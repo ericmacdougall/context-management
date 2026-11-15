@@ -93,8 +93,7 @@ class ElasticsearchSearch(SearchBackend):
 
     def knn_clause(self, vector, filter, k: int) -> dict:
         knn = {"field": self.vector_field, "query_vector": list(vector), "k": k, "num_candidates": max(self.num_candidates, k)}
-        if filter:
-            knn["filter"] = self._filters(filter)
+        knn["filter"] = self._filters(filter)   # always: the tenant term applies to kNN too, with or without a caller filter
         if self.rescore_oversample:
             knn["rescore_vector"] = {"oversample": self.rescore_oversample}
         return knn
@@ -138,8 +137,10 @@ class ElasticsearchSearch(SearchBackend):
 
     @staticmethod
     def _is_licence_error(e: Exception) -> bool:
+        """An ES licence refusal is HTTP 403 with reason 'current license is non-compliant for [...]'. Both must hold: a
+        404 for an index whose name contains 'license', or an unrelated 403, is not a licence error."""
         m = str(e).lower()
-        return "license" in m or "licence" in m or "non-compliant" in m
+        return m.startswith("http 403") and "current license is non-compliant" in m
 
     def capability_probe(self, index, tenant=None) -> Optional[bool]:
         """One tiny retriever query. Only DEFINITE outcomes are cached: success (True, until a later licence error resets it) and a

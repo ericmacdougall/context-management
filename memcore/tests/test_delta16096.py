@@ -634,5 +634,113 @@ class KibanaPreExecTemplateTests(unittest.TestCase):
             workflow_yaml("http://x", step_timeout_s=119)
 
 
+
+class ExtrasTests(unittest.TestCase):
+    """Cheap residuals from the delta review: N3, N8, N9, finding 8 residual (gateway), MCP HTTP RecursionError (N10 part)."""
+
+    def test_n3_every_openai_compat_client_is_tainted_unless_the_operator_declares_otherwise(self):
+        from memcore.adapters.openai_compat import OpenAICompatChat
+        from memcore.devgate import DevSubscriptionNotEnabled
+        d = tempfile.mkdtemp()
+        mk = lambda url, **kw: OpenAICompatChat(url, "m", token="t", cache_dir=tempfile.mkdtemp(dir=d), ledger_path=os.devnull, cap=1, **kw)
+        for url in ("http://localhost.:9/v1", "http://127.1:9/v1", "http://0.0.0.0:9/v1", "http://[::ffff:127.0.0.1]:9/v1",
+                    "http://127.0.0.1.nip.io:9/v1", "http://LOCALHOST:9/v1", "https://api.example.com/v1"):
+            c = mk(url)
+            self.assertTrue(c.subscription_backed, url)
+            with self.assertRaises(DevSubscriptionNotEnabled):
+                gw_mod.Gateway(c, tempfile.mkdtemp(dir=d))
+        declared = mk("https://api.example.com/v1", operator_declares_not_subscription=True)
+        self.assertFalse(declared.subscription_backed)
+        gw_mod.Gateway(declared, tempfile.mkdtemp(dir=d)).srv.server_close()     # loopback gateway: accepted
+        real = gw_mod.ThreadingHTTPServer
+        gw_mod.ThreadingHTTPServer = _NoBind
+        try:
+            with self.assertRaises(ValueError):                                   # bridge: still refused (not a stub type)
+                gw_mod.Gateway(declared, tempfile.mkdtemp(dir=d), host=BRIDGE, allow_bridge_host=BRIDGE)
+        finally:
+            gw_mod.ThreadingHTTPServer = real
+
+    def test_n8_knn_always_carries_the_tenant_term(self):
+        from memcore.adapters.elasticsearch_search import ElasticsearchSearch
+        s = ElasticsearchSearch("http://127.0.0.1:1", lambda: "k", tenant="acme")
+        term = [{"term": {"tenant": "acme"}}]
+        self.assertEqual(s.vector_body([0.1], None, 3)["knn"].get("filter"), term)
+        s.backend_fusion = "rrf"
+        self.assertEqual(s.fused_body("q", [0.1], None, 3)["retriever"]["rrf"]["retrievers"][1]["knn"].get("filter"), term)
+        s.backend_fusion = "linear"
+        self.assertEqual(s.fused_body("q", [0.1], None, 3)["retriever"]["linear"]["retrievers"][1]["retriever"]["knn"].get("filter"), term)
+
+    def test_n9_only_a_403_non_compliant_licence_error_latches_client_fusion(self):
+        from memcore.adapters.elasticsearch_search import ElasticsearchSearch
+        from memcore.ports import BackendError
+        for err, latched in (('HTTP 404: {"error":{"type":"index_not_found_exception","reason":"no such index [mc-acme-license_terms]"}}', False),
+                             ('HTTP 403: {"error":{"type":"security_exception","reason":"action [x] is unauthorized; see license docs"}}', False),
+                             ('HTTP 403: {"error":{"reason":"current license is non-compliant for [Reciprocal Rank Fusion (RRF)]"}}', True)):
+            s = ElasticsearchSearch("http://127.0.0.1:1", lambda: "k", tenant="acme")
+
+            def fake_req(method, path, body=None, err=err):
+                if "retriever" in (body or {}):
+                    raise BackendError(err)
+                return {"hits": {"hits": []}}
+            s._req = fake_req
+            r = s.fused("license_terms", "q", [0.1], None, 2)
+            self.assertEqual(r.fusion, "client")
+            self.assertEqual(s._probe is False, latched, err[:40])
+
+    def test_finding8_gateway_turns_any_backend_or_embedder_error_into_a_502(self):
+        from memcore.fakes import HashEmbedder
+        from memcore.ports import BackendError
+        d = tempfile.mkdtemp()
+
+        def boom(p, s, j):
+            raise RuntimeError("backend bug")
+
+        class BadEmb(HashEmbedder):
+            def _embed(self, texts, kind):
+                raise (BackendError if texts[0] == "a" else KeyError)("es down")
+        g = gw_mod.Gateway(FakeChat(boom, cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=5), os.path.join(d, "g"),
+                           embedder=BadEmb(4), embed_cap=5)
+        g.start()
+        try:
+            with open(os.path.join(d, "g", "gateway.token")) as fh:
+                tok = fh.read().strip()
+            codes = []
+            for path, body in (("/chat/completions", {"model": "fake-1", "messages": [{"role": "user", "content": "x"}]}),
+                               ("/embeddings", {"input": "a"}), ("/embeddings", {"input": "b"})):
+                try:
+                    urllib.request.urlopen(urllib.request.Request(g.base_url + path, data=json.dumps(body).encode(), method="POST",
+                                                                  headers={"Authorization": "Bearer " + tok}), timeout=10)
+                    codes.append(200)
+                except urllib.error.HTTPError as e:
+                    codes.append(e.code)
+                except Exception as e:  # noqa: BLE001 - a dropped connection is the defect
+                    codes.append(type(e).__name__)
+            self.assertEqual(codes, [502, 502, 502])
+        finally:
+            g.shutdown()
+
+    def test_mcp_http_deeply_nested_json_is_a_parse_error(self):
+        from memcore.mcp_http import McpHttpServer
+        from memcore.mcp_server import demo_store
+        from memcore.memtools import memory_tools
+        tok = "t" * 40
+        srv = McpHttpServer(memory_tools(demo_store()), tok).start()
+        try:
+            h = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream", "Authorization": "Bearer " + tok}
+            try:
+                urllib.request.urlopen(urllib.request.Request(srv.url, data=b"[" * 100000 + b"]" * 100000, headers=h, method="POST"), timeout=10)
+                code = 200
+            except urllib.error.HTTPError as e:
+                code = e.code
+            except Exception as e:  # noqa: BLE001
+                code = type(e).__name__
+            self.assertEqual(code, 400)
+            r = urllib.request.urlopen(urllib.request.Request(srv.url, data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"}).encode(),
+                                                              headers=h, method="POST"), timeout=10)
+            self.assertEqual(r.status, 200)
+        finally:
+            srv.stop()
+
+
 if __name__ == "__main__":
     unittest.main()

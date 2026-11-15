@@ -29,17 +29,15 @@ class OpenAICompatChat(CachedChatModel):
     adapter_id = "openai-compat"
 
     def __init__(self, base_url: str, model: str, token: Optional[str] = None, token_file: Optional[str] = None,
-                 max_context_tokens: Optional[int] = None, **kw):
+                 max_context_tokens: Optional[int] = None, operator_declares_not_subscription: bool = False, **kw):
         if token is None and token_file:
             with open(token_file) as fh:
                 token = fh.read().strip()
         self.base_url, self._token = base_url.rstrip("/"), token
-        from urllib.parse import urlparse
-        import ipaddress as _ip
-        try:
-            self.subscription_backed = _ip.ip_address(urlparse(base_url).hostname or "").is_loopback   # taint: may front a loopback subscription gateway
-        except ValueError:
-            self.subscription_backed = (urlparse(base_url).hostname or "") == "localhost"
+        # Taint by default (review N3): any OpenAI-compatible endpoint may front a subscription gateway, and host spellings
+        # (localhost., 127.1, 0.0.0.0, [::ffff:127.0.0.1], *.nip.io, DNS) cannot be classified reliably. Only an explicit
+        # operator declaration clears it, and even then the gateway refuses it off loopback (not an allow-listed stub type).
+        self.subscription_backed = operator_declares_not_subscription is not True
         super().__init__(model=model, **kw)
         self.capabilities = Capabilities(adapter=self.adapter_id, supports_json_schema=True, json_schema_mode="prompt+validate",
                                          supports_system=True, reports_usage=True, max_context_tokens=max_context_tokens,

@@ -90,7 +90,7 @@ def make_handler(surface: AgentToolSurface, token: str, allowed_hosts):
                 return self._send(400, {"error": "bad length"})
             try:
                 msg = json.loads(self.rfile.read(n))
-            except ValueError:
+            except (ValueError, RecursionError):       # deeply nested JSON is a parse error, not a dropped connection
                 return self._send(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}})
             if not isinstance(msg, dict):
                 return self._send(400, {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "batches not supported"}})

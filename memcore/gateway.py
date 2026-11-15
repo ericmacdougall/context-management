@@ -186,7 +186,7 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
                 return None
             try:
                 b = json.loads(self.rfile.read(n))
-            except ValueError as e:
+            except (ValueError, RecursionError) as e:
                 self._err(400, str(e))
                 return None
             if recorder is not None:  # fixtures: path, non-secret headers and the parsed body (the bearer token is never recorded)
@@ -230,6 +230,8 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
                 return self._err(502, str(e), "schema_validation_failed")
             except (BackendError, PortError) as e:
                 return self._err(502, str(e))
+            except Exception as e:  # noqa: BLE001 - any other backend failure is a clean 502, never a dropped connection
+                return self._err(502, "backend failed: %s" % type(e).__name__, "backend_error")
             u = res.usage
             usage = None
             if u is not None and u.input_tokens is not None and u.output_tokens is not None:
@@ -281,7 +283,10 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
                 except CallCapExceeded as e:
                     return self._err(429, str(e), "call_cap_exceeded", {"Retry-After": "3600"})
                 embed_budget.ledger(kind="embed", n=len(texts), embed_kind=kind)
-            r = embedder.embed(texts, kind=kind)
+            try:
+                r = embedder.embed(texts, kind=kind)
+            except Exception as e:  # noqa: BLE001 - an embedder failure is a clean 502 (the reserved call stays counted)
+                return self._err(502, "embedder failed: %s" % type(e).__name__, "backend_error")
             fmt = body.get("encoding_format", "float")
             data = [{"object": "embedding", "index": i, "embedding": _b64_floats(v) if fmt == "base64" else v} for i, v in enumerate(r.vectors)]
             n = sum(len(t.split()) for t in texts)
