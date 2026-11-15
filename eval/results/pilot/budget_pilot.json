@@ -1,0 +1,51 @@
+{
+ "split": "pilot",
+ "level": "H0",
+ "n": 94,
+ "rule": "smallest budget whose next grid step adds < 0.01 session recall",
+ "table": [
+  {
+   "budget": 500,
+   "gold_session_recall": 0.26365248226950355,
+   "gold_round_recall": 0.19858156028368795,
+   "mean_tokens_used": 142.2872340425532
+  },
+  {
+   "budget": 1000,
+   "gold_session_recall": 0.5953900709219858,
+   "gold_round_recall": 0.4148936170212766,
+   "mean_tokens_used": 689.9893617021277
+  },
+  {
+   "budget": 2000,
+   "gold_session_recall": 0.8221631205673758,
+   "gold_round_recall": 0.6382978723404256,
+   "mean_tokens_used": 1696.063829787234
+  },
+  {
+   "budget": 4000,
+   "gold_session_recall": 0.922340425531915,
+   "gold_round_recall": 0.8070921985815602,
+   "mean_tokens_used": 3613.8297872340427
+  },
+  {
+   "budget": 8000,
+   "gold_session_recall": 0.94822695035461,
+   "gold_round_recall": 0.8796099290780143,
+   "mean_tokens_used": 7615.946808510638
+  },
+  {
+   "budget": 16000,
+   "gold_session_recall": 0.9680851063829787,
+   "gold_round_recall": 0.9363475177304964,
+   "mean_tokens_used": 15664.936170212766
+  },
+  {
+   "budget": 32000,
+   "gold_session_recall": 1.0,
+   "gold_round_recall": 0.9620567375886525,
+   "mean_tokens_used": 31626.510638297874
+  }
+ ],
+ "proposed_budget": null
+}
