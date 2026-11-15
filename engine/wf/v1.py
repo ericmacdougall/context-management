@@ -30,6 +30,7 @@ class SessionWorkflow:
         self.approved = False
         self.finish = False
         self.sig = 0
+        self.more = False  # last reconcile returned a full batch: more unprocessed inputs may be waiting in Postgres
 
     @workflow.signal
     def turn(self, event_id: str):
@@ -55,6 +56,13 @@ class SessionWorkflow:
         key = await act("turn_effect", sid, eid)
         await act("turn_append", sid, eid, digest, key, CODE)
 
+    async def _reconcile(self):
+        ids = await act("reconcile", self.st["sid"])
+        self.more = len(ids) >= 20
+        for e in ids:
+            if e not in self.pending and e not in self.done:
+                self.pending.append(e)
+
     def _want_can(self):
         info = workflow.info()
         cl = self.st.get("can_len", 0)
@@ -66,9 +74,7 @@ class SessionWorkflow:
         sid = st["sid"]
         if st["rollup_s"] and not st["rollup_deadline_ms"]:
             st["rollup_deadline_ms"] = now_ms() + int(st["rollup_s"] * 1000)
-        for e in await act("reconcile", sid):
-            if e not in self.pending:
-                self.pending.append(e)
+        await self._reconcile()
         while True:
             if self.finish and not self.pending:
                 break
@@ -102,6 +108,8 @@ class SessionWorkflow:
                     await self._turn(eid)
                     self.done.add(eid)
                     st["turns_done"] += 1
+            elif self.more:
+                await self._reconcile()
             else:
                 timeout = None
                 if st["rollup_s"]:

@@ -1,0 +1,37 @@
+# Engine-evolution testbed notes (GoodQA #16096, rows F4 to F8)
+
+Today is 2026-11-15. Everything below that is a mechanism choice was read from the current docs first; experiment
+results are in `results/*.json` and the table in the final report. Source: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a/738faa20-cd78-4599-bbda-f9ec18226de4 "...and when the temporal/engine/etc needs to update/ugprade/evolve".
+
+## Research (read 2026-11-15)
+
+| Topic | URL | What I rely on |
+|---|---|---|
+| Patching (Python) | https://docs.temporal.io/develop/python/workflows/versioning | `workflow.patched("id")` writes a marker: new code runs for new executions, old executions keep the old path; if replay meets a marker the code does not produce, the workflow task fails. `workflow.deprecate_patch("id")` is the middle step; remove both only after pre-patch executions have left retention. Copy-the-class cutover (`@workflow.defn(name=...)`) does not version running executions. |
+| Worker Versioning | https://docs.temporal.io/production-deployment/worker-deployments/worker-versioning | Behaviours per workflow type: Pinned (runs on the deployment version it started on, no patching needed, recommended for "rainbow" deployments) or Auto-Upgrade (moves to the target version; must stay replay-safe, i.e. patched). Long workflows that use continue-as-new can be Pinned and move to new code at the CaN boundary. Minimum: self-hosted server 1.29.1, CLI 1.4.1, UI 2.38.0, Python SDK 1.11. Page has no GA or preview label; pre-2025 experimental versioning was removed from the server in March 2026 (page warning). Temporal reports when a version is drained. Warns against enabling it on worker-specific task queues (per-version task queue limit). |
+| Continue-as-new | https://docs.temporal.io/develop/python/workflows/continue-as-new | `workflow.continue_as_new(input)`; `workflow.info().is_continue_as_new_suggested()`; state travels in the input; add a test-only low threshold to exercise it. |
+| Safe message handlers | https://docs.temporal.io/develop/python/workflows/message-passing | Never continue-as-new inside an update handler; `await workflow.wait_condition(workflow.all_handlers_finished)` before finishing or continuing; `workflow.current_update_info` for update-id dedup. |
+| Limits | https://docs.temporal.io/workflow-execution/limits and https://docs.temporal.io/cloud/limits | History: 51,200 events or 50 MB hard, warning at 10,240 events or 10 MB. Pending activities/child/signals/cancels: 2,000 each. Payload 2 MB per request; 4 MB per history transaction and per gRPC message. Signals: up to 10,000 per execution, recommended about 5/s per execution (Cloud wording). Updates: 10 in flight, 2,000 total in history. |
+| Replay testing | https://docs.temporal.io/develop/python/testing-suite | `Replayer(workflows=[...])`, `replay_workflow(...)`, `replay_workflows(histories, fail_fast=...)`, `WorkflowHistory.from_json(workflow_id, json_str)`; histories come from `client.list_workflows(...).map_histories()`, the UI or the CLI. The page does not name the nondeterminism exception; I observed it (see F5a). |
+| Server upgrade | https://docs.temporal.io/self-hosted-guide/upgrade-server | One minor version at a time, first to the latest patch of the current minor; update the DB schema with the matching `temporal-sql-tool` / cassandra tool BEFORE the server; allow about 10 minutes per version for history shards; consecutive-minor compatibility only, skipping can make old formats unreadable; test in staging under load. |
+| Dev server | `temporal server start-dev --help` (CLI 1.10.1) | `--db-filename` persists state in SQLite, `--ip`, `--port`, `--http-port`, `--metrics-port`, `--headless`, `--dynamic-config-value KEY=VALUE`, `-n` namespaces. The CLI embeds a specific server: CLI 1.7.3 = server 1.31.2, CLI 1.10.1 = server 1.32.2 (printed by `temporal --version`, release notes of cli v1.10.0 "server to OSS Server v1.32.2"). |
+
+## Versions pinned (t2-dev)
+
+- Temporal CLI 1.7.3 (embeds server 1.31.2, UI 2.49.1): https://github.com/temporalio/cli/releases/download/v1.7.3/temporal_cli_1.7.3_linux_amd64.tar.gz, 113,289,640 bytes, sha256 verified against the release `checksums.txt` (extracted binary 576 MB).
+- Temporal CLI 1.10.1 (embeds server 1.32.2, UI 2.56.4): https://github.com/temporalio/cli/releases/download/v1.10.1/temporal_cli_1.10.1_linux_amd64.tar.gz, 38,357,804 bytes, sha256 verified against `checksums.txt` (binary 126 MB). Released 2026-11-13.
+- Server 1.31.2 to 1.32.2 is one minor step, the documented upgrade granularity.
+- Python SDK: temporalio 1.31.0 (old, venv-old) and 1.36.1 (new, venv-new); psycopg 3.3.9, psycopg-pool 3.3.3 (`requirements-old.txt`, `requirements-new.txt`).
+- Postgres 16 container `emlab-pg-engine-16096` (image postgres:16), systems schema loaded unchanged plus `engine_schema.sql`.
+
+## Design rules and where each is enforced
+
+- Engine holds ids, cursors and counters only: `payloadcheck.py` + `codec.py` (PayloadCodec on every client and worker; counts and rejects). Free text, strings that are not ids, nested or oversized payloads (> 4096 bytes) are rejected.
+- Every external effect is an activity with an idempotency key in `effects`: `keys.py`, `pgstore.py`. Keys derive from the logical step only.
+- Engine not on the read path: the driver appends turn inputs straight to Postgres; the signal is a doorbell that carries the event id; after any restart `reconcile` re-derives pending turns from Postgres (anti-join of inputs against `effects`).
+- Bounded history: continue-as-new on `is_continue_as_new_suggested()`, only from the main method after `all_handlers_finished`.
+
+## Harness constraints met while building
+
+- kill_guard refuses a supervisor that signals processes, so crash tests use `workerloop.sh`: the worker ends itself with `os._exit(137)` (no cleanup, no flush, sockets dropped by the kernel; equivalent to SIGKILL for the engine, but not a signal sent from outside) and the wrapper restarts it. The server and wrapper are started with `kill_guard.py spawn --host t2-dev` and stopped by literal `ssh t2-dev kill -9 PID`.
+- An early Temporal dev server (pid 507746, CLI 1.7.3, port 48233) and a smoke worker (pid 543483) were started before this was known and are not in the spawn ledger; the audited stop needs `--foreign`, so they are left for main to stop (idle).

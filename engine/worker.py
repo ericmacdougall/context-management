@@ -42,6 +42,8 @@ async def main():
     ap.add_argument("--deployment", default="")   # Worker Versioning: deployment name
     ap.add_argument("--build-id", default="")
     ap.add_argument("--pinned", action="store_true")
+    ap.add_argument("--crash-after", type=float, default=0)  # abrupt self-exit (no cleanup, no flush): crash test
+    ap.add_argument("--stop-file", default="")                 # graceful stop when this file appears
     a = ap.parse_args()
     os.environ["ENGINE_WORKER_IDENT"] = a.identity
     mod = importlib.import_module(f"engine.wf.{a.variant}")
@@ -65,6 +67,15 @@ async def main():
     loop = asyncio.get_running_loop()
     for s in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(s, stop.set)
+    if a.crash_after:
+        import threading, time
+        threading.Thread(target=lambda: (time.sleep(a.crash_after), os._exit(137)), daemon=True).start()
+    if a.stop_file:
+        async def watch():
+            while not os.path.exists(a.stop_file):
+                await asyncio.sleep(0.5)
+            stop.set()
+        asyncio.get_running_loop().create_task(watch())
     print(f"worker up variant={a.variant} identity={a.identity} pid={os.getpid()} tq={a.task_queue}", flush=True)
     async with worker:
         await stop.wait()
