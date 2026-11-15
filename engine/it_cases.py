@@ -138,14 +138,20 @@ async def case_h3(client):
     a, b = ctl.sids(t, 2)
     eb = pgstore.append_input(TENANT, b, "r1", {"n": 1})[0]
     await signal(client, a, eb)                                  # foreign id into A
-    await asyncio.sleep(4)
+    await asyncio.sleep(12)                                      # long enough for A's worker to have handled it
     await signal(client, b, eb)                                  # B's own doorbell
     await wait_for(lambda: len(results_of_session(b)) >= 1, 30)
     await signal(client, a, "f", "finish_now")
     await signal(client, b, "f", "finish_now")
     await wait_for(lambda: False, 3)
     ra, rb = results_of_session(a), results_of_session(b)
-    return {"results_in_A": len(ra), "results_in_B": len(rb), "passed": len(ra) == 0 and len(rb) == 1}
+    h = await client.get_workflow_handle(ctl.wid(a, TENANT)).fetch_history()
+    kinds = [e.event_type for e in h.events]
+    from temporalio.api.enums.v1 import EventType
+    sig = [e for e in h.events if e.event_type == EventType.EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED]
+    return {"results_in_A": len(ra), "results_in_B": len(rb), "A_history_events": len(kinds), "A_signals_received": len(sig),
+            "A_activities_scheduled": sum(1 for e in h.events if e.event_type == EventType.EVENT_TYPE_ACTIVITY_TASK_SCHEDULED),
+            "passed": len(ra) == 0 and len(rb) == 1}
 
 
 async def case_l1(client):
@@ -203,9 +209,8 @@ async def case_l3(client):
     await up(variant)
     stats = {"appended": 0, "signaled": 0, "retries": 0}
     t = tag("l3")
-    await lib.launch(client, t, 1, TQ, stats, turns=0, can_len=30)
+    await lib.launch(client, t, 1, TQ, stats, turns=0, can_len=30, expected=11)
     sid = ctl.sids(t, 1)[0]
-    import psycopg
     lock = lib.pg_connect(autocommit=False)                      # holds engine_config so get_config blocks for the window
     sent = 0
     for i in range(1, 4):
@@ -220,7 +225,6 @@ async def case_l3(client):
         await asyncio.sleep(0.5)
     lock.rollback()
     lock.close()
-    await signal(client, sid, "f", "finish_now")
     t0 = time.time()
     st = "RUNNING"
     while time.time() - t0 < 60 and st == "RUNNING":
