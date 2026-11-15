@@ -48,6 +48,7 @@ HOP_EDITS = [
     ('        self.sig = 0\n', '        self.sig = 0\n        self.rotate = False\n'),
     ('    @workflow.signal\n    def approve', '    @workflow.signal\n    def rotate_now(self, ref: str):\n        self.rotate = True\n\n    @workflow.signal\n    def approve'),
     ('        return info.is_continue_as_new_suggested() or', '        return self.rotate or info.is_continue_as_new_suggested() or'),
+    ('lambda: bool(self.pending) or self.finish,', 'lambda: bool(self.pending) or self.finish or self.rotate,'),
     ('                workflow.continue_as_new(st)',
      '                tq = await act("get_config", "target_queue")\n'
      '                if tq and tq != workflow.info().task_queue:\n'
@@ -63,5 +64,14 @@ variant("v2s", "state schema v2 (rename + new field), migrated on entry", [
     (READ, READ + '        policy = workflow.patched("policy-check")\n        if policy:\n            await act("turn_policy", eid)\n'),
     (APPEND, '        await act("turn_append", sid, eid, digest, key, CODE + ("+policy" if policy else ""))\n'),
 ], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]').replace('"approval": st["approval"],', '"approval": st["approval"], "ver": st["ver"],'))
+variant("v1n", "NAIVE continue-as-new: drops pending signals at the boundary and never reconciles (control that must fail)", [
+    ('                st["pend"] = [e for e in self.pending if e not in self.done]\n', '                st["pend"] = []\n'),
+    ('        await self._reconcile()\n        while True:', '        while True:')])
+
+variant("v2sx", "BROKEN state migration (loses the renamed counter): control that must fail", [
+    ('from temporalio.common import RetryPolicy\n', 'from temporalio.common import RetryPolicy\n\nwith workflow.unsafe.imports_passed_through():\n    from engine import state as state_mod\n'),
+    ('        self.st = dict(st)\n', '        self.st = state_mod.migrate_lossy(dict(st))\n'),
+], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]'))
+
 if __name__ == "__main__":
     print("generated", sorted(p.name for p in HERE.glob("v*.py")))

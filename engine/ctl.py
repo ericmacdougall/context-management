@@ -16,6 +16,7 @@ from datetime import timedelta
 
 from temporalio.client import WorkflowExecutionStatus, WorkflowFailureError
 from temporalio.common import WorkflowIDConflictPolicy
+from temporalio.service import RPCError, RPCStatusCode
 
 from . import keys, pgstore, state
 from .common import TENANT, pg_connect
@@ -41,6 +42,15 @@ async def retry(coro_fn, what, stats, budget=600):
     while True:
         try:
             return await coro_fn()
+        except RPCError as e:
+            if e.status == RPCStatusCode.NOT_FOUND:  # doorbell for a workflow that does not exist: Postgres still has the event
+                stats["doorbell_dropped"] = stats.get("doorbell_dropped", 0) + 1
+                return "dropped"
+            stats["retries"] = stats.get("retries", 0) + 1
+            if time.time() - t0 > budget:
+                stats.setdefault("failed", []).append(f"{what}: {e.status}")
+                return None
+            await asyncio.sleep(1.0)
         except Exception as e:  # server restart, worker-independent: the client simply retries
             stats["retries"] = stats.get("retries", 0) + 1
             if time.time() - t0 > budget:

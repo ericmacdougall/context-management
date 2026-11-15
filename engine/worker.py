@@ -7,6 +7,7 @@ import importlib
 import os
 import signal
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 
@@ -16,6 +17,8 @@ from temporalio.worker import Worker
 
 from . import activities, common, pgstore
 from .codec import CheckingCodec
+
+_watch_task = None
 
 
 def make_codec(proc):
@@ -69,13 +72,26 @@ async def main():
         loop.add_signal_handler(s, stop.set)
     if a.crash_after:
         import threading, time
-        threading.Thread(target=lambda: (time.sleep(a.crash_after), os._exit(137)), daemon=True).start()
+        def crash():
+            import json
+            time.sleep(a.crash_after)
+            snap = activities.inflight_snapshot()
+            with open(os.environ.get("ENGINE_CRASH_LOG", "/dev/null"), "a") as f:  # instrumentation only
+                f.write(json.dumps({"t": time.time(), "identity": a.identity, "inflight": snap}) + "\n")
+            os._exit(137)
+        threading.Thread(target=crash, daemon=True).start()
     if a.stop_file:
         async def watch():
             while not os.path.exists(a.stop_file):
-                await asyncio.sleep(0.5)
+                if os.path.exists(a.stop_file + ".hard"):   # crash on request: abrupt self-exit, no cleanup
+                    import json
+                    with open(os.environ.get("ENGINE_CRASH_LOG", "/dev/null"), "a") as f:
+                        f.write(json.dumps({"t": time.time(), "identity": a.identity, "inflight": activities.inflight_snapshot(), "how": "hard-file"}) + "\n")
+                    os._exit(137)
+                await asyncio.sleep(0.2)
             stop.set()
-        asyncio.get_running_loop().create_task(watch())
+        global _watch_task
+        _watch_task = asyncio.get_running_loop().create_task(watch())  # keep a strong ref (tasks can be GC'd)
     print(f"worker up variant={a.variant} identity={a.identity} pid={os.getpid()} tq={a.task_queue}", flush=True)
     async with worker:
         await stop.wait()

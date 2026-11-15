@@ -120,7 +120,7 @@ class SessionWorkflow:
                 if st["rollup_s"]:
                     timeout = max((st["rollup_deadline_ms"] - now_ms()) / 1000, 0.001)
                 try:
-                    await workflow.wait_condition(lambda: bool(self.pending) or self.finish, timeout=timeout)
+                    await workflow.wait_condition(lambda: bool(self.pending) or self.finish or self.rotate, timeout=timeout)
                 except asyncio.TimeoutError:
                     pass
             if self._want_can() and len(self.pending) <= MAX_CARRY:

@@ -44,3 +44,10 @@ def migrate(state, to=CURRENT):
         d = _STEPS[v](d)
         v = d["ver"]
     return d
+
+
+def migrate_lossy(state, to=CURRENT):
+    """BROKEN on purpose (test control): adds the new fields but resets the renamed counter."""
+    d = migrate(state, to)
+    d["rollup_count"] = 0
+    return d

@@ -16,4 +16,6 @@ def pg_connect(autocommit=False, app="engine"):
 
 
 def temporal_target():
+    if os.environ.get("ENGINE_TEMPORAL_PORT"):
+        return "127.0.0.1:" + os.environ["ENGINE_TEMPORAL_PORT"]
     return "127.0.0.1:" + (HOME / "run" / "temporal_port").read_text().strip()

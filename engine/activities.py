@@ -1,11 +1,37 @@
 """Activities: every touch of Postgres or the external system. Arguments and results are ids and small values only
 (enforced by the payload codec). All are safe to retry or replay: keys derive from the logical step."""
+import functools
 import json
 import os
+import threading
 
 from temporalio import activity
 
 from . import keys, pgstore
+
+
+INFLIGHT = {}
+_lk = threading.Lock()
+
+
+def tracked(fn):
+    """Counts activities currently executing in this process (read by the crash instrumentation, so a test can
+    say whether an abrupt exit hit a worker with work in flight)."""
+    @functools.wraps(fn)
+    def inner(*a, **k):
+        with _lk:
+            INFLIGHT[fn.__name__] = INFLIGHT.get(fn.__name__, 0) + 1
+        try:
+            return fn(*a, **k)
+        finally:
+            with _lk:
+                INFLIGHT[fn.__name__] -= 1
+    return inner
+
+
+def inflight_snapshot():
+    with _lk:
+        return {k: v for k, v in INFLIGHT.items() if v}
 
 
 def _worker():
@@ -13,21 +39,25 @@ def _worker():
 
 
 @activity.defn
+@tracked
 def turn_read(event_id: str) -> str:
     return pgstore.read_digest(event_id)
 
 
 @activity.defn
+@tracked
 def turn_policy(event_id: str) -> str:  # a step added by code version 2
     return "ok"
 
 
 @activity.defn
+@tracked
 def turn_audit(event_id: str) -> str:  # a step added by code version 3
     return "ok"
 
 
 @activity.defn
+@tracked
 def turn_effect(sid: str, event_id: str) -> str:
     return pgstore.external_effect(
         sid, event_id, _worker(), gap_s=float(os.environ.get("ENGINE_EFFECT_GAP", "0")),
@@ -35,24 +65,31 @@ def turn_effect(sid: str, event_id: str) -> str:
 
 
 @activity.defn
+@tracked
 def turn_append(sid: str, event_id: str, digest: str, effect_key: str, code: str) -> str:
-    eid, _ = pgstore.append_once(keys.result_key(event_id), sid, "turn_result", "turn_result",
+    rk = keys.result_key(event_id)
+    if os.environ.get("ENGINE_BROKEN_RESULT") == "1":  # fence-off control: key depends on the attempt
+        rk = f"{rk}/a{activity.info().attempt}"
+    eid, _ = pgstore.append_once(rk, sid, "turn_result", "turn_result",
                                  {"in": event_id, "digest": digest, "effect": effect_key, "code": code})
     return eid
 
 
 @activity.defn
+@tracked
 def reconcile(sid: str) -> list:
     return pgstore.unprocessed_inputs(sid, limit=20)
 
 
 @activity.defn
+@tracked
 def rollup(sid: str, ordinal: int) -> str:
     eid, _ = pgstore.append_once(keys.rollup_key(sid, ordinal), sid, "rollup", "rollup", {"k": ordinal})
     return eid
 
 
 @activity.defn
+@tracked
 def approval_request(sid: str, deadline_ms: int) -> int:
     eid, created = pgstore.append_once(keys.approval_key(sid, "request"), sid, "approval", "approval_requested",
                                        {"deadline_ms": deadline_ms})
@@ -64,6 +101,7 @@ def approval_request(sid: str, deadline_ms: int) -> int:
 
 
 @activity.defn
+@tracked
 def approval_resolve(sid: str) -> str:
     from .common import TENANT
     with pgstore.pool().connection() as conn:
@@ -77,12 +115,14 @@ def approval_resolve(sid: str) -> str:
 
 
 @activity.defn
+@tracked
 def finish_session(sid: str, turns: int) -> str:
     eid, _ = pgstore.append_once(keys.finish_key(sid), sid, "finish", "session_finished", {"turns": turns})
     return eid
 
 
 @activity.defn
+@tracked
 def get_config(name: str) -> str:
     with pgstore.pool().connection() as conn:
         r = conn.execute("select value from engine_config where name=%s", (name,)).fetchone()
