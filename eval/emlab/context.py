@@ -116,14 +116,17 @@ def context_metrics(q, items: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def write_context(root: str, arm: str, level: str, q, budget: int, items: List[Dict[str, Any]],
-                  real_sids: Optional[Set[str]] = None) -> str:
+                  real_sids: Optional[Set[str]] = None, qids: Optional[Set[str]] = None) -> str:
     d = os.path.join(root, arm, level)
     os.makedirs(d, exist_ok=True)
     ordered = order_items(items)
-    _guard(ordered, real_sids)  # refuse to write a model-facing file that carries a real session id
+    doc = {"_meta": {"question_id": q.qid, "arm": arm, "level": level, "budget_tokens": budget,
+                     "tokens_used": sum(i["tokens"] for i in ordered),
+                     "token_estimate": "ceil(chars/4) of rendered item text",
+                     "note": "_meta is for the runner only and must never be passed to a model"},
+           "items": ordered}
+    _guard(doc, real_sids, qids)  # refuse to write a model-facing file that carries a real id, a question id or a level
     path = os.path.join(d, "%s.json" % q.qid)
     with open(path, "w", encoding="utf-8") as fh:
-        json.dump({"question_id": q.qid, "arm": arm, "level": level, "budget_tokens": budget,
-                   "token_estimate": "ceil(chars/4) of rendered item text",
-                   "tokens_used": sum(i["tokens"] for i in ordered), "items": ordered}, fh, indent=1)
+        json.dump(doc, fh, indent=1)
     return path

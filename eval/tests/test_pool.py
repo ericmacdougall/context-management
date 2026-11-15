@@ -39,6 +39,44 @@ class PoolTests(unittest.TestCase):
         self.assertEqual(cc["ku_001"], cc["ku_001_abs"])          # same gold content under other ids
         self.assertNotEqual(cc["ku_001"], cc["lo_003"])
 
+    def test_gold_content_union_without_the_abs_rule(self):
+        twin = twin_of(self.q, "ku_777", {s: s + "_copy" for s in self.q.haystack_session_ids})   # NOT an _abs id
+        h = session_hashes(self.qs + [twin])
+        cc = content_clusters(self.qs + [twin], h)
+        self.assertEqual(cc["ku_001"], cc["ku_777"])      # only the shared gold content can join them
+
+    def test_hash_pins_role_and_text_only(self):
+        t = twin_of(self.q, "x", {})
+        later = dataclasses.replace(t, qid="y", turns=[dataclasses.replace(x, date=x.date.replace(year=2030)) for x in t.turns])
+        self.assertEqual(session_hashes([t]), session_hashes([later]))        # dates are not part of the content
+        edited = dataclasses.replace(t, qid="z", turns=[dataclasses.replace(t.turns[0], text=t.turns[0].text + "!")] + t.turns[1:])
+        self.assertNotEqual(session_hashes([t])[t.turns[0].session_id], session_hashes([edited])[t.turns[0].session_id])
+
+    def test_round_level_residual_is_excluded_by_rule(self):
+        q = self.q                                    # gold round: ku_s4:0 (and ku_s1:0)
+        gold_turn = [t for t in q.turns if t.session_id == "ku_s4" and t.index == 0][0]
+        reply = [t for t in q.turns if t.session_id == "ku_s4" and t.index == 1][0]
+        part = [dataclasses.replace(gold_turn, session_id="zz_partial"), dataclasses.replace(reply, session_id="zz_partial"),
+                Turn("zz_partial", 2, "user", "something else entirely", False, gold_turn.date),
+                Turn("zz_partial", 3, "assistant", "reply", False, gold_turn.date)]
+        other = dataclasses.replace(self.qs[2], qid="other_q", turns=part + [dataclasses.replace(t) for t in self.qs[2].turns],
+                                    haystack_session_ids=["zz_partial"] + self.qs[2].haystack_session_ids, gold_session_ids=[])
+        ctx = PoolContext(self.qs + [other])
+        lv = ctx.level_sessions(q, "H3", {})
+        self.assertNotIn("zz_partial", lv)            # shares a gold ROUND hash with q although the session differs
+        lv2 = ctx.level_sessions(self.qs[2], "H3", {})
+        self.assertIn("zz_partial", lv2)              # but is an ordinary distractor for a question without that gold round
+
+    def test_sensitivity_rule_finds_test_questions_with_gold_in_pilot_haystacks(self):
+        from emlab.content import sensitivity_excluded
+        twin = twin_of(self.q, "pilot_q", {s: s + "_copy" for s in self.q.haystack_session_ids})
+        allq = self.qs + [twin]
+        h = session_hashes(allq)
+        asg = {"ku_001": "test", "ab_002_abs": "test", "lo_003": "test", "pilot_q": "pilot"}
+        self.assertEqual(sensitivity_excluded(allq, asg, h), ["ku_001"])
+        asg["pilot_q"] = "test"                                  # a test twin is not a pilot haystack
+        self.assertEqual(sensitivity_excluded(allq, asg, h), [])
+
     def test_abs_base_pair_clusters_even_without_shared_content(self):
         base = self.qs[1]  # ab_002_abs has no base in the fixture; make one
         b = dataclasses.replace(base, qid="ab_002", gold_session_ids=[])

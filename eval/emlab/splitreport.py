@@ -3,6 +3,7 @@ import json
 import sys
 from collections import Counter
 
+from .content import sensitivity_excluded
 from .dataset import LongMemEvalLoader, full_split_assignment, split_assignment
 from .pool import PoolContext
 
@@ -30,6 +31,9 @@ def main(dataset, out):
     rep["pilot_content_clusters_multi"] = sum(1 for c, n in Counter(ctx.clusters[q] for q, v in new.items() if v == "pilot").items() if n > 1)
     rep["content_clusters_total"] = len(set(ctx.clusters.values()))
     rep["pool"] = {"session_ids": len(ctx.hashes), "distinct_content": len(ctx.pool), "gold_content_hashes": len(ctx.gold_hashes)}
+    sens = sensitivity_excluded(qs, new, ctx.hashes)
+    rep["sensitivity_excluded"] = {"rule": "non-abstention test questions whose gold content is verbatim inside a pilot or dev2 haystack",
+                                   "n": len(sens), "by_type": dict(Counter(t[q].qtype for q in sens)), "ids": sens}
     json.dump(rep, open(out, "w"), indent=1)
     print(json.dumps(rep)[:3000])
 

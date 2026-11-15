@@ -59,3 +59,29 @@ def content_clusters(questions: Sequence[Question], hashes: Dict[str, str]) -> D
         if q.qid.endswith("_abs") and q.qid[:-4] in ids:
             union(q.qid[:-4], q.qid)
     return {q.qid: find(q.qid) for q in qs}
+
+
+def round_hashes(questions: Iterable[Question]) -> Dict[str, set]:
+    """session id -> set of content hashes of its rounds (round text only)."""
+    out: Dict[str, set] = {}
+    for q in questions:
+        for r in q.rounds:
+            out.setdefault(r.session_id, set()).add(hashlib.sha256(r.text.encode("utf-8")).hexdigest())
+    return out
+
+
+def gold_round_hashes(q: Question) -> set:
+    return {hashlib.sha256(r.text.encode("utf-8")).hexdigest() for r in q.rounds if r.has_answer}
+
+
+def sensitivity_excluded(questions: Sequence[Question], assignment: Dict[str, str], hashes: Dict[str, str]) -> List[str]:
+    """Sensitivity-analysis rule (registered): non-abstention test questions whose gold CONTENT appears verbatim inside
+    a pilot or dev2 haystack. Pilot-stage work has processed that text as haystack content, so every confirmatory
+    result is reported twice: on the full test split and with these questions excluded."""
+    seen = set()
+    for q in questions:
+        if assignment.get(q.qid) in ("pilot", "dev2"):
+            seen |= {hashes[s] for s in q.haystack_session_ids}
+    return sorted(q.qid for q in questions
+                  if assignment.get(q.qid) == "test" and not q.is_abstention
+                  and any(hashes.get(s) in seen for s in q.gold_session_ids))

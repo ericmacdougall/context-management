@@ -32,10 +32,13 @@ class Ctx(unittest.TestCase):
 
     def test_facts_include_source_round_once_and_respect_budget(self):
         facts = self._facts()
-        items = pack_facts(["f1", "f1b" if False else "f2"], facts, self.dates, self.texts, 10 ** 6)
+        items = pack_facts(["f1", "f2"], facts, self.dates, self.texts, 10 ** 6)
         kinds = [i["kind"] for i in items]
         self.assertEqual(kinds, ["fact", "source_round", "fact", "source_round"])
-        self.assertEqual(sum(i["tokens"] for i in items), sum(i["tokens"] for i in items))
+        # a second fact from an already-included round adds its own tokens but not a second copy of the round
+        facts["f3"] = dict(facts["f1"], id="f3", text="also at Borealis")
+        again = pack_facts(["f1", "f3"], facts, self.dates, self.texts, 10 ** 6)
+        self.assertEqual([i["kind"] for i in again], ["fact", "source_round", "fact"])
         tight = pack_facts(["f1", "f2"], facts, self.dates, self.texts, items[0]["tokens"] + items[1]["tokens"])
         self.assertEqual(len(tight), 2)  # f2 does not fit: strict prefix stops
 
@@ -100,11 +103,16 @@ class Analyst(unittest.TestCase):
         from emlab.analyst_score import aggregate, score_one
         import json as _j
         q = list(FixtureLoader().questions())[0]
-        t = make_task(q.qid, "H1", q.question, "2023-08-01 10:00", [{"round_id": "ku_s4:0", "session_id": "ku_s4",
-                                                                    "date": "2023-06-20 08:15", "rank": 1, "snippet": "x"}])
-        blob = _j.dumps(t).lower()
+        t = make_task(q.qid, "H1", q.question, "2023-08-01 10:00", [{"round_id": "s123456789abc:0", "session_id": "s123456789abc",
+                                                                    "date": "2023-06-20 08:15", "text": "x"}])
+        mf = {k: v for k, v in t.items() if k != "_meta"}            # what a model may see
+        self.assertEqual(set(t), {"_meta", "question", "question_date", "candidates"})
+        self.assertEqual(t["_meta"]["question_id"], q.qid)
+        blob = _j.dumps(mf).lower()
         for w in FORBIDDEN:
             self.assertNotIn(w, blob)
+        from emlab.guard import check as _check
+        _check(t, {"ku_s4"}, {q.qid})                                 # _meta is skipped; model-facing part is clean
         texts = {r.round_id: r.text for r in q.rounds}
         dates = {s: "2023-01-01 00:00" for s in q.haystack_session_ids}
         m = score_one(q, ["ku_s2:0", "ku_s4:0"], dates, texts)
@@ -114,7 +122,6 @@ class Analyst(unittest.TestCase):
         self.assertTrue(stale["stale_only"])
         m["qid"], m["calls"], m["tool_seconds"] = q.qid, 3, 1.5
         self.assertEqual(aggregate([m], {q.qid})["low_overlap"]["tool_calls"], 3)
-        self.assertNotIn("ids outside scope", "")
         out_of_scope = score_one(q, ["zzz:0"], dates, texts)
         self.assertEqual(out_of_scope["items"], 0)   # ids outside the level scope are dropped, not credited
 
@@ -147,14 +154,18 @@ class Anon(unittest.TestCase):
 
 
 class Guard(unittest.TestCase):
-    def test_guard_refuses_real_ids_and_label_patterns(self):
+    def test_guard_refuses_real_ids_question_ids_levels_and_label_patterns(self):
         from emlab.guard import LeakError, check
         real = {"answer_ab12cd_1", "0123abcd", "sharegpt_X1"}
-        check({"round_id": "s123456789abc:3", "text": "hello world"}, real)       # opaque ids pass
+        qids = {"6e984302", "gpt4_77_abs"}
+        check({"round_id": "s123456789abc:3", "text": "hello world, H1B visa"}, real, qids)   # opaque ids pass; content may say H1
+        check({"_meta": {"question_id": "6e984302", "level": "H3"}, "question": "q"}, real, qids)  # _meta is skipped
         for bad in ({"session_id": "answer_ab12cd_1"}, {"round_id": "0123abcd:4"}, {"x": ["see answer_ff00aa_2"]},
-                    {"text": "from sharegpt_Q9 conversation"}, {"ultrachat_77": 1}):
+                    {"text": "from sharegpt_Q9 conversation"}, {"ultrachat_77": 1},
+                    {"item_id": "src:0123abcd:3"}, {"fact_id": "0123abcd:2:0"}, {"note": "see 0123abcd now"},
+                    {"question_id": "6e984302"}, {"level": "H3"}, {"label": "gpt4_77_abs"}, {"text": "uses 0123abcd inside"}):
             with self.assertRaises(LeakError):
-                check(bad, real)
+                check(bad, real, qids)
 
     def test_write_context_refuses_leaky_items(self):
         import tempfile
@@ -165,3 +176,57 @@ class Guard(unittest.TestCase):
                 "text": "t", "tokens": 1, "rank": 0}
         with self.assertRaises(LeakError):
             write_context(tempfile.mkdtemp(), "rag", "H0", q, 10, [item], {"ku_s4"})
+        ok = dict(item, session_id="s123456789abc", round_id="s123456789abc:0", item_id="s123456789abc:0")
+        path = write_context(tempfile.mkdtemp(), "rag", "H1", q, 10, [ok], {"ku_s4"}, {q.qid})
+        import json as _j
+        doc = _j.load(open(path))
+        self.assertEqual(set(doc), {"_meta", "items"})                # question id and level live only under _meta
+        self.assertEqual(doc["_meta"]["level"], "H1")
+
+
+class Tools(unittest.TestCase):
+    def test_timeline_reveals_no_pool_size(self):
+        from emlab.analyst_tools import Backend
+        b = object.__new__(Backend)
+        n = 80
+        b.sessions = {"sess%d" % i: "2023-01-%02d 00:00" % (i % 28 + 1) for i in range(n)}
+        b.chunks = [{"chunk_id": "sess%d:0#0" % i, "round_id": "sess%d:0" % i, "session_id": "sess%d" % i} for i in range(n)]
+        b.by_session = {"sess%d" % i: [i] for i in range(n)}
+        b.round_text = {"sess%d:0" % i: "user: topic %d" % i for i in range(n)}
+        r = b.timeline(None, 5)
+        self.assertEqual(set(r), {"sessions", "more"})
+        self.assertEqual(len(r["sessions"]), 5)
+        self.assertTrue(r["more"])
+        self.assertFalse(b.timeline(None, 50)["more"] and n <= 50)
+        small = object.__new__(Backend)
+        small.sessions, small.chunks, small.by_session, small.round_text = (
+            {"a": "2023-01-01 00:00"}, [{"chunk_id": "a:0#0", "round_id": "a:0", "session_id": "a"}], {"a": [0]}, {"a:0": "user: x"})
+        self.assertFalse(small.timeline(None, 5)["more"])
+
+
+class Registered(unittest.TestCase):
+    def test_one_rerank_head_size(self):
+        from emlab.retrievers import RERANK_TOP_N, run_arm, FakeRetriever
+        self.assertEqual(RERANK_TOP_N, 20)
+        seen = []
+
+        class R(FakeRetriever):
+            def rerank(self, q, ranked, depth):
+                seen.append(len(ranked))
+                return ranked
+
+        q = list(FixtureLoader().questions())[0]
+        run_arm(R(), q, "rerank", 200, "off")
+        self.assertLessEqual(seen[0], RERANK_TOP_N)
+        import inspect
+        self.assertEqual(inspect.signature(run_arm).parameters["rerank_top"].default, 20)
+
+    def test_pool_lowoverlap_generator_excludes_abstention_and_has_thresholds(self):
+        from emlab.lowoverlap_pool import compute
+        from emlab.retrievers import FakeRetriever
+        from emlab.pool import PoolContext
+        qs = list(FixtureLoader().questions())
+        res = compute(qs, PoolContext(qs), FakeRetriever())
+        self.assertNotIn("ab_002_abs", res["ranks"])
+        self.assertEqual(set(res["thresholds"]), {"100", "50", "20"})
+        self.assertEqual(res["n_with_gold"], 2)

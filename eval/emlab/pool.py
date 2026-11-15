@@ -17,7 +17,7 @@ import dataclasses
 import hashlib
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from .content import content_clusters, session_hashes
+from .content import content_clusters, gold_round_hashes, round_hashes, session_hashes
 from .dataset import SPLIT_SEED, Question
 from .metrics import best_gold_rank, clustered_paired_bootstrap
 
@@ -35,6 +35,8 @@ class PoolContext:
         self.pool = sorted(self.canon.values())                    # deduplicated pool (canonical ids)
         self.gold_hashes = {self.hashes[s] for q in self.qs for s in q.gold_session_ids if s in self.hashes}
         self.clusters = content_clusters(self.qs, self.hashes)     # qid -> content cluster id
+        self.round_h = round_hashes(self.qs)                       # session id -> hashes of its rounds
+        self.gold_round_h = {q.qid: gold_round_hashes(q) for q in self.qs}
         self.hay_hashes = {q.qid: {self.hashes[s] for s in q.haystack_session_ids} for q in self.qs}
         self.cluster_hay: Dict[str, set] = {}
         for q in self.qs:
@@ -73,7 +75,16 @@ class PoolContext:
         else:
             raise ValueError(level)
         own_h = {self.hashes[s] for s in own}
-        return own + [s for s in extra if s not in set(own) and self.hashes[s] not in own_h]
+        own_set = set(own)
+        gr = self.gold_round_h[q.qid]
+        # residual rule (review M1): drop a distractor that shares a ROUND-level content hash with a gold round of this
+        # question, even if the rest of the session differs
+        out = own + [s for s in extra if s not in own_set and self.hashes[s] not in own_h
+                     and not (self.round_h.get(s, set()) & gr)]
+        # assertion: gold matching by content holds; no extra session is a twin of an own session or holds a gold round
+        for s in out[len(own):]:
+            assert self.hashes[s] not in own_h and not (self.round_h.get(s, set()) & gr), "content twin in level"
+        return out
 
 
 def with_sessions(q: Question, session_ids: Sequence[str]) -> Question:

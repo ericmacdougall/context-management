@@ -34,14 +34,17 @@ def main(dataset, art, out):
     n = len(qs)
     table = [{"budget": b, "gold_session_recall": sum(rows[b]["sess"]) / n, "gold_round_recall": sum(rows[b]["rnd"]) / n,
               "mean_tokens_used": sum(rows[b]["tok"]) / n} for b in GRID]
-    pick = None
-    for i, r in enumerate(table[:-1]):
-        if table[i + 1]["gold_session_recall"] - r["gold_session_recall"] < 0.01:
-            pick = r["budget"]
-            break
-    json.dump({"split": "pilot", "level": "H0", "n": n, "rule": "smallest budget whose next grid step adds < 0.01 session recall",
-               "table": table, "proposed_budget": pick}, open(out, "w"), indent=1)
-    print(json.dumps(table), pick)
+    def pick(th):
+        for i, r in enumerate(table[:-1]):
+            if table[i + 1]["gold_session_recall"] - r["gold_session_recall"] < th:
+                return r["budget"]
+        return None
+    json.dump({"split": "pilot", "level": "H0", "n": n,
+               "rule_as_first_proposed": "smallest budget whose next grid step adds < 0.01 session recall",
+               "proposed_budget_0.01": pick(0.01),
+               "rule_pilot_chosen": "same rule with threshold 0.03, chosen on pilot data on 2026-11-15 AFTER the 0.01 rule failed to fire; before any context existed",
+               "proposed_budget_0.03": pick(0.03), "table": table}, open(out, "w"), indent=1)
+    print(json.dumps(table), pick(0.01), pick(0.03))
 
 
 if __name__ == "__main__":

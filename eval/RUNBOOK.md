@@ -21,7 +21,7 @@ Outputs: rounds.jsonl, chunks.jsonl, chunk_vectors.npy (float32, N x 384), queri
 
 ## 3. Pilot-only pre-computation and tuning (before the pre-registration is frozen)
 ```
-cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --action lowoverlap --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/lowoverlap_pilot.json
+cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --action lowoverlap_own_haystack --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/lowoverlap_pilot.json
 cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --action grid --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/grid_pilot.json
 ```
 Do not pass `--split test` or `--split all` until main has recorded the frozen hash of PREREGISTRATION.md on the ticket.

@@ -23,6 +23,7 @@ from .timeparse import in_range, parse_question_range
 
 MODES = ("off", "asof", "expand_filter", "expand_boost")
 BOOST_BETA = 0.5  # default; pilot grid {0.25, 0.5, 1.0}
+RERANK_TOP_N = 20  # the ONE registered rerank head size (dated pilot-stage amendment 2026-11-15; was 50)
 
 _STOP = frozenset("a an and are as at be but by for if in into is it no not of on or such that the their "
                   "then there these they this to was will with".split())
@@ -136,7 +137,7 @@ class FakeRetriever(Retriever):
 
 def run_arm(r: Retriever, q: Question, arm: str, depth: int, mode: str,
             rrf_k: int = 60, dense_weight: float = 0.5, beta: float = BOOST_BETA,
-            rerank_top: int = 50) -> List[str]:
+            rerank_top: int = RERANK_TOP_N) -> List[str]:
     """Round ranking for one arm under one time-aware mode. Boost (expand_boost) is applied to the fused
     list before reranking; rerank reorders only the top `rerank_top`, the tail keeps its fused order."""
     allowed, boost = allowed_sessions(q, mode)

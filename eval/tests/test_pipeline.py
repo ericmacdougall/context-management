@@ -57,16 +57,16 @@ class Fixture(unittest.TestCase):
         self.assertTrue(all(v is None for v in m.values()))
         res = runner.evaluate(self.qs, FakeRetriever(), arms=("bm25",), modes=("off",))
         self.assertEqual(res["summary"]["all"]["bm25|off"]["session_recall@5"]["n"], 2)
-        self.assertIsNone(runner.low_overlap(ab, FakeRetriever(), 200, 2))
+        self.assertIsNone(runner.low_overlap_own_haystack(ab, FakeRetriever(), 200, 2))
 
     def test_low_overlap_uses_gold_round_rank_over_full_haystack(self):
         q = self.qs[2]
-        ranks = runner.low_overlap_ranks(q, FakeRetriever())
+        ranks = runner.low_overlap_own_haystack_ranks(q, FakeRetriever())
         self.assertIsNotNone(ranks["bm25"])  # full ranking, not truncated at a depth
         self.assertIsNotNone(ranks["dense"])
-        self.assertTrue(runner.low_overlap(q, FakeRetriever(), 200, 0))          # every rank > 0
-        self.assertFalse(runner.low_overlap(q, FakeRetriever(), 200, 10 ** 6))   # no rank exceeds the bound
-        self.assertIsNone(runner.low_overlap_ranks(self.qs[1], FakeRetriever()))  # abstention
+        self.assertTrue(runner.low_overlap_own_haystack(q, FakeRetriever(), 200, 0))          # every rank > 0
+        self.assertFalse(runner.low_overlap_own_haystack(q, FakeRetriever(), 200, 10 ** 6))   # no rank exceeds the bound
+        self.assertIsNone(runner.low_overlap_own_haystack_ranks(self.qs[1], FakeRetriever()))  # abstention
 
     def test_diagnostics_asof(self):
         from emlab.diagnostics import asof_report, parser_report

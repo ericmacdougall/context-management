@@ -1,12 +1,11 @@
 """Analyst tool backend (read-only, deterministic, exact retrievers; no approximate index, no LLM).
 
-One JSON request on stdin -> one JSON response on stdout (single-shot), or `--serve` for a persistent process that
-reads one JSON request per line and writes one response per line (for an MCP stdio wrapper run over ssh).
-Scope: a scope file per (level, question) lists the session ids and the dates shown for THIS question; every tool
-refuses ids outside it. Scope and task files contain no gold labels and no answer.
-
-Tools: search(query, k<=20, mode=hybrid|lexical|dense), open_round(round_id), open_session(session_id,
-from_round, to_round), timeline(terms, limit), search_facts(query, k).
+Client mode (default): `analyst_tool --question Q --level L`, one JSON request {"tool","args"} on stdin, one JSON
+response on stdout; a thin stdlib client that talks over a unix socket to a daemon holding the index (`--daemon`;
+stop it with the stop-file `<socket>.stop`). Scope: a scope file per (level, question) lists the session ids and the dates
+shown for THIS question; every tool refuses ids outside it. Every id a model sends or receives is OPAQUE (emlab.anon).
+Tools: search(query, k<=20, [mode=hybrid|lexical|dense]), open_round(round_id), open_session(session_id),
+timeline(term, [limit]) which returns at most `limit` sessions and a boolean `more` and NO counts.
 Budget (registered): at most 12 tool calls and 60 s of tool time per question and level, enforced from the call log.
 """
 from __future__ import annotations
@@ -194,8 +193,9 @@ class Backend:
             first = (texts[0][:80] if texts else "")
             out.append((self.sessions[sid], sid, first))
         out.sort()
+        # no count of matches or of sessions in scope: a total would reveal the pool size and therefore the level
         return {"sessions": [{"session_id": opaque_sid(s), "date": d, "first_words": f} for d, s, f in out[:limit]],
-                "total_matches": len(out)}
+                "more": len(out) > limit}
 
     def search_facts(self, query: str, k: int = 10) -> Dict[str, Any]:
         return {"error": "facts not available"}

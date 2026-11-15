@@ -68,7 +68,7 @@ def build_rag(dataset, art, sets_path, out_root):
             for budget, root in ((4000, os.path.join(out_root, "contexts")), (8000, os.path.join(out_root, "contexts_b8000"))):
                 items = pack_rag(ranked, dates, texts, budget)
                 m = context_metrics(q, items)
-                write_context(root, "rag", lv, q, budget, anonymise(items, own), set(ctx.hashes))
+                write_context(root, "rag", lv, q, budget, anonymise(items, own), set(ctx.hashes), {x.qid for x in all_qs})
                 m.update({"qid": q.qid, "qtype": q.qtype, "arm": "rag", "level": lv, "budget": budget, "abstention": q.is_abstention})
                 rows.append(m)
     json.dump(rows, open(os.path.join(out_root, "rag_context_metrics.json"), "w"), indent=1)
@@ -98,7 +98,7 @@ def build_analyst(dataset, art, sets_path, out_root, in_root, calls_log, arm):
             good = [r for r in good if r.rsplit(":", 1)[0] in dates and r in texts][:20]
             items = pack_rag(good, dates, texts, 4000)
             m = context_metrics(q, items)
-            write_context(os.path.join(out_root, "contexts"), arm, lv, q, 4000, anonymise(items, own), set(ctx.hashes))
+            write_context(os.path.join(out_root, "contexts"), arm, lv, q, 4000, anonymise(items, own), set(ctx.hashes), {x.qid for x in all_qs})
             m.update(row)
             m.update({"rejected_ids": len(ids) - len([i for i in ids if i in ok]), "returned": len(ids),
                       "tool_calls": res.get("tool_calls"), "seconds": res.get("seconds"), "abstention": q.is_abstention})

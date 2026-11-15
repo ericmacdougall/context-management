@@ -14,7 +14,7 @@ from .rerank import RerankingWrapper
 from .retrievers import run_arm
 from .runner import DEPTH, question_metrics
 
-TOP_N = 20
+from .retrievers import RERANK_TOP_N as TOP_N
 
 
 def main(dataset, art, models, sets_path, out, only_low=""):

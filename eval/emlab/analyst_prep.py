@@ -21,17 +21,18 @@ from .live import ExactRetriever
 from .pool import PoolContext, with_sessions
 from .retrievers import run_arm
 
-TOOLS_HELP = ("python -m emlab.analyst_tools --artifacts <A> --scope-dir <out>/analyst_scope --level <L> --qid <Q> "
-              "--log <runlog> < request.json ; request: {\"tool\": \"search|open_round|open_session|timeline|search_facts\", "
-              "\"args\": {...}}")
+TOOLS_HELP = ("~/emlab-16096/bin/analyst_tool --question <Q> --level <L> < request.json ; request: "
+              "{\"tool\": \"search|open_round|open_session|timeline\", \"args\": {...}}")
 CAND_TEXT = 2000  # characters of round text handed to the analyst per candidate (the runner caps further at 1200)
 FORBIDDEN = ("gold", "answer", "has_answer", "stale")
 
 
 def make_task(qid: str, level: str, question: str, qdate: str, cands: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Shape agreed with the runner: {question_id, question, question_date, level, candidates:[{round_id, text,
-    session_id, date}]}. Ids are OPAQUE (emlab.anon); no gold, no answer, no other question."""
-    return {"question_id": qid, "question": question, "question_date": qdate, "level": level, "candidates": cands}
+    """Shape: {_meta:{question_id, level}, question, question_date, candidates:[{round_id, text, session_id, date}]};
+    `_meta` is for the runner only (never passed to a model). Ids are OPAQUE (emlab.anon); no gold, no answer, no other question."""
+    return {"_meta": {"question_id": qid, "level": level,
+                      "note": "_meta is for the runner only and must never be passed to a model"},
+            "question": question, "question_date": qdate, "candidates": cands}
 
 
 def main(dataset, art, sets_path, out_root, n_cand="50", tasks_dir="analyst_tasks"):
@@ -61,7 +62,7 @@ def main(dataset, art, sets_path, out_root, n_cand="50", tasks_dir="analyst_task
                                                  "sessions": dates}),
                              (tasks_dir, make_task(q.qid, lv, q.question, q.question_date.strftime(FMT), cands))):
                 if sub != "analyst_scope":  # the scope file is read only by the tool daemon, never by a model
-                    guard_check(obj, set(ctx.hashes))
+                    guard_check(obj, set(ctx.hashes), {x.qid for x in all_qs})
                 d = os.path.join(out_root, sub, lv)
                 os.makedirs(d, exist_ok=True)
                 json.dump(obj, open(os.path.join(d, q.qid + ".json"), "w"))
