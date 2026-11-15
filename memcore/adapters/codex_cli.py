@@ -21,6 +21,7 @@ import sys
 from typing import List, Optional
 
 from ..chat_base import BackendOut, CachedChatModel, run_child
+from ..devgate import require_dev_subscription
 from ..ports import BackendError, Capabilities, PortError, Usage
 
 POOL = os.path.expanduser("~/.claude/hooks/codex_pool.py")
@@ -40,8 +41,10 @@ def _status() -> dict:
 
 class CodexCliChat(CachedChatModel):
     adapter_id = "codex-cli"
+    subscription_backed = True
 
-    def __init__(self, cwd: str, schema_dir: Optional[str] = None, model: Optional[str] = None, effort: str = "low", **kw):
+    def __init__(self, cwd: str, dev_subscription_backends: bool = False, schema_dir: Optional[str] = None, model: Optional[str] = None, effort: str = "low", **kw):
+        require_dev_subscription(dev_subscription_backends, "CodexCliChat")
         kw["concurrency"] = 1
         super().__init__(model=model or DEFAULT_MODEL, cwd=cwd, **kw)
         self.effort = effort

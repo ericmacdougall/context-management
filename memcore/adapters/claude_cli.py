@@ -15,6 +15,7 @@ import os
 from typing import List, Optional
 
 from ..chat_base import BackendOut, CachedChatModel, run_child
+from ..devgate import require_dev_subscription
 from ..ports import BackendError, Capabilities, Usage
 
 DEFAULT_SYSTEM = "You are a concise, accurate assistant."
@@ -22,8 +23,10 @@ DEFAULT_SYSTEM = "You are a concise, accurate assistant."
 
 class ClaudeCliChat(CachedChatModel):
     adapter_id = "claude-cli"
+    subscription_backed = True
 
-    def __init__(self, cwd: str, model: str = "sonnet", extra_args: Optional[List[str]] = None, claude_bin: str = "claude", **kw):
+    def __init__(self, cwd: str, dev_subscription_backends: bool = False, model: str = "sonnet", extra_args: Optional[List[str]] = None, claude_bin: str = "claude", **kw):
+        require_dev_subscription(dev_subscription_backends, "ClaudeCliChat")
         if os.path.isdir(os.path.join(cwd, ".git")):
             raise ValueError("cwd must be a neutral non-git directory")
         self.extra_args, self.claude_bin = list(extra_args or []), claude_bin

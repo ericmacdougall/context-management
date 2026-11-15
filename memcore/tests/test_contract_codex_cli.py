@@ -11,7 +11,7 @@ class CodexCliContract(ChatModelContract, unittest.TestCase):
     TIMEOUT_S = 1.0       # the pool clamps --max-seconds to >=30 but our own kill fires at 1s
 
     def make_model(self):
-        return CodexCliChat(cwd=os.path.join(OUT, "neutral"), cache_dir=os.path.join(OUT, "cache", "codex-cli"),
+        return CodexCliChat(dev_subscription_backends=True, cwd=os.path.join(OUT, "neutral"), cache_dir=os.path.join(OUT, "cache", "codex-cli"),
                             ledger_path=os.path.join(OUT, "ledger.jsonl"), cap=80, timeout_s=300)
 
 

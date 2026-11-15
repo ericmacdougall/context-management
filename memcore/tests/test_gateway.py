@@ -44,7 +44,7 @@ class MappingTests(unittest.TestCase):
 
     def test_unsupported_rejected(self):
         for bad in ({"messages": [{"role": "tool", "content": "x"}]}, {"messages": [{"role": "user", "content": "x"}], "tools": [{}]},
-                    {"messages": []}, {"messages": [{"role": "user", "content": "x"}], "n": 2}):
+                    {"messages": []}):
             with self.assertRaises(ValueError):
                 to_port_request(bad)
 
@@ -131,8 +131,6 @@ class GatewayLive(unittest.TestCase):
         self.assertEqual(c.exception.code, 400)
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class GatewayCapTest(unittest.TestCase):
@@ -151,3 +149,101 @@ class GatewayCapTest(unittest.TestCase):
             self.assertEqual(b.backend_calls, 1)
         finally:
             gw.shutdown()
+
+
+TOOL_BODY = {"model": "fake-1", "messages": [{"role": "user", "content": "x"}], "n": 3, "user": "u", "reasoning_effort": "low",
+             "tools": [{"type": "function", "function": {"name": "answer", "parameters": SCHEMA}}],
+             "tool_choice": {"type": "function", "function": {"name": "answer"}}}
+
+
+class ElasticFacingTests(unittest.TestCase):
+    """What Elasticsearch's openai service sends and parses (research, ES 9.5 source): see NOTES.md."""
+
+    @classmethod
+    def setUpClass(cls):
+        from memcore.fakes import HashEmbedder
+        d = tempfile.mkdtemp()
+        cls.backend = FakeChat(lambda p, s, j: ({"a": 7} if j else "hello"), cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=50)
+        cls.gw = Gateway({"fake-1": cls.backend}, os.path.join(d, "gw"), embedder=HashEmbedder(8))
+        cls.gw.start()
+        cls.tok = cls.gw.token
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.gw.shutdown()
+
+    def post(self, path, body):
+        req = urllib.request.Request(self.gw.base_url + path, data=json.dumps(body).encode(), headers={"Authorization": "Bearer " + self.tok}, method="POST")
+        return urllib.request.urlopen(req)
+
+    def test_validation_request_shape_nonstream_content_is_string(self):
+        r = json.load(self.post("/chat/completions", {"model": "fake-1", "messages": [{"role": "user", "content": "how big"}], "n": 1, "stream": False}))
+        self.assertIsInstance(r["choices"][0]["message"]["content"], str)
+        self.assertEqual(r["choices"][0]["index"], 0)
+
+    def test_forced_tool_nonstream_content_still_a_string_and_ignores_n_user_reasoning(self):
+        r = json.load(self.post("/chat/completions", TOOL_BODY))
+        m = r["choices"][0]["message"]
+        self.assertEqual(m["content"], "")
+        self.assertEqual(json.loads(m["tool_calls"][0]["function"]["arguments"]), {"a": 7})
+
+    def test_stream_tool_deltas_and_final_usage_all_three_counts(self):
+        raw = self.post("/chat/completions", dict(TOOL_BODY, stream=True, stream_options={"include_usage": True})).read()
+        evs = list(parse_events(raw.splitlines(True)))
+        self.assertEqual(evs[-1], "[DONE]")
+        for e in evs[:-1]:
+            for k in ("id", "object", "model"):
+                self.assertTrue(e.get(k), (k, e))
+            for c in e["choices"]:
+                self.assertIn("index", c)
+                self.assertIn("delta", c)
+        usage = evs[-2]
+        self.assertEqual(usage["choices"], [])
+        self.assertEqual(sorted(k for k in usage["usage"] if k != "prompt_tokens_details"), ["completion_tokens", "prompt_tokens", "total_tokens"])
+        tcs = [c["delta"]["tool_calls"][0] for e in evs[:-2] for c in e["choices"] if c["delta"].get("tool_calls")]
+        self.assertTrue(all("index" in t for t in tcs))
+        self.assertEqual(json.loads("".join(t["function"].get("arguments", "") for t in tcs)), {"a": 7})
+
+    def test_unknown_model_is_404(self):
+        with self.assertRaises(urllib.error.HTTPError) as c:
+            self.post("/chat/completions", {"model": "nope", "messages": [{"role": "user", "content": "x"}]})
+        self.assertEqual(c.exception.code, 404)
+
+    def test_embeddings_base64_float32(self):
+        import base64, struct
+        r = json.load(self.post("/embeddings", {"model": "m", "input": ["a b", "c"], "encoding_format": "base64"}))
+        v = struct.unpack("<8f", base64.b64decode(r["data"][0]["embedding"]))
+        self.assertEqual(len(v), 8)
+        self.assertEqual(len(r["data"]), 2)
+        r2 = json.load(self.post("/embeddings", {"input": "a b"}))
+        self.assertEqual(len(r2["data"][0]["embedding"]), 8)
+
+    def test_input_type_is_not_needed(self):
+        # the Embedder port owns query/passage; the wire body never carries input_type
+        self.assertEqual(len(json.load(self.post("/embeddings", {"input": "x"}))["data"]), 1)
+
+
+class BindRulesTests(unittest.TestCase):
+    def test_bridge_host_rules(self):
+        d = tempfile.mkdtemp()
+        b = FakeChat(lambda p, s, j: "x", cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=5)
+        for bad in ("0.0.0.0", "8.8.8.8", "::"):
+            with self.assertRaises(ValueError):
+                Gateway(b, os.path.join(d, "g"), host=bad, allow_bridge_host=bad)
+        with self.assertRaises(ValueError):
+            Gateway(b, os.path.join(d, "g"), host="172.17.0.1")  # private but not loopback and not named as the bridge host
+
+    def test_subscription_backend_needs_flag_and_loopback(self):
+        from memcore.devgate import DevSubscriptionNotEnabled
+        d = tempfile.mkdtemp()
+        b = FakeChat(lambda p, s, j: "x", cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=5)
+        b.subscription_backed = True
+        with self.assertRaises(DevSubscriptionNotEnabled):
+            Gateway(b, os.path.join(d, "g"))
+        with self.assertRaises(ValueError):
+            Gateway(b, os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1", dev_subscription_backends=True)
+        Gateway(b, os.path.join(d, "g"), dev_subscription_backends=True).srv.server_close()
+
+
+if __name__ == "__main__":
+    unittest.main()

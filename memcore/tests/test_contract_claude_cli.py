@@ -9,7 +9,7 @@ class ClaudeCliContract(ChatModelContract, unittest.TestCase):
     NAME = "claude-cli"
 
     def make_model(self):
-        return ClaudeCliChat(cwd=os.path.join(OUT, "neutral"), model="sonnet", cache_dir=os.path.join(OUT, "cache", "claude-cli"),
+        return ClaudeCliChat(dev_subscription_backends=True, cwd=os.path.join(OUT, "neutral"), model="sonnet", cache_dir=os.path.join(OUT, "cache", "claude-cli"),
                              ledger_path=os.path.join(OUT, "ledger.jsonl"), cap=200, concurrency=3, timeout_s=300)
 
 

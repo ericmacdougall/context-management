@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 from .inbox import InboxItem, render_block
+from .devgate import require_dev_subscription
 from .ports import BackendError, CallTimeout, Usage
 
 
@@ -113,8 +114,9 @@ class ClaudeStreamJsonSession(AgentSession):
     --tools "" (plus an explicit --allowedTools only for the MCP servers passed in), --strict-mcp-config, no session
     persistence; hooks and setting sources are left untouched."""
 
-    def __init__(self, cwd: str, system: str, tools: Sequence[McpServerSpec] = (), model: str = "sonnet", mcp_config_dir: Optional[str] = None,
+    def __init__(self, cwd: str, system: str, dev_subscription_backends: bool = False, tools: Sequence[McpServerSpec] = (), model: str = "sonnet", mcp_config_dir: Optional[str] = None,
                  turn_timeout_s: float = 300.0, claude_bin: str = "claude"):
+        require_dev_subscription(dev_subscription_backends, "ClaudeStreamJsonSession")
         if os.path.isdir(os.path.join(cwd, ".git")):
             raise ValueError("cwd must be a neutral non-git directory")
         cmd = [claude_bin, "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--model", model,

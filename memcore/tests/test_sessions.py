@@ -40,7 +40,7 @@ class FakeSessionTests(unittest.TestCase):
 
 class AcpClientTests(unittest.TestCase):
     def test_roundtrip_against_fake_agent(self):
-        s = AcpSession([sys.executable, FAKE], os.getcwd(), turn_timeout_s=20)
+        s = AcpSession([sys.executable, FAKE], os.getcwd(), dev_subscription_backends=True, turn_timeout_s=20)
         try:
             self.assertEqual(s.session_id, "S1")
             s.deliver([it("f9")])
@@ -55,3 +55,16 @@ class AcpClientTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DevGateTests(unittest.TestCase):
+    def test_subscription_adapters_refuse_without_flag(self):
+        from memcore.adapters.claude_cli import ClaudeCliChat
+        from memcore.devgate import DevSubscriptionNotEnabled
+        from memcore.agent_session import ClaudeStreamJsonSession
+        for mk in (lambda: ClaudeCliChat(cwd="/tmp", cache_dir="/tmp/x", ledger_path="/dev/null", cap=1),
+                   lambda: ClaudeCliChat(cwd="/tmp", dev_subscription_backends="yes", cache_dir="/tmp/x", ledger_path="/dev/null", cap=1),
+                   lambda: ClaudeStreamJsonSession("/tmp", "s"),
+                   lambda: AcpSession([sys.executable, FAKE], os.getcwd())):
+            with self.assertRaises(DevSubscriptionNotEnabled):
+                mk()

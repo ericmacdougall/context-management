@@ -18,6 +18,7 @@ import time
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 from .agent_session import AgentSession, McpServerSpec, SessionEvent, TurnResult
+from .devgate import require_dev_subscription
 from .ports import BackendError, CallTimeout, Usage
 
 
@@ -84,8 +85,9 @@ class AcpClient:
 
 
 class AcpSession(AgentSession):
-    def __init__(self, cmd: List[str], cwd: str, tools: Sequence[McpServerSpec] = (), turn_timeout_s: float = 300.0, env: Optional[dict] = None,
+    def __init__(self, cmd: List[str], cwd: str, tools: Sequence[McpServerSpec] = (), dev_subscription_backends: bool = False, turn_timeout_s: float = 300.0, env: Optional[dict] = None,
                  model: Optional[str] = "sonnet", mode: Optional[str] = "default"):
+        require_dev_subscription(dev_subscription_backends, "AcpSession")
         self.cli, self.turn_timeout_s, self.turns = AcpClient(cmd, cwd, env), turn_timeout_s, 0
         init = self.cli.request("initialize", {"protocolVersion": 1, "clientCapabilities": {}, "clientInfo": {"name": "memcore", "version": "0.1"}}, 60)
         self.agent_caps = (init or {}).get("agentCapabilities", {})

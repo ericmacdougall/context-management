@@ -38,7 +38,10 @@ def require_loopback(host: str) -> None:
 
 
 def to_port_request(body: dict) -> dict:
-    """OpenAI chat request -> ChatModel.complete kwargs. Raises ValueError for what we do not support."""
+    """OpenAI chat request -> ChatModel.complete kwargs (+ "_tool": name of a forced function, if any).
+    Accepts and ignores n, user, reasoning_effort, stream_options details, max_completion_tokens (mapped).
+    Structured output over the Elastic route = ONE forced function tool (tool_choice naming it): its parameters become the
+    json_schema. Anything else about tools is refused."""
     msgs, system = [], []
     for m in body.get("messages") or []:
         role, content = m.get("role"), m.get("content")
@@ -46,6 +49,8 @@ def to_port_request(body: dict) -> dict:
             if any(p.get("type") != "text" for p in content):
                 raise ValueError("only text content parts are supported")
             content = "".join(p.get("text", "") for p in content)
+        if content is None and role == "assistant":
+            content = ""
         if not isinstance(content, str):
             raise ValueError("message content must be a string")
         if role in ("system", "developer"):
@@ -53,43 +58,59 @@ def to_port_request(body: dict) -> dict:
         elif role in ("user", "assistant"):
             msgs.append({"role": role, "content": content})
         else:
-            raise ValueError("unsupported message role %r (tools are not supported)" % (role,))
+            raise ValueError("unsupported message role %r" % (role,))
     if not msgs:
         raise ValueError("no user message")
-    if body.get("tools") or body.get("functions"):
-        raise ValueError("tools are not supported by this gateway yet")
-    if (body.get("n") or 1) != 1:
-        raise ValueError("n must be 1")
-    schema = None
+    schema, tool = None, None
+    tools = body.get("tools") or []
+    if tools:
+        fn = (tools[0] or {}).get("function") or {}
+        tc = body.get("tool_choice")
+        forced = isinstance(tc, dict) and (tc.get("function") or {}).get("name") == fn.get("name")
+        if len(tools) != 1 or not forced or not isinstance(fn.get("parameters"), dict):
+            raise ValueError("only a single forced function tool (tool_choice naming it) is supported")
+        schema, tool = fn["parameters"], fn["name"]
     rf = body.get("response_format") or {}
-    if rf.get("type") == "json_schema":
+    if schema is None and rf.get("type") == "json_schema":
         schema = (rf.get("json_schema") or {}).get("schema")
         if not isinstance(schema, dict):
             raise ValueError("response_format.json_schema.schema missing")
-    elif rf.get("type") == "json_object":
+    elif schema is None and rf.get("type") == "json_object":
         schema = {"type": "object"}
     return {"messages": msgs, "system": "\n\n".join(system) if system else None, "json_schema": schema,
             "max_output_tokens": body.get("max_tokens") or body.get("max_completion_tokens"),
-            "temperature": body.get("temperature")}
+            "temperature": body.get("temperature"), "_tool": tool}
 
 
-def make_handler(backend: ChatModel, token: str):
+def _b64_floats(vec) -> str:
+    import base64
+    import struct
+    return base64.b64encode(struct.pack("<%df" % len(vec), *vec)).decode()
+
+
+def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None):
+    if not isinstance(backends, dict):
+        backends = {backends.model: backends}
+    default_model = default_model or next(iter(backends))
+
     class H(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
         def log_message(self, fmt, *a):  # no request logging: bodies are private
             pass
 
-        def _send(self, code, obj, extra=None):
+        def _send(self, code, obj, headers=None):
             raw = json.dumps(obj).encode()
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(raw)))
+            for k, v in (headers or {}).items():
+                self.send_header(k, v)
             self.end_headers()
             self.wfile.write(raw)
 
-        def _err(self, code, msg, ecode=None):
-            self._send(code, {"error": {"message": msg, "type": "invalid_request_error" if code < 500 else "server_error", "code": ecode}})
+        def _err(self, code, msg, ecode=None, headers=None):
+            self._send(code, {"error": {"message": msg, "type": "invalid_request_error" if code < 500 else "server_error", "code": ecode}}, headers)
 
         def _auth(self) -> bool:
             got = self.headers.get("Authorization", "")
@@ -102,64 +123,121 @@ def make_handler(backend: ChatModel, token: str):
             if not self._auth():
                 return
             if self.path.rstrip("/") == "/v1/models":
-                self._send(200, {"object": "list", "data": [{"id": backend.model, "object": "model", "created": 0, "owned_by": "memcore-gateway"}]})
+                self._send(200, {"object": "list", "data": [{"id": m, "object": "model", "created": 0, "owned_by": "memcore-gateway"} for m in backends]})
             else:
                 self._err(404, "not found")
+
+        def _body(self):
+            n = int(self.headers.get("Content-Length") or 0)
+            if n <= 0 or n > MAX_BODY:
+                self._err(413 if n > MAX_BODY else 400, "bad body length")
+                return None
+            try:
+                return json.loads(self.rfile.read(n))
+            except ValueError as e:
+                self._err(400, str(e))
+                return None
 
         def do_POST(self):
             if not self._auth():
                 return
-            if self.path.rstrip("/") != "/v1/chat/completions":
+            path = self.path.rstrip("/")
+            if path == "/v1/embeddings":
+                return self._embeddings()
+            if path != "/v1/chat/completions":
                 return self._err(404, "not found")
-            n = int(self.headers.get("Content-Length") or 0)
-            if n <= 0 or n > MAX_BODY:
-                return self._err(413 if n > MAX_BODY else 400, "bad body length")
+            body = self._body()
+            if body is None:
+                return
             try:
-                body = json.loads(self.rfile.read(n))
                 kw = to_port_request(body)
             except (ValueError, AttributeError) as e:
                 return self._err(400, str(e))
+            tool = kw.pop("_tool")
+            model = body.get("model") or default_model
+            backend = backends.get(model)
+            if backend is None:
+                return self._err(404, "model %r not served here; have %s" % (model, sorted(backends)), "model_not_found")
             try:
                 res = backend.complete(**kw)
             except InputTooLong as e:
                 return self._err(400, str(e), "context_length_exceeded")
             except CallCapExceeded as e:
-                return self._err(429, str(e), "call_cap_exceeded")
+                return self._err(429, str(e), "call_cap_exceeded", {"Retry-After": "3600"})  # fast: never queue past the caller's timeout
             except CallTimeout as e:
                 return self._err(504, str(e))
             except SchemaError as e:
                 return self._err(502, str(e), "schema_validation_failed")
             except (BackendError, PortError) as e:
                 return self._err(502, str(e))
+            u = res.usage
             usage = None
-            if res.usage is not None:
-                usage = {"prompt_tokens": res.usage.input_tokens, "completion_tokens": res.usage.output_tokens,
-                         "total_tokens": (res.usage.input_tokens or 0) + (res.usage.output_tokens or 0),
-                         "prompt_tokens_details": {"cached_tokens": res.usage.cached_input_tokens}}
+            if u is not None:
+                usage = {"prompt_tokens": u.input_tokens or 0, "completion_tokens": u.output_tokens or 0,
+                         "total_tokens": (u.input_tokens or 0) + (u.output_tokens or 0),
+                         "prompt_tokens_details": {"cached_tokens": u.cached_input_tokens or 0}}
+            want_usage = (body.get("stream_options") or {}).get("include_usage")
+            if usage is None and body.get("stream") and want_usage:
+                usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}  # wire format requires all three; the backend reported none
             cid, created = "chatcmpl-" + res.request_hash[:24], int(time.time())
+            call = {"id": "call_" + res.request_hash[:16], "name": tool, "arguments": res.text if res.parsed is None else json.dumps(res.parsed)} if tool else None
             if body.get("stream"):
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream")
                 self.send_header("Cache-Control", "no-cache")
                 self.send_header("Connection", "close")
                 self.end_headers()
-                for chunk in chat_chunks(cid, backend.model, created, res.text, usage if (body.get("stream_options") or {}).get("include_usage") else None):
+                for chunk in chat_chunks(cid, model, created, res.text, usage if want_usage else None, tool_call=call):
                     self.wfile.write(chunk)
                     self.wfile.flush()
                 self.close_connection = True
             else:
-                self._send(200, {"id": cid, "object": "chat.completion", "created": created, "model": backend.model,
-                                 "choices": [{"index": 0, "message": {"role": "assistant", "content": res.text}, "finish_reason": "stop"}],
+                msg = {"role": "assistant", "content": "" if call else res.text}
+                if call:
+                    msg["tool_calls"] = [{"id": call["id"], "type": "function", "function": {"name": tool, "arguments": call["arguments"]}}]
+                self._send(200, {"id": cid, "object": "chat.completion", "created": created, "model": model,
+                                 "choices": [{"index": 0, "message": msg, "finish_reason": "tool_calls" if call else "stop"}],
                                  **({"usage": usage} if usage else {}), "x_memcore": {"cached": res.cached, "request_hash": res.request_hash}})
+
+        def _embeddings(self):
+            if embedder is None:
+                return self._err(404, "no embedder configured")
+            body = self._body()
+            if body is None:
+                return
+            inp = body.get("input")
+            texts = [inp] if isinstance(inp, str) else inp
+            if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
+                return self._err(400, "input must be a string or a list of strings")
+            # NOTE: the openai service never sends input_type; the port's kind is fixed by the gateway config (default passage).
+            r = embedder.embed(texts, kind=getattr(embedder, "gateway_kind", "passage"))
+            fmt = body.get("encoding_format", "float")
+            data = [{"object": "embedding", "index": i, "embedding": _b64_floats(v) if fmt == "base64" else v} for i, v in enumerate(r.vectors)]
+            n = sum(len(t.split()) for t in texts)
+            self._send(200, {"object": "list", "data": data, "model": body.get("model") or r.model, "usage": {"prompt_tokens": n, "total_tokens": n}})
     return H
 
 
 class Gateway:
-    def __init__(self, backend: ChatModel, out_dir: str, host: str = "127.0.0.1", port: int = 0):
-        require_loopback(host)
+    def __init__(self, backend, out_dir: str, host: str = "127.0.0.1", port: int = 0, embedder=None,
+                 dev_subscription_backends: bool = False, allow_bridge_host: Optional[str] = None):
+        """backend: a ChatModel or {model_id: ChatModel}. allow_bridge_host: one explicitly named private address (e.g. the Docker
+        bridge gateway) a containerised client must reach; never 0.0.0.0, and the bearer token still applies."""
+        backs = backend if isinstance(backend, dict) else {backend.model: backend}
+        if any(getattr(b, "subscription_backed", False) for b in backs.values()):
+            from .devgate import require_dev_subscription
+            require_dev_subscription(dev_subscription_backends, "Gateway over a subscription backend")
+            if allow_bridge_host:
+                raise ValueError("a subscription-backed gateway binds loopback only")
+        if allow_bridge_host and host == allow_bridge_host:
+            ipaddress.ip_address(host)
+            if host in ("0.0.0.0", "::") or not ipaddress.ip_address(host).is_private:
+                raise ValueError("bridge host must be a specific private address")
+        else:
+            require_loopback(host)
         os.makedirs(out_dir, exist_ok=True)
         self.out_dir, self.token = out_dir, secrets.token_urlsafe(32)
-        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token))
+        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token, embedder))
         self.srv.daemon_threads = True
         self.host, self.port = self.srv.server_address[:2]
         self._write("gateway.token", self.token, 0o600)
@@ -208,16 +286,17 @@ def main(argv=None):
     ap.add_argument("--cap", type=int, default=200)
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=0)
+    ap.add_argument("--dev-subscription-backends", action="store_true", help="REQUIRED: acknowledge development-only subscription use")
     a = ap.parse_args(argv)
     require_loopback(a.host)
     cache, ledger = os.path.join(a.out, "cache", a.backend), os.path.join(a.out, "ledger.jsonl")
     if a.backend == "claude-cli":
         from .adapters.claude_cli import ClaudeCliChat
-        backend = ClaudeCliChat(cwd=os.path.join(a.out, "neutral"), model=a.model or "sonnet", cache_dir=cache, ledger_path=ledger, cap=a.cap)
+        backend = ClaudeCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=os.path.join(a.out, "neutral"), model=a.model or "sonnet", cache_dir=cache, ledger_path=ledger, cap=a.cap)
     else:
         from .adapters.codex_cli import CodexCliChat
-        backend = CodexCliChat(cwd=os.path.join(a.out, "neutral"), model=a.model, cache_dir=cache, ledger_path=ledger, cap=a.cap)
-    gw = Gateway(backend, a.out, a.host, a.port)
+        backend = CodexCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=os.path.join(a.out, "neutral"), model=a.model, cache_dir=cache, ledger_path=ledger, cap=a.cap)
+    gw = Gateway(backend, a.out, a.host, a.port, dev_subscription_backends=a.dev_subscription_backends)
     print(BANNER % (gw.host, gw.port), file=sys.stderr)
     print("base_url=%s token_file=%s stop_file=%s" % (gw.base_url, os.path.join(a.out, "gateway.token"), gw.stop_file), file=sys.stderr)
     gw.start()
