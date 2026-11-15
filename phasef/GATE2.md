@@ -17,8 +17,9 @@ nothing hidden. Reader prompt reader-v1.2 unchanged. Question expansion as in v3
 
 ## Operational definitions (fixed now)
 - Gold-value fact B: as in GATE.md (the fact in the gold sessions whose object plus quote covers at least 50% of the answer content tokens; ties to the later session).
-- Gold update pair: (A, B) where B is the gold-value fact and A is the fact in an OLDER gold session with the highest idf-weighted overlap (slot, predicate and cue-key tokens) with B,
-  among asserted or decided facts. If B or A does not exist the pair counts as missing (fails G2 and G5).
+- Gold update pair (amended before any dev2 call, because the answer-based definition fails for questions that ask about the earlier value): (A, B) = the pair of facts, A from an OLDER gold session
+  and B from the LATEST gold session (by session date), both single-cardinality with modality asserted, decided or proposed, with the highest candidate similarity sim(A, B) (the idf-weighted
+  token similarity in links.py). Missing if either gold session has no such fact. This is not independent of candidate generation, so candidate recall on it is a weak check; G5 tests the link judge on it.
 - G3 exception as in GATE.md: for questions asking about an earlier value (initially, originally, previously, used to, before, first) superseded also counts if shown.
 
 ## Criteria (all must hold)
