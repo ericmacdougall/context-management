@@ -129,3 +129,22 @@ Shape: tier 0 search (ms) -> tier 1 rerank -> tier 2 relevance analysts: long-li
 | H5 | Routing by requirement graph: an analyst finding is routed to the sessions whose current task items it serves, and re-routed when the task is amended | EXP (builds on F1) | todo |
 | H6 | Safety: analysts read untrusted transcripts and then write into other agents' context. Findings are ids plus quotes with trust origin, never instructions; a planted instruction in a transcript must not be relayed as one | EXP attack set | todo |
 | H7 | Budget control: per-turn and per-day analyst spend caps, and a rule for when the cascade is skipped (search already confident) | EXP + measured thresholds | todo |
+
+## I. Currency: is the context true to the latest state of the discussion
+
+Requirement: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a (message beginning "heres important things to think of tho: what about when requests get superseeded in plain text with decisions and discussions ... what 'proves' that the right information is updated and context is appropriate and accurate to the latest version of the discussion").
+
+State of evidence when this section was added: nothing proves it. Structured amendments work as plumbing (F1-F3, owner-run). Supersession stated in prose is detected with high precision but low recall (held-out: 16 of 16 links correct, 10 of 16 real updates linked, 9 of 25 links unstable across batchings). Plain search at pool scale puts only the stale value in context for 47 percent of update questions and the current value for 33 percent (pilot, n=15). A reader shown both dated statements picks the current one (16 of 16, small set).
+
+Position: currency cannot rest on a detector being right. It is a property to be checked at three points: when state changes (recorded, attributable, confirmable), when context is built (freshness proven against the log tail, staleness visible), and after the fact (what version was acted on; independent audits).
+
+| ID | Question | Exit | Status |
+|---|---|---|---|
+| I1 | Benchmark of plain-text supersession with gold "state after every turn": explicit reversal, implicit change, partial scope, conditional, proposal versus decision, decision reverted, change by someone without authority, change buried in a long message, offhand contradiction, restatement that is not a change, multi-party disagreement left unresolved | design reviewed adversarially, then built | todo |
+| I2 | State accuracy after each turn; stale-as-current injection rate; detection latency in turns; false-change rate; unresolved items reported as unresolved, on I1 and on the benchmark's update questions | EVAL | todo |
+| I3 | Freshness check at injection: every item presented as current carries its source event and a checked-through watermark, and a bounded scan of everything after that watermark for statements touching the item (lexical, vector, then analyst) either finds nothing or surfaces the challenger alongside; measured miss rate of the scan | EXP + EVAL | todo |
+| I4 | Decisions are recorded, not inferred silently: a detected prose change becomes a pending update with its quotes; it becomes current only by an explicit decision event (user confirmation or a read-back that the user accepts); discussions and assistant suggestions never change state on their own | EXP (plumbing, builds on F1 and trust gating) | todo |
+| I5 | Acted-on version: every step and every injected block records the definition version and watermark it used, so work done on a superseded version is found mechanically when a later version appears | EXP (plumbing) | todo |
+| I6 | Independent audit in operation: an auditor re-derives the current state of sampled items from the raw transcript without seeing the system's state; disagreement rate is a live metric with an alarm | EVAL of the auditor against gold, then EXP | todo |
+| I7 | Real-session test: replay a real long working session whose decisions were logged with sources at the time (this lab's own session has such a ledger: asks, answers, requirements, reversals) and score "what is the current decision on X" at many points against that ledger | USER (private data; needs the user's OK) then EVAL | open |
+| I8 | Read-back cost: how often the system must ask for confirmation, and whether a confirmation prompt is itself a burden or a source of error | EVAL | todo |
