@@ -61,9 +61,9 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | Id | Idea | Verdict | Status |
 |---|---|---|---|
 | X04 | Every memory write cites session, round and a verbatim quote; a host check verifies quote and speaker mechanically | test now, no model calls | running (phasef owner). Rough pass by a reviewer: 2,301 of 2,373 quotes found in the cited round; 8 speaker mismatches, 58 ambiguous |
-| X02 | Two-stage retrieval: pick sessions first, then rounds within them | test now on pilot, only if the stage-1 ceiling is at least 0.58 | queued (eval owner), exploratory |
-| X05 | Skip injection and analysts when retrieval confidence is high; abstain when nothing clears a calibrated score | test now on pilot, permutation null | queued (eval owner), exploratory |
-| X01 | Pooled token-budget curve | by-product of X02; no claim about context rot | queued |
+| X02 | Two-stage retrieval: pick sessions first, then rounds within them | **DID NOT HOLD** (exploratory, pilot, exact in-process retriever, thresholds committed first at 4e14548) | Whole pool, 94 questions: S=20 0.462 vs flat 0.481 (diff -0.019, CI -0.074 to 0.040); S=50 0.481 (diff 0.000). Shuffled-text control 0.000 as required. Planted-gold control 0.504 against a 0.90 bar: missed, so the pipeline's ability to find gold among hard neighbours is itself unconfirmed. Session length predicts gold (AUROC 0.687 vs null 0.448 to 0.547): a length shortcut exists in this benchmark |
+| X05 | Skip injection and analysts when retrieval confidence is high; abstain when nothing clears a calibrated score | **HELD at mid pool sizes, NOT at whole pool** (exploratory, pilot, rule committed at a594d3f) | AUROC vs 97.5th percentile of permutation null: +500 distractors 0.831 vs 0.718 yes; +3,900 0.727 vs 0.664 yes; whole pool 0.572 vs 0.631 no; no-distractor level unresolvable (3 negatives). No single cosine threshold transfers across pool sizes. Abstention questions not separable |
+| X01 | Pooled token-budget curve | descriptive only | Any gold session present in a packed context at 4,000 / 8,000 / 32,000 tokens: +500 distractors 0.86 / 0.90 / 0.97; +3,900 0.73 / 0.79 / 0.90; whole pool 0.53 / 0.62 / 0.79. All gold sessions at 4,000: 0.65 / 0.45 / 0.33 |
 | X24 | Injection and trimming at the model port must keep tool-call and tool-result pairing valid | rule; test when the port fix lands | queued |
 | X23 | A memory append must never fail silently | rule; fault-injection test on the rebuilt write path | queued |
 | X20 | Re-evaluate policy at delivery, not only at enqueue | rule; add to the kill and inbox tests | queued |
@@ -79,5 +79,5 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 
 - "Full-history reader equals the oracle reader" is an n=10 micro-pilot (9 of 10). It shows no headroom on that sample; it is not evidence about long-context reading in general.
 - "Batched extraction loses facts" counts facts, not recall against human gold; the per-call baseline was never validated by a person. Class: owner-reported count, cause unproven.
-- Whole-pool session recall appears as 0.46 in OPEN-QUESTIONS and 0.48 here. Unresolved; the eval owner has been asked for the source file.
+- Whole-pool session recall: the right figure is 0.4754 (RRF session recall@10, pilot, n 94, eval/results/pilot/curve_pilot.json). 0.46 was the superseded old-sets value and is dropped.
 - Thresholds chosen after seeing pilot data (4,000-token budget, rerank top-20, low-overlap cut) weaken anything built on them; new thresholds must be committed before the run.
