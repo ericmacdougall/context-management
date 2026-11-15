@@ -1,0 +1,38 @@
+{
+ "workload": "200 runs per race and mode, random delays 0-100 ms on both sides; PG16 + ES 9.5.6 on t2-dev",
+ "results": {
+  "race1_step_started_amend_completed": {
+   "runs": 200,
+   "torn": 0,
+   "amend_before_start": 91,
+   "amend_during": 75,
+   "amend_after_completion": 34,
+   "errors": 0
+  },
+  "race2_fold_fence_on": {
+   "runs": 200,
+   "runs_with_stale_commit": 0,
+   "rejected_stale_commits": 89,
+   "runs_converged_after_refold": 200
+  },
+  "race2_fold_fence_off": {
+   "runs": 200,
+   "runs_with_stale_commit": 77,
+   "rejected_stale_commits": 0,
+   "runs_converged_after_refold": 200
+  },
+  "race3_projection_fence_on": {
+   "runs": 200,
+   "stale_in_es": 0
+  },
+  "race3_projection_fence_off": {
+   "runs": 200,
+   "stale_in_es": 61
+  }
+ },
+ "pass": true,
+ "controls_sensitive": {
+  "fold": true,
+  "projection": true
+ }
+}

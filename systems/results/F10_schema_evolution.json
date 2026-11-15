@@ -1,0 +1,84 @@
+{
+ "workload": "16 writer processes appending 1 event/txn to ONE session at the C7 rate while the migration runs; 200 pre-existing task sessions (57831 events); PG16 4cpu/4g on t2-dev",
+ "pre_events": 57831,
+ "migration_wall_s": 5.3,
+ "steps": [
+  {
+   "step": "add nullable column",
+   "attempts": 1,
+   "wall_s": 0.003,
+   "last_statement_s": 0.002
+  },
+  {
+   "step": "replace trigger: fill-once exception for the derived column",
+   "attempts": 1,
+   "wall_s": 0.003,
+   "last_statement_s": 0.002
+  },
+  {
+   "step": "batched backfill",
+   "batches": 13,
+   "rows": 60231,
+   "total_s": 4.22,
+   "max_batch_s": 0.543
+  },
+  {
+   "step": "add constraint NOT VALID",
+   "attempts": 1,
+   "wall_s": 0.004,
+   "last_statement_s": 0.004
+  },
+  {
+   "step": "validate constraint",
+   "s": 0.019
+  }
+ ],
+ "writers": {
+  "appends_ok": 6400,
+  "failed_appends": 0,
+  "errors": [],
+  "per_phase": {
+   "0": 2400,
+   "1": 1600,
+   "3": 2400
+  },
+  "shapes_written": {
+   "v1": 4000,
+   "v2": 2400
+  },
+  "session_row_lock_wait_s": {
+   "p50": 0.0348,
+   "p99": 0.2143,
+   "p100": 0.4795
+  },
+  "append_latency_s": {
+   "p50": 0.0375,
+   "p99": 0.2207,
+   "p100": 0.487
+  }
+ },
+ "verify": {
+  "hot_rows": 6400,
+  "hot_gapless": true,
+  "hot_unique_payloads": 6400,
+  "hot_lost_or_dup": 0,
+  "null_payload_version_rows": 0,
+  "rows_by_payload_version": {
+   "1": 61831,
+   "2": 2400
+  },
+  "chain_breaks": [],
+  "pre_sessions_state_identical": true,
+  "pre_sessions_hash_fingerprint_unchanged": true,
+  "all_hot_events_upcast_to_current_shape": true,
+  "append_only_still_enforced_for_other_updates": [
+   true,
+   true,
+   true,
+   true
+  ]
+ },
+ "longest_writer_lock_wait_s": 0.4795,
+ "longest_ddl_wall_s": 0.004,
+ "pass": true
+}

@@ -1,0 +1,58 @@
+{
+ "workload": "2000 generated scenarios, seed 16096: 5-30 items, 10-200 steps, 1-5 amendments (narrow/widen/change acceptance/add constraint/remove/revert/same item twice) plus invalid ops and low-trust amendment attempts; 30% have an amendment immediately reverted",
+ "f1": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 582393,
+   "steps": 208201,
+   "effective_versions": 7751,
+   "reverts": 1130,
+   "low_trust_attempts": 2415,
+   "obsolete_steps": 1248,
+   "needs_recheck_steps": 19465,
+   "still_valid_steps": 161022,
+   "immediate_reverts_checked": 600,
+   "redo_steps": 19465,
+   "f2_superseded_texts_checked": 1641
+  },
+  "ranges_seen": {
+   "items": [
+    5,
+    30
+   ],
+   "steps": [
+    10,
+    200
+   ],
+   "versions": [
+    1,
+    11
+   ]
+  },
+  "failures": {},
+  "pg_roundtrips": 300,
+  "elapsed_s": 61.2
+ },
+ "f1_f2_pass": true,
+ "f2_crash": {
+  "runs": 100,
+  "mismatch": 0,
+  "lagging_before_recovery": 67,
+  "by_point": {
+   "after_append": {
+    "runs": 34,
+    "mismatch": 0
+   },
+   "mid_update": {
+    "runs": 33,
+    "mismatch": 0
+   },
+   "after_update": {
+    "runs": 33,
+    "mismatch": 0
+   }
+  }
+ },
+ "f2_crash_pass": true,
+ "pass": true
+}
