@@ -1,0 +1,11 @@
+# X04 result (thresholds in PROVENANCE_CHECK.md, committed before the run; checker phasef/provenance.py)
+
+Rounds: rebuilt with the eval grouping rule; 8 of 8 sampled cited round ids are byte-identical to ~/emlab-16096/out/emb/rounds.jsonl on t2-dev (provenance_xcheck.py).
+Facts: 2,373 from 623 sessions.
+- (a) quote verbatim (whitespace and case normalised only) in the cited round: 2,351 of 2,373 = 99.1%, Wilson [98.6%, 99.4%] (per fact); session-clustered bootstrap [98.7%, 99.4%]; sessions with every quote passing 601 of 623 (96.5%, Wilson [94.7%, 97.7%]). The rough pass reported 2,301 (97.0%); that used the pair index, the rebuilt round mapping gives 50 more passes, so the rough figure understated.
+- (b) author vs speaker: pass 2,290, mismatch 8, ambiguous 53 (quote in turns of both roles), undefined 22 (the 22 (a) failures). Reproduces the 8 mismatches (7 facts marked user quoting assistant-only text, 1 marked assistant quoting user-only text); the ambiguous count is 53 against the reviewer's 58.
+- Controls: one word changed 2,341 of 2,341 rejected; quote cited against the adjacent round 2,208 of 2,208 rejected (62 further facts excluded because the quote also occurs verbatim in the adjacent round); author flipped 2,290 of 2,290 rejected.
+- All 22 (a) failures classified (the seeded random 30 covers all 22): wrong round (quote found in another round of the same session) 9; paraphrase or formatting (every quote token occurs in the cited round but not contiguously or with different punctuation, which whitespace and case normalisation cannot absorb) 10; truncated or ellipsis (quote stitched from separate fragments with "...") 3; wrong session 0.
+- The 8 mismatches are real attribution errors on inspection: assistant-said text (a suggestion, a file name, a summary line) promoted to author=user, and a user-stated launch claim attributed to the assistant.
+
+Threshold verdict: (a) 99.1% >= 95%, controls all rejected, failures are real quote-not-in-place defects (9 wrong round, 3 stitched) or normalisation artefacts (10); so the check is useful as a write gate. The "paraphrase" bucket shows the strict rule rejects punctuation-only differences; a gate should tolerate punctuation or route those to a fuzzy tier rather than count them as fabrication.

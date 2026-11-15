@@ -18,6 +18,18 @@ def sh(cmd):
     return subprocess.run(SSH + [cmd], capture_output=True, check=True).stdout
 
 
+def fetch_all():
+    """Task files for the rest and secondary phases: H1, H2, H3 for the 94 questions and the top-20 H3 files of the 23 low-overlap questions (tar over one ssh per directory; no tool probes)."""
+    q94 = json.load(open(os.path.join(W, "q94.json")))
+    low = json.load(open(os.path.join(W, "low23.json")))
+    jobs = [("analyst_tasks", lv, q94, os.path.join(W, "tasks", lv)) for lv in ("H1", "H2", "H3")] + [("analyst_tasks_top20", "H3", low, os.path.join(W, "tasks_top20", "H3"))]
+    for root, lv, qs, dest in jobs:
+        os.makedirs(dest, exist_ok=True)
+        names = " ".join("%s.json" % q for q in qs)
+        tarfile.open(fileobj=io.BytesIO(sh("cd %s/%s/%s && tar -cf - %s" % (REMOTE, root, lv, names)))).extractall(dest)
+        print(root, lv, len(os.listdir(dest)))
+
+
 def main():
     os.makedirs(os.path.join(W, "tasks", "H3"), exist_ok=True)
     raw = sh("cat %s/lowoverlap_pool_h3.json" % REMOTE)
@@ -36,4 +48,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    fetch_all() if sys.argv[1:] == ["all"] else main()

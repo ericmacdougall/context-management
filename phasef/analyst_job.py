@@ -32,13 +32,21 @@ def plan(phase, questions, lowoverlap, levels, canary_level, secondary_level, se
     raise ValueError(phase)
 
 
+def task_source(a, level):
+    """Result level -> (tasks dir, tool level). The top-20 variant has result level H3_top20 but uses the H3 tool level."""
+    if level.endswith("_top20"):
+        return os.path.join(a.top20_dir, level[:-len("_top20")]), level[:-len("_top20")]
+    return os.path.join(a.tasks_dir, level), level
+
+
 def process(item, a, runner=None):
     arm, level, qid = item
-    task = json.load(open(os.path.join(a.tasks_dir, level, qid + ".json")))
+    tdir, tool_level = task_source(a, level)
+    task = json.load(open(os.path.join(tdir, qid + ".json")))
     cache = os.path.join(a.work, "cache")
     ledger = os.path.join(a.work, "ledger.jsonl")
     if arm == "ANALYST":
-        rec = run_analyst(task, os.path.join(a.work, "run"), ["--backend", a.backend.format(qid=qid, level=level)], cache, ledger, CAP, R.NEUTRAL_CWD, forbidden=a.forbidden, runner=runner)
+        rec = run_analyst(task, os.path.join(a.work, "run"), ["--backend", a.backend.format(qid=qid, level=tool_level)], cache, ledger, CAP, R.NEUTRAL_CWD, forbidden=a.forbidden, runner=runner)
     else:
         m = make_llm(cache, ledger, CAP, R.NEUTRAL_CWD, forbidden=a.forbidden, runner=runner)
         rec = run_rerank(task, m, a.forbidden)
@@ -112,6 +120,7 @@ def parse(argv=None):
     ap.add_argument("--canary-level", required=True)
     ap.add_argument("--levels", nargs="+", default=["H1", "H2", "H3"])
     ap.add_argument("--secondary-level", default=None)
+    ap.add_argument("--top20-dir", default=None, help="root of the top-20 variant task files (<root>/<level>/<qid>.json)")
     ap.add_argument("--secondary-arm", default="ANALYST")
     ap.add_argument("--work", default=os.path.join(R.OUT, "analyst_job"))
     ap.add_argument("--out", default=os.path.join(R.OUT, "analyst_job", "out"))
