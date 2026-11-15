@@ -79,10 +79,12 @@ Phase R is descriptive and decides neither kill rule (Section 1); it selects the
 
 Why: a micro-pilot (n=10 pilot questions, LLM) showed the reader given the whole S haystack (about 165k tokens) scored the same as the reader given gold evidence only (9 of 10 each, same single miss). On S as distributed a memory layer therefore has no accuracy headroom, and S can support cost and latency claims only. What matters is behaviour as the history grows far past the context window. This analysis measures retrieval, not answers, as history grows. (Source of the micro-pilot: main's relay; not re-measured here.)
 
-Levels, per question (nested, fixed seed 16096):
-- H0 = the question's own haystack (as in Section 4).
-- H1 = H0 + 500 distractor sessions; H2 = H0 + 5,000; H3 = H0 + every other session of the pool (the whole pool of 19,195 unique sessions).
-- Distractors are sessions that appear in no haystack of any question in the question's CLUSTER (Section 2). The distractor order is the permutation given by `sha256("16096:<question id>:<session id>")`, so H1 is a prefix of H2, which is a prefix of H3 (`emlab.pool`).
+Levels, per question, with distractor sets SHARED by every question of a split (fixed seed 16096; main's decision, so later answer-level arms can extract facts once for exactly these sets):
+- Sets, defined once per split: eligible = pool sessions that appear in no haystack of any question of that split; eligible sessions are ordered by `sha256("16096:D:<split>:<session id>")`; D500 = the first 500 and D5000 = the first 5,000 of that order (D500 inside D5000); POOL = all 19,195 unique sessions. If fewer than 5,000 are eligible, D5000 is all of them and the actual size is recorded (`d5000_short`).
+- H0 = the question's own haystack (as in Section 4). H1 = own + D500. H2 = own + D5000. H3 = own + every other session of POOL except sessions of the question's own cluster (Section 2). Own sessions come first, in their own order.
+- Pilot-split work uses sets drawn from sessions in no PILOT question's haystack. The later test-split run uses the same rule with sets drawn from sessions in no TEST question's haystack; this is registered now and NOT built (the runner refuses `poolsets` for the test split until the pre-registration is frozen).
+- The session id lists (ids only, with seed, split, eligible count) are written as an artifact by `--action poolsets` (`pool_sets_pilot.json`) so another owner can extract facts for exactly D500 and D5000 once.
+- An earlier per-question-draw design was replaced by this one before any result was computed; no per-question-draw numbers exist.
 - Approximate size of each level: reported by the run as characters/4 (an estimate, not a tokenizer count), mean and distribution over the pilot questions; no figure is asserted before the run.
 
 Measurements (pilot questions with retrieval gold; abstention excluded):

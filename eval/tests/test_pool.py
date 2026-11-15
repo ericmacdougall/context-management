@@ -3,7 +3,7 @@ import unittest
 from emlab.corpus import cluster_ids
 from emlab.dataset import FixtureLoader
 from emlab.pool import (cluster_haystacks, contamination_proxy, distribution, level_session_ids,
-                        pool_universe, with_sessions)
+                        pool_universe)
 import emlab.pool as pool
 
 
@@ -26,29 +26,32 @@ class PoolTests(unittest.TestCase):
         self.uni = pool_universe(self.qs)
         self.q = self.qs[0]
 
-    def test_levels_nested_and_exclude_cluster_sessions(self):
-        old = pool.LEVEL_SIZES
-        pool.LEVEL_SIZES = (("H0", 0), ("H1", 2), ("H2", 5), ("H3", None))
-        try:
-            lv = {l: level_session_ids(self.q, self.uni, self.ch[self.cl[self.q.qid]], l) for l, _ in pool.LEVEL_SIZES}
-        finally:
-            pool.LEVEL_SIZES = old
-        self.assertEqual(lv["H0"], self.q.haystack_session_ids)
-        self.assertEqual(lv["H1"][: len(lv["H0"])], lv["H0"])
-        self.assertTrue(set(lv["H1"]) < set(lv["H2"]) < set(lv["H3"]))
-        self.assertEqual(lv["H2"][: len(lv["H1"])], lv["H1"])  # nested prefix
-        self.assertEqual(set(lv["H3"]), set(self.uni))          # whole pool
-        extra = set(lv["H3"]) - set(lv["H0"])
-        self.assertFalse(extra & set(self.ch[self.cl[self.q.qid]]))
-        self.assertEqual(len(lv["H3"]), len(set(lv["H3"])))
+    def test_shared_sets_nested_exclude_split_haystacks_and_deterministic(self):
+        sets = pool.shared_distractors(self.uni, [self.qs[0]], "pilot")
+        used = set(self.qs[0].haystack_session_ids)
+        self.assertFalse(used & set(sets["D5000"]))
+        self.assertEqual(sets["eligible"], len(self.uni) - len(used))
+        self.assertTrue(sets["d5000_short"])  # fixture pool is tiny: D5000 is every eligible session
+        self.assertEqual(sets["D5000"][:len(sets["D500"])], sets["D500"])
+        self.assertEqual(sets, pool.shared_distractors(self.uni, [self.qs[0]], "pilot"))
 
-    def test_deterministic_and_question_specific(self):
-        a = level_session_ids(self.q, self.uni, self.ch[self.cl[self.q.qid]], "H3")
-        b = level_session_ids(self.q, self.uni, self.ch[self.cl[self.q.qid]], "H3")
-        self.assertEqual(a, b)
-        other = self.qs[2]
-        c = level_session_ids(other, self.uni, self.ch[self.cl[other.qid]], "H3")
-        self.assertNotEqual(a[len(self.q.haystack_session_ids):], c[len(other.haystack_session_ids):])
+    def test_levels_share_sets_across_questions_and_nest(self):
+        split = [self.qs[0], self.qs[1]]
+        sets = pool.shared_distractors(self.uni, split, "pilot")
+        sets = {**sets, "D500": sets["D5000"][:2]}  # shrink D500 so nesting is visible on the fixture
+        for q in split:
+            cs = self.ch[self.cl[q.qid]]
+            lv = {l: level_session_ids(q, self.uni, cs, l, sets) for l in pool.LEVELS}
+            own = q.haystack_session_ids
+            self.assertEqual(lv["H0"], own)
+            self.assertEqual(lv["H1"], own + sets["D500"])
+            self.assertEqual(lv["H2"], own + sets["D5000"])
+            self.assertTrue(set(lv["H1"]) < set(lv["H2"]) <= set(lv["H3"]))
+            self.assertFalse(set(lv["H3"]) - set(own) & set(cs))      # no own-cluster sessions beyond own
+            self.assertEqual(len(lv["H3"]), len(set(lv["H3"])))
+        a = level_session_ids(split[0], self.uni, self.ch[self.cl[split[0].qid]], "H2", sets)
+        b = level_session_ids(split[1], self.uni, self.ch[self.cl[split[1].qid]], "H2", sets)
+        self.assertEqual(a[len(split[0].haystack_session_ids):], b[len(split[1].haystack_session_ids):])  # shared
 
     def test_contamination_counts_only_rounds_above_gold_on_both(self):
         q = self.qs[2]  # gold round lo_s2:0

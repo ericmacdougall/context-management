@@ -16,7 +16,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 from .dataset import SPLIT_SEED, Question
 from .metrics import best_gold_rank, clustered_paired_bootstrap
 
-LEVEL_SIZES = (("H0", 0), ("H1", 500), ("H2", 5000), ("H3", None))
+LEVELS = ("H0", "H1", "H2", "H3")
+D_SIZES = (("D500", 500), ("D5000", 5000))
 
 
 def pool_universe(all_questions: Iterable[Question]) -> List[str]:
@@ -27,20 +28,39 @@ def pool_universe(all_questions: Iterable[Question]) -> List[str]:
     return sorted(seen)
 
 
-def distractor_order(q: Question, candidates: Sequence[str], seed: int = SPLIT_SEED) -> List[str]:
-    return sorted(candidates, key=lambda s: hashlib.sha256(("%d:%s:%s" % (seed, q.qid, s)).encode()).hexdigest())
+def shared_distractors(universe: Sequence[str], split_questions: Iterable[Question], split_name: str,
+                       seed: int = SPLIT_SEED) -> Dict[str, Any]:
+    """Distractor sets SHARED by every question of a split, so later answer-level arms extract facts once.
+
+    eligible = pool sessions that appear in no haystack of any question of the split; ordered by
+    sha256("<seed>:D:<split>:<session id>"); D500 is the first 500 and D5000 the first 5,000 of that order
+    (D500 inside D5000). If fewer than 5,000 are eligible, D5000 is all of them and `d5000_short` is True.
+    """
+    used = {s for q in split_questions for s in q.haystack_session_ids}
+    eligible = [s for s in universe if s not in used]
+    order = sorted(eligible, key=lambda s: hashlib.sha256(("%d:D:%s:%s" % (seed, split_name, s)).encode()).hexdigest())
+    return {"seed": seed, "split": split_name, "pool_sessions": len(universe), "eligible": len(eligible),
+            "D500": order[:500], "D5000": order[:5000], "d5000_short": len(order) < 5000}
 
 
 def level_session_ids(q: Question, universe: Sequence[str], cluster_sessions: Sequence[str], level: str,
-                      seed: int = SPLIT_SEED) -> List[str]:
-    """Session ids searched at `level`. H0 first, in its own order, then distractors in the seeded order."""
+                      sets: Dict[str, Any]) -> List[str]:
+    """Session ids searched at `level`: H0 own haystack; H1 own + D500; H2 own + D5000; H3 own + every pool
+    session except sessions of the question's own cluster. Own sessions come first, in their own order."""
     own = list(q.haystack_session_ids)
     if level == "H0":
         return own
-    banned = set(cluster_sessions) | set(own)
-    order = distractor_order(q, [s for s in universe if s not in banned], seed)
-    n = dict(LEVEL_SIZES)[level]
-    return own + (order if n is None else order[:n])
+    own_set = set(own)
+    if level == "H1":
+        extra = sets["D500"]
+    elif level == "H2":
+        extra = sets["D5000"]
+    elif level == "H3":
+        banned = set(cluster_sessions)
+        extra = [s for s in universe if s not in banned]
+    else:
+        raise ValueError(level)
+    return own + [s for s in extra if s not in own_set]
 
 
 def cluster_haystacks(all_questions: Sequence[Question], clusters: Dict[str, str]) -> Dict[str, List[str]]:

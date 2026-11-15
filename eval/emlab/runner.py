@@ -132,7 +132,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="emlab.runner")
     ap.add_argument("--dry-run", action="store_true", help="fixture + in-memory fake retriever; no network")
     ap.add_argument("--phase", choices=["R", "F"], default="R")
-    ap.add_argument("--action", choices=["run", "lowoverlap", "grid", "index", "diagnostics", "rerank-timing", "curve"],
+    ap.add_argument("--action", choices=["run", "lowoverlap", "grid", "index", "diagnostics", "rerank-timing", "curve", "poolsets"],
                     default="run")
     ap.add_argument("--retriever", choices=["exact", "es"], default="exact")
     ap.add_argument("--dataset-path")
@@ -171,6 +171,16 @@ def main(argv=None) -> int:
         sys.stderr.write("NOTE: %s split requested; only valid after the pre-registration hash is recorded\n" % args.split)
     qs = select_split(list(LongMemEvalLoader(args.dataset_path).questions()), args.split)
     a = args.artifacts.rstrip("/") + "/"
+    if args.action == "poolsets":  # ids only, for other owners to extract facts once
+        if args.split != "pilot":
+            sys.stderr.write("poolsets: only the pilot sets are built now; the test-split rule is registered, not built\n")
+            return 2
+        from .pool import pool_universe, shared_distractors
+        all_qs = list(LongMemEvalLoader(args.dataset_path).questions())
+        res = shared_distractors(pool_universe(all_qs), qs, "pilot")
+        _write(res, args.out)
+        print("D500", len(res["D500"]), "D5000", len(res["D5000"]), "eligible", res["eligible"])
+        return 0
     if args.action == "diagnostics":  # structural only, reads no retrieval result
         from .diagnostics import asof_report, parser_report
         res = {"split": args.split, "asof": asof_report(qs), "parser": parser_report(qs)}
