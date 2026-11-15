@@ -137,7 +137,7 @@ def main(argv=None) -> int:
     ap.add_argument("--retriever", choices=["exact", "es"], default="exact")
     ap.add_argument("--dataset-path")
     ap.add_argument("--artifacts", help="dir written by embed.py (chunks.jsonl, vectors, queries)")
-    ap.add_argument("--split", choices=["pilot", "test", "dev2", "all"], default="pilot")
+    ap.add_argument("--split", choices=["pilot", "test", "dev2", "held_back", "all"], default="pilot")
     ap.add_argument("--seed", type=int, default=16096, help="split seed (must equal the registered seed)")
     ap.add_argument("--es-url")
     ap.add_argument("--credential-file", help="path to a 0600 file holding the API key")
@@ -145,6 +145,7 @@ def main(argv=None) -> int:
     ap.add_argument("--reranker-dir", help="model cache dir; enables the rerank arm")
     ap.add_argument("--low-overlap-threshold", type=int, default=100)
     ap.add_argument("--out")
+    ap.add_argument("--sets", help="pooled distractor sets JSON (poolsets output)")
     args = ap.parse_args(argv)
 
     if args.dry_run:
@@ -167,19 +168,23 @@ def main(argv=None) -> int:
     if not args.dataset_path or not args.artifacts:
         sys.stderr.write("--dataset-path and --artifacts are required for live runs\n")
         return 2
-    if args.split != "pilot" and args.action not in ("index", "diagnostics"):
-        sys.stderr.write("NOTE: %s split requested; only valid after the pre-registration hash is recorded\n" % args.split)
+    if args.split not in ("pilot",) and args.action not in ("index", "diagnostics"):
+        sys.stderr.write("%s split refused: pilot only until the pre-registration hash is recorded on the ticket\n" % args.split)
+        return 2
     qs = select_split(list(LongMemEvalLoader(args.dataset_path).questions()), args.split)
     a = args.artifacts.rstrip("/") + "/"
     if args.action == "poolsets":  # ids only, for other owners to extract facts once
         if args.split != "pilot":
             sys.stderr.write("poolsets: only the pilot sets are built now; the test-split rule is registered, not built\n")
             return 2
-        from .pool import pool_universe, shared_distractors
+        from .pool import PoolContext
         all_qs = list(LongMemEvalLoader(args.dataset_path).questions())
-        res = shared_distractors(pool_universe(all_qs), qs, "pilot")
+        ctx = PoolContext(all_qs)
+        m = ctx.matched_L(select_split(all_qs, "pilot"), select_split(all_qs, "test"))
+        res = ctx.shared_distractors(qs, "pilot", m["L"])
+        res["matched_L"] = m
         _write(res, args.out)
-        print("D500", len(res["D500"]), "D5000", len(res["D5000"]), "eligible", res["eligible"])
+        print("D500", len(res["D500"]), "DL", len(res["DL"]), "L", m["L"], "eligible pilot/test", m["eligible_pilot"], m["eligible_test"])
         return 0
     if args.action == "diagnostics":  # structural only, reads no retrieval result
         from .diagnostics import asof_report, parser_report
@@ -209,13 +214,19 @@ def main(argv=None) -> int:
     else:
         arms.remove("rerank")
     if args.action == "curve":
+        if args.split != "pilot":
+            sys.stderr.write("curve: pilot only until the pre-registration is frozen\n")
+            return 2
         from .curve import run_curve
+        from .pool import PoolContext
         all_qs = list(LongMemEvalLoader(args.dataset_path).questions())
+        ctx = PoolContext(all_qs)
+        sets = json.load(open(args.sets))
         chars: Dict[str, int] = {}
         for c in retr.chunks:  # ExactRetriever only
             chars[c["session_id"]] = chars.get(c["session_id"], 0) + len(c["text"])
         retr.prepare_terms(qs)
-        res = run_curve(qs, all_qs, retr, arms, chars)
+        res = run_curve(qs, all_qs, retr, arms, chars, sets, ctx)
         res["split"] = args.split
     elif args.action == "rerank-timing":
         import time

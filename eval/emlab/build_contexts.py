@@ -17,11 +17,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from .context import context_metrics, pack_facts, pack_mix, pack_rag, write_context
-from .corpus import cluster_ids
 from .dataset import LongMemEvalLoader, select_split
 from .facts import FactsRetriever, load_facts, load_question_cues
 from .live import ExactRetriever
-from .pool import cluster_haystacks, level_session_ids, pool_universe, with_sessions
+from .pool import PoolContext, with_sessions
 from .retrievers import run_arm
 
 LEVELS = ("H0", "H1")
@@ -75,9 +74,7 @@ def build(dataset, art, facts_path, cues_path, sets_path, out_root, budget, lowo
     all_qs = list(LongMemEvalLoader(dataset).questions())
     qs = select_split(all_qs, "pilot")
     sets = json.load(open(sets_path))
-    cl = cluster_ids(all_qs)
-    ch = cluster_haystacks(all_qs, cl)
-    uni = pool_universe(all_qs)
+    ctx = PoolContext(all_qs)
     a = art.rstrip("/") + "/"
     ex = ExactRetriever(a + "chunks.jsonl", a + "chunk_vectors.npy", a + "queries.json", a + "query_vectors.npy")
     texts = {}
@@ -102,7 +99,7 @@ def build(dataset, art, facts_path, cues_path, sets_path, out_root, budget, lowo
             own.setdefault(t.session_id, t.date)
         earliest = min(own.values())
         for lv in LEVELS:
-            ids = level_session_ids(q, uni, ch[cl[q.qid]], lv, sets)
+            ids = ctx.level_sessions(q, lv, sets)
             syn = {s for s in ids if s not in own}
             dts = {s: (own[s] if s in own else synthetic_date(q.qid, s, earliest, q.question_date)) for s in ids}
             dates = {s: d.strftime(FMT) for s, d in dts.items()}

@@ -10,7 +10,6 @@ import sys
 
 import numpy as np
 
-from .corpus import cluster_ids
 from .dataset import LongMemEvalLoader, select_split
 from .es_client import CurlEsClient, EsError
 from .escompare import set_heuristic
@@ -18,7 +17,7 @@ from .fusion import rrf
 from .live import ExactRetriever
 from .mappings import INDEX_V1
 from .metrics import clustered_paired_bootstrap, ndcg_at_k, recall_at_k
-from .pool import cluster_haystacks, level_session_ids, pool_universe, with_sessions
+from .pool import PoolContext, with_sessions
 from .retrievers import to_sessions
 
 K = 100
@@ -38,9 +37,8 @@ def main(dataset, art, es_url, cfg, sets_path, out):
     all_qs = list(LongMemEvalLoader(dataset).questions())
     qs = [q for q in select_split(all_qs, "pilot") if q.retrieval_gold_session_ids]
     sets = json.load(open(sets_path))
-    cl = cluster_ids(all_qs)
-    ch = cluster_haystacks(all_qs, cl)
-    uni = pool_universe(all_qs)
+    ctx = PoolContext(all_qs)
+    cl = ctx.clusters
     a = art.rstrip("/") + "/"
     ex = ExactRetriever(a + "chunks.jsonl", a + "chunk_vectors.npy", a + "queries.json", a + "query_vectors.npy")
     ex.prepare_terms(qs)
@@ -49,14 +47,14 @@ def main(dataset, art, es_url, cfg, sets_path, out):
     prep = {}
     for lv in ("H2", "H3"):
         for q in qs:
-            ids = level_session_ids(q, uni, ch[cl[q.qid]], lv, sets)
+            ids = ctx.level_sessions(q, lv, sets)
             pq = with_sessions(q, ids)
             bm = [d for d, _ in ex.bm25(pq, K, None)]
             idx = np.asarray([i for s in ids for i in ex.by_session.get(s, ())])
             sims = ex.vectors[idx] @ qv[q.qid]
             top = np.argsort(-sims, kind="stable")[:K]
             dense_exact = rounds_of([ex.chunks[int(idx[t])]["chunk_id"] for t in top])
-            excl = sorted(set(uni) - set(ids))
+            excl = sorted(set(ctx.hashes) - set(ids))
             flt = ({"terms": {"session_id": ids}} if lv == "H2" else
                    ({"bool": {"must_not": [{"terms": {"session_id": excl}}]}} if excl else {"match_all": {}}))
             prep[(lv, q.qid)] = (bm, dense_exact, flt)

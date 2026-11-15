@@ -246,9 +246,20 @@ def split_assignment(questions: Sequence[Question]) -> Dict[str, str]:
     return sp
 
 
+def full_split_assignment(questions: Sequence[Question]) -> Dict[str, str]:
+    """qid -> 'pilot' | 'dev2' | 'test' | 'held_back'. Pilot and dev2 are NOT re-derived (split_assignment). Review
+    amendment B: every test question whose CONTENT cluster touches a pilot or dev2 question moves to `held_back`
+    (never used for a confirmatory result)."""
+    from .content import content_clusters, session_hashes
+    sp = split_assignment(questions)
+    cc = content_clusters(questions, session_hashes(questions))
+    touched = {cc[q] for q, v in sp.items() if v in ("pilot", "dev2")}
+    return {q: ("held_back" if v == "test" and cc[q] in touched else v) for q, v in sp.items()}
+
+
 def select_split(questions: Sequence[Question], split: str) -> List[Question]:
-    """split in {'all','pilot','test','dev2'}; computed over ALL questions then filtered."""
+    """split in {'all','pilot','test','dev2','held_back'}; computed over ALL questions then filtered."""
     if split == "all":
         return list(questions)
-    sp = split_assignment(questions)
+    sp = full_split_assignment(questions)
     return [q for q in questions if sp[q.qid] == split]

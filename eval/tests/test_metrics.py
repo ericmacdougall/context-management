@@ -2,7 +2,7 @@ import math
 import unittest
 
 from emlab.metrics import (best_gold_rank, clustered_paired_bootstrap, is_low_overlap, ndcg_at_k,
-                           recall_at_k, wilson_interval)
+                           recall_at_k, stratified_macro_bootstrap, wilson_interval)
 
 
 class RecallNdcg(unittest.TestCase):
@@ -90,6 +90,27 @@ class Bootstrap(unittest.TestCase):
     def test_zero_difference_interval_is_degenerate(self):
         r = clustered_paired_bootstrap([("x", 0.5, 0.5), ("y", 0.1, 0.1)], n_boot=50, seed=0)
         self.assertEqual((r["ci_low"], r["ci_high"], r["mean_diff"]), (0.0, 0.0, 0.0))
+
+
+
+class Macro(unittest.TestCase):
+    rows = ([("KU", "k%d" % i, 0.0, 1.0) for i in range(2)] + [("TR", "t%d" % i, 0.5, 0.5) for i in range(8)])
+
+    def test_macro_differs_from_pooled_and_is_equal_weight(self):
+        pooled = clustered_paired_bootstrap([(c, a, b) for _, c, a, b in self.rows], n_boot=200, seed=1)
+        macro = stratified_macro_bootstrap(self.rows, n_boot=200, seed=1)
+        self.assertAlmostEqual(pooled["mean_diff"], 0.2)            # question-weighted: KU counts 2 of 10
+        self.assertAlmostEqual(macro["macro_diff"], 0.5)            # equal weight: (1.0 + 0.0) / 2
+        # identical diffs inside each stratum -> every resample gives the same macro value
+        self.assertEqual((macro["lower_one_sided"], macro["upper_one_sided"]), (0.5, 0.5))
+        self.assertEqual(macro["clusters_per_stratum"], {"'KU'": 2.0, "'TR'": 8.0})
+
+    def test_resamples_within_stratum_and_is_seeded(self):
+        rows = [("KU", "k%d" % i, 0.0, float(i % 2)) for i in range(6)] + [("TR", "t%d" % i, 0.0, 0.0) for i in range(6)]
+        a = stratified_macro_bootstrap(rows, n_boot=300, seed=4)
+        self.assertEqual(a, stratified_macro_bootstrap(rows, n_boot=300, seed=4))
+        self.assertGreater(a["upper_one_sided"], a["lower_one_sided"])
+        self.assertLessEqual(a["upper_one_sided"], 0.5)              # TR stratum stays at 0, KU at most 1
 
 
 if __name__ == "__main__":

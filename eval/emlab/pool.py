@@ -1,11 +1,15 @@
 """Pooled-history curve (Phase R named analysis): nested haystacks of growing size, retrieval only, no LLM.
 
-Levels (per question): H0 = own haystack; H1 = H0 + 500 distractor sessions; H2 = H0 + 5,000; H3 = the whole
-pool of unique sessions. Distractors are sessions that appear in no haystack of any question in the question's
-cluster; the order is a fixed seeded permutation per question (sha256 of "16096:<qid>:<session id>") so H1 is
-inside H2 inside H3. Time-aware modes are OFF at pooled levels (a session has different dates in different
-questions). Gold ids stay valid for retrieval metrics; distractors may contain competing answers (contamination
-threat for answer-level use, measured by `contamination_proxy`).
+Amended after the independent review (content identity, matched levels). The pool is DEDUPLICATED BY CONTENT: one
+canonical session id per content hash (the smallest id). Per question:
+  H0 = own haystack
+  H1 = own + D500
+  H2 = own + DL            (L = the largest round number both the pilot and the test split can supply)
+  H3 = own + every canonical pool session whose content is in no haystack of the question's content cluster
+D sets are SHARED by all questions of a split. Eligible distractors: canonical sessions whose content appears in NO
+haystack of the split's questions and is gold (by content) for NO question in any split; ordered by
+sha256("<seed>:D:<split>:<session id>"); D500 inside DL. Because a content that is in the split's haystacks is
+excluded, no distractor is a twin of any own-haystack session. Time-aware modes are off at pooled levels.
 """
 from __future__ import annotations
 
@@ -13,62 +17,63 @@ import dataclasses
 import hashlib
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
+from .content import content_clusters, session_hashes
 from .dataset import SPLIT_SEED, Question
 from .metrics import best_gold_rank, clustered_paired_bootstrap
 
 LEVELS = ("H0", "H1", "H2", "H3")
-D_SIZES = (("D500", 500), ("D5000", 5000))
 
 
-def pool_universe(all_questions: Iterable[Question]) -> List[str]:
-    seen: Dict[str, None] = {}
-    for q in all_questions:
-        for s in q.haystack_session_ids:
-            seen.setdefault(s)
-    return sorted(seen)
+class PoolContext:
+    def __init__(self, all_questions: Sequence[Question]):
+        self.qs = list(all_questions)
+        self.hashes = session_hashes(self.qs)                      # session id -> content hash
+        by: Dict[str, List[str]] = {}
+        for s, h in self.hashes.items():
+            by.setdefault(h, []).append(s)
+        self.canon = {h: min(v) for h, v in by.items()}            # content hash -> canonical session id
+        self.pool = sorted(self.canon.values())                    # deduplicated pool (canonical ids)
+        self.gold_hashes = {self.hashes[s] for q in self.qs for s in q.gold_session_ids if s in self.hashes}
+        self.clusters = content_clusters(self.qs, self.hashes)     # qid -> content cluster id
+        self.hay_hashes = {q.qid: {self.hashes[s] for s in q.haystack_session_ids} for q in self.qs}
+        self.cluster_hay: Dict[str, set] = {}
+        for q in self.qs:
+            self.cluster_hay.setdefault(self.clusters[q.qid], set()).update(self.hay_hashes[q.qid])
 
+    def eligible(self, split_questions: Iterable[Question]) -> List[str]:
+        used = set()
+        for q in split_questions:
+            used |= self.hay_hashes[q.qid]
+        banned = used | self.gold_hashes
+        return [self.canon[h] for h in self.canon if h not in banned]
 
-def shared_distractors(universe: Sequence[str], split_questions: Iterable[Question], split_name: str,
-                       seed: int = SPLIT_SEED) -> Dict[str, Any]:
-    """Distractor sets SHARED by every question of a split, so later answer-level arms extract facts once.
+    def shared_distractors(self, split_questions: Sequence[Question], split_name: str, L: int,
+                           seed: int = SPLIT_SEED) -> Dict[str, Any]:
+        el = self.eligible(split_questions)
+        order = sorted(el, key=lambda s: hashlib.sha256(("%d:D:%s:%s" % (seed, split_name, s)).encode()).hexdigest())
+        return {"seed": seed, "split": split_name, "pool_sessions_deduplicated": len(self.pool),
+                "session_ids_total": len(self.hashes), "eligible": len(el), "L": L,
+                "D500": order[:500], "DL": order[:L], "short": len(order) < L}
 
-    eligible = pool sessions that appear in no haystack of any question of the split; ordered by
-    sha256("<seed>:D:<split>:<session id>"); D500 is the first 500 and D5000 the first 5,000 of that order
-    (D500 inside D5000). If fewer than 5,000 are eligible, D5000 is all of them and `d5000_short` is True.
-    """
-    used = {s for q in split_questions for s in q.haystack_session_ids}
-    eligible = [s for s in universe if s not in used]
-    order = sorted(eligible, key=lambda s: hashlib.sha256(("%d:D:%s:%s" % (seed, split_name, s)).encode()).hexdigest())
-    return {"seed": seed, "split": split_name, "pool_sessions": len(universe), "eligible": len(eligible),
-            "D500": order[:500], "D5000": order[:5000], "d5000_short": len(order) < 5000}
+    def matched_L(self, pilot_qs: Sequence[Question], test_qs: Sequence[Question], step: int = 100) -> Dict[str, int]:
+        ep, et = len(self.eligible(pilot_qs)), len(self.eligible(test_qs))
+        return {"eligible_pilot": ep, "eligible_test": et, "L": (min(ep, et) // step) * step}
 
-
-def level_session_ids(q: Question, universe: Sequence[str], cluster_sessions: Sequence[str], level: str,
-                      sets: Dict[str, Any]) -> List[str]:
-    """Session ids searched at `level`: H0 own haystack; H1 own + D500; H2 own + D5000; H3 own + every pool
-    session except sessions of the question's own cluster. Own sessions come first, in their own order."""
-    own = list(q.haystack_session_ids)
-    if level == "H0":
-        return own
-    own_set = set(own)
-    if level == "H1":
-        extra = sets["D500"]
-    elif level == "H2":
-        extra = sets["D5000"]
-    elif level == "H3":
-        banned = set(cluster_sessions)
-        extra = [s for s in universe if s not in banned]
-    else:
-        raise ValueError(level)
-    return own + [s for s in extra if s not in own_set]
-
-
-def cluster_haystacks(all_questions: Sequence[Question], clusters: Dict[str, str]) -> Dict[str, List[str]]:
-    """cluster id -> every session id appearing in any haystack of any question in the cluster."""
-    out: Dict[str, set] = {}
-    for q in all_questions:
-        out.setdefault(clusters[q.qid], set()).update(q.haystack_session_ids)
-    return {c: sorted(v) for c, v in out.items()}
+    def level_sessions(self, q: Question, level: str, sets: Dict[str, Any]) -> List[str]:
+        own = list(q.haystack_session_ids)
+        if level == "H0":
+            return own
+        if level == "H1":
+            extra = sets["D500"]
+        elif level == "H2":
+            extra = sets["DL"]
+        elif level == "H3":
+            banned = self.cluster_hay[self.clusters[q.qid]]
+            extra = [s for s in self.pool if self.hashes[s] not in banned]
+        else:
+            raise ValueError(level)
+        own_h = {self.hashes[s] for s in own}
+        return own + [s for s in extra if s not in set(own) and self.hashes[s] not in own_h]
 
 
 def with_sessions(q: Question, session_ids: Sequence[str]) -> Question:
@@ -76,8 +81,8 @@ def with_sessions(q: Question, session_ids: Sequence[str]) -> Question:
 
 
 def contamination_proxy(q: Question, retriever, depth: int = 10 ** 9) -> Optional[Dict[str, int]]:
-    """At a pooled question (whole pool): the number of non-gold ROUNDS ranked above the best gold round on
-    BOTH bm25 and dense. A non-gold round that outranks gold on both legs is a candidate competing answer."""
+    """At the whole-pool level: the number of non-gold ROUNDS ranked above the best gold round on BOTH bm25 and dense.
+    Content twins of gold are absent from the level by construction (amendment A)."""
     gold = set(q.retrieval_gold_round_ids)
     if not gold:
         return None
@@ -101,7 +106,6 @@ def distribution(vals: Sequence[float]) -> Dict[str, float]:
 
 def drop_bootstrap(per_q: List[Dict[str, Any]], arm_key: str, level: str, metric: str, clusters: Dict[str, str],
                    n_boot: int = 2000, seed: int = SPLIT_SEED) -> Optional[Dict[str, float]]:
-    """Clustered paired bootstrap of (level - H0) for one arm and metric; questions without gold are skipped."""
     rows = []
     for r in per_q:
         a = r["levels"]["H0"][arm_key].get(metric)

@@ -92,3 +92,28 @@ class Dates(unittest.TestCase):
         self.assertFalse(event_time_allowed(f, "2023-02-11 09:00", False))
         self.assertFalse(event_time_allowed(f, "2023-02-10 09:00", True))      # synthetic date: never shown
         self.assertIsNone(event_time_allowed({"event_time": "x"}, "2023-02-10 09:00", False))
+
+
+class Analyst(unittest.TestCase):
+    def test_task_has_no_gold_and_score_precision(self):
+        from emlab.analyst_prep import FORBIDDEN, make_task
+        from emlab.analyst_score import aggregate, score_one
+        import json as _j
+        q = list(FixtureLoader().questions())[0]
+        t = make_task(q.qid, "H1", q.question, "2023-08-01 10:00", [{"round_id": "ku_s4:0", "session_id": "ku_s4",
+                                                                    "date": "2023-06-20 08:15", "rank": 1, "snippet": "x"}])
+        blob = _j.dumps(t).lower()
+        for w in FORBIDDEN:
+            self.assertNotIn(w, blob)
+        texts = {r.round_id: r.text for r in q.rounds}
+        dates = {s: "2023-01-01 00:00" for s in q.haystack_session_ids}
+        m = score_one(q, ["ku_s2:0", "ku_s4:0"], dates, texts)
+        self.assertEqual(m["nongold_share"], 0.5)
+        self.assertTrue(m["gold_latest_in_context"])
+        stale = score_one(q, ["ku_s1:0"], dates, texts)
+        self.assertTrue(stale["stale_only"])
+        m["qid"], m["calls"], m["tool_seconds"] = q.qid, 3, 1.5
+        self.assertEqual(aggregate([m], {q.qid})["low_overlap"]["tool_calls"], 3)
+        self.assertNotIn("ids outside scope", "")
+        out_of_scope = score_one(q, ["zzz:0"], dates, texts)
+        self.assertEqual(out_of_scope["items"], 0)   # ids outside the level scope are dropped, not credited

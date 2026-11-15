@@ -4,20 +4,15 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List, Sequence
 
-from .corpus import cluster_ids
 from .metrics import clustered_paired_bootstrap
-from .pool import (LEVELS, cluster_haystacks, contamination_proxy, distribution, drop_bootstrap,
-                   level_session_ids, pool_universe, shared_distractors, with_sessions)
+from .pool import LEVELS, PoolContext, contamination_proxy, distribution, drop_bootstrap, with_sessions
 from .retrievers import run_arm
 from .runner import DEPTH, question_metrics
 
 
 def run_curve(qs: Sequence, all_qs: Sequence, retriever, arms: Sequence[str], session_chars: Dict[str, int],
-              n_boot: int = 2000, depth: int = DEPTH, split_name: str = "pilot") -> Dict[str, Any]:
-    clusters = cluster_ids(all_qs)
-    ch = cluster_haystacks(all_qs, clusters)
-    universe = pool_universe(all_qs)
-    sets = shared_distractors(universe, qs, split_name)
+              sets: Dict[str, Any], ctx: PoolContext, n_boot: int = 2000, depth: int = DEPTH) -> Dict[str, Any]:
+    clusters = ctx.clusters
     per_q: List[Dict[str, Any]] = []
     seconds: Dict[str, List[float]] = {l: [] for l in LEVELS}
     tokens_est: Dict[str, List[float]] = {l: [] for l in LEVELS}
@@ -26,7 +21,7 @@ def run_curve(qs: Sequence, all_qs: Sequence, retriever, arms: Sequence[str], se
     for q in qs:
         rec: Dict[str, Any] = {"qid": q.qid, "qtype": q.qtype, "levels": {}}
         for lv in LEVELS:
-            ids = level_session_ids(q, universe, ch[clusters[q.qid]], lv, sets)
+            ids = ctx.level_sessions(q, lv, sets)
             pq = with_sessions(q, ids)
             tokens_est[lv].append(sum(session_chars.get(s, 0) for s in ids) / 4.0)
             t0 = time.time()
@@ -55,6 +50,6 @@ def run_curve(qs: Sequence, all_qs: Sequence, retriever, arms: Sequence[str], se
                 if lv != "H0":
                     vals[metric]["drop_vs_H0"] = drop_bootstrap(per_q, arm, lv, metric, clusters, n_boot)
             out["levels"][lv][arm] = vals
-    out["distractor_sets"] = {k: v for k, v in sets.items() if k not in ("D500", "D5000")}
+    out["distractor_sets"] = {k: v for k, v in sets.items() if k not in ("D500", "DL")}
     out["per_question"] = per_q
     return out

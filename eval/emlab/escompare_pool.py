@@ -8,13 +8,12 @@ import time
 
 import numpy as np
 
-from .corpus import cluster_ids
 from .dataset import LongMemEvalLoader, select_split
 from .es_client import CurlEsClient
 from .escompare import exact_topk, overlap, set_heuristic
 from .live import ExactRetriever
 from .mappings import INDEX_V1
-from .pool import cluster_haystacks, level_session_ids, pool_universe
+from .pool import PoolContext
 
 
 def main(dataset, art, es_url, cfg, sets_path, out, limit=0):
@@ -23,9 +22,7 @@ def main(dataset, art, es_url, cfg, sets_path, out, limit=0):
     if int(limit):
         qs = qs[:int(limit)]
     sets = json.load(open(sets_path))
-    cl = cluster_ids(all_qs)
-    ch = cluster_haystacks(all_qs, cl)
-    uni = pool_universe(all_qs)
+    ctx = PoolContext(all_qs)
     a = art.rstrip("/") + "/"
     ex = ExactRetriever(a + "chunks.jsonl", a + "chunk_vectors.npy", a + "queries.json", a + "query_vectors.npy")
     qv = dict(zip(json.load(open(a + "queries.json")), np.load(a + "query_vectors.npy")))
@@ -36,7 +33,7 @@ def main(dataset, art, es_url, cfg, sets_path, out, limit=0):
     sess = {}
     for lv in ("H2", "H3"):
         for q in qs:
-            ids = level_session_ids(q, uni, ch[cl[q.qid]], lv, sets)
+            ids = ctx.level_sessions(q, lv, sets)
             sess[(lv, q.qid)] = ids
             truth[(lv, q.qid)] = exact_topk(ex.vectors, ex.by_session, ex.chunks, qv[q.qid], ids, 50)
     for heur in ("acorn", "fanout"):
@@ -48,7 +45,7 @@ def main(dataset, art, es_url, cfg, sets_path, out, limit=0):
                     for q in qs:
                         ids = sess[(lv, q.qid)]
                         if lv == "H3":  # same set expressed as a must_not on the excluded own-cluster sessions
-                            excl = sorted(set(uni) - set(ids))
+                            excl = sorted(set(ctx.hashes) - set(ids))
                             flt = {"bool": {"must_not": [{"terms": {"session_id": excl}}]}} if excl else {"match_all": {}}
                         else:
                             flt = {"terms": {"session_id": ids}}

@@ -42,9 +42,11 @@ def exact_topk(vectors, by_session, chunks, qv, sessions, k):
 
 
 def set_heuristic(c: CurlEsClient, index: str, value: str) -> str:
+    """PUT the dynamic setting, then READ IT BACK; the returned string states the value actually in force."""
     try:
         c.request("PUT", "/%s/_settings" % index, {"index.dense_vector.hnsw_filter_heuristic": value})
-        return "dynamic setting applied"
+        got = c.request("GET", "/%s/_settings" % index)[index]["settings"]["index"].get("dense_vector", {}).get("hnsw_filter_heuristic")
+        return "requested %s, read back %s%s" % (value, got, "" if got == value else " (MISMATCH)")
     except EsError as e:
         return "NOT dynamic or refused: %s" % e
 

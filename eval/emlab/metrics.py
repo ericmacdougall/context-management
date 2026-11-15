@@ -104,3 +104,39 @@ def clustered_paired_bootstrap(
     one_hi = diffs[min(n_boot - 1, int((1 - alpha) * n_boot))]
     return {"mean_diff": observed, "ci_low": lo, "ci_high": hi, "lower_one_sided": one_lo, "upper_one_sided": one_hi, "effective_n": float(m),
             "questions": float(total_n), "n_boot": float(n_boot), "seed": float(seed)}
+
+
+def stratified_macro_bootstrap(rows: Sequence[Tuple[Hashable, Hashable, float, float]], n_boot: int = 10000,
+                               seed: int = 0, alpha: float = 0.05) -> Dict[str, float]:
+    """The registered H1 statistic: EQUAL-WEIGHT MACRO-AVERAGE over strata of mean(b - a), clusters resampled
+    WITHIN each stratum. rows: (stratum, cluster_id, value_a, value_b). Returns the observed macro difference,
+    two-sided and one-sided percentile bounds and the number of clusters per stratum."""
+    strata: Dict[Hashable, Dict[Hashable, List[float]]] = {}
+    for st, cid, a, b in rows:
+        strata.setdefault(st, {}).setdefault(cid, []).append(b - a)
+    names = sorted(strata, key=repr)
+    if not names:
+        raise ValueError("no rows")
+    packed = []
+    for st in names:
+        keys = sorted(strata[st], key=repr)
+        packed.append(([sum(strata[st][k]) for k in keys], [len(strata[st][k]) for k in keys]))
+    observed = sum(sum(s) / sum(c) for s, c in packed) / len(packed)
+    rng = random.Random(seed)
+    diffs = []
+    for _ in range(n_boot):
+        tot = 0.0
+        for s, c in packed:
+            m = len(s)
+            ss = cc = 0.0
+            for _ in range(m):
+                j = rng.randrange(m)
+                ss += s[j]
+                cc += c[j]
+            tot += ss / cc
+        diffs.append(tot / len(packed))
+    diffs.sort()
+    return {"macro_diff": observed, "ci_low": diffs[int((alpha / 2) * n_boot)],
+            "ci_high": diffs[min(n_boot - 1, int((1 - alpha / 2) * n_boot))],
+            "lower_one_sided": diffs[int(alpha * n_boot)], "upper_one_sided": diffs[min(n_boot - 1, int((1 - alpha) * n_boot))],
+            "clusters_per_stratum": {repr(n): float(len(strata[n])) for n in names}, "n_boot": float(n_boot), "seed": float(seed)}
