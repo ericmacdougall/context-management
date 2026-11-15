@@ -113,3 +113,19 @@ Requirement: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a/bbac7e5d-b0f4-41b6-a1ea-9
 | G6 | Results do not depend on which adapter is used: the eval's reader and extractor give equivalent outputs through two adapters on a sample | EXP: parity sample | todo |
 | G7 | Just-in-time injection reaches each agent host: Agent Builder (pre-execution workflow), Claude Code and Codex (their hook or MCP mechanisms) | EXP per host; Serverless-only hooks OPEN-BLOCKED | todo |
 | G8 | Terms: whether subscription instances may be used as a local development backend this way | USER (main reports what the published terms say; not legal advice) | open |
+
+## H. Relevance analyst cascade (asynchronous agent tier above search)
+
+Requirement: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a (message beginning "why not use a relevance analyst cascade - where agents can run via headless interactive session harnesses with acp and secondary researchers can help additionally rerank and dig/inject context while analyzing the requirement graph and transcripts and agent instance registry"). Motivation from this lab's own measurements: hybrid search finds the right session in the top 10 for 0.97 of pilot questions on one conversation but 0.46 against the whole pool; 24 of 94 pilot questions have evidence ranked worse than 100 on both legs; the cross-encoder reranker costs about 26 s per question on CPU.
+
+Shape: tier 0 search (ms) -> tier 1 rerank -> tier 2 relevance analysts: long-lived headless agent sessions with pull tools (search, open, timeline, facts) that re-rank and dig, driven by the turn, the task's requirement graph and the registry of live agent sessions; what they find is delivered asynchronously to the right session's inbox as ids with provenance and trust labels, and injected at that session's next turn boundary. Never on the synchronous path of a turn.
+
+| ID | Question | Exit | Status |
+|---|---|---|---|
+| H1 | Does an analyst tier recover evidence that search misses as history grows (gold in context at the +500, +5,000 and whole-pool levels; the 24 low-overlap questions), and at what cost per question (calls, tokens, seconds) | EVAL arm on the pilot | todo |
+| H2 | Precision: how often does an analyst deliver irrelevant or stale items; does injected analyst context ever make an answer worse | EVAL arm | todo |
+| H3 | Long-lived agent sessions through a session protocol (ACP) versus one process per call: overhead per request, session-log footprint, mid-session delivery of new context | EXP, after the protocol facts are verified from primary docs | todo |
+| H4 | Asynchronous delivery: inbox per agent session keyed from the instance registry; exactly-once, ordered, expiring; delivered at a turn boundary; survives restart; nothing delivered to a session whose task no longer needs it | EXP (plumbing) | todo |
+| H5 | Routing by requirement graph: an analyst finding is routed to the sessions whose current task items it serves, and re-routed when the task is amended | EXP (builds on F1) | todo |
+| H6 | Safety: analysts read untrusted transcripts and then write into other agents' context. Findings are ids plus quotes with trust origin, never instructions; a planted instruction in a transcript must not be relayed as one | EXP attack set | todo |
+| H7 | Budget control: per-turn and per-day analyst spend caps, and a rule for when the cascade is skipped (search already confident) | EXP + measured thresholds | todo |
