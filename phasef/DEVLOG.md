@@ -83,3 +83,7 @@ the owner's shuffled re-judge disagreed on 10 of 34 positives. Strict independen
 recent videos, guitar lessons vs plan to find a teacher, sculpting vs sculpting classes, plan to meet vs met twice), and a verifier strict enough to remove the four
 v4 errors also drops those: at the ceiling the precision and recall bars pull against each other. (4) The per-session cost assumes the 40-pair cap per haystack of about
 48 sessions; a single long history has no per-question cap. USD figures and the Opus/Sonnet ratio are ledger-derived estimates; no Opus verifier was run.
+
+Gate 3 budget confirmation (before any dev2 call): allowance 220 (cap 565) covers extraction 47 (743 sessions at 16 per call), gold-pair identification 16, expansion 16,
+three reader arms 48 and answer judging 8 (135 fixed), leaving 85 for both stage-1 passes, both stage-2 passes and the audit: enough for up to 547 candidate pairs (dev had 501).
+The exact pair count is checked by code right after extraction (stage budget); above that, the gate stops and the shortfall is reported.
