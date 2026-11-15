@@ -31,3 +31,7 @@ facts per session: 1 per call 9.00 (216 facts), 4 per call 5.12, 8 per call 4.46
 Trivial or duplicate facts (Opus): 2 of 216 (0.9%) in the 1-per-call list and 1 (0.8%), 0, 0 at 4, 8, 16: the extra facts at small batch sizes are real, not padding.
 Main's rule (largest size with at most 10% missing against 1 per call): only 1 per call qualifies. Volume run NOT started. Cue keys for the 102 pilot questions generated (102 calls, volume counter) and copied to t2-dev:~/emlab-16096/in/question_cues_pilot.jsonl.
 Measured cost per session (model tokens vs per-call harness overhead of about 10.5k tokens): 1 per call: 4.4k in net / 1.88k out, 14.9k in total per call, 36 s per call; 4 per call: 3.8k / 0.94k, 25.7k per call, 36 s per call.
+
+ANALYST RUNNER dry run (fake lexical backend, 2 pilot questions own-haystack, stand-in lexical top-50 candidates; 5 of 10 calls): both arms returned valid strict output on both questions
+(rerank 5.7 and 7.8 s, 18k and 32k input tokens; analyst 7.3 and 9.8 s, 19k and 32k input tokens, 0 tool calls: the candidates already held the answer). A forced diagnostic call confirmed the MCP path:
+search and open_round were reached through the stdio server (--mcp-config, --strict-mcp-config, built-ins off, neutral cwd) and logged with round ids; the 12-call budget is enforced and unit-tested in analyst_mcp.py.

@@ -32,9 +32,9 @@ def request_hash(model, recipe, system, prompt):
     return h.hexdigest()
 
 
-def claude_cli_runner(model, system, prompt, timeout=1500, cwd=None):
+def claude_cli_runner(model, system, prompt, timeout=1500, cwd=None, extra_args=None):
     cmd = ["claude", "-p", "--model", model, "--tools", "", "--strict-mcp-config",
-           "--system-prompt", system, "--no-session-persistence", "--output-format", "json"]
+           "--system-prompt", system, "--no-session-persistence", "--output-format", "json"] + list(extra_args or [])
     p = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout, cwd=cwd)
     if p.returncode != 0:
         raise RuntimeError("claude exited %d: %s" % (p.returncode, p.stderr[-400:]))
@@ -43,12 +43,12 @@ def claude_cli_runner(model, system, prompt, timeout=1500, cwd=None):
 
 class LLM:
     def __init__(self, cache_dir, ledger_path, cap=DEFAULT_CAP, concurrency=DEFAULT_CONCURRENCY,
-                 recipe="v1", runner=None, cwd=None):
+                 recipe="v1", runner=None, cwd=None, extra_args=None):
         self.cache_dir, self.ledger_path = cache_dir, ledger_path
         self.cap, self.recipe = cap, recipe
         # Run from a neutral, non-git directory: the user's Stop hook otherwise reacts to the caller's dirty checkout and
         # injects extra turns and hook chatter into the answer (observed on the first 10 ORACLE calls).
-        self.runner = runner or (lambda m, s, p: claude_cli_runner(m, s, p, cwd=cwd))
+        self.runner = runner or (lambda m, s, p: claude_cli_runner(m, s, p, cwd=cwd, extra_args=extra_args))
         with _SHARED_GUARD:
             sh = _SHARED.setdefault(os.path.abspath(cache_dir), {"sem": threading.Semaphore(concurrency),
                                                                   "lock": threading.Lock(), "keys": {}})
@@ -104,7 +104,7 @@ class LLM:
                    "result": out.get("result", ""), "is_error": bool(out.get("is_error", False)),
                    "in_tokens": u.get("input_tokens", 0), "cache_creation": u.get("cache_creation_input_tokens", 0),
                    "cache_read": u.get("cache_read_input_tokens", 0), "out_tokens": u.get("output_tokens", 0),
-                   "cost_usd": out.get("total_cost_usd"), "seconds": round(secs, 2), "prompt_chars": len(prompt)}
+                   "cost_usd": out.get("total_cost_usd"), "num_turns": out.get("num_turns"), "seconds": round(secs, 2), "prompt_chars": len(prompt)}
             tmp = path + ".tmp%d" % threading.get_ident()
             with open(tmp, "w") as fh:
                 json.dump(rec, fh)
