@@ -19,6 +19,11 @@ from .esc import ES, ESError, bulk_errors
 from .projector import LOCK_SQL
 
 
+# Registry of derived tables keyed by input event id: (table, event_id column, optional array column). Every derived store
+# added later (an extraction cache, a summary table) registers here so the erasure cascade cannot silently miss it.
+DERIVED_BY_EVENT = []
+
+
 def phase1(conn, kms, tenant, subject_id, job_id, hook=None, slot_locks=True, resolve_hook=None):
     t0 = time.time()
 
@@ -49,9 +54,12 @@ def phase1(conn, kms, tenant, subject_id, job_id, hook=None, slot_locks=True, re
             c = cur.execute("update concepts set digest=null, input_fact_ids='{}', input_event_ids='{}', dirty=true, gen=gen+1, claim_token=null, lease_until=null, "
                             "pending_since=null, next_fold_at=clock_timestamp(), dirty_since=clock_timestamp() "
                             "where tenant_id=%s and (input_event_ids && %s or concept_id = any(%s))", (tenant, ids, sorted(ents))).rowcount
+            purged = {}
+            for table, col in DERIVED_BY_EVENT:
+                purged[table] = cur.execute(f"delete from {table} where tenant_id=%s and {col} = any(%s)", (tenant, ids)).rowcount
             cur.execute("insert into erasure_jobs(job_id, tenant_id, subject_id, event_ids, event_ts) values (%s,%s,%s,%s,%s)",
                         (job_id, tenant, subject_id, ids, [e[1] for e in evs]))
-            return {"events": len(ids), "facts_deleted": deleted, "concepts_deleted": cdel, "concepts_reset": c}
+            return {"events": len(ids), "registered_tables_purged": purged, "facts_deleted": deleted, "concepts_deleted": cdel, "concepts_reset": c}
     r = retry_deadlock(txn)
     r["phase1_s"] = round(time.time() - t0, 3)
     return r
