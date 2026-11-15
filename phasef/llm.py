@@ -4,6 +4,7 @@ Every call is keyed by sha256(model, recipe, system, prompt). A hit costs nothin
 cap. A miss increments a persistent counter BEFORE the subprocess starts (so a crash or failure still counts) and
 is refused once the counter reaches the cap. Concurrency is bounded by a semaphore. Usage goes to a JSONL ledger.
 """
+import fcntl
 import hashlib
 import json
 import os
@@ -13,6 +14,10 @@ import time
 
 DEFAULT_CAP = 120
 DEFAULT_CONCURRENCY = 3
+
+
+_SHARED = {}  # per cache dir: lock, semaphore and per-key locks shared by every LLM instance in this process
+_SHARED_GUARD = threading.Lock()
 
 
 class CallCapExceeded(RuntimeError):
@@ -27,10 +32,10 @@ def request_hash(model, recipe, system, prompt):
     return h.hexdigest()
 
 
-def claude_cli_runner(model, system, prompt, timeout=1500):
+def claude_cli_runner(model, system, prompt, timeout=1500, cwd=None):
     cmd = ["claude", "-p", "--model", model, "--tools", "", "--strict-mcp-config",
            "--system-prompt", system, "--no-session-persistence", "--output-format", "json"]
-    p = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
+    p = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout, cwd=cwd)
     if p.returncode != 0:
         raise RuntimeError("claude exited %d: %s" % (p.returncode, p.stderr[-400:]))
     return json.loads(p.stdout)
@@ -38,12 +43,16 @@ def claude_cli_runner(model, system, prompt, timeout=1500):
 
 class LLM:
     def __init__(self, cache_dir, ledger_path, cap=DEFAULT_CAP, concurrency=DEFAULT_CONCURRENCY,
-                 recipe="v1", runner=claude_cli_runner):
+                 recipe="v1", runner=None, cwd=None):
         self.cache_dir, self.ledger_path = cache_dir, ledger_path
-        self.cap, self.recipe, self.runner = cap, recipe, runner
-        self._sem = threading.Semaphore(concurrency)
-        self._lock = threading.Lock()
-        self._key_locks = {}
+        self.cap, self.recipe = cap, recipe
+        # Run from a neutral, non-git directory: the user's Stop hook otherwise reacts to the caller's dirty checkout and
+        # injects extra turns and hook chatter into the answer (observed on the first 10 ORACLE calls).
+        self.runner = runner or (lambda m, s, p: claude_cli_runner(m, s, p, cwd=cwd))
+        with _SHARED_GUARD:
+            sh = _SHARED.setdefault(os.path.abspath(cache_dir), {"sem": threading.Semaphore(concurrency),
+                                                                  "lock": threading.Lock(), "keys": {}})
+        self._sem, self._lock, self._key_locks = sh["sem"], sh["lock"], sh["keys"]
         os.makedirs(cache_dir, exist_ok=True)
         self._counter = os.path.join(cache_dir, "calls.count")
 
@@ -56,12 +65,14 @@ class LLM:
 
     def _reserve(self):
         with self._lock:
-            n = self.calls_used()
-            if n >= self.cap:
-                raise CallCapExceeded("call cap %d reached" % self.cap)
-            with open(self._counter, "w") as fh:
-                fh.write(str(n + 1))
-            return n + 1
+            with open(self._counter + ".lock", "w") as lk:  # cross-process exclusion
+                fcntl.flock(lk, fcntl.LOCK_EX)
+                n = self.calls_used()
+                if n >= self.cap:
+                    raise CallCapExceeded("call cap %d reached" % self.cap)
+                with open(self._counter, "w") as fh:
+                    fh.write(str(n + 1))
+                return n + 1
 
     def _path(self, key):
         return os.path.join(self.cache_dir, key + ".json")

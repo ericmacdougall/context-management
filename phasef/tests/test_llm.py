@@ -84,6 +84,23 @@ class LLMTests(unittest.TestCase):
         with open(os.path.join(self.d, "led.jsonl")) as fh:
             self.assertEqual(len(fh.readlines()), 9)
 
+    def test_cap_exact_across_many_instances_and_threads(self):
+        errs, lock = [], threading.Lock()
+
+        def work(i):
+            m = LLM(os.path.join(self.d, "c"), os.path.join(self.d, "led.jsonl"), cap=10, runner=fake_runner(self.calls))
+            try:
+                m.call("p%d" % i, "s", "sonnet", "A", "q", "read")
+            except CallCapExceeded:
+                with lock:
+                    errs.append(i)
+        ts = [threading.Thread(target=work, args=(i,)) for i in range(25)]
+        [t.start() for t in ts]
+        [t.join() for t in ts]
+        self.assertEqual(len(self.calls), 10)
+        self.assertEqual(len(errs), 15)
+        self.assertEqual(self.mk(cap=10).calls_used(), 10)
+
     def test_same_request_concurrently_runs_once(self):
         m = self.mk(cap=10)
         ts = [threading.Thread(target=m.call, args=("same", "s", "sonnet", "A", "q", "read")) for _ in range(4)]
