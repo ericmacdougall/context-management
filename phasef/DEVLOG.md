@@ -26,3 +26,14 @@ Step 2, diagnosis: the 4 false links are all judge errors of one kind, two relat
 relationship vs employer, one video plan vs another video). Gold misses: 07741c45 is a candidate miss ("stored" lemmatised to "stor"), not a judge error;
 5c40ec5b has no comparable earlier value (a plan to meet, then "met twice") and no candidate; 89941a94 is a definition artefact (yes/no answer, coverage 0.33),
 its correct pair is linked. 5a4f22c0's v4 hit rests on a false link. Ceiling with correct links under the owner's definition: 12 of 15 (GATE3.md section 2).
+
+Rescue iteration 1 (v5 = v4 candidates + lemma fix "stored" -> "store"; stage 1 = link-v4.1 Sonnet, cached, 2 new pairs; stage 2 = link-v5-verify Sonnet on every stage-1
+positive, attribute-explicit: each side names entity and attribute, same_entity / same_attribute / both_true checked in code, explicit unsure = abstain; replaces the v4
+shuffled re-judge): 501 pairs, 35 stage-1 positives, 19 links (17 replaces, 2 pending), 2 abstentions (unsure). Calls 7 (2 stage-1, 3 verify, 2 audit).
+S1 precision 19/19 Wilson95 [0.83, 1.00] but only 19 audited (bar: at least 20): FAIL on the count. S2 harmful 0/19 [0.00, 0.17]: pass. S3 12/15 [0.55, 0.93]: FAIL
+(misses 5a4f22c0, 5c40ec5b, 89941a94: the three rows of the GATE3 ceiling table); S3-correct 12. STOP CONDITION NOT MET.
+The 19/19 is IN-SAMPLE: the verifier's examples (workplace vs home, relationship vs employer, two different videos) are the four v4 dev errors. No held-out precision exists.
+Recall price: of the 20 v4 links the original audit accepted, v5 keeps 18; it drops sculpting one month -> classes three months (auditor: replaces) and lessons with Alex ->
+plan to find a guitar teacher (auditor: pending); the 4 audited-false links are all dropped. New: 07741c45 under the bed -> shoe-rack plan (audited pending).
+Not demonstrated: order independence of stage 2 (batches of 12 across questions in pair-id order; a verdict may depend on its neighbours).
+Gate: not run (stop condition not met). No dev2 call, no dev2 session count.
