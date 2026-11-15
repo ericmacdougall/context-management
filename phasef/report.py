@@ -6,9 +6,8 @@ import os
 import statistics
 import sys
 
-from emlab.metrics import wilson_interval
-
 from . import data, run_pilot as R
+from emlab.metrics import wilson_interval
 
 OVERHEAD = 11000  # per-call harness overhead (cached prompt), measured from the smallest call
 
@@ -67,7 +66,7 @@ def main(stats_path):
             print("  %s: extraction %d unique sessions -> %d calls, in %.1fM out %.1fM tokens" % (label, uniq, calls_ex, ex_in / 1e6, ex_out / 1e6))
             for arm in ("ORACLE", "FULL"):
                 m, sd = rows[arm]["read_in"]
-                print("    %s reading: %d calls, in %.1fM (+-%.1fM per-question sd scaled), out %.2fM" % (arm, qn, qn * m / 1e6, sd * math.sqrt(qn) / 1e6, qn * rows[arm]["read_out"][0] / 1e6))
+                print("    %s reading: %d calls, in %.1fM (sampling sd of the total from n=10 only: +-%.2fM; type mix and model drift not covered), out %.2fM" % (arm, qn, qn * m / 1e6, sd * math.sqrt(qn) / 1e6, qn * rows[arm]["read_out"][0] / 1e6))
             if "FACTS" in rows and rows["FACTS"]["n"]:
                 m, sd = rows["FACTS"]["read_in"]
                 print("    FACTS reading: %d calls, in %.2fM" % (qn, qn * m / 1e6))

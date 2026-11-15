@@ -138,18 +138,18 @@ def stage_extract(limit=None):
         res = list(ex.map(one, range(len(batches))))
     bad = [(i, d) for i, per, d, c in res if per is None]
     with open(store, "w") as fh:
-        for i, per, d, c in res:
+        for (i, per, d, c) in res:
             if per is None:
                 continue
-            for sid, fs in per.items():
+            for item, fs in zip(batches[i], per):
                 for f in fs:
                     g = dict(f)
                     g["valid_from"], g["asserted_at"] = f["valid_from"].isoformat(), f["asserted_at"].isoformat()
-                    g["session_key"] = next(k for k in keys if uniq[k][0] == sid)
+                    g["session_key"] = _skey(*item)
                     fh.write(json.dumps(g) + "\n")
     print("parse failures", bad)
     for i, per, d, c in res:
-        print(i, "facts", sum(len(v) for v in per.values()) if per else None, "in", c["in_tokens"] + c["cache_creation"] + c["cache_read"], "out", c["out_tokens"], "s", c["seconds"])
+        print(i, "facts", sum(len(v) for v in per) if per else None, "in", c["in_tokens"] + c["cache_creation"] + c["cache_read"], "out", c["out_tokens"], "s", c["seconds"])
 
 
 def load_facts(S):

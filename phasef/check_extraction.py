@@ -3,9 +3,8 @@ the supersession code mark the newer one current? Gold: the later-dated gold ses
 Usage: python3 -m phasef.check_extraction"""
 import json
 
-from emlab.dataset import LongMemEvalLoader, parse_date
-
 from . import data, run_pilot as R
+from emlab.dataset import parse_date
 from .facts import toks
 
 

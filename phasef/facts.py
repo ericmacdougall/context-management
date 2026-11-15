@@ -30,7 +30,30 @@ def _json_from(text):
     a, b = t.find("{"), t.rfind("}")
     if a < 0 or b < 0:
         raise ValueError("no JSON object in extractor output: %r" % text[:200])
-    return json.loads(t[a:b + 1])
+    body = t[a:b + 1]
+    try:
+        return json.loads(body)
+    except ValueError:
+        return json.loads(body + _missing_closers(body))  # the model sometimes stops short of its closing brackets
+
+
+def _missing_closers(text):
+    stack, in_str, esc = [], False, False
+    for ch in text:
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]" and stack:
+            stack.pop()
+    return "".join(reversed(stack))
 
 
 def _date(s, fallback):
@@ -43,22 +66,29 @@ def _date(s, fallback):
 
 
 def parse_extraction(text, batch):
-    """Returns {session_id: [fact dict]} (raw, supersession not yet resolved). Unknown session ids are dropped and counted."""
+    """Returns ([fact list per batch position], dropped). Output entries are matched to batch items by session id in order of
+    appearance, so the same session id occurring twice in one batch (with different dates, as in LongMemEval) is kept apart.
+    Unknown ids and malformed facts are dropped and counted."""
     obj = _json_from(text)
-    dates = {sid: parse_date(d) for sid, d, _ in batch}
-    out, dropped = {sid: [] for sid in dates}, 0
+    slots = {}
+    for pos, (sid, d, _) in enumerate(batch):
+        slots.setdefault(sid, []).append(pos)
+    used = {sid: 0 for sid in slots}
+    out, dropped = [[] for _ in batch], 0
     for ent in obj.get("sessions", []):
         sid = ent.get("session_id")
-        if sid not in dates:
+        if sid not in slots or used[sid] >= len(slots[sid]):
             dropped += 1
             continue
+        pos = slots[sid][used[sid]]
+        used[sid] += 1
+        asserted = parse_date(batch[pos][1])
         for f in ent.get("facts", []):
             if not all(k in f for k in ("subject", "predicate", "object")):
                 dropped += 1
                 continue
-            asserted = dates[sid]
             mod = f.get("modality") if f.get("modality") in MODALITIES else "asserted"
-            out[sid].append({
+            out[pos].append({
                 "subject": str(f["subject"]), "predicate": str(f["predicate"]), "object": str(f["object"]),
                 "valid_from": _date(f.get("valid_from"), asserted), "valid_to_stated": f.get("valid_to"),
                 "asserted_at": asserted, "modality": mod, "scope": str(f.get("scope", "")),

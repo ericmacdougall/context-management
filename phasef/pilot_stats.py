@@ -3,7 +3,9 @@ Usage: python3 -m phasef.pilot_stats <dataset path> <out json>"""
 import json
 import sys
 
-from emlab.dataset import LongMemEvalLoader, select_split
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "eval"))
+from emlab.dataset import LongMemEvalLoader, select_split  # noqa: E402
 
 
 def main(path, out):
