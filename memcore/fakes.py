@@ -21,7 +21,7 @@ def tokens(text: str) -> List[str]:
 class FakeChat(CachedChatModel):
     """Backend is a python callable (prompt, system, schema) -> str | dict; counts real calls in `.backend_calls`."""
     adapter_id = "fake"
-    network_safe = True          # positively declared: a stub, never a subscription backend
+    # NOT network-safe: its behaviour is caller code (fn may forward to anything), so the gateway refuses it off loopback.
 
     def __init__(self, fn: Callable, reports_usage: bool = True, **kw):
         super().__init__(model="fake-1", **kw)
@@ -37,6 +37,33 @@ class FakeChat(CachedChatModel):
         text = r if isinstance(r, str) else json.dumps(r)
         usage = Usage(len(prompt) // 4, 0, len(text) // 4) if self.capabilities.reports_usage else None
         return BackendOut(text=text, usage=usage)
+
+
+class ScriptedStubChat(CachedChatModel):
+    """Data-only stub chat backend: the answer is chosen from a fixed tuple of (substring, answer) string rules, else the
+    fixed default text (with "{prompt}" replaced by the first 100 prompt characters). No caller code ever runs, which is why
+    this exact type (not a subclass) is the one backend the gateway accepts on the named bridge address (see gateway.py)."""
+    adapter_id = "scripted-stub"
+
+    def __init__(self, cache_dir: str, ledger_path: str, cap: int, rules: Sequence = (), default: str = "Stub answer: {prompt}",
+                 model: str = "stub-1"):
+        rules = tuple((a, b) for a, b in rules)
+        if not all(isinstance(a, str) and isinstance(b, str) for a, b in rules) or not isinstance(default, str):
+            raise TypeError("ScriptedStubChat rules and default must be plain strings")
+        super().__init__(model=model, cache_dir=cache_dir, ledger_path=ledger_path, cap=cap)   # no **kw: nothing injectable
+        self.rules, self.default = rules, default
+        self.capabilities = Capabilities(adapter=self.adapter_id, supports_json_schema=False, json_schema_mode="prompt+validate",
+                                         supports_system=True, reports_usage=True, max_context_tokens=100000,
+                                         supports_temperature=True, supports_max_output_tokens=True)
+
+    def settings_fingerprint(self) -> dict:
+        return {"rules": [list(r) for r in self.rules], "default": self.default}
+
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None):
+        text = next((ans for sub, ans in self.rules if sub in prompt), None)
+        if text is None:
+            text = self.default.replace("{prompt}", prompt[:100])
+        return BackendOut(text=text, usage=Usage(len(prompt) // 4, 0, len(text) // 4))
 
 
 class HashEmbedder(Embedder):

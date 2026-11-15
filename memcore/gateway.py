@@ -17,8 +17,10 @@ import secrets
 import sys
 import threading
 import time
+from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Optional
+from types import MappingProxyType
+from typing import Callable, Optional
 
 from .budget import CallBudget
 from .ports import (BackendError, CallCapExceeded, CallTimeout, ChatModel, InputTooLong, PortError, SchemaError)
@@ -37,6 +39,49 @@ def require_loopback(host: str) -> None:
         ok = False  # hostnames (even 'localhost') are refused: no resolver surprises
     if not ok:
         raise ValueError("refusing non-loopback bind %r; only 127.0.0.1 / ::1 are allowed" % host)
+
+
+def _network_safe(b) -> bool:
+    """Default deny. True only for an instance of EXACTLY an allow-listed data-only stub type (no subclass, no wrapper, no
+    attribute a caller can set), with no callable injected on the instance, no shadowed method, its own guard and budget
+    types, and string-only rules. A flag the object declares about itself is never trusted."""
+    from .budget import CallBudget
+    from .fakes import ScriptedStubChat
+    from .guard import EgressGuard
+    if type(b) is not ScriptedStubChat:
+        return False
+    inst = vars(b)
+    cls_methods = {k for k in dir(type(b)) if callable(getattr(type(b), k, None))}
+    if any(callable(v) for v in inst.values()) or cls_methods & set(inst):
+        return False
+    if getattr(b, "subscription_backed", False) or type(b.egress_guard) is not EgressGuard or type(b.budget) is not CallBudget:
+        return False
+    rules = inst.get("rules")
+    return (isinstance(rules, tuple) and all(type(r) is tuple and len(r) == 2 and all(type(x) is str for x in r) for r in rules)
+            and type(inst.get("default")) is str)
+
+
+def check_gate(backs: Mapping, host: str, allow_bridge_host: Optional[str], dev_subscription_backends: bool) -> None:
+    """The bind/backend gate. Run at construction over the snapshot the handler will use, and again per request."""
+    try:
+        loopback = ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        loopback = False
+    tainted = [m for m, b in backs.items() if getattr(b, "subscription_backed", False)]
+    if tainted:   # subscription CLIs, or any client/wrapper that declares the taint: explicit dev flag, loopback only
+        from .devgate import require_dev_subscription
+        require_dev_subscription(dev_subscription_backends, "Gateway over subscription-backed backend(s) %s" % tainted)
+    if loopback:
+        require_loopback(host)
+        return
+    # FAIL CLOSED: a non-loopback bind needs the one named bridge address AND every backend to be an exact allow-listed
+    # data-only stub (_network_safe). FakeChat (caller code), subclasses, wrappers, routers and clients are refused.
+    if allow_bridge_host != host or host not in BRIDGE_ADDRESSES:
+        raise ValueError("refusing non-loopback bind %r: only loopback or the named bridge address %s" % (host, sorted(BRIDGE_ADDRESSES)))
+    unsafe = [m for m, b in backs.items() if not _network_safe(b)]
+    if unsafe:
+        raise ValueError("refusing non-loopback bind: backend(s) %s are not an allow-listed data-only stub type (ScriptedStubChat); "
+                         "anything else may front a subscription and is refused off loopback" % unsafe)
 
 
 def to_port_request(body: dict) -> dict:
@@ -91,9 +136,12 @@ def _b64_floats(vec) -> str:
 
 
 def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None, recorder: Optional[list] = None,
-                 embed_budget=None, embed_kind: str = "passage"):
-    if not isinstance(backends, dict):
+                 embed_budget=None, embed_kind: str = "passage", gate: Optional[Callable[[Mapping], None]] = None):
+    """backends: a ChatModel or a mapping; it is COPIED into a read-only mapping, so a caller mutating its dict afterwards
+    changes nothing the handler serves. gate: re-run per request on the chosen backend (refuses with 503)."""
+    if not isinstance(backends, Mapping):
         backends = {backends.model: backends}
+    backends = MappingProxyType(dict(backends))
     default_model = default_model or next(iter(backends))
 
     class H(BaseHTTPRequestHandler):
@@ -165,6 +213,11 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
             backend = backends.get(model)
             if backend is None:
                 return self._err(404, "model %r not served here; have %s" % (model, sorted(backends)), "model_not_found")
+            if gate is not None:
+                try:
+                    gate({model: backend})      # a backend mutated after construction (taint set, method injected) is refused
+                except (ValueError, PortError) as e:
+                    return self._err(503, "backend %r no longer passes the gateway gate: %s" % (model, type(e).__name__), "backend_refused")
             try:
                 res = backend.complete(**kw)
             except InputTooLong as e:
@@ -242,30 +295,13 @@ class Gateway:
                  embed_kind: str = "passage"):
         """backend: a ChatModel or {model_id: ChatModel}. allow_bridge_host: one explicitly named private address (e.g. the Docker
         bridge gateway) a containerised client must reach; never 0.0.0.0, and the bearer token still applies."""
-        backs = backend if isinstance(backend, dict) else {backend.model: backend}
-        loopback = True
-        try:
-            loopback = ipaddress.ip_address(host).is_loopback
-        except ValueError:
-            loopback = False
-        tainted = [m for m, b in backs.items() if getattr(b, "subscription_backed", False)]
-        if tainted:   # subscription CLIs, or any client/wrapper that declares the taint: explicit dev flag, loopback only
-            from .devgate import require_dev_subscription
-            require_dev_subscription(dev_subscription_backends, "Gateway over subscription-backed backend(s) %s" % tainted)
-        if loopback:
-            require_loopback(host)
-        else:
-            # FAIL CLOSED: a non-loopback bind needs the one named bridge address AND every backend positively declaring
-            # network_safe=True (stub or replay types). A wrapper, router or client that does not declare it is refused.
-            if allow_bridge_host != host or host not in BRIDGE_ADDRESSES:
-                raise ValueError("refusing non-loopback bind %r: only loopback or the named bridge address %s" % (host, sorted(BRIDGE_ADDRESSES)))
-            unsafe = [m for m, b in backs.items() if getattr(b, "network_safe", False) is not True or getattr(b, "subscription_backed", False)]
-            if unsafe:
-                raise ValueError("refusing non-loopback bind: backend(s) %s do not declare network_safe=True (subscription taint propagates "
-                                 "through wrappers and loopback clients)" % unsafe)
+        # Snapshot FIRST, gate the snapshot, and hand the handler a read-only view of exactly what was gated (review N2).
+        backs = MappingProxyType(dict(backend) if isinstance(backend, Mapping) else {backend.model: backend})
+        check_gate(backs, host, allow_bridge_host, dev_subscription_backends)
+        gate = lambda sub: check_gate(sub, host, allow_bridge_host, dev_subscription_backends)
         os.makedirs(out_dir, exist_ok=True)
         self.out_dir, self.token = out_dir, secrets.token_urlsafe(32)
-        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token, embedder, recorder=recorder, embed_budget=CallBudget(out_dir, embed_cap, os.path.join(out_dir, "embed-ledger.jsonl"), name="embed"), embed_kind=embed_kind))
+        self.srv = ThreadingHTTPServer((host, port), make_handler(backs, self.token, embedder, recorder=recorder, gate=gate, embed_budget=CallBudget(out_dir, embed_cap, os.path.join(out_dir, "embed-ledger.jsonl"), name="embed"), embed_kind=embed_kind))
         self.srv.daemon_threads = True
         self.host, self.port = self.srv.server_address[:2]
         self._write("gateway.token", self.token, 0o600)
