@@ -52,7 +52,9 @@ def handle(surface: AgentToolSurface, msg: dict) -> Optional[dict]:
             return err(-32602, str(e))
         except ValueError as e:
             return ok({"content": [{"type": "text", "text": str(e)}], "isError": True})
-        return ok({"content": [{"type": "text", "text": json.dumps(res, ensure_ascii=False)}], "isError": False})
+        # full result in text content (Kibana ignores structuredContent); structuredContent (an object) is added alongside
+        return ok({"content": [{"type": "text", "text": json.dumps(res, ensure_ascii=False)}],
+                   "structuredContent": res if isinstance(res, dict) else {"result": res}, "isError": False})
     return err(-32601, "method not found: %s" % method)
 
 
