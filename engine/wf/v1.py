@@ -1,0 +1,123 @@
+"""SessionWorkflow, code version v1. Holds ids, cursors and counters only; every effect is an activity.
+Turn = read event from Postgres, (stand-in) compute, idempotent external effect, append result event."""
+import asyncio
+from datetime import timedelta
+
+from temporalio import workflow
+from temporalio.common import RetryPolicy
+
+CODE = "v1"
+AT = dict(start_to_close_timeout=timedelta(seconds=8),
+          retry_policy=RetryPolicy(initial_interval=timedelta(milliseconds=500), maximum_interval=timedelta(seconds=5)))
+MAX_CARRY = 50
+
+
+async def act(name, *args):
+    return await workflow.execute_activity(name, args=list(args), **AT)
+
+
+def now_ms():
+    return int(workflow.now().timestamp() * 1000)
+
+
+@workflow.defn(name="SessionWorkflow")
+class SessionWorkflow:
+    @workflow.init
+    def __init__(self, st: dict):
+        self.st = dict(st)
+        self.pending = list(self.st.get("pend", []))
+        self.done = set()
+        self.approved = False
+        self.finish = False
+        self.sig = 0
+
+    @workflow.signal
+    def turn(self, event_id: str):
+        self.sig += 1
+        self.pending.append(event_id)
+
+    @workflow.signal
+    def approve(self, ref: str):
+        self.approved = True
+
+    @workflow.signal
+    def finish_now(self, ref: str):
+        self.finish = True
+
+    @workflow.query
+    def progress(self) -> dict:
+        return {"turns": self.st["turns_done"], "sig": self.st["signals_seen"] + self.sig, "code": CODE}
+
+    # ---- one turn: the only place the command sequence matters for in-flight sessions
+    async def _turn(self, eid):
+        sid = self.st["sid"]
+        digest = await act("turn_read", eid)
+        key = await act("turn_effect", sid, eid)
+        await act("turn_append", sid, eid, digest, key, CODE)
+
+    def _want_can(self):
+        info = workflow.info()
+        cl = self.st.get("can_len", 0)
+        return info.is_continue_as_new_suggested() or (cl and info.get_current_history_length() >= cl)
+
+    @workflow.run
+    async def run(self, st: dict) -> dict:
+        st = self.st
+        sid = st["sid"]
+        if st["rollup_s"] and not st["rollup_deadline_ms"]:
+            st["rollup_deadline_ms"] = now_ms() + int(st["rollup_s"] * 1000)
+        for e in await act("reconcile", sid):
+            if e not in self.pending:
+                self.pending.append(e)
+        while True:
+            if self.finish and not self.pending:
+                break
+            if st["expected_turns"] and st["turns_done"] >= st["expected_turns"]:
+                break
+            if st.get("stop_after_rollups") and st["rollups"] >= st["stop_after_rollups"]:
+                break
+            # approval gate: parked until a grant or the deadline; the deadline lives in Postgres, not here
+            if st["approval_at"] and st["approval"] == "none" and st["turns_done"] >= st["approval_at"]:
+                st["approval"] = "waiting"
+                st["approval_deadline_ms"] = await act("approval_request", sid,
+                                                       now_ms() + int(st["approval_to_s"] * 1000))
+            if st["approval"] == "waiting":
+                remaining = (st["approval_deadline_ms"] - now_ms()) / 1000
+                if remaining > 0:
+                    try:
+                        await workflow.wait_condition(lambda: self.approved, timeout=remaining)
+                    except asyncio.TimeoutError:
+                        pass
+                st["approval"] = await act("approval_resolve", sid)
+                continue
+            if st["rollup_s"] and now_ms() >= st["rollup_deadline_ms"]:
+                await act("rollup", sid, st["rollups"])
+                st["rollups"] += 1
+                st["rollup_deadline_ms"] = max(st["rollup_deadline_ms"] + int(st["rollup_s"] * 1000),
+                                               now_ms() + 1000)
+                continue
+            if self.pending:
+                eid = self.pending.pop(0)
+                if eid not in self.done:
+                    await self._turn(eid)
+                    self.done.add(eid)
+                    st["turns_done"] += 1
+            else:
+                timeout = None
+                if st["rollup_s"]:
+                    timeout = max((st["rollup_deadline_ms"] - now_ms()) / 1000, 0.001)
+                try:
+                    await workflow.wait_condition(lambda: bool(self.pending) or self.finish, timeout=timeout)
+                except asyncio.TimeoutError:
+                    pass
+            if self._want_can() and len(self.pending) <= MAX_CARRY:
+                await workflow.wait_condition(workflow.all_handlers_finished)
+                st["pend"] = [e for e in self.pending if e not in self.done]
+                st["signals_seen"] += self.sig
+                st["cans"] += 1
+                st["hist_max"] = max(st["hist_max"], workflow.info().get_current_history_length())
+                workflow.continue_as_new(st)
+        await act("finish_session", sid, st["turns_done"])
+        await workflow.wait_condition(workflow.all_handlers_finished)
+        return {"turns": st["turns_done"], "sig": st["signals_seen"] + self.sig, "cans": st["cans"],
+                "rollups": st["rollups"], "approval": st["approval"], "code": CODE}
