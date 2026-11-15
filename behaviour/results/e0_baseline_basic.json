@@ -1,0 +1,97 @@
+{
+ "root": {
+  "name": "81414232b668",
+  "cluster_name": "emlab-16096",
+  "cluster_uuid": "V8CsE6BcTOGIO3BSB4mEXA",
+  "version": {
+   "number": "9.5.6",
+   "build_flavor": "default",
+   "build_type": "docker",
+   "build_hash": "fd1e8011342a0988e432b999cea4bf884ca120ed",
+   "build_date": "2026-10-28T22:37:54.387301573Z",
+   "build_snapshot": false,
+   "lucene_version": "10.5.2",
+   "minimum_wire_compatibility_version": "8.19.0",
+   "minimum_index_compatibility_version": "8.0.0"
+  },
+  "tagline": "You Know, for Search"
+ },
+ "license": {
+  "license": {
+   "status": "active",
+   "uid": "2b1d437b-aa5d-4690-8f7e-a75cc2c133ac",
+   "type": "basic",
+   "issue_date": "2026-11-15T17:48:39.515Z",
+   "issue_date_in_millis": 1794764919515,
+   "max_nodes": 1000,
+   "max_resource_units": null,
+   "issued_to": "emlab-16096",
+   "issuer": "elasticsearch",
+   "start_date_in_millis": -1
+  }
+ },
+ "watermarks": {
+  "defaults": {
+   "cluster": {
+    "routing": {
+     "allocation": {
+      "disk": {
+       "watermark": {
+        "flood_stage.frozen.max_headroom": "20GB",
+        "flood_stage": "5gb",
+        "high": "10gb",
+        "low": "15gb",
+        "flood_stage.frozen": "5gb",
+        "flood_stage.max_headroom": "100GB",
+        "low.max_headroom": "200GB",
+        "high.max_headroom": "150GB"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "create": {
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "e0-test"
+ },
+ "health": {
+  "cluster_name": "emlab-16096",
+  "status": "green",
+  "timed_out": false,
+  "number_of_nodes": 1,
+  "number_of_data_nodes": 1,
+  "active_primary_shards": 1,
+  "active_shards": 1,
+  "relocating_shards": 0,
+  "initializing_shards": 0,
+  "unassigned_shards": 0,
+  "unassigned_primary_shards": 0,
+  "delayed_unassigned_shards": 0,
+  "number_of_pending_tasks": 0,
+  "number_of_in_flight_fetch": 0,
+  "task_max_waiting_in_queue_millis": 0,
+  "active_shards_percent_as_number": 100.0
+ },
+ "allocation": [
+  {
+   "shards": "4",
+   "shards.undesired": "0",
+   "write_load.forecast": "0.0",
+   "disk.indices.forecast": "74kb",
+   "disk.indices": "78kb",
+   "disk.used": "598.5gb",
+   "disk.avail": "43.6gb",
+   "disk.total": "642.1gb",
+   "disk.percent": "93",
+   "host": "172.17.0.8",
+   "ip": "172.17.0.8",
+   "node": "81414232b668",
+   "node.role": "cdfhilmrstw"
+  }
+ ],
+ "blocks": {},
+ "write_after": "created"
+}
