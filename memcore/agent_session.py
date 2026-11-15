@@ -23,9 +23,10 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
-from .inbox import InboxItem, render_block
+from .inbox import InboxItem, item_record, render_block
 from .budget import CallBudget
 from .devgate import require_dev_subscription
+from .guard import DEFAULT_GUARD
 from .ports import BackendError, CallTimeout, Usage
 
 
@@ -59,6 +60,11 @@ class AgentSession:
     _pending: List[InboxItem]
 
     budget: Optional[CallBudget] = None
+    egress_guard = DEFAULT_GUARD      # every model-facing string of a session passes it (None disables: tests only)
+
+    def _guard(self, obj, where: str) -> None:
+        if self.egress_guard is not None:
+            self.egress_guard.check(obj, where)
 
     def _count_turn(self, turn_id: str) -> None:
         """Every turn is one counted, capped, ledgered call (sessions bypassed the cap before the review)."""
@@ -73,7 +79,18 @@ class AgentSession:
         return render_block(items, turn_id) if items else ""
 
     def deliver(self, items: Sequence[InboxItem]) -> None:
+        """Checked on the RAW record values (before JSON escaping hides fullwidth or zero-width forms); a leaking item
+        refuses the whole call and nothing is queued."""
+        items = list(items)
+        for it in items:
+            self._guard(item_record(it), "delivered inbox item")
         self._pending.extend(items)
+
+    def _compose(self, text: str, turn_id: str) -> str:
+        block = self._last_block = self._take_context(turn_id)
+        content = (block + "\n\n" + text) if block else text
+        self._guard(content, "session turn content")      # backstop on exactly what is written to the agent
+        return content
 
     def send(self, text: str) -> Iterator[SessionEvent]:
         raise NotImplementedError
@@ -103,12 +120,14 @@ class FakeAgentSession(AgentSession):
     def send(self, text):
         if self.closed:
             raise BackendError("session closed")
+        self._guard(text, "session send text")            # before the turn is counted or pending items are taken
         self.turns += 1
         turn_id = "%s-t%d" % (self.session_id, self.turns)
         if self.budget is not None:
             self._count_turn(turn_id)
-        block = self._take_context(turn_id)
-        self.shown.append(block)
+        content = self._compose(text, turn_id)
+        self.shown.append(self._last_block)
+        self.sent = content
         reply = "ECHO %s" % text
         yield SessionEvent("text", reply)
         yield SessionEvent("result", TurnResult(reply, "end_turn", Usage(len(text), 0, len(reply)), 0.0, turn_id, self._last_delivered))
@@ -131,6 +150,7 @@ class ClaudeStreamJsonSession(AgentSession):
                  turn_timeout_s: float = 300.0, claude_bin: str = "claude",
                  strip_patterns: Sequence[str] = ()):
         require_dev_subscription(dev_subscription_backends, "ClaudeStreamJsonSession")
+        self._guard(system, "session system prompt")
         self.budget = budget
         if os.path.isdir(os.path.join(cwd, ".git")):
             raise ValueError("cwd must be a neutral non-git directory")
@@ -159,11 +179,11 @@ class ClaudeStreamJsonSession(AgentSession):
         self._q.put(None)
 
     def send(self, text):
+        self._guard(text, "session send text")            # before the turn is counted or pending items are taken
         self.turns += 1
         turn_id = "claude-t%d" % self.turns
         self._count_turn(turn_id)
-        block = self._take_context(turn_id)
-        content = (block + "\n\n" + text) if block else text
+        content = self._compose(text, turn_id)
         t0 = time.time()
         try:
             self._proc.stdin.write(json.dumps({"type": "user", "message": {"role": "user", "content": content}}) + "\n")

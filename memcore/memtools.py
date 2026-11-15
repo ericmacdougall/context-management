@@ -86,6 +86,9 @@ class BudgetedInjector(ContextInjector):
 
     def build(self, turn: Turn) -> Injection:
         import json as _json
+        turn_label = "%s@%s" % (turn.session_id, turn.time)
+        if self.egress_guard is not None:     # the header carries the host's session id: refuse (raise) rather than inject it
+            self.egress_guard.check_text(turn_label, "injection header")
         recs, used, n = [], [], 0
         for h in self.store.recall(turn.user_text, as_of=turn.time, k=self.k):
             rec = {"id": h["id"], "ts": h["ts"], "text": h["text"]}
@@ -101,4 +104,4 @@ class BudgetedInjector(ContextInjector):
             recs.append(rec)
             used.append(h["id"])
             n += size + 1
-        return Injection(block=render_data_block(recs, "%s@%s" % (turn.session_id, turn.time), label="remembered events") if recs else "", used_ids=used)
+        return Injection(block=render_data_block(recs, turn_label, label="remembered events") if recs else "", used_ids=used)

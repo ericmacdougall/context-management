@@ -143,5 +143,167 @@ class N2SnapshotTests(unittest.TestCase):
         self.assertEqual(self.fc.backend_calls, 1)
 
 
+
+ID = "answer_4be1b6b4_2"
+NOW = "2026-12-01T00:00:00Z"
+
+
+def _item(fid, quote="q", src=("e1",)):
+    from memcore.inbox import InboxItem
+    return InboxItem(fid, "S", list(src), quote, "transcript", ["R1"], 0.0, 9e9)
+
+
+class N4EgressGuardTests(unittest.TestCase):
+    """N4: the session-id guard must cover every egress path, normalised forms and every container type."""
+
+    def test_normalised_variants_are_blocked_and_prose_is_not(self):
+        from memcore.guard import DEFAULT_GUARD, EgressLeak
+        for v in ("ANSWER_4BE1B6B4_2", "answer_4BE1B6B4_2", "answer​_4be1b6b4_2", "answer＿4be1b6b4_2",
+                  "ａnswer_4be1b6b4_2", "answer-4be1b6b4-2", "answer‐" + "4be1b6b4", "sharegpt-QROQ758_9",
+                  "SHAREGPT_QROQ758_9", "ultrachat-123", "ULTRACHAT_355211", "x (answer⁠_4be1b6b4)"):
+            with self.assertRaises(EgressLeak, msg=repr(v)):
+                DEFAULT_GUARD.check_text("see %s here" % v)
+        for ok in ("sharegpt-style prompts", "the answer is 42", "ultrachat corpus", "answer_key", "Answer: dead"):
+            DEFAULT_GUARD.check_text(ok)
+
+    def test_tool_results_of_any_container_type_are_checked_and_unknown_types_refused(self):
+        from memcore.guard import EgressLeak
+        from memcore.ports import AgentToolSurface, ToolSpec
+        cases = [{ID}, frozenset([ID]), ID.encode(), bytearray(ID.encode()), (1, [{"k": (ID,)}]), {"x": {ID: 1}},
+                 {("t", ID): 1}, object()]
+        for res in cases:
+            surf = AgentToolSurface([ToolSpec("t", "d", {"type": "object"}, lambda a, r=res: r)])
+            with self.assertRaises(EgressLeak, msg=repr(res)):
+                surf.call_tool("t", {})
+        ok = AgentToolSurface([ToolSpec("t", "d", {"type": "object"}, lambda a: {"a": [1, 2.0, None, True, {"s"}, b"x"]})])
+        self.assertEqual(ok.call_tool("t", {})["a"][0], 1)
+
+    def test_openai_stream_is_guarded_before_the_cap_and_the_network(self):
+        import memcore.adapters.openai_compat as oc
+        from memcore.guard import EgressLeak
+        opened = []
+        real = oc._urlopen
+        oc._urlopen = lambda *a, **k: (opened.append(a), (_ for _ in ()).throw(urllib.error.URLError("refused")))[1]
+        try:
+            d = tempfile.mkdtemp()
+            c = oc.OpenAICompatChat("http://127.0.0.1:1/v1", "m", token="t", cache_dir=d, ledger_path=os.devnull, cap=5)
+            for msgs, system in (([{"role": "user", "content": "my id is " + ID}], None),
+                                 ([{"role": "user", "content": "hi"}], "ctx ANSWER＿4BE1B6B4")):
+                try:
+                    list(c.stream(msgs, system=system))
+                    exc = None
+                except Exception as e:  # noqa: BLE001 - the type is the assertion
+                    exc = e
+                self.assertIsInstance(exc, EgressLeak, "the stream reached the transport %d time(s)" % len(opened))
+            self.assertEqual((opened, c.calls_used()), ([], 0))
+        finally:
+            oc._urlopen = real
+
+    def test_fake_session_send_and_deliver_are_guarded_without_spending_or_losing_items(self):
+        from memcore.agent_session import FakeAgentSession
+        from memcore.budget import CallBudget
+        from memcore.guard import EgressLeak
+        b = CallBudget(tempfile.mkdtemp(), 5)
+        s = FakeAgentSession(budget=b)
+        s.deliver([_item("f1")])
+        with self.assertRaises(EgressLeak):
+            s.send_collect("my id is " + ID)
+        self.assertEqual(b.used(), 0)                                        # nothing counted
+        for bad in (_item("f2", quote="see answer＿4be1b6b4_2"), _item("f3", src=["ANSWER_4BE1B6B4_2"]), _item(ID)):
+            with self.assertRaises(EgressLeak):
+                s.deliver([_item("ok"), bad])                                 # the whole call is refused
+        r = s.send_collect("hello")
+        self.assertEqual(r.delivered_ids, ["f1"])                            # the clean pending item survived the refused send
+        self.assertNotIn("4be1b6b4", s.sent.lower())
+
+    def test_stream_json_and_acp_sessions_never_write_a_leaking_turn(self):
+        import sys
+        from memcore.acp import AcpSession
+        from memcore.agent_session import ClaudeStreamJsonSession
+        from memcore.budget import CallBudget
+        from memcore.guard import EgressLeak
+        here = os.path.dirname(__file__)
+        d = tempfile.mkdtemp()
+        with self.assertRaises(EgressLeak):
+            ClaudeStreamJsonSession(d, "system mentions " + ID, CallBudget(d, 3), dev_subscription_backends=True,
+                                    claude_bin=os.path.join(here, "fake_claude_bin.py"))
+        mk = (lambda b: ClaudeStreamJsonSession(d, "sys", b, dev_subscription_backends=True, claude_bin=os.path.join(here, "fake_claude_bin.py")),
+              lambda b: AcpSession([sys.executable, os.path.join(here, "fake_acp_agent.py")], os.getcwd(), b, dev_subscription_backends=True,
+                                   turn_timeout_s=20))
+        for make in mk:
+            b = CallBudget(tempfile.mkdtemp(), 3)
+            s = make(b)
+            try:
+                with self.assertRaises(EgressLeak):
+                    s.send_collect("x " + ID)
+                with self.assertRaises(EgressLeak):
+                    s.deliver([_item("f9", quote="q " + ID)])
+                r = s.send_collect("clean turn")
+                self.assertNotIn("4be1b6b4", r.text)
+                self.assertEqual(b.used(), 1)                                 # only the clean turn was counted and sent
+            finally:
+                s.close()
+
+    def test_prompt_hook_header_with_a_dataset_session_id_injects_nothing(self):
+        from memcore.hosts.prompt_hook import main
+        p = os.path.join(tempfile.mkdtemp(), "events.json")
+        with open(p, "w") as fh:
+            json.dump({"events": [{"id": "e1", "ts": "2026-03-02T09:00:00Z", "text": "Priya moved the staging database to Dublin."}]}, fh)
+        for sid, expect in (("host-sess-1", True), (ID, False), ("ANSWER＿4BE1B6B4_2", False)):
+            out = io.StringIO()
+            main(["--store", p, "--now", NOW], stdin=io.StringIO(json.dumps({"prompt": "staging database", "session_id": sid})), stdout=out)
+            self.assertEqual(bool(out.getvalue()), expect, sid)
+            self.assertNotIn("4be1b6b4", out.getvalue().lower())
+
+    def test_real_ids_load_match_normalised_and_fail_closed(self):
+        from memcore.guard import EgressGuard, EgressLeak, configure_from_env
+        d = tempfile.mkdtemp()
+        f = os.path.join(d, "ids.txt")
+        with open(f, "w") as fh:
+            fh.write("conv-7f.2\nSess_ABC123\n")
+        g = configure_from_env(EgressGuard(), {"MEMCORE_REAL_IDS_FILE": f})
+        for leak in ("see conv-7f.2 now", "see CONV_7F.2", "sess-abc123", "ｓess_ABC123"):
+            with self.assertRaises(EgressLeak, msg=leak):
+                g.check_text(leak)
+        g.check_text("an unrelated conversation about sessions")
+        empty = os.path.join(d, "empty.txt")
+        open(empty, "w").close()
+        for path in (os.path.join(d, "missing.txt"), empty):
+            g2 = configure_from_env(EgressGuard(), {"MEMCORE_REAL_IDS_FILE": path})
+            with self.assertRaises(EgressLeak):
+                g2.check_text("perfectly harmless text")                     # fail closed: nothing goes out
+            with self.assertRaises(EgressLeak):
+                g2.check({"n": 1})
+        g3 = configure_from_env(EgressGuard(), {"MEMCORE_REQUIRE_REAL_IDS": "1"})
+        with self.assertRaises(EgressLeak):
+            g3.check_text("harmless")
+
+    def test_prompt_hook_real_ids_flag_is_wired_and_fails_closed(self):
+        from memcore.guard import DEFAULT_GUARD
+        from memcore.hosts.prompt_hook import main
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "events.json")
+        with open(p, "w") as fh:
+            json.dump({"events": [{"id": "e1", "ts": "2026-03-02T09:00:00Z", "text": "staging database note sess-77"},
+                                  {"id": "e2", "ts": "2026-03-03T09:00:00Z", "text": "staging database is in Dublin"}]}, fh)
+        ids = os.path.join(d, "ids.json")
+        with open(ids, "w") as fh:
+            json.dump(["SESS_77"], fh)
+        saved = (set(DEFAULT_GUARD.real_ids), DEFAULT_GUARD.require_real_ids, DEFAULT_GUARD.load_error)
+        try:
+            out = io.StringIO()
+            main(["--store", p, "--now", NOW, "--real-ids", ids], stdin=io.StringIO(json.dumps({"prompt": "staging database"})), stdout=out)
+            ctx = json.loads(out.getvalue())["hookSpecificOutput"]["additionalContext"]
+            self.assertIn('"id":"e2"', ctx)
+            self.assertNotIn("sess-77", ctx)                                  # the record carrying a real id was dropped
+            out = io.StringIO()
+            main(["--store", p, "--now", NOW, "--real-ids", os.path.join(d, "nope.json")],
+                 stdin=io.StringIO(json.dumps({"prompt": "staging database"})), stdout=out)
+            self.assertEqual(out.getvalue(), "")                              # id file missing: nothing injected
+        finally:
+            DEFAULT_GUARD.set_real_ids(())
+            DEFAULT_GUARD.real_ids, DEFAULT_GUARD.require_real_ids, DEFAULT_GUARD.load_error = saved
+
+
 if __name__ == "__main__":
     unittest.main()

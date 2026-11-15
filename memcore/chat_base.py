@@ -175,6 +175,10 @@ class CachedChatModel(ChatModel):
         self.budget.ledger(**row)
 
     def _one_call(self, key, prompt, system, schema, timeout_s, kind, params=None) -> tuple:
+        if self.egress_guard is not None:          # every real backend call passes here (first call and repair)
+            self.egress_guard.check_text(prompt, "prompt")
+            if system:
+                self.egress_guard.check_text(system, "system")
         self._reserve()
         t0 = time.time()
         try:

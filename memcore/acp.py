@@ -107,11 +107,11 @@ class AcpSession(AgentSession):
         self._pending, self._last_delivered = [], []
 
     def send(self, text):
+        self._guard(text, "session send text")            # before the turn is counted or pending items are taken
         self.turns += 1
         turn_id = "acp-t%d" % self.turns
         self._count_turn(turn_id)
-        block = self._take_context(turn_id)
-        content = (block + "\n\n" + text) if block else text
+        content = self._compose(text, turn_id)
         parts, usage, tools, t0 = [], {}, [], time.time()
         events: List[SessionEvent] = []
 

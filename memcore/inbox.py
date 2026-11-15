@@ -286,6 +286,11 @@ def render_data_block(records: Sequence[dict], turn_id: str, delimiter: Optional
     return "\n".join([head] + recs + ["<<<%s END>>>" % d]) if recs else ""
 
 
+def item_record(i: InboxItem) -> dict:
+    """The exact model-facing fields of an inbox item (what render_block shows; what the egress guard checks raw)."""
+    return {"finding_id": i.finding_id, "source_event_ids": i.source_event_ids, "trust_origin": i.trust_origin,
+            "serves": i.item_ids, "quote": i.quote}
+
+
 def render_block(items: Sequence[InboxItem], turn_id: str, delimiter: Optional[str] = None) -> str:
-    return render_data_block([{"finding_id": i.finding_id, "source_event_ids": i.source_event_ids, "trust_origin": i.trust_origin,
-                               "serves": i.item_ids, "quote": i.quote} for i in items], turn_id, delimiter)
+    return render_data_block([item_record(i) for i in items], turn_id, delimiter)

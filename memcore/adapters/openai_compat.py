@@ -95,9 +95,14 @@ class OpenAICompatChat(CachedChatModel):
                ) -> Iterator[Tuple[str, Optional[Usage]]]:
         """Yield (text_delta, None) per content chunk, then ('', usage) once if the server sent a usage chunk.
         Streams are not cached (nothing to replay) but ARE counted against this client's cap and ledgered."""
+        prompt = render_messages(messages)
+        if self.egress_guard is not None:                 # same egress guard as complete(), before the cap is spent
+            self.egress_guard.check_text(prompt, "stream prompt")
+            if system:
+                self.egress_guard.check_text(system, "stream system")
         self._reserve()                                   # streams are counted, capped and ledgered like complete()
         self._ledger(kind="stream", status="started")
-        body = self._body(render_messages(messages), system, None, stream=True)
+        body = self._body(prompt, system, None, stream=True)
         with self._open(body, timeout_s or self.timeout_s) as r:
             for ev in parse_events(r):
                 if ev == "[DONE]":
