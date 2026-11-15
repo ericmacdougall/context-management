@@ -79,7 +79,7 @@ def slot_hashes_for(kms, tenant, claims):
         c["entity_hash"] = em[c["subject"]]
 
 
-def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, between=None, kms=None):
+def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, between=None, kms=None, slot_locks=True, resolve_hook=None):
     """Process one batch; returns the number of events consumed. `between` is a test hook called after reading and
     before writing. fence=False is the NAIVE CONTROL: ciphertext is made before the hook and written with no subject
     check and no slot locks."""
@@ -109,9 +109,9 @@ def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, betwe
                        for c in claims}
             if between:
                 between(tenant, rows, claims)
-            slots = _insert_claims(cur, kms, tenant, recipe, claims, pre, fence)
+            slots = _insert_claims(cur, kms, tenant, recipe, claims, pre, fence, slot_locks)
             crash("derive_after_insert")
-            changed = resolve_slots(cur, kms, tenant, recipe, slots)
+            changed = resolve_slots(cur, kms, tenant, recipe, slots, after_read=resolve_hook)
             if touch and changed:
                 from .conceptq import touch_concepts
                 touch_concepts(cur, tenant, changed)
@@ -121,7 +121,7 @@ def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, betwe
     return retry_deadlock(run)
 
 
-def _insert_claims(cur, kms, tenant, recipe, claims, pre, fence):
+def _insert_claims(cur, kms, tenant, recipe, claims, pre, fence, slot_locks=True):
     if not claims:
         return set()
     if fence:
@@ -132,7 +132,8 @@ def _insert_claims(cur, kms, tenant, recipe, claims, pre, fence):
             if r is not None and r[0]:
                 erased.add(s)
         claims[:] = [c for c in claims if c["subject_id"] not in erased]
-        lock_slots(cur, tenant, recipe, [c["slot_hash"] for c in claims])
+        if slot_locks:
+            lock_slots(cur, tenant, recipe, [c["slot_hash"] for c in claims])
     rows = []
     for c in claims:
         if pre is not None:
@@ -157,7 +158,7 @@ def decode_slot(slot_json):
     return d["s"], d["p"], d["sc"], d.get("cue")
 
 
-def resolve_slots(cur, kms, tenant, recipe, slot_hashes):
+def resolve_slots(cur, kms, tenant, recipe, slot_hashes, after_read=None):
     """Recompute status/valid_to for every claim of the given slots from the claim set. The caller holds the slot
     locks. Returns the set of entity hashes whose rows were part of the resolution."""
     if not slot_hashes:
@@ -165,6 +166,8 @@ def resolve_slots(cur, kms, tenant, recipe, slot_hashes):
     cur.execute("select id, slot_hash, entity_hash, slot_enc, object_enc, subject_id, modality, trust_origin, valid_from, order_key, status, valid_to "
                 "from facts where tenant_id=%s and recipe_version=%s and slot_hash = any(%s)", (tenant, recipe, sorted(slot_hashes)))
     rows = cur.fetchall()
+    if after_read:
+        after_read()
     dec = kms.dec_many(tenant, [(r[5], r[3]) for r in rows] + [(r[5], r[4]) for r in rows])
     n = len(rows)
     by_slot, ents = defaultdict(list), set()

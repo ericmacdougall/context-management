@@ -1,0 +1,627 @@
+{
+ "scope": "speaker-provenance erasure only (events produced by the subject and rows derived from them)",
+ "workload": "one tenant, N events (50/session, 20 data subjects, ~5% per subject), markers in event content and in entity/predicate/scope/object fields, recipes 1 and 2 projected (two facts indices), bucket span 90 d; ES 9.5.6 + PG16 (events) + PG16 key service on t2-dev (shared)",
+ "disk_free_gb_before": 25.1,
+ "results": {
+  "5000": {
+   "events": 5012,
+   "load_s": 2.4,
+   "project_s_both_recipes": 47.0,
+   "subjects": {
+    "control": "u5",
+    "m1": "u17",
+    "m2": "u9",
+    "m3": "u12"
+   },
+   "facts_indices": [
+    "sys-e3-facts-v2-g1",
+    "sys-e3-facts-v1-g1"
+   ],
+   "es_docs": 13238,
+   "positive_control_es": {
+    "u5": 22,
+    "u17": 20,
+    "u9": 20,
+    "u12": 19
+   },
+   "pg_plaintext_positive_control_files": 2,
+   "key_bytes_before": {
+    "in_key_service": {
+     "u5": 1,
+     "u17": 1,
+     "u9": 1,
+     "u12": 1
+    },
+    "in_event_db": {
+     "u5": 0,
+     "u17": 0,
+     "u9": 0,
+     "u12": 0
+    }
+   },
+   "pg_marker_files_event_db_before": {
+    "u5": 0,
+    "u17": 0,
+    "u9": 0,
+    "u12": 0
+   },
+   "control_delete_then_immediate_forcemerge": {
+    "marker_files_after": {
+     "files": 4,
+     "by_kind": {
+      "indices:cfs": 4
+     }
+    }
+   },
+   "m1_lease_gated_forcemerge": {
+    "phase1_pg_s": 0.62,
+    "es_delete_s": 0.15,
+    "lease_gate_wait_s": 30.14,
+    "forcemerge_s": 0.33,
+    "es_total_s": 30.62,
+    "indices_merged": 9,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "m2_alias_swap_rebuild": {
+    "phase1_pg_s": 0.521,
+    "key_destroy_and_es_purge_s": 2.682,
+    "indices_rebuilt": 7,
+    "facts_indices_rebuilt": [
+     1,
+     2
+    ],
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "m3_drop_and_reproject": {
+    "phase1_pg_s": 0.47,
+    "drop_s": 0.02,
+    "indices_dropped": 9,
+    "reproject_s": 2.37,
+    "es_total_s": 2.39,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "pg_marker_files_event_db_after": {
+    "u5": 0,
+    "u17": 0,
+    "u9": 0,
+    "u12": 0
+   },
+   "key_bytes_after": {
+    "in_key_service": {
+     "u5": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u17": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u9": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u12": {
+      "files": 0,
+      "by_kind": {}
+     }
+    },
+    "in_event_db": {
+     "u5": 0,
+     "u17": 0,
+     "u9": 0,
+     "u12": 0
+    }
+   },
+   "survivor_identity": {
+    "events": {
+     "pg": 3200,
+     "es": 3200,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0,
+     "wrong_bucket": 0,
+     "examples": []
+    },
+    "facts_v1": {
+     "pg": 2643,
+     "es": 2643,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0
+    }
+   },
+   "receipt_verification": {
+    "events_tombstoned": 403,
+    "events_still_decryptable": 0,
+    "key_destroyed": true,
+    "pg_facts_touching_tombstoned": 0,
+    "pg_concepts_touching_tombstoned": 0,
+    "es_event_docs": 0,
+    "es_fact_docs_touching": 0,
+    "es_facts_indices_checked": 2
+   }
+  },
+  "20000": {
+   "events": 20012,
+   "load_s": 6.9,
+   "project_s_both_recipes": 57.5,
+   "subjects": {
+    "control": "u3",
+    "m1": "u8",
+    "m2": "u7",
+    "m3": "u15"
+   },
+   "facts_indices": [
+    "sys-e3-facts-v2-g1",
+    "sys-e3-facts-v1-g1"
+   ],
+   "es_docs": 24348,
+   "positive_control_es": {
+    "u3": 16,
+    "u8": 21,
+    "u7": 18,
+    "u15": 17
+   },
+   "pg_plaintext_positive_control_files": 2,
+   "key_bytes_before": {
+    "in_key_service": {
+     "u3": 1,
+     "u8": 1,
+     "u7": 1,
+     "u15": 1
+    },
+    "in_event_db": {
+     "u3": 0,
+     "u8": 0,
+     "u7": 0,
+     "u15": 0
+    }
+   },
+   "pg_marker_files_event_db_before": {
+    "u3": 0,
+    "u8": 0,
+    "u7": 0,
+    "u15": 0
+   },
+   "control_delete_then_immediate_forcemerge": {
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    }
+   },
+   "m1_lease_gated_forcemerge": {
+    "phase1_pg_s": 3.62,
+    "es_delete_s": 0.15,
+    "lease_gate_wait_s": 16.08,
+    "forcemerge_s": 0.88,
+    "es_total_s": 17.11,
+    "indices_merged": 9,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "m2_alias_swap_rebuild": {
+    "phase1_pg_s": 3.292,
+    "key_destroy_and_es_purge_s": 11.959,
+    "indices_rebuilt": 8,
+    "facts_indices_rebuilt": [
+     1,
+     2
+    ],
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "m3_drop_and_reproject": {
+    "phase1_pg_s": 3.14,
+    "drop_s": 0.03,
+    "indices_dropped": 9,
+    "reproject_s": 11.85,
+    "es_total_s": 11.88,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "pg_marker_files_event_db_after": {
+    "u3": 0,
+    "u8": 0,
+    "u7": 0,
+    "u15": 0
+   },
+   "key_bytes_after": {
+    "in_key_service": {
+     "u3": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u8": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u7": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u15": {
+      "files": 0,
+      "by_kind": {}
+     }
+    },
+    "in_event_db": {
+     "u3": 0,
+     "u8": 0,
+     "u7": 0,
+     "u15": 0
+    }
+   },
+   "survivor_identity": {
+    "events": {
+     "pg": 15150,
+     "es": 15150,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0,
+     "wrong_bucket": 0,
+     "examples": []
+    },
+    "facts_v1": {
+     "pg": 12557,
+     "es": 12557,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0
+    }
+   },
+   "receipt_verification": {
+    "events_tombstoned": 1153,
+    "events_still_decryptable": 0,
+    "key_destroyed": true,
+    "pg_facts_touching_tombstoned": 0,
+    "pg_concepts_touching_tombstoned": 0,
+    "es_event_docs": 0,
+    "es_fact_docs_touching": 0,
+    "es_facts_indices_checked": 2
+   }
+  },
+  "60000": {
+   "events": 60012,
+   "load_s": 33.0,
+   "project_s_both_recipes": 375.7,
+   "subjects": {
+    "control": "u1",
+    "m1": "u14",
+    "m2": "u7",
+    "m3": "u18"
+   },
+   "facts_indices": [
+    "sys-e3-facts-v2-g1",
+    "sys-e3-facts-v1-g1"
+   ],
+   "es_docs": 159242,
+   "positive_control_es": {
+    "u1": 33,
+    "u14": 28,
+    "u7": 32,
+    "u18": 31
+   },
+   "pg_plaintext_positive_control_files": 2,
+   "key_bytes_before": {
+    "in_key_service": {
+     "u1": 2,
+     "u14": 2,
+     "u7": 2,
+     "u18": 2
+    },
+    "in_event_db": {
+     "u1": 0,
+     "u14": 0,
+     "u7": 0,
+     "u18": 0
+    }
+   },
+   "pg_marker_files_event_db_before": {
+    "u1": 0,
+    "u14": 0,
+    "u7": 0,
+    "u18": 0
+   },
+   "control_delete_then_immediate_forcemerge": {
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    }
+   },
+   "m1_lease_gated_forcemerge": {
+    "phase1_pg_s": 19.13,
+    "es_delete_s": 0.58,
+    "lease_gate_wait_s": 28.12,
+    "forcemerge_s": 6.33,
+    "es_total_s": 35.03,
+    "indices_merged": 9,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "m2_alias_swap_rebuild": {
+    "phase1_pg_s": 17.804,
+    "key_destroy_and_es_purge_s": 37.465,
+    "indices_rebuilt": 9,
+    "facts_indices_rebuilt": [
+     1,
+     2
+    ],
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "m3_drop_and_reproject": {
+    "phase1_pg_s": 15.91,
+    "drop_s": 0.04,
+    "indices_dropped": 9,
+    "reproject_s": 31.9,
+    "es_total_s": 31.94,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_hits_for_marker_text": 0,
+     "es_facts_indices": 2
+    }
+   },
+   "pg_marker_files_event_db_after": {
+    "u1": 0,
+    "u14": 0,
+    "u7": 0,
+    "u18": 0
+   },
+   "key_bytes_after": {
+    "in_key_service": {
+     "u1": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u14": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u7": {
+      "files": 0,
+      "by_kind": {}
+     },
+     "u18": {
+      "files": 0,
+      "by_kind": {}
+     }
+    },
+    "in_event_db": {
+     "u1": 0,
+     "u14": 0,
+     "u7": 0,
+     "u18": 0
+    }
+   },
+   "survivor_identity": {
+    "events": {
+     "pg": 45950,
+     "es": 45950,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0,
+     "wrong_bucket": 0,
+     "examples": []
+    },
+    "facts_v1": {
+     "pg": 37982,
+     "es": 37982,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0
+    }
+   },
+   "receipt_verification": {
+    "events_tombstoned": 3453,
+    "events_still_decryptable": 0,
+    "key_destroyed": true,
+    "pg_facts_touching_tombstoned": 0,
+    "pg_concepts_touching_tombstoned": 0,
+    "es_event_docs": 0,
+    "es_fact_docs_touching": 0,
+    "es_facts_indices_checked": 2
+   }
+  }
+ },
+ "receipt_sample": {
+  "receipt_id": "940336df4e714378",
+  "tenant": "e3",
+  "subject_id": "u7",
+  "events_erased": 1153,
+  "es_rebuilt": [
+   [
+    "events",
+    223,
+    [
+     "sys-e3-events-b00223-g1",
+     "sys-e3-events-b00223-g2",
+     1853
+    ]
+   ],
+   [
+    "events",
+    224,
+    [
+     "sys-e3-events-b00224-g1",
+     "sys-e3-events-b00224-g2",
+     2900
+    ]
+   ],
+   [
+    "events",
+    225,
+    [
+     "sys-e3-events-b00225-g1",
+     "sys-e3-events-b00225-g2",
+     2900
+    ]
+   ],
+   [
+    "events",
+    226,
+    [
+     "sys-e3-events-b00226-g1",
+     "sys-e3-events-b00226-g2",
+     2450
+    ]
+   ],
+   [
+    "events",
+    227,
+    [
+     "sys-e3-events-b00227-g1",
+     "sys-e3-events-b00227-g2",
+     2700
+    ]
+   ],
+   [
+    "events",
+    228,
+    [
+     "sys-e3-events-b00228-g1",
+     "sys-e3-events-b00228-g2",
+     2850
+    ]
+   ],
+   [
+    "facts",
+    1,
+    [
+     "sys-e3-facts-v1-g1",
+     "sys-e3-facts-v1-g2",
+     13527
+    ]
+   ],
+   [
+    "facts",
+    2,
+    [
+     "sys-e3-facts-v2-g1",
+     "sys-e3-facts-v2-g2",
+     13527
+    ]
+   ]
+  ],
+  "verification": {
+   "events_tombstoned": 1153,
+   "events_still_decryptable": 0,
+   "key_destroyed": true,
+   "pg_facts_touching_tombstoned": 0,
+   "pg_concepts_touching_tombstoned": 0,
+   "es_event_docs": 0,
+   "es_fact_docs_touching": 0,
+   "es_facts_indices_checked": 2
+  },
+  "attempts": 1,
+  "es_and_key_steps_s": 11.959,
+  "scope": "speaker-provenance erasure only (events produced by this subject and rows derived from them)",
+  "facts_deleted": 1932,
+  "concepts_deleted": 3,
+  "concepts_reset": 30,
+  "phase1_s": 3.292
+ },
+ "cross_speaker_case": {
+  "erased_subject": "uBobby (speaker)",
+  "facts_about_Bobby_remaining_in_pg": 1,
+  "es_fact_docs_remaining": 1,
+  "interpretation": "facts ABOUT Bobby that another speaker (uAnna) stated remain current: erasure here is speaker-provenance only; the user must decide what a data subject is"
+ },
+ "pass": true,
+ "disk_free_gb_after": 53.2
+}

@@ -23,23 +23,25 @@ def kill(name, at):
         os.kill(os.getpid(), signal.SIGKILL)
 
 
+ACTOR = {"user_typed": "user", "user_supplied_external": "user", "assistant": "assistant", "tool": "tool", "web": "tool"}
+
+
 def append(conn, tenant, session, kind, body, trust="user_typed", n=0):
-    ids, _ = store.append_events(conn, tenant, session, [dict(ts_event=TS0 + dt.timedelta(seconds=n), actor="user" if trust == "user_typed" else trust,
+    ids, _ = store.append_events(conn, tenant, session, [dict(ts_event=TS0 + dt.timedelta(seconds=n), actor=ACTOR[trust],
                                                               trust_origin=trust, kind=kind, subject_id="u1", content=json.dumps(body, sort_keys=True))])
     return int(ids[0].rsplit("/", 1)[1])
 
 
 def append_many(conn, tenant, session, events):
-    evs = [dict(ts_event=TS0 + dt.timedelta(seconds=e["seq"]), actor=e["trust_origin"], trust_origin=e["trust_origin"], kind=e["kind"], subject_id="u1",
+    evs = [dict(ts_event=TS0 + dt.timedelta(seconds=e["seq"]), actor=ACTOR[e["trust_origin"]], trust_origin=e["trust_origin"], kind=e["kind"], subject_id="u1",
                 content=json.dumps(e["body"], sort_keys=True)) for e in events]
     for i in range(0, len(evs), 100):
         store.append_events(conn, tenant, session, evs[i:i + 100])
 
 
 def load_events(conn, tenant, session, after_seq=0):
-    rows = conn.execute("select seq, kind, trust_origin, mem_dec(tenant_id, subject_id, content_enc) from events where tenant_id=%s and session_id=%s and seq>%s order by seq",
-                        (tenant, session, after_seq)).fetchall()
-    return [{"seq": s, "kind": k, "trust_origin": t, "body": json.loads(c)} for s, k, t, c in rows if c is not None]
+    rows = store.read_plain(conn, tenant, "session_id=%s and seq>%s order by seq", (session, after_seq))
+    return [{"seq": r["seq"], "kind": r["kind"], "trust_origin": r["trust_origin"], "body": json.loads(r["plain"])} for r in rows if r["plain"] is not None]
 
 
 def update_view(conn, tenant, session, crash_at=None):

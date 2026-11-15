@@ -1,0 +1,459 @@
+{
+ "workload": "4 tenants x 100 sessions x 100 events = 40000 events, bucket span 30 days (~18 buckets/tenant), projector batch 300, 50 abrupt stops; PG16+ES 9.5.6 on t2-dev",
+ "classic_rollover_control": {
+  "retry_status_after_rollover": 201,
+  "copies_of_one_id": 2
+ },
+ "load_s": 14.7,
+ "crash_log": [
+  [
+   0,
+   "time",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   1,
+   "derive_after_read",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   2,
+   "derive_after_insert",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   3,
+   "derive_before_commit",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   4,
+   "bucket_create",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   5,
+   "mirror_after_read",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   6,
+   "mirror_mid_bulk",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   7,
+   "mirror_after_bulk",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   8,
+   "mirror_after_refresh",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   9,
+   "mirror_after_cursor",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   10,
+   "time",
+   "wrapper-killed+progress",
+   -9,
+   "generation swap b00 bucket 678: ('sys-b00-events-b00678-g1', 'sys-b00-events-b00678-g2', 400)"
+  ],
+  [
+   11,
+   "derive_after_read",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   12,
+   "derive_after_insert",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   13,
+   "derive_before_commit",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   14,
+   "bucket_create",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   15,
+   "mirror_after_read",
+   "self-killed+progress",
+   -9,
+   "100 backfilled/future events into b00"
+  ],
+  [
+   16,
+   "mirror_mid_bulk",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   17,
+   "mirror_after_bulk",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   18,
+   "mirror_after_refresh",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   19,
+   "mirror_after_cursor",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   20,
+   "time",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   21,
+   "derive_after_read",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   22,
+   "derive_after_insert",
+   "self-killed+no-progress",
+   -9
+  ],
+  [
+   23,
+   "derive_before_commit",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   24,
+   "bucket_create",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   25,
+   "mirror_after_read",
+   "wrapper-killed+progress",
+   -9,
+   "read-only bucket index sys-b00-events-b00670-g1 for 3 s: tenant b00 mirror stalled, 1240 events behind the cursor (head-of-line stall), then unblocked"
+  ],
+  [
+   26,
+   "mirror_mid_bulk",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   27,
+   "mirror_after_bulk",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   28,
+   "mirror_after_refresh",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   29,
+   "mirror_after_cursor",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   30,
+   "time",
+   "wrapper-killed+progress",
+   -9,
+   "generation swap b00 bucket 678: ('sys-b00-events-b00678-g2', 'sys-b00-events-b00678-g3', 400)"
+  ],
+  [
+   31,
+   "derive_after_read",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   32,
+   "derive_after_insert",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   33,
+   "derive_before_commit",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   34,
+   "bucket_create",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   35,
+   "mirror_after_read",
+   "wrapper-killed+progress",
+   -9,
+   "100 backfilled/future events into b03"
+  ],
+  [
+   36,
+   "mirror_mid_bulk",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   37,
+   "mirror_after_bulk",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   38,
+   "mirror_after_refresh",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   39,
+   "mirror_after_cursor",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   40,
+   "time",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   41,
+   "derive_after_read",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   42,
+   "derive_after_insert",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   43,
+   "derive_before_commit",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   44,
+   "bucket_create",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   45,
+   "mirror_after_read",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   46,
+   "mirror_mid_bulk",
+   "self-killed+progress",
+   -9
+  ],
+  [
+   47,
+   "mirror_after_bulk",
+   "wrapper-killed+progress",
+   -9
+  ],
+  [
+   48,
+   "mirror_after_refresh",
+   "wrapper-killed+no-progress",
+   -9
+  ],
+  [
+   49,
+   "mirror_after_cursor",
+   "wrapper-killed+no-progress",
+   -9
+  ]
+ ],
+ "kills_with_work_in_flight": {
+  "self_killed_at_named_point": 24,
+  "wrapper_killed_after_progress": 24,
+  "wrapper_killed_without_progress": 2
+ },
+ "crash_points_fired": {
+  "time": {
+   "self_killed": 0,
+   "wrapper_killed": 5
+  },
+  "derive_after_read": {
+   "self_killed": 2,
+   "wrapper_killed": 3
+  },
+  "derive_after_insert": {
+   "self_killed": 3,
+   "wrapper_killed": 2
+  },
+  "derive_before_commit": {
+   "self_killed": 1,
+   "wrapper_killed": 4
+  },
+  "bucket_create": {
+   "self_killed": 5,
+   "wrapper_killed": 0
+  },
+  "mirror_after_read": {
+   "self_killed": 2,
+   "wrapper_killed": 3
+  },
+  "mirror_mid_bulk": {
+   "self_killed": 3,
+   "wrapper_killed": 2
+  },
+  "mirror_after_bulk": {
+   "self_killed": 3,
+   "wrapper_killed": 2
+  },
+  "mirror_after_refresh": {
+   "self_killed": 2,
+   "wrapper_killed": 3
+  },
+  "mirror_after_cursor": {
+   "self_killed": 3,
+   "wrapper_killed": 2
+  }
+ },
+ "final_catchup_s": 0.2,
+ "compare_events": {
+  "pg": 40240,
+  "es": 40240,
+  "missing": 0,
+  "extra": 0,
+  "duplicates": 0,
+  "hash_mismatch": 0,
+  "wrong_bucket": 0,
+  "examples": []
+ },
+ "compare_facts": {
+  "pg": 33267,
+  "es": 33267,
+  "missing": 0,
+  "extra": 0,
+  "duplicates": 0,
+  "hash_mismatch": 0
+ },
+ "dropped_bucket": {
+  "index": "sys-b01-events-b00672-g1",
+  "compare_after_drop": {
+   "pg": 10000,
+   "es": 9500,
+   "missing": 500,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": [
+    [
+     "missing",
+     "b01/s0015/1"
+    ],
+    [
+     "missing",
+     "b01/s0015/2"
+    ],
+    [
+     "missing",
+     "b01/s0015/3"
+    ],
+    [
+     "missing",
+     "b01/s0015/4"
+    ],
+    [
+     "missing",
+     "b01/s0015/5"
+    ]
+   ]
+  },
+  "compare_after_projector_rerun": {
+   "pg": 10000,
+   "es": 9500,
+   "missing": 500,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": [
+    [
+     "missing",
+     "b01/s0015/1"
+    ],
+    [
+     "missing",
+     "b01/s0015/2"
+    ],
+    [
+     "missing",
+     "b01/s0015/3"
+    ],
+    [
+     "missing",
+     "b01/s0015/4"
+    ],
+    [
+     "missing",
+     "b01/s0015/5"
+    ]
+   ]
+  },
+  "repair": "('sys-b01-events-b00672-g1', 'sys-b01-events-b00672-g2', 500)",
+  "compare_after_repair": {
+   "pg": 10000,
+   "es": 10000,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": []
+  }
+ },
+ "pass": true,
+ "disk_free_gb": 49.7
+}

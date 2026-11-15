@@ -52,6 +52,7 @@ def resolve_slot(claims, rank=TRUST_RANK, cross_scope=True):
         if existing is None:
             out[c.id] = ("current", None)
             cur[c.scope] = c
+            _override_lower_scoped(c, cur, out, rank, cross_scope)
             continue
         same = norm(c.object) == norm(existing.object)
         r_new, r_cur = rank[c.trust_origin], rank[existing.trust_origin]
@@ -61,6 +62,18 @@ def resolve_slot(claims, rank=TRUST_RANK, cross_scope=True):
             out[existing.id] = ("superseded", c.valid_from)
             out[c.id] = ("current", None)
             cur[c.scope] = c
+            _override_lower_scoped(c, cur, out, rank, cross_scope)
         else:
             out[c.id] = ("disputed", None)
     return out
+
+
+def _override_lower_scoped(c, cur, out, rank, cross_scope):
+    """A newly current whole-slot claim retires LOWER-trust scoped claims that disagree with it."""
+    if not cross_scope or c.scope != "*":
+        return
+    for sc in [k for k in cur if k != "*"]:
+        o = cur[sc]
+        if rank[o.trust_origin] < rank[c.trust_origin] and norm(o.object) != norm(c.object):
+            out[o.id] = ("superseded", c.valid_from)
+            del cur[sc]

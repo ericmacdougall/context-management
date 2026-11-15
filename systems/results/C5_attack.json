@@ -1,0 +1,117 @@
+{
+ "workload": "6000 generated typed-fact histories with 1-5 attack or update events each (10 attack types); each correct variant must show 0 violations, each broken variant must show >0",
+ "correct": {
+  "cases": 6000,
+  "attack_events_by_kind": {
+   "typed": 6000,
+   "mislabelled_envelope": 1515,
+   "hypothetical": 1528,
+   "proposal": 1480,
+   "scoped_pasted": 1516,
+   "pasted_marker": 1493,
+   "web_actor": 1463,
+   "assistant_restatement_marker": 1412,
+   "assistant_actor": 1465,
+   "legit_update": 3120,
+   "web_marker": 1472,
+   "scoped_low_trust": 1477
+  },
+  "violations": {}
+ },
+ "broken_no_paste_quote_markers": {
+  "cases": 6000,
+  "attack_events_by_kind": {
+   "typed": 6000,
+   "mislabelled_envelope": 1515,
+   "hypothetical": 1528,
+   "proposal": 1480,
+   "scoped_pasted": 1516,
+   "pasted_marker": 1493,
+   "web_actor": 1463,
+   "assistant_restatement_marker": 1412,
+   "assistant_actor": 1465,
+   "legit_update": 3120,
+   "web_marker": 1472,
+   "scoped_low_trust": 1477
+  },
+  "violations": {
+   "lower_trust_claim_current:scoped_pasted": 1217,
+   "lower_trust_claim_current:pasted_marker": 830,
+   "typed_fact_displaced": 2437,
+   "lower_trust_claim_current:assistant_restatement_marker": 774,
+   "lower_trust_claim_current:web_marker": 833,
+   "lower_trust_claim_current:scoped_low_trust": 68
+  }
+ },
+ "broken_scope_bypasses_trust": {
+  "cases": 6000,
+  "attack_events_by_kind": {
+   "typed": 6000,
+   "mislabelled_envelope": 1515,
+   "hypothetical": 1528,
+   "proposal": 1480,
+   "scoped_pasted": 1516,
+   "pasted_marker": 1493,
+   "web_actor": 1463,
+   "assistant_restatement_marker": 1412,
+   "assistant_actor": 1465,
+   "legit_update": 3120,
+   "web_marker": 1472,
+   "scoped_low_trust": 1477
+  },
+  "violations": {
+   "lower_trust_claim_current:scoped_pasted": 1217,
+   "lower_trust_claim_current:scoped_low_trust": 1195
+  }
+ },
+ "broken_envelope_unchecked": {
+  "cases": 6000,
+  "attack_events_by_kind": {
+   "typed": 6000,
+   "mislabelled_envelope": 1515,
+   "hypothetical": 1528,
+   "proposal": 1480,
+   "scoped_pasted": 1516,
+   "pasted_marker": 1493,
+   "web_actor": 1463,
+   "assistant_restatement_marker": 1412,
+   "assistant_actor": 1465,
+   "legit_update": 3120,
+   "web_marker": 1472,
+   "scoped_low_trust": 1477
+  },
+  "violations": {
+   "typed_fact_displaced": 1009,
+   "lower_trust_claim_current:mislabelled_envelope": 1009,
+   "lower_trust_claim_current:scoped_low_trust": 32,
+   "lower_trust_claim_current:scoped_pasted": 17
+  }
+ },
+ "database": {
+  "matrix": {
+   "accepted_valid": 50,
+   "rejected_invalid": 150,
+   "wrongly_accepted": 0,
+   "wrongly_rejected": 0
+  },
+  "end_to_end": {
+   "sequences": 200,
+   "attack_events_by_kind": {
+    "typed": 200,
+    "legit_update": 91,
+    "hypothetical": 55,
+    "assistant_restatement_marker": 47,
+    "assistant_actor": 45,
+    "proposal": 45,
+    "scoped_pasted": 48,
+    "mislabelled_envelope": 52,
+    "scoped_low_trust": 54,
+    "pasted_marker": 52,
+    "web_marker": 50,
+    "web_actor": 52
+   },
+   "violations": {}
+  }
+ },
+ "pass": true
+}

@@ -131,6 +131,12 @@ class ScopeAndMarkers(unittest.TestCase):
         cs = [self.sc(1, "555-1", "user_typed", "*", 0), self.sc(2, "555-1", "web", "work", 1)]     # same value: no conflict
         self.assertNotEqual(resolve_slot(cs)["c2"][0], "disputed")
 
+    def test_higher_trust_whole_claim_retires_lower_trust_scoped_claims(self):
+        cs = [self.sc(1, "555-1", "user_typed", "*", 0), self.sc(2, "555-1", "web", "work", 1), self.sc(3, "999-9", "user_typed", "*", 2)]
+        r = resolve_slot(cs)
+        self.assertEqual((r["c2"][0], r["c3"][0]), ("superseded", "current"))
+        self.assertEqual(resolve_slot(cs, cross_scope=False)["c2"][0], "current")
+
     def test_paste_and_quote_markers_lower_trust_of_a_user_typed_event(self):
         ev = dict(TestEV, trust_origin="user_typed", actor="user")
         self.assertEqual(extractor.extract(1, ev, "Pasted: Alice's city is Rome")[0]["trust_origin"], "user_supplied_external")

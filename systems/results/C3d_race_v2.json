@@ -1,0 +1,76 @@
+{
+ "workload": "200 runs per race and mode, random delays 0-60 ms (0-800 ms for the ES batch); PG16 + key service + ES 9.5.6 on t2-dev",
+ "results": {
+  "derive_on": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "derive_off": {
+   "runs": 200,
+   "violations": 121,
+   "runs_with_exception": 0
+  },
+  "mirror_on": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "mirror_lock_lost": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 200
+  },
+  "mirror_off": {
+   "runs": 200,
+   "violations": 131,
+   "runs_with_exception": 3
+  },
+  "fold_on": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "fold_off": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "shared_derive_on": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "shared_derive_off": {
+   "runs": 200,
+   "violations": 111,
+   "runs_with_exception": 0
+  },
+  "shared_erase_on": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "shared_erase_off": {
+   "runs": 200,
+   "violations": 69,
+   "runs_with_exception": 0
+  }
+ },
+ "fenced_clean": {
+  "derive": true,
+  "mirror": true,
+  "fold": true,
+  "shared_derive": true,
+  "shared_erase": true
+ },
+ "lock_lost_clean": true,
+ "controls_sensitive": {
+  "derive": true,
+  "mirror": true,
+  "fold": false,
+  "shared_derive": true,
+  "shared_erase": true
+ },
+ "pass": false
+}

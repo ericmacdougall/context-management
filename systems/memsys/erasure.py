@@ -19,7 +19,7 @@ from .esc import ES, ESError, bulk_errors
 from .projector import LOCK_SQL
 
 
-def phase1(conn, kms, tenant, subject_id, job_id, hook=None):
+def phase1(conn, kms, tenant, subject_id, job_id, hook=None, slot_locks=True, resolve_hook=None):
     t0 = time.time()
 
     def txn():
@@ -39,10 +39,11 @@ def phase1(conn, kms, tenant, subject_id, job_id, hook=None):
             for rv, sh, eh in doomed:
                 by_recipe.setdefault(rv, set()).add(sh); ents.add(eh)
             for rv in sorted(by_recipe):            # same global order as derivation: slot locks sorted, before any slot is read or changed
-                D.lock_slots(cur, tenant, rv, by_recipe[rv])
+                if slot_locks:
+                    D.lock_slots(cur, tenant, rv, by_recipe[rv])
             deleted = cur.execute("delete from facts where tenant_id=%s and input_event_ids && %s returning recipe_version", (tenant, ids)).rowcount
             for rv in sorted(by_recipe):
-                D.resolve_slots(cur, kms, tenant, rv, by_recipe[rv])
+                D.resolve_slots(cur, kms, tenant, rv, by_recipe[rv], after_read=resolve_hook)
             gone = [e for e in ents if not cur.execute("select 1 from facts where tenant_id=%s and entity_hash=%s limit 1", (tenant, e)).fetchone()]
             cdel = cur.execute("delete from concepts where tenant_id=%s and concept_id = any(%s)", (tenant, gone)).rowcount if gone else 0
             c = cur.execute("update concepts set digest=null, input_fact_ids='{}', input_event_ids='{}', dirty=true, gen=gen+1, claim_token=null, lease_until=null, "
@@ -169,6 +170,14 @@ def load_job(conn, job_id):
     return dict(zip(("job_id", "tenant_id", "subject_id", "state", "event_ids", "event_ts", "attempts"), r))
 
 
+def _inject(fail_at, point):
+    import os, signal
+    if fail_at == point:
+        raise RuntimeError(f"injected: {point}")
+    if fail_at == "kill:" + point:
+        os.kill(os.getpid(), signal.SIGKILL)
+
+
 def complete_job(conn, lockconn, es, job_id, fence=True, kms=None, fail_at=None, es_purge_enabled=True):
     """Run the remaining steps of a job; each is idempotent and the state advances only after the step succeeded.
     fail_at: test injection, raises RuntimeError('injected: <step>') at the named point."""
@@ -178,18 +187,15 @@ def complete_job(conn, lockconn, es, job_id, fence=True, kms=None, fail_at=None,
     try:
         conn.execute("update erasure_jobs set attempts=attempts+1, updated_at=now() where job_id=%s", (job_id,))
         if job["state"] == "pending":
-            if fail_at == "before_key_destroy":
-                raise RuntimeError("injected: before_key_destroy")
+            _inject(fail_at, "before_key_destroy")
             kms.destroy(job["tenant_id"], job["subject_id"])
             conn.execute("update erasure_jobs set state='key_destroyed', updated_at=now() where job_id=%s", (job_id,)); job["state"] = "key_destroyed"
         rebuilt = []
         if job["state"] == "key_destroyed":
-            if fail_at == "before_es_purge":
-                raise RuntimeError("injected: before_es_purge")
+            _inject(fail_at, "before_es_purge")
             if es_purge_enabled:
                 rebuilt = es_purge(conn, lockconn, kms, es, job, fence)
-            if fail_at == "after_es_purge":
-                raise RuntimeError("injected: after_es_purge")
+            _inject(fail_at, "after_es_purge")
             conn.execute("update erasure_jobs set state='es_purged', updated_at=now() where job_id=%s", (job_id,)); job["state"] = "es_purged"
         ver = verify(conn, kms, es, job)
         receipt = {"receipt_id": job_id, "tenant": job["tenant_id"], "subject_id": job["subject_id"], "events_erased": len(job["event_ids"]), "es_rebuilt": rebuilt,
@@ -216,14 +222,13 @@ def sweep(conn, lockconn, es, fence=True):
     return out
 
 
-def erase_subject(conn, lockconn, es: ES, tenant, subject_id, recipes=None, fence=True, hook_phase1=None, fail_at=None, es_purge=True, kms=None):
+def erase_subject(conn, lockconn, es: ES, tenant, subject_id, recipes=None, fence=True, hook_phase1=None, fail_at=None, es_purge=True, kms=None, slot_locks=True, resolve_hook=None):
     """phase 1 + completion. `recipes` is accepted for compatibility and ignored: every facts index is discovered.
     On an injected/real failure after phase 1 the job stays open (the sweeper finishes it) and the exception propagates."""
     kms = kms or _kms.get()
     job_id = uuid.uuid4().hex[:16]
-    p1 = phase1(conn, kms, tenant, subject_id, job_id, hook_phase1)
-    if fail_at == "after_phase1":
-        raise RuntimeError("injected: after_phase1")
+    p1 = phase1(conn, kms, tenant, subject_id, job_id, hook_phase1, slot_locks, resolve_hook)
+    _inject(fail_at, "after_phase1")
     receipt = complete_job(conn, lockconn, es, job_id, fence, kms, fail_at, es_purge)
     receipt.update({"facts_deleted": p1["facts_deleted"], "concepts_deleted": p1["concepts_deleted"], "concepts_reset": p1["concepts_reset"], "phase1_s": p1["phase1_s"]})
     return receipt

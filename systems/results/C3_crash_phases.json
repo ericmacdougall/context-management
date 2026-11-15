@@ -1,0 +1,98 @@
+{
+ "workload": "10 runs per point for injected failure and for SIGKILL of the erasing process at 4 points, plus 20 runs with an ES error injected at a random request during the purge; PG16+key service+ES 9.5.6 on t2-dev",
+ "results": {
+  "exception:after_phase1": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 10,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "exception:before_key_destroy": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 10,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "exception:before_es_purge": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 10,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "exception:after_es_purge": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 0,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "sigkill:after_phase1": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 10,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "sigkill:before_key_destroy": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 10,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "sigkill:before_es_purge": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 10,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "sigkill:after_es_purge": {
+   "runs": 10,
+   "job_row_present": 10,
+   "left_pending": 10,
+   "raw_es_had_erased_docs_while_pending": 0,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 10,
+   "final_clean": 10,
+   "marker_files_after_sweep_nonzero": 0
+  },
+  "es_error_injected": {
+   "runs": 20,
+   "job_row_present": 20,
+   "left_pending": 20,
+   "raw_es_had_erased_docs_while_pending": 18,
+   "reader_leaks_while_pending": 0,
+   "sweeper_completed": 20,
+   "final_clean": 20,
+   "marker_files_after_sweep_nonzero": 0
+  }
+ },
+ "pass": true,
+ "total_runs": 100,
+ "necessity_of_read_filter": 78
+}

@@ -1,0 +1,23 @@
+{
+ "workload": "200 runs per race and mode, random delays 0-60 ms (0-800 ms for the ES batch); PG16 + key service + ES 9.5.6 on t2-dev",
+ "results": {
+  "fold_on": {
+   "runs": 200,
+   "violations": 0,
+   "runs_with_exception": 0
+  },
+  "fold_off": {
+   "runs": 200,
+   "violations": 2,
+   "runs_with_exception": 0
+  }
+ },
+ "fenced_clean": {
+  "fold": true
+ },
+ "lock_lost_clean": true,
+ "controls_sensitive": {
+  "fold": true
+ },
+ "pass": true
+}

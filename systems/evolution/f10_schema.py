@@ -20,7 +20,8 @@ def append_v2col(conn, tenant, session, e, pv):
         t0 = time.perf_counter()
         nxt, last = cur.execute("select next_seq,last_hash from sessions where tenant_id=%s and session_id=%s for update", (tenant, session)).fetchone()
         wait = time.perf_counter() - t0
-        enc = cur.execute("select mem_enc(%s,%s,%s)", (tenant, e["subject_id"], e["content"])).fetchone()[0]
+        from memsys import kms
+        enc = kms.get().enc(tenant, e["subject_id"], e["content"])
         eid = f"{tenant}/{session}/{nxt}"
         h = chain.event_hash(last, tenant, session, nxt, eid, iso(e["ts_event"]), e["actor"], e["trust_origin"], e["kind"], e["subject_id"], enc)
         cur.execute("insert into events(tenant_id,session_id,seq,event_id,ts_event,subject_id,actor,trust_origin,kind,content_enc,prev_hash,hash,payload_version) "
@@ -62,6 +63,17 @@ def writer(args):
     return {"w": w, "ok": sum(per_phase.values()), "fails": fails, "waits": waits, "lats": lats, "per_phase": per_phase, "shapes": shapes, "errs": err_examples[:3]}
 
 
+def backfill_batch(mc, limit):
+    from memsys import kms
+    rows = mc.execute("select tenant_id, session_id, seq, subject_id, kind, content_enc from events where payload_version is null limit %s", (limit,)).fetchall()
+    if not rows:
+        return 0
+    pl = kms.get().dec_many(T, [(r[3], r[5]) for r in rows])
+    vals = [((int(json.loads(p).get("_v", 1)) if (r[4] == "step_completed" and p) else 1), r[0], r[1], r[2]) for r, p in zip(rows, pl)]
+    mc.cursor().executemany("update events set payload_version=%s where tenant_id=%s and session_id=%s and seq=%s", vals)
+    return len(rows)
+
+
 def pct(xs, ps=(50, 99, 100)):
     xs = sorted(xs)
     return {f"p{p}": round(xs[min(len(xs) - 1, int(len(xs) * p / 100 - 1e-9))], 4) for p in ps} if xs else {}
@@ -70,8 +82,7 @@ def pct(xs, ps=(50, 99, 100)):
 def states(conn, sessions):
     out = {}
     for s in sessions:
-        rows = conn.execute("select seq, kind, trust_origin, mem_dec(tenant_id, subject_id, content_enc) from events where tenant_id=%s and session_id=%s order by seq", (T, s)).fetchall()
-        evs = [{"seq": q, "kind": k, "trust_origin": t, "body": upcast.upcast(k, json.loads(c))} for q, k, t, c in rows]
+        evs = [{"seq": r["seq"], "kind": r["kind"], "trust_origin": r["trust_origin"], "body": upcast.upcast(r["kind"], json.loads(r["plain"]))} for r in store.read_plain(conn, T, "session_id=%s order by seq", (s,))]
         out[s] = task.canon(task.task_state(evs))
     return out
 
@@ -137,22 +148,18 @@ def main():
     t0 = time.perf_counter(); batches, rows, bmax = 0, 0, 0.0
     while True:
         tb = time.perf_counter()
-        r = mc.execute("with b as (select tenant_id, session_id, seq from events where payload_version is null limit 5000) "
-                       "update events e set payload_version = coalesce((case when e.kind = 'step_completed' then (mem_dec(e.tenant_id, e.subject_id, e.content_enc)::jsonb ->> '_v') end)::smallint, 1) "
-                       "from b where e.tenant_id=b.tenant_id and e.session_id=b.session_id and e.seq=b.seq")
+        n = backfill_batch(mc, 5000)
         d = time.perf_counter() - tb
-        if r.rowcount == 0:
+        if n == 0:
             break
-        batches += 1; rows += r.rowcount; bmax = max(bmax, d)
-    log.append({"step": "batched backfill", "batches": batches, "rows": rows, "total_s": round(time.perf_counter() - t0, 2), "max_batch_s": round(bmax, 3)})
+        batches += 1; rows += n; bmax = max(bmax, d)
+    log.append({"step": "batched backfill (decrypt in the application, fill-once update)", "batches": batches, "rows": rows, "total_s": round(time.perf_counter() - t0, 2), "max_batch_s": round(bmax, 3)})
     acks = {w: p for w, p in mc.execute("select w, phase from writer_ack").fetchall()}
     # a writer that has not yet acked phase 1 may still insert NULL: sweep again once all acked
     t1 = time.time()
     while any(p < 1 for p in acks.values()) and time.time() - t1 < 20:
         time.sleep(0.2); acks = {w: p for w, p in mc.execute("select w, phase from writer_ack").fetchall()}
-    mc.execute("update events set payload_version = 1 where payload_version is null and false") if False else None
-    while mc.execute("update events e set payload_version = coalesce((case when e.kind = 'step_completed' then (mem_dec(e.tenant_id, e.subject_id, e.content_enc)::jsonb ->> '_v') end)::smallint, 1) "
-                     "where payload_version is null").rowcount:
+    while backfill_batch(mc, 5000):
         pass
     ddl(mc, "alter table events add constraint payload_version_set check (payload_version is not null) not valid", "add constraint NOT VALID", log)
     t0 = time.perf_counter(); mc.execute("alter table events validate constraint payload_version_set"); log.append({"step": "validate constraint", "s": round(time.perf_counter() - t0, 3)})
@@ -173,7 +180,7 @@ def main():
     bad = chains_ok(conn, [HOT] + pre)
     S1 = states(conn, pre)
     fp1 = {s: conn.execute("select md5(string_agg(hash, ',' order by seq)) from events where tenant_id=%s and session_id=%s", (T, s)).fetchone()[0] for s in pre}
-    hot = [json.loads(c) for (c,) in conn.execute("select mem_dec(tenant_id, subject_id, content_enc) from events where tenant_id=%s and session_id=%s order by seq", (T, HOT)).fetchall()]
+    hot = [json.loads(r["plain"]) for r in store.read_plain(conn, T, "session_id=%s order by seq", (HOT,))]
     upcasts_ok = all(set(upcast.upcast("step_completed", b)) == {"step_id", "artifacts", "outcome"} for b in hot)
     ids = [b["step_id"] for b in hot]
     # append-only still holds for everything else

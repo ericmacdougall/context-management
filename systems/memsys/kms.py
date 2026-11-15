@@ -71,7 +71,9 @@ class KMS:
         """Real delete of the key, then VACUUM and CHECKPOINT so the old tuple is not left in heap or WAL."""
         self.conn.execute("select kms_destroy(%s,%s)", (tenant, subject))
         self.conn.execute("vacuum keys")
-        self.conn.execute("checkpoint")
+        for _ in range(2):      # the current WAL segment still holds the key tuple: switch it, then checkpoint so the old segment is removed (wal_recycle=off)
+            self.conn.execute("select pg_switch_wal()")
+            self.conn.execute("checkpoint")
 
     def is_destroyed(self, tenant, subject):
         return self.conn.execute("select 1 from destroyed where tenant_id=%s and subject_id=%s", (tenant, subject)).fetchone() is not None
