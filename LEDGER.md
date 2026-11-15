@@ -48,4 +48,36 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | kepano | Links written at extraction, dangling links as a work queue | queued |
 | kepano | Layered consolidation with random-sample audit | queued |
 | Harness knowledge bundle | Decisions register separating user words from agent assumptions | queued; test questions drafted |
-| X posts, arXiv 2607.23809, mrinalwadhwa | being read | pending |
+
+### Read 2026-11-15 (research/wv1gg5s6m.output). All readers worked from page summaries, not raw text.
+
+| Source | What it is | Evidence in the source |
+|---|---|---|
+| X post, sharpeye_wnl | Link to a beginner primer on context engineering; repackages Anthropic's post and two dbreunig posts | Third-hand figures only; no original experiment |
+| X post, Promixyz | Essay on agent workflows as dependency graphs, not queues; not about memory | Assertions with illustrative numbers only |
+| arXiv 2607.23809 (ACM) | Agent decides when to compress its own context; raw messages offloaded by id and queryable; small model post-trained to use the tools | n=150, no confidence intervals, no ablation isolating the lossless offload or the timing; gains over the nearest baselines within about one standard error |
+| GitHub mrinalwadhwa (Autonomy, Ockam, fluent, ai) | Agent identity and attribute-based authorisation; two-tier memory; learner whose drafts are untrusted until the host verifies a cited anchor and hash; checkpoint cadence | Code read, not measured. Counter-examples found in the code: workers start allow-all, memory write failures swallowed, mailbox at-most-once |
+
+| Id | Idea | Verdict | Status |
+|---|---|---|---|
+| X04 | Every memory write cites session, round and a verbatim quote; a host check verifies quote and speaker mechanically | test now, no model calls | running (phasef owner). Rough pass by a reviewer: 2,301 of 2,373 quotes found in the cited round; 8 speaker mismatches, 58 ambiguous |
+| X02 | Two-stage retrieval: pick sessions first, then rounds within them | test now on pilot, only if the stage-1 ceiling is at least 0.58 | queued (eval owner), exploratory |
+| X05 | Skip injection and analysts when retrieval confidence is high; abstain when nothing clears a calibrated score | test now on pilot, permutation null | queued (eval owner), exploratory |
+| X01 | Pooled token-budget curve | by-product of X02; no claim about context rot | queued |
+| X24 | Injection and trimming at the model port must keep tool-call and tool-result pairing valid | rule; test when the port fix lands | queued |
+| X23 | A memory append must never fail silently | rule; fault-injection test on the rebuilt write path | queued |
+| X20 | Re-evaluate policy at delivery, not only at enqueue | rule; add to the kill and inbox tests | queued |
+| X18 | Policy point: identity and tenant attributes cannot be overwritten by derived attributes; non-boolean or erroring evaluation denies | test later | blocked on the policy point existing |
+| X07 | Analyst findings in a fixed schema with an explicit "nothing relevant" outcome that suppresses injection | rule, untested | queued |
+| X13 | Several critics before a finding becomes durable | test later, aimed at false challengers in the freshness scan, not at supersession precision | needs model calls |
+| X06 | Prune retrieved text with a small model | test later | needs model calls |
+| X15 | Pipeline stages instead of barriers | test later, quiet host only | not started |
+| X09 | Agent chooses when to compact | not proven in the source; out of reach for host sessions | not adopted |
+| X10 | Post-train a small model to use memory tools | rejected: the target is the client's own models through one port | not adopted |
+
+## Corrections to this ledger from the critic (2026-11-15)
+
+- "Full-history reader equals the oracle reader" is an n=10 micro-pilot (9 of 10). It shows no headroom on that sample; it is not evidence about long-context reading in general.
+- "Batched extraction loses facts" counts facts, not recall against human gold; the per-call baseline was never validated by a person. Class: owner-reported count, cause unproven.
+- Whole-pool session recall appears as 0.46 in OPEN-QUESTIONS and 0.48 here. Unresolved; the eval owner has been asked for the source file.
+- Thresholds chosen after seeing pilot data (4,000-token budget, rerank top-20, low-overlap cut) weaken anything built on them; new thresholds must be committed before the run.
