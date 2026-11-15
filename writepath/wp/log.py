@@ -55,11 +55,17 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
                 raise                       # concurrent duplicate idem_key: the re-check below returns the stored event
         except psycopg.Error as ex:
             if is_stale_error(ex):
-                with conn.transaction():
-                    for p in prepared:
-                        conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc) values (%s,%s,%s,%s,%s,%s,%s)",
-                                     (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"]))
-                return {"accepted": [], "duplicates": [], "quarantined": len(prepared)}
+                q = 0
+                for p in prepared:
+                    try:
+                        with conn.transaction():
+                            conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc) values (%s,%s,%s,%s,%s,%s,%s)",
+                                         (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"]))
+                        q += 1
+                    except psycopg.Error as qe:
+                        if getattr(qe, "sqlstate", None) != "WPS03":     # an erased subject's stale write is dropped, not kept
+                            raise
+                return {"accepted": [], "duplicates": [], "quarantined": q, "dropped_erased": len(prepared) - q}
             if getattr(ex, "sqlstate", None) == "WPS05":
                 have = dict(conn.execute("select idem_key, event_id from events where tenant_id=%s and idem_key = any(%s)",
                                          (t, [p["idem_key"] for p in prepared])).fetchall())

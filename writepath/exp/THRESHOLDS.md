@@ -31,3 +31,16 @@ Row 23 late commit: hold one transaction open while 10 later ones commit. Naive 
   the xmin cursor must skip 0 and project all 11.
 Registry: unregistered() == [] on a clean system; controls: one rogue table and one rogue index must each be listed.
 ES on-disk marker grep: if the pre-erasure grep finds 0 files, the on-disk claim is NOT made (API level only).
+
+## Amendment 1 (committed before the second, reported run; the a482a22 run is superseded)
+Added after an advisor review found two unexercised paths:
+N3S_projector stale swap: eraser A has bulk-written its staging index; a projector takes over (force) before A's swap.
+  Pass = A's swap refused, read alias on exactly 1 index, the new projector's write alias present and a new event W
+  projected, survivor Z live. Control = A swaps without the compare-and-set: must leave W unprojected or the alias gone.
+N3S_eraser stale swap with an eraser B as taker: fenced arm only. No sensitive control exists in this harness because
+  B's swap deletes A's staging index; reported as SUPPORTING evidence, never as PASS.
+N8 writers racing phase 1: a derive that read X's fact before phase 1, an inbox enqueue for X and a stale append for X
+  are released while phase 1 is open. Overlap witness = backends waiting on a lock during phase 1 (>= 1).
+  Pass = job done and zero X residue in facts, inbox, quarantine and ES. Control = wp_ctl: residue > 0 after done.
+ES probe P8: remove_index combined with a failing must_exist remove must leave the index in place.
+Row 27 (stale-approval half): amended -> execution refused 10/10; not amended -> accepted 10/10; control accepts >= 9/10.

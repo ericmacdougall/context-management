@@ -10,7 +10,8 @@ HERE = pathlib.Path(__file__).parent
 CTL_DB = "wp_ctl"
 CTL_DROP = ["drop trigger events_guard on events", "drop trigger inbox_fence on inbox", "drop trigger jobs_guard on analyst_jobs",
             "drop trigger facts_fence on facts", "drop trigger cursors_fence on cursors", "drop trigger erasure_guard on erasure_jobs",
-            "drop trigger heads_guard on decision_heads", "alter table analyst_jobs drop constraint done_needs_verify",
+            "drop trigger heads_guard on decision_heads", "drop trigger inbox_subject on inbox", "drop trigger facts_subject on facts",
+            "drop trigger quarantine_subject on quarantine", "alter table analyst_jobs drop constraint done_needs_verify",
             "alter table events drop constraint events_tenant_id_idem_key_key"]
 
 

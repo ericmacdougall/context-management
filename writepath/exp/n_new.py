@@ -114,6 +114,133 @@ def n3(arm):
         "A_done_first_try": recA["done"], "A_error": recA["error_type"], "Y_docs_all_indices": y_any, "sweep": sweep, "X_docs_after_sweep": x_any}
 
 
+# ------------------------------------------------------------------ N3 at the swap: takeover between A's bulk and A's swap
+def n3s(arm, taker):
+    conn, ks, es = env()
+    t = tenant("n3s")
+    s = session(conn, t)
+    log.append(conn, ks, s, [msg(0, "X says zqn3x", "X"), msg(1, "Y says zqn3y", "Y"), msg(2, "Z says zqn3z", "Z")])
+    p = projector.Projector(conn, ks, es, t)
+    p.run(); p.stop()
+    w = {}
+    p2 = None
+
+    def hook(name, data=None):
+        nonlocal p2
+        if name == "rebuild_before_swap:events" and "taken" not in w:
+            stage = [(i, a) for i, al in es.alias_map(f"{F.P}{t}-events-*").items() for a in al if a.startswith(f"{F.P}{t}-events-s")]
+            w["A_staging_has_Y"] = es.count(stage[0][0], Xq("Y")) if stage else None
+            w["t_A_bulk_done"] = now()
+            if taker == "eraser":
+                w["taken"] = erasure.erase(db.connect(), ks, es, t, "Y")["done"]
+            else:
+                p2 = projector.Projector(db.connect(), K.KeyService(), es, t)
+                w["taken"] = p2.start(force=True)
+            w["t_taken"] = now()
+            if arm == "control" and stage:                  # BROKEN: A swaps without the compare-and-set (no must_exist anchor)
+                si, sa = stage[0]
+                others = [i for i in F._family_state(es, t, "events") if i != si]
+                try:
+                    es.aliases([{"remove_index": {"index": i}} for i in others] +
+                               [{"add": {"index": si, "alias": F.read_alias(t, "events")}}, {"add": {"index": si, "alias": sa.replace("-events-s", "-events-w"), "is_write_index": True}}])
+                    w["control_swapped"] = True
+                except Exception as e:  # noqa: BLE001
+                    w["control_swapped"] = f"not applicable: {type(e).__name__}"
+            w["t_A_swap_attempt"] = now()
+    jA = erasure.request(conn, t, "X")
+    recA = erasure.run(db.connect(), ks, es, jA, hook=hook)
+    out = {"A_done_first_try": recA["done"], "A_error": recA["error_type"]}
+    if taker == "projector":
+        log.append(conn, ks, s, [msg(3, "W says zqn3w after takeover", "W")])
+        p2.run()
+        out["W_live"] = es_count_live(es, t, "events", Xq("W"))
+        out["p2_write_alias_present"] = any(F.write_alias(t, "events", p2.lease.epoch) in al for al in es.alias_map(f"{F.P}{t}-events-*").values()) if p2.lease else False
+        p2.stop()
+    live = [i for i, a in es.alias_map(f"{F.P}{t}-events-*").items() if F.read_alias(t, "events") in a]
+    out.update({"read_alias_indices": len(live), "Y_live": es_count_live(es, t, "events", Xq("Y")), "Z_live": es_count_live(es, t, "events", Xq("Z"))})
+    out["sweep"] = erasure.sweep(conn, ks, es)
+    out["Y_all_after_sweep"] = es_count_all(es, t, Xq("Y"))
+    out.update({k: w.get(k) for k in ("A_staging_has_Y", "taken", "control_swapped")})
+    out["overlap"] = bool(w) and w["t_A_bulk_done"] < w["t_taken"] <= w["t_A_swap_attempt"]
+    if taker == "eraser":
+        holds = out["Y_live"] == 0 and out["read_alias_indices"] == 1 and out["Z_live"] == 1 and out["Y_all_after_sweep"] == 0
+    else:
+        holds = out["W_live"] == 1 and out["p2_write_alias_present"] and out["read_alias_indices"] == 1 and out["Z_live"] == 1
+    return holds, "" if holds else "stale swap took effect", out
+
+
+def n3s_eraser(arm):
+    return n3s(arm, "eraser")
+
+
+def n3s_projector(arm):
+    return n3s(arm, "projector")
+
+
+# ------------------------------------------------------------------ N8: writers racing phase 1 (bump-first ordering + erased-subject guards)
+def n8(arm):
+    dbname = CTL_DB if arm == "control" else None
+    mk = (lambda n: db.connect(db=dbname, application_name=n)) if dbname else (lambda n: db.connect(application_name=n))
+    conn, ks, es = env(dbname)
+    t = tenant("n8")
+    s = session(conn, t)
+    log.append(conn, ks, s, [msg(0, "X says zqn8x", "X"), msg(1, "Y says zqn8y", "Y")])
+    p = projector.Projector(mk("n8-derive"), K.KeyService(), es, t)
+    p.run()
+    log.append(conn, ks, s, [fact(2, "X", "Xavier", "diagnosis", "zqn8flu")])
+    ev_read, ev_go, res = threading.Event(), threading.Event(), {}
+
+    def dhook(name, data=None):
+        if name == "derive_after_read" and not ev_read.is_set():
+            res["derive_read_has_X"] = any(r[1] == "X" for r in data)
+            ev_read.set(); ev_go.wait(30)
+    p.hook = dhook
+
+    def derive():
+        try:
+            res["derive"] = p.derive()
+        except Exception as e:  # noqa: BLE001
+            res["derive"] = type(e).__name__
+
+    def inbox():
+        try:
+            log.inbox_enqueue(mk("n8-inbox"), K.KeyService(), s, "iX", "s1", "X", {"text": "zqn8inbox"})
+            res["inbox"] = "accepted"
+        except Exception as e:  # noqa: BLE001
+            res["inbox"] = getattr(e, "sqlstate", type(e).__name__)
+
+    def stale():
+        r = log.append(mk("n8-stale"), K.KeyService(), L.Lease(t, s.scope, s.epoch - 1, "zombie", None), [msg(3, "zombie zqn8z", "X")])
+        res["stale"] = r
+    td = threading.Thread(target=derive); td.start(); ev_read.wait(30)
+    ths = []
+
+    def phook(name, data=None):
+        if name == "phase1_before_commit":
+            ev_go.set()
+            for f in (inbox, stale):
+                th = threading.Thread(target=f); th.start(); ths.append(th)
+            waiting = 0
+            for _ in range(60):
+                waiting = CLOCK.execute("select count(*) from pg_stat_activity where wait_event_type='Lock' and application_name like 'n8-%%'").fetchone()[0]
+                if waiting >= 3 or (all(not x.is_alive() for x in ths) and not td.is_alive()):
+                    break
+                threading.Event().wait(0.05)
+            res["waiting_on_phase1"] = waiting
+    rec = erasure.run(mk("n8-erase"), ks, es, erasure.request(conn, t, "X"), hook=phook)
+    td.join(30); [x.join(30) for x in ths]
+    p.hook = lambda *a: None
+    p.run(); p.stop()
+    sweep = erasure.sweep(conn, ks, es)
+    resid = {"pg_facts_X": conn.execute("select count(*) from facts where tenant_id=%s and subject_id='X'", (t,)).fetchone()[0],
+             "pg_inbox_X": conn.execute("select count(*) from inbox where tenant_id=%s and subject_id='X'", (t,)).fetchone()[0],
+             "pg_quarantine_X": conn.execute("select count(*) from quarantine where tenant_id=%s and subject_id='X'", (t,)).fetchone()[0],
+             "es_X": es_count_all(es, t, Xq())}
+    state = conn.execute("select state from erasure_jobs where tenant_id=%s", (t,)).fetchone()[0]
+    holds = state == "done" and not any(resid.values())
+    return holds, "" if holds else f"residue {resid} state {state}", {**res, "residue": resid, "job_state": state, "first_run_done": rec["done"], "sweep": sweep}
+
+
 # ------------------------------------------------------------------ N4
 class OpenJobOnlyReader(reader.Reader):
     """BROKEN reader (old semantics): hides tombstones only while an erasure job is open."""
@@ -228,12 +355,15 @@ def _decide_with_barrier(c, ks, s, hv, src, ts, bar):
     return "accepted" if r["accepted"] else ("duplicate" if r["duplicates"] else "quarantined")
 
 
-SCEN = {"N1": n1, "N2": n2, "N3": n3, "N4": n4, "N5": n5, "N7": n7}
+SCEN = {"N1": n1, "N2": n2, "N3": n3, "N3S_eraser": n3s_eraser, "N3S_projector": n3s_projector, "N4": n4, "N5": n5, "N7": n7, "N8": n8}
+
+
+NO_CONTROL = {"N3S_eraser"}     # pre-registered: no sensitive control exists (the taker deletes the stale staging index)
 
 
 def run(name, R):
     arms = {}
-    for arm in ("fenced", "control"):
+    for arm in (("fenced",) if name in NO_CONTROL else ("fenced", "control")):
         runs = []
         for i in range(R):
             try:
@@ -243,7 +373,11 @@ def run(name, R):
             runs.append({"holds": holds, "why": why, "witness": w})
         arms[arm] = {"holds": sum(1 for r in runs if r["holds"] is True), "violated": sum(1 for r in runs if r["holds"] is False),
                      "errors": sum(1 for r in runs if r["holds"] is None), "runs": runs}
-    ok = arms["fenced"]["holds"] == R and arms["control"]["violated"] >= int(0.9 * R)
+    if name in NO_CONTROL:
+        arms["control"] = {"holds": 0, "violated": 0, "errors": 0, "runs": [], "note": "no control (supporting witness only, not a PASS)"}
+        ok = None if arms["fenced"]["holds"] == R else False
+    else:
+        ok = arms["fenced"]["holds"] == R and arms["control"]["violated"] >= int(0.9 * R)
     return {"pass": ok, "R": R, "fenced_holds": arms["fenced"]["holds"], "control_violated": arms["control"]["violated"],
             "errors": {a: arms[a]["errors"] for a in arms}, "arms": arms}
 
@@ -253,7 +387,8 @@ if __name__ == "__main__":
     which = [a for a in sys.argv[1:] if not a.isdigit()] or list(SCEN)
     for n in which:
         res = run(n, R)
-        print(n, "PASS" if res["pass"] else "FAIL", "fenced", res["fenced_holds"], "/", R, "control violated", res["control_violated"], "/", R, "errors", res["errors"])
+        print(n, {True: "PASS", False: "FAIL", None: "SUPPORTING(no control)"}[res["pass"]], "fenced", res["fenced_holds"], "/", R, "control violated", res["control_violated"], "/", R, "errors", res["errors"])
         print("  sample fenced witness:", json.dumps(res["arms"]["fenced"]["runs"][0], default=str)[:700])
-        print("  sample control witness:", json.dumps(res["arms"]["control"]["runs"][0], default=str)[:700])
+        if res["arms"]["control"]["runs"]:
+            print("  sample control witness:", json.dumps(res["arms"]["control"]["runs"][0], default=str)[:700])
         write_result(f"new_{n}", res)

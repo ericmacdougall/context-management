@@ -221,3 +221,16 @@ begin
   return NEW;
 end $$;
 create trigger erasure_guard before insert or update on erasure_jobs for each row execute function erasure_guard();
+
+
+-- Every content-bearing insert for a subject checks the erasure fence (FOR SHARE vs erasure's FOR UPDATE), not only events.
+create function subject_not_erased() returns trigger language plpgsql as $$
+declare er boolean;
+begin
+  select erased into er from subjects where tenant_id = NEW.tenant_id and subject_id = NEW.subject_id for share;
+  if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
+  return NEW;
+end $$;
+create trigger inbox_subject before insert on inbox for each row execute function subject_not_erased();
+create trigger facts_subject before insert on facts for each row execute function subject_not_erased();
+create trigger quarantine_subject before insert on quarantine for each row execute function subject_not_erased();

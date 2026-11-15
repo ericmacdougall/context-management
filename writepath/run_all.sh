@@ -17,6 +17,7 @@ OUT=../results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.row1_zombie "$R"
   $PY -m exp.row23_latecommit "$R"
   $PY -m exp.e_verify "$R"
+  $PY -m exp.row27_stale_approval "$R"
   $PY -m exp.registry_marker
   echo "end $(date -u +%FT%TZ)"
 } > "$OUT" 2>&1

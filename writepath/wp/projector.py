@@ -144,6 +144,7 @@ class Projector:
         xm, rows = self._snapshot_rows("facts",
             "select f.fact_id, f.subject_id, f.body_enc, f.valid_from, f.valid_to, f.input_event_ids, f.rev, f.changed_xid from facts f where f.tenant_id=%s "
             "and (f.changed_xid, f.rev) > (%s, %s) and f.changed_xid < %s "
+            "and not exists (select 1 from tombstones tb where tb.tenant_id=f.tenant_id and tb.event_id = any(f.input_event_ids)) "
             "order by f.changed_xid, f.rev limit %s", (self.batch,))
         if not rows:
             self._advance("facts", xm - 1, BIG)

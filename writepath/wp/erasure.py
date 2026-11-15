@@ -38,26 +38,34 @@ def _job(conn, jid):
     return dict(zip(("tenant", "subject", "state", "event_ids"), r))
 
 
+def _cascade(conn, t, s, ids):
+    """Idempotent deletes of the subject's derived rows in every registered Postgres content store."""
+    return {
+        "facts": conn.execute("delete from facts where tenant_id=%s and (input_event_ids && %s or subject_id=%s)", (t, ids, s)).rowcount,
+        "inbox": conn.execute("delete from inbox where tenant_id=%s and subject_id=%s", (t, s)).rowcount,
+        "analyst_jobs": conn.execute("delete from analyst_jobs where tenant_id=%s and input_event_ids && %s", (t, ids)).rowcount,
+        "quarantine": conn.execute("delete from quarantine where tenant_id=%s and subject_id=%s", (t, s)).rowcount,
+    }
+
+
 def phase1(conn, jid, ttl_s, hook=_noop):
+    """One transaction. The projector-lease bump comes FIRST, so any fenced writer racing this transaction blocks on
+    the lease row and then sees the new epoch; content inserts for the subject block on the subject row and then see
+    erased=true (subject_not_erased trigger). Then tombstones and the cascade."""
     j = _job(conn, jid)
     t, s = j["tenant"], j["subject"]
     with conn.transaction():
         conn.execute("select 1 from erasure_jobs where job_id=%s for update", (jid,))
+        lease = L.acquire_in_txn(conn, t, L.PROJECTOR, ttl_s, holder="erasure:" + jid)
         conn.execute("insert into subjects(tenant_id, subject_id) values (%s,%s) on conflict do nothing", (t, s))
         conn.execute("select 1 from subjects where tenant_id=%s and subject_id=%s for update", (t, s))
         conn.execute("update subjects set erased=true where tenant_id=%s and subject_id=%s", (t, s))
         ids = [r[0] for r in conn.execute("select event_id from events where tenant_id=%s and subject_id=%s order by event_id", (t, s)).fetchall()]
         conn.execute("insert into tombstones(tenant_id, event_id, subject_id, job_id) select %s, e, %s, %s from unnest(%s::text[]) e on conflict do nothing", (t, s, jid, ids))
-        counts = {
-            "facts": conn.execute("delete from facts where tenant_id=%s and (input_event_ids && %s or subject_id=%s)", (t, ids, s)).rowcount,
-            "inbox": conn.execute("delete from inbox where tenant_id=%s and subject_id=%s", (t, s)).rowcount,
-            "analyst_jobs": conn.execute("delete from analyst_jobs where tenant_id=%s and input_event_ids && %s", (t, ids)).rowcount,
-            "quarantine": conn.execute("delete from quarantine where tenant_id=%s and subject_id=%s", (t, s)).rowcount,
-        }
-        hook("phase1_before_bump")
-        lease = L.acquire_in_txn(conn, t, L.PROJECTOR, ttl_s, holder="erasure:" + jid)
+        counts = _cascade(conn, t, s, ids)
         conn.execute("update erasure_jobs set state='fenced', event_ids=%s, attempts=attempts+1, lease_scope=%s, lease_epoch=%s, updated_at=clock_timestamp() where job_id=%s",
                      (ids, L.PROJECTOR, lease.epoch, jid))
+        hook("phase1_before_commit")
     return lease, ids, counts
 
 
@@ -148,7 +156,9 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=120.0, hook=_noop, destroy_key=Tr
         lease, ids, p1 = phase1(conn, jid, ttl_s, hook)
     else:                                                    # resume (sweeper): take the lease again under a new epoch
         lease = L.acquire(conn, t, L.PROJECTOR, ttl_s, force=True, holder="erasure:" + jid)
-        ids, p1 = j["event_ids"], {}
+        ids = j["event_ids"]
+        with conn.transaction():
+            p1 = _cascade(conn, t, s, ids)
         _set(conn, jid, lease, attempts=_attempts(conn, jid) + 1)
     hook("after_phase1")
     rebuilt, err = [], None
