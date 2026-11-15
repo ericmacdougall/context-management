@@ -46,3 +46,29 @@ Rescue call ceiling: counter value 467 (287 before the rescue + 180). Before the
 extraction (unique uncached dev2 sessions / 16, rounded up; session ids are counted without any call), 16 expansion, 16 ORACLE, 16 reads,
 6 answer-judge, link judging at its upper bound from the candidate cap (16 x ceil(max_pairs / 15) first-stage calls, plus second-stage and audit calls
 at the dev rate per question scaled to 16). If they do not, no dev2 call is made and the shortfall is reported.
+
+## 6. Amendment, 2026-11-15, before any dev2 call (main's decisions; main's choice, not the user's words)
+Source: main's message to the rescue author after the rescue handoff. dev2 is untouched (no LLM call; only its 16 records were copied to phasef-out/rescue/ and its
+sessions counted: 743 unique, none already extracted, so 47 extraction calls at 16 per call).
+1. Waiver (main's): the dev stop condition of section 3 is waived. Reasons as given by main: dev precision 19/19 fell one link short of the 20-link minimum, and the dev
+   recall bar of 13/15 equals the measured ceiling of the answer-fact definition (12 by strict reading). The dev result is in-sample; the held-out gate is the evidence.
+2. Frozen recipe: v5 exactly as at HEAD 2b15450, iteration-1 settings: candidates_v5 with CAND_V5 (theta 0.12, 5 per fact, 40 per question, no protection, lemma fix);
+   stage 1 = link-v4.1 Sonnet prompt; stage 2 = link-v5-verify Sonnet prompt with the code-side consistency check; derive_status from links.py; reader-v1.2; retrieval
+   and question expansion as v3/v4. New code (phasef/gate3.py) only wires these together for dev2 and adds items 3, 4 and 6.
+3. G5 gold update pair (replaces the answer-token definition for G5 only; G2 and G3 keep the GATE.md gold-value fact B): before any link is judged on dev2, one Opus call
+   per question (recipe goldpair-v1) sees the question, the gold answer, the full text of the question's gold (answer) sessions and the facts extracted from those sessions
+   (numbered), and names the fact numbers that state the OLD value and the NEW value, or "none" for a side no extracted fact states. Stored in rescue/dev2_goldpairs.json.
+   G5 hit: a final link (item 4) of label replaces or pending whose two facts are one named old fact and one named new fact. A side named "none" is an extraction miss:
+   reported separately and a G5 failure. Unparseable output or a number outside the list: G5 failure, reported (no retry).
+4. Order independence: stage 1 and stage 2 run twice. Run A: candidate pairs packed 15 per call across questions in pair-id order; stage 2 on run-A positives, 12 per
+   call in pair-id order. Run B: the same pairs packed 15 per call after a seeded shuffle (seed 16096); stage 2 on run-B positives, 12 per call after a seeded shuffle
+   (seed 7). A link counts only if both runs' final verdicts are replaces or pending; its label is replaces if both say replaces, otherwise pending. Flips reported:
+   stage-1 positive/negative disagreements and final link/no-link disagreements.
+5. Criteria exactly as section 4: G1 FACTS5 (reader with final v5 labels) >= 14/16 and >= ORACLE - 1; G2 >= 14; G3 >= 13; G4 precision >= 0.90 (every link audited by
+   linkaudit-v1 Opus, full source rounds and dates, batches of 10); G4b harmful <= 0.05; G5 >= 12/16 under item 3. Answer judge: Opus, benchmark prompts, batches of 6.
+6. Diagnostic arm NOLABEL (not a criterion): same reader, same retrieved facts in the same order, every status label removed; each fact keeps only its date and its
+   modality tag (stated as fact, decision or plan), identical to dev diagnostic D2.
+7. Budget (replaces the section 5 margin rule): allowance 220 calls (counter 345 -> cap 565). Fixed: extraction 47, expansion 16, gold pairs 16, three reader arms 48,
+   answer judge 8 = 135, leaving 85 for link judging and audit. Variable: 2 x ceil(P / 15) stage-1 calls for P candidate pairs, plus about 2 x 4 stage-2 and about 4
+   audit calls. P is known only after extraction, by code. Order of work: extraction first; then P is computed without any call; if 2 x ceil(P / 15) + 12 > the calls
+   then remaining minus the 88 fixed calls still to spend, the gate stops there and the shortfall is reported (no partial gate). With dev's P = 501 the total is 135 + 68 + 12 = 215.
