@@ -1,0 +1,118 @@
+{
+ "phase": "basic",
+ "license": "basic",
+ "create_key_A": {
+  "status": 200,
+  "created": true
+ },
+ "create_key_B": {
+  "status": 200,
+  "created": true
+ },
+ "before_B_adds_docs": {
+  "A_match_all": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "B_match_all": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_kiwi": {
+   "status": 403,
+   "hits": {
+    "type": "security_exception",
+    "reason": "current license is non-compliant for [field and document level security]",
+    "root": "current license is non-compliant for [field and document level security]"
+   }
+  },
+  "A_idf_via_explain": null,
+  "admin_kiwi_total": 6,
+  "A_significant_terms": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_knn_k5": {
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_terms_enum_cat": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_count_api": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  }
+ },
+ "after_B_adds_20000_kiwi_docs": {
+  "A_match_all": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "B_match_all": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_kiwi": {
+   "status": 403,
+   "hits": {
+    "type": "security_exception",
+    "reason": "current license is non-compliant for [field and document level security]",
+    "root": "current license is non-compliant for [field and document level security]"
+   }
+  },
+  "A_idf_via_explain": null,
+  "admin_kiwi_total": 10000,
+  "A_significant_terms": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_knn_k5": {
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_terms_enum_cat": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "A_count_api": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  }
+ },
+ "score_shift_A_top_hit": {
+  "before": {
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  },
+  "after": {
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [field and document level security]",
+   "root": "current license is non-compliant for [field and document level security]"
+  }
+ }
+}

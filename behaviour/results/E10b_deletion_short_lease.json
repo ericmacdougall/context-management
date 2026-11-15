@@ -1,0 +1,206 @@
+{
+ "marker_note": "unique per-run marker ZXQMARKER+12hex, present in body (text) and k (keyword)",
+ "mark_len": 21,
+ "delete": "deleted",
+ "expunge_merge": [
+  200,
+  {
+   "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+   }
+  }
+ ],
+ "full_merge": [
+  200,
+  {
+   "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+   }
+  }
+ ],
+ "leases": {
+  "indices": {
+   "e10b-del": {
+    "shards": {
+     "0": [
+      {
+       "retention_leases": {
+        "primary_term": 1,
+        "version": 1,
+        "leases": [
+         {
+          "id": "peer_recovery/3LVbsXnaTXKnVZkwh6gGRg",
+          "retaining_seq_no": 0,
+          "timestamp": 1794766139677,
+          "source": "peer recovery"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  }
+ },
+ "reindex": 35,
+ "steps": [
+  {
+   "step": "1 indexed+refreshed, not flushed",
+   "files_containing_marker": [
+    "0/index/_0.cfs",
+    "0/translog/translog-2.tlog"
+   ],
+   "docs": {
+    "count": 41,
+    "deleted": 0,
+    "total_size_in_bytes": 8753
+   },
+   "segments_count": 1,
+   "translog_ops": 41,
+   "translog_uncommitted_ops": 41,
+   "listing": "_0.cfe _0.cfs _0.si segments_2 write.lock \ntranslog-2.tlog translog.ckp"
+  },
+  {
+   "step": "2 after flush",
+   "files_containing_marker": [
+    "0/index/_0.cfs"
+   ],
+   "docs": {
+    "count": 41,
+    "deleted": 0,
+    "total_size_in_bytes": 8753
+   },
+   "segments_count": 1,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_0.cfe _0.cfs _0.si segments_3 write.lock \ntranslog-3.tlog translog.ckp"
+  },
+  {
+   "step": "3 deleted + refresh (no flush)",
+   "files_containing_marker": [
+    "0/index/_0.cfs"
+   ],
+   "docs": {
+    "count": 40,
+    "deleted": 2,
+    "total_size_in_bytes": 13879
+   },
+   "segments_count": 2,
+   "translog_ops": 1,
+   "translog_uncommitted_ops": 1,
+   "listing": "_0.cfe _0.cfs _0.si _0_1.fnm _0_1_Lucene90_0.dvd _0_1_Lucene90_0.dvm _0_1_Lucene90_0.dvs _1.cfe _1.cfs _1.si segments_3 write.lock \ntranslog-3.tlog translog.ckp"
+  },
+  {
+   "step": "4 deleted + flush",
+   "files_containing_marker": [
+    "0/index/_0.cfs"
+   ],
+   "docs": {
+    "count": 40,
+    "deleted": 2,
+    "total_size_in_bytes": 13879
+   },
+   "segments_count": 2,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_0.cfe _0.cfs _0.si _0_1.fnm _0_1_Lucene90_0.dvd _0_1_Lucene90_0.dvm _0_1_Lucene90_0.dvs _1.cfe _1.cfs _1.si segments_4 write.lock \ntranslog-4.tlog translog.ckp"
+  },
+  {
+   "step": "5 8 more docs deleted + flush (deleted%% ~ 20%%)",
+   "files_containing_marker": [
+    "0/index/_0.cfs"
+   ],
+   "docs": {
+    "count": 32,
+    "deleted": 18,
+    "total_size_in_bytes": 17898
+   },
+   "segments_count": 3,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_0.cfe _0.cfs _0.si _0_2.fnm _0_2_Lucene90_0.dvd _0_2_Lucene90_0.dvm _0_2_Lucene90_0.dvs _1.cfe _1.cfs _1.si _2.cfe _2.cfs _2.si segments_5 write.lock \ntranslog-5.tlog translog.ckp"
+  },
+  {
+   "step": "6 after forcemerge only_expunge_deletes",
+   "files_containing_marker": [
+    "0/index/_0.cfs"
+   ],
+   "docs": {
+    "count": 32,
+    "deleted": 18,
+    "total_size_in_bytes": 17898
+   },
+   "segments_count": 3,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_0.cfe _0.cfs _0.si _0_2.fnm _0_2_Lucene90_0.dvd _0_2_Lucene90_0.dvm _0_2_Lucene90_0.dvs _1.cfe _1.cfs _1.si _2.cfe _2.cfs _2.si segments_5 write.lock \ntranslog-5.tlog translog.ckp"
+  },
+  {
+   "step": "7 after expunge + flush",
+   "files_containing_marker": [
+    "0/index/_0.cfs"
+   ],
+   "docs": {
+    "count": 32,
+    "deleted": 18,
+    "total_size_in_bytes": 17898
+   },
+   "segments_count": 3,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_0.cfe _0.cfs _0.si _0_2.fnm _0_2_Lucene90_0.dvd _0_2_Lucene90_0.dvm _0_2_Lucene90_0.dvs _1.cfe _1.cfs _1.si _2.cfe _2.cfs _2.si segments_6 write.lock \ntranslog-5.tlog translog.ckp"
+  },
+  {
+   "step": "8 after forcemerge max_num_segments=1 + flush",
+   "files_containing_marker": [
+    "0/index/_3.cfs"
+   ],
+   "docs": {
+    "count": 32,
+    "deleted": 18,
+    "total_size_in_bytes": 9640
+   },
+   "segments_count": 1,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_3.cfe _3.cfs _3.si segments_8 write.lock \ntranslog-5.tlog translog.ckp"
+  },
+  {
+   "step": "9 lease period 1s, wait 3s, add docs, flush, forcemerge 1",
+   "files_containing_marker": [
+    "0/index/_7.cfs"
+   ],
+   "docs": {
+    "count": 35,
+    "deleted": 18,
+    "total_size_in_bytes": 10076
+   },
+   "segments_count": 1,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_7.cfe _7.cfs _7.si segments_a write.lock \ntranslog-6.tlog translog.ckp"
+  },
+  {
+   "step": "10 fresh reindexed index (survivors only) after flush",
+   "files_containing_marker": [],
+   "docs": {
+    "count": 35,
+    "deleted": 0,
+    "total_size_in_bytes": 10079
+   },
+   "segments_count": 1,
+   "translog_ops": 0,
+   "translog_uncommitted_ops": 0,
+   "listing": "_0.cfe _0.cfs _0.si segments_3 write.lock \ntranslog-3.tlog translog.ckp"
+  }
+ ],
+ "stats_docs_final": {
+  "count": 35,
+  "deleted": 0,
+  "total_size_in_bytes": 10079
+ }
+}

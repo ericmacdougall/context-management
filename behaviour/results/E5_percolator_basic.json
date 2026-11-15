@@ -1,0 +1,120 @@
+{
+ "phase": "basic",
+ "create_index": [
+  200,
+  true
+ ],
+ "single_doc_matches": [
+  "m1",
+  "t1"
+ ],
+ "multi_doc_slots": [
+  {
+   "id": "p1",
+   "slots": [
+    2
+   ]
+  },
+  {
+   "id": "b1",
+   "slots": [
+    0
+   ]
+  }
+ ],
+ "stored_unsupported": {
+  "knn": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:93] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "root_cause": "[1:93] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "caused_by": "the [knn] query is unsupported inside a percolator query"
+  },
+  "sparse_vector": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:78] failed to parse: Cannot invoke \"org.apache.lucene.index.IndexReader.getDocCount(String)\" because the return value of \"org.elasticsearch.index.query.SearchExecutionContext.getIndexReader()\" is null",
+   "root_cause": "[1:78] failed to parse: Cannot invoke \"org.apache.lucene.index.IndexReader.getDocCount(String)\" because the return value of \"org.elasticsearch.index.query.SearchExecutionContext.getIndexReader()\" is null",
+   "caused_by": "Cannot invoke \"org.apache.lucene.index.IndexReader.getDocCount(String)\" because the return value of \"org.elasticsearch.index.query.SearchExecutionContext.getIndexReader()\" is null"
+  },
+  "sparse_vector_inference": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:78] failed to parse: [nope] is not an inference service model or a deployed ml model",
+   "root_cause": "[nope] is not an inference service model or a deployed ml model",
+   "caused_by": "[nope] is not an inference service model or a deployed ml model"
+  },
+  "script_score_cosine": {
+   "status": 201,
+   "result": "created"
+  },
+  "more_like_this": {
+   "status": 201,
+   "result": "created"
+  },
+  "has_child_like_terms_lookup": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:65] failed to parse: no such index [x]",
+   "root_cause": "no such index [x]",
+   "caused_by": "no such index [x]"
+  },
+  "range_now": {
+   "status": 201,
+   "result": "created"
+  }
+ },
+ "latency_term_queries": {
+  "workload": "N stored term queries over 5000-token vocab (random), 1 shard, query doc = 30 random tokens, 200 reps after 20 warmup, sequential client on same host; 10-doc variant 100 reps",
+  "results": {
+   "1000": {
+    "matches_for_doc": 4,
+    "one_doc_client_ms": {
+     "p50": 4.734282993013039,
+     "p90": 6.343516963534057,
+     "p99": 9.114719305653125
+    },
+    "one_doc_took_ms": {
+     "p50": 2.0,
+     "p90": 3.0
+    },
+    "ten_docs_client_ms": {
+     "p50": 8.891720499377698,
+     "p90": 12.300662003690377
+    }
+   },
+   "10000": {
+    "matches_for_doc": 50,
+    "one_doc_client_ms": {
+     "p50": 3.918713511666283,
+     "p90": 5.1231520017609,
+     "p99": 7.227168716490269
+    },
+    "one_doc_took_ms": {
+     "p50": 1.0,
+     "p90": 2.0
+    },
+    "ten_docs_client_ms": {
+     "p50": 11.733474995708093,
+     "p90": 14.825042965821922
+    }
+   },
+   "100000": {
+    "matches_for_doc": 588,
+    "one_doc_client_ms": {
+     "p50": 5.3384024649858475,
+     "p90": 6.504295772174373,
+     "p99": 7.862509331898764
+    },
+    "one_doc_took_ms": {
+     "p50": 3.0,
+     "p90": 4.0
+    },
+    "ten_docs_client_ms": {
+     "p50": 49.27370903897099,
+     "p90": 63.81349581060931
+    }
+   }
+  }
+ }
+}

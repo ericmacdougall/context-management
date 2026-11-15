@@ -1,0 +1,174 @@
+{
+ "synthetic": "random unit vectors (seeded numpy standard normal, normalised), 384 dims, 200k docs, grp uniform int 0..999",
+ "e6-bbq-acorn_create": [
+  200,
+  "ok"
+ ],
+ "e6-bbq-acorn_heuristic_setting": {
+  "e6-bbq-acorn": {
+   "settings": {
+    "index": {
+     "dense_vector": {
+      "hnsw_filter_heuristic": "acorn"
+     }
+    }
+   }
+  }
+ },
+ "e6-bbq-fanout_create": [
+  200,
+  "ok"
+ ],
+ "e6-bbq-fanout_heuristic_setting": {
+  "e6-bbq-fanout": {
+   "settings": {
+    "index": {
+     "dense_vector": {
+      "hnsw_filter_heuristic": "fanout"
+     }
+    }
+   }
+  }
+ },
+ "e6-int8-acorn_create": [
+  200,
+  "ok"
+ ],
+ "e6-int8-acorn_heuristic_setting": {
+  "e6-int8-acorn": {
+   "settings": {
+    "index": {
+     "dense_vector": {
+      "hnsw_filter_heuristic": "acorn"
+     }
+    }
+   }
+  }
+ },
+ "e6-int8-fanout_create": [
+  200,
+  "ok"
+ ],
+ "e6-int8-fanout_heuristic_setting": {
+  "e6-int8-fanout": {
+   "settings": {
+    "index": {
+     "dense_vector": {
+      "hnsw_filter_heuristic": "fanout"
+     }
+    }
+   }
+  }
+ },
+ "ingest_seconds": 459.7949802875519,
+ "stats": {
+  "e6-bbq-acorn": {
+   "docs": {
+    "count": 200000,
+    "deleted": 0,
+    "total_size_in_bytes": 337419824
+   },
+   "store": {
+    "size_in_bytes": 327424697,
+    "total_data_set_size_in_bytes": 327424697,
+    "reserved_in_bytes": 0
+   },
+   "segments": {
+    "count": 8,
+    "memory_in_bytes": 0,
+    "terms_memory_in_bytes": 0,
+    "stored_fields_memory_in_bytes": 0,
+    "term_vectors_memory_in_bytes": 0,
+    "norms_memory_in_bytes": 0,
+    "points_memory_in_bytes": 0,
+    "doc_values_memory_in_bytes": 0,
+    "index_writer_memory_in_bytes": 0,
+    "version_map_memory_in_bytes": 0,
+    "fixed_bit_set_memory_in_bytes": 0,
+    "max_unsafe_auto_id_timestamp": -1,
+    "file_sizes": {}
+   }
+  },
+  "e6-bbq-fanout": {
+   "docs": {
+    "count": 200000,
+    "deleted": 0,
+    "total_size_in_bytes": 337383152
+   },
+   "store": {
+    "size_in_bytes": 320682813,
+    "total_data_set_size_in_bytes": 320682813,
+    "reserved_in_bytes": 0
+   },
+   "segments": {
+    "count": 8,
+    "memory_in_bytes": 0,
+    "terms_memory_in_bytes": 0,
+    "stored_fields_memory_in_bytes": 0,
+    "term_vectors_memory_in_bytes": 0,
+    "norms_memory_in_bytes": 0,
+    "points_memory_in_bytes": 0,
+    "doc_values_memory_in_bytes": 0,
+    "index_writer_memory_in_bytes": 0,
+    "version_map_memory_in_bytes": 0,
+    "fixed_bit_set_memory_in_bytes": 0,
+    "max_unsafe_auto_id_timestamp": -1,
+    "file_sizes": {}
+   }
+  },
+  "e6-int8-acorn": {
+   "docs": {
+    "count": 200000,
+    "deleted": 0,
+    "total_size_in_bytes": 405019760
+   },
+   "store": {
+    "size_in_bytes": 392996665,
+    "total_data_set_size_in_bytes": 392996665,
+    "reserved_in_bytes": 0
+   },
+   "segments": {
+    "count": 8,
+    "memory_in_bytes": 0,
+    "terms_memory_in_bytes": 0,
+    "stored_fields_memory_in_bytes": 0,
+    "term_vectors_memory_in_bytes": 0,
+    "norms_memory_in_bytes": 0,
+    "points_memory_in_bytes": 0,
+    "doc_values_memory_in_bytes": 0,
+    "index_writer_memory_in_bytes": 0,
+    "version_map_memory_in_bytes": 0,
+    "fixed_bit_set_memory_in_bytes": 0,
+    "max_unsafe_auto_id_timestamp": -1,
+    "file_sizes": {}
+   }
+  },
+  "e6-int8-fanout": {
+   "docs": {
+    "count": 200000,
+    "deleted": 0,
+    "total_size_in_bytes": 405019760
+   },
+   "store": {
+    "size_in_bytes": 392996665,
+    "total_data_set_size_in_bytes": 392996665,
+    "reserved_in_bytes": 0
+   },
+   "segments": {
+    "count": 8,
+    "memory_in_bytes": 0,
+    "terms_memory_in_bytes": 0,
+    "stored_fields_memory_in_bytes": 0,
+    "term_vectors_memory_in_bytes": 0,
+    "norms_memory_in_bytes": 0,
+    "points_memory_in_bytes": 0,
+    "doc_values_memory_in_bytes": 0,
+    "index_writer_memory_in_bytes": 0,
+    "version_map_memory_in_bytes": 0,
+    "fixed_bit_set_memory_in_bytes": 0,
+    "max_unsafe_auto_id_timestamp": -1,
+    "file_sizes": {}
+   }
+  }
+ }
+}
