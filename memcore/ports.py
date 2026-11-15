@@ -219,6 +219,7 @@ class Turn:
 class Injection:
     block: str
     used_ids: List[str]
+    dropped: int = 0          # candidate records left out (egress guard or budget); reported, never silent
 
 
 class ContextInjector:

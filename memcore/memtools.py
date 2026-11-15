@@ -77,19 +77,24 @@ def memory_tools(store) -> AgentToolSurface:
 
 
 class BudgetedInjector(ContextInjector):
-    """Recall on the user's text and render at most `char_budget` characters as an inert DATA block (per-turn random delimiter,
-    JSON-encoded records, no instruction field); records that would leak a dataset session id are dropped and counted.
-    Only ids are returned for logging."""
+    """Recall on the user's text and render an inert DATA block (per-turn random delimiter, JSON-encoded records, no
+    instruction field) whose RENDERED size, header and END line included, is at most `char_budget` characters. Whole
+    records are dropped, never cut, so the block is always well-formed or empty; a record that does not fit is skipped
+    and smaller later ones are still considered. Records that would leak a dataset session id are dropped. Both kinds
+    of drop are counted on the Injection (`dropped`) and on the injector. Only ids are returned for logging."""
+
+    _PROBE_DELIM = "MEMCORE-" + "0" * 16     # same length as a real per-turn delimiter (8 random bytes, hex)
 
     def __init__(self, store, char_budget: int = 800, k: int = 5, egress_guard=DEFAULT_GUARD):
-        self.store, self.char_budget, self.k, self.egress_guard, self.dropped_by_guard = store, char_budget, k, egress_guard, 0
+        self.store, self.char_budget, self.k, self.egress_guard = store, char_budget, k, egress_guard
+        self.dropped_by_guard, self.dropped_by_budget = 0, 0
 
-    def build(self, turn: Turn) -> Injection:
-        import json as _json
+    def build(self, turn: Turn, char_budget: Optional[int] = None) -> Injection:
+        budget = self.char_budget if char_budget is None else min(self.char_budget, char_budget)
         turn_label = "%s@%s" % (turn.session_id, turn.time)
         if self.egress_guard is not None:     # the header carries the host's session id: refuse (raise) rather than inject it
             self.egress_guard.check_text(turn_label, "injection header")
-        recs, used, n = [], [], 0
+        recs, used, dropped = [], [], 0
         for h in self.store.recall(turn.user_text, as_of=turn.time, k=self.k):
             rec = {"id": h["id"], "ts": h["ts"], "text": h["text"]}
             if self.egress_guard is not None:
@@ -97,11 +102,18 @@ class BudgetedInjector(ContextInjector):
                     self.egress_guard.check(rec, "injected record")
                 except EgressLeak:
                     self.dropped_by_guard += 1
+                    dropped += 1
                     continue
-            size = len(_json.dumps(rec, ensure_ascii=True))
-            if n + size > self.char_budget:
-                break
+            if len(render_data_block(recs + [rec], turn_label, delimiter=self._PROBE_DELIM, label="remembered events")) > budget:
+                self.dropped_by_budget += 1
+                dropped += 1
+                continue
             recs.append(rec)
             used.append(h["id"])
-            n += size + 1
-        return Injection(block=render_data_block(recs, turn_label, label="remembered events") if recs else "", used_ids=used)
+        block = render_data_block(recs, turn_label, label="remembered events") if recs else ""
+        while block and len(block) > budget:      # defensive: a re-rolled delimiter has the same length
+            recs.pop()
+            used.pop()
+            dropped += 1
+            block = render_data_block(recs, turn_label, label="remembered events") if recs else ""
+        return Injection(block=block, used_ids=used, dropped=dropped)

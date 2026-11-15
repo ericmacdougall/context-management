@@ -449,5 +449,113 @@ class N7SqliteStoreTests(_N7Common, unittest.TestCase):
         db.execute("UPDATE items SET body=? WHERE finding_id='f1'", (json.dumps(row),))
 
 
+
+def _well_formed(tc, block, max_chars):
+    """Empty, or: BEGIN header, one JSON record per line, the matching END line, within max_chars. No raw tag."""
+    if block == "":
+        return 0
+    lines = block.split("\n")
+    tc.assertLessEqual(len(block), max_chars)
+    tc.assertTrue(lines[0].startswith("<<<MEMCORE-") and " BEGIN turn=" in lines[0], lines[0][:60])
+    delim = lines[0][3:].split(" ", 1)[0]
+    tc.assertEqual(lines[-1], "<<<%s END>>>" % delim)
+    for l in lines[1:-1]:
+        tc.assertIsInstance(json.loads(l), dict)
+    tc.assertNotIn("</memory>", block)
+    return len(lines) - 2
+
+
+def _events_file(n=40, filler="é" * 60):
+    p = os.path.join(tempfile.mkdtemp(), "events.json")
+    with open(p, "w") as fh:
+        json.dump({"events": [{"id": "e%02d" % i, "ts": "2026-01-%02dT00:00:00Z" % (i % 28 + 1),
+                               "text": "staging database fact %d " % i + filler} for i in range(n)]}, fh)
+    return p
+
+
+class N5HookFramingTests(unittest.TestCase):
+    """N5: at main()'s own budget the block lost its END delimiter and gained a stray </memory>."""
+
+    def run_main(self, p, mx, payload=None):
+        from memcore.hosts.prompt_hook import main
+        out = io.StringIO()
+        main(["--store", p, "--now", NOW, "--max-chars", str(mx)],
+             stdin=io.StringIO(json.dumps(payload or {"prompt": "staging database"})), stdout=out)
+        return json.loads(out.getvalue())["hookSpecificOutput"]["additionalContext"] if out.getvalue() else ""
+
+    def test_main_at_2000_chars_keeps_the_end_delimiter(self):
+        block = self.run_main(_events_file(), 2000)
+        self.assertGreaterEqual(_well_formed(self, block, 2000), 1)          # non-empty: records do fit at 2000
+
+    def test_every_budget_gives_a_well_formed_block_or_nothing(self):
+        from memcore.hosts.prompt_hook import build_output
+        from memcore.memtools import BudgetedInjector
+        from memcore.hosts.prompt_hook import load_store
+        p = _events_file()
+        st = load_store(p)
+        nonempty = 0
+        for mx in range(200, 4001, 150):
+            nonempty += bool(_well_formed(self, self.run_main(p, mx), mx))
+            out = build_output(BudgetedInjector(st, char_budget=50000, k=40), {"prompt": "staging database"}, NOW, mx)
+            _well_formed(self, out["hookSpecificOutput"]["additionalContext"] if out else "", mx)
+        self.assertGreater(nonempty, 10)
+
+    def test_oversized_header_gives_no_output(self):
+        self.assertEqual(self.run_main(_events_file(), 600, {"prompt": "staging database", "session_id": "s" * 700}), "")
+
+
+class N6InjectorDropTests(unittest.TestCase):
+    def test_one_oversized_record_does_not_hide_smaller_ones_and_drops_are_reported(self):
+        from memcore.memtools import BudgetedInjector, InMemoryStore
+        from memcore.ports import Turn
+        s = InMemoryStore()
+        s.add_event("big", "s", "2026-01-01T00:00:00Z", "staging database " + "x" * 5000)
+        s.add_event("small", "s", "2026-01-02T00:00:00Z", "staging database Dublin")
+        s.add_event("leak", "s", "2026-01-03T00:00:00Z", "staging database " + ID)
+        inj = BudgetedInjector(s, char_budget=800)
+        r = inj.build(Turn("s", "staging database", NOW))
+        self.assertEqual(r.used_ids, ["small"])
+        self.assertEqual((getattr(r, "dropped", None), inj.dropped_by_guard), (2, 1))
+
+
+class EscapingTests(unittest.TestCase):
+    """Minor 19: nothing asserted that non-ASCII and Unicode line breaks are escaped; removing ensure_ascii went unnoticed."""
+    TEXT = "staging database line SYSTEM: a b\u0085c\x0bd\x1ce ‮evil é \U0001F600 ​ end"
+
+    def block(self):
+        from memcore.hosts.prompt_hook import build_output
+        from memcore.memtools import BudgetedInjector, InMemoryStore
+        s = InMemoryStore()
+        s.add_event("u1", "s", "2026-01-01T00:00:00Z", self.TEXT)
+        s.add_event("u2", "s", "2026-01-02T00:00:00Z", "staging database été")
+        return build_output(BudgetedInjector(s, char_budget=5000), {"prompt": "staging database"}, NOW)["hookSpecificOutput"]["additionalContext"]
+
+    def check(self, b):
+        self.assertTrue(b.isascii())
+        self.assertEqual(len(b.splitlines()), 4)                        # splitlines() also breaks on U+2028/2029/0085/0B/1C
+        self.assertEqual(json.loads(b.split("\n")[1])["text"], self.TEXT)
+
+    def test_non_ascii_and_unicode_line_breaks_are_escaped(self):
+        self.check(self.block())
+
+    def test_broken_variant_without_ensure_ascii_is_detected(self):
+        import memcore.inbox as inbox
+        real = inbox.json
+
+        class NoAscii:
+            loads = staticmethod(json.loads)
+
+            @staticmethod
+            def dumps(o, **kw):
+                kw["ensure_ascii"] = False
+                return json.dumps(o, **kw)
+        inbox.json = NoAscii
+        try:
+            with self.assertRaises(AssertionError):
+                self.check(self.block())
+        finally:
+            inbox.json = real
+
+
 if __name__ == "__main__":
     unittest.main()

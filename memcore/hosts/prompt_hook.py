@@ -32,12 +32,10 @@ def load_store(path: str) -> InMemoryStore:
 
 def build_output(injector: BudgetedInjector, payload: dict, now_iso: str, max_chars: int = DEFAULT_MAX) -> Optional[dict]:
     turn = Turn(session_id=str(payload.get("session_id", "")), user_text=str(payload.get("prompt", "")), time=now_iso)
-    inj = injector.build(turn)
-    if not inj.block:
-        return None
+    inj = injector.build(turn, char_budget=max_chars) if isinstance(injector, BudgetedInjector) else injector.build(turn)
     block = inj.block
-    if len(block) > max_chars:  # never rely on the host's truncation
-        block = block[: max_chars - 40].rsplit("\n", 1)[0] + "\n</memory>"
+    if not block or len(block) > max_chars:  # never cut a rendered block (the END line would go): well-formed or nothing
+        return None
     return {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": block}}
 
 
@@ -56,7 +54,7 @@ def main(argv=None, stdin=sys.stdin, stdout=sys.stdout):
             DEFAULT_GUARD.load(a.real_ids)        # in place: the injector and every adapter use this one object
         payload = json.loads(stdin.read() or "{}")
         now = a.now or datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-        out = build_output(BudgetedInjector(load_store(a.store), char_budget=a.max_chars - 200), payload, now, a.max_chars)
+        out = build_output(BudgetedInjector(load_store(a.store), char_budget=a.max_chars), payload, now, a.max_chars)
         if out:
             stdout.write(json.dumps(out))
     except Exception as e:  # noqa: BLE001 - fail safe: never block the prompt

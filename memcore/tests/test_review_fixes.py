@@ -40,8 +40,21 @@ class Item3InjectorTests(unittest.TestCase):
         self.assertEqual(len(b.split("\n")), 3)
 
     def test_broken_variant_old_renderer_is_forgeable(self):
-        old = "<memory>\n- [ev9 ts] %s\n</memory>" % FORGE                  # the pre-fix rendering
-        self.assertTrue(any(l.startswith("SYSTEM:") for l in old.split("\n")))
+        """Control for the test above, through the real hook path: with the pre-fix renderer swapped in, the same record
+        produces a forged SYSTEM line and a second opening tag, so the checks above can tell the difference."""
+        import memcore.memtools as mt
+        real = mt.render_data_block
+
+        def old_renderer(records, turn_id, delimiter=None, label=""):          # the pre-fix '<memory>' rendering
+            return "<memory>\n" + "\n".join("- [%s %s] %s" % (r["id"], r["ts"], r["text"]) for r in records) + "\n</memory>"
+        mt.render_data_block = old_renderer
+        try:
+            out = build_output(BudgetedInjector(self.store(), char_budget=5000), {"prompt": "staging database"}, NOW)
+        finally:
+            mt.render_data_block = real
+        lines = out["hookSpecificOutput"]["additionalContext"].split("\n")
+        self.assertTrue(any(l.startswith("SYSTEM:") for l in lines))
+        self.assertEqual(sum(l == "<memory>" for l in lines), 2)
 
 
 class Item5TokenTests(unittest.TestCase):

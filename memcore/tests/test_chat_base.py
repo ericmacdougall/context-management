@@ -161,17 +161,43 @@ class ReviewFixTests(Base):
             m.complete(U, temperature=0.5)
 
     def test_item7_http_adapters_put_params_on_the_wire(self):
-        from memcore.adapters.anthropic_api import AnthropicMessagesChat
-        from memcore.adapters.elastic_inference import ElasticInferenceChat
-        from memcore.adapters.openai_compat import OpenAICompatChat
-        d = tempfile.mkdtemp()
-        kw = dict(cache_dir=d, ledger_path=os.devnull, cap=5)
-        e = ElasticInferenceChat("http://x", "i", lambda: "k", **kw).body("p", None, None, 7, 0.0)
-        o = OpenAICompatChat("http://x/v1", "m", token="t", **kw)._body("p", None, None, max_output_tokens=7, temperature=0.0)
-        a = AnthropicMessagesChat("m", lambda: "k", **kw).body("p", None, None, 7, 0.0)
-        self.assertEqual((e["max_completion_tokens"], e["temperature"]), (7, 0.0))
-        self.assertEqual((o["max_tokens"], o["temperature"]), (7, 0.0))
-        self.assertEqual((a["max_tokens"], a["temperature"]), (7, 0.0))
+        """Through complete() (the real call path: _normalise -> _one_call -> _call_backend -> request body), with each
+        adapter's _urlopen replaced by an in-process capture. The earlier version called the body builders directly and
+        passed even when _call_backend dropped the parameters (delta review, section 2C)."""
+        import io
+        import json
+        import memcore.adapters.anthropic_api as aa
+        import memcore.adapters.elastic_inference as ei
+        import memcore.adapters.openai_compat as oa
+        bodies = {}
+
+        class R(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): pass
+
+        def cap(name, payload):
+            def f(req, timeout=None, context=None):
+                bodies[name] = json.loads(req.data)
+                return R(payload)
+            return f
+        saved = (ei._urlopen, oa._urlopen, aa._urlopen)
+        ei._urlopen = cap("elastic", b'data: {"choices":[{"index":0,"delta":{"content":"ok"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
+        oa._urlopen = cap("openai", json.dumps({"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}).encode())
+        aa._urlopen = cap("anthropic", json.dumps({"content": [{"type": "text", "text": "ok"}], "stop_reason": "end_turn",
+                                                   "usage": {"input_tokens": 1, "output_tokens": 1}}).encode())
+        try:
+            d = tempfile.mkdtemp()
+            kw = lambda n: dict(cache_dir=os.path.join(d, n), ledger_path=os.devnull, cap=5)
+            ms = [{"role": "user", "content": "hi"}]
+            ei.ElasticInferenceChat(base_url="http://127.0.0.1:1", auth_header=lambda: "ApiKey x", endpoint_id="ep", **kw("e")).complete(
+                ms, temperature=0.0, max_output_tokens=7)
+            oa.OpenAICompatChat("http://127.0.0.1:1/v1", "m", token="t", **kw("o")).complete(ms, temperature=0.0, max_output_tokens=7)
+            aa.AnthropicMessagesChat(model="m", api_key=lambda: "k", **kw("a")).complete(ms, temperature=0.0, max_output_tokens=7)
+        finally:
+            ei._urlopen, oa._urlopen, aa._urlopen = saved
+        self.assertEqual((bodies["elastic"].get("max_completion_tokens"), bodies["elastic"].get("temperature")), (7, 0.0))
+        self.assertEqual((bodies["openai"].get("max_tokens"), bodies["openai"].get("temperature")), (7, 0.0))
+        self.assertEqual((bodies["anthropic"].get("max_tokens"), bodies["anthropic"].get("temperature")), (7, 0.0))
 
     def test_item6_egress_guard_blocks_prompts_and_system(self):
         from memcore.guard import EgressLeak

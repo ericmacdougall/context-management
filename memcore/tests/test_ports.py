@@ -132,9 +132,11 @@ class ToolTests(unittest.TestCase):
             self.surf.call_tool("nope", {})
 
     def test_injector_budget_and_ids(self):
-        inj = BudgetedInjector(demo_store(), char_budget=140)
+        inj = BudgetedInjector(demo_store(), char_budget=420)    # the budget is the RENDERED size (header and END line included)
         out = inj.build(Turn("s", "where is the staging database", "2026-12-01T00:00:00Z"))
         self.assertEqual(len(out.used_ids), 1)
+        self.assertLessEqual(len(out.block), 420)
+        self.assertEqual(out.dropped, 1)
         self.assertIn('"id":"%s"' % out.used_ids[0], out.block)
         self.assertEqual(BudgetedInjector(demo_store()).build(Turn("s", "zzz", "2026-12-01T00:00:00Z")).block, "")
 
