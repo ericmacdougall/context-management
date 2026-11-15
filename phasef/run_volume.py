@@ -23,8 +23,10 @@ INDEX = os.path.join(VOL, "sessions_needed.json")
 POOL = os.path.join(VOL, "pool_sets_pilot.json")
 CACHE = os.path.join(VOL, "cache")
 CACHE_Q = os.path.join(VOL, "cache_q")
+CACHE_EXT = os.path.join(VOL, "cache_ext")  # extraction counter, cap 580
+CACHE_C = os.path.join(VOL, "cache_curve")  # batch-size curve counter, cap 45
 RAW_VOL = os.path.join(VOL, "facts_vol_raw.jsonl")
-CAP_VOL, CAP_Q = 360, 12
+CAP_VOL, CAP_Q = 580, 12
 BATCH = 16
 
 
@@ -155,10 +157,79 @@ def stage_quality():
     json.dump({"n8": n8, "n16": n16, "only8": only8, "only16": only16, "both": both}, open(os.path.join(VOL, "quality_sample.json"), "w"))
 
 
+def stage_curve():
+    """Batch-size curve on 24 of the 48 sample sessions: 1, 4 per call (new), 8 (cached v2 run), 16 (cached quality run); Opus matches each size against 1 per call."""
+    import re
+    idx = load_index()
+    v2 = {}
+    for f in raw_lines(os.path.join(OUT, "facts_v2_raw.jsonl")):
+        sid, _, h = f["session_key"].split("|")
+        v2.setdefault((sid, h), []).append(f)
+    keys = sorted(k for k in v2 if k[0] in idx and idx[k[0]]["hash"] == k[1])
+    sample48 = random.Random(16096).sample(keys, 48)
+    s24 = sorted(sample48[:24])
+    mq = llm(CACHE_Q, CAP_Q, "ledger_quality.jsonl")  # cache hits only (same prompts as the quality stage): free
+    s48 = sorted(sample48)
+    f16 = {}
+    for bi in range(3):
+        b = s48[bi * 16:(bi + 1) * 16]
+        batch = [(sid, idx[sid]["date"], idx[sid]["turns"]) for sid, h in b]
+        c = mq.call(build_extract_prompt_v2(batch), EXTRACT_SYSTEM, "sonnet", "QUALITY", "q16_%d" % bi, "extract")
+        per, _ = parse_extraction_v2(c["result"], batch)
+        for k, fs in zip(b, per):
+            f16[k] = fs
+    m = llm(CACHE_C, 45, "ledger_curve.jsonl")
+    lists = {8: {k: v2[k] for k in s24}, 16: {k: f16[k] for k in s24}, 4: {}, 1: {}}
+    for size in (4, 1):
+        chunks = [s24[i:i + size] for i in range(0, 24, size)]
+
+        def one(b, size=size):
+            batch = [(sid, idx[sid]["date"], idx[sid]["turns"]) for sid, h in b]
+            c = m.call(build_extract_prompt_v2(batch), EXTRACT_SYSTEM, "sonnet", "CURVE", "c%d_%s" % (size, b[0][0]), "extract")
+            per, dropped = parse_extraction_v2(c["result"], batch)
+            return b, per, c
+        with ThreadPoolExecutor(3) as ex:
+            for b, per, c in ex.map(one, chunks):
+                for k, fs in zip(b, per):
+                    lists[size][k] = fs
+    stmt = lambda f: "%s | %s = %s" % (f["subject"], f["predicate"], f["object"])
+    res = {}
+    for size in (1, 4, 8, 16):
+        print("facts per session at %d per call: %.2f (24 sessions, %d facts)" % (size, sum(len(v) for v in lists[size].values()) / 24.0, sum(len(v) for v in lists[size].values())))
+    for size in (4, 8, 16):
+        onlyA = onlyB = both = trA = trB = 0
+        for ci in range(0, 24, 8):
+            ks = s24[ci:ci + 8]
+            blocks = []
+            for j, k in enumerate(ks, 1):
+                A, B = lists[1][k], lists[size][k]
+                blocks.append("=== SESSION %d ===\nList A (%d facts):\n%s\nList B (%d facts):\n%s\n=== END SESSION %d ===" % (
+                    j, len(A), "\n".join("A%d. %s" % (i + 1, stmt(f)) for i, f in enumerate(A)), len(B), "\n".join("B%d. %s" % (i + 1, stmt(f)) for i, f in enumerate(B)), j))
+            prompt = ("For each session below, two memory systems extracted facts from the same chat session into List A and List B. A fact in one list is MATCHED if the other list contains a fact that states the same information "
+                      "(wording may differ; a merged or split fact counts as matched for the information it covers). Count: onlyA = facts in A with no match in B; onlyB = facts in B with no match in A; both = facts in A matched in B; "
+                      "trivialA = facts in A that are trivial (small talk, generic filler, something nobody would need to remember later) or duplicate another fact in A; trivialB = the same for B.\n\n"
+                      + "\n\n".join(blocks) + "\n\nOutput exactly one line per session: '<number>: onlyA=<n> onlyB=<n> both=<n> trivialA=<n> trivialB=<n>' and nothing else.")
+            c = m.call(prompt, "You are a careful comparer. Output only the requested lines.", "opus", "CURVE", "cmp%d_%d" % (size, ci), "compare")
+            got = {int(x.group(1)): tuple(int(y) for y in x.groups()[1:]) for x in re.finditer(r"^\s*(\d+):\s*onlyA=(\d+)\s+onlyB=(\d+)\s+both=(\d+)\s+trivialA=(\d+)\s+trivialB=(\d+)", c["result"], re.M)}
+            for j in range(1, len(ks) + 1):
+                a, b_, bo, ta, tb = got[j]
+                onlyA += a
+                onlyB += b_
+                both += bo
+                trA += ta
+                trB += tb
+        nA = sum(len(lists[1][k]) for k in s24)
+        nB = sum(len(lists[size][k]) for k in s24)
+        res[size] = {"nA": nA, "nB": nB, "onlyA": onlyA, "onlyB": onlyB, "both": both, "trivialA": trA, "trivialB": trB}
+        print("size %2d vs 1: 1-per-call facts missing at this size %d of %d (%.1f%%); facts only at this size %d (%.1f%% of its %d); trivial/duplicate: 1-per-call list %d (%.1f%%), this size %d (%.1f%%)" % (
+            size, onlyA, nA, 100.0 * onlyA / nA, onlyB, 100.0 * onlyB / nB, nB, trA, 100.0 * trA / nA, trB, 100.0 * trB / nB))
+    json.dump(res, open(os.path.join(VOL, "curve.json"), "w"))
+
+
 def stage_extract():
     idx = load_index()
     todo = todo_sessions(idx)
-    m = llm(CACHE, CAP_VOL, "ledger_volume.jsonl")
+    m = llm(CACHE_EXT, CAP_VOL, "ledger_volume.jsonl")
     batches = [todo[i:i + BATCH] for i in range(0, len(todo), BATCH)]
     print("sessions", len(todo), "batches", len(batches), flush=True)
 

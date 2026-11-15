@@ -24,3 +24,10 @@ facts per session batch 8 = 4.38 (210 facts), batch 16 = 2.54 (122 facts), chang
 in the batch-8 list, 140 matched. All three batch-16 outputs parsed strictly and completely, so the loss is silent (fewer facts, not truncation). Rule from main: more than 10% loss stops the volume run.
 VOLUME RUN NOT STARTED (0 extraction calls). Plan at 16 per call was 4,266 sessions, 267 calls, 18.2M input; at 8 per call it would be about 534 calls (over the 360-call limit), about 21M input. The v3 dev gate (14 questions) used batch 16 and
 therefore saw about a third fewer facts than batch-8 extraction.
+
+BATCH-SIZE CURVE (24 of the 48 sample sessions, first 24 in seed-16096 order; 1 and 4 per call newly extracted (24 + 6 Sonnet calls), 8 from the v2 run, 16 from the quality run; Opus matches each size against the 1-per-call list, 9 calls; cache_curve counter 39 of 45):
+facts per session: 1 per call 9.00 (216 facts), 4 per call 5.12, 8 per call 4.46, 16 per call 2.71.
+1-per-call facts with no match at that size: 4 per call 73 of 216 (33.8%), 8 per call 84 (38.9%), 16 per call 136 (63.0%). Facts present at the size but not in the 1-per-call list: 3, 1, 0.
+Trivial or duplicate facts (Opus): 2 of 216 (0.9%) in the 1-per-call list and 1 (0.8%), 0, 0 at 4, 8, 16: the extra facts at small batch sizes are real, not padding.
+Main's rule (largest size with at most 10% missing against 1 per call): only 1 per call qualifies. Volume run NOT started. Cue keys for the 102 pilot questions generated (102 calls, volume counter) and copied to t2-dev:~/emlab-16096/in/question_cues_pilot.jsonl.
+Measured cost per session (model tokens vs per-call harness overhead of about 10.5k tokens): 1 per call: 4.4k in net / 1.88k out, 14.9k in total per call, 36 s per call; 4 per call: 3.8k / 0.94k, 25.7k per call, 36 s per call.
