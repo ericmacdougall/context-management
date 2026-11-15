@@ -16,10 +16,12 @@ from typing import Any, Dict, List, Optional
 from .dataset import FixtureLoader, LongMemEvalLoader, Question, select_split, split_pilot_test
 from .mappings import ARMS
 from .metrics import best_gold_rank, is_low_overlap, ndcg_at_k, recall_at_k
-from .retrievers import MODES, FakeRetriever, Retriever, run_arm, to_sessions
+from .retrievers import FakeRetriever, Retriever, run_arm, to_sessions
 
 KS = (5, 10, 20, 50)
 DEPTH = 200
+# `asof` is identical to `off` on LongMemEval-S (0 sessions removed), so it is not run as a separate arm.
+RUN_MODES = ("off", "expand_filter", "expand_boost")
 GRID_RRF_K = (20, 60, 100)
 GRID_DENSE_W = (0.3, 0.5, 0.7)
 GRID_BETA = (0.25, 0.5, 1.0)
@@ -63,7 +65,7 @@ def question_metrics(q: Question, rounds: List[str]) -> Dict[str, Optional[float
 
 
 def evaluate(questions, retriever: Retriever, depth: int = DEPTH, low_overlap_threshold: int = 100,
-             arms=ARMS, modes=MODES, **cfg) -> Dict[str, Any]:
+             arms=ARMS, modes=RUN_MODES, **cfg) -> Dict[str, Any]:
     per_q: List[Dict[str, Any]] = []
     for q in questions:
         rec: Dict[str, Any] = {"qid": q.qid, "qtype": q.qtype, "abstention": q.is_abstention,
@@ -108,11 +110,11 @@ def grid(questions, retriever: Retriever, depth: int = DEPTH) -> List[Dict[str, 
     pre-registration: the configuration with the highest mean, ties to the smaller value of each parameter."""
     rows = []
     for k in GRID_RRF_K:
-        res = evaluate(questions, retriever, depth, arms=("rrf",), modes=("asof",), rrf_k=k)
-        rows.append({"arm": "rrf", "rrf_k": k, "session_ndcg@10": res["summary"]["all"]["rrf|asof"]["session_ndcg@10"]})
+        res = evaluate(questions, retriever, depth, arms=("rrf",), modes=("off",), rrf_k=k)
+        rows.append({"arm": "rrf", "rrf_k": k, "session_ndcg@10": res["summary"]["all"]["rrf|off"]["session_ndcg@10"]})
     for w in GRID_DENSE_W:
-        res = evaluate(questions, retriever, depth, arms=("linear",), modes=("asof",), dense_weight=w)
-        rows.append({"arm": "linear", "dense_weight": w, "session_ndcg@10": res["summary"]["all"]["linear|asof"]["session_ndcg@10"]})
+        res = evaluate(questions, retriever, depth, arms=("linear",), modes=("off",), dense_weight=w)
+        rows.append({"arm": "linear", "dense_weight": w, "session_ndcg@10": res["summary"]["all"]["linear|off"]["session_ndcg@10"]})
     for b in GRID_BETA:
         res = evaluate(questions, retriever, depth, arms=("rrf",), modes=("expand_boost",), beta=b)
         rows.append({"arm": "rrf+boost", "beta": b, "session_ndcg@10": res["summary"]["all"]["rrf|expand_boost"]["session_ndcg@10"]})
