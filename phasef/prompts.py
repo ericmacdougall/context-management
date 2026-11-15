@@ -72,3 +72,35 @@ EXPAND_SYSTEM = "You output only valid JSON, no prose, no code fences."
 EXPAND_TEMPLATE = """A user asks a memory system this question (current date {date}): {question}
 
 Write 3 to 6 short phrases or words that a stored memory about the answer might be tagged with, including synonyms, the category of the thing asked about, and what the answer itself would be about (not words from the question only). Output exactly: {{"cue_keys": ["...", "..."]}}"""
+
+READER_V12_RECIPE = "reader-v1.2"
+READER_TEMPLATE_V12 = (
+    "I will give you context drawn from past chat history between you and a user. Please answer the question based on "
+    "the relevant information in it. First extract the relevant information, then reason over it (use the dates given "
+    "and the current date when the question depends on time), then give the final answer on a last line starting "
+    "with 'Answer:'. Items in the context are dated; when values conflict, prefer the most recent asserted or decided value, "
+    "and treat a planned change as possibly completed if a later item implies it. If the context does not contain the "
+    "information needed to answer, say that the information is not available instead of guessing.\n\n"
+    "Context:\n\n{context}\n\nCurrent date: {date}\nQuestion: {question}\nAnswer (step by step):"
+)
+
+CANON_RECIPE = "canon-v1"
+CANON_SYSTEM = "You output only valid JSON, no prose, no code fences."
+CANON_TEMPLATE = """Below is a list of memory slot keys, each with its cardinality and the modalities it was stated with. Each key names an attribute of an entity, in the form entity.attribute. Different keys may name the SAME real-world attribute (for example a stored-at attribute and a plan to change where something is stored, or two spellings of the same attribute). You see only the keys; you do not see their content.
+
+Group keys that name the same attribute of the same entity. Do not merge different attributes or different entities. Map every key to a canonical key, which must be one of the keys in the list (choose the clearest one); a key that is alone maps to itself.
+
+Output exactly: {{"mapping": {{"<key>": "<canonical key>", ...}}}} containing every input key exactly once.
+
+Keys:
+{lines}
+"""
+
+AUDIT_RECIPE = "audit-v1"
+AUDIT_SYSTEM = "You are a careful auditor. Output exactly one line per item in the form '<number>: yes' or '<number>: no' and nothing else."
+AUDIT_TEMPLATE = """=== ITEM {i} ===
+Slot: {slot}
+Earlier statement (session date {d1}): "{q1}"
+Later statement (session date {d2}): "{q2}"
+Question: do both statements concern the same attribute, and does the later statement replace (or announce a replacement of) the earlier value? Answer yes or no.
+=== END ITEM {i} ==="""

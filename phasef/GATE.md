@@ -13,8 +13,8 @@ keep their cached v2 extraction; the other 14 are extracted with the v2 prompt u
    (no content, quotes or values). Output is a mapping key -> canonical key where the canonical key must itself be one of the input keys.
    Code validates a pure mapping (every input key exactly once, value in the input keys, nothing else). Invalid -> that question
    falls back to the deterministic v2 normaliser for the gate and is reported (no retry).
-2. Status labels, never hiding anything: current; superseded-by (same canonical slot, single, asserted/decided, same scope, later session
-   date, different object, author not lower trust); pending-update (a decided/proposed single-cardinality fact in a slot that already has
+2. Status labels, never hiding anything: current; superseded-by (same canonical slot, single, same scope; the NEWER fact is asserted, the OLDER is
+   asserted or decided; later session date, different object, author not lower trust); pending-update (a decided or proposed single-cardinality fact (decided never retires, it is pending) in a slot that already has
    an earlier asserted/decided value with a different object; it links to the slot, retires nothing); disputed (same slot, same asserted day or
    session, different objects, both asserted/decided). Superseded facts stay in retrieval and in the reader's context.
 3. Reader prompt reader-v1.2 (all arms identical): adds one sentence: items are dated; on conflicting values prefer the most recent
