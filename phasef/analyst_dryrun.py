@@ -28,7 +28,7 @@ def build_tasks():
         top = be({"tool": "search", "args": {"query": S[q]["question"], "k": 50}})["results"]
         by = {r["round_id"]: r for r in rounds}
         cands = [by[x["round_id"]] for x in top]
-        json.dump({"question_id": q, "question": S[q]["question"], "question_date": S[q]["question_date"], "level": "own_haystack", "candidates": cands, "haystack": rounds}, open(p, "w"))
+        json.dump({"question_id": q, "question": S[q]["question"], "question_date": S[q]["question_date"], "candidates": cands, "haystack": rounds, "_meta": {"question_id": q, "level": "own_haystack"}}, open(p, "w"))
         paths.append(p)
     return paths
 

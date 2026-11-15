@@ -34,5 +34,5 @@ class FakeBackend:
                     continue
                 seen.add(r["session_id"])
                 out.append({"session_id": r["session_id"], "date": r["date"], "first_words": r["text"][:80]})
-            return {"sessions": out[:60]}
+            return {"sessions": out[:60], "more": len(out) > 60}  # no total count (it revealed pool size)
         return {"error": "unknown tool"}

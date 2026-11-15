@@ -9,7 +9,9 @@ import os
 import re
 import sys
 
-from .llm import LLM
+import hashlib
+
+from .llm import LLM, PromptLeak, check_prompt
 
 PROMPT_VERSION = "analyst-prompt-v1"
 TEXT_CAP = 1200
@@ -24,12 +26,31 @@ ANALYST_SYSTEM = ("You are a relevance analyst for a memory system. Chat rounds 
                   "You may only use the provided tools and must stop calling tools after at most %d calls. Output only valid JSON as your final message." % BUDGET)
 
 
+LEVEL_NAMES = ("own_haystack", "H0", "H1", "H2", "H3")
+
+
+def qid_of(task):
+    """Question id and level may sit at the top level or under _meta (the retrieval owner is moving them there). Neither is ever put in a prompt."""
+    meta = task.get("_meta") or {}
+    return str(task.get("question_id") or meta.get("question_id")), task.get("level") or meta.get("level")
+
+
+def task_forbidden(task):
+    qid, level = qid_of(task)
+    return {t for t in (qid, level) if t} | set(LEVEL_NAMES)
+
+
+def guarded(task, prompt, system, forbidden=None):
+    """Send-time guard on top of llm.check_prompt: also refuses the task's question id, its level and the level names."""
+    check_prompt(prompt, system, (forbidden or set()) | task_forbidden(task))
+
+
 def cand_lines(task):
+    """Only: opaque round id, date, text capped at TEXT_CAP characters."""
     out = []
     for c in task["candidates"]:
-        meta = " ".join(x for x in (c.get("date"), c.get("session_id")) if x)
         t = c["text"] if len(c["text"]) <= TEXT_CAP else c["text"][:TEXT_CAP] + " [cut]"
-        out.append("[%s] %s\n%s" % (c["round_id"], meta, t))
+        out.append("[%s] %s\n%s" % (c["round_id"], c.get("date") or "", t))
     return "\n\n".join(out)
 
 
@@ -93,9 +114,11 @@ def tokens(c):
     return {"in": c["in_tokens"], "cache_creation": c["cache_creation"], "cache_read": c["cache_read"], "out": c["out_tokens"]}
 
 
-def run_rerank(task, m):
-    c = m.call(build_rerank_prompt(task), RERANK_SYSTEM, "sonnet", "ANALYST-RERANK-ONLY", task["question_id"], "rerank")
-    base = {"question_id": task["question_id"], "level": task.get("level"), "arm": "ANALYST-RERANK-ONLY", "tokens": tokens(c), "seconds": c["seconds"], "tool_calls": 0, "prompt_version": PROMPT_VERSION}
+def run_rerank(task, m, forbidden=None):
+    guarded(task, build_rerank_prompt(task), RERANK_SYSTEM, forbidden)
+    qid, level = qid_of(task)
+    c = m.call(build_rerank_prompt(task), RERANK_SYSTEM, "sonnet", "ANALYST-RERANK-ONLY", qid, "rerank")
+    base = {"question_id": qid, "level": level, "arm": "ANALYST-RERANK-ONLY", "tokens": tokens(c), "seconds": c["seconds"], "tool_calls": 0, "prompt_version": PROMPT_VERSION}
     try:
         ranked, omitted = parse_rerank(c["result"], task)
     except Exception as e:
@@ -127,18 +150,20 @@ def write_result(base, rec):
 
 
 def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbidden=None):
-    qid = task["question_id"]
+    qid, level = qid_of(task)
+    guarded(task, build_analyst_prompt(task), ANALYST_SYSTEM, forbidden)
     os.makedirs(run_dir, exist_ok=True)
-    log_path = os.path.join(run_dir, qid + ".toolcalls.jsonl")
+    key = hashlib.sha1(qid.encode()).hexdigest()[:10]  # file names handed to the tool server carry no question id
+    log_path = os.path.join(run_dir, key + ".toolcalls.jsonl")
     if os.path.exists(log_path):
         os.remove(log_path)  # a rerun of an uncached question starts a fresh log (a cache hit re-reads the old answer only)
-    cfg = mcp_config(os.path.join(run_dir, qid + ".mcp.json"), log_path, backend_args)
+    cfg = mcp_config(os.path.join(run_dir, key + ".mcp.json"), log_path, backend_args)
     m = make_llm(cache_dir, ledger, cap, cwd, analyst_extra_args(cfg), recipe=PROMPT_VERSION + "+mcp", forbidden=forbidden)
     c = m.call(build_analyst_prompt(task), ANALYST_SYSTEM, "sonnet", "ANALYST", qid, "analyst")
     calls = [json.loads(l) for l in open(log_path)] if os.path.exists(log_path) else []
     done = [x for x in calls if not x.get("refused")]
     seen = set(c_["round_id"] for c_ in task["candidates"]) | set(i for x in done for i in x.get("round_ids", []))
-    base = {"question_id": qid, "level": task.get("level"), "arm": "ANALYST", "tokens": tokens(c), "seconds": c["seconds"], "tool_calls": len(done), "refused_calls": len(calls) - len(done),
+    base = {"question_id": qid, "level": level, "arm": "ANALYST", "tokens": tokens(c), "seconds": c["seconds"], "tool_calls": len(done), "refused_calls": len(calls) - len(done),
             "tool_log": [{k: x.get(k) for k in ("tool", "args", "ms", "error")} for x in done], "num_turns": c.get("num_turns"), "prompt_version": PROMPT_VERSION}
     if len(done) > BUDGET:
         return dict(base, status="rejected", error="tool budget exceeded (server bug)")
