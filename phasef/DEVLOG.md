@@ -16,3 +16,11 @@ STOP RULE NOT MET after 3 iterations (needed precision >= 0.90 and >= 13 of 15):
 Residual false links: a work-versus-home location pair, a colleague's employer change judged adds by the auditor, a plan versus a new topic. Gold links missed: 07741c45 (the shoe-rack plan is never linked to the under-the-bed fact:
 judged adds or unrelated), 5c40ec5b (the earlier evidence is a plan to meet, judged adds; no earlier count exists), 89941a94 (no fact covers the answer: extraction miss).
 Cost line (candidate judging, link-v4.1, 499 pairs over 764 unique dev sessions): 48 calls (10.4 pairs per call), 1.39M input / 27.7k output tokens including about 10.5k overhead per call, i.e. about 1.8k input and 0.036k output tokens and 0.063 calls per session, plus about 0.005 calls per session for verification.
+
+VOLUME PLAN: sessions needed 5137 (pilot 4637, D500 500), already cached 871, to extract 4266, calls at 16 per call 267, estimated input 18.2M tokens, output 3.0M; limits 360 calls / 26M input (printed before the run)
+
+BATCH-SIZE QUALITY SAMPLE (48 sessions by seed 16096 from the 192 already extracted at 8 per call; re-extracted at 16 per call, 3 Sonnet calls; Opus comparison, 6 calls; volume/cache_q counter 9 of 12):
+facts per session batch 8 = 4.38 (210 facts), batch 16 = 2.54 (122 facts), change -41.9%. Opus matching: 70 batch-8 facts have no match in the batch-16 list (33.3% of batch-8 facts dropped), 1 batch-16 fact has no match
+in the batch-8 list, 140 matched. All three batch-16 outputs parsed strictly and completely, so the loss is silent (fewer facts, not truncation). Rule from main: more than 10% loss stops the volume run.
+VOLUME RUN NOT STARTED (0 extraction calls). Plan at 16 per call was 4,266 sessions, 267 calls, 18.2M input; at 8 per call it would be about 534 calls (over the 360-call limit), about 21M input. The v3 dev gate (14 questions) used batch 16 and
+therefore saw about a third fewer facts than batch-8 extraction.
