@@ -113,3 +113,33 @@ class ChildTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FilterAndKeyTests(Base):
+    def test_cache_key_includes_adapter_model_recipe(self):
+        a = self.mk(lambda p, s, j: "x")
+        b = self.mk(lambda p, s, j: "x")
+        b.model = "other-model"
+        c = self.mk(lambda p, s, j: "x", recipe="v2")
+        h = a.request_hash(U)
+        self.assertNotEqual(h, b.request_hash(U))
+        self.assertNotEqual(h, c.request_hash(U))
+        b.adapter_id = "other-adapter"
+        self.assertNotEqual(self.mk(lambda p, s, j: "x").request_hash(U), b.request_hash(U))
+
+    def test_post_filter_strips_banner_counts_and_default_off(self):
+        text = "42 (you asked for 41). (Heads-up: the log backup is 50h old)"
+        off = self.mk(lambda p, s, j: text)
+        self.assertEqual(off.complete(U).text, text)           # default: nothing filtered
+        on = self.mk(lambda p, s, j: text, strip_patterns=[r"\(Heads-up:[^)]*\)"])
+        r = on.complete(U)
+        self.assertEqual((r.text, on.filter_hits, r.meta["filtered"]), ("42 (you asked for 41).", 1, 1))
+
+    def test_suppress_sentence_is_opt_in(self):
+        seen = []
+        m = self.mk(lambda p, s, j: seen.append(s) or "x")
+        m.complete(U)
+        self.assertIsNone(seen[0])
+        m2 = self.mk(lambda p, s, j: seen.append(s) or "x", suppress_harness_notices=True)
+        m2.complete(U)
+        self.assertIn("session-start notices", seen[1])

@@ -115,7 +115,8 @@ class ClaudeStreamJsonSession(AgentSession):
     persistence; hooks and setting sources are left untouched."""
 
     def __init__(self, cwd: str, system: str, dev_subscription_backends: bool = False, tools: Sequence[McpServerSpec] = (), model: str = "sonnet", mcp_config_dir: Optional[str] = None,
-                 turn_timeout_s: float = 300.0, claude_bin: str = "claude"):
+                 turn_timeout_s: float = 300.0, claude_bin: str = "claude",
+                 strip_patterns: Sequence[str] = ()):
         require_dev_subscription(dev_subscription_backends, "ClaudeStreamJsonSession")
         if os.path.isdir(os.path.join(cwd, ".git")):
             raise ValueError("cwd must be a neutral non-git directory")
@@ -127,7 +128,9 @@ class ClaudeStreamJsonSession(AgentSession):
             with open(p, "w") as fh:
                 json.dump(cfg, fh)
             cmd += ["--mcp-config", p, "--allowedTools", ",".join("mcp__%s" % t.name for t in tools)]
+        import re as _re
         self.model, self.turn_timeout_s = model, turn_timeout_s
+        self.strip_patterns, self.filter_hits = [_re.compile(p) for p in strip_patterns], 0
         self._proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, cwd=cwd,
                                       start_new_session=True, bufsize=1)
         self._q: "queue.Queue[Optional[str]]" = queue.Queue()
@@ -182,7 +185,11 @@ class ClaudeStreamJsonSession(AgentSession):
                 u = ev.get("usage") or {}
                 cr, cc = u.get("cache_read_input_tokens") or 0, u.get("cache_creation_input_tokens") or 0
                 usage = Usage((u.get("input_tokens") or 0) + cr + cc, cr, u.get("output_tokens")) if u else None
-                yield SessionEvent("result", TurnResult(ev.get("result") or "", ev.get("stop_reason") or "end_turn", usage,
+                rtext = ev.get("result") or ""
+                for p in self.strip_patterns:
+                    rtext, k = p.subn("", rtext)
+                    self.filter_hits += k
+                yield SessionEvent("result", TurnResult(rtext.strip() if self.strip_patterns else rtext, ev.get("stop_reason") or "end_turn", usage,
                                                         round(time.time() - t0, 2), turn_id, self._last_delivered,
                                                         {"cost_usd": ev.get("total_cost_usd"), "num_turns": ev.get("num_turns"),
                                                          "session_id": ev.get("session_id")}))
