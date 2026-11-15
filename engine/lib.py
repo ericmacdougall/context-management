@@ -10,13 +10,22 @@ import subprocess
 import time
 
 from . import ctl, pgstore
-from .common import HOME, TENANT, pg_connect
+from .common import DEMO_TENANT as TENANT
+from .common import HOME, pg_connect
 from .worker import connect
 
 RUN = HOME / "run"
 if (RUN / "ABORT").exists():  # lets me neutralise queued chains without signalling anything
     raise SystemExit(0)
 PROCS = {}
+RUN_ID = os.environ.setdefault("ENGINE_RUN_ID", f"r{int(time.time())}x{os.getpid()}")   # scopes payload stats to this run
+STARTED = time.time()
+RECORD = {"servers": [], "workers": [], "params": {}}
+
+
+def record(**kw):
+    """Parameters actually used by the run (read from the variables the experiment ran with), stored in the result."""
+    RECORD["params"].update(kw)
 
 
 def _u(name):
@@ -70,6 +79,7 @@ def start_server(cli, db, tport=48310, name=None):
     env = {**os.environ, "TPORT": str(tport)}
     os.environ["ENGINE_TEMPORAL_PORT"] = str(tport)
     log = open(HOME / "logs" / f"{name}-{cli}-{int(time.time())}.log", "ab")
+    RECORD["servers"].append({"name": name, "cli": cli, "db": db, "port": tport, "at": time.time() - STARTED})
     PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/serverloop.sh"), cli, str(RUN / db),
                                     str(RUN / f"stop-{name}")], env=env, stdout=log, stderr=log,
                                    stdin=subprocess.DEVNULL, start_new_session=True)
@@ -101,6 +111,9 @@ def start_worker(name, venv, variant, ident, tq, cwd=None, extra=(), env=None, c
     if home:
         e["ENGINE_HOME"] = str(home)
     log = open(HOME / "logs" / f"{name}.log", "ab")
+    RECORD["workers"].append({"name": name, "venv": venv, "variant": variant, "identity": ident, "task_queue": tq,
+                              "code_dir": str(cwd or HOME / "code"), "extra": list(extra), "crash_after": crash_after,
+                              "knobs": {k: v for k, v in (env or {}).items() if k.startswith("ENGINE_")}, "at": time.time() - STARTED})
     PROCS[name] = subprocess.Popen(cmd, cwd=str(cwd or HOME / "code"), env=e, stdout=log, stderr=log,
                                    stdin=subprocess.DEVNULL, start_new_session=True)
     return PROCS[name]
@@ -122,33 +135,33 @@ def ns(**kw):
     return argparse.Namespace(**d)
 
 
-async def launch(client, tag, n, tq, stats, **kw):
+async def launch(client, tag, n, tq, stats, tenant=TENANT, **kw):
     """Start n sessions (workflow + session_started event), then feed turns. Returns the feed tasks."""
     a = ns(task_queue=tq, **kw)
     ids = ctl.sids(tag, n)
     for i in range(0, n, 20):
-        await asyncio.gather(*[ctl.start_session(client, s, a, a.ver, tq, stats) for s in ids[i:i + 20]])
+        await asyncio.gather(*[ctl.start_session(client, s, a, a.ver, tq, stats, tenant) for s in ids[i:i + 20]])
     if a.turns:
-        return [asyncio.create_task(ctl.feed(client, s, a, stats, __import__("random").uniform(0, a.period)))
+        return [asyncio.create_task(ctl.feed(client, s, a, stats, __import__("random").uniform(0, a.period), tenant))
                 for s in ids]
     return []
 
 
-async def statuses(client, tag, n):
+async def statuses(client, tag, n, tenant=TENANT):
     out = {}
     for s in ctl.sids(tag, n):
         try:
-            d = await client.get_workflow_handle(ctl.wid(s)).describe()
+            d = await client.get_workflow_handle(ctl.wid(s, tenant)).describe()
             out[s] = d.status.name
         except Exception as e:
             out[s] = "ERR:" + type(e).__name__
     return out
 
 
-async def wait_done(client, tag, n, timeout):
+async def wait_done(client, tag, n, timeout, tenant=TENANT):
     t0 = time.time()
     while time.time() - t0 < timeout:
-        st = await statuses(client, tag, n)
+        st = await statuses(client, tag, n, tenant)
         if all(v != "RUNNING" for v in st.values()):
             break
         await asyncio.sleep(3)
@@ -156,14 +169,18 @@ async def wait_done(client, tag, n, timeout):
     return dict(Counter(st.values())), round(time.time() - t0, 1)
 
 
-async def results_of(client, tag, n):
+async def results_of(client, tag, n, tenant=TENANT):
     out = {}
     for s in ctl.sids(tag, n):
         try:
-            out[s] = await client.get_workflow_handle(ctl.wid(s)).result()
+            out[s] = await client.get_workflow_handle(ctl.wid(s, tenant)).result()
         except Exception as e:
             out[s] = {"error": type(e).__name__}
     return out
+
+
+def events_of(sid, kind=None, tenant=TENANT):
+    return pgstore.events_of(tenant, sid, kind)
 
 
 def q(sql, *args):
@@ -171,7 +188,23 @@ def q(sql, *args):
         return c.execute(sql, args).fetchall()
 
 
+def provenance():
+    """Where this result came from: git commit and dirty flag of the code that ran (written by host/sync.sh), run id,
+    start and end times, host, argv, versions, and every server and worker the run started."""
+    import platform
+    import sys
+    from importlib import metadata
+    gc = pathlib.Path(__file__).parent / "GIT_COMMIT"
+    git = json.loads(gc.read_text()) if gc.exists() else {"commit": "unknown", "dirty": None}
+    return {"git_commit": git.get("commit"), "git_dirty": git.get("dirty"), "run_id": RUN_ID,
+            "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(STARTED)),
+            "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "host": platform.node(),
+            "argv": sys.argv[1:], "python": platform.python_version(),
+            "temporalio_client": metadata.version("temporalio"), "recorded": RECORD}
+
+
 def save(name, obj):
+    obj = {"provenance": provenance(), **obj}
     p = HOME / "results" / f"{name}.json"
     json.dump(obj, open(p, "w"), indent=1, default=str)
     return p
@@ -213,13 +246,19 @@ def start_server_try(cli, db, tport, wait=20):
     return {"came_up": up, "exit_code": exited, "log_tail": logp.read_text()[-500:]}
 
 
-def start_loop(name, venv, variant, ident, tq, env=None, seed=1):
-    """workerloop.sh under Popen: restarts the worker after each abrupt self-exit until stop-<name> appears."""
+def start_loop(name, venv, variant, ident, tq, env=None, seed=1, crashes=0):
+    """workerloop.sh under Popen: restarts the worker after each abrupt self-exit until stop-<name> appears. While
+    `crashes` remain the worker ends itself abruptly after a random 2 to (CMAX+1) seconds."""
     name = _u(name)
     _clear(name)
     e = {**os.environ, **(env or {})}
+    RECORD["workers"].append({"name": name, "kind": "loop", "venv": venv, "variant": variant, "identity": ident,
+                              "task_queue": tq, "crashes": crashes, "seed": seed,
+                              "knobs": {k: v for k, v in (env or {}).items() if k.startswith("ENGINE_") or k == "CMAX"},
+                              "at": time.time() - STARTED})
     PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/workerloop.sh"), venv, variant, ident, tq,
-                                    str(HOME / "code"), "0", str(seed), str(RUN / f"stop-{name}"), str(HOME / "logs" / name)],
+                                    str(HOME / "code"), str(crashes), str(seed), str(RUN / f"stop-{name}"),
+                                    str(HOME / "logs" / name)],
                                    env=e, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
                                    start_new_session=True)
     return PROCS[name]

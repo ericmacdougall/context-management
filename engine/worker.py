@@ -22,6 +22,7 @@ _watch_task = None
 
 
 def make_codec(proc):
+    proc = f"{os.environ.get('ENGINE_RUN_ID', 'norun')}-{proc}"   # payload stats are scoped to one run
     def flush(i, r, mx):
         with pgstore.pool().connection() as c:
             c.execute("insert into payload_stats(proc,inspected,rejected,max_bytes,updated_at) values (%s,%s,%s,%s,now()) "

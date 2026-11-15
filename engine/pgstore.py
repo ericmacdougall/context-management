@@ -1,17 +1,33 @@
 """All durable session state: appends to the systems write-path `events` table (append-only, per-session sequence,
 hash chain; same algorithm as systems/memsys/store.py + chain.py), plus the `effects` idempotency table.
-The engine never holds content; these functions are called by activities and by the API-side driver."""
+The engine never holds content; these functions are called by activities and by the API-side driver.
+
+Multi-tenant rules: every function takes the tenant explicitly (no module constant), every key starts with the
+tenant (keys.py), every lookup filters on tenant_id, and an event id is accepted for a session only when it is of the
+same tenant and session and of the expected kind."""
 import hashlib
 import json
 import os
+import re
 import threading
+import time
 from datetime import datetime, timezone
 
 from . import chain, keys
-from .common import HOME, TENANT, pg_connect
+from .common import HOME, pg_connect
+
+APPROVER_RE = re.compile(r"^[A-Za-z0-9_.@:\-]{1,80}$")
 
 _pool = None
 _pool_lock = threading.Lock()
+
+
+class InvalidInput(Exception):
+    """The referenced event is not a valid input for this tenant and session (never retry)."""
+
+
+class SubjectErased(Exception):
+    """The subject's key was destroyed: the content is unreadable and no event can be appended (never retry)."""
 
 
 def pool():
@@ -55,8 +71,9 @@ def _append_locked(cur, tenant, sid, ev):
     return eid
 
 
-def append(sid, kind, content, actor="driver", trust="user_typed", tenant=TENANT):
-    """Plain append (driver side: a user turn or approval is an event before it is ever a signal)."""
+def append(tenant, sid, kind, content, actor="driver", trust="user_typed"):
+    """Plain append (not idempotent: use append_input or append_once for anything an API can retry)."""
+    keys.check_tenant(tenant)
     with pool().connection() as conn:
         with conn.transaction():
             cur = conn.cursor()
@@ -65,9 +82,12 @@ def append(sid, kind, content, actor="driver", trust="user_typed", tenant=TENANT
             return _append_locked(cur, tenant, sid, {"kind": kind, "content": content, "actor": actor, "trust": trust})
 
 
-def append_once(key, sid, step, kind, content, actor="engine", trust="assistant", tenant=TENANT):
+def append_once(tenant, key, sid, step, kind, content, actor="engine", trust="assistant"):
     """Idempotent append: exactly one event per key, however many times this is called or retried. The effects row
     and the event commit in one transaction, so a crash leaves neither or both. Returns (event_id, created)."""
+    keys.check_tenant(tenant)
+    if not key.startswith(tenant + "/"):
+        raise ValueError("idempotency key does not start with the tenant")
     with pool().connection() as conn:
         with conn.transaction():
             cur = conn.cursor()
@@ -77,83 +97,217 @@ def append_once(key, sid, step, kind, content, actor="engine", trust="assistant"
             got = cur.execute("insert into effects(key,tenant_id,session_id,step,status) values (%s,%s,%s,%s,'done') "
                               "on conflict do nothing returning key", (key, tenant, sid, step)).fetchone()
             if got is None:
-                ref = cur.execute("select result_ref from effects where key=%s", (key,)).fetchone()[0]
-                return ref, False
+                row = cur.execute("select result_ref, tenant_id from effects where key=%s", (key,)).fetchone()
+                if row[1] != tenant:
+                    raise ValueError("key owned by another tenant")
+                return row[0], False
             eid = _append_locked(cur, tenant, sid, {"kind": kind, "content": content, "actor": actor, "trust": trust})
-            cur.execute("update effects set result_ref=%s where key=%s", (eid, key))
+            cur.execute("update effects set result_ref=%s where key=%s and tenant_id=%s", (eid, key, tenant))
             return eid, True
 
 
-def read_digest(event_id):
-    """The 'agent turn' stand-in: read the input event from Postgres and derive a deterministic result digest."""
-    tenant, sid, _ = event_id.split("/")
+def append_input(tenant, sid, request_id, content):
+    """Create a turn input exactly once per caller-supplied request id. Returns (event_id, created)."""
+    return append_once(tenant, keys.input_key(tenant, sid, request_id), sid, "input", "turn_input", content,
+                       "driver", "user_typed")
+
+
+def _event_row(conn, tenant, sid, event_id):
+    return conn.execute("select kind, ts_event, mem_dec(tenant_id, subject_id, content_enc) from events "
+                        "where tenant_id=%s and session_id=%s and event_id=%s", (tenant, sid, event_id)).fetchone()
+
+
+def check_turn_input(tenant, sid, event_id):
+    """Reject anything that is not a turn_input of this tenant and session, before it is read or marked."""
+    if not keys.belongs_to(tenant, sid, event_id):
+        raise InvalidInput("event id is not of this tenant and session")
     with pool().connection() as conn:
-        row = conn.execute("select mem_dec(tenant_id, subject_id, content_enc) from events where event_id=%s",
-                           (event_id,)).fetchone()
-    if row is None or row[0] is None:
-        raise LookupError(f"no such event {event_id}")
-    return "d" + hashlib.sha256(row[0].encode()).hexdigest()[:16]
+        row = conn.execute("select kind from events where tenant_id=%s and session_id=%s and event_id=%s",
+                           (tenant, sid, event_id)).fetchone()
+    if row is None or row[0] != "turn_input":
+        raise InvalidInput("not a turn_input event")
+
+
+def read_digest(tenant, sid, event_id):
+    """The 'agent turn' stand-in: read the input event from Postgres and derive a deterministic result digest."""
+    check_turn_input(tenant, sid, event_id)
+    with pool().connection() as conn:
+        row = _event_row(conn, tenant, sid, event_id)
+    if row[2] is None:
+        raise SubjectErased("content unreadable: subject key destroyed")
+    return "d" + hashlib.sha256(row[2].encode()).hexdigest()[:16]
+
+
+def has_older_unprocessed(tenant, sid, event_id):
+    """True when an input with a lower seq has no recorded result yet (so this one must wait: sequence order)."""
+    seq = keys.parse_event_id(event_id)[2]
+    with pool().connection() as conn:
+        row = conn.execute(
+            "select 1 from events e where e.tenant_id=%s and e.session_id=%s and e.kind='turn_input' and e.seq < %s "
+            "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id) limit 1",
+            (tenant, sid, seq, keys.result_key_prefix(tenant))).fetchone()
+    return row is not None
 
 
 def maybe_crash(knob, where):
     """Targeted fault injection (test only): abrupt exit inside a critical window with the probability in the
     named test knob (a probability, not a secret)."""
-    import json
     import random
-    import time as _t
     pr = float(os.environ.get(knob, "0") or 0)
     if pr and random.random() < pr:
         from . import activities
         with open(os.environ.get("ENGINE_CRASH_LOG", "/dev/null"), "a") as f:
-            f.write(json.dumps({"t": _t.time(), "where": where, "inflight": activities.inflight_snapshot()}) + "\n")
+            f.write(json.dumps({"t": time.time(), "where": where, "inflight": activities.inflight_snapshot()}) + "\n")
         os._exit(137)
 
 
-def external_effect(sid, input_event_id, worker, gap_s=0.0, broken_keys=False, attempt=0):
+def external_effect(tenant, sid, input_event_id, worker, gap_s=0.0, broken_keys=False, attempt=0):
     """One idempotent external effect. The external system dedups on the idempotency key; the effects row is the
     engine-side record. `gap_s` widens the window between 'applied' and 'recorded' so crash tests land in it.
     `broken_keys` derives the key from the attempt number (the bug the experiments must catch)."""
-    import time
-    key = keys.effect_key(input_event_id)
+    if not keys.belongs_to(tenant, sid, input_event_id):
+        raise InvalidInput("event id is not of this tenant and session")
+    key = keys.effect_key(tenant, input_event_id)
     if broken_keys:
         key = f"{key}/a{attempt}"
     with pool().connection() as conn:
-      conn.autocommit = True
-      try:
-        conn.execute("insert into ext_calls(key, worker) values (%s,%s)", (key, worker))
-        with conn.transaction():
-            fresh = conn.execute("insert into ext_applied(key) values (%s) on conflict do nothing returning key",
-                                 (key,)).fetchone()
-            if fresh:
-                conn.execute("insert into effect_ledger(key, ref_event) values (%s,%s)", (key, input_event_id))
-        if gap_s:
-            time.sleep(gap_s)
-        maybe_crash("ENGINE_CRASH_IN_GAP", "effect_applied_not_recorded")
-        conn.execute("insert into effects(key,tenant_id,session_id,step,status,result_ref) values (%s,%s,%s,'effect','done',%s) "
-                     "on conflict do nothing", (key, TENANT, sid, input_event_id))
-      finally:
-        conn.autocommit = False
+        conn.autocommit = True
+        try:
+            conn.execute("insert into ext_calls(key, worker, tenant_id) values (%s,%s,%s)", (key, worker, tenant))
+            with conn.transaction():
+                fresh = conn.execute("insert into ext_applied(key) values (%s) on conflict do nothing returning key",
+                                     (key,)).fetchone()
+                if fresh:
+                    conn.execute("insert into effect_ledger(key, ref_event, tenant_id) values (%s,%s,%s)",
+                                 (key, input_event_id, tenant))
+            if gap_s:
+                time.sleep(gap_s)
+            maybe_crash("ENGINE_CRASH_IN_GAP", "effect_applied_not_recorded")
+            conn.execute("insert into effects(key,tenant_id,session_id,step,status,result_ref) "
+                         "values (%s,%s,%s,'effect','done',%s) on conflict do nothing",
+                         (key, tenant, sid, input_event_id))
+        finally:
+            conn.autocommit = False
     return key
 
 
-def unprocessed_inputs(sid, limit=20, tenant=TENANT):
+def unprocessed_inputs(tenant, sid, limit=20):
     """Input events with no recorded result (the doorbell-independent truth), in seq order."""
     with pool().connection() as conn:
         rows = conn.execute(
             "select e.event_id from events e where e.tenant_id=%s and e.session_id=%s and e.kind='turn_input' "
-            "and not exists (select 1 from effects f where f.key = 'res/' || e.event_id) order by e.seq limit %s",
-            (tenant, sid, limit)).fetchall()
+            "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id) "
+            "order by e.seq limit %s", (tenant, sid, keys.result_key_prefix(tenant), limit)).fetchall()
     return [r[0] for r in rows]
 
 
-def events_of(sid, kind=None, tenant=TENANT):
+def append_result(tenant, sid, input_event_id, digest, effect_key, code, attempt=0, broken=False):
+    """Record the turn result once. Validates the input before it is marked processed."""
+    check_turn_input(tenant, sid, input_event_id)
+    rk = keys.result_key(tenant, input_event_id)
+    if broken:  # fence-off control: key depends on the attempt
+        rk = f"{rk}/a{attempt}"
+    eid, _ = append_once(tenant, rk, sid, "turn_result", "turn_result",
+                         {"in": input_event_id, "digest": digest, "effect": effect_key, "code": code})
+    return eid
+
+
+def dead_letter(tenant, sid, input_event_id, reason):
+    """Poison path: the input counts as processed (reconcile skips it) and the reason is recorded. For an erased
+    subject no event can be written (the key is gone), so only the effects row records it."""
+    import psycopg
+    if not keys.belongs_to(tenant, sid, input_event_id):
+        raise InvalidInput("event id is not of this tenant and session")
+    key = keys.dead_key(tenant, input_event_id)
+    try:
+        eid, _ = append_once(tenant, key, sid, "dead_letter", "turn_dead_letter",
+                             {"in": input_event_id, "reason": reason})
+        return eid
+    except psycopg.errors.Error as e:
+        if "subject_erased" not in str(e):
+            raise
+    with pool().connection() as conn:
+        conn.execute("insert into effects(key,tenant_id,session_id,step,status,result_ref) "
+                     "values (%s,%s,%s,'dead_letter','dead',%s) on conflict do nothing", (key, tenant, sid, reason))
+    return "effects-only"
+
+
+# ------------------------------------------------------------------ approvals bound to one request id
+def request_approval(tenant, sid, anchor, deadline_ms):
+    """One request per gate anchor. Returns (request_id, deadline_ms) as stored (a retry returns the first)."""
+    key = keys.approval_request_key(tenant, sid, anchor)
+    eid, created = append_once(tenant, key, sid, "approval", "approval_requested",
+                               {"deadline_ms": int(deadline_ms), "anchor": anchor})
+    if created:
+        return eid, int(deadline_ms)
+    return eid, _request_info(tenant, sid, eid)[0]
+
+
+def _request_info(tenant, sid, request_id):
+    with pool().connection() as conn:
+        row = _event_row(conn, tenant, sid, request_id)
+    if row is None or row[0] != "approval_requested" or row[2] is None:
+        raise InvalidInput("no such approval request in this tenant and session")
+    return json.loads(row[2])["deadline_ms"], row[1]
+
+
+def grant_approval(tenant, sid, request_id, approver, now_ms=None):
+    """Record a grant for ONE request. Rejected (and nothing written) unless the request exists in this tenant and
+    session, the approver is named, and the deadline has not passed. Returns 'granted', 'duplicate' or 'rejected:..'."""
+    now_ms = int(time.time() * 1000) if now_ms is None else int(now_ms)
+    if not isinstance(approver, str) or not APPROVER_RE.match(approver):
+        return "rejected:approver"
+    try:
+        deadline_ms, _ = _request_info(tenant, sid, request_id)
+    except InvalidInput:
+        return "rejected:no_such_request"
+    if now_ms > deadline_ms:
+        return "rejected:after_deadline"
+    _, created = append_once(tenant, keys.approval_grant_key(tenant, request_id), sid, "approval", "approval_grant",
+                             {"request": request_id, "approver": approver}, "approver", "user_typed")
+    return "granted" if created else "duplicate"
+
+
+def resolve_approval(tenant, sid, request_id, now_ms=None):
+    """Postgres decides, from the request event: granted if a grant bound to THIS request exists, was recorded after
+    the request and no later than its deadline; timed out once the deadline has passed; else pending."""
+    now_ms = int(time.time() * 1000) if now_ms is None else int(now_ms)
+    deadline_ms, req_ts = _request_info(tenant, sid, request_id)
+    with pool().connection() as conn:
+        done = conn.execute("select result_ref from effects where tenant_id=%s and key=%s",
+                            (tenant, keys.approval_resolve_key(tenant, request_id))).fetchone()
+        if done:
+            return conn.execute("select kind from events where tenant_id=%s and event_id=%s",
+                                (tenant, done[0])).fetchone()[0]
+        g = conn.execute("select result_ref from effects where tenant_id=%s and key=%s",
+                         (tenant, keys.approval_grant_key(tenant, request_id))).fetchone()
+        grant_ok = False
+        if g and g[0]:
+            row = _event_row(conn, tenant, sid, g[0])
+            if row and row[0] == "approval_grant" and row[2] is not None:
+                body = json.loads(row[2])
+                grant_ok = (body.get("request") == request_id and bool(body.get("approver"))
+                            and row[1] > req_ts and row[1].timestamp() * 1000 <= deadline_ms)
+    if not grant_ok and now_ms < deadline_ms:
+        return "pending"
+    kind = "approval_granted" if grant_ok else "approval_timeout"
+    eid, created = append_once(tenant, keys.approval_resolve_key(tenant, request_id), sid, "approval", kind,
+                               {"request": request_id})
+    if created:
+        return kind
+    with pool().connection() as conn:
+        return conn.execute("select kind from events where tenant_id=%s and event_id=%s", (tenant, eid)).fetchone()[0]
+
+
+def events_of(tenant, sid, kind=None):
+    keys.check_tenant(tenant)
     with pool().connection() as conn:
         q = ("select seq, event_id, kind, mem_dec(tenant_id, subject_id, content_enc), ts_event from events "
              "where tenant_id=%s and session_id=%s " + ("and kind=%s " if kind else "") + "order by seq")
         return conn.execute(q, (tenant, sid) + ((kind,) if kind else ())).fetchall()
 
 
-def verify_session_chain(sid, tenant=TENANT):
+def verify_session_chain(tenant, sid):
     with pg_connect() as conn:
         cur = conn.cursor()
         cur.execute("select tenant_id,session_id,seq,event_id,ts_event,actor,trust_origin,kind,subject_id,content_enc,"

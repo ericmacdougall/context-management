@@ -1,0 +1,3 @@
+engine/GIT_COMMIT
+.msg*.txt
+__pycache__/

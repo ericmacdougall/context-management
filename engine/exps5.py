@@ -10,13 +10,15 @@ from temporalio.api.enums.v1 import EventType
 from temporalio.worker import Replayer
 
 from . import ctl, keys, lib, pgstore
-from .common import HOME, TENANT
+from .common import DEMO_TENANT as TENANT
+from .common import HOME
 from .exps import SMALL, T, TPORT, sizes, suffix
 
 
 def codes(tag):
     rows = lib.q("select session_id, mem_dec(tenant_id,subject_id,content_enc)::json->>'code' from events "
-                 "where kind='turn_result' and session_id like %s order by session_id, seq", tag + "%")
+                 "where tenant_id=%s and kind='turn_result' and session_id like %s escape '\\' order by session_id, seq",
+                 TENANT, ctl.like(tag))
     d = {}
     for s, c in rows:
         d.setdefault(s, []).append(c)
@@ -69,16 +71,26 @@ async def replay(client, tag, n, variant):
             "failure_type": type(sample).__name__ if sample else None, "failure_sample": str(sample)[:240] if sample else None}
 
 
+async def describe_sample(client, sid):
+    """What an operator sees in describe for a session whose workflow task keeps failing (measured, not asserted)."""
+    d = await client.get_workflow_handle(ctl.wid(sid)).describe()
+    raw = d.raw_description
+    pend = getattr(raw, "pending_workflow_task", None)
+    return {"status": d.status.name, "pending_workflow_task_attempt": getattr(pend, "attempt", None),
+            "pending_workflow_task_state": str(getattr(pend, "state", None))}
+
+
 async def progress_window(tag, n, seconds):
-    before = lib.q("select count(*) from events where kind='turn_result' and session_id like %s", tag + "%")[0][0]
+    before = lib.q("select count(*) from events where tenant_id=%s and kind='turn_result' and session_id like %s escape '\\'", TENANT, ctl.like(tag))[0][0]
     await asyncio.sleep(seconds)
-    after = lib.q("select count(*) from events where kind='turn_result' and session_id like %s", tag + "%")[0][0]
+    after = lib.q("select count(*) from events where tenant_id=%s and kind='turn_result' and session_id like %s escape '\\'", TENANT, ctl.like(tag))[0][0]
     return before, after
 
 
 # ------------------------------------------------------------------ F5a incompatible change
 async def f5a():
     n, turns, period, pre = sizes((20, 40, 3, 50), (4, 12, 1.5, 12))
+    lib.record(n=n, turns=turns, period=period, pre=pre)
     lib.start_server("1.7.3", f"f5a{suffix()}-{int(time.time())}.db", TPORT)
     lib.start_worker("f5a1", "venv-new", "v1", "old", "f5a")
     client, _ = await lib.connect_retry()
@@ -100,7 +112,7 @@ async def f5a():
         "sample_failure": next((f["last_failure"] for f in facts if f["wft_failed"]), None),
         "workflow_failed_or_terminated": sum(1 for v in st.values() if v not in ("RUNNING",)),
         "driver_inputs_appended_meanwhile": stats["appended"],
-        "visibility": "workflow status stays RUNNING; the only signals are WorkflowTaskFailed events in history, pending_workflow_task attempts in describe, and worker logs"}
+        "describe_sample": await describe_sample(client, ctl.sids(tag, n)[0])}
     lib.stop_worker("f5a2")
     # roll back to the compatible code: the stuck sessions resume
     lib.start_worker("f5a3", "venv-new", "v1", "old2", "f5a")
@@ -120,6 +132,7 @@ async def f5a():
 # ------------------------------------------------------------------ F5b(1) patching
 async def f5b1():
     n, turns, period, pre, n2 = sizes((30, 24, 4, 40, 10), (5, 10, 1.5, 8, 3))
+    lib.record(n=n, turns=turns, period=period, pre=pre, n2=n2)
     lib.start_server("1.7.3", f"f5b1{suffix()}-{int(time.time())}.db", TPORT)
     lib.start_worker("f5b1a", "venv-new", "v1", "old", "f5b1")
     client, _ = await lib.connect_retry()
@@ -141,7 +154,7 @@ async def f5b1():
     lib.stop_server()
     po, pc, pn = code_profile(old), code_profile(oldc), code_profile(new)
     out = {"id": "F5b-1-patching", "old_sessions_no_can": n, "old_sessions_with_can": n, "new_sessions": n2, "turns": turns,
-           "old_worker_needed_after_switch_s": 0, "code_profile_old_no_can": po, "code_profile_old_with_can": pc,
+           "code_profile_old_no_can": po, "code_profile_old_with_can": pc,
            "code_profile_new": pn, "statuses": [st, stc, st2], "verify": [v1, vc, v2], "history_sample": facts,
            "finding": "patched() is memoized per execution: an old execution that replayed without the marker keeps the old path for its whole run; it adopts the new step only after continue-as-new",
            "PASS": v1["PASS"] and vc["PASS"] and v2["PASS"] and st == {"COMPLETED": n} and stc == {"COMPLETED": n} and st2 == {"COMPLETED": n2}
@@ -160,6 +173,7 @@ def cli(ver, *args):
 async def f5b2():
     server_cli = "1.10.1" if "--server-new" in sys.argv else "1.7.3"
     n, turns, period, pre, n2 = sizes((30, 24, 4, 40, 10), (5, 10, 1.5, 10, 3))
+    lib.record(n=n, turns=turns, period=period, pre=pre, n2=n2)
     lib.start_server(server_cli, f"f5b2{suffix()}-{int(time.time())}.db", TPORT)
     dep = "sessdep"
     w = ["--deployment", dep, "--pinned"]
@@ -207,6 +221,7 @@ async def f5b2():
 # ------------------------------------------------------------------ F5b(3) continue-as-new as the upgrade point
 async def f5b3():
     n1, n2, turns, period, pre, nn = sizes((15, 15, 24, 4, 40, 10), (3, 3, 10, 1.5, 8, 3))
+    lib.record(n1=n1, n2=n2, turns=turns, period=period, pre=pre, nn=nn)
     lib.start_server("1.7.3", f"f5b3{suffix()}-{int(time.time())}.db", TPORT)
     lib.start_worker("f5b3a", "venv-new", "v1c", "old", "f5b3q1")
     client, _ = await lib.connect_retry()
@@ -224,15 +239,18 @@ async def f5b3():
         await client.get_workflow_handle(ctl.wid(s)).signal("rotate_now", "r")
     tasks += await lib.launch(client, gn, nn, "f5b3q2", stats, turns=turns // 2, period=period, expected=turns // 2)
     # when has every old session hopped? (task queue of the latest run)
-    hop = {}
+    hop, unhopped = {}, []
     t0 = time.time()
     while len(hop) < n1 + n2 and time.time() - t0 < 600:
         for s in ctl.sids(g1, n1) + ctl.sids(g2, n2):
             if s in hop:
                 continue
             d = await client.get_workflow_handle(ctl.wid(s)).describe()
-            if d.status.name != "RUNNING" or d.task_queue == "f5b3q2":
+            if d.task_queue == "f5b3q2":
                 hop[s] = round(time.time() - t_cut, 1)
+            elif d.status.name != "RUNNING":
+                unhopped.append(s)
+                hop[s] = None
         await asyncio.sleep(2)
     await asyncio.gather(*tasks)
     sa, _ = await lib.wait_done(client, g1, n1, 900)
@@ -245,9 +263,9 @@ async def f5b3():
     lib.stop_worker("f5b3b")
     lib.stop_server()
     out = {"id": "F5b-3-continue-as-new-hop", "rotate_group": n1, "natural_can_group": n2, "new_sessions": nn,
-           "hop_seconds_after_cutover_max_by_group": {"rotate": max(hop[s] for s in ctl.sids(g1, n1)),
-                                                       "natural_can": max(hop[s] for s in ctl.sids(g2, n2))},
-           "old_worker_needed_until_s_after_cutover": max(hop.values()), "all_done_s_after_cutover": round(t_all, 1),
+           "hop_seconds_after_cutover_max_by_group": {"rotate": max(hop[s] for s in ctl.sids(g1, n1) if hop[s] is not None),
+                                                       "natural_can": max(hop[s] for s in ctl.sids(g2, n2) if hop[s] is not None)},
+           "old_worker_needed_until_s_after_cutover": max(v for v in hop.values() if v is not None), "completed_without_hopping": unhopped, "all_done_s_after_cutover": round(t_all, 1),
            "code_profile_rotate": code_profile(g1), "code_profile_natural": code_profile(g2), "code_profile_new": code_profile(gn),
            "statuses": [sa, sb, sc], "verify": [va, vb, vc], "sample_result": next(iter(res.values())),
            "PASS": va["PASS"] and vb["PASS"] and vc["PASS"] and sa == {"COMPLETED": n1} and sb == {"COMPLETED": n2}
@@ -260,6 +278,7 @@ async def f5b3():
 # ------------------------------------------------------------------ F5c idle across two versions
 async def f5c():
     n, wake_wait = sizes((10, 20), (3, 6))
+    lib.record(n=n, wake_wait=wake_wait)
     lib.start_server("1.7.3", f"f5c{suffix()}-{int(time.time())}.db", TPORT)
     lib.start_worker("f5c1", "venv-new", "v1", "v1", "f5c")
     client, _ = await lib.connect_retry()
@@ -270,7 +289,7 @@ async def f5c():
         tasks = await lib.launch(client, tag, n, "f5c", stats, turns=2, period=0.5, expected=3)
         await asyncio.gather(*tasks)
     for _ in range(120):
-        done = lib.q("select count(*) from events where kind='turn_result' and (session_id like %s or session_id like %s)", ok_tag + "%", bad_tag + "%")[0][0]
+        done = lib.q("select count(*) from events where tenant_id=%s and kind='turn_result' and (session_id like %s escape '\\' or session_id like %s escape '\\')", TENANT, ctl.like(ok_tag), ctl.like(bad_tag))[0][0]
         if done >= 4 * n:
             break
         await asyncio.sleep(1)
@@ -283,7 +302,7 @@ async def f5c():
 
     async def wake(tag):
         for s in ctl.sids(tag, n):
-            eid = await asyncio.to_thread(pgstore.append, s, "turn_input", {"n": 3, "text": f"wake turn of {s}"})
+            eid = await asyncio.to_thread(pgstore.append_input, TENANT, s, f"wake-{s}", {"n": 3, "text": f"wake turn of {s}"})
             await client.get_workflow_handle(ctl.wid(s)).signal("turn", eid)
     await wake(ok_tag)
     st_ok, w_ok = await lib.wait_done(client, ok_tag, n, 240)
@@ -315,6 +334,7 @@ async def f5c():
 # ------------------------------------------------------------------ F6 state schema migration
 async def f6():
     nA, nB, nC, turns, period, pre = sizes((20, 10, 10, 30, 4, 45), (4, 2, 2, 12, 1.5, 10))
+    lib.record(nA=nA, nB=nB, nC=nC, turns=turns, period=period, pre=pre)
     variant = "v2sx" if "--broken" in sys.argv else "v2s"
     lib.start_server("1.7.3", f"f6{variant}{suffix()}-{int(time.time())}.db", TPORT)
     lib.start_worker("f6a", "venv-new", "v1", "old", "f6")
@@ -344,8 +364,8 @@ async def f6():
     mism = []
     for tag, cnt in ((A, nA), (B, nB), (C, nC)):
         for s, r in res[tag][1].items():
-            pg_roll = len(pgstore.events_of(s, "rollup"))
-            pg_turns = len(pgstore.events_of(s, "turn_result"))
+            pg_roll = len(lib.events_of(s, "rollup"))
+            pg_turns = len(lib.events_of(s, "turn_result"))
             if r.get("ver") != 2 or r.get("rollups") != pg_roll or r.get("turns") != pg_turns:
                 mism.append({"sid": s, "result": r, "pg_rollups": pg_roll, "pg_turns": pg_turns})
     # state versions seen across all runs of every session (coexistence)

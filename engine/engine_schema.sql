@@ -25,3 +25,11 @@ create table if not exists payload_stats (
 
 -- Configuration read by the engine through an activity (never hard-coded in workflow code): the F5 task-queue hop.
 create table if not exists engine_config (name text primary key, value text not null);
+
+-- v2 (multi-tenant review fixes), additive so old and new code can share one database:
+-- tenant columns for scoped verification, and a (tenant, key) uniqueness that backs the tenant-prefixed keys.
+alter table ext_calls add column if not exists tenant_id text;
+alter table effect_ledger add column if not exists tenant_id text;
+create unique index if not exists effects_tenant_key on effects (tenant_id, key);
+create index if not exists ext_calls_tenant on ext_calls (tenant_id);
+create index if not exists effect_ledger_tenant on effect_ledger (tenant_id);
