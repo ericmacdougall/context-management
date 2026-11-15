@@ -24,6 +24,20 @@ def build_mapping(dims: Optional[int], similarity: str = "cosine", index_type: s
     return {"settings": {"number_of_shards": 1, "number_of_replicas": 0}, "mappings": {"properties": props}}
 
 
+INDEX_V1 = "emlab-rounds-v1"
+
+
+def build_mapping_v1(dims: int, heuristic: Optional[str] = None) -> Dict[str, Any]:
+    """The one registered index: chunk documents with a bbq_hnsw vector (`vector`) and an int8_hnsw copy
+    (`vector_int8`) for comparison; 1 shard, 0 replicas."""
+    m = build_mapping(dims, index_type="bbq_hnsw")
+    m["mappings"]["properties"]["vector_int8"] = {"type": "dense_vector", "dims": dims, "index": True,
+                                                  "similarity": "cosine", "index_options": {"type": "int8_hnsw"}}
+    if heuristic:
+        m["settings"]["index.dense_vector.hnsw_filter_heuristic"] = heuristic
+    return m
+
+
 def _filters(session_ids: Sequence[str]) -> List[Dict[str, Any]]:
     return [{"terms": {"session_id": list(session_ids)}}]
 
@@ -34,7 +48,7 @@ def bm25_query(text: str, session_ids: Sequence[str], size: int) -> Dict[str, An
 
 
 def knn_query(vector: List[float], session_ids: Sequence[str], size: int,
-              num_candidates: int = 1000) -> Dict[str, Any]:
+              num_candidates: int = 1000, field: str = "vector") -> Dict[str, Any]:
     return {"size": size, "_source": ["round_id", "session_id"],
-            "knn": {"field": "vector", "query_vector": vector, "k": size,
+            "knn": {"field": field, "query_vector": vector, "k": size,
                     "num_candidates": num_candidates, "filter": _filters(session_ids)}}

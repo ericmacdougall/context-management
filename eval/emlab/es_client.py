@@ -98,3 +98,42 @@ class EsClient:
 
     def search(self, index: str, body: Dict[str, Any]) -> Dict[str, Any]:
         return self.request("POST", "/%s/_search" % urllib.parse.quote(index), body)
+
+
+class CurlEsClient(EsClient):
+    """Same interface as EsClient, but speaks through `curl --config <file>` so a node that needs TLS or
+    auth settings kept in a curl config file can be used without this process ever reading or printing
+    that file. The file path is the only argument that carries the credential (never its content)."""
+
+    def __init__(self, base_url: str, curl_config: str, timeout: float = 120.0, allow_nonlocal: bool = False):
+        super().__init__(base_url, None, timeout=timeout, allow_nonlocal=allow_nonlocal)
+        if not os.path.exists(curl_config):
+            raise EsError("curl config file not found")
+        self._cfg = curl_config
+
+    def __repr__(self) -> str:
+        return "CurlEsClient(%r)" % self.base_url
+
+    def request(self, method: str, path: str, body: Any = None, ndjson: bool = False) -> Dict[str, Any]:
+        import subprocess
+        cmd = ["curl", "--config", self._cfg, "-sS", "-m", str(int(self.timeout)), "-X", method,
+               "-H", "Accept: application/json", "-w", "\n%{http_code}", self.base_url + path]
+        data = None
+        if body is not None:
+            if ndjson:
+                data = ("\n".join(json.dumps(x) for x in body) + "\n").encode()
+            else:
+                data = json.dumps(body).encode()
+            # Content-Type is NOT sent here: the curl config supplies it (a duplicate header is rejected by
+            # Elasticsearch); _bulk accepts application/json bodies.
+            cmd[1:1] = ["--data-binary", "@-"]
+        try:
+            out = subprocess.run(cmd, input=data, capture_output=True, timeout=self.timeout + 10)
+        except subprocess.TimeoutExpired:
+            raise EsError("%s %s timed out" % (method, path)) from None
+        if out.returncode != 0:
+            raise EsError("%s %s: curl exit %d" % (method, path, out.returncode))
+        raw, _, code = out.stdout.rpartition(b"\n")
+        if not code.strip().startswith(b"2"):
+            raise EsError("%s %s -> HTTP %s: %s" % (method, path, code.decode().strip(), raw[:300].decode("utf-8", "replace")))
+        return json.loads(raw) if raw.strip() else {}

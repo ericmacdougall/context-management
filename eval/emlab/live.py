@@ -60,7 +60,46 @@ class ExactRetriever(Retriever):
             out.extend(self.by_session.get(s, ()))
         return out
 
+    def prepare_terms(self, questions) -> None:
+        """One pass over all chunks collecting postings ONLY for the terms of the given questions, so BM25 over
+        very large session sets (whole pool) costs a posting scan instead of re-tokenising every chunk."""
+        want = set()
+        for q in questions:
+            want |= set(tokens(q.question))
+        post: Dict[str, List[Tuple[int, int]]] = {w: [] for w in want}
+        for i, c in enumerate(self.chunks):
+            for w, n in Counter(t for t in tokens(c["text"]) if t in want).items():
+                post[w].append((i, n))
+        self.post = post
+
+    def _bm25_postings(self, q, depth, allowed):
+        np = self.np
+        mask = np.zeros(self.n, dtype=bool)
+        for s in _sessions(q, allowed):
+            ids = self.by_session.get(s)
+            if ids:
+                mask[ids] = True
+        score: Dict[int, float] = {}
+        for w in set(tokens(q.question)):
+            df = self.df[w]
+            idf = math.log(1 + (self.n - df + 0.5) / (df + 0.5))
+            for i, tf in self.post.get(w, ()):
+                if mask[i]:
+                    score[i] = score.get(i, 0.0) + idf * tf * 2.2 / (tf + 1.2 * (0.25 + 0.75 * self.dl[i] / self.avgdl))
+        # chunks matching no term score 0 and are appended so the full ranking covers the whole search set
+        scored = [(self.chunks[i]["round_id"], s) for i, s in score.items()]
+        if depth > len(scored):
+            have = {r for r, _ in scored}
+            for i in np.nonzero(mask)[0]:
+                r = self.chunks[int(i)]["round_id"]
+                if r not in have:
+                    have.add(r)
+                    scored.append((r, 0.0))
+        return _rollup(scored, depth)
+
     def bm25(self, q, depth, allowed):
+        if getattr(self, "post", None) is not None:
+            return self._bm25_postings(q, depth, allowed)
         qt = set(tokens(q.question))
         scored = []
         for i in self._idx(q, allowed):
@@ -78,7 +117,7 @@ class ExactRetriever(Retriever):
         idx = self._idx(q, allowed)
         if not idx:
             return []
-        sims = self.np.asarray(self.vectors[idx]) @ self.qvec[q.qid]
+        sims = self.vectors[self.np.asarray(idx)] @ self.qvec[q.qid]
         return _rollup([(self.chunks[i]["round_id"], float(s)) for i, s in zip(idx, sims)], depth)
 
 

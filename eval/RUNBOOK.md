@@ -26,7 +26,20 @@ cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --acti
 ```
 Do not pass `--split test` or `--split all` until main has recorded the frozen hash of PREREGISTRATION.md on the ticket.
 
-## 4. After handover of the Elasticsearch node (not before)
+## 3b. Pooled-history curve (pilot only; needs numpy, exact retriever)
+```
+cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --action curve --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/curve_pilot.json
+```
+
+## 4. Elasticsearch node (handed over; ES 9.5.6, https://127.0.0.1:19200 from t2-dev)
+The node is shared: one index only (`emlab-rounds-v1`, already created, 0 replicas), modest bulk, never touch other indices, the licence, ML deployments or container settings. The curl config file holds the credential and Content-Type; it is passed by path only and never printed.
+```
+cd eval && ../venv/bin/python -m emlab.indexer --es-url https://127.0.0.1:19200 --curl-config /home/eric/emlab-16096/curl_key.conf --artifacts ../out/emb
+cd eval && ../venv/bin/python -m emlab.escompare --action knn --es-url https://127.0.0.1:19200 --curl-config /home/eric/emlab-16096/curl_key.conf --artifacts ../out/emb --dataset-path ../data/longmemeval_s_cleaned.json --out ../out/es_knn_pilot.json
+(same with --action fusion and --action e5)
+```
+
+## 4b. Legacy plain-HTTP interface (not used on this node)
 ```
 cd eval && ../venv/bin/python -m emlab.indexer --es-url http://127.0.0.1:<ES_PORT> --credential-file <CRED_FILE> --artifacts ../out/emb --index emlab-chunks
 cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever es --es-url http://127.0.0.1:<ES_PORT> --credential-file <CRED_FILE> --index emlab-chunks --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/phaseR_pilot.json

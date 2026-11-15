@@ -75,6 +75,30 @@ Metrics: session-level and round-level recall@k and NDCG@k (binary gain) for k i
 
 Phase R is descriptive and decides neither kill rule (Section 1); it selects the retrieval configuration that Phase F uses, on the pilot only.
 
+## 4.1 Named analysis: pooled-history curve (Phase R, no LLM, pilot split only until frozen)
+
+Why: a micro-pilot (n=10 pilot questions, LLM) showed the reader given the whole S haystack (about 165k tokens) scored the same as the reader given gold evidence only (9 of 10 each, same single miss). On S as distributed a memory layer therefore has no accuracy headroom, and S can support cost and latency claims only. What matters is behaviour as the history grows far past the context window. This analysis measures retrieval, not answers, as history grows. (Source of the micro-pilot: main's relay; not re-measured here.)
+
+Levels, per question (nested, fixed seed 16096):
+- H0 = the question's own haystack (as in Section 4).
+- H1 = H0 + 500 distractor sessions; H2 = H0 + 5,000; H3 = H0 + every other session of the pool (the whole pool of 19,195 unique sessions).
+- Distractors are sessions that appear in no haystack of any question in the question's CLUSTER (Section 2). The distractor order is the permutation given by `sha256("16096:<question id>:<session id>")`, so H1 is a prefix of H2, which is a prefix of H3 (`emlab.pool`).
+- Approximate size of each level: reported by the run as characters/4 (an estimate, not a tokenizer count), mean and distribution over the pilot questions; no figure is asserted before the run.
+
+Measurements (pilot questions with retrieval gold; abstention excluded):
+1. Session-level and round-level recall@k and NDCG@k, k in {5, 10, 20, 50}, for every arm of Section 4 (BM25, dense, RRF, linear, and rerank if the reranker is available), mode `off`, at every level.
+2. The drop from H0 to each of H1, H2, H3, per arm and metric, with a clustered paired bootstrap (resampling clusters, 2,000 resamples, seed 16096; `emlab.pool.drop_bootstrap`), reported with the number of clusters. Descriptive: no threshold, no kill-rule role.
+3. Time-aware modes are OFF at every pooled level (a session has different dates in different questions; the curve is about relevance at scale, not time).
+4. Contamination: distractor sessions come from other questions' simulated users, so a distractor may contain a competing answer. Gold ids stay valid for retrieval metrics. For ANSWER-level use of pooled levels this is a threat (a retrieved competing answer may be correct for another question's user, not wrong for the system). Proxy (at H3): for each pilot question, the number of non-gold ROUNDS ranked above the best gold round on BOTH BM25 and dense over the whole pool (`emlab.pool.contamination_proxy`); the distribution (min, quartiles, p90, max, mean, count of zeros) is reported, and so are the single-leg counts.
+5. Cost: per-question wall time at each level with the exact in-process retriever on the host under its thread cap is reported; if the whole-pool level is impractical in-process, that level is run on the Elasticsearch index instead, and the report says which retriever produced which level.
+
+## 4.2 Elasticsearch comparisons (pilot only; differences reported, not tuned away)
+
+- Index: one index `emlab-rounds-v1` on the throwaway node (ES 9.5.6, trial licence), 1 shard, 0 replicas, chunk documents with `vector` (`bbq_hnsw`) and `vector_int8` (`int8_hnsw`) for comparison. Bulk indexing is modest (200 documents per request with a pause) because other agents use the node; their indices, the licence, ML deployments and container settings are not touched.
+- kNN recall: Elasticsearch filtered kNN (filter = the question's haystack session ids, about 48 of 19,195 sessions) vs exact cosine over the same sessions, recall of the true top-10 and top-50 chunks, for `index.dense_vector.hnsw_filter_heuristic` = `acorn` and `fanout`, both vector fields, num_candidates 100 and 1000. The settings change is dynamic and applied to this index only. This is a first test, on real embeddings, of an earlier synthetic finding that the default heuristic gave much lower filtered-kNN recall at a 5% filter; the per-question filter here is far more selective.
+- Fusion parity (open question A11): client-side RRF (rank constant 60) and linear (min-max, weights 0.5/0.5) over Elasticsearch's own BM25 and kNN chunk lists vs Elasticsearch's `rrf` and `linear` retrievers (window 200) on the same queries: top-10 and top-50 overlap, same-order fraction, same-top-1 fraction.
+- Embedding parity: the external E5 vectors vs the node's built-in E5 endpoint (inference id `emlab-e5`) on a sample of 200 rounds (100 pilot gold rounds plus random rounds, seed 16096) and 50 pilot queries, with and without the `passage: ` / `query: ` prefixes: cosine agreement and top-10 overlap within the sample.
+
 ## 5. Phase F: facts and answers (needs LLM calls)
 
 LLM stages run on Sonnet over all 500 questions (USER decision): reader and extractor are `claude-sonnet-5-5`; the judge is the benchmark's own question-type-specific judge prompts run on `claude-opus-5-5` (MAIN), preceded by a leniency probe with deliberately wrong answers before the test run; judge and reader come from the same vendor (threat below). Token budget and pull tools are identical in every arm.
@@ -136,6 +160,7 @@ Every figure is reported with workload (dataset variant, stratum, n, effective n
 - Vectors computed outside Elasticsearch deviate from the semantic_text path; results transfer to it only if the embedding model is the same.
 - Distractor sessions are shared across pilot and test questions (19,195 unique sessions over 23,867 references): the pilot sees the same filler text the test set contains, so pilot-tuned settings are mildly optimistic for filler-heavy behaviour. Answer sessions are shared by 5 multi-question clusters; these are kept together in the split and resampled together.
 - The judge (Opus) and the reader and extractor (Sonnet) are from the same vendor, which can bias judging towards the reader's style; the leniency probe measures leniency, not self-preference.
+- Headroom: a micro-pilot (n=10, relayed by main) found no accuracy difference between the full S haystack and gold-only evidence, so answer-level accuracy gains on S are likely bounded near zero and S supports cost and latency claims; the pooled-history curve (Section 4.1) is the retrieval-side test of growth, and its answer-level reading is limited by contamination.
 - This benchmark cannot test as-of filtering: its histories never contain superseded facts separated by more than a day from the question date. Testing it needs histories where superseded facts are separated by more than a day (the M variant or the user's own sessions).
 - The in-process exact retriever used for the low-overlap pre-computation differs from Elasticsearch's analyzer; stratum membership may shift slightly once recomputed on the node.
 - E5-small with a 512-token limit and chunking may under-represent long rounds; chunk max-pooling is a simplification.

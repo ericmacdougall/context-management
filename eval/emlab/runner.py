@@ -132,7 +132,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="emlab.runner")
     ap.add_argument("--dry-run", action="store_true", help="fixture + in-memory fake retriever; no network")
     ap.add_argument("--phase", choices=["R", "F"], default="R")
-    ap.add_argument("--action", choices=["run", "lowoverlap", "grid", "index", "diagnostics", "rerank-timing"],
+    ap.add_argument("--action", choices=["run", "lowoverlap", "grid", "index", "diagnostics", "rerank-timing", "curve"],
                     default="run")
     ap.add_argument("--retriever", choices=["exact", "es"], default="exact")
     ap.add_argument("--dataset-path")
@@ -198,7 +198,16 @@ def main(argv=None) -> int:
         retr = RerankingWrapper(retr, rt, args.reranker_dir)
     else:
         arms.remove("rerank")
-    if args.action == "rerank-timing":
+    if args.action == "curve":
+        from .curve import run_curve
+        all_qs = list(LongMemEvalLoader(args.dataset_path).questions())
+        chars: Dict[str, int] = {}
+        for c in retr.chunks:  # ExactRetriever only
+            chars[c["session_id"]] = chars.get(c["session_id"], 0) + len(c["text"])
+        retr.prepare_terms(qs)
+        res = run_curve(qs, all_qs, retr, arms, chars)
+        res["split"] = args.split
+    elif args.action == "rerank-timing":
         import time
         from .retrievers import allowed_sessions, rrf as _rrf
         rows = []
