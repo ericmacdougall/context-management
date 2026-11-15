@@ -20,10 +20,10 @@ import psycopg
 
 from . import families as F, keys as K, lease as L, registry as R
 from .es import ESError
-from .projector import event_actions, fact_actions
+from .projector import decode_events, decode_facts, to_actions
 
 
-def _noop(_n):
+def _noop(_n, _data=None):
     pass
 
 
@@ -90,9 +90,9 @@ def rebuild_family(conn, ks, es, t, f, epoch, hook=_noop):
         es.req("DELETE", f"/{new}", ok=(200, 404))
         raise
     rows = _survivors(conn, t, f)
-    hook(f"rebuild_after_read:{f}")
-    target = F.stage_alias(t, f, epoch)
-    acts = event_actions(ks, t, rows, target) if f == "events" else fact_actions(ks, t, rows, target)
+    docs = decode_events(ks, t, rows) if f == "events" else decode_facts(ks, t, rows)
+    hook(f"rebuild_after_read:{f}", rows)
+    acts = to_actions(docs, F.stage_alias(t, f, epoch))
     for i in range(0, len(acts), 500):
         ok, bad = es.bulk_fenced(acts[i:i + 500])
         hard = [b for b in bad if b[1] != 409]

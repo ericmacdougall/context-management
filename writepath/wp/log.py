@@ -28,7 +28,7 @@ def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_
     return _h(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, hashlib.sha256(bytes(content_enc)).hexdigest(), epoch, item, based_on, source)
 
 
-def _noop(_name):
+def _noop(_name, _data=None):
     pass
 
 
@@ -61,6 +61,10 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
                                      (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"]))
                 return {"accepted": [], "duplicates": [], "quarantined": len(prepared)}
             if getattr(ex, "sqlstate", None) == "WPS05":
+                have = dict(conn.execute("select idem_key, event_id from events where tenant_id=%s and idem_key = any(%s)",
+                                         (t, [p["idem_key"] for p in prepared])).fetchall())
+                if have and all(p["idem_key"] in have for p in prepared):   # a retry of a decision that already landed
+                    return {"accepted": [], "duplicates": [have[p["idem_key"]] for p in prepared], "quarantined": 0}
                 raise StaleDecision(str(ex).split("\n")[0]) from None
             raise
 
@@ -75,6 +79,7 @@ def _append_txn(conn, t, sid, lease, prepared, hook):
         dups = [have[p["idem_key"]] for p in prepared if p["idem_key"] in have]
         if not todo:
             return {"accepted": [], "duplicates": dups, "quarantined": 0}
+        hook("after_precheck")
         conn.execute("insert into chains(tenant_id, session_id) values (%s,%s) on conflict do nothing", (t, sid))
         next_seq, prev = conn.execute("select next_seq, last_hash from chains where tenant_id=%s and session_id=%s for update", (t, sid)).fetchone()
         hook("in_txn")
@@ -95,6 +100,7 @@ def _append_txn(conn, t, sid, lease, prepared, hook):
             prev = h
             ids.append(p["event_id"])
         conn.execute("update chains set next_seq=%s, last_hash=%s where tenant_id=%s and session_id=%s", (next_seq + len(todo), prev, t, sid))
+        hook("before_commit")
         return {"accepted": ids, "duplicates": dups, "quarantined": 0}
 
 

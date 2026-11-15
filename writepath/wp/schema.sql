@@ -151,7 +151,10 @@ begin
   if NEW.lease_scope <> OLD.lease_scope or NEW.lease_epoch <> OLD.lease_epoch then
     raise exception 'job lease fields are immutable' using errcode = 'WPS07';
   end if;
-  if NEW.state = 'claimed' and NEW.claim_epoch <> OLD.claim_epoch + 1 then
+  if NEW.claim_epoch <> OLD.claim_epoch and (NEW.claim_epoch <> OLD.claim_epoch + 1 or NEW.state <> 'claimed') then
+    raise exception 'claim_epoch only advances by one, on a claim' using errcode = 'WPS07';
+  end if;
+  if OLD.state = 'queued' and NEW.state = 'claimed' and NEW.claim_epoch <> OLD.claim_epoch + 1 then
     raise exception 'claim must advance claim_epoch' using errcode = 'WPS07';
   end if;
   if NEW.state = 'done' then

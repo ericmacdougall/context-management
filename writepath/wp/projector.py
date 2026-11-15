@@ -20,7 +20,7 @@ BIG = 2 ** 62
 FACT_KIND = "fact"
 
 
-def _noop(_n):
+def _noop(_n, _data=None):
     pass
 
 
@@ -94,7 +94,7 @@ class Projector:
         if not rows:
             self._advance("derive", xm - 1, BIG)
             return 0
-        self.hook("derive_after_read")
+        self.hook("derive_after_read", rows)
         keys = self._keys([r[1] for r in rows])
         try:
             with self.conn.transaction():
@@ -131,17 +131,10 @@ class Projector:
         if not rows:
             self._advance("events", xm - 1, BIG)
             return 0
-        self.hook("mirror_after_read")
-        keys = self._keys([r[4] for r in rows])
-        acts = []
-        for eid, sid, seq, kind, subj, actor, trust, ts, enc, _, _ in rows:
-            plain = K.open_(keys[subj], self.t, subj, eid, enc)
-            if plain is None:
-                continue
-            acts.append(({"create": {"_index": F.write_alias(self.t, "events", self.lease.epoch), "_id": eid}},
-                         {"event_id": eid, "session_id": sid, "seq": seq, "kind": kind, "subject_id": subj, "actor": actor, "trust_origin": trust,
-                          "ts_event": ts.isoformat(), "content": plain}))
-        self.hook("mirror_before_bulk")
+        docs = decode_events(self.ks, self.t, rows)        # plaintext exists from here on, as in any real projector
+        self.hook("mirror_after_read", rows)
+        acts = to_actions(docs, F.write_alias(self.t, "events", self.lease.epoch))   # target = epoch from acquire()
+        self.hook("mirror_before_bulk", acts)
         self._bulk("events", acts)
         self._advance("events", rows[-1][9], rows[-1][10])
         return len(rows)
@@ -155,8 +148,9 @@ class Projector:
         if not rows:
             self._advance("facts", xm - 1, BIG)
             return 0
-        self.hook("facts_after_read")
-        acts = fact_actions(self.ks, self.t, rows, F.write_alias(self.t, "facts", self.lease.epoch))
+        docs = decode_facts(self.ks, self.t, rows)
+        self.hook("facts_after_read", rows)
+        acts = to_actions(docs, F.write_alias(self.t, "facts", self.lease.epoch))
         self._bulk("facts", acts)
         self._advance("facts", rows[-1][7], rows[-1][6])
         return len(rows)
@@ -186,28 +180,37 @@ class Projector:
             self.lease = None
 
 
-def event_actions(ks, t, rows, target):
+def decode_events(ks, t, rows):
+    """[(action_template, doc)] for event rows (decrypted; rows whose key is gone are skipped)."""
     keys = ks.keys(t, [r[4] for r in rows])
-    acts = []
-    for eid, sid, seq, kind, subj, actor, trust, ts, enc in rows:
+    out = []
+    for eid, sid, seq, kind, subj, actor, trust, ts, enc, *_ in rows:
         plain = K.open_(keys[subj], t, subj, eid, enc)
         if plain is None:
             continue
-        acts.append(({"create": {"_index": target, "_id": eid}},
-                     {"event_id": eid, "session_id": sid, "seq": seq, "kind": kind, "subject_id": subj, "actor": actor, "trust_origin": trust,
-                      "ts_event": ts.isoformat(), "content": plain}))
-    return acts
+        out.append(({"create": {"_id": eid}}, {"event_id": eid, "session_id": sid, "seq": seq, "kind": kind, "subject_id": subj, "actor": actor,
+                                                "trust_origin": trust, "ts_event": ts.isoformat(), "content": plain}))
+    return out
 
 
-def fact_actions(ks, t, rows, target):
+def decode_facts(ks, t, rows):
     keys = ks.keys(t, [r[1] for r in rows])
-    acts = []
+    out = []
     for fid, subj, enc, vf, vt, inputs, rev, *_ in rows:
         plain = K.open_(keys[subj], t, subj, "fact:" + fid, enc)
         if plain is None:
             continue
         b = json.loads(plain)
-        acts.append(({"index": {"_index": target, "_id": fid, "version": rev, "version_type": "external_gte"}},
-                     {"fact_id": fid, "subject_id": subj, "entity": b["entity"], "attribute": b["attribute"], "value": b["value"],
-                      "valid_from": vf.isoformat(), "valid_to": vt.isoformat() if vt else None, "input_event_ids": list(inputs), "rev": rev}))
+        out.append(({"index": {"_id": fid, "version": rev, "version_type": "external_gte"}},
+                    {"fact_id": fid, "subject_id": subj, "entity": b["entity"], "attribute": b["attribute"], "value": b["value"],
+                     "valid_from": vf.isoformat(), "valid_to": vt.isoformat() if vt else None, "input_event_ids": list(inputs), "rev": rev}))
+    return out
+
+
+def to_actions(docs, target):
+    """Bind decoded docs to a write target (an alias; es.bulk_fenced sends require_alias=true)."""
+    acts = []
+    for tmpl, doc in docs:
+        (op, meta), = tmpl.items()
+        acts.append(({op: dict(meta, _index=target)}, doc))
     return acts
