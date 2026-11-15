@@ -72,7 +72,8 @@ class FactsRetriever:
         for i, f in enumerate(facts):
             self.by_session.setdefault(f["session_id"], []).append(i)
 
-    def rank(self, question: str, cue_keys: Sequence[str], qvec, sessions: Sequence[str], depth: int = 200) -> List[str]:
+    def rank(self, question: str, cue_keys: Sequence[str], qvec, sessions: Sequence[str], depth: int = 200,
+             use_cue: bool = True) -> List[str]:
         idx = [i for s in sessions for i in self.by_session.get(s, ())]
         if not idx:
             return []
@@ -83,6 +84,8 @@ class FactsRetriever:
             sims = self.vectors[idx] @ qvec
             order = sorted(range(len(idx)), key=lambda j: (-float(sims[j]), self.facts[idx[j]]["id"]))
             legs.append([self.facts[idx[j]]["id"] for j in order][:depth])
+        if not use_cue:  # diagnostic arm: ranking WITHOUT the cue-key leg
+            return [d for d, _ in rrf([l for l in legs if l], k=60)][:depth]
         cq = tokens(" ".join(cue_keys)) + tokens(question)
         sc = self.cue.score(cq, idx)
         legs.append([self.facts[i]["id"] for i, _ in sorted(sc.items(), key=lambda kv: (-kv[1], self.facts[kv[0]]["id"]))][:depth])

@@ -56,6 +56,13 @@ class Ctx(unittest.TestCase):
         self.assertTrue(context_metrics(self.q, items)["gold_latest_in_context"])
         self.assertFalse(context_metrics(self.q, items)["stale_only"])
 
+    def test_cue_leg_can_be_switched_off(self):
+        fr = FactsRetriever(list(self._facts().values()))
+        with_cue = fr.rank("zzz", ["employer"], None, ["ku_s1", "ku_s4"])
+        without = fr.rank("zzz", ["employer"], None, ["ku_s1", "ku_s4"], use_cue=False)
+        self.assertEqual(with_cue, ["f1"])      # found only through the cue key
+        self.assertEqual(without, [])
+
     def test_facts_retriever_cue_and_text(self):
         fr = FactsRetriever(list(self._facts().values()))
         r = fr.rank("Which employer and job?", ["employer"], None, ["ku_s1", "ku_s4"])
@@ -67,3 +74,21 @@ class Ctx(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Dates(unittest.TestCase):
+    def test_synthetic_date_rules(self):
+        from datetime import datetime
+        from emlab.build_contexts import event_time_allowed, synthetic_date
+        e, q = datetime(2023, 1, 1, 8, 0), datetime(2023, 6, 1, 10, 0)
+        a = synthetic_date("q1", "s1", e, q)
+        self.assertEqual(a, synthetic_date("q1", "s1", e, q))                 # deterministic
+        self.assertNotEqual(a, synthetic_date("q1", "s2", e, q))
+        for i in range(200):
+            d = synthetic_date("q%d" % i, "s%d" % i, e, q)
+            self.assertTrue(e <= d <= q)                                       # never after the question date
+        f = {"event_time": "2023-03-01", "ref_date": "2023-02-10 09:00"}
+        self.assertTrue(event_time_allowed(f, "2023-02-10 09:00", False))
+        self.assertFalse(event_time_allowed(f, "2023-02-11 09:00", False))
+        self.assertFalse(event_time_allowed(f, "2023-02-10 09:00", True))      # synthetic date: never shown
+        self.assertIsNone(event_time_allowed({"event_time": "x"}, "2023-02-10 09:00", False))
