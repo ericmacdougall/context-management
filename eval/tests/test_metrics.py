@@ -115,3 +115,23 @@ class Macro(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Exploratory(unittest.TestCase):
+    def test_derangement_has_no_fixed_point_and_is_seeded(self):
+        from emlab.xp_common import derangement_list
+        p = derangement_list(50, 7)
+        self.assertEqual(sorted(p), list(range(50)))
+        self.assertTrue(all(p[i] != i for i in range(50)))
+        self.assertEqual(p, derangement_list(50, 7))
+        self.assertNotEqual(p, derangement_list(50, 8))
+
+    def test_cluster_wilson_uses_clusters_not_questions(self):
+        from emlab.xp_common import cluster_wilson
+        per = {"a": 1.0, "b": 1.0, "c": 1.0, "d": 0.0}
+        one_cluster = cluster_wilson(per, {"a": "X", "b": "X", "c": "X", "d": "Y"})   # clusters: X (rate 1), Y (rate 0)
+        self.assertEqual((one_cluster["n_clusters"], one_cluster["n_questions"], one_cluster["rate"]), (2, 4, 0.5))
+        four = cluster_wilson(per, {"a": "A", "b": "B", "c": "C", "d": "D"})
+        self.assertEqual(four["n_clusters"], 4)
+        self.assertGreater(four["wilson_low"], one_cluster["wilson_low"])           # more clusters, tighter bound
+        self.assertLess(one_cluster["wilson_low"], 0.5)
