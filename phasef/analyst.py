@@ -40,9 +40,28 @@ def task_forbidden(task):
     return {t for t in (qid, level) if t} | set(LEVEL_NAMES)
 
 
-def guarded(task, prompt, system, forbidden=None):
-    """Send-time guard on top of llm.check_prompt: also refuses the task's question id, its level and the level names."""
-    check_prompt(prompt, system, (forbidden or set()) | task_forbidden(task))
+def composed_only(task):
+    """The task with every candidate's text blanked: what remains of a prompt is what WE compose (instructions, question line, date, candidate id and date prefixes)."""
+    t = dict(task)
+    t["candidates"] = [dict(c, text="") for c in task["candidates"]]
+    return t
+
+
+def guarded(task, prompt, system, forbidden=None, builder=None):
+    """Send-time guard. Real-session-id patterns and the known real ids are checked on the WHOLE prompt (candidate and tool text included).
+    The question id, the level and the level names are checked only on the parts we compose, never on candidate or tool-result text
+    (ordinary text contains H1 or H2; blocking on it would silently remove questions)."""
+    check_prompt(prompt, system, forbidden or set())
+    mine = builder(composed_only(task)) if builder else ""
+    check_prompt(mine, system, task_forbidden(task), patterns=False)
+
+
+def record_block(m, arm, qid, level, stage, err):
+    """Every guard block goes to the ledger and the question is scored as a failure for the arm (never dropped)."""
+    with open(m.ledger_path, "a") as fh:
+        fh.write(json.dumps({"arm": arm, "qid": qid, "stage": "guard_block:" + stage, "error": str(err)[:200]}) + "\n")
+    return {"question_id": qid, "level": level, "arm": arm, "status": "blocked_guard", "error": str(err)[:200], "ranked_round_ids": [], "tokens": {"in": 0, "cache_creation": 0, "cache_read": 0, "out": 0},
+            "seconds": 0, "tool_calls": 0, "prompt_version": PROMPT_VERSION}
 
 
 def cand_lines(task):
@@ -115,8 +134,11 @@ def tokens(c):
 
 
 def run_rerank(task, m, forbidden=None):
-    guarded(task, build_rerank_prompt(task), RERANK_SYSTEM, forbidden)
     qid, level = qid_of(task)
+    try:
+        guarded(task, build_rerank_prompt(task), RERANK_SYSTEM, forbidden, build_rerank_prompt)
+    except PromptLeak as e:
+        return record_block(m, "ANALYST-RERANK-ONLY", qid, level, "rerank", e)
     c = m.call(build_rerank_prompt(task), RERANK_SYSTEM, "sonnet", "ANALYST-RERANK-ONLY", qid, "rerank")
     base = {"question_id": qid, "level": level, "arm": "ANALYST-RERANK-ONLY", "tokens": tokens(c), "seconds": c["seconds"], "tool_calls": 0, "prompt_version": PROMPT_VERSION}
     try:
@@ -151,7 +173,6 @@ def write_result(base, rec):
 
 def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbidden=None):
     qid, level = qid_of(task)
-    guarded(task, build_analyst_prompt(task), ANALYST_SYSTEM, forbidden)
     os.makedirs(run_dir, exist_ok=True)
     key = hashlib.sha1(qid.encode()).hexdigest()[:10]  # file names handed to the tool server carry no question id
     log_path = os.path.join(run_dir, key + ".toolcalls.jsonl")
@@ -159,6 +180,10 @@ def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbid
         os.remove(log_path)  # a rerun of an uncached question starts a fresh log (a cache hit re-reads the old answer only)
     cfg = mcp_config(os.path.join(run_dir, key + ".mcp.json"), log_path, backend_args)
     m = make_llm(cache_dir, ledger, cap, cwd, analyst_extra_args(cfg), recipe=PROMPT_VERSION + "+mcp", forbidden=forbidden)
+    try:
+        guarded(task, build_analyst_prompt(task), ANALYST_SYSTEM, forbidden, build_analyst_prompt)
+    except PromptLeak as e:
+        return record_block(m, "ANALYST", qid, level, "analyst", e)
     c = m.call(build_analyst_prompt(task), ANALYST_SYSTEM, "sonnet", "ANALYST", qid, "analyst")
     calls = [json.loads(l) for l in open(log_path)] if os.path.exists(log_path) else []
     done = [x for x in calls if not x.get("refused")]

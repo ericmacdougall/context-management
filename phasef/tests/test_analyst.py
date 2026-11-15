@@ -77,12 +77,46 @@ class NoLeakTests(unittest.TestCase):
         self.assertEqual(qid_of(LEAKTASK), (SECRET_QID, SECRET_LEVEL))
         self.assertEqual(qid_of({"question_id": "a", "level": "H0"}), ("a", "H0"))
 
-    def test_send_time_guard_refuses_question_id_level_and_level_names(self):
-        ok = build_rerank_prompt(LEAKTASK)
-        guarded(LEAKTASK, ok, RERANK_SYSTEM)
-        for bad in (ok + " " + SECRET_QID, ok + " H2", ok + " own_haystack", ok + " H0", ok + " H3"):
-            with self.assertRaises(PromptLeak):
-                guarded(LEAKTASK, bad, RERANK_SYSTEM)
+    def _task(self, question=None, text=None, date=None):
+        t = json.loads(json.dumps(LEAKTASK))
+        if question:
+            t["question"] = question
+        if text:
+            t["candidates"][0]["text"] = text
+        if date:
+            t["candidates"][0]["date"] = date
+        return t
+
+    def test_guard_checks_composed_parts_for_qid_and_level(self):
+        from phasef.analyst import ANALYST_SYSTEM as AS
+        for bad in (self._task(question="Tell me about 09ba9854_abs"), self._task(question="level H2 question"), self._task(question="in own_haystack?"), self._task(date="H3")):
+            for builder, system in ((build_rerank_prompt, RERANK_SYSTEM), (build_analyst_prompt, AS)):
+                with self.assertRaises(PromptLeak):
+                    guarded(bad, builder(bad), system, None, builder)
+        ok = self._task()
+        guarded(ok, build_rerank_prompt(ok), RERANK_SYSTEM, None, build_rerank_prompt)
+
+    def test_candidate_text_containing_level_tokens_or_question_id_passes(self):
+        t = self._task(text="<H1>Title</H1> in H2 2022 we tried own_haystack; H0 H3 and 09ba9854_abs appear as ordinary text")
+        guarded(t, build_rerank_prompt(t), RERANK_SYSTEM, None, build_rerank_prompt)
+        guarded(t, build_analyst_prompt(t), ANALYST_SYSTEM, None, build_analyst_prompt)
+
+    def test_real_session_id_in_candidate_text_is_still_blocked_and_recorded_not_dropped(self):
+        from phasef.analyst import run_rerank
+        t = self._task(text="see answer_c6fd8ebd for details")
+        with self.assertRaises(PromptLeak):
+            guarded(t, build_rerank_prompt(t), RERANK_SYSTEM, None, build_rerank_prompt)
+        d = tempfile.mkdtemp()
+
+        class FakeLLM:
+            ledger_path = os.path.join(d, "ledger.jsonl")
+
+            def call(self, *a, **k):
+                raise AssertionError("must not reach the model")
+        r = run_rerank(t, FakeLLM())
+        self.assertEqual((r["status"], r["question_id"], r["arm"]), ("blocked_guard", SECRET_QID, "ANALYST-RERANK-ONLY"))
+        row = json.loads(open(FakeLLM.ledger_path).read().splitlines()[0])
+        self.assertTrue(row["stage"].startswith("guard_block") and row["qid"] == SECRET_QID)
 
     def test_mcp_server_never_echoes_ids_in_results_or_errors(self):
         d = tempfile.mkdtemp()

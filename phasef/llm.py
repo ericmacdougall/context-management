@@ -33,10 +33,10 @@ _LEAK_RE = re.compile(r"answer_[0-9a-fA-F]|sharegpt_|ultrachat_")
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
 
 
-def check_prompt(prompt, system="", forbidden=None):
+def check_prompt(prompt, system="", forbidden=None, patterns=True):
     """Refuse any prompt that shows a real LongMemEval session id: gold ids (answer_<hex>), sharegpt_/ultrachat_ ids, or any id in the optional forbidden set."""
     for text in (prompt, system):
-        m = _LEAK_RE.search(text)
+        m = _LEAK_RE.search(text) if patterns else None
         if m:
             raise PromptLeak("prompt contains a real session id pattern near %r" % text[max(0, m.start() - 20):m.end() + 20])
         if forbidden:
