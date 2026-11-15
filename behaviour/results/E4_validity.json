@@ -1,0 +1,145 @@
+{
+ "e4-dates_create": {
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "e4-dates"
+ },
+ "e4-range_create": {
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "e4-range"
+ },
+ "range_explicit_null_lt": [
+  201,
+  "created"
+ ],
+ "asof_2025-03-01": {
+  "dates": [
+   "f2",
+   "f4",
+   "f5"
+  ],
+  "range_term": [
+   "f2",
+   "f4",
+   "f5"
+  ],
+  "range_CONTAINS": [
+   "f2",
+   "f4",
+   "f5"
+  ],
+  "expected": [
+   "f2",
+   "f4",
+   "f5"
+  ]
+ },
+ "currently_valid_now(2026-11-15)": {
+  "dates_now": [
+   "f3",
+   "f4",
+   "f5"
+  ],
+  "range_now": [
+   "f3",
+   "f3null",
+   "f4",
+   "f5"
+  ],
+  "expected": [
+   "f3",
+   "f4",
+   "f5"
+  ]
+ },
+ "window_overlap_2024-06-01..2024-08-01": {
+  "INTERSECTS": [
+   "f1",
+   "f2",
+   "f4"
+  ],
+  "WITHIN": [
+   "f1"
+  ],
+  "CONTAINS": [
+   "f1",
+   "f4"
+  ]
+ },
+ "sort_valid_from_dates_asc": [
+  "f4",
+  "f1",
+  "f2",
+  "f5",
+  "f3"
+ ],
+ "sort_valid_from_dates_desc_missing_valid_to_sort": [
+  "f1",
+  "f2",
+  "f5",
+  "f3",
+  "f4"
+ ],
+ "sort_range_field": {
+  "status": 400,
+  "err": "Sorting by range field [valid] is not supported"
+ },
+ "range_docvalue_fields": [
+  500,
+  {
+   "error": {
+    "root_cause": [
+     {
+      "type": "unsupported_operation_exception",
+      "reason": null
+     }
+    ],
+    "type": "search_phase_execution_exception",
+    "reason": "all shards failed",
+    "phase": "query",
+    "grouped": true,
+    "failed_shards": [
+     {
+      "shard": 0,
+      "index": "e4-range",
+      "node": "3LVbsXnaTXKnVZkwh6gGRg",
+      "reason": {
+       "type": "unsupported_operation_exception",
+       "reason": null
+      }
+     }
+    ],
+    "caused_by": {
+     "type": "unsupported_operation_exception",
+     "reason": null,
+     "caused_by": {
+      "type": "unsupported_operation_exception",
+      "reason": null
+     }
+    }
+   },
+   "status": 500
+  }
+ ],
+ "script_sort_on_range_doc_values": [
+  200,
+  "ok"
+ ],
+ "stored_bound_now": [
+  400,
+  "[1:33] failed to parse field [valid] of type [date_range] in document with id 'now1'. Preview of field's value: 'now'",
+  "could not read the current timestamp"
+ ],
+ "stored_bound_now_math": [
+  400,
+  "[1:33] failed to parse field [valid] of type [date_range] in document with id 'now2'. Preview of field's value: 'now-1d/d'",
+  "could not read the current timestamp"
+ ],
+ "range_default_relation_ids_for_window": [
+  "f1",
+  "f2",
+  "f4"
+ ],
+ "range_docvalue_note": "see range_docvalue_fields"
+}

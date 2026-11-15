@@ -1,0 +1,706 @@
+{
+ "workload": "50 trials x 2 threads, barrier-started, same doc, if_seq_no/if_primary_term",
+ "trials_summary": {
+  "exactly_one_win": 50,
+  "both_win": 0,
+  "none_win": 0,
+  "loser_error_types": [
+   "version_conflict_engine_exception"
+  ],
+  "final_matches_winner": true
+ },
+ "trials": [
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  },
+  {
+   "res": [
+    [
+     200,
+     null
+    ],
+    [
+     409,
+     "version_conflict_engine_exception"
+    ]
+   ],
+   "final_v": 1
+  },
+  {
+   "res": [
+    [
+     409,
+     "version_conflict_engine_exception"
+    ],
+    [
+     200,
+     null
+    ]
+   ],
+   "final_v": 2
+  }
+ ],
+ "bulk": {
+  "http": 200,
+  "errors_flag": true,
+  "items": [
+   {
+    "create": {
+     "status": 201,
+     "err": null
+    }
+   },
+   {
+    "create": {
+     "status": 409,
+     "err": "version_conflict_engine_exception"
+    }
+   },
+   {
+    "index": {
+     "status": 201,
+     "err": null
+    }
+   },
+   {
+    "update": {
+     "status": 404,
+     "err": "document_missing_exception"
+    }
+   },
+   {
+    "index": {
+     "status": 201,
+     "err": null
+    }
+   }
+  ],
+  "applied": {
+   "b1": true,
+   "b3": true,
+   "b5": true,
+   "b4": false
+  }
+ }
+}

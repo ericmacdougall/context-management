@@ -1,0 +1,173 @@
+{
+ "phase": "basic",
+ "license": "basic",
+ "tests": {
+  "retriever_standard": {
+   "status": 200,
+   "ok": true,
+   "hits": [
+    "0",
+    "2"
+   ],
+   "values": null
+  },
+  "retriever_knn": {
+   "status": 200,
+   "ok": true,
+   "hits": [
+    "0",
+    "3",
+    "2"
+   ],
+   "values": null
+  },
+  "retriever_rescorer": {
+   "status": 200,
+   "ok": true,
+   "hits": [
+    "2",
+    "0"
+   ],
+   "values": null
+  },
+  "retriever_pinned": {
+   "status": 200,
+   "ok": true,
+   "hits": [
+    "3",
+    "0",
+    "2"
+   ],
+   "values": null
+  },
+  "retriever_rrf": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "root": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "caused_by": null
+  },
+  "retriever_linear": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [linear retriever]",
+   "root": "current license is non-compliant for [linear retriever]",
+   "caused_by": null
+  },
+  "retriever_text_similarity_reranker_builtin_elastic_rerank": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [text_similarity_reranker]",
+   "root": "current license is non-compliant for [text_similarity_reranker]",
+   "caused_by": null
+  },
+  "retriever_diversify_mmr": {
+   "status": 200,
+   "ok": true,
+   "hits": [
+    "0",
+    "3",
+    "2"
+   ],
+   "values": null
+  },
+  "knn_search_top_level": {
+   "status": 200,
+   "ok": true,
+   "hits": [
+    "0",
+    "3",
+    "2"
+   ],
+   "values": null
+  },
+  "rank_rrf_legacy_top_level": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "root": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "caused_by": null
+  },
+  "esql_match": {
+   "status": 200,
+   "ok": true,
+   "hits": null,
+   "values": [
+    [
+     "paris trip planning",
+     0.8506131172180176
+    ],
+    [
+     "dentist appointment paris",
+     0.8506131172180176
+    ]
+   ]
+  },
+  "esql_fork": {
+   "status": 200,
+   "ok": true,
+   "hits": null,
+   "values": [
+    [
+     "1",
+     "fork2",
+     0.8506131172180176
+    ],
+    [
+     "4",
+     "fork2",
+     0.8506131172180176
+    ],
+    [
+     "0",
+     "fork1",
+     0.8506131172180176
+    ],
+    [
+     "2",
+     "fork1",
+     0.8506131172180176
+    ]
+   ]
+  },
+  "esql_fork_fuse": {
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:173: current license is non-compliant for [FUSE]",
+   "root": "Found 1 problem\nline 1:173: current license is non-compliant for [FUSE]",
+   "caused_by": null
+  },
+  "esql_fuse_linear": {
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:173: current license is non-compliant for [FUSE LINEAR]",
+   "root": "Found 1 problem\nline 1:173: current license is non-compliant for [FUSE LINEAR]",
+   "caused_by": null
+  },
+  "esql_rerank": {
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [inference]",
+   "root": "current license is non-compliant for [inference]",
+   "caused_by": null
+  },
+  "esql_completion": {
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:73: Inference endpoint not found [.rainbow-sprinkles-elastic]",
+   "root": "Found 1 problem\nline 1:73: Inference endpoint not found [.rainbow-sprinkles-elastic]",
+   "caused_by": null
+  },
+  "esql_lookup_join": {
+   "status": 200,
+   "ok": true,
+   "hits": null,
+   "values": [
+    [
+     "refund policy",
+     "billing"
+    ]
+   ]
+  }
+ }
+}

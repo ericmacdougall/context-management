@@ -1,0 +1,124 @@
+{
+ "template": {
+  "acknowledged": true
+ },
+ "create_ds": {
+  "acknowledged": true
+ },
+ "rollover": {
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "old_index": ".ds-e3-events-2026.11.15-000001",
+  "new_index": ".ds-e3-events-2026.11.15-000002",
+  "rolled_over": true,
+  "dry_run": false,
+  "lazy": false,
+  "conditions": {}
+ },
+ "results": {
+  "first_create": [
+   201,
+   "created",
+   ".ds-e3-events-2026.11.15-000001"
+  ],
+  "retry_same_backing_index": [
+   409,
+   "version_conflict_engine_exception",
+   null
+  ],
+  "op_type_index_on_stream": [
+   400,
+   "illegal_argument_exception",
+   null
+  ],
+  "post_no_id_no_create": [
+   201,
+   "created",
+   ".ds-e3-events-2026.11.15-000001"
+  ],
+  "backfill_2020": [
+   201,
+   "created",
+   ".ds-e3-events-2026.11.15-000001"
+  ],
+  "update_on_stream": [
+   400,
+   "illegal_argument_exception",
+   null
+  ],
+  "delete_on_stream": [
+   400,
+   "illegal_argument_exception",
+   null
+  ],
+  "index_overwrite_on_stream_with_if_seq": [
+   400,
+   "illegal_argument_exception",
+   null
+  ],
+  "backing_index_1": ".ds-e3-events-2026.11.15-000001",
+  "overwrite_via_backing_index_as_index_op": [
+   400,
+   "illegal_argument_exception",
+   null
+  ],
+  "update_via_backing_index": [
+   200,
+   "updated",
+   ".ds-e3-events-2026.11.15-000001"
+  ],
+  "bulk_on_stream_update_delete": [
+   {
+    "update": [
+     400,
+     "illegal_argument_exception",
+     "only write ops with an op_type of create are allowed in data streams"
+    ]
+   },
+   {
+    "delete": [
+     400,
+     "illegal_argument_exception",
+     "only write ops with an op_type of create are allowed in data streams"
+    ]
+   }
+  ],
+  "retry_after_rollover": [
+   201,
+   "created",
+   ".ds-e3-events-2026.11.15-000002"
+  ],
+  "backfill_old_after_rollover": [
+   201,
+   "created",
+   ".ds-e3-events-2026.11.15-000002"
+  ],
+  "docs_found": [
+   {
+    "_id": "ev-old",
+    "_index": ".ds-e3-events-2026.11.15-000001",
+    "msg": "old"
+   },
+   {
+    "_id": "ev-1",
+    "_index": ".ds-e3-events-2026.11.15-000001",
+    "msg": "upd-backing"
+   },
+   {
+    "_id": "ev-1",
+    "_index": ".ds-e3-events-2026.11.15-000002",
+    "msg": "retry-after-rollover"
+   },
+   {
+    "_id": "ev-old2",
+    "_index": ".ds-e3-events-2026.11.15-000002",
+    "msg": "old2"
+   }
+  ],
+  "duplicate_ev1_across_backing_indices": 2,
+  "data_stream_info": [
+   ".ds-e3-events-2026.11.15-000001",
+   ".ds-e3-events-2026.11.15-000002"
+  ]
+ }
+}
