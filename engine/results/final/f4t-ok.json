@@ -1,0 +1,31 @@
+{
+ "id": "F4a-targeted-ok",
+ "sessions": 40,
+ "turns": 20,
+ "crashes_total": 34,
+ "crashes_by_window": {
+  "result_committed_not_acked": 19,
+  "effect_applied_not_recorded": 15
+ },
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "verify": {
+  "tag": "ta",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 838,
+  "redundant_external_calls": 38,
+  "chains_verified": 40,
+  "PASS": true
+ },
+ "problems_sample": [],
+ "verify_PASS_expected": true,
+ "as_expected": true
+}

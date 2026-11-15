@@ -22,7 +22,7 @@ def pool():
             os.environ["PGPASSFILE"] = str(HOME / "pg" / "pgpass")
             port = int((HOME / "pg" / "pg_port").read_text().strip())
             _pool = ConnectionPool(f"host=127.0.0.1 port={port} dbname=emlab user=emlab application_name=engine",
-                                   min_size=2, max_size=int(os.environ.get("ENGINE_PG_POOL", "24")), open=True,
+                                   min_size=2, max_size=int(os.environ.get("ENGINE_PG_POOL", "10")), open=True,
                                    timeout=30)
         return _pool
 

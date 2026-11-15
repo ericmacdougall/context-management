@@ -1,0 +1,157 @@
+{
+ "id": "F6",
+ "variant": "v2s",
+ "state_before_upgrade_sample": {
+  "q6ma0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 3
+  },
+  "q6ma0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 3
+  },
+  "q6mb0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  },
+  "q6mb0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  }
+ },
+ "carried_state_versions_per_run_sample": {
+  "q6ma0001": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "q6ma0002": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "q6ma0003": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "q6mb0001": [
+   1
+  ],
+  "q6mb0002": [
+   1
+  ],
+  "q6mc0001": [
+   2
+  ]
+ },
+ "statuses": {
+  "q6ma": {
+   "COMPLETED": 20
+  },
+  "q6mb": {
+   "COMPLETED": 10
+  },
+  "q6mc": {
+   "COMPLETED": 10
+  }
+ },
+ "mismatches_vs_postgres": [],
+ "mismatch_count": 0,
+ "verify": [
+  {
+   "tag": "q6ma",
+   "sessions": 20,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 600,
+   "result_events": 600,
+   "result_keys": 600,
+   "ledger_rows": 600,
+   "effect_rows": 600,
+   "external_calls": 600,
+   "redundant_external_calls": 0,
+   "chains_verified": 20,
+   "PASS": true
+  },
+  {
+   "tag": "q6mb",
+   "sessions": 10,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 300,
+   "result_events": 300,
+   "result_keys": 300,
+   "ledger_rows": 300,
+   "effect_rows": 300,
+   "external_calls": 300,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "PASS": true
+  },
+  {
+   "tag": "q6mc",
+   "sessions": 10,
+   "expect_turns_each": 15,
+   "problems": [],
+   "inputs_total": 150,
+   "result_events": 150,
+   "result_keys": 150,
+   "ledger_rows": 150,
+   "effect_rows": 150,
+   "external_calls": 150,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "PASS": true
+  }
+ ],
+ "rollback_to_v1_with_v2_state": {
+  "statuses": {
+   "RUNNING": 4
+  },
+  "sessions_with_wft_failures": 4,
+  "sample": "'rollups'",
+  "after_rolling_forward": {
+   "COMPLETED": 4
+  }
+ },
+ "PASS": true
+}

@@ -1,0 +1,45 @@
+{
+ "id": "F4d",
+ "variant": "v1",
+ "turns": 300,
+ "inject_rate_per_s": 15.0,
+ "wall_s": 94.6,
+ "signals_sent": 300,
+ "result": {
+  "approval": "none",
+  "cans": 1,
+  "code": "v1",
+  "rollups": 0,
+  "sig": 300,
+  "turns": 300
+ },
+ "workflow_status": {
+  "COMPLETED": 1
+ },
+ "runs": 2,
+ "continue_as_new_boundaries": 1,
+ "max_run_history_events": 5147,
+ "total_history_events": 6064,
+ "events_per_turn": 20.21,
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "results_in_postgres": 300,
+ "verify": {
+  "tag": "K",
+  "sessions": 1,
+  "expect_turns_each": 300,
+  "problems": [],
+  "inputs_total": 300,
+  "result_events": 300,
+  "result_keys": 300,
+  "ledger_rows": 300,
+  "effect_rows": 300,
+  "external_calls": 300,
+  "redundant_external_calls": 0,
+  "chains_verified": 1,
+  "PASS": true
+ },
+ "PASS": false
+}

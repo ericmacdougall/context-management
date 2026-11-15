@@ -1,0 +1,37 @@
+{
+ "id": "F4a-targeted-brokenkeys",
+ "sessions": 40,
+ "turns": 20,
+ "crashes_total": 36,
+ "crashes_by_window": {
+  "effect_applied_not_recorded": 25,
+  "result_committed_not_acked": 11
+ },
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "verify": {
+  "tag": "tb",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [
+   "ledger duplicates: 54",
+   "effects rows per input != 1: 16"
+  ],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 859,
+  "effect_rows": 817,
+  "external_calls": 861,
+  "redundant_external_calls": 2,
+  "chains_verified": 40,
+  "PASS": false
+ },
+ "problems_sample": [
+  "ledger duplicates: 54",
+  "effects rows per input != 1: 16"
+ ],
+ "verify_PASS_expected": false,
+ "as_expected": true
+}

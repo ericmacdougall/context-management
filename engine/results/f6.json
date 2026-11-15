@@ -1,0 +1,240 @@
+{
+ "id": "F6",
+ "variant": "v2s",
+ "state_before_upgrade_sample": {
+  "ma0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 3
+  },
+  "ma0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 2
+  },
+  "mb0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  },
+  "mb0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  }
+ },
+ "carried_state_versions_per_run_sample": {
+  "ma0001": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "ma0002": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1
+  ],
+  "ma0003": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mb0001": [
+   1
+  ],
+  "mb0002": [
+   1
+  ],
+  "mc0001": [
+   2
+  ]
+ },
+ "statuses": {
+  "ma": {
+   "COMPLETED": 20
+  },
+  "mb": {
+   "COMPLETED": 10
+  },
+  "mc": {
+   "COMPLETED": 10
+  }
+ },
+ "mismatches_vs_postgres": [
+  {
+   "sid": "ma0001",
+   "result": {
+    "approval": "none",
+    "cans": 15,
+    "code": "v2s",
+    "rollups": 29,
+    "sig": 30,
+    "turns": 30,
+    "ver": 2
+   },
+   "pg_rollups": 46,
+   "pg_turns": 30
+  },
+  {
+   "sid": "ma0002",
+   "result": {
+    "approval": "none",
+    "cans": 14,
+    "code": "v2s",
+    "rollups": 28,
+    "sig": 30,
+    "turns": 30,
+    "ver": 2
+   },
+   "pg_rollups": 45,
+   "pg_turns": 30
+  },
+  {
+   "sid": "ma0003",
+   "result": {
+    "approval": "none",
+    "cans": 14,
+    "code": "v2s",
+    "rollups": 28,
+    "sig": 30,
+    "turns": 30,
+    "ver": 2
+   },
+   "pg_rollups": 45,
+   "pg_turns": 30
+  },
+  {
+   "sid": "ma0004",
+   "result": {
+    "approval": "none",
+    "cans": 15,
+    "code": "v2s",
+    "rollups": 29,
+    "sig": 30,
+    "turns": 30,
+    "ver": 2
+   },
+   "pg_rollups": 46,
+   "pg_turns": 30
+  },
+  {
+   "sid": "ma0005",
+   "result": {
+    "approval": "none",
+    "cans": 14,
+    "code": "v2s",
+    "rollups": 28,
+    "sig": 30,
+    "turns": 30,
+    "ver": 2
+   },
+   "pg_rollups": 46,
+   "pg_turns": 30
+  }
+ ],
+ "mismatch_count": 30,
+ "verify": [
+  {
+   "tag": "ma",
+   "sessions": 20,
+   "expect_turns_each": 30,
+   "problems": [
+    "ma0011: inputs 31 != 30",
+    "ma0011: results rows/distinct (31, 31) != 30",
+    "ma0015: inputs 31 != 30",
+    "ma0015: results rows/distinct (31, 31) != 30"
+   ],
+   "inputs_total": 602,
+   "result_events": 602,
+   "result_keys": 602,
+   "ledger_rows": 602,
+   "effect_rows": 602,
+   "external_calls": 681,
+   "redundant_external_calls": 79,
+   "chains_verified": 20,
+   "PASS": false
+  },
+  {
+   "tag": "mb",
+   "sessions": 10,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 300,
+   "result_events": 300,
+   "result_keys": 300,
+   "ledger_rows": 300,
+   "effect_rows": 300,
+   "external_calls": 300,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "PASS": true
+  },
+  {
+   "tag": "mc",
+   "sessions": 10,
+   "expect_turns_each": 15,
+   "problems": [],
+   "inputs_total": 150,
+   "result_events": 150,
+   "result_keys": 150,
+   "ledger_rows": 150,
+   "effect_rows": 150,
+   "external_calls": 150,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "PASS": true
+  }
+ ],
+ "rollback_to_v1_with_v2_state": {
+  "statuses": {
+   "RUNNING": 4
+  },
+  "sessions_with_wft_failures": 4,
+  "sample": "[TMPRL1100] Nondeterminism error: Non-deprecated patch marker encountered for change policy-check, but there is no corresponding change command!",
+  "after_rolling_forward": {
+   "COMPLETED": 4
+  }
+ },
+ "PASS": false
+}

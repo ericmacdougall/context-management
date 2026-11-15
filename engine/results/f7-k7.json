@@ -1,0 +1,96 @@
+{
+ "id": "F7",
+ "from": {
+  "server": "1.31.2 (CLI 1.7.3)",
+  "sdk": "temporalio 1.31.0"
+ },
+ "to": {
+  "server": "1.32.2 (CLI 1.10.1)",
+  "sdk": "temporalio 1.36.1"
+ },
+ "events": [
+  {
+   "t": 63.0,
+   "what": "server 1.31.2 -> 1.32.2 on same sqlite file",
+   "downtime_s": 4.1
+  },
+  {
+   "t": 85.4,
+   "what": "approved half of the parked approval sessions"
+  },
+  {
+   "t": 170.0,
+   "what": "SDK 1.31.0 -> 1.36.1 (worker swap)",
+   "gap_s": 0.5
+  }
+ ],
+ "persistence": "SQLite file run/f7-k7-1794782909.db shared by both CLI versions (the dev server migrates it on start); not the documented production schema-tool path",
+ "statuses": [
+  {
+   "COMPLETED": 80
+  },
+  {
+   "COMPLETED": 15
+  },
+  {
+   "COMPLETED": 15
+  }
+ ],
+ "verify_A": {
+  "tag": "k7upa",
+  "sessions": 80,
+  "expect_turns_each": 30,
+  "problems": [],
+  "inputs_total": 2400,
+  "result_events": 2400,
+  "result_keys": 2400,
+  "ledger_rows": 2400,
+  "effect_rows": 2400,
+  "external_calls": 2400,
+  "redundant_external_calls": 0,
+  "chains_verified": 80,
+  "PASS": true
+ },
+ "verify_P": {
+  "tag": "k7upb",
+  "sessions": 15,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 60,
+  "result_events": 60,
+  "result_keys": 60,
+  "ledger_rows": 60,
+  "effect_rows": 60,
+  "external_calls": 60,
+  "redundant_external_calls": 0,
+  "chains_verified": 15,
+  "PASS": true
+ },
+ "timers": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "lateness_s_min_max": [
+   3.1,
+   19.6
+  ],
+  "granted": 7,
+  "timed_out": 8
+ },
+ "external_calls_by_worker": [
+  [
+   "sdk-1.31.0",
+   "1243"
+  ],
+  [
+   "sdk-1.36.1",
+   "1217"
+  ]
+ ],
+ "new_server_log_head": "Temporal CLI 1.10.1 (Server 1.32.2, UI 2.56.4)\n\nTemporal Server:      localhost:59400\nTemporal Persistence: /home/eric/emlab-16096/engine/run/f7-k7-1794782909.db\nTemporal HTTP:        localhost:59410\nTemporal Metrics:     http://localhost:59420/metrics\ntime=2026-11-15T22:50:24.139 level=ERROR msg=\"Update workflow execution operation failed.\" shard-id=1 address=127.0.0.1:45503 wf-namespace-id=01a1e165-d669-76b3-88c1-ffeb9b79fb27 wf-id=sess-k7upa0014 wf-run-id=01a1e165-e0c5-7efb-9cd8-07d1bbce56be store-operation=update-wf-execution error=\"context canceled\"\ntime=2026-11-15T22:50:24.140 level=WARN",
+ "driver": {
+  "appended": 2460,
+  "signaled": 2460,
+  "retries": 0
+ },
+ "PASS": true
+}

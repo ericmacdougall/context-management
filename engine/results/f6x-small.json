@@ -1,0 +1,192 @@
+{
+ "id": "F6-control-broken-migration",
+ "variant": "v2sx",
+ "state_before_upgrade_sample": {
+  "MXa0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 3
+  },
+  "MXa0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 2
+  },
+  "MXb0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  },
+  "MXb0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  }
+ },
+ "carried_state_versions_per_run_sample": {
+  "MXa0001": [
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "MXa0002": [
+   2,
+   2,
+   2,
+   1,
+   1,
+   1
+  ],
+  "MXa0003": [
+   2,
+   2,
+   2,
+   1,
+   1,
+   1
+  ],
+  "MXb0001": [
+   1
+  ],
+  "MXb0002": [
+   1
+  ],
+  "MXc0001": [
+   2
+  ]
+ },
+ "statuses": {
+  "MXa": {
+   "COMPLETED": 4
+  },
+  "MXb": {
+   "COMPLETED": 2
+  },
+  "MXc": {
+   "COMPLETED": 2
+  }
+ },
+ "mismatches_vs_postgres": [
+  {
+   "sid": "MXa0001",
+   "result": {
+    "approval": "none",
+    "cans": 5,
+    "code": "v2sx",
+    "rollups": 1,
+    "sig": 12,
+    "turns": 12
+   },
+   "pg_rollups": 1,
+   "pg_turns": 12
+  },
+  {
+   "sid": "MXa0002",
+   "result": {
+    "approval": "none",
+    "cans": 5,
+    "code": "v2sx",
+    "rollups": 0,
+    "sig": 12,
+    "turns": 12
+   },
+   "pg_rollups": 1,
+   "pg_turns": 12
+  },
+  {
+   "sid": "MXa0003",
+   "result": {
+    "approval": "none",
+    "cans": 5,
+    "code": "v2sx",
+    "rollups": 0,
+    "sig": 12,
+    "turns": 12
+   },
+   "pg_rollups": 1,
+   "pg_turns": 12
+  },
+  {
+   "sid": "MXa0004",
+   "result": {
+    "approval": "none",
+    "cans": 4,
+    "code": "v2sx",
+    "rollups": 0,
+    "sig": 12,
+    "turns": 12
+   },
+   "pg_rollups": 1,
+   "pg_turns": 12
+  },
+  {
+   "sid": "MXb0001",
+   "result": {
+    "approval": "none",
+    "cans": 0,
+    "code": "v2sx",
+    "rollups": 3,
+    "sig": 12,
+    "turns": 12
+   },
+   "pg_rollups": 3,
+   "pg_turns": 12
+  }
+ ],
+ "mismatch_count": 8,
+ "verify": [
+  {
+   "tag": "MXa",
+   "sessions": 4,
+   "expect_turns_each": 12,
+   "problems": [],
+   "inputs_total": 48,
+   "result_events": 48,
+   "result_keys": 48,
+   "ledger_rows": 48,
+   "effect_rows": 48,
+   "external_calls": 48,
+   "redundant_external_calls": 0,
+   "chains_verified": 4,
+   "PASS": true
+  },
+  {
+   "tag": "MXb",
+   "sessions": 2,
+   "expect_turns_each": 12,
+   "problems": [],
+   "inputs_total": 24,
+   "result_events": 24,
+   "result_keys": 24,
+   "ledger_rows": 24,
+   "effect_rows": 24,
+   "external_calls": 24,
+   "redundant_external_calls": 0,
+   "chains_verified": 2,
+   "PASS": true
+  },
+  {
+   "tag": "MXc",
+   "sessions": 2,
+   "expect_turns_each": 6,
+   "problems": [],
+   "inputs_total": 12,
+   "result_events": 12,
+   "result_keys": 12,
+   "ledger_rows": 12,
+   "effect_rows": 12,
+   "external_calls": 12,
+   "redundant_external_calls": 0,
+   "chains_verified": 2,
+   "PASS": true
+  }
+ ],
+ "PASS_expected_false": false
+}

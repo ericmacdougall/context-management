@@ -1,0 +1,82 @@
+{
+ "id": "F5b-1-patching",
+ "old_sessions": 5,
+ "new_sessions": 3,
+ "turns": 10,
+ "old_worker_needed_after_switch_s": 0,
+ "old_code_profile": {
+  "v1>v2p": 5
+ },
+ "new_code_profile": {
+  "v2p+policy": 3
+ },
+ "statuses_old": {
+  "COMPLETED": 5
+ },
+ "statuses_new": {
+  "COMPLETED": 3
+ },
+ "verify_old": {
+  "tag": "V",
+  "sessions": 5,
+  "expect_turns_each": 10,
+  "problems": [],
+  "inputs_total": 50,
+  "result_events": 50,
+  "result_keys": 50,
+  "ledger_rows": 50,
+  "effect_rows": 50,
+  "external_calls": 50,
+  "redundant_external_calls": 0,
+  "chains_verified": 5,
+  "PASS": true
+ },
+ "verify_new": {
+  "tag": "W",
+  "sessions": 3,
+  "expect_turns_each": 5,
+  "problems": [],
+  "inputs_total": 15,
+  "result_events": 15,
+  "result_keys": 15,
+  "ledger_rows": 15,
+  "effect_rows": 15,
+  "external_calls": 15,
+  "redundant_external_calls": 0,
+  "chains_verified": 3,
+  "PASS": true
+ },
+ "history_sample_markers": [
+  {
+   "events": 239,
+   "wft_failed": 0,
+   "markers": 0,
+   "last_failure": ""
+  },
+  {
+   "events": 236,
+   "wft_failed": 0,
+   "markers": 0,
+   "last_failure": ""
+  },
+  {
+   "events": 234,
+   "wft_failed": 0,
+   "markers": 0,
+   "last_failure": ""
+  },
+  {
+   "events": 236,
+   "wft_failed": 0,
+   "markers": 0,
+   "last_failure": ""
+  },
+  {
+   "events": 237,
+   "wft_failed": 0,
+   "markers": 0,
+   "last_failure": ""
+  }
+ ],
+ "PASS": true
+}

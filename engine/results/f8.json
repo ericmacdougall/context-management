@@ -1,0 +1,112 @@
+{
+ "id": "F8",
+ "engine_discarded_at_s": 70.0,
+ "sessions": 92,
+ "rebuilt": 90,
+ "already_finished": 2,
+ "rebuild_wall_s": 16.7,
+ "new_engine": "fresh server 1.32.2 (CLI 1.10.1), empty SQLite, new worker identity; old SQLite file deleted",
+ "doorbells_dropped_by_new_engine_not_found": 75,
+ "statuses": {
+  "ha": {
+   "COMPLETED": 60
+  },
+  "hb": {
+   "COMPLETED": 8,
+   "ERR:RPCError": 2
+  },
+  "hc": {
+   "COMPLETED": 10
+  },
+  "hd": {
+   "COMPLETED": 6
+  },
+  "he": {
+   "COMPLETED": 6
+  }
+ },
+ "finished_in_postgres": {
+  "ha": 60,
+  "hb": 10,
+  "hc": 10,
+  "hd": 6,
+  "he": 6
+ },
+ "verify_A": {
+  "tag": "ha",
+  "sessions": 60,
+  "expect_turns_each": 24,
+  "problems": [],
+  "inputs_total": 1440,
+  "result_events": 1440,
+  "result_keys": 1440,
+  "ledger_rows": 1440,
+  "effect_rows": 1440,
+  "external_calls": 1462,
+  "redundant_external_calls": 22,
+  "chains_verified": 60,
+  "PASS": true
+ },
+ "verify_P": {
+  "tag": "hb",
+  "sessions": 10,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 40,
+  "result_events": 40,
+  "result_keys": 40,
+  "ledger_rows": 40,
+  "effect_rows": 40,
+  "external_calls": 40,
+  "redundant_external_calls": 0,
+  "chains_verified": 10,
+  "PASS": true
+ },
+ "timers_main_groups": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "lateness_s_min_max": [
+   1.7,
+   14.0
+  ],
+  "granted": 5,
+  "timed_out": 5
+ },
+ "stored_in_postgres_and_used": [
+  "session_started.params (expected_turns, timers, can_len)",
+  "turn_input events (unprocessed = no effects row res/<id>)",
+  "turn_result and rollup events (counters and rollup deadline = last rollup ts + interval)",
+  "approval_requested.deadline_ms",
+  "approval_grant written BEFORE the doorbell signal"
+ ],
+ "loss_if_not_stored": {
+  "grant_only_as_signal_X": {
+   "verify": true,
+   "outcomes": {
+    "approvals_exactly_once_and_correct": false,
+    "rollups_exactly_once": true,
+    "lateness_s_min_max": [
+     0.6,
+     2.3
+    ],
+    "granted": 0,
+    "timed_out": 6
+   },
+   "note": "grant existed only inside the old engine; the rebuilt session times out although the human approved"
+  },
+  "deadline_not_stored_L": {
+   "outcomes": {
+    "approvals_exactly_once_and_correct": true,
+    "rollups_exactly_once": true,
+    "lateness_s_min_max": [
+     1.7,
+     51.9
+    ],
+    "granted": 0,
+    "timed_out": 6
+   },
+   "note": "rebuilt with timers restarted from the rebuild time; lateness is the loss"
+  }
+ },
+ "PASS": true
+}

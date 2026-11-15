@@ -1,0 +1,66 @@
+{
+ "id": "F5b-2-worker-versioning-pinned",
+ "server": "1.7.3",
+ "old_sessions": 5,
+ "new_sessions": 3,
+ "ops": {
+  "server": "1.7.3",
+  "set_current_b1": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "set_current_b2": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "describe_b1": {
+   "rc": 0,
+   "out": "Worker Deployment Version:\n  DeploymentName           sessdep\n  BuildID                  b1\n  CreateTime               41 seconds ago\n  RoutingChangedTime       23 seconds ago\n  CurrentSinceTime         a long while ago\n  RampingSinceTime         a long while ago\n  RampPercentage           0\n  DrainageStatus           draining\n  DrainageLastChangedTime  23 seconds ago\n  DrainageLastCheckedTime  23 seconds ago\n\nTask Queues:\n  Name    Type  \n  f5b2  workflow\n  f5b2  activity\n"
+  }
+ },
+ "old_code_profile": {
+  "v1": 5
+ },
+ "new_code_profile": {
+  "v2i": 3
+ },
+ "old_build_needed_until_s_after_cutover": 27.8,
+ "control_old_build_stopped_20s_results_progress": 0,
+ "statuses_old": {
+  "COMPLETED": 5
+ },
+ "statuses_new": {
+  "COMPLETED": 3
+ },
+ "verify_old": {
+  "tag": "X",
+  "sessions": 5,
+  "expect_turns_each": 10,
+  "problems": [],
+  "inputs_total": 50,
+  "result_events": 50,
+  "result_keys": 50,
+  "ledger_rows": 50,
+  "effect_rows": 50,
+  "external_calls": 50,
+  "redundant_external_calls": 0,
+  "chains_verified": 5,
+  "PASS": true
+ },
+ "verify_new": {
+  "tag": "Y",
+  "sessions": 3,
+  "expect_turns_each": 5,
+  "problems": [],
+  "inputs_total": 15,
+  "result_events": 15,
+  "result_keys": 15,
+  "ledger_rows": 15,
+  "effect_rows": 15,
+  "external_calls": 15,
+  "redundant_external_calls": 0,
+  "chains_verified": 3,
+  "PASS": true
+ },
+ "PASS": true
+}

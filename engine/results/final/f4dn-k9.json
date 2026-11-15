@@ -1,0 +1,42 @@
+{
+ "id": "F4d-control-naive",
+ "variant": "v1n",
+ "turns": 400,
+ "inject_rate_per_s": 4.0,
+ "wall_s": 175.3,
+ "signals_sent": 400,
+ "result": null,
+ "workflow_status": {
+  "RUNNING": 1
+ },
+ "runs": 19,
+ "continue_as_new_boundaries": 18,
+ "max_run_history_events": 427,
+ "total_history_events": 7414,
+ "events_per_turn": 18.54,
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "results_in_postgres": 358,
+ "verify": {
+  "tag": "k9n",
+  "sessions": 1,
+  "expect_turns_each": 400,
+  "problems": [
+   "k9n0001: results rows/distinct (358, 358) != 400",
+   "ledger missing: 42",
+   "effects missing: 42"
+  ],
+  "inputs_total": 400,
+  "result_events": 358,
+  "result_keys": 358,
+  "ledger_rows": 358,
+  "effect_rows": 358,
+  "external_calls": 358,
+  "redundant_external_calls": 0,
+  "chains_verified": 1,
+  "PASS": false
+ },
+ "PASS": false
+}

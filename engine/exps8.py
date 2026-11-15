@@ -58,7 +58,7 @@ async def f7():
     lib.start_worker("f7a", "venv-old", "v1", "sdk-1.31.0", "f7", env={"ENGINE_EFFECT_GAP": "0.03"})
     client, _ = await lib.connect_retry()
     stats = {"appended": 0, "signaled": 0, "retries": 0}
-    A, P, R = T("t") + "a", T("t") + "b", T("t") + "c"
+    A, P, R = T("up") + "a", T("up") + "b", T("up") + "c"
     t0 = time.time()
     tasks = await lib.launch(client, A, nA, "f7", stats, turns=turns, period=period, expected=turns)
     tasks += await lib.launch(client, P, nP, "f7", stats, turns=4, period=0.5, expected=4, approval_at=2, approval_to_s=appr)
@@ -86,11 +86,11 @@ async def f7():
     stR, _ = await lib.wait_done(client, R, nR, 900)
     vA, vP = ctl.verify(A, nA, turns), ctl.verify(P, nP, 4)
     tm = timer_check(P, nP, R, nR, roll, approved)
-    calls = lib.q("select worker, count(*) from ext_calls where key like %s group by 1", f"eff/{TENANT}/{T('t')}%")
+    calls = lib.q("select worker, count(*) from ext_calls where key like %s group by 1", f"eff/{TENANT}/{T('up')}%")
     lib.stop_worker("f7b")
     lib.stop_server()
     shutil.copy(HOME / "run" / db, HOME / "run" / (db + ".post-upgrade"))
-    srvlog = sorted((HOME / "logs").glob("server-*-1.10.1-*.log"))[-1]
+    srvlog = sorted((HOME / "logs").glob(f"server-{TPORT}-1.10.1-*.log"))[-1]
     out = {"id": "F7", "from": {"server": "1.31.2 (CLI 1.7.3)", "sdk": "temporalio 1.31.0"},
            "to": {"server": "1.32.2 (CLI 1.10.1)", "sdk": "temporalio 1.36.1"}, "events": ev,
            "persistence": "SQLite file run/%s shared by both CLI versions (the dev server migrates it on start); not the documented production schema-tool path" % db,

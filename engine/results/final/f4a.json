@@ -1,0 +1,44 @@
+{
+ "tag": "b",
+ "sessions": 200,
+ "expect_turns_each": 50,
+ "problems": [],
+ "inputs_total": 10000,
+ "result_events": 10000,
+ "result_keys": 10000,
+ "ledger_rows": 10000,
+ "effect_rows": 10000,
+ "external_calls": 10037,
+ "redundant_external_calls": 37,
+ "chains_verified": 200,
+ "PASS": true,
+ "payload_check": {
+  "processes_reporting": 130,
+  "payloads_inspected_at_least": 1697776,
+  "rejected": 1269,
+  "max_payload_bytes": 1013
+ },
+ "crash_instrumentation": {
+  "abrupt_worker_exits": 50,
+  "with_any_activity_in_flight": 9,
+  "in_turn_effect_activity": 5,
+  "in_turn_append_activity": 3,
+  "idle_or_between_activities": 41,
+  "note": "workflow tasks in flight are not counted by this instrumentation"
+ },
+ "run": {
+  "sessions": 200,
+  "turns_each": 50,
+  "tag": "b",
+  "server": "1.31.2 (CLI 1.7.3)",
+  "sdk": "temporalio 1.31.0",
+  "measured_drain_turns_per_s": 13,
+  "injected": "one turn per session per about 30 s, about 6.5 turns/s",
+  "effect_gap_ms": 50,
+  "driver_wall_s": 1760.9,
+  "driver_client_retries": 2344,
+  "server_stop": "one graceful stop of about 2.5 minutes at 20:47 caused by my own stop-file name collision (sessions resumed); the planned abrupt server stop is NOT in this run; see F4c and the targeted runs",
+  "drain_after_last_worker_exit_min": 9,
+  "finding": "with a worker exit every about 30 s the cache is lost each time and replay of 200 open histories outlasts the worker's life, so throughput falls to about 1 turn/s until exits stop; nothing is lost"
+ }
+}

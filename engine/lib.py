@@ -14,7 +14,14 @@ from .common import HOME, TENANT, pg_connect
 from .worker import connect
 
 RUN = HOME / "run"
+if (RUN / "ABORT").exists():  # lets me neutralise queued chains without signalling anything
+    raise SystemExit(0)
 PROCS = {}
+
+
+def _u(name):
+    """Stop-file names are unique per orchestrator process so concurrent runs can never stop each other."""
+    return name if name.endswith(f"-{os.getpid()}") else f"{name}-{os.getpid()}"
 
 
 def _clear(name):
@@ -83,6 +90,7 @@ def stop_server(name=None, hard=False, timeout=60):
 
 
 def start_worker(name, venv, variant, ident, tq, cwd=None, extra=(), env=None, crash_after=0, home=None):
+    name = _u(name)
     _clear(name)
     cmd = [str(HOME / venv / "bin/python"), "-m", "engine.worker", "--variant", variant, "--identity", ident,
            "--task-queue", tq, "--stop-file", str(RUN / f"stop-{name}")]
@@ -99,6 +107,7 @@ def start_worker(name, venv, variant, ident, tq, cwd=None, extra=(), env=None, c
 
 
 def stop_worker(name, hard=False, timeout=60):
+    name = _u(name)
     (RUN / f"stop-{name}{'.hard' if hard else ''}").touch()
     try:
         return PROCS[name].wait(timeout=timeout)
@@ -206,6 +215,7 @@ def start_server_try(cli, db, tport, wait=20):
 
 def start_loop(name, venv, variant, ident, tq, env=None, seed=1):
     """workerloop.sh under Popen: restarts the worker after each abrupt self-exit until stop-<name> appears."""
+    name = _u(name)
     _clear(name)
     e = {**os.environ, **(env or {})}
     PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/workerloop.sh"), venv, variant, ident, tq,

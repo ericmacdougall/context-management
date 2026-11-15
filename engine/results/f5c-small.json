@@ -1,0 +1,56 @@
+{
+ "id": "F5c",
+ "sessions_each_group": 3,
+ "idle_through": [
+  "v2p",
+  "v3p"
+ ],
+ "statuses_woken_on_v3p": {
+  "COMPLETED": 3
+ },
+ "verify_v3p": {
+  "tag": "I",
+  "sessions": 3,
+  "expect_turns_each": 3,
+  "problems": [],
+  "inputs_total": 9,
+  "result_events": 9,
+  "result_keys": 9,
+  "ledger_rows": 9,
+  "effect_rows": 9,
+  "external_calls": 9,
+  "redundant_external_calls": 0,
+  "chains_verified": 3,
+  "PASS": true
+ },
+ "code_profile_v3p": {
+  "v1>v3p": 3
+ },
+ "control_cleaned_up_patch": {
+  "statuses_after_25s": {
+   "RUNNING": 3
+  },
+  "sessions_with_wft_failures": 3,
+  "sample": "[TMPRL1100] Nondeterminism error: Activity type of scheduled event 'turn_effect' does not match activity type of activity command 'turn_policy'",
+  "after_restoring_patched_code": {
+   "COMPLETED": 3
+  },
+  "verify_after_restore": {
+   "tag": "J",
+   "sessions": 3,
+   "expect_turns_each": 3,
+   "problems": [],
+   "inputs_total": 9,
+   "result_events": 9,
+   "result_keys": 9,
+   "ledger_rows": 9,
+   "effect_rows": 9,
+   "external_calls": 9,
+   "redundant_external_calls": 0,
+   "chains_verified": 3,
+   "PASS": true
+  }
+ },
+ "required": "v3 must still contain the v2 patch (workflow.patched('policy-check')) while any pre-patch execution exists; histories are replayed in full on wake",
+ "PASS": true
+}

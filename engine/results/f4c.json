@@ -1,0 +1,117 @@
+{
+ "id": "F4c",
+ "approval_sessions": 30,
+ "rollup_sessions": 30,
+ "approval_timeout_s": 240,
+ "rollup_s": 180,
+ "events": [
+  {
+   "t": 25.1,
+   "what": "early_check"
+  },
+  {
+   "t": 93.0,
+   "what": "worker_crash_1"
+  },
+  {
+   "t": 100.6,
+   "what": "server_hard_stop_restart"
+  },
+  {
+   "t": 103.6,
+   "what": "worker_crash_2"
+  },
+  {
+   "t": 120.7,
+   "what": "approve_half"
+  },
+  {
+   "t": 156.9,
+   "what": "server_graceful_restart"
+  },
+  {
+   "t": 233.0,
+   "what": "worker_crash_3"
+  }
+ ],
+ "control_early_check": {
+  "approval_resolved": 0,
+  "rollups": 0
+ },
+ "statuses_A": {
+  "COMPLETED": 30
+ },
+ "statuses_B": {
+  "COMPLETED": 30
+ },
+ "approval_exactly_once_and_correct_outcome": true,
+ "rollup_exactly_once": true,
+ "lateness_s_min_max": [
+  -130.03,
+  7.54
+ ],
+ "verify_A_turns": {
+  "tag": "r",
+  "sessions": 30,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 120,
+  "result_events": 120,
+  "result_keys": 120,
+  "ledger_rows": 120,
+  "effect_rows": 120,
+  "external_calls": 120,
+  "redundant_external_calls": 0,
+  "chains_verified": 30,
+  "PASS": true
+ },
+ "rowsA_sample": [
+  {
+   "sid": "r0001",
+   "requests": 1,
+   "resolutions": 1,
+   "kind": "approval_granted",
+   "finished": 1,
+   "late_s": -130.03
+  },
+  {
+   "sid": "r0002",
+   "requests": 1,
+   "resolutions": 1,
+   "kind": "approval_granted",
+   "finished": 1,
+   "late_s": -128.18
+  },
+  {
+   "sid": "r0003",
+   "requests": 1,
+   "resolutions": 1,
+   "kind": "approval_granted",
+   "finished": 1,
+   "late_s": -129.84
+  }
+ ],
+ "rowsB_sample": [
+  {
+   "sid": "s0001",
+   "rollups": 1,
+   "finished": 1,
+   "late_s": 4.55
+  },
+  {
+   "sid": "s0002",
+   "rollups": 1,
+   "finished": 1,
+   "late_s": 1.76
+  },
+  {
+   "sid": "s0003",
+   "rollups": 1,
+   "finished": 1,
+   "late_s": 6.22
+  }
+ ],
+ "granted": 15,
+ "timed_out": 15,
+ "PASS": true
+}

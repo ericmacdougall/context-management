@@ -1,0 +1,54 @@
+{
+ "id": "F4a-targeted-brokenresult",
+ "sessions": 40,
+ "turns": 20,
+ "crashes_total": 41,
+ "crashes_by_window": {
+  "effect_applied_not_recorded": 25,
+  "result_committed_not_acked": 16
+ },
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "verify": {
+  "tag": "tc",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [
+   "tc0002: results rows/distinct (21, 20) != 20",
+   "tc0003: results rows/distinct (21, 20) != 20",
+   "tc0004: results rows/distinct (21, 20) != 20",
+   "tc0005: results rows/distinct (23, 20) != 20",
+   "tc0006: results rows/distinct (21, 20) != 20",
+   "tc0011: results rows/distinct (21, 20) != 20",
+   "tc0012: results rows/distinct (21, 20) != 20",
+   "tc0013: results rows/distinct (21, 20) != 20",
+   "tc0015: results rows/distinct (22, 20) != 20",
+   "tc0021: results rows/distinct (21, 20) != 20",
+   "tc0024: results rows/distinct (21, 20) != 20",
+   "tc0026: results rows/distinct (22, 20) != 20",
+   "tc0028: results rows/distinct (23, 20) != 20",
+   "tc0032: results rows/distinct (21, 20) != 20",
+   "tc0036: results rows/distinct (23, 20) != 20",
+   "tc0037: results rows/distinct (21, 20) != 20",
+   "tc0038: results rows/distinct (21, 20) != 20"
+  ],
+  "inputs_total": 800,
+  "result_events": 825,
+  "result_keys": 825,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 865,
+  "redundant_external_calls": 65,
+  "chains_verified": 40,
+  "PASS": false
+ },
+ "problems_sample": [
+  "tc0002: results rows/distinct (21, 20) != 20",
+  "tc0003: results rows/distinct (21, 20) != 20",
+  "tc0004: results rows/distinct (21, 20) != 20",
+  "tc0005: results rows/distinct (23, 20) != 20"
+ ],
+ "verify_PASS_expected": false,
+ "as_expected": true
+}

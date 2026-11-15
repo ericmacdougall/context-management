@@ -1,0 +1,214 @@
+{
+ "id": "F7",
+ "from": {
+  "server": "1.31.2 (CLI 1.7.3)",
+  "sdk": "temporalio 1.31.0"
+ },
+ "to": {
+  "server": "1.32.2 (CLI 1.10.1)",
+  "sdk": "temporalio 1.36.1"
+ },
+ "events": [
+  {
+   "t": 66.7,
+   "what": "server 1.31.2 -> 1.32.2 on same sqlite file",
+   "downtime_s": 3.6
+  },
+  {
+   "t": 87.3,
+   "what": "approved half of the parked approval sessions"
+  },
+  {
+   "t": 170.0,
+   "what": "SDK 1.31.0 -> 1.36.1 (worker swap)",
+   "gap_s": 0.6
+  }
+ ],
+ "persistence": "SQLite file run/f7-1794780819.db shared by both CLI versions (the dev server migrates it on start); not the documented production schema-tool path",
+ "statuses": [
+  {
+   "COMPLETED": 80
+  },
+  {
+   "COMPLETED": 15
+  },
+  {
+   "COMPLETED": 15
+  }
+ ],
+ "verify_A": {
+  "tag": "ta",
+  "sessions": 80,
+  "expect_turns_each": 30,
+  "problems": [
+   "ta0001: inputs 50 != 30",
+   "ta0001: results rows/distinct (50, 50) != 30",
+   "ta0002: inputs 50 != 30",
+   "ta0002: results rows/distinct (50, 50) != 30",
+   "ta0003: inputs 50 != 30",
+   "ta0003: results rows/distinct (50, 50) != 30",
+   "ta0004: inputs 50 != 30",
+   "ta0004: results rows/distinct (50, 50) != 30",
+   "ta0005: inputs 50 != 30",
+   "ta0005: results rows/distinct (50, 50) != 30",
+   "ta0006: inputs 50 != 30",
+   "ta0006: results rows/distinct (50, 50) != 30",
+   "ta0007: inputs 50 != 30",
+   "ta0007: results rows/distinct (50, 50) != 30",
+   "ta0008: inputs 50 != 30",
+   "ta0008: results rows/distinct (50, 50) != 30",
+   "ta0009: inputs 50 != 30",
+   "ta0009: results rows/distinct (50, 50) != 30",
+   "ta0010: inputs 50 != 30",
+   "ta0010: results rows/distinct (50, 50) != 30",
+   "ta0011: inputs 50 != 30",
+   "ta0011: results rows/distinct (50, 50) != 30",
+   "ta0012: inputs 50 != 30",
+   "ta0012: results rows/distinct (50, 50) != 30",
+   "ta0013: inputs 50 != 30",
+   "ta0013: results rows/distinct (50, 50) != 30",
+   "ta0014: inputs 50 != 30",
+   "ta0014: results rows/distinct (50, 50) != 30",
+   "ta0015: inputs 50 != 30",
+   "ta0015: results rows/distinct (50, 50) != 30",
+   "ta0016: inputs 50 != 30",
+   "ta0016: results rows/distinct (50, 50) != 30",
+   "ta0017: inputs 50 != 30",
+   "ta0017: results rows/distinct (50, 50) != 30",
+   "ta0018: inputs 50 != 30",
+   "ta0018: results rows/distinct (50, 50) != 30",
+   "ta0019: inputs 50 != 30",
+   "ta0019: results rows/distinct (50, 50) != 30",
+   "ta0020: inputs 50 != 30",
+   "ta0020: results rows/distinct (50, 50) != 30",
+   "ta0021: inputs 50 != 30",
+   "ta0021: results rows/distinct (50, 50) != 30",
+   "ta0022: inputs 50 != 30",
+   "ta0022: results rows/distinct (50, 50) != 30",
+   "ta0023: inputs 50 != 30",
+   "ta0023: results rows/distinct (50, 50) != 30",
+   "ta0024: inputs 50 != 30",
+   "ta0024: results rows/distinct (50, 50) != 30",
+   "ta0025: inputs 50 != 30",
+   "ta0025: results rows/distinct (50, 50) != 30",
+   "ta0026: inputs 50 != 30",
+   "ta0026: results rows/distinct (50, 50) != 30",
+   "ta0027: inputs 50 != 30",
+   "ta0027: results rows/distinct (50, 50) != 30",
+   "ta0028: inputs 50 != 30",
+   "ta0028: results rows/distinct (50, 50) != 30",
+   "ta0029: inputs 50 != 30",
+   "ta0029: results rows/distinct (50, 50) != 30",
+   "ta0030: inputs 50 != 30",
+   "ta0030: results rows/distinct (50, 50) != 30",
+   "ta0031: inputs 50 != 30",
+   "ta0031: results rows/distinct (50, 50) != 30",
+   "ta0032: inputs 50 != 30",
+   "ta0032: results rows/distinct (50, 50) != 30",
+   "ta0033: inputs 50 != 30",
+   "ta0033: results rows/distinct (50, 50) != 30",
+   "ta0034: inputs 50 != 30",
+   "ta0034: results rows/distinct (50, 50) != 30",
+   "ta0035: inputs 50 != 30",
+   "ta0035: results rows/distinct (50, 50) != 30",
+   "ta0036: inputs 50 != 30",
+   "ta0036: results rows/distinct (50, 50) != 30",
+   "ta0037: inputs 50 != 30",
+   "ta0037: results rows/distinct (50, 50) != 30",
+   "ta0038: inputs 50 != 30",
+   "ta0038: results rows/distinct (50, 50) != 30",
+   "ta0039: inputs 50 != 30",
+   "ta0039: results rows/distinct (50, 50) != 30",
+   "ta0040: inputs 50 != 30",
+   "ta0040: results rows/distinct (50, 50) != 30"
+  ],
+  "inputs_total": 3200,
+  "result_events": 3200,
+  "result_keys": 3200,
+  "ledger_rows": 3200,
+  "effect_rows": 3200,
+  "external_calls": 3238,
+  "redundant_external_calls": 38,
+  "chains_verified": 80,
+  "PASS": false
+ },
+ "verify_P": {
+  "tag": "tb",
+  "sessions": 15,
+  "expect_turns_each": 4,
+  "problems": [
+   "tb0001: inputs 24 != 4",
+   "tb0001: results rows/distinct (24, 24) != 4",
+   "tb0002: inputs 24 != 4",
+   "tb0002: results rows/distinct (24, 24) != 4",
+   "tb0003: inputs 24 != 4",
+   "tb0003: results rows/distinct (24, 24) != 4",
+   "tb0004: inputs 24 != 4",
+   "tb0004: results rows/distinct (24, 24) != 4",
+   "tb0005: inputs 24 != 4",
+   "tb0005: results rows/distinct (24, 24) != 4",
+   "tb0006: inputs 24 != 4",
+   "tb0006: results rows/distinct (24, 24) != 4",
+   "tb0007: inputs 24 != 4",
+   "tb0007: results rows/distinct (24, 24) != 4",
+   "tb0008: inputs 24 != 4",
+   "tb0008: results rows/distinct (24, 24) != 4",
+   "tb0009: inputs 24 != 4",
+   "tb0009: results rows/distinct (24, 24) != 4",
+   "tb0010: inputs 24 != 4",
+   "tb0010: results rows/distinct (24, 24) != 4",
+   "tb0011: inputs 24 != 4",
+   "tb0011: results rows/distinct (24, 24) != 4",
+   "tb0012: inputs 24 != 4",
+   "tb0012: results rows/distinct (24, 24) != 4",
+   "tb0013: inputs 24 != 4",
+   "tb0013: results rows/distinct (24, 24) != 4",
+   "tb0014: inputs 24 != 4",
+   "tb0014: results rows/distinct (24, 24) != 4",
+   "tb0015: inputs 24 != 4",
+   "tb0015: results rows/distinct (24, 24) != 4",
+   "ledger duplicates: 54",
+   "effects rows per input != 1: 16"
+  ],
+  "inputs_total": 860,
+  "result_events": 860,
+  "result_keys": 860,
+  "ledger_rows": 919,
+  "effect_rows": 877,
+  "external_calls": 921,
+  "redundant_external_calls": 2,
+  "chains_verified": 15,
+  "PASS": false
+ },
+ "timers": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "lateness_s_min_max": [
+   1.2,
+   2846.9
+  ],
+  "granted": 7,
+  "timed_out": 8
+ },
+ "external_calls_by_worker": [
+  [
+   "sdk-1.31.0",
+   "589"
+  ],
+  [
+   "sdk-1.36.1",
+   "1972"
+  ],
+  [
+   "hostA",
+   "2564"
+  ]
+ ],
+ "new_server_log_head": "Temporal CLI 1.10.1 (Server 1.32.2, UI 2.56.4)\n\nTemporal Server:      localhost:59840\nTemporal Persistence: /home/eric/emlab-16096/engine/run/f5b2-1794780433.db\nTemporal HTTP:        localhost:59850\nTemporal Metrics:     http://localhost:59860/metrics\ntime=2026-11-15T22:07:16.286 level=WARN msg=\"TrailerToContextMetadataInterceptor: Trailer had metadata but context not wrapped\" service=worker trailer=\"map[workflow-task-queue:temporal-sys-per-ns-tq workflow-type:temporal-sys-worker-deployment-version-workflow]\" method=/temporal.server.api.historyservice.v1.HistoryService/ExecuteMultiOperation\nti",
+ "driver": {
+  "appended": 2460,
+  "signaled": 2460,
+  "retries": 0
+ },
+ "PASS": false
+}

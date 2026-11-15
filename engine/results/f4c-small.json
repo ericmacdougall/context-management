@@ -1,0 +1,123 @@
+{
+ "id": "F4c",
+ "approval_sessions": 4,
+ "rollup_sessions": 4,
+ "approval_timeout_s": 40,
+ "rollup_s": 30,
+ "events": [
+  {
+   "t": 612.6,
+   "what": "early_check"
+  },
+  {
+   "t": 675.6,
+   "what": "worker_crash_1"
+  },
+  {
+   "t": 683.1,
+   "what": "server_hard_stop_restart"
+  },
+  {
+   "t": 686.1,
+   "what": "worker_crash_2"
+  },
+  {
+   "t": 686.1,
+   "what": "approve_half"
+  },
+  {
+   "t": 693.0,
+   "what": "server_graceful_restart"
+  },
+  {
+   "t": 696.0,
+   "what": "worker_crash_3"
+  }
+ ],
+ "control_early_check": {
+  "approval_resolved": 0,
+  "rollups": 0
+ },
+ "statuses_A": {
+  "COMPLETED": 2,
+  "RUNNING": 2
+ },
+ "statuses_B": {
+  "COMPLETED": 4
+ },
+ "approval_exactly_once_and_correct_outcome": false,
+ "rollup_exactly_once": true,
+ "lateness_s_min_max": [
+  -39.69,
+  665.69
+ ],
+ "verify_A_turns": {
+  "tag": "R",
+  "sessions": 4,
+  "expect_turns_each": 4,
+  "problems": [
+   "R0003: results rows/distinct (3, 3) != 4",
+   "R0004: results rows/distinct (3, 3) != 4",
+   "ledger missing: 2",
+   "effects missing: 2"
+  ],
+  "inputs_total": 16,
+  "result_events": 14,
+  "result_keys": 14,
+  "ledger_rows": 14,
+  "effect_rows": 14,
+  "external_calls": 16,
+  "redundant_external_calls": 2,
+  "chains_verified": 4,
+  "PASS": false
+ },
+ "rowsA_sample": [
+  {
+   "sid": "R0001",
+   "requests": 1,
+   "resolutions": 1,
+   "kind": "approval_granted",
+   "finished": 1,
+   "late_s": -39.69
+  },
+  {
+   "sid": "R0002",
+   "requests": 1,
+   "resolutions": 1,
+   "kind": "approval_granted",
+   "finished": 1,
+   "late_s": -39.57
+  },
+  {
+   "sid": "R0003",
+   "requests": 1,
+   "resolutions": 1,
+   "kind": "approval_timeout",
+   "finished": 0,
+   "late_s": 0.09
+  }
+ ],
+ "rowsB_sample": [
+  {
+   "sid": "S0001",
+   "rollups": 1,
+   "finished": 1,
+   "late_s": 665.69
+  },
+  {
+   "sid": "S0002",
+   "rollups": 1,
+   "finished": 1,
+   "late_s": 665.62
+  },
+  {
+   "sid": "S0003",
+   "rollups": 1,
+   "finished": 1,
+   "late_s": 665.49
+  }
+ ],
+ "granted": 2,
+ "timed_out": 2,
+ "PASS": false
+}

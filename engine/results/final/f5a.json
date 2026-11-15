@@ -1,0 +1,67 @@
+{
+ "id": "F5a",
+ "sessions": 20,
+ "turns": 40,
+ "sdk": "temporalio 1.36.1",
+ "server": "1.31.2",
+ "replay_before_deploy": {
+  "v1": {
+   "histories": 20,
+   "replay_failures": 0,
+   "failure_type": null,
+   "failure_sample": null
+  },
+  "v2p": {
+   "histories": 20,
+   "replay_failures": 0,
+   "failure_type": null,
+   "failure_sample": null
+  },
+  "v2i": {
+   "histories": 20,
+   "replay_failures": 20,
+   "failure_type": "NondeterminismError",
+   "failure_sample": "Workflow activation completion failed: Failure { failure: Some(Failure { message: \"[TMPRL1100] Nondeterminism error: Activity type of scheduled event 'turn_effect' does not match activity type of activity command 'turn_policy'\", source: \"\","
+  }
+ },
+ "deployed_incompatible": {
+  "results_before_after_30s": [
+   225,
+   229
+  ],
+  "statuses": {
+   "RUNNING": 20
+  },
+  "sessions_with_wft_failures": 20,
+  "max_wft_failed_events": 8,
+  "sample_failure": "[TMPRL1100] Nondeterminism error: Activity type of scheduled event 'turn_effect' does not match activity type of activity command 'turn_policy'",
+  "workflow_failed_or_terminated": 0,
+  "driver_inputs_appended_meanwhile": 516,
+  "visibility": "workflow status stays RUNNING; the only signals are WorkflowTaskFailed events in history, pending_workflow_task attempts in describe, and worker logs"
+ },
+ "rollback": {
+  "statuses": {
+   "COMPLETED": 20
+  },
+  "wait_s": 52.8
+ },
+ "verify": {
+  "tag": "ua",
+  "sessions": 20,
+  "expect_turns_each": 40,
+  "problems": [],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 800,
+  "redundant_external_calls": 0,
+  "chains_verified": 20,
+  "PASS": true
+ },
+ "code_profile": {
+  "v1": 20
+ },
+ "PASS": true
+}

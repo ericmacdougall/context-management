@@ -1,0 +1,66 @@
+{
+ "id": "F5b-2-worker-versioning-pinned",
+ "server": "1.10.1",
+ "old_sessions": 30,
+ "new_sessions": 10,
+ "ops": {
+  "server": "1.10.1",
+  "set_current_b1": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "set_current_b2": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "describe_b1": {
+   "rc": 0,
+   "out": "Worker Deployment Version:\n  DeploymentName           sessdep\n  BuildID                  b1\n  Status                   draining\n  CreateTime               3 minutes ago\n  RoutingChangedTime       2 minutes ago\n  RampPercentage           0\n  DrainageStatus           draining\n  DrainageLastChangedTime  2 minutes ago\n  DrainageLastCheckedTime  2 minutes ago\n\nTask Queues:\n  Name    Type  \n  f5b2  workflow\n  f5b2  activity\n"
+  }
+ },
+ "old_code_profile": {
+  "v1": 30
+ },
+ "new_code_profile": {
+  "v2i": 10
+ },
+ "old_build_needed_until_s_after_cutover": 140.0,
+ "control_old_build_stopped_20s_results_progress": 0,
+ "statuses_old": {
+  "COMPLETED": 30
+ },
+ "statuses_new": {
+  "COMPLETED": 10
+ },
+ "verify_old": {
+  "tag": "nfx",
+  "sessions": 30,
+  "expect_turns_each": 24,
+  "problems": [],
+  "inputs_total": 720,
+  "result_events": 720,
+  "result_keys": 720,
+  "ledger_rows": 720,
+  "effect_rows": 720,
+  "external_calls": 720,
+  "redundant_external_calls": 0,
+  "chains_verified": 30,
+  "PASS": true
+ },
+ "verify_new": {
+  "tag": "nfy",
+  "sessions": 10,
+  "expect_turns_each": 12,
+  "problems": [],
+  "inputs_total": 120,
+  "result_events": 120,
+  "result_keys": 120,
+  "ledger_rows": 120,
+  "effect_rows": 120,
+  "external_calls": 120,
+  "redundant_external_calls": 0,
+  "chains_verified": 10,
+  "PASS": true
+ },
+ "PASS": true
+}

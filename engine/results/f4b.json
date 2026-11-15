@@ -1,0 +1,53 @@
+{
+ "id": "F4b",
+ "sessions": 100,
+ "turns": 20,
+ "sdk": "temporalio 1.31.0",
+ "server": "1.31.2 (CLI 1.7.3)",
+ "worker_A_exit": null,
+ "move_at_s": 60,
+ "gap_s": 8,
+ "workflow_statuses": {
+  "COMPLETED": 100
+ },
+ "wait_s": 0.3,
+ "control_early_verify_PASS_should_be_False": false,
+ "control_early_problems": 200,
+ "external_calls_by_worker": [
+  [
+   "hostB",
+   "779"
+  ],
+  [
+   "hostA",
+   "1221"
+  ]
+ ],
+ "external_calls_by_worker_at_gap": [
+  [
+   "hostA",
+   "403"
+  ]
+ ],
+ "verify": {
+  "tag": "p",
+  "sessions": 100,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 2000,
+  "result_events": 2000,
+  "result_keys": 2000,
+  "ledger_rows": 2000,
+  "effect_rows": 2000,
+  "external_calls": 2000,
+  "redundant_external_calls": 0,
+  "chains_verified": 100,
+  "PASS": true
+ },
+ "driver": {
+  "appended": 2000,
+  "signaled": 2000,
+  "retries": 0
+ },
+ "PASS": true
+}

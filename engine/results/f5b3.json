@@ -1,0 +1,88 @@
+{
+ "id": "F5b-3-continue-as-new-hop",
+ "rotate_group": 15,
+ "natural_can_group": 15,
+ "new_sessions": 10,
+ "hop_seconds_after_cutover_max_by_group": {
+  "rotate": 9.0,
+  "natural_can": 6.5
+ },
+ "old_worker_needed_until_s_after_cutover": 9.0,
+ "all_done_s_after_cutover": 138.9,
+ "code_profile_rotate": {
+  "v1c>v2c": 15
+ },
+ "code_profile_natural": {
+  "v1c>v2c": 15
+ },
+ "code_profile_new": {
+  "v2c": 10
+ },
+ "statuses": [
+  {
+   "COMPLETED": 15
+  },
+  {
+   "COMPLETED": 15
+  },
+  {
+   "COMPLETED": 10
+  }
+ ],
+ "verify": [
+  {
+   "tag": "q",
+   "sessions": 15,
+   "expect_turns_each": 24,
+   "problems": [],
+   "inputs_total": 360,
+   "result_events": 360,
+   "result_keys": 360,
+   "ledger_rows": 360,
+   "effect_rows": 360,
+   "external_calls": 360,
+   "redundant_external_calls": 0,
+   "chains_verified": 15,
+   "PASS": true
+  },
+  {
+   "tag": "l",
+   "sessions": 15,
+   "expect_turns_each": 24,
+   "problems": [],
+   "inputs_total": 360,
+   "result_events": 360,
+   "result_keys": 360,
+   "ledger_rows": 360,
+   "effect_rows": 360,
+   "external_calls": 360,
+   "redundant_external_calls": 0,
+   "chains_verified": 15,
+   "PASS": true
+  },
+  {
+   "tag": "o",
+   "sessions": 10,
+   "expect_turns_each": 12,
+   "problems": [],
+   "inputs_total": 120,
+   "result_events": 120,
+   "result_keys": 120,
+   "ledger_rows": 120,
+   "effect_rows": 120,
+   "external_calls": 120,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "PASS": true
+  }
+ ],
+ "sample_result": {
+  "approval": "none",
+  "cans": 1,
+  "code": "v2c",
+  "rollups": 0,
+  "sig": 24,
+  "turns": 24
+ },
+ "PASS": true
+}

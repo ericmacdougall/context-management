@@ -1,0 +1,96 @@
+{
+ "id": "F7",
+ "from": {
+  "server": "1.31.2 (CLI 1.7.3)",
+  "sdk": "temporalio 1.31.0"
+ },
+ "to": {
+  "server": "1.32.2 (CLI 1.10.1)",
+  "sdk": "temporalio 1.36.1"
+ },
+ "events": [
+  {
+   "t": 12.7,
+   "what": "server 1.31.2 -> 1.32.2 on same sqlite file",
+   "downtime_s": 4.1
+  },
+  {
+   "t": 16.9,
+   "what": "approved half of the parked approval sessions"
+  },
+  {
+   "t": 24.0,
+   "what": "SDK 1.31.0 -> 1.36.1 (worker swap)",
+   "gap_s": 0.3
+  }
+ ],
+ "persistence": "SQLite file run/f7-small-1794780081.db shared by both CLI versions (the dev server migrates it on start); not the documented production schema-tool path",
+ "statuses": [
+  {
+   "COMPLETED": 6
+  },
+  {
+   "COMPLETED": 3
+  },
+  {
+   "COMPLETED": 3
+  }
+ ],
+ "verify_A": {
+  "tag": "Ta",
+  "sessions": 6,
+  "expect_turns_each": 8,
+  "problems": [],
+  "inputs_total": 48,
+  "result_events": 48,
+  "result_keys": 48,
+  "ledger_rows": 48,
+  "effect_rows": 48,
+  "external_calls": 48,
+  "redundant_external_calls": 0,
+  "chains_verified": 6,
+  "PASS": true
+ },
+ "verify_P": {
+  "tag": "Tb",
+  "sessions": 3,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 12,
+  "result_events": 12,
+  "result_keys": 12,
+  "ledger_rows": 12,
+  "effect_rows": 12,
+  "external_calls": 12,
+  "redundant_external_calls": 0,
+  "chains_verified": 3,
+  "PASS": true
+ },
+ "timers": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "lateness_s_min_max": [
+   0.1,
+   1.1
+  ],
+  "granted": 1,
+  "timed_out": 2
+ },
+ "external_calls_by_worker": [
+  [
+   "sdk-1.31.0",
+   "50"
+  ],
+  [
+   "sdk-1.36.1",
+   "10"
+  ]
+ ],
+ "new_server_log_head": "Temporal CLI 1.10.1 (Server 1.32.2, UI 2.56.4)\n\nTemporal Server:      localhost:53920\nTemporal Persistence: /home/eric/emlab-16096/engine/run/f7-small-1794780081.db\nTemporal HTTP:        localhost:53930\nTemporal Metrics:     http://localhost:53940/metrics\ntime=2026-11-15T22:02:13.382 level=WARN msg=\"Failed to poll for task.\" service=worker Namespace=temporal-system TaskQueue=temporal-sys-tq-scanner-taskqueue-0 WorkerID=temporal-system@127.0.0.1:36943 WorkerType=WorkflowWorker Error=\"closing transport due to: connection error: desc = \\\"error reading from server: EOF\\\", received prior goaway: co",
+ "driver": {
+  "appended": 60,
+  "signaled": 60,
+  "retries": 0
+ },
+ "PASS": true
+}

@@ -58,11 +58,9 @@ HOP_EDITS = [
 variant("v1c", "continue-as-new hops to the task queue configured in Postgres; rotate signal", HOP_EDITS)
 variant("v2c", "v1c plus the unguarded policy step", HOP_EDITS + [(READ, READ + POLICY)])
 
-variant("v2s", "state schema v2 (rename + new field), migrated on entry", [
+variant("v2s", "state schema v2 (rename + new field), migrated on entry; no other change", [
     ('from temporalio.common import RetryPolicy\n', 'from temporalio.common import RetryPolicy\n\nwith workflow.unsafe.imports_passed_through():\n    from engine import state as state_mod\n'),
     ('        self.st = dict(st)\n', '        self.st = state_mod.migrate(dict(st))\n'),
-    (READ, READ + '        policy = workflow.patched("policy-check")\n        if policy:\n            await act("turn_policy", eid)\n'),
-    (APPEND, '        await act("turn_append", sid, eid, digest, key, CODE + ("+policy" if policy else ""))\n'),
 ], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]').replace('"approval": st["approval"],', '"approval": st["approval"], "ver": st["ver"],'))
 variant("v1n", "NAIVE continue-as-new: drops pending signals at the boundary and never reconciles (control that must fail)", [
     ('                st["pend"] = [e for e in self.pending if e not in self.done]\n', '                st["pend"] = []\n'),
