@@ -1,0 +1,136 @@
+{
+ "workload": "2000 generated scenarios (seed 16096): 3-10 items, 15-60 actions of 12 kinds (discussion, detected changes incl. conflicting, read-backs, accept/reject/state/accept-read-back/revert decisions, unauthorised decisions from assistant/web/pasted, steps and injections that record a possibly stale (version, watermark)); per-event state compared with an independent truth model",
+ "correct": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 79320,
+   "detected": 13106,
+   "rejected": 3160,
+   "reverts_adjacent": 575,
+   "disputed_observations": 12909,
+   "unresolved_observations": 13547,
+   "unauthorized": 12733,
+   "decisions": 19635,
+   "stale_work_items": 5520,
+   "stale_contexts": 2417,
+   "prefix_checks": 79320,
+   "rejected_with_later_interactions_skipped_in_trace_check": 566
+  },
+  "failures": {}
+ },
+ "broken_detected_applies": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 79320,
+   "detected": 13106,
+   "rejected": 3160,
+   "reverts_adjacent": 575,
+   "disputed_observations": 0,
+   "unresolved_observations": 0,
+   "unauthorized": 12733,
+   "decisions": 17971,
+   "stale_work_items": 5520,
+   "stale_contexts": 2417,
+   "prefix_checks": 79320,
+   "rejected_with_later_interactions_skipped_in_trace_check": 566
+  },
+  "failures": {
+   "state_mismatch_after_event": 59972,
+   "detected_change_altered_current_definition": 12586,
+   "rejected_change_left_a_trace_in_current_state": 3120,
+   "rejected_change_missing_from_history": 3160,
+   "stale_work_list_not_exact": 1282,
+   "stale_contexts_list_not_exact": 1098
+  }
+ },
+ "broken_assistant_decides": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 79320,
+   "detected": 13106,
+   "rejected": 3160,
+   "reverts_adjacent": 575,
+   "disputed_observations": 12928,
+   "unresolved_observations": 13537,
+   "unauthorized": 0,
+   "decisions": 32415,
+   "stale_work_items": 5520,
+   "stale_contexts": 2417,
+   "prefix_checks": 79320,
+   "rejected_with_later_interactions_skipped_in_trace_check": 566
+  },
+  "failures": {
+   "state_mismatch_after_event": 64925,
+   "rejected_change_left_a_trace_in_current_state": 2548,
+   "unauthorized_decision_count": 1962,
+   "stale_work_list_not_exact": 1392,
+   "stale_contexts_list_not_exact": 1195
+  }
+ },
+ "broken_reject_leaves_trace": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 79320,
+   "detected": 13106,
+   "rejected": 3160,
+   "reverts_adjacent": 575,
+   "disputed_observations": 20703,
+   "unresolved_observations": 12136,
+   "unauthorized": 12733,
+   "decisions": 19846,
+   "stale_work_items": 5520,
+   "stale_contexts": 2417,
+   "prefix_checks": 79320,
+   "rejected_with_later_interactions_skipped_in_trace_check": 566
+  },
+  "failures": {
+   "state_mismatch_after_event": 32644,
+   "rejected_change_left_a_trace_in_current_state": 3063,
+   "stale_work_list_not_exact": 94,
+   "stale_contexts_list_not_exact": 68
+  }
+ },
+ "broken_acted_on_version_compare": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 79320,
+   "detected": 13106,
+   "rejected": 3160,
+   "reverts_adjacent": 575,
+   "disputed_observations": 12909,
+   "unresolved_observations": 13547,
+   "unauthorized": 12733,
+   "decisions": 19635,
+   "stale_work_items": 5520,
+   "stale_contexts": 2417,
+   "prefix_checks": 79320,
+   "rejected_with_later_interactions_skipped_in_trace_check": 566
+  },
+  "failures": {
+   "stale_work_list_not_exact": 1618,
+   "stale_contexts_list_not_exact": 1369
+  }
+ },
+ "broken_acted_on_ignores_serves": {
+  "totals": {
+   "scenarios": 2000,
+   "events": 79320,
+   "detected": 13106,
+   "rejected": 3160,
+   "reverts_adjacent": 575,
+   "disputed_observations": 12909,
+   "unresolved_observations": 13547,
+   "unauthorized": 12733,
+   "decisions": 19635,
+   "stale_work_items": 5520,
+   "stale_contexts": 2417,
+   "prefix_checks": 79320,
+   "rejected_with_later_interactions_skipped_in_trace_check": 566
+  },
+  "failures": {
+   "stale_work_list_not_exact": 1676
+  }
+ },
+ "elapsed_s": 68.9,
+ "pass": true
+}

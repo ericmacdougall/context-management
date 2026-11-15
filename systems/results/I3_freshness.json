@@ -1,0 +1,189 @@
+{
+ "workload": "200 trials per cell; item of 4 terms; 30-1500 chatter events after the decision with 6% one-term and 1% two-term distractors; planted later statement keeps a fraction of the item terms and replaces the rest by a KNOWN alias or an UNKNOWN synonym; hash-embedding vector leg (a stand-in, not a real model)",
+ "cells": {
+  "strict|alias|overlap=1.0": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.59,
+   "scans_with_any_false_challenger": 0.95,
+   "false_rate_per_scanned_event": 0.0101,
+   "planted_surfaced_when_bound_is_300": 0.515
+  },
+  "strict|alias|overlap=0.75": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.28,
+   "scans_with_any_false_challenger": 0.96,
+   "false_rate_per_scanned_event": 0.0097,
+   "planted_surfaced_when_bound_is_300": 0.55
+  },
+  "strict|alias|overlap=0.5": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.29,
+   "scans_with_any_false_challenger": 0.94,
+   "false_rate_per_scanned_event": 0.0099,
+   "planted_surfaced_when_bound_is_300": 0.51
+  },
+  "strict|alias|overlap=0.25": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.91,
+   "scans_with_any_false_challenger": 0.96,
+   "false_rate_per_scanned_event": 0.0101,
+   "planted_surfaced_when_bound_is_300": 0.505
+  },
+  "strict|alias|overlap=0.0": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.2,
+   "scans_with_any_false_challenger": 0.94,
+   "false_rate_per_scanned_event": 0.0105,
+   "planted_surfaced_when_bound_is_300": 0.55
+  },
+  "strict|unknown|overlap=0.75": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.68,
+   "scans_with_any_false_challenger": 0.935,
+   "false_rate_per_scanned_event": 0.0105,
+   "planted_surfaced_when_bound_is_300": 0.53
+  },
+  "strict|unknown|overlap=0.5": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.8,
+   "scans_with_any_false_challenger": 0.93,
+   "false_rate_per_scanned_event": 0.0102,
+   "planted_surfaced_when_bound_is_300": 0.49
+  },
+  "strict|unknown|overlap=0.25": {
+   "planted_surfaced": 0.0,
+   "via_lexical": 0,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.5,
+   "scans_with_any_false_challenger": 0.94,
+   "false_rate_per_scanned_event": 0.01,
+   "planted_surfaced_when_bound_is_300": 0.0
+  },
+  "strict|unknown|overlap=0.0": {
+   "planted_surfaced": 0.0,
+   "via_lexical": 0,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 7.51,
+   "scans_with_any_false_challenger": 0.95,
+   "false_rate_per_scanned_event": 0.0101,
+   "planted_surfaced_when_bound_is_300": 0.0
+  },
+  "loose|alias|overlap=1.0": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 54.58,
+   "scans_with_any_false_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0736,
+   "planted_surfaced_when_bound_is_300": 0.465
+  },
+  "loose|alias|overlap=0.75": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 55.97,
+   "scans_with_any_false_challenger": 0.995,
+   "false_rate_per_scanned_event": 0.0748,
+   "planted_surfaced_when_bound_is_300": 0.45
+  },
+  "loose|alias|overlap=0.5": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 54.05,
+   "scans_with_any_false_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0737,
+   "planted_surfaced_when_bound_is_300": 0.505
+  },
+  "loose|alias|overlap=0.25": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 57.35,
+   "scans_with_any_false_challenger": 0.995,
+   "false_rate_per_scanned_event": 0.0742,
+   "planted_surfaced_when_bound_is_300": 0.505
+  },
+  "loose|alias|overlap=0.0": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 57.8,
+   "scans_with_any_false_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0748,
+   "planted_surfaced_when_bound_is_300": 0.44
+  },
+  "loose|unknown|overlap=0.75": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 54.23,
+   "scans_with_any_false_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0749,
+   "planted_surfaced_when_bound_is_300": 0.545
+  },
+  "loose|unknown|overlap=0.5": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 57.22,
+   "scans_with_any_false_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0746,
+   "planted_surfaced_when_bound_is_300": 0.52
+  },
+  "loose|unknown|overlap=0.25": {
+   "planted_surfaced": 1.0,
+   "via_lexical": 200,
+   "via_vector_only": 0,
+   "mean_false_challengers_per_scan": 56.03,
+   "scans_with_any_false_challenger": 0.995,
+   "false_rate_per_scanned_event": 0.0732,
+   "planted_surfaced_when_bound_is_300": 0.48
+  },
+  "loose|unknown|overlap=0.0": {
+   "planted_surfaced": 0.005,
+   "via_lexical": 0,
+   "via_vector_only": 1,
+   "mean_false_challengers_per_scan": 57.84,
+   "scans_with_any_false_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0753,
+   "planted_surfaced_when_bound_is_300": 0.005
+  },
+  "strict|no_planted_statement": {
+   "mean_false_challengers_per_scan": 7.59,
+   "scans_with_any_challenger": 0.91,
+   "false_rate_per_scanned_event": 0.0098
+  },
+  "loose|no_planted_statement": {
+   "mean_false_challengers_per_scan": 59.38,
+   "scans_with_any_challenger": 1.0,
+   "false_rate_per_scanned_event": 0.0739
+  }
+ },
+ "controls": {
+  "wrong_watermark_scans_that_resurface_pre_decision_text": 1.0,
+  "random_surfacing_same_volume_recall_overlap_0.5": 0.015
+ },
+ "structure": {
+  "blocks_checked": 300,
+  "with_source_watermark_flagged_challenger_and_state_unchanged": 300,
+  "violations": 0
+ },
+ "pass": true,
+ "limits": "Paraphrase with no shared term, alias or hash-embedding signal is not surfaced: that needs the analyst tier (an LLM scan), which is not part of this stream. The vector leg here is a hash embedding stand-in, not a semantic model.",
+ "elapsed_s": 242.4
+}
