@@ -74,3 +74,12 @@ The iteration-2 config adds 48% stage-1 pairs for 2 links. No Opus judge was use
 costs about 1.9x Sonnet per input token here (audit 7.9e-6 vs verifier 4.3e-6 USD-equivalent per token), i.e. an Opus verifier would cost about 0.95 instead of
 0.52 USD-equivalent per 1,000 sessions for stage 2 (stage 1 dominates: about 7.7 per 1,000 sessions on Sonnet).
 Companion from the v3 gate: of 12 audited-false v3 links, 3 touched a fact shown to the reader (07741c45, 0e4e4c46, 603deb26); all three were answered correctly.
+Caveats on the rescue numbers (added after review, no new calls): (1) the 19 links are 18 distinct statement pairs in iteration 1 (bikes 3 -> 4 appears in both
+89941a93 and 89941a94) and about 17 distinct underlying session pairs (the sneaker pair is the same two sessions in 07741c44 and 07741c45); iteration 2's two new links
+are one distinct pair. Paired questions also double-count in S3. (2) Order independence is NOT met: stage 2 flipped 1 of 33 verdicts under a different batching (towards
+asserting a link, which would have made a 20th link, so S1's count failure is within batching noise and S3 is the binding failure); stage 1 was never order-checked here and
+the owner's shuffled re-judge disagreed on 10 of 34 positives. Strict independence (one pair per call) would cost about 0.65 stage-1 calls per session instead of 0.063.
+(3) D1 is a single audit call, not a three-way audit; "measured ceiling 13" rests on it. The auditor is consistent but permissive on boundary cases (12th video vs 15
+recent videos, guitar lessons vs plan to find a teacher, sculpting vs sculpting classes, plan to meet vs met twice), and a verifier strict enough to remove the four
+v4 errors also drops those: at the ceiling the precision and recall bars pull against each other. (4) The per-session cost assumes the 40-pair cap per haystack of about
+48 sessions; a single long history has no per-question cap. USD figures and the Opus/Sonnet ratio are ledger-derived estimates; no Opus verifier was run.
