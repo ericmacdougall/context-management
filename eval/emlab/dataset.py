@@ -225,10 +225,30 @@ def split_pilot_test(qs: Sequence[Tuple[str, str]], seed: int = SPLIT_SEED,
     return out
 
 
+DEV2_SIZE = 16
+
+
+def split_assignment(questions: Sequence[Question]) -> Dict[str, str]:
+    """qid -> 'pilot' | 'dev2' | 'test'. Pilot/test as in split_pilot_test (by cluster, stratified by type); then
+    `dev2` takes the first DEV2_SIZE knowledge-update question ids, in sorted order, from the test split that
+    are not abstention questions and whose cluster holds exactly one question. Nothing else changes."""
+    from .corpus import cluster_ids
+    clusters = cluster_ids(questions)
+    sp = split_pilot_test([(q.qid, q.qtype) for q in questions], clusters=clusters)
+    size: Dict[str, int] = {}
+    for c in clusters.values():
+        size[c] = size.get(c, 0) + 1
+    cand = sorted(q.qid for q in questions
+                  if sp[q.qid] == "test" and q.qtype == "knowledge-update" and not q.is_abstention
+                  and size[clusters[q.qid]] == 1)
+    for qid in cand[:DEV2_SIZE]:
+        sp[qid] = "dev2"
+    return sp
+
+
 def select_split(questions: Sequence[Question], split: str) -> List[Question]:
-    """split in {'all','pilot','test'}; the split is computed over ALL questions then filtered."""
+    """split in {'all','pilot','test','dev2'}; computed over ALL questions then filtered."""
     if split == "all":
         return list(questions)
-    from .corpus import cluster_ids
-    sp = split_pilot_test([(q.qid, q.qtype) for q in questions], clusters=cluster_ids(questions))
+    sp = split_assignment(questions)
     return [q for q in questions if sp[q.qid] == split]

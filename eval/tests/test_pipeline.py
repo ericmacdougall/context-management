@@ -143,6 +143,47 @@ class Fixture(unittest.TestCase):
         self.assertEqual(runner.main(["--seed", "1", "--dataset-path", "x", "--artifacts", "y"]), 2)
 
 
+class Dev2(unittest.TestCase):
+    def _qs(self):
+        base = list(FixtureLoader().questions())[0]
+        out = []
+        for i in range(60):
+            out.append(type(base)(**{**base.__dict__, "qid": "k%03d" % i, "qtype": "knowledge-update",
+                                     "gold_session_ids": ["g%03d" % i]}))
+        out.append(type(base)(**{**base.__dict__, "qid": "k999_abs", "qtype": "knowledge-update",
+                                 "gold_session_ids": ["g999"]}))
+        out.append(type(base)(**{**base.__dict__, "qid": "m001", "qtype": "multi-session", "gold_session_ids": ["gm"]}))
+        return out
+
+    def test_dev2_rule(self):
+        qs = self._qs()
+        from emlab.dataset import split_assignment, split_pilot_test
+        from emlab.corpus import cluster_ids
+        sp = split_assignment(qs)
+        dev2 = sorted(q for q, v in sp.items() if v == "dev2")
+        self.assertEqual(len(dev2), 16)
+        base = split_pilot_test([(q.qid, q.qtype) for q in qs], clusters=cluster_ids(qs))
+        want = sorted(q for q, v in base.items() if v == "test" and q.startswith("k") and not q.endswith("_abs"))[:16]
+        self.assertEqual(dev2, want)                       # first 16 test KU ids in sorted order
+        self.assertTrue(all(base[q] == "test" for q in dev2))
+        self.assertEqual({q: v for q, v in sp.items() if v == "pilot"}, {q: v for q, v in base.items() if v == "pilot"})
+        self.assertNotIn("k999_abs", dev2)
+        self.assertEqual(sum(v == "test" for v in sp.values()), sum(v == "test" for v in base.values()) - 16)
+
+    def test_dev2_skips_multi_question_clusters(self):
+        qs = self._qs()
+        from emlab.dataset import split_assignment, split_pilot_test
+        from emlab.corpus import cluster_ids
+        base = split_pilot_test([(q.qid, q.qtype) for q in qs], clusters=cluster_ids(qs))
+        first = sorted(q for q, v in base.items() if v == "test" and q.startswith("k") and not q.endswith("_abs"))[0]
+        i = int(first[1:])
+        for q in qs:   # make the first candidate share a gold session with another question: cluster of 2
+            if q.qid == "k%03d" % ((i + 1) % 60):
+                q.gold_session_ids = ["g%03d" % i]
+        sp = split_assignment(qs)
+        self.assertNotEqual(sp[first], "dev2")
+
+
 class TimeParse(unittest.TestCase):
     qd = datetime(2023, 8, 16, 10, 0)  # a Wednesday
 

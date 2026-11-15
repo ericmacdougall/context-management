@@ -137,7 +137,7 @@ def main(argv=None) -> int:
     ap.add_argument("--retriever", choices=["exact", "es"], default="exact")
     ap.add_argument("--dataset-path")
     ap.add_argument("--artifacts", help="dir written by embed.py (chunks.jsonl, vectors, queries)")
-    ap.add_argument("--split", choices=["pilot", "test", "all"], default="pilot")
+    ap.add_argument("--split", choices=["pilot", "test", "dev2", "all"], default="pilot")
     ap.add_argument("--seed", type=int, default=16096, help="split seed (must equal the registered seed)")
     ap.add_argument("--es-url")
     ap.add_argument("--credential-file", help="path to a 0600 file holding the API key")
