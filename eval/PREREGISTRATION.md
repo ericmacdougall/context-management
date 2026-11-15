@@ -3,7 +3,9 @@
 Ticket: GoodQA goodqa#16096. Design under test: `../DESIGN.md`.
 Source of the work: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a/b5d6a478-d70d-4516-8e08-839e60bbf5c7 "double check/finish the research and run the experiments".
 
-Status: DRAFT. Freezing means recording the git commit hash of this file in the ticket before any run (`git rev-parse HEAD:eval/PREREGISTRATION.md`). After freezing, edits go in a dated "Amendments" section at the end, each with a reason and the data already seen; thresholds are never edited after the test set is first scored.
+Status: DRAFT v2, ready to freeze once main records the open items below as settled. Freezing means recording the git commit hash of this file in the ticket before any run (`git rev-parse HEAD:eval/PREREGISTRATION.md`). After freezing, edits go in a dated "Amendments" section at the end, each with a reason and the data already seen; thresholds are never edited after the test set is first scored.
+
+Provenance of choices: USER decisions come from answer:73716864-6b3b-4deb-94ef-8ed2c8432e4a/02b847b6-8aaf-49cd-9108-3691d2bc3a40 (public benchmark first plus the user's own redacted sessions later; LLM stages on Sonnet over all 500 questions; Elastic trial licence on the throwaway node). Items marked MAIN are implementation choices made by main, not the user's words. Items marked MEASURED were re-measured on the data file by `emlab.corpus.verify_dataset` (output kept at ~/emlab-16096/out/verify.json on t2-dev).
 
 Labels: `ASSUMPTION` = not the user's words. `TARGET_MISMATCH` = result narrower than the original slice. `TO FIX FROM PILOT` = placeholder that must be replaced by a number derived on the pilot set by the stated rule, committed before the test run. Nothing in this file is a measured number.
 
@@ -18,40 +20,64 @@ Phase R decides neither kill rule: both rules compare systems on extracted facts
 
 ## 2. Dataset
 
-- LongMemEval is the intended public benchmark. `ASSUMPTION`: it is not the user's stated choice; the user's stated requirement is public data only.
-- Everything about its schema in `emlab/dataset.py` (field names `question_id`, `question_type`, `question`, `answer`, `question_date`, `haystack_session_ids`, `haystack_dates`, `haystack_sessions`, `answer_session_ids`, per-turn `has_answer`, the `_abs` suffix for abstention, date string format, question-type names, the S/M variants and their sizes, license) is "to confirm from the dataset card". Which variant is used (S about 115k tokens per question, M about 1.5M tokens) is `TO FIX` after the confirmation and before data is sampled.
-- Gold labels: session-level gold = `answer_session_ids`; turn-level gold = turns with `has_answer` (to confirm that every question type has them). Abstention questions have no retrieval gold: they are excluded from recall/NDCG and used only for abstention precision.
-- Knowledge-update gold-latest: the gold evidence that carries the CURRENT value. Whether the dataset marks it, or whether `answer_session_ids` includes superseded sessions, is to confirm; if not marked, superseded ids are annotated by a documented rule fixed before the test set is read (the repo's fixture models this with an `x_stale_session_ids` annotation that is ours, not the dataset's).
-- The fixture in `eval/fixtures/tiny.json` is hand-written, follows the recalled layout and is not evidence about the real files.
+- Benchmark: LongMemEval-S, cleaned release `xiaowu0162/longmemeval-cleaned`, file `longmemeval_s_cleaned.json`, 277,383,467 bytes, sha256 `d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442` (MEASURED: downloaded on t2-dev, hash and size match), MIT licence. The older non-cleaned release is deprecated and not used. The user asked for public data first; the specific benchmark and variant are MAIN's choice (originally an ASSUMPTION).
+- Fields (MEASURED): question_id, question_type, question, answer (a string, or an int in 32 questions: cast to str), question_date, haystack_session_ids, haystack_dates, haystack_sessions (list of sessions, each a list of {role, content}; evidence turns carry has_answer: true), answer_session_ids.
+- 500 questions; question_type counts: single-session-user 70, single-session-assistant 56, single-session-preference 30, temporal-reasoning 133, knowledge-update 78, multi-session 133. 38 to 62 sessions per question (median 48); 23,867 session references, 19,195 unique session ids.
+- Abstention is not a type: 30 questions whose id ends `_abs`. CORRECTION to the relayed facts: all 30 DO carry an answer_session_ids list, and 21 of them have no has_answer turn. Rule (registered): abstention questions are excluded from every retrieval metric (recall, NDCG, gold-latest, low-overlap) by the id convention regardless of any gold list, leaving 470 questions with retrieval gold; they are used only for abstention precision in Phase F. All 470 non-abstention questions have at least one has_answer turn (MEASURED).
+- Same session id, same content, DIFFERENT dates: content never differs across questions (0 conflicts) but 3,942 session ids carry different dates in different questions (filler sessions get a per-question date). CORRECTION to the relayed facts. Consequence: the shared index stores no date; the as-of logic uses each question's own haystack_dates, computed client-side.
+- haystack_session_ids are not chronological (289 of 500 in order), so no rank or position is used as time.
+- Late sessions: 76 questions (60 temporal-reasoning, 16 knowledge-update) contain sessions whose timestamp is later than question_date by under one day; 75 such sessions are gold. As-of rule (registered, day granularity): a session is visible iff its calendar day <= the question's calendar day (`emlab.dataset.visible_as_of`). A strict timestamp comparison would drop gold. These 76 questions are reported as the named sub-stratum `late_session_subset` (16 of them fall in the pilot).
+- Index sharing: ONE shared index of unique rounds; every search is filtered to the question's haystack_session_ids (and to the time-aware subset). Distractor sessions are shared across pilot and test questions (threat below). 8 session ids are answer sessions of two different questions (16 references; CORRECTION to the relayed "no answer session appears in another question's haystack"). Questions sharing an answer session form one cluster (union-find over shared gold sessions: 495 clusters for 500 questions, 5 clusters of two or more questions). Clusters, not questions, are the unit of the split and of the bootstrap.
+- Knowledge-update gold (MEASURED): all 72 non-abstention knowledge-update questions list exactly 2 answer sessions, both with has_answer turns. Registered stale rule: the CURRENT-value gold session is the one with the latest session date (`Question.gold_latest_session_ids`); the other gold session is stale. The date rule agrees with the id-suffix order (`_2` newer than `_1`) in 71 of 72; the exception is `618f13b2` (suffixes inverted, same day, 17:45 vs 22:16); the date rule is kept and the case is listed. The rule was fixed before any test-split result was read.
+- Gold labels: session-level gold = answer_session_ids; round-level gold = rounds containing a has_answer turn. Gold-latest hit (Phase R and F): knowledge-update only; the latest gold session must be in the top k; stale-only counts as a miss.
+- The paper's fact-key and time-aware retrieval numbers (Table 3) are on the M variant and are not comparable to an S run; cited as context only. The Table 9 split is not stated.
+- The fixture in `eval/fixtures/tiny.json` is hand-written and proves nothing about the real data.
+
+### 2.1 Private sessions (the user's own redacted sessions): NOT YET SPECIFIED
+
+The user wants their own redacted sessions evaluated in addition to the public benchmark. Which sessions, the redaction procedure, the gold-label procedure, where the data may live, and whether any LLM call may see them are all open. Until specified: no private data is read, copied or used; no number in this document or in any report may mix private and public data; a separate pre-registration section and a separate frozen hash are needed before any private run. Benchmark first.
 
 ## 3. Sampling and splits (fixed before data is seen)
 
 - Strata by dataset question type: single-session-user, single-session-assistant, single-session-preference, multi-session, knowledge-update, temporal-reasoning (names to confirm), plus abstention (identified by id convention, to confirm). Low-overlap is an overlay defined in 3.2, not a type.
-- 3.1 Split: by question id, stratified by question type. Within a stratum, order ids by `sha256("16096:" + question_id)` and take the first `ceil(0.2 * n)` (at least 1, never all) as the pilot set; the rest are the test set (`emlab.dataset.split_pilot_test`, seed constant `SPLIT_SEED = 16096`, pilot fraction 0.2 is a proposed value, decision for main). The hash ordering does not depend on Python version or input order. If conversations share haystacks across question ids (to confirm), the split key becomes the haystack/conversation id instead, so no conversation appears in both sets.
+- 3.1 Split: by CLUSTER (questions that share an answer session stay together), stratified by question type. Within a stratum, clusters are ordered by `sha256("16096:" + cluster id)` (cluster id = smallest question id in the cluster) and added to the pilot until it holds at least `ceil(0.2 * n)` questions of that stratum (never all units). Seed constant `SPLIT_SEED = 16096`; pilot fraction 0.2, alpha 0.05 one-sided, power 0.80 (MAIN, confirmed). MEASURED result: 102 pilot and 398 test questions (pilot by type: multi-session 27, temporal-reasoning 27, knowledge-update 16, single-session-user 14, single-session-assistant 12, single-session-preference 6; 8 abstention questions in the pilot). The earlier "100 / 400" was approximate.
 - The pilot set is used for: tuning every arm, fixing thresholds and minimum n, and debugging. The test set is scored once per frozen configuration. Any test-set look before the freeze voids the freeze.
-- Test-set size: the whole of the non-pilot questions for Phase R (no LLM cost). For Phase F, the per-stratum sample is the larger of the minimum n from H1/H2 and what the budget (TBD by the user) allows; if the budget is below the minimum n the result is reported INCONCLUSIVE, never narrowed silently.
-- 3.2 Low-overlap stratum, operationally: run raw-question BM25 and dense retrieval over the question's full haystack (turns indexed individually, session rank = rank of its best turn, depth at least 200); a question is low-overlap iff the best-ranked gold session has rank greater than 100, or is absent, on BOTH (`emlab.metrics.is_low_overlap`, threshold 100). Computed with the same embedding model used in every arm, on the raw question text, with no time filter. Questions with no gold (abstention) are never low-overlap.
+- Test-set size: all 398 test questions for Phase R (no LLM cost). Phase F runs LLM stages on Sonnet over all 500 questions (USER decision), so pilot and test are both available; if the effective n in a primary stratum is below the minimum n from H1/H2 the result is INCONCLUSIVE, never narrowed silently.
+- 3.2 Low-overlap stratum, operationally: run raw-question BM25 and dense retrieval over the question's full haystack (turns indexed individually, session rank = rank of its best turn, depth at least 200); a question is low-overlap iff the best-ranked gold session has rank greater than 100, or is absent, on BOTH (`emlab.metrics.is_low_overlap`, threshold 100, applied to the SESSION ranking). Computed with the same embedding model used in every arm, on the raw question text, with no time filter, restricted to the question's own haystack. For the pre-computation, BM25 and exact cosine are computed in-process (`emlab.live.ExactRetriever`; BM25 k1 1.2, b 0.75, global statistics over the shared chunk corpus, lowercase alphanumeric tokens, 33-word English stoplist, no stemming; a deviation from Elasticsearch's english analyzer, to be cross-checked on the node later). It is computed on the pilot split only until this document is frozen. Questions with no gold (abstention) are never low-overlap.
 
 ## 4. Phase R: retrieval only (no LLM)
 
-Stack: Elasticsearch 9.5.x single node on t2-dev, localhost only, capped CPU/memory/disk (see RUNBOOK). Granularity: one document per turn with `qid`, `session_id`, `turn_id`, `role`, `session_date`, `text` (and `vector`); every query filters on its own `qid`. One embedding model, identical in every arm (name and revision `TO FIX` before the run); vectors computed outside Elasticsearch (labelled deviation from the semantic_text path). Fusion is client-side so no licensed feature is needed. Rerank uses an open cross-encoder (name `TO FIX`), top 50 of the RRF list.
+Stack: Elasticsearch 9.5.x single node (throwaway node; the trial licence is approved by the user), localhost only, capped resources (see RUNBOOK). Only Basic-tier features are relied on (BM25, kNN), because Elastic's `rrf`, `linear`, FUSE and reranker retrievers need the Enterprise licence: fusion and reranking are done client-side so results do not depend on a licence.
 
-Arms (each run with `time_aware=off` and `time_aware=on`):
-1. BM25 (`match` on `text`)
-2. Dense (kNN)
-3. Hybrid RRF (`rank_constant` 60 unless pilot tuning picks another from a fixed grid {20, 60, 100})
-4. Hybrid linear (min-max normalised, weight grid fixed in advance: dense weight in {0.3, 0.5, 0.7})
-5. Hybrid + rerank
+Index unit (MAIN): one document per ROUND (user message plus the assistant reply that follows it), carrying session_id and round index; the date is not stored (Section 2). Chunk rule (registered): the round text is tokenised with the E5 tokenizer; rounds over 480 tokens are cut at token boundaries into consecutive non-overlapping windows of 480 tokens, each its own document; a round's score is the max over its chunks; the session ranking is the sessions ordered by their best round.
 
-Time-aware: (a) hard filter `session_date <= question_date`; (b) temporal expansion for questions whose text carries a relative or absolute time expression (widen to the resolved window, never narrow below the as-of filter). The exact expansion rule is `TO FIX` and written down before the pilot; the scaffold implements only (a).
+Embedding (MAIN): `intfloat/multilingual-e5-small` (MIT, 384 dimensions, 512-token limit), prefixes `query: ` and `passage: `, mean pooling, L2 normalised, identical in every arm, computed outside Elasticsearch on t2-dev CPU and indexed as `dense_vector` with `bbq_hnsw`. Labelled deviation from the semantic_text path. Reason: Jina v5 is CC BY-NC; E5-small is also Elastic's built-in model, so a parity check through the Elastic inference API on the trial node can be added later.
 
-Metrics: session-level and turn-level recall@k and NDCG@k (binary gain) for k in {5, 10, 20, 50}, against gold ids; session ranking is derived from the turn ranking (best turn per session). Reported per stratum with the mean over questions that have gold, n and effective n alongside. Arm differences use the clustered paired bootstrap (Section 7), never a bare comparison of means.
+Reranker (MAIN): `BAAI/bge-reranker-v2-m3` (Apache-2.0), CPU, top 50 fused candidates (rerank only reorders the head; the tail keeps its fused order). If CPU time for all questions is impractical, a smaller registered top-n is proposed before the pilot, with a measured rate, never after.
 
-Phase R is descriptive. It carries no pass/fail threshold; it selects the retrieval configuration (fusion, weights, rerank on/off, time-aware on/off) that Phase F uses, chosen on the pilot set only.
+Arms, each under every time-aware mode:
+1. BM25 (`match` on `text`, english analyzer)
+2. Dense (kNN, cosine)
+3. Hybrid RRF, client-side (rank constant grid {20, 60, 100})
+4. Hybrid linear, client-side (min-max normalised, dense weight grid {0.3, 0.5, 0.7})
+5. Hybrid + rerank (RRF then rerank)
+
+Time-aware modes (rule fixed now, before the pilot; deterministic, no LLM, `emlab.timeparse`):
+- `off`: whole haystack.
+- `asof`: sessions with calendar day <= the question's calendar day (day granularity, Section 2).
+- `expand_filter`: `asof` intersected with a date range extracted from the question text; if no range is found or the intersection is empty it falls back to `asof`.
+- `expand_boost`: `asof`, then sessions inside the extracted range get their rank-score (1/(60+rank)) multiplied by (1 + beta), beta grid {0.25, 0.5, 1.0}; applied after fusion and before rerank.
+Date extraction priority: absolute dates (`YYYY/MM/DD`, `Month D[, YYYY]`, `D Month [YYYY]`), `Month YYYY`, `in|during|last|this <month>` (most recent such month), then relative expressions (yesterday, today, last <weekday>, last week = previous Monday to Sunday, last month, last year, past/last N day|week|month|year(s) = [question date minus N units, question date], N day|week|month|year(s) ago = centre +/- slack of 1, 3, 15, 60 days). Both variants are reported side by side; neither is declared the winner except by the pilot selection rule.
+
+Pilot tuning rule: the grid values above are evaluated on the pilot only (`--action grid`, `asof` mode for fusion parameters, `expand_boost` for beta); the chosen value maximises mean session NDCG@10 over pilot questions with retrieval gold, ties to the smaller parameter value; the choice is committed before any test run.
+
+Metrics: session-level and round-level recall@k and NDCG@k (binary gain) for k in {5, 10, 20, 50}, against gold ids, plus gold-latest hit@k for knowledge-update. Reported per question type, overall (470 questions with gold), for the low-overlap overlay and for the `late_session_subset`, with n alongside; abstention questions are excluded. Differences between arms use the clustered paired bootstrap (Section 7).
+
+Phase R is descriptive and decides neither kill rule (Section 1); it selects the retrieval configuration that Phase F uses, on the pilot only.
 
 ## 5. Phase F: facts and answers (needs LLM calls)
 
-Reader model, extractor model, judge model, answer budget and token budget are identical across arms and `TO FIX` after the user's answers (not chosen here). Pull tools and token budget are the same in every arm.
+LLM stages run on Sonnet over all 500 questions (USER decision): reader and extractor are Sonnet (exact model id `TO FIX` before the pilot); the judge is the benchmark's own question-type-specific judge prompts run on Opus (MAIN), preceded by a leniency probe with deliberately wrong answers before the test run; judge and reader come from the same vendor (threat below). Token budget and pull tools are identical in every arm.
 
 Arms:
 - A0 facts+hybrid: the design (facts with valid_from/valid_to, modality, trust; hybrid retrieval from Phase R's pilot-selected configuration; budgeted injection plus pull tools).
@@ -59,14 +85,14 @@ Arms:
 - B2 long context with compaction.
 - B3 dated always-present observation log.
 - B4 grep/open-by-id agent over raw history.
-- B5 Atlas-style three-index memory, reproduced from public descriptions only. `ASSUMPTION`: no contact with Elastic; a faithful reproduction may not be possible, in which case B5 is reported as "approximation, labelled" or dropped with a stated reason before the run. Vendor-reported numbers are not used as results.
-- Concept-doc arm (for K2): not defined here. Registered so K2 is not forgotten; it needs its own definition committed before any Phase F run that includes it.
+- B5 "Atlas-style" (MAIN): Elastic's Atlas demo needs Elastic's cloud inference service, which is not approved here, so B5 is a reimplementation on local models of the publicly described shape: three indices, RRF with 80 candidates per leg and rank constant 30, rerank, a supersession filter, and gauss decay with offset 180 d and scale 1825 d. It is NOT Atlas and is reported as "Atlas-style". Vendor-reported numbers are not used as results.
+- Concept-doc arm (for K2): registered but CONDITIONAL (MAIN): it runs only if K1 passes, and its arm is defined by a dated amendment committed before any K2 run.
 - Every baseline gets the same tuning budget on the pilot (number of configurations `TO FIX`).
 
 Metrics:
 - Answer accuracy by stratum (judge-graded; judge model fixed, plus a human-audited sample on the pilot to estimate judge leniency).
 - Retrieval gold-latest hit rate: for knowledge-update questions, a hit means the injected or retrieved context contains the evidence for the CURRENT value; context containing only the superseded value counts as a MISS.
-- Abstention precision: of the questions where the system abstains, the fraction that are true abstention questions; abstention recall is reported next to it.
+- Abstention precision: of the questions where the system abstains, the fraction that are true abstention questions; abstention recall is reported next to it (abstention set: the 30 `_abs` questions).
 - Tokens injected per turn (mean, p95), measured from logs of injected ids and block size.
 
 ## 6. Hypotheses and thresholds
@@ -74,6 +100,7 @@ Metrics:
 Primary strata for H1: knowledge-update and temporal-reasoning, pooled with equal weight per stratum.
 
 - **H1 (kill rule K1).** A0 beats the best tuned baseline (best by pilot score among B1-B5) on the primary metric, the pooled gold-latest hit rate and answer accuracy on the primary strata, by at least delta1.
+  - After the pilot, main takes the proposed delta values to the user; the test run does not start before the user accepts them (MAIN).
   - delta1 = `TO FIX FROM PILOT (pilot set disjoint from test set)`. Rule: the smallest absolute difference that is larger than the pilot's measured noise floor (half-width of the clustered paired-bootstrap interval for the same arm run under two seeds or prompt orderings) AND that the user accepts as worth the facts layer's added complexity. The user's acceptance is a decision sourced in the user's own words; absent it, delta1 stays unfixed and the test run does not start.
   - Minimum sample: n_min_H1 = `TO FIX FROM PILOT (pilot set disjoint from test set)` independent conversations in the primary strata. Rule: n = ((z_alpha + z_beta) * sd_d / delta1)^2 using the pilot standard deviation sd_d of the per-cluster paired difference, with alpha = 0.05 one-sided and power 0.80 (proposed conventions, decision for main). If the test set offers fewer effective conversations than n_min_H1, the outcome is INCONCLUSIVE regardless of the point estimate.
   - Decision: facts layer KEPT only if the lower bound of the 95% clustered paired-bootstrap interval of (A0 minus best baseline) is above delta1 on the primary metric. It is KILLED if the upper bound is below delta1. Otherwise INCONCLUSIVE (one pre-declared extension to a larger test sample is allowed if budget exists; otherwise reported as inconclusive).
@@ -87,7 +114,7 @@ Primary strata for H1: knowledge-update and temporal-reasoning, pooled with equa
 ## 7. Statistics
 
 - Single proportions (accuracy, hit rate, abstention precision, recall over questions): Wilson 95% interval (`emlab.metrics.wilson_interval`). Never a Wilson interval on a difference.
-- Differences between arms: paired bootstrap resampling whole clusters (conversation or, if each question has its own haystack, question) with replacement, 10,000 resamples, fixed seed argument recorded in the output, percentile 95% interval (`clustered_paired_bootstrap`).
+- Differences between arms: paired bootstrap resampling whole clusters (question clusters per Section 2: 495 clusters for 500 questions) with replacement, 10,000 resamples, fixed seed argument recorded in the output, percentile 95% interval (`clustered_paired_bootstrap`).
 - Effective n is the number of independent clusters (conversations), reported next to every interval; the number of questions is reported separately.
 - Recall@k and NDCG@k are per-question means, so they enter the bootstrap as per-question values, not as proportions.
 - Pilot and test sets are disjoint; tuning, thresholds and minimum n come from the pilot only.
@@ -103,19 +130,20 @@ Every figure is reported with workload (dataset variant, stratum, n, effective n
 - LLM judge leniency and drift: mitigated by a fixed judge, a pilot human audit and reporting judge agreement; not eliminated.
 - Baseline strength depends on tuning effort: equal pilot tuning budgets are registered, but a tuned baseline can still be weaker than a vendor's production system. Vendor-reported baseline numbers are not reproduced or used here.
 - Vectors computed outside Elasticsearch deviate from the semantic_text path; results transfer to it only if the embedding model is the same.
-- Per-question haystacks may overlap across questions, so clusters may be fewer than questions; the effective n accounts for this once the structure is confirmed.
+- Distractor sessions are shared across pilot and test questions (19,195 unique sessions over 23,867 references): the pilot sees the same filler text the test set contains, so pilot-tuned settings are mildly optimistic for filler-heavy behaviour. Answer sessions are shared by 5 multi-question clusters; these are kept together in the split and resampled together.
+- The judge (Opus) and the reader and extractor (Sonnet) are from the same vendor, which can bias judging towards the reader's style; the leniency probe measures leniency, not self-preference.
+- The in-process exact retriever used for the low-overlap pre-computation differs from Elasticsearch's analyzer; stratum membership may shift slightly once recomputed on the node.
+- E5-small with a 512-token limit and chunking may under-represent long rounds; chunk max-pooling is a simplification.
 - A single embedding model, reader model and judge model: conclusions are conditional on them.
 - Pilot-derived thresholds are noisy when the pilot is small; this is why delta and n_min are derived from pilot variance and the outcome INCONCLUSIVE exists.
 
-## 10. Open decisions (for main and the user; none has been silently resolved)
+## 10. Open items (none resolved silently)
 
-1. Dataset choice and variant (LongMemEval is an ASSUMPTION).
-2. Embedding model, reranker, reader, extractor and judge models, and the Phase F budget.
-3. Pilot fraction (0.2 proposed), alpha and power (0.05 one-sided and 0.80 proposed).
-4. User acceptance of delta1 and delta2 in the user's own words once the pilot noise floor is known.
-5. Definition of the concept-doc arm and whether K2 is in this phase at all.
-6. Whether B5 is reproduced or dropped.
-7. If the run stops after Phase R: confirm it is reported as `TARGET_MISMATCH`.
+1. Private sessions: NOT YET SPECIFIED (Section 2.1).
+2. Exact Sonnet and Opus model ids, and the Phase F token budget: `TO FIX` before the pilot.
+3. delta1, delta2, n_min_H1, n_min_H2: placeholders until the pilot; the user must accept delta values in their own words before the test run.
+4. The correction items in Section 2 (abstention gold lists, per-question dates, shared answer sessions) differ from the relayed facts; main to confirm the registered handling.
+5. If the run stops after Phase R it is reported as `TARGET_MISMATCH` against the original slice.
 
 ## Amendments
 

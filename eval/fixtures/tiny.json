@@ -10,20 +10,23 @@
    "ku_s2",
    "ku_s3",
    "ku_s4",
-   "ku_s5"
+   "ku_s5",
+   "ku_s6"
   ],
   "haystack_dates": [
    "2023/01/10 (Tue) 09:00",
    "2023/02/14 (Tue) 18:30",
    "2023/03/02 (Thu) 12:00",
    "2023/06/20 (Tue) 08:15",
-   "2023/07/01 (Sat) 20:00"
+   "2023/07/01 (Sat) 20:00",
+   "2023/08/01 (Tue) 17:30"
   ],
   "haystack_sessions": [
    [
     {
      "role": "user",
-     "content": "I just started as an analyst at Acme Corp, the commute is long."
+     "content": "I just started as an analyst at Acme Corp, the commute is long.",
+     "has_answer": true
     },
     {
      "role": "assistant",
@@ -70,13 +73,21 @@
      "role": "assistant",
      "content": "You can usually cancel online or in person."
     }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Any tips for a long train ride tomorrow?"
+    },
+    {
+     "role": "assistant",
+     "content": "Bring snacks and a charged phone."
+    }
    ]
   ],
   "answer_session_ids": [
+   "ku_s1",
    "ku_s4"
-  ],
-  "x_stale_session_ids": [
-   "ku_s1"
   ]
  },
  {

@@ -1,49 +1,40 @@
-# Runbook (later run on t2-dev). Nothing here has been executed.
+# Runbook: Phase R on t2-dev
 
-Do not start until PREREGISTRATION.md is frozen (hash in the ticket) and the user's answers are in. t2-dev also hosts GoodQA staging and is at about 93% disk: cap everything, bind localhost only, check `df -h` first and abort if free space is below the cap plus margin. Placeholders in angle brackets are filled at run time; no secret is ever typed on a command line or placed in an environment variable.
+All work is under `~/emlab-16096` on t2-dev (budget: 6 GB disk, at most 12 CPU threads under `nice`, stop and report if free disk would fall below 25 GB). The Elasticsearch container `emlab-es-16096` belongs to another owner: do not touch or index into it until main says so. No credential is ever typed on a command line or placed in an environment variable.
 
-## 0. Preconditions
-```
-ssh -F ~/.ssh/config_fleetops t2-dev 'df -h / ; free -m ; nproc'
-```
-Record the output in the run manifest. Abort if the disk budget below does not fit.
+Layout: `data/` dataset, `models/` HF cache, `venv/`, `eval/` this directory, `out/` artifacts, `logs/`.
 
-## 1. Elasticsearch 9.5.x (single node, localhost only, capped)
-Container or tarball per the user's decision; either way:
-- bind `127.0.0.1:<ES_PORT>` only; no published ports on other interfaces
-- heap `-Xms<HEAP>g -Xmx<HEAP>g`, CPU cap `<CPUS>`, memory cap `<MEM>g`, data path on a volume capped at `<DISK>g`
-- security enabled; the API key is created on the node and written to `<CRED_FILE>` (mode 0600, owned by the run user, outside the repo). It is never echoed.
+## 1. Data and environment (done once)
 ```
-chmod 600 <CRED_FILE>
+curl -L -o data/longmemeval_s_cleaned.json https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned/resolve/main/longmemeval_s_cleaned.json
+sha256sum data/longmemeval_s_cleaned.json   # d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442
+python3 -m venv venv && venv/bin/pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple torch==2.9.1+cpu transformers==4.57.1 numpy==2.2.6
 ```
+Re-measure the dataset facts: `cd eval && ../venv/bin/python -c "import json; from emlab.corpus import verify_dataset; print(json.dumps(verify_dataset('../data/longmemeval_s_cleaned.json'), indent=1))"`.
 
-## 2. Reach the node from the runner
-Run the runner on t2-dev itself, or tunnel (the client refuses non-loopback hosts):
+## 2. Chunk and embed (detached; resumable from out/emb/shards)
 ```
-ssh -F ~/.ssh/config_fleetops -N -L <LOCAL_PORT>:127.0.0.1:<ES_PORT> t2-dev
+cd eval && nohup nice -n 10 ../venv/bin/python embed.py --dataset ../data/longmemeval_s_cleaned.json --model-dir ../models --out ../out/emb --threads 12 --batch 32 > ../logs/embed.log 2>&1 &
+tail -f ../logs/embed.log
 ```
+Outputs: rounds.jsonl, chunks.jsonl, chunk_vectors.npy (float32, N x 384), queries.json, query_vectors.npy, embed_stats.json.
 
-## 3. Environment (versions pinned in eval/requirements.txt; installed only now, in a venv under the work directory)
+## 3. Pilot-only pre-computation and tuning (before the pre-registration is frozen)
 ```
-python3 -m venv <WORK>/venv && <WORK>/venv/bin/pip install -r eval/requirements.txt
+cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --action lowoverlap --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/lowoverlap_pilot.json
+cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever exact --action grid --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/grid_pilot.json
 ```
-Fetch the dataset into its own empty directory (`<DATA_DIR>`) and record its checksum and license in the manifest. The dataset and model downloads are the steps that need the user's go-ahead.
+Do not pass `--split test` or `--split all` until main has recorded the frozen hash of PREREGISTRATION.md on the ticket.
 
-## 4. Sanity (no dataset)
+## 4. After handover of the Elasticsearch node (not before)
+```
+cd eval && ../venv/bin/python -m emlab.indexer --es-url http://127.0.0.1:<ES_PORT> --credential-file <CRED_FILE> --artifacts ../out/emb --index emlab-chunks
+cd eval && ../venv/bin/python -m emlab.runner --phase R --retriever es --es-url http://127.0.0.1:<ES_PORT> --credential-file <CRED_FILE> --index emlab-chunks --split pilot --dataset-path ../data/longmemeval_s_cleaned.json --artifacts ../out/emb --out ../out/phaseR_pilot.json
+```
+Add `--reranker-dir ../models` to enable the rerank arm (needs BAAI/bge-reranker-v2-m3 in the cache). `<CRED_FILE>` is mode 0600 and outside the repo. The client refuses non-loopback hosts.
+
+## 5. Tests and dry run (anywhere, stdlib only)
 ```
 cd eval && python3 -m unittest
-cd eval && python3 -m emlab.runner --dry-run --out <WORK>/dry.json
+cd eval && python3 -m emlab.runner --dry-run
 ```
-
-## 5. Phase R (live runner commands are not implemented in the scaffold; this is the intended interface)
-```
-cd eval && python3 -m emlab.runner --phase R --es-url http://127.0.0.1:<ES_PORT> --credential-file <CRED_FILE> --dataset-path <DATA_DIR>/<FILE> --split pilot --seed 16096 --out <WORK>/phaseR_pilot.json
-cd eval && python3 -m emlab.runner --phase R --es-url http://127.0.0.1:<ES_PORT> --credential-file <CRED_FILE> --dataset-path <DATA_DIR>/<FILE> --split test --seed 16096 --out <WORK>/phaseR_test.json
-```
-Pilot first; fix the configuration and Phase F thresholds from the pilot, commit them, then run test once.
-
-## 6. Phase F
-Same interface with `--phase F`, model identifiers from the frozen pre-registration; provider credentials only via a credential FILE path, never an environment variable or argument.
-
-## 7. Teardown
-Stop and remove the Elasticsearch container or process, delete its data volume, stop the tunnel, confirm disk is back to the recorded baseline, and keep outputs under `<WORK>`. Record each step in the WAL.

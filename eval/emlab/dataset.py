@@ -1,8 +1,9 @@
-"""Dataset loader interface.
+"""Dataset loader interface for LongMemEval-S (cleaned): xiaowu0162/longmemeval-cleaned, MIT.
 
-LongMemEvalLoader parses the raw LongMemEval JSON layout AS RECALLED (ASSUMPTION; every field name is
-"to confirm from the dataset card"). The fixture under fixtures/ is hand-written in that same layout so
-the parser is exercised, but it proves nothing about the real files.
+Facts measured on the file by a verifier and re-checked by `emlab.corpus.verify_dataset`:
+500 questions; `answer` is sometimes an int (cast to str); abstention = question_id ending `_abs`
+(no gold location); haystack_session_ids are NOT chronological; 76 questions hold sessions dated later
+than question_date by under one day, so the as-of rule works at calendar-day granularity.
 """
 from __future__ import annotations
 
@@ -10,16 +11,17 @@ import abc
 import hashlib
 import json
 import math
+import os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 _DATE_RE = re.compile(r"(\d{4})/(\d{2})/(\d{2})(?:\s*\([A-Za-z]{3}\))?\s*(\d{2}):(\d{2})")
 
 
 def parse_date(s: str) -> datetime:
-    """Parse '2023/05/20 (Sat) 02:21' (format to confirm from the dataset card) or ISO 8601."""
+    """Parse '2023/05/20 (Sat) 02:21' or ISO 8601."""
     m = _DATE_RE.search(s)
     if m:
         y, mo, d, h, mi = (int(x) for x in m.groups())
@@ -27,15 +29,53 @@ def parse_date(s: str) -> datetime:
     return datetime.fromisoformat(s)
 
 
+def visible_as_of(session_date: datetime, question_date: datetime) -> bool:
+    """Day-granularity as-of rule: a session is visible iff its calendar day <= the question's calendar day.
+
+    A strict timestamp comparison would drop gold sessions dated hours after question_date (75 of 76 such
+    questions in LongMemEval-S have the later session as gold).
+    """
+    return session_date.date() <= question_date.date()
+
+
+def as_of_end_of_day(question_date: datetime) -> str:
+    """Upper bound string for the Elasticsearch `session_date` range filter (format strict_date_hour_minute)."""
+    return question_date.strftime("%Y-%m-%dT23:59")
+
+
 @dataclass
 class Turn:
-    turn_id: str
     session_id: str
     index: int
     role: str
     text: str
     has_answer: bool
     date: datetime
+
+
+@dataclass
+class Round:
+    """Index unit: a user message plus the assistant reply that follows it."""
+    round_id: str  # "<session_id>:<round index>"
+    session_id: str
+    index: int
+    text: str
+    has_answer: bool
+    date: datetime
+
+
+def build_rounds(sid: str, turns: Sequence[Turn]) -> List[Round]:
+    groups: List[List[Turn]] = []
+    for t in turns:
+        if t.role == "user" or not groups:
+            groups.append([t])
+        else:
+            groups[-1].append(t)
+    out: List[Round] = []
+    for i, g in enumerate(groups):
+        text = "\n".join("%s: %s" % (t.role, t.text) for t in g)
+        out.append(Round("%s:%d" % (sid, i), sid, i, text, any(t.has_answer for t in g), g[0].date))
+    return out
 
 
 @dataclass
@@ -47,21 +87,65 @@ class Question:
     question_date: datetime
     turns: List[Turn]
     gold_session_ids: List[str]
-    gold_turn_ids: List[str]
+    haystack_session_ids: List[str]
     stale_session_ids: List[str] = field(default_factory=list)  # our own annotation, not in LongMemEval
-    expected_low_overlap: Optional[bool] = None
 
     @property
     def is_abstention(self) -> bool:
-        return self.qid.endswith("_abs")  # convention to confirm from the dataset card
+        return self.qid.endswith("_abs")
 
     @property
     def session_ids(self) -> List[str]:
-        seen: List[str] = []
+        return list(self.haystack_session_ids)
+
+    @property
+    def rounds(self) -> List[Round]:
+        by: Dict[str, List[Turn]] = {}
         for t in self.turns:
-            if t.session_id not in seen:
-                seen.append(t.session_id)
-        return seen
+            by.setdefault(t.session_id, []).append(t)
+        out: List[Round] = []
+        for sid in self.haystack_session_ids:
+            out.extend(build_rounds(sid, by.get(sid, [])))
+        return out
+
+    @property
+    def gold_round_ids(self) -> List[str]:
+        return [r.round_id for r in self.rounds if r.has_answer]
+
+    @property
+    def retrieval_gold_session_ids(self) -> List[str]:
+        """Abstention questions are excluded from retrieval metrics even if a gold list is present."""
+        return [] if self.is_abstention else list(self.gold_session_ids)
+
+    @property
+    def retrieval_gold_round_ids(self) -> List[str]:
+        return [] if self.is_abstention else self.gold_round_ids
+
+    @property
+    def gold_latest_session_ids(self) -> List[str]:
+        """Knowledge-update only (non-abstention): the gold session with the latest date carries the CURRENT
+        value; the other gold sessions are stale (superseded). Registered rule; checked against the id
+        suffix convention in corpus.verify_dataset. Empty for every other question type."""
+        if self.qtype != "knowledge-update" or self.is_abstention or not self.gold_session_ids:
+            return []
+        dates = session_dates_of(self.turns)
+        known = [s for s in self.gold_session_ids if s in dates]
+        if not known:
+            return []
+        return [max(known, key=lambda s: (dates[s], s))]
+
+    @property
+    def late_session_ids(self) -> List[str]:
+        """Sessions dated after question_date on a timestamp basis (the named 76-question sub-stratum)."""
+        seen: Dict[str, datetime] = {t.session_id: t.date for t in self.turns}
+        return [s for s, d in seen.items() if d > self.question_date]
+
+
+def session_dates_of(turns: Sequence[Turn]) -> Dict[str, datetime]:
+    out: Dict[str, datetime] = {}
+    for t in turns:
+        out.setdefault(t.session_id, t.date)
+    return out
 
 
 class DatasetLoader(abc.ABC):
@@ -71,9 +155,6 @@ class DatasetLoader(abc.ABC):
 
 
 class LongMemEvalLoader(DatasetLoader):
-    """Parses a list of records with: question_id, question_type, question, answer, question_date,
-    haystack_session_ids, haystack_dates, haystack_sessions[[{role, content, has_answer?}]], answer_session_ids."""
-
     def __init__(self, path: str):
         self.path = path
 
@@ -94,22 +175,17 @@ class LongMemEvalLoader(DatasetLoader):
         for sid, dstr, sess in zip(sids, dates, sessions):
             d = parse_date(dstr)
             for i, t in enumerate(sess):
-                turns.append(Turn("%s:%d" % (sid, i), sid, i, t["role"], t["content"],
-                                  bool(t.get("has_answer", False)), d))
-        gold_sessions = list(rec.get("answer_session_ids", []))
-        gold_turns = [t.turn_id for t in turns if t.has_answer]
+                turns.append(Turn(sid, i, t["role"], t["content"], bool(t.get("has_answer", False)), d))
         return Question(
             qid=str(rec["question_id"]), qtype=rec["question_type"], question=rec["question"],
             answer=str(rec["answer"]), question_date=parse_date(rec["question_date"]), turns=turns,
-            gold_session_ids=gold_sessions, gold_turn_ids=gold_turns,
+            gold_session_ids=list(rec.get("answer_session_ids", [])), haystack_session_ids=list(sids),
             stale_session_ids=list(rec.get("x_stale_session_ids", [])),
-            expected_low_overlap=rec.get("x_expected_low_overlap"),
         )
 
 
 class FixtureLoader(LongMemEvalLoader):
     def __init__(self, path: Optional[str] = None):
-        import os
         super().__init__(path or os.path.join(os.path.dirname(__file__), "..", "fixtures", "tiny.json"))
 
 
@@ -117,19 +193,37 @@ SPLIT_SEED = 16096  # fixed before any data is seen; see PREREGISTRATION.md
 
 
 def split_pilot_test(qs: Sequence[Tuple[str, str]], seed: int = SPLIT_SEED,
-                     pilot_fraction: float = 0.2) -> Dict[str, str]:
-    """Deterministic stratified split by question id. qs = [(qid, stratum)] -> {qid: 'pilot'|'test'}.
+                     pilot_fraction: float = 0.2,
+                     clusters: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    """Deterministic stratified split. qs = [(qid, stratum)] -> {qid: 'pilot'|'test'}.
 
-    Within each stratum, ids are ordered by sha256("seed:qid") and the first ceil(fraction*n) become pilot
-    (at least one when n >= 2). Independent of Python version and of input order.
+    Units are clusters (questions sharing a gold session stay together; default: each question alone).
+    Within each stratum, units are ordered by sha256("seed:cluster id") and added to the pilot until the
+    pilot holds at least ceil(fraction*n) questions (at least one unit when the stratum has >= 2 units,
+    never all). Independent of Python version and of input order.
     """
-    by: Dict[str, List[str]] = {}
+    clusters = clusters or {}
+    by: Dict[str, Dict[str, List[str]]] = {}
     for qid, stratum in qs:
-        by.setdefault(stratum, []).append(qid)
+        by.setdefault(stratum, {}).setdefault(clusters.get(qid, qid), []).append(qid)
     out: Dict[str, str] = {}
-    for stratum, ids in by.items():
-        ids = sorted(ids, key=lambda q: hashlib.sha256(("%d:%s" % (seed, q)).encode()).hexdigest())
-        n_pilot = min(len(ids) - 1, max(1, math.ceil(pilot_fraction * len(ids)))) if len(ids) >= 2 else 0
-        for i, q in enumerate(ids):
-            out[q] = "pilot" if i < n_pilot else "test"
+    for stratum, units in by.items():
+        n = sum(len(v) for v in units.values())
+        want = math.ceil(pilot_fraction * n)
+        order = sorted(units, key=lambda c: hashlib.sha256(("%d:%s" % (seed, c)).encode()).hexdigest())
+        got = 0
+        for i, c in enumerate(order):
+            take = len(order) >= 2 and got < want and i < len(order) - 1
+            for q in units[c]:
+                out[q] = "pilot" if take else "test"
+            got += len(units[c]) if take else 0
     return out
+
+
+def select_split(questions: Sequence[Question], split: str) -> List[Question]:
+    """split in {'all','pilot','test'}; the split is computed over ALL questions then filtered."""
+    if split == "all":
+        return list(questions)
+    from .corpus import cluster_ids
+    sp = split_pilot_test([(q.qid, q.qtype) for q in questions], clusters=cluster_ids(questions))
+    return [q for q in questions if sp[q.qid] == split]

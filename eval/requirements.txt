@@ -1,7 +1,8 @@
-# Needed by LATER runs only; nothing here is installed or needed for the scaffold or its tests.
-# Exact versions to be re-verified against PyPI at run time (record the date in the run manifest).
-# Phase R embeddings (same model in every arm):
-sentence-transformers==3.3.1
-torch==2.5.1
-numpy==2.0.2
-# Phase F extraction/answer client is chosen after the user's answers (not pinned yet).
+# Live runs only; the scaffold and its unit tests are stdlib-only. Installed on t2-dev in ~/emlab-16096/venv
+# (Python 3.12.3, CPU-only torch wheel index https://download.pytorch.org/whl/cpu), versions as installed.
+torch==2.9.1+cpu
+transformers==4.57.1
+numpy==2.2.6
+tokenizers==0.22.2
+safetensors==0.8.0
+huggingface_hub==0.36.2
