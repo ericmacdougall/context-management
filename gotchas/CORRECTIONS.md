@@ -1,0 +1,16 @@
+# Classifications the critic corrected
+
+- RES-02, ORC-02, CAP-19, EFX-08: marked tested_claimed, should be gap. No session-lease fence exists. memsys/fencing.py has only tombstone and fold-claim checks, the alias fences index generations, and memcore/inbox.py uses a 30 s wall-clock claim lease with no token.
+- SEC-14: marked tested_reviewed, should be tested_claimed (faults found, fixes unreviewed). The review confirmed leaks (DLS term statistics, index-name collision); no defence has been reviewed, and cache and provider-org scoping are untested.
+- SEC-15: marked tested_reviewed, should be gap. The lab's lessons and the opaque-id fix address eval label leakage, not an author steering the reviewer or CI as the entry describes.
+- ORC-14, EFX-02: 'C2 todo' is wrong. C2_lag_tail.json passes (100 of 100 read-after-write via the tail; 600 events written during a projector pause all found). Mark the tail-scan leg tested_claimed; signal loss and the outbox stay untested.
+- EFX-04, OPS-01, GAP1-05: 'C5 todo' is wrong. C5_attack.json ran 6,000 generated histories, and its broken variants do fail. These are tested_claimed on generated data only; C4 and H6 are still todo.
+- EFX-07, OPS-05, OPS-28, GAP1-02, GAP2-03, GAP2-15: 'I5/I4 todo' is wrong. I4_I5_decisions.json covers 2,000 scenarios with failing broken variants. Mark tested_claimed (generated, single-thread, no authority).
+- EFX-15: 'F3 todo' is wrong. F3_inflight.json ran 200 runs per race, and the fence-off controls committed stale state 74 and 71 times. Amendment in flight is tested_claimed; the human-versus-agent race (J1) is not.
+- SEC-17, OPS-22, GAP2-07, ORC-08, FEN-10: 'tombstone race todo' is wrong, because C3d was run. But C3d_race_v2.json records pass:false with an insensitive fold control, and the rerun (C3d_race_v2_fold.json) passes on a control that failed only 2 of 200 times, so the fold leg is weakly proven.
+- OPS-25, WSP-28: marked tested_claimed, should be designed_untested. A gapless sequence from 16 writers on one host says nothing about clock skew or cross-host ordering.
+- RES-19, WSP-30, ORC-17, OPS-11: the claim that the freshness scan misses paraphrase comes from I3_freshness.json, whose vector leg is a hash-embedding stand-in. There is no real-model result, and false challengers appear in about 95% of scans.
+- OPS-33, WSP-18: marked tested_claimed, should be designed_untested. The evidence is a null (no headroom), and the 20-turn cost is owner-reported with no artifact.
+- Generator gotcha 'projector cursor skips late commits': marked reasoned, but it is already implemented (projector.py bounds reads by xmin) and tested once (XMIN_stall.json). Its status is tested_claimed without a failing control, not new.
+- RES-04: the 'no kill run' is partly wrong. C1b_crash_v2.json made 50 abrupt stops at 10 named projector and derive points. Append idempotency under concurrent retry is still untested, and the stops are self-exits at instrumented points.
+- Lab register (main checkout OPEN-QUESTIONS.md): rows C1-C8, F1-F3, F9-F11 and I3-I5 still read todo although result files exist in worktrees. F4-F8 commits exist, but engine/results/ is empty. Every row's status needs an evidence id or must be reported CLAIMED.
