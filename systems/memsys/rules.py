@@ -24,34 +24,43 @@ class Claim:
     trust_origin: str
     valid_from: object     # comparable timestamp (datetime or ISO string)
     order_key: str         # canonical total order, stored with the claim
+    scope: str = "*"       # '*' = whole slot; anything else narrows it (e.g. 'work')
 
 
 def norm(v: str) -> str:
     return " ".join(v.casefold().split())
 
 
-def resolve_slot(claims, rank=TRUST_RANK):
-    """Return {claim_id: (status, valid_to)}."""
+def resolve_slot(claims, rank=TRUST_RANK, cross_scope=True):
+    """Resolve every claim of one (subject, predicate) group. Returns {claim_id: (status, valid_to)}.
+
+    Within one scope a claim closes the current claim of rank <= its own. Across scopes: a scoped claim of LOWER
+    trust than the current whole-slot ('*') claim, with a different value, is disputed (a narrower scope must not be a
+    way around trust gating). cross_scope=False is the broken variant used by tests."""
     out = {}
-    cur: Optional[Claim] = None
+    cur = {}                      # scope -> current Claim
     for c in sorted(claims, key=lambda c: c.order_key):
         if c.modality in NON_ASSERTIVE:
             out[c.id] = (NON_ASSERTIVE[c.modality], None)
             continue
-        if cur is None:
-            out[c.id] = ("current", None)
-            cur = c
+        whole = cur.get("*")
+        if (cross_scope and c.scope != "*" and whole is not None and rank[c.trust_origin] < rank[whole.trust_origin]
+                and norm(c.object) != norm(whole.object)):
+            out[c.id] = ("disputed", None)
             continue
-        same = norm(c.object) == norm(cur.object)
-        r_new, r_cur = rank[c.trust_origin], rank[cur.trust_origin]
+        existing = cur.get(c.scope)
+        if existing is None:
+            out[c.id] = ("current", None)
+            cur[c.scope] = c
+            continue
+        same = norm(c.object) == norm(existing.object)
+        r_new, r_cur = rank[c.trust_origin], rank[existing.trust_origin]
         if same and r_new <= r_cur:
             out[c.id] = ("duplicate", None)
         elif r_new >= r_cur:
-            # equal or higher trust closes the current claim (same value at
-            # higher trust is a re-assertion that raises the slot's trust)
-            out[cur.id] = ("superseded", c.valid_from)
+            out[existing.id] = ("superseded", c.valid_from)
             out[c.id] = ("current", None)
-            cur = c
+            cur[c.scope] = c
         else:
             out[c.id] = ("disputed", None)
     return out

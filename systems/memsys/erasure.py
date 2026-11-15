@@ -1,124 +1,63 @@
-"""Deletion cascade for one data subject.
+"""Deletion cascade for one data subject (speaker-provenance erasure: events the subject produced and everything
+derived from them; data ABOUT the subject spoken by others is NOT covered, see exp/c3 cross-speaker case).
 
-Phase 1 (one Postgres transaction, serialised against derivation by the key row):
-  lock the subject's key row FOR UPDATE; tombstone every event of the subject;
-  destroy the key (content unreadable); delete every derived row whose input set
-  touches a tombstoned event; re-resolve the affected slots from the survivors
-  (an erased superseder reinstates its predecessor); invalidate and dirty affected
-  concepts (their claim token is cleared, so an in-flight fold cannot commit).
-Phase 2 (Elasticsearch, under the exclusive tenant fence):
-  deleting a document leaves its bytes in segment files (measured), so purge by
-  rebuilding each affected index generation from surviving rows, swapping the
-  aliases and deleting the old index in one atomic request.
+Phase 1 (one Postgres transaction): fence row FOR UPDATE (appends and derivation of this subject now refuse), tombstone
+every event, delete every derived fact whose input set touches a tombstoned event (taking the slot locks first),
+re-resolve the affected slots from survivors, delete or reset affected concepts, and WRITE A DURABLE erasure_jobs ROW.
+Then, idempotently and resumable by the sweeper: destroy the key in the key service (real delete + vacuum + checkpoint),
+purge Elasticsearch (rebuild every affected events bucket and EVERY facts index of the tenant from surviving rows, alias
+swap + old index delete in one request), verify, write the receipt. Until the job is done, readers hide tombstoned ids.
 """
 import json
 import time
 import uuid
 
 from . import derive as D
-from . import esx
-from .db import iso
-from .esc import ES
-
+from . import esx, kms as _kms
+from .db import iso, retry_deadlock
+from .esc import ES, ESError, bulk_errors
 from .projector import LOCK_SQL
 
 
-def phase1(conn, tenant, subject_id, recipes, receipt_id, hook=None):
+def phase1(conn, kms, tenant, subject_id, job_id, hook=None):
     t0 = time.time()
-    with conn.transaction():
-        cur = conn.cursor()
-        cur.execute("select 1 from keys where tenant_id=%s and subject_id=%s for update", (tenant, subject_id))
-        evs = cur.execute("select event_id, ts_event from events where tenant_id=%s and subject_id=%s", (tenant, subject_id)).fetchall()
-        ids = [e[0] for e in evs]
-        if hook:
-            hook()
-        cur.execute("insert into tombstones(tenant_id,event_id,subject_id,receipt_id) select %s, e, %s, %s from unnest(%s::text[]) e on conflict do nothing",
-                    (tenant, subject_id, receipt_id, ids))
-        cur.execute("update keys set key=null, destroyed_at=coalesce(destroyed_at, now()) where tenant_id=%s and subject_id=%s", (tenant, subject_id))
-        deleted = cur.execute("delete from facts where tenant_id=%s and input_event_ids && %s returning recipe_version, subject, predicate, scope, id",
-                              (tenant, ids)).fetchall()
-        by_recipe, subjects = {}, set()
-        fact_ids = {}
-        for rv, s, p, sc, fid in deleted:
-            fact_ids.setdefault(rv, []).append(fid)
-            by_recipe.setdefault(rv, set()).add((s, p, sc))
-            subjects.add(s)
-        reinstated = 0
-        for rv, slots in by_recipe.items():
-            D.resolve_slots(cur, tenant, rv, slots)
-        c = cur.execute("update concepts set digest=null, input_fact_ids='{}', input_event_ids='{}', dirty=true, gen=gen+1, "
-                        "claim_token=null, lease_until=null, pending_since=null, next_fold_at=clock_timestamp(), dirty_since=clock_timestamp() "
-                        "where tenant_id=%s and (input_event_ids && %s or concept_id = any(%s))", (tenant, ids, sorted(subjects)))
-        concepts = c.rowcount
-    return {"event_ids": ids, "ts": [e[1] for e in evs], "fact_ids": fact_ids, "facts_deleted": len(deleted), "concepts_reset": concepts,
-            "phase1_s": round(time.time() - t0, 3)}
+
+    def txn():
+        with conn.transaction():
+            cur = conn.cursor()
+            cur.execute("insert into subjects(tenant_id, subject_id) values (%s,%s) on conflict do nothing", (tenant, subject_id))
+            cur.execute("select erased from subjects where tenant_id=%s and subject_id=%s for update", (tenant, subject_id))
+            cur.execute("update subjects set erased=true, epoch=epoch+1 where tenant_id=%s and subject_id=%s", (tenant, subject_id))
+            evs = cur.execute("select event_id, ts_event from events where tenant_id=%s and subject_id=%s order by event_id", (tenant, subject_id)).fetchall()
+            ids = [e[0] for e in evs]
+            if hook:
+                hook()
+            cur.execute("insert into tombstones(tenant_id,event_id,subject_id,receipt_id) select %s, e, %s, %s from unnest(%s::text[]) e on conflict do nothing",
+                        (tenant, subject_id, job_id, ids))
+            doomed = cur.execute("select recipe_version, slot_hash, entity_hash from facts where tenant_id=%s and input_event_ids && %s", (tenant, ids)).fetchall()
+            by_recipe, ents = {}, set()
+            for rv, sh, eh in doomed:
+                by_recipe.setdefault(rv, set()).add(sh); ents.add(eh)
+            for rv in sorted(by_recipe):            # same global order as derivation: slot locks sorted, before any slot is read or changed
+                D.lock_slots(cur, tenant, rv, by_recipe[rv])
+            deleted = cur.execute("delete from facts where tenant_id=%s and input_event_ids && %s returning recipe_version", (tenant, ids)).rowcount
+            for rv in sorted(by_recipe):
+                D.resolve_slots(cur, kms, tenant, rv, by_recipe[rv])
+            gone = [e for e in ents if not cur.execute("select 1 from facts where tenant_id=%s and entity_hash=%s limit 1", (tenant, e)).fetchone()]
+            cdel = cur.execute("delete from concepts where tenant_id=%s and concept_id = any(%s)", (tenant, gone)).rowcount if gone else 0
+            c = cur.execute("update concepts set digest=null, input_fact_ids='{}', input_event_ids='{}', dirty=true, gen=gen+1, claim_token=null, lease_until=null, "
+                            "pending_since=null, next_fold_at=clock_timestamp(), dirty_since=clock_timestamp() "
+                            "where tenant_id=%s and (input_event_ids && %s or concept_id = any(%s))", (tenant, ids, sorted(ents))).rowcount
+            cur.execute("insert into erasure_jobs(job_id, tenant_id, subject_id, event_ids, event_ts) values (%s,%s,%s,%s,%s)",
+                        (job_id, tenant, subject_id, ids, [e[1] for e in evs]))
+            return {"events": len(ids), "facts_deleted": deleted, "concepts_deleted": cdel, "concepts_reset": c}
+    r = retry_deadlock(txn)
+    r["phase1_s"] = round(time.time() - t0, 3)
+    return r
 
 
-def _load_events(conn, tenant, b):
-    span = esx.BUCKET_DAYS * 86400
-    cur = conn.cursor()
-    cur.execute("select session_id, seq, event_id, ts_event, actor, trust_origin, kind, subject_id, mem_dec(tenant_id, subject_id, content_enc) "
-                "from events e where tenant_id=%s and ts_event >= to_timestamp(%s) and ts_event < to_timestamp(%s) "
-                "and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) order by ingest_seq",
-                (tenant, b * span, (b + 1) * span))
-    return cur
-
-
-def rebuild_events_bucket(conn, es: ES, tenant, b):
-    w = esx.ev_walias(tenant, b)
-    olds = esx.alias_targets(es, w)
-    if not olds:
-        return None
-    old = olds[0]
-    new = esx.ev_index(tenant, b, esx.gen_of(old) + 1)
-    es.req("DELETE", f"/{new}", ok=(200, 404))
-    es.req("PUT", f"/{new}")
-    lines = []
-    for sid, seq, eid, ts, actor, tr, kind, subj, plain in _load_events(conn, tenant, b):
-        if plain is None:
-            continue
-        lines.append({"index": {"_index": new, "_id": eid}})
-        lines.append(esx.event_doc(tenant, sid, seq, eid, iso(ts), actor, tr, kind, subj, plain))
-    _bulk_plain(es, lines)
-    es.req("POST", f"/{new}/_refresh")
-    esx.swap_generation(es, old, new, {w: {"is_write_index": True}, esx.ev_ralias(tenant): {}})
-    return (old, new, len(lines) // 2)
-
-
-def rebuild_facts_index(conn, es: ES, tenant, v):
-    w = esx.fx_walias(tenant, v)
-    olds = esx.alias_targets(es, w)
-    if not olds:
-        return None
-    old = olds[0]
-    live = old in esx.alias_targets(es, esx.fx_ralias(tenant))
-    new = esx.fx_index(tenant, v, esx.gen_of(old) + 1)
-    es.req("DELETE", f"/{new}", ok=(200, 404))
-    es.req("PUT", f"/{new}")
-    cur = conn.cursor()
-    cur.execute("select id, subject, predicate, scope, mem_dec(tenant_id, subject_id, object_enc), modality, status, author, trust_origin, "
-                "valid_from, valid_to, input_event_ids, recipe_version, subject_id, cue, rev from facts where tenant_id=%s and recipe_version=%s",
-                (tenant, v))
-    lines = []
-    for (fid, sub, pred, sc, obj, mod, st, au, tr, vf, vt, ie, rv, sid, cue, rev) in cur.fetchall():
-        if obj is None:
-            continue
-        f = dict(id=fid, tenant_id=tenant, subject=sub, predicate=pred, scope=sc, object=obj, modality=mod, status=st, author=au,
-                 trust_origin=tr, valid_from=iso(vf), valid_to=iso(vt) if vt else None, input_event_ids=ie, recipe_version=rv,
-                 subject_id=sid, cue=cue, rev=rev)
-        lines.append({"index": {"_index": new, "_id": fid}})
-        lines.append(esx.fact_doc(f))
-    _bulk_plain(es, lines)
-    es.req("POST", f"/{new}/_refresh")
-    aliases = {w: {"is_write_index": True}}
-    if live:
-        aliases[esx.fx_ralias(tenant)] = {}
-    esx.swap_generation(es, old, new, aliases)
-    return (old, new, len(lines) // 2)
-
-
+# ------------------------------------------------------------------ Elasticsearch purge
 def _bulk_plain(es, lines, chunk=800):
-    from .esc import bulk_errors, ESError
     for i in range(0, len(lines), chunk * 2):
         r = es.bulk(lines[i:i + chunk * 2])
         bad = bulk_errors(r)
@@ -126,40 +65,165 @@ def _bulk_plain(es, lines, chunk=800):
             raise ESError(500, bad[:3], "rebuild bulk")
 
 
-def erase_subject(conn, lockconn, es: ES, tenant, subject_id, recipes=(1,), fence=True, hook_phase1=None, hook_before_es=None, es_purge=True):
-    receipt_id = uuid.uuid4().hex[:16]
-    t0 = time.time()
-    p1 = phase1(conn, tenant, subject_id, recipes, receipt_id, hook_phase1)
-    t1 = time.time()
-    rebuilt = []
-    if es_purge:
-        if hook_before_es:
-            hook_before_es()
-        if fence:
-            lockconn.execute(f"select pg_advisory_lock({LOCK_SQL})", (tenant,))
-        try:
-            buckets = sorted({esx.bucket_of(ts) for ts in p1["ts"]})
-            for b in buckets:
-                rebuilt.append(["events", b, rebuild_events_bucket(conn, es, tenant, b)])
-            for v in recipes:
-                rebuilt.append(["facts", v, rebuild_facts_index(conn, es, tenant, v)])
-        finally:
-            if fence:
-                lockconn.execute(f"select pg_advisory_unlock({LOCK_SQL})", (tenant,))
-    t2 = time.time()
-    # verification queries (receipt evidence)
-    ids = p1["event_ids"]
+def rebuild_events_bucket(conn, kms, es: ES, tenant, b):
+    olds = esx._targets(es, f"sys-{tenant}-events-w{b:05d}-g*")
+    if not olds:
+        return None
+    old = olds[0]
+    g = esx.gen_of(old)
+    new = esx.ev_index(tenant, b, g + 1)
+    es.req("DELETE", f"/{new}", ok=(200, 404))
+    es.req("PUT", f"/{new}")
+    span = esx.BUCKET_DAYS * 86400
+    from . import store
+    rows = store.read_plain(conn, tenant, "ts_event >= to_timestamp(%s) and ts_event < to_timestamp(%s) and not exists "
+                            "(select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) order by ingest_seq",
+                            (b * span, (b + 1) * span), kms)
+    lines = []
+    for r in rows:
+        if r["plain"] is None:
+            continue
+        lines.append({"index": {"_index": new, "_id": r["event_id"]}})
+        lines.append(esx.event_doc(tenant, r["session_id"], r["seq"], r["event_id"], iso(r["ts_event"]), r["actor"], r["trust_origin"], r["kind"], r["subject_id"], r["plain"]))
+    _bulk_plain(es, lines)
+    es.req("POST", f"/{new}/_refresh")
+    esx.swap_generation(es, old, new, {esx.ev_walias(tenant, b, g + 1): {"is_write_index": True}, esx.ev_ralias(tenant): {}})
+    conn.execute("insert into es_buckets(tenant_id,bucket,gen) values (%s,%s,%s) on conflict (tenant_id,bucket) do update set gen=excluded.gen", (tenant, b, g + 1))
+    return (old, new, len(lines) // 2)
+
+
+def rebuild_facts_index(conn, kms, es: ES, tenant, v):
+    olds = esx._targets(es, f"sys-{tenant}-facts-w{v}-g*")
+    if not olds:
+        return None
+    old = olds[0]
+    g = esx.gen_of(old)
+    live = old in esx.alias_targets(es, esx.fx_ralias(tenant))
+    new = esx.fx_index(tenant, v, g + 1)
+    es.req("DELETE", f"/{new}", ok=(200, 404))
+    es.req("PUT", f"/{new}")
     cur = conn.cursor()
-    ver = {
-        "events_tombstoned": cur.execute("select count(*) from tombstones where tenant_id=%s and receipt_id=%s", (tenant, receipt_id)).fetchone()[0],
-        "events_still_decryptable": cur.execute("select count(*) from events where tenant_id=%s and subject_id=%s and mem_dec(tenant_id, subject_id, content_enc) is not null", (tenant, subject_id)).fetchone()[0],
-        "key_destroyed": cur.execute("select count(*) from keys where tenant_id=%s and subject_id=%s and key is null and destroyed_at is not null", (tenant, subject_id)).fetchone()[0],
-        "facts_touching_tombstoned": cur.execute("select count(*) from facts where tenant_id=%s and input_event_ids && %s", (tenant, ids)).fetchone()[0],
-        "concepts_touching_tombstoned": cur.execute("select count(*) from concepts where tenant_id=%s and input_event_ids && %s", (tenant, ids)).fetchone()[0],
-    }
-    receipt = {"receipt_id": receipt_id, "tenant": tenant, "subject_id": subject_id, "events_erased": len(ids),
-               "facts_deleted": p1["facts_deleted"], "concepts_reset": p1["concepts_reset"], "phase1_s": p1["phase1_s"],
-               "es_purge_s": round(t2 - t1, 3), "total_s": round(t2 - t0, 3), "es_rebuilt": rebuilt, "verification": ver,
-               "method": "alias-swap rebuild from surviving rows; old index deleted atomically", "bytes_checked_in_es": "see exp/c3 (marker scan)"}
-    cur.execute("insert into erasure_receipts(receipt_id, tenant_id, subject_id, doc) values (%s,%s,%s,%s)", (receipt_id, tenant, subject_id, json.dumps(receipt)))
+    cur.execute("select id, slot_enc, object_enc, modality, status, author, trust_origin, valid_from, valid_to, input_event_ids, recipe_version, subject_id, rev "
+                "from facts where tenant_id=%s and recipe_version=%s", (tenant, v))
+    rows = cur.fetchall()
+    n = len(rows)
+    dec = kms.dec_many(tenant, [(r[11], r[1]) for r in rows] + [(r[11], r[2]) for r in rows])
+    lines = []
+    for i, r in enumerate(rows):
+        if dec[i] is None or dec[n + i] is None:
+            continue
+        sub, pred, scope, cue = D.decode_slot(dec[i])
+        f = {"id": r[0], "tenant_id": tenant, "subject": sub, "predicate": pred, "scope": scope, "object": dec[n + i], "modality": r[3], "status": r[4], "author": r[5],
+             "trust_origin": r[6], "valid_from": iso(r[7]), "valid_to": iso(r[8]) if r[8] else None, "input_event_ids": r[9], "recipe_version": r[10],
+             "subject_id": r[11], "cue": cue, "rev": r[12]}
+        lines.append({"index": {"_index": new, "_id": r[0]}})
+        lines.append(esx.fact_doc(f))
+    _bulk_plain(es, lines)
+    es.req("POST", f"/{new}/_refresh")
+    aliases = {esx.fx_walias(tenant, v, g + 1): {"is_write_index": True}}
+    if live:
+        aliases[esx.fx_ralias(tenant)] = {}
+    esx.swap_generation(es, old, new, aliases)
+    conn.execute("insert into es_buckets(tenant_id,bucket,gen) values (%s,%s,%s) on conflict (tenant_id,bucket) do update set gen=excluded.gen", (tenant, -v, g + 1))
+    return (old, new, len(lines) // 2)
+
+
+def es_purge(conn, lockconn, kms, es, job, fence=True):
+    tenant = job["tenant_id"]
+    if fence:
+        lockconn.execute(f"select pg_advisory_lock({LOCK_SQL})", (tenant,))
+    rebuilt = []
+    try:
+        for b in sorted({esx.bucket_of(ts) for ts in job["event_ts"]}):
+            rebuilt.append(["events", b, rebuild_events_bucket(conn, kms, es, tenant, b)])
+        for v in sorted(esx.facts_versions(es, tenant)):      # EVERY facts index of the tenant, not only the recipes the caller knows
+            rebuilt.append(["facts", v, rebuild_facts_index(conn, kms, es, tenant, v)])
+    finally:
+        if fence:
+            lockconn.execute(f"select pg_advisory_unlock({LOCK_SQL})", (tenant,))
+    return rebuilt
+
+
+def verify(conn, kms, es, job):
+    tenant, subject_id, ids = job["tenant_id"], job["subject_id"], job["event_ids"]
+    cur = conn.cursor()
+    rows = cur.execute("select subject_id, content_enc from events where tenant_id=%s and subject_id=%s", (tenant, subject_id)).fetchall()
+    readable = sum(p is not None for p in kms.dec_many(tenant, [(r[0], r[1]) for r in rows]))
+    es_ev = es.req("POST", f"/sys-{tenant}-events/_search", {"size": 0, "track_total_hits": True, "query": {"terms": {"event_id": ids}}}, ok=(200, 404))[1]
+    es_ev = es_ev.get("hits", {}).get("total", {}).get("value", 0)
+    fx_idx = [r["index"] for r in esx.tenant_indices(es, tenant) if "-facts-v" in r["index"]]
+    es_fx = 0
+    if fx_idx:
+        es_fx = es.req("POST", f"/{','.join(fx_idx)}/_search", {"size": 0, "track_total_hits": True, "query": {"terms": {"input_event_ids": ids}}})[1]["hits"]["total"]["value"]
+    return {"events_tombstoned": cur.execute("select count(*) from tombstones where tenant_id=%s and subject_id=%s", (tenant, subject_id)).fetchone()[0],
+            "events_still_decryptable": readable, "key_destroyed": kms.is_destroyed(tenant, subject_id),
+            "pg_facts_touching_tombstoned": cur.execute("select count(*) from facts where tenant_id=%s and input_event_ids && %s", (tenant, ids)).fetchone()[0],
+            "pg_concepts_touching_tombstoned": cur.execute("select count(*) from concepts where tenant_id=%s and input_event_ids && %s", (tenant, ids)).fetchone()[0],
+            "es_event_docs": es_ev, "es_fact_docs_touching": es_fx, "es_facts_indices_checked": len(fx_idx)}
+
+
+def load_job(conn, job_id):
+    cur = conn.cursor()
+    cur.execute("select job_id, tenant_id, subject_id, state, event_ids, event_ts, attempts from erasure_jobs where job_id=%s", (job_id,))
+    r = cur.fetchone()
+    return dict(zip(("job_id", "tenant_id", "subject_id", "state", "event_ids", "event_ts", "attempts"), r))
+
+
+def complete_job(conn, lockconn, es, job_id, fence=True, kms=None, fail_at=None, es_purge_enabled=True):
+    """Run the remaining steps of a job; each is idempotent and the state advances only after the step succeeded.
+    fail_at: test injection, raises RuntimeError('injected: <step>') at the named point."""
+    kms = kms or _kms.get()
+    job = load_job(conn, job_id)
+    t0 = time.time()
+    try:
+        conn.execute("update erasure_jobs set attempts=attempts+1, updated_at=now() where job_id=%s", (job_id,))
+        if job["state"] == "pending":
+            if fail_at == "before_key_destroy":
+                raise RuntimeError("injected: before_key_destroy")
+            kms.destroy(job["tenant_id"], job["subject_id"])
+            conn.execute("update erasure_jobs set state='key_destroyed', updated_at=now() where job_id=%s", (job_id,)); job["state"] = "key_destroyed"
+        rebuilt = []
+        if job["state"] == "key_destroyed":
+            if fail_at == "before_es_purge":
+                raise RuntimeError("injected: before_es_purge")
+            if es_purge_enabled:
+                rebuilt = es_purge(conn, lockconn, kms, es, job, fence)
+            if fail_at == "after_es_purge":
+                raise RuntimeError("injected: after_es_purge")
+            conn.execute("update erasure_jobs set state='es_purged', updated_at=now() where job_id=%s", (job_id,)); job["state"] = "es_purged"
+        ver = verify(conn, kms, es, job)
+        receipt = {"receipt_id": job_id, "tenant": job["tenant_id"], "subject_id": job["subject_id"], "events_erased": len(job["event_ids"]), "es_rebuilt": rebuilt,
+                   "verification": ver, "attempts": job["attempts"] + 1, "es_and_key_steps_s": round(time.time() - t0, 3),
+                   "scope": "speaker-provenance erasure only (events produced by this subject and rows derived from them)"}
+        conn.execute("insert into erasure_receipts(receipt_id, tenant_id, subject_id, doc) values (%s,%s,%s,%s) on conflict (receipt_id) do update set doc=excluded.doc",
+                     (job_id, job["tenant_id"], job["subject_id"], json.dumps(receipt, default=str)))
+        conn.execute("update erasure_jobs set state='done', last_error=null, updated_at=now() where job_id=%s", (job_id,))
+        return receipt
+    except Exception as e:
+        conn.execute("update erasure_jobs set last_error=%s, updated_at=now() where job_id=%s", (f"{type(e).__name__}: {str(e)[:200]}", job_id))
+        raise
+
+
+def sweep(conn, lockconn, es, fence=True):
+    """Complete every open erasure job (run periodically and at start-up). Returns {job_id: 'done'|error}."""
+    out = {}
+    for (jid,) in conn.execute("select job_id from erasure_jobs where state <> 'done' order by created_at").fetchall():
+        try:
+            complete_job(conn, lockconn, es, jid, fence)
+            out[jid] = "done"
+        except Exception as e:
+            out[jid] = f"{type(e).__name__}: {str(e)[:100]}"
+    return out
+
+
+def erase_subject(conn, lockconn, es: ES, tenant, subject_id, recipes=None, fence=True, hook_phase1=None, fail_at=None, es_purge=True, kms=None):
+    """phase 1 + completion. `recipes` is accepted for compatibility and ignored: every facts index is discovered.
+    On an injected/real failure after phase 1 the job stays open (the sweeper finishes it) and the exception propagates."""
+    kms = kms or _kms.get()
+    job_id = uuid.uuid4().hex[:16]
+    p1 = phase1(conn, kms, tenant, subject_id, job_id, hook_phase1)
+    if fail_at == "after_phase1":
+        raise RuntimeError("injected: after_phase1")
+    receipt = complete_job(conn, lockconn, es, job_id, fence, kms, fail_at, es_purge)
+    receipt.update({"facts_deleted": p1["facts_deleted"], "concepts_deleted": p1["concepts_deleted"], "concepts_reset": p1["concepts_reset"], "phase1_s": p1["phase1_s"]})
     return receipt

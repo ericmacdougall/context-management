@@ -9,7 +9,7 @@ Order of operations matters:
 The tail scan is bounded; if more rows sit above the mark than the bound the
 result is flagged `tail_truncated` (degraded), never silently incomplete.
 """
-from . import esx, fusion
+from . import esx, fusion, kms as _kms
 from .esc import ESError
 
 LEG = 50
@@ -61,6 +61,12 @@ class Reader:
             out.append(h)
         return out
 
+    def _pending_tombstones(self, tenant, ids):
+        """Event ids among `ids` that are tombstoned while an erasure job for the tenant is still open."""
+        if not ids or not self.conn.execute("select 1 from erasure_jobs where tenant_id=%s and state <> 'done' limit 1", (tenant,)).fetchone():
+            return set()
+        return {r[0] for r in self.conn.execute("select event_id from tombstones where tenant_id=%s and event_id = any(%s)", (tenant, list(ids))).fetchall()}
+
     # ------------------------------------------------------------- events
     def search(self, tenant, text, k=10, vec_exact=False, tail=True):
         mark = self.hwm(tenant)                      # 1. mark BEFORE the ES search
@@ -74,19 +80,23 @@ class Reader:
             tl, tv, tail_info = self._tail(tenant, mark, text, qv)
             lists += [tl, tv]
             tail_ids = set(tl) | set(tv)
-        fused = fusion.rrf(lists, topn=k)
+        fused = fusion.rrf(lists, topn=k * 3)
+        hidden = self._pending_tombstones(tenant, [i for i, _ in fused])      # erased but ES not yet purged: never serve
+        fused = [x for x in fused if x[0] not in hidden][:k]
         hits = [{"id": i, "score": s, "via": ("es" if i in es_ids else "tail")} for i, s in fused]
         return {"hits": hits, "mark": mark, "tail": tail_info, "es_only_ids": lists[0] + [x for x in lists[1] if x not in lists[0]]}
 
     def _tail(self, tenant, mark, text, qv):
         cur = self.conn.cursor()
         cur.execute(
-            "select event_id, mem_dec(tenant_id, subject_id, content_enc) from events e where tenant_id=%s "
+            "select event_id, subject_id, content_enc from events e where tenant_id=%s "
             "and (commit_xid, ingest_seq) > (%s, %s) and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) "
             "order by commit_xid desc, ingest_seq desc limit %s", (tenant, mark[0], mark[1], self.tail_bound + 1))
         rows = cur.fetchall()
         truncated = len(rows) > self.tail_bound
-        rows = [r for r in rows[: self.tail_bound] if r[1] is not None]
+        rows = rows[: self.tail_bound]
+        pl = _kms.get().dec_many(tenant, [(r[1], r[2]) for r in rows])
+        rows = [(r[0], p) for r, p in zip(rows, pl) if p is not None]
         qt = fusion.tokens(text)
         lex = sorted(((fusion.lexical_score(qt, fusion.tokens(c)), eid) for eid, c in rows), key=lambda x: (-x[0], x[1]))
         vec = sorted(((fusion.cosine(qv, fusion.embed(c)), eid) for eid, c in rows), key=lambda x: (-x[0], x[1]))
@@ -98,9 +108,13 @@ class Reader:
     def search_facts(self, tenant, text, k=10, vec_exact=False):
         qv = fusion.embed(text)
         def go(pit):
-            bm, kn = self._legs(pit, "object", text, qv, vec_exact, src=["recipe_version", "status", "subject", "predicate"])
+            bm, kn = self._legs(pit, "object", text, qv, vec_exact, src=["recipe_version", "status", "subject", "predicate", "input_event_ids"])
             return bm, kn
         bm, kn = self._with_pit(f"sys-{tenant}-facts", go)
+        allh = bm + kn
+        inputs = {h["_id"]: h["_source"].get("input_event_ids", []) for h in allh}
+        hidden = self._pending_tombstones(tenant, [e for v in inputs.values() for e in v])
+        bm = [h for h in bm if not set(inputs[h["_id"]]) & hidden]; kn = [h for h in kn if not set(inputs[h["_id"]]) & hidden]
         versions = {h["_source"]["recipe_version"] for h in bm + kn}
         fused = fusion.rrf([[h["_id"] for h in bm], [h["_id"] for h in kn]], topn=k)
         return {"hits": [i for i, _ in fused], "versions": versions}

@@ -112,6 +112,38 @@ class Supersession(unittest.TestCase):
         self.assertIn("lower trust closed higher", violations(cs, res))
 
 
+class ScopeAndMarkers(unittest.TestCase):
+    def sc(self, i, obj, trust, scope, t):
+        c = C(i, obj, trust, t=t); c.scope = scope; return c
+
+    def test_lower_trust_scoped_claim_cannot_sit_beside_higher_trust_whole_claim(self):
+        cs = [self.sc(1, "555-1", "user_typed", "*", 0), self.sc(2, "666-2", "web", "work", 1)]
+        r = resolve_slot(cs)
+        self.assertEqual(r["c1"][0], "current"); self.assertEqual(r["c2"][0], "disputed")
+        # the broken variant (scope bypasses trust gating) leaves both current
+        rb = resolve_slot(cs, cross_scope=False)
+        self.assertEqual((rb["c1"][0], rb["c2"][0]), ("current", "current"))
+
+    def test_equal_or_higher_trust_scoped_claim_is_fine_and_scoped_does_not_close_whole(self):
+        cs = [self.sc(1, "555-1", "user_typed", "*", 0), self.sc(2, "666-2", "user_typed", "work", 1)]
+        r = resolve_slot(cs)
+        self.assertEqual((r["c1"][0], r["c2"][0]), ("current", "current"))
+        cs = [self.sc(1, "555-1", "user_typed", "*", 0), self.sc(2, "555-1", "web", "work", 1)]     # same value: no conflict
+        self.assertNotEqual(resolve_slot(cs)["c2"][0], "disputed")
+
+    def test_paste_and_quote_markers_lower_trust_of_a_user_typed_event(self):
+        ev = dict(TestEV, trust_origin="user_typed", actor="user")
+        self.assertEqual(extractor.extract(1, ev, "Pasted: Alice's city is Rome")[0]["trust_origin"], "user_supplied_external")
+        self.assertEqual(extractor.extract(1, ev, "As you said, Alice's city is Rome")[0]["trust_origin"], "assistant")
+        self.assertEqual(extractor.extract(1, ev, "According to the page, Alice's city is Rome")[0]["trust_origin"], "web")
+        self.assertEqual(extractor.extract(1, ev, "Alice's city is Rome")[0]["trust_origin"], "user_typed")
+        # a marker never RAISES trust
+        self.assertEqual(extractor.extract(1, dict(ev, trust_origin="web", actor="tool"), "Pasted: Alice's city is Rome")[0]["trust_origin"], "web")
+
+
+TestEV = dict(tenant_id="t01", session_id="s1", seq=1, event_id="t01/s1/1", hash="h", ts_event="2026-01-01T00:00:00.000000Z", subject_id="u1")
+
+
 class Extractor(unittest.TestCase):
     EV = dict(tenant_id="t01", session_id="s1", seq=1, event_id="t01/s1/1", hash="h", ts_event="2026-01-01T00:00:00.000000Z",
               trust_origin="user_typed", actor="user", subject_id="u1")

@@ -52,10 +52,10 @@ def bucket_of(ts_event) -> int:
 
 
 def ev_index(t, b, g):  return f"sys-{t}-events-b{b:05d}-g{g}"
-def ev_walias(t, b):    return f"sys-{t}-events-w{b:05d}"
+def ev_walias(t, b, g): return f"sys-{t}-events-w{b:05d}-g{g}"    # per-GENERATION write alias: a stale writer's bulk fails once its generation is gone
 def ev_ralias(t):       return f"sys-{t}-events"
 def fx_index(t, v, g):  return f"sys-{t}-facts-v{v}-g{g}"
-def fx_walias(t, v):    return f"sys-{t}-facts-w{v}"
+def fx_walias(t, v, g): return f"sys-{t}-facts-w{v}-g{g}"
 def fx_ralias(t):       return f"sys-{t}-facts"
 
 
@@ -106,35 +106,57 @@ def alias_targets(es: ES, alias: str):
     return sorted(j.keys()) if s == 200 else []
 
 
-def ensure_events_bucket(es: ES, t, b):
-    w = ev_walias(t, b)
-    if alias_targets(es, w):
-        return
-    name = ev_index(t, b, 1)
-    try:
-        es.req("PUT", f"/{name}", {"aliases": {w: {"is_write_index": True}, ev_ralias(t): {}}})
-    except ESError as e:
-        if "resource_already_exists" not in json.dumps(e.body):
-            raise
-        # index exists but the alias is missing: an interrupted generation swap; repair deterministically
-        es.req("POST", "/_aliases", {"actions": [{"add": {"index": name, "alias": w, "is_write_index": True}},
-                                               {"add": {"index": name, "alias": ev_ralias(t)}}]})
+def _targets(es: ES, pattern: str):
+    s, j = es.req("GET", f"/_alias/{pattern}", ok=(200, 404))
+    return sorted(j.keys()) if s == 200 and isinstance(j, dict) else []
 
 
-def ensure_facts_index(es: ES, t, v, live=False):
-    w = fx_walias(t, v)
-    if alias_targets(es, w):
-        return
-    name = fx_index(t, v, 1)
-    aliases = {w: {"is_write_index": True}}
-    if live:
-        aliases[fx_ralias(t)] = {}
+def _create_family_index(es: ES, name, aliases):
     try:
         es.req("PUT", f"/{name}", {"aliases": aliases})
     except ESError as e:
         if "resource_already_exists" not in json.dumps(e.body):
             raise
-        es.req("POST", "/_aliases", {"actions": [{"add": {"index": name, "alias": a, **({"is_write_index": True} if a == w else {})}} for a in aliases]})
+        es.req("POST", "/_aliases", {"actions": [{"add": {"index": name, "alias": a, **opts}} for a, opts in aliases.items()]})
+
+
+def ensure_events_bucket(es: ES, conn, t, b):
+    """Return the current generation of the (tenant, bucket) events index, creating generation 1 if the bucket is new.
+    The ES alias names are the authority; es_buckets is only a cache, repaired here."""
+    found = _targets(es, f"sys-{t}-events-w{b:05d}-g*")
+    if found:
+        g = max(gen_of(i) for i in found)
+    else:
+        row = conn.execute("select gen from es_buckets where tenant_id=%s and bucket=%s", (t, b)).fetchone()
+        g = row[0] if row else 1
+        _create_family_index(es, ev_index(t, b, g), {ev_walias(t, b, g): {"is_write_index": True}, ev_ralias(t): {}})
+    conn.execute("insert into es_buckets(tenant_id,bucket,gen) values (%s,%s,%s) on conflict (tenant_id,bucket) do update set gen=excluded.gen", (t, b, g))
+    return g
+
+
+def ensure_facts_index(es: ES, conn, t, v, live=False):
+    found = _targets(es, f"sys-{t}-facts-w{v}-g*")
+    if found:
+        g = max(gen_of(i) for i in found)
+    else:
+        row = conn.execute("select gen from es_buckets where tenant_id=%s and bucket=%s", (t, -v)).fetchone()
+        g = row[0] if row else 1
+        aliases = {fx_walias(t, v, g): {"is_write_index": True}}
+        if live:
+            aliases[fx_ralias(t)] = {}
+        _create_family_index(es, fx_index(t, v, g), aliases)
+    conn.execute("insert into es_buckets(tenant_id,bucket,gen) values (%s,%s,%s) on conflict (tenant_id,bucket) do update set gen=excluded.gen", (t, -v, g))
+    return g
+
+
+def facts_versions(es: ES, t):
+    """Every facts index family of the tenant that exists in ES: {recipe_version: generation}."""
+    out = {}
+    for i in _targets(es, f"sys-{t}-facts-w*-g*"):
+        m = re.match(rf"sys-{re.escape(t)}-facts-v(\d+)-g(\d+)$", i)
+        if m:
+            out[int(m.group(1))] = max(out.get(int(m.group(1)), 0), int(m.group(2)))
+    return out
 
 
 def gen_of(index_name: str) -> int:

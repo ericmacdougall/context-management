@@ -18,10 +18,25 @@ def connect(autocommit=False, application_name="memsys"):
                            autocommit=autocommit, application_name=application_name)
 
 
-def reset_schema(conn):
+def reset_schema(conn, kms_too=True):
     conn.autocommit = True
     conn.execute("drop schema public cascade; create schema public;")
     conn.execute(SCHEMA.read_text())
+    if kms_too:     # the key service is reset together with the event log (lab only)
+        from . import kms
+        kms.reset_schema()
+
+
+def retry_deadlock(fn, tries=6):
+    """Run fn(); retry on deadlock or serialization failure (the write and projector paths)."""
+    import time
+    for i in range(tries):
+        try:
+            return fn()
+        except (psycopg.errors.DeadlockDetected, psycopg.errors.SerializationFailure):
+            if i == tries - 1:
+                raise
+            time.sleep(0.02 * (i + 1))
 
 
 def iso(dt) -> str:

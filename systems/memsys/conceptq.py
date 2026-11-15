@@ -48,16 +48,19 @@ def claim(conn, limit=1, lease=LEASE_S):
     return rows
 
 
-def compute_fold(cur, tenant, concept_id, recipe=1):
-    """Deterministic stand-in for the LLM fold: a digest over the subject's current facts.
-    Regenerated from facts only, never from the previous concept state."""
+def compute_fold(cur, tenant, concept_id, recipe=1, kms=None):
+    """Deterministic stand-in for the LLM fold: a digest over the entity's current facts (concept_id is the keyed
+    entity hash; no plaintext in the row). Regenerated from facts only, never from the previous concept state."""
+    from . import kms as _kms
+    kms = kms or _kms.get()
     rows = cur.execute(
-        "select id, mem_dec(tenant_id, subject_id, object_enc), input_event_ids from facts "
-        "where tenant_id=%s and recipe_version=%s and subject=%s and status='current' order by predicate, scope, id",
-        (tenant, recipe, concept_id)).fetchall()
-    fids = [r[0] for r in rows if r[1] is not None]
-    evs = sorted({e for r in rows if r[1] is not None for e in r[2]})
-    h = hashlib.sha256("|".join(f"{r[0]}={r[1]}" for r in rows if r[1] is not None).encode()).hexdigest()
+        "select id, object_enc, subject_id, input_event_ids from facts where tenant_id=%s and recipe_version=%s and entity_hash=%s and status='current' "
+        "order by slot_hash, id", (tenant, recipe, concept_id)).fetchall()
+    objs = kms.dec_many(tenant, [(r[2], r[1]) for r in rows])
+    live = [(r, o) for r, o in zip(rows, objs) if o is not None]
+    fids = [r[0] for r, _ in live]
+    evs = sorted({e for r, _ in live for e in r[3]})
+    h = hashlib.sha256("|".join(f"{r[0]}={o}" for r, o in live).encode()).hexdigest()
     return fids, evs, h
 
 

@@ -80,31 +80,34 @@ def strip_gen(idx):
 
 
 def pg_expected_events(conn, tenant):
-    """Expected {event_id: doc_hash} computed from Postgres, independent of the projector."""
+    """Expected {event_id: (bucket, doc_hash)} computed from Postgres, independent of the projector."""
     from memsys.db import iso
-    cur = conn.cursor()
-    cur.execute("select session_id, seq, event_id, ts_event, actor, trust_origin, kind, subject_id, mem_dec(tenant_id, subject_id, content_enc) "
-                "from events e where tenant_id=%s and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id)", (tenant,))
+    from memsys import store
     out = {}
-    for sid, seq, eid, ts, actor, tr, kind, subj, plain in cur:
-        if plain is None:
+    for r in store.read_plain(conn, tenant, "true", ()):
+        if r["tomb"] or r["plain"] is None:
             continue
-        out[eid] = (esx.bucket_of(ts), esx.doc_hash(esx.event_doc(tenant, sid, seq, eid, iso(ts), actor, tr, kind, subj, plain)))
+        out[r["event_id"]] = (esx.bucket_of(r["ts_event"]), esx.doc_hash(esx.event_doc(tenant, r["session_id"], r["seq"], r["event_id"], iso(r["ts_event"]), r["actor"],
+                                                                                         r["trust_origin"], r["kind"], r["subject_id"], r["plain"])))
     return out
 
 
 def pg_expected_facts(conn, tenant, recipe):
     from memsys.db import iso
+    from memsys import kms as _kms, derive as D
     cur = conn.cursor()
-    cur.execute("select id, subject, predicate, scope, mem_dec(tenant_id, subject_id, object_enc), modality, status, author, trust_origin, "
-                "valid_from, valid_to, input_event_ids, recipe_version, subject_id, cue, rev from facts where tenant_id=%s and recipe_version=%s", (tenant, recipe))
+    cur.execute("select id, slot_enc, object_enc, modality, status, author, trust_origin, valid_from, valid_to, input_event_ids, recipe_version, subject_id, rev "
+                "from facts where tenant_id=%s and recipe_version=%s", (tenant, recipe))
+    rows = cur.fetchall(); n = len(rows)
+    dec = _kms.get().dec_many(tenant, [(r[11], r[1]) for r in rows] + [(r[11], r[2]) for r in rows])
     out = {}
-    for (fid, sub, pred, sc, obj, mod, st, au, tr, vf, vt, ie, rv, sid, cue, rev) in cur:
-        if obj is None:
+    for i, r in enumerate(rows):
+        if dec[i] is None or dec[n + i] is None:
             continue
-        f = dict(id=fid, tenant_id=tenant, subject=sub, predicate=pred, scope=sc, object=obj, modality=mod, status=st, author=au, trust_origin=tr,
-                 valid_from=iso(vf), valid_to=iso(vt) if vt else None, input_event_ids=ie, recipe_version=rv, subject_id=sid, cue=cue, rev=rev)
-        out[fid] = esx.doc_hash(esx.fact_doc(f))
+        sub, pred, scope, cue = D.decode_slot(dec[i])
+        f = dict(id=r[0], tenant_id=tenant, subject=sub, predicate=pred, scope=scope, object=dec[n + i], modality=r[3], status=r[4], author=r[5], trust_origin=r[6],
+                 valid_from=iso(r[7]), valid_to=iso(r[8]) if r[8] else None, input_event_ids=r[9], recipe_version=r[10], subject_id=r[11], cue=cue, rev=r[12])
+        out[r[0]] = esx.doc_hash(esx.fact_doc(f))
     return out
 
 

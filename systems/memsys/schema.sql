@@ -1,33 +1,13 @@
--- Source of truth for the memory write path. Plaintext of subject-keyed content
--- never reaches Postgres storage: events and fact objects are AES-encrypted
--- (pgcrypto) under a per-data-subject key that lives in `keys`.
-create extension if not exists pgcrypto;
+-- Source of truth for the memory write path (events database). This database holds NO key material and no
+-- subject-keyed plaintext: events and fact text are ciphertext made by the key service (kms.py).
 
-create table keys (
+-- Key-free fence row per data subject. Appends and derivation take FOR SHARE and refuse an erased subject;
+-- erasure takes FOR UPDATE and flips `erased`. Lives here so the fence is transactional with the writes it protects.
+create table subjects (
   tenant_id text not null, subject_id text not null,
-  key bytea, created_at timestamptz not null default now(), destroyed_at timestamptz,
+  erased boolean not null default false, epoch bigint not null default 0,
   primary key (tenant_id, subject_id)
 );
-
--- Encrypt under the subject's key. FOR SHARE on the key row is the commit-time
--- fence: erasure takes FOR UPDATE on the same row, so a derived write either
--- commits before erasure (and is purged by it) or fails after it.
-create function mem_enc(t text, s text, plain text) returns bytea language plpgsql as $$
-declare k bytea; d timestamptz; iv bytea;
-begin
-  insert into keys(tenant_id, subject_id, key) values (t, s, gen_random_bytes(32)) on conflict do nothing;
-  select key, destroyed_at into k, d from keys where tenant_id = t and subject_id = s for share;
-  if d is not null or k is null then raise exception 'subject_erased: %', s using errcode = 'P0001'; end if;
-  iv := gen_random_bytes(16);
-  return iv || encrypt_iv(convert_to(plain, 'UTF8'), k, iv, 'aes-cbc/pad:pkcs');
-end $$;
-
--- NULL when the key is destroyed (content unreadable).
-create function mem_dec(t text, s text, c bytea) returns text language sql stable as $$
-  select case when k.destroyed_at is null and k.key is not null
-    then convert_from(decrypt_iv(substring(c from 17), k.key, substring(c from 1 for 16), 'aes-cbc/pad:pkcs'), 'UTF8') end
-  from keys k where k.tenant_id = t and k.subject_id = s
-$$;
 
 create table sessions (
   tenant_id text not null, session_id text not null,
@@ -40,6 +20,7 @@ create sequence ingest_seq;
 create table events (
   tenant_id text not null, session_id text not null, seq bigint not null,
   event_id text not null unique,
+  client_event_id text,
   ingest_seq bigint not null default nextval('ingest_seq'),
   commit_xid bigint not null default (pg_current_xact_id()::text)::bigint,
   ts_event timestamptz not null, ts_ingested timestamptz not null default clock_timestamp(),
@@ -47,10 +28,16 @@ create table events (
   trust_origin text not null check (trust_origin in ('user_typed','user_supplied_external','assistant','tool','web')),
   kind text not null,
   content_enc bytea not null, prev_hash text not null, hash text not null,
-  primary key (tenant_id, session_id, seq)
+  primary key (tenant_id, session_id, seq),
+  -- trust is a function of who produced the event: an assistant or tool event can never carry user_typed
+  constraint actor_trust_consistent check (
+    (actor = 'user' and trust_origin in ('user_typed','user_supplied_external')) or
+    (actor = 'assistant' and trust_origin = 'assistant') or
+    (actor = 'tool' and trust_origin in ('tool','web')))
 );
 create index events_cursor on events (tenant_id, commit_xid, ingest_seq);
 create index events_subject on events (tenant_id, subject_id);
+create unique index events_client_id on events (tenant_id, client_event_id) where client_event_id is not null;
 
 create function events_append_only() returns trigger language plpgsql as $$
 begin raise exception 'events is append-only'; end $$;
@@ -65,21 +52,25 @@ create table tombstones (
 
 create sequence fact_rev;
 
+-- Slot text (subject, predicate, scope, cue) and object are ciphertext under the speaker's key. slot_hash and
+-- entity_hash are keyed hashes (tenant key in the key service) used for grouping, locking and concept ids.
 create table facts (
   tenant_id text not null, recipe_version int not null, id text not null,
-  subject text not null, predicate text not null, scope text not null default '*',
-  object_enc bytea not null, modality text not null, author text not null, trust_origin text not null,
+  slot_hash text not null, entity_hash text not null,
+  slot_enc bytea not null, object_enc bytea not null,
+  modality text not null, author text not null, trust_origin text not null,
   valid_from timestamptz not null, valid_to timestamptz, status text not null default 'new',
   input_event_ids text[] not null, subject_id text not null, order_key text not null,
-  cue text,
   rev bigint not null default nextval('fact_rev'),
   changed_xid bigint not null default (pg_current_xact_id()::text)::bigint,
   primary key (tenant_id, recipe_version, id)
 );
 create index facts_cursor on facts (tenant_id, recipe_version, changed_xid, rev);
-create index facts_slot on facts (tenant_id, recipe_version, subject, predicate, scope);
+create index facts_slot on facts (tenant_id, recipe_version, slot_hash);
+create index facts_entity on facts (tenant_id, recipe_version, entity_hash);
 create index facts_inputs on facts using gin (input_event_ids);
 
+-- concept_id is the entity_hash: no plaintext in the row.
 create table concepts (
   tenant_id text not null, concept_id text not null,
   dirty boolean not null default true, dirty_since timestamptz default now(),
@@ -99,6 +90,7 @@ create table projection_state (
   primary key (view, version, tenant_id)
 );
 
+-- cache of the current generation per index family (the ES alias names are the authority; see esx.ensure_*)
 create table es_buckets (
   tenant_id text not null, bucket int not null, gen int not null default 1,
   primary key (tenant_id, bucket)
@@ -108,3 +100,13 @@ create table erasure_receipts (
   receipt_id text primary key, tenant_id text not null, subject_id text not null,
   doc jsonb not null, created_at timestamptz not null default now()
 );
+
+-- Durable erasure state: written in the phase-1 transaction, completed idempotently by erase_subject or the sweeper.
+create table erasure_jobs (
+  job_id text primary key, tenant_id text not null, subject_id text not null,
+  state text not null default 'pending' check (state in ('pending','key_destroyed','es_purged','done')),
+  event_ids text[] not null, event_ts timestamptz[] not null,
+  attempts int not null default 0, last_error text,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create index erasure_jobs_open on erasure_jobs (tenant_id) where state <> 'done';
