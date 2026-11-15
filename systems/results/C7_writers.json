@@ -1,0 +1,64 @@
+{
+ "workload": "16 processes, 1 event per transaction, one session, synchronous_commit=on, PG16 container 4 cpus/4g on t2-dev (shared 48-core host)",
+ "disk_free_gb_before": 77.8,
+ "row_lock": {
+  "mode": "row_lock",
+  "writers": 16,
+  "appends_attempted": 100000,
+  "duration_s": 251.9,
+  "throughput_per_s": 397.0,
+  "append_latency_s": {
+   "p50": 0.0372,
+   "p90": 0.0542,
+   "p95": 0.0639,
+   "p99": 0.0947,
+   "p100": 1.864
+  },
+  "lock_wait_s": {
+   "p50": 0.0345,
+   "p90": 0.0511,
+   "p95": 0.0605,
+   "p99": 0.0904,
+   "p100": 1.8586
+  },
+  "errors": 0,
+  "verify": {
+   "rows": 100000,
+   "chain_ok": true,
+   "first_bad_seq": null,
+   "gapless": true,
+   "distinct_payloads": 100000,
+   "duplicated_payloads": 0,
+   "lost_payloads": 0,
+   "unexpected_payloads": 0
+  }
+ },
+ "no_lock_control": {
+  "mode": "no_lock",
+  "writers": 16,
+  "appends_attempted": 4000,
+  "duration_s": 1.5,
+  "throughput_per_s": 2753.2,
+  "append_latency_s": {
+   "p50": 0.0042,
+   "p90": 0.0068,
+   "p95": 0.0109,
+   "p99": 0.0336,
+   "p100": 0.0442
+  },
+  "lock_wait_s": {},
+  "errors": 3685,
+  "verify": {
+   "rows": 315,
+   "chain_ok": true,
+   "first_bad_seq": null,
+   "gapless": true,
+   "distinct_payloads": 315,
+   "duplicated_payloads": 0,
+   "lost_payloads": 3685,
+   "unexpected_payloads": 0
+  }
+ },
+ "pass": true,
+ "disk_free_gb_after": 77.7
+}

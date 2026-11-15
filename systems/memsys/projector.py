@@ -23,11 +23,12 @@ LOCK_SQL = "hashtextextended('proj:' || %s, 0)"
 
 
 class Projector:
-    def __init__(self, conn, lockconn, es: ES, recipes=(1,), live_recipe=1, batch=500, tenants=None, fence=True, derive=True):
+    def __init__(self, conn, lockconn, es: ES, recipes=(1,), live_recipe=1, batch=500, tenants=None, fence=True, derive=True, delay=None):
         self.conn, self.lock, self.es = conn, lockconn, es
         self.recipes, self.live, self.batch = list(recipes), live_recipe, batch
         self.tenant_filter, self.fence, self.do_derive = tenants, fence, derive
         self.known_ev, self.known_fx = set(), set()
+        self.delay = delay   # test hook: called between reading a batch and writing it to Elasticsearch
 
     def tenants(self):
         ts = D.tenants(self.conn)
@@ -61,6 +62,8 @@ class Projector:
             self._advance("events", 1, t, xm - 1, D.BIG)
             return 0
         D.crash("mirror_after_read")
+        if self.delay:
+            self.delay()
         lines, touched = [], set()
         for r in rows:
             if r["tomb"] or r["plain"] is None:

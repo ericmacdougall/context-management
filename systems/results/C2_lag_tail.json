@@ -1,0 +1,52 @@
+{
+ "workload": "50 single-event appends/s for 120 s into one tenant (5 sessions), projector batch 500 with explicit refresh per batch; PG16 + ES 9.5.6 single node on t2-dev (shared)",
+ "steady": {
+  "appends": 6001,
+  "probed": 601,
+  "not_found_in_30s": 0,
+  "append_to_searchable_s": {
+   "p50": 0.0516,
+   "p90": 0.1272,
+   "p95": 0.2685,
+   "p99": 0.6297,
+   "p100": 1.0091
+  },
+  "mean_s": 0.078
+ },
+ "read_after_write": {
+  "trials": 100,
+  "found_with_tail": 100,
+  "found_via": {
+   "es": 0,
+   "tail": 100
+  },
+  "found_without_tail_scan": 0
+ },
+ "paused": {
+  "paused_s": 60,
+  "events_written_while_paused": 600,
+  "hwm_unchanged": true,
+  "found_with_default_tail_bound_2000": 600,
+  "tail_info_default": {
+   "rows": 600,
+   "truncated": false
+  },
+  "tail_bound_300": {
+   "found": 300,
+   "queries_flagged_truncated": 600,
+   "of": 600
+  }
+ },
+ "catchup_s": 0.44,
+ "final_compare": {
+  "pg": 6702,
+  "es": 6702,
+  "missing": 0,
+  "extra": 0,
+  "duplicates": 0,
+  "hash_mismatch": 0,
+  "wrong_bucket": 0,
+  "examples": []
+ },
+ "pass": true
+}

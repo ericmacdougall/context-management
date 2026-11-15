@@ -1,0 +1,79 @@
+{
+ "workload": "3000 concepts, zipf s=1.1 skew, 400 activities/s for 90s (35123 activities), 8 worker processes, fold work 20 ms, PG16 4cpu on t2-dev",
+ "registered": {
+  "debounce_s": 1.0,
+  "max_wait_s": 5.0,
+  "lease_s": 30.0,
+  "bound_B_s": 7.0
+ },
+ "activities": 35123,
+ "folds": 11773,
+ "folds_rejected": 0,
+ "unserved_activities": 0,
+ "still_dirty_after_drain": 0,
+ "latency_all_s": {
+  "p50": 1.5164,
+  "p90": 4.2605,
+  "p95": 4.6948,
+  "p99": 5.0306,
+  "p100": 5.6953
+ },
+ "latency_hot_s": {
+  "p50": 2.7332,
+  "p90": 4.6105,
+  "p95": 4.8525,
+  "p99": 5.0398,
+  "p100": 5.4562
+ },
+ "latency_cold_s": {
+  "p50": 1.1277,
+  "p90": 3.6577,
+  "p95": 4.3794,
+  "p99": 5.0258,
+  "p100": 5.6953
+ },
+ "concepts_folded": 2486,
+ "overlapping_folds_same_concept": 0,
+ "hot_concepts": {
+  "k00000": {
+   "activities": 5755,
+   "folds": 18,
+   "max_gap_between_fold_claims_s": 5.38,
+   "mean_gap_s": 5.05
+  },
+  "k00001": {
+   "activities": 2708,
+   "folds": 18,
+   "max_gap_between_fold_claims_s": 5.5,
+   "mean_gap_s": 5.07
+  },
+  "k00002": {
+   "activities": 1716,
+   "folds": 19,
+   "max_gap_between_fold_claims_s": 5.24,
+   "mean_gap_s": 4.78
+  },
+  "k00003": {
+   "activities": 1264,
+   "folds": 19,
+   "max_gap_between_fold_claims_s": 5.28,
+   "mean_gap_s": 4.79
+  },
+  "k00004": {
+   "activities": 1005,
+   "folds": 19,
+   "max_gap_between_fold_claims_s": 5.24,
+   "mean_gap_s": 4.78
+  }
+ },
+ "lease_expiry_case": {
+  "a_claimed": true,
+  "b_claimed_after_expiry": true,
+  "b_commit": "committed",
+  "a_late_commit": "rejected",
+  "final_digest": "B",
+  "fold_count": 1,
+  "pass": true
+ },
+ "pass": true
+}

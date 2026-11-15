@@ -1,0 +1,23 @@
+{
+ "correct_variant": {
+  "cases": 20000,
+  "web_vs_user_typed": 7181,
+  "pasted_vs_user_typed": 7210,
+  "assistant_vs_user_typed": 7200,
+  "hypothetical_or_proposed": 15832,
+  "partial_scope_vs_whole": 2000,
+  "violations": {}
+ },
+ "broken_variant_no_gating": {
+  "cases": 20000,
+  "web_vs_user_typed": 7181,
+  "pasted_vs_user_typed": 7210,
+  "assistant_vs_user_typed": 7200,
+  "hypothetical_or_proposed": 15832,
+  "partial_scope_vs_whole": 2000,
+  "violations": {
+   "lower_trust_closed_higher": 11733
+  }
+ },
+ "pass": true
+}

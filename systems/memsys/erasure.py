@@ -35,10 +35,12 @@ def phase1(conn, tenant, subject_id, recipes, receipt_id, hook=None):
         cur.execute("insert into tombstones(tenant_id,event_id,subject_id,receipt_id) select %s, e, %s, %s from unnest(%s::text[]) e on conflict do nothing",
                     (tenant, subject_id, receipt_id, ids))
         cur.execute("update keys set key=null, destroyed_at=coalesce(destroyed_at, now()) where tenant_id=%s and subject_id=%s", (tenant, subject_id))
-        deleted = cur.execute("delete from facts where tenant_id=%s and input_event_ids && %s returning recipe_version, subject, predicate, scope",
+        deleted = cur.execute("delete from facts where tenant_id=%s and input_event_ids && %s returning recipe_version, subject, predicate, scope, id",
                               (tenant, ids)).fetchall()
         by_recipe, subjects = {}, set()
-        for rv, s, p, sc in deleted:
+        fact_ids = {}
+        for rv, s, p, sc, fid in deleted:
+            fact_ids.setdefault(rv, []).append(fid)
             by_recipe.setdefault(rv, set()).add((s, p, sc))
             subjects.add(s)
         reinstated = 0
@@ -48,7 +50,7 @@ def phase1(conn, tenant, subject_id, recipes, receipt_id, hook=None):
                         "claim_token=null, lease_until=null, pending_since=null, next_fold_at=clock_timestamp(), dirty_since=clock_timestamp() "
                         "where tenant_id=%s and (input_event_ids && %s or concept_id = any(%s))", (tenant, ids, sorted(subjects)))
         concepts = c.rowcount
-    return {"event_ids": ids, "ts": [e[1] for e in evs], "facts_deleted": len(deleted), "concepts_reset": concepts,
+    return {"event_ids": ids, "ts": [e[1] for e in evs], "fact_ids": fact_ids, "facts_deleted": len(deleted), "concepts_reset": concepts,
             "phase1_s": round(time.time() - t0, 3)}
 
 
