@@ -137,7 +137,7 @@ def build(dataset, art, facts_path, cues_path, sets_path, out_root, budget, lowo
                     anon_items = [dict(i, item_id=("src:" if i["kind"] == "source_round" else "") + opaque_rid(i["round_id"])
                                        if i["kind"] != "fact" else i["item_id"], round_id=opaque_rid(i["round_id"]),
                                        session_id=opaque_sid(i["session_id"])) for i in items]
-                    write_context(out_root, arm, lv, q, budget, anon_items)
+                    write_context(out_root, arm, lv, q, budget, anon_items, set(ctx.hashes))
                 m.update({"qid": q.qid, "qtype": q.qtype, "arm": arm, "level": lv, "abstention": q.is_abstention,
                           "low_overlap_h3": q.qid in low})
                 metrics.append(m)

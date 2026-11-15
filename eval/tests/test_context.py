@@ -144,3 +144,24 @@ class Anon(unittest.TestCase):
         good, rejected = real_ranked({"ranked_round_ids": [opaque_rid("s_a:0"), opaque_rid("s_b:1"), opaque_rid("s_c:2")]}, ok, am)
         self.assertEqual(good, ["s_a:0", "s_b:1"])
         self.assertEqual(rejected, 1)     # s_c:2 was returned for another question only
+
+
+class Guard(unittest.TestCase):
+    def test_guard_refuses_real_ids_and_label_patterns(self):
+        from emlab.guard import LeakError, check
+        real = {"answer_ab12cd_1", "0123abcd", "sharegpt_X1"}
+        check({"round_id": "s123456789abc:3", "text": "hello world"}, real)       # opaque ids pass
+        for bad in ({"session_id": "answer_ab12cd_1"}, {"round_id": "0123abcd:4"}, {"x": ["see answer_ff00aa_2"]},
+                    {"text": "from sharegpt_Q9 conversation"}, {"ultrachat_77": 1}):
+            with self.assertRaises(LeakError):
+                check(bad, real)
+
+    def test_write_context_refuses_leaky_items(self):
+        import tempfile
+        from emlab.context import write_context
+        from emlab.guard import LeakError
+        q = list(FixtureLoader().questions())[0]
+        item = {"item_id": "x", "kind": "round", "session_id": "ku_s4", "round_id": "ku_s4:0", "round_index": 0, "date": "d",
+                "text": "t", "tokens": 1, "rank": 0}
+        with self.assertRaises(LeakError):
+            write_context(tempfile.mkdtemp(), "rag", "H0", q, 10, [item], {"ku_s4"})

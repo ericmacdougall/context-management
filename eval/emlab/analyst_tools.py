@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional
 
 from .anon import opaque_rid, opaque_sid
 from .fusion import rrf
+from .guard import check as guard_check
 from .retrievers import tokens
 
 MAX_CALLS = 12
@@ -240,6 +241,10 @@ def handle(backend: Backend, req: Dict[str, Any], log_path: str, qid: str, level
         fh.write(json.dumps({"ts": time.time(), "qid": qid, "level": level, "tool": req.get("tool"),
                              "args": req.get("args", {}), "returned_ids": returned_ids(resp), "seconds": dt,
                              "error": resp.get("error")}) + "\n")
+    try:
+        guard_check(resp, set(backend.by_session))  # a tool output must never carry a real id
+    except Exception as e:
+        resp = {"error": "output withheld by the id guard: %s" % e}
     resp["budget_used"] = {"calls": st["calls"] + 1, "seconds": round(st["seconds"] + dt, 3)}
     return resp
 
@@ -258,8 +263,15 @@ def serve_socket(art: str, scope_dir: str, sock_path: str, log_path: str, model_
     srv.bind(sock_path)
     os.chmod(sock_path, 0o600)
     srv.listen(8)
-    while True:
-        conn, _ = srv.accept()
+    srv.settimeout(5.0)
+    stop = sock_path + ".stop"  # stop-file: touch it to end this daemon without a signal
+    if os.path.exists(stop):
+        os.remove(stop)
+    while not os.path.exists(stop):
+        try:
+            conn, _ = srv.accept()
+        except socket.timeout:
+            continue
         try:
             data = b""
             while not data.endswith(b"\n"):
@@ -276,6 +288,8 @@ def serve_socket(art: str, scope_dir: str, sock_path: str, log_path: str, model_
             conn.sendall((json.dumps(resp) + "\n").encode())
         finally:
             conn.close()
+    srv.close()
+    os.remove(sock_path)
 
 
 def client(sock_path: str, qid: str, level: str, req: Dict[str, Any]) -> Dict[str, Any]:

@@ -14,6 +14,7 @@ import sys
 from typing import Any, Dict, List
 
 from .anon import opaque_rid, opaque_sid
+from .guard import check as guard_check
 from .build_contexts import FMT, synthetic_date
 from .dataset import LongMemEvalLoader, select_split
 from .live import ExactRetriever
@@ -59,6 +60,8 @@ def main(dataset, art, sets_path, out_root, n_cand="50", tasks_dir="analyst_task
             for sub, obj in (("analyst_scope", {"question_id": q.qid, "level": lv, "question_date": q.question_date.strftime(FMT),
                                                  "sessions": dates}),
                              (tasks_dir, make_task(q.qid, lv, q.question, q.question_date.strftime(FMT), cands))):
+                if sub != "analyst_scope":  # the scope file is read only by the tool daemon, never by a model
+                    guard_check(obj, set(ctx.hashes))
                 d = os.path.join(out_root, sub, lv)
                 os.makedirs(d, exist_ok=True)
                 json.dump(obj, open(os.path.join(d, q.qid + ".json"), "w"))

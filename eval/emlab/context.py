@@ -15,6 +15,8 @@ import math
 import os
 from typing import Any, Dict, List, Optional, Sequence, Set
 
+from .guard import check as _guard
+
 ARMS = ("rag", "facts", "facts_rag")
 
 
@@ -113,10 +115,12 @@ def context_metrics(q, items: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
-def write_context(root: str, arm: str, level: str, q, budget: int, items: List[Dict[str, Any]]) -> str:
+def write_context(root: str, arm: str, level: str, q, budget: int, items: List[Dict[str, Any]],
+                  real_sids: Optional[Set[str]] = None) -> str:
     d = os.path.join(root, arm, level)
     os.makedirs(d, exist_ok=True)
     ordered = order_items(items)
+    _guard(ordered, real_sids)  # refuse to write a model-facing file that carries a real session id
     path = os.path.join(d, "%s.json" % q.qid)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump({"question_id": q.qid, "arm": arm, "level": level, "budget_tokens": budget,
