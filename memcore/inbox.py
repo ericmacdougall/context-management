@@ -2,12 +2,25 @@
 H6 safe rendering of inbox items. No LLM involved.
 
 Delivery protocol (two-phase, so a crash never loses an item and never shows it as a new one):
-  claim(session, turn_id): atomically bind the oldest eligible pending items to turn_id (idempotent per turn_id: a retry
-                           returns the SAME items in the SAME order). Nothing is 'delivered' yet.
-  confirm(session, turn_id): after the host has shown the block, mark them delivered (delivered_at set, never offered again).
+  claim(session, turn_id, lease_s=None) -> Claim (a list of items plus .token, the FENCING token of this claim):
+                           atomically bind the oldest eligible pending items to turn_id under a lease (idempotent per
+                           turn_id: a retry returns the SAME items in the SAME order with the SAME token and extends the
+                           lease). Nothing is 'delivered' yet.
+  renew(session, turn_id, token, lease_s=None) -> n: extend the lease while the turn is still running (heartbeat). 0 means
+                           the claim was superseded: the turn must not show (or must retract) the block.
+  confirm(session, turn_id, token) -> n: after the host has shown the block, mark them delivered. Only the holder of the
+                           CURRENT token can confirm; a superseded claimant (or a caller without a token) confirms 0 rows,
+                           so exactly one confirm wins.
+Lease: lease_s (service default DEFAULT_LEASE_S = 330 s, i.e. the 300 s session turn timeout plus margin; a host passes its
+own turn timeout) is tied to the turn, and renew() extends it. Another turn takes an item over only after the lease has
+lapsed (the holder evidently died); the takeover issues a new token, which fences the old holder out.
+Rows claimed before the fencing upgrade (no token): a row with claimed_at gets lease_until = claimed_at + lease_s; a row
+without claimed_at gets a fresh lease from the first time it is seen (persisted), so a live pre-upgrade turn is not
+robbed; such a row can still be confirmed by its turn_id without a token. ROLLBACK NOTE: code before this change cannot
+read rows written by it (InboxItem(**row) raises TypeError on the new fields); roll back only with an empty claimed set.
 Crash between claim and show: retry with the same turn_id re-offers the same items -> shown once. Crash between show and
 confirm: the retry shows the same turn_id's block again; the host dedupes by turn_id (the block carries it), so display is
-effectively-once, and the delivery record is exactly-once. A claim by a NEW turn_id re-offers unconfirmed claims of older turns.
+effectively-once, and the delivery record is exactly-once.
 Eligibility at claim time: session open; item not expired; item serves at least one requirement item the session's task
 currently lists (RequirementGraph); anything else stays pending and is expired/dropped by policy, never delivered.
 Bounded inbox: at most max_pending pending items per session; on overflow the OLDEST pending item is dropped (policy
@@ -25,6 +38,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set
 
 TRUST_ORIGINS = ("user", "agent", "tool", "web", "transcript", "unknown")
 MAX_QUOTE_CHARS = 2000
+DEFAULT_LEASE_S = 330.0          # session turn timeout (300 s) plus margin: a lease never lapses under a live, unrenewed turn
 
 
 class RequirementGraph:
@@ -52,6 +66,9 @@ class InboxItem:
     claim_turn: Optional[str] = None
     delivered_at: Optional[float] = None
     claimed_at: Optional[float] = None
+    claim_token: Optional[str] = None   # fencing token of the current claim (None: claimed before the fencing upgrade)
+    fence: int = 0                      # number of claims issued for this item (monotonic, for audit)
+    lease_until: Optional[float] = None
 
     def __post_init__(self):
         if self.trust_origin not in TRUST_ORIGINS:
@@ -180,8 +197,17 @@ class SqliteStore(Store):
 
 
 # ------------------------------------------------------------------ service
+class Claim(list):
+    """The items of one claim plus its fencing token (a plain list for every other purpose)."""
+
+    def __init__(self, items=(), token: Optional[str] = None):
+        super().__init__(items)
+        self.token = token
+
+
 class InboxService:
-    def __init__(self, store: Store, graph: RequirementGraph, clock: Callable[[], float], max_pending: int = 20, lease_s: float = 30.0):
+    def __init__(self, store: Store, graph: RequirementGraph, clock: Callable[[], float], max_pending: int = 20,
+                 lease_s: float = DEFAULT_LEASE_S):
         self.store, self.graph, self.clock, self.max_pending, self.lease_s = store, graph, clock, max_pending, lease_s
 
     # registry
@@ -233,38 +259,69 @@ class InboxService:
     def _eligible(self, s: SessionRecord, it: InboxItem, now: float) -> bool:
         return it.expires > now and bool(set(it.item_ids) & self.graph.items_for(s.task_id))
 
-    def claim(self, session_id: str, turn_id: str, limit: int = 5) -> List[InboxItem]:
+    def _lease_until(self, it: InboxItem, now: float) -> Optional[float]:
+        """The lease of a claimed row; for a row claimed before the fencing upgrade it is derived (and must be persisted)."""
+        if it.lease_until is not None:
+            return it.lease_until
+        return (it.claimed_at + self.lease_s) if it.claimed_at is not None else now + self.lease_s
+
+    def claim(self, session_id: str, turn_id: str, limit: int = 5, lease_s: Optional[float] = None) -> Claim:
         now = self.clock()
+        lease = self.lease_s if lease_s is None else lease_s
         with self.store.transaction():
             s = self.store.get_session(session_id)
             if not s or s.status != "open":
-                return []
-            for it in self.store.items(session_id, ["pending", "claimed"]):  # expire first
+                return Claim()
+            for it in self.store.items(session_id, ["pending", "claimed"]):  # expire first; pin a lease on pre-upgrade claims
                 if it.expires <= now:
                     it.state = "expired"
                     self.store.put_item(it)
-            same = [i for i in self.store.items(session_id, ["claimed"]) if i.claim_turn == turn_id]
-            if same:  # retry of the same turn: identical answer
-                return [i for i in same if self._eligible(s, i, now)]
-            out = []
+                elif it.state == "claimed" and it.lease_until is None:
+                    it.lease_until = self._lease_until(it, now)
+                    self.store.put_item(it)
+            same = [i for i in self.store.items(session_id, ["claimed"]) if i.claim_turn == turn_id and i.claim_token is not None]
+            if same:  # retry of the same turn: identical answer, same token, lease extended
+                out = [i for i in same if self._eligible(s, i, now)]
+                for i in out:
+                    i.lease_until = max(i.lease_until or 0.0, now + lease)
+                    self.store.put_item(i)
+                return Claim(out, same[0].claim_token)
+            token, out = secrets.token_hex(12), []
             for it in self.store.items(session_id, ["pending", "claimed"]):
                 if len(out) >= limit:
                     break
-                # A claim held by ANOTHER turn is re-offered only after its lease expired (that turn evidently crashed). While the
-                # lease is live the other turn may still be showing the item, so it stays with that turn.
-                if it.state == "claimed" and it.claim_turn != turn_id and it.claimed_at is not None and now - it.claimed_at < self.lease_s:
+                # A claim held by another turn (or by this turn_id before the upgrade) is taken over only after its lease
+                # lapsed (the holder evidently died). The new token fences the old holder out of renew() and confirm().
+                if it.state == "claimed" and now < self._lease_until(it, now):
                     continue
                 if self._eligible(s, it, now):
                     it.state, it.claim_turn, it.claimed_at = "claimed", turn_id, now
+                    it.claim_token, it.fence, it.lease_until = token, it.fence + 1, now + lease
                     self.store.put_item(it)
                     out.append(it)
-            return out
+            return Claim(out, token if out else None)
 
-    def confirm(self, session_id: str, turn_id: str) -> int:
+    def renew(self, session_id: str, turn_id: str, token: str, lease_s: Optional[float] = None) -> int:
+        """Heartbeat of a running turn. Returns the number of items whose lease was extended; 0 = superseded or done."""
+        now, n = self.clock(), 0
+        lease = self.lease_s if lease_s is None else lease_s
+        if not token:
+            return 0
+        with self.store.transaction():
+            for it in self.store.items(session_id, ["claimed"]):
+                if it.claim_turn == turn_id and it.claim_token == token and now < (it.lease_until or 0.0):
+                    it.lease_until = now + lease
+                    self.store.put_item(it)
+                    n += 1
+        return n
+
+    def confirm(self, session_id: str, turn_id: str, token: Optional[str] = None) -> int:
+        """Exactly one confirm wins: only rows still claimed under this turn AND this token. token=None matches only rows
+        claimed before the fencing upgrade (no token), never a fenced row."""
         now, n = self.clock(), 0
         with self.store.transaction():
             for it in self.store.items(session_id, ["claimed"]):
-                if it.claim_turn == turn_id:
+                if it.claim_turn == turn_id and it.claim_token == token:
                     it.state, it.delivered_at = "delivered", now
                     self.store.put_item(it)
                     n += 1

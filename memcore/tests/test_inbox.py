@@ -20,7 +20,7 @@ class OnePhaseBroken(InboxService):
     """Broken variant: marks delivered at claim time, i.e. BEFORE the host shows anything."""
     def claim(self, session_id, turn_id, limit=5):
         got = super().claim(session_id, turn_id, limit)
-        self.confirm(session_id, turn_id)
+        self.confirm(session_id, turn_id, got.token)
         return got
 
 
@@ -48,18 +48,21 @@ class Common:
             self.svc.enqueue(item(f, created=1000.0 + i))
         got = self.svc.claim("S", "t1", limit=2)
         self.assertEqual([i.finding_id for i in got], ["a", "b"])
-        self.assertEqual(self.svc.confirm("S", "t1"), 2)
-        self.assertEqual([i.finding_id for i in self.svc.claim("S", "t2")], ["c"])
-        self.svc.confirm("S", "t2")
+        self.assertEqual(self.svc.confirm("S", "t1", got.token), 2)
+        got2 = self.svc.claim("S", "t2")
+        self.assertEqual([i.finding_id for i in got2], ["c"])
+        self.svc.confirm("S", "t2", got2.token)
         self.assertEqual(self.svc.claim("S", "t3"), [])
         self.assertIsNotNone(self.store.get_item("S", "a").delivered_at)
 
     def test_retry_same_turn_same_items_then_never_again(self):
         self.svc.enqueue(item("a"))
-        self.assertEqual([i.finding_id for i in self.svc.claim("S", "t1")], ["a"])
-        self.assertEqual([i.finding_id for i in self.svc.claim("S", "t1")], ["a"])
-        self.svc.confirm("S", "t1")
-        self.assertEqual(self.svc.confirm("S", "t1"), 0)   # confirm is idempotent
+        c1 = self.svc.claim("S", "t1")
+        self.assertEqual([i.finding_id for i in c1], ["a"])
+        c2 = self.svc.claim("S", "t1")
+        self.assertEqual(([i.finding_id for i in c2], c2.token), (["a"], c1.token))   # same items, same fencing token
+        self.svc.confirm("S", "t1", c1.token)
+        self.assertEqual(self.svc.confirm("S", "t1", c1.token), 0)   # confirm is idempotent
         self.assertEqual(self.svc.claim("S", "t1"), [])    # delivered items are never offered again
 
     def test_crash_between_mark_and_show(self):
@@ -72,8 +75,8 @@ class Common:
 
     def test_unconfirmed_claim_reoffered_to_next_turn(self):
         self.svc.enqueue(item("a"))
-        self.svc.claim("S", "t1")  # never confirmed (host died)
-        self.clock.t += 31         # the lease (30 s) expired: the first turn is presumed dead
+        self.svc.claim("S", "t1", lease_s=30)  # never confirmed (host died)
+        self.clock.t += 31         # the lease (30 s) lapsed without renewal: the first turn is presumed dead
         self.assertEqual([i.finding_id for i in self.svc.claim("S", "t2")], ["a"])
 
     def test_item12_two_live_turns_do_not_both_show_the_item(self):
@@ -83,8 +86,8 @@ class Common:
         b = self.svc.claim("S", "turnB", limit=2)          # concurrent live turn, lease still valid
         self.assertEqual([i.finding_id for i in a], ["f1"])
         self.assertEqual([i.finding_id for i in b], ["f2"])  # f1 stays with turn A
-        self.assertEqual(self.svc.confirm("S", "turnA"), 1)
-        self.assertEqual(self.svc.confirm("S", "turnB"), 1)
+        self.assertEqual(self.svc.confirm("S", "turnA", a.token), 1)
+        self.assertEqual(self.svc.confirm("S", "turnB", b.token), 1)
 
     def test_item12_broken_variant_without_lease_double_delivers(self):
         class NoLease(InboxService):
@@ -113,8 +116,9 @@ class Common:
         self.svc.enqueue(item("a", items=("R9",)))
         self.assertEqual(self.svc.claim("S", "t1"), [])           # R9 not in the task's graph
         self.graph.tasks["T"] = {"R9"}                              # task amended: now it is
-        self.assertEqual([i.finding_id for i in self.svc.claim("S", "t2")], ["a"])
-        self.svc.confirm("S", "t2")
+        c2 = self.svc.claim("S", "t2")
+        self.assertEqual([i.finding_id for i in c2], ["a"])
+        self.assertEqual(self.svc.confirm("S", "t2", c2.token), 1)
         self.svc.enqueue(item("b", items=("R9",)))
         self.graph.tasks["T"] = {"R1"}                              # amended again: R9 dropped
         self.assertEqual(self.svc.claim("S", "t3"), [])
@@ -162,8 +166,9 @@ class SqliteTests(Common, unittest.TestCase):
         a.enqueue(item("a"))
         a.claim("S", "t1")
         b = InboxService(SqliteStore(p), graph, clock)  # process restart
-        self.assertEqual([i.finding_id for i in b.claim("S", "t1")], ["a"])
-        b.confirm("S", "t1")
+        rb = b.claim("S", "t1")
+        self.assertEqual([i.finding_id for i in rb], ["a"])
+        self.assertEqual(b.confirm("S", "t1", rb.token), 1)
         c = InboxService(SqliteStore(p), graph, clock)
         self.assertEqual(c.claim("S", "t9"), [])
 

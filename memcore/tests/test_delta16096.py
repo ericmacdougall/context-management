@@ -305,5 +305,149 @@ class N4EgressGuardTests(unittest.TestCase):
             DEFAULT_GUARD.real_ids, DEFAULT_GUARD.require_real_ids, DEFAULT_GUARD.load_error = saved
 
 
+
+class _Clock:
+    def __init__(self):
+        self.t = 1000.0
+
+    def __call__(self):
+        return self.t
+
+
+class _N7Common:
+    """N7: a turn longer than the old fixed 30 s lease must keep its item; exactly one confirm wins; pre-upgrade rows are
+    not taken over. Turn A and turn B use separate service objects (and, for SQLite, separate connections to one file)."""
+
+    def setUp(self):
+        from memcore.inbox import InboxItem, InboxService, RequirementGraph
+        self.clock = _Clock()
+        g = RequirementGraph({"T": {"R1"}})
+        sa, sb = self.stores()
+        self.A = InboxService(sa, g, self.clock)
+        self.B = InboxService(sb, g, self.clock)
+        self.A.register("S", "claude-code", "T", ["R1"])
+        self.A.enqueue(InboxItem("f1", "S", ["ev1"], "q", "transcript", ["R1"], 1000.0, 5000.0))
+
+    def ids(self, xs):
+        return [i.finding_id for i in xs]
+
+    def test_two_overlapping_turns_only_one_shows_and_one_confirm_wins(self):
+        log, res, errs = [], {}, []
+        a_claimed, b_done = threading.Event(), threading.Event()
+
+        def turn_a():
+            try:
+                c = self.A.claim("S", "turnA")
+                res["a"] = c
+                log.append(("A:claim", self.clock()))
+                a_claimed.set()
+                b_done.wait(10)                                   # turn A is still running while turn B claims
+                log.append(("A:confirm", self.clock()))
+                res["a_confirm"] = self.A.confirm("S", "turnA", getattr(c, "token", None))
+            except Exception as e:  # noqa: BLE001
+                errs.append(e)
+                a_claimed.set()
+
+        def turn_b():
+            try:
+                a_claimed.wait(10)
+                self.clock.t += 40                                # A's turn has now run 40 s: past the old 30 s lease
+                log.append(("B:claim", self.clock()))
+                res["b"] = self.B.claim("S", "turnB")
+            except Exception as e:  # noqa: BLE001
+                errs.append(e)
+            finally:
+                b_done.set()
+
+        ts = [threading.Thread(target=turn_a), threading.Thread(target=turn_b)]
+        [t.start() for t in ts]
+        [t.join(15) for t in ts]
+        when = dict(log)
+        # witness: B's claim falls inside A's open claim..confirm interval, more than 30 s after A's claim
+        self.assertEqual([e for e, _ in log], ["A:claim", "B:claim", "A:confirm"])
+        self.assertTrue(when["A:claim"] < when["B:claim"] <= when["A:confirm"] and when["B:claim"] - when["A:claim"] > 30)
+        self.assertEqual(self.ids(res["a"]), ["f1"])
+        self.assertEqual(self.ids(res["b"]), [])                  # only ONE live turn shows f1
+        self.assertEqual(errs, [])
+        self.assertEqual(res["a_confirm"], 1)
+        self.assertEqual(self.B.confirm("S", "turnB", getattr(res["b"], "token", None)), 0)
+
+    def test_short_lease_is_kept_alive_by_renewal(self):
+        a = self.A.claim("S", "turnA", lease_s=30)
+        for step in (20, 20, 20):                                # a 60 s turn renewing every 20 s
+            self.clock.t += step
+            self.assertEqual(self.A.renew("S", "turnA", a.token, lease_s=30), 1)
+            self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])
+        self.assertEqual(self.A.confirm("S", "turnA", a.token), 1)
+
+    def test_superseded_claimant_is_fenced_out(self):
+        a = self.A.claim("S", "turnA", lease_s=30)
+        self.clock.t += 31                                        # A stopped renewing (crashed): the lease lapsed
+        b = self.B.claim("S", "turnB")
+        self.assertEqual(self.ids(b), ["f1"])
+        self.assertNotEqual(a.token, b.token)
+        self.assertEqual(self.A.renew("S", "turnA", a.token), 0)   # A learns it lost the claim
+        self.assertEqual(self.A.confirm("S", "turnA", a.token), 0)
+        self.assertEqual(self.A.claim("S", "turnA"), [])          # A's retry cannot steal it back while B is live
+        self.assertEqual(self.B.confirm("S", "turnB", b.token), 1)
+        self.assertEqual(self.B.confirm("S", "turnB", b.token), 0)
+        self.assertEqual(self.B.store.get_item("S", "f1").fence, 2)
+
+    def test_confirm_without_the_token_does_not_deliver(self):
+        self.A.claim("S", "turnA")
+        self.assertEqual(self.A.confirm("S", "turnA"), 0)
+        self.assertEqual(self.A.store.get_item("S", "f1").state, "claimed")
+
+    def make_legacy(self, claimed_at):
+        it = self.A.store.get_item("S", "f1")
+        it.state, it.claim_turn, it.claimed_at = "claimed", "turnA", claimed_at
+        with self.A.store.transaction():
+            self.A.store.put_item(it)
+        self.strip_new_fields()
+
+    def test_row_claimed_before_the_upgrade_is_not_taken_over_while_live(self):
+        self.make_legacy(None)                                    # 888c94b^ row: no claimed_at, no token, no lease
+        self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])
+        self.clock.t += 100
+        self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])  # the lease pinned at first sight is not restarted
+        self.clock.t += 231                                       # first sight + 331 s: the pre-upgrade holder is dead
+        self.assertEqual(self.ids(self.B.claim("S", "turnB")), ["f1"])
+
+    def test_row_claimed_before_the_upgrade_can_still_be_confirmed_by_its_turn(self):
+        self.make_legacy(self.clock.t)                            # 888c94b row: claimed_at set, no token
+        self.clock.t += 40
+        self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])
+        self.assertEqual(self.A.confirm("S", "turnA"), 1)
+
+
+class N7MemoryStoreTests(_N7Common, unittest.TestCase):
+    def stores(self):
+        from memcore.inbox import MemoryStore
+        s = MemoryStore()
+        return s, s
+
+    def strip_new_fields(self):
+        it = self.A.store._items[("S", "f1")]
+        for k in ("claim_token", "lease_until"):
+            if hasattr(it, k):
+                setattr(it, k, None)
+
+
+class N7SqliteStoreTests(_N7Common, unittest.TestCase):
+    def stores(self):
+        from memcore.inbox import SqliteStore
+        p = os.path.join(tempfile.mkdtemp(), "inbox.db")
+        return SqliteStore(p), SqliteStore(p)                     # two connections, as two host processes would have
+
+    def strip_new_fields(self):
+        db = self.A.store.db
+        row = json.loads(db.execute("SELECT body FROM items WHERE finding_id='f1'").fetchone()[0])
+        for k in ("claim_token", "fence", "lease_until"):
+            row.pop(k, None)
+        if row.get("claimed_at") is None:
+            row.pop("claimed_at", None)
+        db.execute("UPDATE items SET body=? WHERE finding_id='f1'", (json.dumps(row),))
+
+
 if __name__ == "__main__":
     unittest.main()
