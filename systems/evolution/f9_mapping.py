@@ -113,7 +113,11 @@ def main():
     es.req("POST", "/_aliases", {"actions": [{"remove_index": {"index": i}} for i in old_idx]})
     out["embedding_change"] = {"build_catch_up_s": catch3, "alias_cutover_s": cut3, "old_indices_removed": len(old_idx)}
     time.sleep(4)
-    stop.set(); stop3.set()
+    stop.set()
+    t_w = time.time()
+    while F.lag(conn, 'events-ev3', [T]) > 0 and time.time() - t_w < 30:       # let the new family drain what the writer appended last
+        time.sleep(0.2)
+    stop3.set()
     for th in ths + [th2, th3]:
         th.join()
     out["readers"] = {"requests": stats["requests"], "mixed_family_responses": stats["mixed_view"], "retried_errors_in_cutover_windows": stats["retried_errors"],
@@ -126,13 +130,13 @@ def main():
                                    "content_mismatch": sum(1 for i, s in docs.items() if i in pg and s.get("content") != pg[i])}
     rng = random.Random(1); samp = rng.sample(list(pg), 50); ok = 0
     for i in samp:
-        r = es.req("POST", f"/{STABLE}/_search", {"size": 5, "_source": False, "query": {"script_score": {"query": {"match_all": {}}, "script": {"source": "cosineSimilarity(params.q, 'vec2') + 1.0", "params": {"q": fusion.embed(pg[i], 32)}}}}})[1]["hits"]["hits"]
-        ok += any(h["_id"] == i for h in r)
-    out["vector_self_recall_at_5_new_field"] = ok / 50
+        r = es.req("POST", f"/{STABLE}/_search", {"size": 5, "_source": ["content"], "query": {"script_score": {"query": {"match_all": {}}, "script": {"source": "cosineSimilarity(params.q, 'vec2') + 1.0", "params": {"q": fusion.embed(pg[i], 32)}}}}})[1]["hits"]["hits"]
+        ok += any(h["_source"]["content"] == pg[i] for h in r)      # identical texts have identical vectors, so ties are expected: the nearest hit must carry the same text
+    out["vector_same_text_recall_at_5_new_field"] = ok / 50
     kinds = es.req("POST", f"/{STABLE}/_search", {"size": 0, "aggs": {"k": {"terms": {"field": "kind.raw"}}}})[1]["aggregations"]["k"]["buckets"]
     out["new_subfield_works"] = {"kind.raw_buckets": len(kinds), "content.en_stemmed_match": es.req("POST", f"/{STABLE}/_search", {"size": 0, "track_total_hits": True, "query": {"match": {"content.en": "colours"}}})[1]["hits"]["total"]["value"]}
     out["pass"] = bool(out["readers"]["mixed_family_responses"] == 0 and out["readers"]["failed_after_retries"] == 0 and out["identity_vs_postgres"]["missing"] == 0
-                       and out["identity_vs_postgres"]["content_mismatch"] == 0 and out["vector_self_recall_at_5_new_field"] >= 0.9 and out["readers"]["requests"] > 500)
+                       and out["identity_vs_postgres"]["content_mismatch"] == 0 and out["vector_same_text_recall_at_5_new_field"] >= 0.9 and out["readers"]["requests"] > 500)
     evo.save("F9_mapping_embedding_bluegreen", out)
     print(json.dumps(out, indent=1, default=str)); print("PASS" if out["pass"] else "FAIL")
 

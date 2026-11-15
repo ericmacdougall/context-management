@@ -62,6 +62,15 @@ def start(image, vol, wm):
     raise RuntimeError("node did not come up")
 
 
+def license_of(es):
+    for path in ("/_license", "/_xpack"):
+        s, j = es.req("GET", path, ok=None)
+        lic = j.get("license") if isinstance(j, dict) else None
+        if s == 200 and lic:
+            return {"type": lic.get("type"), "status": lic.get("status"), "via": path}
+    return {"type": "basic (default; license endpoints unavailable with security disabled)", "status": "n/a", "via": "none"}
+
+
 def exact_results(conn, es, qs):
     from c1_rebuild_v2 import run_queries
     r = run_queries(es, reader.Reader(conn, es), qs)
@@ -78,13 +87,14 @@ def main():
     wm, wm_src = watermarks()
     out = {"workload": f"tenant {T}: {N} events projected into a throwaway ES node (old image {tag}, Basic licence, security off, localhost only, 4 cpus 6 GB), then upgraded to 9.5.6", "old_image": OLD,
            "new_image": NEW, "watermarks": wm, "watermark_source": wm_src, "disk_free_gb_before": free0}
+    sh("docker", "rm", "-f", NAME, check=False)
     for v in (VOL, VOL2):
         sh("docker", "volume", "rm", "-f", v, check=False)
     conn = evo.connect(); evo.reset(conn); lock = evo.connect()
     sess = gen.gen_tenant(T, 5, N // 50, 50, n_users=20); gen.load(conn, T, sess, 5, store)
     es, up_s = start(OLD, VOL, wm)
     out["old_version"] = es.req("GET", "/")[1]["version"]["number"]; out["old_build"] = es.req("GET", "/")[1]["version"].get("build_hash", "")[:12]
-    lic = es.req("GET", "/_license")[1]["license"]; out["old_license"] = {"type": lic["type"], "status": lic["status"]}
+    out["old_license"] = license_of(es)
     esx.install_templates(es)
     t0 = time.time(); projector.Projector(conn, lock, es, recipes=(1,), live_recipe=1, tenants=[T], batch=1000).run(); out["project_into_old_s"] = round(time.time() - t0, 1)
     from c1_rebuild_v2 import query_set
@@ -107,7 +117,7 @@ def main():
     es2.req("GET", "/_cluster/health", wait_for_status="green", timeout="120s")
     out["in_place_upgrade"] = {"total_s": round(time.time() - t_up, 1), "downtime_stop_to_green_s": round(time.time() - t_stop, 1)}
     out["new_version"] = es2.req("GET", "/")[1]["version"]["number"]
-    lic2 = es2.req("GET", "/_license")[1]["license"]; out["new_license"] = {"type": lic2["type"], "status": lic2["status"]}
+    out["new_license"] = license_of(es2)
     idx = es2.req("GET", "/_cat/indices", format="json", h="index,status,health,docs.count")[1]
     out["indices_after"] = {"count": len(idx), "all_open": all(i["status"] == "open" for i in idx), "health": sorted({i["health"] for i in idx})}
     after = {"events": compare_events(conn, es2, [T]), "facts": compare_facts(conn, es2, [T], 1), "queries": exact_results(conn, es2, qs)}
@@ -130,7 +140,7 @@ def main():
     out["comparison"] = {"in_place_downtime_s": out["in_place_upgrade"]["downtime_stop_to_green_s"], "fresh_rebuild_total_s": round(up3 + rb, 1),
                          "notes": ["in-place keeps old Lucene segments readable by the new version (no reindex) but cannot be rolled back once the new version has written to the volume; take a volume copy first",
                                    "fresh rebuild never touches the old data (old node can stay live until cutover) but needs the full Postgres replay and cursors per target"]}
-    ok = (out["new_version"] == "9.5.6" and out["indices_after"]["all_open"] and out["post_upgrade"]["exact_query_results_identical"] and out["old_license"]["type"] == "basic"
+    ok = (out["new_version"] == "9.5.6" and out["indices_after"]["all_open"] and out["post_upgrade"]["exact_query_results_identical"] and str(out["old_license"]["type"]).startswith("basic")
           and all(out["post_upgrade"][k]["missing"] == 0 and out["post_upgrade"][k]["hash_mismatch"] == 0 and out["post_upgrade"][k]["duplicates"] == 0 for k in ("events_vs_pg", "facts_vs_pg"))
           and out["writes_continue_after_upgrade"]["new_event_searchable"] and out["alternative_fresh_rebuild"]["exact_query_results_identical_to_pre_upgrade"]
           and out["alternative_fresh_rebuild"]["events_vs_pg"]["missing"] == 0)

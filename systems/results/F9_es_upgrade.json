@@ -1,0 +1,130 @@
+{
+ "workload": "tenant upg1: 20000 events projected into a throwaway ES node (old image 9.4.9, Basic licence, security off, localhost only, 4 cpus 6 GB), then upgraded to 9.5.6",
+ "old_image": "docker.elastic.co/elasticsearch/elasticsearch:9.4.9",
+ "new_image": "docker.elastic.co/elasticsearch/elasticsearch:9.5.6",
+ "watermarks": {
+  "cluster.routing.allocation.disk.watermark.low": "10gb",
+  "cluster.routing.allocation.disk.watermark.high": "5gb",
+  "cluster.routing.allocation.disk.watermark.flood_stage": "2gb"
+ },
+ "watermark_source": "could not read first node settings; absolute-byte values chosen by me",
+ "disk_free_gb_before": 80.3,
+ "old_version": "9.4.9",
+ "old_build": "1370365b7b23",
+ "old_license": {
+  "type": "basic (default; license endpoints unavailable with security disabled)",
+  "status": "n/a",
+  "via": "none"
+ },
+ "project_into_old_s": 90.0,
+ "pre_upgrade": {
+  "events_vs_pg": {
+   "pg": 20000,
+   "es": 20000,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": []
+  },
+  "facts_vs_pg": {
+   "pg": 16635,
+   "es": 16635,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0
+  },
+  "docs": "36635"
+ },
+ "deprecation_api": {
+  "cluster_settings": 0,
+  "index_settings": {},
+  "node_settings": 0
+ },
+ "in_place_upgrade": {
+  "total_s": 46.1,
+  "downtime_stop_to_green_s": 42.4
+ },
+ "new_version": "9.5.6",
+ "new_license": {
+  "type": "basic",
+  "status": "active",
+  "via": "/_license"
+ },
+ "indices_after": {
+  "count": 8,
+  "all_open": true,
+  "health": [
+   "green"
+  ]
+ },
+ "post_upgrade": {
+  "events_vs_pg": {
+   "pg": 20000,
+   "es": 20000,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": []
+  },
+  "facts_vs_pg": {
+   "pg": 16635,
+   "es": 16635,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0
+  },
+  "exact_query_results_identical": true
+ },
+ "writes_continue_after_upgrade": {
+  "new_event_searchable": true,
+  "events_vs_pg": {
+   "pg": 20001,
+   "es": 20001,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": []
+  }
+ },
+ "alternative_fresh_rebuild": {
+  "node_start_s": 36.2,
+  "rebuild_from_postgres_s": 17.3,
+  "events_vs_pg": {
+   "pg": 20001,
+   "es": 20001,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0,
+   "wrong_bucket": 0,
+   "examples": []
+  },
+  "facts_vs_pg": {
+   "pg": 16636,
+   "es": 16636,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0
+  },
+  "exact_query_results_identical_to_pre_upgrade": true
+ },
+ "comparison": {
+  "in_place_downtime_s": 42.4,
+  "fresh_rebuild_total_s": 53.5,
+  "notes": [
+   "in-place keeps old Lucene segments readable by the new version (no reindex) but cannot be rolled back once the new version has written to the volume; take a volume copy first",
+   "fresh rebuild never touches the old data (old node can stay live until cutover) but needs the full Postgres replay and cursors per target"
+  ]
+ },
+ "pass": true,
+ "disk_free_gb_after_cleanup": 71.6
+}

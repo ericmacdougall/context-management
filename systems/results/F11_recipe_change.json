@@ -1,0 +1,101 @@
+{
+ "workload": "3 tenants x 40 sessions x 50 events (+15 past-tense statements), live writer 20 events/s and 4 reader threads during the v2 build; rule extractor (stand-in); PG16 + key service + ES 9.5.6 on t2-dev",
+ "with_cache": {
+  "cache": true,
+  "events": 6045,
+  "v1_build": {
+   "s": 21.6,
+   "extractor_invocations": 6045,
+   "cache_hits": 0
+  },
+  "v2_build_under_live_writes": {
+   "s": 59.1,
+   "live_events_written": 790,
+   "extractor_invocations": 761,
+   "cache_hits": 6796
+  },
+  "readers": {
+   "requests": 12641,
+   "mixed_version_responses": 0,
+   "errors": 0,
+   "versions_seen": [
+    1,
+    2
+   ],
+   "alias_swaps": 30
+  },
+  "v2_rebuild_from_scratch": {
+   "s": 17.2,
+   "extractor_invocations": 0,
+   "cache_hits": 6944
+  },
+  "v2_identity_vs_es": {
+   "pg": 3301,
+   "es": 3301,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0
+  },
+  "v3_extractor_change_build": {
+   "s": 17.6,
+   "extractor_invocations": 6944,
+   "cache_hits": 0,
+   "v2_facts": 5851,
+   "v3_facts": 5896
+  },
+  "erasure_vs_cache": {
+   "cache_rows_before_control": 800,
+   "left_after_cascade_without_registry": 800,
+   "cache_rows_before": 1110,
+   "left_after_cascade_with_registry": 0
+  }
+ },
+ "without_cache": {
+  "cache": false,
+  "events": 6045,
+  "v1_build": {
+   "s": 19.9,
+   "extractor_invocations": 6045,
+   "cache_hits": 0
+  },
+  "v2_build_under_live_writes": {
+   "s": 37.1,
+   "live_events_written": 517,
+   "extractor_invocations": 6949,
+   "cache_hits": 0
+  },
+  "readers": {
+   "requests": 8359,
+   "mixed_version_responses": 0,
+   "errors": 0,
+   "versions_seen": [
+    1,
+    2
+   ],
+   "alias_swaps": 30
+  },
+  "v2_rebuild_from_scratch": {
+   "s": 9.3,
+   "extractor_invocations": 6648,
+   "cache_hits": 0
+  },
+  "v2_identity_vs_es": {
+   "pg": 3301,
+   "es": 3301,
+   "missing": 0,
+   "extra": 0,
+   "duplicates": 0,
+   "hash_mismatch": 0
+  },
+  "v3_extractor_change_build": {
+   "s": 10.3,
+   "extractor_invocations": 6648,
+   "cache_hits": 0,
+   "v2_facts": 5555,
+   "v3_facts": 5600
+  }
+ },
+ "v2_facts_identical_cache_vs_no_cache": true,
+ "pass": true
+}

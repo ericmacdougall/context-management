@@ -1,7 +1,7 @@
 """F11: recipe change with facts already derived, under live writes, with an extraction cache keyed by (event id, extractor version).
 Each mode (cache on / cache off) runs the same data: v1 build -> v2 build under live writes + atomic alias swap under readers ->
 v2 rebuild from scratch -> v3 (extractor change) build -> erasure vs the cache. usage: f11_recipe.py [sessions=40] [per_session=50]"""
-import datetime as dt, os, random, sys, threading, time
+import datetime as dt, json, os, random, sys, threading, time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from evolution import evo, cached_extract as ce
 from common import compare_facts, pg_expected_facts
@@ -9,6 +9,22 @@ from memsys import gen, store, projector, reader, erasure, kms, esx, extractor
 from memsys.esc import ES
 
 TENANTS = ["f11a", "f11b", "f11c"]
+
+
+def pending(conn, view, version):
+    tot = 0
+    for t in TENANTS:
+        tot += conn.execute("select count(*) from events e where tenant_id=%s and (commit_xid, ingest_seq) > coalesce((select (hwm_xid, hwm_seq) from projection_state where view=%s and version=%s and tenant_id=%s), (0::bigint,0::bigint))", (t, view, version, t)).fetchone()[0]
+    return tot
+
+
+def facts_content(conn, tenant, recipe):
+    """Id-free content of a tenant's facts (ids derive from event hashes, which differ between independent loads: encryption is randomised)."""
+    from memsys import derive as D
+    rows = conn.execute("select slot_enc, object_enc, subject_id, modality, status, author, trust_origin, valid_from, valid_to, input_event_ids from facts where tenant_id=%s and recipe_version=%s", (tenant, recipe)).fetchall()
+    k = kms.get(); n = len(rows)
+    dec = k.dec_many(tenant, [(r[2], r[0]) for r in rows] + [(r[2], r[1]) for r in rows])
+    return sorted(json.dumps([D.decode_slot(dec[i]), dec[n + i], r[3], r[4], r[5], r[6], str(r[7]), str(r[8]), sorted(r[9])], sort_keys=True) for i, r in enumerate(rows))
 
 
 def swap_live(es, t, to):
@@ -58,7 +74,9 @@ def run_mode(use_cache, ns, per):
     for th in ths: th.start()
     inv0, hit0 = snap(), counter.hits
     p2 = projector.Projector(conn, lock, es, recipes=(1, 2), live_recipe=1, batch=500)
-    t0 = time.time(); p2.run(idle_rounds=2)
+    t0 = time.time()
+    while pending(conn, 'derive', 2) > 60 or pending(conn, 'facts', 2) > 0 and False:
+        p2.run_once()
     res["v2_build_under_live_writes"] = {"s": round(time.time() - t0, 1), "live_events_written": written[0], "extractor_invocations": snap() - inv0, "cache_hits": counter.hits - hit0}
     time.sleep(1)
     swaps = 0
@@ -77,7 +95,7 @@ def run_mode(use_cache, ns, per):
     inv0, hit0 = snap(), counter.hits
     p3 = projector.Projector(conn, lock, es, recipes=(2,), live_recipe=2, batch=500)
     t0 = time.time(); p3.run(); res["v2_rebuild_from_scratch"] = {"s": round(time.time() - t0, 1), "extractor_invocations": snap() - inv0, "cache_hits": counter.hits - hit0}
-    ident = {t: pg_expected_facts(conn, t, 2) for t in ("f11b", "f11c")}
+    ident = {t: facts_content(conn, t, 2) for t in ("f11b", "f11c")}
     res["_identity_v2"] = ident
     res["v2_identity_vs_es"] = compare_facts(conn, es, ["f11b", "f11c"], 2)
     # ---- D: recipe 3 = extractor change

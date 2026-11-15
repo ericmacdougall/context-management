@@ -5,19 +5,19 @@
    "runs": 200,
    "torn": 0,
    "amend_before_start": 91,
-   "amend_during": 75,
-   "amend_after_completion": 34,
+   "amend_during": 78,
+   "amend_after_completion": 31,
    "errors": 0
   },
   "race2_fold_fence_on": {
    "runs": 200,
    "runs_with_stale_commit": 0,
-   "rejected_stale_commits": 89,
+   "rejected_stale_commits": 84,
    "runs_converged_after_refold": 200
   },
   "race2_fold_fence_off": {
    "runs": 200,
-   "runs_with_stale_commit": 77,
+   "runs_with_stale_commit": 74,
    "rejected_stale_commits": 0,
    "runs_converged_after_refold": 200
   },
@@ -27,7 +27,7 @@
   },
   "race3_projection_fence_off": {
    "runs": 200,
-   "stale_in_es": 61
+   "stale_in_es": 71
   }
  },
  "pass": true,

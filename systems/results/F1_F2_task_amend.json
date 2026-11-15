@@ -31,7 +31,7 @@
   },
   "failures": {},
   "pg_roundtrips": 300,
-  "elapsed_s": 61.2
+  "elapsed_s": 103.5
  },
  "f1_f2_pass": true,
  "f2_crash": {

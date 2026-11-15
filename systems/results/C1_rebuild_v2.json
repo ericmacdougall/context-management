@@ -1,0 +1,137 @@
+{
+ "workload": "20 tenants x 100 sessions x 100 events = 200000 events (2000 sessions), 18 months, bucket span 90 d, projector single process batch 1000; PG16 (4cpu/4g) + ES 9.5.6 single node on t2-dev",
+ "disk_free_gb_before": 49.7,
+ "events_loaded": 200000,
+ "load_s": 69.1,
+ "initial_project_s": 343.5,
+ "facts_rows": 165083,
+ "facts_status": {
+  "current": 7476,
+  "disputed": 16885,
+  "duplicate": 34880,
+  "hypothetical": 8026,
+  "proposed": 6059,
+  "superseded": 91757
+ },
+ "erasures": {
+  "count": 40,
+  "events_erased": 37400,
+  "total_s": 254.2,
+  "facts_deleted": 30809,
+  "receipt_example": {
+   "receipt_id": "aecac8aa2bcd4d5d",
+   "tenant": "t01",
+   "subject_id": "u2",
+   "events_erased": 1300,
+   "es_rebuilt": [
+    [
+     "events",
+     223,
+     [
+      "sys-t01-events-b00223-g1",
+      "sys-t01-events-b00223-g2",
+      1400
+     ]
+    ],
+    [
+     "events",
+     224,
+     [
+      "sys-t01-events-b00224-g1",
+      "sys-t01-events-b00224-g2",
+      2000
+     ]
+    ],
+    [
+     "events",
+     225,
+     [
+      "sys-t01-events-b00225-g1",
+      "sys-t01-events-b00225-g2",
+      1200
+     ]
+    ],
+    [
+     "events",
+     226,
+     [
+      "sys-t01-events-b00226-g1",
+      "sys-t01-events-b00226-g2",
+      1100
+     ]
+    ],
+    [
+     "events",
+     228,
+     [
+      "sys-t01-events-b00228-g1",
+      "sys-t01-events-b00228-g2",
+      1100
+     ]
+    ],
+    [
+     "facts",
+     1,
+     [
+      "sys-t01-facts-v1-g1",
+      "sys-t01-facts-v1-g2",
+      7169
+     ]
+    ]
+   ],
+   "verification": {
+    "events_tombstoned": 1300,
+    "events_still_decryptable": 0,
+    "key_destroyed": true,
+    "pg_facts_touching_tombstoned": 0,
+    "pg_concepts_touching_tombstoned": 0,
+    "es_event_docs": 0,
+    "es_fact_docs_touching": 0,
+    "es_facts_indices_checked": 1
+   },
+   "attempts": 1,
+   "es_and_key_steps_s": 6.008,
+   "scope": "speaker-provenance erasure only (events produced by this subject and rows derived from them)",
+   "facts_deleted": 1080,
+   "concepts_deleted": 0,
+   "concepts_reset": 30,
+   "phase1_s": 1.052
+  }
+ },
+ "tombstones": 37400,
+ "queries": 200,
+ "snapshot_s": 46.3,
+ "docs": {
+  "events": 162600,
+  "facts": 134274
+ },
+ "rebuild": {
+  "project_s": 306.9,
+  "events_per_s": 652,
+  "fold_s": 2.5,
+  "docs_per_s": 967
+ },
+ "identity": {
+  "es_events": true,
+  "es_facts": true,
+  "pg_facts": true,
+  "concepts": true,
+  "doc_counts_equal": {
+   "events": true,
+   "facts": true
+  }
+ },
+ "query_results": {
+  "lexical_exact_identical": true,
+  "vector_exact_identical": true,
+  "asof_facts_identical": true,
+  "hybrid_identical": false,
+  "hybrid_mean_jaccard": 0.5375,
+  "vector_ann_identical": false,
+  "vector_ann_mean_jaccard_vs_before": 0.6431,
+  "vector_ann_vs_exact_recall_before": 0.567,
+  "vector_ann_vs_exact_recall_after": 0.5728
+ },
+ "disk_free_gb_after": 31.7,
+ "pass_phase_a": true
+}

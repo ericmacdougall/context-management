@@ -1,71 +1,71 @@
 {
  "workload": "16 writer processes appending 1 event/txn to ONE session at the C7 rate while the migration runs; 200 pre-existing task sessions (57831 events); PG16 4cpu/4g on t2-dev",
  "pre_events": 57831,
- "migration_wall_s": 5.3,
+ "migration_wall_s": 9.4,
  "steps": [
   {
    "step": "add nullable column",
    "attempts": 1,
-   "wall_s": 0.003,
-   "last_statement_s": 0.002
+   "wall_s": 0.028,
+   "last_statement_s": 0.027
   },
   {
    "step": "replace trigger: fill-once exception for the derived column",
    "attempts": 1,
-   "wall_s": 0.003,
-   "last_statement_s": 0.002
+   "wall_s": 0.019,
+   "last_statement_s": 0.018
   },
   {
-   "step": "batched backfill",
+   "step": "batched backfill (decrypt in the application, fill-once update)",
    "batches": 13,
    "rows": 60231,
-   "total_s": 4.22,
-   "max_batch_s": 0.543
+   "total_s": 8.51,
+   "max_batch_s": 1.31
   },
   {
    "step": "add constraint NOT VALID",
    "attempts": 1,
-   "wall_s": 0.004,
-   "last_statement_s": 0.004
+   "wall_s": 0.01,
+   "last_statement_s": 0.009
   },
   {
    "step": "validate constraint",
-   "s": 0.019
+   "s": 0.025
   }
  ],
  "writers": {
-  "appends_ok": 6400,
+  "appends_ok": 5600,
   "failed_appends": 0,
   "errors": [],
   "per_phase": {
    "0": 2400,
    "1": 1600,
-   "3": 2400
+   "3": 1600
   },
   "shapes_written": {
    "v1": 4000,
-   "v2": 2400
+   "v2": 1600
   },
   "session_row_lock_wait_s": {
-   "p50": 0.0348,
-   "p99": 0.2143,
-   "p100": 0.4795
+   "p50": 0.046,
+   "p99": 0.4676,
+   "p100": 1.7885
   },
   "append_latency_s": {
-   "p50": 0.0375,
-   "p99": 0.2207,
-   "p100": 0.487
+   "p50": 0.0499,
+   "p99": 0.5575,
+   "p100": 1.8048
   }
  },
  "verify": {
-  "hot_rows": 6400,
+  "hot_rows": 5600,
   "hot_gapless": true,
-  "hot_unique_payloads": 6400,
+  "hot_unique_payloads": 5600,
   "hot_lost_or_dup": 0,
   "null_payload_version_rows": 0,
   "rows_by_payload_version": {
    "1": 61831,
-   "2": 2400
+   "2": 1600
   },
   "chain_breaks": [],
   "pre_sessions_state_identical": true,
@@ -78,7 +78,7 @@
    true
   ]
  },
- "longest_writer_lock_wait_s": 0.4795,
- "longest_ddl_wall_s": 0.004,
+ "longest_writer_lock_wait_s": 1.7885,
+ "longest_ddl_wall_s": 0.028,
  "pass": true
 }

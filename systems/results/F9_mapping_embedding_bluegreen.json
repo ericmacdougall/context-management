@@ -1,0 +1,38 @@
+{
+ "workload": "one tenant, 30000 events (+ live writer 20/s), 4 reader threads doing PIT hybrid search through the stable alias sys-f9a-events; ES 9.5.6 single node on t2-dev",
+ "baseline_projection_s": 8.0,
+ "mapping_change": {
+  "build_catch_up_s": 11.6,
+  "alias_cutover_s": 0.084,
+  "old_indices_removed": 8
+ },
+ "embedding_change": {
+  "build_catch_up_s": 11.0,
+  "alias_cutover_s": 0.073,
+  "old_indices_removed": 8
+ },
+ "readers": {
+  "requests": 6184,
+  "mixed_family_responses": 0,
+  "retried_errors_in_cutover_windows": 15,
+  "failed_after_retries": 0,
+  "families_seen": [
+   "ev2",
+   "ev3",
+   "events"
+  ]
+ },
+ "identity_vs_postgres": {
+  "pg": 30464,
+  "es": 30464,
+  "missing": 0,
+  "extra": 0,
+  "content_mismatch": 0
+ },
+ "vector_same_text_recall_at_5_new_field": 0.96,
+ "new_subfield_works": {
+  "kind.raw_buckets": 1,
+  "content.en_stemmed_match": 2781
+ },
+ "pass": true
+}

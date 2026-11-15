@@ -1,0 +1,91 @@
+{
+ "workload": "16 processes, 1 event per transaction, one session, synchronous_commit=on, PG16 container 4 cpus/4g on t2-dev (shared 48-core host)",
+ "disk_free_gb_before": 54.3,
+ "row_lock": {
+  "mode": "row_lock",
+  "writers": 16,
+  "appends_attempted": 100000,
+  "duration_s": 238.0,
+  "throughput_per_s": 420.1,
+  "append_latency_s": {
+   "p50": 0.0277,
+   "p90": 0.0753,
+   "p95": 0.0948,
+   "p99": 0.1542,
+   "p100": 1.3659
+  },
+  "lock_wait_s": {
+   "p50": 0.0232,
+   "p90": 0.0704,
+   "p95": 0.0896,
+   "p99": 0.1462,
+   "p100": 1.3512
+  },
+  "errors": 0,
+  "verify": {
+   "rows": 100000,
+   "chain_ok": true,
+   "first_bad_seq": null,
+   "gapless": true,
+   "distinct_payloads": 100000,
+   "duplicated_payloads": 0,
+   "lost_payloads": 0,
+   "unexpected_payloads": 0
+  }
+ },
+ "no_lock_control_max_plus_one": {
+  "mode": "max",
+  "writers": 16,
+  "appends_attempted": 4000,
+  "duration_s": 2.0,
+  "throughput_per_s": 1971.5,
+  "append_latency_s": {
+   "p50": 0.0062,
+   "p90": 0.0098,
+   "p95": 0.0117,
+   "p99": 0.0628,
+   "p100": 0.1078
+  },
+  "lock_wait_s": {},
+  "errors": 3491,
+  "verify": {
+   "rows": 509,
+   "chain_ok": true,
+   "first_bad_seq": null,
+   "gapless": true,
+   "distinct_payloads": 509,
+   "duplicated_payloads": 0,
+   "lost_payloads": 3491,
+   "unexpected_payloads": 0
+  }
+ },
+ "no_lock_control_sequence": {
+  "mode": "seq",
+  "writers": 16,
+  "appends_attempted": 4000,
+  "duration_s": 1.6,
+  "throughput_per_s": 2483.6,
+  "append_latency_s": {
+   "p50": 0.0052,
+   "p90": 0.0086,
+   "p95": 0.01,
+   "p99": 0.0145,
+   "p100": 0.0603
+  },
+  "lock_wait_s": {},
+  "errors": 0,
+  "verify": {
+   "rows": 3,
+   "chain_ok": false,
+   "first_bad_seq": 3,
+   "gapless": true,
+   "distinct_payloads": 4000,
+   "duplicated_payloads": 0,
+   "lost_payloads": 0,
+   "unexpected_payloads": 0
+  }
+ },
+ "control_sensitive": true,
+ "pass": true,
+ "disk_free_gb_after": 54.0
+}
