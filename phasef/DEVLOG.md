@@ -37,3 +37,24 @@ Recall price: of the 20 v4 links the original audit accepted, v5 keeps 18; it dr
 plan to find a guitar teacher (auditor: pending); the 4 audited-false links are all dropped. New: 07741c45 under the bed -> shoe-rack plan (audited pending).
 Not demonstrated: order independence of stage 2 (batches of 12 across questions in pair-id order; a verdict may depend on its neighbours).
 Gate: not run (stop condition not met). No dev2 call, no dev2 session count.
+
+Registered before running (diagnostics for the recommendation; none of these is a link or counts toward S1-S3):
+- D1 (1 Opus call): linkaudit-v1 on X of 5c40ec5b ("met up with Alex twice already") against the two Alex facts of the earlier gold session (met at a festival; plan to
+  meet when he visits). If both are rejected, the GATE3 ceiling of 12 of 15 is measured rather than read; if one is accepted, a dated correction goes here and GATE3 stays as committed.
+- D2 (label-free reader arm on dev, about 19 calls): the FACTS3 reader (reader-v1.2, same v3 facts, same retrieval, same order; score_v2 does not use status) with every
+  link label replaced by the fact's modality, i.e. dated facts only. Baseline: FACTS3 16/16, which was read with v3 labels (link precision 0.625); no v4- or v5-label read
+  exists on dev. Reading rule: at n=16 with arms at ceiling only a large drop is informative. A label-free score of 15 or 16 means no measurable answer benefit from links
+  on dev; a drop of 3 or more means labels matter here; 1 or 2 is within noise. A v5-label arm is run only if the label-free arm drops.
+D1 result (2026-11-15, correction to the GATE3 ceiling table, which stays as committed): the auditor labels "plans to meet Alex when he visits" -> "has met up with Alex
+twice already" REPLACES (and the festival fact -> X adds). So under the measuring rubric the 5c40ec5b row is satisfiable; the measured ceiling is 13 of 15, not 12.
+Reaching it needs that pair in the candidate set (it is not: X has no candidate at theta 0.12 / 40 pairs) and both link stages to accept it.
+D2 result: label-free reader 16/16 [0.81, 1.00], same 16 of 16 fact lists as FACTS3; FACTS3 (v3 labels) 16/16; ORACLE3 16/16. Under the registered reading rule:
+no measurable answer benefit from links on dev.
+
+Rescue iteration 2, registered before running. Purpose: (a) a precision check on pairs the verifier was not designed on (the 287 new pairs; their links are reported
+separately from iteration 1's 19), (b) whether S3 can reach the measured ceiling of 13 with correct links, (c) the volume cost of wider candidates.
+Config: theta 0.10, 5 per fact, 50 pairs per question, each fact's best partner protected from the per-question cut, lemma fix (741 pairs, +48% over iteration 1).
+Stage 1 unchanged (link-v4.1 Sonnet); new pairs packed 15 per call across questions in pair-id order (each pair carries its own rounds). Stage 2 unchanged (Sonnet).
+Audit: one linkaudit-v1 audit per link; links already audited in iteration 1 keep that label. Plus an order check: stage 2 re-run on all stage-1 positives with
+seeded shuffled batches (seed 7), verdict flips reported. Even if the stop condition were met, the GATE3 budget rule cannot be satisfied after this iteration
+(about 115 calls would remain against at least 107 plus extraction), so the gate will not be run; that is decided now, not after the result.
