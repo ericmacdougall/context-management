@@ -2,7 +2,10 @@
  "split": "pilot",
  "level": "H0",
  "n": 94,
- "rule": "smallest budget whose next grid step adds < 0.01 session recall",
+ "rule_as_first_proposed": "smallest budget whose next grid step adds < 0.01 session recall",
+ "proposed_budget_0.01": null,
+ "rule_pilot_chosen": "same rule with threshold 0.03, chosen on pilot data on 2026-11-15 AFTER the 0.01 rule failed to fire; before any context existed",
+ "proposed_budget_0.03": 4000,
  "table": [
   {
    "budget": 500,
@@ -46,6 +49,5 @@
    "gold_round_recall": 0.9620567375886525,
    "mean_tokens_used": 31626.510638297874
   }
- ],
- "proposed_budget": null
+ ]
 }
