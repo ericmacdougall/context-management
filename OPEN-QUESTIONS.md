@@ -59,8 +59,8 @@ Status values: todo, running, done (with evidence id), blocked.
 | C6 | Prompt-cache economics of regenerating the injected block each turn | EXP measured on real calls | todo |
 | C7 | Concurrent writers to one session log (sequence, hash chain) | EXP | todo |
 | C8 | Concept owners as rows + keyed job queue under load (debounce, starvation of hot concepts) | EXP | todo |
-| C9 | Temporal on the turn path | DR: design keeps it off the turn path; limits confirmed from docs; no testbed unless a timer case appears | done (decision) |
-| C10 | Durable per-concept processes | DR for now: admitted only on a measured case needing a timer or long wait; the eval cannot test them | done (decision) |
+| C9 | Temporal on the turn path | DR for the turn path (kept off it); the engine itself is now tested under F4-F8 | reopened as F4-F8 |
+| C10 | Durable per-concept processes | DR for now: admitted only on a measured case needing a timer or long wait; session durability is tested under F4-F8 | done (decision) |
 | C11 | Multi-tenant isolation model (index per tenant vs DLS) | EXP E9 + DR | running |
 
 ## D. Needs the user
@@ -79,3 +79,22 @@ Status values: todo, running, done (with evidence id), blocked.
 |---|---|---|---|
 | E1 | Whether Elastic wants a design partner; private roadmap for memory validity and erasure | OPEN-BLOCKED: needs contact with Elastic, which is the user's step | blocked |
 | E2 | Q2 FY27 results on 2026-11-19 supersede the Q1 figures | re-check after that date | todo |
+
+## F. Change and evolution
+
+Requirement: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a/738faa20-cd78-4599-bbda-f9ec18226de4 "keep going and dont forget about scenarios where the task definition needs to adjust slightly without loosing progress e..." (continues: "...and when the temporal/engine/etc needs to update/ugprade/evolve"). This reopens C9 and C10: the durable session engine is in scope and gets a real testbed.
+
+| ID | Question | Exit | Status |
+|---|---|---|---|
+| F1 | Task definition amended mid-session (narrowed, widened, an acceptance criterion changed, a constraint added): the amendment is an event; earlier work is kept and re-classified as still valid, needs rework, or obsolete; nothing completed is lost or silently redone | EXP (plumbing) | todo |
+| F2 | After an amendment the next turn's context shows the new definition as current, the old one as superseded, and never injects a stale requirement as current; a crash at the amendment point resumes correctly | EXP + small LLM scenario set | todo |
+| F3 | Amendment while work is in flight (a step running, a tool call outstanding, a fold or projection mid-way): no torn state; the in-flight step is reconciled against the new definition | EXP | todo |
+| F4 | Durable session engine (Temporal): a long-running session survives worker crash, restart and host move with no lost or repeated external effect | EXP testbed | todo |
+| F5 | Workflow code changes while sessions are in flight: incompatible change is caught by replay tests before deploy; compatible paths (patching, worker versioning, continue-as-new as the upgrade point) keep old sessions running | EXP testbed | todo |
+| F6 | Session state schema changes: migration at a continue-as-new boundary; old and new sessions coexist | EXP testbed | todo |
+| F7 | Engine upgrade: Temporal server and SDK version bump under running sessions | EXP testbed | todo |
+| F8 | Engine independence: a session can be rebuilt into a fresh engine namespace (or another engine) from the Postgres log alone, because the engine holds ids and cursors only | EXP drill | todo |
+| F9 | Elasticsearch version upgrade with existing indices; mapping change; embedding model change (reindex and alias swap under load) | EXP | todo |
+| F10 | Postgres schema change on the append-only, hash-chained log: event schema versions, upcasting old events on read, online migration under writes | EXP | todo |
+| F11 | Extraction recipe or model change with facts already derived: mixed versions never served together; cost of re-derivation bounded by the extraction cache | EXP (C1 covered the rule-based case) + measured with the real extractor | todo |
+| F12 | Agent harness and model upgrades mid-session (the coding agent itself changes version) | OPEN-BLOCKED here: belongs to the session-runtime design (see the factory-gotchas catalogue, resume section); only the memory-side contract is tested | blocked |
