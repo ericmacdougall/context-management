@@ -501,7 +501,9 @@ class N5HookFramingTests(unittest.TestCase):
         self.assertGreater(nonempty, 10)
 
     def test_oversized_header_gives_no_output(self):
-        self.assertEqual(self.run_main(_events_file(), 600, {"prompt": "staging database", "session_id": "s" * 700}), "")
+        p = _events_file(filler="")                                          # small records: they fit, the header does not
+        self.assertGreaterEqual(_well_formed(self, self.run_main(p, 600, {"prompt": "staging database", "session_id": "s1"}), 600), 1)
+        self.assertEqual(self.run_main(p, 600, {"prompt": "staging database", "session_id": "s" * 700}), "")
 
 
 class N6InjectorDropTests(unittest.TestCase):
