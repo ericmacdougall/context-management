@@ -1,0 +1,15 @@
+﻿event: message
+data: {"id":"chatcmpl-a1e17a9c8553461bf2a44ca8","choices":[{"delta":{"content":"","role":"assistant"},"index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-a1e17a9c8553461bf2a44ca8","choices":[{"delta":{"content":"Paris"},"index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-a1e17a9c8553461bf2a44ca8","choices":[{"delta":{},"finish_reason":"stop","index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-a1e17a9c8553461bf2a44ca8","choices":[],"model":"stub-chat","object":"chat.completion.chunk","usage":{"completion_tokens":1,"prompt_tokens":10,"total_tokens":11,"prompt_tokens_details":{"cached_tokens":0}}}
+
+﻿event: message
+data: [DONE]
+

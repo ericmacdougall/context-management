@@ -88,7 +88,7 @@ def _b64_floats(vec) -> str:
     return base64.b64encode(struct.pack("<%df" % len(vec), *vec)).decode()
 
 
-def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None):
+def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None, recorder: Optional[list] = None):
     if not isinstance(backends, dict):
         backends = {backends.model: backends}
     default_model = default_model or next(iter(backends))
@@ -129,14 +129,18 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
 
         def _body(self):
             n = int(self.headers.get("Content-Length") or 0)
+            self._raw_n = n
             if n <= 0 or n > MAX_BODY:
                 self._err(413 if n > MAX_BODY else 400, "bad body length")
                 return None
             try:
-                return json.loads(self.rfile.read(n))
+                b = json.loads(self.rfile.read(n))
             except ValueError as e:
                 self._err(400, str(e))
                 return None
+            if recorder is not None:  # fixtures: path, non-secret headers and the parsed body (the bearer token is never recorded)
+                recorder.append({"path": self.path, "headers": {k: v for k, v in self.headers.items() if k.lower() != "authorization"}, "body": b})
+            return b
 
         def do_POST(self):
             if not self._auth():
@@ -219,7 +223,7 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
 
 
 class Gateway:
-    def __init__(self, backend, out_dir: str, host: str = "127.0.0.1", port: int = 0, embedder=None,
+    def __init__(self, backend, out_dir: str, host: str = "127.0.0.1", port: int = 0, embedder=None, recorder: Optional[list] = None,
                  dev_subscription_backends: bool = False, allow_bridge_host: Optional[str] = None):
         """backend: a ChatModel or {model_id: ChatModel}. allow_bridge_host: one explicitly named private address (e.g. the Docker
         bridge gateway) a containerised client must reach; never 0.0.0.0, and the bearer token still applies."""
@@ -237,7 +241,7 @@ class Gateway:
             require_loopback(host)
         os.makedirs(out_dir, exist_ok=True)
         self.out_dir, self.token = out_dir, secrets.token_urlsafe(32)
-        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token, embedder))
+        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token, embedder, recorder=recorder))
         self.srv.daemon_threads = True
         self.host, self.port = self.srv.server_address[:2]
         self._write("gateway.token", self.token, 0o600)
