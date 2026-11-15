@@ -1,0 +1,235 @@
+{
+ "license": {
+  "status": "active",
+  "uid": "2c265504-b7cd-4016-8335-67ef530b1cb8",
+  "type": "trial",
+  "issue_date": "2026-11-15T18:26:40.684Z",
+  "issue_date_in_millis": 1794767200684,
+  "expiry_date": "2026-12-15T18:26:40.684Z",
+  "expiry_date_in_millis": 1797359200684,
+  "max_nodes": 1000,
+  "max_resource_units": null,
+  "issued_to": "emlab-16096",
+  "issuer": "elasticsearch",
+  "start_date_in_millis": -1
+ },
+ "preconfigured_endpoints": [
+  ".elser-2-elasticsearch",
+  ".multilingual-e5-small-elasticsearch",
+  ".rerank-v1-elasticsearch"
+ ],
+ "put_endpoint": {
+  "status": 200,
+  "seconds": 24.461960554122925,
+  "body": {
+   "inference_id": "emlab-e5",
+   "task_type": "text_embedding",
+   "service": "elasticsearch",
+   "chunking_settings": {
+    "strategy": "sentence",
+    "max_chunk_size": 250,
+    "sentence_overlap": 1
+   }
+  }
+ },
+ "model_stats": {
+  "count": 1,
+  "trained_model_stats": [
+   {
+    "model_id": ".multilingual-e5-small",
+    "model_size_stats": {
+     "model_size_bytes": 470097544,
+     "required_native_memory_bytes": 1497914672
+    },
+    "pipeline_count": 0,
+    "inference_stats": {
+     "failure_count": 0,
+     "inference_count": 0,
+     "cache_miss_count": 0,
+     "missing_all_fields_count": 0,
+     "timestamp": 1794767233757
+    },
+    "deployment_stats": {
+     "deployment_id": "emlab-e5",
+     "model_id": ".multilingual-e5-small",
+     "threads_per_allocation": 1,
+     "number_of_allocations": 1,
+     "queue_capacity": 10000,
+     "state": "started",
+     "allocation_status": {
+      "allocation_count": 1,
+      "target_allocation_count": 1,
+      "state": "fully_allocated"
+     },
+     "cache_size": "448.3mb",
+     "priority": "normal",
+     "start_time": 1794767223780,
+     "peak_throughput_per_minute": 0,
+     "nodes": [
+      {
+       "node": {
+        "3LVbsXnaTXKnVZkwh6gGRg": {
+         "name": "81414232b668",
+         "ephemeral_id": "19q9rub9RdyilmrWSG6Wqg",
+         "transport_address": "172.17.0.8:9300",
+         "external_id": "81414232b668",
+         "attributes": {
+          "xpack.installed": "true",
+          "transform.config_version": "10.0.0",
+          "ml.machine_memory": "17179869184",
+          "ml.allocated_processors": "12",
+          "ml.allocated_processors_double": "12.0",
+          "ml.max_jvm_size": "4294967296",
+          "ml.config_version": "12.0.0"
+         },
+         "roles": [
+          "data",
+          "data_cold",
+          "data_content",
+          "data_frozen",
+          "data_hot",
+          "data_warm",
+          "ingest",
+          "master",
+          "ml",
+          "remote_cluster_client",
+          "transform"
+         ],
+         "version": "9.5.6",
+         "min_index_version": 8000099,
+         "max_index_version": 9111002
+        }
+       },
+       "routing_state": {
+        "routing_state": "started"
+       },
+       "inference_count": 0,
+       "inference_cache_hit_count": 0,
+       "number_of_pending_requests": 0,
+       "start_time": 1794767226792,
+       "threads_per_allocation": 1,
+       "number_of_allocations": 1,
+       "peak_throughput_per_minute": 0,
+       "throughput_last_minute": 0,
+       "inference_cache_hit_count_last_minute": 0
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "model_config_size": {
+  "count": 1,
+  "trained_model_configs": [
+   {
+    "model_id": ".multilingual-e5-small",
+    "model_type": "pytorch",
+    "model_package": {
+     "packaged_model_id": "multilingual-e5-small",
+     "model_repository": "https://ml-models.elastic.co",
+     "minimum_version": "12.0.0",
+     "size": 470097544,
+     "sha256": "8e8ac0963a9492e0b03b66bd1d0ad736580a9edcdf7fc012c81fa9260195fe36",
+     "metadata": {},
+     "tags": [],
+     "vocabulary_file": "multilingual-e5-small.vocab.json"
+    },
+    "created_by": "api_user",
+    "version": "12.0.0",
+    "create_time": 1794767209341,
+    "model_size_bytes": 0,
+    "estimated_operations": 0,
+    "license_level": "platinum",
+    "description": "E5 small multilingual",
+    "tags": [],
+    "metadata": {
+     "per_allocation_memory_bytes": 557785256,
+     "per_deployment_memory_bytes": 470031872
+    },
+    "input": {
+     "field_names": [
+      "text_field"
+     ]
+    },
+    "inference_config": {
+     "text_embedding": {
+      "vocabulary": {
+       "index": ".ml-inference-native-000002"
+      },
+      "tokenization": {
+       "xlm_roberta": {
+        "do_lower_case": false,
+        "with_special_tokens": true,
+        "max_sequence_length": 512,
+        "truncate": "first",
+        "span": -1
+       }
+      },
+      "embedding_size": 384
+     }
+    },
+    "location": {
+     "index": {
+      "name": ".ml-inference-native-000002"
+     }
+    },
+    "prefix_strings": {
+     "ingest": "passage: ",
+     "search": "query: "
+    },
+    "fully_defined": true
+   }
+  ]
+ },
+ "ml_memory": {
+  "_nodes": {
+   "total": 1,
+   "successful": 1,
+   "failed": 0
+  },
+  "cluster_name": "emlab-16096",
+  "nodes": {
+   "3LVbsXnaTXKnVZkwh6gGRg": {
+    "name": "81414232b668",
+    "ephemeral_id": "19q9rub9RdyilmrWSG6Wqg",
+    "transport_address": "172.17.0.8:9300",
+    "attributes": {
+     "ml.machine_memory": "17179869184",
+     "ml.allocated_processors": "12",
+     "ml.allocated_processors_double": "12.0",
+     "ml.max_jvm_size": "4294967296",
+     "ml.config_version": "12.0.0"
+    },
+    "roles": [
+     "data",
+     "data_cold",
+     "data_content",
+     "data_frozen",
+     "data_hot",
+     "data_warm",
+     "ingest",
+     "master",
+     "ml",
+     "remote_cluster_client",
+     "transform"
+    ],
+    "mem": {
+     "total_in_bytes": 17179869184,
+     "adjusted_total_in_bytes": 17179869184,
+     "ml": {
+      "max_in_bytes": 5153960755,
+      "native_code_overhead_in_bytes": 31457280,
+      "anomaly_detectors_in_bytes": 0,
+      "data_frame_analytics_in_bytes": 0,
+      "native_inference_in_bytes": 1497914672
+     }
+    },
+    "jvm": {
+     "heap_max_in_bytes": 4294967296,
+     "java_inference_max_in_bytes": 1717986918,
+     "java_inference_in_bytes": 0
+    }
+   }
+  }
+ }
+}

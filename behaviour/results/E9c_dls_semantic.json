@@ -1,0 +1,203 @@
+{
+ "bulk_errors": false,
+ "semantic_query__admin": {
+  "status": 200,
+  "hits": [
+   [
+    "b18",
+    0.9453,
+    "B"
+   ],
+   [
+    "b17",
+    0.945,
+    "B"
+   ],
+   [
+    "b13",
+    0.9438,
+    "B"
+   ],
+   [
+    "b15",
+    0.9438,
+    "B"
+   ],
+   [
+    "b10",
+    0.9429,
+    "B"
+   ]
+  ]
+ },
+ "semantic_query__tenantA": {
+  "status": 200,
+  "hits": [
+   [
+    "a1",
+    0.8864,
+    "A"
+   ],
+   [
+    "a0",
+    0.8855,
+    "A"
+   ],
+   [
+    "a4",
+    0.8846,
+    "A"
+   ],
+   [
+    "a3",
+    0.8842,
+    "A"
+   ],
+   [
+    "a2",
+    0.882,
+    "A"
+   ]
+  ]
+ },
+ "match_on_semantic_text__admin": {
+  "status": 200,
+  "hits": [
+   [
+    "b18",
+    0.9453,
+    "B"
+   ],
+   [
+    "b17",
+    0.945,
+    "B"
+   ],
+   [
+    "b13",
+    0.9438,
+    "B"
+   ],
+   [
+    "b15",
+    0.9438,
+    "B"
+   ],
+   [
+    "b10",
+    0.9429,
+    "B"
+   ]
+  ]
+ },
+ "match_on_semantic_text__tenantA": {
+  "status": 200,
+  "hits": [
+   [
+    "a1",
+    0.8864,
+    "A"
+   ],
+   [
+    "a0",
+    0.8855,
+    "A"
+   ],
+   [
+    "a4",
+    0.8846,
+    "A"
+   ],
+   [
+    "a3",
+    0.8842,
+    "A"
+   ],
+   [
+    "a2",
+    0.882,
+    "A"
+   ]
+  ]
+ },
+ "retriever_knn_style_semantic_in_bool__admin": {
+  "status": 200,
+  "hits": [
+   [
+    "b18",
+    0.9453,
+    "B"
+   ],
+   [
+    "b17",
+    0.945,
+    "B"
+   ],
+   [
+    "b13",
+    0.9438,
+    "B"
+   ],
+   [
+    "b15",
+    0.9438,
+    "B"
+   ],
+   [
+    "b10",
+    0.9429,
+    "B"
+   ]
+  ]
+ },
+ "retriever_knn_style_semantic_in_bool__tenantA": {
+  "status": 200,
+  "hits": [
+   [
+    "a1",
+    0.8864,
+    "A"
+   ],
+   [
+    "a0",
+    0.8855,
+    "A"
+   ],
+   [
+    "a4",
+    0.8846,
+    "A"
+   ],
+   [
+    "a3",
+    0.8842,
+    "A"
+   ],
+   [
+    "a2",
+    0.882,
+    "A"
+   ]
+  ]
+ },
+ "admin_explain_n_N_e9_shared": [
+  [
+   "n, number of documents containing term",
+   20006
+  ],
+  [
+   "N, total number of documents with field",
+   20060
+  ]
+ ],
+ "tenantA_explain_n_N_e9_shared": [
+  [
+   "n, number of documents containing term",
+   20006
+  ],
+  [
+   "N, total number of documents with field",
+   20060
+  ]
+ ]
+}

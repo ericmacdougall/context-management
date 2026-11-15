@@ -1,0 +1,46 @@
+{
+ "license_before": {
+  "license": {
+   "status": "active",
+   "uid": "2b1d437b-aa5d-4690-8f7e-a75cc2c133ac",
+   "type": "basic",
+   "issue_date": "2026-11-15T17:48:39.515Z",
+   "issue_date_in_millis": 1794764919515,
+   "max_nodes": 1000,
+   "max_resource_units": null,
+   "issued_to": "emlab-16096",
+   "issuer": "elasticsearch",
+   "start_date_in_millis": -1
+  }
+ },
+ "trial_status_before": {
+  "eligible_to_start_trial": true
+ },
+ "start_trial": {
+  "status": 200,
+  "body": {
+   "acknowledged": true,
+   "trial_was_started": true,
+   "type": "trial"
+  }
+ },
+ "license_after": {
+  "license": {
+   "status": "active",
+   "uid": "2c265504-b7cd-4016-8335-67ef530b1cb8",
+   "type": "trial",
+   "issue_date": "2026-11-15T18:26:40.684Z",
+   "issue_date_in_millis": 1794767200684,
+   "expiry_date": "2026-12-15T18:26:40.684Z",
+   "expiry_date_in_millis": 1797359200684,
+   "max_nodes": 1000,
+   "max_resource_units": null,
+   "issued_to": "emlab-16096",
+   "issuer": "elasticsearch",
+   "start_date_in_millis": -1
+  }
+ },
+ "trial_status_after": {
+  "eligible_to_start_trial": false
+ }
+}

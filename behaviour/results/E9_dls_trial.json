@@ -1,0 +1,196 @@
+{
+ "phase": "trial",
+ "license": "trial",
+ "create_key_A": {
+  "status": 200,
+  "created": true
+ },
+ "create_key_B": {
+  "status": 200,
+  "created": true
+ },
+ "before_B_adds_docs": {
+  "A_match_all": {
+   "total": 30,
+   "tenant_buckets": [
+    {
+     "key": "A",
+     "doc_count": 30
+    }
+   ],
+   "cat_buckets": [
+    {
+     "key": "a-cat",
+     "doc_count": 15
+    },
+    {
+     "key": "shared-cat",
+     "doc_count": 15
+    }
+   ]
+  },
+  "B_match_all": {
+   "total": 30,
+   "tenant_buckets": [
+    {
+     "key": "B",
+     "doc_count": 30
+    }
+   ],
+   "cat_buckets": [
+    {
+     "key": "b-secret-cat",
+     "doc_count": 30
+    }
+   ]
+  },
+  "A_kiwi": {
+   "status": 200,
+   "hits": [
+    [
+     "a0",
+     2.2390716
+    ],
+    [
+     "a1",
+     2.2390716
+    ],
+    [
+     "a2",
+     2.2390716
+    ]
+   ]
+  },
+  "A_idf_via_explain": [
+   [
+    "score(freq=1.0), computed as boost * idf * tf from:",
+    2.2390716,
+    [
+     "boost",
+     "idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:",
+     "tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:"
+    ]
+   ],
+   [
+    "idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:",
+    2.2390716,
+    [
+     "n, number of documents containing term",
+     "N, total number of documents with field"
+    ]
+   ]
+  ],
+  "admin_kiwi_total": 6,
+  "A_significant_terms": {
+   "doc_count": 30,
+   "bg_count": 30,
+   "buckets": []
+  },
+  "A_knn_k5": {
+   "status": 200,
+   "n": 5,
+   "tenants": [
+    "A"
+   ]
+  },
+  "A_terms_enum_cat": [],
+  "A_count_api": 30
+ },
+ "after_B_adds_20000_kiwi_docs": {
+  "A_match_all": {
+   "total": 30,
+   "tenant_buckets": [
+    {
+     "key": "A",
+     "doc_count": 30
+    }
+   ],
+   "cat_buckets": [
+    {
+     "key": "a-cat",
+     "doc_count": 15
+    },
+    {
+     "key": "shared-cat",
+     "doc_count": 15
+    }
+   ]
+  },
+  "B_match_all": {
+   "total": 20030,
+   "tenant_buckets": [
+    {
+     "key": "B",
+     "doc_count": 20030
+    }
+   ],
+   "cat_buckets": [
+    {
+     "key": "b-secret-cat",
+     "doc_count": 20030
+    }
+   ]
+  },
+  "A_kiwi": {
+   "status": 200,
+   "hits": [
+    [
+     "a0",
+     0.0030295562
+    ],
+    [
+     "a1",
+     0.0030295562
+    ],
+    [
+     "a2",
+     0.0030295562
+    ]
+   ]
+  },
+  "A_idf_via_explain": [
+   [
+    "score(freq=1.0), computed as boost * idf * tf from:",
+    0.0030295562,
+    [
+     "boost",
+     "idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:",
+     "tf, computed as freq / (freq + k1 * (1 - b + b * dl / avgdl)) from:"
+    ]
+   ],
+   [
+    "idf, computed as log(1 + (N - n + 0.5) / (n + 0.5)) from:",
+    0.002720411,
+    [
+     "n, number of documents containing term",
+     "N, total number of documents with field"
+    ]
+   ]
+  ],
+  "admin_kiwi_total": 10000,
+  "A_significant_terms": {
+   "doc_count": 30,
+   "bg_count": 30,
+   "buckets": []
+  },
+  "A_knn_k5": {
+   "status": 200,
+   "n": 5,
+   "tenants": [
+    "A"
+   ]
+  },
+  "A_terms_enum_cat": [],
+  "A_count_api": 30
+ },
+ "score_shift_A_top_hit": {
+  "before": [
+   "a0",
+   2.2390716
+  ],
+  "after": [
+   "a0",
+   0.0030295562
+  ]
+ }
+}

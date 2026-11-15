@@ -1,0 +1,33 @@
+{
+ "1_put_mapping": {
+  "status": 200,
+  "ok": true
+ },
+ "2_bulk_index": {
+  "status": 200,
+  "errors": false,
+  "first_item": "ok"
+ },
+ "3_refresh": {
+  "status": 200,
+  "shards": {
+   "total": 1,
+   "successful": 1,
+   "failed": 0
+  }
+ },
+ "4_flush": {
+  "status": 200,
+  "shards": {
+   "total": 1,
+   "successful": 1,
+   "failed": 0
+  }
+ },
+ "5_search": {
+  "status": 200,
+  "hits": 3
+ },
+ "6_health": "green",
+ "license": "trial"
+}

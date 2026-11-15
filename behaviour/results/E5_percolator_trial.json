@@ -1,0 +1,70 @@
+{
+ "license": "trial",
+ "create_index": [
+  200,
+  true
+ ],
+ "store": {
+  "semantic": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:69] failed to parse: No inference results set for [semantic_text] field [body]",
+   "root": "[1:69] failed to parse: No inference results set for [semantic_text] field [body]",
+   "caused_by": "No inference results set for [semantic_text] field [body]"
+  },
+  "match_on_semantic_text": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:48] failed to parse: Field [body] of type [semantic_text] does not support match queries",
+   "root": "[1:48] failed to parse: Field [body] of type [semantic_text] does not support match queries",
+   "caused_by": "Field [body] of type [semantic_text] does not support match queries"
+  },
+  "bool_filter_with_semantic": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:134] failed to parse: No inference results set for [semantic_text] field [body]",
+   "root": "[1:134] failed to parse: No inference results set for [semantic_text] field [body]",
+   "caused_by": "No inference results set for [semantic_text] field [body]"
+  },
+  "sparse_vector_query_vector": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:78] failed to parse: Cannot invoke \"org.apache.lucene.index.IndexReader.getDocCount(String)\" because the return value of \"org.elasticsearch.index.query.SearchExecutionContext.getIndexReader()\" is null",
+   "root": "[1:78] failed to parse: Cannot invoke \"org.apache.lucene.index.IndexReader.getDocCount(String)\" because the return value of \"org.elasticsearch.index.query.SearchExecutionContext.getIndexReader()\" is null",
+   "caused_by": "Cannot invoke \"org.apache.lucene.index.IndexReader.getDocCount(String)\" because the return value of \"org.elasticsearch.index.query.SearchExecutionContext.getIndexReader()\" is null"
+  },
+  "sparse_vector_elser_inference_id": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:102] failed to parse: Could not start deployment because no ML nodes with sufficient capacity were found",
+   "root": "Could not start deployment because no ML nodes with sufficient capacity were found",
+   "caused_by": "Could not start deployment because no ML nodes with sufficient capacity were found"
+  },
+  "knn": {
+   "status": 400,
+   "type": "document_parsing_exception",
+   "reason": "[1:93] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "root": "[1:93] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "caused_by": "the [knn] query is unsupported inside a percolator query"
+  },
+  "match_txt_control": {
+   "status": 201,
+   "result": "created"
+  }
+ },
+ "percolate": {
+  "doc_with_text_and_body": {
+   "status": 200,
+   "matches": [
+    [
+     "match_txt_control",
+     0.13076457
+    ]
+   ]
+  },
+  "doc_body_only": {
+   "status": 200,
+   "matches": []
+  }
+ }
+}

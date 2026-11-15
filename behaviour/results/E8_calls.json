@@ -1,0 +1,228 @@
+{
+ "create": {
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "e8-sem"
+ },
+ "ops": [
+  {
+   "op": "0 calibration: index API full doc d1",
+   "status": 201,
+   "result": "created",
+   "before": {
+    "inference_stats_count": 0,
+    "deployment_inference_count": 0,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 1,
+    "deployment_inference_count": 1,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 1,
+   "delta_deployment": 1
+  },
+  {
+   "op": "1 calibration: bulk index full doc d2",
+   "status": 200,
+   "result": {
+    "item_status": 201,
+    "result": "created",
+    "error": null
+   },
+   "before": {
+    "inference_stats_count": 1,
+    "deployment_inference_count": 1,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 2,
+    "deployment_inference_count": 2,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 1,
+   "delta_deployment": 1
+  },
+  {
+   "op": "2 bulk partial update omitting semantic_text (d1.tag)",
+   "status": 200,
+   "result": {
+    "item_status": 200,
+    "result": "updated",
+    "error": null
+   },
+   "before": {
+    "inference_stats_count": 2,
+    "deployment_inference_count": 2,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 2,
+    "deployment_inference_count": 2,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 0,
+   "delta_deployment": 0
+  },
+  {
+   "op": "3 Update API doc partial omitting semantic_text (d1.tag)",
+   "status": 200,
+   "result": "updated",
+   "before": {
+    "inference_stats_count": 2,
+    "deployment_inference_count": 2,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 3,
+    "deployment_inference_count": 3,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 1,
+   "delta_deployment": 1
+  },
+  {
+   "op": "4 scripted Update API on other field (d1.tag)",
+   "status": 200,
+   "result": "updated",
+   "before": {
+    "inference_stats_count": 3,
+    "deployment_inference_count": 3,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 4,
+    "deployment_inference_count": 4,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 1,
+   "delta_deployment": 1
+  },
+  {
+   "op": "5 scripted update inside _bulk (d1.tag)",
+   "status": 200,
+   "result": {
+    "item_status": 400,
+    "result": null,
+    "error": {
+     "type": "status_exception",
+     "reason": "Cannot apply update with a script on indices that contain [semantic_text] field(s)"
+    }
+   },
+   "before": {
+    "inference_stats_count": 4,
+    "deployment_inference_count": 4,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 4,
+    "deployment_inference_count": 4,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 0,
+   "delta_deployment": 0
+  },
+  {
+   "op": "6 full re-index d1 via index API, identical body",
+   "status": 200,
+   "result": "updated",
+   "before": {
+    "inference_stats_count": 4,
+    "deployment_inference_count": 4,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 5,
+    "deployment_inference_count": 5,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 1,
+   "delta_deployment": 1
+  },
+  {
+   "op": "7 Update API doc partial that RESENDS semantic_text unchanged",
+   "status": 200,
+   "result": "updated",
+   "before": {
+    "inference_stats_count": 5,
+    "deployment_inference_count": 5,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 6,
+    "deployment_inference_count": 6,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 1,
+   "delta_deployment": 1
+  },
+  {
+   "op": "8 _reindex e8-sem -> e8-sem-copy (2 docs, same inference_id)",
+   "status": 200,
+   "result": {
+    "total": 2,
+    "created": 2,
+    "failures": []
+   },
+   "before": {
+    "inference_stats_count": 6,
+    "deployment_inference_count": 6,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 8,
+    "deployment_inference_count": 8,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 2,
+   "delta_deployment": 2
+  },
+  {
+   "op": "9 update_by_query touching tag only",
+   "status": 200,
+   "result": {
+    "total": 2,
+    "updated": 2,
+    "failures": []
+   },
+   "before": {
+    "inference_stats_count": 8,
+    "deployment_inference_count": 8,
+    "deployment_number_of_pending": 0
+   },
+   "after": {
+    "inference_stats_count": 10,
+    "deployment_inference_count": 10,
+    "deployment_number_of_pending": 0
+   },
+   "delta_inference_stats": 2,
+   "delta_deployment": 2
+  }
+ ],
+ "semantic_query": [
+  200,
+  [
+   [
+    "d2",
+    0.9106785
+   ],
+   [
+    "d1",
+    0.90463334
+   ]
+  ]
+ ],
+ "match_on_semantic_text": [
+  200,
+  [
+   [
+    "d2",
+    0.9106785
+   ],
+   [
+    "d1",
+    0.90463334
+   ]
+  ]
+ ]
+}

@@ -1,0 +1,68 @@
+{
+ "n_docs": 10,
+ "note": "counts = (inference_stats.inference_count, summed deployment inference_count)",
+ "bulk_errors": [
+  false,
+  false,
+  false
+ ],
+ "bulk_partial_update_10docs_run1": {
+  "delta": [
+   0,
+   0
+  ]
+ },
+ "bulk_partial_update_10docs_run2": {
+  "delta": [
+   0,
+   0
+  ]
+ },
+ "update_api_doc_partial_10calls_run1": {
+  "delta": [
+   10,
+   10
+  ]
+ },
+ "update_api_doc_partial_10calls_run2": {
+  "delta": [
+   10,
+   10
+  ]
+ },
+ "bulk_partial_update_10docs_run3_after_single": {
+  "delta": [
+   0,
+   0
+  ]
+ },
+ "semantic_query_after": [
+  [
+   "d1",
+   0.9224796,
+   "b3"
+  ],
+  [
+   "d0",
+   0.92171025,
+   "b3"
+  ],
+  [
+   "d9",
+   0.9206463,
+   "b3"
+  ]
+ ],
+ "update_api_noop_same_tag": {
+  "delta": [
+   0,
+   0
+  ]
+ },
+ "bulk_update_noop_same_tag": {
+  "delta": [
+   0,
+   0
+  ]
+ }
+}
