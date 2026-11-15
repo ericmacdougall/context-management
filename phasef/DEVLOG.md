@@ -87,3 +87,6 @@ v4 errors also drops those: at the ceiling the precision and recall bars pull ag
 Gate 3 budget confirmation (before any dev2 call): allowance 220 (cap 565) covers extraction 47 (743 sessions at 16 per call), gold-pair identification 16, expansion 16,
 three reader arms 48 and answer judging 8 (135 fixed), leaving 85 for both stage-1 passes, both stage-2 passes and the audit: enough for up to 547 candidate pairs (dev had 501).
 The exact pair count is checked by code right after extraction (stage budget); above that, the gate stops and the shortfall is reported.
+
+Gate 3 on dev2 (one run, GATE3_RESULT.md): G1 16/16 (ORACLE 16/16), G2 14/16, G3 14/16, G4 16/16, G4b 0/16 all pass; G5 10/16 FAIL (needs 12). Held-out precision
+16/16 [0.81, 1.00] with no harmful link; recall of the named gold update 10/16; 9 of 25 links flip between seeded runs. NOLABEL 16/16, same verdicts as FACTS5.
