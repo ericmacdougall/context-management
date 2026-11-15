@@ -1,0 +1,349 @@
+{
+ "mode": "clustered",
+ "rescore_oversample": 3.0,
+ "workload": "200 queries (random unit vectors, seed 777), k=10, single shard force-merged to 1 segment, sequential client on t2-dev; truth = numpy exact cosine with the filter; synthetic data",
+ "cells": [
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "100%",
+   "recall_at_10": 0.785,
+   "client_ms_p50": 2.943879022495821,
+   "client_ms_p90": 4.096177994506434,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "50%",
+   "recall_at_10": 0.9275,
+   "client_ms_p50": 3.487387002678588,
+   "client_ms_p90": 4.260588967008516,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "5%",
+   "recall_at_10": 0.452,
+   "client_ms_p50": 3.9712825091555715,
+   "client_ms_p90": 5.240781814791262,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "0.5%",
+   "recall_at_10": 0.6375,
+   "client_ms_p50": 2.926504996139556,
+   "client_ms_p90": 4.141271987464279,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "100%",
+   "recall_at_10": 0.7895,
+   "client_ms_p50": 4.32025600457564,
+   "client_ms_p90": 5.202057777205482,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "50%",
+   "recall_at_10": 0.93,
+   "client_ms_p50": 5.88021901785396,
+   "client_ms_p90": 7.601615716703236,
+   "took_ms_p50": 4.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "5%",
+   "recall_at_10": 0.6065,
+   "client_ms_p50": 7.675590954022482,
+   "client_ms_p90": 8.93849091953598,
+   "took_ms_p50": 5.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "0.5%",
+   "recall_at_10": 0.6375,
+   "client_ms_p50": 3.2536995131522417,
+   "client_ms_p90": 4.728289903141558,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "100%",
+   "recall_at_10": 0.785,
+   "client_ms_p50": 2.503008989151567,
+   "client_ms_p90": 3.0222079949453473,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "50%",
+   "recall_at_10": 0.9295,
+   "client_ms_p50": 2.9068844742141664,
+   "client_ms_p90": 3.796493884874508,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "5%",
+   "recall_at_10": 0.7225,
+   "client_ms_p50": 4.112839000299573,
+   "client_ms_p90": 5.192498111864552,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "0.5%",
+   "recall_at_10": 0.6375,
+   "client_ms_p50": 3.4201050002593547,
+   "client_ms_p90": 4.659621819155291,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "100%",
+   "recall_at_10": 0.7895,
+   "client_ms_p50": 4.794422507984564,
+   "client_ms_p90": 6.231370841851458,
+   "took_ms_p50": 3.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "50%",
+   "recall_at_10": 0.9305,
+   "client_ms_p50": 5.793109012302011,
+   "client_ms_p90": 8.706837805220857,
+   "took_ms_p50": 4.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "5%",
+   "recall_at_10": 0.743,
+   "client_ms_p50": 4.990399000234902,
+   "client_ms_p90": 7.216188032180071,
+   "took_ms_p50": 3.0
+  },
+  {
+   "index": "bbq_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "0.5%",
+   "recall_at_10": 0.6375,
+   "client_ms_p50": 3.646267985459417,
+   "client_ms_p90": 4.72213490284048,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "100%",
+   "recall_at_10": 0.9995,
+   "client_ms_p50": 2.9740449972450733,
+   "client_ms_p90": 4.143953183665872,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "50%",
+   "recall_at_10": 0.9985,
+   "client_ms_p50": 3.912176500307396,
+   "client_ms_p90": 4.980250902008265,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "5%",
+   "recall_at_10": 0.559,
+   "client_ms_p50": 3.826211002888158,
+   "client_ms_p90": 4.709852795349434,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 100,
+   "filter_pass": "0.5%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 3.415725484956056,
+   "client_ms_p90": 4.262210876913741,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "100%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 4.969608999090269,
+   "client_ms_p90": 6.180015986319631,
+   "took_ms_p50": 3.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "50%",
+   "recall_at_10": 0.999,
+   "client_ms_p50": 7.009028020547703,
+   "client_ms_p90": 8.466469997074455,
+   "took_ms_p50": 5.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "5%",
+   "recall_at_10": 0.7885,
+   "client_ms_p50": 7.99286097753793,
+   "client_ms_p90": 9.979036025470123,
+   "took_ms_p50": 6.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "acorn",
+   "num_candidates": 500,
+   "filter_pass": "0.5%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 3.090221987804398,
+   "client_ms_p90": 3.8926858571358025,
+   "took_ms_p50": 1.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "100%",
+   "recall_at_10": 0.9995,
+   "client_ms_p50": 3.913626482244581,
+   "client_ms_p90": 5.429011973319575,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "50%",
+   "recall_at_10": 0.9995,
+   "client_ms_p50": 5.655756976921111,
+   "client_ms_p90": 7.3319860035553575,
+   "took_ms_p50": 3.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "5%",
+   "recall_at_10": 0.9165,
+   "client_ms_p50": 8.154128008754924,
+   "client_ms_p90": 10.045928921317682,
+   "took_ms_p50": 5.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 100,
+   "filter_pass": "0.5%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 4.008258489193395,
+   "client_ms_p90": 5.556502006947994,
+   "took_ms_p50": 2.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "100%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 5.721368012018502,
+   "client_ms_p90": 7.294610870303586,
+   "took_ms_p50": 4.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "50%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 6.175953516503796,
+   "client_ms_p90": 7.735113997478038,
+   "took_ms_p50": 4.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "5%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 6.774536013836041,
+   "client_ms_p90": 10.833734786137938,
+   "took_ms_p50": 4.0
+  },
+  {
+   "index": "int8_hnsw",
+   "heuristic": "fanout",
+   "num_candidates": 500,
+   "filter_pass": "0.5%",
+   "recall_at_10": 1.0,
+   "client_ms_p50": 3.755845013074577,
+   "client_ms_p90": 4.893900884781033,
+   "took_ms_p50": 2.0
+  }
+ ],
+ "exact_script_score_latency_int8_index": {
+  "100%": {
+   "client_ms_p50": 52.77335800928995,
+   "status": 200,
+   "n": 20
+  },
+  "50%": {
+   "client_ms_p50": 39.73099397262558,
+   "status": 200,
+   "n": 20
+  },
+  "5%": {
+   "client_ms_p50": 10.431133501697332,
+   "status": 200,
+   "n": 20
+  },
+  "0.5%": {
+   "client_ms_p50": 3.509107482386753,
+   "status": 200,
+   "n": 20
+  }
+ }
+}
