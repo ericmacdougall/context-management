@@ -1,0 +1,83 @@
+{
+ "split": "pilot",
+ "knn": {
+  "heuristic_setting_status": {
+   "acorn": "dynamic setting applied",
+   "fanout": "dynamic setting applied"
+  },
+  "rows": [
+   {
+    "heuristic": "acorn",
+    "field": "vector",
+    "num_candidates": 100,
+    "recall_true_top10_mean": 1.0,
+    "recall_true_top50_mean": 0.9886274509803922,
+    "min_top10": 1.0,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "acorn",
+    "field": "vector",
+    "num_candidates": 1000,
+    "recall_true_top10_mean": 1.0,
+    "recall_true_top50_mean": 0.9886274509803922,
+    "min_top10": 1.0,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "acorn",
+    "field": "vector_int8",
+    "num_candidates": 100,
+    "recall_true_top10_mean": 0.9862745098039215,
+    "recall_true_top50_mean": 0.9915686274509804,
+    "min_top10": 0.9,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "acorn",
+    "field": "vector_int8",
+    "num_candidates": 1000,
+    "recall_true_top10_mean": 0.9862745098039215,
+    "recall_true_top50_mean": 0.9915686274509804,
+    "min_top10": 0.9,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "fanout",
+    "field": "vector",
+    "num_candidates": 100,
+    "recall_true_top10_mean": 1.0,
+    "recall_true_top50_mean": 0.9886274509803922,
+    "min_top10": 1.0,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "fanout",
+    "field": "vector",
+    "num_candidates": 1000,
+    "recall_true_top10_mean": 1.0,
+    "recall_true_top50_mean": 0.9886274509803922,
+    "min_top10": 1.0,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "fanout",
+    "field": "vector_int8",
+    "num_candidates": 100,
+    "recall_true_top10_mean": 0.9862745098039215,
+    "recall_true_top50_mean": 0.9915686274509804,
+    "min_top10": 0.9,
+    "n_questions": 102
+   },
+   {
+    "heuristic": "fanout",
+    "field": "vector_int8",
+    "num_candidates": 1000,
+    "recall_true_top10_mean": 0.9862745098039215,
+    "recall_true_top50_mean": 0.9915686274509804,
+    "min_top10": 0.9,
+    "n_questions": 102
+   }
+  ]
+ }
+}

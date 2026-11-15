@@ -72,7 +72,7 @@ def do_knn(c, qs, ex, qv_all, out):
     out["knn"] = {"heuristic_setting_status": status, "rows": rows}
 
 
-def do_fusion(c, qs, qv_all, out):
+def do_fusion(c, qs, ex, qv_all, out):
     rows = []
     for q in qs:
         qv = list(map(float, qv_all[q.qid]))
@@ -171,7 +171,7 @@ def main(argv=None) -> int:
     ex = ExactRetriever(d + "chunks.jsonl", d + "chunk_vectors.npy", d + "queries.json", d + "query_vectors.npy")
     c = CurlEsClient(a.es_url, a.curl_config)
     out: Dict[str, Any] = {"split": "pilot"}
-    {"knn": do_knn, "fusion": do_fusion, "e5": do_e5}[a.action](c, qs, ex, qv_all, out) if a.action != "knn" else do_knn(c, qs, ex, qv_all, out)
+    {"knn": do_knn, "fusion": do_fusion, "e5": do_e5}[a.action](c, qs, ex, qv_all, out)
     json.dump(out, open(a.out, "w"), indent=1)
     print(json.dumps(out.get(a.action, {}).get("rows", out.get(a.action))[:3] if a.action != "e5" else out["e5"])[:1500])
     return 0
