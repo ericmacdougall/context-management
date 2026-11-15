@@ -124,9 +124,12 @@ def parse_analyst(text, allowed):
     return out
 
 
-def make_llm(cache_dir, ledger, cap, cwd, extra_args=None, recipe=PROMPT_VERSION, forbidden=None):
+CONCURRENCY = 2
+
+
+def make_llm(cache_dir, ledger, cap, cwd, extra_args=None, recipe=PROMPT_VERSION, forbidden=None, runner=None):
     os.makedirs(cache_dir, exist_ok=True)
-    return LLM(cache_dir, ledger, cap=cap, concurrency=3, recipe=recipe, cwd=cwd, extra_args=extra_args, forbidden=forbidden)
+    return LLM(cache_dir, ledger, cap=cap, concurrency=CONCURRENCY, recipe=recipe, cwd=cwd, extra_args=extra_args, forbidden=forbidden, runner=runner)
 
 
 def tokens(c):
@@ -171,7 +174,7 @@ def write_result(base, rec):
     return p
 
 
-def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbidden=None):
+def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbidden=None, runner=None):
     qid, level = qid_of(task)
     os.makedirs(run_dir, exist_ok=True)
     key = hashlib.sha1(qid.encode()).hexdigest()[:10]  # file names handed to the tool server carry no question id
@@ -179,7 +182,7 @@ def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbid
     if os.path.exists(log_path):
         os.remove(log_path)  # a rerun of an uncached question starts a fresh log (a cache hit re-reads the old answer only)
     cfg = mcp_config(os.path.join(run_dir, key + ".mcp.json"), log_path, backend_args)
-    m = make_llm(cache_dir, ledger, cap, cwd, analyst_extra_args(cfg), recipe=PROMPT_VERSION + "+mcp", forbidden=forbidden)
+    m = make_llm(cache_dir, ledger, cap, cwd, analyst_extra_args(cfg), recipe=PROMPT_VERSION + "+mcp", forbidden=forbidden, runner=runner)
     try:
         guarded(task, build_analyst_prompt(task), ANALYST_SYSTEM, forbidden, build_analyst_prompt)
     except PromptLeak as e:
