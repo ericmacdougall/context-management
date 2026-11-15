@@ -1,0 +1,59 @@
+{
+ "kibana": "9.5.6",
+ "how_attached": "advanced setting agentBuilder:prePromptWorkflowIds (PUT agent workflow_ids still answers 400 'Only administrators can configure pre-execution workflows.')",
+ "variants": {
+  "ok2": {
+   "converse_http": 200,
+   "seconds": 6.8,
+   "body": {
+    "status": "completed",
+    "model_usage": {
+     "llm_calls": 1,
+     "connector_id": "mc-g7-chat",
+     "output_tokens": 5,
+     "model": "stub-tool",
+     "input_tokens": 10
+    },
+    "response": {
+     "message": "Stub answer: [Sent: 2026-11-15T23:06:21Z]\n\n<memory>\n- [ev2 2026-03-02] Priya moved the database to Dublin.\n</memo"
+    },
+    "steps": []
+   }
+  },
+  "fail": {
+   "converse_http": 500,
+   "seconds": 3.9,
+   "body": {
+    "statusCode": 500,
+    "error": "Internal Server Error",
+    "message": "[ECONNREFUSED] connect ECONNREFUSED 172.17.0.1:1",
+    "attributes": {
+     "trace_id": "125017a949f4359d31e89ed4d4672f58"
+    }
+   }
+  },
+  "slow": {
+   "converse_http": 500,
+   "seconds": 124.5,
+   "body": {
+    "statusCode": 500,
+    "error": "Internal Server Error",
+    "message": "Hook execution timed out after 120000ms",
+    "attributes": {
+     "trace_id": "51109cc7e87c115e27de413d8f7fba81"
+    }
+   }
+  }
+ },
+ "model_requests_seen_by_stub": [
+  {
+   "messages_tail": {
+    "content": "[Sent: 2026-11-15T23:06:21Z]\n\n<memory>\n- [ev2 2026-03-02] Priya moved the database to Dublin.\n</memory>\nHello there",
+    "role": "user"
+   },
+   "n_messages": 2,
+   "has_tools": true
+  }
+ ],
+ "title_generation_requests_seen_by_stub": 3
+}

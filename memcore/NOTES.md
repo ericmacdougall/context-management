@@ -29,7 +29,7 @@ Local, unpublished. Python 3.9, standard library only in the core.
   - SSE from `_stream`: a UTF-8 BOM before every `event: message` line, bare chunk JSON (no `chat_completion` wrapper), final chunk with `choices: []` and usage. Tool-call continuation deltas carry `"type": null`.
   - The embeddings request ES sends: `{input:[...], model, dimensions, encoding_format:"base64"}`; no `input_type`. The gateway returned base64 float32 and `_inference/text_embedding/{id}` worked.
   - Golden fixtures: `memcore/tests/fixtures/es956_*` and replay tests (`test_golden_es956`).
-- Still not observed: the 9.6 wrapper, https with a private CA, Basic-licence behaviour (known elsewhere: 403), Agent Builder, `.mcp` connector, Elastic-side fusion. SearchBackend has only the in-memory fake (client-side RRF); no Elasticsearch adapter was built.
+- Still not observed (as of this G5 section; later sections record what was observed since): the 9.6 wrapper, https with a private CA, Basic-licence behaviour on a real Basic node (known elsewhere: 403). Agent Builder, the `.mcp` connector and Elastic-side fusion were observed later (Phase 2, Phase 3b, NOTES-addendum-g7.md). The ElasticsearchSearch adapter exists (memcore/adapters/elasticsearch_search.py); InMemorySearch remains the unit-test fake.
 
 ## Session cost (H3, measured 2026-11-15, sonnet, neutral cwd; see results/h3.json)
 See the report; raw numbers in `memcore-out/results/h3.json`.
