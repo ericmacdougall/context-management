@@ -20,6 +20,7 @@ import sys
 import time
 from typing import Any, Dict, List, Optional
 
+from .anon import opaque_rid, opaque_sid
 from .fusion import rrf
 from .retrievers import tokens
 
@@ -46,12 +47,12 @@ def build_postings(chunks_path: str, out_path: str) -> None:
 
 
 class Backend:
-    def __init__(self, art: str, scope: Dict[str, Any], model_dir: Optional[str] = None, facts: Optional[str] = None):
+    """Global read-only index plus a per-call scope. Every id a model sees or sends is OPAQUE (emlab.anon)."""
+
+    def __init__(self, art: str, model_dir: Optional[str] = None, facts: Optional[str] = None):
         import numpy as np
         self.np = np
         a = art.rstrip("/") + "/"
-        self.scope = scope
-        self.sessions = scope["sessions"]  # session id -> date shown for THIS question
         self.chunks = [json.loads(l) for l in open(a + "chunks.jsonl", encoding="utf-8")]
         self.vectors = np.load(a + "chunk_vectors.npy", mmap_mode="r")
         pk = pickle.load(open(a + "postings.pkl", "rb"))
@@ -60,24 +61,42 @@ class Backend:
         self.round_text: Dict[str, str] = {}
         for line in open(a + "rounds.jsonl", encoding="utf-8"):
             r = json.loads(line)
-            if r["session_id"] in self.sessions:
-                self.round_text[r["round_id"]] = r["text"]
+            self.round_text[r["round_id"]] = r["text"]
         self.by_session: Dict[str, List[int]] = {}
         for i, c in enumerate(self.chunks):
-            if c["session_id"] in self.sessions:
-                self.by_session.setdefault(c["session_id"], []).append(i)
-        self.mask = np.zeros(self.n, dtype=bool)
-        for ids in self.by_session.values():
-            self.mask[ids] = True
-        self.model_dir = model_dir
-        self._emb = None
-        self.facts_path = facts
-        self._facts = None
+            self.by_session.setdefault(c["session_id"], []).append(i)
+        self.model_dir, self._emb, self.facts_path, self._facts = model_dir, None, facts, None
+        self._scopes: Dict[tuple, Any] = {}
+        self.set_scope = self._set_scope
 
-    # -- helpers
+    def _set_scope(self, scope: Dict[str, Any]) -> None:
+        key = (scope["level"], scope["question_id"])
+        if key not in self._scopes:
+            if len(self._scopes) > 6:
+                self._scopes.pop(next(iter(self._scopes)))
+            np = self.np
+            mask = np.zeros(self.n, dtype=bool)
+            for sid in scope["sessions"]:
+                ids = self.by_session.get(sid)
+                if ids:
+                    mask[ids] = True
+            rev = {opaque_sid(s): s for s in scope["sessions"]}
+            self._scopes[key] = (scope["sessions"], mask, rev)
+        self.sessions, self.mask, self.rev = self._scopes[key]
+
+    # -- id helpers
+    def _real_round(self, orid: str) -> str:
+        sid, idx = orid.rsplit(":", 1)
+        if sid not in self.rev:
+            raise ValueError("id not in this question's level scope")
+        rid = "%s:%s" % (self.rev[sid], idx)
+        if rid not in self.round_text:
+            raise ValueError("id not in this question's level scope")
+        return rid
+
     def _round_info(self, rid: str, rank: int) -> Dict[str, Any]:
         sid = rid.rsplit(":", 1)[0]
-        return {"round_id": rid, "session_id": sid, "date": self.sessions[sid], "rank": rank,
+        return {"round_id": opaque_rid(rid), "session_id": opaque_sid(sid), "date": self.sessions[sid], "rank": rank,
                 "snippet": self.round_text[rid][:SNIPPET]}
 
     def _rollup(self, idx, scores, limit: int) -> List[str]:
@@ -130,11 +149,8 @@ class Backend:
         sims = self.vectors[idx] @ self._embed(text)
         return self._rollup(idx, sims, limit)
 
-    def _check_round(self, rid: str) -> None:
-        if rid not in self.round_text:
-            raise ValueError("round not in this question's level scope")
-
-    # -- tools
+    # -- tools (argument names match the runner: search(query,k[,mode]), open_round(round_id), open_session(session_id),
+    #    timeline(term)); every id in and out is opaque
     def search(self, query: str, k: int = 10, mode: str = "hybrid") -> Dict[str, Any]:
         k = max(1, min(int(k), 20))
         if mode == "lexical":
@@ -148,48 +164,40 @@ class Backend:
         return {"results": [self._round_info(r, i + 1) for i, r in enumerate(ids)]}
 
     def open_round(self, round_id: str) -> Dict[str, Any]:
-        self._check_round(round_id)
-        t = self.round_text[round_id]
-        sid = round_id.rsplit(":", 1)[0]
-        return {"round_id": round_id, "date": self.sessions[sid], "text": t[:OPEN_CAP], "truncated": len(t) > OPEN_CAP}
+        rid = self._real_round(round_id)
+        t = self.round_text[rid]
+        return {"round_id": round_id, "date": self.sessions[rid.rsplit(":", 1)[0]], "text": t[:OPEN_CAP],
+                "truncated": len(t) > OPEN_CAP}
 
-    def open_session(self, session_id: str, from_round: int = 0, to_round: int = 10 ** 6) -> Dict[str, Any]:
-        if session_id not in self.sessions:
-            raise ValueError("session not in this question's level scope")
-        rounds = sorted((int(r.rsplit(":", 1)[1]), r) for r in self.round_text if r.rsplit(":", 1)[0] == session_id)
-        picked = [(i, r) for i, r in rounds if int(from_round) <= i <= int(to_round)]
-        out, used = [], 0
-        for i, r in picked:
-            t = self.round_text[r]
-            if used + len(t) > OPEN_CAP and out:
-                return {"session_id": session_id, "date": self.sessions[session_id], "rounds": out, "truncated": True}
-            out.append({"round_id": r, "text": t[:OPEN_CAP - used]})
-            used += len(t)
-        return {"session_id": session_id, "date": self.sessions[session_id], "rounds": out, "truncated": False}
+    def open_session(self, session_id: str) -> Dict[str, Any]:
+        if session_id not in self.rev:
+            raise ValueError("id not in this question's level scope")
+        sid = self.rev[session_id]
+        rounds = sorted((int(c["round_id"].rsplit(":", 1)[1]), c["round_id"]) for c in
+                        (self.chunks[i] for i in self.by_session[sid]) if c["chunk_id"].endswith("#0"))
+        return {"session_id": session_id, "date": self.sessions[sid],
+                "rounds": [{"round_id": opaque_rid(r), "snippet": self.round_text[r][:SNIPPET]} for _, r in rounds[:60]]}
 
-    def timeline(self, terms: List[str], limit: int = 20) -> Dict[str, Any]:
+    def timeline(self, term: Optional[str] = None, limit: int = 30) -> Dict[str, Any]:
         limit = max(1, min(int(limit), 50))
-        want = set(tokens(" ".join(terms)))
-        hits = []
-        for rid, t in self.round_text.items():
-            if want & set(tokens(t)):
-                sid = rid.rsplit(":", 1)[0]
-                hits.append((self.sessions[sid], int(rid.rsplit(":", 1)[1]), rid))
-        hits.sort()
-        return {"results": [dict(self._round_info(r, i + 1)) for i, (_, _, r) in enumerate(hits[:limit])],
-                "total_matches": len(hits)}
+        want = set(tokens(term)) if term else set()
+        by: Dict[str, List[str]] = {}
+        for sid in self.sessions:
+            if sid in self.by_session:
+                by[sid] = [c for c in (self.chunks[i] for i in self.by_session[sid])]
+        out = []
+        for sid, cs in by.items():
+            texts = [self.round_text[c["round_id"]] for c in cs if c["chunk_id"].endswith("#0")]
+            if want and not any(want & set(tokens(t)) for t in texts):
+                continue
+            first = (texts[0][:80] if texts else "")
+            out.append((self.sessions[sid], sid, first))
+        out.sort()
+        return {"sessions": [{"session_id": opaque_sid(s), "date": d, "first_words": f} for d, s, f in out[:limit]],
+                "total_matches": len(out)}
 
     def search_facts(self, query: str, k: int = 10) -> Dict[str, Any]:
-        if not self.facts_path or not os.path.exists(self.facts_path):
-            return {"error": "facts not available yet"}
-        from .facts import FactsRetriever, load_facts
-        if self._facts is None:
-            self._facts = FactsRetriever(load_facts(self.facts_path))
-        ids = self._facts.rank(query, [], None, list(self.sessions), 50)[:max(1, min(int(k), 20))]
-        by = {f["id"]: f for f in self._facts.facts}
-        return {"results": [{"fact_id": i, "session_id": by[i]["session_id"], "date": self.sessions[by[i]["session_id"]],
-                             "text": by[i]["text"], "round_id": "%s:%s" % (by[i]["session_id"], by[i]["round_index"])}
-                            for i in ids]}
+        return {"error": "facts not available"}
 
     def call(self, tool: str, args: Dict[str, Any]) -> Dict[str, Any]:
         fn = {"search": self.search, "open_round": self.open_round, "open_session": self.open_session,
@@ -236,29 +244,79 @@ def handle(backend: Backend, req: Dict[str, Any], log_path: str, qid: str, level
     return resp
 
 
+def load_scope(scope_dir: str, level: str, qid: str) -> Dict[str, Any]:
+    return json.load(open(os.path.join(scope_dir, level, qid + ".json")))
+
+
+def serve_socket(art: str, scope_dir: str, sock_path: str, log_path: str, model_dir: Optional[str]) -> None:
+    """Daemon: holds the index in memory; one JSON object per connection line: {"qid","level","request"}."""
+    import socket
+    b = Backend(art, model_dir)
+    if os.path.exists(sock_path):
+        os.remove(sock_path)
+    srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    srv.bind(sock_path)
+    os.chmod(sock_path, 0o600)
+    srv.listen(8)
+    while True:
+        conn, _ = srv.accept()
+        try:
+            data = b""
+            while not data.endswith(b"\n"):
+                chunk = conn.recv(65536)
+                if not chunk:
+                    break
+                data += chunk
+            msg = json.loads(data)
+            try:
+                b.set_scope(load_scope(scope_dir, msg["level"], msg["qid"]))
+                resp = handle(b, msg["request"], log_path, msg["qid"], msg["level"])
+            except Exception as e:
+                resp = {"error": str(e)[:300]}
+            conn.sendall((json.dumps(resp) + "\n").encode())
+        finally:
+            conn.close()
+
+
+def client(sock_path: str, qid: str, level: str, req: Dict[str, Any]) -> Dict[str, Any]:
+    import socket
+    c = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        c.connect(sock_path)
+    except OSError:
+        return {"error": "analyst daemon not running"}
+    c.sendall((json.dumps({"qid": qid, "level": level, "request": req}) + "\n").encode())
+    data = b""
+    while not data.endswith(b"\n"):
+        chunk = c.recv(1 << 20)
+        if not chunk:
+            break
+        data += chunk
+    return json.loads(data)
+
+
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--artifacts", required=True)
-    ap.add_argument("--scope-dir", required=True, help="dir holding <level>/<qid>.json scope files")
-    ap.add_argument("--level", required=True, choices=["H1", "H2", "H3"])
-    ap.add_argument("--qid", required=True)
-    ap.add_argument("--log", required=True, help="per-run call log (JSONL)")
-    ap.add_argument("--model-dir")
-    ap.add_argument("--facts")
-    ap.add_argument("--serve", action="store_true")
+    ap = argparse.ArgumentParser(description="Analyst tool program. Client mode (default): --question Q --level L, one JSON "
+                                 "request on stdin, one JSON response on stdout (talks to the local daemon over a unix socket). "
+                                 "Daemon mode: --daemon.")
+    ap.add_argument("--artifacts", default=os.path.expanduser("~/emlab-16096/out/emb"))
+    ap.add_argument("--scope-dir", default=os.path.expanduser("~/emlab-16096/out/analyst_scope"))
+    ap.add_argument("--socket", default=os.path.expanduser("~/emlab-16096/run/analyst.sock"))
+    ap.add_argument("--log", default=os.path.expanduser("~/emlab-16096/out/analyst_calls.jsonl"))
+    ap.add_argument("--question")
+    ap.add_argument("--level", choices=["H1", "H2", "H3"])
+    ap.add_argument("--model-dir", default=os.path.expanduser("~/emlab-16096/models"))
+    ap.add_argument("--daemon", action="store_true")
     ap.add_argument("--build-postings", action="store_true")
     a = ap.parse_args(argv)
     if a.build_postings:
         build_postings(os.path.join(a.artifacts, "chunks.jsonl"), os.path.join(a.artifacts, "postings.pkl"))
         return 0
-    scope = json.load(open(os.path.join(a.scope_dir, a.level, a.qid + ".json")))
-    b = Backend(a.artifacts, scope, a.model_dir, a.facts)
-    if a.serve:
-        for line in sys.stdin:
-            if line.strip():
-                print(json.dumps(handle(b, json.loads(line), a.log, a.qid, a.level)), flush=True)
+    if a.daemon:
+        os.makedirs(os.path.dirname(a.socket), exist_ok=True)
+        serve_socket(a.artifacts, a.scope_dir, a.socket, a.log, a.model_dir)
         return 0
-    print(json.dumps(handle(b, json.loads(sys.stdin.read()), a.log, a.qid, a.level)))
+    print(json.dumps(client(a.socket, a.question, a.level, json.loads(sys.stdin.read()))))
     return 0
 
 

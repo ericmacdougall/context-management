@@ -22,6 +22,23 @@ def precision_proxy(q, items) -> Any:
     return sum(1 for r in rounds if r not in gold) / len(rounds)  # share of returned items that are non-gold
 
 
+def allowed_ids(task: Dict[str, Any], log_path: str, qid: str, level: str) -> set:
+    ok = {c["round_id"] for c in task["candidates"]}
+    if os.path.exists(log_path):
+        for line in open(log_path, encoding="utf-8"):
+            r = json.loads(line)
+            if r.get("qid") == qid and r.get("level") == level:
+                ok |= set(r.get("returned_ids", []))
+    return ok
+
+
+def real_ranked(result: Dict[str, Any], allowed: set, anon) -> Any:
+    """Only ranked_round_ids are used; ids outside candidates + returned tool ids are rejected (counted)."""
+    ids = result.get("ranked_round_ids") or []
+    good = [anon.real_rid(i) for i in ids if i in allowed]
+    return good, len(ids) - len(good)
+
+
 def score_one(q, ordered_ids: List[str], dates: Dict[str, str], texts: Dict[str, str], budget: int = BUDGET) -> Dict[str, Any]:
     ids = [r for r in ordered_ids if r.rsplit(":", 1)[0] in dates and r in texts][:20]
     items = pack_rag(ids, dates, texts, budget)

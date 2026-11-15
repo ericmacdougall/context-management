@@ -117,3 +117,30 @@ class Analyst(unittest.TestCase):
         self.assertNotIn("ids outside scope", "")
         out_of_scope = score_one(q, ["zzz:0"], dates, texts)
         self.assertEqual(out_of_scope["items"], 0)   # ids outside the level scope are dropped, not credited
+
+
+class Anon(unittest.TestCase):
+    def test_opaque_ids_hide_the_label_and_roundtrip(self):
+        from emlab.anon import AnonMap, opaque_rid, opaque_sid
+        sids = ["answer_abc_1", "sharegpt_x", "0123abcd", "ultrachat_9"]
+        for s in sids:
+            self.assertNotIn("answer", opaque_sid(s))
+            self.assertNotIn("sharegpt", opaque_sid(s))
+        am = AnonMap(sids)
+        self.assertEqual(am.real_rid(opaque_rid("answer_abc_1:3")), "answer_abc_1:3")
+        self.assertEqual(opaque_rid("sharegpt_x:0"), opaque_sid("sharegpt_x") + ":0")
+
+    def test_result_ids_outside_candidates_and_tool_returns_are_rejected(self):
+        import json as _j, tempfile, os as _o
+        from emlab.anon import AnonMap, opaque_rid
+        from emlab.analyst_score import allowed_ids, real_ranked
+        am = AnonMap(["s_a", "s_b", "s_c"])
+        task = {"candidates": [{"round_id": opaque_rid("s_a:0")}]}
+        d = tempfile.mkdtemp()
+        log = _o.path.join(d, "log.jsonl")
+        open(log, "w").write(_j.dumps({"qid": "q", "level": "H1", "returned_ids": [opaque_rid("s_b:1")]}) + "\n"
+                             + _j.dumps({"qid": "other", "level": "H1", "returned_ids": [opaque_rid("s_c:2")]}) + "\n")
+        ok = allowed_ids(task, log, "q", "H1")
+        good, rejected = real_ranked({"ranked_round_ids": [opaque_rid("s_a:0"), opaque_rid("s_b:1"), opaque_rid("s_c:2")]}, ok, am)
+        self.assertEqual(good, ["s_a:0", "s_b:1"])
+        self.assertEqual(rejected, 1)     # s_c:2 was returned for another question only
