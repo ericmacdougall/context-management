@@ -1,6 +1,6 @@
 """Fixed prompts. READER is identical for every arm; only the context block differs. Recipe versions are part of the cache key."""
-READER_RECIPE = "reader-v1.1"
-EXTRACT_RECIPE = "extract-v1"
+READER_RECIPE = "reader-v1.1-anon"
+EXTRACT_RECIPE = "extract-v1-anon"
 JUDGE_RECIPE = "judge-v1"
 
 READER_SYSTEM = "You answer questions about a user's past conversations using only the context provided. Be accurate and concise."
@@ -42,7 +42,7 @@ Output exactly one JSON object: {{"sessions": [{{"session_id": "<id>", "facts": 
 JUDGE_SYSTEM = ("You are a careful grader. For each numbered item follow its instructions exactly. Output exactly one line per item, "
                 "in the form '<number>: yes' or '<number>: no', and nothing else.")
 
-EXTRACT_V2_RECIPE = "extract-v2"
+EXTRACT_V2_RECIPE = "extract-v2-anon"
 EXPAND_RECIPE = "expand-v1"
 
 EXTRACT_V2_TEMPLATE = """Below are {n} chat sessions between a user and an AI assistant. Each has an id, a date, and numbered rounds [r0], [r1], ... (a user message followed by the assistant reply).
@@ -73,7 +73,7 @@ EXPAND_TEMPLATE = """A user asks a memory system this question (current date {da
 
 Write 3 to 6 short phrases or words that a stored memory about the answer might be tagged with, including synonyms, the category of the thing asked about, and what the answer itself would be about (not words from the question only). Output exactly: {{"cue_keys": ["...", "..."]}}"""
 
-READER_V12_RECIPE = "reader-v1.2"
+READER_V12_RECIPE = "reader-v1.2-anon"
 READER_TEMPLATE_V12 = (
     "I will give you context drawn from past chat history between you and a user. Please answer the question based on "
     "the relevant information in it. First extract the relevant information, then reason over it (use the dates given "

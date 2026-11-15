@@ -5,6 +5,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "eval"))
 from emlab.dataset import LongMemEvalLoader, build_rounds, parse_date  # noqa: E402  (eval/ is read-only)
+from .anon import opaque_sid  # noqa: E402
 
 PILOT_IDS = ["078150f1", "09ba9854_abs", "6e984301", "6e984302", "07741c44", "07741c45",
              "0862e8bf", "311778f1", "0e5e2d1a", "2bf43736"]  # from select_pilot.py, fixed rule
@@ -42,7 +43,7 @@ def sessions_of(rec):
 
 
 def render_session(sid, date_str, turns):
-    lines = ["### Session %s | date: %s" % (sid, date_str)]
+    lines = ["### Session %s | date: %s" % (opaque_sid(sid), date_str)]
     for t in turns:
         lines.append("%s: %s" % (t["role"], t["content"]))
     return "\n".join(lines)

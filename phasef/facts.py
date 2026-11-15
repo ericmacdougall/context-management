@@ -4,6 +4,7 @@ import math
 import re
 from datetime import datetime
 
+from .anon import opaque_sid
 from .data import parse_date, render_session, rounds_of
 from .prompts import EXTRACT_SYSTEM, EXTRACT_TEMPLATE
 from .supersede import resolve
@@ -16,7 +17,7 @@ _STOP = set("a an the of to is are was were be been has have had in at on for an
 def render_for_extraction(sid, date_str, turns):
     rs = rounds_of(sid, turns, date_str)
     body = "\n".join("[r%d] %s" % (r.index, r.text) for r in rs)
-    return "### SESSION id=%s date=%s\n%s" % (sid, date_str, body)
+    return "### SESSION id=%s date=%s\n%s" % (opaque_sid(sid), date_str, body)
 
 
 def build_extract_prompt(batch):
@@ -135,7 +136,7 @@ def format_fact(f):
     if f.get("valid_to"):
         span += " to %s (superseded)" % f["valid_to"].date()
     return "- [%s] %s | %s | %s (%s; %s, %s; stated in session %s round %d)" % (
-        status, f["subject"], f["predicate"], f["object"], span, f["modality"], f["author"], f["session_id"], f["round"])
+        status, f["subject"], f["predicate"], f["object"], span, f["modality"], f["author"], opaque_sid(f["session_id"]), f["round"])
 
 
 def build_context(question, qdate, facts, sessions_by_id, max_rounds=20):
@@ -157,7 +158,7 @@ def build_context(question, qdate, facts, sessions_by_id, max_rounds=20):
         rs = rounds_of(sid, turns, d)
         r = next((x for x in rs if x.index == ri), None)
         if r:
-            lines.append("### Session %s | date: %s | round %d\n%s" % (sid, d, ri, r.text))
+            lines.append("### Session %s | date: %s | round %d\n%s" % (opaque_sid(sid), d, ri, r.text))
     return "\n".join(lines), {"facts_shown": len(top), "rounds_cited": len(cited)}
 
 

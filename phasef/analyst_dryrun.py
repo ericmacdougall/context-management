@@ -5,10 +5,11 @@ import os
 import sys
 
 from . import data, run_pilot as R
-from .analyst import make_llm, run_analyst, run_rerank
+from .analyst import make_llm, run_analyst, run_rerank, write_result
+from .anon import opaque_rid, opaque_sid
 from .analyst_fake import FakeBackend
 
-OUT = os.path.join(R.OUT, "analyst_dryrun")
+OUT = os.path.join(R.OUT, "analyst_dryrun_v1")
 QIDS = ["0862e8bf", "6e984301"]
 
 
@@ -20,7 +21,7 @@ def build_tasks():
         rounds = []
         for sid, d, turns in data.sessions_of(S[q]):
             for r in data.rounds_of(sid, turns, d):
-                rounds.append({"round_id": r.round_id, "session_id": sid, "date": d, "text": r.text})
+                rounds.append({"round_id": opaque_rid(r.round_id), "session_id": opaque_sid(sid), "date": d, "text": r.text})  # tasks carry opaque ids only
         p = os.path.join(OUT, q + ".fake.json")
         json.dump({"haystack": rounds}, open(p, "w"))
         be = FakeBackend(p)
@@ -34,18 +35,21 @@ def build_tasks():
 
 def main(cap):
     paths = build_tasks()
+    S, _ = R.pilot()
+    real = set(s for q in QIDS for s in S[q]["haystack_session_ids"])
     ledger = os.path.join(OUT, "ledger.jsonl")
     cache = os.path.join(OUT, "cache")
     os.makedirs(R.NEUTRAL_CWD, exist_ok=True)
-    mr = make_llm(cache, ledger, int(cap), R.NEUTRAL_CWD)
+    mr = make_llm(cache, ledger, int(cap), R.NEUTRAL_CWD, forbidden=real)
     for p in paths:
         task = json.load(open(p))
         r1 = run_rerank(task, mr)
-        r2 = run_analyst(task, os.path.join(OUT, "run"), ["--fake", p], cache, ledger, int(cap), R.NEUTRAL_CWD)
+        r2 = run_analyst(task, os.path.join(OUT, "run"), ["--fake", p], cache, ledger, int(cap), R.NEUTRAL_CWD, forbidden=real)
         for r in (r1, r2):
             print(json.dumps({k: v for k, v in r.items() if k not in ("ranked_round_ids", "reasons", "tool_log")}), "top3", (r.get("ranked_round_ids") or [])[:3])
         print("  analyst tools:", [(x["tool"], x["args"]) for x in r2.get("tool_log", [])])
-        json.dump([r1, r2], open(os.path.join(OUT, task["question_id"] + ".results.json"), "w"))
+        for r in (r1, r2):
+            write_result(OUT, r)
 
 
 if __name__ == "__main__":

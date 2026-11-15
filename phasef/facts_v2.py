@@ -1,6 +1,7 @@
 """FACTS arm, recipe v2: slot-keyed extraction parsing, question cue expansion, retrieval = lexical + cue-to-cue + slot lookup."""
 import math
 
+from .anon import opaque_sid
 from .data import parse_date, rounds_of
 from .facts import MODALITIES, _date, _json_from, as_of_filter, render_for_extraction, toks
 from .prompts import EXTRACT_V2_TEMPLATE
@@ -22,7 +23,7 @@ def parse_extraction_v2(text, batch):
     obj = _json_from(text)
     slots = {}
     for pos, (sid, d, _) in enumerate(batch):
-        slots.setdefault(sid, []).append(pos)
+        slots.setdefault(opaque_sid(sid), []).append(pos)  # the model echoes the opaque id it was shown
     used = {s: 0 for s in slots}
     out, dropped = [[] for _ in batch], 0
     for ent in obj.get("sessions", []):
@@ -44,7 +45,7 @@ def parse_extraction_v2(text, batch):
                 "asserted_at": asserted, "valid_from": _date(f.get("event_time"), asserted),
                 "modality": f.get("modality") if f.get("modality") in MODALITIES else "asserted",
                 "scope": str(f.get("scope", "")), "author": "assistant" if f.get("author") == "assistant" else "user",
-                "session_id": sid, "round": f.get("round") if isinstance(f.get("round"), int) else 0,
+                "session_id": batch[pos][0], "round": f.get("round") if isinstance(f.get("round"), int) else 0,
                 "quote": str(f.get("quote", ""))[:200], "cue_keys": [str(c) for c in (f.get("cue_keys") or [])][:6]})
     return out, dropped
 
@@ -82,7 +83,7 @@ def format_fact_v2(f):
     if f.get("valid_to"):
         span += ", replaced %s" % f["valid_to"].date()
     return "- [%s] %s | %s = %s (%s; %s; slot %s; session %s round %d; quote: \"%s\")" % (
-        f["status"].upper(), f["subject"], f["predicate"], f["object"], span, f["modality"], f["slot"], f["session_id"], f["round"], f["quote"])
+        f["status"].upper(), f["subject"], f["predicate"], f["object"], span, f["modality"], f["slot"], opaque_sid(f["session_id"]), f["round"], f["quote"])
 
 
 def build_context_v2(question, q_cues, qdate, facts, sessions_by_id, max_rounds=20):
@@ -102,5 +103,5 @@ def build_context_v2(question, q_cues, qdate, facts, sessions_by_id, max_rounds=
         d, turns = sessions_by_id[sid]
         r = next((x for x in rounds_of(sid, turns, d) if x.index == ri), None)
         if r:
-            lines.append("### Session %s | date: %s | round %d\n%s" % (sid, d, ri, r.text))
+            lines.append("### Session %s | date: %s | round %d\n%s" % (opaque_sid(sid), d, ri, r.text))
     return "\n".join(lines), {"facts_shown": len(top), "rounds_cited": len(cited), "top": top}

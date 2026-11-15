@@ -1,4 +1,4 @@
-"""Runner for the two analyst arms (LLM side). Prompt text is DRAFT v0 until the retrieval owner registers the final text in the pre-registration.
+"""Runner for the two analyst arms (LLM side). Prompt text is analyst-prompt-v1 (v0 draft with one sentence replaced, per main).
   ANALYST-RERANK-ONLY: one headless call, no tools, strict ordered-id output from the given candidates only.
   ANALYST: one headless call with an MCP stdio tool server (analyst_mcp.py) wrapping the retrieval tool program; at most 12 tool calls enforced
            in the server; returns at most 20 round ids with one-line reasons (reasons are stored but never passed to the reader).
@@ -11,7 +11,7 @@ import sys
 
 from .llm import LLM
 
-PROMPT_VERSION = "analyst-prompt-v0-draft"
+PROMPT_VERSION = "analyst-prompt-v1"
 TEXT_CAP = 1200
 MAX_RESULTS = 20
 BUDGET = 12
@@ -40,7 +40,7 @@ def build_rerank_prompt(task):
 
 
 def build_analyst_prompt(task):
-    return ("Question (asked on %s): %s\n\nThe memory search returned the %d candidate rounds below (round id in brackets). The correct evidence may be missing from them. You have tools: search(query, k), open_round(round_id), "
+    return ("Question (asked on %s): %s\n\nThe memory search returned the %d candidate rounds below (round id in brackets). The candidates may or may not contain the evidence needed to answer. You have tools: search(query, k), open_round(round_id), "
             "open_session(session_id), timeline(term). Use at most %d tool calls in total. Then return at most %d round ids, best first, each with a one-line reason. Round ids may come from the candidates or from tool results.\n\n"
             "Output exactly: {\"results\": [{\"round_id\": \"<id>\", \"reason\": \"<one line>\"}, ...]}\n\nCandidates:\n\n%s"
             % (task["question_date"], task["question"], len(task["candidates"]), BUDGET, MAX_RESULTS, cand_lines(task)))
@@ -84,9 +84,9 @@ def parse_analyst(text, allowed):
     return out
 
 
-def make_llm(cache_dir, ledger, cap, cwd, extra_args=None, recipe=PROMPT_VERSION):
+def make_llm(cache_dir, ledger, cap, cwd, extra_args=None, recipe=PROMPT_VERSION, forbidden=None):
     os.makedirs(cache_dir, exist_ok=True)
-    return LLM(cache_dir, ledger, cap=cap, concurrency=3, recipe=recipe, cwd=cwd, extra_args=extra_args)
+    return LLM(cache_dir, ledger, cap=cap, concurrency=3, recipe=recipe, cwd=cwd, extra_args=extra_args, forbidden=forbidden)
 
 
 def tokens(c):
@@ -113,14 +113,27 @@ def analyst_extra_args(cfg_path):
     return ["--mcp-config", cfg_path, "--strict-mcp-config", "--allowedTools", ",".join("mcp__analyst__" + t for t in TOOL_NAMES)]
 
 
-def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd):
+def result_path(base, arm, level, qid):
+    """<base>/analyst_results/<ARM>/<level>/<question id>.json with ARM in {ANALYST, ANALYST-RERANK-ONLY} (final layout from main)."""
+    assert arm in ("ANALYST", "ANALYST-RERANK-ONLY")
+    return os.path.join(base, "analyst_results", arm, level, qid + ".json")
+
+
+def write_result(base, rec):
+    p = result_path(base, rec["arm"], rec["level"], rec["question_id"])
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    json.dump(rec, open(p, "w"))
+    return p
+
+
+def run_analyst(task, run_dir, backend_args, cache_dir, ledger, cap, cwd, forbidden=None):
     qid = task["question_id"]
     os.makedirs(run_dir, exist_ok=True)
     log_path = os.path.join(run_dir, qid + ".toolcalls.jsonl")
     if os.path.exists(log_path):
         os.remove(log_path)  # a rerun of an uncached question starts a fresh log (a cache hit re-reads the old answer only)
     cfg = mcp_config(os.path.join(run_dir, qid + ".mcp.json"), log_path, backend_args)
-    m = make_llm(cache_dir, ledger, cap, cwd, analyst_extra_args(cfg), recipe=PROMPT_VERSION + "+mcp")
+    m = make_llm(cache_dir, ledger, cap, cwd, analyst_extra_args(cfg), recipe=PROMPT_VERSION + "+mcp", forbidden=forbidden)
     c = m.call(build_analyst_prompt(task), ANALYST_SYSTEM, "sonnet", "ANALYST", qid, "analyst")
     calls = [json.loads(l) for l in open(log_path)] if os.path.exists(log_path) else []
     done = [x for x in calls if not x.get("refused")]

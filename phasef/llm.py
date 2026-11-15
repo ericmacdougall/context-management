@@ -8,6 +8,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 import subprocess
 import threading
 import time
@@ -22,6 +23,26 @@ _SHARED_GUARD = threading.Lock()
 
 class CallCapExceeded(RuntimeError):
     pass
+
+
+class PromptLeak(RuntimeError):
+    pass
+
+
+_LEAK_RE = re.compile(r"answer_[0-9a-fA-F]|sharegpt_|ultrachat_")
+_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
+
+
+def check_prompt(prompt, system="", forbidden=None):
+    """Refuse any prompt that shows a real LongMemEval session id: gold ids (answer_<hex>), sharegpt_/ultrachat_ ids, or any id in the optional forbidden set."""
+    for text in (prompt, system):
+        m = _LEAK_RE.search(text)
+        if m:
+            raise PromptLeak("prompt contains a real session id pattern near %r" % text[max(0, m.start() - 20):m.end() + 20])
+        if forbidden:
+            for t in _TOKEN_RE.findall(text):
+                if t in forbidden:
+                    raise PromptLeak("prompt contains the real session id %r" % t)
 
 
 def request_hash(model, recipe, system, prompt):
@@ -43,9 +64,9 @@ def claude_cli_runner(model, system, prompt, timeout=1500, cwd=None, extra_args=
 
 class LLM:
     def __init__(self, cache_dir, ledger_path, cap=DEFAULT_CAP, concurrency=DEFAULT_CONCURRENCY,
-                 recipe="v1", runner=None, cwd=None, extra_args=None):
+                 recipe="v1", runner=None, cwd=None, extra_args=None, forbidden=None):
         self.cache_dir, self.ledger_path = cache_dir, ledger_path
-        self.cap, self.recipe = cap, recipe
+        self.cap, self.recipe, self.forbidden = cap, recipe, forbidden
         # Run from a neutral, non-git directory: the user's Stop hook otherwise reacts to the caller's dirty checkout and
         # injects extra turns and hook chatter into the answer (observed on the first 10 ORACLE calls).
         self.runner = runner or (lambda m, s, p: claude_cli_runner(m, s, p, cwd=cwd, extra_args=extra_args))
@@ -78,6 +99,7 @@ class LLM:
         return os.path.join(self.cache_dir, key + ".json")
 
     def call(self, prompt, system, model, arm, qid, stage):
+        check_prompt(prompt, system, self.forbidden)  # before the cache lookup: a leaking prompt is never served or sent
         key = request_hash(model, self.recipe, system, prompt)
         path = self._path(key)
         if os.path.exists(path):

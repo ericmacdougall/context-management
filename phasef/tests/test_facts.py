@@ -47,5 +47,18 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(score_facts("where are my shoes stored", facts), [])
 
 
+class AnonParse(unittest.TestCase):
+    def test_v2_parse_matches_opaque_echo_and_keeps_real_id(self):
+        from phasef.anon import opaque_sid
+        from phasef.facts_v2 import build_extract_prompt_v2, parse_extraction_v2
+        batch = [("answer_abc123", "2023/05/20 (Sat) 02:21", [{"role": "user", "content": "hi"}])]
+        prompt = build_extract_prompt_v2(batch)
+        self.assertNotIn("answer_abc123", prompt)
+        self.assertIn(opaque_sid("answer_abc123"), prompt)
+        out = '{"sessions": [{"session_id": "%s", "facts": [{"subject": "u", "slot": "u.x", "predicate": "p", "object": "o"}]}]}' % opaque_sid("answer_abc123")
+        per, dropped = parse_extraction_v2(out, batch)
+        self.assertEqual((dropped, per[0][0]["session_id"]), (0, "answer_abc123"))
+
+
 if __name__ == "__main__":
     unittest.main()

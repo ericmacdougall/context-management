@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from . import data, run_pilot as R
+from .anon import opaque_sid
 from .canon import build_prompt as canon_prompt, parse_mapping
 from .facts import _json_from
 from .facts_v2 import build_extract_prompt_v2, parse_extraction_v2, score_v2
@@ -200,13 +201,13 @@ def label(f, facts):
     return f["modality"].upper()
 
 
-def build_context_v3(question, cues, qdate, facts, by):
+def build_context_v3(question, cues, qdate, facts, by, labels=True):
     vis = [f for f in facts if f["modality"] != "question" and f["asserted_at"].date() <= qdate.date()]
     top = score_v2(question, cues, vis)
     lines = ["Memory facts, most relevant first. Each shows the date of the session that stated it and a status label (labels are advisory; every fact is shown):"]
     for f in top:
         lines.append("- [%s] stated %s%s | %s: %s = %s (session %s round %d; quote: \"%s\")" % (
-            label(f, facts), f["asserted_at"].date(), ", event %s" % f["event_time"] if f.get("event_time") else "", f["subject"], f["predicate"], f["object"], f["session_id"], f["round"], f["quote"]))
+            label(f, facts) if labels else f["modality"].upper(), f["asserted_at"].date(), ", event %s" % f["event_time"] if f.get("event_time") else "", f["subject"], f["predicate"], f["object"], opaque_sid(f["session_id"]), f["round"], f["quote"]))
     cited, seen = [], set()
     for f in top:
         k = (f["session_id"], f["round"])
@@ -219,7 +220,7 @@ def build_context_v3(question, cues, qdate, facts, by):
         d, turns = by[sid]
         r = next((x for x in data.rounds_of(sid, turns, d) if x.index == ri), None)
         if r:
-            lines.append("### Session %s | date: %s | round %d\n%s" % (sid, d, ri, r.text))
+            lines.append("### Session %s | date: %s | round %d\n%s" % (opaque_sid(sid), d, ri, r.text))
     return "\n".join(lines), top
 
 
