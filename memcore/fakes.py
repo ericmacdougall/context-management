@@ -21,15 +21,18 @@ def tokens(text: str) -> List[str]:
 class FakeChat(CachedChatModel):
     """Backend is a python callable (prompt, system, schema) -> str | dict; counts real calls in `.backend_calls`."""
     adapter_id = "fake"
+    network_safe = True          # positively declared: a stub, never a subscription backend
 
     def __init__(self, fn: Callable, reports_usage: bool = True, **kw):
         super().__init__(model="fake-1", **kw)
         self.fn, self.backend_calls = fn, 0
         self.capabilities = Capabilities(adapter="fake", supports_json_schema=False, json_schema_mode="prompt+validate",
-                                         supports_system=True, reports_usage=reports_usage, max_context_tokens=1000)
+                                         supports_system=True, reports_usage=reports_usage, max_context_tokens=1000,
+                                         supports_temperature=True, supports_max_output_tokens=True)
 
-    def _call_backend(self, prompt, system, json_schema, timeout_s):
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None):
         self.backend_calls += 1
+        self.last_params = params
         r = self.fn(prompt, system, json_schema)
         text = r if isinstance(r, str) else json.dumps(r)
         usage = Usage(len(prompt) // 4, 0, len(text) // 4) if self.capabilities.reports_usage else None

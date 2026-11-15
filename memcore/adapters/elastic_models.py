@@ -9,6 +9,7 @@ import urllib.error
 import urllib.request
 from typing import Callable, List, Optional, Sequence
 
+from ..http_util import urlopen as _urlopen
 from ..ports import BackendError, Embedder, Reranker, RerankHit
 
 INPUT_TYPE = {"query": "search", "passage": "ingest"}
@@ -26,7 +27,7 @@ class _Es:
         req = urllib.request.Request(self.base + path, data=json.dumps(body).encode(), method="POST",
                                      headers={"Content-Type": "application/json", "Authorization": self._auth()})
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout_s, context=self._ctx) as r:
+            with _urlopen(req, timeout=self.timeout_s, context=self._ctx) as r:
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
             raise BackendError("HTTP %d: %s" % (e.code, e.read()[:300].decode("utf-8", "replace"))) from None

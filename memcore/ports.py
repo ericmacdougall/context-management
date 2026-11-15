@@ -183,8 +183,9 @@ class ToolSpec:
 class AgentToolSurface:
     """Holds ToolSpecs; a transport (MCP stdio, HTTP, in-process) only maps list/call, it never redefines a tool."""
 
-    def __init__(self, tools: Sequence[ToolSpec]):
+    def __init__(self, tools: Sequence[ToolSpec], egress_guard="default"):
         self._tools = {t.name: t for t in tools}
+        self._guard = egress_guard
 
     def list_tools(self) -> List[dict]:
         return [t.describe() for t in self._tools.values()]
@@ -197,7 +198,13 @@ class AgentToolSurface:
         errs = validate(arguments, self._tools[name].input_schema)
         if errs:
             raise ValueError("invalid arguments for %s: %s" % (name, "; ".join(errs)))
-        return self._tools[name].handler(arguments)
+        result = self._tools[name].handler(arguments)
+        guard = self._guard
+        if guard == "default":
+            from .guard import DEFAULT_GUARD as guard
+        if guard is not None:
+            guard.check(result, "tool result of %s" % name)   # model-facing: no dataset session ids
+        return result
 
 
 # ------------------------------------------------------------------ context injection

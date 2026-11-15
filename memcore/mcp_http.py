@@ -24,13 +24,24 @@ from .memtools import memory_tools
 from .ports import AgentToolSurface
 
 MAX_BODY = 1 << 20
+BRIDGE_ADDRESSES = {"172.17.0.1"}
+
+
+MIN_TOKEN = 32
+
+
+def check_token(tok: str) -> str:
+    if not isinstance(tok, str) or len(tok) < MIN_TOKEN:
+        raise ValueError("bearer token must be at least %d characters (an empty or short token would accept 'Bearer ')" % MIN_TOKEN)
+    return tok
 
 
 def read_token(path: str) -> str:
     mode = stat.S_IMODE(os.stat(path).st_mode)
     if mode & 0o077:
         raise PermissionError("token file %s must be 0600 (is %o)" % (path, mode))
-    return open(path).read().strip()
+    with open(path) as fh:
+        return check_token(fh.read().strip())
 
 
 def make_token_file(path: str) -> str:
@@ -90,9 +101,10 @@ def make_handler(surface: AgentToolSurface, token: str, allowed_hosts):
 
 class McpHttpServer:
     def __init__(self, surface: AgentToolSurface, token: str, host: str = "127.0.0.1", port: int = 0, allow_private_host: Optional[str] = None):
+        check_token(token)
         ip = ipaddress.ip_address(host)
-        if not ip.is_loopback and not (allow_private_host == host and ip.is_private and host not in ("0.0.0.0", "::")):
-            raise ValueError("refusing to bind %r: loopback only (or one explicitly named private address)" % host)
+        if not ip.is_loopback and not (allow_private_host == host and host in BRIDGE_ADDRESSES):
+            raise ValueError("refusing to bind %r: loopback only, or the one named Docker bridge address %s" % (host, sorted(BRIDGE_ADDRESSES)))
         self.srv = ThreadingHTTPServer((host, port), make_handler(surface, token, {"127.0.0.1", "localhost", "::1", host}))
         self.srv.daemon_threads = True
         self.host, self.port = self.srv.server_address[:2]

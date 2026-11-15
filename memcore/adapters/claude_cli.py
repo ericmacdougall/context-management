@@ -37,6 +37,9 @@ class ClaudeCliChat(CachedChatModel):
                                          supports_system=True, reports_usage=True, max_context_tokens=200_000,
                                          supports_temperature=False, supports_max_output_tokens=False, streaming="none")
 
+    def settings_fingerprint(self):
+        return {"extra_args": self.extra_args, "default_system": DEFAULT_SYSTEM, "bin": os.path.basename(self.claude_bin)}
+
     def command(self, system: Optional[str], json_schema: Optional[dict]) -> List[str]:
         cmd = [self.claude_bin, "-p", "--model", self.model, "--tools", "", "--strict-mcp-config",
                "--system-prompt", system if system is not None else DEFAULT_SYSTEM,
@@ -45,7 +48,7 @@ class ClaudeCliChat(CachedChatModel):
             cmd += ["--json-schema", json.dumps(json_schema)]
         return cmd + self.extra_args
 
-    def _call_backend(self, prompt, system, json_schema, timeout_s) -> BackendOut:
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None) -> BackendOut:
         p = run_child(self.command(system, json_schema), prompt, timeout_s, self.cwd)
         if p.returncode != 0:
             raise BackendError("claude exited %d: %s" % (p.returncode, p.stderr[-300:]))

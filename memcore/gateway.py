@@ -20,10 +20,12 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 
+from .budget import CallBudget
 from .ports import (BackendError, CallCapExceeded, CallTimeout, ChatModel, InputTooLong, PortError, SchemaError)
 from .sse import chat_chunks
 
 MAX_BODY = 8 * 1024 * 1024
+BRIDGE_ADDRESSES = {"172.17.0.1"}   # the one Docker bridge address a container client may reach; never configurable per call
 BANNER = ("=" * 72 + "\nmemcore gateway: SINGLE-USER, LOCAL, DEVELOPMENT ONLY. Bound to %s:%d.\n"
           "Backed by a subscription CLI; every request spends the backend call cap. Do not expose.\n" + "=" * 72)
 
@@ -88,7 +90,8 @@ def _b64_floats(vec) -> str:
     return base64.b64encode(struct.pack("<%df" % len(vec), *vec)).decode()
 
 
-def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None, recorder: Optional[list] = None):
+def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None, recorder: Optional[list] = None,
+                 embed_budget=None, embed_kind: str = "passage"):
     if not isinstance(backends, dict):
         backends = {backends.model: backends}
     default_model = default_model or next(iter(backends))
@@ -176,13 +179,16 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
                 return self._err(502, str(e))
             u = res.usage
             usage = None
-            if u is not None:
-                usage = {"prompt_tokens": u.input_tokens or 0, "completion_tokens": u.output_tokens or 0,
-                         "total_tokens": (u.input_tokens or 0) + (u.output_tokens or 0),
-                         "prompt_tokens_details": {"cached_tokens": u.cached_input_tokens or 0}}
+            if u is not None and u.input_tokens is not None and u.output_tokens is not None:
+                usage = {"prompt_tokens": u.input_tokens, "completion_tokens": u.output_tokens, "total_tokens": u.input_tokens + u.output_tokens}
+                if u.cached_input_tokens is not None:
+                    usage["prompt_tokens_details"] = {"cached_tokens": u.cached_input_tokens}
             want_usage = (body.get("stream_options") or {}).get("include_usage")
+            usage_known = usage is not None
             if usage is None and body.get("stream") and want_usage:
-                usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}  # wire format requires all three; the backend reported none
+                # The wire format requires all three counts in the final chunk, and the backend reported none: send zeros but say
+                # so (x_memcore_usage_known false); non-stream replies simply omit usage.
+                usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "x_memcore_usage_known": False}
             cid, created = "chatcmpl-" + res.request_hash[:24], int(time.time())
             call = {"id": "call_" + res.request_hash[:16], "name": tool, "arguments": res.text if res.parsed is None else json.dumps(res.parsed)} if tool else None
             if body.get("stream"):
@@ -213,8 +219,16 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
             texts = [inp] if isinstance(inp, str) else inp
             if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
                 return self._err(400, "input must be a string or a list of strings")
-            # NOTE: the openai service never sends input_type; the port's kind is fixed by the gateway config (default passage).
-            r = embedder.embed(texts, kind=getattr(embedder, "gateway_kind", "passage"))
+            # NOTE: the openai service never sends input_type; without one the gateway's configured embed_kind applies (default passage).
+            it = body.get("input_type")
+            kind = {"search": "query", "query": "query", "ingest": "passage", "passage": "passage"}.get(it, embed_kind) if it else embed_kind
+            if embed_budget is not None:
+                try:
+                    embed_budget.reserve()
+                except CallCapExceeded as e:
+                    return self._err(429, str(e), "call_cap_exceeded", {"Retry-After": "3600"})
+                embed_budget.ledger(kind="embed", n=len(texts), embed_kind=kind)
+            r = embedder.embed(texts, kind=kind)
             fmt = body.get("encoding_format", "float")
             data = [{"object": "embedding", "index": i, "embedding": _b64_floats(v) if fmt == "base64" else v} for i, v in enumerate(r.vectors)]
             n = sum(len(t.split()) for t in texts)
@@ -224,24 +238,34 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
 
 class Gateway:
     def __init__(self, backend, out_dir: str, host: str = "127.0.0.1", port: int = 0, embedder=None, recorder: Optional[list] = None,
-                 dev_subscription_backends: bool = False, allow_bridge_host: Optional[str] = None):
+                 dev_subscription_backends: bool = False, allow_bridge_host: Optional[str] = None, embed_cap: int = 1000,
+                 embed_kind: str = "passage"):
         """backend: a ChatModel or {model_id: ChatModel}. allow_bridge_host: one explicitly named private address (e.g. the Docker
         bridge gateway) a containerised client must reach; never 0.0.0.0, and the bearer token still applies."""
         backs = backend if isinstance(backend, dict) else {backend.model: backend}
-        if any(getattr(b, "subscription_backed", False) for b in backs.values()):
+        loopback = True
+        try:
+            loopback = ipaddress.ip_address(host).is_loopback
+        except ValueError:
+            loopback = False
+        tainted = [m for m, b in backs.items() if getattr(b, "subscription_backed", False)]
+        if tainted:   # subscription CLIs, or any client/wrapper that declares the taint: explicit dev flag, loopback only
             from .devgate import require_dev_subscription
-            require_dev_subscription(dev_subscription_backends, "Gateway over a subscription backend")
-            if allow_bridge_host:
-                raise ValueError("a subscription-backed gateway binds loopback only")
-        if allow_bridge_host and host == allow_bridge_host:
-            ipaddress.ip_address(host)
-            if host in ("0.0.0.0", "::") or not ipaddress.ip_address(host).is_private:
-                raise ValueError("bridge host must be a specific private address")
-        else:
+            require_dev_subscription(dev_subscription_backends, "Gateway over subscription-backed backend(s) %s" % tainted)
+        if loopback:
             require_loopback(host)
+        else:
+            # FAIL CLOSED: a non-loopback bind needs the one named bridge address AND every backend positively declaring
+            # network_safe=True (stub or replay types). A wrapper, router or client that does not declare it is refused.
+            if allow_bridge_host != host or host not in BRIDGE_ADDRESSES:
+                raise ValueError("refusing non-loopback bind %r: only loopback or the named bridge address %s" % (host, sorted(BRIDGE_ADDRESSES)))
+            unsafe = [m for m, b in backs.items() if getattr(b, "network_safe", False) is not True or getattr(b, "subscription_backed", False)]
+            if unsafe:
+                raise ValueError("refusing non-loopback bind: backend(s) %s do not declare network_safe=True (subscription taint propagates "
+                                 "through wrappers and loopback clients)" % unsafe)
         os.makedirs(out_dir, exist_ok=True)
         self.out_dir, self.token = out_dir, secrets.token_urlsafe(32)
-        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token, embedder, recorder=recorder))
+        self.srv = ThreadingHTTPServer((host, port), make_handler(backend, self.token, embedder, recorder=recorder, embed_budget=CallBudget(out_dir, embed_cap, os.path.join(out_dir, "embed-ledger.jsonl"), name="embed"), embed_kind=embed_kind))
         self.srv.daemon_threads = True
         self.host, self.port = self.srv.server_address[:2]
         self._write("gateway.token", self.token, 0o600)

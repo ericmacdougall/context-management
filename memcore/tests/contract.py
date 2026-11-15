@@ -13,6 +13,9 @@ from memcore.jsonschema_min import validate
 from memcore.ports import CallTimeout, ChatModel, InputTooLong, PortError, Usage
 
 OUT = os.environ.get("MEMCORE_OUT", "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/memcore-out")
+# Evidence files (results/<adapter>.json under OUT) are written ONLY for a deliberate evidence run (MEMCORE_EVIDENCE=1), and an
+# existing evidence file is never overwritten (a timestamped sibling is written instead). Unit-test runs write to a temp dir.
+EVIDENCE = os.environ.get("MEMCORE_EVIDENCE") == "1"
 
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["person", "city", "amount", "tags"],
           "properties": {"person": {"type": "string"}, "city": {"type": "string"}, "amount": {"type": "integer"},
@@ -49,8 +52,14 @@ class ChatModelContract:
 
     @classmethod
     def tearDownClass(cls):
-        os.makedirs(os.path.join(OUT, "results"), exist_ok=True)
-        with open(os.path.join(OUT, "results", cls.NAME + ".json"), "w") as fh:
+        import tempfile
+        import time as _t
+        d = os.path.join(OUT, "results") if EVIDENCE else os.path.join(tempfile.gettempdir(), "memcore-results")
+        os.makedirs(d, exist_ok=True)
+        p = os.path.join(d, cls.NAME + ".json")
+        if os.path.exists(p) and EVIDENCE:
+            p = os.path.join(d, "%s.%d.json" % (cls.NAME, int(_t.time())))
+        with open(p, "w") as fh:
             json.dump(cls.results, fh, indent=1, default=str)
 
     def U(self, text):

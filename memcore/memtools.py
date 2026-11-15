@@ -6,6 +6,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from .fakes import tokens
+from .guard import DEFAULT_GUARD, EgressLeak
+from .inbox import render_data_block
 from .ports import AgentToolSurface, ContextInjector, Injection, ToolSpec, Turn
 
 
@@ -34,7 +36,9 @@ class InMemoryStore:
         return [{"id": x[3]["id"], "ts": x[3]["ts"], "text": x[3]["text"], "score": -x[0]} for x in sorted(sc, key=lambda t: t[:3])[:k]]
 
     def open_event(self, id: str) -> Optional[dict]:
-        return self.events.get(id)
+        e = self.events.get(id)
+        # the stored session id never leaves the store: model-facing tool results carry no dataset session field
+        return None if e is None else {k: v for k, v in e.items() if k != "session"}
 
     def query_facts(self, subject: str, predicate: Optional[str] = None, as_of: Optional[str] = None) -> List[dict]:
         out = []
@@ -73,19 +77,28 @@ def memory_tools(store) -> AgentToolSurface:
 
 
 class BudgetedInjector(ContextInjector):
-    """Recall on the user's text and render at most `char_budget` characters; only ids are returned for logging."""
+    """Recall on the user's text and render at most `char_budget` characters as an inert DATA block (per-turn random delimiter,
+    JSON-encoded records, no instruction field); records that would leak a dataset session id are dropped and counted.
+    Only ids are returned for logging."""
 
-    def __init__(self, store, char_budget: int = 800, k: int = 5):
-        self.store, self.char_budget, self.k = store, char_budget, k
+    def __init__(self, store, char_budget: int = 800, k: int = 5, egress_guard=DEFAULT_GUARD):
+        self.store, self.char_budget, self.k, self.egress_guard, self.dropped_by_guard = store, char_budget, k, egress_guard, 0
 
     def build(self, turn: Turn) -> Injection:
-        lines, used, n = [], [], 0
+        import json as _json
+        recs, used, n = [], [], 0
         for h in self.store.recall(turn.user_text, as_of=turn.time, k=self.k):
-            line = "- [%s %s] %s" % (h["id"], h["ts"], h["text"])
-            if n + len(line) > self.char_budget:
+            rec = {"id": h["id"], "ts": h["ts"], "text": h["text"]}
+            if self.egress_guard is not None:
+                try:
+                    self.egress_guard.check(rec, "injected record")
+                except EgressLeak:
+                    self.dropped_by_guard += 1
+                    continue
+            size = len(_json.dumps(rec, ensure_ascii=True))
+            if n + size > self.char_budget:
                 break
-            lines.append(line)
+            recs.append(rec)
             used.append(h["id"])
-            n += len(line) + 1
-        block = "<memory>\n" + "\n".join(lines) + "\n</memory>" if lines else ""
-        return Injection(block=block, used_ids=used)
+            n += size + 1
+        return Injection(block=render_data_block(recs, "%s@%s" % (turn.session_id, turn.time), label="remembered events") if recs else "", used_ids=used)

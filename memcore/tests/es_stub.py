@@ -29,8 +29,8 @@ def rule_extract(user):
 
 
 class Stub:
-    def __init__(self, wrapped=False, bom=True, error_after=None, bad_usage=False):
-        self.wrapped, self.bom, self.error_after, self.requests = wrapped, bom, error_after, []
+    def __init__(self, wrapped=False, bom=True, error_after=None, bad_usage=False, truncate_after=None):
+        self.wrapped, self.bom, self.error_after, self.requests, self.truncate_after = wrapped, bom, error_after, [], truncate_after
         stub = self
 
         class H(BaseHTTPRequestHandler):
@@ -71,6 +71,8 @@ class Stub:
                 events.append({"id": "r1", "object": "chat.completion.chunk", "model": "stub", "choices": [],
                                "usage": {"prompt_tokens": len(user) // 4, "completion_tokens": len(out) // 4, "total_tokens": (len(user) + len(out)) // 4}})
                 for i, e in enumerate(events):
+                    if stub.truncate_after is not None and i == stub.truncate_after:
+                        return   # close with no finish chunk, no usage, no [DONE]
                     if stub.error_after is not None and i == stub.error_after:
                         self._w("event: error\ndata: %s\n\n" % json.dumps({"error": {"message": "boom"}}))
                         return

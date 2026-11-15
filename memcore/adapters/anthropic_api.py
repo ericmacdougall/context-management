@@ -10,6 +10,7 @@ import urllib.request
 from typing import Callable, Optional
 
 from ..chat_base import BackendOut, CachedChatModel
+from ..http_util import urlopen as _urlopen
 from ..ports import BackendError, CallTimeout, Capabilities, InputTooLong, Usage
 
 TOOL = "answer"
@@ -26,6 +27,9 @@ class AnthropicMessagesChat(CachedChatModel):
                                          reports_usage=True, max_context_tokens=max_context_tokens, supports_temperature=True,
                                          supports_max_output_tokens=True, streaming="none")
 
+    def settings_fingerprint(self):
+        return {"version": self.version, "default_max_tokens": self.default_max_tokens}
+
     def body(self, prompt, system, json_schema, max_output_tokens=None, temperature=None) -> dict:
         b = {"model": self.model, "max_tokens": max_output_tokens or self.default_max_tokens, "messages": [{"role": "user", "content": prompt}]}
         if system is not None:
@@ -37,11 +41,12 @@ class AnthropicMessagesChat(CachedChatModel):
             b["tool_choice"] = {"type": "tool", "name": TOOL}
         return b
 
-    def _call_backend(self, prompt, system, json_schema, timeout_s) -> BackendOut:
-        req = urllib.request.Request(self.base_url + "/v1/messages", data=json.dumps(self.body(prompt, system, json_schema)).encode(), method="POST",
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None) -> BackendOut:
+        p = params or {}
+        req = urllib.request.Request(self.base_url + "/v1/messages", data=json.dumps(self.body(prompt, system, json_schema, p.get("max_output_tokens"), p.get("temperature"))).encode(), method="POST",
                                      headers={"content-type": "application/json", "x-api-key": self._key(), "anthropic-version": self.version})
         try:
-            with urllib.request.urlopen(req, timeout=timeout_s) as r:
+            with _urlopen(req, timeout=timeout_s) as r:
                 d = json.loads(r.read())
         except urllib.error.HTTPError as e:
             raw = e.read()[:1500].decode("utf-8", "replace")

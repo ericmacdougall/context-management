@@ -38,10 +38,15 @@ class GoldenStreams(unittest.TestCase):
         self.assertEqual(json.loads(out.text)["city"], "Lisbon")
         self.assertTrue(out.meta["forced_tool"])
 
-    def test_broken_variant_naive_parser_chokes_on_bom(self):
+    def test_every_real_event_has_a_bom_and_the_parser_handles_each(self):
+        from memcore.sse import parse_named_events
         raw = open(os.path.join(FX, "es956_stream_plain.sse"), "rb").read()
-        names = [l.decode().split(":")[0] for l in raw.splitlines() if l.strip()]
-        self.assertIn("﻿event", names)  # a parser that does not strip the BOM sees 'event' as an unknown field name
+        evs = list(parse_named_events(io.BytesIO(raw)))
+        self.assertGreaterEqual(len(evs), 4)
+        self.assertTrue(all(n == "message" for n, _ in evs))
+        # inject an error event in the real byte framing (BOM first): the parser must name it 'error'
+        forged = raw + "\ufeffevent: error\ndata: {\"error\":{\"message\":\"late\"}}\n\n".encode("utf-8")
+        self.assertEqual(list(parse_named_events(io.BytesIO(forged)))[-1][0], "error")
 
 
 class RecordedRequests(unittest.TestCase):

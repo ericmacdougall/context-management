@@ -1,0 +1,50 @@
+{
+ "conversation_id": "ab7e3456-6084-442e-8387-d88459417292",
+ "access_control": {
+  "access_mode": "private"
+ },
+ "round_id": "b7b1f227-f2dc-4244-a543-1e2d3925ea12",
+ "trace_id": "b242f6e6ef0e15f2c1553b38bd4bbf26",
+ "model_usage": {
+  "llm_calls": 2,
+  "connector_id": "mc-g7-chat",
+  "output_tokens": 10,
+  "model": "stub-tool",
+  "input_tokens": 20
+ },
+ "started_at": "2026-11-15T22:42:43.513Z",
+ "time_to_last_token": 684,
+ "steps": [
+  {
+   "tool_call_group_id": "2e364314-e1b0-4bcd-af69-d8ef8146d99e",
+   "tool_type": "mcp",
+   "tool_call_id": "call_stub1",
+   "tool_origin": "registry",
+   "tool_id": "mc.query_facts",
+   "progression": [],
+   "type": "tool_call",
+   "params": {
+    "subject": "staging database"
+   },
+   "results": [
+    {
+     "data": {
+      "content": [
+       {
+        "text": "[{\"id\": \"f1\", \"subject\": \"staging database\", \"predicate\": \"region\", \"value\": \"Frankfurt\", \"valid_from\": \"2026-01-05T10:00:00Z\", \"valid_to\": \"2026-03-02T09:00:00Z\", \"event_id\": \"ev1\"}, {\"id\": \"f2\", \"subject\": \"staging database\", \"predicate\": \"region\", \"value\": \"Dublin\", \"valid_from\": \"2026-03-02T09:00:00Z\", \"valid_to\": null, \"event_id\": \"ev2\"}]",
+        "type": "text"
+       }
+      ]
+     },
+     "tool_result_id": "9eulY3",
+     "type": "other"
+    }
+   ]
+  }
+ ],
+ "status": "completed",
+ "time_to_first_token": 666,
+ "response": {
+  "message": "Per the tool the staging database is in Dublin. (tool said: {\"response\":\"<tool_result>{\\\"results\\\":[{\\\"type\\\":\\\"other\\\",\\\"data\\\":{\\\"content\\\":[{\\\"type\\\":\\\"text\\\",\\\"text\\\":\\\"[{\\\\\\\"i)"
+ }
+}

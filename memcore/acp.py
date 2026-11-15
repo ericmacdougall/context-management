@@ -17,13 +17,15 @@ import threading
 import time
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
+from .budget import CallBudget
 from .agent_session import AgentSession, McpServerSpec, SessionEvent, TurnResult
 from .devgate import require_dev_subscription
 from .ports import BackendError, CallTimeout, Usage
 
 
 class AcpClient:
-    def __init__(self, cmd: List[str], cwd: str, env: Optional[dict] = None):
+    def __init__(self, cmd: List[str], cwd: str, env: Optional[dict] = None, dev_subscription_backends: bool = False):
+        require_dev_subscription(dev_subscription_backends, "AcpClient")
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, cwd=cwd,
                                      env=env, start_new_session=True, bufsize=1)
         self._id, self._w = 0, threading.Lock()
@@ -85,10 +87,11 @@ class AcpClient:
 
 
 class AcpSession(AgentSession):
-    def __init__(self, cmd: List[str], cwd: str, tools: Sequence[McpServerSpec] = (), dev_subscription_backends: bool = False, turn_timeout_s: float = 300.0, env: Optional[dict] = None,
+    def __init__(self, cmd: List[str], cwd: str, budget: CallBudget, tools: Sequence[McpServerSpec] = (), dev_subscription_backends: bool = False, turn_timeout_s: float = 300.0, env: Optional[dict] = None,
                  model: Optional[str] = "sonnet", mode: Optional[str] = "default"):
         require_dev_subscription(dev_subscription_backends, "AcpSession")
-        self.cli, self.turn_timeout_s, self.turns = AcpClient(cmd, cwd, env), turn_timeout_s, 0
+        self.budget = budget
+        self.cli, self.turn_timeout_s, self.turns = AcpClient(cmd, cwd, env, dev_subscription_backends=True), turn_timeout_s, 0
         init = self.cli.request("initialize", {"protocolVersion": 1, "clientCapabilities": {}, "clientInfo": {"name": "memcore", "version": "0.1"}}, 60)
         self.agent_caps = (init or {}).get("agentCapabilities", {})
         self.auth_methods = (init or {}).get("authMethods", [])
@@ -106,6 +109,7 @@ class AcpSession(AgentSession):
     def send(self, text):
         self.turns += 1
         turn_id = "acp-t%d" % self.turns
+        self._count_turn(turn_id)
         block = self._take_context(turn_id)
         content = (block + "\n\n" + text) if block else text
         parts, usage, tools, t0 = [], {}, [], time.time()

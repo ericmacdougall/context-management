@@ -12,6 +12,7 @@ import urllib.request
 from typing import Iterator, Optional, Sequence, Tuple
 
 from ..chat_base import BackendOut, CachedChatModel, render_messages
+from ..http_util import urlopen as _urlopen
 from ..ports import BackendError, CallTimeout, Capabilities, InputTooLong, Usage
 from ..sse import parse_events
 
@@ -33,6 +34,12 @@ class OpenAICompatChat(CachedChatModel):
             with open(token_file) as fh:
                 token = fh.read().strip()
         self.base_url, self._token = base_url.rstrip("/"), token
+        from urllib.parse import urlparse
+        import ipaddress as _ip
+        try:
+            self.subscription_backed = _ip.ip_address(urlparse(base_url).hostname or "").is_loopback   # taint: may front a loopback subscription gateway
+        except ValueError:
+            self.subscription_backed = (urlparse(base_url).hostname or "") == "localhost"
         super().__init__(model=model, **kw)
         self.capabilities = Capabilities(adapter=self.adapter_id, supports_json_schema=True, json_schema_mode="prompt+validate",
                                          supports_system=True, reports_usage=True, max_context_tokens=max_context_tokens,
@@ -56,7 +63,7 @@ class OpenAICompatChat(CachedChatModel):
                                      headers={"Content-Type": "application/json",
                                               **({"Authorization": "Bearer " + self._token} if self._token else {})})
         try:
-            return urllib.request.urlopen(req, timeout=timeout_s)
+            return _urlopen(req, timeout=timeout_s)
         except urllib.error.HTTPError as e:
             raw = e.read()[:2000].decode("utf-8", "replace")
             try:
@@ -73,9 +80,10 @@ class OpenAICompatChat(CachedChatModel):
                 raise CallTimeout("no response within %.1fs" % timeout_s)
             raise BackendError("connection failed: %s" % e.reason)
 
-    def _call_backend(self, prompt, system, json_schema, timeout_s) -> BackendOut:
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None) -> BackendOut:
+        p = params or {}
         try:
-            with self._open(self._body(prompt, system, json_schema), timeout_s) as r:
+            with self._open(self._body(prompt, system, json_schema, max_output_tokens=p.get("max_output_tokens"), temperature=p.get("temperature")), timeout_s) as r:
                 d = json.loads(r.read())
         except (socket.timeout, TimeoutError):
             raise CallTimeout("no response within %.1fs" % timeout_s)
@@ -86,7 +94,9 @@ class OpenAICompatChat(CachedChatModel):
     def stream(self, messages: Sequence[dict], system: Optional[str] = None, timeout_s: Optional[float] = None
                ) -> Iterator[Tuple[str, Optional[Usage]]]:
         """Yield (text_delta, None) per content chunk, then ('', usage) once if the server sent a usage chunk.
-        Streams are not cached or capped by this client (the gateway/backends enforce their own cap)."""
+        Streams are not cached (nothing to replay) but ARE counted against this client's cap and ledgered."""
+        self._reserve()                                   # streams are counted, capped and ledgered like complete()
+        self._ledger(kind="stream", status="started")
         body = self._body(render_messages(messages), system, None, stream=True)
         with self._open(body, timeout_s or self.timeout_s) as r:
             for ev in parse_events(r):

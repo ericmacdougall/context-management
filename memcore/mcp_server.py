@@ -28,10 +28,22 @@ def demo_store() -> InMemoryStore:
 
 def handle(surface: AgentToolSurface, msg: dict) -> Optional[dict]:
     """Return a response dict, or None for notifications."""
-    mid, method, params = msg.get("id"), msg.get("method"), msg.get("params") or {}
+    if not isinstance(msg, dict):
+        return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
+    mid, method, params = msg.get("id"), msg.get("method"), msg.get("params")
     if mid is None:
         return None  # notification (initialized, cancelled, ...)
+    if params is None:
+        params = {}
+    if not isinstance(params, dict) or not isinstance(method, str) or isinstance(mid, (dict, list, bool)):
+        return {"jsonrpc": "2.0", "id": mid if isinstance(mid, (str, int)) else None, "error": {"code": -32600, "message": "invalid request"}}
+    try:
+        return _dispatch(surface, mid, method, params)
+    except Exception:  # noqa: BLE001 - a malformed call must never take the server down; no internals leak
+        return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32603, "message": "internal error"}}
 
+
+def _dispatch(surface: AgentToolSurface, mid, method, params) -> dict:
     def ok(result):
         return {"jsonrpc": "2.0", "id": mid, "result": result}
 
@@ -46,8 +58,11 @@ def handle(surface: AgentToolSurface, msg: dict) -> Optional[dict]:
     if method == "tools/list":
         return ok({"tools": surface.list_tools()})
     if method == "tools/call":
+        args = params.get("arguments")
+        if args is not None and not isinstance(args, dict) or not isinstance(params.get("name"), str):
+            return err(-32602, "tools/call needs a string name and an object arguments")
         try:
-            res = surface.call_tool(params.get("name"), params.get("arguments"))
+            res = surface.call_tool(params.get("name"), args)
         except KeyError as e:
             return err(-32602, str(e))
         except ValueError as e:
@@ -65,7 +80,7 @@ def serve(surface: AgentToolSurface, fin=sys.stdin, fout=sys.stdout) -> None:
             continue
         try:
             msg = json.loads(line)
-        except ValueError:
+        except (ValueError, RecursionError):
             fout.write(json.dumps({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}) + "\n")
             fout.flush()
             continue

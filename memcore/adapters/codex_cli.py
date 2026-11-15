@@ -58,6 +58,9 @@ class CodexCliChat(CachedChatModel):
                                          supports_system=True, reports_usage=True, max_context_tokens=None,
                                          supports_temperature=False, supports_max_output_tokens=False, streaming="none")
 
+    def settings_fingerprint(self):
+        return {"effort": self.effort, "sandbox": "read-only"}
+
     def _guard(self, when: str, stderr: str = "") -> None:
         if "falling back to API keys" in stderr:
             self._tripped = True
@@ -67,7 +70,7 @@ class CodexCliChat(CachedChatModel):
         if self._tripped:
             raise PaidFallback("stopped %s: pool status/stderr indicates paid fallback or an unavailable subscription" % when)
 
-    def _call_backend(self, prompt, system, json_schema, timeout_s) -> BackendOut:
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None) -> BackendOut:
         if self._tripped:
             raise PaidFallback("a previous call tripped the spend guard")
         self._guard("before call")

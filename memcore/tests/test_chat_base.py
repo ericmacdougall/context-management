@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import time
@@ -143,3 +144,77 @@ class FilterAndKeyTests(Base):
         m2 = self.mk(lambda p, s, j: seen.append(s) or "x", suppress_harness_notices=True)
         m2.complete(U)
         self.assertIn("session-start notices", seen[1])
+
+
+class ReviewFixTests(Base):
+    def test_item7_params_sent_and_hash_only_when_supported(self):
+        m = self.mk(lambda p, s, j: "x")
+        m.complete(U, temperature=0.0, max_output_tokens=7)
+        self.assertEqual(m.last_params, {"max_output_tokens": 7, "temperature": 0.0})
+        h0, h1 = m.request_hash(U), m.request_hash(U, temperature=0.5)
+        self.assertNotEqual(h0, h1)                       # supported: part of the key
+        m.capabilities = type(m.capabilities)(**dict(vars(m.capabilities), supports_temperature=False))
+        self.assertEqual(m.request_hash(U), m.request_hash(U, temperature=0.5))   # unsupported: not hashed, not sent
+        m.strict_params = True
+        from memcore.ports import UnsupportedParameter
+        with self.assertRaises(UnsupportedParameter):
+            m.complete(U, temperature=0.5)
+
+    def test_item7_http_adapters_put_params_on_the_wire(self):
+        from memcore.adapters.anthropic_api import AnthropicMessagesChat
+        from memcore.adapters.elastic_inference import ElasticInferenceChat
+        from memcore.adapters.openai_compat import OpenAICompatChat
+        d = tempfile.mkdtemp()
+        kw = dict(cache_dir=d, ledger_path=os.devnull, cap=5)
+        e = ElasticInferenceChat("http://x", "i", lambda: "k", **kw).body("p", None, None, 7, 0.0)
+        o = OpenAICompatChat("http://x/v1", "m", token="t", **kw)._body("p", None, None, max_output_tokens=7, temperature=0.0)
+        a = AnthropicMessagesChat("m", lambda: "k", **kw).body("p", None, None, 7, 0.0)
+        self.assertEqual((e["max_completion_tokens"], e["temperature"]), (7, 0.0))
+        self.assertEqual((o["max_tokens"], o["temperature"]), (7, 0.0))
+        self.assertEqual((a["max_tokens"], a["temperature"]), (7, 0.0))
+
+    def test_item6_egress_guard_blocks_prompts_and_system(self):
+        from memcore.guard import EgressLeak
+        m = self.mk(lambda p, s, j: "x")
+        for bad in ("see sharegpt_QROQ758_9 please", "answer_1a2b3c_1 is gold", "ultrachat_355211"):
+            with self.assertRaises(EgressLeak):
+                m.complete([{"role": "user", "content": bad}])
+        with self.assertRaises(EgressLeak):
+            m.complete(U, system="ctx sharegpt_abc")
+        self.assertEqual(m.backend_calls, 0)
+        off = self.mk(lambda p, s, j: "x", egress_guard=None)
+        off.complete([{"role": "user", "content": "sharegpt_abc ok when explicitly disabled"}])
+
+    def test_item9_schema_subset_refused_not_ignored(self):
+        from memcore.jsonschema_min import SchemaUnsupported, validate
+        m = self.mk(lambda p, s, j: {"p": 5})
+        for bad in ({"$ref": "#/$defs/x"}, {"oneOf": [{"type": "string"}]}, {"pattern": "^a"}, {"additionalProperties": {"type": "string"}},
+                    {"type": "frob"}, {"type": "array", "items": [{"type": "string"}]}):
+            with self.assertRaises(SchemaUnsupported):
+                m.complete(U, json_schema=bad)
+        self.assertEqual(m.backend_calls, 0)
+        self.assertTrue(validate(True, {"enum": [1]}))                      # True != 1
+        self.assertTrue(validate(float("nan"), {"type": "number", "minimum": 0}))
+        self.assertEqual(validate(1, {"enum": [1.0, 2]}), [])
+
+    def test_counter_corruption_fails_closed(self):
+        m = self.mk(lambda p, s, j: "x", cap=3)
+        m.complete([{"role": "user", "content": "a"}])
+        open(m._counter, "w").write("")                                      # a crash mid-write leaves an empty file
+        with self.assertRaises(CallCapExceeded):
+            m.complete([{"role": "user", "content": "b"}])
+        self.assertEqual(m.backend_calls, 1)
+
+    def test_filter_applied_at_read_time_cache_keeps_raw(self):
+        raw = "keep. (Heads-up: the log backup is old) keep too"
+        m = self.mk(lambda p, s, j: raw, strip_patterns=[r"\(Heads-up:[^)]*\)"])
+        r1 = m.complete(U)
+        self.assertNotIn("Heads-up", r1.text)
+        cached = json.load(open(m._path(r1.request_hash)))
+        self.assertIn("Heads-up", cached["text"])                            # corrupted/filtered text is never the cached answer
+        self.assertNotIn("Heads-up", m.complete(U).text)
+
+    def test_settings_fingerprint_in_key(self):
+        a, b = self.mk(lambda p, s, j: "x"), self.mk(lambda p, s, j: "x")
+        b.settings_fingerprint = lambda: {"effort": "high"}
+        self.assertNotEqual(a.request_hash(U), b.request_hash(U))

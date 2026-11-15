@@ -19,7 +19,9 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence
 
-from .jsonschema_min import validate
+from .budget import CallBudget
+from .guard import DEFAULT_GUARD
+from .jsonschema_min import check_schema, validate
 from .ports import (BackendError, CallCapExceeded, CallTimeout, Capabilities, ChatModel, ChatResult, InputTooLong,
                     Message, SchemaError, UnsupportedParameter, Usage, canonical_hash)
 
@@ -86,7 +88,8 @@ class CachedChatModel(ChatModel):
 
     def __init__(self, model: str, cache_dir: str, ledger_path: str, cap: int, concurrency: int = 3,
                  timeout_s: float = 600.0, recipe: str = "v1", strict_params: bool = False, cwd: Optional[str] = None,
-                 strip_patterns: Sequence[str] = (), suppress_harness_notices: bool = False):
+                 strip_patterns: Sequence[str] = (), suppress_harness_notices: bool = False,
+                 egress_guard=DEFAULT_GUARD):
         self.model, self.cache_dir, self.ledger_path = model, cache_dir, ledger_path
         self.cap, self.recipe, self.timeout_s, self.strict_params, self.cwd = cap, recipe, timeout_s, strict_params, cwd
         self.strip_patterns = [re.compile(p) for p in strip_patterns]
@@ -96,10 +99,14 @@ class CachedChatModel(ChatModel):
         with _SHARED_GUARD:
             self._sh = _SHARED.setdefault(os.path.abspath(cache_dir), {"sem": threading.Semaphore(concurrency),
                                                                          "lock": threading.Lock(), "keys": {}})
-        self._counter = os.path.join(cache_dir, "calls.count")
+        self.egress_guard = egress_guard                         # None disables (tests, public-data replays)
+        self.budget = CallBudget(cache_dir, cap, ledger_path)
+        self._counter = self.budget.counter
 
     # ---- to implement
-    def _call_backend(self, prompt: str, system: Optional[str], json_schema: Optional[dict], timeout_s: float) -> BackendOut:
+    def _call_backend(self, prompt: str, system: Optional[str], json_schema: Optional[dict], timeout_s: float,
+                      params: Optional[dict] = None) -> BackendOut:
+        """params: {'max_output_tokens': int|None, 'temperature': float|None}, only for parameters this adapter declares as supported."""
         raise NotImplementedError
 
     # ---- hash / cache / cap
@@ -107,35 +114,31 @@ class CachedChatModel(ChatModel):
         caps = self.capabilities
         if system is not None and not caps.supports_system:
             raise UnsupportedParameter("%s has no system prompt support" % caps.adapter)
-        for name, val, ok in (("temperature", temperature, caps.supports_temperature),
-                              ("max_output_tokens", max_output_tokens, caps.supports_max_output_tokens)):
-            if val is not None and not ok and self.strict_params:
-                raise UnsupportedParameter("%s is not supported by %s" % (name, caps.adapter))
-        return {"adapter": self.adapter_id, "recipe": self.recipe, "model": self.model, "system": system,
+        if not caps.supports_temperature:
+            if temperature is not None and self.strict_params:
+                raise UnsupportedParameter("temperature is not supported by %s" % caps.adapter)
+            temperature = None          # never hash a parameter that is not sent
+        if not caps.supports_max_output_tokens:
+            if max_output_tokens is not None and self.strict_params:
+                raise UnsupportedParameter("max_output_tokens is not supported by %s" % caps.adapter)
+            max_output_tokens = None
+        return {"settings": self.settings_fingerprint(), "adapter": self.adapter_id, "recipe": self.recipe, "model": self.model, "system": system,
                 "messages": list(messages), "json_schema": json_schema,
                 "max_output_tokens": max_output_tokens, "temperature": temperature,
                 "filters": [p.pattern for p in self.strip_patterns], "suppress": self.suppress_harness_notices}
+
+    def settings_fingerprint(self) -> dict:
+        """Adapter settings that change the answer; part of the cache key. Adapters extend it."""
+        return {}
 
     def request_hash(self, messages, system=None, json_schema=None, max_output_tokens=None, temperature=None) -> str:
         return canonical_hash(self._normalise(messages, system, json_schema, max_output_tokens, temperature))
 
     def calls_used(self) -> int:
-        try:
-            with open(self._counter) as fh:
-                return int(fh.read().strip() or 0)
-        except FileNotFoundError:
-            return 0
+        return self.budget.used()
 
     def _reserve(self) -> int:
-        with self._sh["lock"]:
-            with open(self._counter + ".lock", "w") as lk:
-                fcntl.flock(lk, fcntl.LOCK_EX)
-                n = self.calls_used()
-                if n >= self.cap:
-                    raise CallCapExceeded("call cap %d reached for %s" % (self.cap, self.cache_dir))
-                with open(self._counter, "w") as fh:
-                    fh.write(str(n + 1))
-                return n + 1
+        return self.budget.reserve()
 
     def _path(self, key: str) -> str:
         return os.path.join(self.cache_dir, key + ".json")
@@ -147,8 +150,17 @@ class CachedChatModel(ChatModel):
         except (FileNotFoundError, ValueError):
             return None
         u = r.get("usage")
-        return ChatResult(text=r["text"], parsed=r.get("parsed"), usage=Usage(**u) if u else None, model=r["model"],
-                          latency_s=r["latency_s"], request_hash=key, cached=True, adapter=self.adapter_id, meta=r.get("meta", {}))
+        return self._present(ChatResult(text=r["text"], parsed=r.get("parsed"), usage=Usage(**u) if u else None, model=r["model"],
+                                        latency_s=r["latency_s"], request_hash=key, cached=True, adapter=self.adapter_id, meta=r.get("meta", {})))
+
+    def _present(self, res: ChatResult) -> ChatResult:
+        """Output notice filter, applied when the result is RETURNED, never to what is cached (the cache keeps the raw answer)."""
+        if self.strip_patterns and res.parsed is None:
+            text, n = self._strip(res.text)
+            if n:
+                res = ChatResult(text=text, parsed=res.parsed, usage=res.usage, model=res.model, latency_s=res.latency_s,
+                                 request_hash=res.request_hash, cached=res.cached, adapter=res.adapter, meta=dict(res.meta, filtered=n))
+        return res
 
     def _store(self, key: str, res: ChatResult) -> None:
         rec = {"text": res.text, "parsed": res.parsed, "model": res.model, "latency_s": res.latency_s, "meta": res.meta,
@@ -159,16 +171,14 @@ class CachedChatModel(ChatModel):
         os.replace(tmp, self._path(key))
 
     def _ledger(self, **row) -> None:
-        row["ts"] = round(time.time(), 3)
         row["adapter"], row["model"] = self.adapter_id, self.model
-        with self._sh["lock"], open(self.ledger_path, "a") as fh:
-            fh.write(json.dumps(row) + "\n")
+        self.budget.ledger(**row)
 
-    def _one_call(self, key, prompt, system, schema, timeout_s, kind) -> tuple:
+    def _one_call(self, key, prompt, system, schema, timeout_s, kind, params=None) -> tuple:
         self._reserve()
         t0 = time.time()
         try:
-            out = self._call_backend(prompt, system, schema, timeout_s)
+            out = self._call_backend(prompt, system, schema, timeout_s, params)
         except Exception as e:
             self._ledger(key=key, kind=kind, status=type(e).__name__, seconds=round(time.time() - t0, 2))
             raise
@@ -182,8 +192,15 @@ class CachedChatModel(ChatModel):
     def complete(self, messages, system=None, json_schema=None, max_output_tokens=None, temperature=None,
                  timeout_s=None) -> ChatResult:
         norm = self._normalise(messages, system, json_schema, max_output_tokens, temperature)
+        if json_schema is not None:
+            check_schema(json_schema)   # refuse schemas the validator cannot enforce
         key = canonical_hash(norm)
         prompt = render_messages(messages)
+        if self.egress_guard is not None:
+            self.egress_guard.check_text(prompt, "prompt")
+            if system:
+                self.egress_guard.check_text(system, "system")
+        params = {"max_output_tokens": norm["max_output_tokens"], "temperature": norm["temperature"]}
         mx = self.capabilities.max_context_tokens
         if mx is not None and (len(prompt) + len(system or "")) > mx * CHARS_PER_TOKEN:
             raise InputTooLong("input of %d chars exceeds %d tokens x %d chars/token preflight limit" %
@@ -202,19 +219,15 @@ class CachedChatModel(ChatModel):
                 return hit
             if self.suppress_harness_notices:
                 system = ((system or "") + "\n" + HARNESS_NOTICE_SENTENCE).strip()
-            out, secs = self._one_call(key, prompt, system, json_schema, tmo, "call")
+            out, secs = self._one_call(key, prompt, system, json_schema, tmo, "call", params)
             text, parsed, usage = out.text, out.parsed, out.usage
             meta = dict(out.meta or {})
-            if json_schema is None and self.strip_patterns:
-                text, n = self._strip(text)
-                if n:
-                    meta["filtered"] = n
             if json_schema is not None:
                 parsed, errs = self._check(text, parsed, json_schema)
                 if errs:  # one repair retry, prompt + validate
                     repair = ("%s\n\n---\nYour previous answer was:\n%s\n\nIt failed validation: %s\n"
                               "Reply with ONLY the corrected JSON value." % (prompt, text, "; ".join(errs[:5])))
-                    out2, secs2 = self._one_call(key, repair, system, json_schema, tmo, "repair")
+                    out2, secs2 = self._one_call(key, repair, system, json_schema, tmo, "repair", params)
                     text, secs = out2.text, secs + secs2
                     usage = _sum_usage(usage, out2.usage)
                     parsed, errs = self._check(out2.text, out2.parsed, json_schema)
@@ -223,8 +236,8 @@ class CachedChatModel(ChatModel):
                         raise SchemaError("answer invalid after one repair: %s" % "; ".join(errs[:5]))
             res = ChatResult(text=text, parsed=parsed, usage=usage, model=self.model, latency_s=round(secs, 3),
                              request_hash=key, cached=False, adapter=self.adapter_id, meta=meta)
-            self._store(key, res)
-            return res
+            self._store(key, res)            # raw answer cached; the notice filter is applied on the way out
+            return self._present(res)
 
     def _strip(self, text):
         n = 0

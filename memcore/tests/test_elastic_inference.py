@@ -1,3 +1,4 @@
+import io
 import os
 import tempfile
 import unittest
@@ -69,6 +70,63 @@ class StubShapeTests(unittest.TestCase):
             self.assertNotIn("ApiKey", blob)
         finally:
             s.stop()
+
+
+class TruncationTests(unittest.TestCase):
+    """Review finding 8: a short stream used to be cached as a successful answer."""
+
+    def test_truncated_stream_is_an_error_and_never_cached(self):
+        s = Stub(truncate_after=1)
+        try:
+            m = mk(s)
+            with self.assertRaises(BackendError):
+                m.complete(U)
+            self.assertEqual([f for f in os.listdir(m.cache_dir) if f.endswith(".json")], [])
+            self.assertEqual(m.calls_used(), 1)
+        finally:
+            s.stop()
+
+    def test_abrupt_cut_and_bad_json_are_backend_errors_not_raw_exceptions(self):
+        import http.client
+        m = mk(Stub())
+
+        class Cut:
+            def __iter__(self):
+                yield b'event: message\ndata: {"id":"1","choices":[{"index":0,"delta":{"content":"The capital is "}}]}\n'
+                raise http.client.IncompleteRead(b"x")
+        with self.assertRaises(BackendError):
+            m.read_stream(Cut())
+        with self.assertRaises(BackendError):
+            m.read_stream([b"event: message\n", b"data: {not json\n", b"\n"])
+
+    def test_finish_reason_alone_counts_as_complete(self):
+        m = mk(Stub())
+        out = m.read_stream([b'data: {"choices":[{"index":0,"delta":{"content":"ok"},"finish_reason":"stop"}]}\n', b"\n"])
+        self.assertEqual(out.text, "ok")
+
+    def test_bom_is_stripped_so_an_error_event_is_seen(self):
+        m = mk(Stub())
+        raw = ("\ufeffevent: error\ndata: {\"error\":{\"message\":\"boom\"}}\n\n").encode("utf-8")
+        with self.assertRaises(BackendError) as c:
+            m.read_stream(io.BytesIO(raw))
+        self.assertIn("boom", str(c.exception))
+
+    def test_broken_variant_parser_without_bom_strip_misses_the_error(self):
+        raw = ("\ufeffevent: error\ndata: {\"error\":{\"message\":\"boom\"}}\n\n").encode("utf-8")
+        from memcore.sse import parse_named_events
+
+        def naive(lines):                                  # no BOM strip: 'event:' is not recognised on the first line
+            name, data = None, []
+            for raw_line in lines:
+                line = raw_line.decode("utf-8").rstrip("\r\n")
+                if line == "":
+                    yield (name or "message", "\n".join(data)); name, data = None, []
+                elif line.startswith("event:"):
+                    name = line[6:].strip()
+                elif line.startswith("data:"):
+                    data.append(line[5:].lstrip(" "))
+        self.assertEqual(list(naive(io.BytesIO(raw)))[0][0], "message")          # the naive parser misreports the error as a message
+        self.assertEqual(list(parse_named_events(io.BytesIO(raw)))[0][0], "error")
 
 
 _stub = None

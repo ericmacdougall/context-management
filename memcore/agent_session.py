@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 from .inbox import InboxItem, render_block
+from .budget import CallBudget
 from .devgate import require_dev_subscription
 from .ports import BackendError, CallTimeout, Usage
 
@@ -57,6 +58,15 @@ class AgentSession:
     session_id: str = ""
     _pending: List[InboxItem]
 
+    budget: Optional[CallBudget] = None
+
+    def _count_turn(self, turn_id: str) -> None:
+        """Every turn is one counted, capped, ledgered call (sessions bypassed the cap before the review)."""
+        if self.budget is None:
+            raise BackendError("session has no CallBudget")
+        self.budget.reserve()
+        self.budget.ledger(kind="session_turn", session=self.session_id, turn=turn_id, adapter=type(self).__name__)
+
     def _take_context(self, turn_id: str) -> str:
         items, self._pending = self._pending, []
         self._last_delivered = [i.finding_id for i in items]
@@ -84,7 +94,8 @@ class AgentSession:
 class FakeAgentSession(AgentSession):
     """Deterministic: answers 'ECHO <text>' and reports what context block it was shown (for tests)."""
 
-    def __init__(self, system: str = "", tools: Sequence[McpServerSpec] = (), model: str = "fake"):
+    def __init__(self, system: str = "", tools: Sequence[McpServerSpec] = (), model: str = "fake", budget: Optional[CallBudget] = None):
+        self.budget = budget
         self.session_id, self.system, self.tools, self.model = "fake-%d" % next(_ids), system, list(tools), model
         self._pending, self.closed, self.turns, self.shown = [], False, 0, []
         self._last_delivered: List[str] = []
@@ -94,6 +105,8 @@ class FakeAgentSession(AgentSession):
             raise BackendError("session closed")
         self.turns += 1
         turn_id = "%s-t%d" % (self.session_id, self.turns)
+        if self.budget is not None:
+            self._count_turn(turn_id)
         block = self._take_context(turn_id)
         self.shown.append(block)
         reply = "ECHO %s" % text
@@ -114,10 +127,11 @@ class ClaudeStreamJsonSession(AgentSession):
     --tools "" (plus an explicit --allowedTools only for the MCP servers passed in), --strict-mcp-config, no session
     persistence; hooks and setting sources are left untouched."""
 
-    def __init__(self, cwd: str, system: str, dev_subscription_backends: bool = False, tools: Sequence[McpServerSpec] = (), model: str = "sonnet", mcp_config_dir: Optional[str] = None,
+    def __init__(self, cwd: str, system: str, budget: CallBudget, dev_subscription_backends: bool = False, tools: Sequence[McpServerSpec] = (), model: str = "sonnet", mcp_config_dir: Optional[str] = None,
                  turn_timeout_s: float = 300.0, claude_bin: str = "claude",
                  strip_patterns: Sequence[str] = ()):
         require_dev_subscription(dev_subscription_backends, "ClaudeStreamJsonSession")
+        self.budget = budget
         if os.path.isdir(os.path.join(cwd, ".git")):
             raise ValueError("cwd must be a neutral non-git directory")
         cmd = [claude_bin, "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose", "--model", model,
@@ -125,8 +139,10 @@ class ClaudeStreamJsonSession(AgentSession):
         if tools:
             cfg = {"mcpServers": {t.name: {"command": t.command, "args": t.args, "env": t.env} for t in tools}}
             p = os.path.join(mcp_config_dir or cwd, "mcp-%d-%d.json" % (os.getpid(), next(_ids)))
-            with open(p, "w") as fh:
+            fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)   # may carry a bearer token: owner-only
+            with os.fdopen(fd, "w") as fh:
                 json.dump(cfg, fh)
+            self._mcp_cfg = p
             cmd += ["--mcp-config", p, "--allowedTools", ",".join("mcp__%s" % t.name for t in tools)]
         import re as _re
         self.model, self.turn_timeout_s = model, turn_timeout_s
@@ -145,6 +161,7 @@ class ClaudeStreamJsonSession(AgentSession):
     def send(self, text):
         self.turns += 1
         turn_id = "claude-t%d" % self.turns
+        self._count_turn(turn_id)
         block = self._take_context(turn_id)
         content = (block + "\n\n" + text) if block else text
         t0 = time.time()
@@ -196,6 +213,12 @@ class ClaudeStreamJsonSession(AgentSession):
                 return
 
     def close(self):
+        cfg = getattr(self, "_mcp_cfg", None)
+        if cfg:
+            try:
+                os.unlink(cfg)                                    # the one-off MCP config is removed with the session
+            except FileNotFoundError:
+                pass
         try:
             self._proc.stdin.close()
         except OSError:

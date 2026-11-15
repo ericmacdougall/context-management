@@ -227,7 +227,7 @@ class BindRulesTests(unittest.TestCase):
     def test_bridge_host_rules(self):
         d = tempfile.mkdtemp()
         b = FakeChat(lambda p, s, j: "x", cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=5)
-        for bad in ("0.0.0.0", "8.8.8.8", "::"):
+        for bad in ("0.0.0.0", "8.8.8.8", "::", "192.168.1.20", "10.0.0.5"):
             with self.assertRaises(ValueError):
                 Gateway(b, os.path.join(d, "g"), host=bad, allow_bridge_host=bad)
         with self.assertRaises(ValueError):
@@ -243,6 +243,91 @@ class BindRulesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Gateway(b, os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1", dev_subscription_backends=True)
         Gateway(b, os.path.join(d, "g"), dev_subscription_backends=True).srv.server_close()
+
+
+class Delegating:
+    """A wrapper around a subscription backend that does NOT forward the taint attribute (the review's reproducer)."""
+    network_safe = False
+
+    def __init__(self, inner):
+        self.inner, self.model, self.capabilities = inner, inner.model, inner.capabilities
+
+    def complete(self, *a, **k):
+        return self.inner.complete(*a, **k)
+
+
+class FailClosedTests(unittest.TestCase):
+    """Review finding 2: the non-loopback gate used to fail OPEN."""
+
+    def mk(self):
+        d = tempfile.mkdtemp()
+        b = FakeChat(lambda p, s, j: "x", cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=5)
+        return d, b
+
+    def test_wrapper_around_subscription_backend_refused_on_bridge(self):
+        d, b = self.mk()
+        b.subscription_backed = True
+        for backend in (Delegating(b), b):
+            with self.assertRaises(ValueError):
+                Gateway(backend, os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1", dev_subscription_backends=True)
+
+    def test_loopback_client_backend_is_tainted(self):
+        d, _ = self.mk()
+        client = OpenAICompatChat("http://127.0.0.1:9/v1", "m", token="t", cache_dir=os.path.join(d, "cc"), ledger_path=os.devnull, cap=5)
+        self.assertTrue(client.subscription_backed)
+        from memcore.devgate import DevSubscriptionNotEnabled
+        with self.assertRaises(DevSubscriptionNotEnabled):
+            Gateway(client, os.path.join(d, "g"))                                   # loopback, no dev flag
+        with self.assertRaises(ValueError):
+            Gateway(client, os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1", dev_subscription_backends=True)
+
+    def test_undeclared_backend_refused_off_loopback_declared_stub_allowed_only_on_the_bridge_address(self):
+        d, b = self.mk()
+        class Plain:
+            model, capabilities = "m", b.capabilities
+        with self.assertRaises(ValueError):
+            Gateway(Plain(), os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1")
+        for host in ("192.168.1.20", "169.254.1.1"):
+            with self.assertRaises(ValueError):
+                Gateway(b, os.path.join(d, "g"), host=host, allow_bridge_host=host)
+
+
+class EmbedBudgetAndUsageTests(unittest.TestCase):
+    def setUp(self):
+        from memcore.fakes import HashEmbedder
+        self.d = tempfile.mkdtemp()
+        self.b = FakeChat(lambda p, s, j: "x", cache_dir=os.path.join(self.d, "c"), ledger_path=os.devnull, cap=5, reports_usage=False)
+        self.seen = []
+        emb = HashEmbedder(4)
+        orig = emb._embed
+        emb._embed = lambda texts, kind: (self.seen.append((texts, kind)), orig(texts, kind))[1]
+        self.gw = Gateway(self.b, os.path.join(self.d, "g"), embedder=emb, embed_cap=2)
+        self.gw.start()
+        self.tok = open(os.path.join(self.d, "g", "gateway.token")).read().strip()
+
+    def tearDown(self):
+        self.gw.shutdown()
+
+    def post(self, path, body):
+        return urllib.request.urlopen(urllib.request.Request(self.gw.base_url + path, data=json.dumps(body).encode(), method="POST",
+                                                             headers={"Authorization": "Bearer " + self.tok}))
+
+    def test_embeddings_are_capped_ledgered_and_input_type_respected(self):
+        self.post("/embeddings", {"input": "a"})
+        self.post("/embeddings", {"input": "b", "input_type": "search"})
+        with self.assertRaises(urllib.error.HTTPError) as c:
+            self.post("/embeddings", {"input": "c"})
+        self.assertEqual(c.exception.code, 429)
+        self.assertEqual([k for _, k in self.seen], ["passage", "query"])
+        self.assertEqual(len(open(os.path.join(self.d, "g", "embed-ledger.jsonl")).read().splitlines()), 2)
+
+    def test_unknown_usage_is_omitted_not_zero(self):
+        r = json.load(self.post("/chat/completions", {"model": "fake-1", "messages": [{"role": "user", "content": "hi"}]}))
+        self.assertNotIn("usage", r)
+        raw = self.post("/chat/completions", {"model": "fake-1", "messages": [{"role": "user", "content": "hi2"}], "stream": True,
+                                              "stream_options": {"include_usage": True}}).read()
+        evs = list(parse_events(raw.splitlines(True)))
+        self.assertFalse(evs[-2]["usage"]["x_memcore_usage_known"])
 
 
 if __name__ == "__main__":

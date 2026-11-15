@@ -18,6 +18,7 @@ import urllib.request
 from typing import Callable, Optional
 
 from ..chat_base import BackendOut, CachedChatModel
+from ..http_util import urlopen as _urlopen
 from ..ports import BackendError, CallTimeout, Capabilities, InputTooLong, Usage
 from ..sse import parse_named_events
 
@@ -56,12 +57,13 @@ class ElasticInferenceChat(CachedChatModel):
             b["temperature"] = temperature
         return b
 
-    def _call_backend(self, prompt, system, json_schema, timeout_s) -> BackendOut:
+    def _call_backend(self, prompt, system, json_schema, timeout_s, params=None) -> BackendOut:
+        p = params or {}
         url = "%s/_inference/chat_completion/%s/_stream" % (self.base_url, self.endpoint_id)
-        req = urllib.request.Request(url, data=json.dumps(self.body(prompt, system, json_schema)).encode(), method="POST",
+        req = urllib.request.Request(url, data=json.dumps(self.body(prompt, system, json_schema, p.get("max_output_tokens"), p.get("temperature"))).encode(), method="POST",
                                      headers={"Content-Type": "application/json", "Accept": "text/event-stream", "Authorization": self._auth()})
         try:
-            r = urllib.request.urlopen(req, timeout=timeout_s, context=self._ctx)
+            r = _urlopen(req, timeout=timeout_s, context=self._ctx)
         except urllib.error.HTTPError as e:
             raw = e.read()[:1500].decode("utf-8", "replace")
             if "context_length" in raw or "maximum context" in raw:
@@ -76,12 +78,16 @@ class ElasticInferenceChat(CachedChatModel):
         return self.read_stream(r)
 
     def read_stream(self, lines) -> BackendOut:
-        text, args, usage, finish = [], {}, None, None
+        """A stream counts as complete only if it ended with [DONE] or a choice carried a finish_reason. A short stream, an abrupt cut
+        (IncompleteRead, half an event) or malformed JSON is a BackendError and is never cached."""
+        import http.client
+        text, args, usage, finish, done = [], {}, None, None, False
         try:
             for name, data in parse_named_events(lines):
                 if name == "error":
                     raise BackendError("inference stream error: %s" % data[:300])
                 if data.strip() == "[DONE]":
+                    done = True
                     break
                 if not data.strip():
                     continue
@@ -98,5 +104,11 @@ class ElasticInferenceChat(CachedChatModel):
                     finish = c.get("finish_reason") or finish
         except (socket.timeout, TimeoutError):
             raise CallTimeout("stream stalled")
+        except (http.client.HTTPException, ConnectionError, ValueError, OSError) as e:
+            if isinstance(e, BackendError):
+                raise
+            raise BackendError("truncated or malformed inference stream: %s" % type(e).__name__)
+        if not (done or finish):
+            raise BackendError("inference stream ended without [DONE] or a finish_reason (truncated); not cached")
         out = "".join(text) if not args else "".join("".join(v) for _, v in sorted(args.items()))
         return BackendOut(text=out, usage=usage, meta={"finish_reason": finish, "forced_tool": bool(args)})
