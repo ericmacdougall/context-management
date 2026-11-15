@@ -58,3 +58,19 @@ Stage 1 unchanged (link-v4.1 Sonnet); new pairs packed 15 per call across questi
 Audit: one linkaudit-v1 audit per link; links already audited in iteration 1 keep that label. Plus an order check: stage 2 re-run on all stage-1 positives with
 seeded shuffled batches (seed 7), verdict flips reported. Even if the stop condition were met, the GATE3 budget rule cannot be satisfied after this iteration
 (about 115 calls would remain against at least 107 plus extraction), so the gate will not be run; that is decided now, not after the result.
+
+Rescue iteration 2 result: 741 pairs; 287 new pairs gave only 3 new stage-1 positives; 19 links (17 kept from iteration 1, 2 new). The wider cut displaced two
+iteration-1 links (89941a94 California -> Chicago -> Bay Area, filler-session noise). New links (pairs the verifier was not designed on): 2 of 2 audited replaces
+(phone GPS -> new bike computer, in two haystacks); held-out n is too small to say anything beyond "no new error". S1 19/19 [0.83, 1.00] on 19 links: FAIL on the count;
+S2 0/19: pass; S3 12/15: FAIL. The 5c40ec5b pair now reaches the judges: stage 1 says replaces, the verifier says none (plan to meet vs number of meetups:
+same_attribute=no) while the auditor says replaces (D1). The verifier is stricter than the auditor; that strictness is what removed the four v4 errors and it also
+costs this one gold link and two auditor-accepted v4 links. Calls 25 (20 stage-1 packed, 1 verify, 1 audit, 3 order check). Order check: stage 2 re-run with seeded
+shuffled batches keeps the link/no-link verdict on 32 of 33 positives (one flip: unsure -> replaces on Samsung S22 -> iPhone 12).
+STOPPED after 2 of 3 iterations. A third would only relax the verifier for one dev pair to reach 13 (overfitting), and the gate cannot run under the GATE3 budget
+rule (122 calls remain; the gate needs at least 107 plus about 44-48 extraction calls plus 10%). The dev stop condition is NOT met; dev2 received no call.
+Cost line for volume (iteration-1 config, 764 dev sessions): stage 1 as v4 (0.063 calls, 1.8k input and 0.036k output tokens per session) plus stage 2
+(3 Sonnet calls, 93.9k input and 3.8k output tokens: 0.004 calls, 0.12k input tokens per session) = about 0.067 Sonnet calls and 1.9k input tokens per session.
+The iteration-2 config adds 48% stage-1 pairs for 2 links. No Opus judge was used (the Sonnet verifier removed every v4 error); by the ledger's cost field Opus
+costs about 1.9x Sonnet per input token here (audit 7.9e-6 vs verifier 4.3e-6 USD-equivalent per token), i.e. an Opus verifier would cost about 0.95 instead of
+0.52 USD-equivalent per 1,000 sessions for stage 2 (stage 1 dominates: about 7.7 per 1,000 sessions on Sonnet).
+Companion from the v3 gate: of 12 audited-false v3 links, 3 touched a fact shown to the reader (07741c45, 0e4e4c46, 603deb26); all three were answered correctly.
