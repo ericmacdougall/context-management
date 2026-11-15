@@ -55,7 +55,7 @@ def read_event_batch(cur, tenant, cx, cs, limit):
     return xm, [dict(zip(cols, r)) for r in cur.fetchall()]
 
 
-def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, between=None):
+def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, between=None, pre_conn=None):
     """Process one batch; returns number of events consumed. `between` is a test hook
     called after reading and before writing (used to inject delays in race tests);
     fence=False is the NAIVE CONTROL: encrypt before the hook and write without re-checking."""
@@ -77,7 +77,8 @@ def derive_batch(conn, tenant, recipe, limit=1000, touch=True, fence=True, betwe
         crash("derive_after_read")
         pre = None
         if not fence:
-            pre = {c["id"]: cur.execute("select mem_enc(%s,%s,%s)", (tenant, c["subject_id"], c["object"])).fetchone()[0] for c in claims}
+            pc = (pre_conn or conn).cursor()   # naive control: ciphertext made outside this transaction, so no key lock is held
+            pre = {c["id"]: pc.execute("select mem_enc(%s,%s,%s)", (tenant, c["subject_id"], c["object"])).fetchone()[0] for c in claims}
         if between:
             between(tenant, rows, claims)
         touched = _insert_claims(conn, cur, tenant, recipe, claims, pre)

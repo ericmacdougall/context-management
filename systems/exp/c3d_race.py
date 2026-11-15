@@ -34,9 +34,11 @@ def run_race(kind, fence, runs, rng):
         marker = f"zmark{tag}"
         store.append_events(conn, T, f"s{tag}", [ev(10 + k, f"{ent}'s city is {marker}{k}", subj) for k in range(3)])
         da, db_ = rng.uniform(0, 0.06), rng.uniform(0, 0.06)
+        if kind == "mirror":
+            da = rng.uniform(0, 0.8)   # erasure's ES purge takes a few hundred ms, so the in-flight batch must be able to outlast it
         ca, cb, cl, cl2 = (db.connect(autocommit=True) for _ in range(4))
         if kind == "derive":
-            fa = lambda: derive.derive_batch(ca, T, 1, touch=False, fence=fence, between=lambda *a: time.sleep(da))
+            fa = lambda: derive.derive_batch(ca, T, 1, touch=False, fence=fence, between=lambda *a: time.sleep(da), pre_conn=cl)
             fb = lambda: erasure.phase1(cb, T, subj, (1,), "r" + tag)
         elif kind == "mirror":
             es_a, es_b = ES(), ES()
@@ -78,16 +80,17 @@ def main():
     store.append_events(conn, T, "keep", [ev(0, "Keeper's city is Oslo", "keep")])
     projector.Projector(conn, lock, es, tenants=[T]).run()
     rng = random.Random(16096)
-    out = {"workload": f"{runs} runs per race and mode, random injected delay 0-60 ms in the in-flight operation and in the erasure start; PG16+ES 9.5.6 on t2-dev", "results": {}}
-    for kind in ("derive", "mirror", "fold"):
+    out = {"workload": f"{runs} runs per race and mode, random injected delay 0-60 ms (0-800 ms for the ES batch) in the in-flight operation and in the erasure start; PG16+ES 9.5.6 on t2-dev", "results": {}}
+    kinds = sys.argv[2].split(",") if len(sys.argv) > 2 else ["derive", "mirror", "fold"]
+    for kind in kinds:
         for fence in (True, False):
             r = run_race(kind, fence, runs, rng)
             out["results"][f"{kind}_fence_{'on' if fence else 'off'}"] = r
             print(kind, "fence", fence, r, flush=True)
     R = out["results"]
-    out["pass"] = all(R[f"{k}_fence_on"]["resurrections"] == 0 for k in ("derive", "mirror", "fold"))
-    out["test_sensitive"] = {k: R[f"{k}_fence_off"]["resurrections"] > 0 for k in ("derive", "mirror", "fold")}
-    save("C3d_race", out)
+    out["pass"] = all(R[f"{k}_fence_on"]["resurrections"] == 0 for k in kinds)
+    out["test_sensitive"] = {k: R[f"{k}_fence_off"]["resurrections"] > 0 for k in kinds}
+    save("C3d_race" + ("" if len(kinds) == 3 else "_" + "_".join(kinds)), out)
     print("PASS" if out["pass"] else "FAIL", out["test_sensitive"])
 
 if __name__ == "__main__":

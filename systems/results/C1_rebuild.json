@@ -1,0 +1,134 @@
+{
+ "workload": "20 tenants x 100 sessions x 100 events = 200000 events (2000 sessions), 18 months, bucket span 90 d, projector single process batch 1000; PG16 (4cpu/4g) + ES 9.5.6 single node on t2-dev",
+ "disk_free_gb_before": 63.5,
+ "events_loaded": 200000,
+ "load_s": 25.5,
+ "initial_project_s": 179.2,
+ "facts_rows": 165083,
+ "facts_status": {
+  "current": 7476,
+  "disputed": 16885,
+  "duplicate": 34880,
+  "hypothetical": 8026,
+  "proposed": 6059,
+  "superseded": 91757
+ },
+ "erasures": {
+  "count": 40,
+  "events_erased": 37400,
+  "total_s": 253.6,
+  "facts_deleted": 30809,
+  "receipt_example": {
+   "receipt_id": "86e675cdad9d4f4e",
+   "tenant": "t01",
+   "subject_id": "u2",
+   "events_erased": 1300,
+   "facts_deleted": 1080,
+   "concepts_reset": 30,
+   "phase1_s": 0.523,
+   "es_purge_s": 4.986,
+   "total_s": 5.51,
+   "es_rebuilt": [
+    [
+     "events",
+     223,
+     [
+      "sys-t01-events-b00223-g1",
+      "sys-t01-events-b00223-g2",
+      1400
+     ]
+    ],
+    [
+     "events",
+     224,
+     [
+      "sys-t01-events-b00224-g1",
+      "sys-t01-events-b00224-g2",
+      2000
+     ]
+    ],
+    [
+     "events",
+     225,
+     [
+      "sys-t01-events-b00225-g1",
+      "sys-t01-events-b00225-g2",
+      1200
+     ]
+    ],
+    [
+     "events",
+     226,
+     [
+      "sys-t01-events-b00226-g1",
+      "sys-t01-events-b00226-g2",
+      1100
+     ]
+    ],
+    [
+     "events",
+     228,
+     [
+      "sys-t01-events-b00228-g1",
+      "sys-t01-events-b00228-g2",
+      1100
+     ]
+    ],
+    [
+     "facts",
+     1,
+     [
+      "sys-t01-facts-v1-g1",
+      "sys-t01-facts-v1-g2",
+      7169
+     ]
+    ]
+   ],
+   "verification": {
+    "events_tombstoned": 1300,
+    "events_still_decryptable": 0,
+    "key_destroyed": 1,
+    "facts_touching_tombstoned": 0,
+    "concepts_touching_tombstoned": 0
+   },
+   "method": "alias-swap rebuild from surviving rows; old index deleted atomically",
+   "bytes_checked_in_es": "see exp/c3 (marker scan)"
+  }
+ },
+ "tombstones": 37400,
+ "queries": 200,
+ "snapshot_s": 42.0,
+ "docs": {
+  "events": 162600,
+  "facts": 134274
+ },
+ "rebuild": {
+  "project_s": 153.2,
+  "events_per_s": 1305,
+  "fold_s": 1.6,
+  "docs_per_s": 1937
+ },
+ "identity": {
+  "es_events": true,
+  "es_facts": true,
+  "pg_facts": true,
+  "concepts": true,
+  "doc_counts_equal": {
+   "events": true,
+   "facts": true
+  }
+ },
+ "query_results": {
+  "lexical_exact_identical": true,
+  "vector_exact_identical": true,
+  "asof_facts_identical": true,
+  "hybrid_identical": false,
+  "hybrid_mean_jaccard": 0.5805,
+  "vector_ann_identical": false,
+  "vector_ann_mean_jaccard_vs_before": 0.6253,
+  "vector_ann_vs_exact_recall_before": 0.5376,
+  "vector_ann_vs_exact_recall_after": 0.5019
+ },
+ "disk_free_gb_after": 45.5,
+ "pass_phase_a": true
+}

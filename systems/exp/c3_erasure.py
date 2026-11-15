@@ -70,8 +70,11 @@ def verify_subject(conn, es, receipt_ids, subject, marker):
 def one_size(N, results, save_receipts):
     conn, lock, es = conns()
     db.reset_schema(conn); esx.install_templates(es); esx.drop_tenant(es, T)
-    markers = {u: "zxq" + uuid.uuid4().hex[:12] for u in ("u3", "u4", "u5", "u6")}
     sessions = gen.gen_tenant(T, 3, max(10, N // 50), 50, n_users=20)
+    cnt = collections.Counter(s["subject_id"] for s in sessions)
+    top = [u for u, _ in cnt.most_common(4)]                 # the four data subjects with most events: (control, i, ii, iii)
+    markers = {u: "zxq" + uuid.uuid4().hex[:12] for u in top}
+    U_CTL, U_1, U_2, U_3 = top
     for s in sessions:
         m = markers.get(s["subject_id"])
         if m:
@@ -81,21 +84,21 @@ def one_size(N, results, save_receipts):
     t0 = time.time(); projector.Projector(conn, lock, es, batch=1000, tenants=[T]).run(); t_proj = time.time() - t0
     flush_all(es)
     own = {u: conn.execute("select count(*) from events where tenant_id=%s and subject_id=%s", (T, u)).fetchone()[0] for u in markers}
-    row = {"events": n, "load_s": round(t_load, 1), "project_s": round(t_proj, 1), "subject_events": own, "es_docs": sum(int(r["docs.count"]) for r in esx.tenant_indices(es, T)),
+    row = {"events": n, "load_s": round(t_load, 1), "project_s": round(t_proj, 1), "subjects": {"control": U_CTL, "m1": U_1, "m2": U_2, "m3": U_3}, "subject_events": own, "es_docs": sum(int(r["docs.count"]) for r in esx.tenant_indices(es, T)),
            "es_indices": len(esx.tenant_indices(es, T))}
     pos = {u: grep(ES_C, ES_ROOT, m) for u, m in markers.items()}
     row["positive_control_es"] = pos
-    conn.execute("create table c3_ctl(x text)"); conn.execute("insert into c3_ctl values (%s)", (markers["u3"] + "ctl",)); conn.execute("checkpoint")
-    row["pg_positive_control_files"] = grep(PG_C, PG_ROOT, markers["u3"] + "ctl")["files"]; conn.execute("drop table c3_ctl")
+    conn.execute("create table c3_ctl(x text)"); ctl_marker = "zxq" + uuid.uuid4().hex[:12]; conn.execute("insert into c3_ctl values (%s)", (ctl_marker,)); conn.execute("checkpoint")
+    row["pg_positive_control_files"] = grep(PG_C, PG_ROOT, ctl_marker)["files"]; conn.execute("drop table c3_ctl")
     row["pg_marker_before"] = {u: grep(PG_C, PG_ROOT, m)["files"] for u, m in markers.items()}
     # --- control: delete + immediate force merge, no gate
-    u = "u6"; p1 = erasure.phase1(conn, T, u, (1,), "ctl")
+    u = U_CTL; p1 = erasure.phase1(conn, T, u, (1,), "ctl")
     ms = es_delete_docs(es, p1); flush_all(es)
     for idx in ms: es.req("POST", f"/{idx}/_forcemerge", max_num_segments=1)
     flush_all(es)
     row["control_delete_then_immediate_forcemerge"] = {"marker_files_after": grep(ES_C, ES_ROOT, markers[u])}
     # --- (i) delete + lease-gated force merge
-    u = "u3"; t0 = time.time(); p1 = erasure.phase1(conn, T, u, (1,), "m1"); t_p1 = time.time() - t0
+    u = U_1; t0 = time.time(); p1 = erasure.phase1(conn, T, u, (1,), "m1"); t_p1 = time.time() - t0
     t1 = time.time(); ms = es_delete_docs(es, p1); flush_all(es); t_del = time.time() - t1
     gate = seq_gate(es, ms)
     t2 = time.time()
@@ -105,14 +108,14 @@ def one_size(N, results, save_receipts):
                                          "es_total_s": round(t_del + (gate or 0) + t_merge, 2), "indices_merged": len(ms), "marker_files_after": grep(ES_C, ES_ROOT, markers[u]),
                                          "verify": verify_subject(conn, es, p1["event_ids"], u, markers[u])}
     # --- (ii) alias-swap rebuild
-    u = "u4"; rc = erasure.erase_subject(conn, lock, es, T, u, (1,)); flush_all(es)
+    u = U_2; rc = erasure.erase_subject(conn, lock, es, T, u, (1,)); flush_all(es)
     m2ids = [r[0] for r in conn.execute("select event_id from tombstones where receipt_id=%s", (rc["receipt_id"],)).fetchall()]
     row["m2_alias_swap_rebuild"] = {"phase1_pg_s": rc["phase1_s"], "es_purge_s": rc["es_purge_s"], "indices_rebuilt": len(rc["es_rebuilt"]),
                                      "marker_files_after": grep(ES_C, ES_ROOT, markers[u]),
                                      "verify": verify_subject(conn, es, m2ids, u, markers[u])}
     save_receipts[N] = rc
     # --- (iii) drop everything of the tenant, re-project survivors
-    u = "u5"; p1 = erasure.phase1(conn, T, u, (1,), "m3")
+    u = U_3; p1 = erasure.phase1(conn, T, u, (1,), "m3")
     t0 = time.time(); names = esx.drop_tenant(es, T); t_drop = time.time() - t0
     conn.execute("delete from projection_state where tenant_id=%s and view in ('events','facts')", (T,))
     t0 = time.time(); projector.Projector(conn, lock, es, batch=1000, tenants=[T], derive=False).run(); t_re = time.time() - t0

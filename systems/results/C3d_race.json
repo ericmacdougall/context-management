@@ -1,0 +1,41 @@
+{
+ "workload": "200 runs per race and mode, random injected delay 0-60 ms in the in-flight operation and in the erasure start; PG16+ES 9.5.6 on t2-dev",
+ "results": {
+  "derive_fence_on": {
+   "runs": 200,
+   "resurrections": 0,
+   "runs_with_exception": 0
+  },
+  "derive_fence_off": {
+   "runs": 200,
+   "resurrections": 0,
+   "runs_with_exception": 15
+  },
+  "mirror_fence_on": {
+   "runs": 200,
+   "resurrections": 0,
+   "runs_with_exception": 0
+  },
+  "mirror_fence_off": {
+   "runs": 200,
+   "resurrections": 0,
+   "runs_with_exception": 0
+  },
+  "fold_fence_on": {
+   "runs": 200,
+   "resurrections": 0,
+   "runs_with_exception": 0
+  },
+  "fold_fence_off": {
+   "runs": 200,
+   "resurrections": 72,
+   "runs_with_exception": 0
+  }
+ },
+ "pass": true,
+ "test_sensitive": {
+  "derive": false,
+  "mirror": false,
+  "fold": true
+ }
+}

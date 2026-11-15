@@ -1,0 +1,547 @@
+{
+ "workload": "one tenant, N events (50/session, 20 data subjects, ~5% per subject, marker string in the subject's events), bucket span 90 d, 1 shard 0 replicas; ES 9.5.6 single node and PG16 container on t2-dev (shared host)",
+ "disk_free_gb_before": 69.2,
+ "results": {
+  "5000": {
+   "events": 5000,
+   "load_s": 0.8,
+   "project_s": 26.9,
+   "subjects": {
+    "control": "u5",
+    "m1": "u17",
+    "m2": "u9",
+    "m3": "u12"
+   },
+   "subject_events": {
+    "u5": 550,
+    "u17": 450,
+    "u9": 400,
+    "u12": 400
+   },
+   "es_docs": 9101,
+   "es_indices": 8,
+   "positive_control_es": {
+    "u5": {
+     "files": 17,
+     "by_kind": {
+      "cfs": 17
+     }
+    },
+    "u17": {
+     "files": 15,
+     "by_kind": {
+      "cfs": 15
+     }
+    },
+    "u9": {
+     "files": 15,
+     "by_kind": {
+      "cfs": 15
+     }
+    },
+    "u12": {
+     "files": 14,
+     "by_kind": {
+      "cfs": 14
+     }
+    }
+   },
+   "pg_positive_control_files": 2,
+   "pg_marker_before": {
+    "u5": 0,
+    "u17": 0,
+    "u9": 0,
+    "u12": 0
+   },
+   "control_delete_then_immediate_forcemerge": {
+    "marker_files_after": {
+     "files": 2,
+     "by_kind": {
+      "cfs": 2
+     }
+    }
+   },
+   "m1_lease_gated_forcemerge": {
+    "phase1_pg_s": 0.17,
+    "es_delete_s": 0.11,
+    "lease_gate_wait_s": 29.18,
+    "forcemerge_s": 0.35,
+    "es_total_s": 29.64,
+    "indices_merged": 7,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "m2_alias_swap_rebuild": {
+    "phase1_pg_s": 0.155,
+    "es_purge_s": 2.562,
+    "indices_rebuilt": 6,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "m3_drop_and_reproject": {
+    "phase1_pg_s": 0.15,
+    "drop_s": 0.07,
+    "indices_dropped": 8,
+    "reproject_s": 2.66,
+    "es_total_s": 2.73,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "pg_marker_after": {
+    "u5": 0,
+    "u17": 0,
+    "u9": 0,
+    "u12": 0
+   },
+   "survivor_identity": {
+    "events": {
+     "pg": 3200,
+     "es": 3200,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0,
+     "wrong_bucket": 0,
+     "examples": []
+    },
+    "facts": {
+     "pg": 2643,
+     "es": 2643,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0
+    }
+   },
+   "receipt_verification": {
+    "m2": {
+     "events_tombstoned": 400,
+     "events_still_decryptable": 0,
+     "key_destroyed": 1,
+     "facts_touching_tombstoned": 0,
+     "concepts_touching_tombstoned": 0
+    }
+   }
+  },
+  "20000": {
+   "events": 20000,
+   "load_s": 3.1,
+   "project_s": 30.1,
+   "subjects": {
+    "control": "u3",
+    "m1": "u8",
+    "m2": "u7",
+    "m3": "u15"
+   },
+   "subject_events": {
+    "u3": 1300,
+    "u8": 1250,
+    "u7": 1150,
+    "u15": 1150
+   },
+   "es_docs": 36597,
+   "es_indices": 8,
+   "positive_control_es": {
+    "u3": {
+     "files": 21,
+     "by_kind": {
+      "cfs": 18,
+      "fdt": 1,
+      "tim": 1,
+      "dvd": 1
+     }
+    },
+    "u8": {
+     "files": 24,
+     "by_kind": {
+      "cfs": 21,
+      "fdt": 1,
+      "tim": 1,
+      "dvd": 1
+     }
+    },
+    "u7": {
+     "files": 20,
+     "by_kind": {
+      "cfs": 20
+     }
+    },
+    "u15": {
+     "files": 22,
+     "by_kind": {
+      "cfs": 22
+     }
+    }
+   },
+   "pg_positive_control_files": 2,
+   "pg_marker_before": {
+    "u3": 0,
+    "u8": 0,
+    "u7": 0,
+    "u15": 0
+   },
+   "control_delete_then_immediate_forcemerge": {
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    }
+   },
+   "m1_lease_gated_forcemerge": {
+    "phase1_pg_s": 1.01,
+    "es_delete_s": 0.14,
+    "lease_gate_wait_s": 21.11,
+    "forcemerge_s": 1.2,
+    "es_total_s": 22.45,
+    "indices_merged": 8,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "m2_alias_swap_rebuild": {
+    "phase1_pg_s": 0.88,
+    "es_purge_s": 7.767,
+    "indices_rebuilt": 7,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "m3_drop_and_reproject": {
+    "phase1_pg_s": 0.87,
+    "drop_s": 0.05,
+    "indices_dropped": 8,
+    "reproject_s": 6.58,
+    "es_total_s": 6.64,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "pg_marker_after": {
+    "u3": 0,
+    "u8": 0,
+    "u7": 0,
+    "u15": 0
+   },
+   "survivor_identity": {
+    "events": {
+     "pg": 15150,
+     "es": 15150,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0,
+     "wrong_bucket": 0,
+     "examples": []
+    },
+    "facts": {
+     "pg": 12557,
+     "es": 12557,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0
+    }
+   },
+   "receipt_verification": {
+    "m2": {
+     "events_tombstoned": 1150,
+     "events_still_decryptable": 0,
+     "key_destroyed": 1,
+     "facts_touching_tombstoned": 0,
+     "concepts_touching_tombstoned": 0
+    }
+   }
+  },
+  "60000": {
+   "events": 60000,
+   "load_s": 8.7,
+   "project_s": 124.2,
+   "subjects": {
+    "control": "u1",
+    "m1": "u14",
+    "m2": "u7",
+    "m3": "u18"
+   },
+   "subject_events": {
+    "u1": 3700,
+    "u14": 3550,
+    "u7": 3450,
+    "u18": 3350
+   },
+   "es_docs": 109603,
+   "es_indices": 8,
+   "positive_control_es": {
+    "u1": {
+     "files": 33,
+     "by_kind": {
+      "cfs": 30,
+      "fdt": 1,
+      "dvd": 1,
+      "tim": 1
+     }
+    },
+    "u14": {
+     "files": 27,
+     "by_kind": {
+      "cfs": 24,
+      "fdt": 1,
+      "dvd": 1,
+      "tim": 1
+     }
+    },
+    "u7": {
+     "files": 30,
+     "by_kind": {
+      "cfs": 30
+     }
+    },
+    "u18": {
+     "files": 32,
+     "by_kind": {
+      "cfs": 32
+     }
+    }
+   },
+   "pg_positive_control_files": 2,
+   "pg_marker_before": {
+    "u1": 0,
+    "u14": 0,
+    "u7": 0,
+    "u18": 0
+   },
+   "control_delete_then_immediate_forcemerge": {
+    "marker_files_after": {
+     "files": 1,
+     "by_kind": {
+      "cfs": 1
+     }
+    }
+   },
+   "m1_lease_gated_forcemerge": {
+    "phase1_pg_s": 4.95,
+    "es_delete_s": 0.22,
+    "lease_gate_wait_s": 8.05,
+    "forcemerge_s": 5.07,
+    "es_total_s": 13.35,
+    "indices_merged": 8,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "m2_alias_swap_rebuild": {
+    "phase1_pg_s": 4.59,
+    "es_purge_s": 19.672,
+    "indices_rebuilt": 8,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "m3_drop_and_reproject": {
+    "phase1_pg_s": 4.4,
+    "drop_s": 0.07,
+    "indices_dropped": 8,
+    "reproject_s": 18.36,
+    "es_total_s": 18.43,
+    "marker_files_after": {
+     "files": 0,
+     "by_kind": {}
+    },
+    "verify": {
+     "pg_facts_touching": 0,
+     "pg_concepts_touching": 0,
+     "es_event_docs": 0,
+     "es_fact_docs_touching": 0,
+     "es_search_hits_for_marker": 0
+    }
+   },
+   "pg_marker_after": {
+    "u1": 0,
+    "u14": 0,
+    "u7": 0,
+    "u18": 0
+   },
+   "survivor_identity": {
+    "events": {
+     "pg": 45950,
+     "es": 45950,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0,
+     "wrong_bucket": 0,
+     "examples": []
+    },
+    "facts": {
+     "pg": 37982,
+     "es": 37982,
+     "missing": 0,
+     "extra": 0,
+     "duplicates": 0,
+     "hash_mismatch": 0
+    }
+   },
+   "receipt_verification": {
+    "m2": {
+     "events_tombstoned": 3450,
+     "events_still_decryptable": 0,
+     "key_destroyed": 1,
+     "facts_touching_tombstoned": 0,
+     "concepts_touching_tombstoned": 0
+    }
+   }
+  }
+ },
+ "receipt_sample": {
+  "receipt_id": "d1116756076e48e0",
+  "tenant": "e3",
+  "subject_id": "u7",
+  "events_erased": 1150,
+  "facts_deleted": 963,
+  "concepts_reset": 30,
+  "phase1_s": 0.88,
+  "es_purge_s": 7.767,
+  "total_s": 8.648,
+  "es_rebuilt": [
+   [
+    "events",
+    223,
+    [
+     "sys-e3-events-b00223-g1",
+     "sys-e3-events-b00223-g2",
+     1850
+    ]
+   ],
+   [
+    "events",
+    224,
+    [
+     "sys-e3-events-b00224-g1",
+     "sys-e3-events-b00224-g2",
+     2900
+    ]
+   ],
+   [
+    "events",
+    225,
+    [
+     "sys-e3-events-b00225-g1",
+     "sys-e3-events-b00225-g2",
+     2900
+    ]
+   ],
+   [
+    "events",
+    226,
+    [
+     "sys-e3-events-b00226-g1",
+     "sys-e3-events-b00226-g2",
+     2450
+    ]
+   ],
+   [
+    "events",
+    227,
+    [
+     "sys-e3-events-b00227-g1",
+     "sys-e3-events-b00227-g2",
+     2700
+    ]
+   ],
+   [
+    "events",
+    228,
+    [
+     "sys-e3-events-b00228-g1",
+     "sys-e3-events-b00228-g2",
+     2850
+    ]
+   ],
+   [
+    "facts",
+    1,
+    [
+     "sys-e3-facts-v1-g1",
+     "sys-e3-facts-v1-g2",
+     13524
+    ]
+   ]
+  ],
+  "verification": {
+   "events_tombstoned": 1150,
+   "events_still_decryptable": 0,
+   "key_destroyed": 1,
+   "facts_touching_tombstoned": 0,
+   "concepts_touching_tombstoned": 0
+  },
+  "method": "alias-swap rebuild from surviving rows; old index deleted atomically",
+  "bytes_checked_in_es": "see exp/c3 (marker scan)"
+ },
+ "pass": true,
+ "disk_free_gb_after": 63.9
+}

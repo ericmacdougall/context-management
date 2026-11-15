@@ -20,8 +20,9 @@ def classic_rollover_control(es):
     es.req("PUT", "/sys-c1bctl-000001", {"aliases": {"sys-c1bctl-w": {"is_write_index": True}}})
     doc = {"v": 1}
     es.req("PUT", "/sys-c1bctl-w/_create/EVT1", doc)
-    es.req("PUT", "/sys-c1bctl-000002", {"aliases": {"sys-c1bctl-w": {"is_write_index": True}}})
-    es.req("POST", "/_aliases", {"actions": [{"add": {"index": "sys-c1bctl-000001", "alias": "sys-c1bctl-w", "is_write_index": False}}]})
+    es.req("PUT", "/sys-c1bctl-000002")
+    es.req("POST", "/_aliases", {"actions": [{"add": {"index": "sys-c1bctl-000001", "alias": "sys-c1bctl-w", "is_write_index": False}},
+                                           {"add": {"index": "sys-c1bctl-000002", "alias": "sys-c1bctl-w", "is_write_index": True}}]})
     s, j = es.req("PUT", "/sys-c1bctl-w/_create/EVT1", doc, ok=None)     # the retry after the rollover
     es.req("POST", "/sys-c1bctl-*/_refresh")
     n = es.req("POST", "/sys-c1bctl-*/_count", {"query": {"term": {"_id": "EVT1"}}})[1]["count"]
@@ -32,7 +33,7 @@ def classic_rollover_control(es):
 def run_projector(crash_point, tenants, kill_after):
     env = dict(os.environ)
     if crash_point != "time":
-        env["MEMSYS_CRASH"] = f"{crash_point}:0.25"
+        env["MEMSYS_CRASH"] = f"{crash_point}:0.12"
     p = subprocess.Popen([PY, "-u", "exp/projector_main.py", ",".join(tenants), "1", "1", "300"], env=env, stdout=subprocess.DEVNULL,
                          stderr=open(f"{RES}/c1b_projector.err", "ab"))
     t0 = time.time()
@@ -65,7 +66,7 @@ def main():
     log = []
     for i in range(crashes):
         pt = POINTS[i % len(POINTS)]
-        how, rc = run_projector(pt, tenants, rng.uniform(0.4, 3.0))
+        how, rc = run_projector(pt, tenants, rng.uniform(1.5, 7.0))
         log.append((i, pt, how, rc))
         extra = None
         if i in (10, 30):      # rollover-like: swap a bucket's generation while a projector is running (fence must exclude it)
@@ -90,6 +91,11 @@ def main():
         if i == 25:            # read-only bucket inside the retry horizon
             t = tenants[0]
             idx = [r["index"] for r in tenant_idx(es, t, "events")][0]
+            import re as _re
+            bk = int(_re.search(r"-events-b(\d+)-g", idx).group(1))
+            bts = dt.datetime.fromtimestamp(bk * esx.BUCKET_DAYS * 86400 + 3600, dt.timezone.utc)
+            conn.execute("select 1")
+            store.append_events(conn, t, "ro-session", [dict(ts_event=bts + dt.timedelta(minutes=k), actor="user", trust_origin="user_typed", kind="message", subject_id="u1", content=f"Zed's city is Rome ro{k}") for k in range(40)])
             es.req("PUT", f"/{idx}/_settings", {"index.blocks.write": True})
             how2, _ = run_projector("time", [t], 3.0)
             cur = conn.execute("select hwm_xid from projection_state where view='events' and tenant_id=%s", (t,)).fetchone()
@@ -100,6 +106,11 @@ def main():
             log[-1] = log[-1] + (extra,)
             print(extra, flush=True)
     out["crash_log"] = log
+    fired = {}
+    for x in log:
+        fired.setdefault(x[1], {"self_killed": 0, "wrapper_killed": 0})[x[2].replace("-", "_")] += 1
+    out["crash_points_fired"] = fired
+    print(fired)
     print("crashes done", sum(1 for x in log if x[2] == "self-killed"), "self-killed,", sum(1 for x in log if x[2] == "wrapper-killed"), "wrapper-killed", flush=True)
     # final: run to completion
     p = projector.Projector(conn, lock, es, recipes=[1], live_recipe=1, batch=300, tenants=tenants)
@@ -115,7 +126,7 @@ def main():
     p.known_ev.clear()
     p.run()
     out["dropped_bucket"]["compare_after_projector_rerun"] = compare_events(conn, es, [t])       # cursor is past it: still missing
-    b = int(idx.split("-b")[1][:5])
+    import re; b = int(re.search(r"-events-b(\d+)-g", idx).group(1))
     esx.ensure_events_bucket(es, t, b)
     r = erasure.rebuild_events_bucket(conn, es, t, b)
     out["dropped_bucket"]["repair"] = str(r)
