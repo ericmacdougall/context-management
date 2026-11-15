@@ -98,3 +98,18 @@ Requirement: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a/738faa20-cd78-4599-bbda-f
 | F10 | Postgres schema change on the append-only, hash-chained log: event schema versions, upcasting old events on read, online migration under writes | EXP | todo |
 | F11 | Extraction recipe or model change with facts already derived: mixed versions never served together; cost of re-derivation bounded by the extraction cache | EXP (C1 covered the rule-based case) + measured with the real extractor | todo |
 | F12 | Agent harness and model upgrades mid-session (the coding agent itself changes version) | OPEN-BLOCKED here: belongs to the session-runtime design (see the factory-gotchas catalogue, resume section); only the memory-side contract is tested | blocked |
+
+## G. Works with what Elastic's customers use; cheap to develop against
+
+Requirement: user:73716864-6b3b-4deb-94ef-8ed2c8432e4a/bbac7e5d-b0f4-41b6-a1ea-9d5c29df9534 "i want you to build this to work with what elastic's clients likely use -- while having adapters so we can test and use" (continues: "it with our subscription based claude/codex instances for cost while we develop it").
+
+| ID | Question | Exit | Status |
+|---|---|---|---|
+| G1 | What Elastic customers actually run for models, embeddings, agents and orchestration (inference API services, managed models, Agent Builder, MCP, frameworks), from primary sources | research, adversarially checked | todo |
+| G2 | One set of ports (chat model, embeddings, rerank, search, agent tool surface, injection hook) with the core depending on no vendor | EXP: contract tests | todo |
+| G3 | Customer-side adapters: Elastic inference API (chat completion, embeddings, rerank), Elastic-side fusion where licensed with client-side fallback on Basic, an MCP tool server usable from Agent Builder | EXP on the test node | todo |
+| G4 | Development adapters: headless Claude Code and Codex on the user's subscriptions behind the same chat-model port, with caching, call caps and usage ledgers | EXP: same contract suite | todo |
+| G5 | The Elastic inference path exercised end to end without paid API keys: the node's inference endpoint pointed at a local OpenAI-compatible gateway backed by the subscription instances | EXP on the test node | todo |
+| G6 | Results do not depend on which adapter is used: the eval's reader and extractor give equivalent outputs through two adapters on a sample | EXP: parity sample | todo |
+| G7 | Just-in-time injection reaches each agent host: Agent Builder (pre-execution workflow), Claude Code and Codex (their hook or MCP mechanisms) | EXP per host; Serverless-only hooks OPEN-BLOCKED | todo |
+| G8 | Terms: whether subscription instances may be used as a local development backend this way | USER (main reports what the published terms say; not legal advice) | open |
