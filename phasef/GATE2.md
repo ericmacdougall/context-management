@@ -10,16 +10,15 @@ First 16 knowledge-update question ids in sorted order from the TEST split, not 
 These clusters are removed from the test split for every stream. Sessions are extracted with recipe extract-v2 at 16 sessions per call.
 
 ## v4 link recipe (summary; code in phasef/links.py, frozen at the commit that precedes the first dev2 call)
-Extraction v2 unchanged. Candidate pairs in code (deterministic similarity, at most 3 per fact, at most 30 pairs per question; formula and threshold in links.py, tuned on dev only).
+Extraction v2 unchanged. Candidate pairs in code (deterministic similarity over facts of any cardinality with modality asserted, decided or proposed from different sessions, at most 5 per fact, at most 40 pairs per question, similarity threshold 0.12; formula and threshold in links.py, tuned on dev only).
 Link judge (Sonnet, batches of 15 pairs): sees both fact statements, quotes, the full source round of each (capped at 3000 characters, marked when cut) and both session dates;
-returns replaces | pending | restates | adds | unrelated plus a one-line reason. Status labels derived in code (current, superseded-by, pending-update, disputed); advisory,
+returns replaces | pending | restates | adds | unrelated plus a one-line reason; every replaces/pending decision is then re-judged once in a shuffled batch and kept only if the second call agrees (replaces or pending). Status labels derived in code (current, superseded-by, pending-update, disputed); advisory,
 nothing hidden. Reader prompt reader-v1.2 unchanged. Question expansion as in v3.
 
 ## Operational definitions (fixed now)
 - Gold-value fact B: as in GATE.md (the fact in the gold sessions whose object plus quote covers at least 50% of the answer content tokens; ties to the later session).
-- Gold update pair (amended before any dev2 call, because the answer-based definition fails for questions that ask about the earlier value): (A, B) = the pair of facts, A from an OLDER gold session
-  and B from the LATEST gold session (by session date), both single-cardinality with modality asserted, decided or proposed, with the highest candidate similarity sim(A, B) (the idf-weighted
-  token similarity in links.py). Missing if either gold session has no such fact. This is not independent of candidate generation, so candidate recall on it is a weak check; G5 tests the link judge on it.
+- Gold update link (final definition, amended three times before any dev2 call, driven by dev: similarity-based pair definitions picked unrelated facts): X = the fact in the gold sessions with the highest
+  answer-token coverage (at least 50% of the answer content tokens; none for abstention or when below 50%). G5 holds for a question when X has a replaces or pending link to some fact in a DIFFERENT gold session.
 - G3 exception as in GATE.md: for questions asking about an earlier value (initially, originally, previously, used to, before, first) superseded also counts if shown.
 
 ## Criteria (all must hold)

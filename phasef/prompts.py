@@ -104,3 +104,42 @@ Earlier statement (session date {d1}): "{q1}"
 Later statement (session date {d2}): "{q2}"
 Question: do both statements concern the same attribute, and does the later statement replace (or announce a replacement of) the earlier value? Answer yes or no.
 === END ITEM {i} ==="""
+
+LINK_RECIPE = "link-v4.1"
+LINK_SYSTEM = "You are a careful analyst of a user's memory records. Follow the output format exactly."
+LINK_TEMPLATE_HEAD = """For each numbered pair below, two memory facts were extracted from two different chat sessions with a user. EARLIER is the fact from the earlier session, LATER from the later session. You see each fact, its supporting quote and the full chat round it came from.
+
+Decide the relation of LATER to EARLIER with exactly one label:
+- replaces: both state the same attribute of the same entity with a different value, and LATER gives the new current state (the old value no longer holds)
+- pending: LATER is a plan, intention or decision to change that attribute, not yet stated as done
+- restates: the same value as EARLIER in other words (nothing changed)
+- adds: both hold at once (for example two different purchases, interests or events), or LATER adds a different item to a collection
+- unrelated: different attributes or different entities
+
+Be strict. Use replaces ONLY when the two values cannot both be true at the same time for the same attribute of the same entity (a current location, job, count, price, status, preference, schedule) and LATER clearly gives the new value. If both could hold, or they concern different items, people or events (for example two purchases, two plans, a bag and a strap), the label is adds or unrelated. If LATER only repeats or elaborates a plan or fact already in EARLIER, the label is restates.
+
+Output exactly one line per pair: '<number>: <label> | attribute=<attribute>; earlier=<value>; later=<value>'. Nothing else.
+
+"""
+LINK_TEMPLATE_PAIR = """=== PAIR {i} ===
+EARLIER (session date {d1}): {s1}
+Quote: "{q1}"
+Round: {r1}
+LATER (session date {d2}): {s2}
+Quote: "{q2}"
+Round: {r2}
+=== END PAIR {i} ===
+"""
+
+LINKAUDIT_RECIPE = "linkaudit-v1"
+LINKAUDIT_SYSTEM = "You are a careful auditor. Output exactly one line per pair: '<number>: <label>' and nothing else."
+LINKAUDIT_HEAD = """For each numbered pair, a memory system linked a fact from an EARLIER chat round to a fact from a LATER chat round. Judge from the rounds themselves. Label the relation of LATER to EARLIER with exactly one of: replaces (same attribute of the same entity, different value, LATER gives the new state), pending (LATER is a plan or intention to change that attribute), restates (same value in other words), adds (both hold; a different item or event), unrelated (different attribute or entity).
+
+"""
+LINKAUDIT_PAIR = """=== PAIR {i} ===
+EARLIER fact (session date {d1}): {s1}
+Earlier round: {r1}
+LATER fact (session date {d2}): {s2}
+Later round: {r2}
+=== END PAIR {i} ===
+"""
