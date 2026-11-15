@@ -31,24 +31,26 @@ def _sessions(q: Question, allowed: Optional[Set[str]]) -> List[str]:
 
 
 class ExactRetriever(Retriever):
+    """Memory-lean: keeps global document frequencies and chunk lengths only; the chunks of a question's
+    haystack are tokenised on demand."""
+
     def __init__(self, chunks_path: str, vectors_path: str, queries_path: str, query_vectors_path: str):
         import numpy as np
         self.np = np
-        self.chunks = [json.loads(l) for l in open(chunks_path, encoding="utf-8")]
-        self.vectors = np.load(vectors_path)
+        self.chunks: List[Dict[str, str]] = [json.loads(l) for l in open(chunks_path, encoding="utf-8")]
+        self.vectors = np.load(vectors_path, mmap_mode="r")
         qids = json.load(open(queries_path))
         self.qvec = dict(zip(qids, np.load(query_vectors_path)))
         if len(self.chunks) != len(self.vectors):
             raise ValueError("chunks and vectors differ in length")
         self.by_session: Dict[str, List[int]] = {}
-        self.postings: Dict[str, List[Tuple[int, int]]] = {}
+        self.df: Counter = Counter()
         self.dl: List[int] = []
         for i, c in enumerate(self.chunks):
             self.by_session.setdefault(c["session_id"], []).append(i)
             toks = tokens(c["text"])
             self.dl.append(len(toks))
-            for w, n in Counter(toks).items():
-                self.postings.setdefault(w, []).append((i, n))
+            self.df.update(set(toks))
         self.n = len(self.chunks)
         self.avgdl = sum(self.dl) / max(1, self.n)
 
@@ -59,25 +61,24 @@ class ExactRetriever(Retriever):
         return out
 
     def bm25(self, q, depth, allowed):
-        idx = set(self._idx(q, allowed))
-        score: Dict[int, float] = {}
-        for w in set(tokens(q.question)):
-            post = self.postings.get(w)
-            if not post:
-                continue
-            df = len(post)
-            idf = math.log(1 + (self.n - df + 0.5) / (df + 0.5))
-            for i, tf in post:
-                if i in idx:
-                    score[i] = score.get(i, 0.0) + idf * tf * 2.2 / (tf + 1.2 * (0.25 + 0.75 * self.dl[i] / self.avgdl))
-        return _rollup([(self.chunks[i]["round_id"], s) for i, s in score.items()], depth)
+        qt = set(tokens(q.question))
+        scored = []
+        for i in self._idx(q, allowed):
+            tf = Counter(tokens(self.chunks[i]["text"]))
+            s = 0.0
+            for w in qt:
+                if w in tf:
+                    df = self.df[w]
+                    idf = math.log(1 + (self.n - df + 0.5) / (df + 0.5))
+                    s += idf * tf[w] * 2.2 / (tf[w] + 1.2 * (0.25 + 0.75 * self.dl[i] / self.avgdl))
+            scored.append((self.chunks[i]["round_id"], s))
+        return _rollup(scored, depth)
 
     def dense(self, q, depth, allowed):
-        np = self.np
         idx = self._idx(q, allowed)
         if not idx:
             return []
-        sims = self.vectors[idx] @ self.qvec[q.qid]
+        sims = self.np.asarray(self.vectors[idx]) @ self.qvec[q.qid]
         return _rollup([(self.chunks[i]["round_id"], float(s)) for i, s in zip(idx, sims)], depth)
 
 
@@ -95,10 +96,11 @@ class EsRetriever(Retriever):
         sids = _sessions(q, allowed)
         if not sids:
             return []
-        return _rollup(self._run(bm25_query(q.question, sids, depth * self.overfetch)), depth)
+        return _rollup(self._run(bm25_query(q.question, sids, min(depth * self.overfetch, 10000))), depth)
 
     def dense(self, q, depth, allowed):
         sids = _sessions(q, allowed)
         if not sids:
             return []
-        return _rollup(self._run(knn_query(self.qv[q.qid], sids, depth * self.overfetch, self.num_candidates)), depth)
+        k = min(depth * self.overfetch, 10000)
+        return _rollup(self._run(knn_query(self.qv[q.qid], sids, k, max(self.num_candidates, k))), depth)

@@ -25,13 +25,27 @@ GRID_DENSE_W = (0.3, 0.5, 0.7)
 GRID_BETA = (0.25, 0.5, 1.0)
 
 
+FULL = 10 ** 9  # no depth cut: the full haystack is ranked
+
+
 def low_overlap(q: Question, retriever: Retriever, depth: int, threshold: int) -> Optional[bool]:
-    gold = q.retrieval_gold_session_ids
+    """Low-overlap on the best gold ROUND rank over the FULL haystack ranking (no depth cut), raw question,
+    no time filter; true iff that rank is > threshold on BOTH bm25 and dense. `depth` is ignored (kept for
+    call compatibility). Abstention / no-gold questions are never low-overlap."""
+    gold = q.retrieval_gold_round_ids
     if not gold:
-        return None  # abstention / no gold: never low-overlap
-    rb = best_gold_rank(to_sessions([d for d, _ in retriever.bm25(q, depth, None)]), gold)
-    rd = best_gold_rank(to_sessions([d for d, _ in retriever.dense(q, depth, None)]), gold)
+        return None
+    rb = best_gold_rank([d for d, _ in retriever.bm25(q, FULL, None)], gold)
+    rd = best_gold_rank([d for d, _ in retriever.dense(q, FULL, None)], gold)
     return is_low_overlap(rb, rd, threshold)
+
+
+def low_overlap_ranks(q: Question, retriever: Retriever) -> Optional[Dict[str, Optional[int]]]:
+    gold = q.retrieval_gold_round_ids
+    if not gold:
+        return None
+    return {"bm25": best_gold_rank([d for d, _ in retriever.bm25(q, FULL, None)], gold),
+            "dense": best_gold_rank([d for d, _ in retriever.dense(q, FULL, None)], gold)}
 
 
 def question_metrics(q: Question, rounds: List[str]) -> Dict[str, Optional[float]]:
@@ -116,7 +130,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="emlab.runner")
     ap.add_argument("--dry-run", action="store_true", help="fixture + in-memory fake retriever; no network")
     ap.add_argument("--phase", choices=["R", "F"], default="R")
-    ap.add_argument("--action", choices=["run", "lowoverlap", "grid", "index"], default="run")
+    ap.add_argument("--action", choices=["run", "lowoverlap", "grid", "index", "diagnostics", "rerank-timing"],
+                    default="run")
     ap.add_argument("--retriever", choices=["exact", "es"], default="exact")
     ap.add_argument("--dataset-path")
     ap.add_argument("--artifacts", help="dir written by embed.py (chunks.jsonl, vectors, queries)")
@@ -150,10 +165,16 @@ def main(argv=None) -> int:
     if not args.dataset_path or not args.artifacts:
         sys.stderr.write("--dataset-path and --artifacts are required for live runs\n")
         return 2
-    if args.split != "pilot" and args.action != "index":
+    if args.split != "pilot" and args.action not in ("index", "diagnostics"):
         sys.stderr.write("NOTE: %s split requested; only valid after the pre-registration hash is recorded\n" % args.split)
     qs = select_split(list(LongMemEvalLoader(args.dataset_path).questions()), args.split)
     a = args.artifacts.rstrip("/") + "/"
+    if args.action == "diagnostics":  # structural only, reads no retrieval result
+        from .diagnostics import asof_report, parser_report
+        res = {"split": args.split, "asof": asof_report(qs), "parser": parser_report(qs)}
+        _write(res, args.out)
+        print(json.dumps(res))
+        return 0
     if args.retriever == "exact":
         from .live import ExactRetriever
         retr: Retriever = ExactRetriever(a + "chunks.jsonl", a + "chunk_vectors.npy", a + "queries.json", a + "query_vectors.npy")
@@ -168,16 +189,31 @@ def main(argv=None) -> int:
     arms = list(ARMS)
     if args.reranker_dir:
         from .rerank import RerankingWrapper
-        rt = {}
-        for line in open(a + "rounds.jsonl", encoding="utf-8"):
+        rt: Dict[str, List[str]] = {}
+        for line in open(a + "chunks.jsonl", encoding="utf-8"):
             r = json.loads(line)
-            rt[r["round_id"]] = r["text"]
+            rt.setdefault(r["round_id"], []).append(r["text"])
         retr = RerankingWrapper(retr, rt, args.reranker_dir)
     else:
         arms.remove("rerank")
-    if args.action == "lowoverlap":
-        res = {"split": args.split, "threshold": args.low_overlap_threshold,
-               "low_overlap": {q.qid: low_overlap(q, retr, DEPTH, args.low_overlap_threshold) for q in qs}}
+    if args.action == "rerank-timing":
+        import time
+        from .retrievers import allowed_sessions, rrf as _rrf
+        rows = []
+        for q in [x for x in qs if x.retrieval_gold_round_ids][:5]:
+            allowed, _ = allowed_sessions(q, "asof")
+            b, d = retr.bm25(q, DEPTH, allowed), retr.dense(q, DEPTH, allowed)
+            head = [x for x, _ in _rrf([[i for i, _ in b], [i for i, _ in d]])][:50]
+            t0 = time.time()
+            retr.rerank(q, head, 50)
+            rows.append({"qid": q.qid, "seconds_for_top50": time.time() - t0})
+        res = {"rows": rows, "mean_seconds": sum(r["seconds_for_top50"] for r in rows) / max(1, len(rows))}
+    elif args.action == "lowoverlap":
+        ranks = {q.qid: low_overlap_ranks(q, retr) for q in qs}
+        flags = {q.qid: (None if ranks[q.qid] is None else is_low_overlap(ranks[q.qid]["bm25"], ranks[q.qid]["dense"], args.low_overlap_threshold)) for q in qs}
+        res = {"split": args.split, "threshold": args.low_overlap_threshold, "unit": "gold round, full haystack ranking",
+               "ranks": ranks, "low_overlap": flags,
+               "n_with_gold": sum(v is not None for v in flags.values()), "n_low_overlap": sum(v is True for v in flags.values())}
     elif args.action == "grid":
         res = {"split": args.split, "grid": grid(qs, retr)}
     elif args.action == "run":

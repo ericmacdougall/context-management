@@ -100,5 +100,7 @@ def clustered_paired_bootstrap(
     diffs.sort()
     lo = diffs[int((alpha / 2) * n_boot)]
     hi = diffs[min(n_boot - 1, int((1 - alpha / 2) * n_boot))]
-    return {"mean_diff": observed, "ci_low": lo, "ci_high": hi, "effective_n": float(m),
+    one_lo = diffs[int(alpha * n_boot)]  # one-sided (1 - alpha) bounds, used by the pre-registered decision rule
+    one_hi = diffs[min(n_boot - 1, int((1 - alpha) * n_boot))]
+    return {"mean_diff": observed, "ci_low": lo, "ci_high": hi, "lower_one_sided": one_lo, "upper_one_sided": one_hi, "effective_n": float(m),
             "questions": float(total_n), "n_boot": float(n_boot), "seed": float(seed)}

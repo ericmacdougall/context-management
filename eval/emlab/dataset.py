@@ -172,14 +172,19 @@ class LongMemEvalLoader(DatasetLoader):
         if not (len(sids) == len(dates) == len(sessions)):
             raise ValueError("haystack arrays differ in length for %s" % rec.get("question_id"))
         turns: List[Turn] = []
+        seen_sids = set()
         for sid, dstr, sess in zip(sids, dates, sessions):
+            if sid in seen_sids:  # a session id repeated inside one haystack (13 refs in S): keep the first
+                continue
+            seen_sids.add(sid)
             d = parse_date(dstr)
             for i, t in enumerate(sess):
                 turns.append(Turn(sid, i, t["role"], t["content"], bool(t.get("has_answer", False)), d))
         return Question(
             qid=str(rec["question_id"]), qtype=rec["question_type"], question=rec["question"],
             answer=str(rec["answer"]), question_date=parse_date(rec["question_date"]), turns=turns,
-            gold_session_ids=list(rec.get("answer_session_ids", [])), haystack_session_ids=list(sids),
+            gold_session_ids=list(rec.get("answer_session_ids", [])),
+            haystack_session_ids=list(dict.fromkeys(sids)),
             stale_session_ids=list(rec.get("x_stale_session_ids", [])),
         )
 

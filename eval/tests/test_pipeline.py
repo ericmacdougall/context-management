@@ -29,6 +29,17 @@ class Fixture(unittest.TestCase):
         self.assertEqual(ku.gold_round_ids, ["ku_s1:0", "ku_s4:0"])
         self.assertEqual(ku.gold_latest_session_ids, ["ku_s4"])  # latest-dated gold session is current
 
+    def test_repeated_session_id_in_a_haystack_is_deduplicated(self):
+        import json as _json
+        from emlab.dataset import LongMemEvalLoader
+        rec = _json.load(open(os.path.join(os.path.dirname(__file__), "..", "fixtures", "tiny.json")))[1]
+        rec["haystack_session_ids"].append(rec["haystack_session_ids"][0])
+        rec["haystack_dates"].append(rec["haystack_dates"][0])
+        rec["haystack_sessions"].append(rec["haystack_sessions"][0])
+        q = LongMemEvalLoader.parse_record(rec)
+        self.assertEqual(len(q.haystack_session_ids), 3)
+        self.assertEqual(len(q.rounds), len({r.round_id for r in q.rounds}))
+
     def test_rounds_pair_user_and_assistant(self):
         ku = self.qs[0]
         r = [x for x in ku.rounds if x.session_id == "ku_s4"]
@@ -47,6 +58,22 @@ class Fixture(unittest.TestCase):
         res = runner.evaluate(self.qs, FakeRetriever(), arms=("bm25",), modes=("off",))
         self.assertEqual(res["summary"]["all"]["bm25|off"]["session_recall@5"]["n"], 2)
         self.assertIsNone(runner.low_overlap(ab, FakeRetriever(), 200, 2))
+
+    def test_low_overlap_uses_gold_round_rank_over_full_haystack(self):
+        q = self.qs[2]
+        ranks = runner.low_overlap_ranks(q, FakeRetriever())
+        self.assertIsNotNone(ranks["bm25"])  # full ranking, not truncated at a depth
+        self.assertIsNotNone(ranks["dense"])
+        self.assertTrue(runner.low_overlap(q, FakeRetriever(), 200, 0))          # every rank > 0
+        self.assertFalse(runner.low_overlap(q, FakeRetriever(), 200, 10 ** 6))   # no rank exceeds the bound
+        self.assertIsNone(runner.low_overlap_ranks(self.qs[1], FakeRetriever()))  # abstention
+
+    def test_diagnostics_asof(self):
+        from emlab.diagnostics import asof_report, parser_report
+        r = asof_report(self.qs)
+        self.assertEqual(r["gold_sessions_removed_by_day_rule"], 0)
+        self.assertEqual(r["gold_sessions_removed_by_strict_timestamp_rule"], 0)  # ku_s6 is not gold here
+        self.assertEqual(parser_report(self.qs)["questions"], 3)
 
     def test_stale_only_retrieval_is_a_gold_latest_miss(self):
         ku = self.qs[0]

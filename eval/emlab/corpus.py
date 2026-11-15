@@ -81,6 +81,7 @@ def verify_dataset(path: str) -> Dict[str, Any]:
             owners.setdefault(s, set()).add(r["question_id"])
     leak = sum(1 for r in data for s in r.get("answer_session_ids", []) if len(owners.get(s, ())) > 1)
     rep["answer_sessions_in_other_haystacks"] = leak
+    rep["distinct_answer_session_ids_shared_across_questions"] = len({s for r in data for s in r.get("answer_session_ids", []) if len(owners.get(s, ())) > 1})
     from .dataset import LongMemEvalLoader as _L
     qs = [_L.parse_record(r) for r in data]
     cl = cluster_ids(qs)

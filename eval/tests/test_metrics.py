@@ -81,6 +81,12 @@ class Bootstrap(unittest.TestCase):
         self.assertLessEqual(r["ci_low"], want)
         self.assertGreaterEqual(r["ci_high"], want)
 
+    def test_one_sided_bounds_are_inside_two_sided(self):
+        r = clustered_paired_bootstrap(self.rows, n_boot=2000, seed=5)
+        self.assertGreaterEqual(r["lower_one_sided"], r["ci_low"])
+        self.assertLessEqual(r["upper_one_sided"], r["ci_high"])
+        self.assertLess(r["lower_one_sided"], r["mean_diff"])
+
     def test_zero_difference_interval_is_degenerate(self):
         r = clustered_paired_bootstrap([("x", 0.5, 0.5), ("y", 0.1, 0.1)], n_boot=50, seed=0)
         self.assertEqual((r["ci_low"], r["ci_high"], r["mean_diff"]), (0.0, 0.0, 0.0))
