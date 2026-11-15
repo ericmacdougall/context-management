@@ -223,6 +223,8 @@ async def f5b3():
     n1, n2, turns, period, pre, nn = sizes((15, 15, 24, 4, 40, 10), (3, 3, 10, 1.5, 8, 3))
     lib.record(n1=n1, n2=n2, turns=turns, period=period, pre=pre, nn=nn)
     lib.start_server("1.7.3", f"f5b3{suffix()}-{int(time.time())}.db", TPORT)
+    with lib.pg_connect(autocommit=True) as c:
+        c.execute("delete from engine_config where name='target_queue'")
     lib.start_worker("f5b3a", "venv-new", "v1c", "old", "f5b3q1")
     client, _ = await lib.connect_retry()
     stats = {"appended": 0, "signaled": 0, "retries": 0}
@@ -259,6 +261,8 @@ async def f5b3():
     t_all = time.time() - t_cut
     va, vb, vc = ctl.verify(g1, n1, turns), ctl.verify(g2, n2, turns), ctl.verify(gn, nn, turns // 2)
     res = await lib.results_of(client, g1, n1)
+    with lib.pg_connect(autocommit=True) as c:      # leave no queue hop behind for other runs
+        c.execute("delete from engine_config where name='target_queue'")
     lib.stop_worker("f5b3a")
     lib.stop_worker("f5b3b")
     lib.stop_server()
