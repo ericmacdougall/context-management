@@ -95,6 +95,20 @@ def read_digest(event_id):
     return "d" + hashlib.sha256(row[0].encode()).hexdigest()[:16]
 
 
+def maybe_crash(knob, where):
+    """Targeted fault injection (test only): abrupt exit inside a critical window with the probability in the
+    named test knob (a probability, not a secret)."""
+    import json
+    import random
+    import time as _t
+    pr = float(os.environ.get(knob, "0") or 0)
+    if pr and random.random() < pr:
+        from . import activities
+        with open(os.environ.get("ENGINE_CRASH_LOG", "/dev/null"), "a") as f:
+            f.write(json.dumps({"t": _t.time(), "where": where, "inflight": activities.inflight_snapshot()}) + "\n")
+        os._exit(137)
+
+
 def external_effect(sid, input_event_id, worker, gap_s=0.0, broken_keys=False, attempt=0):
     """One idempotent external effect. The external system dedups on the idempotency key; the effects row is the
     engine-side record. `gap_s` widens the window between 'applied' and 'recorded' so crash tests land in it.
@@ -114,6 +128,7 @@ def external_effect(sid, input_event_id, worker, gap_s=0.0, broken_keys=False, a
                 conn.execute("insert into effect_ledger(key, ref_event) values (%s,%s)", (key, input_event_id))
         if gap_s:
             time.sleep(gap_s)
+        maybe_crash("ENGINE_CRASH_IN_GAP", "effect_applied_not_recorded")
         conn.execute("insert into effects(key,tenant_id,session_id,step,status,result_ref) values (%s,%s,%s,'effect','done',%s) "
                      "on conflict do nothing", (key, TENANT, sid, input_event_id))
       finally:

@@ -82,7 +82,7 @@ async def f5a():
     lib.start_server("1.7.3", f"f5a{suffix()}-{int(time.time())}.db", TPORT)
     lib.start_worker("f5a1", "venv-new", "v1", "old", "f5a")
     client, _ = await lib.connect_retry()
-    tag, stats = T("u"), {"appended": 0, "signaled": 0, "retries": 0}
+    tag, stats = T("ua"), {"appended": 0, "signaled": 0, "retries": 0}
     tasks = await lib.launch(client, tag, n, "f5a", stats, turns=turns, period=period, expected=turns)
     await asyncio.sleep(pre)
     lib.stop_worker("f5a1")
@@ -124,29 +124,30 @@ async def f5b1():
     lib.start_worker("f5b1a", "venv-new", "v1", "old", "f5b1")
     client, _ = await lib.connect_retry()
     stats = {"appended": 0, "signaled": 0, "retries": 0}
-    old, new = T("v"), T("w")
+    old, oldc, new = T("va"), T("vb"), T("wn")
     tasks = await lib.launch(client, old, n, "f5b1", stats, turns=turns, period=period, expected=turns)
+    tasks += await lib.launch(client, oldc, n, "f5b1", stats, turns=turns, period=period, expected=turns, can_len=60)
     await asyncio.sleep(pre)
     lib.stop_worker("f5b1a")
-    t_switch = time.time()
     lib.start_worker("f5b1b", "venv-new", "v2p", "new", "f5b1")
     tasks += await lib.launch(client, new, n2, "f5b1", stats, turns=turns // 2, period=period, expected=turns // 2)
     await asyncio.gather(*tasks)
-    st, w1 = await lib.wait_done(client, old, n, 600)
-    st2, w2 = await lib.wait_done(client, new, n2, 600)
-    v1, v2 = ctl.verify(old, n, turns), ctl.verify(new, n2, turns // 2)
-    facts = [await history_facts(client, s) for s in ctl.sids(old, n)[:5]]
+    st, _ = await lib.wait_done(client, old, n, 600)
+    stc, _ = await lib.wait_done(client, oldc, n, 600)
+    st2, _ = await lib.wait_done(client, new, n2, 600)
+    v1, vc, v2 = ctl.verify(old, n, turns), ctl.verify(oldc, n, turns), ctl.verify(new, n2, turns // 2)
+    facts = [await history_facts(client, s) for s in ctl.sids(old, n)[:3]]
     lib.stop_worker("f5b1b")
     lib.stop_server()
-    po, pn = code_profile(old), code_profile(new)
-    out = {"id": "F5b-1-patching", "old_sessions": n, "new_sessions": n2, "turns": turns,
-           "old_worker_needed_after_switch_s": 0, "old_code_profile": po, "new_code_profile": pn,
-           "statuses_old": st, "statuses_new": st2, "verify_old": v1, "verify_new": v2, "history_sample_markers": facts,
-           "PASS": v1["PASS"] and v2["PASS"] and st == {"COMPLETED": n} and st2 == {"COMPLETED": n2}
-           and all(k.endswith("v2p+policy") for k in pn) and all(">" in k or k == "v2p+policy" for k in po)
-           and not any(k.startswith("v2p+policy>v1") for k in po)}
+    po, pc, pn = code_profile(old), code_profile(oldc), code_profile(new)
+    out = {"id": "F5b-1-patching", "old_sessions_no_can": n, "old_sessions_with_can": n, "new_sessions": n2, "turns": turns,
+           "old_worker_needed_after_switch_s": 0, "code_profile_old_no_can": po, "code_profile_old_with_can": pc,
+           "code_profile_new": pn, "statuses": [st, stc, st2], "verify": [v1, vc, v2], "history_sample": facts,
+           "finding": "patched() is memoized per execution: an old execution that replayed without the marker keeps the old path for its whole run; it adopts the new step only after continue-as-new",
+           "PASS": v1["PASS"] and vc["PASS"] and v2["PASS"] and st == {"COMPLETED": n} and stc == {"COMPLETED": n} and st2 == {"COMPLETED": n2}
+           and all("+policy" not in k for k in po) and set(pn) == {"v2p+policy"} and any(k.endswith("v2p+policy") for k in pc)}
     lib.save(f"f5b1{suffix()}", out)
-    print(out["PASS"], po, pn)
+    print(out["PASS"], po, pc, pn)
 
 
 # ------------------------------------------------------------------ F5b(2) Worker Versioning, pinned
@@ -169,7 +170,7 @@ async def f5b2():
     ops["set_current_b1"] = cli(server_cli, "worker", "deployment", "set-current-version", "--deployment-name", dep,
                                 "--build-id", "b1", "--yes")
     stats = {"appended": 0, "signaled": 0, "retries": 0}
-    old, new = T("x"), T("y")
+    old, new = T("fx"), T("fy")
     tasks = await lib.launch(client, old, n, "f5b2", stats, turns=turns, period=period, expected=turns)
     await asyncio.sleep(pre)
     t_switch = time.time()
@@ -210,7 +211,7 @@ async def f5b3():
     lib.start_worker("f5b3a", "venv-new", "v1c", "old", "f5b3q1")
     client, _ = await lib.connect_retry()
     stats = {"appended": 0, "signaled": 0, "retries": 0}
-    g1, g2, gn = T("z"), T("l"), T("m")
+    g1, g2, gn = T("q"), T("l"), T("o")
     tasks = await lib.launch(client, g1, n1, "f5b3q1", stats, turns=turns, period=period, expected=turns)       # rotate by signal
     tasks += await lib.launch(client, g2, n2, "f5b3q1", stats, turns=turns, period=period, expected=turns, can_len=90)  # natural CAN
     await asyncio.sleep(pre)
@@ -319,7 +320,8 @@ async def f6():
     lib.start_worker("f6a", "venv-new", "v1", "old", "f6")
     client, _ = await lib.connect_retry()
     stats = {"appended": 0, "signaled": 0, "retries": 0}
-    A, B, C, D = T("m") + "a", T("m") + "b", T("m") + "c", T("m") + "d"
+    tp = T("mx") if variant == "v2sx" else T("m")
+    A, B, C, D = tp + "a", tp + "b", tp + "c", tp + "d"
     # A: already continued-as-new before the upgrade (v1-shaped state in the new run); B: never CAN'd before the upgrade
     tasks = await lib.launch(client, A, nA, "f6", stats, turns=turns, period=period, expected=turns, rollup_s=6, can_len=60)
     tasks += await lib.launch(client, B, nB, "f6", stats, turns=turns, period=period, expected=turns, rollup_s=6)
@@ -361,7 +363,7 @@ async def f6():
            "verify": [verA, verB, verC]}
     if variant == "v2s":
         # rollback test: v2-shaped sessions meet the v1 code again
-        tag = T("m") + "e"
+        tag = tp + "e"
         tasks = await lib.launch(client, tag, 4, "f6", stats, turns=10, period=2, expected=10, rollup_s=6, ver=2)
         await asyncio.sleep(8)
         lib.stop_worker("f6b")

@@ -20,7 +20,7 @@ def broken_check(v):  # a variant that only checks size, as a naive implementati
 class PayloadCheckTests(unittest.TestCase):
     def test_accepts_ids_cursors_counters(self):
         self.assertTrue(ok({"sid": "s0001", "pend": ["t1/s0001/5", "t1/s0001/7"], "turns_done": 12, "ver": 2,
-                            "rollup_s": 1.5, "approval": "waiting", "flag": True, "x": None}))
+                            "rollup_s": 1.5, "approval": "waiting", "flag": True, "x": None, "last_result": ""}))
 
     def test_rejects_free_text(self):
         self.assertFalse(ok({"note": "the user said hello there"}))

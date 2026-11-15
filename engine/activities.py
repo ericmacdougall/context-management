@@ -72,6 +72,7 @@ def turn_append(sid: str, event_id: str, digest: str, effect_key: str, code: str
         rk = f"{rk}/a{activity.info().attempt}"
     eid, _ = pgstore.append_once(rk, sid, "turn_result", "turn_result",
                                  {"in": event_id, "digest": digest, "effect": effect_key, "code": code})
+    pgstore.maybe_crash("ENGINE_CRASH_AFTER_APPEND", "result_committed_not_acked")
     return eid
 
 
@@ -102,10 +103,16 @@ def approval_request(sid: str, deadline_ms: int) -> int:
 
 @activity.defn
 @tracked
-def approval_resolve(sid: str) -> str:
-    from .common import TENANT
+def approval_resolve(sid: str, deadline_ms: int) -> str:
+    """Postgres decides: granted if a grant event exists, timed out once the deadline has passed, else pending."""
+    import time
     with pgstore.pool().connection() as conn:
         granted = conn.execute("select 1 from effects where key=%s", (keys.approval_key(sid, "grant"),)).fetchone()
+        done = conn.execute("select result_ref from effects where key=%s", (keys.approval_key(sid, "resolve"),)).fetchone()
+        if done:
+            return conn.execute("select kind from events where event_id=%s", (done[0],)).fetchone()[0]
+    if not granted and time.time() * 1000 < deadline_ms:
+        return "pending"
     kind = "approval_granted" if granted else "approval_timeout"
     eid, created = pgstore.append_once(keys.approval_key(sid, "resolve"), sid, "approval", kind, {})
     if created:

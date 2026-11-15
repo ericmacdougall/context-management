@@ -39,7 +39,7 @@ def port_open(port):
 def pick_port():
     import random
     for _ in range(200):
-        p = random.randrange(48600, 49800, 40)
+        p = random.randrange(50000, 60000, 40)
         ok = True
         for q in range(p, p + 32):
             s = socket.socket()
@@ -177,3 +177,39 @@ async def connect_retry(name="orch", tries=90):
             last = e
             await asyncio.sleep(1.0)
     raise last
+
+
+def start_server_try(cli, db, tport, wait=20):
+    """Start a server and report whether it came up (used for the downgrade control)."""
+    name = f"server-{tport}"
+    _clear(name)
+    logp = HOME / "logs" / f"{name}-{cli}-try-{int(time.time())}.log"
+    env = {**os.environ, "TPORT": str(tport)}
+    PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/serverloop.sh"), cli, str(RUN / db),
+                                    str(RUN / f"stop-{name}")], env=env, stdout=open(logp, "ab"), stderr=subprocess.STDOUT,
+                                   stdin=subprocess.DEVNULL, start_new_session=True)
+    t0 = time.time()
+    up = False
+    while time.time() - t0 < wait and PROCS[name].poll() is None:
+        up = port_open(tport)
+        if up:
+            break
+        time.sleep(0.5)
+    exited = PROCS[name].poll()
+    (RUN / f"stop-{name}").touch()
+    try:
+        PROCS[name].wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        pass
+    return {"came_up": up, "exit_code": exited, "log_tail": logp.read_text()[-500:]}
+
+
+def start_loop(name, venv, variant, ident, tq, env=None, seed=1):
+    """workerloop.sh under Popen: restarts the worker after each abrupt self-exit until stop-<name> appears."""
+    _clear(name)
+    e = {**os.environ, **(env or {})}
+    PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/workerloop.sh"), venv, variant, ident, tq,
+                                    str(HOME / "code"), "0", str(seed), str(RUN / f"stop-{name}"), str(HOME / "logs" / name)],
+                                   env=e, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
+                                   start_new_session=True)
+    return PROCS[name]

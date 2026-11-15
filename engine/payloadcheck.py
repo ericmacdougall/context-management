@@ -8,7 +8,7 @@ import re
 MAX_BYTES = 4096
 MAX_LIST = 64
 MAX_DEPTH = 4
-ID_RE = re.compile(r"^[A-Za-z0-9_.:/=+\-]{1,160}$")  # no whitespace, so no prose
+ID_RE = re.compile(r"^[A-Za-z0-9_.:/=+\-]{0,160}$")  # no whitespace, so no prose
 KEY_RE = re.compile(r"^[A-Za-z0-9_]{1,40}$")
 
 

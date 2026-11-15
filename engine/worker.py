@@ -71,7 +71,7 @@ async def main():
     for s in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(s, stop.set)
     if a.crash_after:
-        import threading, time
+        import threading
         def crash():
             import json
             time.sleep(a.crash_after)

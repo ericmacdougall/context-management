@@ -97,7 +97,12 @@ class SessionWorkflow:
                         await workflow.wait_condition(lambda: self.approved, timeout=remaining)
                     except asyncio.TimeoutError:
                         pass
-                st["approval"] = await act("approval_resolve", sid)
+                res = await act("approval_resolve", sid, st["approval_deadline_ms"])
+                if res == "pending":
+                    self.approved = False  # a doorbell with no grant recorded in Postgres is ignored
+                    await workflow.sleep(0.2)
+                else:
+                    st["approval"] = res
                 continue
             if st["rollup_s"] and now_ms() >= st["rollup_deadline_ms"]:
                 await act("rollup", sid, st["rollups"])

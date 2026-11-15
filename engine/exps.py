@@ -24,12 +24,16 @@ def sizes(full, small):
     return small if SMALL else full
 
 
+RETAG = sys.argv[sys.argv.index("--retag") + 1] if "--retag" in sys.argv else ""
+
+
 def T(t):
+    t = RETAG + t
     return t.upper() if SMALL else t
 
 
 def suffix():
-    return "-small" if SMALL else ""
+    return ("-small" if SMALL else "") + (f"-{RETAG}" if RETAG else "")
 
 
 # ------------------------------------------------------------------ F4b host move
@@ -163,7 +167,7 @@ async def f4c():
     vA = ctl.verify(T("r"), nA, 4)
     lib.stop_worker("f4cA")
     lib.stop_server()
-    lates = [r["late_s"] for r in rowsA + rowsB if r["late_s"] is not None]
+    lates = [r["late_s"] for r in [x for x in rowsA if x["kind"] == "approval_timeout"] + rowsB if r["late_s"] is not None]  # granted ones resolve early by design
     out = {"id": "F4c", "approval_sessions": nA, "rollup_sessions": nB, "approval_timeout_s": appr_to, "rollup_s": roll_s,
            "events": log, "control_early_check": early, "statuses_A": stA, "statuses_B": stB,
            "approval_exactly_once_and_correct_outcome": okA, "rollup_exactly_once": okB,
@@ -221,5 +225,39 @@ async def f4d():
     print(out["PASS"], out["continue_as_new_boundaries"], out["max_run_history_events"], out["events_per_turn"])
 
 
+# ------------------------------------------------------------------ F4a targeted crashes (+ fence-off controls)
+async def f4t():
+    mode = sys.argv[sys.argv.index("--mode") + 1]          # ok | brokenkeys | brokenresult
+    n, turns, period = sizes((40, 20, 6), (4, 6, 1.5))
+    lib.start_server("1.7.3", f"f4t{mode}{suffix()}-{int(time.time())}.db", TPORT)
+    env = {"ENGINE_EFFECT_GAP": "0.05", "ENGINE_CRASH_IN_GAP": "0.02", "ENGINE_CRASH_AFTER_APPEND": "0.02"}
+    if mode == "brokenkeys":
+        env["ENGINE_BROKEN_KEYS"] = "1"
+    if mode == "brokenresult":
+        env["ENGINE_BROKEN_RESULT"] = "1"
+    name = f"f4t{mode}"
+    (HOME / "logs" / f"{name}.crashes").write_text("")
+    lib.start_loop(name, "venv-old", "v1", "hostA", "f4t", env=env, seed=5)
+    client, _ = await lib.connect_retry()
+    stats = {"appended": 0, "signaled": 0, "retries": 0}
+    tag = T({"ok": "ta", "brokenkeys": "tb", "brokenresult": "tc"}[mode])
+    tasks = await lib.launch(client, tag, n, "f4t", stats, turns=turns, period=period, expected=turns)
+    await asyncio.gather(*tasks)
+    st, waited = await lib.wait_done(client, tag, n, 900)
+    v = ctl.verify(tag, n, turns)
+    crashes = [json.loads(l) for l in open(HOME / "logs" / f"{name}.crashes") if l.strip()]
+    lib.stop_worker(name)
+    lib.stop_server()
+    by = {}
+    for c in crashes:
+        by[c.get("where", "timed")] = by.get(c.get("where", "timed"), 0) + 1
+    expect_pass = mode == "ok"
+    out = {"id": "F4a-targeted-" + mode, "sessions": n, "turns": turns, "crashes_total": len(crashes), "crashes_by_window": by,
+           "statuses": st, "verify": v, "problems_sample": v["problems"][:4], "verify_PASS_expected": expect_pass,
+           "as_expected": v["PASS"] == expect_pass}
+    lib.save(f"f4t-{mode}{suffix()}", out)
+    print(mode, "verify PASS:", v["PASS"], "crashes:", by, "expected:", expect_pass)
+
+
 if __name__ == "__main__":
-    asyncio.run({"f4b": f4b, "f4c": f4c, "f4d": f4d}[sys.argv[1]]())
+    asyncio.run({"f4b": f4b, "f4c": f4c, "f4d": f4d, "f4t": f4t}[sys.argv[1]]())
