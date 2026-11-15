@@ -38,7 +38,7 @@ def process(item, a, runner=None):
     cache = os.path.join(a.work, "cache")
     ledger = os.path.join(a.work, "ledger.jsonl")
     if arm == "ANALYST":
-        rec = run_analyst(task, os.path.join(a.work, "run"), ["--backend", a.backend], cache, ledger, CAP, R.NEUTRAL_CWD, forbidden=a.forbidden, runner=runner)
+        rec = run_analyst(task, os.path.join(a.work, "run"), ["--backend", a.backend.format(qid=qid, level=level)], cache, ledger, CAP, R.NEUTRAL_CWD, forbidden=a.forbidden, runner=runner)
     else:
         m = make_llm(cache, ledger, CAP, R.NEUTRAL_CWD, forbidden=a.forbidden, runner=runner)
         rec = run_rerank(task, m, a.forbidden)
@@ -54,7 +54,7 @@ def push(a, paths):
     rel = [os.path.relpath(p, a.out) for p in paths]
     lst = os.path.join(a.work, "push_list.txt")
     open(lst, "w").write("\n".join(rel) + "\n")
-    tar = subprocess.Popen(["tar", "-C", a.out, "-cf", "-", "-T", lst], stdout=subprocess.PIPE)
+    tar = subprocess.Popen(["tar", "-C", a.out, "-cf", "-", "-T", lst], stdout=subprocess.PIPE, env=dict(os.environ, COPYFILE_DISABLE="1"))  # no macOS ._ metadata files on the host
     r = subprocess.run(["ssh", "-F", os.path.expanduser("~/.ssh/config_fleetops"), a.remote, "mkdir -p ~/emlab-16096/in && tar -C ~/emlab-16096/in -xf -"], stdin=tar.stdout, capture_output=True, text=True)
     tar.stdout.close()
     tar.wait()
@@ -106,7 +106,7 @@ def parse(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--phase", required=True, choices=["canary", "rest", "secondary"])
     ap.add_argument("--tasks-dir", required=True)
-    ap.add_argument("--backend", required=True, help='tool program command, e.g. "ssh -F cfg t2-dev /path/prog"')
+    ap.add_argument("--backend", required=True, help='tool command with {qid} and {level} placeholders')
     ap.add_argument("--questions-file", required=True, help="JSON list of the 94 question ids")
     ap.add_argument("--lowoverlap-ids", required=True, help="JSON list of the 23 low-overlap question ids")
     ap.add_argument("--canary-level", required=True)

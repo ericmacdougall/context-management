@@ -35,3 +35,7 @@ Measured cost per session (model tokens vs per-call harness overhead of about 10
 ANALYST RUNNER dry run (fake lexical backend, 2 pilot questions own-haystack, stand-in lexical top-50 candidates; 5 of 10 calls): both arms returned valid strict output on both questions
 (rerank 5.7 and 7.8 s, 18k and 32k input tokens; analyst 7.3 and 9.8 s, 19k and 32k input tokens, 0 tool calls: the candidates already held the answer). A forced diagnostic call confirmed the MCP path:
 search and open_round were reached through the stdio server (--mcp-config, --strict-mcp-config, built-ins off, neutral cwd) and logged with round ids; the 12-call budget is enforced and unit-tested in analyst_mcp.py.
+
+ANALYST CANARY (H3, 23 whole-pool low-overlap questions, both arms, 46 calls, run_capped, concurrency 2): 44 ok, 2 rejected (one duplicate id in an ANALYST answer, one rerank id not among the candidates), 0 guard blocks, 0 refused tool calls,
+max 12 tool calls (budget held), 79 tool calls in total (daemon log 80 including one early probe of mine), wall 384 s, counter 46 of 620. Rerank: 31k input tokens and 10 s per call; analyst: 100k input tokens mean (max 289k, repeated turns) and 22 s per call, 3.4 tool calls per question.
+Low-overlap file: out/lowoverlap_pool_h3.json on t2-dev, sha256 c6351d7ffbfacb9e642862b30edcfe187e41b0316eca8f15bdd694431bba73a2, thresholds.100.qids (23). A first push left macOS ._ files on the host (removed); tar now runs with COPYFILE_DISABLE.
