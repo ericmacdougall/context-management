@@ -36,4 +36,9 @@ Same fields as STAGE-X0.md Section 3 with `prompt_version` = `extract-v2-cap30` 
 
 ## 6. Handoff
 
-Filled in below after the inputs are built (second commit).
+Filled in after the inputs were built (second commit; the rules above were committed in 2d25936 and are unchanged).
+
+Inputs on t2-dev (counts checked): 10 session files in `~/emlab-16096/out/stage_x0b/sessions/<opaque id>.json` (copies of the Stage X0 files), the run order `~/emlab-16096/out/stage_x0b/run_order.json` (key `order`: s4d2671e04b9d, sbe2fabc62aa8, s0964e5661ff2, s827f306f0106, sb09bceea100a, sc699af8d9a5d, sc2e73c115511, sff21ad092f20, s6de582b428f4, s994fd89ef0fe). The key `~/emlab-16096/out/stage_x0b_key/selection_key.json` is for the scorer only; the runner must not read it. Results go to `~/emlab-16096/in/stage_x0b/<opaque id>.json` and `_run.json`.
+Composition (56 capped sessions in Stage X0; pools: 35 further capped gold, 17 capped non-gold): 4 forced (1 weak-list session of fca70973, 3 low-overlap sessions of gpt4_ab202e7f), 3 random capped gold (2 knowledge-update, 1 weak-list) and 3 random capped non-gold sessions.
+Calls: 10 (hard cap; no retries); prompt `extract-v2-cap30`, sha16 `ae055bca99452fb6`.
+
