@@ -197,5 +197,39 @@ class Jobs(unittest.TestCase):
             X.X = old
 
 
+class Gate(unittest.TestCase):
+    def rec(self, status="ok", tokens=15000, i=0):
+        return {"status": status, "order_index": i, "input_tokens": 2, "cache_creation_input_tokens": tokens, "cache_read_input_tokens": 0}
+
+    def test_canary_gate_stops_on_low_parse_rate_or_big_prompt_and_waits_for_20(self):
+        good = [self.rec(i=i) for i in range(20)]
+        self.assertTrue(X.canary_check(good)[0])
+        bad = [self.rec(i=i) for i in range(18)] + [self.rec("parse_failure", i=18), self.rec("call_error", i=19)]
+        self.assertFalse(X.canary_check(bad)[0])
+        self.assertTrue(X.canary_check([self.rec("ok", i=i) for i in range(19)] + [self.rec("repaired", i=19)])[0])
+        big = [self.rec(i=i) for i in range(19)] + [self.rec(tokens=60000, i=19)]
+        self.assertFalse(X.canary_check(big)[0])
+        self.assertTrue(X.canary_check(good[:10])[0])
+
+    def test_no_earlier_cache_clash_check_finds_a_planted_key(self):
+        from phasef.llm import request_hash
+        from phasef import run_pilot as R
+        d = tempfile.mkdtemp()
+        old = (X.X, R.OUT)
+        X.X, R.OUT = os.path.join(d, "stage_new"), d
+        try:
+            os.makedirs(os.path.join(X.X, "sessions"))
+            os.makedirs(os.path.join(d, "stage_old", "cache"))
+            for sid in ("sA00000000aa", "sB00000000bb"):
+                json.dump({"session_id": sid, "date": DATE, "turns": TURNS}, open(os.path.join(X.X, "sessions", sid + ".json"), "w"))
+            cfg = X.variant_cfg("cap30")
+            self.assertEqual(X.confirm_no_earlier_cache(["sA00000000aa", "sB00000000bb"]), [])
+            key = request_hash("sonnet", cfg["recipe"], X.EXTRACT_SYSTEM, X.build_prompt("sB00000000bb", DATE, TURNS, cfg["template"]))
+            open(os.path.join(d, "stage_old", "cache", key + ".json"), "w").write("{}")
+            self.assertEqual(X.confirm_no_earlier_cache(["sA00000000aa", "sB00000000bb"]), ["sB00000000bb"])
+        finally:
+            X.X, R.OUT = old
+
+
 if __name__ == "__main__":
     unittest.main()

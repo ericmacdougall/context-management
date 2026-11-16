@@ -161,6 +161,39 @@ def push(paths_rel):
         print("PUSH FAILED:", r.stderr[-200:], flush=True)
 
 
+def canary_check(recs, n=20, min_parse=0.95, max_prompt=40000):
+    """X1 gate on the first n results: parse rate (ok or repaired) at least 95 percent and no prompt over 40,000 input tokens (prompt = total input minus the 10.5k per-call overhead).
+    Returns (continue?, reason)."""
+    first = recs[:n]
+    if len(first) < n:
+        return True, "not enough results yet"
+    rate = sum(1 for r in first if r["status"] in ("ok", "repaired")) / float(n)
+    if rate < min_parse:
+        return False, "parse rate %.2f below %.2f in the first %d calls" % (rate, min_parse, n)
+    big = [r for r in first if r["input_tokens"] + r["cache_creation_input_tokens"] + r["cache_read_input_tokens"] - 10500 > max_prompt]
+    if big:
+        return False, "prompt over %d tokens in %d of the first %d calls" % (max_prompt, len(big), n)
+    return True, "canary ok: parse rate %.2f" % rate
+
+
+def confirm_no_earlier_cache(order, cfg=None):
+    """No X1 prompt may have an entry in any earlier stage's cache: compares request hashes against every phasef-out/*/cache directory except this stage's."""
+    from .llm import request_hash
+    cfg = cfg or variant_cfg("cap30")
+    earlier = set()
+    for d in os.listdir(R.OUT):
+        c = os.path.join(R.OUT, d, "cache")
+        if os.path.isdir(c) and os.path.abspath(os.path.join(R.OUT, d)) != os.path.abspath(X):
+            earlier |= {f[:-5] for f in os.listdir(c) if f.endswith(".json")}
+    clashes = []
+    for sid in order:
+        sess = json.load(open(os.path.join(X, "sessions", sid + ".json")))
+        key = request_hash("sonnet", cfg["recipe"], EXTRACT_SYSTEM, build_prompt(sid, sess["date"], sess["turns"], cfg["template"]))
+        if key in earlier:
+            clashes.append(sid)
+    return clashes
+
+
 def not_run_record(idx, sid):
     return {"session_id": sid, "order_index": idx, "status": "not_run", "reject_reason": None, "prompt_version": VERSION, "prompt_sha16": SHA16, "model": MODEL, "input_tokens": 0, "output_tokens": 0,
             "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None, "n_facts": 0, "error": None}
@@ -180,6 +213,12 @@ def write_not_run(order, lo, hi):
 def run(a, runner=None):
     order = load_inputs()
     lo, hi = (0, 10) if a.phase == "canary" else ((0, len(order)) if a.phase == "all" else (10, 200))
+    if a.gate:
+        clashes = confirm_no_earlier_cache(order, variant_cfg("base" if VERSION == "extract-v2-anon" else ("pref" if VERSION == "extract-v3-pref" else "cap30"), REPLICATE))
+        if clashes:
+            print("ABORT: %d prompts have an entry in an earlier stage's cache, e.g. %s" % (len(clashes), clashes[:3]), flush=True)
+            return {}
+        print("confirmed: none of the %d prompts has an entry in any earlier stage's cache" % len(order), flush=True)
     items = [(i, order[i]) for i in range(lo, hi) if not os.path.exists(os.path.join(X, "out", order[i] + ".json"))]
     print("phase %s: %d sessions" % (a.phase, len(items)), flush=True)
     meter = Meter()
@@ -191,6 +230,7 @@ def run(a, runner=None):
     started = datetime.utcnow().isoformat() + "Z"
     os.makedirs(os.path.join(X, "out", "raw"), exist_ok=True)
     done = []
+    gate = {"checked": False}
 
     def one(item):
         idx, sid = item
@@ -210,6 +250,12 @@ def run(a, runner=None):
                 continue
             stats[rec["status"]] = stats.get(rec["status"], 0) + 1
             done.append(rec)
+            if a.gate and not gate["checked"] and len(done) >= 20:
+                gate["checked"] = True
+                okc, why = canary_check(sorted(done, key=lambda r: r["order_index"]))
+                print("CANARY GATE:", why, flush=True)
+                if not okc:
+                    open(a.stop_file, "w").write("canary gate: " + why)
             if len(done) % 40 == 0 and a.remote:
                 push(["%s.json" % r["session_id"] for r in done] + [r["raw_output_path"] for r in done if r["raw_output_path"]])
     ended = datetime.utcnow().isoformat() + "Z"
@@ -283,6 +329,8 @@ def parse(argv=None):
     ap.add_argument("--variant", choices=["base", "cap30", "pref"], default="base")
     ap.add_argument("--stage", default="stage_x0", help="directory name under phasef-out and under the host in/ and out/ trees")
     ap.add_argument("--cap", type=int, default=200)
+    ap.add_argument("--token-stop", type=float, default=12e6)
+    ap.add_argument("--gate", action="store_true", help="X1: after the first 20 results stop unless parse rate >= 95 percent and every prompt <= 40,000 tokens")
     ap.add_argument("--replicate", default=None, help="replicate id: separate cache namespace, same prompt_version and prompt_sha16 in the records")
     ap.add_argument("--concurrency", type=int, default=2)
     ap.add_argument("--remote", default="t2-dev")
@@ -294,7 +342,8 @@ def parse(argv=None):
 
 
 def configure(a):
-    global X, CAP, REMOTE_IN, REPLICATE
+    global X, CAP, REMOTE_IN, REPLICATE, TOKEN_STOP
+    TOKEN_STOP = int(a.token_stop)
     REPLICATE = a.replicate
     X = os.path.join(R.OUT, a.stage)
     CAP = a.cap
