@@ -395,7 +395,14 @@ def main(argv=None):
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=0)
     ap.add_argument("--dev-subscription-backends", action="store_true", help="REQUIRED: acknowledge development-only subscription use")
+    ap.add_argument("--real-ids", default=None, help="REQUIRED (or $MEMCORE_REAL_IDS_FILE): real dataset session id file; "
+                    "the gateway refuses to start without a usable one (fail closed)")
     a = ap.parse_args(argv)
+    from .guard import DEFAULT_GUARD, RealIdsMissing, require_real_ids
+    try:
+        require_real_ids(DEFAULT_GUARD, a.real_ids, "memcore.gateway")
+    except RealIdsMissing as e:
+        ap.exit(2, "%s\n" % e)
     require_loopback(a.host)
     cache, ledger = os.path.join(a.out, "cache", a.backend), os.path.join(a.out, "ledger.jsonl")
     if a.backend == "claude-cli":

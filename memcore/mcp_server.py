@@ -90,6 +90,21 @@ def serve(surface: AgentToolSurface, fin=sys.stdin, fout=sys.stdout) -> None:
             fout.flush()
 
 
-if __name__ == "__main__":
+def main(argv=None, fin=sys.stdin, fout=sys.stdout) -> int:
+    import argparse
+    from .guard import DEFAULT_GUARD, RealIdsMissing, require_real_ids
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--real-ids", default=None, help="REQUIRED (or $MEMCORE_REAL_IDS_FILE): real dataset session id file "
+                    "(fail closed)")
+    a = ap.parse_args(argv)
+    try:
+        require_real_ids(DEFAULT_GUARD, a.real_ids, "memcore.mcp_server")
+    except RealIdsMissing as e:
+        ap.exit(2, "%s\n" % e)
     print("memcore MCP stdio server (fake in-memory store)", file=sys.stderr)
-    serve(memory_tools(demo_store()))
+    serve(memory_tools(demo_store()), fin, fout)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

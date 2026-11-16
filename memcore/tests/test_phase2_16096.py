@@ -412,5 +412,84 @@ class EmbedRerankGuardBudgetTests(unittest.TestCase):
             OverlapReranker().rerank("q", [self.LEAK])
 
 
+class _Started(Exception):
+    """Raised by a stand-in server class: the entry point got past its start-up checks."""
+
+
+class EntryPointsRequireRealIdsTests(unittest.TestCase):
+    """Reviewer residual: on c20e208 the real-id set is opt-in, so an entry point started without the id file runs with
+    pattern matching only. Now every memcore entry point that can pass stored or eval text to a model refuses to start
+    (prompt_hook: injects nothing) unless --real-ids or MEMCORE_REAL_IDS_FILE names a usable file."""
+
+    def setUp(self):
+        from memcore.tests._realids import restored_default_guard
+        cm = restored_default_guard()
+        cm.__enter__()
+        self.addCleanup(cm.__exit__, None, None, None)
+        self._env = os.environ.pop("MEMCORE_REAL_IDS_FILE", None)
+        self.addCleanup(lambda: self._env is not None and os.environ.__setitem__("MEMCORE_REAL_IDS_FILE", self._env))
+        self.d = tempfile.mkdtemp()
+        self.empty = os.path.join(self.d, "empty.txt")
+        open(self.empty, "w").close()
+
+    def ids(self):
+        from memcore.tests._realids import ids_file
+        return ids_file()
+
+    def assert_refused(self, fn):
+        import contextlib
+        import io
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as c:
+            fn()
+        self.assertEqual(c.exception.code, 2)
+        self.assertIn("real session id", err.getvalue())
+
+    def test_prompt_hook_injects_nothing_without_a_usable_id_file(self):
+        import io
+        from memcore.hosts.prompt_hook import main
+        p = os.path.join(self.d, "events.json")
+        with open(p, "w") as fh:
+            json.dump({"events": [{"id": "e1", "ts": "2026-03-02T09:00:00Z", "text": "staging database is in Dublin"}]}, fh)
+        for extra in ([], ["--real-ids", self.empty], ["--real-ids", os.path.join(self.d, "missing")]):
+            out = io.StringIO()
+            self.assertEqual(main(["--store", p, "--now", NOW] + extra, stdin=io.StringIO('{"prompt": "staging database"}'), stdout=out), 0)
+            self.assertEqual(out.getvalue(), "", extra)
+        out = io.StringIO()
+        main(["--store", p, "--now", NOW, "--real-ids", self.ids()], stdin=io.StringIO('{"prompt": "staging database"}'), stdout=out)
+        self.assertIn('\\"id\\":\\"e1\\"', out.getvalue())             # control: with the file it injects
+
+    def test_gateway_refuses_to_start_without_the_id_file(self):
+        from memcore.gateway import main
+        from memcore.ports import PortError
+        for extra in ([], ["--real-ids", self.empty]):
+            self.assert_refused(lambda: main(["--backend", "claude-cli", "--out", self.d] + extra))
+        # control: with the file it gets past the id check and stops at the next gate (no dev flag: no CLI is started)
+        with self.assertRaises((PortError, ValueError)) as c:
+            main(["--backend", "claude-cli", "--out", self.d, "--real-ids", self.ids()])
+        self.assertNotIn("real session id", str(c.exception))
+
+    def test_mcp_http_refuses_to_start_without_the_id_file(self):
+        import memcore.mcp_http as m
+
+        class NoServe:
+            def __init__(self, *a, **k):
+                raise _Started()
+        real, m.McpHttpServer = m.McpHttpServer, NoServe
+        self.addCleanup(setattr, m, "McpHttpServer", real)
+        tok = os.path.join(self.d, "mcp.token")
+        self.assert_refused(lambda: m.main(["--token-file", tok]))
+        with self.assertRaises(_Started):
+            m.main(["--token-file", tok, "--real-ids", self.ids()])
+
+    def test_mcp_stdio_server_refuses_to_start_without_the_id_file(self):
+        import io
+        import memcore.mcp_server as m
+        self.assert_refused(lambda: m.main([], fin=io.StringIO(""), fout=io.StringIO()))
+        os.environ["MEMCORE_REAL_IDS_FILE"] = self.ids()                  # the environment variable works as well
+        self.addCleanup(os.environ.pop, "MEMCORE_REAL_IDS_FILE", None)
+        self.assertEqual(m.main([], fin=io.StringIO(""), fout=io.StringIO()), 0)
+
+
 if __name__ == "__main__":
     unittest.main()

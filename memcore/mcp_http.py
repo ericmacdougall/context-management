@@ -124,7 +124,14 @@ def main(argv=None):
     ap.add_argument("--token-file", required=True, help="created 0600 if missing")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=0)
+    ap.add_argument("--real-ids", default=None, help="REQUIRED (or $MEMCORE_REAL_IDS_FILE): real dataset session id file "
+                    "(fail closed)")
     a = ap.parse_args(argv)
+    from .guard import DEFAULT_GUARD, RealIdsMissing, require_real_ids
+    try:
+        require_real_ids(DEFAULT_GUARD, a.real_ids, "memcore.mcp_http")
+    except RealIdsMissing as e:
+        ap.exit(2, "%s\n" % e)
     tok = read_token(a.token_file) if os.path.exists(a.token_file) else make_token_file(a.token_file)
     srv = McpHttpServer(memory_tools(demo_store()), tok, a.host, a.port, allow_private_host=a.host if a.host != "127.0.0.1" else None).start()
     print("memcore MCP http (fake store): %s  token in %s" % (srv.url, a.token_file), file=sys.stderr, flush=True)

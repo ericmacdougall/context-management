@@ -273,13 +273,13 @@ class N4EgressGuardTests(unittest.TestCase):
                 s.close()
 
     def test_prompt_hook_header_with_a_dataset_session_id_injects_nothing(self):
-        from memcore.hosts.prompt_hook import main
+        from memcore.tests._realids import hook_main
         p = os.path.join(tempfile.mkdtemp(), "events.json")
         with open(p, "w") as fh:
             json.dump({"events": [{"id": "e1", "ts": "2026-03-02T09:00:00Z", "text": "Priya moved the staging database to Dublin."}]}, fh)
         for sid, expect in (("host-sess-1", True), (ID, False), ("ANSWER＿4BE1B6B4_2", False)):
             out = io.StringIO()
-            main(["--store", p, "--now", NOW], stdin=io.StringIO(json.dumps({"prompt": "staging database", "session_id": sid})), stdout=out)
+            hook_main(["--store", p, "--now", NOW], stdin=io.StringIO(json.dumps({"prompt": "staging database", "session_id": sid})), stdout=out)
             self.assertEqual(bool(out.getvalue()), expect, sid)
             self.assertNotIn("4be1b6b4", out.getvalue().lower())
 
@@ -513,9 +513,9 @@ class N5HookFramingTests(unittest.TestCase):
     """N5: at main()'s own budget the block lost its END delimiter and gained a stray </memory>."""
 
     def run_main(self, p, mx, payload=None):
-        from memcore.hosts.prompt_hook import main
+        from memcore.tests._realids import hook_main
         out = io.StringIO()
-        main(["--store", p, "--now", NOW, "--max-chars", str(mx)],
+        hook_main(["--store", p, "--now", NOW, "--max-chars", str(mx)],
              stdin=io.StringIO(json.dumps(payload or {"prompt": "staging database"})), stdout=out)
         return json.loads(out.getvalue())["hookSpecificOutput"]["additionalContext"] if out.getvalue() else ""
 

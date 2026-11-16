@@ -17,6 +17,8 @@ def store(n=1, text="Priya moved the staging database to Dublin."):
     return s
 
 
+from memcore.tests._realids import hook_main
+
 class HookTests(unittest.TestCase):
     def test_output_shape_for_both_hosts(self):
         out = build_output(BudgetedInjector(store()), {"session_id": "x", "prompt": "where is the staging database", "hook_event_name": "UserPromptSubmit"}, NOW)
@@ -40,14 +42,14 @@ class HookTests(unittest.TestCase):
     def test_failure_is_silent_exit_zero(self):
         err = io.StringIO()
         out = io.StringIO()
-        rc = main(["--store", "/nonexistent.json"], stdin=io.StringIO("{}"), stdout=out)
+        rc = hook_main(["--store", "/nonexistent.json"], stdin=io.StringIO("{}"), stdout=out)
         self.assertEqual((rc, out.getvalue()), (0, ""))
 
     def test_main_end_to_end(self):
         p = os.path.join(tempfile.mkdtemp(), "events.json")
         json.dump({"events": [{"id": "e1", "ts": "2026-03-02T09:00:00Z", "text": "Priya moved the staging database to Dublin."}]}, open(p, "w"))
         out = io.StringIO()
-        main(["--store", p, "--now", NOW], stdin=io.StringIO(json.dumps({"prompt": "staging database"})), stdout=out)
+        hook_main(["--store", p, "--now", NOW], stdin=io.StringIO(json.dumps({"prompt": "staging database"})), stdout=out)
         self.assertIn("e1", json.loads(out.getvalue())["hookSpecificOutput"]["additionalContext"])
 
 

@@ -32,6 +32,10 @@ class EgressLeak(PortError, ValueError):
     pass
 
 
+class RealIdsMissing(EgressLeak):
+    """An entry point was started without a usable real session id file."""
+
+
 def normalise(s: str) -> str:
     s = unicodedata.normalize("NFKC", s)
     out = []
@@ -121,6 +125,22 @@ def configure_from_env(guard: EgressGuard, env: Mapping[str, str] = os.environ) 
     elif env.get("MEMCORE_REQUIRE_REAL_IDS") == "1":
         guard.require_real_ids = True
     return guard
+
+
+def require_real_ids(guard: EgressGuard, path: Optional[str] = None, entry: str = "memcore",
+                     env: Mapping[str, str] = os.environ) -> str:
+    """Entry points that can send stored or eval text to a model call this at start (fail closed, not opt-in): the real
+    dataset session id file must be named (`path`, else $MEMCORE_REAL_IDS_FILE), readable and non-empty, and it is loaded
+    into `guard` IN PLACE with the id set required. Raises RealIdsMissing otherwise. Returns the path used."""
+    p = path or env.get("MEMCORE_REAL_IDS_FILE")
+    if not p:
+        guard.require_real_ids = True
+        raise RealIdsMissing("%s: a real session id file is required (--real-ids FILE or MEMCORE_REAL_IDS_FILE); refusing to "
+                             "start (fail closed)" % entry)
+    guard.load(p)
+    if not guard.real_ids:
+        raise RealIdsMissing("%s: real session id file unusable (%s); refusing to start (fail closed)" % (entry, guard.load_error))
+    return p
 
 
 DEFAULT_GUARD = configure_from_env(EgressGuard())

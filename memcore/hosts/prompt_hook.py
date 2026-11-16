@@ -44,14 +44,13 @@ def main(argv=None, stdin=sys.stdin, stdout=sys.stdout):
     ap.add_argument("--store", required=True)
     ap.add_argument("--max-chars", type=int, default=DEFAULT_MAX)
     ap.add_argument("--now", default=None, help="ISO time; default is the current UTC time")
-    ap.add_argument("--real-ids", default=None, help="file of real dataset session ids (JSON list or one per line); required "
-                    "once given: unreadable or empty means nothing is injected. Default: $MEMCORE_REAL_IDS_FILE")
+    ap.add_argument("--real-ids", default=None, help="REQUIRED (or $MEMCORE_REAL_IDS_FILE): file of real dataset session "
+                    "ids (JSON list or one per line). Missing, unreadable or empty means nothing is injected (fail closed).")
     a = ap.parse_args(argv)
     try:
         import datetime
-        if a.real_ids:
-            from ..guard import DEFAULT_GUARD
-            DEFAULT_GUARD.load(a.real_ids)        # in place: the injector and every adapter use this one object
+        from ..guard import DEFAULT_GUARD, require_real_ids
+        require_real_ids(DEFAULT_GUARD, a.real_ids, "prompt_hook")   # in place: the injector and adapters share this object
         payload = json.loads(stdin.read() or "{}")
         now = a.now or datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         out = build_output(BudgetedInjector(load_store(a.store), char_budget=a.max_chars), payload, now, a.max_chars)
