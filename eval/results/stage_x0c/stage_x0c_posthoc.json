@@ -1,0 +1,203 @@
+{
+ "exploratory": true,
+ "post_hoc": true,
+ "second_pass": {
+  "per_session": {
+   "s6de582b428f4": {
+    "run1_X0B": 24,
+    "run2_S": 25,
+    "union_1_2": 29,
+    "added_by_run2": 5,
+    "run3_P": 27,
+    "union_1_2_3": 35,
+    "added_by_P_after_two": 6,
+    "union_1_2_quote_pass": 29,
+    "group": "low_overlap",
+    "questions": [
+     "gpt4_ab202e7f"
+    ]
+   },
+   "s827f306f0106": {
+    "run1_X0B": 19,
+    "run2_S": 19,
+    "union_1_2": 23,
+    "added_by_run2": 4,
+    "run3_P": 21,
+    "union_1_2_3": 26,
+    "added_by_P_after_two": 3,
+    "union_1_2_quote_pass": 23,
+    "group": "low_overlap",
+    "questions": [
+     "gpt4_ab202e7f"
+    ]
+   },
+   "s994fd89ef0fe": {
+    "run1_X0B": 13,
+    "run2_S": 16,
+    "union_1_2": 19,
+    "added_by_run2": 6,
+    "run3_P": 13,
+    "union_1_2_3": 19,
+    "added_by_P_after_two": 0,
+    "union_1_2_quote_pass": 19,
+    "group": "low_overlap",
+    "questions": [
+     "gpt4_ab202e7f"
+    ]
+   },
+   "sc699af8d9a5d": {
+    "run1_X0B": 15,
+    "run2_S": 24,
+    "union_1_2": 29,
+    "added_by_run2": 14,
+    "run3_P": 26,
+    "union_1_2_3": 39,
+    "added_by_P_after_two": 10,
+    "union_1_2_quote_pass": 20,
+    "group": "weak_list",
+    "questions": [
+     "fca70973"
+    ]
+   },
+   "sc2e73c115511": {
+    "run1_X0B": 14,
+    "run2_S": 16,
+    "union_1_2": 16,
+    "added_by_run2": 2,
+    "run3_P": 15,
+    "union_1_2_3": 17,
+    "added_by_P_after_two": 1,
+    "union_1_2_quote_pass": 15,
+    "group": "knowledge_update",
+    "questions": [
+     "0e4e4c46"
+    ]
+   },
+   "s4d2671e04b9d": {
+    "run1_X0B": 13,
+    "run2_S": 12,
+    "union_1_2": 14,
+    "added_by_run2": 1,
+    "run3_P": 14,
+    "union_1_2_3": 15,
+    "added_by_P_after_two": 1,
+    "union_1_2_quote_pass": 14,
+    "group": "knowledge_update",
+    "questions": [
+     "45dc21b6"
+    ]
+   },
+   "sb09bceea100a": {
+    "run1_X0B": 15,
+    "run2_S": 14,
+    "union_1_2": 16,
+    "added_by_run2": 1,
+    "run3_P": 15,
+    "union_1_2_3": 17,
+    "added_by_P_after_two": 1,
+    "union_1_2_quote_pass": 16,
+    "group": "weak_list",
+    "questions": [
+     "gpt4_4929293b"
+    ]
+   },
+   "sbe2fabc62aa8": {
+    "run1_X0B": 15,
+    "run2_S": 16,
+    "union_1_2": 19,
+    "added_by_run2": 5,
+    "run3_P": 18,
+    "union_1_2_3": 21,
+    "added_by_P_after_two": 2,
+    "union_1_2_quote_pass": 18,
+    "group": "random_non_gold",
+    "questions": []
+   },
+   "s0964e5661ff2": {
+    "run1_X0B": 14,
+    "run2_S": 17,
+    "union_1_2": 14,
+    "added_by_run2": 4,
+    "run3_P": 15,
+    "union_1_2_3": 15,
+    "added_by_P_after_two": 1,
+    "union_1_2_quote_pass": 14,
+    "group": "random_non_gold",
+    "questions": []
+   },
+   "sff21ad092f20": {
+    "run1_X0B": 16,
+    "run2_S": 18,
+    "union_1_2": 21,
+    "added_by_run2": 5,
+    "run3_P": 17,
+    "union_1_2_3": 25,
+    "added_by_P_after_two": 4,
+    "union_1_2_quote_pass": 21,
+    "group": "random_non_gold",
+    "questions": []
+   }
+  },
+  "run1_total": 158,
+  "run2_total": 177,
+  "union_total": 200,
+  "added_by_second_run": 47,
+  "union_quote_pass": 189,
+  "union_1_2_3_total": 229,
+  "added_by_third_draw": 29
+ },
+ "union_curve_mean_over_orders": {
+  "mean_new_facts_per_session_by_draw_index": {
+   "1": 16.733333333333334,
+   "2": 3.8333333333333335,
+   "3": 2.3666666666666667
+  },
+  "note": "mean over all 6 orders of the three draws and over the 10 sessions; draw 1 is the first run's size, draws 2 and 3 are the facts they add; the third draw is arm P (a prompt with one extra sentence), not an identical-prompt run"
+ },
+ "unstable_vs_stable": {
+  "only_in_one_run": {
+   "n": 75,
+   "quote_pass": 67,
+   "quote_pass_rate": 0.8933333333333333,
+   "counts": {
+    "author_user": 19,
+    "third_2": 33,
+    "author_assistant": 52,
+    "third_1": 19,
+    "third_0": 23,
+    "author_missing": 4
+   }
+  },
+  "in_both_runs": {
+   "n": 260,
+   "quote_pass": 254,
+   "quote_pass_rate": 0.9769230769230769,
+   "counts": {
+    "author_user": 141,
+    "third_0": 106,
+    "third_1": 70,
+    "third_2": 84,
+    "author_assistant": 104,
+    "author_missing": 15
+   }
+  },
+  "note": "facts of both runs pooled over the 10 replicate sessions; position = cited round in thirds of the session (0 first, 2 last); author = the model's author field"
+ },
+ "mechanical_repair": {
+  "outputs": 250,
+  "facts_total": 2698,
+  "verbatim_in_cited_round": 2568,
+  "not_verbatim": 130,
+  "author_defined_by_speaker": 2543,
+  "author_agreement": 2524,
+  "author_mismatch": 1,
+  "author_field_missing": 18,
+  "verbatim_but_speaker_ambiguous_or_split": 25,
+  "not_verbatim_classified": {
+   "paraphrase": 29,
+   "punct_cited": 98,
+   "other_round": 3
+  },
+  "reading": "up to 20 author mismatches are in the reading file"
+ }
+}
