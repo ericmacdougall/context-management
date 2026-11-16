@@ -342,3 +342,13 @@ class StageX0C(unittest.TestCase):
         w = cluster_wilson_mean([0.9, 0.8, 1.0, 0.9])
         self.assertTrue(w["low"] < w["mean"] < w["high"])
         self.assertEqual(cluster_wilson_mean([])["n"], 0)
+
+    def test_missing_author_is_not_a_mismatch(self):
+        from emlab import provenance_x04 as P
+        from emlab.stage_x0c_score import check_with_missing_author, user_stats
+        sess = {"s1": P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex"}, {"role": "assistant", "content": "Nice"}])}
+        f = [{"session_id": "s1", "round": 0, "quote": "adopted a dog named Rex"}, {"session_id": "s1", "round": 0, "quote": "adopted a dog named Rex", "author": "user"}]
+        r = check_with_missing_author(f, sess)
+        self.assertEqual((r[0]["a"], r[0]["b"]), ("pass", "author_missing"))
+        self.assertEqual((r[1]["a"], r[1]["b"]), ("pass", "pass"))
+        self.assertEqual(user_stats(f)["author_missing"], 1)

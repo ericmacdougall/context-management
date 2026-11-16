@@ -39,7 +39,18 @@ def cluster_wilson_mean(rates: List[float]) -> Dict[str, float]:
 
 def user_stats(facts: List[Dict[str, Any]]) -> Dict[str, Any]:
     u = sum(1 for f in facts if f.get("author") == "user")
-    return {"total": len(facts), "user": u, "user_share": (u / float(len(facts))) if facts else None}
+    return {"total": len(facts), "user": u, "author_missing": sum(1 for f in facts if "author" not in f), "user_share": (u / float(len(facts))) if facts else None}
+
+
+def check_with_missing_author(facts: List[Dict[str, Any]], sess) -> List[Dict[str, Any]]:
+    """The vendored checker reads f["author"]; a fact the model emitted without an author field gets a sentinel and its speaker verdict is
+    reported as `author_missing` (never as a mismatch or a pass); the quote check (a) is unaffected."""
+    fixed = [dict(f, author=f["author"]) if "author" in f else dict(f, author="__missing__") for f in facts]
+    rows = prov.check_all(fixed, sess) if fixed else []
+    for f, r in zip(fixed, rows):
+        if f["author"] == "__missing__" and r["b"] != "undefined":
+            r["b"] = "author_missing"
+    return rows
 
 
 def main(out_root, in_root, out_json):
@@ -91,12 +102,17 @@ def main(out_root, in_root, out_json):
     pU = sum(per[o]["P"]["user"] for o in both)
     sT = sum(per[o]["S"]["total"] for o in both)
     pT = sum(per[o]["P"]["total"] for o in both)
+    clean = [o for o in both if per[o]["S"]["author_missing"] == 0 and per[o]["P"]["author_missing"] == 0]
+    sens = {"sessions_excluded_for_missing_author_field": [o for o in both if o not in clean], "sessions": len(clean),
+            "mean_user_increase": (sum(per[o]["P"]["user"] - per[o]["S"]["user"] for o in clean) / float(len(clean))) if clean else None,
+            "sessions_with_more_user_facts_in_P": sum(1 for o in clean if per[o]["P"]["user"] > per[o]["S"]["user"])}
     disp = sum(per[o]["S_facts_displaced_in_P"] for o in both)
     # excess displacement on the replicate sessions: P-vs-S displacement minus the identical-prompt non-reproduction of the same facts (S vs X0B)
     rep_disp = {o: {"S_displaced_in_P": per[o]["S_facts_displaced_in_P"], "S_n": per[o]["S"]["total"],
                     "S_not_reproduced_vs_prev": len(S[o]["facts"]) - matched_into(S[o]["facts"], prev30[o]["facts"])} for o in both if o in prev30}
     res["arm_P_vs_S"] = {"per_session": per, "sessions_compared": len(both), "user_facts_S": sU, "user_facts_P": pU, "mean_user_facts_S": sU / float(len(both)) if both else None,
-                         "mean_user_facts_P": pU / float(len(both)) if both else None, "mean_user_increase": (pU - sU) / float(len(both)) if both else None,
+                         "mean_user_facts_P": pU / float(len(both)) if both else None, "mean_user_increase": (pU - sU) / float(len(both)) if both else None, "sensitivity_excluding_missing_author_sessions": sens,
+                         "per_session_user_increase": {o: per[o]["P"]["user"] - per[o]["S"]["user"] for o in both},
                          "sessions_with_more_user_facts_in_P": sum(1 for o in both if per[o]["P"]["user"] > per[o]["S"]["user"]),
                          "user_share_S": (sU / float(sT)) if sT else None, "user_share_P": (pU / float(pT)) if pT else None, "total_facts_S": sT, "total_facts_P": pT,
                          "P_at_cap_30": sum(1 for o in both if per[o]["P_at_cap_30"]), "S_facts_displaced_in_P_total": disp, "S_facts_displaced_share": (disp / float(sT)) if sT else None,
@@ -107,14 +123,14 @@ def main(out_root, in_root, out_json):
 
     def prov_arm(R):
         facts = [dict(f, session_id=o) for o in rows if ok(R[o]) for f in (R[o].get("facts") or [])]
-        r = prov.check_all(facts, sess) if facts else []
+        r = check_with_missing_author(facts, sess)
         a_pass = sum(1 for x in r if x["a"] == prov.PASS)
         lo, hi = prov.wilson(a_pass, len(r)) if r else (0.0, 0.0)
         users = [(f, x) for f, x in zip(facts, r) if f.get("author") == "user"]
         u_a = [x for f, x in users if x["a"] == prov.PASS]
         return {"facts": len(r), "a_pass": a_pass, "a_rate": (a_pass / len(r)) if r else None, "wilson_low": lo, "wilson_high": hi,
-                "b": {k: sum(1 for x in r if x["b"] == k) for k in ("pass", "ambiguous", "mismatch", "undefined")},
-                "user_authored_facts": len(users), "user_a_pass": len(u_a), "user_speaker_pass_among_a": sum(1 for x in u_a if x["b"] == "pass"),
+                "b": {k: sum(1 for x in r if x["b"] == k) for k in ("pass", "ambiguous", "mismatch", "undefined", "author_missing")},
+                "facts_without_author_field": sum(1 for f in facts if "author" not in f), "user_authored_facts": len(users), "user_a_pass": len(u_a), "user_speaker_pass_among_a": sum(1 for x in u_a if x["b"] == "pass"),
                 "user_speaker_mismatch": sum(1 for x in u_a if x["b"] == "mismatch"), "user_speaker_ambiguous": sum(1 for x in u_a if x["b"] == "ambiguous"),
                 "controls": prov.controls(facts, sess, r) if r else None}
     res["provenance"] = {"arm_S": prov_arm(S), "arm_P": prov_arm(P)}
