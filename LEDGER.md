@@ -129,6 +129,44 @@ Did not hold or measured as a problem:
 | Elasticsearch fence against a dishonest writer | not started (security off on the test node) | open |
 | A test node can hold the per-tenant index layout | The node hit its 1,000-shard limit during the suite | open: layout rule needed for many tenants |
 
+## Licence transitions and ingestion from the model port (2026-11-16; both owner-reported on stubs, independent review pending)
+
+Licence rehearsal (feat/licence-rehearsal cc45153; own Elasticsearch 9.5.6 node, 12 fresh-node lives, stub embedder):
+
+| Finding | Figures | Class |
+|---|---|---|
+| A licence change under load gives no wrong answer and loses no write | Trial to Basic and Basic to trial: 387,045 responses checked against an independent oracle, 0 mismatches; 134,290 acknowledged writes, 0 lost; fallback to client-side fusion in 0.03 to 0.06 s; control (always call the licensed retriever) failed 59,656 of 59,656 on Basic | owner-reported; the oracle comparison was recomputed from raw rows for 1 of 12 lives |
+| Data written with licensed features stays readable on Basic | semantic_text and bbq_disk indices: reads, deletes, force merge work; every write or re-embed fails with a licence error; migration to Basic-safe mappings verified (299 of 299 and 199 of 199 documents, 0 vector mismatches) | owner-reported |
+| Document-level security fails closed after a downgrade | 12 read paths, 0 documents leaked | owner-reported |
+
+Did not hold or traps found:
+
+| Finding | Consequence |
+|---|---|
+| Linear fusion on Basic silently becomes a different ranking function (60 of 60 queries differ, no error) | Do not use the linear option on the Basic path |
+| The reviewed start-up probe pins its answer for the life of the process: after a restart on a licensed node it stayed on the Basic path 5 of 5 times | A re-probe is needed (proposed, not in the reviewed code) |
+| A bulk write to a licensed vector type returns HTTP 200 with every item failed | Callers must read item results |
+| Keyword query forms over a semantic-only field return 0 hits with no error, licensed or not | Use the semantic query forms only |
+| A trial cannot be restarted on a cluster, so "licence returns on the same node" could not be tested | NOT TESTED; needs a real licence file |
+| The adapter reloads the system certificate store on every call (about 45 requests per second per process) | Performance defect in the reviewed adapter |
+
+Ingestion from the model port's log (feat/port-ingest 0801866):
+
+| Finding | Figures | Class |
+|---|---|---|
+| A crash at any point in a call leaves a log from which exactly the completed turns are ingested | 40 of 40 with real process kills; control (log after return) loses a turn in 20 of 40 | owner-reported |
+| Exactly-once, ordered ingestion under duplication, reordering and racing ingesters | 20 of 20 seeds; the compare-and-set fence alone is sufficient | owner-reported |
+| The injected memory block is never ingested as user content | 0 across 7 placements on both provider shapes; a role-only ingester does it in 21 of 28 merged runs | owner-reported |
+| Hosts that drop or summarise old messages | 12 of 12 after the fix (54 and 80 user events for 20 messages before it) | owner-reported |
+
+Did not hold:
+
+| Finding | Consequence |
+|---|---|
+| A response lost between the model answering and the log recording it can be recovered | No provider API for it was found (Anthropic: none documented; OpenAI: unverified). Stated limit; the session reports "complete except unconfirmed" |
+| A tuned secret scanner generalises | 400 of 400 on the tuned variants, 350 of 800 (44%) on a held-out set. The write-path's 880 of 880 figure was also on a self-planted corpus and needs the same test |
+| Truncation with no outside witness is detectable | 12 of 20 still falsely report complete |
+
 ## Stage G: deeper shuffled candidates and a first look at answers (2026-11-16, pilot, feat/eval-scaffold c9e3909; design and scorer committed before any result; judge NOT validated)
 
 Held (pilot observations, owner-reported):
