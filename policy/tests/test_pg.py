@@ -112,6 +112,25 @@ class PgProofs(unittest.TestCase):
         [c.close() for c in conns]
         self.assertEqual(sorted(out), [("duplicate", "superseded"), ("superseded", None)])
 
+    def test_grant_may_reuse_an_applied_event_id_like_the_oracle(self):
+        """CORE-RULES rule 6 precedes rule 8: a grant is not refused duplicate_id. Found by exp/pg_diff (dev, dirty tree): the backstop index
+        raised UniqueViolation where pol/_core applies `granted`. A later non-grant event with that id is still duplicate_id."""
+        from pol import _core
+        st = _core.MemoryState(CFG)
+        evs = [dict(ev("supersede", "alice", "s", req="r2", value_ref="v1", label=LAB, based_on=0), id="e1"),
+               dict(ev("grant", "admin", "g", req="r2", target="bob", role="decide"), id="e1"),
+               dict(ev("grant", "admin", "g2", req="r2", target="bob", role="propose"), id="e1"),
+               dict(ev("supersede", "bob", "s2", req="r2", value_ref="v2", label=LAB, based_on=1), id="e1")]
+        codes = []
+        for e in evs:
+            want, orig, d = _core.reduce(st, e)
+            st.apply_delta(d)
+            codes.append(want)
+            self.assertEqual(self.e._submit(e), (want, orig), e)
+        self.assertEqual(codes, ["superseded", "granted", "granted", "duplicate_id"])
+        self.assertEqual(self.e._comparable(), st.comparable())
+        self.assertEqual(tuple(self.e._verify_chain()), (3, True))
+
     def test_revoke_through_definer_function_invalidates_open_items(self):
         for i in range(3):
             self.e._submit(ev("propose", "x", i, req="r1", value_ref="v", label=LAB, based_on=0))

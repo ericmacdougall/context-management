@@ -35,7 +35,8 @@ create table dc.chain(n bigserial primary key, tenant text not null, req text no
 create table dc.events(seq bigserial primary key, tenant text not null, principal text not null, idem text not null, req text, evid text not null,
                        fp text not null, code text not null, ev jsonb not null, chain_n bigint, prev_hash text, hash text);
 create unique index events_idem on dc.events(tenant, principal, idem);
-create unique index events_id on dc.events(tenant, req, evid) where req is not null;
+-- grants are exempt from the duplicate-id rule (CORE-RULES rule 6 precedes rule 8), so the backstop index excludes them (found by exp/pg_diff)
+create unique index events_id on dc.events(tenant, req, evid) where req is not null and code <> 'granted';
 create table dc.chainhead(tenant text primary key, n bigint not null default 0, hash text not null);
 create table dc.audit(n bigserial primary key, tenant text, principal text, code text not null, original text, ev jsonb);
 -- the vault: value text, its label as submitted (subject NAMES, needed to find what to erase), erased on request
