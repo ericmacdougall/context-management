@@ -148,7 +148,8 @@ def _b64_floats(vec) -> str:
 
 def make_handler(backends, token: str, embedder=None, default_model: Optional[str] = None, recorder: Optional[list] = None,
                  embed_budget=None, embed_kind: str = "passage", gate: Optional[Callable[[Mapping], None]] = None,
-                 pre_exec_injector=None, pre_exec_budget_s: float = 20.0, pre_exec_max_chars: Optional[int] = None):
+                 pre_exec_injector=None, pre_exec_budget_s: float = 20.0, pre_exec_max_chars: Optional[int] = None,
+                 pre_exec_max_concurrent: int = 8):
     """backends: a ChatModel or a mapping; it is COPIED into a read-only mapping, so a caller mutating its dict afterwards
     changes nothing the handler serves. gate: re-run per request on the chosen backend (refuses with 503).
     pre_exec_injector: serve POST /v1/pre_exec (Kibana pre-execution workflow) with this BudgetedInjector; the same bearer
@@ -158,6 +159,7 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
     backends = MappingProxyType(dict(backends))
     if not backends and pre_exec_injector is None:
         raise ValueError("no backend and no pre_exec injector: nothing to serve")
+    pre_exec_slots = threading.BoundedSemaphore(max(1, int(pre_exec_max_concurrent)))   # concurrent builds, abandoned ones included
     default_model = default_model or next(iter(backends), None)
 
     class H(BaseHTTPRequestHandler):
@@ -303,7 +305,7 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
                     return self._err(503, "gateway no longer passes its gate: %s" % type(e).__name__, "backend_refused")
             now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             out = pre_exec_new_prompt(pre_exec_injector, payload, now, budget_s=pre_exec_budget_s or DEFAULT_BUDGET_S,
-                                      max_chars=pre_exec_max_chars or DEFAULT_MAX)
+                                      max_chars=pre_exec_max_chars or DEFAULT_MAX, slots=pre_exec_slots)
             self._send(200, out)
 
         def _embeddings(self):
@@ -340,7 +342,7 @@ class Gateway:
     def __init__(self, backend, out_dir: str, host: str = "127.0.0.1", port: int = 0, embedder=None, recorder: Optional[list] = None,
                  dev_subscription_backends: bool = False, allow_bridge_host: Optional[str] = None, embed_cap: int = 1000,
                  embed_kind: str = "passage", pre_exec_injector=None, pre_exec_budget_s: float = 20.0,
-                 pre_exec_max_chars: Optional[int] = None):
+                 pre_exec_max_chars: Optional[int] = None, pre_exec_max_concurrent: int = 8):
         """backend: a ChatModel or {model_id: ChatModel}. allow_bridge_host: one explicitly named private address (e.g. the Docker
         bridge gateway) a containerised client must reach; never 0.0.0.0, and the bearer token still applies."""
         # Snapshot FIRST, gate the snapshot, and hand the handler a read-only view of exactly what was gated (review N2).
@@ -355,7 +357,8 @@ class Gateway:
         self.out_dir, self.token = out_dir, secrets.token_urlsafe(32)
         self.srv = ThreadingHTTPServer((host, port), make_handler(backs, self.token, embedder, recorder=recorder, gate=gate, embed_budget=CallBudget(out_dir, embed_cap, os.path.join(out_dir, "embed-ledger.jsonl"), name="embed"), embed_kind=embed_kind,
                                                                     pre_exec_injector=pre_exec_injector, pre_exec_budget_s=pre_exec_budget_s,
-                                                                    pre_exec_max_chars=pre_exec_max_chars))
+                                                                    pre_exec_max_chars=pre_exec_max_chars,
+                                                                    pre_exec_max_concurrent=pre_exec_max_concurrent))
         self.srv.daemon_threads = True
         self.host, self.port = self.srv.server_address[:2]
         self._write("gateway.token", self.token, 0o600)
