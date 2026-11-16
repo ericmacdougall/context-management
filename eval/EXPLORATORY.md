@@ -77,3 +77,31 @@ Session length (tokens of its chunks) separates gold sessions from the other ses
 
 ## Daemon budget key (recorded, nothing re-run)
 The analyst daemon's defensive budget was keyed on (question, level) and the 20-candidate variant used level H3, so a question's two H3 runs shared one budget (3 refused calls; see the results section of PREREGISTRATION.md). Fix committed in code: the call carries an optional `--variant` (default empty), the budget and the call log are keyed on (question, level, variant); the running daemon was not restarted and no run is repeated because of it.
+
+---
+# Round 2 results, part 1: E4, E5 (a) to (c), E6 (retriever: exact in-process on its own chunk arrays, NOT Elasticsearch; pilot, H3; raw file results/exploratory/xp_e456.json; thresholds committed in 73375be before this run; no timing reported, the host was loaded)
+
+## E4 candidate ceiling (HIT@K / SESSION-RECALL@K, K = number of ROUNDS in the candidate list)
+Denominators: all 94 questions (90 content clusters), the 23 low-overlap questions (23 clusters), the other 71 (69 clusters); Wilson bounds by content cluster for every HIT@K are in the raw file.
+
+| list | subset | K=50 | K=100 | K=200 | K=400 | K=1,000 |
+|---|---|---|---|---|---|---|
+| BM25 | all 94 | 0.78 / 0.63 | 0.84 / 0.72 | 0.90 / 0.78 | 0.91 / 0.84 | 0.92 / 0.87 |
+| BM25 | low-overlap 23 | 0.30 / 0.11 | 0.39 / 0.16 | 0.61 / 0.31 | 0.65 / 0.45 | 0.70 / 0.55 |
+| dense | all 94 | 0.68 / 0.56 | 0.74 / 0.64 | 0.78 / 0.68 | 0.86 / 0.78 | 0.94 / 0.88 |
+| dense | low-overlap 23 | 0.17 / 0.12 | 0.30 / 0.22 | 0.39 / 0.25 | 0.57 / 0.45 | 0.78 / 0.66 |
+| flat RRF | all 94 | 0.79 / 0.66 | 0.84 / 0.74 | 0.88 / 0.79 | 0.92 / 0.85 | 0.93 / 0.89 |
+| flat RRF | low-overlap 23 | 0.30 / 0.12 | 0.39 / 0.21 | 0.48 / 0.29 | 0.65 / 0.49 | 0.70 / 0.60 |
+| flat RRF | the other 71 | 0.94 / 0.83 | 0.99 / 0.91 | 1.00 / 0.96 | 1.00 / 0.97 | 1.00 / 0.99 |
+
+The 50 rounds handed to the analyst cover about 40 distinct sessions and contain a gold session for 30% of the low-overlap questions (7 of 23); a reordering arm over a 100-round list could reach at most 39%, over 200 rounds 48%, over 400 rounds 65%, over 1,000 rounds 70% (dense alone reaches 78% at 1,000 rounds; a 1,000-round list spans about 740 distinct sessions). The cross-encoder rerank v2 rankings (head 20 reordered, tail unchanged; 83 questions finished at the time, all 23 low-overlap included) give HIT / SESSION-RECALL at K = 20, 50, 100: all 0.66 / 0.55, 0.77 / 0.65, 0.82 / 0.74; low-overlap 0.17 / 0.06, 0.35 / 0.16, 0.35 / 0.19. Descriptive; no pass rule. Reading: for the hard questions the first-stage candidate list would have to go about 400 rounds deep before two thirds of them have any gold in it, so reordering alone cannot fix the 23.
+
+## E5 (a) to (c): none held
+Metric: SESSION-RECALL@50 rounds on the low-overlap 23 against flat RRF (baseline 0.118); HELD iff the gain is at least +0.05 and the paired content-cluster 95% lower bound is above 0. Control: the same variant on another question's query, against flat RRF on that same wrong query (both give 0.000 session recall at 50 rounds for every variant, so the control gain is 0.000 and nothing is credited; the control is uninformative because a wrong query finds no gold in either arm).
+- (a) session-sum pooling: 0.051, difference -0.067 [-0.135, -0.009] on the 23; all 94: 0.453 against 0.657 (-0.204 [-0.275, -0.139]); session recall@10 0.409 against 0.475. NOT held (it is worse).
+- (b) rare-term and entity-boosted BM25: 0.104, difference -0.014 [-0.080, +0.051] on the 23; all 94: 0.647 against 0.657 (-0.010 [-0.040, +0.018]). NOT held.
+- (c) deterministic query expansion (pseudo-relevance feedback and Rocchio): 0.124, difference +0.006 [-0.026, +0.043] on the 23; all 94: 0.652 against 0.657 (-0.006 [-0.032, +0.019]); session recall@10 0.482 against 0.475 (+0.007 [-0.029, +0.045]). NOT held.
+Since no variant held, no Elasticsearch re-run was done. (d) is reported separately below once it has finished.
+
+## E6 length shortcut
+Retriever: exact in-process. Length-only ranking (longest sessions first, no query) gives session recall@10 0.000 at H3 (all 94 and the 23), so length alone explains none of any arm's top-10 recall; the AUROC of 0.687 is a weak separator among about 18,000 sessions, not a retrieval shortcut by itself. Length-matched evaluation (the arm's ranked list restricted to sessions whose length lies within the question's gold length range widened by 25%, gold kept; the matched pool averages 7,297 sessions against 18,454 in the level): session recall@10 unmatched to matched: BM25 0.494 to 0.535, dense 0.345 to 0.412, flat RRF 0.475 to 0.523 (re-retrieval inside the matched pool 0.518), RRF top-50 candidates 0.473 to 0.521, ANALYST 0.603 to 0.619, ANALYST-RERANK-ONLY 0.581 to 0.587, cross-encoder v2 (83 questions) 0.537 to 0.558; the low-overlap 23 move by at most +0.02 (flat RRF 0.041 to 0.062, ANALYST 0.072 to 0.072). Recall RISES under matching for every arm, mostly because the pool shrinks by 60%, so no arm is shown to have been credited for length; a size-matched random-pool control was not run, so the size of the pool effect is not separated from the length effect. Which headline numbers move (paired, content clusters): ANALYST minus the RRF top-50 candidates at H3 session recall@10 +0.130 [+0.060, +0.202] becomes +0.098 [+0.041, +0.157] (still resolvable; low-overlap 23: +0.041 [-0.020, +0.114] to +0.019 [-0.061, +0.106]); ANALYST-RERANK-ONLY minus RRF +0.108 [+0.046, +0.173] becomes +0.065 [+0.015, +0.118]; the cross-encoder minus flat RRF (83 questions) +0.047 [+0.007, +0.095] becomes +0.020 [-0.004, +0.049], i.e. its advantage is no longer resolvable once long sessions are matched; ANALYST minus cross-encoder +0.053 [-0.011, +0.116] becomes +0.050 [-0.006, +0.107] (not resolvable either way). The 0.4754 / 0.475 curve value itself (all 94, unmatched) is the registered one and is unchanged.
