@@ -142,6 +142,15 @@ Did not hold or open:
 | The 12-fact cap in the extraction prompt | 28% of sessions hit it; 49% of gold sessions against 14% of random ones; cap share rises with length (0, 8, 26, 34, 43% by length band). The two questions whose answer is in the raw text but in no fact both involve capped sessions | The cap binds where it matters; facts lost to it cannot be counted from this run; a 10-call re-extraction at a higher cap would measure it |
 | Prompt limits obeyed | 14.6% of quotes exceed the 12-word limit; event time present on only 10.4% of facts | Dated facts are mostly undated in practice; time-aware retrieval cannot rely on event time from this prompt |
 
+Cap check (stage X0B, 10 calls, feat/eval-scaffold 19f19ed; 10 capped sessions re-extracted with the cap at 30; a direction, not a rate):
+
+| Finding | Figures | Consequence |
+|---|---|---|
+| The 12-fact cap was dropping facts | All 10 sessions returned more than 12: 13 to 24, mean 15.8; none reached 30 | Held: use a cap of 30 (about +9% cost per capped call, about +1.5% overall) |
+| The cap explains the two missing answers | Neither answer appears at cap 30 in any re-extracted gold session | Did not hold: the cause of those two misses is not established |
+| A single extraction pass gives a stable fact set | 111 of the original 120 facts reappear by quote match (92.5%); 9 replaced; 28% of the new facts match no original. Cap change and run-to-run variation are not separated | Open: needs an identical-prompt replicate before volume (gate proposed at 85% overlap) |
+| Quote check on the additional facts | 151 of 158 verbatim in the cited round (0.956); on facts with no original match 41 of 45 (0.911) | The extra facts are somewhat less well grounded |
+
 Cost extrapolation (random sample only; interval is sampling noise; the pool's longest sessions are 3.7 times longer than any sampled):
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
