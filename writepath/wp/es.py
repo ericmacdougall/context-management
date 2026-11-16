@@ -26,10 +26,12 @@ def _etype(j):
 
 
 class ES:
-    def __init__(self, url=None):
+    def __init__(self, url=None, role=None):
+        """role: 'projector' | 'eraser' | 'verifier' uses that role's own API key (D6); None the lab's admin key."""
         u = urllib.parse.urlparse(url or config.ES_URL)
         self.scheme, self.host, self.port = u.scheme, u.hostname, u.port
-        self.auth = config.es_auth_header()
+        self.role = role
+        self.auth = config.es_auth_header(role)
         self.conn = None
         self.write_requests = 0
 

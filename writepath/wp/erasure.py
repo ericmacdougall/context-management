@@ -265,9 +265,37 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
     return rec
 
 
+class ExternalVerifier:
+    """D2: the application does not verify. It waits for the separate verifier service (wp/verifier_service.py, its
+    own process and credentials) to move the job, reading only what the store wrote."""
+    def __init__(self, conn, slack_s=60.0, poll_s=0.5):
+        self.conn, self.slack, self.poll = conn, slack_s, poll_s
+
+    def complete(self, jid, expunge=True, wait_s=2.0):
+        t0 = self.conn.execute("select clock_timestamp()").fetchone()[0]
+        deadline = time.time() + wait_s + self.slack
+        while True:
+            st, err, v, upd, la, pdl, pp, created = self.conn.execute(
+                "select state, last_error_type, verify, updated_at, logical_at, physical_deadline, physical_pending, created_at "
+                "from erasure_jobs where job_id=%s", (jid,)).fetchone()
+            seen = upd is not None and upd >= t0
+            if st == "done":
+                return {"done": True, "receipt_state": "done", "verify": v, "logical_at": la, "external": True}
+            if st == "logically_erased" and seen:
+                return {"done": False, "receipt_state": "logically_erased_physical_purge_pending", "verify": v, "logical_at": la,
+                        "physical_deadline": pdl, "physical_pending": pp, "overdue": err == "physical_purge_overdue", "external": True,
+                        "logical_delay_s": round((la - created).total_seconds(), 3) if la else None}
+            if err == "residue" and seen:
+                return {"done": False, "receipt_state": "residue", "verify": v, "external": True}
+            if time.time() > deadline:
+                return {"done": False, "receipt_state": "verifier_unavailable", "external": True}
+            time.sleep(self.poll)
+
+
 def _physical(ks, verifier, jid, rec, physical, destroy_key, hb):
-    """Key purge (coalesced: covers every key deleted before it) then the verifier; returns the error type or None."""
-    v = verifier or Verifier()
+    """Key purge (coalesced: covers every key deleted before it) then the verifier; returns the error type or None.
+    verifier="external" (D2): wait for the separate verifier service instead of verifying in this process."""
+    v = ExternalVerifier(db.connect(application_name="wp-await-verifier")) if verifier == "external" else (verifier or Verifier())
     ts, attempts = time.time(), 0
     while True:
         attempts += 1
@@ -288,6 +316,8 @@ def _physical(ks, verifier, jid, rec, physical, destroy_key, hb):
         rec["steps"]["physical_attempts"], rec["steps"]["physical_s"] = attempts, round(time.time() - ts, 3)
         if res["done"]:
             return None
+        if res.get("receipt_state") == "verifier_unavailable":
+            return "verifier_unavailable"
         if res.get("receipt_state") != "logically_erased_physical_purge_pending":
             return "residue"
         if res.get("overdue"):

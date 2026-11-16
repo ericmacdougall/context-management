@@ -44,6 +44,8 @@ OUT=../results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.cleanup exp.d4_store_mark
   $PY -m exp.d3_identifier 5
   $PY -m exp.cleanup exp.d3_identifier
+  $PY -m exp.d2_verifier_process 5
+  $PY -m exp.cleanup exp.d2_verifier_process
   $PY -m exp.phys_purge
   $PY -m exp.cleanup exp.phys_purge
   $PY -m exp.races R1 R2 R3 40

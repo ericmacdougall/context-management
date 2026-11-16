@@ -213,3 +213,10 @@ no subject could reach done, and its EXPLAIN showed that enable_seqscan = off le
 tenant through the primary key (9.4 s per 5,000 at 100k). Fix: per-event GIN probes for the deletes and the residue
 counts (measured on that tenant: 55 ms per 5,000 events; residue 5 ms against 405 ms for the 4960f50 body). The run is
 repeated in full at the fixing commit with physical="wait".
+
+## Amendment 12 (2026-11-16, written before the run): D2 verifier as a separate process (exp/d2_verifier_process.py)
+R=5. PASS = fenced 5/5 (application process with only its own credential directory): cannot connect as wp_verifier;
+wp_erasure_complete as wp_app refused; a dishonest runner (placeholders skipped, fabricated zero ES counts) does not
+reach done; the honest runner with verifier="external" reaches done through the separate verifier process; AND control
+5/5 (one credential directory for every role): the dishonest runner reaches done while X's content is still in ES.
+Limits: one OS user (file permissions do not separate the processes); the runner holds the key-service credential.
