@@ -10,6 +10,7 @@ stream, the terminal event) is returned to the caller. Redaction and the egress 
 from __future__ import annotations
 
 import copy
+import json
 import uuid
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
@@ -59,19 +60,20 @@ def _noop_crash(point: str, idx: Optional[int] = None) -> None:
 
 class Registry:
     """Blocks the injector issued, by keyed hash. Provenance 'memory_injected' comes from an EXACT match against a value the port
-    itself handed out (never a marker pattern); a host that alters the block defeats the match (documented)."""
+    itself handed out (never a marker pattern); a host that alters the block defeats the match (documented).
+    Persistence: the (redacted) block text goes into the append-only content-addressed blob store in the same transaction as the REQ
+    record that references it (inside the hash chain); there is no separate table. A block that contained a secret is stored
+    redacted, so after a restart it no longer matches exactly (documented edge)."""
 
     def __init__(self, log: PortLog, stream: str, hasher: Hasher, scanner=None, red=None):
         self.log, self.stream, self.hasher, self.scanner, self.red = log, stream, hasher, scanner, red
-        self.texts: Dict[str, str] = log.issued(stream)
+        self.texts: Dict[str, str] = log.issued_blocks(stream)
+        self.persisted = set(self.texts)
 
     def add(self, text: str) -> str:
         h = self.hasher.h(text)
         if h not in self.texts:
             self.texts[h] = text
-            # the persisted copy is redacted (a secret inside recalled memory must not reach disk); the raw text stays in memory only.
-            # Consequence: after a restart a block that contained a secret no longer matches exactly (documented edge).
-            self.log.record_issued(self.stream, h, self.red(text, []) if self.red else text)
         return h
 
 
@@ -162,6 +164,8 @@ class PortTap:
         self.secret_policy, self.witness, self.stream_delivery, self.clock = secret_policy, witness, stream_delivery, clock
         self.crash = crash.hit if isinstance(crash, CrashPlan) else (crash or _noop_crash)
         self._reg: Dict[str, Registry] = {}
+        self._mcache: Dict[tuple, dict] = {}
+        self._cursor: Dict[str, dict] = {}
 
     def flush(self) -> None:
         """The real tap has nothing pending: both halves are durable before the data is returned. LateTap overrides this."""
@@ -201,18 +205,52 @@ class PortTap:
         return redact_obj(obj, self.scanner, self.hasher, counter)
 
     # ------------------------------------------------------------ request half
+    def _msg_entry(self, stream: str, m: dict, reg: Registry) -> dict:
+        """Per-message pipeline (guard, excision of registered blocks, redaction, hashing), cached by the message's canonical JSON so an
+        unchanged message costs one serialisation and a lookup on later calls (cost must not grow with history)."""
+        ck = (stream, cj(m))
+        ent = self._mcache.get(ck)
+        if ent is not None:
+            return ent
+        if self.guard is not None:
+            self.guard.check(m, "model request message")
+        _, mx, spans = excise_injected(self.provider, None, [m], reg)
+        counter: list = []
+        blobs: Dict[str, str] = {}
+        ref = self._put_msg(mx[0], blobs, counter)
+        ent = {"ref": ref, "blobs": blobs, "spans": spans, "red": len(counter), "persisted": False}
+        self._mcache[ck] = ent
+        return ent
+
     def _prepare(self, request: dict, stream_flag: bool):
         stream, session = self._stream_id()
-        if self.guard is not None:
-            try:
-                self.guard.check(request, "model request")
-            except Exception as e:                      # egress guard refusal: fail closed, tombstone keeps the sequence contiguous
-                self._append(stream, "BLOCK", None, {"reason": "egress_guard", "error": type(e).__name__}, new_call=True)
-                raise
         sysm, messages = shapes.split_request(self.provider, request)
         reg = self.registry(stream)
+        cur = self._cursor.get(stream)
+        p = 0
+        if cur:
+            pm = cur["msgs"]
+            lim = min(len(pm), len(messages))
+            while p < lim and messages[p] is pm[p]:
+                p += 1
+        keep = max(p - 8, 0)         # identity fast path for messages older than the last 8; the last 8 are re-verified by content
+        try:
+            if self.guard is not None:
+                self.guard.check({k: v for k, v in request.items() if k != "messages"}, "model request")
+            ents = cur["ents"][:keep] if cur else []
+            new_ents = []
+            for m in messages[keep:]:
+                e = self._msg_entry(stream, m, reg)
+                ents.append(e)
+                if not e["persisted"]:
+                    new_ents.append(e)
+        except Exception as e:                      # egress guard refusal: fail closed, tombstone keeps the sequence contiguous
+            if self.guard is not None and e.__class__.__name__ == "EgressLeak":
+                self._append(stream, "BLOCK", None, {"reason": "egress_guard", "error": type(e).__name__}, new_call=True)
+            raise
         injection_meta = None
-        sent = copy.deepcopy(request)
+        sent = dict(request)
+        sent["messages"] = list(messages)
         if self.injector is not None:
             from memcore.ports import Turn
             inj = self.injector.build(Turn(session_id=session, user_text=last_user_text(self.provider, messages), time=self.clock()))
@@ -220,19 +258,32 @@ class PortTap:
                 ih = reg.add(inj.block)
                 self._place(sent, inj.block)
                 injection_meta = {"h": ih, "ids": list(inj.used_ids), "dropped": inj.dropped, "placed_by": "tap", "len": len(inj.block)}
-        # structural excision from the ORIGINAL request (host-merged blocks); the tap's own placement is not in `request`
-        sysx, msgsx, spans = excise_injected(self.provider, sysm, messages, reg)
+        spans: List[dict] = []
+        for mi in range(keep, len(ents)):
+            spans += [dict(sp, msg=mi) for sp in ents[mi]["spans"]]
+        if cur:
+            spans = list(cur.get("spans_prefix", []))[:0] + spans
+        sysx, sspans = sysm, []
+        if reg.texts and sysm not in (None, "", []):
+            sysx, _, sspans = excise_injected(self.provider, sysm, [], reg)
+        spans += sspans
         if spans and injection_meta is None:
             injection_meta = {"h": spans[0]["h"], "ids": [], "placed_by": "host"}
-        counter: list = []
+        counter: list = [1] * sum(e["red"] for e in new_ents)
         blobs: Dict[str, str] = {}
-        mrefs = [self._put_msg(m, blobs, counter) for m in msgsx]
+        for e in new_ents:
+            blobs.update(e["blobs"])
+        mrefs = [e["ref"] for e in ents]
         sref = None
         if sysx not in (None, "", []):
             s = self._red(strip_media(sysx), counter)
             st = cj(s)
             sref = {"h": self.hasher.h(st)[:32], "k": self.hasher.h(st)[:20]}
             blobs[sref["h"]] = st
+        used_blocks = {sp["h"] for sp in spans} | ({injection_meta["h"]} if injection_meta else set())
+        for h in used_blocks:
+            if h not in reg.persisted and h in reg.texts:
+                blobs[h] = self._red(reg.texts[h], [])
         if injection_meta and injection_meta.get("placed_by") == "tap":
             if self.scanner.scan(reg.texts[injection_meta["h"]]):
                 counter.append(1)
@@ -246,10 +297,12 @@ class PortTap:
                 "msgs": body_msgs, "sys": sref, "tools_h": self.hasher.hj(tools) if tools else None,
                 "tool_names": sorted((t.get("name") or t.get("function", {}).get("name") or "?") for t in tools) if tools else [],
                 "injected": injection_meta, "spans": spans, "redactions": len(counter),
-                "pairing": shapes.check_pairing(self.provider, messages)}
+                "pairing": shapes.check_pairing(self.provider, messages[max(keep - 2, 0):])}
         if delta:
             body["delta"] = delta
         self._pending_keys = (stream, [m["k"] for m in mrefs])
+        self._touched = (new_ents, used_blocks)
+        self._cursor_next = (stream, {"msgs": list(messages), "ents": ents})
         return stream, sent, body, blobs, reg
 
     def _delta(self, stream: str, mrefs: List[dict]):
@@ -267,21 +320,58 @@ class PortTap:
             return None, mrefs
         return {"base": last["call"], "with_resp": bool(last["resp_k"]), "p": p, "digest": sha_keys(full[:p])}, mrefs[p:]
 
+    def seed(self, messages: List[dict]) -> None:
+        """Resumed session: record a SIGNED baseline of the history the host resumes with (keys only, never ingested as events)."""
+        stream, _ = self._stream_id()
+        reg = self.registry(stream)
+        keys = [self._msg_entry(stream, m, reg)["ref"]["k"] for m in messages]
+        digest = sha_keys(keys)
+        self._append(stream, "SEED", None, {"keys": keys, "digest": digest, "sig": self.hasher.h("seed|%s|%s" % (stream, digest))}, new_call=True)
+
+    def backfill(self, gap_kind: str, key: str, authorized_by: str, backfill_hasher: Hasher) -> None:
+        """Authorised backfill record that clears a detected gap (e.g. a bypass); signed with a key the ingester trusts separately."""
+        stream, _ = self._stream_id()
+        sig = backfill_hasher.h("backfill|%s|%s|%s|%s" % (stream, gap_kind, key, authorized_by))
+        self._append(stream, "BACKFILL", None, {"gap_kind": gap_kind, "key": key, "authorized_by": authorized_by, "sig": sig}, new_call=True)
+
+    def recover_unconfirmed(self, recoverer) -> int:
+        """Ask a provider-side recoverer for the response of every REQ with no RESP record. Interface only: as of 2026-11-16 neither
+        Anthropic Messages nor OpenAI chat documents an idempotency key or retrieval of a synchronous response (NOT AVAILABLE)."""
+        stream, _ = self._stream_id()
+        reg = self.registry(stream)
+        recs = self.log.read(stream)
+        answered = {r["call_n"] for r in recs if r["kind"] == "RESP"}
+        n = 0
+        for r in recs:
+            if r["kind"] != "REQ" or r["call_n"] in answered:
+                continue
+            body = json.loads(r["body"])
+            resp = recoverer(body["req_id"], r["call_n"])
+            if not resp:
+                continue
+            msg = shapes.response_message(self.provider, resp)
+            stop, done = shapes.stop_info(self.provider, resp)
+            self._resp_record(stream, r["call_n"], reg, "recovered", msg, stop, done, [], resp.get("id"), resp.get("usage"), resp.get("model"))
+            n += 1
+        return n
+
     def _place(self, sent: dict, block: str) -> None:
         """Place the injected block as its OWN block in the last user message (never merged into the user's text). tool_result blocks
         must stay first in a user message (Anthropic: text after tool_results), so the block goes after any leading tool_results."""
-        msgs = sent.get("messages") or []
-        for m in reversed(msgs):
+        msgs = sent["messages"]
+        for idx in range(len(msgs) - 1, -1, -1):
+            m = msgs[idx]
             if m.get("role") == "user":
                 c = m.get("content")
                 parts = [{"type": "text", "text": c}] if isinstance(c, str) else list(c or [])
                 i = 0
                 while i < len(parts) and isinstance(parts[i], dict) and parts[i].get("type") == "tool_result":
                     i += 1
-                m["content"] = parts[:i] + [{"type": "text", "text": block}] + parts[i:]
+                m2 = dict(m)
+                m2["content"] = parts[:i] + [{"type": "text", "text": block}] + parts[i:]
+                msgs[idx] = m2
                 return
         msgs.append({"role": "user", "content": [{"type": "text", "text": block}]})
-        sent["messages"] = msgs
 
     # ------------------------------------------------------------ response half
     def _resp_record(self, stream, call_n, reg, status, msg, stop, turn_complete, bad, resp_id, usage, model, err=None):
@@ -306,6 +396,11 @@ class PortTap:
         stream_id, sent, body, blobs, reg = self._prepare(request, stream)
         self.crash("before_req_log")
         seq, call_n, _ = self._append(stream_id, "REQ", None, body, blobs, new_call=True)
+        new_ents, used_blocks = self._touched
+        for e in new_ents:
+            e["persisted"] = True
+        self._cursor[self._cursor_next[0]] = self._cursor_next[1]
+        reg.persisted |= used_blocks
         if not hasattr(self, "_last"):
             self._last = {}
         self._last[stream_id] = {"call": call_n, "keys": self._pending_keys[1], "resp_k": None}

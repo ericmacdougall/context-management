@@ -126,6 +126,7 @@ class States(Base):
         self.assertEqual(n, 1)
         rig.sync()
         self.assertEqual(rig.ing.completeness(rig.stream_id)["state"], "complete")
+        self.assertEqual([e["prov"] for e in rig.events()], ["user", "assistant"])
         r = [e for e in rig.events() if e["prov"] == "assistant"]
         self.assertEqual(len(r), 1)
         self.assertTrue(json.loads(r[0]["meta"]).get("recovered"))

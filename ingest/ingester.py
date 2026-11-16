@@ -21,13 +21,15 @@ CREATE TABLE IF NOT EXISTS applied(stream TEXT NOT NULL, seq INTEGER NOT NULL, h
 CREATE TABLE IF NOT EXISTS calls(stream TEXT NOT NULL, call_n INTEGER NOT NULL, state TEXT NOT NULL, req_seq INTEGER, keys TEXT,
   roles TEXT, sys_k TEXT, resp_key TEXT, resp_ok INTEGER, PRIMARY KEY(stream, call_n));
 CREATE TABLE IF NOT EXISTS reqs(stream TEXT NOT NULL, call_n INTEGER NOT NULL, body TEXT NOT NULL, refs TEXT NOT NULL DEFAULT '[]', resp_ref TEXT, PRIMARY KEY(stream, call_n));
+CREATE TABLE IF NOT EXISTS hist(stream TEXT NOT NULL, idx INTEGER NOT NULL, k TEXT NOT NULL, PRIMARY KEY(stream, idx));
+CREATE TABLE IF NOT EXISTS seen(stream TEXT NOT NULL, k TEXT NOT NULL, PRIMARY KEY(stream, k));
 CREATE TABLE IF NOT EXISTS gaps(id INTEGER PRIMARY KEY AUTOINCREMENT, stream TEXT NOT NULL, kind TEXT NOT NULL, from_seq INTEGER NOT NULL,
   to_seq INTEGER NOT NULL, blocking INTEGER NOT NULL, detail TEXT, opened REAL, closed REAL, closed_by TEXT, UNIQUE(stream, kind, from_seq));
 CREATE TABLE IF NOT EXISTS witness(stream TEXT PRIMARY KEY, seq INTEGER NOT NULL, hash TEXT NOT NULL);
 """
 
 BLOCKING = {"seq_hole": 1, "tail_truncated": 1, "chain_break": 1, "conflicting_duplicate": 1, "blob_missing": 1,
-            "unlogged_assistant_message": 1, "delta_mismatch": 1, "assistant_message_not_in_log": 1, "history_rewritten": 0}
+            "unlogged_assistant_message": 1, "delta_mismatch": 1, "seed_invalid": 1, "assistant_message_not_in_log": 1, "history_rewritten": 0}
 
 
 class Fenced(Exception):
@@ -36,10 +38,12 @@ class Fenced(Exception):
 
 class Ingester:
     def __init__(self, path: str, blob_source: Callable[[str], Optional[str]], name: str = "ing", sync: str = "FULL",
-                 hooks: Optional[Dict[str, Callable]] = None, fence: bool = True, unique: bool = True, state_guard: bool = True):
+                 hooks: Optional[Dict[str, Callable]] = None, fence: bool = True, unique: bool = True, state_guard: bool = True, chain: bool = True,
+                 seed_verifier: Optional[Callable[[str], str]] = None, backfill_verifier: Optional[Callable[[str], str]] = None):
         """fence/unique=False exist only to build the race control (compare-and-set and event uniqueness removed)."""
         self.path, self.blob, self.name, self.hooks = path, blob_source, name, hooks or {}
-        self.fence, self.unique, self._n, self.state_guard = fence, unique, 0, state_guard
+        self.fence, self.unique, self._n, self.state_guard, self.chain = fence, unique, 0, state_guard, chain
+        self.seed_verifier, self.backfill_verifier = seed_verifier, backfill_verifier
         self.c = connect(path, sync)
         self.c.executescript(SCHEMA)
         self.stats = {"fenced": 0, "dup_event_suppressed": 0, "records_applied": 0, "lock_wait_s": 0.0, "apply_s": 0.0}
@@ -126,7 +130,7 @@ class Ingester:
                 self.hooks["in_apply"](self.name, stream, token)
             ehead = (c.execute("SELECT ehead FROM wm WHERE stream=?", (stream,)).fetchone() or (GENESIS,))[0]
             for r in run:
-                if r["prev"] != head and self.fence:   # (the chain check is a second fence; the race control removes it too)
+                if r["prev"] != head and self.chain:   # (a second fence; the ablation turns it off separately)
                     self._gap(stream, "chain_break", r["seq"], r["seq"], {"expected_prev": head, "got_prev": r["prev"]})
                     break                                  # held: records after a broken chain are not applied
                 if sha(r["prev"] + "|" + r["kind"] + "|" + r["body"]) != r["hash"]:
@@ -216,10 +220,27 @@ class Ingester:
             return None
         if kind == "RESP":
             return self._apply_resp(stream, n, seq, body)
+        if kind == "SEED":
+            from .tap import sha_keys
+            ok = (self.seed_verifier is not None and sha_keys(body["keys"]) == body["digest"]
+                  and self.seed_verifier("seed|%s|%s" % (stream, body["digest"])) == body["sig"])
+            if not ok:
+                self._gap(stream, "seed_invalid", seq, seq, {"digest": body.get("digest")})
+                return None
+            base = c.execute("SELECT COALESCE(MAX(idx),-1) FROM hist WHERE stream=?", (stream,)).fetchone()[0]
+            for i, k in enumerate(body["keys"]):
+                c.execute("INSERT OR IGNORE INTO hist VALUES(?,?,?)", (stream, base + 1 + i, k))
+                c.execute("INSERT OR IGNORE INTO seen VALUES(?,?)", (stream, k))
+            self._emit(stream, 0, "meta", seq, 0, "port", "seed_baseline", "info", cj({"n": len(body["keys"]), "digest": body["digest"]}), seq)
+            return None
         if kind == "BACKFILL":
-            c.execute("UPDATE gaps SET closed=?, closed_by='backfill' WHERE stream=? AND closed IS NULL AND kind IN "
-                      "('unlogged_assistant_message','assistant_message_not_in_log') AND detail LIKE ?",
-                      (time.time(), stream, '%"key":"' + body.get("key", "?") + '"%'))
+            msg = "backfill|%s|%s|%s|%s" % (stream, body.get("gap_kind"), body.get("key"), body.get("authorized_by"))
+            if self.backfill_verifier is None or self.backfill_verifier(msg) != body.get("sig"):
+                self._emit(stream, 0, "meta", seq, 1, "port", "backfill_rejected", "info", cj({"by": body.get("authorized_by")}), seq)
+                return None
+            c.execute("UPDATE gaps SET closed=?, closed_by=? WHERE stream=? AND closed IS NULL AND kind=? AND detail LIKE ?",
+                      (time.time(), "backfill:" + str(body.get("authorized_by")), stream, body.get("gap_kind"), '%"key":"' + str(body.get("key")) + '"%'))
+            self._emit(stream, 0, "meta", seq, 2, "port", "backfill_applied", "info", cj({"by": body.get("authorized_by"), "kind": body.get("gap_kind")}), seq)
             return None
         self._emit(stream, n, "meta", 0, 0, "port", "unknown_record_kind", "info", kind, seq)
         return None
@@ -230,6 +251,24 @@ class Ingester:
         b["msgs"] = json.loads(row[1])           # full reconstructed refs (the log record may hold only the delta)
         return b
 
+    @staticmethod
+    def _lcsub(R: List[str], H: List[str]):
+        """Longest common contiguous run of keys between request R and logical history H -> (start_in_R, length). Ties prefer the run
+        ending latest in H. O(matches), not O(|R|*|H|)."""
+        pos: Dict[str, List[int]] = {}
+        for j, k in enumerate(H):
+            pos.setdefault(k, []).append(j)
+        best = (0, 0, -1)               # (length, end_in_H, start_in_R)
+        runs: Dict[int, int] = {}
+        for i, k in enumerate(R):
+            new: Dict[int, int] = {}
+            for j in pos.get(k, ()):
+                new[j] = runs.get(j - 1, 0) + 1
+                if (new[j], j) > (best[0], best[1]):
+                    best = (new[j], j, i - new[j] + 1)
+            runs = new
+        return (best[2], best[0]) if best[0] else (0, 0)
+
     def _apply_resp(self, stream: str, n: int, seq: int, body: dict) -> Optional[str]:
         c = self.c
         status = body["status"]
@@ -238,39 +277,51 @@ class Ingester:
         if body.get("msg"):
             c.execute("UPDATE reqs SET resp_ref=? WHERE stream=? AND call_n=?", (cj(body["msg"]), stream, n))
         row = c.execute("SELECT state FROM calls WHERE stream=? AND call_n=?", (stream, n)).fetchone()
-        if row is None or (row[0] == "confirmed" and self.state_guard):
+        if row is None or (row[0] in ("confirmed", "recovered") and self.state_guard):
+            return None
+        req = self._req_body(stream, n, seq)
+        provider = req["provider"]
+        recovered = status == "recovered"
+        if recovered and row[0] != "superseded":
+            status = "complete" if body.get("turn_complete") else "turn_incomplete"      # same path as a confirmed call, flagged
+        elif recovered:
+            c.execute("UPDATE calls SET state='recovered' WHERE stream=? AND call_n=?", (stream, n))
+            msg = self._blocks(body["msg"]["h"], provider)
+            for bi, b in enumerate(shapes.blocks_of_message(provider, msg)):
+                self._emit(stream, n, "resp", 0, bi, b.prov, b.kind, "complete", cj(b.data), seq,
+                           {"tool_id": b.tool_id, "stop": body.get("stop"), "resp_id": body.get("resp_id"), "recovered": True})
             return None
         if status in ("rejected", "failed_unknown"):
             c.execute("UPDATE calls SET state=? WHERE stream=? AND call_n=?", ("rejected" if status == "rejected" else "unconfirmed", stream, n))
             self._emit(stream, n, "meta", 0, 0, "port", "call_" + status, "info", cj({"error": body.get("error")}), seq)
             return None
-        req = self._req_body(stream, n, seq)
-        provider = req["provider"]
         keys = [m["k"] for m in req["msgs"]]
-        base = c.execute("SELECT call_n, keys, resp_key FROM calls WHERE stream=? AND state='confirmed' ORDER BY call_n DESC LIMIT 1",
-                         (stream,)).fetchone()
         roles = [m["role"] for m in req["msgs"]]
-        tail_from, note, skip_pos = 0, {}, None
-        if base:
-            bkeys = json.loads(base[1])
-            full = bkeys + ([base[2]] if base[2] else [])
-            p = 0
-            while p < len(keys) and p < len(full) and keys[p] == full[p]:
-                p += 1
-            if p == len(full):
-                tail_from = p
-            elif keys == bkeys:
-                note, tail_from = {"retry_of": base[0]}, len(keys)
-            elif base[2] and p == len(bkeys):
-                note, tail_from, skip_pos = {"response_mismatch": True}, p, p
-                self._gap(stream, "assistant_message_not_in_log", seq, seq, {"call": n, "pos": p, "key": keys[p] if p < len(keys) else None})
-            else:
-                note, tail_from = {"history_rewritten": True, "diverged_at": p}, p
-                self._gap(stream, "history_rewritten", seq, seq, {"call": n, "diverged_at": p})
-        # an incomplete baseline response may legitimately appear in history at len(bkeys)
-        partial_pos = len(json.loads(base[1])) if base and not base[2] else None
+        H = [r[0] for r in c.execute("SELECT k FROM hist WHERE stream=? ORDER BY idx", (stream,))]
+        seen = {r[0] for r in c.execute("SELECT k FROM seen WHERE stream=?", (stream,))} if H else set()
+        base = c.execute("SELECT call_n, keys, resp_key FROM calls WHERE stream=? AND state='confirmed' ORDER BY call_n DESC LIMIT 1", (stream,)).fetchone()
+        note: dict = {"recovered": True} if recovered else {}
+        if base and keys == json.loads(base[1]) and not recovered:
+            note = {"retry_of": base[0]}
+            s, L = 0, len(keys)
+        elif H:
+            s, L = self._lcsub(keys, H)
+            if L == 0:
+                s, L = max(len(keys) - 1, 0), 0          # nothing aligns: only the last message is the new tail, the rest is host-authored
+        else:
+            s, L = 0, 0
+        tail_from = s + L
+        # leading, unaligned messages: host-authored (compaction summaries, re-seeded context), recorded once, never as user content
+        for i in range(0, s if H or "retry_of" in note else 0):
+            if keys[i] in seen:
+                continue
+            msg = self._blocks(req["msgs"][i]["h"], provider)
+            for bi, b in enumerate(shapes.blocks_of_message(provider, msg)):
+                self._emit(stream, n, "host", i, bi, "host", "host_authored_" + str(roles[i]), "complete", cj(b.data), seq, {"tool_id": b.tool_id})
+            c.execute("INSERT OR IGNORE INTO seen VALUES(?,?)", (stream, keys[i]))
+        partial_ok = bool(base) and not base[2]
         for i in range(tail_from, len(keys)):
-            if roles[i] == "assistant" and i != skip_pos and i != partial_pos:
+            if roles[i] == "assistant" and not (partial_ok and i == tail_from):
                 self._gap(stream, "unlogged_assistant_message", seq, seq, {"call": n, "pos": i, "key": keys[i]})
         # ---- events: system (when changed), request tail, injected marker, response blocks
         last_sys = c.execute("SELECT sys_k FROM calls WHERE stream=? AND state='confirmed' ORDER BY call_n DESC LIMIT 1", (stream,)).fetchone()
@@ -280,11 +331,16 @@ class Ingester:
             sb = sysv if isinstance(sysv, list) else [{"type": "text", "text": sysv}]
             for bi, b in enumerate(sb):
                 self._emit(stream, n, "sys", 0, bi, "system", "text", "complete", cj(b), seq)
+        hn = len(H)
         for i in range(tail_from, len(keys)):
             msg = self._blocks(req["msgs"][i]["h"], provider)
             for bi, b in enumerate(shapes.blocks_of_message(provider, msg)):
                 self._emit(stream, n, "req", i, bi, b.prov, b.kind, "complete", cj(b.data), seq,
                            {"tool_id": b.tool_id, **note, **({"unlogged_assistant": True} if roles[i] == "assistant" else {})})
+            if "retry_of" not in note:
+                c.execute("INSERT OR IGNORE INTO hist VALUES(?,?,?)", (stream, hn, keys[i]))
+                hn += 1
+            c.execute("INSERT OR IGNORE INTO seen VALUES(?,?)", (stream, keys[i]))
         inj = req.get("injected")
         if inj:
             self._emit(stream, n, "inj", 0, 0, "memory_injected", "block", "complete",
@@ -302,9 +358,20 @@ class Ingester:
                 if bi in quotes:
                     meta["quotes_injected"] = quotes[bi]
                 self._emit(stream, n, "resp", 0, bi, b.prov, kind, "incomplete" if bi in bad else st, cj(b.data), seq, meta)
+            if status in ("complete", "turn_incomplete"):
+                if "retry_of" in note and H and H[-1] == (base[2] if base else None):
+                    c.execute("UPDATE hist SET k=? WHERE stream=? AND idx=?", (resp_key, stream, len(H) - 1))     # retry: the host saw THIS answer
+                else:
+                    c.execute("INSERT OR IGNORE INTO hist VALUES(?,?,?)", (stream, hn, resp_key))
+                c.execute("INSERT OR IGNORE INTO seen VALUES(?,?)", (stream, resp_key))
         resp_ok = 1 if status == "complete" else 0
         c.execute("UPDATE calls SET state='confirmed', resp_key=?, resp_ok=? WHERE stream=? AND call_n=?",
                   (resp_key if status in ("complete", "turn_incomplete") else None, resp_ok, stream, n))
+        # an earlier unconfirmed call whose request is a prefix of this one is superseded (this call is its retry)
+        for (pn, pk) in c.execute("SELECT call_n, keys FROM calls WHERE stream=? AND state IN ('unconfirmed','requested') AND call_n<?", (stream, n)).fetchall():
+            pkeys = json.loads(pk or "[]")
+            if pkeys == keys[:len(pkeys)]:
+                c.execute("UPDATE calls SET state='superseded' WHERE stream=? AND call_n=?", (stream, pn))
         return None
 
     # ------------------------------------------------------------ witness, claims
@@ -329,17 +396,24 @@ class Ingester:
         return [dict(zip(("id", "kind", "from_seq", "to_seq", "blocking", "detail", "closed", "closed_by"), r)) for r in self.c.execute(q, (stream,))]
 
     def completeness(self, stream: str) -> dict:
+        """state: 'complete' | 'complete_except_unconfirmed' (ids listed) | 'incomplete' (blocking gap or held records)."""
         wm = self.watermark(stream)[0]
         blk = [g for g in self.gaps(stream) if g["blocking"]]
-        inflight = [r[0] for r in self.c.execute("SELECT call_n FROM calls WHERE stream=? AND state='requested'", (stream,))]
+        unconf = [r[0] for r in self.c.execute("SELECT call_n FROM calls WHERE stream=? AND state IN ('requested','unconfirmed') ORDER BY call_n", (stream,))]
         pend = self.c.execute("SELECT COUNT(*) FROM pending WHERE stream=?", (stream,)).fetchone()[0]
-        return {"complete_up_to": wm if not blk and not pend else None, "watermark": wm, "blocking_gaps": blk, "pending_beyond_gap": pend,
-                "in_flight_calls": inflight}
+        state = "incomplete" if (blk or pend) else ("complete_except_unconfirmed" if unconf else "complete")
+        return {"state": state, "complete_up_to": wm if state == "complete" else None, "watermark": wm, "blocking_gaps": blk,
+                "pending_beyond_gap": pend, "unconfirmed_calls": unconf, "in_flight_calls": unconf}
 
     def claim_complete(self, stream: str, n: int) -> bool:
-        """'Memory is complete up to log seq n'. False when a blocking gap is open or records beyond the watermark are held."""
+        """'Memory is complete up to log seq n' with NOTHING outstanding: false across an unconfirmed call or a blocking gap."""
         c = self.completeness(stream)
-        return c["complete_up_to"] is not None and n <= c["complete_up_to"]
+        return c["state"] == "complete" and n <= c["watermark"]
+
+    def claim_complete_except(self, stream: str, n: int):
+        """(ok, unconfirmed_call_ids): complete up to n apart from the listed calls whose response is not confirmed."""
+        c = self.completeness(stream)
+        return (c["state"] in ("complete", "complete_except_unconfirmed") and n <= c["watermark"]), c["unconfirmed_calls"]
 
     def events(self, stream: str, include_port: bool = False) -> List[dict]:
         q = "SELECT ord,ikey,call_n,side,pos,blk,prov,kind,status,content,log_seq,meta FROM events WHERE stream=?" + \

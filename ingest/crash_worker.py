@@ -37,5 +37,24 @@ def main(cfg: dict) -> None:
     sys.exit(0)
 
 
+
+
+def stream_contract(cfg: dict) -> None:
+    """Crash mid-stream (os._exit) while the host consumes the stream; the host's received events are written to the truth file."""
+    provider, delivery, at = cfg["provider"], cfg["delivery"], cfg["at"]
+
+    def hit(p, idx=None):
+        if p == "mid_stream" and idx == at:
+            os._exit(137)
+    script = [{"content": [text("a long answer made of several small chunks of text")]}] if provider == "anthropic" else \
+        [{"message": {"role": "assistant", "content": "a long answer made of several small chunks of text"}}]
+    rig = Rig(cfg["dir"], provider, script, stream=True, truth=True, tap_kw={"crash": hit, "stream_delivery": delivery})
+    rig.msgs.append({"role": "user", "content": "q"})
+    for ev in rig.tap.call(rig.request(), stream=True):
+        rig.truth.add(ev="host_event", n=1)
+    sys.exit(0)
+
+
 if __name__ == "__main__":
-    main(json.loads(sys.argv[1]))
+    cfg = json.loads(sys.argv[1])
+    (stream_contract if cfg.get("mode") == "stream_contract" else main)(cfg)

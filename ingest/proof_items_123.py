@@ -63,7 +63,12 @@ def _crash_run(provider: str, stream: bool, point: str, k: int, tap: str) -> dic
         completed = sorted({t["n"] for t in truth if t["ev"] == "completed"})
         returned = sorted({t["n"] for t in truth if t["ev"] == "host_received"})
         have_resp = sorted({e["call_n"] for e in got if e["side"] == "resp" and e["status"] == "complete"})
-        return {"provider": provider, "stream": stream, "point": point, "k": k, "tap": tap, "exit": r.returncode, "stderr": r.stderr[-200:],
+        recv = len([t for t in truth if t["ev"] == "received"])
+        nrec = sum(1 for r in log.read(streams[0])) if streams else 0
+        exp_recv = (k - 1) + (0 if point in ("before_req_log", "after_req_log_before_send") else 1)
+        exp_recs = 2 * (k - 1) + {"before_req_log": 0, "after_req_log_before_send": 1, "after_send_before_resp_log": 1, "mid_stream": 1}.get(point, 2)
+        return {"stub_received_calls": recv, "expected_received_calls": exp_recv, "log_records": nrec, "expected_log_records": exp_recs,
+                "provider": provider, "stream": stream, "point": point, "k": k, "tap": tap, "exit": r.returncode, "stderr": r.stderr[-200:],
                 "got": _tuples(got), "expected": expected_events(point, k), "inflight_got": comp.get("in_flight_calls") or [], "log_streams": len(streams),
                 "inflight_expected": expected_inflight(point, k), "stub_completed": completed, "host_received": returned,
                 "ingested_complete_resp_calls": have_resp, "blocking_gaps": comp.get("blocking_gaps"), "n_events": len(got), "truth_lines": len(truth)}
@@ -90,7 +95,8 @@ def item1(out: str) -> dict:
                "control_runs": len(ctl), "control_completed_turn_absent": len(ctl_lost), "control_returned_turn_lost": len(ctl_returned_lost),
                "real_tap_completed_turn_absent": len(real_lost),
                "real_tap_absent_points": sorted({r["point"] for r in real_lost}),
-               "min_events_examined": min(r["n_events"] for r in runs), "min_truth_lines": min(r["truth_lines"] for r in runs)}
+               "min_events_examined": min(r["n_events"] for r in runs), "min_truth_lines": min(r["truth_lines"] for r in runs),
+               "restated_witness_cells_ok": sum(1 for r in runs if r["stub_received_calls"] == r["expected_received_calls"] and r["log_records"] == r["expected_log_records"])}
     path = write_artifact(out, "item1", {"matrix": "5 points x 4 modes x k in {1,3}", "n_calls": 4}, {"real": runs, "control": ctl}, summary)
     summary["artifact"] = path
     return summary
@@ -140,8 +146,8 @@ def item1b(out: str) -> dict:
 
 
 # --------------------------------------------------------------------------- item 2
-def _baseline(tmp: str, seed: int) -> Tuple[Rig, List[dict], List[list]]:
-    rig = scripted_conversation(Rig, tmp, 30, seed=seed)
+def _baseline(tmp: str, seed: int, provider: str = "anthropic") -> Tuple[Rig, List[dict], List[list]]:
+    rig = scripted_conversation(Rig, tmp, 30, seed=seed, provider=provider)
     recs = rig.log.read(rig.stream_id)
     base = Ingester(os.path.join(tmp, "base.db"), rig.log.blob)
     base.deliver(recs)
@@ -162,12 +168,12 @@ def _plan(recs: List[dict], rnd: random.Random) -> List[List[dict]]:
     return batches
 
 
-def item2_delivery(out: str) -> dict:
+def item2_delivery(out: str, provider: str = "anthropic", tag: str = "item2a") -> dict:
     runs = []
     for seed in SEEDS:
         tmp = tmpdir()
         try:
-            rig, recs, base_sig = _baseline(tmp, seed)
+            rig, recs, base_sig = _baseline(tmp, seed, provider)
             rnd = random.Random(seed)
             batches = _plan(recs, rnd)
             ing = Ingester(os.path.join(tmp, "ing.db"), rig.log.blob)
@@ -195,11 +201,11 @@ def item2_delivery(out: str) -> dict:
     summary = {"seeds": len(runs), "pass": len(ok), "control_violations": sum(r["control_violation"] for r in runs),
                "min_records": min(r["n_records"] for r in runs), "min_deliveries": min(r["deliveries"] for r in runs),
                "seeds_with_transient_gap": sum(1 for r in runs if r["transient_gaps_seen"] > 0)}
-    summary["artifact"] = write_artifact(out, "item2a", {"seeds": SEEDS, "calls": 30, "copies": "1-3", "batch": "1-7"}, runs, summary)
+    summary["artifact"] = write_artifact(out, tag, {"seeds": SEEDS, "calls": 30, "copies": "1-3", "batch": "1-7", "provider": provider}, runs, summary)
     return summary
 
 
-def _thread_ingester(path, blob_path, name, stream, barrier, rounds, result, fence=True, unique=True, chunk_q=None, state_guard=True):
+def _thread_ingester(path, blob_path, name, stream, barrier, rounds, result, fence=True, unique=True, chunk_q=None, state_guard=True, chain=True):
     log = PortLog(blob_path)
     times = []
 
@@ -209,7 +215,7 @@ def _thread_ingester(path, blob_path, name, stream, barrier, rounds, result, fen
                 barrier.wait(timeout=5)
             except threading.BrokenBarrierError:
                 pass
-    ing = Ingester(path, log.blob, name=name, hooks={"after_snapshot": after_snapshot}, fence=fence, unique=unique, state_guard=state_guard)
+    ing = Ingester(path, log.blob, name=name, hooks={"after_snapshot": after_snapshot}, fence=fence, unique=unique, state_guard=state_guard, chain=chain)
     for r in range(rounds):
         chunk_q[r].wait()                     # main has delivered this chunk
         ing.drain(stream)
@@ -218,24 +224,24 @@ def _thread_ingester(path, blob_path, name, stream, barrier, rounds, result, fen
     result[name] = {"stats": ing.stats, "intervals": times}
 
 
-def item2_race_threads(out: str, fence=True, unique=True, tag="item2b", state_guard=True) -> dict:
+def item2_race_threads(out: str, fence=True, unique=True, tag="item2b", state_guard=True, chain=True, provider="anthropic") -> dict:
     global barrier_after
     runs = []
     seeds = SEEDS[:10]
     for seed in seeds:
         tmp = tmpdir()
         try:
-            rig, recs, base_sig = _baseline(tmp, seed)
+            rig, recs, base_sig = _baseline(tmp, seed, provider)
             stream = rig.stream_id
             store = os.path.join(tmp, "shared.db")
-            seed_ing = Ingester(store, rig.log.blob, name="seed", fence=fence, unique=unique)
+            seed_ing = Ingester(store, rig.log.blob, name="seed", fence=fence, unique=unique, chain=chain, state_guard=state_guard)
             chunks = [recs[i:i + 6] for i in range(0, len(recs), 6)]
             rounds = len(chunks)
             barrier = threading.Barrier(2)
             barrier_after = threading.Barrier(3)
             ready = [threading.Event() for _ in range(rounds)]
             result: Dict[str, dict] = {}
-            ts = [threading.Thread(target=_thread_ingester, args=(store, rig.logp, n, stream, barrier, rounds, result, fence, unique, ready, state_guard))
+            ts = [threading.Thread(target=_thread_ingester, args=(store, rig.logp, n, stream, barrier, rounds, result, fence, unique, ready, state_guard, chain))
                   for n in ("A", "B")]
             for t in ts:
                 t.start()
@@ -245,9 +251,10 @@ def item2_race_threads(out: str, fence=True, unique=True, tag="item2b", state_gu
                 barrier_after.wait(timeout=30)
             for t in ts:
                 t.join()
-            chk = Ingester(store, rig.log.blob, name="chk", fence=fence, unique=unique)
+            chk = Ingester(store, rig.log.blob, name="chk", fence=fence, unique=unique, chain=chain, state_guard=state_guard)
             sig = event_sig(chk.events(stream))
-            ikeys = [s[0] if unique else s[0].split("|")[0:5].__str__() for s in sig]
+            sig = [["|".join(s[0].split("|")[:5]), s[1], s[2]] for s in sig]      # control ingesters add a per-ingester suffix to the key
+            ikeys = [s[0] for s in sig]
             base_keys = [s[0] for s in base_sig]
             iv = []
             for r in range(rounds):
@@ -267,7 +274,10 @@ def item2_race_threads(out: str, fence=True, unique=True, tag="item2b", state_gu
     summary = {"runs": len(runs), "identical_to_baseline": len(ok), "runs_with_fencing": sum(1 for r in runs if r["fenced"] >= 1),
                "total_fenced": sum(r["fenced"] for r in runs), "runs_with_measured_overlap": sum(1 for r in runs if r["overlapping_rounds"] >= 1),
                "runs_with_duplicates": sum(1 for r in runs if r["dup_rows"] > 0)}
-    summary["artifact"] = write_artifact(out, tag, {"seeds": seeds, "threads": 2, "fence": fence, "unique": unique, "state_guard": state_guard}, runs, summary)
+    if tag is None:
+        summary["runs_detail"] = runs
+        return summary
+    summary["artifact"] = write_artifact(out, tag, {"seeds": seeds, "threads": 2, "fence": fence, "unique": unique, "state_guard": state_guard, "chain": chain, "provider": provider}, runs, summary)
     return summary
 
 
@@ -293,14 +303,14 @@ def _proc_ingester(args):
     return {"name": name, "stats": ing.stats, "iv": iv}
 
 
-def item2_race_procs(out: str) -> dict:
+def item2_race_procs(out: str, provider: str = "anthropic", tag: str = "item2c") -> dict:
     runs = []
     seeds = SEEDS[:5]
     ctx = mp.get_context("spawn")
     for seed in seeds:
         tmp = tmpdir()
         try:
-            rig, recs, base_sig = _baseline(tmp, seed)
+            rig, recs, base_sig = _baseline(tmp, seed, provider)
             stream = rig.stream_id
             store = os.path.join(tmp, "shared.db")
             seed_ing = Ingester(store, rig.log.blob, name="seed")
@@ -332,16 +342,16 @@ def item2_race_procs(out: str) -> dict:
             shutil.rmtree(tmp, ignore_errors=True)
     summary = {"runs": len(runs), "identical_to_baseline": sum(r["identical_to_baseline"] for r in runs),
                "runs_with_fencing": sum(1 for r in runs if r["fenced"] >= 1), "runs_with_measured_overlap": sum(1 for r in runs if r["overlapping_rounds"] >= 1)}
-    summary["artifact"] = write_artifact(out, "item2c", {"seeds": seeds, "processes": 2}, runs, summary)
+    summary["artifact"] = write_artifact(out, tag, {"seeds": seeds, "processes": 2, "provider": provider}, runs, summary)
     return summary
 
 
-def item2_zombie(out: str) -> dict:
+def item2_zombie(out: str, provider: str = "anthropic", tag: str = "item2d") -> dict:
     runs = []
     for seed in SEEDS[:10]:
         tmp = tmpdir()
         try:
-            rig, recs, base_sig = _baseline(tmp, seed)
+            rig, recs, base_sig = _baseline(tmp, seed, provider)
             stream = rig.stream_id
             store = os.path.join(tmp, "shared.db")
             Ingester(store, rig.log.blob, name="seed").deliver(recs)
@@ -373,7 +383,7 @@ def item2_zombie(out: str) -> dict:
             shutil.rmtree(tmp, ignore_errors=True)
     ok = [r for r in runs if r["z_fenced"] >= 1 and r["z_records_applied"] == 0 and r["events_final"] == r["events_after_B"] and r["identical_to_baseline"]]
     summary = {"runs": len(runs), "zombie_rejected_no_writes": len(ok)}
-    summary["artifact"] = write_artifact(out, "item2d", {"seeds": SEEDS[:10]}, runs, summary)
+    summary["artifact"] = write_artifact(out, tag, {"seeds": SEEDS[:10], "provider": provider}, runs, summary)
     return summary
 
 
@@ -392,14 +402,15 @@ class WatermarkFreeReporter:
         return self.max_seen
 
 
-def item3(out: str) -> dict:
+def item3(out: str, provider: str = "anthropic", tag: str = "item3") -> dict:
+    from .proofs_common import spec_text, asst_msg
     runs = []
     for seed in SEEDS:
         rnd = random.Random(seed)
         tmp = tmpdir()
         try:
             wit = {}
-            rig = Rig(tmp, "anthropic", [{"content": [__import__("ingest.stubs", fromlist=["text"]).text("a%d" % i)]} for i in range(20)],
+            rig = Rig(tmp, provider, [spec_text(provider, "a%d" % i) for i in range(20)],
                       tap_kw={"witness": lambda s, q, h: wit.__setitem__(s, (q, h))})
             for i in range(20):
                 rig.ask("q%d" % i)
@@ -449,14 +460,13 @@ def item3(out: str) -> dict:
             # (c) host bypasses the port for one call; its answer re-enters history
             d2 = os.path.join(tmp, "c")
             os.makedirs(d2)
-            from ingest.stubs import text as T
-            rc = Rig(d2, "anthropic", [{"content": [T("a%d" % i)]} for i in range(12)])
+            rc = Rig(d2, provider, [spec_text(provider, "a%d" % i) for i in range(12)])
             byp = rnd.randint(2, 8)
             for i in range(10):
                 if i == byp:
                     rc.msgs.append({"role": "user", "content": "q%d" % i})
                     o = rc.stub.call(rc.request())                  # direct transport call: bypasses the tap
-                    rc.msgs.append({"role": "assistant", "content": o["content"]})
+                    rc.msgs.append(asst_msg(provider, o))
                 else:
                     rc.ask("q%d" % i)
             rc.sync()
@@ -464,7 +474,7 @@ def item3(out: str) -> dict:
             # (f) bypass whose answer never re-enters the context (final call, answer discarded)
             d3 = os.path.join(tmp, "f")
             os.makedirs(d3)
-            rf = Rig(d3, "anthropic", [{"content": [T("a%d" % i)]} for i in range(12)])
+            rf = Rig(d3, provider, [spec_text(provider, "a%d" % i) for i in range(12)])
             for i in range(6):
                 rf.ask("q%d" % i)
             rf.stub.call({"model": "m", "messages": [{"role": "user", "content": "secret side call"}]})     # never logged, never seen again
@@ -493,5 +503,25 @@ def item3(out: str) -> dict:
                "e_false_complete_claims": sum(r["e"]["claim_cut"] for r in runs),
                "f_hidden_bypass_detected": sum(r["f"]["gaps"] > 0 for r in runs),
                "g_tamper_detected": sum("chain_break" in r["g"]["gaps"] and not r["g"]["claim_head"] for r in runs)}
-    summary["artifact"] = write_artifact(out, "item3", {"seeds": SEEDS, "calls": 20}, runs, summary)
+    summary["artifact"] = write_artifact(out, tag, {"seeds": SEEDS, "calls": 20, "provider": provider}, runs, summary)
+    return summary
+
+
+def item2_ablation(out: str) -> dict:
+    """Which layer prevents duplicates? Four layers: CAS fence, chain-prev check, unique event key, call-state guard."""
+    layers = ["fence", "chain", "unique", "state_guard"]
+    cfgs = [("all_on", {}), ("all_off", {l: False for l in layers})]
+    cfgs += [("only_" + l, {x: (x == l) for x in layers}) for l in layers]
+    cfgs += [("without_" + l, {l: False}) for l in layers]
+    rows = []
+    for name, kw in cfgs:
+        s = item2_race_threads(out, tag=None, **kw)
+        det = s.pop("runs_detail")
+        rows.append({"config": name, "flags": {l: kw.get(l, True) for l in layers}, "runs": len(det), "runs_with_duplicates": s["runs_with_duplicates"],
+                     "identical_to_baseline": s["identical_to_baseline"], "runs_with_fencing": s["runs_with_fencing"], "per_run": [
+                         {"dup_rows": r["dup_rows"], "identical": r["identical_to_baseline"], "fenced": r["fenced"]} for r in det]})
+    summary = {"configs": [{k: v for k, v in r.items() if k != "per_run"} for r in rows]}
+    summary["single_layer_sufficient"] = [r["config"] for r in rows if r["config"].startswith("only_") and r["identical_to_baseline"] == r["runs"] and r["runs_with_duplicates"] == 0]
+    summary["registered_control_all_off_duplicate_runs"] = [r["runs_with_duplicates"] for r in rows if r["config"] == "all_off"][0]
+    summary["artifact"] = write_artifact(out, "item2e", {"seeds": SEEDS[:10], "threads": 2, "layers": layers}, rows, summary)
     return summary

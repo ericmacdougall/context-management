@@ -97,3 +97,17 @@ def copy_log_prefix(src_path: str, dst_path: str, upto_seq: int) -> None:
 def event_sig(events: List[dict]) -> List[list]:
     import hashlib as h
     return [[e["ikey"], h.sha256((e["content"] or "").encode()).hexdigest()[:16], e["status"]] for e in events]
+
+
+# ---------------------------------------------------------------- provider-neutral spec/message builders
+def spec_text(provider: str, t: str, **kw) -> dict:
+    from .stubs import text
+    return ({"content": [text(t)], **kw} if provider == "anthropic" else {"message": {"role": "assistant", "content": t}, **kw})
+
+
+def asst_msg(provider: str, o: dict) -> dict:
+    return {"role": "assistant", "content": o["content"]} if provider == "anthropic" else o["choices"][0]["message"]
+
+
+def resp_text(provider: str, o: dict) -> str:
+    return o["content"][0]["text"] if provider == "anthropic" else o["choices"][0]["message"]["content"]

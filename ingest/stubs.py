@@ -88,15 +88,17 @@ class Stub:
     """provider: 'anthropic'|'openai'. delay_s: per non-stream call; event_delay_s: per stream event (indicative-cost runs)."""
 
     def __init__(self, provider: str, script: List[dict], truth: Optional[Truth] = None, delay_s: float = 0.0, event_delay_s: float = 0.0,
-                 sleep: Callable[[float], None] = time.sleep):
+                 sleep: Callable[[float], None] = time.sleep, record: bool = True):
         self.provider, self.script, self.truth = provider, list(script), truth or Truth(None)
         self.delay_s, self.event_delay_s, self.sleep = delay_s, event_delay_s, sleep
         self.n = 0
+        self.record = record          # record=False: do not deep-copy requests (cost runs must not time the stub's own bookkeeping)
         self.received: List[dict] = []
 
     def _next(self, req: dict) -> dict:
         self.n += 1
-        self.received.append(copy.deepcopy(req))
+        if self.record:
+            self.received.append(copy.deepcopy(req))
         spec = self.script[self.n - 1] if self.n - 1 < len(self.script) else self.script[-1]
         if spec.get("fail") == "reject":
             raise Rejected("400 invalid_request")
@@ -105,7 +107,8 @@ class Stub:
 
     def _resp(self, spec: dict) -> dict:
         if "content_fn" in spec:                      # response computed from the request actually received
-            spec = {**spec, "content": spec["content_fn"](self.received[-1])}
+            out = spec["content_fn"](self.received[-1])
+            spec = {**spec, "content": out} if self.provider == "anthropic" else {**spec, "message": {"role": "assistant", "content": out}}
         if self.provider == "anthropic":
             return anth_msg(spec["content"], spec.get("stop", "end_turn"), spec.get("id", "msg_stub_%d" % self.n))
         return oai_resp(spec["message"], spec.get("stop", "stop"), spec.get("id", "chatcmpl-stub-%d" % self.n))
@@ -145,8 +148,9 @@ class Stub:
                     return
             if self.event_delay_s:
                 self.sleep(self.event_delay_s)
+            if i == len(evs) - 1:
+                self.truth.add(ev="completed", n=self.n, id=resp["id"])      # the provider finished: written when the terminal event is emitted
             yield ev
-        self.truth.add(ev="completed", n=self.n, id=resp["id"])
 
 
 def text(t: str) -> dict:

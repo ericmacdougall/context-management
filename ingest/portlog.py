@@ -15,7 +15,6 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS port_log(stream TEXT NOT NULL, seq INTEGER NOT NULL, kind TEXT NOT NULL, call_n INTEGER,
   body TEXT NOT NULL, prev TEXT NOT NULL, hash TEXT NOT NULL, ts REAL NOT NULL, PRIMARY KEY(stream, seq));
 CREATE TABLE IF NOT EXISTS blobs(h TEXT PRIMARY KEY, body TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS issued(stream TEXT NOT NULL, h TEXT NOT NULL, text TEXT NOT NULL, PRIMARY KEY(stream, h));
 CREATE TRIGGER IF NOT EXISTS port_log_noupd BEFORE UPDATE ON port_log BEGIN SELECT RAISE(ABORT,'append-only'); END;
 CREATE TRIGGER IF NOT EXISTS port_log_nodel BEFORE DELETE ON port_log BEGIN SELECT RAISE(ABORT,'append-only'); END;
 CREATE TRIGGER IF NOT EXISTS blobs_noupd BEFORE UPDATE ON blobs BEGIN SELECT RAISE(ABORT,'append-only'); END;
@@ -80,12 +79,21 @@ class PortLog:
         self.bytes += len(text) + nb
         return seq, call_n, h
 
-    def record_issued(self, stream: str, h: str, text: str) -> None:
-        c = self.conn()
-        c.execute("INSERT OR IGNORE INTO issued VALUES(?,?,?)", (stream, h, text))
-
-    def issued(self, stream: str) -> Dict[str, str]:
-        return {h: t for h, t in self.conn().execute("SELECT h, text FROM issued WHERE stream=?", (stream,))}
+    def issued_blocks(self, stream: str) -> Dict[str, str]:
+        """Injected-block texts (redacted) referenced by REQ records of this stream; read from the append-only blob store."""
+        import json as _j
+        out: Dict[str, str] = {}
+        for (body,) in self.conn().execute("SELECT body FROM port_log WHERE stream=? AND kind='REQ'", (stream,)):
+            b = _j.loads(body)
+            hs = {sp["h"] for sp in b.get("spans") or []}
+            if b.get("injected"):
+                hs.add(b["injected"]["h"])
+            for h in hs:
+                if h not in out:
+                    t = self.blob(h)
+                    if t is not None:
+                        out[h] = t
+        return out
 
     def read(self, stream: str, after_seq: int = 0, limit: int = 100000) -> List[dict]:
         rows = self.conn().execute("SELECT seq,kind,call_n,body,prev,hash,ts FROM port_log WHERE stream=? AND seq>? ORDER BY seq LIMIT ?",

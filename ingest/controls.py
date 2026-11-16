@@ -92,15 +92,15 @@ class RoleOnlyIngester:
     """Control for item 4: provenance = the role of the message as the request carries it; no injected registry. Ingests every block
     of every request message that is new by position (so a host-merged injected block lands in a user event)."""
 
-    def __init__(self, blob_source, raw_requests: List[dict]):
-        self.blob, self.raw = blob_source, raw_requests
+    def __init__(self, blob_source, raw_requests: List[dict], provider: str = "anthropic"):
+        self.blob, self.raw, self.provider = blob_source, raw_requests, provider
 
     def user_texts(self) -> List[str]:
         out = []
         seen = 0
         for req in self.raw:
             for m in req["messages"][seen:]:
-                for b in shapes.blocks_of_message("anthropic", m):
+                for b in shapes.blocks_of_message(self.provider, m):
                     if b.prov == "user" and isinstance(b.data, dict) and b.data.get("type") == "text":
                         out.append(b.data["text"])
             seen = len(req["messages"])
