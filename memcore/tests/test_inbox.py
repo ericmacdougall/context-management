@@ -20,7 +20,8 @@ class OnePhaseBroken(InboxService):
     """Broken variant: marks delivered at claim time, i.e. BEFORE the host shows anything."""
     def claim(self, session_id, turn_id, limit=5):
         got = super().claim(session_id, turn_id, limit)
-        self.confirm(session_id, turn_id, got.token)
+        if got.token:                              # an empty claim has no token (confirm() requires one)
+            self.confirm(session_id, turn_id, got.token)
         return got
 
 

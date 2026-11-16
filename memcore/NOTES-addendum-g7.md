@@ -57,6 +57,14 @@ My count is 8 open plus 2 partial among the 21; main's "13" may use a different 
   in-repo host calls it yet; every OpenAICompatChat is subscription-tainted unless operator_declares_not_subscription=True;
   FakeChat is refused on the bridge address (use ScriptedStubChat): memcore-out/g5/g5_run.py, which starts a bridge
   gateway over FakeChat, will now be refused; deliver() refuses a whole batch if one item leaks.
+- Inbox API (reviewer item 1): InboxService.claim returns a Claim (a list subclass carrying .token); confirm(session, turn,
+  token) needs that token and, since phase 2, RAISES ValueError without one (it used to return 0 silently); rows claimed
+  before the fencing upgrade are confirmed with confirm_legacy(session, turn); renew() returns Renewal(renewed, lapsed,
+  status) with status renewed / lapsed / done / superseded. Rollback: code older than 60b23d9 (N7 fencing) cannot read the fenced rows
+  correctly (it ignores claim_token, fence and lease_until), so roll back only with an empty or drained inbox.
+- Egress guard (reviewer item 5): tool results and other guarded objects of a type the guard does not know (datetime,
+  Decimal, dataclass, any custom class) are refused as EgressLeak instead of being stringified; convert them to str,
+  int, float, bool, None, list, tuple or dict before they reach a model.
 - Still open: N10 schema keyword values (enum/minimum/minItems/properties/required types, deep schema recursion), N11
   (first session turn ledgered with session ''), finding 4 residual (AcpClient.request public and uncounted; embedders and
   rerankers without a budget; and the guard is not applied to embed/rerank inputs), the real-id set is opt-in

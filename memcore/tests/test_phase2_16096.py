@@ -184,5 +184,89 @@ class WorkflowTemplateTests(unittest.TestCase):
                 workflow_yaml("http://172.17.0.1:9", **bad)
 
 
+class _InboxResiduals:
+    """Reviewer residuals (a) renew lapsed-but-untaken vs superseded, (b) confirm without a token, (c) a pre-upgrade row
+    retried by its own turn. Run on both stores; turn A and turn B use separate service objects / connections."""
+
+    def setUp(self):
+        from memcore.inbox import InboxItem, InboxService, RequirementGraph
+        from memcore.tests.test_delta16096 import _Clock
+        self.clock = _Clock()
+        g = RequirementGraph({"T": {"R1"}})
+        sa, sb = self.stores()
+        self.A, self.B = InboxService(sa, g, self.clock), InboxService(sb, g, self.clock)
+        self.A.register("S", "claude-code", "T", ["R1"])
+        self.A.enqueue(InboxItem("f1", "S", ["ev1"], "q", "transcript", ["R1"], 1000.0, 5000.0))
+
+    def ids(self, xs):
+        return [i.finding_id for i in xs]
+
+    def test_a_renew_says_lapsed_when_the_lease_ran_out_but_nobody_took_the_row(self):
+        """c20e208 returns 0 here, the same answer as a takeover, so a slow-but-alive turn aborts needlessly."""
+        a = self.A.claim("S", "turnA", lease_s=30)
+        self.clock.t += 31
+        r = self.A.renew("S", "turnA", a.token, lease_s=30)
+        self.assertEqual(getattr(r, "status", r), "lapsed")
+        again = self.A.claim("S", "turnA", lease_s=30)              # the documented recovery: same turn re-lets it
+        self.assertEqual((self.ids(again), again.token), (["f1"], a.token))
+        self.assertEqual(self.A.renew("S", "turnA", a.token, lease_s=30).status, "renewed")
+        self.assertEqual(self.A.confirm("S", "turnA", a.token), 1)
+        self.assertEqual(self.A.renew("S", "turnA", a.token).status, "done")
+
+    def test_a_renew_says_superseded_after_a_takeover(self):
+        a = self.A.claim("S", "turnA", lease_s=30)
+        self.clock.t += 31
+        self.assertEqual(self.ids(self.B.claim("S", "turnB")), ["f1"])
+        r = self.A.renew("S", "turnA", a.token)
+        self.assertEqual((r.renewed, r.status), (0, "superseded"))
+
+    def test_b_confirm_without_a_token_raises(self):
+        """c20e208 silently returns 0 (a host that lost its token never learns its confirm did nothing)."""
+        self.A.claim("S", "turnA")
+        for tok in (None, ""):
+            with self.assertRaises(ValueError):
+                self.A.confirm("S", "turnA", tok)
+        with self.assertRaises(ValueError):
+            self.A.renew("S", "turnA", None)
+        self.assertEqual(self.A.store.get_item("S", "f1").state, "claimed")
+
+    def test_c_pre_upgrade_row_is_returned_to_its_own_turn_on_retry(self):
+        """c20e208 returns [] to the retry of the very turn that claimed the row before the upgrade."""
+        it = self.A.store.get_item("S", "f1")
+        it.state, it.claim_turn, it.claimed_at = "claimed", "turnA", self.clock.t
+        with self.A.store.transaction():
+            self.A.store.put_item(it)
+        self.strip_new_fields()
+        self.clock.t += 10
+        c = self.A.claim("S", "turnA")
+        self.assertEqual(self.ids(c), ["f1"])
+        self.assertTrue(c.token)
+        self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])   # still fenced against other turns
+        self.assertEqual(self.A.confirm_legacy("S", "turnA"), 0)     # adopted: no longer a token-less row
+        self.assertEqual(self.A.confirm("S", "turnA", c.token), 1)
+
+
+class InboxResidualsMemoryTests(_InboxResiduals, unittest.TestCase):
+    def stores(self):
+        from memcore.inbox import MemoryStore
+        s = MemoryStore()
+        return s, s
+
+    def strip_new_fields(self):
+        from memcore.tests.test_delta16096 import N7MemoryStoreTests
+        N7MemoryStoreTests.strip_new_fields(self)
+
+
+class InboxResidualsSqliteTests(_InboxResiduals, unittest.TestCase):
+    def stores(self):
+        from memcore.inbox import SqliteStore
+        p = os.path.join(tempfile.mkdtemp(), "inbox.db")
+        return SqliteStore(p), SqliteStore(p)
+
+    def strip_new_fields(self):
+        from memcore.tests.test_delta16096 import N7SqliteStoreTests
+        N7SqliteStoreTests.strip_new_fields(self)
+
+
 if __name__ == "__main__":
     unittest.main()

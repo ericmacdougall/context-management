@@ -405,13 +405,13 @@ class _N7Common:
         self.assertEqual(self.ids(res["b"]), [])                  # only ONE live turn shows f1
         self.assertEqual(errs, [])
         self.assertEqual(res["a_confirm"], 1)
-        self.assertEqual(self.B.confirm("S", "turnB", getattr(res["b"], "token", None)), 0)
+        self.assertIsNone(getattr(res["b"], "token", "no Claim type"))   # B got nothing, so it holds no token to confirm with
 
     def test_short_lease_is_kept_alive_by_renewal(self):
         a = self.A.claim("S", "turnA", lease_s=30)
         for step in (20, 20, 20):                                # a 60 s turn renewing every 20 s
             self.clock.t += step
-            self.assertEqual(self.A.renew("S", "turnA", a.token, lease_s=30), 1)
+            self.assertEqual(tuple(self.A.renew("S", "turnA", a.token, lease_s=30)), (1, 0, "renewed"))
             self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])
         self.assertEqual(self.A.confirm("S", "turnA", a.token), 1)
 
@@ -421,7 +421,7 @@ class _N7Common:
         b = self.B.claim("S", "turnB")
         self.assertEqual(self.ids(b), ["f1"])
         self.assertNotEqual(a.token, b.token)
-        self.assertEqual(self.A.renew("S", "turnA", a.token), 0)   # A learns it lost the claim
+        self.assertEqual(self.A.renew("S", "turnA", a.token).status, "superseded")   # A learns it lost the claim
         self.assertEqual(self.A.confirm("S", "turnA", a.token), 0)
         self.assertEqual(self.A.claim("S", "turnA"), [])          # A's retry cannot steal it back while B is live
         self.assertEqual(self.B.confirm("S", "turnB", b.token), 1)
@@ -430,7 +430,8 @@ class _N7Common:
 
     def test_confirm_without_the_token_does_not_deliver(self):
         self.A.claim("S", "turnA")
-        self.assertEqual(self.A.confirm("S", "turnA"), 0)
+        with self.assertRaises((ValueError, TypeError)):      # phase 2: a missing token raises (it used to return 0)
+            self.A.confirm("S", "turnA")
         self.assertEqual(self.A.store.get_item("S", "f1").state, "claimed")
 
     def make_legacy(self, claimed_at):
@@ -452,7 +453,7 @@ class _N7Common:
         self.make_legacy(self.clock.t)                            # 888c94b row: claimed_at set, no token
         self.clock.t += 40
         self.assertEqual(self.ids(self.B.claim("S", "turnB")), [])
-        self.assertEqual(self.A.confirm("S", "turnA"), 1)
+        self.assertEqual(self.A.confirm_legacy("S", "turnA"), 1)
 
 
 class N7MemoryStoreTests(_N7Common, unittest.TestCase):

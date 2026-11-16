@@ -34,7 +34,7 @@ import sqlite3
 import threading
 from contextlib import contextmanager
 from dataclasses import dataclass, field, asdict
-from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set
+from typing import Callable, Dict, Iterator, List, NamedTuple, Optional, Sequence, Set
 
 TRUST_ORIGINS = ("user", "agent", "tool", "web", "transcript", "unknown")
 MAX_QUOTE_CHARS = 2000
@@ -205,6 +205,16 @@ class Claim(list):
         self.token = token
 
 
+class Renewal(NamedTuple):
+    """renew() result. status: "renewed" (every row of this claim extended), "lapsed" (some rows' lease ran out but nobody
+    took them: they are still this claim's, NOT extended; claim() again with the same turn re-lets them under the same
+    token), "done" (the claim's rows were delivered), "superseded" (no row carries this token any more: another turn took
+    them over, or the token is unknown)."""
+    renewed: int
+    lapsed: int
+    status: str
+
+
 class InboxService:
     def __init__(self, store: Store, graph: RequirementGraph, clock: Callable[[], float], max_pending: int = 20,
                  lease_s: float = DEFAULT_LEASE_S):
@@ -279,13 +289,18 @@ class InboxService:
                 elif it.state == "claimed" and it.lease_until is None:
                     it.lease_until = self._lease_until(it, now)
                     self.store.put_item(it)
-            same = [i for i in self.store.items(session_id, ["claimed"]) if i.claim_turn == turn_id and i.claim_token is not None]
-            if same:  # retry of the same turn: identical answer, same token, lease extended
-                out = [i for i in same if self._eligible(s, i, now)]
+            mine = [i for i in self.store.items(session_id, ["claimed"]) if i.claim_turn == turn_id]
+            if mine:  # retry of the same turn: identical answer, same token, lease extended
+                # A row this turn claimed before the fencing upgrade (no token) is adopted under the claim's token (a fresh
+                # one if it has none yet), with its fence bumped: the retry gets it back instead of [] (review residual c).
+                token = next((i.claim_token for i in mine if i.claim_token is not None), None) or secrets.token_hex(12)
+                out = [i for i in mine if self._eligible(s, i, now)]
                 for i in out:
+                    if i.claim_token is None:
+                        i.claim_token, i.fence = token, i.fence + 1
                     i.lease_until = max(i.lease_until or 0.0, now + lease)
                     self.store.put_item(i)
-                return Claim(out, same[0].claim_token)
+                return Claim(out, token if out else None)
             token, out = secrets.token_hex(12), []
             for it in self.store.items(session_id, ["pending", "claimed"]):
                 if len(out) >= limit:
@@ -301,23 +316,41 @@ class InboxService:
                     out.append(it)
             return Claim(out, token if out else None)
 
-    def renew(self, session_id: str, turn_id: str, token: str, lease_s: Optional[float] = None) -> int:
-        """Heartbeat of a running turn. Returns the number of items whose lease was extended; 0 = superseded or done."""
-        now, n = self.clock(), 0
-        lease = self.lease_s if lease_s is None else lease_s
+    def renew(self, session_id: str, turn_id: str, token: str, lease_s: Optional[float] = None) -> Renewal:
+        """Heartbeat of a running turn: extend the lease of this claim's rows that are still live. See Renewal for the
+        statuses; a holder that sees "superseded" must not show or confirm the items."""
         if not token:
-            return 0
+            raise ValueError("renew() needs the claim token (Claim.token)")
+        now, n, lapsed = self.clock(), 0, 0
+        lease = self.lease_s if lease_s is None else lease_s
         with self.store.transaction():
-            for it in self.store.items(session_id, ["claimed"]):
-                if it.claim_turn == turn_id and it.claim_token == token and now < (it.lease_until or 0.0):
+            ours = [it for it in self.store.items(session_id, ["claimed", "delivered"])
+                    if it.claim_turn == turn_id and it.claim_token == token]
+            for it in ours:
+                if it.state != "claimed":
+                    continue
+                if now < (it.lease_until or 0.0):
                     it.lease_until = now + lease
                     self.store.put_item(it)
                     n += 1
-        return n
+                else:
+                    lapsed += 1
+        if n or lapsed:
+            return Renewal(n, lapsed, "lapsed" if lapsed else "renewed")
+        return Renewal(0, 0, "done" if ours else "superseded")
 
-    def confirm(self, session_id: str, turn_id: str, token: Optional[str] = None) -> int:
-        """Exactly one confirm wins: only rows still claimed under this turn AND this token. token=None matches only rows
-        claimed before the fencing upgrade (no token), never a fenced row."""
+    def confirm(self, session_id: str, turn_id: str, token: str) -> int:
+        """Exactly one confirm wins: only rows still claimed under this turn AND this token. The token is required (a
+        missing token raises; rows claimed before the fencing upgrade go through confirm_legacy)."""
+        if not token:
+            raise ValueError("confirm() needs the claim token (Claim.token); use confirm_legacy() for pre-upgrade rows")
+        return self._deliver(session_id, turn_id, token)
+
+    def confirm_legacy(self, session_id: str, turn_id: str) -> int:
+        """Confirm rows this turn claimed BEFORE the fencing upgrade (no token). Never matches a fenced row."""
+        return self._deliver(session_id, turn_id, None)
+
+    def _deliver(self, session_id: str, turn_id: str, token: Optional[str]) -> int:
         now, n = self.clock(), 0
         with self.store.transaction():
             for it in self.store.items(session_id, ["claimed"]):
