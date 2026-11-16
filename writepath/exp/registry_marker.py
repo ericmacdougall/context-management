@@ -42,18 +42,19 @@ def sql_scan(conn, marker):
 def run_one(arm):
     conn, ks, es = db.connect(), K.KeyService(), ES()
     adm = db.admin()
+    vc, vk = db.verifier(), db.verifier(db=config.KEYS_DB)       # the gate runs as the verifier role (read access to every table)
     out = {"arm": arm}
     # ---- 1. inventory
-    out["unregistered_clean"] = registry.unregistered(conn, ks.conn, es)
+    out["unregistered_clean"] = registry.unregistered(vc, vk, es)
     adm.execute("create table rogue_cache(x text)")
     es.req("PUT", f"/{config.INDEX_PREFIX}zz-rogue")
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     (config.LOG_DIR / "rogue.txt").write_text("x")
-    flagged = registry.unregistered(conn, ks.conn, es)
+    flagged = registry.unregistered(vc, vk, es)
     out["controls_flagged"] = {"table": "pg:rogue_cache" in flagged, "index": f"es-index:{config.INDEX_PREFIX}zz-rogue" in flagged,
                                "logfile": any(f.endswith("rogue.txt") for f in flagged)}
     adm.execute("drop table rogue_cache"); es.req("DELETE", f"/{config.INDEX_PREFIX}zz-rogue"); (config.LOG_DIR / "rogue.txt").unlink()
-    out["unregistered_after_cleanup"] = registry.unregistered(conn, ks.conn, es)
+    out["unregistered_after_cleanup"] = registry.unregistered(vc, vk, es)
     out["stores_registered"] = len(registry.STORES)
     out["stores_verifiable"] = [s.name for s in registry.verifiable()]
     # ---- 2. plant
@@ -74,7 +75,7 @@ def run_one(arm):
     p.run(); p.stop()
     adm.execute("checkpoint")
     es.req("POST", f"/{config.INDEX_PREFIX}{t}-*/_flush", expand_wildcards="all")
-    out["before"] = {"pg_sql_hits_events_db": sql_scan(conn, mx), "pg_sql_hits_keys_db": sql_scan(ks.conn, mx),
+    out["before"] = {"pg_sql_hits_events_db": sql_scan(adm, mx), "pg_sql_hits_keys_db": sql_scan(ks.conn, mx),
                      "es_api_X": es_count_all(es, t, {"multi_match": {"query": mx, "fields": ["content", "value"]}}),
                      "es_api_Y": es_count_all(es, t, {"multi_match": {"query": my, "fields": ["content", "value"]}}),
                      "pg_disk_files_X": grep_files(PG_C, "/var/lib/postgresql/data", mx),
@@ -88,7 +89,7 @@ def run_one(arm):
     es.req("POST", f"/{config.INDEX_PREFIX}{t}-*/_flush", expand_wildcards="all")
     adm.execute("checkpoint")
     out["receipt"] = {k: rec.get(k) for k in ("done", "verify", "residue", "error_type", "key_store")}
-    out["after"] = {"pg_sql_hits_events_db": sql_scan(conn, mx), "pg_sql_hits_keys_db": sql_scan(ks.conn, mx),
+    out["after"] = {"pg_sql_hits_events_db": sql_scan(adm, mx), "pg_sql_hits_keys_db": sql_scan(ks.conn, mx),
                     "es_api_X": es_count_all(es, t, {"multi_match": {"query": mx, "fields": ["content", "value"]}}),
                     "es_api_Y": es_count_all(es, t, {"multi_match": {"query": my, "fields": ["content", "value"]}}),
                     "es_disk_files_X": grep_files(ES_C, "/usr/share/elasticsearch/data", mx),

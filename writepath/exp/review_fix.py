@@ -430,7 +430,12 @@ def f6_xmin(mitigated, hold_s=20.0):
         conn, ks, es = env()
         t = tenant("f6x"); s = session(conn, t)
         log.append(conn, ks, s, [msg(i, f"e{i}", "U") for i in range(5)])
-        timer = threading.Timer(hold_s, lambda: (other.rollback(), other.close()))   # the other transaction ends at hold_s
+        def end_other():
+            try:
+                other.rollback(); other.close()
+            except psycopg.Error:
+                pass                                         # mitigated arm: the server already ended it (idle timeout)
+        timer = threading.Timer(hold_s, end_other)           # the other transaction ends at hold_s
         t0 = time.time()
         timer.start()
         p = projector.Projector(conn, ks, es, t)
