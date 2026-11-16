@@ -41,7 +41,7 @@ class KeyService(KeyStore):
     replica, no backup). It is NOT a KMS: no HSM, no deletion window, no audited key lifecycle."""
     KIND = "lab-postgres-keystore"
     STAND_IN = True
-    DELETION = "row delete + VACUUM + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup)"
+    DELETION = "row delete + VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)"
 
     def __init__(self, conn=None):
         self.conn = conn or db.keys_connect()
@@ -87,7 +87,11 @@ class KeyService(KeyStore):
             self.conn.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (f"key:{tenant}/{subject}",))
             self.conn.execute("delete from subject_keys where tenant_id=%s and subject_id=%s", (tenant, subject))
             self.conn.execute("insert into destroyed(tenant_id, subject_id) values (%s,%s) on conflict do nothing", (tenant, subject))
-        self.conn.execute("vacuum subject_keys")
+        # VACUUM FULL, not VACUUM: plain VACUUM frees the dead tuple's space without zeroing it, and the key bytes were
+        # found in the heap file after destroy in 3 of 10 reported runs (exp/probe_keyresidue.py). VACUUM FULL rewrites
+        # the table into a new file; the old file is unlinked at the next checkpoint (below). Cost grows with the number
+        # of live keys and takes an exclusive lock on subject_keys while it runs: a lab stand-in, not a KMS design.
+        self.conn.execute("vacuum full subject_keys")
         for _ in range(2):
             self.conn.execute("select pg_switch_wal()")
             self.conn.execute("checkpoint")

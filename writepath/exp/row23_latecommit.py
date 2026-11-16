@@ -23,7 +23,11 @@ def one():
         if name == "before_commit":
             held.set(); release.wait(30)
 
-    th = threading.Thread(target=lambda: out.setdefault("H", log.append(db.connect(), K.KeyService(), sH, [msg(0, "late committer zqlate", "UH")], hook=hook)))
+    hc = db.connect()
+    # The app role's idle_in_transaction_session_timeout (5 s, review F6) would end H's held transaction before the 10
+    # later commits and projection passes finish; this experiment needs H to stay open, so H's session raises it.
+    hc.execute("set idle_in_transaction_session_timeout = '120s'")
+    th = threading.Thread(target=lambda: out.setdefault("H", log.append(hc, K.KeyService(), sH, [msg(0, "late committer zqlate", "UH")], hook=hook)))
     th.start(); held.wait(30)
     for i in range(10):
         log.append(conn, ks, s2, [msg(1 + i, f"early committer {i}", "U2")])

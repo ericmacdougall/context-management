@@ -92,3 +92,14 @@ Mentions and legal hold (exp/scope_hold.py, user decisions 2026-11-16), R=3 per 
     hold placed after mark (cascade stopped, key kept; done after release). Control (wp_hold_check no-op) violated 3/3.
 Every result carries env.key_store: the lab key store is a STAND-IN for the client's KMS (keys.KeyStore interface).
 Erasure cost (exp/erasure_cost.py): measurement only.
+
+## Amendment 4 (2026-11-16, after the reported run at 3944749; applies to the rerun of the cases below only)
+F1: the pre-registered "Y docs 2" was an arithmetic error in the threshold: subject Y writes 1 message and 1 fact,
+  which project to 2 event documents and 1 fact document. Corrected to Y docs = 3. The 3944749 F1 result stays
+  reported as FAIL against the original text.
+F3 delete_tombstones: the attack ran against a tenant with no tombstones (0 rows: vacuous control). The attack now
+  runs after the app's own mark + cascade of X created tombstones. Rerun of F3 only.
+row23: the 5 s idle-in-transaction timeout (F6 mitigation) ended H's held transaction; H's session now raises it to
+  120 s for this experiment (stated in the module). Rerun of row23 only.
+registry_marker: the key hex survived in the subject_keys heap after a plain VACUUM in 3/10 fenced runs (a real
+  defect: VACUUM does not zero freed tuple space). Fixed with VACUUM FULL in the lab key store; rerun R=10 per arm.

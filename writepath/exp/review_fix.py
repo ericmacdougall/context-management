@@ -52,7 +52,7 @@ def f1_large(n):
     rec = erasure.erase(conn, ks, es, t, "X", ttl_s=120)
     x_after = es_count_all(es, t, {"term": {"subject_id": "X"}})
     y_after = es_count_all(es, t, {"term": {"subject_id": "Y"}})
-    holds = rec["done"] and x_after == 0 and y_after == 2 and x_before > 65536
+    holds = rec["done"] and x_after == 0 and y_after == 3 and x_before > 65536     # Y: 2 event docs + 1 fact doc (amendment 4)
     return {"property": "erasure of one subject with N events completes (done) with zero residue in every store",
             "N_events": n, "property_holds": holds,
             "witness": {"X_docs_before": x_before, "X_docs_after": x_after, "Y_docs_after": y_after, "append_s": t_append, "project_s": t_project,
@@ -115,6 +115,15 @@ def _own(tbl, trig, priv):
 ZEROS = json.dumps({"es:events": 0, "es:facts": 0, "es:soft_deleted": 0, "keys:subject_keys": 0, "gate:unregistered": 0})
 
 
+def _tombstoned(c, t):
+    """Give the tenant real tombstones (mark + cascade of X through the app's own functions) so the attack is not vacuous."""
+    jid = erasure.request(c, t, "X")
+    c.execute("select wp_erasure_mark(%s)", (jid,))
+    while c.execute("select wp_erasure_cascade(%s, 1000)", (jid,)).fetchone()[0]:
+        pass
+    return t
+
+
 def _ready(c, t):
     jid = erasure.request(c, t, "Z")                       # a subject with no data: completion is otherwise valid
     c.execute("update erasure_jobs set state='keys_destroyed' where job_id=%s", (jid,))
@@ -132,7 +141,7 @@ F3_ATTACKS = {
     "truncate_inbox": (lambda c, t, s: _try(c, "truncate inbox"), _own("inbox", "inbox_no_truncate", "truncate"), "app TRUNCATE on inbox (privilege + trigger)"),
     "reset_erased": (lambda c, t, s: _try(c, "update subjects set erased=false where tenant_id=%s", (t,)), _own("subjects", "subjects_owner_only", "update"),
                      "app UPDATE on subjects"),
-    "delete_tombstones": (lambda c, t, s: _try(c, "delete from tombstones"), _own("tombstones", "tombstones_owner_only", "delete"),
+    "delete_tombstones": (lambda c, t, s: _try(c, "delete from tombstones where tenant_id=%s", (_tombstoned(c, t),)), _own("tombstones", "tombstones_owner_only", "delete"),
                           "app DELETE on tombstones"),
     "delete_store_registry": (lambda c, t, s: _try(c, "delete from store_registry where name='dir:logs'"), _own("store_registry", "store_registry_owner_only", "delete"),
                               "app DELETE on store_registry"),
