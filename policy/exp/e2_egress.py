@@ -2,6 +2,7 @@
 under random scenarios; an independent oracle scans what each stub recorded. Controls disable enforcement at one choke point,
 drop the derivation join, or replace the decision point with a canary-blind id-pattern guard.
 usage: python -m exp.e2_egress"""
+import os
 import random
 import re
 import sys
@@ -16,6 +17,8 @@ from pol.stubs import Network, StubChat, StubEmbedder
 
 ROWS = []
 SEEDS = [21, 22, 23, 24, 25]
+if os.environ.get("E2_DEV_SEEDS"):      # DEV tuning only (never for a stamped run)
+    SEEDS = [1, 2, 3, 4, 5]
 PER_SEED = 400
 CLASSES = ["eu_only", "local_only", "model_banned", "restricted_channel", "other_tenant", "plain"]
 MARKER_RE = re.compile(r"@@([a-z_]+):([0-9a-f]{8})@@")
@@ -80,7 +83,7 @@ class IdPatternGuard(Enforcer):
 
     blocked = 0
 
-    def check(self, principal, action, labels, ctx=None, texts=()):
+    def check(self, principal, action, labels, ctx=None, texts=(), resolve=None):
         self.evaluated_actions.add(action)
         if any(self.PAT.search(t) for t in texts):  # scans the text for id-shaped strings only
             IdPatternGuard.blocked += 1
@@ -145,18 +148,19 @@ def run_scenario(seed, mode):
 
     for _ in range(rng.randint(4, 10)):
         st["ops"] += 1
-        op = rng.choice(["inject_send", "direct_send", "embed", "inbox", "export", "derive_send", "inject_send", "direct_send", "compliant", "compliant", "compliant"])
+        op = rng.choice(["inject_send", "direct_send", "embed", "inbox", "export", "derive_send", "inject_send", "direct_send", "compliant", "compliant", "compliant", "compliant"])
         picks = rng.sample(pool, rng.randint(1, min(4, len(pool))))
         bias = rng.random()
-        if bias < 0.3:                         # steer part of the traffic at the restricted and banned-model cases
-            sub = [r for r in pool if "restricted_channel" in r.text or "model_banned" in r.text]
+        if bias < 0.5:                         # steer part of the traffic at the restricted and banned-model cases
+            sub = [r for r in pool if "restricted_channel" in r.text or "model_banned" in r.text or "local_only" in r.text or "eu_only" in r.text]
             if sub:
                 picks = rng.sample(sub, rng.randint(1, min(3, len(sub))))
         blocks = [Block(r.text, r.label, (r.id,)) for r in picks]
         c = ctx_base()
         if op == "compliant":              # route a record where the oracle says it may go (positive witness: markers do get delivered)
             options = [("model", n) for n in chats] + [("embed", n) for n in embs] + [("export", n) for n in exps] + [("inbox", "rcp:" + r) for r in RECIPIENTS]
-            r = rng.choice(pool)
+            rs_ = [x for x in pool if "restricted_channel" in x.text]
+            r = rng.choice(rs_) if (rs_ and rng.random() < 0.4) else rng.choice(pool)
             ok = [o for o in options if not any(oracle_forbidden(cls_of[m.group(0)], o[0], o[1], "t1", pol) for m in MARKER_RE.finditer(r.text) if m.group(0) in cls_of)]
             if ok:
                 ch, dest = rng.choice(ok)
@@ -184,6 +188,8 @@ def run_scenario(seed, mode):
                     pass
         elif op == "direct_send":
             dest = rng.choice(list(chats) + ["d_model_cyber", "d_model_cyber", "d_model_us"])
+            if any("model_banned" in x.text for x in picks) and rng.random() < 0.5:
+                dest = "d_model_us"
             if dest == "d_model_cyber" and rng.random() < 0.8:
                 c["authorization"] = "auth1"
             res = attempt("model", dest, blocks, lambda: chats[dest].complete(P1, blocks, ctx=c, derive_mode=dmode))
@@ -213,13 +219,13 @@ def run_scenario(seed, mode):
                 attempt("inbox", "rcp:" + rid, [summ], lambda: inbox.enqueue("P1", [summ], c, rid))
                 inbox.deliver_all()
         elif op == "embed":
-            dest = rng.choice(list(embs) + ["d_embed_us"])
+            dest = "d_embed_us" if (any("model_banned" in x.text for x in picks) and rng.random() < 0.5) else rng.choice(list(embs) + ["d_embed_us"])
             attempt("embed", dest, blocks, lambda: embs[dest].embed(P1, blocks, ctx=c))
         elif op == "export":
             dest = rng.choice(list(exps))
             attempt("export", dest, blocks, lambda: exps[dest].export(P1, blocks, ctx=c))
         elif op == "inbox":
-            rid = rng.choice(list(RECIPIENTS) + ["r2"])
+            rid = "r2" if (any("model_banned" in x.text for x in picks) and rng.random() < 0.5) else rng.choice(list(RECIPIENTS) + ["r2"])
             attempt("inbox", "rcp:" + rid, blocks, lambda: inbox.enqueue("P1", blocks, c, rid))
             inbox.deliver_all()
 

@@ -79,7 +79,7 @@ def main():
            "malformed_safe_probes": 0, "lenient_allows": 0, "lenient_probes": 0, "valid_doc_allows": 0, "valid_doc_probes": 0}
     good_doc = {"version": 3, "grants": {"t1": list(ACTIONS), "t2": list(ACTIONS)},
                 "destinations": {"m": {"kind": "model", "region": "EU", "local": True, "max_sensitivity": 3, "model": "m1"}},
-                "authorizations": {"a": {"tenant": "t1", "programme": "x", "expires": 5}}, "banned_models": ["m9"], "hold_events": ["h1"]}
+                "authorizations": {"a": {"tenant": "t1", "programme": "x", "expires": 5, "principal": "p"}}, "banned_models": ["m9"], "hold_events": ["h1"]}
     parse_policy(good_doc)
     ex = parse_policy(EXAMPLE_POLICY)          # the example parses, and is marked as an example, but grants only its own demo tenant
     for pr, a, lab, ctx in probes(rng, None, 3000):
