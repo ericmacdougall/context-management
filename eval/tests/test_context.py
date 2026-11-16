@@ -397,3 +397,15 @@ class StageX1(unittest.TestCase):
         self.assertTrue(per["q1"]["facts_top10"] and per["q1"]["raw_top10"] and per["q1"]["combined_5_5_top10"])
         t = tally(per)
         self.assertEqual(t["n"], 2)
+
+
+class XpX1Dense(unittest.TestCase):
+    def test_rrf_merge_first_rank_session_order(self):
+        from emlab.xp_x1_dense import first_rank, rrf_merge, session_order
+        m = rrf_merge([["a", "b", "c"], ["b", "d"]])
+        self.assertEqual(m[0], "b")
+        self.assertEqual(set(m), {"a", "b", "c", "d"})
+        own = {"a": "s1", "b": "s2", "c": "s1", "d": "s3"}.get
+        self.assertEqual(first_rank(["a", "b", "c"], own, {"s2"}), 2)
+        self.assertIsNone(first_rank(["a"], own, {"s3"}))
+        self.assertEqual(session_order(["a", "c", "b", "d"], own), ["s1", "s2", "s3"])
