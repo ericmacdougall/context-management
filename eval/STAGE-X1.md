@@ -34,4 +34,9 @@ For the 800 calls: status, parse and repair rates (runner status `repaired` and 
 
 ## 6. Handoff
 
-Filled in below after the inputs are built (second commit).
+Filled in after the inputs were built (second commit; the rules above were committed in 2cde700 and are unchanged).
+
+Inputs on t2-dev (counts checked): 800 session files in `~/emlab-16096/out/stage_x1/sessions/<opaque id>.json` (11 MB; no `has_answer` field; `session_id`, `date`, `turns`); the run order `~/emlab-16096/out/stage_x1/run_order.json` (key `order`: the 800 ids); the report `~/emlab-16096/out/stage_x1/prep_report.json` (copy in `eval/results/stage_x1/`). The key `~/emlab-16096/out/stage_x1_key/selection_key.json` is for the scorer only (the runner must not read it). Results go to `~/emlab-16096/in/stage_x1/<opaque id>.json` and `_run.json`; record fields as in STAGE-X0.md Section 3 (prompt_version `extract-v2-cap30`, prompt_sha16 `ae055bca99452fb6`).
+Composition: 4,237 candidates (pilot-haystack, never gold, not in Stage X0). 40 LONG sessions: the longest candidates, 20,720 to 42,867 characters (median 21,757); 760 RANDOM sessions, 152 per whole-pool length quintile (candidates per stratum after removing the long ones: 873, 847, 880, 819, 778); the random sample's mean length is 10,053 characters against 10,191 for the whole pool. Note that the pilot's longest non-gold session is 42,867 characters, so even the deliberately long set does not reach the whole pool's longest sessions (up to 78,117 characters); the cost of those stays an extrapolation.
+Calls: 800 (hard cap; one per session; no retries).
+
