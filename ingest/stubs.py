@@ -104,6 +104,8 @@ class Stub:
         return spec
 
     def _resp(self, spec: dict) -> dict:
+        if "content_fn" in spec:                      # response computed from the request actually received
+            spec = {**spec, "content": spec["content_fn"](self.received[-1])}
         if self.provider == "anthropic":
             return anth_msg(spec["content"], spec.get("stop", "end_turn"), spec.get("id", "msg_stub_%d" % self.n))
         return oai_resp(spec["message"], spec.get("stop", "stop"), spec.get("id", "chatcmpl-stub-%d" % self.n))
@@ -126,7 +128,11 @@ class Stub:
         kind, _, arg = fail.partition(":")
         limit = int(arg) if arg else None
         if kind == "badjson":                      # content_block_stop never sent: the tool_use JSON is unterminated, stream still closes
-            evs = [e for e in evs if not (isinstance(e, dict) and e.get("type") == "content_block_stop")]
+            if self.provider == "anthropic":
+                evs = [e for e in evs if not (isinstance(e, dict) and e.get("type") == "content_block_stop")]
+            else:                                   # drop the last argument fragment so the tool-call JSON is unterminated
+                last = max(i for i, e in enumerate(evs) if isinstance(e, dict) and e["choices"][0]["delta"].get("tool_calls"))
+                evs = evs[:last] + evs[last + 1:]
         for i, ev in enumerate(evs):
             if limit is not None and i >= limit:
                 if kind == "drop":

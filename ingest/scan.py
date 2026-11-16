@@ -39,7 +39,7 @@ _PATTERNS = [
 _B64 = re.compile(r"[A-Za-z0-9+/_-]{16,}={0,2}")
 _HEX = re.compile(r"(?:[0-9a-fA-F]{2}){12,}")
 _PCT = re.compile(r"(?:%[0-9a-fA-F]{2}[A-Za-z0-9._~-]{0,3}){6,}")
-_ESC = re.compile(r"(?:\\u[0-9a-fA-F]{4}|\\x[0-9a-fA-F]{2}){6,}")
+_ESC = re.compile(r"(?:\\{1,2}u[0-9a-fA-F]{4}|\\{1,2}x[0-9a-fA-F]{2}){6,}")
 
 
 def _direct(t: str) -> Optional[str]:
@@ -62,13 +62,17 @@ def _decode_variants(tok: str) -> List[str]:
         pass
     out.append(urllib.parse.unquote(tok))
     try:
-        out.append(tok.encode("ascii").decode("unicode_escape"))
+        out.append(tok.replace("\\\\", "\\").encode("ascii").decode("unicode_escape"))
     except (UnicodeError, ValueError):
         pass
     return out
 
 
+_ESC_FMT = re.compile(r"\\{1,2}u(?:200[b-fB-F]|2060|feff|FEFF)")
+
+
 def _norm(s: str) -> str:
+    s = _ESC_FMT.sub("", s)                    # JSON-escaped zero-width characters (a block that was JSON-encoded)
     s = unicodedata.normalize("NFKC", s)
     return "".join(c for c in s if unicodedata.category(c) != "Cf")
 

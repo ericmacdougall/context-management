@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from . import shapes
 from .canon import Hasher, cj
 from .portlog import PortLog
-from .scan import Scanner, SecretBlocked, redact_obj
+from .scan import Scanner, SecretBlocked, redact_obj, redact_text
 
 
 class Identity:
@@ -61,15 +61,17 @@ class Registry:
     """Blocks the injector issued, by keyed hash. Provenance 'memory_injected' comes from an EXACT match against a value the port
     itself handed out (never a marker pattern); a host that alters the block defeats the match (documented)."""
 
-    def __init__(self, log: PortLog, stream: str, hasher: Hasher):
-        self.log, self.stream, self.hasher = log, stream, hasher
+    def __init__(self, log: PortLog, stream: str, hasher: Hasher, scanner=None, red=None):
+        self.log, self.stream, self.hasher, self.scanner, self.red = log, stream, hasher, scanner, red
         self.texts: Dict[str, str] = log.issued(stream)
 
     def add(self, text: str) -> str:
         h = self.hasher.h(text)
         if h not in self.texts:
             self.texts[h] = text
-            self.log.record_issued(self.stream, h, text)
+            # the persisted copy is redacted (a secret inside recalled memory must not reach disk); the raw text stays in memory only.
+            # Consequence: after a restart a block that contained a secret no longer matches exactly (documented edge).
+            self.log.record_issued(self.stream, h, self.red(text, []) if self.red else text)
         return h
 
 
@@ -135,6 +137,11 @@ def strip_media(obj: Any) -> Any:
     return obj
 
 
+def sha_keys(keys: List[str]) -> str:
+    import hashlib
+    return hashlib.sha256("|".join(keys).encode()).hexdigest()[:20]
+
+
 def last_user_text(provider: str, messages: List[dict]) -> str:
     for m in reversed(messages):
         if m.get("role") == "user":
@@ -156,6 +163,9 @@ class PortTap:
         self.crash = crash.hit if isinstance(crash, CrashPlan) else (crash or _noop_crash)
         self._reg: Dict[str, Registry] = {}
 
+    def flush(self) -> None:
+        """The real tap has nothing pending: both halves are durable before the data is returned. LateTap overrides this."""
+
     # ------------------------------------------------------------ helpers
     def _stream_id(self) -> Tuple[str, str]:
         tenant, session = self.identity.resolve()
@@ -165,7 +175,7 @@ class PortTap:
 
     def registry(self, stream: str) -> Registry:
         if stream not in self._reg:
-            self._reg[stream] = Registry(self.log, stream, self.hasher)
+            self._reg[stream] = Registry(self.log, stream, self.hasher, self.scanner, self._red)
         return self._reg[stream]
 
     def register_issued(self, injection) -> str:
@@ -180,11 +190,15 @@ class PortTap:
         return r
 
     def _put_msg(self, msg: dict, blobs: Dict[str, str], counter: list) -> dict:
-        m = redact_obj(strip_media(msg), self.scanner, self.hasher, counter)
+        m = self._red(strip_media(msg), counter)
         text = cj(m)
-        h = self.hasher.h(text)
+        h = self.hasher.h(text)[:32]
         blobs[h] = text
-        return {"h": h, "k": self.hasher.h(shapes.message_key(self.provider, m)), "role": msg.get("role")}
+        return {"h": h, "k": self.hasher.h(shapes.message_key(self.provider, m))[:20], "role": msg.get("role")}
+
+    def _red(self, obj, counter):
+        """The ONE redaction entry point (every write path goes through it; the scan-after-write control overrides it)."""
+        return redact_obj(obj, self.scanner, self.hasher, counter)
 
     # ------------------------------------------------------------ request half
     def _prepare(self, request: dict, stream_flag: bool):
@@ -215,9 +229,9 @@ class PortTap:
         mrefs = [self._put_msg(m, blobs, counter) for m in msgsx]
         sref = None
         if sysx not in (None, "", []):
-            s = redact_obj(strip_media(sysx), self.scanner, self.hasher, counter)
+            s = self._red(strip_media(sysx), counter)
             st = cj(s)
-            sref = {"h": self.hasher.h(st), "k": self.hasher.h(st)}
+            sref = {"h": self.hasher.h(st)[:32], "k": self.hasher.h(st)[:20]}
             blobs[sref["h"]] = st
         if injection_meta and injection_meta.get("placed_by") == "tap":
             if self.scanner.scan(reg.texts[injection_meta["h"]]):
@@ -227,12 +241,31 @@ class PortTap:
             self._append(stream, "BLOCK", None, {"reason": "secret_in_request", "findings": len(counter)}, new_call=True)
             raise SecretBlocked("secret found in outbound request (%d findings)" % len(counter))
         tools = request.get("tools")
+        delta, body_msgs = self._delta(stream, mrefs)
         body = {"req_id": uuid.uuid4().hex, "provider": self.provider, "model": request.get("model"), "stream": stream_flag,
-                "msgs": mrefs, "sys": sref, "tools_h": self.hasher.hj(tools) if tools else None,
+                "msgs": body_msgs, "sys": sref, "tools_h": self.hasher.hj(tools) if tools else None,
                 "tool_names": sorted((t.get("name") or t.get("function", {}).get("name") or "?") for t in tools) if tools else [],
                 "injected": injection_meta, "spans": spans, "redactions": len(counter),
                 "pairing": shapes.check_pairing(self.provider, messages)}
+        if delta:
+            body["delta"] = delta
+        self._pending_keys = (stream, [m["k"] for m in mrefs])
         return stream, sent, body, blobs, reg
+
+    def _delta(self, stream: str, mrefs: List[dict]):
+        """REQ stores only messages beyond the common prefix with the previous call (its request plus its logged response). Single
+        writer per stream is assumed; a stale cache surfaces as a digest mismatch at ingest (typed gap), never silently."""
+        last = getattr(self, "_last", {}).get(stream)
+        keys = [m["k"] for m in mrefs]
+        if not last:
+            return None, mrefs
+        full = last["keys"] + ([last["resp_k"]] if last["resp_k"] else [])
+        p = 0
+        while p < len(keys) and p < len(full) and keys[p] == full[p]:
+            p += 1
+        if p == 0:
+            return None, mrefs
+        return {"base": last["call"], "with_resp": bool(last["resp_k"]), "p": p, "digest": sha_keys(full[:p])}, mrefs[p:]
 
     def _place(self, sent: dict, block: str) -> None:
         """Place the injected block as its OWN block at the front of the last user message (never merged into the user's text)."""
@@ -262,11 +295,16 @@ class PortTap:
         body = {"status": status, "stop": stop, "turn_complete": turn_complete, "bad_blocks": bad, "resp_id": resp_id,
                 "usage": usage, "model": model, "msg": mref, "quotes_injected": quotes, "redactions": len(counter), "error": err}
         self._append(stream, "RESP", call_n, body, blobs)
+        if mref is not None and getattr(self, "_last", {}).get(stream, {}).get("call") == call_n:
+            self._last[stream]["resp_k"] = mref["k"]
 
     def call(self, request: dict, stream: bool = False):
         stream_id, sent, body, blobs, reg = self._prepare(request, stream)
         self.crash("before_req_log")
         seq, call_n, _ = self._append(stream_id, "REQ", None, body, blobs, new_call=True)
+        if not hasattr(self, "_last"):
+            self._last = {}
+        self._last[stream_id] = {"call": call_n, "keys": self._pending_keys[1], "resp_k": None}
         self.crash("after_req_log_before_send")
         if stream:
             return self._stream(stream_id, call_n, reg, sent)
@@ -344,6 +382,11 @@ class PortTap:
             write("caller_abandoned")
             raise
         except shapes.StreamError:
+            raise
+        except Rejected as e:
+            if not wrote:
+                wrote = True
+                self._resp_record(stream_id, call_n, reg, "rejected", None, None, False, [], None, None, None, type(e).__name__)
             raise
         except Exception as e:
             write("transport_error:%s" % type(e).__name__)

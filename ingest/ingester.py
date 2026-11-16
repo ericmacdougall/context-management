@@ -20,14 +20,14 @@ CREATE TABLE IF NOT EXISTS pending(stream TEXT NOT NULL, seq INTEGER NOT NULL, r
 CREATE TABLE IF NOT EXISTS applied(stream TEXT NOT NULL, seq INTEGER NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(stream, seq));
 CREATE TABLE IF NOT EXISTS calls(stream TEXT NOT NULL, call_n INTEGER NOT NULL, state TEXT NOT NULL, req_seq INTEGER, keys TEXT,
   roles TEXT, sys_k TEXT, resp_key TEXT, resp_ok INTEGER, PRIMARY KEY(stream, call_n));
-CREATE TABLE IF NOT EXISTS reqs(stream TEXT NOT NULL, call_n INTEGER NOT NULL, body TEXT NOT NULL, PRIMARY KEY(stream, call_n));
+CREATE TABLE IF NOT EXISTS reqs(stream TEXT NOT NULL, call_n INTEGER NOT NULL, body TEXT NOT NULL, refs TEXT NOT NULL DEFAULT '[]', resp_ref TEXT, PRIMARY KEY(stream, call_n));
 CREATE TABLE IF NOT EXISTS gaps(id INTEGER PRIMARY KEY AUTOINCREMENT, stream TEXT NOT NULL, kind TEXT NOT NULL, from_seq INTEGER NOT NULL,
   to_seq INTEGER NOT NULL, blocking INTEGER NOT NULL, detail TEXT, opened REAL, closed REAL, closed_by TEXT, UNIQUE(stream, kind, from_seq));
 CREATE TABLE IF NOT EXISTS witness(stream TEXT PRIMARY KEY, seq INTEGER NOT NULL, hash TEXT NOT NULL);
 """
 
 BLOCKING = {"seq_hole": 1, "tail_truncated": 1, "chain_break": 1, "conflicting_duplicate": 1, "blob_missing": 1,
-            "unlogged_assistant_message": 1, "assistant_message_not_in_log": 1, "history_rewritten": 0}
+            "unlogged_assistant_message": 1, "delta_mismatch": 1, "assistant_message_not_in_log": 1, "history_rewritten": 0}
 
 
 class Fenced(Exception):
@@ -36,8 +36,10 @@ class Fenced(Exception):
 
 class Ingester:
     def __init__(self, path: str, blob_source: Callable[[str], Optional[str]], name: str = "ing", sync: str = "FULL",
-                 hooks: Optional[Dict[str, Callable]] = None):
+                 hooks: Optional[Dict[str, Callable]] = None, fence: bool = True, unique: bool = True, state_guard: bool = True):
+        """fence/unique=False exist only to build the race control (compare-and-set and event uniqueness removed)."""
         self.path, self.blob, self.name, self.hooks = path, blob_source, name, hooks or {}
+        self.fence, self.unique, self._n, self.state_guard = fence, unique, 0, state_guard
         self.c = connect(path, sync)
         self.c.executescript(SCHEMA)
         self.stats = {"fenced": 0, "dup_event_suppressed": 0, "records_applied": 0, "lock_wait_s": 0.0, "apply_s": 0.0}
@@ -118,13 +120,13 @@ class Ingester:
         t1 = time.time()
         try:
             cur, head = self.watermark(stream)
-            if cur != token:
+            if cur != token and self.fence:
                 raise Fenced("watermark %d != token %d" % (cur, token))
             if self.hooks.get("in_apply"):
                 self.hooks["in_apply"](self.name, stream, token)
             ehead = (c.execute("SELECT ehead FROM wm WHERE stream=?", (stream,)).fetchone() or (GENESIS,))[0]
             for r in run:
-                if r["prev"] != head:
+                if r["prev"] != head and self.fence:   # (the chain check is a second fence; the race control removes it too)
                     self._gap(stream, "chain_break", r["seq"], r["seq"], {"expected_prev": head, "got_prev": r["prev"]})
                     break                                  # held: records after a broken chain are not applied
                 if sha(r["prev"] + "|" + r["kind"] + "|" + r["body"]) != r["hash"]:
@@ -150,14 +152,18 @@ class Ingester:
                 pass
             raise
         finally:
+            t2 = time.time()
             self.stats["lock_wait_s"] += t1 - t0
-            self.stats["apply_s"] += time.time() - t1
-        self.last_overlap = (t0, t1, time.time())
+            self.stats["apply_s"] += t2 - t1
+            self.last_overlap = (t0, t1, t2)       # [lock request, lock acquired, end]: measured overlap witness
 
     # ------------------------------------------------------------ event emission
     def _emit(self, stream, call_n, side, pos, blk, prov, kind, status, content, log_seq, meta=None) -> None:
         c = self.c
         ikey = "%s|%s|%s|%s|%s" % (stream, call_n, side, pos, blk)
+        if not self.unique:
+            self._n += 1
+            ikey += "|%s#%d" % (self.name, self._n)
         last = c.execute("SELECT ehash FROM events WHERE stream=? ORDER BY ord DESC LIMIT 1", (stream,)).fetchone()
         eprev = last[0] if last else GENESIS
         chash = sha(content or "")
@@ -187,14 +193,24 @@ class Ingester:
             for h in [m["h"] for m in body["msgs"]] + ([body["sys"]["h"]] if body.get("sys") else []):
                 if self.blob(h) is None:
                     return h
+            refs = body["msgs"]
+            d = body.get("delta")
+            if d:
+                b = c.execute("SELECT refs, resp_ref FROM reqs WHERE stream=? AND call_n=?", (stream, d["base"])).fetchone()
+                full = (json.loads(b[0]) + ([json.loads(b[1])] if d["with_resp"] and b[1] else [])) if b else []
+                from .tap import sha_keys
+                if not b or len(full) < d["p"] or sha_keys([m["k"] for m in full[:d["p"]]]) != d["digest"]:
+                    self._gap(stream, "delta_mismatch", seq, seq, {"call": n, "base": d["base"]})
+                    return "delta_base:%s" % d["base"]
+                refs = full[:d["p"]] + body["msgs"]
             # any earlier call still 'requested' never got a response record: its send outcome is unknown
             for (pn,) in c.execute("SELECT call_n FROM calls WHERE stream=? AND state='requested'", (stream,)).fetchall():
                 c.execute("UPDATE calls SET state='unconfirmed' WHERE stream=? AND call_n=?", (stream, pn))
                 self._emit(stream, pn, "meta", 0, 0, "port", "unconfirmed_request", "info", cj({"why": "no response record before next request"}), seq)
             c.execute("INSERT OR IGNORE INTO calls(stream,call_n,state,req_seq,keys,roles,sys_k) VALUES(?,?,?,?,?,?,?)",
-                      (stream, n, "requested", seq, cj([m["k"] for m in body["msgs"]]), cj([m["role"] for m in body["msgs"]]),
+                      (stream, n, "requested", seq, cj([m["k"] for m in refs]), cj([m["role"] for m in refs]),
                        (body["sys"] or {}).get("k") if body.get("sys") else None))
-            c.execute("INSERT OR IGNORE INTO reqs VALUES(?,?,?)", (stream, n, r["body"]))
+            c.execute("INSERT OR IGNORE INTO reqs(stream,call_n,body,refs) VALUES(?,?,?,?)", (stream, n, r["body"], cj(refs)))
             for v in body.get("pairing") or []:
                 self._emit(stream, n, "meta", 1, int(sha(v)[:7], 16), "port", "tool_pairing_violation", "info", v, seq)
             return None
@@ -209,15 +225,20 @@ class Ingester:
         return None
 
     def _req_body(self, stream: str, n: int, seq: int) -> dict:
-        return json.loads(self.c.execute("SELECT body FROM reqs WHERE stream=? AND call_n=?", (stream, n)).fetchone()[0])
+        row = self.c.execute("SELECT body, refs FROM reqs WHERE stream=? AND call_n=?", (stream, n)).fetchone()
+        b = json.loads(row[0])
+        b["msgs"] = json.loads(row[1])           # full reconstructed refs (the log record may hold only the delta)
+        return b
 
     def _apply_resp(self, stream: str, n: int, seq: int, body: dict) -> Optional[str]:
         c = self.c
         status = body["status"]
         if body.get("msg") and self.blob(body["msg"]["h"]) is None:
             return body["msg"]["h"]
+        if body.get("msg"):
+            c.execute("UPDATE reqs SET resp_ref=? WHERE stream=? AND call_n=?", (cj(body["msg"]), stream, n))
         row = c.execute("SELECT state FROM calls WHERE stream=? AND call_n=?", (stream, n)).fetchone()
-        if row is None or row[0] == "confirmed":
+        if row is None or (row[0] == "confirmed" and self.state_guard):
             return None
         if status in ("rejected", "failed_unknown"):
             c.execute("UPDATE calls SET state=? WHERE stream=? AND call_n=?", ("rejected" if status == "rejected" else "unconfirmed", stream, n))
