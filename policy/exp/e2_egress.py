@@ -272,7 +272,7 @@ def main():
                        ("info_inject_only_disabled", ("disable", "inject"))]:
         arms[name] = run_arm(mode)
     a = arms["enforced"]
-    expected_actions = sorted(x for x in ACTIONS if x not in ("append", "read", "inject"))
+    expected_actions = sorted(x for x in ACTIONS if x not in ("append", "read", "inject", "erase"))
     pos_ok = (a["violations"] == 0 and a["scenarios"] >= 2000 and all(a["attempts_forbidden"][c] >= 1000 for c in CLASSES if c != "plain")
               and all(a["permitted"][c] >= 1000 for c in CLASSES if c not in ("other_tenant",))
               and set(a["channels"]) == {"model", "embed", "inbox", "export"} and a["registered_actions"] == expected_actions
