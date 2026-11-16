@@ -46,3 +46,7 @@ Types: id not among candidates 11, duplicate id 3, malformed or trailing JSON ("
 
 STAGE G CANARY STOPPED AT THE SIZE CHECK: first real part-A prompt (078150f1, 400 candidates cut at 400 characters, both arms) measured 66,388 tokens for A-REORDER (76,886 total input minus the 10,500 per-call overhead), above the 60,000 stop line; the estimate formula gave 53,489 (ratio 1.24;
 162,355 candidate characters tokenise at 2.47 characters per token, not 4, because of the id and date prefixes). The runner wrote its stop file after the first result; 2 of the 22 canary calls were made (A-REORDER ok, A-DIG ok with 9 tool calls over 10 turns, 5 ids returned, 604k cumulative input tokens), 2 calls on the part A counter, none on part B. No further calls until main replies.
+
+STAGE G CANARY AT DEPTH 300 (22 calls, run_capped, concurrency 2, 170 s): part A 9 ok and 1 rejected of 10 (A-REORDER 078150f1: id not among candidates); measured A-REORDER prompt 50.6k to 52.1k tokens (max 52,137, under the 60,000 line);
+A-DIG tool calls per question 0, 0, 0, 10, 0 (the rule "at least 3 calls" followed on 1 of 5), no tool errors on variant g300; A-DIG cumulative input per question: cache creation 64.4k mean and cache read 82.0k mean (146k total; 62k and 0.8k when no tool is used, 75k and 407k with 10 calls).
+Part B 12 of 12 calls ok (6 items: reader and judge parsed). Guard blocks 0. WAL and work directories +22 each. Counters: part A 12 of 190, part B 12 of 460.
