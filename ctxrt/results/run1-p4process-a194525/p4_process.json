@@ -1,0 +1,410 @@
+{
+ "claim": "out-of-band stop reaches a process that ignores SIGTERM, its inbox writes and its model calls",
+ "overall": "FAIL",
+ "per_seed": [
+  {
+   "artifact": {
+    "n": 30,
+    "path": "ctxrt/results/p4_process-16096001.jsonl",
+    "sha256": "f6ec140d3396c627ed5761f870c3ad2cbbd96ac26da0feb78a3b29e91a70023e"
+   },
+   "criteria": [
+    {
+     "criterion": "process ignoring SIGTERM is gone after the audited stop (100%)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "escalation was needed (the stub ignored SIGTERM)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "witness: child was alive and landing calls before the fence",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "zombie attempted spend and write after the fence in >=90% of runs",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "0 model calls and 0 inbox writes landed after the fence (DB truth and child lines)",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "audited stop command succeeded",
+     "ok": true,
+     "value": 0
+    }
+   ],
+   "metrics": {
+    "ah_failures": 0,
+    "alive_before": 30,
+    "db_calls_after_stop": 0,
+    "db_items_after_stop": 0,
+    "escalated": 30,
+    "gone": 30,
+    "post_landed_lines": 0,
+    "post_spend_attempt_runs": 30,
+    "post_write_attempt_runs": 30,
+    "pre_landed_runs": 30,
+    "runs": 30
+   },
+   "seconds": 64.2,
+   "seed": 16096001
+  },
+  {
+   "artifact": {
+    "n": 30,
+    "path": "ctxrt/results/p4_process-16096002.jsonl",
+    "sha256": "d4856f10a3802ac137049b86834ae1bbb835bcd9b59fccfa32ff123bf0a3da51"
+   },
+   "criteria": [
+    {
+     "criterion": "process ignoring SIGTERM is gone after the audited stop (100%)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "escalation was needed (the stub ignored SIGTERM)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "witness: child was alive and landing calls before the fence",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "zombie attempted spend and write after the fence in >=90% of runs",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "0 model calls and 0 inbox writes landed after the fence (DB truth and child lines)",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "audited stop command succeeded",
+     "ok": true,
+     "value": 0
+    }
+   ],
+   "metrics": {
+    "ah_failures": 0,
+    "alive_before": 30,
+    "db_calls_after_stop": 0,
+    "db_items_after_stop": 0,
+    "escalated": 30,
+    "gone": 30,
+    "post_landed_lines": 0,
+    "post_spend_attempt_runs": 30,
+    "post_write_attempt_runs": 30,
+    "pre_landed_runs": 30,
+    "runs": 30
+   },
+   "seconds": 59.3,
+   "seed": 16096002
+  },
+  {
+   "artifact": {
+    "n": 30,
+    "path": "ctxrt/results/p4_process-16096003.jsonl",
+    "sha256": "8c2bb9756352637881ba7f0f1833875cb03f40a7bff884b6a7efeeaa0277652e"
+   },
+   "criteria": [
+    {
+     "criterion": "process ignoring SIGTERM is gone after the audited stop (100%)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "escalation was needed (the stub ignored SIGTERM)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "witness: child was alive and landing calls before the fence",
+     "ok": false,
+     "value": [
+      30,
+      29,
+      30
+     ]
+    },
+    {
+     "criterion": "zombie attempted spend and write after the fence in >=90% of runs",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "0 model calls and 0 inbox writes landed after the fence (DB truth and child lines)",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "audited stop command succeeded",
+     "ok": true,
+     "value": 0
+    }
+   ],
+   "metrics": {
+    "ah_failures": 0,
+    "alive_before": 30,
+    "db_calls_after_stop": 0,
+    "db_items_after_stop": 0,
+    "escalated": 30,
+    "gone": 30,
+    "post_landed_lines": 0,
+    "post_spend_attempt_runs": 30,
+    "post_write_attempt_runs": 30,
+    "pre_landed_runs": 29,
+    "runs": 30
+   },
+   "seconds": 61.7,
+   "seed": 16096003
+  },
+  {
+   "artifact": {
+    "n": 30,
+    "path": "ctxrt/results/p4_process-16096004.jsonl",
+    "sha256": "17d3101d1f12b139f3447887a52c92458ab0e653484b04ea2e7d3451241785a1"
+   },
+   "criteria": [
+    {
+     "criterion": "process ignoring SIGTERM is gone after the audited stop (100%)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "escalation was needed (the stub ignored SIGTERM)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "witness: child was alive and landing calls before the fence",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "zombie attempted spend and write after the fence in >=90% of runs",
+     "ok": true,
+     "value": [
+      30,
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "0 model calls and 0 inbox writes landed after the fence (DB truth and child lines)",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "audited stop command succeeded",
+     "ok": true,
+     "value": 0
+    }
+   ],
+   "metrics": {
+    "ah_failures": 0,
+    "alive_before": 30,
+    "db_calls_after_stop": 0,
+    "db_items_after_stop": 0,
+    "escalated": 30,
+    "gone": 30,
+    "post_landed_lines": 0,
+    "post_spend_attempt_runs": 30,
+    "post_write_attempt_runs": 30,
+    "pre_landed_runs": 30,
+    "runs": 30
+   },
+   "seconds": 70.4,
+   "seed": 16096004
+  },
+  {
+   "artifact": {
+    "n": 30,
+    "path": "ctxrt/results/p4_process-16096005.jsonl",
+    "sha256": "6adfc19413d1329959c01aa4d4bea3024d16688bc34074d91dd60235f7e8ca0c"
+   },
+   "criteria": [
+    {
+     "criterion": "process ignoring SIGTERM is gone after the audited stop (100%)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "escalation was needed (the stub ignored SIGTERM)",
+     "ok": true,
+     "value": [
+      30,
+      30
+     ]
+    },
+    {
+     "criterion": "witness: child was alive and landing calls before the fence",
+     "ok": false,
+     "value": [
+      30,
+      27,
+      30
+     ]
+    },
+    {
+     "criterion": "zombie attempted spend and write after the fence in >=90% of runs",
+     "ok": true,
+     "value": [
+      29,
+      29,
+      30
+     ]
+    },
+    {
+     "criterion": "0 model calls and 0 inbox writes landed after the fence (DB truth and child lines)",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "audited stop command succeeded",
+     "ok": true,
+     "value": 0
+    }
+   ],
+   "metrics": {
+    "ah_failures": 0,
+    "alive_before": 30,
+    "db_calls_after_stop": 0,
+    "db_items_after_stop": 0,
+    "escalated": 30,
+    "gone": 30,
+    "post_landed_lines": 0,
+    "post_spend_attempt_runs": 29,
+    "post_write_attempt_runs": 29,
+    "pre_landed_runs": 27,
+    "runs": 30
+   },
+   "seconds": 75.9,
+   "seed": 16096005
+  }
+ ],
+ "proof": "p4_process",
+ "stamp": {
+  "code_commit": "a19452535e459c2366098bbc0bf21f3fcb1ad2f0",
+  "dirty": false,
+  "fingerprint": {
+   "es": "none (in-process stubs)",
+   "model": "deterministic stubs, 0 model calls",
+   "stores": "in-memory + sqlite"
+  },
+  "host": "Mac-2.lan",
+  "loadavg": [
+   27.78857421875,
+   23.9658203125,
+   22.94580078125
+  ],
+  "machine": "macOS-26.6-arm64-arm-64bit",
+  "params": {
+   "runs": 30,
+   "seeds": [
+    16096001,
+    16096002,
+    16096003,
+    16096004,
+    16096005
+   ],
+   "stop": "ah.py audited stop with SIGKILL escalation",
+   "timing": "real time, not quiesced"
+  },
+  "python": "3.9.6",
+  "threshold_commits": [
+   "67a2842",
+   "05aafb0"
+  ],
+  "time_utc": "2026-11-16T02:05:19Z",
+  "timing_quiesced": false
+ },
+ "verdict_by_criterion": {
+  "0 model calls and 0 inbox writes landed after the fence (DB truth and child lines)": "PASS",
+  "audited stop command succeeded": "PASS",
+  "escalation was needed (the stub ignored SIGTERM)": "PASS",
+  "process ignoring SIGTERM is gone after the audited stop (100%)": "PASS",
+  "witness: child was alive and landing calls before the fence": "FAIL",
+  "zombie attempted spend and write after the fence in >=90% of runs": "PASS"
+ }
+}

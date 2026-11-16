@@ -1,0 +1,674 @@
+{
+ "claim": "author never routed to review or approve; model recorded; inbox origin filter",
+ "overall": "PASS",
+ "per_seed": [
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096001.jsonl",
+    "sha256": "0907e11939dba2afe4f06cac9d138936862130be93d594ec768159cbcc053794"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1257
+     ]
+    },
+    {
+     "criterion": "different-model rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      301,
+      301
+     ]
+    },
+    {
+     "criterion": "approvals: 0 by author set, all others allowed",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: non-author sessions DO receive the item",
+     "ok": true,
+     "value": [
+      948,
+      948
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      927,
+      1947
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1101,
+      500
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_author_refused": 2296,
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 927,
+    "ctrl_cases": 1947,
+    "ctrl_inbox_author_claims": 1101,
+    "ctrl_only_author_assigned": 283,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 948,
+    "inbox_nonauthor_expected": 948,
+    "only_author_pool": 301,
+    "only_author_refused": 301,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1257,
+    "route_in_author_set": 0,
+    "route_refused": 743,
+    "route_same_model": 0,
+    "set_mismatch": 0
+   },
+   "seconds": 3.8,
+   "seed": 16096001
+  },
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096002.jsonl",
+    "sha256": "02363e6c81aa61c9c53cf8c9f1083a3d8419d57a9c1f5f0502d06e7ca83d53e7"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1247
+     ]
+    },
+    {
+     "criterion": "different-model rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      328,
+      328
+     ]
+    },
+    {
+     "criterion": "approvals: 0 by author set, all others allowed",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: non-author sessions DO receive the item",
+     "ok": true,
+     "value": [
+      931,
+      931
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      991,
+      1955
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1095,
+      500
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_author_refused": 2289,
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 991,
+    "ctrl_cases": 1955,
+    "ctrl_inbox_author_claims": 1095,
+    "ctrl_only_author_assigned": 306,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 931,
+    "inbox_nonauthor_expected": 931,
+    "only_author_pool": 328,
+    "only_author_refused": 328,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1247,
+    "route_in_author_set": 0,
+    "route_refused": 753,
+    "route_same_model": 0,
+    "set_mismatch": 0
+   },
+   "seconds": 1.5,
+   "seed": 16096002
+  },
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096003.jsonl",
+    "sha256": "d725036a7420438cc06486971f922d06e2dd0dbb1f800ed8a641ebd79432c683"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1291
+     ]
+    },
+    {
+     "criterion": "different-model rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      276,
+      276
+     ]
+    },
+    {
+     "criterion": "approvals: 0 by author set, all others allowed",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: non-author sessions DO receive the item",
+     "ok": true,
+     "value": [
+      940,
+      940
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      924,
+      1965
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1041,
+      500
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_author_refused": 2110,
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 924,
+    "ctrl_cases": 1965,
+    "ctrl_inbox_author_claims": 1041,
+    "ctrl_only_author_assigned": 264,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 940,
+    "inbox_nonauthor_expected": 940,
+    "only_author_pool": 276,
+    "only_author_refused": 276,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1291,
+    "route_in_author_set": 0,
+    "route_refused": 709,
+    "route_same_model": 0,
+    "set_mismatch": 0
+   },
+   "seconds": 1.7,
+   "seed": 16096003
+  },
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096004.jsonl",
+    "sha256": "0346ed0bc0fb9b4e62679fa38eade74bb24c1f105e3ffa06d7ad7a5f24919c7d"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1251
+     ]
+    },
+    {
+     "criterion": "different-model rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      320,
+      320
+     ]
+    },
+    {
+     "criterion": "approvals: 0 by author set, all others allowed",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: non-author sessions DO receive the item",
+     "ok": true,
+     "value": [
+      946,
+      946
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      943,
+      1953
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1087,
+      500
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_author_refused": 2159,
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 943,
+    "ctrl_cases": 1953,
+    "ctrl_inbox_author_claims": 1087,
+    "ctrl_only_author_assigned": 297,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 946,
+    "inbox_nonauthor_expected": 946,
+    "only_author_pool": 320,
+    "only_author_refused": 320,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1251,
+    "route_in_author_set": 0,
+    "route_refused": 749,
+    "route_same_model": 0,
+    "set_mismatch": 0
+   },
+   "seconds": 2.0,
+   "seed": 16096004
+  },
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096005.jsonl",
+    "sha256": "e4d8ffcc31f42249fe7cdbc3c561e809afbe7310b81e4af5dd9732ea964228fa"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1249
+     ]
+    },
+    {
+     "criterion": "different-model rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      280,
+      280
+     ]
+    },
+    {
+     "criterion": "approvals: 0 by author set, all others allowed",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: non-author sessions DO receive the item",
+     "ok": true,
+     "value": [
+      951,
+      951
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      936,
+      1947
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1082,
+      500
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_author_refused": 2108,
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 936,
+    "ctrl_cases": 1947,
+    "ctrl_inbox_author_claims": 1082,
+    "ctrl_only_author_assigned": 256,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 951,
+    "inbox_nonauthor_expected": 951,
+    "only_author_pool": 280,
+    "only_author_refused": 280,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1249,
+    "route_in_author_set": 0,
+    "route_refused": 751,
+    "route_same_model": 0,
+    "set_mismatch": 0
+   },
+   "seconds": 1.5,
+   "seed": 16096005
+  }
+ ],
+ "proof": "p6_routing",
+ "stamp": {
+  "code_commit": "a19452535e459c2366098bbc0bf21f3fcb1ad2f0",
+  "dirty": false,
+  "fingerprint": {
+   "es": "none (in-process stubs)",
+   "model": "deterministic stubs, 0 model calls",
+   "stores": "in-memory + sqlite"
+  },
+  "host": "Mac-2.lan",
+  "loadavg": [
+   17.0146484375,
+   18.41943359375,
+   20.5703125
+  ],
+  "machine": "macOS-26.6-arm64-arm-64bit",
+  "params": {
+   "N": 2000,
+   "seeds": [
+    16096001,
+    16096002,
+    16096003,
+    16096004,
+    16096005
+   ]
+  },
+  "python": "3.9.6",
+  "threshold_commits": [
+   "67a2842",
+   "05aafb0"
+  ],
+  "time_utc": "2026-11-16T02:17:03Z",
+  "timing_quiesced": false
+ },
+ "verdict_by_criterion": {
+  "0 routings to the author set": "PASS",
+  "approvals: 0 by author set, all others allowed": "PASS",
+  "author model on 100% of records": "PASS",
+  "author-only pools: typed refusal, never fallback": "PASS",
+  "author-set closure equals independent fixpoint": "PASS",
+  "canary: non-author sessions DO receive the item": "PASS",
+  "control: availability-only routing assigns author set >=10%": "PASS",
+  "control: unfiltered inbox delivers author-origin items >=10%": "PASS",
+  "creation without author id/model refused 100%": "PASS",
+  "different-model rule held on every assignment": "PASS",
+  "inbox: 0 author-origin claims by author-set sessions": "PASS",
+  "routing equals independent expectation or typed refusal (100%)": "PASS"
+ }
+}

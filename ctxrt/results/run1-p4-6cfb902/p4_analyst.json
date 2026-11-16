@@ -1,0 +1,2207 @@
+{
+ "claim": "analyst runtime: keyed runs, reserved budget, stall stop, fenced stop, findings schema, host check, async",
+ "overall": "FAIL",
+ "per_seed": [
+  {
+   "artifact": {
+    "n": 1,
+    "path": "ctxrt/results/p4_analyst-16096001.jsonl",
+    "sha256": "dd4f6fd327b109c6e7513c6928f5b25e0283bb4c8c4ed1a34febf8ace8ac3c92"
+   },
+   "criteria": [
+    {
+     "criterion": "4a keyed: 1 run row, 1 call set, identical result per key (100%)",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
+     "ok": true,
+     "value": 577
+    },
+    {
+     "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
+     "ok": true,
+     "value": [
+      66,
+      66,
+      132,
+      132
+     ]
+    },
+    {
+     "criterion": "4a control unkeyed duplicates >=10% of keys",
+     "ok": true,
+     "value": [
+      67,
+      67
+     ]
+    },
+    {
+     "criterion": "4b reservation before first call; charged to originating step only",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "4b runaway stub refused at reservation (spent<=reserved)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b 8 concurrent vs allowance 5: exactly <=5 start",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b overlap witness: >=100 contended reservations per seed",
+     "ok": true,
+     "value": 306
+    },
+    {
+     "criterion": "4b zombie actor refused",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C1 charge-after-run overspends >=10%",
+     "ok": true,
+     "value": [
+      127,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C2 non-atomic overshoot >=10% of trials",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c loop stub stopped within stall_s + 2 ticks (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c hang stub stopped within bound, thread released, call discarded (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c progressing slow stub never stopped",
+     "ok": true,
+     "value": [
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c after stop: 0 writes and 0 calls land; zombie attempted",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c canary: a live run's write lands through the same gate",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "4c control cooperative flag: zombie writes land >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d malformed: 100% rejected typed, 0 injected",
+     "ok": true,
+     "value": [
+      500,
+      500,
+      500,
+      0
+     ]
+    },
+    {
+     "criterion": "4d nothing_relevant renders empty string and enqueues nothing",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4d control: injecting on empty emits a block >=10%",
+     "ok": true,
+     "value": 100
+    },
+    {
+     "criterion": "4d dead ends stored; dead_end_only suppresses injection",
+     "ok": true,
+     "value": [
+      162,
+      162,
+      100
+     ]
+    },
+    {
+     "criterion": "4d canary: valid finding IS injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d seen-set: run 2 pays 0 for run-1 rejections; control pays again",
+     "ok": true,
+     "value": [
+      329,
+      0,
+      329,
+      329
+     ]
+    },
+    {
+     "criterion": "4e valid accepted 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e word-replaced rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e adjacent-round rejected 100% (legitimate repeats excluded and counted)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "4e speaker-flip rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e ambiguous speaker goes to review, injected 0",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction in claim: 0 in model-facing block",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e canary: non-planted valid finding injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e control: injecting the claim leaks >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction inside verified quote stays in one framed JSON data line",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0.0013242909999995334,
+      0.001338290999999714
+     ]
+    },
+    {
+     "criterion": "4f synchronous control adds >= analyst delay",
+     "ok": true,
+     "value": [
+      95,
+      100,
+      0.2557824169999998
+     ]
+    },
+    {
+     "criterion": "4f write attempts refused 100%, log hash unchanged",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      100
+     ]
+    }
+   ],
+   "metrics": {
+    "4a": {
+     "calls_wrong": 0,
+     "conc_n": 67,
+     "contended": 577,
+     "crash_completed_one": 66,
+     "crash_n": 66,
+     "ctrl_dup_keys": 67,
+     "ctrl_keys": 67,
+     "keyed_ok": 200,
+     "keys": 200,
+     "replay_extra_calls": 0,
+     "replays": 134,
+     "results_differ": 0,
+     "rows_ne_1": 0,
+     "started_n": 0,
+     "zombie_attempts": 132,
+     "zombie_refused": 132
+    },
+    "4b": {
+     "charge_checks": 100,
+     "charge_ok": 100,
+     "conc_contended": 306,
+     "conc_started_eq_allow": 100,
+     "conc_started_le_allow": 100,
+     "conc_trials": 100,
+     "cross_charged": 0,
+     "ctrl1_over": 127,
+     "ctrl1_runs": 300,
+     "ctrl2_overlap": 0,
+     "ctrl2_overshoot": 100,
+     "ctrl2_trials": 100,
+     "reserve_before_call": 100,
+     "reserve_checks": 100,
+     "runaway": 100,
+     "runaway_refused": 100,
+     "runaway_spent_le_reserved": 100,
+     "shared_key_n": 100,
+     "shared_key_second_charged": 0,
+     "zombie_attempts": 300,
+     "zombie_refused": 300
+    },
+    "4c": {
+     "canary_live_write": 50,
+     "canary_n": 50,
+     "ctrl_calls_landed": 100,
+     "ctrl_runs": 100,
+     "ctrl_writes_landed": 100,
+     "discarded_inflight": 100,
+     "hang_runs": 100,
+     "hang_stopped_in_bound": 100,
+     "hang_thread_exited": 100,
+     "loop_runs": 100,
+     "loop_stopped_in_bound": 100,
+     "max_ticks_hang": 11.0,
+     "max_ticks_loop": 11.0,
+     "prog_done": 100,
+     "prog_false_stop": 0,
+     "prog_runs": 100,
+     "zombie_attempted": 100,
+     "zombie_calls_landed": 0,
+     "zombie_runs": 100,
+     "zombie_writes_landed": 0
+    },
+    "4d": {
+     "canary_valid": 100,
+     "canary_valid_rendered": 100,
+     "ctrl_empty_injects": 100,
+     "ctrl_run2_paid": 329,
+     "dead_n": 162,
+     "dead_stored": 162,
+     "deadend_only_ok": 100,
+     "injected_after_malformed": 0,
+     "malformed_n": 500,
+     "malformed_rejected": 500,
+     "nothing_items": 0,
+     "nothing_n": 100,
+     "nothing_render_empty": 100,
+     "seen_questions": 60,
+     "seen_run1_paid": 329,
+     "seen_run2_paid": 0,
+     "seen_skipped_run2": 329,
+     "typed_codes_ok": 500
+    },
+    "4e": {
+     "adj": 100,
+     "adj_excluded": 0,
+     "adj_rejected": 100,
+     "amb": 100,
+     "amb_injected": 0,
+     "amb_review": 100,
+     "canary_nonplanted": 100,
+     "canary_nonplanted_n": 100,
+     "ctrl_claim_leaks": 100,
+     "flip": 100,
+     "flip_rejected": 100,
+     "plant_claim_in_block": 0,
+     "plant_claim_n": 100,
+     "plant_quote_framed": 100,
+     "plant_quote_n": 100,
+     "plant_quote_present": 100,
+     "valid": 100,
+     "valid_accepted": 100,
+     "word": 100,
+     "word_rejected": 100
+    },
+    "4f": {
+     "base_med": 0.0013242909999995334,
+     "hang_med": 0.001338290999999714,
+     "log_unchanged": 100,
+     "ok_latency": 100,
+     "runs": 100,
+     "sync_adds": 95,
+     "sync_med": 0.2557824169999998,
+     "write_attempts": 300,
+     "write_refused": 300
+    }
+   },
+   "seconds": 36.7,
+   "seed": 16096001
+  },
+  {
+   "artifact": {
+    "n": 1,
+    "path": "ctxrt/results/p4_analyst-16096002.jsonl",
+    "sha256": "15a6f341cb46d6ce014c33a69d622e6e779c4637339f71e5c5b8b88ca7cd42d1"
+   },
+   "criteria": [
+    {
+     "criterion": "4a keyed: 1 run row, 1 call set, identical result per key (100%)",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
+     "ok": true,
+     "value": 677
+    },
+    {
+     "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
+     "ok": true,
+     "value": [
+      66,
+      66,
+      132,
+      132
+     ]
+    },
+    {
+     "criterion": "4a control unkeyed duplicates >=10% of keys",
+     "ok": true,
+     "value": [
+      67,
+      67
+     ]
+    },
+    {
+     "criterion": "4b reservation before first call; charged to originating step only",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "4b runaway stub refused at reservation (spent<=reserved)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b 8 concurrent vs allowance 5: exactly <=5 start",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b overlap witness: >=100 contended reservations per seed",
+     "ok": true,
+     "value": 354
+    },
+    {
+     "criterion": "4b zombie actor refused",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C1 charge-after-run overspends >=10%",
+     "ok": true,
+     "value": [
+      120,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C2 non-atomic overshoot >=10% of trials",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c loop stub stopped within stall_s + 2 ticks (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c hang stub stopped within bound, thread released, call discarded (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c progressing slow stub never stopped",
+     "ok": true,
+     "value": [
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c after stop: 0 writes and 0 calls land; zombie attempted",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c canary: a live run's write lands through the same gate",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "4c control cooperative flag: zombie writes land >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d malformed: 100% rejected typed, 0 injected",
+     "ok": true,
+     "value": [
+      500,
+      500,
+      500,
+      0
+     ]
+    },
+    {
+     "criterion": "4d nothing_relevant renders empty string and enqueues nothing",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4d control: injecting on empty emits a block >=10%",
+     "ok": true,
+     "value": 100
+    },
+    {
+     "criterion": "4d dead ends stored; dead_end_only suppresses injection",
+     "ok": true,
+     "value": [
+      156,
+      156,
+      100
+     ]
+    },
+    {
+     "criterion": "4d canary: valid finding IS injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d seen-set: run 2 pays 0 for run-1 rejections; control pays again",
+     "ok": true,
+     "value": [
+      322,
+      0,
+      322,
+      322
+     ]
+    },
+    {
+     "criterion": "4e valid accepted 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e word-replaced rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e adjacent-round rejected 100% (legitimate repeats excluded and counted)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "4e speaker-flip rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e ambiguous speaker goes to review, injected 0",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction in claim: 0 in model-facing block",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e canary: non-planted valid finding injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e control: injecting the claim leaks >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction inside verified quote stays in one framed JSON data line",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0.0011166660000014872,
+      0.001112999999996589
+     ]
+    },
+    {
+     "criterion": "4f synchronous control adds >= analyst delay",
+     "ok": true,
+     "value": [
+      94,
+      100,
+      0.2549677500000058
+     ]
+    },
+    {
+     "criterion": "4f write attempts refused 100%, log hash unchanged",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      100
+     ]
+    }
+   ],
+   "metrics": {
+    "4a": {
+     "calls_wrong": 0,
+     "conc_n": 67,
+     "contended": 677,
+     "crash_completed_one": 66,
+     "crash_n": 66,
+     "ctrl_dup_keys": 67,
+     "ctrl_keys": 67,
+     "keyed_ok": 200,
+     "keys": 200,
+     "replay_extra_calls": 0,
+     "replays": 134,
+     "results_differ": 0,
+     "rows_ne_1": 0,
+     "started_n": 0,
+     "zombie_attempts": 132,
+     "zombie_refused": 132
+    },
+    "4b": {
+     "charge_checks": 100,
+     "charge_ok": 100,
+     "conc_contended": 354,
+     "conc_started_eq_allow": 100,
+     "conc_started_le_allow": 100,
+     "conc_trials": 100,
+     "cross_charged": 0,
+     "ctrl1_over": 120,
+     "ctrl1_runs": 300,
+     "ctrl2_overlap": 0,
+     "ctrl2_overshoot": 100,
+     "ctrl2_trials": 100,
+     "reserve_before_call": 100,
+     "reserve_checks": 100,
+     "runaway": 100,
+     "runaway_refused": 100,
+     "runaway_spent_le_reserved": 100,
+     "shared_key_n": 100,
+     "shared_key_second_charged": 0,
+     "zombie_attempts": 300,
+     "zombie_refused": 300
+    },
+    "4c": {
+     "canary_live_write": 50,
+     "canary_n": 50,
+     "ctrl_calls_landed": 100,
+     "ctrl_runs": 100,
+     "ctrl_writes_landed": 100,
+     "discarded_inflight": 100,
+     "hang_runs": 100,
+     "hang_stopped_in_bound": 100,
+     "hang_thread_exited": 100,
+     "loop_runs": 100,
+     "loop_stopped_in_bound": 100,
+     "max_ticks_hang": 11.0,
+     "max_ticks_loop": 11.0,
+     "prog_done": 100,
+     "prog_false_stop": 0,
+     "prog_runs": 100,
+     "zombie_attempted": 100,
+     "zombie_calls_landed": 0,
+     "zombie_runs": 100,
+     "zombie_writes_landed": 0
+    },
+    "4d": {
+     "canary_valid": 100,
+     "canary_valid_rendered": 100,
+     "ctrl_empty_injects": 100,
+     "ctrl_run2_paid": 322,
+     "dead_n": 156,
+     "dead_stored": 156,
+     "deadend_only_ok": 100,
+     "injected_after_malformed": 0,
+     "malformed_n": 500,
+     "malformed_rejected": 500,
+     "nothing_items": 0,
+     "nothing_n": 100,
+     "nothing_render_empty": 100,
+     "seen_questions": 60,
+     "seen_run1_paid": 322,
+     "seen_run2_paid": 0,
+     "seen_skipped_run2": 322,
+     "typed_codes_ok": 500
+    },
+    "4e": {
+     "adj": 100,
+     "adj_excluded": 0,
+     "adj_rejected": 100,
+     "amb": 100,
+     "amb_injected": 0,
+     "amb_review": 100,
+     "canary_nonplanted": 100,
+     "canary_nonplanted_n": 100,
+     "ctrl_claim_leaks": 100,
+     "flip": 100,
+     "flip_rejected": 100,
+     "plant_claim_in_block": 0,
+     "plant_claim_n": 100,
+     "plant_quote_framed": 100,
+     "plant_quote_n": 100,
+     "plant_quote_present": 100,
+     "valid": 100,
+     "valid_accepted": 100,
+     "word": 100,
+     "word_rejected": 100
+    },
+    "4f": {
+     "base_med": 0.0011166660000014872,
+     "hang_med": 0.001112999999996589,
+     "log_unchanged": 100,
+     "ok_latency": 100,
+     "runs": 100,
+     "sync_adds": 94,
+     "sync_med": 0.2549677500000058,
+     "write_attempts": 300,
+     "write_refused": 300
+    }
+   },
+   "seconds": 36.6,
+   "seed": 16096002
+  },
+  {
+   "artifact": {
+    "n": 1,
+    "path": "ctxrt/results/p4_analyst-16096003.jsonl",
+    "sha256": "6cc000f8e226777aecbae8a5a7f9f1be76e8429fb9afa1ca7d9261c4d5531177"
+   },
+   "criteria": [
+    {
+     "criterion": "4a keyed: 1 run row, 1 call set, identical result per key (100%)",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
+     "ok": true,
+     "value": 625
+    },
+    {
+     "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
+     "ok": true,
+     "value": [
+      66,
+      66,
+      132,
+      132
+     ]
+    },
+    {
+     "criterion": "4a control unkeyed duplicates >=10% of keys",
+     "ok": true,
+     "value": [
+      67,
+      67
+     ]
+    },
+    {
+     "criterion": "4b reservation before first call; charged to originating step only",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "4b runaway stub refused at reservation (spent<=reserved)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b 8 concurrent vs allowance 5: exactly <=5 start",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b overlap witness: >=100 contended reservations per seed",
+     "ok": true,
+     "value": 260
+    },
+    {
+     "criterion": "4b zombie actor refused",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C1 charge-after-run overspends >=10%",
+     "ok": true,
+     "value": [
+      108,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C2 non-atomic overshoot >=10% of trials",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c loop stub stopped within stall_s + 2 ticks (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c hang stub stopped within bound, thread released, call discarded (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c progressing slow stub never stopped",
+     "ok": true,
+     "value": [
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c after stop: 0 writes and 0 calls land; zombie attempted",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c canary: a live run's write lands through the same gate",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "4c control cooperative flag: zombie writes land >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d malformed: 100% rejected typed, 0 injected",
+     "ok": true,
+     "value": [
+      500,
+      500,
+      500,
+      0
+     ]
+    },
+    {
+     "criterion": "4d nothing_relevant renders empty string and enqueues nothing",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4d control: injecting on empty emits a block >=10%",
+     "ok": true,
+     "value": 100
+    },
+    {
+     "criterion": "4d dead ends stored; dead_end_only suppresses injection",
+     "ok": true,
+     "value": [
+      155,
+      155,
+      100
+     ]
+    },
+    {
+     "criterion": "4d canary: valid finding IS injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d seen-set: run 2 pays 0 for run-1 rejections; control pays again",
+     "ok": true,
+     "value": [
+      333,
+      0,
+      333,
+      333
+     ]
+    },
+    {
+     "criterion": "4e valid accepted 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e word-replaced rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e adjacent-round rejected 100% (legitimate repeats excluded and counted)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "4e speaker-flip rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e ambiguous speaker goes to review, injected 0",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction in claim: 0 in model-facing block",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e canary: non-planted valid finding injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e control: injecting the claim leaks >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction inside verified quote stays in one framed JSON data line",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "ok": false,
+     "value": [
+      99,
+      100,
+      0.002007250000005456,
+      0.0019273329999975886
+     ]
+    },
+    {
+     "criterion": "4f synchronous control adds >= analyst delay",
+     "ok": false,
+     "value": [
+      76,
+      100,
+      0.2522802919999947
+     ]
+    },
+    {
+     "criterion": "4f write attempts refused 100%, log hash unchanged",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      100
+     ]
+    }
+   ],
+   "metrics": {
+    "4a": {
+     "calls_wrong": 0,
+     "conc_n": 67,
+     "contended": 625,
+     "crash_completed_one": 66,
+     "crash_n": 66,
+     "ctrl_dup_keys": 67,
+     "ctrl_keys": 67,
+     "keyed_ok": 200,
+     "keys": 200,
+     "replay_extra_calls": 0,
+     "replays": 134,
+     "results_differ": 0,
+     "rows_ne_1": 0,
+     "started_n": 0,
+     "zombie_attempts": 132,
+     "zombie_refused": 132
+    },
+    "4b": {
+     "charge_checks": 100,
+     "charge_ok": 100,
+     "conc_contended": 260,
+     "conc_started_eq_allow": 100,
+     "conc_started_le_allow": 100,
+     "conc_trials": 100,
+     "cross_charged": 0,
+     "ctrl1_over": 108,
+     "ctrl1_runs": 300,
+     "ctrl2_overlap": 0,
+     "ctrl2_overshoot": 100,
+     "ctrl2_trials": 100,
+     "reserve_before_call": 100,
+     "reserve_checks": 100,
+     "runaway": 100,
+     "runaway_refused": 100,
+     "runaway_spent_le_reserved": 100,
+     "shared_key_n": 100,
+     "shared_key_second_charged": 0,
+     "zombie_attempts": 300,
+     "zombie_refused": 300
+    },
+    "4c": {
+     "canary_live_write": 50,
+     "canary_n": 50,
+     "ctrl_calls_landed": 100,
+     "ctrl_runs": 100,
+     "ctrl_writes_landed": 100,
+     "discarded_inflight": 100,
+     "hang_runs": 100,
+     "hang_stopped_in_bound": 100,
+     "hang_thread_exited": 100,
+     "loop_runs": 100,
+     "loop_stopped_in_bound": 100,
+     "max_ticks_hang": 11.0,
+     "max_ticks_loop": 11.0,
+     "prog_done": 100,
+     "prog_false_stop": 0,
+     "prog_runs": 100,
+     "zombie_attempted": 100,
+     "zombie_calls_landed": 0,
+     "zombie_runs": 100,
+     "zombie_writes_landed": 0
+    },
+    "4d": {
+     "canary_valid": 100,
+     "canary_valid_rendered": 100,
+     "ctrl_empty_injects": 100,
+     "ctrl_run2_paid": 333,
+     "dead_n": 155,
+     "dead_stored": 155,
+     "deadend_only_ok": 100,
+     "injected_after_malformed": 0,
+     "malformed_n": 500,
+     "malformed_rejected": 500,
+     "nothing_items": 0,
+     "nothing_n": 100,
+     "nothing_render_empty": 100,
+     "seen_questions": 60,
+     "seen_run1_paid": 333,
+     "seen_run2_paid": 0,
+     "seen_skipped_run2": 333,
+     "typed_codes_ok": 500
+    },
+    "4e": {
+     "adj": 100,
+     "adj_excluded": 0,
+     "adj_rejected": 100,
+     "amb": 100,
+     "amb_injected": 0,
+     "amb_review": 100,
+     "canary_nonplanted": 100,
+     "canary_nonplanted_n": 100,
+     "ctrl_claim_leaks": 100,
+     "flip": 100,
+     "flip_rejected": 100,
+     "plant_claim_in_block": 0,
+     "plant_claim_n": 100,
+     "plant_quote_framed": 100,
+     "plant_quote_n": 100,
+     "plant_quote_present": 100,
+     "valid": 100,
+     "valid_accepted": 100,
+     "word": 100,
+     "word_rejected": 100
+    },
+    "4f": {
+     "base_med": 0.002007250000005456,
+     "hang_med": 0.0019273329999975886,
+     "log_unchanged": 100,
+     "ok_latency": 99,
+     "runs": 100,
+     "sync_adds": 76,
+     "sync_med": 0.2522802919999947,
+     "write_attempts": 300,
+     "write_refused": 300
+    }
+   },
+   "seconds": 45.5,
+   "seed": 16096003
+  },
+  {
+   "artifact": {
+    "n": 1,
+    "path": "ctxrt/results/p4_analyst-16096004.jsonl",
+    "sha256": "0fd0093ad35fd9db29bf616b2a0d3b58b1cb12e3d9b7717db1fce954b3e518c8"
+   },
+   "criteria": [
+    {
+     "criterion": "4a keyed: 1 run row, 1 call set, identical result per key (100%)",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
+     "ok": true,
+     "value": 443
+    },
+    {
+     "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
+     "ok": true,
+     "value": [
+      66,
+      66,
+      132,
+      132
+     ]
+    },
+    {
+     "criterion": "4a control unkeyed duplicates >=10% of keys",
+     "ok": true,
+     "value": [
+      67,
+      67
+     ]
+    },
+    {
+     "criterion": "4b reservation before first call; charged to originating step only",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "4b runaway stub refused at reservation (spent<=reserved)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b 8 concurrent vs allowance 5: exactly <=5 start",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b overlap witness: >=100 contended reservations per seed",
+     "ok": true,
+     "value": 299
+    },
+    {
+     "criterion": "4b zombie actor refused",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C1 charge-after-run overspends >=10%",
+     "ok": true,
+     "value": [
+      107,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C2 non-atomic overshoot >=10% of trials",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c loop stub stopped within stall_s + 2 ticks (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c hang stub stopped within bound, thread released, call discarded (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c progressing slow stub never stopped",
+     "ok": true,
+     "value": [
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c after stop: 0 writes and 0 calls land; zombie attempted",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c canary: a live run's write lands through the same gate",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "4c control cooperative flag: zombie writes land >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d malformed: 100% rejected typed, 0 injected",
+     "ok": true,
+     "value": [
+      500,
+      500,
+      500,
+      0
+     ]
+    },
+    {
+     "criterion": "4d nothing_relevant renders empty string and enqueues nothing",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4d control: injecting on empty emits a block >=10%",
+     "ok": true,
+     "value": 100
+    },
+    {
+     "criterion": "4d dead ends stored; dead_end_only suppresses injection",
+     "ok": true,
+     "value": [
+      164,
+      164,
+      100
+     ]
+    },
+    {
+     "criterion": "4d canary: valid finding IS injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d seen-set: run 2 pays 0 for run-1 rejections; control pays again",
+     "ok": true,
+     "value": [
+      342,
+      0,
+      342,
+      342
+     ]
+    },
+    {
+     "criterion": "4e valid accepted 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e word-replaced rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e adjacent-round rejected 100% (legitimate repeats excluded and counted)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "4e speaker-flip rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e ambiguous speaker goes to review, injected 0",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction in claim: 0 in model-facing block",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e canary: non-planted valid finding injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e control: injecting the claim leaks >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction inside verified quote stays in one framed JSON data line",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0.001812166999997089,
+      0.0018677089999812324
+     ]
+    },
+    {
+     "criterion": "4f synchronous control adds >= analyst delay",
+     "ok": false,
+     "value": [
+      75,
+      100,
+      0.24447383399999012
+     ]
+    },
+    {
+     "criterion": "4f write attempts refused 100%, log hash unchanged",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      100
+     ]
+    }
+   ],
+   "metrics": {
+    "4a": {
+     "calls_wrong": 0,
+     "conc_n": 67,
+     "contended": 443,
+     "crash_completed_one": 66,
+     "crash_n": 66,
+     "ctrl_dup_keys": 67,
+     "ctrl_keys": 67,
+     "keyed_ok": 200,
+     "keys": 200,
+     "replay_extra_calls": 0,
+     "replays": 134,
+     "results_differ": 0,
+     "rows_ne_1": 0,
+     "started_n": 0,
+     "zombie_attempts": 132,
+     "zombie_refused": 132
+    },
+    "4b": {
+     "charge_checks": 100,
+     "charge_ok": 100,
+     "conc_contended": 299,
+     "conc_started_eq_allow": 100,
+     "conc_started_le_allow": 100,
+     "conc_trials": 100,
+     "cross_charged": 0,
+     "ctrl1_over": 107,
+     "ctrl1_runs": 300,
+     "ctrl2_overlap": 0,
+     "ctrl2_overshoot": 100,
+     "ctrl2_trials": 100,
+     "reserve_before_call": 100,
+     "reserve_checks": 100,
+     "runaway": 100,
+     "runaway_refused": 100,
+     "runaway_spent_le_reserved": 100,
+     "shared_key_n": 100,
+     "shared_key_second_charged": 0,
+     "zombie_attempts": 300,
+     "zombie_refused": 300
+    },
+    "4c": {
+     "canary_live_write": 50,
+     "canary_n": 50,
+     "ctrl_calls_landed": 100,
+     "ctrl_runs": 100,
+     "ctrl_writes_landed": 100,
+     "discarded_inflight": 100,
+     "hang_runs": 100,
+     "hang_stopped_in_bound": 100,
+     "hang_thread_exited": 100,
+     "loop_runs": 100,
+     "loop_stopped_in_bound": 100,
+     "max_ticks_hang": 11.0,
+     "max_ticks_loop": 11.0,
+     "prog_done": 100,
+     "prog_false_stop": 0,
+     "prog_runs": 100,
+     "zombie_attempted": 100,
+     "zombie_calls_landed": 0,
+     "zombie_runs": 100,
+     "zombie_writes_landed": 0
+    },
+    "4d": {
+     "canary_valid": 100,
+     "canary_valid_rendered": 100,
+     "ctrl_empty_injects": 100,
+     "ctrl_run2_paid": 342,
+     "dead_n": 164,
+     "dead_stored": 164,
+     "deadend_only_ok": 100,
+     "injected_after_malformed": 0,
+     "malformed_n": 500,
+     "malformed_rejected": 500,
+     "nothing_items": 0,
+     "nothing_n": 100,
+     "nothing_render_empty": 100,
+     "seen_questions": 60,
+     "seen_run1_paid": 342,
+     "seen_run2_paid": 0,
+     "seen_skipped_run2": 342,
+     "typed_codes_ok": 500
+    },
+    "4e": {
+     "adj": 100,
+     "adj_excluded": 0,
+     "adj_rejected": 100,
+     "amb": 100,
+     "amb_injected": 0,
+     "amb_review": 100,
+     "canary_nonplanted": 100,
+     "canary_nonplanted_n": 100,
+     "ctrl_claim_leaks": 100,
+     "flip": 100,
+     "flip_rejected": 100,
+     "plant_claim_in_block": 0,
+     "plant_claim_n": 100,
+     "plant_quote_framed": 100,
+     "plant_quote_n": 100,
+     "plant_quote_present": 100,
+     "valid": 100,
+     "valid_accepted": 100,
+     "word": 100,
+     "word_rejected": 100
+    },
+    "4f": {
+     "base_med": 0.001812166999997089,
+     "hang_med": 0.0018677089999812324,
+     "log_unchanged": 100,
+     "ok_latency": 100,
+     "runs": 100,
+     "sync_adds": 75,
+     "sync_med": 0.24447383399999012,
+     "write_attempts": 300,
+     "write_refused": 300
+    }
+   },
+   "seconds": 45.9,
+   "seed": 16096004
+  },
+  {
+   "artifact": {
+    "n": 1,
+    "path": "ctxrt/results/p4_analyst-16096005.jsonl",
+    "sha256": "9078c1b05c9aaeaae4faf8f20c37bf3b79594541455f1cc39829906cca2c6157"
+   },
+   "criteria": [
+    {
+     "criterion": "4a keyed: 1 run row, 1 call set, identical result per key (100%)",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
+     "ok": true,
+     "value": 624
+    },
+    {
+     "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
+     "ok": true,
+     "value": [
+      66,
+      66,
+      132,
+      132
+     ]
+    },
+    {
+     "criterion": "4a control unkeyed duplicates >=10% of keys",
+     "ok": true,
+     "value": [
+      67,
+      67
+     ]
+    },
+    {
+     "criterion": "4b reservation before first call; charged to originating step only",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "4b runaway stub refused at reservation (spent<=reserved)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b 8 concurrent vs allowance 5: exactly <=5 start",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4b overlap witness: >=100 contended reservations per seed",
+     "ok": true,
+     "value": 347
+    },
+    {
+     "criterion": "4b zombie actor refused",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C1 charge-after-run overspends >=10%",
+     "ok": true,
+     "value": [
+      128,
+      300
+     ]
+    },
+    {
+     "criterion": "4b control C2 non-atomic overshoot >=10% of trials",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c loop stub stopped within stall_s + 2 ticks (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c hang stub stopped within bound, thread released, call discarded (100%)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100,
+      11.0
+     ]
+    },
+    {
+     "criterion": "4c progressing slow stub never stopped",
+     "ok": true,
+     "value": [
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c after stop: 0 writes and 0 calls land; zombie attempted",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4c canary: a live run's write lands through the same gate",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "4c control cooperative flag: zombie writes land >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d malformed: 100% rejected typed, 0 injected",
+     "ok": true,
+     "value": [
+      500,
+      500,
+      500,
+      0
+     ]
+    },
+    {
+     "criterion": "4d nothing_relevant renders empty string and enqueues nothing",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4d control: injecting on empty emits a block >=10%",
+     "ok": true,
+     "value": 100
+    },
+    {
+     "criterion": "4d dead ends stored; dead_end_only suppresses injection",
+     "ok": true,
+     "value": [
+      146,
+      146,
+      100
+     ]
+    },
+    {
+     "criterion": "4d canary: valid finding IS injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4d seen-set: run 2 pays 0 for run-1 rejections; control pays again",
+     "ok": true,
+     "value": [
+      312,
+      0,
+      312,
+      312
+     ]
+    },
+    {
+     "criterion": "4e valid accepted 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e word-replaced rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e adjacent-round rejected 100% (legitimate repeats excluded and counted)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "4e speaker-flip rejected 100%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e ambiguous speaker goes to review, injected 0",
+     "ok": true,
+     "value": [
+      100,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction in claim: 0 in model-facing block",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "4e canary: non-planted valid finding injected",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e control: injecting the claim leaks >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4e planted instruction inside verified quote stays in one framed JSON data line",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0.0019411669999840342,
+      0.001902958000016497
+     ]
+    },
+    {
+     "criterion": "4f synchronous control adds >= analyst delay",
+     "ok": false,
+     "value": [
+      71,
+      100,
+      0.23438812499998107
+     ]
+    },
+    {
+     "criterion": "4f write attempts refused 100%, log hash unchanged",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      100
+     ]
+    }
+   ],
+   "metrics": {
+    "4a": {
+     "calls_wrong": 0,
+     "conc_n": 67,
+     "contended": 624,
+     "crash_completed_one": 66,
+     "crash_n": 66,
+     "ctrl_dup_keys": 67,
+     "ctrl_keys": 67,
+     "keyed_ok": 200,
+     "keys": 200,
+     "replay_extra_calls": 0,
+     "replays": 134,
+     "results_differ": 0,
+     "rows_ne_1": 0,
+     "started_n": 0,
+     "zombie_attempts": 132,
+     "zombie_refused": 132
+    },
+    "4b": {
+     "charge_checks": 100,
+     "charge_ok": 100,
+     "conc_contended": 347,
+     "conc_started_eq_allow": 100,
+     "conc_started_le_allow": 100,
+     "conc_trials": 100,
+     "cross_charged": 0,
+     "ctrl1_over": 128,
+     "ctrl1_runs": 300,
+     "ctrl2_overlap": 0,
+     "ctrl2_overshoot": 100,
+     "ctrl2_trials": 100,
+     "reserve_before_call": 100,
+     "reserve_checks": 100,
+     "runaway": 100,
+     "runaway_refused": 100,
+     "runaway_spent_le_reserved": 100,
+     "shared_key_n": 100,
+     "shared_key_second_charged": 0,
+     "zombie_attempts": 300,
+     "zombie_refused": 300
+    },
+    "4c": {
+     "canary_live_write": 50,
+     "canary_n": 50,
+     "ctrl_calls_landed": 100,
+     "ctrl_runs": 100,
+     "ctrl_writes_landed": 100,
+     "discarded_inflight": 100,
+     "hang_runs": 100,
+     "hang_stopped_in_bound": 100,
+     "hang_thread_exited": 100,
+     "loop_runs": 100,
+     "loop_stopped_in_bound": 100,
+     "max_ticks_hang": 11.0,
+     "max_ticks_loop": 11.0,
+     "prog_done": 100,
+     "prog_false_stop": 0,
+     "prog_runs": 100,
+     "zombie_attempted": 100,
+     "zombie_calls_landed": 0,
+     "zombie_runs": 100,
+     "zombie_writes_landed": 0
+    },
+    "4d": {
+     "canary_valid": 100,
+     "canary_valid_rendered": 100,
+     "ctrl_empty_injects": 100,
+     "ctrl_run2_paid": 312,
+     "dead_n": 146,
+     "dead_stored": 146,
+     "deadend_only_ok": 100,
+     "injected_after_malformed": 0,
+     "malformed_n": 500,
+     "malformed_rejected": 500,
+     "nothing_items": 0,
+     "nothing_n": 100,
+     "nothing_render_empty": 100,
+     "seen_questions": 60,
+     "seen_run1_paid": 312,
+     "seen_run2_paid": 0,
+     "seen_skipped_run2": 312,
+     "typed_codes_ok": 500
+    },
+    "4e": {
+     "adj": 100,
+     "adj_excluded": 0,
+     "adj_rejected": 100,
+     "amb": 100,
+     "amb_injected": 0,
+     "amb_review": 100,
+     "canary_nonplanted": 100,
+     "canary_nonplanted_n": 100,
+     "ctrl_claim_leaks": 100,
+     "flip": 100,
+     "flip_rejected": 100,
+     "plant_claim_in_block": 0,
+     "plant_claim_n": 100,
+     "plant_quote_framed": 100,
+     "plant_quote_n": 100,
+     "plant_quote_present": 100,
+     "valid": 100,
+     "valid_accepted": 100,
+     "word": 100,
+     "word_rejected": 100
+    },
+    "4f": {
+     "base_med": 0.0019411669999840342,
+     "hang_med": 0.001902958000016497,
+     "log_unchanged": 100,
+     "ok_latency": 100,
+     "runs": 100,
+     "sync_adds": 71,
+     "sync_med": 0.23438812499998107,
+     "write_attempts": 300,
+     "write_refused": 300
+    }
+   },
+   "seconds": 45.4,
+   "seed": 16096005
+  }
+ ],
+ "proof": "p4_analyst",
+ "stamp": {
+  "code_commit": "6cfb90246c68db288125237f8113113e43f8166b",
+  "dirty": false,
+  "fingerprint": {
+   "es": "none (in-process stubs)",
+   "model": "deterministic stubs, 0 model calls",
+   "stores": "in-memory + sqlite"
+  },
+  "host": "Mac-2.lan",
+  "loadavg": [
+   13.85791015625,
+   14.99853515625,
+   15.58935546875
+  ],
+  "machine": "macOS-26.6-arm64-arm-64bit",
+  "params": {
+   "budget_trials": 100,
+   "keys": 200,
+   "processes": "see p4_process",
+   "seeds": [
+    16096001,
+    16096002,
+    16096003,
+    16096004,
+    16096005
+   ],
+   "stall_runs": 100,
+   "stall_s": 10.0,
+   "tick": 1.0
+  },
+  "python": "3.9.6",
+  "threshold_commits": [
+   "67a2842",
+   "05aafb0"
+  ],
+  "time_utc": "2026-11-16T01:40:08Z",
+  "timing_quiesced": false
+ },
+ "verdict_by_criterion": {
+  "4a control unkeyed duplicates >=10% of keys": "PASS",
+  "4a crash retry: exactly 1 completed run, zombie refused": "PASS",
+  "4a keyed: 1 run row, 1 call set, identical result per key (100%)": "PASS",
+  "4a overlap: >=100 contended launches per seed (8-way barrier)": "PASS",
+  "4b 8 concurrent vs allowance 5: exactly <=5 start": "PASS",
+  "4b control C1 charge-after-run overspends >=10%": "PASS",
+  "4b control C2 non-atomic overshoot >=10% of trials": "PASS",
+  "4b overlap witness: >=100 contended reservations per seed": "PASS",
+  "4b reservation before first call; charged to originating step only": "PASS",
+  "4b runaway stub refused at reservation (spent<=reserved)": "PASS",
+  "4b zombie actor refused": "PASS",
+  "4c after stop: 0 writes and 0 calls land; zombie attempted": "PASS",
+  "4c canary: a live run's write lands through the same gate": "PASS",
+  "4c control cooperative flag: zombie writes land >=10%": "PASS",
+  "4c hang stub stopped within bound, thread released, call discarded (100%)": "PASS",
+  "4c loop stub stopped within stall_s + 2 ticks (100%)": "PASS",
+  "4c progressing slow stub never stopped": "PASS",
+  "4d canary: valid finding IS injected": "PASS",
+  "4d control: injecting on empty emits a block >=10%": "PASS",
+  "4d dead ends stored; dead_end_only suppresses injection": "PASS",
+  "4d malformed: 100% rejected typed, 0 injected": "PASS",
+  "4d nothing_relevant renders empty string and enqueues nothing": "PASS",
+  "4d seen-set: run 2 pays 0 for run-1 rejections; control pays again": "PASS",
+  "4e adjacent-round rejected 100% (legitimate repeats excluded and counted)": "PASS",
+  "4e ambiguous speaker goes to review, injected 0": "PASS",
+  "4e canary: non-planted valid finding injected": "PASS",
+  "4e control: injecting the claim leaks >=10%": "PASS",
+  "4e planted instruction in claim: 0 in model-facing block": "PASS",
+  "4e planted instruction inside verified quote stays in one framed JSON data line": "PASS",
+  "4e speaker-flip rejected 100%": "PASS",
+  "4e valid accepted 100%": "PASS",
+  "4e word-replaced rejected 100%": "PASS",
+  "4f synchronous control adds >= analyst delay": "FAIL",
+  "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)": "FAIL",
+  "4f write attempts refused 100%, log hash unchanged": "PASS"
+ }
+}

@@ -1,0 +1,131 @@
+{
+ "p1_trim": {
+  "stamp_commit": "bd92199",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "anthropic": true,
+   "openai": true
+  },
+  "all_ok": true
+ },
+ "p2_compact": {
+  "stamp_commit": "6cfb902",
+  "recorded_overall": "PASS",
+  "p2_witness_counts": [
+   {
+    "turns_after_resume": 104,
+    "turns_after_compaction": 221
+   },
+   {
+    "turns_after_resume": 109,
+    "turns_after_compaction": 194
+   },
+   {
+    "turns_after_resume": 122,
+    "turns_after_compaction": 219
+   },
+   {
+    "turns_after_resume": 114,
+    "turns_after_compaction": 206
+   },
+   {
+    "turns_after_resume": 108,
+    "turns_after_compaction": 205
+   }
+  ],
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "p2_turns_after_resume_ge_100": true,
+   "p2_turns_after_compaction_ge_100": true,
+   "own_full": true,
+   "own_none": true,
+   "own_origin_only": true,
+   "own_strip_only": true,
+   "merged_full": true,
+   "merged_none": true,
+   "merged_origin_only": true,
+   "merged_strip_only": true,
+   "paraphrase_full": true,
+   "paraphrase_none": true,
+   "paraphrase_origin_only": true,
+   "paraphrase_strip_only": true
+  },
+  "all_ok": true
+ },
+ "p3_pull": {
+  "stamp_commit": "a194525",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "snapshot": true,
+   "live_offset": true
+  },
+  "all_ok": true
+ },
+ "p4_analyst": {
+  "stamp_commit": "a194525",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "4a_keyed_ok": true,
+   "4d_malformed_rejected": true,
+   "4c_discard_real": true,
+   "4c_discard_ctrl": true,
+   "4b_conc_le_5": true,
+   "4b_ctrl2": true
+  },
+  "all_ok": true
+ },
+ "p4_process": {
+  "stamp_commit": "a0b885b",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": "aggregate-only (no per-case recompute)",
+  "all_ok": true
+ },
+ "p5_delivery": {
+  "stamp_commit": "27838be",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "paused_real": true,
+   "paused_ctrl": true,
+   "crash_real": true,
+   "crash_ctrl": true,
+   "rollback_real": true,
+   "rollback_ctrl": true,
+   "fork_real": true,
+   "fork_ctrl": true
+  },
+  "all_ok": true
+ },
+ "p6_routing": {
+  "stamp_commit": "a194525",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "p6_assigned_in_set": true,
+   "p6_ctrl": true,
+   "p6_sets_equal": true,
+   "p6_models": true
+  },
+  "all_ok": true
+ },
+ "p7_chain": {
+  "stamp_commit": "a194525",
+  "recorded_overall": "PASS",
+  "hash_and_rowcount_ok": true,
+  "per_case_recompute_matches": {
+   "p7_valid_shape": true,
+   "p7_neg_identical": true,
+   "p7_author_set_zero": true
+  },
+  "all_ok": true
+ },
+ "validator_cross_check": {
+  "agree": 1538,
+  "total": 1538
+ },
+ "all_ok": true
+}

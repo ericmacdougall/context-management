@@ -1,0 +1,1278 @@
+{
+ "claim": "inbox exactly-once into the surviving lineage under pause, crash, rollback, fork; policy re-checked at delivery",
+ "overall": "PASS",
+ "per_seed": [
+  {
+   "artifact": {
+    "n": 2000,
+    "path": "ctxrt/results/p5_delivery-16096001.jsonl",
+    "sha256": "29f4ad1c8d54f235fc7ac5fe29a295ed526e80cdf8afc4b027d995c3f9b8854d"
+   },
+   "criteria": [
+    {
+     "criterion": "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie": 37,
+      "zombie_refused": 37
+     }
+    },
+    {
+     "criterion": "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "after_commit_runs": 63,
+      "dup_after_commit": 0,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie_attempt": 72,
+      "zombie_refused": 72
+     }
+    },
+    {
+     "criterion": "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "rewound": 168,
+      "runs": 200,
+      "x_refused": 92
+     }
+    },
+    {
+     "criterion": "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "forked_with_item": 128,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
+     "ok": true,
+     "value": [
+      37,
+      200
+     ]
+    },
+    {
+     "criterion": "paused: stale-token commits refused 100%",
+     "ok": true,
+     "value": [
+      37,
+      37
+     ]
+    },
+    {
+     "criterion": "crash witness: late zombie commit attempted and refused",
+     "ok": true,
+     "value": [
+      72,
+      72
+     ]
+    },
+    {
+     "criterion": "crash witness: crash after commit exercised",
+     "ok": true,
+     "value": 63
+    },
+    {
+     "criterion": "rollback witness: >=100 runs rewound with an item delivered after the checkpoint",
+     "ok": true,
+     "value": 168
+    },
+    {
+     "criterion": "rollback: in-flight old-generation commits refused",
+     "ok": true,
+     "value": [
+      92,
+      200
+     ]
+    },
+    {
+     "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
+     "ok": true,
+     "value": 128
+    },
+    {
+     "criterion": "control paused (tokenless) duplicates >=10%",
+     "ok": true,
+     "value": [
+      42,
+      200
+     ]
+    },
+    {
+     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "ok": true,
+     "value": [
+      133,
+      200
+     ]
+    },
+    {
+     "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
+     "ok": true,
+     "value": [
+      188,
+      200
+     ]
+    },
+    {
+     "criterion": "control fork (shared native id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "ok": true,
+     "value": [
+      0,
+      145
+     ]
+    },
+    {
+     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "ok": true,
+     "value": [
+      55,
+      55
+     ]
+    },
+    {
+     "criterion": "policy: dropped items carry a recorded reason",
+     "ok": true,
+     "value": [
+      145,
+      145
+     ]
+    },
+    {
+     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "ok": true,
+     "value": [
+      130,
+      130
+     ]
+    }
+   ],
+   "metrics": {
+    "crash_ctrl": {
+     "after_commit_runs": 62,
+     "dup_after_commit": 62,
+     "dup_runs": 133,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 71,
+     "zombie_refused": 0
+    },
+    "crash_real": {
+     "after_commit_runs": 63,
+     "dup_after_commit": 0,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 72,
+     "zombie_refused": 72
+    },
+    "fork_ctrl": {
+     "dup_runs": 0,
+     "forked_with_item": 137,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "fork_real": {
+     "dup_runs": 0,
+     "forked_with_item": 128,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "paused_ctrl": {
+     "dup_runs": 42,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 40,
+     "zombie_refused": 0
+    },
+    "paused_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 37,
+     "zombie_refused": 37
+    },
+    "policy_ctrl": {
+     "cases": 200,
+     "tightened": 130,
+     "tightened_delivered": 130,
+     "tightened_with_drop_reason": 0,
+     "untightened": 70,
+     "untightened_delivered": 70
+    },
+    "policy_real": {
+     "cases": 200,
+     "tightened": 145,
+     "tightened_delivered": 0,
+     "tightened_with_drop_reason": 145,
+     "untightened": 55,
+     "untightened_delivered": 55
+    },
+    "rollback_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 188,
+     "rewound": 179,
+     "runs": 200,
+     "x_refused": 0
+    },
+    "rollback_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "rewound": 168,
+     "runs": 200,
+     "x_refused": 92
+    }
+   },
+   "seconds": 225.0,
+   "seed": 16096001
+  },
+  {
+   "artifact": {
+    "n": 2000,
+    "path": "ctxrt/results/p5_delivery-16096002.jsonl",
+    "sha256": "e7c3c069b7b49dacfd4b1d5fcaca188e24b6e3d1e84e2a420f282adb902818f4"
+   },
+   "criteria": [
+    {
+     "criterion": "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie": 50,
+      "zombie_refused": 50
+     }
+    },
+    {
+     "criterion": "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "after_commit_runs": 60,
+      "dup_after_commit": 0,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie_attempt": 66,
+      "zombie_refused": 66
+     }
+    },
+    {
+     "criterion": "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "rewound": 175,
+      "runs": 200,
+      "x_refused": 89
+     }
+    },
+    {
+     "criterion": "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "forked_with_item": 128,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
+     "ok": true,
+     "value": [
+      50,
+      200
+     ]
+    },
+    {
+     "criterion": "paused: stale-token commits refused 100%",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "crash witness: late zombie commit attempted and refused",
+     "ok": true,
+     "value": [
+      66,
+      66
+     ]
+    },
+    {
+     "criterion": "crash witness: crash after commit exercised",
+     "ok": true,
+     "value": 60
+    },
+    {
+     "criterion": "rollback witness: >=100 runs rewound with an item delivered after the checkpoint",
+     "ok": true,
+     "value": 175
+    },
+    {
+     "criterion": "rollback: in-flight old-generation commits refused",
+     "ok": true,
+     "value": [
+      89,
+      200
+     ]
+    },
+    {
+     "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
+     "ok": true,
+     "value": 128
+    },
+    {
+     "criterion": "control paused (tokenless) duplicates >=10%",
+     "ok": true,
+     "value": [
+      51,
+      200
+     ]
+    },
+    {
+     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "ok": true,
+     "value": [
+      140,
+      200
+     ]
+    },
+    {
+     "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
+     "ok": true,
+     "value": [
+      190,
+      200
+     ]
+    },
+    {
+     "criterion": "control fork (shared native id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "ok": true,
+     "value": [
+      0,
+      130
+     ]
+    },
+    {
+     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "ok": true,
+     "value": [
+      70,
+      70
+     ]
+    },
+    {
+     "criterion": "policy: dropped items carry a recorded reason",
+     "ok": true,
+     "value": [
+      130,
+      130
+     ]
+    },
+    {
+     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "ok": true,
+     "value": [
+      124,
+      124
+     ]
+    }
+   ],
+   "metrics": {
+    "crash_ctrl": {
+     "after_commit_runs": 70,
+     "dup_after_commit": 70,
+     "dup_runs": 140,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 70,
+     "zombie_refused": 0
+    },
+    "crash_real": {
+     "after_commit_runs": 60,
+     "dup_after_commit": 0,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 66,
+     "zombie_refused": 66
+    },
+    "fork_ctrl": {
+     "dup_runs": 0,
+     "forked_with_item": 118,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "fork_real": {
+     "dup_runs": 0,
+     "forked_with_item": 128,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "paused_ctrl": {
+     "dup_runs": 51,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 51,
+     "zombie_refused": 0
+    },
+    "paused_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 50,
+     "zombie_refused": 50
+    },
+    "policy_ctrl": {
+     "cases": 200,
+     "tightened": 124,
+     "tightened_delivered": 124,
+     "tightened_with_drop_reason": 0,
+     "untightened": 76,
+     "untightened_delivered": 76
+    },
+    "policy_real": {
+     "cases": 200,
+     "tightened": 130,
+     "tightened_delivered": 0,
+     "tightened_with_drop_reason": 130,
+     "untightened": 70,
+     "untightened_delivered": 70
+    },
+    "rollback_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 190,
+     "rewound": 172,
+     "runs": 200,
+     "x_refused": 0
+    },
+    "rollback_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "rewound": 175,
+     "runs": 200,
+     "x_refused": 89
+    }
+   },
+   "seconds": 234.1,
+   "seed": 16096002
+  },
+  {
+   "artifact": {
+    "n": 2000,
+    "path": "ctxrt/results/p5_delivery-16096003.jsonl",
+    "sha256": "2832575374556d01ce4419a71bf706a38514f182bdbefbf4469b328cbdc7f5b3"
+   },
+   "criteria": [
+    {
+     "criterion": "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie": 39,
+      "zombie_refused": 39
+     }
+    },
+    {
+     "criterion": "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "after_commit_runs": 77,
+      "dup_after_commit": 0,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie_attempt": 62,
+      "zombie_refused": 62
+     }
+    },
+    {
+     "criterion": "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "rewound": 172,
+      "runs": 200,
+      "x_refused": 92
+     }
+    },
+    {
+     "criterion": "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "forked_with_item": 126,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
+     "ok": true,
+     "value": [
+      39,
+      200
+     ]
+    },
+    {
+     "criterion": "paused: stale-token commits refused 100%",
+     "ok": true,
+     "value": [
+      39,
+      39
+     ]
+    },
+    {
+     "criterion": "crash witness: late zombie commit attempted and refused",
+     "ok": true,
+     "value": [
+      62,
+      62
+     ]
+    },
+    {
+     "criterion": "crash witness: crash after commit exercised",
+     "ok": true,
+     "value": 77
+    },
+    {
+     "criterion": "rollback witness: >=100 runs rewound with an item delivered after the checkpoint",
+     "ok": true,
+     "value": 172
+    },
+    {
+     "criterion": "rollback: in-flight old-generation commits refused",
+     "ok": true,
+     "value": [
+      92,
+      200
+     ]
+    },
+    {
+     "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
+     "ok": true,
+     "value": 126
+    },
+    {
+     "criterion": "control paused (tokenless) duplicates >=10%",
+     "ok": true,
+     "value": [
+      32,
+      200
+     ]
+    },
+    {
+     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "ok": true,
+     "value": [
+      141,
+      200
+     ]
+    },
+    {
+     "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
+     "ok": true,
+     "value": [
+      187,
+      200
+     ]
+    },
+    {
+     "criterion": "control fork (shared native id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "ok": true,
+     "value": [
+      0,
+      117
+     ]
+    },
+    {
+     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "ok": true,
+     "value": [
+      83,
+      83
+     ]
+    },
+    {
+     "criterion": "policy: dropped items carry a recorded reason",
+     "ok": true,
+     "value": [
+      117,
+      117
+     ]
+    },
+    {
+     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "ok": true,
+     "value": [
+      134,
+      134
+     ]
+    }
+   ],
+   "metrics": {
+    "crash_ctrl": {
+     "after_commit_runs": 61,
+     "dup_after_commit": 61,
+     "dup_runs": 141,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 80,
+     "zombie_refused": 0
+    },
+    "crash_real": {
+     "after_commit_runs": 77,
+     "dup_after_commit": 0,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 62,
+     "zombie_refused": 62
+    },
+    "fork_ctrl": {
+     "dup_runs": 0,
+     "forked_with_item": 131,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "fork_real": {
+     "dup_runs": 0,
+     "forked_with_item": 126,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "paused_ctrl": {
+     "dup_runs": 32,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 32,
+     "zombie_refused": 0
+    },
+    "paused_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 39,
+     "zombie_refused": 39
+    },
+    "policy_ctrl": {
+     "cases": 200,
+     "tightened": 134,
+     "tightened_delivered": 134,
+     "tightened_with_drop_reason": 0,
+     "untightened": 66,
+     "untightened_delivered": 66
+    },
+    "policy_real": {
+     "cases": 200,
+     "tightened": 117,
+     "tightened_delivered": 0,
+     "tightened_with_drop_reason": 117,
+     "untightened": 83,
+     "untightened_delivered": 83
+    },
+    "rollback_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 187,
+     "rewound": 174,
+     "runs": 200,
+     "x_refused": 0
+    },
+    "rollback_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "rewound": 172,
+     "runs": 200,
+     "x_refused": 92
+    }
+   },
+   "seconds": 236.1,
+   "seed": 16096003
+  },
+  {
+   "artifact": {
+    "n": 2000,
+    "path": "ctxrt/results/p5_delivery-16096004.jsonl",
+    "sha256": "77ac32ec5cbcce83f2da94d0c477897ea4ba0200b7629d699cb585208e0bcd60"
+   },
+   "criteria": [
+    {
+     "criterion": "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie": 44,
+      "zombie_refused": 44
+     }
+    },
+    {
+     "criterion": "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "after_commit_runs": 77,
+      "dup_after_commit": 0,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie_attempt": 60,
+      "zombie_refused": 60
+     }
+    },
+    {
+     "criterion": "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "rewound": 183,
+      "runs": 200,
+      "x_refused": 97
+     }
+    },
+    {
+     "criterion": "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "forked_with_item": 130,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
+     "ok": true,
+     "value": [
+      44,
+      200
+     ]
+    },
+    {
+     "criterion": "paused: stale-token commits refused 100%",
+     "ok": true,
+     "value": [
+      44,
+      44
+     ]
+    },
+    {
+     "criterion": "crash witness: late zombie commit attempted and refused",
+     "ok": true,
+     "value": [
+      60,
+      60
+     ]
+    },
+    {
+     "criterion": "crash witness: crash after commit exercised",
+     "ok": true,
+     "value": 77
+    },
+    {
+     "criterion": "rollback witness: >=100 runs rewound with an item delivered after the checkpoint",
+     "ok": true,
+     "value": 183
+    },
+    {
+     "criterion": "rollback: in-flight old-generation commits refused",
+     "ok": true,
+     "value": [
+      97,
+      200
+     ]
+    },
+    {
+     "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
+     "ok": true,
+     "value": 130
+    },
+    {
+     "criterion": "control paused (tokenless) duplicates >=10%",
+     "ok": true,
+     "value": [
+      39,
+      200
+     ]
+    },
+    {
+     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "ok": true,
+     "value": [
+      133,
+      200
+     ]
+    },
+    {
+     "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
+     "ok": true,
+     "value": [
+      188,
+      200
+     ]
+    },
+    {
+     "criterion": "control fork (shared native id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "ok": true,
+     "value": [
+      0,
+      142
+     ]
+    },
+    {
+     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "ok": true,
+     "value": [
+      58,
+      58
+     ]
+    },
+    {
+     "criterion": "policy: dropped items carry a recorded reason",
+     "ok": true,
+     "value": [
+      142,
+      142
+     ]
+    },
+    {
+     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "ok": true,
+     "value": [
+      128,
+      128
+     ]
+    }
+   ],
+   "metrics": {
+    "crash_ctrl": {
+     "after_commit_runs": 69,
+     "dup_after_commit": 69,
+     "dup_runs": 133,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 64,
+     "zombie_refused": 0
+    },
+    "crash_real": {
+     "after_commit_runs": 77,
+     "dup_after_commit": 0,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 60,
+     "zombie_refused": 60
+    },
+    "fork_ctrl": {
+     "dup_runs": 0,
+     "forked_with_item": 120,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "fork_real": {
+     "dup_runs": 0,
+     "forked_with_item": 130,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "paused_ctrl": {
+     "dup_runs": 39,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 39,
+     "zombie_refused": 0
+    },
+    "paused_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 44,
+     "zombie_refused": 44
+    },
+    "policy_ctrl": {
+     "cases": 200,
+     "tightened": 128,
+     "tightened_delivered": 128,
+     "tightened_with_drop_reason": 0,
+     "untightened": 72,
+     "untightened_delivered": 72
+    },
+    "policy_real": {
+     "cases": 200,
+     "tightened": 142,
+     "tightened_delivered": 0,
+     "tightened_with_drop_reason": 142,
+     "untightened": 58,
+     "untightened_delivered": 58
+    },
+    "rollback_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 188,
+     "rewound": 174,
+     "runs": 200,
+     "x_refused": 0
+    },
+    "rollback_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "rewound": 183,
+     "runs": 200,
+     "x_refused": 97
+    }
+   },
+   "seconds": 233.2,
+   "seed": 16096004
+  },
+  {
+   "artifact": {
+    "n": 2000,
+    "path": "ctxrt/results/p5_delivery-16096005.jsonl",
+    "sha256": "e7cd182e4fab952ff8a4c30f8d88254f1b05574bac6150582c1db5d209cc6f84"
+   },
+   "criteria": [
+    {
+     "criterion": "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie": 47,
+      "zombie_refused": 47
+     }
+    },
+    {
+     "criterion": "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "after_commit_runs": 59,
+      "dup_after_commit": 0,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200,
+      "zombie_attempt": 63,
+      "zombie_refused": 63
+     }
+    },
+    {
+     "criterion": "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "rewound": 176,
+      "runs": 200,
+      "x_refused": 110
+     }
+    },
+    {
+     "criterion": "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "forked_with_item": 136,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
+     "ok": true,
+     "value": [
+      47,
+      200
+     ]
+    },
+    {
+     "criterion": "paused: stale-token commits refused 100%",
+     "ok": true,
+     "value": [
+      47,
+      47
+     ]
+    },
+    {
+     "criterion": "crash witness: late zombie commit attempted and refused",
+     "ok": true,
+     "value": [
+      63,
+      63
+     ]
+    },
+    {
+     "criterion": "crash witness: crash after commit exercised",
+     "ok": true,
+     "value": 59
+    },
+    {
+     "criterion": "rollback witness: >=100 runs rewound with an item delivered after the checkpoint",
+     "ok": true,
+     "value": 176
+    },
+    {
+     "criterion": "rollback: in-flight old-generation commits refused",
+     "ok": true,
+     "value": [
+      110,
+      200
+     ]
+    },
+    {
+     "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
+     "ok": true,
+     "value": 136
+    },
+    {
+     "criterion": "control paused (tokenless) duplicates >=10%",
+     "ok": true,
+     "value": [
+      44,
+      200
+     ]
+    },
+    {
+     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "ok": true,
+     "value": [
+      133,
+      200
+     ]
+    },
+    {
+     "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
+     "ok": true,
+     "value": [
+      188,
+      200
+     ]
+    },
+    {
+     "criterion": "control fork (shared native id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "ok": true,
+     "value": [
+      0,
+      123
+     ]
+    },
+    {
+     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "ok": true,
+     "value": [
+      77,
+      77
+     ]
+    },
+    {
+     "criterion": "policy: dropped items carry a recorded reason",
+     "ok": true,
+     "value": [
+      123,
+      123
+     ]
+    },
+    {
+     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "ok": true,
+     "value": [
+      124,
+      124
+     ]
+    }
+   ],
+   "metrics": {
+    "crash_ctrl": {
+     "after_commit_runs": 72,
+     "dup_after_commit": 72,
+     "dup_runs": 133,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 61,
+     "zombie_refused": 0
+    },
+    "crash_real": {
+     "after_commit_runs": 59,
+     "dup_after_commit": 0,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie_attempt": 63,
+     "zombie_refused": 63
+    },
+    "fork_ctrl": {
+     "dup_runs": 0,
+     "forked_with_item": 114,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "fork_real": {
+     "dup_runs": 0,
+     "forked_with_item": 136,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "paused_ctrl": {
+     "dup_runs": 44,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 43,
+     "zombie_refused": 0
+    },
+    "paused_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200,
+     "zombie": 47,
+     "zombie_refused": 47
+    },
+    "policy_ctrl": {
+     "cases": 200,
+     "tightened": 124,
+     "tightened_delivered": 124,
+     "tightened_with_drop_reason": 0,
+     "untightened": 76,
+     "untightened_delivered": 76
+    },
+    "policy_real": {
+     "cases": 200,
+     "tightened": 123,
+     "tightened_delivered": 0,
+     "tightened_with_drop_reason": 123,
+     "untightened": 77,
+     "untightened_delivered": 77
+    },
+    "rollback_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 188,
+     "rewound": 175,
+     "runs": 200,
+     "x_refused": 0
+    },
+    "rollback_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "rewound": 176,
+     "runs": 200,
+     "x_refused": 110
+    }
+   },
+   "seconds": 227.6,
+   "seed": 16096005
+  }
+ ],
+ "proof": "p5_delivery",
+ "stamp": {
+  "code_commit": "27838be1b72b78902d0366c5a4dade1098080f5a",
+  "dirty": false,
+  "fingerprint": {
+   "es": "none (in-process stubs)",
+   "model": "deterministic stubs, 0 model calls",
+   "stores": "in-memory + sqlite"
+  },
+  "host": "Mac-2.lan",
+  "loadavg": [
+   27.54052734375,
+   20.81396484375,
+   17.81787109375
+  ],
+  "machine": "macOS-26.6-arm64-arm-64bit",
+  "params": {
+   "lease_s": 0.04,
+   "policy_cases": 200,
+   "runs": 200,
+   "seeds": [
+    16096001,
+    16096002,
+    16096003,
+    16096004,
+    16096005
+   ]
+  },
+  "python": "3.9.6",
+  "threshold_commits": [
+   "67a2842",
+   "05aafb0"
+  ],
+  "time_utc": "2026-11-16T01:44:18Z",
+  "timing_quiesced": false
+ },
+ "verdict_by_criterion": {
+  "control crash (send then confirm) duplicates >=10% of runs": "PASS",
+  "control enqueue-only policy delivers tightened items >=10%": "PASS",
+  "control fork (shared native id) loses >=10%": "PASS",
+  "control paused (tokenless) duplicates >=10%": "PASS",
+  "control rollback (cursor outside checkpoint) loses >=10%": "PASS",
+  "crash witness: crash after commit exercised": "PASS",
+  "crash witness: late zombie commit attempted and refused": "PASS",
+  "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "fork witness: >=100 runs forked with an undelivered-to-child item": "PASS",
+  "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "paused witness: >=30 runs with a stale-token commit after takeover": "PASS",
+  "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "paused: stale-token commits refused 100%": "PASS",
+  "policy canary: untightened policy DOES deliver the same item": "PASS",
+  "policy: dropped items carry a recorded reason": "PASS",
+  "policy: tightened between enqueue and delivery -> 0 delivered": "PASS",
+  "rollback witness: >=100 runs rewound with an item delivered after the checkpoint": "PASS",
+  "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "rollback: in-flight old-generation commits refused": "PASS"
+ }
+}
