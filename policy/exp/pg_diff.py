@@ -22,7 +22,7 @@ import time
 from collections import deque
 
 from exp import common  # noqa: F401
-from exp.common import write_result
+from exp.common import write_items, write_result
 from exp.seeds import seeds
 import pol._core as CORE
 
@@ -81,7 +81,19 @@ def b2_logs():
     return out
 
 
-def run_b2(pg, logs, sql_path=None, stop_at_first=False):
+def _vsha(v):
+    return hashlib.sha256(json.dumps(v, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()[:20]
+
+
+# ROWS (per-item artifact, re-judged by verify/pgdiff.py without importing pol/exp):
+#   ["t", arm, unit, oracle_code, oracle_orig, pg_code, pg_orig]   one per B2 event / B1 transition
+#   ["v", arm, unit, oracle_view_sha, pg_view_sha]                   one per B2 log end / B1 tree node
+#   ["l", arm, unit, oracle_applied, pg_applied, chain_ok]           one per B2 log: [evid, code] lists in chain order
+# arm is "b2", "b1:<scenario>", "ctl:b2" or "ctl:b1:r2"; unit is the log id or the B1 node level.
+ROWS = []
+
+
+def run_b2(pg, logs, sql_path=None, stop_at_first=False, arm="b2"):
     from exp.core_gen import config
     res = {"logs": 0, "events": 0, "code_mismatches": 0, "view_mismatches": 0, "log_mismatches": 0, "first": None}
     for lid, mode, evs in logs:
@@ -101,21 +113,26 @@ def run_b2(pg, logs, sql_path=None, stop_at_first=False):
                     got = ("error:" + type(e).__name__, None)
                     res["errors"] = res.get("errors", 0) + 1
                 res["events"] += 1
+                ROWS.append(["t", arm, lid, code, orig, got[0], got[1]])
                 if tuple(got) != (code, orig):
                     res["code_mismatches"] += 1
                     if res["first"] is None:
                         res["first"] = {"log": lid, "i": i, "ev": ev, "oracle": [code, orig], "pg": list(got)}
+            osha = _vsha(st.comparable())
             try:
-                same = eng._comparable() == st.comparable()
-            except Exception:       # noqa: BLE001
-                same, res["errors"] = False, res.get("errors", 0) + 1
-            if not same:
+                psha = _vsha(eng._comparable())
+            except Exception as e:  # noqa: BLE001
+                psha, res["errors"] = "error:" + type(e).__name__, res.get("errors", 0) + 1
+            ROWS.append(["v", arm, lid, osha, psha])
+            if osha != psha:
                 res["view_mismatches"] += 1
             rows = [[e, c] for e, c in conn.execute("select evid, code from dc.events where tenant=%s order by chain_n", (cfg["tenant"],)).fetchall()]
             if rows != applied:
                 res["log_mismatches"] += 1
             res["logs"] += 1
-            if not eng._verify_chain()[1]:
+            chain_ok = bool(eng._verify_chain()[1])
+            ROWS.append(["l", arm, lid, applied, rows, chain_ok])
+            if not chain_ok:
                 res["chain_bad"] = res.get("chain_bad", 0) + 1
         finally:
             conn.close()
@@ -151,7 +168,7 @@ def b1_tree(scen, depth, core):
     return nodes, k0
 
 
-def run_b1(pg, scen, depth, sql_path=None):
+def run_b1(pg, scen, depth, sql_path=None, arm=None):
     import psycopg
     from exp import b1_modelcheck as B1
     core = B1.core_for("enforced", scen)
@@ -159,14 +176,17 @@ def run_b1(pg, scen, depth, sql_path=None):
     res = {"scenario": scen, "depth": depth, "states": len(nodes), "transitions": 0, "code_mismatches": 0, "view_mismatches": 0, "first": None}
     conn, eng = pg.install(B1.config(), sql_path)
     t = B1.config()["tenant"]
+    arm = arm or "b1:" + scen
 
     def walk(key, lvl):
         st, edges = nodes[key]
+        osha = _vsha(st.comparable())
         try:
-            same = eng._comparable() == st.comparable()
-        except Exception:       # noqa: BLE001
-            same, res["errors"] = False, res.get("errors", 0) + 1
-        if not same:
+            psha = _vsha(eng._comparable())
+        except Exception as e:  # noqa: BLE001
+            psha, res["errors"] = "error:" + type(e).__name__, res.get("errors", 0) + 1
+        ROWS.append(["v", arm, lvl, osha, psha])
+        if osha != psha:
             res["view_mismatches"] += 1
         for ev, code, orig, child in edges:
             try:
@@ -178,6 +198,7 @@ def run_b1(pg, scen, depth, sql_path=None):
                         got = ("error:" + type(e).__name__, None)
                         res["errors"] = res.get("errors", 0) + 1
                     res["transitions"] += 1
+                    ROWS.append(["t", arm, lvl, code, orig, got[0], got[1]])
                     if tuple(got) != (code, orig):
                         res["code_mismatches"] += 1
                         if res["first"] is None:
@@ -215,8 +236,8 @@ def main():
         out["b1"].append(run_b1(pg, scen, d, path))
         print("b1", json.dumps(out["b1"][-1], default=str)[:600], round(time.time() - t0), "s", flush=True)
     mut = _sql_variant([(STALE_OLD, STALE_NEW)], "ctl_no_stale")
-    out["control_no_stale"] = {"b2": run_b2(pg, logs[: max(10, len(logs) // 10)], mut),
-                               "b1_r2": run_b1(pg, "r2", B1.DEPTH["r2"], mut)}
+    out["control_no_stale"] = {"b2": run_b2(pg, logs[: max(10, len(logs) // 10)], mut, arm="ctl:b2"),
+                               "b1_r2": run_b1(pg, "r2", B1.DEPTH["r2"], mut, arm="ctl:b1:r2")}
     c = out["control_no_stale"]
     out["control_caught"] = (c["b2"]["code_mismatches"] + c["b2"]["view_mismatches"] + c["b1_r2"]["code_mismatches"] + c["b1_r2"]["view_mismatches"]) > 0
     b2, b1 = out["b2"], out["b1"]
@@ -224,11 +245,13 @@ def main():
                    and all(x["code_mismatches"] == x["view_mismatches"] == 0 and not x.get("errors") for x in b1) and out["control_caught"]
                    and len(b1) == len(B1.DEPTH) and b2["logs"] > 0)
     out["verdict"] = "PASS" if out["pass"] else "FAIL"
-    out["judged_by"] = "this module's pass condition (no independent verify/ module; THRESHOLDS amendment 5)"
+    out["judged_by"] = "this module's pass condition, recomputed from the rows by verify/pgdiff.py (THRESHOLDS amendment 5)"
     out["seconds"] = round(time.time() - t0, 1)
-    p = write_result("pg_diff", {"per_seed": PER_SEED, "b1_depth": B1.DEPTH, "seeds": seeds("pgdiff"), "scenarios_only": os.environ.get("PGDIFF_SCEN") or "all"}, out)
+    fn, h = write_items("pg_diff", ROWS)
+    out["items"] = {"file": fn, "sha256": h, "rows": len(ROWS)}
+    _h, p = write_result("pg_diff", {"per_seed": PER_SEED, "b1_depth": B1.DEPTH, "seeds": seeds("pgdiff"), "scenarios_only": os.environ.get("PGDIFF_SCEN") or "all"}, out)
     print(json.dumps({k: v for k, v in out.items()}, indent=1, default=str)[:4000])
-    print("wrote", p, "sha256", hashlib.sha256(open(p, "rb").read()).hexdigest()[:16])
+    print("wrote", p, "sha256", _h[:16], flush=True)
     if not out["pass"]:
         raise SystemExit(1)                          # run_all.sh scores a nonzero exit as FAIL
 

@@ -4,7 +4,9 @@
 # usage: sh sync.sh   (run from policy/)
 set -e
 cd "$(dirname "$0")"
-DEST=emlab-16096/polr/src
+DEST=${SYNC_DEST:-emlab-16096/polr/src}       # SYNC_DEST=emlab-16096/polr/runs/<name>/src: one fresh copy per run, never synced mid-run
+case "$DEST" in emlab-16096/polr/*) ;; *) echo "SYNC_DEST must be under emlab-16096/polr/"; exit 1;; esac
+ssh -F "$HOME/.ssh/config_fleetops" t2-dev "mkdir -p $DEST"
 DIRTY=$(git status --porcelain -- . ':!results' | wc -l | tr -d ' ')
 if [ "$DIRTY" != "0" ] && [ "$ALLOW_DIRTY" != "1" ]; then echo "dirty tree"; exit 1; fi
 COMMIT=$(git rev-parse HEAD)

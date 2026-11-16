@@ -4,7 +4,7 @@
 #   ALLOW_DIRTY=1 sh run_all.sh --dev      (development: dev-* seeds, results prefixed DEV.)
 # B3, pg_diff and mig_rehearsal need the Postgres env (paths to 0600 files only) exported by the caller; see ~/emlab-16096/polr/runall.sh.
 # Each experiment writes one result file under results/ (no partial reruns combined); a run that errors is a FAIL. pg_diff and
-# mig_rehearsal have no verify/ module: they exit nonzero on their own FAIL verdict, which this script scores as FAIL.
+# mig_rehearsal exit nonzero on their own FAIL verdict (scored FAIL here) and are re-judged by verify/pgdiff.py and verify/mig.py.
 PY=${PY:-../venv/bin/python}
 rc=0
 for m in e1_lattice e2_egress e3_clash e4_tighten e5_threads e6_policy_format b1_modelcheck b2_rebuild b3_pg pg_diff mig_rehearsal; do

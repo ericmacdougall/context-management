@@ -16,7 +16,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EXPS = {"e1": "e1_lattice", "e2": "e2_egress", "e3": "e3_clash", "e4": "e4_tighten", "e5": "e5_threads", "e6": "e6_policy_format",
-        "b1": "b1_modelcheck", "b2": "b2_rebuild", "b3": "b3_pg"}
+        "b1": "b1_modelcheck", "b2": "b2_rebuild", "b3": "b3_pg", "pgdiff": "pg_diff", "mig": "mig_rehearsal"}   # amendment 5 adds the last two
 FORBIDDEN = ("pol", "exp", "tests")
 
 

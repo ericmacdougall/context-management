@@ -24,7 +24,7 @@ import time
 import types
 
 from exp import common  # noqa: F401
-from exp.common import write_result
+from exp.common import write_items, write_result
 from exp.core_gen import Gen, config as gen_config
 from exp.seeds import seeds
 import pol._core as CORE
@@ -71,6 +71,10 @@ def fingerprint(c, schema="dc"):
         rows = c.execute('select row_to_json(x)::text from "%s"."%s" x order by 1' % (schema, t)).fetchall()
         out["data"][t] = [len(rows), hashlib.sha256("\n".join(sorted(r[0] for r in rows)).encode()).hexdigest()]
     return out
+
+
+def fsha(f):
+    return hashlib.sha256(json.dumps(f, sort_keys=True, default=str).encode()).hexdigest()
 
 
 def build_old_history(OLD, seed, logs=3):
@@ -169,6 +173,7 @@ def arm_clean(OLD, seed, anchor_path):
         res["forward_twice_refused"] = str(e)[:120]
     MIG.rollback(o)
     f1 = fingerprint(o)
+    res["fp_before"], res["fp_after_rollback"] = fsha(f0), fsha(f1)
     res["rollback_restores_fingerprint"] = f1 == f0
     if f1 != f0:
         res["fingerprint_diff"] = sorted(k for k in f0 if f0[k] != f1[k]) + sorted(k for k in f0["data"] if f0["data"][k] != f1["data"].get(k))
@@ -214,7 +219,7 @@ def arm_refused(OLD, seed, how):
         refused = "error:" + type(e).__name__ + ":" + str(e)[:160]
     f1 = fingerprint(o)
     o.close()
-    return {"seed": seed, "control": how, "refused": refused, "unchanged": f0 == f1, "ok": bool(refused) and not str(refused).startswith("error:") and f0 == f1}
+    return {"seed": seed, "control": how, "refused": refused, "unchanged": f0 == f1, "fp_before": fsha(f0), "fp_after": fsha(f1), "ok": bool(refused) and not str(refused).startswith("error:") and f0 == f1}
 
 
 def main():
@@ -238,7 +243,15 @@ def main():
                          "who had the authority is indistinguishable from a genuine one (the pre-R3-7 schema kept no session provenance); "
                          "lab database only (the passfiles name database pol); one tenant per history; a failure mid-transaction relies on "
                          "Postgres transactional DDL (no partial state was injected); roles are cluster-wide and dc_idp is left after rollback")
-    p = write_result("mig_rehearsal", {"seeds": sd, "fixture": "exp/fixtures/pgcore_5a80e52.py"}, out)
+    # ROWS for verify/mig.py (stdlib only): every arm with its raw observations (codes, refusal texts, fingerprint hashes, anchor
+    # report, denied-statement map); the verifier recomputes each arm's ok from these, not from the ok flags written here
+    rows = [dict(x, kind="clean") for x in out["clean"]] + [dict(x, kind="control") for x in out["controls"]]
+    fn, h = write_items("mig_rehearsal", rows)
+    out["items"] = {"file": fn, "sha256": h, "rows": len(rows)}
+    out["refusal_codes"] = sorted(c for c in CORE.OUTCOME_CODES if c in ("unauthorized", "principal_revoked", "bad_event", "tenant_mismatch",
+                                                                        "channel_mismatch"))
+    out["outcome_codes"] = sorted(CORE.OUTCOME_CODES)
+    _h, p = write_result("mig_rehearsal", {"seeds": sd, "fixture": "exp/fixtures/pgcore_5a80e52.py"}, out)
     print(json.dumps({"pass": out["pass"], "clean": [{k: v for k, v in x.items() if k in ("ok", "rollback_restores_fingerprint", "fingerprint_diff",
                                                                                       "forward_twice_refused")} for x in out["clean"]],
                       "controls": [{k: x.get(k) for k in ("control", "ok", "refused", "error")} for x in out["controls"]]}, indent=1, default=str)[:4000])
