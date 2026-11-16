@@ -96,7 +96,7 @@ REFUSED = {
     "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation",
     "unknown_proposal", "self_approval", "proposal_mismatch", "stale", "proposal_closed",
     "candidates_full", "contested_needs_resolve", "not_contested", "nothing_to_retract",
-    "unknown_candidate", "idem_conflict", "duplicate",
+    "unknown_candidate", "idem_conflict", "duplicate", "no_value_change",
 }
 
 HEAD_TYPES = ("confirm", "decide", "supersede", "retract")
@@ -600,6 +600,10 @@ class RefCore:
         effect, label, adopted = self._effect(ev, prop, pend)
         if t == "decide" and verb in ("accept", "reject", "amend") and prop["status"] != "open":
             return ("proposal_closed", None, None)
+        # Amendment 3 (spec change applied by the rescue owner, not the reference author): a non-human accept of the current value
+        if (t == "decide" and verb == "accept" and not human and h["status"] == "current"
+                and effect[1] == h["value_ref"]):
+            return ("no_value_change", None, None)
         if t == "retract" and h["status"] in ("unset", "retracted"):
             return ("nothing_to_retract", None, None)
         if t == "decide":

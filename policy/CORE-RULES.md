@@ -88,8 +88,10 @@ those fields is `bad_event`.
     based_on, prior: last.prev, candidates: [last's (event, by, effect, verb, label), this event's]}; status `contested`; value_ref
     None; version + 1; last None. Code `contested_opened`.
 15. Normal application (based_on == version):
-    - decide accept: proposal must be open (`proposal_closed`); proposal becomes `accepted` (closed_by this event); value set.
-      `decided_accept`.
+    - decide accept: proposal must be open (`proposal_closed`); a NON-HUMAN accept whose proposal value_ref equals the head's current
+      value_ref while status is `current` is refused `no_value_change` (N3: a non-human event that changes no value never moves the
+      head; amendment 3, after B1 found an agent re-accepting a value a resolve had already installed); proposal becomes `accepted`
+      (closed_by this event); value set. `decided_accept`.
     - decide reject (human): proposal must be open (`proposal_closed`); proposal becomes `rejected`; value unchanged.
       `decided_reject`.
     - decide amend: proposal must be open (`proposal_closed`); proposal becomes `accepted`; value set to the event's value_ref.
@@ -133,7 +135,8 @@ Every refused event is written to the audit log with its code (not to the event 
 
 ## 7. Liveness bound (what N3 needs)
 
-A non-human can move the head only by accepting an OPEN HUMAN-authored proposal (rules 10c, 10e, 11). So between two reads of the head
+A non-human can move the head only by accepting an OPEN HUMAN-authored proposal whose value differs from the current one (rules 10c,
+10e, 11, 15). So between two reads of the head
 by a human, non-humans can move it at most once per open human proposal, and new human proposals come only from humans. A human who
 re-reads the head and resubmits is therefore applied within (open human-authored proposals on that req) + 1 attempts, whatever
 non-humans do.

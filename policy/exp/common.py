@@ -43,7 +43,8 @@ def write_result(name, params, data, extra_env=None):
     doc = {"name": name, "stamp": st, "params": params, "result": data}
     raw = json.dumps(doc, indent=1, sort_keys=True, default=str).encode()
     h = hashlib.sha256(raw).hexdigest()
-    tag = "DEV." if st["dirty"] else ""
+    st["seeds_mode"] = os.environ.get("POL_SEEDS", "dev")
+    tag = "DEV." if (st["dirty"] or st["seeds_mode"] != "stamped") else ""
     p = os.path.join(RESULTS, "%s%s.%s.json" % (tag, name, h[:16]))
     with open(p, "wb") as fh:
         fh.write(raw)
@@ -62,7 +63,7 @@ def write_items(name, rows):
         g.write(raw)
     data = buf.getvalue()
     h = hashlib.sha256(data).hexdigest()
-    tag = "DEV." if os.environ.get("ALLOW_DIRTY") == "1" else ""
+    tag = "DEV." if (os.environ.get("ALLOW_DIRTY") == "1" or os.environ.get("POL_SEEDS", "dev") != "stamped") else ""
     fn = "%s%s.items.%s.jsonl.gz" % (tag, name, h[:16])
     with open(os.path.join(RESULTS, fn), "wb") as fh:
         fh.write(data)

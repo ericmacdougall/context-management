@@ -1,237 +1,253 @@
-"""B2: rebuild-equals-live over randomised logs. Live path: incremental apply with a JSON snapshot and restore every k events.
-Rebuild path: fold of the whole log from genesis. Compared: state, manifest hash, outcome list. Controls: a live engine whose
-authority map is edited out of band (not in the log), and a live engine that drops refused events from its log.
+"""B2: differential equivalence and rebuild-equals-live.
+
+Arm "enforced": random event logs (exp/core_gen.Gen, plus two targeted modes that reach proposal_cap and candidates_full) are applied
+event by event to (a) exp/ref_reducer.RefCore, an independent implementation written from CORE-RULES.md with no shared imports, and
+(b) pol._core.reduce on MemoryState with a JSON snapshot/restore every k events (k random). After each event the outcome code, the
+original code and the comparable view (CORE-RULES section 8) must be equal. At the end of each log the live state must equal a fold of
+the applied log from genesis (rebuild), snapshot for snapshot.
+
+Refusal audit: every refused event appears in RefCore.audit (same code, same order); on the production service path
+(DecisionService over MemoryEngine with real sessions) every refusal returned by submit appears in the AuditLog with its code.
+
+Controls are broken implementations (one-patch variants of pol/_core.py): each must show a mismatch against RefCore (or, for the two
+snapshot controls, live != rebuild) in >= 10 percent of logs.
 usage: python -m exp.b2_rebuild"""
-import copy
 import json
 import random
+import time
 
 from exp import common  # noqa: F401
 from exp.common import write_items, write_result
-from pol.invariants import state_invariants, transition_invariants
-from pol.testkit import prepare
-from pol.core import REFUSED, apply, canon, current_table, explain, genesis, manifest_hash
+from exp.core_gen import Gen, TENANT, config, label
+from exp.patches import CONTROLS as PATCHES, variant
+from exp.ref_reducer import RefCore
+from exp.seeds import seeds
+import pol._core as CORE
 
-ROWS = []
-SEEDS = [21, 22, 23, 24, 25]
-PER_SEED = 600
-PRINCIPALS = {"u1": "human", "u2": "human", "u3": "human", "a1": "agent", "a2": "agent", "n1": "analyst"}
-AUTHORITY = {"r1": ["u1", "u2", "a2"], "r2": ["u1"], "r3": ["u1", "a1", "a2", "n1"]}
-ADMINS = ["u1"]
-REQS = list(AUTHORITY)
+PER_SEED = int(__import__("os").environ.get("B2_PER_SEED", "600"))
+MODES = (("random", 0.70), ("cap", 0.15), ("contest", 0.15))
+SNAP_CONTROLS = {
+    "snapshot_drops_revocations": ("pol._core", "\"revoked\": sorted(self.revoked),\n                \"req_labels\": self.req_labels",
+                                   "\"revoked\": [],\n                \"req_labels\": self.req_labels"),
+    "restore_drops_idempotency": ("pol._core", "        s.idems = {(x[0], x[1]): [x[2], x[3]] for x in snap[\"idems\"]}\n", "        s.idems = {}\n"),
+}
+DIFF_CONTROLS = ["n3_agent_reject_moves_head", "n2_no_cap", "n2_no_role", "m2_no_original", "stale_unchecked", "agent_may_supersede"]
 
 
-def gen_events(rng, n):
-    st = genesis('T1', PRINCIPALS, AUTHORITY, ADMINS)
-    evs, cnt = [], [0]
+def canon(o):
+    return json.dumps(o, sort_keys=True, separators=(",", ":"))
 
-    def nid():
-        cnt[0] += 1
-        return "e%d" % cnt[0]
 
-    def mk(**k):
-        i = nid()
-        d = {"id": i, "idem": i}
-        d.update(k)
-        return d
+def vsha(v):
+    import hashlib
+    return hashlib.sha256(canon(v).encode()).hexdigest()
 
-    def head(r):
-        return st["reqs"][r]["version"]
 
-    def pick_based(r):
-        h = head(r)
-        x = rng.random()
-        return h if x < 0.65 else max(0, h - 1) if x < 0.85 else rng.randint(0, h + 2)
-
-    def chan(pid):
-        ok = "agent_api" if PRINCIPALS[pid] == "agent" else rng.choice(["owner_ui", "owner_cli"])
-        return ok if rng.random() < 0.88 else rng.choice(["chat", "agent_api", "owner_ui"])
-
-    def one():
-        pid = rng.choice(list(PRINCIPALS))
-        r = rng.choice(REQS)
-        q = st["reqs"][r]
-        t = rng.choices(["propose", "remark", "confirm", "decide", "supersede", "retract", "revoke", "grant"], [14, 10, 8, 26, 8, 5, 1.5, 2.5])[0]
-        b = pick_based(r)
-        if t == "propose":
-            return mk(type=t, req=r, principal=pid, value="v%d" % rng.randrange(50), based_on=b)
-        if t == "remark":
-            return mk(type=t, req=r, principal=pid, value="v%d" % rng.randrange(50), channel=rng.choice(["chat", "owner_ui", "agent_api"]), based_on=b)
-        if t == "confirm":
-            pend = [p["id"] for p in q["pending"]] or ["nope"]
-            return mk(type=t, req=r, principal=pid, pending=rng.choice(pend), channel=chan(pid), based_on=b)
-        if t == "decide":
-            verb = rng.choices(["accept", "reject", "amend", "resolve"], [40, 15, 15, 30])[0]
-            ev = mk(type=t, req=r, principal=pid, verb=verb, channel=chan(pid), based_on=b if verb != "resolve" else head(r) if rng.random() < 0.8 else b)
-            props = [p["id"] for p in q["proposals"]] or ["nope"]
-            if verb in ("accept", "reject", "amend"):
-                ev["proposal"] = rng.choice(props)
-            if verb == "amend":
-                ev["value"] = "v%d" % rng.randrange(50)
-            if verb == "resolve":
-                if q["contested"] and rng.random() < 0.85:
-                    ev["choose"] = rng.choice([c["event"] for c in q["contested"]["candidates"]])
-                else:
-                    ev["value"] = "v%d" % rng.randrange(50)
-            return ev
-        if t == "supersede":
-            return mk(type=t, req=r, principal=pid, value="v%d" % rng.randrange(50), channel=chan(pid), based_on=b)
-        if t == "retract":
-            return mk(type=t, req=r, principal=pid, channel=chan(pid), based_on=b)
-        if t == "revoke":
-            return mk(type=t, principal=rng.choice(["u1", "u1", "u2"]), target=rng.choice(["u2", "u3", "a1"]))
-        return mk(type=t, principal="u1", req=r, target=rng.choice(["u2", "u3", "a1"]))
-
-    def push(ev):
-        nonlocal st
-        ev = prepare(st, ev)
-        x = rng.random()
-        if x < 0.03 and ev.get("proposal_hash"):
-            ev["proposal_hash"] = "bad"                                          # hostile: wrong content hash
-        elif x < 0.05:
-            ev["tenant"] = "T2"                                                   # hostile: another tenant
-        elif x < 0.08 and "label" in ev:
-            ev["label"] = None                                                    # hostile: unlabelled install
-        elif x < 0.12 and evs and ev.get("type") in ("propose", "remark"):
-            ev["id"] = rng.choice(evs)["id"]                                      # hostile: reused event id
-        evs.append(ev)
-        st, _c = apply(st, ev)
-
-    while len(evs) < n:
-        x = rng.random()
-        if x < 0.07 and evs:
-            push(copy.deepcopy(rng.choice(evs)))                                     # redelivery
-        elif x < 0.09 and evs:
-            e = copy.deepcopy(rng.choice(evs))
-            e["id"] = nid()
-            e["value"] = "tampered"                                                  # same idem key, other payload
-            push(e)
-        elif x < 0.22:                                                               # concurrent siblings: two decisions at the same base by different principals
-            r = rng.choice(REQS)
-            q = st["reqs"][r]
-            props = [p["id"] for p in q["proposals"] if p["status"] == "open"]
-            auth = [p for p in st["authority"][r] if PRINCIPALS[p] == "human" and p not in st["revoked"]]
-            if props and len(auth) >= 2:
-                a, b = rng.sample(auth, 2)
-                base = q["version"]
-                push(mk(type="decide", req=r, principal=a, verb="accept", proposal=rng.choice(props), channel="owner_ui", based_on=base))
-                push(mk(type="supersede", req=r, principal=b, value="v%d" % rng.randrange(50), channel="owner_cli", based_on=base))
-            else:
-                push(mk(type="propose", req=r, principal=rng.choice(list(PRINCIPALS)), value="v%d" % rng.randrange(50), based_on=q["version"]))
+# ------------------------------------------------------------------------------------------------ targeted generators
+def cap_log(rng, n):
+    """One or two principals flood a requirement with proposals (per-principal cap 16), with some closures and noise."""
+    g = Gen(rng.random())
+    evs = []
+    who = rng.choice(["h1", "x1", "a2"])
+    req = "r1"
+    for i in range(n):
+        if rng.random() < 0.8:
+            kind = g.principals[who]
+            evs.append({"type": "propose", "id": "c%d" % i, "idem": "ck%d" % i, "tenant": TENANT, "principal": who,
+                        "channel": "owner_ui" if kind == "human" else "agent_api", "req": req, "value_ref": "v%d" % (i % 7), "label": label(rng),
+                        "based_on": 0})
         else:
-            push(one())
+            evs.append(g.event())
     return evs
 
 
-APPLIED_STATE = ("proposed", "pending_created", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted", "confirmed_applied", "resolved", "contested_opened", "revoked", "granted")
+def contest_log(rng, n):
+    """Two humans decide the same base differently, then humans keep joining at the contest base (same principal may join twice,
+    CORE-RULES ambiguity 13) until candidates_full; then noise and a resolve."""
+    evs = []
+    h = ["h1", "h2", "h3"]
+    req = "r2"                                       # authority r2: h1, h3, a1, a2
+    hs = ["h1", "h3"]
+    for i in range(n):
+        x = rng.random()
+        if i < 2 or (x < 0.7 and i < 14):
+            p = hs[i % 2] if i < 2 else rng.choice(hs)
+            evs.append({"type": "supersede", "id": "s%d" % i, "idem": "sk%d" % i, "tenant": TENANT, "principal": p, "channel": rng.choice(["owner_ui", "owner_cli"]),
+                        "req": req, "value_ref": "v%d" % (i % 9), "label": label(rng), "based_on": 0})
+        elif x < 0.8:
+            evs.append({"type": "decide", "id": "z%d" % i, "idem": "zk%d" % i, "tenant": TENANT, "principal": rng.choice(hs), "channel": "owner_ui", "req": req,
+                        "verb": "resolve", "choose": "s%d" % rng.randrange(0, max(1, min(i, 14))), "based_on": rng.choice([1, 2, 3])})
+        else:
+            evs.append({"type": "retract", "id": "t%d" % i, "idem": "tk%d" % i, "tenant": TENANT, "principal": rng.choice(h), "channel": "owner_ui",
+                        "req": req, "based_on": rng.choice([0, 1])})
+    return evs
 
 
-def run_live(events, rng, oob=False, drop_refused=False):
-    st = genesis('T1', PRINCIPALS, AUTHORITY, ADMINS)
-    log, outs, snaps = [], [], 0
-    k = rng.randint(1, 9)
-    dropped = False
-    oob_at = rng.randrange(max(1, len(events))) if oob else -1
-    for i, ev in enumerate(events):
-        if i == oob_at:
-            st["authority"]["r2"] = sorted(set(st["authority"]["r2"]) | {"u2"})      # out-of-band edit: not a logged grant
-        st, code = apply(st, ev)
-        outs.append(code)
-        lost = drop_refused and code in APPLIED_STATE and not dropped and rng.random() < 0.3      # control: one applied event is lost from the log
-        dropped = dropped or lost
-        if not lost and code != "duplicate" and code not in REFUSED:
-            log.append(ev)
-        elif not lost and code in REFUSED:
-            log.append(ev)
+def make_log(rng, seed, li):
+    mode = rng.choices([m for m, _w in MODES], [w for _m, w in MODES])[0]
+    n = rng.randint(5, 300)
+    if mode == "cap":
+        return mode, cap_log(rng, max(n, 40))
+    if mode == "contest":
+        return mode, contest_log(rng, max(n, 20))
+    g = Gen("%s-%d" % (seed, li))
+    evs, hist = [], []
+    st = CORE.MemoryState(config())                 # only to steer based_on to plausible versions (the generator never reads it otherwise)
+    for _ in range(n):
+        ev = g.retry_or_new(hist)
+        hist.append(ev)
+        evs.append(ev)
+        _c, _o, d = CORE.reduce(st, ev)
+        st.apply_delta(d)
+        for r in ("r1", "r2"):
+            g.note_version(r, st.heads[r]["version"])
+    return mode, evs
+
+
+# ------------------------------------------------------------------------------------------------ arms
+def run_log(core, evs, rng, rows, arm, li, record_events):
+    """Returns (first_mismatch or None, live/rebuild equal, codes)."""
+    ref = RefCore(config())
+    st = core.MemoryState(config())
+    applied, codes, first = [], [], None
+    restores = 0
+    k = rng.randint(1, 20)
+    for i, ev in enumerate(evs):
+        a = ref.apply(ev)
+        c, o, d = core.reduce(st, ev)
+        st.apply_delta(d)
+        if c not in core.REFUSED:
+            applied.append(ev)
+        codes.append(c)
         if (i + 1) % k == 0:
-            st = json.loads(json.dumps(st))                                           # crash, restore from the snapshot, continue
-            snaps += 1
-    return st, log, outs, snaps
+            st = core.MemoryState.restore(json.loads(canon(st.snapshot())))
+            restores += 1
+        rv, pv = ref.view(), st.comparable()
+        rs, ps = vsha(rv), vsha(pv)
+        if record_events:
+            rows.append({"kind": "event", "arm": arm, "log": li, "i": i, "ev": ev, "ref_code": a[0], "ref_orig": a[1], "prod_code": c, "prod_orig": o,
+                         "ref_view": rs, "prod_view": ps})
+        if first is None and (a != (c, o) or rs != ps):
+            first = {"i": i, "ev": ev, "ref": list(a), "prod": [c, o], "ref_view": rv, "prod_view": pv}
+    reb = core.MemoryState(config())
+    for ev in applied:
+        _c, _o, d = core.reduce(reb, ev)
+        reb.apply_delta(d)
+    live_sha, reb_sha = vsha(st.snapshot()), vsha(reb.snapshot())
+    refused_n = sum(1 for x in codes if x in core.REFUSED)
+    audit_codes = [a["code"] for a in ref.audit]
+    rows.append({"kind": "log", "arm": arm, "log": li, "n": len(evs), "restores": restores, "first_mismatch": first, "live_sha": live_sha, "rebuild_sha": reb_sha,
+                 "prod_codes": codes, "ref_audit_codes": audit_codes})
+    return first, live_sha == reb_sha, codes
 
 
-def rebuild(log):
-    st = genesis('T1', PRINCIPALS, AUTHORITY, ADMINS)
-    outs = []
-    for ev in log:
-        st, c = apply(st, ev)
-        outs.append(c)
-    return st, outs
-
-
-def invariant_violations(events):
-    """Every B1 invariant over a long random log (two agents, so peer-agent approval is reachable)."""
-    st = genesis('T1', PRINCIPALS, AUTHORITY, ADMINS)
-    bad = {}
-    for ev in events:
-        post, code = apply(st, ev)
-        for b in transition_invariants(st, ev, post, code) + state_invariants(post):
-            bad[b] = bad.get(b, 0) + 1
-        st = post
-    return bad
-
-
-def compare(events, rng, **kw):
-    live, log, outs_live, snaps = run_live(events, rng, **kw)
-    reb, outs_reb = rebuild(log)
-    # the recorded outcomes of events that were logged must equal the rebuilt outcomes (duplicates are not logged)
-    logged_codes = None
-    same_state = canon(live) == canon(reb)
-    same_hash = manifest_hash(live, log) == manifest_hash(reb, log)
-    same_out = True if kw.get("drop_refused") else [c for c in outs_live if c != "duplicate"] == outs_reb
-    return {"state": same_state, "hash": same_hash, "outcomes": same_out, "snaps": snaps, "live": live, "codes": outs_live}
+# ------------------------------------------------------------------------------------------------ production service audit path
+def service_audit(evs):
+    """Drive the DecisionService over MemoryEngine with real sessions from the same log; every refusal returned must be in the AuditLog."""
+    from pol.decisions import DecisionService, MemoryEngine, Vault
+    from pol.directory import Directory, Principal, SessionAuthority
+    from pol.enforce import AuditLog, Enforcer
+    from pol.policy import parse_policy
+    cfg = config()
+    d = Directory([Principal(p, TENANT, frozenset(["g1"]), 3, False, k, "eu", None) for p, k in cfg["principals"].items()])
+    pol = parse_policy({"version": 1})
+    sa, audit = SessionAuthority(d), AuditLog()
+    svc = DecisionService(Enforcer(lambda: pol, d, sa, audit), {TENANT: MemoryEngine(cfg)}, Vault())
+    sess = {}
+    for p, k in cfg["principals"].items():
+        for ch in (("owner_ui", "owner_cli") if k == "human" else ("agent_api",)):
+            sess[(p, ch)] = sa.issue(p, ch)
+    full = {}                                         # generator id -> (service id, value_ref, author)
+    returned = []
+    for ev in evs:
+        p = ev.get("principal")
+        kind = cfg["principals"].get(p)
+        if kind is None:
+            continue
+        ch = ev.get("channel") if (p, ev.get("channel")) in sess else ("owner_ui" if kind == "human" else "agent_api")
+        body = {k: v for k, v in ev.items() if k not in ("id", "tenant", "principal", "channel", "value_ref")}
+        body["client_id"] = str(ev.get("id", "x"))
+        if "value_ref" in ev:
+            body["value"] = ev["value_ref"]
+        if ev.get("tenant") != TENANT:
+            body["tenant"] = ev.get("tenant")                     # forged tenant in the body: must be refused identity_in_body
+        for f in ("proposal", "pending", "choose"):
+            if f in body and body[f] in full:
+                body[f] = full[body[f]][0]
+        if "proposal_hash" in body and ev.get("proposal") in full and body["proposal_hash"] != "0" * 64:
+            sid, ref, auth = full[ev["proposal"]]
+            body["proposal_hash"] = CORE.proposal_hash(sid, ref, auth)
+        out = svc.submit(sess[(p, ch)], body)
+        if out["id"] and out["code"] not in CORE.REFUSED and "id" in ev:
+            full.setdefault(ev["id"], (out["id"], out["value_ref"], p))
+        returned.append(out["code"])
+    refusals_returned = [c for c in returned if c in CORE.REFUSED or c in ("identity_in_body", "unknown_tenant")]
+    audited = [r["reason"] for r in audit.rows() if r.get("action") == "decision" and not r["allow"]]
+    return {"returned": returned, "refusals_returned": refusals_returned, "audited_refusals": audited}
 
 
 def main():
-    arms = {"enforced": {}, "ctl_out_of_band_authority": {"oob": True}, "ctl_lost_applied_event": {"drop_refused": True}}
-    res = {}
-    for name, kw in arms.items():
-        r = {"logs": 0, "state_equal": 0, "hash_equal": 0, "outcomes_equal": 0, "all_equal": 0, "snapshots_restored": 0, "contested_logs": 0, "events": 0,
-             "codes": {}, "explain_ok": 0}
-        for seed in SEEDS:
-            for i in range(PER_SEED):
-                rng = random.Random(seed * 100000 + i)
-                n = rng.randint(5, 80)
-                events = gen_events(rng, n)
-                c = compare(events, random.Random(rng.random()), **kw)
-                ROWS.append({"arm": name, "seed": seed, "i": i, "events": len(events), "state_equal": bool(c["state"]), "hash_equal": bool(c["hash"]), "outcomes_equal": bool(c["outcomes"]),
-                             "snaps": c["snaps"], "contested": "contested_opened" in c["codes"], "inv_violations": (invariant_violations(events) if name == "enforced" else None)})
-                r["logs"] += 1
-                if name == "enforced":
-                    for b, n_ in invariant_violations(events).items():
-                        r.setdefault("invariant_violations", {})[b] = r.get("invariant_violations", {}).get(b, 0) + n_
-                r["events"] += len(events)
-                r["state_equal"] += c["state"]
-                r["hash_equal"] += c["hash"]
-                r["outcomes_equal"] += c["outcomes"]
-                r["all_equal"] += c["state"] and c["hash"] and c["outcomes"]
-                r["snapshots_restored"] += c["snaps"]
-                for code in c["codes"]:
-                    r["codes"][code] = r["codes"].get(code, 0) + 1
-                r["contested_logs"] += "contested_opened" in c["codes"]
-                if name == "enforced":
-                    # "what is current and why" is consistent with the table for every requirement
-                    ok = True
-                    tbl = {row["req"]: row for row in current_table(c["live"])}
-                    for req in AUTHORITY:
-                        ex = explain(c["live"], req)
-                        row = tbl[req]
-                        ok &= ex["value"] == row["value"] and ex["status"] == row["status"] and ex["decision_event"] == row["decision_event"] and ex["version"] == row["version"]
-                        ok &= (ex["contested"] is None) == (row["contested"] is None)
-                    r["explain_ok"] += ok
-        res[name] = r
-    e = res["enforced"]
-    ok = (not e.get("invariant_violations") and e["all_equal"] == e["logs"] and e["logs"] >= 3000 and e["contested_logs"] >= 0.10 * e["logs"] and e["snapshots_restored"] >= 3000 and e["explain_ok"] == e["logs"]
-          and all(e["codes"].get(c, 0) > 0 for c in ("stale", "unauthorized", "self_approval", "duplicate", "idem_conflict", "contested_opened", "resolved", "decided_accept",
-                                                  "pending_created", "confirmed_applied", "revoked", "granted", "principal_revoked", "channel_mismatch")))
-    ctl = {k: {"mismatch_rate": 1 - v["all_equal"] / v["logs"], "meets_floor": (1 - v["all_equal"] / v["logs"]) >= 0.10} for k, v in res.items() if k != "enforced"}
+    t0 = time.time()
+    rows = []
+    sd = seeds("b2")
+    logs = []
+    for s in sd:
+        rng = random.Random(s)
+        for li in range(PER_SEED):
+            mode, evs = make_log(rng, s, li)
+            logs.append(("%s/%d" % (s, li), mode, evs))
+    # enforced
+    rng = random.Random("b2-restore-k")
+    mism, reb_bad, codes_seen, contested_logs, restores = 0, 0, {}, 0, 0
+    modes = {}
+    for lid, mode, evs in logs:
+        modes[mode] = modes.get(mode, 0) + 1
+        first, eq, codes = run_log(CORE, evs, rng, rows, "enforced", lid, True)
+        mism += first is not None
+        reb_bad += not eq
+        for c in codes:
+            codes_seen[c] = codes_seen.get(c, 0) + 1
+        contested_logs += "contested_opened" in codes
+    restores = sum(r["restores"] for r in rows if r["kind"] == "log" and r["arm"] == "enforced")
+    missing = sorted(set(CORE.OUTCOME_CODES) - set(codes_seen))
+    # service-path refusal audit on every fifth log
+    svc_bad, svc_refusals = 0, 0
+    for lid, mode, evs in logs[::5]:
+        a = service_audit(evs)
+        ok = a["refusals_returned"] == a["audited_refusals"]
+        svc_bad += not ok
+        svc_refusals += len(a["refusals_returned"])
+        rows.append({"kind": "svc_audit", "log": lid, **a})
+    # controls
+    ctl = {}
+    for name in DIFF_CONTROLS + list(SNAP_CONTROLS):
+        mod = variant(*(PATCHES[name] if name in PATCHES else SNAP_CONTROLS[name]), tag="b2_" + name)
+        rng = random.Random("b2-restore-k")
+        n_bad = 0
+        for lid, mode, evs in logs:
+            sub = []
+            first, eq, _c = run_log(mod, evs, rng, sub, name, lid, False)
+            bad = first is not None or not eq
+            n_bad += bad
+            r = sub[-1]
+            rows.append({"kind": "ctl_log", "arm": name, "log": lid, "first_mismatch": r["first_mismatch"], "live_sha": r["live_sha"], "rebuild_sha": r["rebuild_sha"]})
+        ctl[name] = {"logs_with_mismatch": n_bad, "rate": n_bad / len(logs), "meets_floor": n_bad / len(logs) >= 0.10}
+    ok = (mism == 0 and reb_bad == 0 and not missing and contested_logs >= 0.10 * len(logs) and restores >= 3000 and svc_bad == 0 and svc_refusals > 0)
     ctl_ok = all(c["meets_floor"] for c in ctl.values())
     verdict = "PASS" if ok and ctl_ok else "FAIL"
-    data = {"verdict": verdict, "arms": res, "controls": ctl, "pass_conditions_met": ok, "controls_meet_floor": ctl_ok,
-            "not_proven": "in-memory reducer only here; the Postgres rebuild is B3; logs are generated by one generator (adversarial but not exhaustive)"}
-    data["items"] = dict(zip(("file", "sha256"), write_items("b2_rebuild", ROWS)))
-    write_result("b2_rebuild", {"seeds": SEEDS, "per_seed": PER_SEED, "length": "5..80"}, data)
-    print(verdict, {k: e[k] for k in ("logs", "all_equal", "contested_logs", "snapshots_restored", "events", "explain_ok")}, ctl)
-    print(sorted(e["codes"].items(), key=lambda x: -x[1]))
+    data = {"verdict": verdict, "logs": len(logs), "modes": modes, "events": sum(len(e) for _l, _m, e in logs), "mismatched_logs": mism,
+            "rebuild_unequal_logs": reb_bad, "codes": codes_seen, "codes_missing": missing, "contested_logs": contested_logs, "restores": restores,
+            "service_audit_logs": len(logs[::5]), "service_audit_bad": svc_bad, "service_refusals": svc_refusals, "controls": ctl,
+            "pass_conditions_met": ok, "controls_meet_floor": ctl_ok, "seconds": round(time.time() - t0, 1),
+            "not_proven": "equivalence with an independent reading of CORE-RULES.md on generated logs only; the reference shares the spec, so a spec "
+                          "error common to both is not detected; label validity domain restricted to what both implementations accept"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("b2_rebuild", rows)))
+    write_result("b2_rebuild", {"seeds": sd, "per_seed": PER_SEED, "modes": MODES, "lengths": "random 5..300, cap >= 40, contest >= 20",
+                                "controls": DIFF_CONTROLS + list(SNAP_CONTROLS)}, data)
+    print(verdict, {k: data[k] for k in ("logs", "events", "mismatched_logs", "rebuild_unequal_logs", "codes_missing", "contested_logs", "restores",
+                                         "service_audit_bad", "service_refusals", "seconds")})
+    for n, c in ctl.items():
+        print("  control", n, c)
 
 
 if __name__ == "__main__":

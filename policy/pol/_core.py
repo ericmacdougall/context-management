@@ -24,7 +24,7 @@ MAX_OPEN_PER_REQ = 256
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap",
            "channel_mismatch", "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation",
            "unknown_proposal", "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve",
-           "not_contested", "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
+           "not_contested", "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate", "no_value_change")
 APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
 OUTCOME_CODES = APPLIED + REFUSED
@@ -241,6 +241,8 @@ def _rules(view, ev):
     if t == "decide":
         if prop["status"] != "open":
             return "proposal_closed", []
+        if not human and verb == "accept" and h["status"] == "current" and eff[1] == h["value_ref"]:
+            return "no_value_change", []                 # N3: a non-human event that changes no value never moves the head
         if verb == "reject":
             code = "decided_reject"
             delta.append(("prop_close", req, prop["id"], "rejected", ev["id"]))

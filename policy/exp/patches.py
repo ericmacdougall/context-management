@@ -49,16 +49,14 @@ CONTROLS = {
     # H8 reintroduced: the recipient used for the send is looked up again after the decision.
     "h8_second_lookup": ("pol.enforce", "                self._sink(sender, rcp, [r.text for r in recs], dict(it[\"request\"]))",
                          "                self._sink(sender, self._enf._dir.lookup(it[\"recipient_id\"]), [r.text for r in recs], dict(it[\"request\"]))"),
-    # H8 reintroduced: no re-read of labels at delivery (labels captured at enqueue).
-    "h8_no_reread": ("pol.enforce", "                    r = self._store._get(rid)\n                    if r is None:",
-                     "                    r = it.setdefault(\"_snap\", {}).get(rid) or self._store._get(rid)\n                    if r is None:"),
+    # (Removed after the dev runs: "h8_no_reread" was vacuous, as its setdefault snapshot was never filled; E4 uses the
+    # enqueue_only variant from exp/e245_kit.py instead.)
     # H2 reintroduced: unknown credential keys ignored.
     "h2_ignore_unknown_keys": ("pol._pdp", "        if not isinstance(k, str) or not k.isascii() or k not in CREDENTIAL_KEYS:\n            _deny(\"attr_unrecognised_key\")\n", "        pass\n"),
-    # M1 reintroduced: identity keys in the body override the session.
-    "m1_body_identity": ("pol.decisions", "        if IDENTITY_KEYS & set(body):\n            return self._refuse(p.id, \"identity_in_body\", body)\n", ""),
+    # (Removed after the dev runs: "m1_body_identity" was masked by the BODY_KEYS check; E3 uses its two-fragment BODY_TRUST variant.)
     # H7 reintroduced: hidden-candidate flag always present.
     "h7_flag_always": ("pol.decisions", "        if notice:\n            out[\"hidden_candidates\"] = hidden\n", "        out[\"hidden_candidates\"] = hidden\n"),
-    # Label join dropped at read: explain shows values without a read check.
+    # INFORMATIONAL ONLY (vacuous by construction: explain checks _readable before _value is reached); E5 uses its no_read_check.
     "h7_unscoped_value": ("pol.decisions", "        return {\"ref\": ref, \"text\": v[\"text\"], \"erased\": False} if self._readable(session, v[\"label\"]) else None",
                           "        return {\"ref\": ref, \"text\": v[\"text\"], \"erased\": False}"),
 }

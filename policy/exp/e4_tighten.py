@@ -1,17 +1,24 @@
-"""E4: an item queued under a permissive policy is refused at delivery after the policy tightens. Control: enqueue-time-only check.
+"""E4: an item queued under a permissive policy is refused at delivery after the policy (or the directory, or the source record)
+tightens. Production path: pol.enforce.Outbox for send_model, send_inbox and export, with sessions issued by SessionAuthority.
+The per-item artifact holds RAW observations per run: the enqueue decision (allow, policy version), every audit row written after the
+tightening (action, allow, reason, policy version), deliveries, refusal reasons, how many recorded payloads carry the run's marker,
+and, per delivery, the identity of the recipient object the sink received next to the identity of the recipient object the decision
+evaluated (the recipient-snapshot check). verify/e4.py recomputes the verdict from these rows.
+Control: an enqueue-time-only Outbox (one-fragment variant of pol/enforce.py: no decision at delivery).
 usage: python -m exp.e4_tighten"""
 import random
+import time
 from dataclasses import replace
 
 from exp import common  # noqa: F401
+from exp import e245_kit as K
 from exp.common import write_items, write_result
-from exp.gen import base_policy
-from pol.enforce import Block, Enforcer, Outbox
+from exp.seeds import seeds
+from pol.directory import Directory, Principal, SessionAuthority
 from pol.labels import Label
-from pol.pdp import Principal
-from pol.stubs import Network, StubChat
+from pol.policy import ACTIONS, parse_policy
+import pol.enforce as PE
 
-ROWS = []
 R = 200
 COMBOS = [("model", "model_banned"), ("model", "region_removed"), ("model", "sender_revoked"), ("model", "tenant_killed"),
           ("inbox", "model_banned"), ("inbox", "region_removed"), ("inbox", "recipient_revoked"), ("inbox", "tenant_killed"), ("inbox", "group_removed"),
@@ -19,105 +26,123 @@ COMBOS = [("model", "model_banned"), ("model", "region_removed"), ("model", "sen
           ("inbox", "label_narrowed"), ("inbox", "source_erased"), ("inbox", "legal_hold_recorded")]
 
 
-def one(seed, path, tighten, enqueue_only):
-    rng = random.Random(seed)
-    pol1 = base_policy()
-    cur = [pol1]
-    directory = {}
-    enf = Enforcer(lambda: cur[0], directory=directory.get, clock=lambda: 10)
-    net = Network()
-    net.register("model", "send_model")
-    net.register("inbox", "send_inbox")
-    net.register("export", "export")
-    sender = Principal("S", "t1", frozenset(["g1", "g2"]), 3, True, region="EU")
-    rcp = Principal("R", "t1", frozenset(rng.choice([["g1"], ["g1", "g2"]])), rng.choice([2, 3]), False, region="EU", model="d_model_eu")
-    directory.update({"S": sender, "R": rcp})
+def policy1():
+    return parse_policy({"version": 1, "grants": {"t1": list(ACTIONS)}, "models": {"m-eu-1": {"family": "m-eu", "version": "1"}},
+                         "destinations": {"d_model_eu": {"kind": "model", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m-eu-1",
+                                                         "tenants": ["t1"]},
+                                          "d_export_eu": {"kind": "export", "region": "eu", "local": False, "max_sensitivity": 3, "model": None,
+                                                          "tenants": ["t1"]}}})
+
+
+def one(E, seed, ci, path, tighten, i):
+    rng = random.Random("%s/%d/%d" % (seed, ci, i))
+    cur = [policy1()]
+    rgroups = rng.choice([["g1"], ["g1", "g2"]])
+    dr = Directory([Principal("s", "t1", frozenset(["g1", "g2"]), 3, True, "human", "eu", None),
+                    Principal("r", "t1", frozenset(rgroups), rng.choice([2, 3]), False, "agent", "eu", "d_model_eu")])
+    sessions = SessionAuthority(dr)
+    audit = E.AuditLog()
+    enf = E.Enforcer(lambda: cur[0], dr, sessions, audit)
+    store = E.Store(enf)
+    s = sessions.issue("s", "owner_ui")
     marker = "MK%08x" % rng.getrandbits(32)
-    lab = Label(["t1"], acl=[["g1"]] + ([["g2", "g1"]] if rng.random() < 0.5 else []), regions=["EU"], sensitivity=rng.choice([0, 1, 2]),
+    lab = Label(["t1"], acl=[["g1"]] + ([["g2", "g1"]] if rng.random() < 0.5 else []), regions=["eu"], sensitivity=rng.choice([0, 1, 2]),
                 subjects=rng.choice([[], ["s1"]]))
-    blocks = [Block("payload %d " % k + marker, lab, ("x",)) for k in range(rng.randint(1, 3))]
-    chat = StubChat(net, "d_model_eu", "m1")
-    from pol.enforce import Record
-    records = {"rec": Record("rec", "src", lab)}
-    if path == "model":
-        ob = Outbox(enf, directory.get, "send_model", lambda p, b, c: chat.complete([{"role": "user", "content": b[0].text}]), enqueue_only)
-        ctx, rid = {"destination": "d_model_eu"}, None
-    elif path == "export":
-        ob = Outbox(enf, directory.get, "export", lambda p, b, c: net.record("export", "d_export_eu", p.tenant, b[0].text), enqueue_only)
-        ctx, rid = {"destination": "d_export_eu"}, None
-    else:
-        ob = Outbox(enf, directory.get, "send_inbox", lambda p, b, c: net.record("inbox", "rcp:R", p.tenant, b[0].text), enqueue_only, resolver=records.get)
-        ctx, rid = {}, "R"
-    ob.enqueue("S", blocks, ctx, rid, **({"record_ids": ["rec"]} if path == "inbox" else {}))
-    enq_entry = dict(enf.log.entries[-1]) if enf.log.entries else None
-    if tighten:
-        d = base_policy().destinations
+    refs = [store.append(s, "payload %d %s" % (k, marker), lab) for k in range(rng.randint(1, 3))]
+    sent, checked = [], []
+    real = E.evaluate
+
+    def spy(principal, action, labels, request, policy, now, recipient):
+        checked.append(id(recipient) if recipient is not None else None)
+        return real(principal, action, labels, request, policy, now, recipient)
+    E.evaluate = spy
+    try:
+        def sink(sender, rcp, texts, req):
+            for t in texts:
+                sent.append({"text_has_marker": marker in t, "rcp_obj": id(rcp) if rcp is not None else None,
+                             "checked_rcp_obj": checked[-1] if checked else None})
+        action = {"model": "send_model", "export": "export", "inbox": "send_inbox"}[path]
+        ob = E.Outbox(enf, store, action, sink)
+        rq = {"model": {"destination": "d_model_eu"}, "export": {"destination": "d_export_eu"}, "inbox": {"recipient_id": "r"}}[path]
+        ob.enqueue(s, refs, rq)
+        enq = audit.rows()[-1]
+        n0 = len(audit.rows())
+        p1 = cur[0]
         if tighten == "model_banned":
-            cur[0] = pol1.tighten(banned_models=frozenset(["m1"]))
+            cur[0] = p1.with_changes({"banned_models": frozenset(["m-eu"])})
         elif tighten == "region_removed":
-            dd = dict(pol1.destinations)
+            dd = dict(p1.destinations)
             for k in ("d_model_eu", "d_export_eu"):
-                dd[k] = replace(dd[k], region="US")
-            cur[0] = pol1.tighten(destinations=dd)
+                dd[k] = replace(dd[k], region="us")
+            cur[0] = p1.with_changes({"destinations": dd})
         elif tighten == "sender_revoked":
-            cur[0] = pol1.tighten(revoked=frozenset(["S"]))
+            cur[0] = p1.with_changes({"revoked": frozenset(["s"])})
         elif tighten == "recipient_revoked":
-            cur[0] = pol1.tighten(revoked=frozenset(["R"]))
+            cur[0] = p1.with_changes({"revoked": frozenset(["r"])})
         elif tighten == "tenant_killed":
-            cur[0] = pol1.tighten(deny_tenants=frozenset(["t1"]))
+            cur[0] = p1.with_changes({"deny_tenants": frozenset(["t1"])})
         elif tighten == "group_removed":
-            directory["R"] = replace(rcp, groups=frozenset(["g9"]))
-        elif tighten == "label_narrowed":                # the SOURCE record is narrowed after enqueue; the policy is unchanged
-            records["rec"] = Record("rec", "src", Label(["t1"], acl=[["hr"]], regions=["EU"]))
+            dr.put(Principal("r", "t1", frozenset(["g9"]), 3, False, "agent", "eu", "d_model_eu"))
+        elif tighten == "label_narrowed":
+            r0 = store._get(refs[0])
+            store._recs[refs[0]] = E.Record(r0.id, r0.tenant, r0.text, Label(["t1"], acl=[["hr"]], regions=["eu"]), r0.lineage)
         elif tighten == "source_erased":
-            del records["rec"]
-        elif tighten == "legal_hold_recorded":           # the source is narrowed by a hold label after enqueue
-            records["rec"] = Record("rec", "src", Label(["t1"], acl=[["hr"]], holds=["h1"]))
-    delivered, refused = ob.deliver_all()
-    escaped = [p for p in net.payloads if marker in p.text]
-    last = enf.log.entries[-1] if enf.log.entries else None
-    refusal_logged = bool(refused) and last is not None and last["allow"] is False and (
-        last["policy_version"] == (2 if tighten not in ("group_removed", "label_narrowed", "source_erased", "legal_hold_recorded") else 1))
-    return {"delivered": len(delivered), "refused": len(refused), "escaped_payloads": len(escaped), "enqueue_allow": bool(enq_entry and enq_entry["allow"]),
-            "enqueue_version": enq_entry["policy_version"] if enq_entry else None, "refusal_logged_with_version": refusal_logged,
-            "refusal_reason": refused[0]["refusal"].reason if refused else None}
+            store.erase(s, refs[0])
+        elif tighten == "legal_hold_recorded":
+            r0 = store._get(refs[0])
+            store._recs[refs[0]] = E.Record(r0.id, r0.tenant, r0.text, Label(["t1"], acl=[["hr"]], holds=["h1"]), r0.lineage)
+        delivered, refused = ob.deliver_all()
+    finally:
+        E.evaluate = real
+    after = [{"action": a["action"], "allow": a["allow"], "reason": a["reason"], "policy_version": a["policy_version"]} for a in audit.rows()[n0:]]
+    return {"enqueue": {"action": enq["action"], "allow": enq["allow"], "policy_version": enq["policy_version"]}, "audit_after": after,
+            "delivered": len(delivered), "refused": [x.get("refusal") for x in refused], "sent": sent}
 
 
-def arm(enqueue_only, tighten_on, arm_name=""):
-    out = {"runs": 0, "delivered": 0, "refused": 0, "escaped": 0, "enqueue_allowed_v1": 0, "refusal_logged_v2": 0, "by_combo": {}, "reasons": {}}
-    for ci, (path, t) in enumerate(COMBOS):
-        for i in range(R):
-            r = one(1000 * ci + i, path, t if tighten_on else None, enqueue_only)
-            ROWS.append({"arm": arm_name, "combo": "%s/%s" % (path, t), "i": i, "delivered": r["delivered"], "refused": r["refused"], "escaped": r["escaped_payloads"],
-                         "enqueue_allow": bool(r["enqueue_allow"]), "enqueue_version": r["enqueue_version"], "refusal_logged": bool(r["refusal_logged_with_version"])})
-            out["runs"] += 1
-            out["delivered"] += r["delivered"]
-            out["refused"] += r["refused"]
-            out["escaped"] += r["escaped_payloads"]
-            out["enqueue_allowed_v1"] += r["enqueue_allow"] and r["enqueue_version"] == 1
-            out["refusal_logged_v2"] += r["refusal_logged_with_version"]
-            k = "%s/%s" % (path, t)
-            out["by_combo"][k] = out["by_combo"].get(k, 0) + r["delivered"]
-            if r["refusal_reason"]:
-                out["reasons"][r["refusal_reason"]] = out["reasons"].get(r["refusal_reason"], 0) + 1
+ARMS = [("fenced", lambda: PE, True), ("positive", lambda: PE, False), ("control_enqueue_only", K.enqueue_only, True)]
+
+
+def summarise(rows):
+    out = {}
+    for arm, _mk, _t in ARMS:
+        rs = [r for r in rows if r["arm"] == arm]
+        out[arm] = {"runs": len(rs), "runs_delivered": sum(1 for r in rs if r["delivered"] > 0),
+                    "marker_payloads": sum(1 for r in rs for x in r["sent"] if x["text_has_marker"]),
+                    "enqueue_allowed_v1": sum(1 for r in rs if r["enqueue"]["allow"] and r["enqueue"]["policy_version"] == 1),
+                    "snapshot_mismatch": sum(1 for r in rs for x in r["sent"] if r["combo"].startswith("inbox") and x["rcp_obj"] != x["checked_rcp_obj"]),
+                    "reasons": {}}
+        for r in rs:
+            for x in r["refused"]:
+                out[arm]["reasons"][x] = out[arm]["reasons"].get(x, 0) + 1
     return out
 
 
 def main():
-    fenced = arm(False, True, "fenced")
-    positive = arm(False, False, "positive")
-    control = arm(True, True, "control_enqueue_only")
-    ok = (fenced["delivered"] == 0 and fenced["escaped"] == 0 and fenced["enqueue_allowed_v1"] == fenced["runs"] and fenced["refusal_logged_v2"] == fenced["runs"]
-          and positive["delivered"] == positive["runs"] and positive["escaped"] == positive["runs"])
-    ctl = control["delivered"] >= 0.9 * control["runs"]
+    t0 = time.time()
+    rows = []
+    sd = seeds("e4")
+    for arm, mk, tight in ARMS:
+        E = mk()
+        for ci, (path, t) in enumerate(COMBOS):
+            for i in range(R):
+                seed = sd[i % len(sd)]
+                r = one(E, seed, ci, path, t if tight else None, i)
+                rows.append(dict(r, arm=arm, combo="%s/%s" % (path, t), seed=seed, i=i))
+    s = summarise(rows)
+    f, p, c = s["fenced"], s["positive"], s["control_enqueue_only"]
+    n_items_pos = sum(len(r["sent"]) for r in rows if r["arm"] == "positive")
+    ok = (f["runs_delivered"] == 0 and f["marker_payloads"] == 0 and f["enqueue_allowed_v1"] == f["runs"] and p["runs_delivered"] == p["runs"]
+          and p["snapshot_mismatch"] == 0 and n_items_pos == p["marker_payloads"])
+    ctl = c["runs_delivered"] >= 0.9 * c["runs"]
     verdict = "PASS" if ok and ctl else "FAIL"
-    data = {"verdict": verdict, "fenced_after_tighten": fenced, "positive_no_tighten": positive, "control_enqueue_only": control,
-            "pass_conditions_met": ok, "control_meets_floor": ctl, "control_reason": "enqueue-only check trusts the stale v1 decision and delivers",
-            "note": "group_removed is a directory change, not a policy version change: its refusal is logged with policy version 1 and the refusal reason recipient_acl",
-            "not_proven": "refusal logged for the last-checked item only; no in-flight (already sent) item can be recalled"}
-    data["items"] = dict(zip(("file", "sha256"), write_items("e4_tighten", ROWS)))
-    write_result("e4_tighten", {"R": R, "combos": COMBOS}, data)
-    print(verdict, "fenced delivered", fenced["delivered"], "of", fenced["runs"], "| positive delivered", positive["delivered"], "| control delivered", control["delivered"], "of", control["runs"])
+    data = {"verdict": verdict, "arms": s, "pass_conditions_met": ok, "control_meets_floor": ctl, "runtime_s": round(time.time() - t0, 1),
+            "note": "directory, record and erasure changes (group_removed, label_narrowed, legal_hold_recorded) are logged at the unchanged policy version 1; "
+                    "source_erased is refused by the purge (refusal 'source_erased') without a delivery decision",
+            "not_proven": "an item already handed to a sink cannot be recalled; legal_hold_recorded is exercised as a narrowing of the source label "
+                          "(a hold itself only affects erasure)"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("e4_tighten", rows)))
+    write_result("e4_tighten", {"R": R, "combos": COMBOS, "seeds": sd}, data)
+    print(verdict, s, "runtime", data["runtime_s"])
 
 
 if __name__ == "__main__":
