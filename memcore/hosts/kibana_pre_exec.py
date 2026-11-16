@@ -21,6 +21,9 @@ Design (two layers of fail-open):
    workflow complete after the step failed; `| default: inputs.prompt` yields the original prompt when
    steps.memory.output is undefined. The bearer token is a workflow `consts` entry (stored in the workflow: use a
    dedicated token for this route only).
+Run live on 2026-11-16 at 8d5425d (NOTES-addendum-g7.md, "Live run on t2-dev"): normal, service down, service slow and
+service hung all completed with the framed block or the original prompt; the same workflow without the wrapper gave
+HTTP 500 when the service was down or hung.
 """
 from __future__ import annotations
 

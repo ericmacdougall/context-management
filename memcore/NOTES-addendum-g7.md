@@ -12,7 +12,7 @@ New file only (the worktree was frozen for the delta review). Observed on the t2
 3. `mc-g7-pre-slow` (`wait` 140 s): converse HTTP 500 after 124.5 s, message `Hook execution timed out after 120000ms`. The run stopped; again no agent model request reached the stub. The workflow engine itself still showed the execution `waiting` at 125 s (earlier direct-run test), so the 120 s limit is enforced by the agent hook, not the engine.
 Source reading predicted "the agent run stops" for failure and for over-120 s: observed, as an HTTP 500 with the step's error text or the timeout text (the original prompt is not used as a fallback). Fail-open must therefore be designed into the workflow itself (catch errors, keep well under 120 s).
 
-## Workflow template and fail-open design (2026-11-15, fix branch fix/adapters-delta-16096; NOT RUN LIVE)
+## Workflow template and fail-open design (fix branch fix/adapters-delta-16096; run live 2026-11-16 at 8d5425d, see below)
 - The raw `<memory>\n- [id ts] text\n</memory>` block used in variant 1 must not be reused: a stored text containing
   `</memory>` and a `SYSTEM:` line forges the framing (review finding 3; delta review hypothesis on d8f714b).
 - The documented template is now `memcore/hosts/kibana_pre_exec.py`: `workflow_yaml()` renders the workflow and
@@ -24,11 +24,43 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   (KibanaPreExecTemplateTests).
 - Fail-open, layer 2 (Kibana): one `http` step with `timeout: 25s` and `on-failure: continue: true`, then `data.set`
   with `new_prompt: "{{ steps.memory.output.data.new_prompt | default: inputs.prompt }}"`. Both budgets sit far below the
-  120 s hook limit observed in variant 3. ASSUMPTION: these step keys and the Liquid `default` filter were not verified
-  on 9.5.6. Observed so far, a failing step or a run past 120 s stops the agent run (variants 2 and 3).
-- Not built: the HTTP route `POST /v1/pre_exec` that would serve `pre_exec_new_prompt()`. To verify live: build the
-  route, then rerun the ok, refused-port and 140 s variants through converse and check that the model receives the framed
-  block or, on failure, the original prompt.
+  120 s hook limit observed in variant 3. The keys are VERIFIED on 9.5.6 (below).
+- The route is built: `Gateway(..., pre_exec_injector=BudgetedInjector(...))` serves `POST /v1/pre_exec` behind the
+  bearer token and the per-request gate (503 when the gate no longer passes); the body is `{"prompt", "session_id"?}`
+  (400 otherwise); the reply is always `{"new_prompt", "injected", "reason"}` and the whole block is egress-checked before
+  it leaves. `workflow_yaml(..., token=...)` emits the bearer token as a workflow const (stored in the workflow: use a
+  token dedicated to this route).
+
+## Live run on t2-dev, 2026-11-16 (src 8d5425d; evidence t2-dev:~/memcore-p2-16096/ev/live/8d5425d/)
+- Setup: Kibana 9.5.6 (emlab-kb-16096) on Elasticsearch emlab-es-16096 (trial). The model is memcore's ToolStub on
+  172.17.0.1 behind an ES inference endpoint created for the run (mc-p2-chat); no real model was called. Agent
+  mc-g7-agent. Memory service: a memcore Gateway on 172.17.0.1:18741 with a ScriptedStubChat backend and /v1/pre_exec
+  over an in-memory store holding a forged `</memory>` + `SYSTEM:` record, started with a required real-id file.
+  Workflow attached through the space setting agentBuilder:prePromptWorkflowIds. Prompt contains a quote, a newline and
+  Liquid braces. Runner: `python3 p2_live.py src-8d5425d 8d5425d` (runs 1 and 2 failed in the harness, not the product:
+  a duplicate Content-Type header on the endpoint PUT, then title-generation calls counted as agent calls; both kept).
+
+| Case | Memory service | Workflow | Converse | Seconds | What the agent's model call received |
+|---|---|---|---|---|---|
+| a | up | wrapped | 200 completed | 8.0 | `[Sent: ...]`, the delimiter-framed block (3 JSON records; the forged text only inside a JSON string), then the prompt verbatim |
+| c2 | store sleeps 40 s (route budget 20 s) | wrapped | 200 completed | 27.3 | the original prompt, exactly |
+| b | stopped (connection refused) | wrapped | 200 completed | 4.1 | the original prompt, exactly |
+| d_b | stopped | unwrapped control | 500 `[ECONNREFUSED] ...:18741` | 5.6 | no agent model call |
+| c | accepts, hangs 150 s (step timeout 25 s) | wrapped | 200 completed | 32.2 | the original prompt, exactly |
+| d_c | hangs 150 s | unwrapped control | 500 `[ECONNABORTED] timeout of 60000ms exceeded` | 66.5 | no agent model call |
+
+- What 9.5.6 actually supports (schema in @kbn/workflows/spec/schema.js plus direct workflow runs, evidence
+  ev/keys/): step `timeout` is a duration string (`25s`, `500ms`, ...) enforced by the engine (TimeoutError; the step
+  fails); `on-failure` takes `retry`, `fallback` (steps) and `continue` (true or a condition string); with
+  `continue: true` the workflow completes after the step failed; `{{ x | default: inputs.prompt }}` yields the input
+  when the step produced no output; workflow-level `settings.timeout` and `settings.on-failure` also exist; values
+  returned by the http step are not re-rendered as Liquid. The http connector has its own 60 s request timeout, so an
+  unwrapped workflow over a hung service fails at about 60 s, before the 120 s hook limit.
+- Kibana also makes one title-generation model call per conversation with the raw user prompt (forced `set_title`
+  tool); it never carries the memory block.
+- Cleanup verified: setting back to `[]`, the 8 workflows and the inference endpoint deleted, kit processes stopped,
+  emlab-kb-16096 stopped again; emlab-es-16096 was already running and was left running. Ledger:
+  ~/memcore-p2-16096/spawn_ledger.jsonl. A scan of the evidence for the Kibana key, service token and probe token found 0 hits.
 
 ## Not done / caveats
 - Three title-generation model requests also reached the stub (Kibana's own utility call); they are not part of the agent run.
@@ -65,7 +97,14 @@ My count is 8 open plus 2 partial among the 21; main's "13" may use a different 
 - Egress guard (reviewer item 5): tool results and other guarded objects of a type the guard does not know (datetime,
   Decimal, dataclass, any custom class) are refused as EgressLeak instead of being stringified; convert them to str,
   int, float, bool, None, list, tuple or dict before they reach a model.
-- Still open: N10 schema keyword values (enum/minimum/minItems/properties/required types, deep schema recursion), N11
-  (first session turn ledgered with session ''), finding 4 residual (AcpClient.request public and uncounted; embedders and
-  rerankers without a budget; and the guard is not applied to embed/rerank inputs), the real-id set is opt-in
-  (MEMCORE_REAL_IDS_FILE or --real-ids), and the minors listed above except 19.
+- Phase 2 (after c20e208, tests in memcore/tests/test_phase2_16096.py, each failing on the c20e208 export): N10 schema
+  keyword values typed and nesting capped at 32 before any spend (gateway answers 400 unsupported_schema); N11 every
+  session ledger row carries a local session id from the first turn (backend_session added once known); embedders and
+  rerankers check the egress guard on every input and spend one budgeted call first, and the remote ones refuse to run
+  without a CallBudget; the gateway, mcp_http, mcp_server and prompt_hook entry points REQUIRE the real-id file
+  (--real-ids or MEMCORE_REAL_IDS_FILE): the servers exit 2, the hook injects nothing.
+- Still open: the eval runner on feat/eval-scaffold does not import memcore and keeps its own guard (eval/emlab/guard.py),
+  so the memcore requirement does not reach it; AcpClient.request is public and uncounted; the injector behind
+  /v1/pre_exec is caller-supplied and not gated (an injector whose store embeds through a remote model is counted by
+  the embedder's own budget but not refused off loopback); class-level monkeypatching past the gate (LOW); and the
+  minors listed above except 19.
