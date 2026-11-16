@@ -1,10 +1,12 @@
 import json
 import math
+import tempfile
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from memcore.adapters.elastic_models import ElasticInferenceEmbedder, ElasticInferenceReranker
+from memcore.budget import CallBudget
 from memcore.fakes import HashEmbedder
 
 
@@ -43,7 +45,7 @@ def check_prefix_sensitivity(with_prefix, without_prefix, threshold=0.999):
 class ModelTests(unittest.TestCase):
     def test_embedder_always_sends_input_type_and_port_adds_no_prefix(self):
         es = Es()
-        e = ElasticInferenceEmbedder(es.url, "mc-e5", lambda: "ApiKey t", 3)
+        e = ElasticInferenceEmbedder(es.url, "mc-e5", lambda: "ApiKey t", 3, budget=CallBudget(tempfile.mkdtemp(), 10))
         e.embed(["a"], "query"); e.embed(["a"], "passage")
         self.assertEqual([b["input_type"] for _, b in es.reqs], ["search", "ingest"])
         self.assertEqual([b["input"] for _, b in es.reqs], [["a"], ["a"]])  # no double prefix
@@ -51,7 +53,7 @@ class ModelTests(unittest.TestCase):
 
     def test_reranker_orders_by_score(self):
         es = Es()
-        r = ElasticInferenceReranker(es.url, "mc-rerank", lambda: "ApiKey t").rerank("q", ["aa", "bbbb", "c"], 2)
+        r = ElasticInferenceReranker(es.url, "mc-rerank", lambda: "ApiKey t", budget=CallBudget(tempfile.mkdtemp(), 10)).rerank("q", ["aa", "bbbb", "c"], 2)
         self.assertEqual([h.index for h in r], [1, 0, 2])
         self.assertEqual(es.reqs[0][1]["top_n"], 2)
         es.srv.shutdown()

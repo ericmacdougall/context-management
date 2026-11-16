@@ -337,5 +337,80 @@ class N10SchemaKeywordTypingTests(unittest.TestCase):
         self.assertIsNotNone(self.chat(d, ans).complete([{"role": "user", "content": "x"}], json_schema=self.deep(20)).parsed)
 
 
+class EmbedRerankGuardBudgetTests(unittest.TestCase):
+    """Finding 4 residual: on c20e208 embedders and rerankers send any input (dataset ids included) to a remote model
+    with no guard, no count and no cap. Driven against a loopback stand-in for the Elasticsearch inference API."""
+
+    LEAK = "user said sharegpt_ab12cd34 earlier"
+
+    def setUp(self):
+        from memcore.tests.test_models import Es
+        self.es = Es()
+        self.addCleanup(self.es.srv.shutdown)
+
+    def budget(self, cap):
+        from memcore.budget import CallBudget
+        d = tempfile.mkdtemp()
+        return CallBudget(d, cap, os.path.join(d, "ledger.jsonl"))
+
+    def models(self, budget):
+        from memcore.adapters.elastic_models import ElasticInferenceEmbedder, ElasticInferenceReranker
+        e = ElasticInferenceEmbedder(self.es.url, "mc-e5", lambda: "ApiKey t", 3)
+        r = ElasticInferenceReranker(self.es.url, "mc-rerank", lambda: "ApiKey t")
+        e.budget = r.budget = budget       # set after construction so the old tree runs the same calls (no budget kwarg there)
+        return e, r
+
+    def test_constructors_take_the_budget(self):
+        from memcore.adapters.elastic_models import ElasticInferenceEmbedder, ElasticInferenceReranker
+        from memcore.adapters.ssh_models import LocalBgeReranker, LocalE5Embedder
+        b = self.budget(1)
+        for m in (ElasticInferenceEmbedder(self.es.url, "e", lambda: "k", 3, budget=b), ElasticInferenceReranker(self.es.url, "r", lambda: "k", budget=b),
+                  LocalE5Embedder(budget=b), LocalBgeReranker(budget=b)):
+            self.assertIs(m.budget, b)
+
+    def test_guard_refuses_leaking_inputs_before_any_request(self):
+        from memcore.guard import EgressLeak
+        e, r = self.models(self.budget(10))
+        for call in (lambda: e.embed(["fine", self.LEAK]), lambda: r.rerank(self.LEAK, ["a"]),
+                     lambda: r.rerank("q", ["a", self.LEAK])):
+            with self.assertRaises(EgressLeak):
+                call()
+        self.assertEqual(self.es.reqs, [])
+
+    def test_each_call_is_counted_and_capped(self):
+        from memcore.ports import CallCapExceeded
+        b = self.budget(2)
+        e, r = self.models(b)
+        e.embed(["a", "b"], "passage")
+        r.rerank("q", ["aa", "b"], 1)
+        with self.assertRaises(CallCapExceeded):
+            e.embed(["c"])
+        with self.assertRaises(CallCapExceeded):
+            r.rerank("q", ["x"])
+        self.assertEqual((len(self.es.reqs), b.used()), (2, 2))
+        with open(b.ledger_path) as fh:
+            kinds = [json.loads(l)["kind"] for l in fh]
+        self.assertEqual(kinds, ["embed", "rerank"])
+
+    def test_remote_models_refuse_to_run_without_a_budget(self):
+        from memcore.ports import BackendError
+        e, r = self.models(None)
+        with self.assertRaises(BackendError):
+            e.embed(["a"])
+        with self.assertRaises(BackendError):
+            r.rerank("q", ["a"])
+        self.assertEqual(self.es.reqs, [])
+
+    def test_local_fakes_are_guarded_too_but_need_no_budget(self):
+        from memcore.fakes import HashEmbedder, OverlapReranker
+        from memcore.guard import EgressLeak
+        self.assertEqual(len(HashEmbedder(8).embed(["a"]).vectors), 1)
+        self.assertEqual(OverlapReranker().rerank("a b", ["a", "c"])[0].index, 0)
+        with self.assertRaises(EgressLeak):
+            HashEmbedder(8).embed([self.LEAK])
+        with self.assertRaises(EgressLeak):
+            OverlapReranker().rerank("q", [self.LEAK])
+
+
 if __name__ == "__main__":
     unittest.main()

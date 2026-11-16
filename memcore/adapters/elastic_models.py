@@ -34,8 +34,11 @@ class _Es:
 
 
 class ElasticInferenceEmbedder(Embedder):
-    def __init__(self, base_url, endpoint_id, auth_header, dimensions: int, model: Optional[str] = None, **kw):
+    requires_budget = True
+
+    def __init__(self, base_url, endpoint_id, auth_header, dimensions: int, model: Optional[str] = None, budget=None, **kw):
         self.es, self.endpoint_id, self.dimensions, self.model = _Es(base_url, auth_header, **kw), endpoint_id, dimensions, model or endpoint_id
+        self.budget = budget
 
     def _embed(self, texts, kind):
         r = self.es.post("/_inference/text_embedding/%s" % self.endpoint_id, {"input": texts, "input_type": INPUT_TYPE[kind]})
@@ -46,10 +49,13 @@ class ElasticInferenceEmbedder(Embedder):
 
 
 class ElasticInferenceReranker(Reranker):
-    def __init__(self, base_url, endpoint_id, auth_header, **kw):
-        self.es, self.endpoint_id, self.model = _Es(base_url, auth_header, **kw), endpoint_id, endpoint_id
+    requires_budget = True
 
-    def rerank(self, query, documents, top_n=None):
+    def __init__(self, base_url, endpoint_id, auth_header, budget=None, **kw):
+        self.es, self.endpoint_id, self.model = _Es(base_url, auth_header, **kw), endpoint_id, endpoint_id
+        self.budget = budget
+
+    def _rerank(self, query, documents, top_n=None):
         body = {"query": query, "input": list(documents)}
         if top_n:
             body["top_n"] = top_n

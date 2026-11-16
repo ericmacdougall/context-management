@@ -89,7 +89,7 @@ class HashEmbedder(Embedder):
 class OverlapReranker(Reranker):
     model = "fake-overlap-rerank"
 
-    def rerank(self, query, documents, top_n=None):
+    def _rerank(self, query, documents, top_n=None):
         q = set(tokens(query))
         scored = [RerankHit(i, len(q & set(tokens(d))) / (len(q) or 1)) for i, d in enumerate(documents)]
         scored.sort(key=lambda h: (-h.score, h.index))

@@ -110,12 +110,17 @@ class Embedder:
     dimensions = 0
     query_prefix = ""
     passage_prefix = ""
+    egress_guard = "default"        # memcore.guard.DEFAULT_GUARD; None disables (tests only)
+    budget = None                   # a CallBudget: one reserved, ledgered call per embed() batch
+    requires_budget = False         # remote adapters (a model behind a network or ssh hop) refuse to run without one
 
     def embed(self, texts: Sequence[str], kind: str = "query") -> EmbedResult:
         if kind not in ("query", "passage"):
             raise ValueError("kind must be 'query' or 'passage', got %r" % (kind,))
         if isinstance(texts, str):
             raise TypeError("texts must be a sequence of strings, not one string")
+        texts = list(texts)
+        _guard_and_spend(self, texts, "embed input", kind="embed", n=len(texts), embed_kind=kind)
         prefix = self.query_prefix if kind == "query" else self.passage_prefix
         vecs = self._embed([prefix + t for t in texts], kind)
         return EmbedResult(vectors=vecs, model=self.model, dimensions=self.dimensions, kind=kind)
@@ -132,11 +137,43 @@ class RerankHit:
 
 
 class Reranker:
+    """Subclasses implement `_rerank`; rerank() checks the egress guard on the query and every document and spends one
+    budgeted call first (remote adapters refuse to run without a budget)."""
     model = "unset"
+    egress_guard = "default"
+    budget = None
+    requires_budget = False
 
     def rerank(self, query: str, documents: Sequence[str], top_n: Optional[int] = None) -> List[RerankHit]:
         """Hits ordered best first; `index` refers to `documents`."""
+        if not isinstance(query, str) or isinstance(documents, str):
+            raise TypeError("query must be a string and documents a sequence of strings")
+        documents = list(documents)
+        _guard_and_spend(self, [query] + documents, "rerank input", kind="rerank", n=len(documents))
+        return self._rerank(query, documents, top_n)
+
+    def _rerank(self, query: str, documents: List[str], top_n: Optional[int]) -> List[RerankHit]:
         raise NotImplementedError
+
+
+def _guard_and_spend(model, texts: List[str], where: str, **ledger) -> None:
+    """Shared pre-call checks for embedders and rerankers (review finding 4 residual): every input must be a string and
+    pass the egress guard, and a budgeted model spends one counted call BEFORE anything leaves the process."""
+    if any(not isinstance(t, str) for t in texts):
+        raise TypeError("%s must be strings" % where)
+    g = model.egress_guard
+    if g == "default":
+        from .guard import DEFAULT_GUARD
+        g = DEFAULT_GUARD
+    if g is not None:
+        for t in texts:
+            g.check_text(t, where)
+    if model.budget is None:
+        if model.requires_budget:
+            raise BackendError("%s has no CallBudget; remote model calls must be counted (pass budget=)" % type(model).__name__)
+        return
+    model.budget.reserve()
+    model.budget.ledger(adapter=type(model).__name__, model=model.model, **ledger)
 
 
 # ------------------------------------------------------------------ search

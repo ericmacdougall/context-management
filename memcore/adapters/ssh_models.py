@@ -28,9 +28,10 @@ def _run(op: dict, ssh: Sequence[str], timeout_s: float):
 class LocalE5Embedder(Embedder):
     model, dimensions = "intfloat/multilingual-e5-small", 384
     query_prefix, passage_prefix = "query: ", "passage: "
+    requires_budget = True
 
-    def __init__(self, ssh: Sequence[str] = DEFAULT_SSH, timeout_s: float = 300.0):
-        self.ssh, self.timeout_s = ssh, timeout_s
+    def __init__(self, ssh: Sequence[str] = DEFAULT_SSH, timeout_s: float = 300.0, budget=None):
+        self.ssh, self.timeout_s, self.budget = ssh, timeout_s, budget
 
     def _embed(self, texts, kind):
         return _run({"op": "embed", "texts": texts}, self.ssh, self.timeout_s)["vectors"]
@@ -38,11 +39,12 @@ class LocalE5Embedder(Embedder):
 
 class LocalBgeReranker(Reranker):
     model = "BAAI/bge-reranker-v2-m3"
+    requires_budget = True
 
-    def __init__(self, ssh: Sequence[str] = DEFAULT_SSH, timeout_s: float = 600.0):
-        self.ssh, self.timeout_s = ssh, timeout_s
+    def __init__(self, ssh: Sequence[str] = DEFAULT_SSH, timeout_s: float = 600.0, budget=None):
+        self.ssh, self.timeout_s, self.budget = ssh, timeout_s, budget
 
-    def rerank(self, query, documents, top_n=None):
+    def _rerank(self, query, documents, top_n=None):
         sc = _run({"op": "rerank", "query": query, "docs": list(documents)}, self.ssh, self.timeout_s)["scores"]
         hits = sorted((RerankHit(i, s) for i, s in enumerate(sc)), key=lambda h: (-h.score, h.index))
         return hits[:top_n] if top_n else hits
