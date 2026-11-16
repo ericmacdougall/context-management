@@ -20,6 +20,30 @@ class IdentifierRefused(Exception):
     pass
 
 
+# D3 identifier rule. ASSUMPTION (safe default, not a user decision): a declared identifier links every later event
+# that contains it, and erasing the subject removes those events whole, whoever wrote them; so an identifier that is
+# likely to name someone else is refused. Refused: a single token shorter than MIN_SINGLE characters unless it contains
+# a digit (customer numbers such as "XQ1001" are allowed), and any identifier made only of STOP words. Multi-token
+# names ("Alex Kim") are allowed. Over-erasure by a long but shared name ("Alex Kim" naming two people) is NOT prevented.
+MIN_SINGLE = 6
+STOP = frozenset("""a an and are as at be by for from he her him his i in is it its me my no not of on or our she so the
+their them they this to us we what who with you your mr mrs ms dr sir madam team admin user customer support""".split())
+
+
+def identifier_problem(n):
+    """None if the normalised identifier is acceptable, else the reason."""
+    toks = n.split()
+    if not toks:
+        return "empty"
+    if len(toks) > MAX_N:
+        return "longer than %d tokens" % MAX_N
+    if all(t in STOP for t in toks):
+        return "only common words"
+    if len(toks) == 1 and len(toks[0]) < MIN_SINGLE and not any(c.isdigit() for c in toks[0]):
+        return "single token shorter than %d characters (likely to name someone else; declare the full name)" % MIN_SINGLE
+    return None
+
+
 def tokens(text):
     return _TOK.findall(text.casefold())
 
@@ -34,11 +58,13 @@ def windows(text):
 
 
 def declare(conn, ks, tenant, subject_id, identifiers):
-    """Declare identifiers for a subject. Returns the new identifier-set version. Refuses empty identifiers, ones
-    longer than MAX_N tokens, an erased subject (WPS03) and an identifier that already names another subject (WPS20)."""
+    """Declare identifiers for a subject. Returns the new identifier-set version. Refuses identifiers that fail the D3
+    rule (identifier_problem), an erased subject (WPS03) and an identifier that already names another subject (WPS20).
+    The rule runs in the application: the store sees only HMACs and cannot check it."""
     norm = sorted({normalize(i) for i in identifiers})
-    if not norm or any(not n or len(n.split()) > MAX_N for n in norm):
-        raise IdentifierRefused("empty or longer than %d tokens" % MAX_N)
+    bad = [(n, identifier_problem(n)) for n in norm if identifier_problem(n)] if norm else [("", "no identifiers")]
+    if bad:
+        raise IdentifierRefused("; ".join(f"{n!r}: {why}" for n, why in bad))
     hm = ks.tenant_hmac_many(tenant, ["ident:" + n for n in norm])
     return conn.execute("select wp_identifier_declare(%s::tenant_t, %s, %s)", (tenant, subject_id, hm)).fetchone()[0]
 

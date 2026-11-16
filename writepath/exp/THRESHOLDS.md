@@ -200,3 +200,9 @@ R=5. PASS = honest runner (every candidate reported page by page) accepted 5/5 w
 page only) refused WPS24 5/5 with the covered version unset; control (store check removed) accepts the lazy runner 5/5.
 Limit stated in the receipt: the store verifies that every candidate was EXAMINED; whether an examined event matched is
 still the runner's word (the store cannot decrypt).
+
+## Amendment 11 (2026-11-16, written before the run): D3 identifier rule (exp/d3_identifier.py)
+ASSUMPTION (safe default, not a user decision): single-token identifiers without a digit need >= 6 characters, and
+identifiers made only of stop-list words are refused (wp/mentions.py identifier_problem). R=5. PASS = fenced 5/5:
+"alex" refused, X's erasure done, Y's "Alex from accounting" event keeps its content and is not tombstoned; AND control
+(rule bypassed) 5/5: Y's event tombstoned with content nulled. Span redaction is not implemented and not claimed.
