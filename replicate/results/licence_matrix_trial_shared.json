@@ -1,0 +1,400 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "4c8e7d8-dirty",
+  "script": "licence_matrix.py",
+  "script_sha256": "10c75b016a8e8c6b8dbe3589a62007d7e6b81f42ad87a4f1413806ff86d21f47",
+  "utc": "2026-11-16T01:23:32Z",
+  "params": {
+   "phase": "trial_shared"
+  },
+  "host": {
+   "host": "t2-dev",
+   "loadavg_1_5_15": [
+    24.9912109375,
+    24.06103515625,
+    24.4951171875
+   ],
+   "cpus": 48,
+   "python": "3.12.3",
+   "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+  }
+ },
+ "es": {
+  "node": "shared-emlab-es-16096",
+  "version": "9.5.6",
+  "build_hash": "fd1e8011342a0988e432b999cea4bf884ca120ed",
+  "licence": {
+   "type": "trial",
+   "uid": "2c265504-b7cd-4016-8335-67ef530b1cb8",
+   "status": "active",
+   "expiry_date": "2026-12-15T18:26:40.684Z"
+  },
+  "nodes": 1
+ },
+ "licence_before": {
+  "type": "trial",
+  "uid": "2c265504-b7cd-4016-8335-67ef530b1cb8",
+  "status": "active",
+  "expiry_date": "2026-12-15T18:26:40.684Z"
+ },
+ "licence_after": {
+  "type": "trial",
+  "uid": "2c265504-b7cd-4016-8335-67ef530b1cb8",
+  "status": "active",
+  "expiry_date": "2026-12-15T18:26:40.684Z"
+ },
+ "cells": {
+  "_setup_base": {
+   "status": 200
+  },
+  "_setup_base_bulk": {
+   "status": 200,
+   "errors": false
+  },
+  "bm25_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5"
+   ]
+  },
+  "retriever_standard": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5"
+   ]
+  },
+  "knn_top_level_float": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "3",
+    "1"
+   ]
+  },
+  "retriever_knn": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "3",
+    "1"
+   ]
+  },
+  "retriever_rescorer": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "2",
+    "0",
+    "5"
+   ]
+  },
+  "retriever_pinned": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "3",
+    "0",
+    "2",
+    "5"
+   ]
+  },
+  "retriever_diversify_mmr": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "3",
+    "1"
+   ]
+  },
+  "client_side_fusion": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "3",
+    "5",
+    "1"
+   ]
+  },
+  "retriever_rrf": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "3",
+    "1",
+    "5"
+   ]
+  },
+  "retriever_linear": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5",
+    "3",
+    "1"
+   ]
+  },
+  "rank_rrf_legacy": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "3",
+    "1",
+    "5"
+   ]
+  },
+  "text_similarity_reranker_nonexistent_endpoint": {
+   "class": "OTHER_ERROR",
+   "status": 404,
+   "type": "status_exception",
+   "reason": "[text_similarity_reranker] search failed - retrievers '[standard]' returned errors. All failures are attached as suppressed exceptions.",
+   "root": "[text_similarity_reranker] search failed - retrievers '[standard]' returned errors. All failures are attached as suppressed exceptions.",
+   "caused_by": null
+  },
+  "vector_bbq_disk": {
+   "mapping_status": 200,
+   "mapping_ok": true,
+   "bulk_status": 200,
+   "bulk_errors_flag": false,
+   "items": 40,
+   "items_failed": 0,
+   "first_item_error": null,
+   "search_status": 200,
+   "search_hits": [
+    "7",
+    "17",
+    "37",
+    "12",
+    "22"
+   ],
+   "self_found_top1": true,
+   "class": "AVAILABLE"
+  },
+  "inference_get_list": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    ".elser-2-elasticsearch",
+    ".multilingual-e5-small-elasticsearch",
+    ".rerank-v1-elasticsearch",
+    "emlab-e5",
+    "mc-e5",
+    "mc-rerank"
+   ]
+  },
+  "semantic_text_nonexistent_endpoint": {
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "rep16096-lic-semtext"
+    ]
+   },
+   "index_doc": {
+    "class": "OTHER_ERROR",
+    "status": 404,
+    "type": "resource_not_found_exception",
+    "reason": "Inference id [rep16096-no-such-endpoint] not found for field [t]",
+    "root": "Inference id [rep16096-no-such-endpoint] not found for field [t]",
+    "caused_by": null
+   },
+   "class": "OTHER_ERROR (licence passed; endpoint not found)"
+  },
+  "esql_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "paris berlin train",
+     0.6768590807914734
+    ],
+    [
+     "paris trip planning",
+     0.6768590807914734
+    ],
+    [
+     "dentist appointment paris",
+     0.6768590807914734
+    ]
+   ]
+  },
+  "esql_fork": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     "fork1",
+     0.6768590807914734
+    ],
+    [
+     "0",
+     "fork1",
+     0.6768590807914734
+    ],
+    [
+     "2",
+     "fork1",
+     0.6768590807914734
+    ],
+    [
+     "5",
+     "fork2",
+     0.6768590807914734
+    ],
+    [
+     "1",
+     "fork2",
+     0.6768590807914734
+    ],
+    [
+     "4",
+     "fork2",
+     0.6768590807914734
+    ]
+   ]
+  },
+  "esql_fork_fuse_rrf": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     0.03278688524590164
+    ],
+    [
+     "1",
+     0.016129032258064516
+    ],
+    [
+     "4",
+     0.015873015873015872
+    ],
+    [
+     "0",
+     0.016129032258064516
+    ],
+    [
+     "2",
+     0.015873015873015872
+    ]
+   ]
+  },
+  "esql_fuse_linear": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     1.3537181615829468
+    ],
+    [
+     "0",
+     0.6768590807914734
+    ],
+    [
+     "2",
+     0.6768590807914734
+    ],
+    [
+     "1",
+     0.6768590807914734
+    ],
+    [
+     "4",
+     0.6768590807914734
+    ]
+   ]
+  },
+  "esql_rerank_nonexistent_endpoint": {
+   "class": "OTHER_ERROR",
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:128: Inference endpoint not found [rep16096-no-such-endpoint]",
+   "root": "Found 1 problem\nline 1:128: Inference endpoint not found [rep16096-no-such-endpoint]",
+   "caused_by": null
+  },
+  "esql_lookup_join": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "refund policy",
+     "billing"
+    ]
+   ]
+  },
+  "percolator_lexical": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "term1"
+   ]
+  },
+  "percolator_knn_stored": {
+   "status": 400,
+   "accepted": false,
+   "class": "OTHER_ERROR",
+   "type": "document_parsing_exception",
+   "reason": "[1:79] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "root": "[1:79] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "caused_by": "the [knn] query is unsupported inside a percolator query"
+  },
+  "data_stream": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "mgfz4aEBaQgieooZx3tH"
+   ],
+   "template_status": 200,
+   "create_status": 201,
+   "get_data_stream_status": 200,
+   "backing_indices": [
+    ".ds-rep16096-lic-ds-a-2026.11.16-000001"
+   ]
+  }
+ },
+ "summary": {
+  "bm25_match": "AVAILABLE",
+  "retriever_standard": "AVAILABLE",
+  "knn_top_level_float": "AVAILABLE",
+  "retriever_knn": "AVAILABLE",
+  "retriever_rescorer": "AVAILABLE",
+  "retriever_pinned": "AVAILABLE",
+  "retriever_diversify_mmr": "AVAILABLE",
+  "client_side_fusion": "AVAILABLE",
+  "retriever_rrf": "AVAILABLE",
+  "retriever_linear": "AVAILABLE",
+  "rank_rrf_legacy": "AVAILABLE",
+  "text_similarity_reranker_nonexistent_endpoint": "OTHER_ERROR",
+  "vector_bbq_disk": "AVAILABLE",
+  "inference_get_list": "AVAILABLE",
+  "semantic_text_nonexistent_endpoint": "OTHER_ERROR (licence passed; endpoint not found)",
+  "esql_match": "AVAILABLE",
+  "esql_fork": "AVAILABLE",
+  "esql_fork_fuse_rrf": "AVAILABLE",
+  "esql_fuse_linear": "AVAILABLE",
+  "esql_rerank_nonexistent_endpoint": "OTHER_ERROR",
+  "esql_lookup_join": "AVAILABLE",
+  "percolator_lexical": "AVAILABLE",
+  "percolator_knn_stored": "OTHER_ERROR",
+  "data_stream": "AVAILABLE"
+ }
+}

@@ -1,0 +1,205 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "ad909a3",
+  "utc": "2026-11-16T01:29:59Z",
+  "tree": "fix/adapters-delta-16096 c20e208"
+ },
+ "witness": {
+  "core_modules": 18,
+  "noncore_modules": 38
+ },
+ "result": {
+  "core_modules": [
+   "memcore",
+   "memcore.acp",
+   "memcore.agent_session",
+   "memcore.budget",
+   "memcore.chat_base",
+   "memcore.devgate",
+   "memcore.fakes",
+   "memcore.fusion",
+   "memcore.gateway",
+   "memcore.guard",
+   "memcore.http_util",
+   "memcore.inbox",
+   "memcore.jsonschema_min",
+   "memcore.mcp_http",
+   "memcore.mcp_server",
+   "memcore.memtools",
+   "memcore.ports",
+   "memcore.sse"
+  ],
+  "noncore_modules": [
+   "memcore.adapters",
+   "memcore.adapters.anthropic_api",
+   "memcore.adapters.claude_cli",
+   "memcore.adapters.codex_cli",
+   "memcore.adapters.elastic_inference",
+   "memcore.adapters.elastic_models",
+   "memcore.adapters.elasticsearch_search",
+   "memcore.adapters.openai_compat",
+   "memcore.adapters.ssh_models",
+   "memcore.hosts",
+   "memcore.hosts.kibana_pre_exec",
+   "memcore.hosts.prompt_hook",
+   "memcore.remote.models_server",
+   "memcore.stubs",
+   "memcore.stubs.openai_toolstub",
+   "memcore.tests",
+   "memcore.tests.contract",
+   "memcore.tests.es_stub",
+   "memcore.tests.fake_acp_agent",
+   "memcore.tests.fake_claude_bin",
+   "memcore.tests.test_anthropic_api",
+   "memcore.tests.test_chat_base",
+   "memcore.tests.test_contract_claude_cli",
+   "memcore.tests.test_contract_codex_cli",
+   "memcore.tests.test_contract_gateway_claude",
+   "memcore.tests.test_delta16096",
+   "memcore.tests.test_elastic_inference",
+   "memcore.tests.test_es_search",
+   "memcore.tests.test_gateway",
+   "memcore.tests.test_golden_es956",
+   "memcore.tests.test_inbox",
+   "memcore.tests.test_kibana_fixtures",
+   "memcore.tests.test_mcp_http",
+   "memcore.tests.test_models",
+   "memcore.tests.test_ports",
+   "memcore.tests.test_prompt_hook",
+   "memcore.tests.test_review_fixes",
+   "memcore.tests.test_sessions"
+  ],
+  "direct_violations": {
+   "memcore.gateway": [
+    {
+     "import": "memcore.adapters.claude_cli",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 363
+    },
+    {
+     "import": "memcore.adapters.claude_cli.ClaudeCliChat",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 363
+    },
+    {
+     "import": "memcore.adapters.codex_cli",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 366
+    },
+    {
+     "import": "memcore.adapters.codex_cli.CodexCliChat",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 366
+    }
+   ]
+  },
+  "transitive_violations": {
+   "memcore.gateway": [
+    {
+     "import": "memcore.adapters.claude_cli",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 363,
+     "via": "memcore.gateway"
+    },
+    {
+     "import": "memcore.adapters.claude_cli.ClaudeCliChat",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 363,
+     "via": "memcore.gateway"
+    },
+    {
+     "import": "memcore.adapters.codex_cli",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 366,
+     "via": "memcore.gateway"
+    },
+    {
+     "import": "memcore.adapters.codex_cli.CodexCliChat",
+     "kind": "non-core memcore",
+     "lazy": true,
+     "line": 366,
+     "via": "memcore.gateway"
+    }
+   ]
+  },
+  "vendor_string_literals_in_core": {
+   "memcore.gateway": [
+    [
+     "Local OpenAI-compatible gateway in front of any ChatModel adapter (claude-cli, c",
+     1
+    ],
+    [
+     "claude-cli",
+     352
+    ],
+    [
+     "codex-cli",
+     352
+    ],
+    [
+     "claude-cli",
+     362
+    ]
+   ],
+   "memcore.agent_session": [
+    [
+     "AgentSession port: a long-lived agent session you can send turns to and push out",
+     1
+    ],
+    [
+     "One long-lived headless Claude Code process. Same safety shape as the single-sho",
+     145
+    ],
+    [
+     "claude",
+     150
+    ],
+    [
+     "ClaudeStreamJsonSession",
+     152
+    ],
+    [
+     "claude-t%d",
+     184
+    ],
+    [
+     "claude session process is gone",
+     192
+    ],
+    [
+     "claude session ended unexpectedly",
+     201
+    ],
+    [
+     "claude turn error: %s",
+     221
+    ]
+   ],
+   "memcore.acp": [
+    [
+     "Agent Client Protocol (https://agentclientprotocol.com, JSON-RPC 2.0 over stdio,",
+     1
+    ]
+   ],
+   "memcore.devgate": [
+    [
+     "Terms guard for the subscription-backed adapters (claude-cli, codex-cli, claude ",
+     1
+    ]
+   ]
+  }
+ },
+ "control_mutant_flagged": true,
+ "threshold_checks": {
+  "zero_violations": false,
+  "mutant_flagged": true
+ }
+}

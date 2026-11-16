@@ -1,0 +1,69 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "ad909a3",
+  "utc": "2026-11-16T01:30:14Z",
+  "input": [
+   "../data/longmemeval_s_cleaned.json",
+   "d6f21ea9d60a0d56f34a05b609c79c88a451d2ae03597821ea3d5a9678c3a442"
+  ]
+ },
+ "counts": {
+  "questions": 500,
+  "non_abstention": 470,
+  "hay_refs": 23854,
+  "gold_refs": 890,
+  "day_removes_hay": 0,
+  "day_removes_gold": 0,
+  "ts_removes_hay": 1474,
+  "ts_removes_gold": 70,
+  "day_removes_nongold": 0,
+  "gold_refs_incl_abstention": 948,
+  "ts_removes_gold_incl_abstention": 75,
+  "questions_with_ts_removed_gold": 41,
+  "dup_sid_refs_skipped": 13
+ },
+ "timestamp_rule_gold_examples": [
+  {
+   "qid": "gpt4_2655b836",
+   "session": "answer_4be1b6b4_1",
+   "session_date": "2023/04/10 (Mon) 10:57",
+   "question_date": "2023/04/10 (Mon) 10:15"
+  },
+  {
+   "qid": "gpt4_2655b836",
+   "session": "answer_4be1b6b4_2",
+   "session_date": "2023/04/10 (Mon) 20:30",
+   "question_date": "2023/04/10 (Mon) 10:15"
+  },
+  {
+   "qid": "gpt4_2487a7cb",
+   "session": "answer_1c6b85ea_1",
+   "session_date": "2023/05/24 (Wed) 16:55",
+   "question_date": "2023/05/24 (Wed) 08:02"
+  },
+  {
+   "qid": "gpt4_76048e76",
+   "session": "answer_b535969f_1",
+   "session_date": "2023/03/10 (Fri) 23:04",
+   "question_date": "2023/03/10 (Fri) 03:39"
+  },
+  {
+   "qid": "gpt4_76048e76",
+   "session": "answer_b535969f_2",
+   "session_date": "2023/03/10 (Fri) 07:55",
+   "question_date": "2023/03/10 (Fri) 03:39"
+  }
+ ],
+ "owner": {
+  "day_removes_hay": "0 of 23,854",
+  "day_removes_gold": "0 of 890",
+  "ts_removes_gold": 70,
+  "verify_json_late_sessions_that_are_gold": 75
+ },
+ "threshold_checks": {
+  "day_rule_removes_0_gold": true,
+  "control_timestamp_rule_removes_gold": true,
+  "day_rule_removes_0_nongold": true
+ }
+}

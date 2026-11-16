@@ -1,0 +1,449 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "05028f4",
+  "script": "licence_matrix.py",
+  "script_sha256": "e9550e0330f57309b14e56ccd063b2772a60f78d9cbee8e31713ca537e907cdc",
+  "utc": "2026-11-16T01:22:05Z",
+  "params": {
+   "phase": "basic"
+  },
+  "host": {
+   "host": "t2-dev",
+   "loadavg_1_5_15": [
+    24.89990234375,
+    23.47119140625,
+    24.35693359375
+   ],
+   "cpus": 48,
+   "python": "3.12.3",
+   "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+  }
+ },
+ "es": {
+  "node": "own-emlab-es-rep-16096",
+  "version": "9.5.6",
+  "build_hash": "fd1e8011342a0988e432b999cea4bf884ca120ed",
+  "licence": {
+   "type": "basic",
+   "uid": "09053cd8-12a0-411d-9219-40a6178a7056",
+   "status": "active",
+   "expiry_date": null
+  },
+  "nodes": 1
+ },
+ "licence_before": {
+  "type": "basic",
+  "uid": "09053cd8-12a0-411d-9219-40a6178a7056",
+  "status": "active",
+  "expiry_date": null
+ },
+ "licence_after": {
+  "type": "basic",
+  "uid": "09053cd8-12a0-411d-9219-40a6178a7056",
+  "status": "active",
+  "expiry_date": null
+ },
+ "cells": {
+  "_setup_base": {
+   "status": 200
+  },
+  "_setup_base_bulk": {
+   "status": 200,
+   "errors": false
+  },
+  "bm25_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5"
+   ]
+  },
+  "retriever_standard": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5"
+   ]
+  },
+  "knn_top_level_float": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "3",
+    "1"
+   ]
+  },
+  "retriever_knn": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "3",
+    "1"
+   ]
+  },
+  "retriever_rescorer": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "2",
+    "0",
+    "5"
+   ]
+  },
+  "retriever_pinned": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "3",
+    "0",
+    "2",
+    "5"
+   ]
+  },
+  "retriever_diversify_mmr": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "3",
+    "1"
+   ]
+  },
+  "client_side_fusion": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "3",
+    "5",
+    "1"
+   ]
+  },
+  "retriever_rrf": {
+   "class": "LICENCE_ERROR",
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "root": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "caused_by": null
+  },
+  "retriever_linear": {
+   "class": "LICENCE_ERROR",
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [linear retriever]",
+   "root": "current license is non-compliant for [linear retriever]",
+   "caused_by": null
+  },
+  "rank_rrf_legacy": {
+   "class": "LICENCE_ERROR",
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "root": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+   "caused_by": null
+  },
+  "text_similarity_reranker_nonexistent_endpoint": {
+   "class": "LICENCE_ERROR",
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [text_similarity_reranker]",
+   "root": "current license is non-compliant for [text_similarity_reranker]",
+   "caused_by": null
+  },
+  "rescore_vector_oversample3_on_bbq_hnsw": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "7",
+    "17",
+    "37",
+    "12",
+    "25"
+   ]
+  },
+  "vector_bbq_hnsw": {
+   "mapping_status": 200,
+   "mapping_ok": true,
+   "bulk_status": 200,
+   "bulk_errors_flag": false,
+   "items": 40,
+   "items_failed": 0,
+   "first_item_error": null,
+   "search_status": 200,
+   "search_hits": [
+    "7",
+    "17",
+    "37",
+    "12",
+    "25"
+   ],
+   "self_found_top1": true,
+   "class": "AVAILABLE"
+  },
+  "vector_int8_hnsw": {
+   "mapping_status": 200,
+   "mapping_ok": true,
+   "bulk_status": 200,
+   "bulk_errors_flag": false,
+   "items": 40,
+   "items_failed": 0,
+   "first_item_error": null,
+   "search_status": 200,
+   "search_hits": [
+    "7",
+    "16",
+    "5",
+    "31",
+    "12"
+   ],
+   "self_found_top1": true,
+   "class": "AVAILABLE"
+  },
+  "vector_bbq_disk": {
+   "mapping_status": 200,
+   "mapping_ok": true,
+   "bulk_status": 200,
+   "bulk_errors_flag": true,
+   "items": 40,
+   "items_failed": 40,
+   "first_item_error": {
+    "type": "security_exception",
+    "reason": "current license is non-compliant for [bbq_disk]",
+    "license.expired.feature": "bbq_disk"
+   },
+   "search_status": 200,
+   "search_hits": [],
+   "self_found_top1": false,
+   "class": "LICENCE_ERROR",
+   "reason": "current license is non-compliant for [bbq_disk]"
+  },
+  "inference_get_list": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    ".elser-2-elasticsearch",
+    ".multilingual-e5-small-elasticsearch",
+    ".rerank-v1-elasticsearch"
+   ]
+  },
+  "inference_put_nonexistent_model": {
+   "class": "LICENCE_ERROR",
+   "status": 403,
+   "type": "security_exception",
+   "reason": "current license is non-compliant for [inference]",
+   "root": "current license is non-compliant for [inference]",
+   "caused_by": null
+  },
+  "semantic_text_nonexistent_endpoint": {
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "rep16096-lic-semtext"
+    ]
+   },
+   "index_doc": {
+    "class": "OTHER_ERROR",
+    "status": 404,
+    "type": "resource_not_found_exception",
+    "reason": "Inference id [rep16096-no-such-endpoint] not found for field [t]",
+    "root": "Inference id [rep16096-no-such-endpoint] not found for field [t]",
+    "caused_by": null
+   },
+   "class": "OTHER_ERROR (licence passed; endpoint not found)"
+  },
+  "esql_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "paris berlin train",
+     0.6768590807914734
+    ],
+    [
+     "paris trip planning",
+     0.6768590807914734
+    ],
+    [
+     "dentist appointment paris",
+     0.6768590807914734
+    ]
+   ]
+  },
+  "esql_fork": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     "fork1",
+     0.6768590807914734
+    ],
+    [
+     "0",
+     "fork1",
+     0.6768590807914734
+    ],
+    [
+     "2",
+     "fork1",
+     0.6768590807914734
+    ],
+    [
+     "5",
+     "fork2",
+     0.6768590807914734
+    ],
+    [
+     "1",
+     "fork2",
+     0.6768590807914734
+    ],
+    [
+     "4",
+     "fork2",
+     0.6768590807914734
+    ]
+   ]
+  },
+  "esql_fork_fuse_rrf": {
+   "class": "LICENCE_ERROR",
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:181: current license is non-compliant for [FUSE]",
+   "root": "Found 1 problem\nline 1:181: current license is non-compliant for [FUSE]",
+   "caused_by": null
+  },
+  "esql_fuse_linear": {
+   "class": "LICENCE_ERROR",
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:181: current license is non-compliant for [FUSE LINEAR]",
+   "root": "Found 1 problem\nline 1:181: current license is non-compliant for [FUSE LINEAR]",
+   "caused_by": null
+  },
+  "esql_rerank_nonexistent_endpoint": {
+   "class": "OTHER_ERROR",
+   "status": 400,
+   "type": "verification_exception",
+   "reason": "Found 1 problem\nline 1:128: Inference endpoint not found [rep16096-no-such-endpoint]",
+   "root": "Found 1 problem\nline 1:128: Inference endpoint not found [rep16096-no-such-endpoint]",
+   "caused_by": null
+  },
+  "esql_lookup_join": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "refund policy",
+     "billing"
+    ]
+   ]
+  },
+  "percolator_lexical": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "term1"
+   ]
+  },
+  "percolator_knn_stored": {
+   "status": 400,
+   "accepted": false,
+   "class": "OTHER_ERROR",
+   "type": "document_parsing_exception",
+   "reason": "[1:79] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "root": "[1:79] failed to parse: the [knn] query is unsupported inside a percolator query",
+   "caused_by": "the [knn] query is unsupported inside a percolator query"
+  },
+  "document_level_security": {
+   "class": "OTHER_ERROR",
+   "status": 403,
+   "type": "security_exception",
+   "reason": "action [indices:data/read/search] is unauthorized for user [rep16096-lic-dls-user] with effective roles [] (assigned roles [rep16096-lic-dls-role] were not found) on indices [rep16096-lic-base], this action is granted by the index privileges [read,all]",
+   "root": "action [indices:data/read/search] is unauthorized for user [rep16096-lic-dls-user] with effective roles [] (assigned roles [rep16096-lic-dls-role] were not found) on indices [rep16096-lic-base], this action is granted by the index privileges [read,all]",
+   "caused_by": null,
+   "role_status": 403,
+   "user_status": 200
+  },
+  "data_stream": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "ekHy4aEBCZnHX-JOcU1y"
+   ],
+   "template_status": 200,
+   "create_status": 201,
+   "get_data_stream_status": 200,
+   "backing_indices": [
+    ".ds-rep16096-lic-ds-a-2026.11.16-000001"
+   ]
+  },
+  "aliases_require_alias_must_exist": {
+   "class": "AVAILABLE",
+   "add_status": 200,
+   "bulk_via_alias_status": 200,
+   "bulk_via_alias_errors": false,
+   "bulk_to_missing_alias_error": {
+    "type": "index_not_found_exception",
+    "reason": "no such index [rep16096-lic-al-missing] and [require_alias] request flag is [true] and [rep16096-lic-al-missing] is not an alias",
+    "index_uuid": "_na_",
+    "index": "rep16096-lic-al-missing"
+   },
+   "remove_missing_must_exist_status": 404,
+   "remove_missing_must_exist_error": "aliases_not_found_exception",
+   "remove_existing_must_exist_status": 200,
+   "doc_count_witness": 1
+  },
+  "force_merge": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": {
+    "segments_before": 3,
+    "segments_after": 1
+   }
+  }
+ },
+ "summary": {
+  "bm25_match": "AVAILABLE",
+  "retriever_standard": "AVAILABLE",
+  "knn_top_level_float": "AVAILABLE",
+  "retriever_knn": "AVAILABLE",
+  "retriever_rescorer": "AVAILABLE",
+  "retriever_pinned": "AVAILABLE",
+  "retriever_diversify_mmr": "AVAILABLE",
+  "client_side_fusion": "AVAILABLE",
+  "retriever_rrf": "LICENCE_ERROR",
+  "retriever_linear": "LICENCE_ERROR",
+  "rank_rrf_legacy": "LICENCE_ERROR",
+  "text_similarity_reranker_nonexistent_endpoint": "LICENCE_ERROR",
+  "rescore_vector_oversample3_on_bbq_hnsw": "AVAILABLE",
+  "vector_bbq_hnsw": "AVAILABLE",
+  "vector_int8_hnsw": "AVAILABLE",
+  "vector_bbq_disk": "LICENCE_ERROR",
+  "inference_get_list": "AVAILABLE",
+  "inference_put_nonexistent_model": "LICENCE_ERROR",
+  "semantic_text_nonexistent_endpoint": "OTHER_ERROR (licence passed; endpoint not found)",
+  "esql_match": "AVAILABLE",
+  "esql_fork": "AVAILABLE",
+  "esql_fork_fuse_rrf": "LICENCE_ERROR",
+  "esql_fuse_linear": "LICENCE_ERROR",
+  "esql_rerank_nonexistent_endpoint": "OTHER_ERROR",
+  "esql_lookup_join": "AVAILABLE",
+  "percolator_lexical": "AVAILABLE",
+  "percolator_knn_stored": "OTHER_ERROR",
+  "document_level_security": "OTHER_ERROR",
+  "data_stream": "AVAILABLE",
+  "aliases_require_alias_must_exist": "AVAILABLE",
+  "force_merge": "AVAILABLE"
+ }
+}
