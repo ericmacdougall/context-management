@@ -15,6 +15,8 @@ from .common import HOME, pg_connect
 from .worker import connect
 
 RUN = HOME / "run"
+CODE = pathlib.Path(os.environ.get("ENGINE_CODE_ROOT", str(HOME / "code")))   # the synced tree this run uses
+BACKEND = os.environ.get("ENGINE_TEMPORAL_BACKEND", "cli")                       # cli (dev server, SQLite) | pg (server container, Postgres)
 if (RUN / "ABORT").exists():  # lets me neutralise queued chains without signalling anything
     raise SystemExit(0)
 PROCS = {}
@@ -87,6 +89,8 @@ def pick_port():
 
 def start_server(cli, db, tport=48310, name=None):
     check_tree()
+    if BACKEND == "pg":
+        return _start_pg(cli, db, tport, name)
     tport = tport or pick_port()
     name = name or f"server-{tport}"
     if port_open(tport) or port_open(tport + 10) or port_open(tport + 20):
@@ -96,7 +100,7 @@ def start_server(cli, db, tport=48310, name=None):
     os.environ["ENGINE_TEMPORAL_PORT"] = str(tport)
     log = open(HOME / "logs" / f"{name}-{cli}-{int(time.time())}.log", "ab")
     RECORD["servers"].append({"name": name, "cli": cli, "db": db, "port": tport, "at": time.time() - STARTED})
-    PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/serverloop.sh"), cli, str(RUN / db),
+    PROCS[name] = subprocess.Popen(["bash", str(CODE / "engine/host/serverloop.sh"), cli, str(RUN / db),
                                     str(RUN / f"stop-{name}")], env=env, stdout=log, stderr=log,
                                    stdin=subprocess.DEVNULL, start_new_session=True)
     t0 = time.time()
@@ -111,6 +115,9 @@ def start_server(cli, db, tport=48310, name=None):
 
 def stop_server(name=None, hard=False, timeout=60):
     name = name or f"server-{os.environ['ENGINE_TEMPORAL_PORT']}"
+    if BACKEND == "pg":
+        _stop_pg(name, hard)
+        return
     (RUN / f"stop-{name}{'.hard' if hard else ''}").touch()
     PROCS[name].wait(timeout=timeout)
 
@@ -129,9 +136,9 @@ def start_worker(name, venv, variant, ident, tq, cwd=None, extra=(), env=None, c
         e["ENGINE_HOME"] = str(home)
     log = open(HOME / "logs" / f"{name}.log", "ab")
     RECORD["workers"].append({"name": name, "venv": venv, "variant": variant, "identity": ident, "task_queue": tq,
-                              "code_dir": str(cwd or HOME / "code"), "extra": list(extra), "crash_after": crash_after,
+                              "code_dir": str(cwd or CODE), "extra": list(extra), "crash_after": crash_after,
                               "knobs": {k: v for k, v in (env or {}).items() if k.startswith("ENGINE_")}, "at": time.time() - STARTED})
-    PROCS[name] = subprocess.Popen(cmd, cwd=str(cwd or HOME / "code"), env=e, stdout=log, stderr=log,
+    PROCS[name] = subprocess.Popen(cmd, cwd=str(cwd or CODE), env=e, stdout=log, stderr=log,
                                    stdin=subprocess.DEVNULL, start_new_session=True)
     return PROCS[name]
 
@@ -228,6 +235,183 @@ def save(name, obj):
     return p
 
 
+# ------------------------------------------------------------------ Temporal server containers on Postgres persistence
+TPG_MAP = {"1.7.3": "1.31.5", "1.10.1": "1.32.2"}       # the experiments' CLI labels, mapped to server image versions
+TPG_NET = "emlab-temporal-16096-net"                    # private bridge: no published Postgres port, no password exists
+TPG_PG = "emlab-pg-temporal-16096"
+TPG_DIR = HOME / "tpg"
+CONTAINERS = []
+TPG_DBS = []
+
+
+def _dk(*a, timeout=300):
+    r = subprocess.run(["docker", *a], capture_output=True, text=True, timeout=timeout)
+    return r.returncode, (r.stdout + r.stderr).strip()
+
+
+class Container:
+    def __init__(self, name):
+        self.name, self.returncode = name, None
+
+    def wait(self, timeout=60):
+        rc, out = _dk("wait", self.name, timeout=timeout)
+        self.returncode = int(out.split()[-1]) if rc == 0 and out.split() else None
+        return self.returncode
+
+
+def tpg_ensure_pg():
+    TPG_DIR.mkdir(exist_ok=True)
+    _dk("network", "create", TPG_NET)
+    rc, out = _dk("inspect", "-f", "{{.State.Running}}", TPG_PG)
+    if rc != 0:
+        (TPG_DIR / "data").mkdir(exist_ok=True)
+        rc, out = _dk("run", "-d", "--name", TPG_PG, "--network", TPG_NET, "--cpus", "2", "--memory", "2g",
+                      "-e", "POSTGRES_USER=temporal", "-e", "POSTGRES_HOST_AUTH_METHOD=trust",
+                      "-v", f"{TPG_DIR}/data:/var/lib/postgresql/data", "postgres:16")
+        if rc != 0:
+            raise RuntimeError("temporal postgres did not start: " + out)
+    elif out != "true":
+        _dk("start", TPG_PG)
+    for _ in range(60):
+        if _dk("exec", TPG_PG, "pg_isready", "-U", "temporal")[0] == 0:
+            return
+        time.sleep(1)
+    raise RuntimeError("temporal postgres not ready")
+
+
+def tpg_psql(db, sql):
+    return _dk("exec", TPG_PG, "psql", "-U", "temporal", "-d", db, "-tAc", sql)
+
+
+def tpg_schema(version, db):
+    """The documented path: temporal-sql-tool create / setup-schema / update-schema of the TARGET version, run before
+    the server of that version starts. Returns the tool outputs."""
+    base = ["run", "--rm", "--network", TPG_NET, "--entrypoint", "temporal-sql-tool", f"temporalio/admin-tools:{version}",
+            "--plugin", "postgres12", "--ep", TPG_PG, "-p", "5432", "-u", "temporal"]
+    outs = []
+    for d, sub in ((db, "temporal"), (db + "_vis", "visibility")):
+        if not tpg_psql("postgres", f"select 1 from pg_database where datname='{d}'")[1]:
+            outs.append(("create " + d, _dk(*base, "--db", d, "create")[1][-300:]))
+        if tpg_psql(d, "select count(*) from schema_version")[0] != 0:
+            outs.append(("setup " + d, _dk(*base, "--db", d, "setup-schema", "-v", "0.0")[1][-300:]))
+        outs.append(("update " + d, _dk(*base, "--db", d, "update-schema", "-d", f"/etc/temporal/schema/postgresql/v12/{sub}/versioned")[1][-400:]))
+    return outs
+
+
+def tpg_schema_versions(db):
+    return {d: tpg_psql(d, "select curr_version from schema_version order by creation_time desc limit 1")[1] for d in (db, db + "_vis")}
+
+
+def tpg_config(db, tport):
+    cfg = TPG_DIR / f"server-{tport}.yaml"
+    def store(d):
+        return (f'      sql:\n        pluginName: "postgres12"\n        databaseName: "{d}"\n        connectAddr: "{TPG_PG}:5432"\n'
+                '        connectProtocol: "tcp"\n        user: "temporal"\n        password: ""\n        maxConns: 20\n'
+                '        maxIdleConns: 20\n        maxConnLifetime: "1h"\n')
+    cfg.write_text(
+        'log:\n  stdout: true\n  level: warn\n'
+        'persistence:\n  defaultStore: default\n  visibilityStore: visibility\n  numHistoryShards: 4\n  datastores:\n'
+        f'    default:\n{store(db)}    visibility:\n{store(db + "_vis")}'
+        'global:\n  membership:\n    maxJoinDuration: 30s\n    broadcastAddress: "127.0.0.1"\n'
+        'services:\n'
+        '  frontend:\n    rpc: {grpcPort: 7233, membershipPort: 6933, bindOnIP: "0.0.0.0"}\n'
+        '  matching:\n    rpc: {grpcPort: 7235, membershipPort: 6935, bindOnIP: "0.0.0.0"}\n'
+        '  history:\n    rpc: {grpcPort: 7234, membershipPort: 6934, bindOnIP: "0.0.0.0"}\n'
+        '  worker:\n    rpc: {grpcPort: 7239, membershipPort: 6939, bindOnIP: "0.0.0.0"}\n'
+        'clusterMetadata:\n  enableGlobalNamespace: false\n  failoverVersionIncrement: 10\n  masterClusterName: "active"\n'
+        '  currentClusterName: "active"\n  clusterInformation:\n    active:\n      enabled: true\n      initialFailoverVersion: 1\n'
+        '      rpcName: "frontend"\n      rpcAddress: "127.0.0.1:7233"\n'
+        'dcRedirectionPolicy:\n  policy: "noop"\n'
+        'archival:\n  history:\n    state: "disabled"\n  visibility:\n    state: "disabled"\n'
+        'namespaceDefaults:\n  archival:\n    history:\n      state: "disabled"\n    visibility:\n      state: "disabled"\n')
+    return cfg
+
+
+def tpg_start(version, db, tport, cname):
+    cfg = tpg_config(db, tport)
+    _dk("rm", "-f", cname)
+    rc, out = _dk("run", "-d", "--name", cname, "--network", TPG_NET, "--cpus", "4", "--memory", "4g",
+                  "-p", f"127.0.0.1:{tport}:7233", "-v", f"{cfg}:/cfg/server.yaml:ro", "--entrypoint", "temporal-server",
+                  f"temporalio/server:{version}", "--config-file", "/cfg/server.yaml", "--allow-no-auth", "start")
+    CONTAINERS.append(cname)
+    return rc, out
+
+
+def tpg_logs(cname, tail=200):
+    return _dk("logs", "--tail", str(tail), cname)[1]
+
+
+def _start_pg(cli, db, tport, name):
+    check_tree()
+    import re
+    tport = tport or pick_port()
+    ver = TPG_MAP[cli]
+    dbname = "t" + re.sub(r"[^a-z0-9]", "", (db.lower())[:40])
+    name = name or f"server-{tport}"
+    cname = f"emlab-temporal-16096-{tport}"
+    tpg_ensure_pg()
+    before = tpg_schema_versions(dbname) if tpg_psql("postgres", f"select 1 from pg_database where datname='{dbname}'")[1] else None
+    outs = tpg_schema(ver, dbname)
+    after = tpg_schema_versions(dbname)
+    rc, out = tpg_start(ver, dbname, tport, cname)
+    if rc != 0:
+        raise RuntimeError("temporal server container did not start: " + out)
+    os.environ["ENGINE_TEMPORAL_PORT"] = str(tport)
+    t0 = time.time()
+    while not port_open(tport):
+        if time.time() - t0 > 120:
+            raise RuntimeError("temporal server did not open its port: " + tpg_logs(cname, 40))
+        time.sleep(1)
+    cli_bin = str(HOME / "bin/cli-1.10.1/temporal")
+    for _ in range(60):      # the namespace is created once per database; the server needs a moment before it answers
+        r = subprocess.run([cli_bin, "operator", "namespace", "describe", "--address", f"127.0.0.1:{tport}", "default"], capture_output=True, text=True)
+        if r.returncode == 0:
+            break
+        subprocess.run([cli_bin, "operator", "namespace", "create", "--address", f"127.0.0.1:{tport}", "default"], capture_output=True, text=True)
+        time.sleep(2)
+    time.sleep(3)
+    TPG_DBS.append(dbname)
+    RECORD["servers"].append({"name": name, "backend": "postgres persistence", "server_image": f"temporalio/server:{ver}", "label": cli,
+                              "database": dbname, "port": tport, "container": cname, "schema_before": before, "schema_after": after,
+                              "schema_tool": outs, "at": time.time() - STARTED})
+    PROCS[name] = PROCS["server"] = Container(cname)
+    return PROCS[name]
+
+
+def _stop_pg(name, hard):
+    cname = f"emlab-temporal-16096-{os.environ['ENGINE_TEMPORAL_PORT']}"
+    _dk("stop", *(["-t", "0"] if hard else []), cname)       # -t 0: the container's main process is killed at once
+    c = PROCS.get(name) or Container(cname)
+    rc, out = _dk("inspect", "-f", "{{.State.ExitCode}}", cname)
+    c.returncode = int(out) if rc == 0 and out.lstrip("-").isdigit() else None
+    return c
+
+
+def tpg_discard(db_label_index=-1):
+    """Engine independence: drop the persistence of the last server this run started (a fresh server then starts on
+    an empty database)."""
+    db = TPG_DBS[db_label_index]
+    for d in (db, db + "_vis"):
+        _dk("exec", TPG_PG, "psql", "-U", "temporal", "-d", "postgres", "-c", f"drop database if exists {d} with (force)")
+    return db
+
+
+def server_log_text(tport, cli):
+    if BACKEND == "pg":
+        return tpg_logs(f"emlab-temporal-16096-{tport}", 400)
+    fs = sorted((HOME / "logs").glob(f"server-{tport}-{cli}-*.log"))
+    return fs[-1].read_text() if fs else ""
+
+
+def tpg_cleanup():
+    for c in set(CONTAINERS):
+        _dk("rm", "-f", c)
+
+
+import atexit
+atexit.register(tpg_cleanup)
+
+
 async def connect_retry(name="orch", tries=90):
     last = None
     for _ in range(tries):
@@ -245,7 +429,7 @@ def start_server_try(cli, db, tport, wait=20):
     _clear(name)
     logp = HOME / "logs" / f"{name}-{cli}-try-{int(time.time())}.log"
     env = {**os.environ, "TPORT": str(tport)}
-    PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/serverloop.sh"), cli, str(RUN / db),
+    PROCS[name] = subprocess.Popen(["bash", str(CODE / "engine/host/serverloop.sh"), cli, str(RUN / db),
                                     str(RUN / f"stop-{name}")], env=env, stdout=open(logp, "ab"), stderr=subprocess.STDOUT,
                                    stdin=subprocess.DEVNULL, start_new_session=True)
     t0 = time.time()
@@ -275,8 +459,8 @@ def start_loop(name, venv, variant, ident, tq, env=None, seed=1, crashes=0):
                               "task_queue": tq, "crashes": crashes, "seed": seed,
                               "knobs": {k: v for k, v in (env or {}).items() if k.startswith("ENGINE_") or k == "CMAX"},
                               "at": time.time() - STARTED})
-    PROCS[name] = subprocess.Popen(["bash", str(HOME / "code/engine/host/workerloop.sh"), venv, variant, ident, tq,
-                                    str(HOME / "code"), str(crashes), str(seed), str(RUN / f"stop-{name}"),
+    PROCS[name] = subprocess.Popen(["bash", str(CODE / "engine/host/workerloop.sh"), venv, variant, ident, tq,
+                                    str(CODE), str(crashes), str(seed), str(RUN / f"stop-{name}"),
                                     str(HOME / "logs" / name)],
                                    env=e, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL,
                                    start_new_session=True)

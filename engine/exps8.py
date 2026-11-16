@@ -85,11 +85,12 @@ async def f7():
                   TENANT, f"{TENANT}/eff/{TENANT}/" + ctl.like(A))
     lib.stop_worker("f7b")
     lib.stop_server()
-    srvlog = sorted((HOME / "logs").glob(f"server-{TPORT}-1.10.1-*.log"))[-1]
-    text = srvlog.read_text()
+    text = lib.server_log_text(TPORT, "1.10.1")
     out = {"id": "F7", "from": {"server": "1.31.2 (CLI 1.7.3)", "sdk": "temporalio 1.31.0"},
            "to": {"server": "1.32.2 (CLI 1.10.1)", "sdk": "temporalio 1.36.1"}, "events": ev,
-           "persistence": f"SQLite file run/{db} opened by both CLI versions; not the documented schema-tool path (Postgres persistence: NOT TESTED)",
+           "persistence": (f"Postgres persistence, schema updated with temporal-sql-tool of the target version before the server started "
+                           "(see provenance.recorded.servers[*].schema_before/schema_after)" if lib.BACKEND == "pg" else
+                           f"SQLite file run/{db} opened by both CLI versions; not the documented schema-tool path"),
            "statuses": [stA, stP, stR], "verify_A": vA, "verify_P": vP, "timers": tm,
            "external_calls_by_worker": {r[0]: r[1] for r in calls},
            "new_server_log_error_lines": sum(1 for l in text.splitlines() if "level=ERROR" in l),
@@ -167,7 +168,7 @@ async def f8():
     lib.record(busy_sessions=nA, turns_each=turns, period_s=period, approval_sessions=nP, rollup_sessions=nR,
                grant_signal_only_sessions=nX, unstored_deadline_sessions=nL, approval_timeout_s=appr, rollup_s=roll, cut_at_s=t_cut)
     lib.start_server("1.7.3", f"f8a{suffix()}-{int(time.time())}.db", TPORT)
-    dbA = sorted((HOME / "run").glob("f8a*.db"))[-1]
+    dbA = sorted((HOME / "run").glob("f8a*.db"))[-1] if lib.BACKEND != "pg" else None
     lib.start_worker("f8w1", "venv-new", "v1", "engine-1", "f8")
     client, _ = await lib.connect_retry()
     stats = {"appended": 0, "signaled": 0, "retries": 0}
@@ -192,9 +193,12 @@ async def f8():
     cut = time.time()
     lib.stop_worker("f8w1", hard=True)       # DISCARD THE ENGINE: worker gone, server gone, its persistence deleted
     lib.stop_server(hard=True)
-    os.remove(dbA)
-    for f in HOME.joinpath("run").glob(dbA.name + "-*"):
-        os.remove(f)
+    if lib.BACKEND == "pg":
+        discarded_db = lib.tpg_discard()          # the engine's persistence is dropped; only Postgres (the engine's) remains
+    else:
+        os.remove(dbA)
+        for f in HOME.joinpath("run").glob(dbA.name + "-*"):
+            os.remove(f)
     time.sleep(6)
     lib.start_server("1.10.1", f"f8b{suffix()}-{int(time.time())}.db", TPORT)    # fresh server, empty persistence
     lib.start_worker("f8w2", "venv-new", "v1", "engine-2", "f8")
@@ -243,5 +247,51 @@ async def f8():
     print(out["PASS"], rebuilt, skipped, tmP, tmX, tmL)
 
 
+# ------------------------------------------------------------------ F7 on Postgres: refused upgrades (controls)
+async def f7pgctl():
+    """Controls for the Postgres upgrade path: (A) a 1.32.2 server started on the 1.31 schema WITHOUT temporal-sql-tool
+    update-schema, and (B) a 1.31.5 server started on the upgraded 1.32 schema (a downgrade). Both are recorded as they
+    behave; the documented path (schema tool first) is the F7 run itself."""
+    assert lib.BACKEND == "pg"
+    lib.record(servers="temporalio/server 1.31.5 then 1.32.2")
+    db = f"f7pgctl{suffix()}-{int(time.time())}.db"
+    lib.start_server("1.7.3", db, TPORT)
+    dbname = lib.TPG_DBS[-1]
+    cname = f"emlab-temporal-16096-{TPORT}"
+    v0 = lib.tpg_schema_versions(dbname)
+    lib.stop_server()
+
+    def attempt(version, label):
+        lib.tpg_start(version, dbname, TPORT, cname)
+        t0 = time.time()
+        up = False
+        while time.time() - t0 < 60:
+            rc, st = lib._dk("inspect", "-f", "{{.State.Running}} {{.State.ExitCode}}", cname)
+            if rc == 0 and st.startswith("false"):
+                break
+            if lib.port_open(TPORT):
+                time.sleep(8)      # a server that opens its port may still fail its schema check; look again
+                rc, st = lib._dk("inspect", "-f", "{{.State.Running}} {{.State.ExitCode}}", cname)
+                up = st.startswith("true")
+                break
+            time.sleep(1)
+        rc, st = lib._dk("inspect", "-f", "{{.State.Running}} {{.State.ExitCode}}", cname)
+        logs = lib.tpg_logs(cname, 60)
+        lib._dk("stop", "-t", "0", cname)
+        return {"attempt": label, "server": version, "running_after_wait": st, "port_opened_and_stayed_up": up,
+                "log_tail": logs[-700:]}
+
+    a = attempt("1.32.2", "A: 1.32.2 on the 1.31 schema, schema tool skipped")
+    lib.start_server("1.10.1", db, TPORT)        # the documented path: schema tool of 1.32.2 first, then the server
+    v1 = lib.tpg_schema_versions(dbname)
+    lib.stop_server()
+    b = attempt("1.31.5", "B: 1.31.5 on the upgraded 1.32 schema (downgrade)")
+    out = {"id": "F7-postgres-upgrade-controls", "schema_versions_initial": v0, "schema_versions_after_documented_upgrade": v1,
+           "control_A_skipped_schema_update": a, "control_B_downgrade": b,
+           "control_A_refused": not a["port_opened_and_stayed_up"], "control_B_refused": not b["port_opened_and_stayed_up"]}
+    lib.save(f"f7pgctl{suffix()}", out)
+    print("A refused:", out["control_A_refused"], "B refused:", out["control_B_refused"], v0, v1)
+
+
 if __name__ == "__main__":
-    asyncio.run({"f7": f7, "f7ctl": f7ctl, "f8": f8}[sys.argv[1]]())
+    asyncio.run({"f7": f7, "f7ctl": f7ctl, "f8": f8, "f7pgctl": f7pgctl}[sys.argv[1]]())
