@@ -181,6 +181,23 @@ def main():
     T["esql_fuse_linear"] = Q(fork + " | FUSE LINEAR | KEEP _id, _score")
     T["esql_rerank_nonexistent_endpoint"] = Q('FROM %s METADATA _score | WHERE MATCH(title, "paris") | LIMIT 3 | RERANK "paris" ON title '
                                               'WITH {"inference_id": "%s"} | KEEP title, _score' % (base, NOEP))
+    if PHASE == "basic":
+        # Preconfigured endpoints, Basic only: the nonexistent-id probe is answered "not found" before the licence
+        # check, so it cannot discriminate. On Basic the licence refuses before any model is deployed or run.
+        T["esql_rerank_preconfigured_endpoint_basic_only"] = Q(
+            'FROM %s METADATA _score | WHERE MATCH(title, "paris") | LIMIT 3 | RERANK "paris" ON title '
+            'WITH {"inference_id": ".rerank-v1-elasticsearch"} | KEEP title, _score' % base)
+        si = P + "semtext-e5"
+        drop("/" + si)
+        cm, jm, _ = ES.req("PUT", "/" + si, {"mappings": {"properties": {"t": {"type": "semantic_text",
+                                                                                "inference_id": ".multilingual-e5-small-elasticsearch"}}}})
+        cell = {"mapping": classify(cm, jm, [si] if cm == 200 else None)}
+        if cm == 200:
+            cd, jd, _ = ES.req("PUT", "/%s/_doc/1" % si, {"t": "paris trip"}, refresh="true")
+            cell["index_doc"] = classify(cd, jd, ["1"] if cd in (200, 201) else None)
+        cell["class"] = cell.get("index_doc", cell["mapping"])["class"]
+        T["semantic_text_preconfigured_e5_basic_only"] = cell
+        drop("/" + si)
     lk, kw = P + "lookup", P + "kw"
     drop("/" + lk), drop("/" + kw)
     ES.req("PUT", "/" + lk, {"settings": {"index.mode": "lookup"}, "mappings": {"properties": {"title": {"type": "keyword"}, "tag": {"type": "keyword"}}}})
@@ -216,6 +233,24 @@ def main():
         jj = r.json()
         cell = classify(r.status_code, jj, hits(jj) if r.status_code == 200 else None)
         cell["role_status"], cell["user_status"] = cr, cu
+        if cr != 200:
+            cell["role_create"] = classify(cr, jr)
+            cell["class"] = cell["role_create"]["class"]
+        # second path (as the owner's E9): an API key whose role descriptor carries the DLS query
+        ck, jk, _ = ES.req("POST", "/_security/api_key", {"name": P + "dls-key", "expiration": "1h", "role_descriptors": {
+            "dls": {"indices": [{"names": [base], "privileges": ["read"], "query": {"term": {"kw": "a"}}}]}}})
+        if ck == 200:
+            s2 = requests.Session()
+            s2.headers["Authorization"] = "ApiKey " + jk["encoded"]
+            r2 = s2.post(ES.url + "/%s/_search" % base, json={"query": {"match_all": {}}, "size": 10}, timeout=60)
+            j2 = r2.json()
+            cell["api_key_path"] = classify(r2.status_code, j2, hits(j2) if r2.status_code == 200 else None)
+            if r2.status_code == 200:
+                cell["api_key_path"]["only_kw_a_returned"] = sorted(hits(j2)) == ["0", "2", "4"]
+            ES.req("DELETE", "/_security/api_key", {"ids": [jk["id"]]})
+            del s2
+        else:
+            cell["api_key_path"] = {"create": classify(ck, jk)}
         if r.status_code == 200:
             cell["only_kw_a_returned"] = sorted(hits(jj)) == ["0", "2", "4"]
             if not cell["only_kw_a_returned"]:
