@@ -1,0 +1,4942 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "06457a3",
+  "utc": "2026-11-16T01:44:28Z",
+  "stream_heads": {
+   "behaviour": "5229e75",
+   "eval": "64bef58",
+   "systems": "a13b524",
+   "engine": "a2858c8",
+   "policy": "9542b91",
+   "realsession": "c2667d8",
+   "writepath": "3944749",
+   "phasef": "26dd4f4",
+   "adapters-fix": "cfaefee"
+  }
+ },
+ "witness": {
+  "files": 228,
+  "streams": [
+   "adapters (memcore-out/results, on disk)",
+   "behaviour",
+   "engine",
+   "eval",
+   "policy",
+   "realsession",
+   "systems",
+   "writepath (wp-results-aaa0fec, on disk)"
+  ]
+ },
+ "controls": {
+  "planted_bad_missing": [
+   "commit",
+   "env",
+   "control",
+   "witness",
+   "thresholds",
+   "per_item"
+  ],
+  "planted_good_missing": [],
+  "bad_fails_all_six": true,
+  "good_passes_all_six": true
+ },
+ "per_stream": {
+  "behaviour": {
+   "files": 28,
+   "missing_env": 27,
+   "missing_control": 27,
+   "missing_per_item": 19,
+   "complete": 0,
+   "env_has_es_version": 3,
+   "env_has_licence": 11,
+   "env_has_load": 9,
+   "missing_commit": 26,
+   "missing_thresholds": 26,
+   "missing_witness": 12
+  },
+  "eval": {
+   "files": 38,
+   "missing_commit": 37,
+   "missing_env": 38,
+   "missing_thresholds": 33,
+   "missing_per_item": 27,
+   "complete": 0,
+   "env_has_es_version": 0,
+   "env_has_licence": 0,
+   "env_has_load": 0,
+   "missing_control": 33,
+   "missing_witness": 9
+  },
+  "systems": {
+   "files": 28,
+   "missing_commit": 23,
+   "missing_env": 27,
+   "missing_witness": 12,
+   "missing_thresholds": 27,
+   "missing_per_item": 28,
+   "complete": 0,
+   "env_has_es_version": 2,
+   "env_has_licence": 1,
+   "env_has_load": 26,
+   "missing_control": 10
+  },
+  "engine": {
+   "files": 62,
+   "missing_commit": 56,
+   "missing_env": 62,
+   "missing_control": 42,
+   "missing_witness": 3,
+   "missing_thresholds": 56,
+   "missing_per_item": 62,
+   "complete": 0,
+   "env_has_es_version": 0,
+   "env_has_licence": 0,
+   "env_has_load": 5
+  },
+  "policy": {
+   "files": 40,
+   "missing_env": 40,
+   "missing_per_item": 40,
+   "complete": 0,
+   "env_has_es_version": 3,
+   "env_has_licence": 2,
+   "env_has_load": 40,
+   "missing_witness": 15
+  },
+  "realsession": {
+   "files": 4,
+   "missing_commit": 3,
+   "missing_env": 4,
+   "missing_control": 3,
+   "missing_thresholds": 3,
+   "missing_per_item": 3,
+   "complete": 0,
+   "env_has_es_version": 0,
+   "env_has_licence": 0,
+   "env_has_load": 0,
+   "missing_witness": 1
+  },
+  "writepath (wp-results-aaa0fec, on disk)": {
+   "files": 17,
+   "missing_thresholds": 15,
+   "complete": 1,
+   "env_has_es_version": 17,
+   "env_has_licence": 17,
+   "env_has_load": 17,
+   "missing_control": 2,
+   "missing_per_item": 5,
+   "missing_witness": 3
+  },
+  "adapters (memcore-out/results, on disk)": {
+   "files": 11,
+   "missing_commit": 11,
+   "missing_env": 11,
+   "missing_control": 11,
+   "missing_witness": 8,
+   "missing_thresholds": 11,
+   "missing_per_item": 9,
+   "complete": 0,
+   "env_has_es_version": 0,
+   "env_has_licence": 0,
+   "env_has_load": 0
+  }
+ },
+ "files": [
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E10_deletion.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E10b_deletion_short_lease.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": true,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": true,
+   "missing": [
+    "env",
+    "control"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E1_refresh.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E1_refresh_part1.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E2_occ.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E3_datastream.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E4_validity.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E5_percolator_basic.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E5_percolator_trial.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_bbqdisk_basic.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_bbqdisk_trial.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_ingest.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_ingest_e6c.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_query.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_query_e6_rescore3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_query_e6c.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E6_query_e6c_rescore3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E7_basic.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E7_trial.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E7_trial2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E8_calls.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E8_deploy.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E8b_repeat.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E9_dls_basic.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E9_dls_trial.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E9c_dls_semantic.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/E_trial_start.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "behaviour",
+   "file": "elastic-memory-lab-behaviour@5229e75:behaviour/results/e0_baseline_basic.json",
+   "commit": false,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/exploratory/es_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/exploratory/xp_e2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/exploratory/xp_e3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/exploratory/xp_e456.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/exploratory/xp_e6_random.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/exploratory/xp_reconcile.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/analyst_canary_h3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/analyst_full.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/analyst_full_94.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/budget_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/curve_pilot.before_round_rule.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/curve_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/curve_pilot.old_sets.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/curve_rerank_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/diag_all.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/diag_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/draws_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/embed_stats.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/es_e5.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/es_fusion.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/es_hybrid_pooled.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/es_knn.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/es_knn_pooled.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/es_round_parity.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/grid_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/lowoverlap_pilot.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/lowoverlap_pool_h3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/lowoverlap_pool_h3.old_sets.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/pool_sets_pilot.SUPERSEDED.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/pool_sets_pilot_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/rag_context_metrics.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/rerank_timing.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/residual_report.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/splits_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/pilot/verify.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/stage_g/B/question_ids.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/stage_g/prep_report.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "eval",
+   "file": "elastic-memory-lab-eval@64bef58:eval/results/stage_g/prep_report_g300.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C1_bluegreen.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C1_bluegreen_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C1_rebuild.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C1_rebuild_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C1b_crash.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C1b_crash_v2.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C2_lag_tail.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3_crash_phases.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3_erasure.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3_erasure_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3d_race.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3d_race_derive_mirror.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3d_race_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C3d_race_v2_fold.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C5_attack.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C5_trust.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C7_writers.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C7_writers_v2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/C8_concept_queue.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/F10_schema_evolution.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": true,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/F11_recipe_change.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/F1_F2_task_amend.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/F3_inflight.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/F9_es_upgrade.json",
+   "commit": false,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/F9_mapping_embedding_bluegreen.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/I3_freshness.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/I4_I5_decisions.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "systems",
+   "file": "elastic-memory-lab-systems@a13b524:systems/results/XMIN_stall.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/bench-driver.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4a-driver.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4a.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4a2-driver.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4b-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4b-x.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4b.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4c-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4c-x.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4c-y.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4c.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4d-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4d.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4dn-k9.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4t-brokenkeys.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4t-brokenresult.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f4t-ok.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5a-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5a.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b1-k5.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b1-r.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b1-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b1.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b2-newserver-k8.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b2-newserver-n.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b2-newserver.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b2-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b3-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5b3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5c-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f5c.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f6-q6.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f6.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f6x-q7.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f6x-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f6x.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f7-k7.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f7-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f7.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f8-small-s2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f8-small.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/f8.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4a.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4b-x.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4c-x.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4c-y.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4d.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4dn-k9.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4t-brokenkeys.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4t-brokenresult.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f4t-ok.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "control",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f5a.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f5b1-k5.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f5b2-newserver-k8.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f5b2.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f5b3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f5c.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f6-q6.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f6x-q7.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f7-k7.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "engine",
+   "file": "elastic-memory-lab-engine@a2858c8:engine/results/final/f8.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b1_modelcheck.00bbc40442831642.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b1_modelcheck.219ee7e48b3a842a.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b1_modelcheck.4a9d9b49120f054e.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b1_modelcheck.ae9ff95ded54e017.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b1_modelcheck.fd1eff5b67b12d12.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b2_rebuild.78be0242fa876187.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b2_rebuild.7b33e40034330d27.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b3_pg.1029444441f14a8a.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": true,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.b3_pg.25f8b0243081cfb9.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": true,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.0b35634fb5d378d1.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.1929e98ebf8cd503.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.3d3b35d238597ea8.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.5fa5034001241f19.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.66698da11b15216a.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.802b295cf523f64d.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.c89fa1b329a9c43d.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e1_lattice.f4ceb6643389c378.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e2_egress.23f9aa83f49fc9a4.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e2_egress.43bac7fc2ce18a98.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e2_egress.78a554997a949f53.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e2_egress.f469a049265cd7fc.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e2_egress.fba6f9ccf603b000.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e3_clash.067e46a9f0390b02.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e3_clash.3faad8976c3ba3d2.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e3_clash.46e75feb2bea58ee.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e4_tighten.4b7ef8d3cb3ec728.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e4_tighten.5f69efabeacfa633.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e5_threads.628e2cdbed085241.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e5_threads.bc2b096483128346.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/DEV.e6_policy_format.67eaecb5df3ac1c3.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/b1_modelcheck.1938a177627c2794.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/b2_rebuild.4f0c71e744ed9e6f.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/b3_pg.b1d9dfde46d5a176.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": true,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e1_lattice.92465648782c6cac.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e2_egress.5850d0dcb2ca9e46.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e2_egress.f19a3ca97df70650.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e3_clash.2832862933066931.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e4_tighten.ce72cc6b7e393f2b.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e5_threads.8ca06da845229c72.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "policy",
+   "file": "elastic-memory-lab-policy@9542b91:policy/results/e6_policy_format.25b1c40e146b623a.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "realsession",
+   "file": "elastic-memory-lab-realsession@c2667d8:realsession/results/coverage.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "realsession",
+   "file": "elastic-memory-lab-realsession@c2667d8:realsession/results/gold_composition.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "realsession",
+   "file": "elastic-memory-lab-realsession@c2667d8:realsession/results/per_item.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "realsession",
+   "file": "elastic-memory-lab-realsession@c2667d8:realsession/results/results.json",
+   "commit": true,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "env",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N8.c1d6cda8bada61e1.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N3S_projector.8b226d3c037bcfd7.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/es_semantics.93a7b8c39d31bac7.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/row27_stale_approval.6159621d678c0162.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N3.21b424a5712b4725.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/row1_zombie.4dddef14ec4ad77b.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N2.da4752081756f581.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": true,
+   "per_item": true,
+   "missing": []
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N3S_eraser.6846c24b467d0071.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N1.8edc6c61073aa035.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/row23_latecommit.27b67160ace71c9d.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/registry_marker.570151d4061f729c.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": true,
+   "per_item": false,
+   "missing": [
+    "witness",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N4.bd49d1ecc91cdb88.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/old_code_N1_N7.711e418fe3d63b1a.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N7.1aab8246366c5e3b.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/e_verify.1dd1535652f4da6a.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/static_check.504bf65b6ff8bdcc.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "writepath (wp-results-aaa0fec, on disk)",
+   "file": "wp-results-aaa0fec/new_N5.d47e6d6384689dec.json",
+   "commit": true,
+   "env": true,
+   "env_parts": {
+    "es_version": true,
+    "licence": true,
+    "load": true
+   },
+   "control": true,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/gateway->claude-cli.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/elastic-inference(stub).json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/parity_codex.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/models_live_result.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/leak.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/h3.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/g3_live_result.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/claude-cli.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/h3_rerun_head.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/parity_claude_gateway.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": true,
+   "thresholds": false,
+   "per_item": true,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "thresholds"
+   ]
+  },
+  {
+   "stream": "adapters (memcore-out/results, on disk)",
+   "file": "memcore-out/results/codex-cli.json",
+   "commit": false,
+   "env": false,
+   "env_parts": {
+    "es_version": false,
+    "licence": false,
+    "load": false
+   },
+   "control": false,
+   "witness": false,
+   "thresholds": false,
+   "per_item": false,
+   "missing": [
+    "commit",
+    "env",
+    "control",
+    "witness",
+    "thresholds",
+    "per_item"
+   ]
+  }
+ ]
+}
