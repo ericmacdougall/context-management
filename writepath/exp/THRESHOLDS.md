@@ -134,3 +134,8 @@ PASS = P_prefix holds 10/10 (verify ok after later appends); E_edited_seal fence
 seal) violated 10/10; T_truncated_log fenced 10/10 head_missing, control (seal checked only against itself) violated
 10/10. The seal interface (wp/seal.py seal/verify) is offered to the context-runtime stream; its consumption there is not
 tested by this stream.
+
+## Amendment 7 (2026-11-16, after the reported run at 7e8f28f; thresholds unchanged)
+M failed at 7e8f28f on counts only (done, no over- or under-erasure): the receipt's found_by_rescan counted the
+write-time mentions that 47a932a materialises into erasure_mentions at mark. A real receipt defect (overclaims the
+rescan), fixed by counting source = 'rescan'. The 7e8f28f M result stays reported as FAIL; M is rerun alone, R=3.

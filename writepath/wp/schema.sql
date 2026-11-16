@@ -606,7 +606,7 @@ begin
       'declared_identifiers', j.ident_count, 'identifier_set_version', j.ident_xmax, 'rescan_covered_version', j.rescanned_xmax,
       'found_at_write', (select count(*) from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
                          where tb.tenant_id = j.tenant_id and tb.subject_id = j.subject_id and e.subject_id <> j.subject_id and e.mentions @> array[j.subject_id]),
-      'found_by_rescan', (select count(*) from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id),
+      'found_by_rescan', (select count(*) from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id and source = 'rescan'),
       'rescan_attested_by', 'erasure runner (the store cannot decrypt; it enforces only that the rescan covered the identifier-set version)',
       'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials)', 'pronouns and indirect references',
                                        'mentions inside inbox payloads and analyst-job results',
