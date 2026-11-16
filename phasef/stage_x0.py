@@ -16,7 +16,7 @@ from datetime import datetime
 from . import data, run_pilot as R
 from .facts import _json_from
 from .llm import LLM, PromptLeak
-from .prompts import EXTRACT_SYSTEM, EXTRACT_V2_CAP30_RECIPE, EXTRACT_V2_CAP30_TEMPLATE, EXTRACT_V2_RECIPE, EXTRACT_V2_TEMPLATE
+from .prompts import (EXTRACT_SYSTEM, EXTRACT_V2_CAP30_RECIPE, EXTRACT_V2_CAP30_TEMPLATE, EXTRACT_V2_RECIPE, EXTRACT_V2_TEMPLATE, EXTRACT_V3_PREF_RECIPE, EXTRACT_V3_PREF_TEMPLATE)
 
 X = os.path.join(R.OUT, "stage_x0")
 CAP = 200
@@ -25,6 +25,8 @@ VERSION = "extract-v2-anon"
 TEMPLATE = EXTRACT_V2_TEMPLATE
 SHA16 = hashlib.sha256((EXTRACT_SYSTEM + "\n" + EXTRACT_V2_TEMPLATE).encode()).hexdigest()[:16]
 SHA16_CAP30 = hashlib.sha256((EXTRACT_SYSTEM + "\n" + EXTRACT_V2_CAP30_TEMPLATE).encode()).hexdigest()[:16]
+SHA16_PREF = hashlib.sha256((EXTRACT_SYSTEM + "\n" + EXTRACT_V3_PREF_TEMPLATE).encode()).hexdigest()[:16]
+REPLICATE = None  # distinct cache namespace for a fresh identical-prompt run; the records keep the same prompt_version and prompt_sha16
 
 
 def set_variant(name):
@@ -32,6 +34,10 @@ def set_variant(name):
     global VERSION, TEMPLATE, SHA16, RECIPE
     if name == "cap30":
         VERSION, TEMPLATE, SHA16, RECIPE = EXTRACT_V2_CAP30_RECIPE, EXTRACT_V2_CAP30_TEMPLATE, SHA16_CAP30, EXTRACT_V2_CAP30_RECIPE
+    elif name == "base":
+        VERSION, TEMPLATE, SHA16, RECIPE = "extract-v2-anon", EXTRACT_V2_TEMPLATE, hashlib.sha256((EXTRACT_SYSTEM + "\n" + EXTRACT_V2_TEMPLATE).encode()).hexdigest()[:16], EXTRACT_V2_RECIPE
+    elif name == "pref":
+        VERSION, TEMPLATE, SHA16, RECIPE = EXTRACT_V3_PREF_RECIPE, EXTRACT_V3_PREF_TEMPLATE, SHA16_PREF, EXTRACT_V3_PREF_RECIPE
 MODEL = "claude-sonnet-5-5"
 PRICE_TABLE = "claude CLI total_cost_usd (notional, subscription path)"
 REMOTE_IN = "~/emlab-16096/in/stage_x0"
@@ -110,9 +116,9 @@ def run_one(idx, sid, a, meter, runner=None):
     prompt = build_prompt(sid, sess["date"], turns)
     rec = {"session_id": sid, "order_index": idx, "status": "ok", "reject_reason": None, "prompt_version": VERSION, "prompt_sha16": SHA16, "model": MODEL, "input_tokens": 0, "output_tokens": 0,
            "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None,
-           "session_chars": sum(len(t["content"]) for t in turns), "session_rounds": len(data.rounds_of(sid, turns, sess["date"])), "n_facts": 0, "error": None}
+           "replicate": REPLICATE, "session_chars": sum(len(t["content"]) for t in turns), "session_rounds": len(data.rounds_of(sid, turns, sess["date"])), "n_facts": 0, "error": None}
     os.makedirs(os.path.join(X, "raw"), exist_ok=True)
-    llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=RECIPE, cwd=R.NEUTRAL_CWD, runner=runner)
+    llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=RECIPE + ("#rep" + REPLICATE if REPLICATE else ""), cwd=R.NEUTRAL_CWD, runner=runner)
     try:
         c = llm.call(prompt, EXTRACT_SYSTEM, "sonnet", "X0", sid, "extract")
     except PromptLeak as e:
@@ -216,9 +222,10 @@ def parse(argv=None):
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--phase", choices=["canary", "rest", "all"], required=True)
-    ap.add_argument("--variant", choices=["base", "cap30"], default="base")
+    ap.add_argument("--variant", choices=["base", "cap30", "pref"], default="base")
     ap.add_argument("--stage", default="stage_x0", help="directory name under phasef-out and under the host in/ and out/ trees")
     ap.add_argument("--cap", type=int, default=200)
+    ap.add_argument("--replicate", default=None, help="replicate id: separate cache namespace, same prompt_version and prompt_sha16 in the records")
     ap.add_argument("--concurrency", type=int, default=2)
     ap.add_argument("--remote", default="t2-dev")
     ap.add_argument("--stop-file", default=None)
@@ -229,7 +236,8 @@ def parse(argv=None):
 
 
 def configure(a):
-    global X, CAP, REMOTE_IN
+    global X, CAP, REMOTE_IN, REPLICATE
+    REPLICATE = a.replicate
     X = os.path.join(R.OUT, a.stage)
     CAP = a.cap
     REMOTE_IN = "~/emlab-16096/in/%s" % a.stage

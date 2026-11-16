@@ -125,5 +125,37 @@ class Cap30(unittest.TestCase):
         self.assertNotEqual(X.SHA16_CAP30, X.SHA16)
 
 
+class Pref(unittest.TestCase):
+    def test_pref_template_differs_from_cap30_only_by_the_added_sentence(self):
+        from phasef.prompts import EXTRACT_V2_CAP30_TEMPLATE as C, EXTRACT_V3_PREF_TEMPLATE as P, PREF_SENTENCE
+        self.assertEqual(P.count(PREF_SENTENCE), 1)
+        self.assertEqual(P.replace(PREF_SENTENCE + " ", ""), C)
+        self.assertIn("Skip small talk. " + PREF_SENTENCE + " At most 30 facts per session", P)
+        self.assertEqual(X.SHA16_CAP30, "ae055bca99452fb6")
+        self.assertNotIn(X.SHA16_PREF, (X.SHA16, X.SHA16_CAP30))
+
+    def test_replicate_gives_a_distinct_cache_namespace_with_identical_prompt_fields(self):
+        d = tempfile.mkdtemp()
+        old = (X.X, X.REPLICATE)
+        X.X = d
+        os.makedirs(os.path.join(d, "sessions"))
+        json.dump({"session_id": SID, "date": DATE, "turns": TURNS}, open(os.path.join(d, "sessions", SID + ".json"), "w"))
+        calls = []
+        try:
+            X.set_variant("cap30")
+            X.REPLICATE = None
+            r0 = X.run_one(0, SID, None, X.Meter(), runner_for(GOOD, calls))
+            r1 = X.run_one(0, SID, None, X.Meter(), runner_for(GOOD, calls))  # same namespace: served from the cache
+            self.assertEqual(len(calls), 1)
+            X.REPLICATE = "rep1"
+            r2 = X.run_one(0, SID, None, X.Meter(), runner_for(GOOD, calls))
+            self.assertEqual(len(calls), 2)  # new namespace: a fresh call
+            self.assertEqual((r2["prompt_version"], r2["prompt_sha16"]), (r0["prompt_version"], r0["prompt_sha16"]))
+            self.assertEqual((r0["replicate"], r2["replicate"]), (None, "rep1"))
+        finally:
+            X.X, X.REPLICATE = old
+            X.set_variant("base")
+
+
 if __name__ == "__main__":
     unittest.main()

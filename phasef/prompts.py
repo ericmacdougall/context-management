@@ -148,3 +148,9 @@ Later round: {r2}
 EXTRACT_V2_CAP30_RECIPE = "extract-v2-cap30"
 EXTRACT_V2_CAP30_TEMPLATE = EXTRACT_V2_TEMPLATE.replace("At most 12 facts per session", "At most 30 facts per session")
 assert EXTRACT_V2_CAP30_TEMPLATE != EXTRACT_V2_TEMPLATE
+
+# Preference variant of extract-v2-cap30 (stage X0C arm P): the ONLY difference is one added sentence right after "Skip small talk.".
+PREF_SENTENCE = "Always record the user's own stated preferences, interests, wishes and plans as facts with author \"user\"."
+EXTRACT_V3_PREF_RECIPE = "extract-v3-pref"
+EXTRACT_V3_PREF_TEMPLATE = EXTRACT_V2_CAP30_TEMPLATE.replace("Skip small talk. ", "Skip small talk. " + PREF_SENTENCE + " ")
+assert EXTRACT_V3_PREF_TEMPLATE != EXTRACT_V2_CAP30_TEMPLATE
