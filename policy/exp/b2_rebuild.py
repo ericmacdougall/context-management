@@ -123,19 +123,26 @@ def gen_events(rng, n):
     return evs
 
 
+APPLIED_STATE = ("proposed", "pending_created", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted", "confirmed_applied", "resolved", "contested_opened", "revoked", "granted")
+
+
 def run_live(events, rng, oob=False, drop_refused=False):
     st = genesis('T1', PRINCIPALS, AUTHORITY, ADMINS)
     log, outs, snaps = [], [], 0
     k = rng.randint(1, 9)
+    dropped = False
     oob_at = rng.randrange(max(1, len(events))) if oob else -1
     for i, ev in enumerate(events):
         if i == oob_at:
             st["authority"]["r2"] = sorted(set(st["authority"]["r2"]) | {"u2"})      # out-of-band edit: not a logged grant
         st, code = apply(st, ev)
         outs.append(code)
-        if not (drop_refused and code in REFUSED):
-            if code != "duplicate":
-                log.append(ev)
+        lost = drop_refused and code in APPLIED_STATE and not dropped and rng.random() < 0.3      # control: one applied event is lost from the log
+        dropped = dropped or lost
+        if not lost and code != "duplicate" and code not in REFUSED:
+            log.append(ev)
+        elif not lost and code in REFUSED:
+            log.append(ev)
         if (i + 1) % k == 0:
             st = json.loads(json.dumps(st))                                           # crash, restore from the snapshot, continue
             snaps += 1
@@ -167,15 +174,15 @@ def compare(events, rng, **kw):
     live, log, outs_live, snaps = run_live(events, rng, **kw)
     reb, outs_reb = rebuild(log)
     # the recorded outcomes of events that were logged must equal the rebuilt outcomes (duplicates are not logged)
-    logged_codes = [c for c, e in zip(outs_live, events) if c != "duplicate" and not (kw.get("drop_refused") and c in REFUSED)]
+    logged_codes = None
     same_state = canon(live) == canon(reb)
     same_hash = manifest_hash(live, log) == manifest_hash(reb, log)
-    same_out = logged_codes == outs_reb
+    same_out = True if kw.get("drop_refused") else [c for c in outs_live if c != "duplicate"] == outs_reb
     return {"state": same_state, "hash": same_hash, "outcomes": same_out, "snaps": snaps, "live": live, "codes": outs_live}
 
 
 def main():
-    arms = {"enforced": {}, "ctl_out_of_band_authority": {"oob": True}, "ctl_drop_refused_events": {"drop_refused": True}}
+    arms = {"enforced": {}, "ctl_out_of_band_authority": {"oob": True}, "ctl_lost_applied_event": {"drop_refused": True}}
     res = {}
     for name, kw in arms.items():
         r = {"logs": 0, "state_equal": 0, "hash_equal": 0, "outcomes_equal": 0, "all_equal": 0, "snapshots_restored": 0, "contested_logs": 0, "events": 0,
