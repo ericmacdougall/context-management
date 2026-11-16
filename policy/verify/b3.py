@@ -6,11 +6,15 @@ the per-log views, chain result and audit count (refusals recounted here from th
 import datetime
 import json
 
+# round 3 (amendment 5): self_approval and no_value_change are gone with rule 11 (non-humans never decide)
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
            "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation", "unknown_proposal",
-           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested", "no_value_change",
+           "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested",
            "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 OVERLAP = ("S1_conflicting_decisions_contested", "S3_zombie_revoked_principal", "S4_same_idem_key_concurrent", "S4b_twins_on_two_requirements", "S5_resolve_race")
+API_OVERLAP = ("S7_api_supersede_race", "S8_api_twins")        # deployment path (dc_app + dc.submit): B blocked < A commit < B done
+SCENARIOS = ("S1_conflicting_decisions_contested", "S2_stale_token_refused", "S3_zombie_revoked_principal", "S4_same_idem_key_concurrent",
+             "S4b_twins_on_two_requirements", "S5_resolve_race", "S6_tenant_isolation") + API_OVERLAP
 
 
 def _t(s):
@@ -22,6 +26,11 @@ def _ov(w, full=True):
     if full:
         return None not in (a, b, c, d) and a < b < c < d
     return None not in (a, b, c) and a < b < c
+
+
+def _ov_api(w):
+    b, a, d = (_t(w.get(k)) for k in ("b_blocked", "a_commit", "b_done"))
+    return None not in (a, b, d) and b < a < d and w.get("b_done_before_commit") == "False"
 
 
 def _codes(info):
@@ -48,6 +57,11 @@ def judge(scen, i, info):
         return c.get("a") == ("resolved", None) and c.get("b") == ("stale", None) and info["version"] == 3
     if scen == "S6_tenant_isolation":
         return [x[0] for x in info["codes"]] == ["unauthorized", "tenant_mismatch", "unauthorized"]
+    if scen == "S7_api_supersede_race":
+        return (c.get("a") == ("superseded", None) and c.get("b") == ("contested_opened", None) and info["status"] == "contested"
+                and info["version"] == 2 and info["candidates"] == ["u1/Sa%d" % i, "u2/Sb%d" % i])
+    if scen == "S8_api_twins":
+        return c.get("a") == ("superseded", None) and c.get("b") == ("duplicate", "superseded") and info["event_rows"] == 1
     if scen == "ctl_no_head_lock":
         return c.get("a") == ("decided_accept", None) and c.get("b") == ("decided_accept", None) and info["status"] == "current"
     if scen == "ctl_no_advisory_lock":
@@ -73,11 +87,12 @@ def verify(doc, rows):
         w = r["info"].get("w") or {}
         if r["scenario"] in OVERLAP:
             s["overlap"] += _ov(w)
+        elif r["scenario"] in API_OVERLAP:
+            s["overlap"] += _ov_api(w)
         elif r["scenario"] in ("ctl_no_head_lock", "ctl_no_advisory_lock"):
             s["overlap"] += _ov(w, full=False)
-    scen_ok = all(sc.get(k, {}).get("passed") == R for k in ("S1_conflicting_decisions_contested", "S2_stale_token_refused", "S3_zombie_revoked_principal",
-                                                            "S4_same_idem_key_concurrent", "S4b_twins_on_two_requirements", "S5_resolve_race", "S6_tenant_isolation"))
-    ov_ok = all(sc.get(k, {}).get("overlap") == R for k in OVERLAP)
+    scen_ok = all(sc.get(k, {}).get("passed") == R for k in SCENARIOS)
+    ov_ok = all(sc.get(k, {}).get("overlap") == R for k in OVERLAP + API_OVERLAP)
     dev = [r for r in rows if r["kind"] == "diff_event"]
     dlog = [r for r in rows if r["kind"] == "diff_log"]
     ev_bad = sum(1 for r in dev if r["mem"] != r["pg"])
