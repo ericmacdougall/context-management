@@ -139,3 +139,6 @@ tested by this stream.
 M failed at 7e8f28f on counts only (done, no over- or under-erasure): the receipt's found_by_rescan counted the
 write-time mentions that 47a932a materialises into erasure_mentions at mark. A real receipt defect (overclaims the
 rescan), fixed by counting source = 'rescan'. The 7e8f28f M result stays reported as FAIL; M is rerun alone, R=3.
+R1 at 7e8f28f was INCONCLUSIVE (fenced arm 18 overlapping runs < 20; 0 violations in 40). Reported as INCONCLUSIVE; one
+  rerun of R1 alone at N=40 with the same rule follows (written before the rerun). If it is again below 20 overlaps it
+  is reported INCONCLUSIVE, not combined with this run.
