@@ -254,6 +254,47 @@ Cost extrapolation (random sample only; interval is sampling noise; the pool's l
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
 
+## Stage X2: extracted facts as extra candidates, 94 questions (2026-11-16, pilot, feat/eval-scaffold 5bb9c5a; design d2559c3 committed first; mechanical scoring, no judge; owner-reported, score file checked by main, not independently reviewed)
+
+Pool: 1,098 sessions, 12,787 facts. 128 extraction calls, 127 ok. Nine
+gold-session records are missing (1 failed call, 8 zero-byte files from
+a full disk), so 6 of 94 questions have a gold session with no facts.
+The scorer was changed once after the design commit (1b99be2) to count
+unreadable records as missing; the change can only hurt the facts arms.
+
+Session hit in the top 10, paired against raw-text fusion (0.862):
+
+| Arm | Hit@10 | Difference [95% interval] | Wins / losses |
+|---|---|---|---|
+| facts list fused by rank (rrf_facts) | 0.894 | +0.032 [-0.032, +0.104] | 7 / 4 |
+| facts and raw in one fused list (fused_facts_raw) | 0.904 | +0.043 [+0.010, +0.092] | 4 / 0 |
+
+Pre-set rules: rrf_facts passes all three (no harm overall; +0.174 on
+the 23 low-overlap questions against a bar of +0.15; wrong-query
+control 0.011). fused_facts_raw fails the benefit rule (+0.130).
+
+**Held, as a screen only:**
+- Facts lists do no measurable harm overall and help where raw
+  retrieval fails: the 11 weak-list questions go 0.091 to 0.455.
+- Facts arms lose less as the pool grows 200 to 1,098 sessions on 39
+  questions (0.949 to 0.821 against 0.923 to 0.718). One growth step.
+
+**Did not hold:**
+- Independent confirmation of X1. The benefit is carried by the 11
+  questions already seen in X1; on the 12 new low-overlap questions
+  rrf_facts shows 1 win and 1 loss.
+- Preference questions: rrf_facts loses 2 of 6 and wins 1.
+- Finding every gold session of a multi-session question: all gold in
+  the top 10 is 0.61 / 0.57 / 0.61 across arms, and 0.78 at top 50 for
+  every arm. First-gold hit overstates aggregation by 0.3 to 0.4.
+- A date filter as a general answer: only 9 of 94 questions resolve a
+  date range; on those 9 it lifts hit@10 to 0.78, but the window is 11%
+  of this small pool and gold fell outside it for 2.
+
+Next step if pursued: a confirmatory test on the untouched split with
+about 60 low-overlap questions chosen by a rule fixed before any data,
+preference and all-gold aggregation as separate questions.
+
 ## Independent replication (2026-11-16, feat/replicate eaaeb53; non-author scripts and controls, thresholds committed first)
 
 | Claim | Owner's figure | Replication | Verdict |
