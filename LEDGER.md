@@ -34,7 +34,7 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 
 | Idea | What happened | Class | Consequence for the design |
 |---|---|---|---|
-| Hybrid retrieval alone as the memory | Session recall@10 0.97 with no distractors, 0.48 at the whole pool; evidence in a 4,000-token context 0.41 | owner-reported | Retrieval is one input, not the answer source; current-state table and analysts needed |
+| Hybrid retrieval alone as the memory | Session recall@10 0.968 with no distractors, 0.4754 at the whole pool (curve_pilot.json); evidence in a 4,000-token context 0.41 | owner-reported | Retrieval is one input, not the answer source; current-state table and analysts needed |
 | Batched fact extraction to save calls | 9.0 facts per session at 1 per call, 5.1 at 4, 4.5 at 8, 2.7 at 16 | owner-reported | No batching above 1 on the truth path |
 | Automatic "this replaces that" links as a filter | Precise 16/16 but recall 10/16, unstable across batching | owner-reported | Supersession labels are advisory, never filtering |
 | Analyst over cross-encoder rerank on which sessions are found | No resolvable gain at any pool size (+0.015, +0.043, +0.024, all intervals include 0); the analyst only adds more gold rounds in context at the two smaller pools | pilot observation | An analyst call (63k tokens, 13.6 s) is not justified for reordering alone; rerank first, analyst only where digging is needed |
@@ -48,7 +48,7 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | Document-level security as tenant isolation | Term statistics leak across the filter | owner-reported | One index family per tenant |
 | Deleting text and assuming it is gone | Purged only after retention-lease sync (about 30 s) plus force merge | owner-reported | Erasure verified by planted markers after merge |
 | Vector search inside the percolator | Rejected by Elasticsearch | observed | Standing queries are lexical only |
-| One fresh headless call per step | About 10.5k tokens overhead each; 20 calls cost 6.5 times one 20-turn session | owner-reported | Long-lived sessions where contamination allows |
+| One fresh headless call per step | About 10.5k tokens overhead each; 20 calls cost about 6.2 times one 20-turn session ($0.7751 vs $0.1246 on the rerun) | owner-reported | Long-lived sessions where contamination allows |
 | Temporal patching as the upgrade mechanism for long sessions | Old runs adopt the patch only after continue-as-new; removing a patch early strands idle sessions | owner-reported, under review | Hotfix backstop only |
 | Rolling back code after a state-shape migration | 4 of 4 sessions stuck | owner-reported, under review | Ship the reader of the next shape before the writer |
 | Agent Builder hook failing open by itself | Error or 120 s timeout returns HTTP 500, no fallback | observed | Fail-open wrapper inside the workflow |
