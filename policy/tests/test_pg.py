@@ -51,9 +51,9 @@ class PgProofs(unittest.TestCase):
 
     def test_passwordless_connection_refused(self):
         with self.assertRaises(psycopg.OperationalError):
-            psycopg.connect(host="127.0.0.1", port=self.port, dbname="pol", user="dc_app", passfile="/dev/null", password="", connect_timeout=5)
+            psycopg.connect(host="127.0.0.1", port=self.port, dbname=os.environ.get("POL_PG_DB") or "pol", user="dc_app", passfile="/dev/null", password="", connect_timeout=5)
         with self.assertRaises(psycopg.OperationalError):
-            psycopg.connect(host="127.0.0.1", port=self.port, dbname="pol", user="postgres", passfile="/dev/null", connect_timeout=5)
+            psycopg.connect(host="127.0.0.1", port=self.port, dbname=os.environ.get("POL_PG_DB") or "pol", user="postgres", passfile="/dev/null", connect_timeout=5)
 
     def test_events_append_only_for_app_and_owner(self):
         self.assertEqual(self.e._submit(ev("supersede", "alice", 1, req="r1", value_ref="v1", label=LAB, based_on=0))[0], "superseded")
