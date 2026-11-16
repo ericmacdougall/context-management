@@ -191,6 +191,16 @@ Post-hoc analysis of the outputs on disk (no model; exploratory; rules written f
 - The unstable facts are mostly the less important ones: facts in only one run are 73% assistant-stated (against 42% of stable facts) and pass the quote check less often (0.893 against 0.977); user-stated facts reproduce 88% of the time, assistant-stated 67%.
 - Mechanical repair: of 130 quotes not verbatim in the cited round (of 2,698 facts), 98 are fixed by punctuation or ellipsis normalisation and 3 by re-pointing to another round; 29 are paraphrases; none is fully ungrounded. After repair about 98.9% are verbatim. The model's author field agrees with the speaker-derived one on all but 1 of 2,525 (and there the dataset's role labels were wrong), so mechanical author is a fill for missing fields, not a corrector.
 
+Stage X1 (800 further calls, a 1,000-session fact pool; decision rule committed first; feat/eval-scaffold b27d132):
+
+| Finding | Figures | Verdict |
+|---|---|---|
+| Extracted facts as extra candidates reach the questions retrieval cannot | Keyword search over fact statements finds a gold-session fact in the top 10 for 2 of the 11 unreachable questions; over raw rounds 1 of 11; rule required at least 6. With quotes and cue keys 3 of 11. At 200 sessions the same code gave 6 and 5: every arm loses two thirds or more when the pool grows five times | **Did not hold. Stop before volume**: the 6,100 and 22,500 call extractions are not requested. Lexical test only; dense and fused variants are a no-model follow-up |
+| Extraction at volume is mechanically sound | 800 of 800 parsed (1 repaired); quote check 0.955 raw, 0.991 after mechanical repair; 13 missing authors filled | Held |
+| Dated facts | Event time present on 10% of facts | Did not hold |
+| Cost of the cap-30 prompt | Ordinary sessions return 11.7 facts at cap 30 against 8.6 at cap 12, so output is +33% and time +24% for every session, not only capped ones | Supersedes the earlier "+1.5%" estimate: 22,500 calls would be about 333M input and 51M output tokens, 58 h wall, about 1,756 USD notional |
+| Whole-pool fact count | About 12 facts per ordinary session, so about 220,000 facts for the pool, not the 295,000 implied by gold-heavy samples | Corrected |
+
 Cost extrapolation (random sample only; interval is sampling noise; the pool's longest sessions are 3.7 times longer than any sampled):
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
