@@ -517,3 +517,154 @@ Paired differences (clustered by content cluster, 95% interval; n / clusters in 
 |---|---|---|---|---|
 | ANALYST minus RRF | 23 / 23 | +0.096 [+0.017, +0.200] | +0.085 [+0.017, +0.172] | +0.076 [+0.000, +0.163] |
 
+## Results: full analyst run rescored with the finished rerank v2 (94 of 94 questions); supersedes every RERANK comparison of the section above
+
+The rerank v2 run (top-n 20, new sets) finished after the analyst scoring above, which had used a 78-question snapshot. This section re-scores with all 94 (`analyst_full_94.json`, same scorer, same rules: failures counted, probe row excluded, pilot only, not confirmatory, no registered pass rule). The 78-question RERANK rows and the sentences built on them in the section above are SUPERSEDED and stay visible there; the ANALYST, ANALYST-RERANK-ONLY and RRF rows of that section do not change. **What changes:** at H3 the analyst is now distinguishable from the cross-encoder on session recall@10 (+0.075 [+0.012, +0.137] on all 94, previously +0.024 [-0.033, +0.079] on 78 questions): the 16 questions added by the finished run were ones where the rerank did poorly. At H1 (+0.005 [-0.051, +0.053]) and H2 (+0.055 [-0.014, +0.124]) the session-recall difference is still not resolvable, while gold sessions and rounds in the 4,000-token context are better with the analyst at H1 (rounds), H2 (sessions and rounds) and H3 (both). Rerank alone beats the tier-0 candidates on session recall@10 at H1 (+0.026 [+0.002, +0.056]) and H3 (+0.054 [+0.020, +0.100]); at H2 it is +0.043 [-0.001, +0.090], not resolvable. **Baseline definition caveat:** the RRF baseline of this scorer is the 50-candidate tier-0 list, not the registered curve (fusion depth 200); on the registered definition the H2 session-recall advantages of the analyst arms over RRF lose their resolvability (ANALYST minus RRF at H2 +0.074 [-0.003, +0.146]); see the reconciliation in eval/EXPLORATORY.md.
+
+**H1, all pilot questions with gold, n 94**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 94 | 0.888 | 0.926 | 0.829 | 0.757 | 0.816 |
+| ANALYST | 94 | 0.894 | 0.926 | 0.877 | 0.870 | 0.891 |
+| ANALYST-RERANK-ONLY | 94 | 0.857 | 0.894 | 0.837 | 0.809 | 0.829 |
+| RRF | 94 | 0.863 | 0.851 | 0.744 | 0.621 | 0.743 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 94, 90 clusters) | +0.005 [-0.051, +0.053] | +0.048 [-0.018, +0.110] | +0.114 [+0.044, +0.184] |
+| ANALYST-RERANK-ONLY minus RERANK (n 94, 90 clusters) | -0.031 [-0.084, +0.014] | +0.007 [-0.054, +0.065] | +0.052 [-0.019, +0.119] |
+| RERANK minus RRF (n 94, 90 clusters) | +0.026 [+0.002, +0.056] | +0.085 [+0.037, +0.141] | +0.136 [+0.075, +0.202] |
+
+Knowledge-update (n 15), RERANK gold-latest / stale-only in the 4k context: 1.000 / 0.000 (8k 1.000 / 0.000); unchanged for the other arms.
+
+**H1, 23 low-overlap questions**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 23 | 0.610 | 0.739 | 0.488 | 0.328 | 0.425 |
+| ANALYST | 23 | 0.718 | 0.826 | 0.666 | 0.699 | 0.749 |
+| ANALYST-RERANK-ONLY | 23 | 0.678 | 0.783 | 0.633 | 0.614 | 0.628 |
+| RRF | 23 | 0.571 | 0.522 | 0.314 | 0.130 | 0.272 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 23, 23 clusters) | +0.108 [-0.046, +0.265] | +0.178 [-0.032, +0.362] | +0.371 [+0.146, +0.580] |
+| ANALYST-RERANK-ONLY minus RERANK (n 23, 23 clusters) | +0.068 [+0.009, +0.142] | +0.146 [+0.063, +0.236] | +0.286 [+0.152, +0.435] |
+| RERANK minus RRF (n 23, 23 clusters) | +0.039 [-0.020, +0.106] | +0.174 [+0.040, +0.330] | +0.197 [+0.017, +0.371] |
+
+**H1, the other 71 questions**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 71 | 0.978 | 0.986 | 0.940 | 0.896 | 0.942 |
+| ANALYST | 71 | 0.951 | 0.958 | 0.946 | 0.926 | 0.937 |
+| ANALYST-RERANK-ONLY | 71 | 0.915 | 0.930 | 0.902 | 0.872 | 0.894 |
+| RRF | 71 | 0.957 | 0.958 | 0.884 | 0.779 | 0.896 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 71, 69 clusters) | -0.028 [-0.079, +0.012] | +0.006 [-0.050, +0.057] | +0.031 [-0.027, +0.081] |
+| ANALYST-RERANK-ONLY minus RERANK (n 71, 69 clusters) | -0.063 [-0.128, -0.007] | -0.038 [-0.109, +0.029] | -0.023 [-0.097, +0.045] |
+| RERANK minus RRF (n 71, 69 clusters) | +0.021 [+0.000, +0.056] | +0.056 [+0.012, +0.102] | +0.116 [+0.061, +0.176] |
+
+Knowledge-update (n 15), RERANK gold-latest / stale-only in the 4k context: 1.000 / 0.000 (8k 1.000 / 0.000); unchanged for the other arms.
+
+**H2, all pilot questions with gold, n 94**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 94 | 0.703 | 0.745 | 0.638 | 0.567 | 0.617 |
+| ANALYST | 94 | 0.758 | 0.830 | 0.731 | 0.711 | 0.730 |
+| ANALYST-RERANK-ONLY | 94 | 0.733 | 0.766 | 0.688 | 0.647 | 0.670 |
+| RRF | 94 | 0.660 | 0.723 | 0.568 | 0.470 | 0.571 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 94, 90 clusters) | +0.055 [-0.014, +0.124] | +0.093 [+0.023, +0.167] | +0.144 [+0.066, +0.222] |
+| ANALYST-RERANK-ONLY minus RERANK (n 94, 90 clusters) | +0.030 [-0.033, +0.091] | +0.050 [-0.012, +0.115] | +0.080 [+0.020, +0.142] |
+| RERANK minus RRF (n 94, 90 clusters) | +0.043 [-0.001, +0.090] | +0.070 [+0.023, +0.120] | +0.098 [+0.049, +0.151] |
+
+Knowledge-update (n 15), RERANK gold-latest / stale-only in the 4k context: 0.933 / 0.067 (8k 1.000 / 0.000); unchanged for the other arms.
+
+**H2, 23 low-overlap questions**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 23 | 0.157 | 0.261 | 0.099 | 0.022 | 0.022 |
+| ANALYST | 23 | 0.337 | 0.522 | 0.285 | 0.272 | 0.293 |
+| ANALYST-RERANK-ONLY | 23 | 0.217 | 0.261 | 0.136 | 0.043 | 0.065 |
+| RRF | 23 | 0.142 | 0.261 | 0.120 | 0.000 | 0.000 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 23, 23 clusters) | +0.180 [+0.054, +0.302] | +0.186 [+0.057, +0.312] | +0.250 [+0.109, +0.395] |
+| ANALYST-RERANK-ONLY minus RERANK (n 23, 23 clusters) | +0.061 [-0.006, +0.135] | +0.038 [-0.051, +0.126] | +0.022 [-0.065, +0.130] |
+| RERANK minus RRF (n 23, 23 clusters) | +0.014 [-0.094, +0.116] | -0.022 [-0.130, +0.065] | +0.022 [+0.000, +0.065] |
+
+**H2, the other 71 questions**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 71 | 0.880 | 0.901 | 0.813 | 0.744 | 0.810 |
+| ANALYST | 71 | 0.895 | 0.930 | 0.876 | 0.853 | 0.872 |
+| ANALYST-RERANK-ONLY | 71 | 0.900 | 0.930 | 0.867 | 0.843 | 0.866 |
+| RRF | 71 | 0.827 | 0.873 | 0.712 | 0.622 | 0.756 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 71, 69 clusters) | +0.015 [-0.061, +0.092] | +0.063 [-0.015, +0.152] | +0.109 [+0.030, +0.197] |
+| ANALYST-RERANK-ONLY minus RERANK (n 71, 69 clusters) | +0.020 [-0.058, +0.099] | +0.054 [-0.021, +0.139] | +0.099 [+0.022, +0.174] |
+| RERANK minus RRF (n 71, 69 clusters) | +0.053 [+0.010, +0.100] | +0.100 [+0.047, +0.151] | +0.122 [+0.061, +0.190] |
+
+Knowledge-update (n 15), RERANK gold-latest / stale-only in the 4k context: 0.933 / 0.067 (8k 1.000 / 0.000); unchanged for the other arms.
+
+**H3, all pilot questions with gold, n 94**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 94 | 0.528 | 0.606 | 0.498 | 0.427 | 0.457 |
+| ANALYST | 94 | 0.603 | 0.670 | 0.585 | 0.541 | 0.569 |
+| ANALYST-RERANK-ONLY | 94 | 0.581 | 0.670 | 0.545 | 0.495 | 0.512 |
+| RRF | 94 | 0.473 | 0.564 | 0.421 | 0.332 | 0.426 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 94, 90 clusters) | +0.075 [+0.012, +0.137] | +0.088 [+0.021, +0.154] | +0.113 [+0.047, +0.182] |
+| ANALYST-RERANK-ONLY minus RERANK (n 94, 90 clusters) | +0.054 [-0.005, +0.111] | +0.048 [-0.009, +0.107] | +0.067 [+0.009, +0.127] |
+| RERANK minus RRF (n 94, 90 clusters) | +0.054 [+0.020, +0.100] | +0.077 [+0.036, +0.125] | +0.096 [+0.053, +0.143] |
+
+Knowledge-update (n 15), RERANK gold-latest / stale-only in the 4k context: 0.800 / 0.133 (8k 0.867 / 0.067); unchanged for the other arms.
+
+**H3, 23 low-overlap questions**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 23 | 0.041 | 0.130 | 0.041 | 0.000 | 0.000 |
+| ANALYST | 23 | 0.072 | 0.130 | 0.072 | 0.051 | 0.051 |
+| ANALYST-RERANK-ONLY | 23 | 0.093 | 0.174 | 0.062 | 0.000 | 0.000 |
+| RRF | 23 | 0.032 | 0.130 | 0.032 | 0.000 | 0.000 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 23, 23 clusters) | +0.032 [-0.038, +0.113] | +0.032 [-0.038, +0.113] | +0.051 [+0.000, +0.130] |
+| ANALYST-RERANK-ONLY minus RERANK (n 23, 23 clusters) | +0.052 [+0.000, +0.117] | +0.022 [+0.000, +0.065] | +0.000 [+0.000, +0.000] |
+| RERANK minus RRF (n 23, 23 clusters) | +0.009 [+0.000, +0.026] | +0.009 [+0.000, +0.026] | +0.000 [+0.000, +0.000] |
+
+**H3, the other 71 questions**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|
+| RERANK | 71 | 0.685 | 0.761 | 0.646 | 0.566 | 0.606 |
+| ANALYST | 71 | 0.775 | 0.845 | 0.751 | 0.700 | 0.737 |
+| ANALYST-RERANK-ONLY | 71 | 0.739 | 0.831 | 0.702 | 0.655 | 0.678 |
+| RRF | 71 | 0.616 | 0.704 | 0.547 | 0.439 | 0.563 |
+
+| paired difference (content clusters, 95%) | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|
+| ANALYST minus RERANK (n 71, 69 clusters) | +0.089 [+0.009, +0.171] | +0.106 [+0.019, +0.190] | +0.134 [+0.049, +0.219] |
+| ANALYST-RERANK-ONLY minus RERANK (n 71, 69 clusters) | +0.054 [-0.021, +0.127] | +0.056 [-0.018, +0.132] | +0.089 [+0.012, +0.169] |
+| RERANK minus RRF (n 71, 69 clusters) | +0.069 [+0.018, +0.125] | +0.099 [+0.047, +0.155] | +0.127 [+0.070, +0.194] |
+
+Knowledge-update (n 15), RERANK gold-latest / stale-only in the 4k context: 0.800 / 0.133 (8k 0.867 / 0.067); unchanged for the other arms.
+
