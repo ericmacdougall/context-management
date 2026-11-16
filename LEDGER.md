@@ -101,6 +101,27 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | X09 | Agent chooses when to compact | not proven in the source; out of reach for host sessions | not adopted |
 | X10 | Post-train a small model to use memory tools | rejected: the target is the client's own models through one port | not adopted |
 
+## Stage G: deeper shuffled candidates and a first look at answers (2026-11-16, pilot, feat/eval-scaffold c9e3909; design and scorer committed before any result; judge NOT validated)
+
+Held (pilot observations, owner-reported):
+
+| Finding | Figures |
+|---|---|
+| An analyst reordering 300 shuffled candidates beats plain retrieval and the cross-encoder at whole pool | Session recall@10, 94 questions, failures counted: reorder-only 0.700, digging arm 0.690, plain retrieval 0.481, cross-encoder 0.528. Reorder minus plain +0.219 (CI 0.146 to 0.292); reorder minus cross-encoder +0.172 (CI 0.105 to 0.243). Earlier 50-candidate analyst in rank order: 0.603 (descriptive; depth and order differ) |
+| Shuffled order shows no anchoring cost | Recall rose from 0.603 to about 0.70 with shuffled, deeper lists; depth and order are confounded |
+| Superseded facts: the latest value reaches the context | Knowledge-update questions (15): reorder-only 1.000, digging 0.933, plain retrieval 0.333 |
+| The benchmark has headroom for a memory layer | Judged answer accuracy, 77 questions, 4,000-token contexts: plain retrieval 0.384, analyst context 0.582, gold-only 0.911. Gold-only minus plain +0.519 (CI 0.408 to 0.636); analyst minus plain +0.195 (CI 0.077 to 0.320). A string-match heuristic gives 0.292, 0.444, 0.667 and disagrees with the judge on 22 to 32% of items |
+
+Did not hold:
+
+| Finding | Figures | Consequence |
+|---|---|---|
+| Telling the analyst to dig with tools | Digging minus reorder-only: -0.010 (CI -0.043 to 0.024) on all 94; -0.067 on the 23 hard questions; where both arms answered, digging is slightly WORSE (-0.027, CI -0.052 to -0.006). Only 50 of 91 followed the rule; 35 made no tool call | Tools dropped from the default analyst; a digging claim would need an enforced minimum and a new test |
+| Digging when the list holds no gold | 10 questions had no gold among 300 candidates; 7 dug; every arm scored 0.000 | Search-and-open tools over the same index do not reach what first-stage retrieval missed; these need a different signal (typed facts, links, decisions) |
+| Hard questions fixed by a better analyst | Low-overlap 23: reorder-only 0.186, digging 0.119, plain 0.041; answers on that stratum: analyst minus plain +0.043 (CI -0.130 to 0.217), gold-only minus plain +0.696 | The largest remaining gap is exactly where candidates are missing |
+
+Cost: 640 calls, 24.4 million input tokens, 81 USD notional.
+
 ## Independent replication (2026-11-16, feat/replicate eaaeb53; non-author scripts and controls, thresholds committed first)
 
 | Claim | Owner's figure | Replication | Verdict |
