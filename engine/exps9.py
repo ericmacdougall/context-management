@@ -160,7 +160,7 @@ def docker(*args):
 
 
 def pg_activity():
-    rows = lib.q("select count(*) filter (where state='active'), count(*) filter (where state like 'idle in transaction%'), count(*), "
+    rows = lib.q("select count(*) filter (where state='active'), count(*) filter (where state in ('idle in transaction', 'idle in transaction (aborted)')), count(*), "
                  "pg_postmaster_start_time() from pg_stat_activity where datname='emlab'")[0]
     return {"active": rows[0], "idle_in_transaction": rows[1], "clients": rows[2], "postmaster_start": str(rows[3])}
 

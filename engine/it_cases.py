@@ -88,7 +88,7 @@ async def case_m2(client):
     if ok is None:
         return {"passed": False, "error": "no approval request appeared"}
     t_grant = time.time()
-    if CODE == "new":
+    if CODE in ("new", "prev"):        # 96a80b2 already has request ids; only 62916ae used the legacy grant shape
         rid = pgstore.events_of(TENANT, sid, "approval_requested")[0][1]
         granted = pgstore.grant_approval(TENANT, sid, rid, "approver-1")
     else:
