@@ -153,7 +153,7 @@ def _scram_verifier(password: str) -> str:
 
 
 def _connect(user, passfile, port, app):
-    c = psycopg.connect(host=HOST, port=port, dbname="postgres", user=user, passfile=passfile, autocommit=True, application_name=app)
+    c = psycopg.connect(host=HOST, port=port, dbname="pol", user=user, passfile=passfile, autocommit=True, application_name=app)
     c.isolation_level = psycopg.IsolationLevel.READ_COMMITTED            # explicit; the lock protocol is argued for READ COMMITTED
     return c
 
@@ -324,7 +324,7 @@ class PgEngine:
         if row is None:
             raise LookupError("tenant not installed")
         if ok and isinstance(ev.get("principal"), str):
-            c.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (t + "\x00" + ev["principal"],))
+            c.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (json.dumps([t, ev["principal"]]),))
         if ok and typ != "revoke" and isinstance(ev.get("req"), str):
             c.execute("select 1 from dc.head where tenant=%s and req=%s for update", (t, ev["req"]))
         if hook:
