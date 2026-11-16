@@ -115,6 +115,10 @@ ALLOWED = {
     ("S2", "pol.policy.Authorization.__init__", "principal"): "policy-document value type (who an authorisation names)",
     ("S2", "pol.policy.Authorization.__init__", "tenant"): "policy-document value type",
     ("S2", "pol.policy.Dest.__init__", "kind"): "policy-document value type (destination kind)",
+    ("S2", "pol.pgcore.anchor_export", "tenant"): "operator path on an OWNER connection (dc_app cannot read the chain); writes chain heads only",
+    ("S2", "pol.pgcore.anchor_check", "tenant"): "operator path on an OWNER connection; returns hashes and counts, no record data",
+    ("S4", "pol.pgcore.Anchor.records", "unscoped read exported"): "anchor records are (tenant, n, chain hash, utc): no record data",
+    ("S4", "pol.pgcore.FileAnchor.records", "unscoped read exported"): "as above",
 }
 
 INERT = {"pol.directory.Session"}

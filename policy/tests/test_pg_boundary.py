@@ -19,7 +19,11 @@ except ImportError:              # pragma: no cover
 from tests.test_pg import CFG, ENV, LAB, T, ev
 
 # The ONLY functions each login role may execute (regprocedure text). A change here is a reviewed API change.
-APP_API = {"dc.submit(text,jsonb)", "dc.explain(text,text)", "dc.read_table(text)", "dc.erase_subject(text,text)"}
+# Change from 2b73a68 (justified): erasure is two calls, erase_candidates and erase_values, because the legal-hold decision is made by
+# the in-process policy point between them (holds come from the policy document); the deletion and the token-mapping removal happen
+# in the database under the tenant row lock.
+APP_API = {"dc.submit(text,jsonb)", "dc.explain(text,text)", "dc.read_table(text)", "dc.erase_candidates(text,text)",
+           "dc.erase_values(text,text,text[])"}
 IDP_API = {"dc.open_session(text,text,text,text,integer)"}
 PRIVS_TABLE = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
 DENIED = (psycopg.errors.InsufficientPrivilege, psycopg.errors.UndefinedFunction, psycopg.errors.UndefinedTable,
@@ -31,7 +35,8 @@ class PgBoundary(unittest.TestCase):
     port = int(os.environ.get("POL_PG_PORT") or 0)
 
     def setUp(self):
-        pgcore.install(self.port, os.environ["POL_PG_SUPER_PASSFILE"], os.environ["POL_PG_APP_PASSWORD_FILE"], {T: CFG})
+        pgcore.install(self.port, os.environ["POL_PG_SUPER_PASSFILE"], os.environ["POL_PG_APP_PASSWORD_FILE"], {T: CFG},
+                       idp_password_file=os.environ["POL_PG_IDP_PASSWORD_FILE"])
         self.c = pgcore.connect_app(self.port, os.environ["POL_PG_APP_PASSFILE"])
         self.s = pgcore._connect("postgres", os.environ["POL_PG_SUPER_PASSFILE"], self.port, "pol-test-super")
 
@@ -100,6 +105,28 @@ class PgBoundary(unittest.TestCase):
                 d = s.execute("select prosecdef, proconfig from pg_proc where oid = %s::regprocedure", (f,)).fetchone()
                 self.assertTrue(d[0], f + " must be SECURITY DEFINER")
                 self.assertIn("search_path=dc, pg_temp", d[1] or [], f + " must pin search_path")
+
+    def test_forged_session_row_and_token_are_refused(self):
+        """A forged token (never issued) is refused by the API; dc_idp cannot write the sessions table either; a real token acts as the
+        principal of its session row, whatever the body says."""
+        idp = pgcore.connect_idp(self.port, os.environ["POL_PG_IDP_PASSFILE"])
+        try:
+            with self.assertRaises(DENIED):
+                with idp.transaction():
+                    idp.execute("insert into dc.sessions values ('x','tenant-a','admin','owner_ui','f', now() + interval '1 hour', false)")
+            with self.assertRaises(psycopg.errors.RaiseException):
+                idp.execute("select dc.open_session('tenant-a','alice','agent_api','f',60)")          # channel must match the kind
+            tok = idp.execute("select dc.open_session('tenant-a','alice','owner_ui','f',60)").fetchone()[0]
+        finally:
+            idp.close()
+        body = '{"type":"retract","client_id":"r","idem":"r","req":"r1","based_on":0}'
+        out = self.c.execute("select dc.submit(%s, %s::jsonb)", (tok[:-1] + ("0" if tok[-1] != "0" else "1"), body)).fetchone()[0]
+        self.assertTrue(out["code"].startswith("unauthenticated"), out)
+        out = self.c.execute("select dc.submit(%s, %s::jsonb)", (tok, body)).fetchone()[0]
+        self.assertEqual((out["code"], out["id"]), ("nothing_to_retract", "alice/r"))
+        out = self.c.execute("select dc.submit(%s, %s::jsonb)", (tok, '{"type":"retract","client_id":"q","idem":"q","req":"r1","based_on":0,'
+                                                                       '"principal":"admin"}')).fetchone()[0]
+        self.assertEqual(out["code"], "identity_in_body")
 
     def test_app_cannot_open_a_session(self):
         """R3-1 in the database: only the identity adapter's role opens sessions; dc_app cannot mint one or write the sessions table."""
