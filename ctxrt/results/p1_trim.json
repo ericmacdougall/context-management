@@ -1,0 +1,1588 @@
+{
+ "claim": "trim/inject keep tool pairing and placement valid in both shapes",
+ "overall": "PASS",
+ "per_seed": [
+  {
+   "artifact": {
+    "n": 4010,
+    "path": "ctxrt/results/p1_trim-16096001.jsonl",
+    "sha256": "326915447f1ba79dfe070320673df396f2b4917ac9582957272d77c9e6ac6cf2"
+   },
+   "criteria": [
+    {
+     "criterion": "anthropic: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "anthropic: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9525
+    },
+    {
+     "criterion": "anthropic: witness has pair >=40%",
+     "ok": true,
+     "value": 0.952
+    },
+    {
+     "criterion": "anthropic: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.671
+    },
+    {
+     "criterion": "anthropic: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 509
+    },
+    {
+     "criterion": "anthropic: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.26733193277310924
+    },
+    {
+     "criterion": "anthropic: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "anthropic: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 1182
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "openai: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.951
+    },
+    {
+     "criterion": "openai: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9485
+    },
+    {
+     "criterion": "openai: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.4805
+    },
+    {
+     "criterion": "openai: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 838
+    },
+    {
+     "criterion": "openai: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.44175013178703215
+    },
+    {
+     "criterion": "openai: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "openai: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 865
+    },
+    {
+     "criterion": "openai: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    }
+   ],
+   "metrics": {
+    "anthropic": {
+     "c1_classes": {
+      "head_not_user": 1051,
+      "orphan_result_or_split_pair": 509
+     },
+     "c2_classes": {
+      "text_before_result": 1182
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 1342,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1904,
+      "inject_invalid": 0,
+      "marker_added": 1545,
+      "n": 2000,
+      "naive_inject_invalid": 1182,
+      "naive_invalid_pair_cases": 1560,
+      "naive_split_class": 509,
+      "naive_would_cut_inside_pair": 509,
+      "orig_invalid": 0,
+      "over_budget": 669,
+      "pair_cases": 1904,
+      "tool_tail_with_block": 1182,
+      "trim_invalid": 0,
+      "trimmed": 1905
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    },
+    "openai": {
+     "c1_classes": {
+      "orphan_result_or_split_pair": 838
+     },
+     "c2_classes": {
+      "missing_result": 865,
+      "orphan_result_or_split_pair": 865
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 961,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1897,
+      "inject_invalid": 0,
+      "marker_added": 1126,
+      "n": 2000,
+      "naive_inject_invalid": 865,
+      "naive_invalid_pair_cases": 838,
+      "naive_split_class": 838,
+      "naive_would_cut_inside_pair": 838,
+      "orig_invalid": 0,
+      "over_budget": 601,
+      "pair_cases": 1897,
+      "tool_tail_with_block": 865,
+      "trim_invalid": 0,
+      "trimmed": 1902
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    }
+   },
+   "seconds": 30.8,
+   "seed": 16096001
+  },
+  {
+   "artifact": {
+    "n": 4010,
+    "path": "ctxrt/results/p1_trim-16096002.jsonl",
+    "sha256": "1dade380f113d7f7b6845dbcc369716acafb5c1fdafc1b6dd397bc2dd9b5fe25"
+   },
+   "criteria": [
+    {
+     "criterion": "anthropic: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "anthropic: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9435
+    },
+    {
+     "criterion": "anthropic: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9345
+    },
+    {
+     "criterion": "anthropic: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.652
+    },
+    {
+     "criterion": "anthropic: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 498
+    },
+    {
+     "criterion": "anthropic: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.2664526484751204
+    },
+    {
+     "criterion": "anthropic: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "anthropic: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 1184
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "openai: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9505
+    },
+    {
+     "criterion": "openai: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9435
+    },
+    {
+     "criterion": "openai: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.449
+    },
+    {
+     "criterion": "openai: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 819
+    },
+    {
+     "criterion": "openai: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.43402225755166934
+    },
+    {
+     "criterion": "openai: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "openai: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 817
+    },
+    {
+     "criterion": "openai: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    }
+   ],
+   "metrics": {
+    "anthropic": {
+     "c1_classes": {
+      "head_not_user": 1030,
+      "orphan_result_or_split_pair": 498
+     },
+     "c2_classes": {
+      "text_before_result": 1184
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 1304,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1869,
+      "inject_invalid": 0,
+      "marker_added": 1501,
+      "n": 2000,
+      "naive_inject_invalid": 1184,
+      "naive_invalid_pair_cases": 1528,
+      "naive_split_class": 498,
+      "naive_would_cut_inside_pair": 498,
+      "orig_invalid": 0,
+      "over_budget": 674,
+      "pair_cases": 1869,
+      "tool_tail_with_block": 1184,
+      "trim_invalid": 0,
+      "trimmed": 1887
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    },
+    "openai": {
+     "c1_classes": {
+      "orphan_result_or_split_pair": 819
+     },
+     "c2_classes": {
+      "missing_result": 817,
+      "orphan_result_or_split_pair": 817
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 898,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1887,
+      "inject_invalid": 0,
+      "marker_added": 1113,
+      "n": 2000,
+      "naive_inject_invalid": 817,
+      "naive_invalid_pair_cases": 819,
+      "naive_split_class": 819,
+      "naive_would_cut_inside_pair": 819,
+      "orig_invalid": 0,
+      "over_budget": 613,
+      "pair_cases": 1887,
+      "tool_tail_with_block": 817,
+      "trim_invalid": 0,
+      "trimmed": 1901
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    }
+   },
+   "seconds": 23.6,
+   "seed": 16096002
+  },
+  {
+   "artifact": {
+    "n": 4010,
+    "path": "ctxrt/results/p1_trim-16096003.jsonl",
+    "sha256": "1162d9b3ab41529c1a99ba754adaa11acbb3a56d79d616833611ea17b0da9e0c"
+   },
+   "criteria": [
+    {
+     "criterion": "anthropic: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "anthropic: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.954
+    },
+    {
+     "criterion": "anthropic: witness has pair >=40%",
+     "ok": true,
+     "value": 0.947
+    },
+    {
+     "criterion": "anthropic: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.6655
+    },
+    {
+     "criterion": "anthropic: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 534
+    },
+    {
+     "criterion": "anthropic: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.2819429778247096
+    },
+    {
+     "criterion": "anthropic: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "anthropic: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 1207
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "openai: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9515
+    },
+    {
+     "criterion": "openai: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9465
+    },
+    {
+     "criterion": "openai: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.4595
+    },
+    {
+     "criterion": "openai: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 856
+    },
+    {
+     "criterion": "openai: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.45219228737453776
+    },
+    {
+     "criterion": "openai: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "openai: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 826
+    },
+    {
+     "criterion": "openai: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    }
+   ],
+   "metrics": {
+    "anthropic": {
+     "c1_classes": {
+      "head_not_user": 1048,
+      "orphan_result_or_split_pair": 534
+     },
+     "c2_classes": {
+      "text_before_result": 1207
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 1331,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1894,
+      "inject_invalid": 0,
+      "marker_added": 1558,
+      "n": 2000,
+      "naive_inject_invalid": 1207,
+      "naive_invalid_pair_cases": 1582,
+      "naive_split_class": 534,
+      "naive_would_cut_inside_pair": 534,
+      "orig_invalid": 0,
+      "over_budget": 663,
+      "pair_cases": 1894,
+      "tool_tail_with_block": 1207,
+      "trim_invalid": 0,
+      "trimmed": 1908
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    },
+    "openai": {
+     "c1_classes": {
+      "orphan_result_or_split_pair": 856
+     },
+     "c2_classes": {
+      "missing_result": 826,
+      "orphan_result_or_split_pair": 826
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 919,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1893,
+      "inject_invalid": 0,
+      "marker_added": 1091,
+      "n": 2000,
+      "naive_inject_invalid": 826,
+      "naive_invalid_pair_cases": 856,
+      "naive_split_class": 856,
+      "naive_would_cut_inside_pair": 856,
+      "orig_invalid": 0,
+      "over_budget": 604,
+      "pair_cases": 1893,
+      "tool_tail_with_block": 826,
+      "trim_invalid": 0,
+      "trimmed": 1903
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    }
+   },
+   "seconds": 23.9,
+   "seed": 16096003
+  },
+  {
+   "artifact": {
+    "n": 4010,
+    "path": "ctxrt/results/p1_trim-16096004.jsonl",
+    "sha256": "eea8ee7be698e67f379d1c0d7ccf6031c9b9a4ae1fabc4cf55c1a708f77037cf"
+   },
+   "criteria": [
+    {
+     "criterion": "anthropic: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "anthropic: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9405
+    },
+    {
+     "criterion": "anthropic: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9325
+    },
+    {
+     "criterion": "anthropic: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.674
+    },
+    {
+     "criterion": "anthropic: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 525
+    },
+    {
+     "criterion": "anthropic: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.28150134048257375
+    },
+    {
+     "criterion": "anthropic: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "anthropic: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 1224
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "openai: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9595
+    },
+    {
+     "criterion": "openai: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9485
+    },
+    {
+     "criterion": "openai: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.454
+    },
+    {
+     "criterion": "openai: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 852
+    },
+    {
+     "criterion": "openai: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.44913020558777017
+    },
+    {
+     "criterion": "openai: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "openai: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 812
+    },
+    {
+     "criterion": "openai: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    }
+   ],
+   "metrics": {
+    "anthropic": {
+     "c1_classes": {
+      "head_not_user": 1019,
+      "orphan_result_or_split_pair": 525
+     },
+     "c2_classes": {
+      "text_before_result": 1224
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 1348,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1865,
+      "inject_invalid": 0,
+      "marker_added": 1535,
+      "n": 2000,
+      "naive_inject_invalid": 1224,
+      "naive_invalid_pair_cases": 1544,
+      "naive_split_class": 525,
+      "naive_would_cut_inside_pair": 525,
+      "orig_invalid": 0,
+      "over_budget": 658,
+      "pair_cases": 1865,
+      "tool_tail_with_block": 1224,
+      "trim_invalid": 0,
+      "trimmed": 1881
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    },
+    "openai": {
+     "c1_classes": {
+      "orphan_result_or_split_pair": 852
+     },
+     "c2_classes": {
+      "missing_result": 812,
+      "orphan_result_or_split_pair": 812
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 908,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1897,
+      "inject_invalid": 0,
+      "marker_added": 1104,
+      "n": 2000,
+      "naive_inject_invalid": 812,
+      "naive_invalid_pair_cases": 852,
+      "naive_split_class": 852,
+      "naive_would_cut_inside_pair": 852,
+      "orig_invalid": 0,
+      "over_budget": 598,
+      "pair_cases": 1897,
+      "tool_tail_with_block": 812,
+      "trim_invalid": 0,
+      "trimmed": 1919
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    }
+   },
+   "seconds": 30.1,
+   "seed": 16096004
+  },
+  {
+   "artifact": {
+    "n": 4010,
+    "path": "ctxrt/results/p1_trim-16096005.jsonl",
+    "sha256": "69060e6610f1dddf1d68b28b8c5d55dad1bd300fa5998f5147215fe3311fc8b0"
+   },
+   "criteria": [
+    {
+     "criterion": "anthropic: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "anthropic: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "anthropic: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9545
+    },
+    {
+     "criterion": "anthropic: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9515
+    },
+    {
+     "criterion": "anthropic: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.6595
+    },
+    {
+     "criterion": "anthropic: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 549
+    },
+    {
+     "criterion": "anthropic: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.2884918549658434
+    },
+    {
+     "criterion": "anthropic: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "anthropic: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 1186
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "anthropic: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: 0 invalid from trim/inject/trim+inject",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "criterion": "openai: 0 false positives on generated valid",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: budget respected when not over_budget",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "openai: witness trimmed >=30%",
+     "ok": true,
+     "value": 0.9565
+    },
+    {
+     "criterion": "openai: witness has pair >=40%",
+     "ok": true,
+     "value": 0.9535
+    },
+    {
+     "criterion": "openai: witness ends in tool result >=25%",
+     "ok": true,
+     "value": 0.4645
+    },
+    {
+     "criterion": "openai: witness naive would cut inside pair >=200",
+     "ok": true,
+     "value": 815
+    },
+    {
+     "criterion": "openai: control C1 naive trim orphan/split class >=10% of pair cases",
+     "ok": true,
+     "value": 0.427372836916623
+    },
+    {
+     "criterion": "openai: control C2 naive inject invalid >=10% of tool-tail cases",
+     "ok": true,
+     "value": 1.0
+    },
+    {
+     "criterion": "openai: canary real injector valid on tool-tail cases",
+     "ok": true,
+     "value": 818
+    },
+    {
+     "criterion": "openai: validator rejects mutation orphan_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation missing_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation text_before_result 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation wrong_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    },
+    {
+     "criterion": "openai: validator rejects mutation duplicate_id 100%",
+     "ok": true,
+     "value": {
+      "caught": 200,
+      "made": 200
+     }
+    }
+   ],
+   "metrics": {
+    "anthropic": {
+     "c1_classes": {
+      "head_not_user": 1041,
+      "orphan_result_or_split_pair": 549
+     },
+     "c2_classes": {
+      "text_before_result": 1186
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 1319,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1903,
+      "inject_invalid": 0,
+      "marker_added": 1579,
+      "n": 2000,
+      "naive_inject_invalid": 1186,
+      "naive_invalid_pair_cases": 1590,
+      "naive_split_class": 549,
+      "naive_would_cut_inside_pair": 549,
+      "orig_invalid": 0,
+      "over_budget": 652,
+      "pair_cases": 1903,
+      "tool_tail_with_block": 1186,
+      "trim_invalid": 0,
+      "trimmed": 1909
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    },
+    "openai": {
+     "c1_classes": {
+      "orphan_result_or_split_pair": 815
+     },
+     "c2_classes": {
+      "missing_result": 818,
+      "orphan_result_or_split_pair": 818
+     },
+     "counts": {
+      "both_invalid": 0,
+      "budget_violation": 0,
+      "ends_tool_result": 929,
+      "good_inject_invalid_tool_tail": 0,
+      "has_pair": 1907,
+      "inject_invalid": 0,
+      "marker_added": 1113,
+      "n": 2000,
+      "naive_inject_invalid": 818,
+      "naive_invalid_pair_cases": 815,
+      "naive_split_class": 815,
+      "naive_would_cut_inside_pair": 815,
+      "orig_invalid": 0,
+      "over_budget": 597,
+      "pair_cases": 1907,
+      "tool_tail_with_block": 818,
+      "trim_invalid": 0,
+      "trimmed": 1913
+     },
+     "mutants": {
+      "duplicate_id": {
+       "caught": 200,
+       "made": 200
+      },
+      "missing_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "orphan_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "text_before_result": {
+       "caught": 200,
+       "made": 200
+      },
+      "wrong_id": {
+       "caught": 200,
+       "made": 200
+      }
+     }
+    }
+   },
+   "seconds": 26.1,
+   "seed": 16096005
+  }
+ ],
+ "proof": "p1_trim",
+ "stamp": {
+  "code_commit": "bd92199b0c3c5ebaae02e34a69d4c7c4ec85a9e1",
+  "dirty": false,
+  "fingerprint": {
+   "es": "none (in-process stubs)",
+   "model": "deterministic stubs, 0 model calls",
+   "stores": "in-memory + sqlite"
+  },
+  "host": "Mac-2.lan",
+  "loadavg": [
+   12.37744140625,
+   11.4697265625,
+   12.517578125
+  ],
+  "machine": "macOS-26.6-arm64-arm-64bit",
+  "params": {
+   "MUT_N": 200,
+   "N": 2000,
+   "seeds": [
+    16096001,
+    16096002,
+    16096003,
+    16096004,
+    16096005
+   ]
+  },
+  "python": "3.9.6",
+  "threshold_commits": [
+   "67a2842",
+   "05aafb0"
+  ],
+  "time_utc": "2026-11-16T01:20:30Z",
+  "timing_quiesced": false
+ },
+ "verdict_by_criterion": {
+  "anthropic: 0 false positives on generated valid": "PASS",
+  "anthropic: 0 invalid from trim/inject/trim+inject": "PASS",
+  "anthropic: budget respected when not over_budget": "PASS",
+  "anthropic: canary real injector valid on tool-tail cases": "PASS",
+  "anthropic: control C1 naive trim orphan/split class >=10% of pair cases": "PASS",
+  "anthropic: control C2 naive inject invalid >=10% of tool-tail cases": "PASS",
+  "anthropic: validator rejects mutation duplicate_id 100%": "PASS",
+  "anthropic: validator rejects mutation missing_result 100%": "PASS",
+  "anthropic: validator rejects mutation orphan_result 100%": "PASS",
+  "anthropic: validator rejects mutation text_before_result 100%": "PASS",
+  "anthropic: validator rejects mutation wrong_id 100%": "PASS",
+  "anthropic: witness ends in tool result >=25%": "PASS",
+  "anthropic: witness has pair >=40%": "PASS",
+  "anthropic: witness naive would cut inside pair >=200": "PASS",
+  "anthropic: witness trimmed >=30%": "PASS",
+  "openai: 0 false positives on generated valid": "PASS",
+  "openai: 0 invalid from trim/inject/trim+inject": "PASS",
+  "openai: budget respected when not over_budget": "PASS",
+  "openai: canary real injector valid on tool-tail cases": "PASS",
+  "openai: control C1 naive trim orphan/split class >=10% of pair cases": "PASS",
+  "openai: control C2 naive inject invalid >=10% of tool-tail cases": "PASS",
+  "openai: validator rejects mutation duplicate_id 100%": "PASS",
+  "openai: validator rejects mutation missing_result 100%": "PASS",
+  "openai: validator rejects mutation orphan_result 100%": "PASS",
+  "openai: validator rejects mutation text_before_result 100%": "PASS",
+  "openai: validator rejects mutation wrong_id 100%": "PASS",
+  "openai: witness ends in tool result >=25%": "PASS",
+  "openai: witness has pair >=40%": "PASS",
+  "openai: witness naive would cut inside pair >=200": "PASS",
+  "openai: witness trimmed >=30%": "PASS"
+ }
+}
