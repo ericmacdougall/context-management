@@ -107,6 +107,31 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   and the lab key (only one of the two service token files was still on disk when the scan ran, and the stub token was deleted before
   the scan; a pattern scan for 43-character URL-safe strings, the shape of all three, over the 40 evidence files found 0); token file then deleted.
 
+## REQUIRED path: Basic live rerun after review round 3, 2026-11-16 (src b3c364e; evidence t2-dev:~/memcore-p3-16096/ev/p3/b3c364e/)
+- Same node recipe and kit as the d71da85 run, plus a seventh case. b3c364e adds the whole-call deadline, the exact
+  framing check, the guard backstop in the API and bounded builds. Runs 1 and 2 at b3c364e failed in the kit, not the
+  product (the client read the token from the service directory, which the gateway removes at stop; then the index
+  was left from run 1); both are kept under ev/p3/run1-*, run2-*.
+
+| Case | Server | Client | Result | Seconds | Model received |
+|---|---|---|---|---|---|
+| a | up | basic_hook | injected (exact grammar accepted) | 0.3 | framed block + prompt verbatim |
+| c2 | store sleeps 40 s | basic_hook | route timeout | 20.0 | original prompt, exactly |
+| b | stopped | basic_hook | unreachable | 0.0 | original prompt, exactly |
+| d_b | stopped | naive urlopen | raised URLError | 0.0 | no model call |
+| c | accepts, silent 150 s | basic_hook | timeout | 25.0 | original prompt, exactly |
+| d_c | accepts, silent 150 s | naive urlopen, no timeout | STILL BLOCKED at 130 s | 130 | no model call |
+| t | 200, then 1 byte per 0.5 s (400 bytes) | basic_hook | timeout; server saw the connection cut at 25.5 s after 50 bytes (BrokenPipe) | 25.0 | original prompt, exactly |
+| d_t | same trickle | urlopen(timeout=25), per-read (the cfaefee behaviour) | STILL BLOCKED at 75 s | 75 | no model call |
+
+- Server trace: 8 requests before the controls marker, none FORBIDDEN, none under /_inference. Controls after it:
+  retriever rrf 403, PUT _inference 403, strategy auto 403. The first two GET /_license (licence.json and the
+  standalone probe) answered 404 because the self-generated licence was not installed yet; the standalone probe fell
+  back to basic by its error rule (probe_error BackendError), while the service's own start-up probe read basic,
+  active. `p3_es.sh up` now waits for GET /_license 200.
+- Cleanup: services stopped, container and network removed (ledgered). Secret scan of 45 files: 0 hits (token values
+  and the lab key) and 0 token-shaped strings.
+
 ## Not done / caveats
 - Three title-generation model requests also reached the stub (Kibana's own utility call); they are not part of the agent run.
 - The advanced setting is space-wide; the per-agent `workflow_ids` route remains administrator-only for this key.
