@@ -409,3 +409,19 @@ class XpX1Dense(unittest.TestCase):
         self.assertEqual(first_rank(["a", "b", "c"], own, {"s2"}), 2)
         self.assertIsNone(first_rank(["a"], own, {"s3"}))
         self.assertEqual(session_order(["a", "c", "b", "d"], own), ["s1", "s2", "s3"])
+
+
+class StageX2(unittest.TestCase):
+    def test_window_view_and_paired(self):
+        from datetime import date
+        from emlab.stage_x2_score import in_window, paired, view
+        self.assertTrue(in_window(date(2023, 5, 22), (date(2023, 5, 20), date(2023, 5, 20))))
+        self.assertFalse(in_window(date(2023, 5, 30), (date(2023, 5, 20), date(2023, 5, 20))))
+        own = {("f", 0): "s1", ("f", 1): "s2", ("r", 0): "s2", ("r", 1): "s3"}.get
+        v = view([("f", 0), ("f", 1), ("r", 0), ("r", 1)], own, {"s2", "s3"})
+        self.assertTrue(v["sess_any_10"] and v["sess_all_10"] and v["item_hit10"])
+        self.assertEqual(v["best_gold_session_rank"], 2)
+        v2 = view([("f", 0)], own, {"s2", "s3"})
+        self.assertFalse(v2["sess_any_10"] or v2["sess_all_10"])
+        p = paired({"a": 0, "b": 0, "c": 1}, {"a": 1, "b": 1, "c": 1}, {"a": "A", "b": "B", "c": "C"})
+        self.assertEqual((p["wins"], p["losses"], p["n"]), (2, 0, 3))
