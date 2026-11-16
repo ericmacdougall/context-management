@@ -162,6 +162,11 @@ Stability and preference-line check (stage X0C, 40 calls, feat/eval-scaffold 99f
 | The model's own author field can be relied on | One record's 19 facts carried no author at all | Did not hold: author should be set mechanically from the speaker of the cited quote |
 | Reported notional cost compares prompt variants | Costs differed 39% between arms with identical token counts, because of cache state | Did not hold: compare tokens, not reported dollars |
 
+Post-hoc analysis of the outputs on disk (no model; exploratory; rules written first; feat/eval-scaffold 5f4e04b):
+- A second pass adds about 31% more distinct facts (158 and 177 give a union of 200) and a third adds less; the set does not converge in three draws. By reading the 7 gold sessions, no fact needed for a question was present in only one run. So a second pass is NOT the default; it stays a conditional arm.
+- The unstable facts are mostly the less important ones: facts in only one run are 73% assistant-stated (against 42% of stable facts) and pass the quote check less often (0.893 against 0.977); user-stated facts reproduce 88% of the time, assistant-stated 67%.
+- Mechanical repair: of 130 quotes not verbatim in the cited round (of 2,698 facts), 98 are fixed by punctuation or ellipsis normalisation and 3 by re-pointing to another round; 29 are paraphrases; none is fully ungrounded. After repair about 98.9% are verbatim. The model's author field agrees with the speaker-derived one on all but 1 of 2,525 (and there the dataset's role labels were wrong), so mechanical author is a fill for missing fields, not a corrector.
+
 Cost extrapolation (random sample only; interval is sampling noise; the pool's longest sessions are 3.7 times longer than any sampled):
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
