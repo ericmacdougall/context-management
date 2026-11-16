@@ -108,5 +108,65 @@ class M5Idempotent(unittest.TestCase):
         self.assertEqual(len(c.events(A, s, "turn_input")), 1)
 
 
+class N2RefusedIds(unittest.TestCase):
+    def test_a_not_yet_existing_sequence_is_never_marked_processed(self):
+        s = c.sid()
+        first = c.make_input(A, s, "r0")
+        seq = int(first.rsplit("/", 1)[1])
+        future = f"{A}/{s}/{seq + 6}"
+        try:
+            c.dead_letter(A, s, future)             # a doorbell for an id that does not exist yet
+        except Exception:
+            pass
+        evs = [first] + [c.make_input(A, s, f"r{i}") for i in range(1, 6)]
+        self.assertEqual(c.unprocessed(A, s), evs)  # old: the input that later takes that sequence is skipped forever
+
+
+class L1Residual(unittest.TestCase):
+    def test_a_late_duplicate_is_reported_as_not_counted(self):
+        s = c.sid()
+        ev = c.make_input(A, s, "r1")
+        first = c.append_result(A, s, ev)
+        again = c.append_result(A, s, ev)            # a doorbell that arrives after the result exists
+        self.assertTrue(c.counted(first))
+        self.assertFalse(c.counted(again))            # old: no flag, so turns_done is incremented again
+
+
+class H2Residual(unittest.TestCase):
+    def test_a_callers_skewed_clock_cannot_grant_after_the_deadline(self):
+        s = c.sid()
+        past = c.now_ms() - 1000
+        r = c.request(A, s, "anchor-1", past)
+        self.assertEqual(c.resolve(A, s, r, past), "timeout")
+        res = c.grant(A, s, r, now_ms=past - 5000)    # a caller whose clock runs behind
+        self.assertNotEqual(res, "granted")           # old: trusts the caller's clock and says granted after the timeout
+
+
+class M5Residual(unittest.TestCase):
+    def test_same_request_id_with_different_content_is_an_error(self):
+        s = c.sid()
+        c.make_input(A, s, "same", n=1)
+        with self.assertRaises(Exception):
+            c.make_input(A, s, "same", n=2)           # old: silently returns the first input
+
+    def test_ids_that_could_make_keys_ambiguous_are_refused(self):
+        s = c.sid()
+        with self.assertRaises(Exception):
+            c.make_input(A, s, "x/y")
+
+
+class M4Residual(unittest.TestCase):
+    def test_deterministic_database_errors_are_not_retried_without_bound(self):
+        import psycopg
+        from engine import activities
+        det = getattr(activities, "DETERMINISTIC", ())
+        def transient(e):
+            return isinstance(e, activities.TRANSIENT) and not isinstance(e, det)
+        self.assertFalse(transient(psycopg.errors.QueryCanceled("statement timeout")))   # old: retried forever
+        self.assertFalse(transient(psycopg.errors.DiskFull("disk full")))
+        self.assertTrue(transient(psycopg.errors.AdminShutdown("restart")))
+        self.assertTrue(transient(psycopg.OperationalError("connection lost")))
+
+
 if __name__ == "__main__":
     unittest.main()

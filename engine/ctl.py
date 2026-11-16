@@ -17,6 +17,7 @@ from . import keys, pgstore, state
 from .common import DEMO_TENANT, pg_connect
 
 POOL = ThreadPoolExecutor(24)
+PG_RETRIES = {"n": 0}      # driver-side Postgres retries (evidence for the Postgres-crash run)
 
 
 def sids(tag, n):
@@ -43,6 +44,7 @@ async def blocking(fn, *a, budget=180):
         try:
             return await asyncio.get_running_loop().run_in_executor(POOL, lambda: fn(*a))
         except (psycopg.OperationalError, psycopg.InterfaceError, psycopg_pool.PoolTimeout, psycopg_pool.PoolClosed):
+            PG_RETRIES["n"] += 1
             if time.time() - t0 > budget:
                 raise
             await asyncio.sleep(1.0)
@@ -76,6 +78,9 @@ async def start_session(client, sid, a, ver, tq, stats, tenant=DEMO_TENANT):
     st = state.new_state(tenant, sid, ver=ver, expected_turns=a.expected, rollup_s=a.rollup_s,
                          approval_at=a.approval_at, approval_to_s=a.approval_to_s, can_len=a.can_len,
                          stop_after_rollups=a.stop_after_rollups)
+    for k in ("approval_poll_s", "approval_poll_max_s", "reconcile_s", "reconcile_max_s"):
+        if getattr(a, k, None) is not None:
+            st[k] = getattr(a, k)
     params = {k: st[k] for k in ("expected_turns", "rollup_s", "approval_at", "approval_to_s", "can_len", "stop_after_rollups")}
     await blocking(pgstore.append_once, tenant, keys.start_key(tenant, sid), sid, "start", "session_started",
                    {"params": params}, "driver", "user_typed")

@@ -12,8 +12,8 @@ from . import ctl, keys, lib, pgstore
 from .common import DEMO_TENANT as TENANT
 from .common import HOME
 
-CODE = "old" if "--code" in sys.argv and sys.argv[sys.argv.index("--code") + 1] == "old" else "new"
-CODE_DIR = HOME / ("old" if CODE == "old" else "code")
+CODE = sys.argv[sys.argv.index("--code") + 1] if "--code" in sys.argv else "new"      # new | old (62916ae) | prev (96a80b2)
+CODE_DIR = HOME / {"new": "code", "old": "old", "prev": "prev"}[CODE]
 RID = lib.RUN_ID.replace("r", "").replace("x", "")[-8:]
 TQ = f"it-{CODE}-{RID}"
 
@@ -255,7 +255,53 @@ async def case_l3(client):
             "passed": res is not None and res["sig"] >= sent and n == sent}
 
 
-CASES = {"m1": case_m1, "m2": case_m2, "m4": case_m4, "h3": case_h3, "l1": case_l1, "l2": case_l2, "l3": case_l3}
+async def case_n2(client):
+    """A doorbell for a sequence that does not exist yet must not cause that input to be skipped later."""
+    await up("v1")
+    stats = {"appended": 0, "signaled": 0, "retries": 0}
+    t = tag("n2")
+    await lib.launch(client, t, 1, TQ, stats, turns=0)
+    sid = ctl.sids(t, 1)[0]
+    first = pgstore.append_input(TENANT, sid, "r0", {"n": 0})[0]
+    await signal(client, sid, first)
+    await wait_for(lambda: len(results_of_session(sid)) == 1, 30)
+    seq = int(first.rsplit("/", 1)[1])
+    await signal(client, sid, f"{TENANT}/{sid}/{seq + 8}")       # the future id (a lagging replica, or a hostile caller)
+    await asyncio.sleep(6)
+    evs = [pgstore.append_input(TENANT, sid, f"r{i}", {"n": i})[0] for i in range(1, 7)]
+    for e in evs:
+        await signal(client, sid, e)
+    waited = await wait_for(lambda: len(results_of_session(sid)) == 7, 60)
+    return {"results": len(results_of_session(sid)), "processed_within_s": waited, "passed": len(results_of_session(sid)) == 7}
+
+
+async def case_m4b(client):
+    """The dead-letter path failing must not fail the workflow: an alert state is surfaced instead (new tree only:
+    the failure is injected with a test knob that the older trees do not have)."""
+    if CODE != "new":
+        return {"passed": False, "skipped": "knob ENGINE_FAIL_DEAD_LETTER exists only in the new tree; code reading only for older trees"}
+    await up("v1", env={"ENGINE_FAIL_DEAD_LETTER": "1"})
+    stats = {"appended": 0, "signaled": 0, "retries": 0}
+    t = tag("m4b")
+    await lib.launch(client, t, 1, TQ, stats, turns=0)
+    sid = ctl.sids(t, 1)[0]
+    e1 = pgstore.append_input(TENANT, sid, "r1", {"n": 1})[0]
+    from .tests import compat
+    compat.erase_subject(TENANT, sid)
+    await signal(client, sid, e1)
+    h = client.get_workflow_handle(ctl.wid(sid, TENANT))
+    st = "RUNNING"
+    t0 = time.time()
+    while time.time() - t0 < 60 and st == "RUNNING":
+        await asyncio.sleep(2)
+        st = await status(client, sid)
+    res = await h.result() if st == "COMPLETED" else None
+    return {"workflow_status": st, "workflow_result": res,
+            "passed": st == "COMPLETED" and res is not None and res["dead_failed"] == 1 and res["alert"].startswith("dead_letter_failed")}
+
+
+CASES = {"m1": case_m1, "m2": case_m2, "m4": case_m4, "h3": case_h3, "l1": case_l1, "l2": case_l2, "l3": case_l3,
+         "n2": case_n2, "m4b": case_m4b}
 
 
 async def main():

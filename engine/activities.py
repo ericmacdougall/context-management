@@ -18,6 +18,23 @@ from . import keys, pgstore
 
 POISON_AFTER_ATTEMPTS = 5
 TRANSIENT = (psycopg.OperationalError, psycopg.InterfaceError, psycopg_pool.PoolTimeout, psycopg_pool.PoolClosed)
+# OperationalError subclasses that are NOT an outage: retrying them without bound only hides a deterministic failure
+DETERMINISTIC = (psycopg.errors.QueryCanceled, psycopg.errors.DiskFull, psycopg.errors.OutOfMemory,
+                 psycopg.errors.ProgramLimitExceeded, psycopg.errors.InsufficientResources)
+
+
+def is_transient(e) -> bool:
+    return isinstance(e, TRANSIENT) and not isinstance(e, DETERMINISTIC)
+
+
+def note_transient(name, e):
+    """Evidence for the Postgres-crash run: every transient database error an activity met (class, activity, time)."""
+    path = os.environ.get("ENGINE_ERR_LOG")
+    if path:
+        import json
+        import time
+        with open(path, "a") as f:
+            f.write(json.dumps({"t": time.time(), "activity": name, "class": type(e).__name__}) + "\n")
 
 INFLIGHT = {}
 _lk = threading.Lock()
@@ -36,11 +53,12 @@ def tracked(fn):
             raise ApplicationError(str(e), type="InvalidInput", non_retryable=True)
         except pgstore.SubjectErased as e:
             raise ApplicationError(str(e), type="SubjectErased", non_retryable=True)
-        except TRANSIENT:
-            raise
         except ApplicationError:
             raise
         except Exception as e:
+            if is_transient(e):
+                note_transient(fn.__name__, e)
+                raise                      # an outage: retry without bound
             if _attempt() >= POISON_AFTER_ATTEMPTS:
                 raise ApplicationError(f"{type(e).__name__}", type="Poison", non_retryable=True)
             raise
@@ -97,11 +115,13 @@ def turn_effect(tenant: str, sid: str, event_id: str) -> str:
 
 @activity.defn
 @tracked
-def turn_append(tenant: str, sid: str, event_id: str, digest: str, effect_key: str, code: str) -> str:
-    eid = pgstore.append_result(tenant, sid, event_id, digest, effect_key, code, attempt=_attempt(),
-                                broken=os.environ.get("ENGINE_BROKEN_RESULT") == "1")
+def turn_append(tenant: str, sid: str, event_id: str, digest: str, effect_key: str, code: str) -> list:
+    eid, created = pgstore.append_result(tenant, sid, event_id, digest, effect_key, code, attempt=_attempt(),
+                                         broken=os.environ.get("ENGINE_BROKEN_RESULT") == "1")
     pgstore.maybe_crash("ENGINE_CRASH_AFTER_APPEND", "result_committed_not_acked")
-    return eid
+    # `counted`: this call created the result, OR it is a retry (attempt 2 or later: a first attempt may have created it
+    # and lost its acknowledgement). A first attempt that finds an existing result is a late duplicate doorbell.
+    return [eid, bool(created or _attempt() > 1)]
 
 
 @activity.defn
@@ -113,6 +133,8 @@ def reconcile(tenant: str, sid: str) -> list:
 @activity.defn
 @tracked
 def dead_letter(tenant: str, sid: str, event_id: str, reason: str) -> str:
+    if os.environ.get("ENGINE_FAIL_DEAD_LETTER") == "1":     # test knob: the dead-letter path itself fails
+        raise RuntimeError("dead-letter store unavailable")
     return pgstore.dead_letter(tenant, sid, event_id, reason)
 
 
@@ -126,8 +148,8 @@ def rollup(tenant: str, sid: str, deadline_ms: int) -> str:
 
 @activity.defn
 @tracked
-def approval_request(tenant: str, sid: str, anchor: str, deadline_ms: int) -> list:
-    rid, dl = pgstore.request_approval(tenant, sid, anchor, deadline_ms)
+def approval_request(tenant: str, sid: str, anchor: str, timeout_ms: int) -> list:
+    rid, dl = pgstore.request_approval(tenant, sid, anchor, timeout_ms)
     return [rid, dl]
 
 

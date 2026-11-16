@@ -20,6 +20,21 @@ if (RUN / "ABORT").exists():  # lets me neutralise queued chains without signall
 PROCS = {}
 RUN_ID = os.environ.setdefault("ENGINE_RUN_ID", f"r{int(time.time())}x{os.getpid()}")   # scopes payload stats to this run
 STARTED = time.time()
+
+
+def _read_git():
+    gc = pathlib.Path(__file__).parent / "GIT_COMMIT"
+    return json.loads(gc.read_text()) if gc.exists() else {"commit": "unknown", "dirty": None}
+
+
+START_GIT = _read_git()      # the commit this run STARTED from; every process of the run must still be on it
+
+
+def check_tree():
+    """Refuse to start anything, or to save a result, if the synced tree's commit file changed since the run began."""
+    now = _read_git()
+    if now != START_GIT:
+        raise RuntimeError(f"code tree changed mid-run: started on {START_GIT}, now {now}")
 RECORD = {"servers": [], "workers": [], "params": {}}
 
 
@@ -71,6 +86,7 @@ def pick_port():
 
 
 def start_server(cli, db, tport=48310, name=None):
+    check_tree()
     tport = tport or pick_port()
     name = name or f"server-{tport}"
     if port_open(tport) or port_open(tport + 10) or port_open(tport + 20):
@@ -100,6 +116,7 @@ def stop_server(name=None, hard=False, timeout=60):
 
 
 def start_worker(name, venv, variant, ident, tq, cwd=None, extra=(), env=None, crash_after=0, home=None):
+    check_tree()
     name = _u(name)
     _clear(name)
     cmd = [str(HOME / venv / "bin/python"), "-m", "engine.worker", "--variant", variant, "--identity", ident,
@@ -130,7 +147,8 @@ def stop_worker(name, hard=False, timeout=60):
 
 def ns(**kw):
     d = dict(expected=0, rollup_s=0, approval_at=0, approval_to_s=0, stop_after_rollups=0, can_len=0, turns=0,
-             period=1.0, ver=1, task_queue="sess")
+             period=1.0, ver=1, task_queue="sess", approval_poll_s=None, approval_poll_max_s=None, reconcile_s=None,
+             reconcile_max_s=None)
     d.update(kw)
     return argparse.Namespace(**d)
 
@@ -194,8 +212,7 @@ def provenance():
     import platform
     import sys
     from importlib import metadata
-    gc = pathlib.Path(__file__).parent / "GIT_COMMIT"
-    git = json.loads(gc.read_text()) if gc.exists() else {"commit": "unknown", "dirty": None}
+    git = START_GIT
     return {"git_commit": git.get("commit"), "git_dirty": git.get("dirty"), "run_id": RUN_ID,
             "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(STARTED)),
             "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "host": platform.node(),
@@ -204,6 +221,7 @@ def provenance():
 
 
 def save(name, obj):
+    check_tree()
     obj = {"provenance": provenance(), **obj}
     p = HOME / "results" / f"{name}-{RUN_ID.replace('r', '', 1)}.json"   # never overwrite another run's result
     json.dump(obj, open(p, "w"), indent=1, default=str)
@@ -249,6 +267,7 @@ def start_server_try(cli, db, tport, wait=20):
 def start_loop(name, venv, variant, ident, tq, env=None, seed=1, crashes=0):
     """workerloop.sh under Popen: restarts the worker after each abrupt self-exit until stop-<name> appears. While
     `crashes` remain the worker ends itself abruptly after a random 2 to (CMAX+1) seconds."""
+    check_tree()
     name = _u(name)
     _clear(name)
     e = {**os.environ, **(env or {})}

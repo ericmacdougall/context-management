@@ -2,3 +2,4 @@ engine/GIT_COMMIT
 .msg*.txt
 __pycache__/
 *.tmp
+*.stage1.py

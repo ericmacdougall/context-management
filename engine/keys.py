@@ -6,12 +6,19 @@ rebuilt in a fresh engine, derives the same key and so cannot repeat the effect.
 import re
 
 TENANT_RE = re.compile(r"^[A-Za-z0-9_.\-]{1,40}$")
+ID_PART_RE = re.compile(r"^[A-Za-z0-9_.\-]{1,120}$")     # session ids and request ids: no '/', so keys cannot be ambiguous
 
 
 def check_tenant(tenant):
     if not isinstance(tenant, str) or not TENANT_RE.match(tenant):
         raise ValueError("bad tenant id")
     return tenant
+
+
+def check_part(value, what="id"):
+    if not isinstance(value, str) or not ID_PART_RE.match(value):
+        raise ValueError(f"bad {what}")
+    return value
 
 
 def _k(tenant, *parts):
@@ -60,8 +67,9 @@ def start_key(tenant, session_id: str) -> str:
 
 
 def input_key(tenant, session_id: str, request_id: str) -> str:
-    """Input creation is idempotent by a caller-supplied request id (an API retry cannot create a second input)."""
-    return _k(tenant, "input", session_id, request_id)
+    """Input creation is idempotent by a caller-supplied request id (an API retry cannot create a second input).
+    Session id and request id may not contain '/', so two (session, request) pairs cannot produce one key."""
+    return _k(tenant, "input", check_part(session_id, "session id"), check_part(request_id, "request id"))
 
 
 def dead_key(tenant, input_event_id: str) -> str:

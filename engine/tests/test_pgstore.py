@@ -58,15 +58,14 @@ class PgStoreTests(unittest.TestCase):
         self.assertEqual(pgstore.unprocessed_inputs(T, self.sid), [])
 
     def test_approval_happy_path_and_request_binding(self):
-        r, dl = pgstore.request_approval(T, self.sid, "a1", int(time.time() * 1000) + 60000)
+        r, dl = pgstore.request_approval(T, self.sid, "a1", 60000)
         self.assertEqual(pgstore.resolve_approval(T, self.sid, r), "pending")
         self.assertEqual(pgstore.grant_approval(T, self.sid, r, "approver-1"), "granted")
         self.assertEqual(pgstore.grant_approval(T, self.sid, r, "approver-2"), "duplicate")
         self.assertEqual(pgstore.resolve_approval(T, self.sid, r), "approval_granted")
 
     def test_grant_recorded_after_the_deadline_by_a_bypass_is_ignored(self):
-        dl = int(time.time() * 1000) + 300
-        r, _ = pgstore.request_approval(T, self.sid, "a1", dl)
+        r, _ = pgstore.request_approval(T, self.sid, "a1", 300)
         time.sleep(0.6)
         pgstore.append_once(T, keys.approval_grant_key(T, r), self.sid, "approval", "approval_grant",
                             {"request": r, "approver": "approver-1"})          # bypasses the grant API

@@ -31,17 +31,17 @@ def variant(code, doc, edits, post=None):
     (HERE / f"{code}.py").write_text(t)
 
 
-POLICY = '        await act("turn_policy", t, sid, eid)\n'
-READ = '        digest = await act("turn_read", t, sid, eid)\n        if digest == "defer":\n            return False\n'
-APPEND = '        await act("turn_append", t, sid, eid, digest, key, CODE)\n'
-PATCHED_POLICY = '        policy = workflow.patched("policy-check")\n        if policy:\n            await act("turn_policy", t, sid, eid)\n'
-APPEND_P = '        await act("turn_append", t, sid, eid, digest, key, CODE + ("+policy" if policy else ""))\n'
+POLICY = '        await act_turn("turn_policy", t, sid, eid)\n'
+READ = '        digest = await act_turn("turn_read", t, sid, eid)\n        if digest == "defer":\n            return "defer"\n'
+APPEND = '        res = await act_turn("turn_append", t, sid, eid, digest, key, CODE)\n'
+PATCHED_POLICY = '        policy = workflow.patched("policy-check")\n        if policy:\n            await act_turn("turn_policy", t, sid, eid)\n'
+APPEND_P = '        res = await act_turn("turn_append", t, sid, eid, digest, key, CODE + ("+policy" if policy else ""))\n'
 
 variant("v2i", "policy step added unguarded (incompatible)", [(READ, READ + POLICY)])
 variant("v2p", "policy step added behind patched()", [(READ, READ + PATCHED_POLICY), (APPEND, APPEND_P)])
 variant("v3p", "policy and audit steps behind patched()", [
     (READ, READ + PATCHED_POLICY),
-    (APPEND, APPEND_P + '        if workflow.patched("audit-step"):\n            await act("turn_audit", t, sid, eid)\n')])
+    (APPEND, APPEND_P + '        if workflow.patched("audit-step"):\n            await act_turn("turn_audit", t, sid, eid)\n')])
 
 HOP_EDITS = [
     ('        self.sig = 0\n', '        self.sig = 0\n        self.rotate = False\n'),
@@ -50,24 +50,24 @@ HOP_EDITS = [
     ('lambda: bool(self.pending) or self.finish,', 'lambda: bool(self.pending) or self.finish or self.rotate,'),
     # the configuration read happens BEFORE handlers are drained and state is snapshotted, so no signal that arrives
     # during the activity can be dropped from the carried state
-    ('                await workflow.wait_condition(workflow.all_handlers_finished)\n                st["pend"]',
-     '                tq = await act("get_config", "target_queue")\n'
-     '                await workflow.wait_condition(workflow.all_handlers_finished)\n                st["pend"]'),
-    ('                workflow.continue_as_new(st)',
-     '                if tq and tq != workflow.info().task_queue:\n'
-     '                    workflow.continue_as_new(st, task_queue=tq)\n'
-     '                workflow.continue_as_new(st)'),
+    ('        await workflow.wait_condition(workflow.all_handlers_finished)\n        st["pend"]',
+     '        tq = await act("get_config", "target_queue")\n'
+     '        await workflow.wait_condition(workflow.all_handlers_finished)\n        st["pend"]'),
+    ('        workflow.continue_as_new(st)',
+     '        if tq and tq != workflow.info().task_queue:\n'
+     '            workflow.continue_as_new(st, task_queue=tq)\n'
+     '        workflow.continue_as_new(st)'),
 ]
 variant("v1c", "continue-as-new hops to the task queue configured in Postgres; rotate signal", HOP_EDITS)
 variant("v2c", "v1c plus the unguarded policy step", HOP_EDITS + [(READ, READ + POLICY)])
 
 # L3 control: the old order (configuration read AFTER the snapshot) loses signals that arrive during the read
 OLD_HOP = [e for e in HOP_EDITS[:4]] + [
-    ('                workflow.continue_as_new(st)',
-     '                tq = await act("get_config", "target_queue")\n'
-     '                if tq and tq != workflow.info().task_queue:\n'
-     '                    workflow.continue_as_new(st, task_queue=tq)\n'
-     '                workflow.continue_as_new(st)')]
+    ('        workflow.continue_as_new(st)',
+     '        tq = await act("get_config", "target_queue")\n'
+     '        if tq and tq != workflow.info().task_queue:\n'
+     '            workflow.continue_as_new(st, task_queue=tq)\n'
+     '        workflow.continue_as_new(st)')]
 variant("v1co", "OLD ORDER hop (config read after the snapshot): control for signals dropped during get_config", OLD_HOP)
 
 variant("v2s", "state schema v2 (rename + new field), migrated on entry; no other change", [
@@ -75,7 +75,7 @@ variant("v2s", "state schema v2 (rename + new field), migrated on entry; no othe
     ('        self.st = dict(st)\n', '        self.st = state_mod.migrate(dict(st))\n'),
 ], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]').replace('"approval": st["approval"],', '"approval": st["approval"], "ver": st["ver"],'))
 variant("v1n", "NAIVE continue-as-new: drops pending signals at the boundary and never reconciles (control that must fail)", [
-    ('                st["pend"] = [e for e in self.pending if e not in self.done][:MAX_CARRY]\n', '                st["pend"] = []\n'),
+    ('        st["pend"] = [e for e in self.pending if e not in self.done][:MAX_CARRY]\n', '        st["pend"] = []\n'),
     ('        await self._reconcile()\n        while True:', '        while True:'),
     ('"reconcile_s": 20', '"reconcile_s": 0')])
 
@@ -84,9 +84,8 @@ variant("v2sx", "BROKEN state migration (loses the renamed counter): control tha
     ('        self.st = dict(st)\n', '        self.st = state_mod.migrate_lossy(dict(st))\n'),
 ], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]'))
 
-
-CAV = ('                workflow.continue_as_new(st)',
-       '                workflow.continue_as_new(st, initial_versioning_behavior=workflow.ContinueAsNewVersioningBehavior.AUTO_UPGRADE)')
+CAV = ('        workflow.continue_as_new(st)',
+       '        workflow.continue_as_new(st, initial_versioning_behavior=workflow.ContinueAsNewVersioningBehavior.AUTO_UPGRADE)')
 variant("v1cv", "continue-as-new asks to be moved to the current Worker Deployment Version (AUTO_UPGRADE)", [CAV])
 variant("v2cv", "v1cv plus the unguarded policy step (incompatible with v1cv histories)", [CAV, (READ, READ + POLICY)])
 

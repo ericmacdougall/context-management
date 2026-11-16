@@ -26,6 +26,10 @@ class InvalidInput(Exception):
     """The referenced event is not a valid input for this tenant and session (never retry)."""
 
 
+class RequestConflict(ValueError):
+    """The same request id was reused with different content."""
+
+
 class SubjectErased(Exception):
     """The subject's key was destroyed: the content is unreadable and no event can be appended (never retry)."""
 
@@ -58,7 +62,8 @@ def _append_locked(cur, tenant, sid, ev):
         (tenant, sid)).fetchone()
     enc = cur.execute("select mem_enc(%s,%s,%s)", (tenant, subject_of(sid), json.dumps(ev["content"], sort_keys=True))
                       ).fetchone()[0]
-    ts = ev.get("ts") or datetime.now(timezone.utc)
+    # every event time comes from the Postgres clock, so API hosts and worker hosts cannot disagree about order
+    ts = ev.get("ts") or cur.execute("select clock_timestamp()").fetchone()[0]
     eid = f"{tenant}/{sid}/{next_seq}"
     h = chain.event_hash(last_hash, tenant, sid, next_seq, eid, _iso(ts), ev["actor"], ev["trust"], ev["kind"],
                          subject_of(sid), enc)
@@ -82,10 +87,23 @@ def append(tenant, sid, kind, content, actor="driver", trust="user_typed"):
             return _append_locked(cur, tenant, sid, {"kind": kind, "content": content, "actor": actor, "trust": trust})
 
 
-def append_once(tenant, key, sid, step, kind, content, actor="engine", trust="assistant"):
+def pg_now_ms(conn=None):
+    q = "select (extract(epoch from clock_timestamp()) * 1000)::bigint"
+    if conn is not None:
+        return conn.execute(q).fetchone()[0]
+    with pool().connection() as c:
+        return c.execute(q).fetchone()[0]
+
+
+def fingerprint_of(content):
+    return hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()[:32]
+
+
+def append_once(tenant, key, sid, step, kind, content, actor="engine", trust="assistant", fingerprint=None):
     """Idempotent append: exactly one event per key, however many times this is called or retried. The effects row
     and the event commit in one transaction, so a crash leaves neither or both. Returns (event_id, created)."""
     keys.check_tenant(tenant)
+    keys.check_part(sid, "session id")
     if not key.startswith(tenant + "/"):
         raise ValueError("idempotency key does not start with the tenant")
     with pool().connection() as conn:
@@ -94,12 +112,15 @@ def append_once(tenant, key, sid, step, kind, content, actor="engine", trust="as
             cur.execute("insert into sessions(tenant_id, session_id) values (%s,%s) on conflict do nothing",
                         (tenant, sid))
             cur.execute("select 1 from sessions where tenant_id=%s and session_id=%s for update", (tenant, sid))
-            got = cur.execute("insert into effects(key,tenant_id,session_id,step,status) values (%s,%s,%s,%s,'done') "
-                              "on conflict do nothing returning key", (key, tenant, sid, step)).fetchone()
+            got = cur.execute("insert into effects(key,tenant_id,session_id,step,status,fingerprint) "
+                              "values (%s,%s,%s,%s,'done',%s) on conflict do nothing returning key",
+                              (key, tenant, sid, step, fingerprint)).fetchone()
             if got is None:
-                row = cur.execute("select result_ref, tenant_id from effects where key=%s", (key,)).fetchone()
+                row = cur.execute("select result_ref, tenant_id, fingerprint from effects where key=%s", (key,)).fetchone()
                 if row[1] != tenant:
                     raise ValueError("key owned by another tenant")
+                if fingerprint is not None and row[2] is not None and row[2] != fingerprint:
+                    raise RequestConflict("request id reused with different content")
                 return row[0], False
             eid = _append_locked(cur, tenant, sid, {"kind": kind, "content": content, "actor": actor, "trust": trust})
             cur.execute("update effects set result_ref=%s where key=%s and tenant_id=%s", (eid, key, tenant))
@@ -109,7 +130,7 @@ def append_once(tenant, key, sid, step, kind, content, actor="engine", trust="as
 def append_input(tenant, sid, request_id, content):
     """Create a turn input exactly once per caller-supplied request id. Returns (event_id, created)."""
     return append_once(tenant, keys.input_key(tenant, sid, request_id), sid, "input", "turn_input", content,
-                       "driver", "user_typed")
+                       "driver", "user_typed", fingerprint=fingerprint_of(content))
 
 
 def _event_row(conn, tenant, sid, event_id):
@@ -161,6 +182,18 @@ def maybe_crash(knob, where):
         os._exit(137)
 
 
+def pause_if_asked():
+    """Test knob (zombie worker): while the named file exists this activity thread holds its task (applied, not
+    recorded), as a worker that was paused or partitioned would. It resumes when the file is removed."""
+    path = os.environ.get("ENGINE_PAUSE_FILE")
+    if path and os.path.exists(path):
+        t0 = time.time()
+        while os.path.exists(path) and time.time() - t0 < 600:
+            time.sleep(0.2)
+        with open(os.environ.get("ENGINE_CRASH_LOG", "/dev/null"), "a") as f:
+            f.write(json.dumps({"t": time.time(), "how": "resumed-after-pause", "held_s": round(time.time() - t0, 1)}) + "\n")
+
+
 def external_effect(tenant, sid, input_event_id, worker, gap_s=0.0, broken_keys=False, attempt=0):
     """One idempotent external effect. The external system dedups on the idempotency key; the effects row is the
     engine-side record. `gap_s` widens the window between 'applied' and 'recorded' so crash tests land in it.
@@ -183,6 +216,7 @@ def external_effect(tenant, sid, input_event_id, worker, gap_s=0.0, broken_keys=
             if gap_s:
                 time.sleep(gap_s)
             maybe_crash("ENGINE_CRASH_IN_GAP", "effect_applied_not_recorded")
+            pause_if_asked()
             conn.execute("insert into effects(key,tenant_id,session_id,step,status,result_ref) "
                          "values (%s,%s,%s,'effect','done',%s) on conflict do nothing",
                          (key, tenant, sid, input_event_id))
@@ -207,17 +241,15 @@ def append_result(tenant, sid, input_event_id, digest, effect_key, code, attempt
     rk = keys.result_key(tenant, input_event_id)
     if broken and attempt > 1:  # fence-off control: a RETRY derives a different key (the first attempt keeps the real one)
         rk = f"{rk}/a{attempt}"
-    eid, _ = append_once(tenant, rk, sid, "turn_result", "turn_result",
-                         {"in": input_event_id, "digest": digest, "effect": effect_key, "code": code})
-    return eid
+    return append_once(tenant, rk, sid, "turn_result", "turn_result",
+                       {"in": input_event_id, "digest": digest, "effect": effect_key, "code": code})   # (event id, created)
 
 
 def dead_letter(tenant, sid, input_event_id, reason):
     """Poison path: the input counts as processed (reconcile skips it) and the reason is recorded. For an erased
     subject no event can be written (the key is gone), so only the effects row records it."""
     import psycopg
-    if not keys.belongs_to(tenant, sid, input_event_id):
-        raise InvalidInput("event id is not of this tenant and session")
+    check_turn_input(tenant, sid, input_event_id)       # never mark an id that is not an existing turn_input of this session
     key = keys.dead_key(tenant, input_event_id)
     try:
         eid, _ = append_once(tenant, key, sid, "dead_letter", "turn_dead_letter",
@@ -233,13 +265,15 @@ def dead_letter(tenant, sid, input_event_id, reason):
 
 
 # ------------------------------------------------------------------ approvals bound to one request id
-def request_approval(tenant, sid, anchor, deadline_ms):
-    """One request per gate anchor. Returns (request_id, deadline_ms) as stored (a retry returns the first)."""
+def request_approval(tenant, sid, anchor, timeout_ms):
+    """One request per gate anchor; the deadline is Postgres time plus the timeout. Returns (request_id, deadline_ms)
+    as stored (a retry returns the first)."""
     key = keys.approval_request_key(tenant, sid, anchor)
+    deadline_ms = pg_now_ms() + int(timeout_ms)
     eid, created = append_once(tenant, key, sid, "approval", "approval_requested",
-                               {"deadline_ms": int(deadline_ms), "anchor": anchor})
+                               {"deadline_ms": deadline_ms, "anchor": anchor})
     if created:
-        return eid, int(deadline_ms)
+        return eid, deadline_ms
     return eid, _request_info(tenant, sid, eid)[0]
 
 
@@ -252,28 +286,45 @@ def _request_info(tenant, sid, request_id):
 
 
 def grant_approval(tenant, sid, request_id, approver, now_ms=None):
-    """Record a grant for ONE request. Rejected (and nothing written) unless the request exists in this tenant and
-    session, the approver is named, and the deadline has not passed. Returns 'granted', 'duplicate' or 'rejected:..'."""
-    now_ms = int(time.time() * 1000) if now_ms is None else int(now_ms)
+    """Record a grant for ONE request, atomically with the checks that no resolution exists yet and that the Postgres
+    clock is still before the deadline (`now_ms` is accepted for compatibility and IGNORED: a caller's clock is never
+    trusted). Returns 'granted', 'duplicate' or 'rejected:<reason>'."""
+    keys.check_tenant(tenant)
+    keys.check_part(sid, "session id")
     if not isinstance(approver, str) or not APPROVER_RE.match(approver):
         return "rejected:approver"
     try:
         deadline_ms, _ = _request_info(tenant, sid, request_id)
     except InvalidInput:
         return "rejected:no_such_request"
-    if now_ms > deadline_ms:
-        return "rejected:after_deadline"
-    _, created = append_once(tenant, keys.approval_grant_key(tenant, request_id), sid, "approval", "approval_grant",
-                             {"request": request_id, "approver": approver}, "approver", "user_typed")
-    return "granted" if created else "duplicate"
+    gkey = keys.approval_grant_key(tenant, request_id)
+    with pool().connection() as conn:
+        with conn.transaction():
+            cur = conn.cursor()
+            cur.execute("select 1 from sessions where tenant_id=%s and session_id=%s for update", (tenant, sid))
+            if cur.execute("select 1 from effects where tenant_id=%s and key=%s",
+                           (tenant, keys.approval_resolve_key(tenant, request_id))).fetchone():
+                return "rejected:already_resolved"
+            if pg_now_ms(conn) > deadline_ms:
+                return "rejected:after_deadline"
+            got = cur.execute("insert into effects(key,tenant_id,session_id,step,status) values (%s,%s,%s,'approval','done') "
+                              "on conflict do nothing returning key", (gkey, tenant, sid)).fetchone()
+            if got is None:
+                return "duplicate"
+            eid = _append_locked(cur, tenant, sid, {"kind": "approval_grant",
+                                                    "content": {"request": request_id, "approver": approver},
+                                                    "actor": "approver", "trust": "user_typed"})
+            cur.execute("update effects set result_ref=%s where key=%s and tenant_id=%s", (eid, gkey, tenant))
+            return "granted"
 
 
 def resolve_approval(tenant, sid, request_id, now_ms=None):
-    """Postgres decides, from the request event: granted if a grant bound to THIS request exists, was recorded after
-    the request and no later than its deadline; timed out once the deadline has passed; else pending."""
-    now_ms = int(time.time() * 1000) if now_ms is None else int(now_ms)
+    """Postgres decides, from the request event and the Postgres clock: granted if a grant bound to THIS request
+    exists, was recorded after the request and no later than its deadline; timed out once the deadline has passed;
+    else pending. (`now_ms` is accepted for compatibility and ignored.)"""
     deadline_ms, req_ts = _request_info(tenant, sid, request_id)
     with pool().connection() as conn:
+        now_ms = pg_now_ms(conn)
         done = conn.execute("select result_ref from effects where tenant_id=%s and key=%s",
                             (tenant, keys.approval_resolve_key(tenant, request_id))).fetchone()
         if done:

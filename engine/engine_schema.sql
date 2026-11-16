@@ -33,3 +33,6 @@ alter table effect_ledger add column if not exists tenant_id text;
 create unique index if not exists effects_tenant_key on effects (tenant_id, key);
 create index if not exists ext_calls_tenant on ext_calls (tenant_id);
 create index if not exists effect_ledger_tenant on effect_ledger (tenant_id);
+
+-- v3 (delta review): a request id reused with different content is an error (fingerprint of the first content)
+alter table effects add column if not exists fingerprint text;

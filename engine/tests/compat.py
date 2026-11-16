@@ -9,6 +9,7 @@ from engine import activities, keys, pgstore
 from engine.common import pg_connect
 
 NEW = hasattr(pgstore, "grant_approval")
+NEWER = hasattr(pgstore, "pg_now_ms")      # delta-review code: the approval deadline is Postgres time plus a timeout
 
 
 def sid():
@@ -24,6 +25,8 @@ def make_input(tenant, s, request_id, n=1):
 def request(tenant, s, anchor, deadline_ms):
     """Returns a request id (new code) or None (old code has no request ids)."""
     if NEW:
+        if NEWER:
+            return pgstore.request_approval(tenant, s, anchor, deadline_ms - now_ms())[0]   # timeout from now (Postgres time)
         return pgstore.request_approval(tenant, s, anchor, deadline_ms)[0]
     if tenant != "t1":      # the old activities hard-code the tenant: write the request the way they would
         pgstore.append_once(keys.approval_key(s, "request"), s, "approval", "approval_requested",
@@ -79,6 +82,16 @@ def unprocessed(tenant, s):
 
 def events(tenant, s, kind):
     return pgstore.events_of(tenant, s, kind) if NEW else pgstore.events_of(s, kind, tenant=tenant)
+
+
+def dead_letter(tenant, s, event_id, reason="InvalidInput"):
+    return pgstore.dead_letter(tenant, s, event_id, reason) if NEW else activities.dead_letter(s, event_id, reason) \
+        if hasattr(activities, "dead_letter") else None
+
+
+def counted(result):
+    """Did the turn_append result say the turn is newly counted? Code that does not say counts every call."""
+    return result[1] if isinstance(result, list) else True
 
 
 def erase_subject(tenant, s):
