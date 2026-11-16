@@ -450,26 +450,44 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
                 g.check_gate({"m": obj}, "127.0.0.1", None, True)
 
     def test_gateway_cli_no_longer_offers_subscription_backends(self):
+        """Assertion-only (review R3-6, R4): the CLI's own --help lists no subscription backend, and argv naming one never
+        constructs a backend or reaches Gateway. On a tree that still offers them, the help assertion FAILS (it does not
+        error), and the recorders see the construction."""
         import contextlib
         import io
         from unittest import mock
         import memcore.gateway as g
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            try:
+                g.main(["--help"])
+            except SystemExit:
+                pass
+        helptext = out.getvalue()
+        self.assertIn("--backend", helptext)
+        for b in ("claude-cli", "codex-cli"):
+            self.assertNotIn(b, helptext)
+        reached = []
 
-        class _Started(Exception):
+        class _Stop(BaseException):        # BaseException: not swallowed by the CLI's own except-Exception handlers
             pass
 
-        def started(*a, **k):          # the old code would build and serve the backend: stop there instead of serving
-            raise _Started()
+        def record(name):
+            def f(*a, **k):
+                reached.append(name)
+                raise _Stop()
+            return f
+        from memcore.adapters import claude_cli, codex_cli
         for b in ("claude-cli", "codex-cli"):
-            # argv valid on the old CLI (no --real-ids there), so only the removed choice can make this exit 2 (review R3-6)
-            err = io.StringIO()
-            with restored_default_guard(), mock.patch.object(g, "Gateway", started), \
-                    contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as c:
-                g.main(["--backend", b, "--out", tempfile.mkdtemp(), "--dev-subscription-backends"])
-            self.assertEqual(c.exception.code, 2)
-            self.assertIn("invalid choice", err.getvalue())
-            self.assertIn(b, err.getvalue())
-
+            with restored_default_guard(), mock.patch.object(g, "Gateway", record("Gateway")), \
+                    mock.patch.object(claude_cli, "ClaudeCliChat", record("ClaudeCliChat")), \
+                    mock.patch.object(codex_cli, "CodexCliChat", record("CodexCliChat")), \
+                    contextlib.redirect_stderr(io.StringIO()):
+                try:
+                    g.main(["--backend", b, "--out", tempfile.mkdtemp(), "--dev-subscription-backends"])
+                except (SystemExit, _Stop):
+                    pass
+        self.assertEqual(reached, [])
 
 if __name__ == "__main__":
     unittest.main()
