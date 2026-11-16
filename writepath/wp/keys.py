@@ -25,6 +25,8 @@ class KeyStore:
 
       keys(tenant, subjects, create=False) -> {subject: key bytes | None}   (create refuses a destroyed subject)
       tenant_hmac(tenant, text) / tenant_hmac_many(tenant, texts)          keyed hashes under the tenant key
+      chain_key(tenant) -> bytes                                            log-chain MAC key (row 6); a KMS would
+                                                                            run the MAC itself (HMAC key, no export)
       is_destroyed(tenant, subject), key_exists(tenant, subject)
       destroy(tenant, subject)                                              idempotent logical delete
       purge(timeout_s) -> {"purged": bool, ...}                          physical removal; False = not proven gone
@@ -75,6 +77,11 @@ class KeyService(KeyStore):
             self.conn.execute("insert into tenant_keys values (%s,%s) on conflict do nothing", (tenant, os.urandom(32).hex()))
             k = bytes.fromhex(self.conn.execute("select hkey_hex from tenant_keys where tenant_id=%s", (tenant,)).fetchone()[0])
         return [hmac.new(k, x.encode(), hashlib.sha256).hexdigest() for x in texts]
+
+    def chain_key(self, tenant):
+        """Per-tenant chain MAC key, derived from the tenant key (domain-separated). Not a subject key: erasure does not
+        destroy it, so the chain stays verifiable after an erasure."""
+        return bytes.fromhex(self.tenant_hmac(tenant, "chain-key:v1"))
 
     def is_destroyed(self, tenant, subject):
         return self.conn.execute("select 1 from destroyed where tenant_id=%s and subject_id=%s", (tenant, subject)).fetchone() is not None

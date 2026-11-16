@@ -149,6 +149,7 @@ create table events (
   content_digest text not null,                             -- sha256 of the ciphertext; the chain hashes THIS, so redaction keeps the chain verifiable
   mentions text[] not null default '{}',                    -- subjects whose declared identifiers the write-time matcher found
   mention_scan_upto bigint not null default 0,              -- identifier-set version the matcher ran against
+  secret_scan text not null default '',                    -- secret-scanner version the app ran (row 19); must be current
   prev_hash text not null, hash text not null,
   decision_item text, decision_action text, based_on_event_id text, source_event_id text,
   lease_scope text not null, lease_epoch bigint not null,
@@ -176,6 +177,9 @@ create table decision_heads (
   primary key (tenant_id, item)
 );
 
+-- row 19: the secret-scanner version every new event must carry (wp/secrets.py VERSION); bumping it is a migration
+create function wp_secret_scan_version() returns text language sql immutable as $$ select 's1'::text $$;
+
 create function events_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare er boolean; ch record; src record; hd record; prior record; mx bigint;
 begin
@@ -183,6 +187,9 @@ begin
     raise exception 'scope_not_bound table=events presented=% required=session:%', NEW.lease_scope, NEW.session_id using errcode = 'WPS12';
   end if;
   perform wp_fence(NEW.tenant_id, NEW.lease_scope, NEW.lease_epoch);
+  if NEW.secret_scan is distinct from wp_secret_scan_version() then
+    raise exception 'secret_scan_missing_or_stale presented=% required=%', NEW.secret_scan, wp_secret_scan_version() using errcode = 'WPS21';
+  end if;
   select erased into er from subjects where tenant_id = NEW.tenant_id and subject_id = NEW.subject_id for share;
   if er is null then raise exception 'unknown_subject' using errcode = 'WPS02'; end if;
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;

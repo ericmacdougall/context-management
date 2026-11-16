@@ -10,7 +10,7 @@ s = session(conn, t)
 r = log.append(conn, ks, s, [msg(0, "hello zqsmokey", "Y"), msg(1, "X says zqsmokex", "X"), fact(2, "X", "Xavier", "diagnosis", "zqsmokeflu"),
                              fact(3, "Y", "Yolanda", "colour", "blue")])
 print("append", {k: (len(v) if isinstance(v, list) else v) for k, v in r.items()})
-print("chain", log.verify_chain(conn, t, "s1"))
+print("chain", log.verify_chain(conn, t, "s1", ks))
 p = projector.Projector(conn, ks, es, t)
 print("projector run", p.run(), p.stats)
 rd = reader.Reader(conn, es, t)

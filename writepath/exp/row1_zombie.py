@@ -73,7 +73,7 @@ def one(arm, stall_at):
         w["B_confirm"] = "refused"
     accepted = sum(len(r["accepted"]) for r in w["zombie_results"])
     quarantined = sum(r["quarantined"] for r in w["zombie_results"])
-    ok_chain, n_chain, epochs = log.verify_chain(cA, t, "s1")
+    ok_chain, n_chain, epochs = log.verify_chain(cA, t, "s1", ksA)
     jobs_zombie = cA.execute("select count(*) from analyst_jobs where tenant_id=%s and lease_epoch=%s", (t, A.epoch)).fetchone()[0] - 5
     shown, conf_epoch = cA.execute("select shown_count, confirmed_epoch from inbox where tenant_id=%s and item_id='i1'", (t,)).fetchone()
     late_seq = cA.execute("select count(*) from events where tenant_id=%s and lease_epoch=%s and seq > 5", (t, A.epoch)).fetchone()[0]

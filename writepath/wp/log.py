@@ -1,12 +1,14 @@
 """Append path, inbox, analyst jobs and decisions. Every effect presents the caller's lease epoch; the store refuses a
 stale one (schema.sql). Stale appends are kept as unadopted rows in `quarantine` (ciphertext), never in the chain."""
 import hashlib
+import hmac
 import json
 import uuid
 
 import psycopg
 
-from . import keys as K, mentions as M
+from . import keys as K, mentions as M, secrets as SEC
+from .secrets import SecretDetected  # noqa: F401  (re-exported for callers)
 from .lease import is_stale_error, session_scope
 
 ANALYST_KINDS = ("message",)        # kinds whose append also enqueues an analyst job (same transaction)
@@ -28,11 +30,15 @@ def digest(content_enc):
     return hashlib.sha256(bytes(content_enc)).hexdigest()
 
 
-def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source, mentions=(), scan=0):
+def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source, mentions=(), scan=0,
+               key=None):
     """The chain covers the ciphertext DIGEST (so erasure can null the ciphertext and the chain still verifies), the
-    mentions and the identifier-set version the matcher ran against."""
+    mentions and the identifier-set version the matcher ran against. With `key` (the tenant chain key from the key
+    store, row 6) each link is an HMAC: whoever can write the events database but not read the key store cannot
+    produce a link that verifies, however correctly chained. key=None is the unkeyed form (controls only)."""
     base = _h(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source)
-    return _h(base, ",".join(mentions), scan) if (mentions or scan) else base
+    h = _h(base, ",".join(mentions), scan) if (mentions or scan) else base
+    return hmac.new(key, h.encode(), hashlib.sha256).hexdigest() if key is not None else h
 
 
 def _noop(_name, _data=None):
@@ -60,20 +66,22 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
     Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision."""
     t, sid = lease.tenant, lease.scope.split(":", 1)[1]
     prepared = []
+    scan_v = SEC.check([e["content"] for e in events], "event")     # row 19: before anything is sealed or stored
     keys = ks.keys(t, [e["subject_id"] for e in events], create=True)
     for e in events:
         eid = uuid.uuid4().hex
         d = e.get("decision") or {}
         enc = K.seal(keys[e["subject_id"]], t, e["subject_id"], eid, e["content"])
         prepared.append(dict(e, event_id=eid, idem_key=e.get("idem_key") or eid,
-                             req_hash=K.req_hmac(keys[e["subject_id"]], _canonical(e)), content_enc=enc, content_digest=digest(enc),
+                             req_hash=K.req_hmac(keys[e["subject_id"]], _canonical(e)), content_enc=enc, content_digest=digest(enc), secret_scan=scan_v,
                              item=ks.tenant_hmac(t, "item:" + d["item"]) if d else None, action=d.get("action"),
                              based_on=d.get("based_on_event_id"), source=d.get("source_event_id")))
     _scan(conn, ks, t, prepared, events)
+    ckey = ks.chain_key(t)
     hook("before_txn")
     for attempt in range(8):
         try:
-            return _append_txn(conn, t, sid, lease, prepared, hook)
+            return _append_txn(conn, t, sid, lease, prepared, hook, ckey)
         except psycopg.Error as ex:
             st = getattr(ex, "sqlstate", None)
             if st == "WPS17" and attempt < 7:
@@ -116,7 +124,7 @@ def _existing(conn, t, sid, prepared):
                                                        (t, sid, [p["idem_key"] for p in prepared])).fetchall()}
 
 
-def _append_txn(conn, t, sid, lease, prepared, hook):
+def _append_txn(conn, t, sid, lease, prepared, hook, ckey=None):
     with conn.transaction():
         conn.execute("select wp_subjects_ensure(%s::tenant_t, %s)", (t, sorted({p["subject_id"] for p in prepared} | {m for p in prepared for m in p["mentions"]})))
         have = _existing(conn, t, sid, prepared)
@@ -136,13 +144,13 @@ def _append_txn(conn, t, sid, lease, prepared, hook):
             seq = next_seq + i
             ts = p["ts_event"].isoformat()
             h = event_hash(prev, t, sid, seq, p["event_id"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], ts, p["content_digest"], lease.epoch,
-                           p["item"], p["action"], p["based_on"], p["source"], p["mentions"], p["scan"])
+                           p["item"], p["action"], p["based_on"], p["source"], p["mentions"], p["scan"], key=ckey)
             conn.execute(
                 "insert into events(tenant_id,session_id,seq,event_id,idem_key,req_hash,kind,subject_id,actor,trust_origin,ts_event,content_enc,content_digest,"
-                "mentions,mention_scan_upto,prev_hash,hash,decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch) "
-                "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                "mentions,mention_scan_upto,prev_hash,hash,decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch,secret_scan) "
+                "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (t, sid, seq, p["event_id"], p["idem_key"], p["req_hash"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], p["ts_event"], p["content_enc"],
-                 p["content_digest"], p["mentions"], p["scan"], prev, h, p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch))
+                 p["content_digest"], p["mentions"], p["scan"], prev, h, p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch, p["secret_scan"]))
             if p["kind"] in ANALYST_KINDS:
                 conn.execute("insert into analyst_jobs(tenant_id, job_id, idem_key, session_id, input_event_ids, lease_scope, lease_epoch) values (%s,%s,%s,%s,%s,%s,%s)",
                              (t, uuid.uuid4().hex, "analyst:" + p["event_id"], sid, [p["event_id"]], lease.scope, lease.epoch))
@@ -152,14 +160,29 @@ def _append_txn(conn, t, sid, lease, prepared, hook):
         return {"accepted": ids, "duplicates": dups, "quarantined": 0}
 
 
-def verify_chain(conn, tenant, session_id):
-    """(ok, n, epochs): recompute every hash; seqs must be 1..n with no gap or fork."""
+def verify_chain(conn, tenant, session_id, ks=None, key=None, upto=None):
+    """(ok, n, epochs): recompute every link under the tenant chain key (from `ks`); seqs must be 1..n with no gap or
+    fork. Pass ks (normal) or key= (bytes; key=b"" is refused). An unkeyed check exists only as verify_chain_unkeyed."""
+    if key is None:
+        if ks is None:
+            raise TypeError("verify_chain needs the key store: the chain is keyed (row 6)")
+        key = ks.chain_key(tenant)
+    return _verify(conn, tenant, session_id, key, upto)
+
+
+def verify_chain_unkeyed(conn, tenant, session_id, upto=None):
+    """The pre-row-6 check (plain SHA-256 links). Controls only: a forger with database access passes it."""
+    return _verify(conn, tenant, session_id, None, upto)
+
+
+def _verify(conn, tenant, session_id, key, upto):
     rows = conn.execute("select seq, event_id, kind, subject_id, actor, trust_origin, ts_event, content_digest, prev_hash, hash, lease_epoch, decision_item, "
                         "decision_action, based_on_event_id, source_event_id, content_enc, mentions, mention_scan_upto "
-                        "from events where tenant_id=%s and session_id=%s order by seq", (tenant, session_id)).fetchall()
+                        "from events where tenant_id=%s and session_id=%s and (%s::bigint is null or seq <= %s) order by seq",
+                        (tenant, session_id, upto, upto)).fetchall()
     prev, ok = "0" * 64, True
     for i, r in enumerate(rows):
-        h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14], r[16], r[17])
+        h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14], r[16], r[17], key=key)
         intact = r[15] is None or digest(r[15]) == r[7]      # redacted (NULL) content is allowed; present content must match its digest
         ok = ok and r[0] == i + 1 and r[8] == prev and r[9] == h and intact
         prev = r[9]
@@ -168,6 +191,7 @@ def verify_chain(conn, tenant, session_id):
 
 # ---------------------------------------------------------------- inbox
 def inbox_enqueue(conn, ks, lease, item_id, target_session, subject_id, payload):
+    SEC.check([json.dumps(payload)], "inbox")
     k = ks.keys(lease.tenant, [subject_id], create=True)[subject_id]
     enc = K.seal(k, lease.tenant, subject_id, "inbox:" + item_id, json.dumps(payload))
     with conn.transaction():
@@ -217,6 +241,7 @@ def job_claim(conn, tenant, ttl_s=30.0):
 def job_complete(conn, ks, tenant, job_id, claim_epoch, result_text, verify):
     """Completion is a conditional write: current claimant only (claim_epoch), verify result mandatory and ok, and the
     store refuses it if any input was erased meanwhile."""
+    SEC.check([result_text], "job_result")
     subj = conn.execute("select e.subject_id from analyst_jobs j join events e on e.tenant_id=j.tenant_id and e.event_id=j.input_event_ids[1] "
                         "where j.tenant_id=%s and j.job_id=%s", (tenant, job_id)).fetchone()
     k = ks.keys(tenant, [subj[0]])[subj[0]] if subj else None
