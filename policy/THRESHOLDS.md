@@ -155,3 +155,418 @@ are fresh again: E1, E2, E5, B2 use 21..25; E3 uses 88; E6 uses 707. Thresholds 
   first transaction holds its uncommitted insert.
 - Rule 5: every experiment writes a per-item artifact (results/*.items.*.jsonl.gz, hash recorded in the result); exp/verify.py recomputes each verdict from the
   rows with its own code (B1: replays every control counterexample through the reducer).
+
+## Amendment 3 (2026-11-16, written after DEV runs at the rescue rebuild; committed ALONE, before any stamped run of this round)
+
+Why: the rescue rebuilt the decision point and the decision core (commits 402df5e and 0e2a8d6, plus the experiment port committed just
+before this amendment). Every earlier stamped result (515e594, 77ea895 and before) is superseded and stays CLAIMED.
+
+Rules for this round (they override earlier text where they conflict):
+- Seeds. Development used ONLY the string seeds "dev-<exp>-1" to "dev-<exp>-5" (exp/seeds.py DEV). The stamped seeds are fresh integers,
+  never used before in any run: E1, E2, E4, E5 and B2 use 31..35; E3 uses 99; E6 uses 808; B1 records 31 (it is exhaustive); B3 uses 31.
+- Stamped runs set POL_SEEDS=stamped on a clean committed tree, synced by sync.sh. exp/seeds.py refuses stamped seeds on a dirty tree.
+  Each stamped configuration runs ONCE, and no development run of the stamped configuration follows this amendment. A stamped FAIL is
+  kept and reported. It is never rerun to get a PASS.
+- Controls are broken IMPLEMENTATIONS: source variants of a production module, built by the harness (exp/patches.py variant/control,
+  and the multi-fragment helpers in the experiment files, each fragment asserted to apply exactly once). No experiment flag, switch or
+  hand-written formula exists in production.
+- Per-item artifacts hold RAW observations. `python -m verify` recomputes every verdict with verify/<x>.py. These are stdlib-only
+  modules, and an AST check refuses any import of pol, exp or tests. The verifier compares its verdict with the experiment's. A
+  disagreement, a missing artifact or a verifier error is a FAIL. A result is PASS only when both say PASS.
+- Core rule change made in this amendment (CORE-RULES rule 15, pol/_core.py, and the reference reducer, which the rescue owner edited,
+  not the reference author): a NON-HUMAN accept whose value equals the current value is refused `no_value_change`.
+  - B1 found an agent re-accepting a value that a resolve had already installed. The head moved and attribution changed without any
+    value change.
+  - B1 invariant I16 is the brief's wording: a non-human event that changes no value never moves the head.
+- Liveness bound (B1 L2, N3): a human who reads version v and retries after each `stale` is applied within (open human-authored
+  proposals on the requirement at the read) + 1 attempts, so at most MAX_OPEN_PER_REQ + 1 = 257. The control
+  `n3_agent_reject_moves_head` must violate it.
+- Unchanged: no model call of any kind is made. A run that errors scores FAIL. Partial reruns are never combined.
+
+The per-experiment text below was proposed by the experiment ports after their DEV runs. It is adopted as written, except where the
+rules above override it. Its "DEV result" paragraphs are development observations on dev seeds, not proof.
+
+Applies to all three experiments:
+- They were rebuilt for the new API at 0e2a8d6: sessions, the private PDP `pol._pdp.evaluate`, `Store`, `DecisionService`.
+- Development runs used only the string seeds dev-e1-1..dev-e1-5, dev-e3-1..dev-e3-5 and dev-e6-1..dev-e6-5 (exp/seeds.py DEV).
+- Stamped runs use exp/seeds.py STAMPED (E1: 31..35; E3: 99; E6: 808), once, with POL_SEEDS=stamped on a clean tree.
+- Every control is a broken implementation, made as a source variant of a production module. It is never a hand-written formula.
+- Per-item rows hold raw observations only: labels, probe bits, what was sent and what came back.
+- verify/e1.py, verify/e3.py and verify/e6.py recompute every verdict from the rows using only the stdlib. They import nothing from pol or exp.
+- A result is PASS only when the experiment's own summary and the verifier both say PASS.
+
+### E1 (exp/e1_lattice.py)
+- **Unchanged.** 20000 derivations (4000 per seed), 40 probes per derivation (>= 800000 probes), 5000 law triples.
+  - Enforced arm: 0 structural and 0 semantic violations, 0 law failures.
+  - Allowed probes are at least 5 percent and at most 95 percent.
+  - Control floors, worst seed: structural >= 10 percent and semantic >= 5 percent of derivations with >= 2 inputs, and the violated dimension is exactly the dropped one.
+- **Controls.** Ten one-patch variants of `pol/labels.py join2`, one dimension each. The fragments are recorded in the result params.
+  - tenants keeps the first input only.
+  - acl merges all groups into one OR clause.
+  - regions and models use union, where any None means any.
+  - sensitivity uses min.
+  - banned and holds use intersection.
+  - local_only and restricted use AND.
+  - subjects keeps the first input only.
+- **Semantic check.** A probe is a violation when the derived label is allowed and some input is not. Probes go through `pol._pdp.evaluate` with a fixed runtime clock. The subject-coverage check (amendment 1) counts as semantic.
+- **Rows.**
+  - Input and derived labels, as lists in DIMENSIONS order.
+  - `d`: one character per probe, 1 or 0, for the derived decision.
+  - `i`: 1 or 0 for "every input allowed", or `-` when the derived probe was denied. Inputs are evaluated only when the derived label was allowed.
+- **New arm: round trip.** 1000 per seed.
+  - `Label.from_dict(json(to_dict()))` equals the label, with the dict and digest unchanged.
+  - Leaves are appended through `Store.append`. Then `Store.append_derived` is called, and the record is read back through `Store.read`.
+  - The stored label must equal the join of the stored lineage. The verifier uses its own join.
+  - PASS: 0 mismatches, and >= 2000 derived records stored.
+- **Probe-universe change (disclosed).** The new PDP requires each destination's contracted tenants and a declared model, so the generator declares both.
+  - The allowed share fell to about 9 percent of probes, against an old share of about 30 percent. That still clears the 5 percent floor.
+- **Artifact size at full scale** (dev run): 9.7 MB gzipped, including ten controls, laws and round trip. No reduced recording is needed.
+
+### E3 (exp/e3_clash.py)
+- **Sizes per seed.** planted 2200, fault 2400, legit 1400, context 3000, and 10 forge rounds.
+  - The stamped run has one seed (99). The dev runs used five seeds, so their counts are five times larger.
+- **Credential channel changes (disclosed).**
+  - The old "derived attributes" channel no longer exists. A planted override now goes either in the credential or as a top-level request key.
+  - The exact expected reasons are `attr_unrecognised_key`, `forged_request` or `attr_source_type`. Any other deny reason for a planted row is a failure ("refused by luck").
+- **Legit cases changed (disclosed).** Benign credentials now use only the allowed narrowing keys:
+  - `{}`, None, `cap_clearance`, `cap_actions` and `cap_restricted`, alone or combined.
+  - Unknown credential keys such as email or roles now deny by design (H2).
+- **Escaped exceptions.** An exception that escapes `evaluate` is recorded raw (`raised`), and any such row in the enforced arm fails.
+- **Control `ctl_naive_pdp`.** A multi-fragment variant of `pol/_pdp.py`. Each fragment must occur exactly once. The fragments are in the result params:
+  - unknown credential keys are ignored;
+  - unknown request keys are accepted;
+  - credential and top-level request keys are merged over the principal's attributes;
+  - the request's clock decides expiry;
+  - the request's recipient object is trusted;
+  - truthiness is used for rule results, and a raising rule passes;
+  - label and evaluation errors are swallowed as allow.
+  - Floors are unchanged: >= 10 percent allows on planted, on fault and on context.
+- **New arm: forge, derived from the public surface.**
+  - The `tests/surface.py` module and signature walk lists every public method of `pol` whose first parameter is `session`. That is 16 request-handler entry points at 0e2a8d6.
+  - Every listed entry point must have a driver. An uncovered entry point fails the run.
+  - **Session forgeries**, applied to each entry point:
+    - a hand-built Session;
+    - the attacker's token under the victim's id;
+    - a copy of the victim's Session values in a new object;
+    - a Principal object, None, a string, a dict, or a SimpleNamespace;
+    - an ended victim session;
+    - the attacker's own real session;
+    - another tenant's real session.
+  - **Request forgeries** (`Outbox.enqueue`): tenant, principal, a recipient object, now, region, credential tenant/clearance/groups, confusable, case, space and zero-width narrowing keys, viewer, trusted, and labels.
+  - **Body forgeries** (`DecisionService.submit`):
+    - tenant, principal, channel or id in the body;
+    - value_ref instead of value;
+    - a client_id namespaced to another principal, or a traversal client_id;
+    - a non-admin revoke of the victim, or a self-grant;
+    - an unknown key.
+  - Acceptance is decided by the verifier from the observation:
+    - an id, a text or payload containing the victim's record, or a queued item;
+    - an applied decision code;
+    - the victim's identity returned, or a session that claims the victim and verifies;
+    - the victim's session ended by someone else;
+    - a marker in a read, or an erasure that was not refused.
+  - PASS: 0 accepted forgeries.
+  - Controls, each with a floor of >= 10 percent of its rows accepted:
+    - `ctl_no_session_verify` is a one-patch variant of `pol/enforce.py` with the session identity check removed (session rows on Store, Guarded* and Outbox).
+    - `ctl_naive_pdp` sits behind the Enforcer (request rows).
+    - `ctl_body_identity_trusted` is a three-fragment variant of `pol/decisions.py` that drops `identity_in_body`, admits identity keys in BODY_KEYS, and lets body keys win over the session stamp (body rows).
+    - The single patch `exp/patches.py m1_body_identity` is masked by the BODY_KEYS check: alone it still refuses (`bad_event`). It is therefore not a usable M1 control, and is replaced here.
+- **Not proven.**
+  - pgcore is reached only through DecisionService. Its engine is wiring, not a request-handler entry point.
+  - In-process Python can reach private names.
+
+### E6 (exp/e6_policy_format.py)
+- **Unchanged.**
+  - Empty and absent documents deny every probe; malformed documents too: 3000 per seed, 5 probes each.
+  - The validator raises PolicyError on all of them. Any other escaping exception is recorded and fails.
+  - A valid document allows more than 5 percent.
+  - The example is marked as an example.
+  - Hold and subject inheritance through join is checked.
+- **New mutation kinds.** Missing destination tenants, a model id outside its family, an alias cycle and a dangling alias. Unknown-key variants include case, a trailing space and an accent.
+- **Control.** A one-patch variant of `pol/policy.py safe_policy`. On a parse error it keeps whatever grants it can read, else grants every action to t1 and t2.
+  - Its Policy is re-expressed as the production class with the same fields, so the decision point accepts it.
+  - Floor: >= 10 percent of probes allowed. The dev result was 29.7 percent.
+- **New service-level erasure arm**, using World and DecisionService:
+  - Four values: alice about dana under recorded hold `hold-7`, bob about dana, alice about dana, and bob about erin.
+  - A non-admin `erase_subject` is refused `unauthorized`.
+  - An admin erasure erases every value about dana whoever wrote it (2), queues the held one (1), and leaves the value about erin.
+  - The verifier recomputes this from the raw before and after vault texts.
+
+Common. Every arm drives the rebuilt production (pol.enforce Store, Store.context, Store.append_derived, GuardedChat, GuardedEmbedder,
+GuardedExport, Outbox; pol.decisions DecisionService) with sessions issued by SessionAuthority. No experiment flag exists in production.
+Controls are source variants built by the harness (exp/patches.py, exp/e245_kit.py). Each per-item artifact holds RAW observations,
+and verify/e2.py, verify/e4.py, verify/e5.py recompute every verdict with their own code (stdlib only, no import from pol or exp).
+Dev runs used string seeds only; the stamped seeds are the integers in exp/seeds.py.
+
+### E2 egress canary
+- Scale: 1000 scenarios per seed, 5 seeds, so 5000 per arm. Amendment 2 had 400 per seed, 2000 per arm. The minimum stays S >= 2000.
+  The larger S is needed for the witness floors after the paths changed.
+- Paths:
+  - Model: GuardedChat (direct and after Store.context injection) and Outbox(send_model).
+  - Embedding: GuardedEmbedder.
+  - Inbox: Outbox(send_inbox).
+  - Export: GuardedExport and Outbox(export).
+  - Derived records come from Store.append_derived and from the answers GuardedChat stores.
+  - The op mix adds two derive_send weights. Without them the derive control reached 6 percent on the dev smoke run, under its floor.
+- Restricted content: GuardedChat has no authorisation parameter, so it always refuses restricted content. Restricted content reaches a
+  model only through Outbox(send_model) with an authorisation, and an inbox recipient only when the recipient is restricted_ok. The
+  permitted-delivery witness for restricted_channel is met through those paths.
+- Inventory: the registered stub actions must equal ACTIONS minus append, read, inject and erase. The audit log must show every one of
+  those actions plus inject being evaluated.
+- New adversarial arm (forge op, about 1 in 16 ops). Each scenario tries what a caller can send:
+  - extra request keys: tenant, principal, now, a recipient object;
+  - a credential with a non-allow-listed key (including a Cyrillic homoglyph, a trailing space and the wrong case);
+  - a recipient in another tenant, or an unknown recipient;
+  - another principal's restricted authorisation;
+  - a hand-built Session, a session issued by another SessionAuthority, an ended session, or a Principal passed as the session.
+  These go through the inbox, model and export queues, GuardedChat, GuardedEmbedder, GuardedExport and Store.context.
+  PASS needs forges >= 1000, 0 forges not refused, and 0 payloads recorded by a forge.
+- Controls:
+  - Decision bypassed for one action, applied to Enforcer._decide: send_model, embed, send_inbox and export.
+  - Derived label set to the first input only, in Store.append_derived.
+  - Id-pattern guard. It replaces the decision point and scans texts in Store._sources. It needs two fragments in one module, and it is
+    the only control that does.
+  - Floors are unchanged: leak in >= 10 percent of scenarios, >= 1 violation, and the guard blocks >= 1 id-shaped string.
+  - The inject-only bypass stays informational.
+- DEV result on t2-dev (dirty tree, dev seeds): PASS, and verify/e2.py agrees.
+  - 5000 scenarios, 0 violations, 2187 forges, all refused.
+  - Forbidden attempts per class: 5741, 5262, 2788, 5961 and 2182.
+  - Permitted deliveries: eu_only 4396, local_only 3461, model_banned 4681, restricted_channel 4916, plain 2956.
+  - Control leak rates: model 0.72, embed 0.43, inbox 0.41, export 0.46, derive 0.26, id guard 0.98 (2513 blocks). Inject-only: 0 violations.
+  - Runtime 81 s. Artifact 6.3 MB gz, 511,691 rows.
+
+### E4 tighten after enqueue
+- The 15 combinations of amendment 2 are kept, with R = 200 each. Seeds rotate per run, with 3000 runs per arm.
+- The source is now erased through Store.erase. The Outbox purge refuses the queued item with "source_erased" when the erasure happens,
+  so no delivery decision is written. For that combination PASS needs the refusal "source_erased" plus an allowed erase row in the audit
+  log after enqueue. Directory and record changes (group_removed, label_narrowed, legal_hold_recorded) are logged at policy version 1.
+  Policy changes are logged at version 2, built with Policy.with_changes.
+- New recipient-snapshot check. For every inbox delivery in the positive arm, the recipient object the sink received must be the very
+  object the delivery decision evaluated (identities recorded). Required: 0 mismatches.
+- Control: an enqueue-time-only Outbox. It is a one-fragment variant of pol/enforce.py Outbox.deliver_all with no decision at delivery.
+  The floor is unchanged: >= 90 percent of tightened runs delivered.
+- DEV result: PASS, and verify/e4.py agrees.
+  - Fenced arm: 0 of 3000 delivered.
+  - Positive arm: 3000 of 3000 delivered, 0 snapshot mismatches.
+  - Control: 2800 of 3000 delivered (0.933). It cannot deliver source_erased items, because the purge still runs.
+  - Runtime 3 s. Artifact 72 KB.
+
+### E5 threads and viewer-scoped reads
+- The store-item conflict notice of amendments 1 and 2 no longer exists in production (pol/threads.py was removed and the default is NONE).
+  - The thread-world arm (A) measures records, injection, analyst findings through the inbox, and cross-reference expansion through
+    Store.read, plus non-interference.
+  - The notice contract moves to the production notice path, DecisionService (arm family B). Witness "notices >= 1000" becomes
+    "hidden_candidates true >= 1000" in the existence_only arm.
+- Arm family A controls:
+  - derived label set to the first input only;
+  - Store.read without the per-reference decision ("expansion without a decision"; it also affects plain reads).
+  - The amendment-2 control "notice carries the other side" is dropped, because the notice it patched was experiment code.
+    Its production successor is B_ctl_no_read_check.
+- New VIEWER-SCOPED READS ARM (family B). Each world has 4 humans with random groups, clearance, restricted flag and region, and 3
+  requirements whose authority sets are random. Its script has open proposals, accepts, contests, and contests followed by a resolve.
+  Every human reads explain(r) for each requirement, plus table().
+  - Arms: notice none (the default) and existence_only (opt-in).
+  - PASS:
+    - no marker of a value, proposal or candidate that the viewer cannot read (verifier's own read oracle) appears in the serialised view;
+    - the hidden_candidates key is present in an explain or table entry iff the policy opted in;
+    - in the opt-in arm the flag equals "something was withheld" for every entry;
+    - non-interference: replaying the same events with every value the viewer cannot read changed gives a byte-identical view (SHA-256
+      compared; the vault key is fixed across the two replays).
+  - Controls:
+    - control('h7_flag_always'): floor 10 percent of worlds break the key rule.
+    - B_ctl_no_read_check: DecisionService._readable always true, a one-fragment variant of pol/decisions.py. Floor 10 percent of worlds leak.
+    - control('h7_unscoped_value') is reported as informational only, because it is vacuous: see the owner report.
+- DEV result: PASS, and verify/e5.py agrees.
+  - Arm family A: 1000 worlds, 0 leaks, 0 interference. Controls leak in 937 (derive) and 1000 (xref) of 1000 worlds.
+  - Arm family B:
+    - Notice none: 0 leaks, 0 key violations, 0 interference.
+    - Existence_only: 6633 flags true, 0 wrong flags, 0 leaks.
+    - Control flag_always: 1000 of 1000 worlds break the key rule.
+    - Control no_read_check: 1000 of 1000 worlds leak.
+    - Informational h7_unscoped_value: 0 of 1000 worlds leak.
+  - Runtime 148 s. Artifact 8.7 MB gz.
+
+### Not proven (E2/E4/E5)
+- Stubs only.
+- The E2 oracle and the policy are built from the same destination table, and the oracle does not see authorisations.
+- Markers are plain strings.
+- No in-flight recall exists.
+- Timing side channels are not tested, nor the withheld count that Store.context returns to its caller.
+- Graph shape is tested only to one hop.
+
+Applies to all three experiments:
+- They were rebuilt for the decision core at 0e2a8d6: `pol._core.reduce(view, ev) -> (code, original_code, delta)`, `MemoryState`
+  (snapshot / restore / comparable), `pol.pgcore.PgEngine`, `DecisionService` and `MemoryEngine`.
+- Development runs used only the string seeds dev-b2-1..dev-b2-5 and dev-b3-1..dev-b3-5 (exp/seeds.py DEV). B1 is exhaustive and uses no seed.
+- Stamped runs use exp/seeds.py STAMPED (B1: 31, recorded only; B2: 31..35; B3: 31), once, with POL_SEEDS=stamped on a clean tree.
+- Every control is a broken implementation built as a source variant of a production module (`exp.patches.variant`, or the multi-patch
+  helpers `multi_variant` in exp/b1_modelcheck.py and `pg_variant` in exp/b3_pg.py, which assert that every fragment applies exactly once).
+  The controls not yet in `exp.patches.CONTROLS` are defined inline in the experiment files and listed below as CONTROLS entries to add.
+- Per-item rows hold raw observations only. verify/b1.py, verify/b2.py and verify/b3.py recompute every verdict from the rows with the stdlib
+  and import nothing from pol or exp. A result is PASS only when the experiment's own summary and the verifier both say PASS.
+
+### B1 (exp/b1_modelcheck.py, exp/b1_invariants.py)
+- **Universe.** Principals u1, u2 (human), a1 (agent), n1 (analyst, proposer only). Authority r1 {u1,u2}, r2 {u1}, r3 {u1,a1}; proposers
+  r1 {n1}, r3 {n1}; admin u1; tenant T1.
+- **Pools.** One pool per requirement (r1, r2, r3), a `caps` pool, and a `joint` pool across requirements. Every pool is asserted at start to
+  hold HEAD-bound events of all six binding types (accept, reject, amend, supersede, retract, resolve), so no binding type is only ever stale.
+  Pools also hold grant / revoke of the agent's decide right, typed and agent confirmations, same-channel confirmations and redeliveries.
+- **Depths (changed from "L = 6 minimum" to per pool).** Enforced: r1 6, r2 8, r3 8, caps 8, joint 4. Controls: r1 5, r2 6, r3 6, caps 6
+  (a control needs only one counterexample; the shortest trace is found first because the search is breadth-first).
+- **Caps scenario.** The open-proposal caps are not reachable at depth 8 with production constants (16 per principal, 256 per requirement).
+  The caps pool runs a SMALL_CAPS variant that changes only those two constants (to 2 and 3). It is not a control: the enforced invariants must
+  still hold, and I17 checks the caps.
+- **Invariants.** I1 to I14 as adapted (I6 now: a redelivery returns `duplicate` with the ORIGINAL outcome code and leaves state unchanged;
+  I13 exempts grants). New:
+  - I15 a proposal needs a proposer or authority role on the requirement.
+  - I16 a non-human REJECT changes no value and never moves the head (CORE-RULES rule 11). A first draft read N3 more broadly ("any
+    non-human event that changes no value never moves the head"). That draft failed on a spec-permitted trace (see "Spec observation"), so
+    I16 was narrowed to the rule text, and the run was repeated. This was disclosed before any stamped run.
+  - I17 open-proposal caps per principal and per requirement.
+  - L1 every contested state is resolvable by some authorised event (checked in every contested state).
+  - L2 head starvation (liveness): a non-human event never increases the number of open human-authored proposals on its requirement, and moves
+    the head only when it consumes one. This is checked inductively on every transition, and a played game (`l2_game`) gives the witness.
+- **Liveness bound (DISCREPANCY with the directive).** The directive said a human needs at most 1 attempt. CORE-RULES section 7 gives
+  attempts <= (open human-authored proposals on the requirement at the read) + 1, because a non-human may legitimately move the head by
+  accepting an open human proposal. The spec bound is implemented. The control game shows attempts 2 > bound 1 with no open human proposal.
+- **Coverage.** Every code in the reducer's code list is reached except `candidates_full`, listed as UNREACHABLE at these depths
+  (it needs MAX_CANDIDATES = 8 contested siblings). B2's contest mode reaches it. The verifier requires all codes except the UNREACHABLE list.
+- **Witnesses unchanged:** states >= 1000, transitions >= 20000, contested reached and resolved.
+- **Controls (replacing the six of THRESHOLDS B1).** Each must yield >= 1 counterexample whose violated invariant is the expected one:
+
+  | Control | Source | Expected |
+  |---|---|---|
+  | n3_agent_reject_moves_head | exp.patches.CONTROLS (required) | L2_head_starvation |
+  | n2_no_role | CONTROLS | I15 |
+  | n2_no_cap | CONTROLS (caps pool) | I17 |
+  | stale_unchecked | CONTROLS | I4 |
+  | agent_may_supersede | CONTROLS | I2 |
+  | m2_no_original | CONTROLS | I6 |
+  | self_approval_removed | NEW inline | I2 |
+  | idempotency_removed (`old = view.idem(...)` becomes `old = None`) | NEW inline | I6 |
+  | authority_removed (the head-moving `has_authority` check) | NEW inline | I1 |
+
+  Remark-is-decision and last-writer-wins are dropped: the reducer has no remark-to-decision path and no write without a version check to patch.
+- **CONTROLS entries to add to exp/patches.py** (module, old fragment, new fragment; exact text in exp/b1_modelcheck.py OWN):
+  - self_approval_removed: pol._core, delete the `if verb == "accept" and not human and prop["author_kind"] != "human": return
+    "self_approval", []` branch.
+  - idempotency_removed: pol._core, `old = view.idem(pid, ev["idem"])` becomes `old = None`.
+  - authority_removed: pol._core, delete the `if not view.has_authority(req, pid): return "unauthorized", []` check under
+    `# ---- head-moving types`.
+  - SMALL_CAPS (not a control): pol._core, `MAX_OPEN_PER_PRINCIPAL = 16` becomes 2, and `MAX_OPEN_PER_REQ = 256` becomes 3.
+    These are two fragments, applied with `multi_variant`. Every B1 control is one fragment. In the caps pool, n2_no_cap is applied on top of
+    SMALL_CAPS.
+- **Rows.** `run` rows (per arm and pool: states, transitions, contested, codes, violations) and `cex` rows (trace ids, pre / post snapshots,
+  event, code, original code, game for L2). The verifier checks trace shape and recomputes each control's invariant from raw pre / post.
+
+### B2 (exp/b2_rebuild.py)
+- **Logs.** 3000 logs (600 per seed; env B2_PER_SEED). Modes: random 70 percent (lengths 5 to 300, was 5 to 80, so long logs exercise
+  restores and cap pressure), cap 15 percent (fills proposal caps, reaches `proposal_cap`), contest 15 percent (reaches `candidates_full`).
+- **Differential against exp/ref_reducer.RefCore**, event by event: outcome code, original code and the comparable view must be equal.
+- **Rebuild equals live.** The live path snapshots and restores every k events (k random 1..20); the rebuild folds from empty. Equal
+  snapshot hash in 100 percent of logs, recorded outcomes equal, restores >= 3000.
+- **Refusal audit.** RefCore.audit equals the refused production codes in every log. Every fifth log is also replayed through
+  DecisionService + MemoryEngine with real sessions; each refusal returned must appear, in order, as a decision denial in the AuditLog.
+  (B3 covers dc.audit.)
+- **Coverage.** Every outcome code reached, including `proposal_cap` and `candidates_full`; contested in >= 10 percent of logs.
+- **Controls (replacing the authority-map and drop-refused controls).** One-patch variants of `pol/_core.py`, each run on all 3000 logs:
+  n3_agent_reject_moves_head, n2_no_cap, n2_no_role, m2_no_original, stale_unchecked, agent_may_supersede (CONTROLS), plus NEW:
+  snapshot_drops_revocations (the snapshot writes `"revoked": []`) and restore_drops_idempotency (`s.idems = {}` on restore).
+  Floor: mismatch (differential or rebuild) in >= 10 percent of logs each.
+- **CONTROLS entries to add** (exp/b2_rebuild.py SNAP_CONTROLS, one fragment each, pol._core):
+  - snapshot_drops_revocations: `"revoked": sorted(self.revoked),` becomes `"revoked": [],` in `snapshot()`.
+  - restore_drops_idempotency: `s.idems = {(x[0], x[1]): [x[2], x[3]] for x in snap["idems"]}` becomes `s.idems = {}`.
+- **Other changes to THRESHOLDS B2 text.**
+  - "Manifest hash equal" is replaced by "snapshot hash of the comparable state equal". The core has no separate manifest.
+  - Enforced event rows carry view hashes, not full views, to keep the artifact at about 22 MB. Control rows keep the full views of the
+    first mismatch.
+- **Rows.** `event` (both codes, original codes, view hashes), `log`, `svc_audit`, `ctl_log` (first mismatch with both full views).
+
+### B3 (exp/b3_pg.py, container emlab-pg-polr-16096, port 25490)
+- **Container changed** from emlab-pg-pol-16096 to emlab-pg-polr-16096 (the rescue owns its own). Free disk was checked first (stop line 20 GB).
+- **Scenarios.** R = 50. S1, S3, S5 as before. Changes:
+  - S2: the stale decision is bound to version 0 while the head is at 2 (binding to version 2 lands in the sibling-contest window, not stale).
+  - S4: same idempotency key from two connections. Even rounds send identical payloads (`duplicate`, original `superseded`); odd rounds send a
+    different payload (`idem_conflict`, original `superseded`). Exactly one event row. Overlap witness added.
+  - S4b NEW: twin events with one idempotency key on two requirements. The advisory lock on (tenant, principal) serialises them, so the
+    second gets (`idem_conflict`, `superseded`) and there is one event row. The unique index is the backstop, shown by a control.
+  - S6 NEW: tenant isolation (unauthorized, tenant_mismatch, unauthorized).
+- **Overlap witness** for S1, S3, S4, S4b, S5 in 50 of 50 rounds: a monitor connection sees the second transaction in pg_stat_activity with
+  wait_event_type = Lock between the first transaction's lock point and its commit (database timestamps, re-checked by the verifier).
+- **Differential arm NEW.** 40 Gen logs. Each is applied to a fresh PgEngine install and to MemoryState. Per event, codes are equal; per log, the
+  Postgres comparable view equals the memory view and the rebuild from dc.events, `verify_chain` holds with chain length equal to the applied
+  rows, and the dc.audit row count equals the refused count.
+- **Rebuild.** After the scenarios, the rebuild from the event table equals the live head rows, and the chain verifies.
+- **Controls (replacing last-writer-wins and no-lock).** pgcore variants, each on its own install, floor >= 90 percent of R:
+
+  | Control | Patch | Pass condition |
+  |---|---|---|
+  | no_head_lock | head `FOR UPDATE` removed | both decisions `decided_accept`, status current (silent lost decision), overlap >= 90 percent |
+  | no_advisory_lock | advisory xact lock removed | the unique-index backstop retried >= 1 time |
+  | idem_unprotected | advisory lock and the `events_idem` unique index removed | both twins `superseded`, 2 event rows |
+
+  These are CONTROLS entries to add (pgcore fragments in exp/b3_pg.py PG_CONTROLS):
+  - no_head_lock: the head `select ... for update` line becomes `pass`.
+  - no_advisory_lock: the `pg_advisory_xact_lock(...)` line becomes `pass`.
+  - idem_unprotected: both of the above edits plus removing `create unique index events_idem ...` from the schema. This is a TWO-fragment
+    variant (deviation from "one-patch"). It is the only way to show what the unique index protects: with the advisory lock still in place,
+    the twins never overlap.
+- **Rebuild wording change.** "Rebuild equals live in 100 percent of rounds" becomes: one rebuild over every scenario's rows after all
+  rounds, plus a rebuild per differential log (40). Per-round requirements are disjoint, so one rebuild covers every round's head row.
+
+### Dev results (seeds as above, run on t2-dev)
+All three verifiers agree with the experiment's own verdict.
+
+- **B1: PASS** with I16 as narrowed. DEV.b1_modelcheck.c49a62200313df9f.json, items 5.1 KB gz. Wall time 172 s (pools run in parallel).
+  - 150,490 states, 1,401,814 transitions, 12,822 contested states, 0 enforced violations. No code missing apart from the UNREACHABLE list.
+  - Runtime: r1 171.5 s, r2 28.0 s, r3 135.5 s, caps 21.5 s, joint 57.8 s.
+  - The superseded draft run DEV.b1_modelcheck.e0a51a60e89bc225.json (broad I16) was FAIL on the spec observation below and nothing else.
+  - All nine controls violated their expected invariant. Shortest traces: n3 [P3, AR3] (L2 game: 2 attempts against a bound of 1);
+    n2_no_role [NP]; n2_no_cap [C1, C2, C3]; stale_unchecked [S1]; agent_may_supersede [AG1]; m2_no_original [R1, R1];
+    self_approval_removed [P3, D4]; idempotency_removed [R1, R1]; authority_removed [S3].
+  - n3 game: the read is at version 0, probe 1 is `stale`, probe 2 is `superseded`, giving 2 attempts. P3 is authored by n1, a non-human, so
+    there are no open human proposals and the bound is 1.
+- Authoritative DEV files are the three named here. DEV.b3_pg.90e08a7e2ac8f1bd.json is a superseded FAIL caused by the S2 test bug.
+  Nothing is stamped.
+- **B2: PASS.** DEV.b2_rebuild.6f2d4ceb2cac6a4b.json, items 21.8 MB gz. Runtime 1700.6 s.
+  - 3000 logs, 454,450 events. 0 mismatched events, 0 unequal rebuilds, 0 bad ref-audit logs.
+  - Every code reached, including proposal_cap, candidates_full and concurrent_agree.
+  - Contested in 1280 logs (42.7 percent). 81,821 restores.
+  - Service audit: 600 logs, 67,690 refusals, 0 bad.
+  - Control mismatch rates: n3 0.435, n2_no_cap 0.146, n2_no_role 0.751, m2_no_original 0.574, stale_unchecked 0.878,
+    agent_may_supersede 0.728, snapshot_drops_revocations 0.177, restore_drops_idempotency 0.982.
+  - verify/b2 takes 18 s and peaks at 2.3 GB RSS. Run it on t2-dev, not the Mac.
+  - No divergence from RefCore.
+- **B3: PASS.** DEV.b3_pg.d5b01c4c9f299692.json, items 226 KB gz. Runtime 1074.4 s.
+  - S1 to S6 and S4b: 50 of 50 each.
+  - Overlap witnesses: 50 of 50 for S1, S3, S4, S4b and S5.
+  - Differential arm: 40 logs, 7672 events, 0 mismatches. Views, rebuild, chain and dc.audit counts are all OK.
+  - Scenario rebuild is equal, and the chain verifies (850 rows). Enforced backstop retries: 0.
+  - Controls: no_head_lock 50 of 50 (overlap 49), no_advisory_lock 50 of 50 (overlap 48), idem_unprotected 50 of 50.
+  - Not proven, as the result records: a single PG16 instance at READ COMMITTED, two writers per round (not N-way), no process kill or network
+    partition mid-transaction. Revoke takes the tenant row FOR UPDATE, which serialises the whole tenant (a scaling limit).
+
+### Spec observation (a rule decision for the owner, not a production bug)
+The reducer and RefCore both follow CORE-RULES here. Rule 15 and section 7 let a non-human accept an open human proposal. Reference
+ambiguity 11 (exp/ref_reducer.py) says resolve does not change proposal statuses for a set effect.
+
+The consequence is found at depth 6 in pool r1 (ids from POOLS["r1"]):
+1. P2: u2 proposes vB.
+2. GR1: grant a1 decide on r1.
+3. S1h: u1 supersedes at 0, to v1.
+4. D2: u2 accepts P2 at base 0, giving contested_opened, v2.
+5. RES1: resolve, choosing D2's candidate vB, giving v3. P2 stays open.
+6. AGA: a1 accepts P2 at v3, giving decided_accept, v4. The value is still vB, but value_by is now a1.
+
+An agent moves the head and takes attribution for a value a human already adopted. A human holding v3 is then `stale` once. This is within
+the section 7 bound, because P2 is consumed and L2 holds.
+
+If that is unwanted, either of these fixes it:
+- close the adopted proposal on resolve, or
+- refuse an accept whose effect equals the current value.
+
+Either change needs the same edit in CORE-RULES and RefCore.
+
+Resolution (rescue owner, this amendment): the second option is adopted. A non-human accept of the current value is refused
+`no_value_change` (CORE-RULES rule 15). I16 is restored to the broad wording ("any non-human event that changes no value never moves the
+head"), and the narrowed I16 and the B1 dev runs above that used it are superseded.
