@@ -143,7 +143,7 @@ async def n1b():
             series.append({"t_s": round(time.time() - t0), "polls": len(pts), "last_gaps_s": gaps[-4:], "runs": await run_count(client, sid), "history_length": h})
         # grant immediately after a poll whose gap is at the cap: the worst case for a lost doorbell
         if len(pts) > seen and len(gaps) >= 1 and gaps[-1] >= 800 and time.time() - pts[-1] < 15:
-            grant_result = await ctl.approve_session(client, sid, TENANT, with_pg=True)   # Postgres only: NO doorbell signal
+            grant_result = await ctl.approve_session(client, sid, TENANT, with_pg=True, doorbell=False)   # Postgres only: the doorbell is dropped
             granted_at = time.time()
             gap_at_grant = gaps[-1]
         seen = len(pts)

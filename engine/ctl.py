@@ -124,14 +124,15 @@ async def wait_request(tenant, sid, timeout=120):
     return None
 
 
-async def approve_session(client, sid, tenant=DEMO_TENANT, with_pg=True, approver="approver-1"):
+async def approve_session(client, sid, tenant=DEMO_TENANT, with_pg=True, approver="approver-1", doorbell=True):
     """The API side of an approval: a grant bound to the session's request id is written to Postgres FIRST, then the
     doorbell. with_pg=False sends only the doorbell (the anti-pattern the F8 control uses)."""
     result = "signal-only"
     if with_pg:
         rid = await wait_request(tenant, sid)
         result = "no-request" if rid is None else await blocking(pgstore.grant_approval, tenant, sid, rid, approver)
-    await client.get_workflow_handle(wid(sid, tenant)).signal("approve", "g")
+    if doorbell:                  # doorbell=False drops it deliberately (the lost-doorbell measurement)
+        await client.get_workflow_handle(wid(sid, tenant)).signal("approve", "g")
     return result
 
 
