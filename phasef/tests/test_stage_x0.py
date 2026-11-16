@@ -111,5 +111,19 @@ class NotRun(unittest.TestCase):
             X.X = old
 
 
+class Cap30(unittest.TestCase):
+    def test_variant_differs_only_in_the_fact_cap_number(self):
+        from phasef.prompts import EXTRACT_V2_CAP30_TEMPLATE as C, EXTRACT_V2_TEMPLATE as B
+        self.assertEqual(B.count("At most 12 facts per session"), 1)
+        self.assertEqual(C, B.replace("At most 12 facts per session", "At most 30 facts per session"))
+        import difflib
+        diff = [l for l in difflib.ndiff(B.splitlines(), C.splitlines()) if l[:2] in ("- ", "+ ")]
+        self.assertEqual(len(diff), 2)
+        a, b = diff[0][2:], diff[1][2:]
+        self.assertEqual(a.replace("12", "30"), b)
+        self.assertEqual(X.SHA16, "a2336c7976bb8fc2")
+        self.assertNotEqual(X.SHA16_CAP30, X.SHA16)
+
+
 if __name__ == "__main__":
     unittest.main()

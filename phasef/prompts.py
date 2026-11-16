@@ -143,3 +143,8 @@ LATER fact (session date {d2}): {s2}
 Later round: {r2}
 === END PAIR {i} ===
 """
+
+# Cap-30 variant of extract-v2-anon (stage X0 cap check): the ONLY difference is the fact cap number 12 -> 30.
+EXTRACT_V2_CAP30_RECIPE = "extract-v2-cap30"
+EXTRACT_V2_CAP30_TEMPLATE = EXTRACT_V2_TEMPLATE.replace("At most 12 facts per session", "At most 30 facts per session")
+assert EXTRACT_V2_CAP30_TEMPLATE != EXTRACT_V2_TEMPLATE

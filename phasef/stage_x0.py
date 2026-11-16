@@ -16,17 +16,27 @@ from datetime import datetime
 from . import data, run_pilot as R
 from .facts import _json_from
 from .llm import LLM, PromptLeak
-from .prompts import EXTRACT_SYSTEM, EXTRACT_V2_RECIPE, EXTRACT_V2_TEMPLATE
+from .prompts import EXTRACT_SYSTEM, EXTRACT_V2_CAP30_RECIPE, EXTRACT_V2_CAP30_TEMPLATE, EXTRACT_V2_RECIPE, EXTRACT_V2_TEMPLATE
 
 X = os.path.join(R.OUT, "stage_x0")
 CAP = 200
 TOKEN_STOP = 12_000_000
 VERSION = "extract-v2-anon"
+TEMPLATE = EXTRACT_V2_TEMPLATE
 SHA16 = hashlib.sha256((EXTRACT_SYSTEM + "\n" + EXTRACT_V2_TEMPLATE).encode()).hexdigest()[:16]
+SHA16_CAP30 = hashlib.sha256((EXTRACT_SYSTEM + "\n" + EXTRACT_V2_CAP30_TEMPLATE).encode()).hexdigest()[:16]
+
+
+def set_variant(name):
+    """'base' = extract-v2-anon, 'cap30' = extract-v2-cap30 (only the fact cap number differs)."""
+    global VERSION, TEMPLATE, SHA16, RECIPE
+    if name == "cap30":
+        VERSION, TEMPLATE, SHA16, RECIPE = EXTRACT_V2_CAP30_RECIPE, EXTRACT_V2_CAP30_TEMPLATE, SHA16_CAP30, EXTRACT_V2_CAP30_RECIPE
 MODEL = "claude-sonnet-5-5"
 PRICE_TABLE = "claude CLI total_cost_usd (notional, subscription path)"
 REMOTE_IN = "~/emlab-16096/in/stage_x0"
 FIELDS = ("subject", "slot", "predicate", "object")
+RECIPE = EXTRACT_V2_RECIPE
 
 
 def render_session(sid, date, turns):
@@ -36,7 +46,7 @@ def render_session(sid, date, turns):
 
 
 def build_prompt(sid, date, turns):
-    return EXTRACT_V2_TEMPLATE.format(n=1, sessions=render_session(sid, date, turns))
+    return TEMPLATE.format(n=1, sessions=render_session(sid, date, turns))
 
 
 def parse_one(text, sid):
@@ -102,7 +112,7 @@ def run_one(idx, sid, a, meter, runner=None):
            "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None,
            "session_chars": sum(len(t["content"]) for t in turns), "session_rounds": len(data.rounds_of(sid, turns, sess["date"])), "n_facts": 0, "error": None}
     os.makedirs(os.path.join(X, "raw"), exist_ok=True)
-    llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=EXTRACT_V2_RECIPE, cwd=R.NEUTRAL_CWD, runner=runner)
+    llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=RECIPE, cwd=R.NEUTRAL_CWD, runner=runner)
     try:
         c = llm.call(prompt, EXTRACT_SYSTEM, "sonnet", "X0", sid, "extract")
     except PromptLeak as e:
