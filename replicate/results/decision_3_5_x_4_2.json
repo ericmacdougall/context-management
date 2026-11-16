@@ -1,0 +1,220 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "54b3072",
+  "script": "decision_test.py",
+  "script_sha256": "0170544f4456201c01193c4a519496aebe1547dc8619128a2601f4211e5ffb18",
+  "utc": "2026-11-16T01:55:22Z",
+  "params": {
+   "scenarios": 600,
+   "pg_scenarios": 150,
+   "runs": 200,
+   "seed": 16096,
+   "cq_seconds": 30,
+   "cq_rate_per_s": 150,
+   "cq_concepts": 300,
+   "cq_workers": 8,
+   "fold_work_s": 0.02
+  },
+  "host": {
+   "host": "t2-dev",
+   "loadavg_1_5_15": [
+    23.94677734375,
+    22.48388671875,
+    22.47119140625
+   ],
+   "cpus": 48,
+   "python": "3.12.3",
+   "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+  },
+  "environment": {
+   "sut": {
+    "tree": "feat/systems-skeleton a13b524 (git archive, unmodified)",
+    "path": "/home/eric/emlab-16096/rep/sut/systems-a13b524/systems"
+   },
+   "postgres": {
+    "container": "emlab-pg-rep-16096",
+    "version": "16.15 (Debian 16.15-1.pgdg13+2)"
+   },
+   "host": {
+    "host": "t2-dev",
+    "loadavg_1_5_15": [
+     23.94677734375,
+     22.48388671875,
+     22.47119140625
+    ],
+    "cpus": 48,
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+   },
+   "elasticsearch": {
+    "node": "emlab-es-rep-16096",
+    "version": "9.5.6",
+    "licence": {
+     "type": "trial",
+     "uid": "2af2fc58-d374-42c8-8a66-523e63e06438",
+     "expiry_date": "2026-12-16T01:23:42.765Z"
+    }
+   }
+  }
+ },
+ "loadavg_before": [
+  18.359375,
+  22.29833984375,
+  22.47998046875
+ ],
+ "loadavg_after": [
+  23.94677734375,
+  22.48388671875,
+  22.47119140625
+ ],
+ "owner": {
+  "F1": "2000 scenarios, failures {} (F1_F2_task_amend.json a13b524)",
+  "F3": "race1 torn 0; fence-off 74 and 71 of 200",
+  "C8": "overlapping 0; lease-expiry late commit rejected"
+ },
+ "F1_3_5_1_and_3_12_1": {
+  "scenarios": 600,
+  "steps_compared": 5874,
+  "steps_ambiguous_partial_removal": 237,
+  "owner_class_for_ambiguous": {
+   "still_valid": 237
+  },
+  "scenarios_with_disagreement": 0,
+  "disagreement_examples": [],
+  "renders_checked": 3423,
+  "render_failures": 0,
+  "render_examples": [],
+  "low_trust_amendments": 983,
+  "effective_amendments": 3423,
+  "class_counts": {
+   "invalidated": 472,
+   "still_valid": 1235,
+   "None": 3645,
+   "obsolete": 155,
+   "ambiguous": 237,
+   "needs_recheck": 367
+  },
+  "controls": {
+   "c1_all_still_valid_scenarios_flagged": 285,
+   "c2_ignore_amendments_scenarios_flagged": 591,
+   "c3_superseded_stripped_flagged": 482,
+   "c1_ge_10pct": true,
+   "c2_ge_10pct": true
+  },
+  "net_zero_amendments_new_version_same_definition": 11
+ },
+ "F1_pg_path": {
+  "scenarios": 150,
+  "mismatch_vs_pure_fold": 0,
+  "mismatch_vs_oracle": 0,
+  "examples": []
+ },
+ "F3_race1": {
+  "runs": 200,
+  "torn": 0,
+  "overlap_witness_amend_between_start_and_complete": 64,
+  "amend_before_start": 112,
+  "amend_after_complete": 24,
+  "errors": 0,
+  "control_stale_read_basis_wrong": 112,
+  "examples": []
+ },
+ "F3_race2_fence_on": {
+  "runs": 200,
+  "fence": true,
+  "runs_with_stale_commit_observed_by_trigger": 0,
+  "rejected_attempts_overlap_witness": 100,
+  "converged_after_refold": 200,
+  "errors": 0
+ },
+ "F3_race3_fence_on": {
+  "runs": 200,
+  "fence": true,
+  "stale_in_es": 0,
+  "errors": 0
+ },
+ "F3_race2_fence_off": {
+  "runs": 200,
+  "fence": false,
+  "runs_with_stale_commit_observed_by_trigger": 93,
+  "rejected_attempts_overlap_witness": 0,
+  "converged_after_refold": 200,
+  "errors": 0
+ },
+ "F3_race3_fence_off": {
+  "runs": 200,
+  "fence": false,
+  "stale_in_es": 85,
+  "errors": 0
+ },
+ "C8_queue": {
+  "mode": "queue",
+  "seconds": 30,
+  "activities": 3816,
+  "workers": 8,
+  "concepts": 300,
+  "fold_attempts": 1225,
+  "results": {
+   "committed": 1205,
+   "committed_dirty": 20,
+   "rejected": 0
+  },
+  "overlapping_fold_intervals_same_concept": 0,
+  "hot_concept_intervals": 30,
+  "hot_concept_overlapping": 0,
+  "hot_overlap_fraction": 0.0,
+  "still_dirty_after_drain": 0
+ },
+ "C8_control_no_lease": {
+  "mode": "naive",
+  "seconds": 30,
+  "activities": 3754,
+  "workers": 8,
+  "concepts": 300,
+  "fold_attempts": 9001,
+  "results": {
+   "committed": 8860,
+   "committed_dirty": 141,
+   "rejected": 0
+  },
+  "overlapping_fold_intervals_same_concept": 7868,
+  "hot_concept_intervals": 238,
+  "hot_concept_overlapping": 208,
+  "hot_overlap_fraction": 0.8739,
+  "still_dirty_after_drain": 0
+ },
+ "C8_lease_expiry_fenced": {
+  "fence": true,
+  "a_claimed": true,
+  "b_claimed_after_expiry": true,
+  "b_commit": "committed",
+  "a_late_commit": "rejected",
+  "final_digest": "B"
+ },
+ "C8_lease_expiry_control_unfenced": {
+  "fence": false,
+  "a_claimed": true,
+  "b_claimed_after_expiry": true,
+  "b_commit": "committed",
+  "a_late_commit": "committed",
+  "final_digest": "A"
+ },
+ "threshold_checks": {
+  "3.5.1_zero_disagreements": true,
+  "3.12.1_render_zero_failures": true,
+  "controls_c1_c2_ge_10pct": true,
+  "3.5.2_race1_torn_0": true,
+  "3.5.2_race1_overlap_witness_gt_0": true,
+  "3.5.2_race1_control_ge_10pct": true,
+  "3.5.2_race2_fence_on_stale_0": true,
+  "3.5.2_race2_overlap_witness_gt_0": true,
+  "3.5.2_race2_fence_off_ge_10pct": true,
+  "3.5.2_race3_fence_on_stale_0": true,
+  "3.5.2_race3_fence_off_ge_10pct": true,
+  "4.2_queue_overlap_0": true,
+  "4.2_control_hot_overlap_ge_10pct": true,
+  "4.2_lease_expiry_late_commit_rejected": true,
+  "4.2_lease_control_unfenced_accepts_late": true
+ }
+}

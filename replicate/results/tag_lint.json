@@ -1,0 +1,1962 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "06457a3",
+  "utc": "2026-11-16T01:44:21Z",
+  "design_sha256": "3cc37723860aa356102654ff37fef352f63bf268b47315f80b8ff3874ceaf2d4",
+  "lab_main_head": "05c261f",
+  "worktree_heads": {
+   "elastic-memory-lab": "05c261f",
+   "elastic-memory-lab-adapters": "d8f714b",
+   "elastic-memory-lab-adapters-fix": "cfaefee",
+   "elastic-memory-lab-behaviour": "5229e75",
+   "elastic-memory-lab-engine": "a2858c8",
+   "elastic-memory-lab-eval": "64bef58",
+   "elastic-memory-lab-links-rescue": "18d07a3",
+   "elastic-memory-lab-phasef": "26dd4f4",
+   "elastic-memory-lab-policy": "9542b91",
+   "elastic-memory-lab-systems": "a13b524",
+   "elastic-memory-lab-writepath": "3944749"
+  }
+ },
+ "witness": {
+  "design_rows_with_tag_cell": 162,
+  "artifact_refs_checked": 33,
+  "ledger_rows": 69
+ },
+ "tag_counts": {
+  "DESIGNED-UNTESTED": 46,
+  "OPEN-DECISION": 10,
+  "OWNER-REPORTED": 35,
+  "REVIEWED": 36,
+  "DID-NOT-HOLD": 21,
+  "EXPLORATORY": 10,
+  "OBSERVED": 4
+ },
+ "rows_with_problems": [
+  {
+   "id": "3.2.7",
+   "tag": "DID-NOT-HOLD",
+   "evidence": "[DID-NOT-HOLD] RV-SYS N1, confirmed by a pure model (fence_window.py)",
+   "problems": [
+    "artifact fence_window.py not found at the cited commit (elastic-memory-lab-systems@a13b524:absent)"
+   ]
+  },
+  {
+   "id": "3.5.11",
+   "tag": "DID-NOT-HOLD",
+   "evidence": "[DID-NOT-HOLD] RV-SYS sibling-scope finding (probe trust_scope.py)",
+   "problems": [
+    "artifact trust_scope.py not found at the cited commit (elastic-memory-lab-systems@a13b524:absent)"
+   ]
+  },
+  {
+   "id": "3.8.11",
+   "tag": "OWNER-REPORTED",
+   "evidence": "[OWNER-REPORTED] MC h3_rerun_head.json; RV-AD",
+   "problems": [
+    "artifact h3_rerun_head.json not found at the cited commit (elastic-memory-lab-adapters-fix@c20e208:absent) but present at memcore-out/results"
+   ]
+  },
+  {
+   "id": "3.9.8",
+   "tag": "OWNER-REPORTED",
+   "evidence": "[OWNER-REPORTED] MC h3_rerun_head.json first_turn_input; PF DEVLOG",
+   "problems": [
+    "artifact h3_rerun_head.json not found at the cited commit (elastic-memory-lab-phasef@27a4c64:absent; elastic-memory-lab-adapters-fix@c20e208:absent) but present at memcore-out/results"
+   ]
+  }
+ ],
+ "ledger_conflicts": [
+  {
+   "design_row": "2.2.1",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F8"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Postgres log first, Elasticsearch as rebuildable projection | Engine discarded and rebuilt from Postgres alone; 1,440 turns exactly once | owner-reported, under review | engine F8, feat/engine-evolu"
+  },
+  {
+   "design_row": "2.2.1",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F8"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Input is a log event first; the workflow signal is only a doorbell | Grants that existed only as signals were lost 6 of 6; with events, 0 lost | owner-reported, under review | engine F8 |"
+  },
+  {
+   "design_row": "2.2.2",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F8"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Postgres log first, Elasticsearch as rebuildable projection | Engine discarded and rebuilt from Postgres alone; 1,440 turns exactly once | owner-reported, under review | engine F8, feat/engine-evolu"
+  },
+  {
+   "design_row": "2.2.2",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F8"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Input is a log event first; the workflow signal is only a doorbell | Grants that existed only as signals were lost 6 of 6; with events, 0 lost | owner-reported, under review | engine F8 |"
+  },
+  {
+   "design_row": "3.11.3",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F5a"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Replay captured histories before every deploy | Incompatible build failed 20 of 20 replays; deployed anyway, all sessions froze | owner-reported, under review | engine F5a |"
+  },
+  {
+   "design_row": "3.11.10",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F8"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Postgres log first, Elasticsearch as rebuildable projection | Engine discarded and rebuilt from Postgres alone; 1,440 turns exactly once | owner-reported, under review | engine F8, feat/engine-evolu"
+  },
+  {
+   "design_row": "3.11.10",
+   "design_tag": "REVIEWED",
+   "ledger_section": "Held",
+   "ledger_class": "OWNER-REPORTED",
+   "shared_tokens": [
+    "F8"
+   ],
+   "conflict": "LEDGER says owner-reported (stale?) while DESIGN tags REVIEWED",
+   "ledger_text": "| Input is a log event first; the workflow signal is only a doorbell | Grants that existed only as signals were lost 6 of 6; with events, 0 lost | owner-reported, under review | engine F8 |"
+  },
+  {
+   "design_row": "3.14.1",
+   "design_tag": "OWNER-REPORTED",
+   "ledger_section": "Held",
+   "ledger_class": "REVIEWED",
+   "shared_tokens": [
+    "BM25"
+   ],
+   "conflict": "LEDGER says reviewed while DESIGN tags OWNER-REPORTED",
+   "ledger_text": "| Typed decision log reduced to a current-state table, on one real session (45 hand-labelled items, 71 position changes) | Returns the current position on 33 of 45 with 2 harmful stale answers; plain "
+  }
+ ],
+ "control_planted_row_flagged": true,
+ "planted_row_problems": [
+  "artifact rep16096_planted_missing.json not found at the cited commit (elastic-memory-lab-systems@a13b524:absent; elastic-memory-lab-systems@a13b524:absent)"
+ ],
+ "known_positive_section6_item10_rediscovered": true,
+ "known_positive_section6_item11_rediscovered": false,
+ "all_rows": [
+  {
+   "id": "2.1.1",
+   "statement": "The system gives AI agents long-term memory: an event log of everything said and done, projections that make it searchable, and a per-turn context block plus pull tools that put the relevant part in front of the model. The targets are the user's words \"massive long term context\" and \"extreme recall ",
+   "evidence": "[DESIGNED-UNTESTED] v1 DESIGN.md; WAL w3feb63cc9ea",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "DESIGN.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab@603bb3b:found"
+     ],
+     "hit": [
+      "elastic-memory-lab",
+      "603bb3b",
+      [
+       "DESIGN.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "2.1.2",
+   "statement": "The deliverable is a client deployment for an Elastic customer, \"not just for my harness/internal use\" (user, WAL w55d0a51fc1f). The concrete shape is main's choice, not the user's: a standalone memory core on the client's Postgres and Elasticsearch, with Agent Builder and client model providers beh",
+   "evidence": "[OPEN-DECISION] WAL w6ffbac116a6",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.1.3",
+   "statement": "Subscription Claude and Codex CLIs are development adapters only, behind the same model port. The user asked for adapters \"so we can test and use it with our subscription based claude/codex instances\" (WAL wd8b56ed99b8). Whether they may sit behind Elasticsearch's inference API is an open ask (WAL w",
+   "evidence": "[OPEN-DECISION] WAL wd8b56ed99b8, wc459b4a2cfc",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.1.4",
+   "statement": "Ideas enter the design only from LEDGER's \"Held\" table, at the evidence class shown there; failed ideas stay recorded with the reason. Source: the user's \"incorporate into designs whatever proves to work, keep track of what doesnt\".",
+   "evidence": "[OWNER-REPORTED] LEDGER header (lab main 603bb3b); WAL w32d28bf01c9",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.1",
+   "statement": "The Postgres log is the only source of truth. Elasticsearch holds rebuildable projections only. The durable engine holds ids and cursors only.",
+   "evidence": "[REVIEWED] RV-ENG F8 SUPPORTED with limits: sessions rebuilt from Postgres alone; limits: a known session list, a single tenant, the old engine fully dead",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.2",
+   "statement": "Every input is a log event before any signal; the workflow signal is only a doorbell.",
+   "evidence": "[REVIEWED] RV-ENG F8 SUPPORTED (75 dropped doorbells covered by reconcile; the signal-only groups fail for the stated reason). The count \"lost 6 of 6\" is the owner's (LEDGER, ENG F8)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.3",
+   "statement": "Idempotency keys derive from stable input identity, never from an attempt number.",
+   "evidence": "[REVIEWED] RV-ENG F4t: attempt-derived keys gave 54 duplicate ledger rows and 825 results for 800 inputs",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.4",
+   "statement": "A stale writer is refused by the store, not by caller discipline. The lease epoch travels in the write and is checked under lock in Postgres, and by a per-epoch Elasticsearch write alias with require_alias.",
+   "evidence": "[REVIEWED] RV-WP N3, N3S_projector, N5, N8 SUPPORTED; limit: holds for honest stale writers that present their own token (RV-WP F3)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.5",
+   "statement": "Hybrid retrieval alone can serve as the memory. It did not: whole-pool recall in section 1 (exploratory, pilot). So: retrieval is one input to context, with a current-state table and an analyst tier above it.",
+   "evidence": "[DID-NOT-HOLD] CURVE; LEDGER \"Did not hold\" row 1 (exploratory)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.6",
+   "statement": "Automatic supersession links can act as a filter. They did not: link recall 10 of 16. So: supersession labels are advisory, never a filter, and the user chose \"Dated facts, links optional\" (WAL w0fdb289edad).",
+   "evidence": "[DID-NOT-HOLD] LR GATE3_RESULT (gate G5)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.7",
+   "statement": "Owner-reported passes hold without independent review. They did not: the first adversarial reviews confirmed 12 challenged material findings in the adapters and 12 in the write-path skeleton. So: no pass counts until an independent review confirms it.",
+   "evidence": "[DID-NOT-HOLD] RV-AD0; RV-WP0",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "2.2.8",
+   "statement": "The proof rules in gotchas/PROOF-RULES.md apply to every experiment: a failing control above a stated sensitivity floor, witness counts, pre-committed thresholds, per-item artifacts and an environment fingerprint.",
+   "evidence": "[OWNER-REPORTED] GOT PROOF-RULES.md (lab main 603bb3b)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "PROOF-RULES.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab@603bb3b:found"
+     ],
+     "hit": [
+      "elastic-memory-lab",
+      "603bb3b",
+      [
+       "gotchas/PROOF-RULES.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.1.1",
+   "statement": "Events are appended to a Postgres table with a per-stream sequence and a hash chain (seq, prev_hash).",
+   "evidence": "[OWNER-REPORTED] SYS C7_writers.json (feat/systems-skeleton a13b524)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "C7_writers.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/C7_writers.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.1.2",
+   "statement": "16 concurrent live writers produced a gapless sequence. This says nothing about clock skew, cross-host ordering or a stale writer.",
+   "evidence": "[REVIEWED] RV-SYS \"recomputed and matching\" (C7); limit from GOT CORRECTIONS",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.3",
+   "statement": "A zombie session that lost its lease is quarantined: 20 of 20 zombie appends were stored as unadopted in both stall positions, the chain verified and nothing was projected.",
+   "evidence": "[REVIEWED] RV-WP \"Zombie row (row 1)\": safety SUPPORTED",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.4",
+   "statement": "Takeover always completes after a zombie loses its lease. It does not: a zombie that stalls after its insert while holding its lease row blocks takeover indefinitely, because `acquire` sets no lock timeout.",
+   "evidence": "[DID-NOT-HOLD] RV-WP F6 (from code; not run)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.5",
+   "statement": "The projector cursor reads only rows whose transaction committed below the cluster-wide snapshot xmin, so a late commit is never skipped.",
+   "evidence": "[REVIEWED] RV-WP \"Late commit (row 23)\": Postgres half SUPPORTED; limit: any long transaction anywhere in the cluster stalls projection for every tenant",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.10",
+   "statement": "While one transaction is held open for 12 s, a reader still finds a new event through the log tail, and projection catches up 0.73 s after the commit. The run has no failing control and covers one database, not a cluster-wide stall across databases.",
+   "evidence": "[OWNER-REPORTED] SYS XMIN_stall.json (a13b524)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "XMIN_stall.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/XMIN_stall.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.1.6",
+   "statement": "The signed chain head is anchored outside the database with a promotion epoch, and projection stops at the replication-confirmed LSN.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES; UNCOVERED-TOP30 #6",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.7",
+   "statement": "The hash chain covers stored bytes, so an upcaster bug changes what an old event means without breaking verification. Old-event golden replays are needed.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES \"still missing\"",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.8",
+   "statement": "A memory append must never fail silently.",
+   "evidence": "[DESIGNED-UNTESTED] LEDGER X23 (rule, queued)",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.1.9",
+   "statement": "Secret and credential scanning runs before append, including encoded variants.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #19",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.1",
+   "statement": "Index names are chosen by an immutable field (plain index, op_type=create, deterministic routing), not by a rolled alias or a data stream. On a data stream the same _id is accepted again after a rollover.",
+   "evidence": "[REVIEWED] RV-ES writes E3a, E3b, E3c and alternatives REPRODUCED",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.2",
+   "statement": "Conditional writes with if_seq_no and if_primary_term give exactly one winner. `_bulk` has no cross-item atomicity, so per-item statuses must be read.",
+   "evidence": "[REVIEWED] RV-ES writes E2 REPRODUCED; E8d PARTLY (HTTP 200 with an item-level 400)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.3",
+   "statement": "Search visibility after a write takes about one second at the default refresh (p50 1,001 ms over 200 writes on a loaded host). Recent events are read from the log tail, not from search.",
+   "evidence": "[OWNER-REPORTED] BEH E1_refresh.json (feat/elastic-behaviour 6f53c80)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "E1_refresh.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-behaviour@6f53c80:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-behaviour",
+      "6f53c80",
+      [
+       "behaviour/results/E1_refresh.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.2.4",
+   "statement": "Read-after-write through the tail scan held for 100 of 100 reads, and 600 events written during a projector pause were all found.",
+   "evidence": "[OWNER-REPORTED] SYS C2_lag_tail.json; GOT CORRECTIONS",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "C2_lag_tail.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/C2_lag_tail.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.2.5",
+   "statement": "Every projection is rebuildable from the log. A blue/green rebuild showed no mixed view, but its control never produced a mixed view, so that half is unproven. A dropped bucket stays missing until an explicit repair.",
+   "evidence": "[DESIGNED-UNTESTED] RV-SYS \"result claims the raw files do not support\" (C1 v2)",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.6",
+   "statement": "The fence is pinned before any read: the epoch is captured at start, and the bulk goes through the per-epoch write alias with require_alias.",
+   "evidence": "[REVIEWED] RV-WP N1 SUPPORTED, narrow; limit: the control re-acquires the lease by force, and an in-flight bulk is not exercised",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.7",
+   "statement": "A fence made of a lock plus an alias resolved after the read keeps erased plaintext out of a live generation. It did not. So: the epoch is pinned before the read (3.2.6).",
+   "evidence": "[DID-NOT-HOLD] RV-SYS N1, confirmed by a pure model (fence_window.py)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [
+    "artifact fence_window.py not found at the cited commit (elastic-memory-lab-systems@a13b524:absent)"
+   ],
+   "checked": [
+    {
+     "file": "fence_window.py",
+     "found": false,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:absent"
+     ],
+     "hit": null
+    }
+   ]
+  },
+  {
+   "id": "3.2.8",
+   "statement": "The fence binds the scope that owns each table and covers every write. It does not: the trigger checks the scope the row names, and DELETE and TRUNCATE are unfenced on several tables.",
+   "evidence": "[DID-NOT-HOLD] RV-WP F3 (schema reading; reproducer given, not run)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.9",
+   "statement": "Elasticsearch `_aliases` can return HTTP 200 with `errors: true`; the client must raise on it.",
+   "evidence": "[DESIGNED-UNTESTED] RV-WP F7 (docs plus code; hypothesis)",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.10",
+   "statement": "The projector never passes unacknowledged items under an Elasticsearch flood-stage write block.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #22",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.11",
+   "statement": "Exact rescoring on approximate vector search is needed: without it the Elasticsearch dense leg cost up to about 0.08 session recall@10; with oversample 3 on bbq_hnsw the loss intervals all include 0.",
+   "evidence": "[OWNER-REPORTED] PREREG 4.3 (es_hybrid_pooled.json)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "es_hybrid_pooled.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/es_hybrid_pooled.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.2.12",
+   "statement": "At a 5% filter, the `fanout` filter heuristic gives higher kNN recall than the default `acorn` at equal num_candidates. The author's exact figures are not properties of Elasticsearch.",
+   "evidence": "[REVIEWED] RV-ES \"E6 direction\" PARTLY (direction confirmed; figures not tested)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.13",
+   "statement": "The embedder identity (model, revision, prefix, normalisation) and the vector index options are part of each generation's name and _meta. Inference endpoint ids are immutable per revision.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES; UNCOVERED-TOP30 #20",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.2.14",
+   "statement": "Without the `query: ` and `passage: ` prefixes, E5 vectors from the Elasticsearch endpoint move (top-10 overlap with prefixed vectors 0.718), so a semantic_text deployment must add them.",
+   "evidence": "[OWNER-REPORTED] PREREG 4.2 (es_e5.json)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "es_e5.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/es_e5.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.3.1",
+   "statement": "Erasure is per-subject key destruction in a separate key store, plus removal of derived rows through input-set provenance, then a rebuild of every registered index family.",
+   "evidence": "[OWNER-REPORTED] WP erasure.py at aaa0fec",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "erasure.py",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-writepath@aaa0fec:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-writepath",
+      "aaa0fec",
+      [
+       "writepath/wp/erasure.py"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.3.2",
+   "statement": "Phase 1 bumps the lease first, in one transaction with the tombstones and the job row. Writers racing phase 1 leave no residue.",
+   "evidence": "[REVIEWED] RV-WP N8 SUPPORTED; limit: the control drops every trigger, so it does not isolate the ordering",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.3",
+   "statement": "A stale rebuild cannot swap: it writes through a staging alias under compare-and-set, and the swap is anchored on `remove ... must_exist`.",
+   "evidence": "[REVIEWED] RV-WP N3 and N3S_projector SUPPORTED (sensitive controls)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.4",
+   "statement": "Readers filter erased subjects on every read path, always.",
+   "evidence": "[REVIEWED] RV-WP N5 SUPPORTED (the unfiltered control serves erased rows)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.5",
+   "statement": "Every registered index family is purged. Families outside the registry, data streams, ingest pipelines, enrich indices and hidden indices are not detected.",
+   "evidence": "[REVIEWED] RV-WP N2 PARTLY: registered families covered; the detector is name-based",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.6",
+   "statement": "\"Done\" requires a verification of zero residue.",
+   "evidence": "[DID-NOT-HOLD] RV-WP F4 and N4 PARTLY: the guard checks a JSON the caller supplies and does not fence INSERT",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.7",
+   "statement": "Erasure completes for any subject size.",
+   "evidence": "[DID-NOT-HOLD] RV-WP F1 (code plus vendor docs; not run live): verify builds one terms query with every event id, Elasticsearch caps terms at 65,536 by default, and one failing job stops the sweeper for all jobs",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.8",
+   "statement": "Erasure completes for any tenant size.",
+   "evidence": "[DID-NOT-HOLD] RV-WP F2 (model, not measured): a full-tenant rebuild longer than the unrenewed 120 s lease livelocks; with an ASSUMPTION rebuild rate the limit is near 200,000 documents",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.9",
+   "statement": "Deleted Elasticsearch text stays in segment files after DELETE. Two purge paths work: delete, flush, wait for the retention-lease sync (about 30 s), force-merge to one segment and verify; or reindex survivors into a fresh index and delete the old index. \"Only reindex works\" was refuted.",
+   "evidence": "[REVIEWED] RV-ES erasure claims REPRODUCED, PARTLY and REFUTED as stated",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.10",
+   "statement": "No plaintext or key material remains at rest in the event and key databases after erasure (one run). The key store is a lab stand-in.",
+   "evidence": "[REVIEWED] RV-WP N6 PARTLY: one run (R = 1), lab stand-in only",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.11",
+   "statement": "Production needs a KMS with real key deletion and a backup-retention bound stated in the erasure receipt.",
+   "evidence": "[OPEN-DECISION] RV-WP owner question 6",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.12",
+   "statement": "Erasure covers speaker provenance only: what other users said about the subject survives, and the tenant HMAC keeps slot hashes confirmable. Whether that is enough is an open ask.",
+   "evidence": "[OPEN-DECISION] RV-WP F8 and owner question 7; WAL wc4b140b9a4f",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.13",
+   "statement": "Legal hold versus erasure needs a defined precedence and an audit trail.",
+   "evidence": "[OPEN-DECISION] RV-WP owner question 10; GOT DESIGN-CHANGES \"still missing\"",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.14",
+   "statement": "Erasure reaches every content store (search, async search, Agent Builder conversations, inbox, sealed checkpoints, snapshots) from an inventory enumerated by code, and a snapshot restore is gated on replay.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #5; GOT DESIGN-CHANGES",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.15",
+   "statement": "Erasure covers the task state written by the evolution phase. It does not: task_view holds plaintext outside the subject key and the cascade.",
+   "evidence": "[DID-NOT-HOLD] RV-SYS N6 (at a13b524; not re-reviewed since)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.3.16",
+   "statement": "Erasure cost grows with the work it triggers: 40 erasures took 254 s.",
+   "evidence": "[OWNER-REPORTED] GOT DESIGN-CHANGES \"still missing\" (erasure amplification)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.4.1",
+   "statement": "Facts carry valid_from and valid_to, modality (asserted, decided, proposed, hypothetical), scope, author and trust origin. Lower trust never supersedes higher.",
+   "evidence": "[DESIGNED-UNTESTED] v1 DESIGN.md; kill rule K1 not run",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "DESIGN.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab@603bb3b:found"
+     ],
+     "hit": [
+      "elastic-memory-lab",
+      "603bb3b",
+      [
+       "DESIGN.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.4.2",
+   "statement": "Every fact cites session, round and a verbatim quote, and a host check verifies the quote mechanically: 2,351 of 2,373 quotes (99.1%) were found in the cited round, and all three controls were rejected in full.",
+   "evidence": "[OWNER-REPORTED] PF PROVENANCE_RESULT.md (feat/phasef-harness 27a4c64)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "PROVENANCE_RESULT.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-phasef@27a4c64:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-phasef",
+      "27a4c64",
+      [
+       "phasef/PROVENANCE_RESULT.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.4.3",
+   "statement": "The same check finds 8 facts whose stated author differs from the speaker (assistant-said text stored as the user's, and the reverse) and 53 ambiguous ones. An event cannot rise above its recorded trust origin.",
+   "evidence": "[OWNER-REPORTED] PF PROVENANCE_RESULT.md; rule from GOT DESIGN-CHANGES",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "PROVENANCE_RESULT.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-phasef@27a4c64:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-phasef",
+      "27a4c64",
+      [
+       "phasef/PROVENANCE_RESULT.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.4.4",
+   "statement": "Fact extraction runs one session per call. Facts per session were 9.00 at 1 session per call, 5.12 at 4, 4.46 at 8 and 2.71 at 16. This counts facts against a model-judged reference that no person has validated; it is not recall against gold.",
+   "evidence": "[OWNER-REPORTED] PF DEVLOG batch-size curve; LEDGER critic correction",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.4.5",
+   "statement": "A derived fact takes the minimum evidence class of its inputs. A status question is answered from the evidence view, never from extracted text.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES; UNCOVERED-TOP30 #12",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.4.6",
+   "statement": "Write-time cue keys let a fact be found by a question with no word overlap.",
+   "evidence": "[DESIGNED-UNTESTED] OPEN-QUESTIONS B8 not run; RV-SRC critic on X28",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.4.7",
+   "statement": "Repo-scoped facts carry (repo, commit, path footprint). As-of and supersession use log sequence; wall time is for display only.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #28",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.4.8",
+   "statement": "Model-facing ids are opaque, after real gold session ids were all found to begin with `answer_`. A re-test with opaque ids changed no outcome (9 of 10, 16 of 16); the dev2 gate-3 answers were not re-run.",
+   "evidence": "[OWNER-REPORTED] PF ID_AUDIT.md",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "ID_AUDIT.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-phasef@27a4c64:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-phasef",
+      "27a4c64",
+      [
+       "phasef/ID_AUDIT.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.5.1",
+   "statement": "A task definition change is an event. Earlier work is kept and re-classified as still valid, needs rework or obsolete.",
+   "evidence": "[OWNER-REPORTED] SYS F1_F2_task_amend.json (a13b524)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "F1_F2_task_amend.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/F1_F2_task_amend.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.5.2",
+   "statement": "An amendment while work is in flight leaves no torn state: 200 runs per race, and the fence-off controls committed stale state 74 and 71 times.",
+   "evidence": "[OWNER-REPORTED] SYS F3_inflight.json; GOT CORRECTIONS",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "F3_inflight.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/F3_inflight.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.5.3",
+   "statement": "A detected prose change becomes a pending update; it becomes current only through an explicit decision event.",
+   "evidence": "[DESIGNED-UNTESTED] OPEN-QUESTIONS I4; the prose detector itself did not hold (section 1)",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.4",
+   "statement": "Decisions in the systems skeleton are version-bound and idempotent. They were not: a stale acceptance overwrote a newer user decision, a replay re-applied a reverted change, and a retried decision dropped a pending change.",
+   "evidence": "[DID-NOT-HOLD] RV-SYS N7 (pure probes)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.5",
+   "statement": "In the rebuilt write path, decisions use compare-and-set: the stale-acceptance, replay and retry cases hold 10 of 10.",
+   "evidence": "[REVIEWED] RV-WP N7 PARTLY: cases (a), (b) and (c) hold",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.6",
+   "statement": "In the rebuilt write path, decisions are bound to the approval itself. They are not yet: the version comes from the caller, heads are per session, one typed message can authorise unlimited decisions, and an idempotency key reused with different content returns \"duplicate\".",
+   "evidence": "[DID-NOT-HOLD] RV-WP F5 (code; reproducers given)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.7",
+   "statement": "Whether decision items are per session or tenant-wide is a product choice (OPEN-QUESTIONS J1 implies tenant-wide).",
+   "evidence": "[OPEN-DECISION] RV-WP F5(b)",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.8",
+   "statement": "Every step and every injected block records the definition version and watermark it used (the acted-on version). The generated-scenario oracle shares the fold's version-blind rule, so its result is not independent.",
+   "evidence": "[DESIGNED-UNTESTED] RV-SYS oracle note; SYS I4_I5_decisions.json",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "I4_I5_decisions.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/I4_I5_decisions.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.5.9",
+   "statement": "Only an authorised human-typed decision flips state; two agents cannot approve each other; a revoked principal's pending decision is invalidated.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #10",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.10",
+   "statement": "The current-state table is a fold of events, checked by an oracle, following agent-fabric's reducer discipline.",
+   "evidence": "[DESIGNED-UNTESTED] FAB section F",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.5.11",
+   "statement": "Lower trust never supersedes higher across sibling scopes.",
+   "evidence": "[DID-NOT-HOLD] RV-SYS sibling-scope finding (probe trust_scope.py)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [
+    "artifact trust_scope.py not found at the cited commit (elastic-memory-lab-systems@a13b524:absent)"
+   ],
+   "checked": [
+    {
+     "file": "trust_scope.py",
+     "found": false,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:absent"
+     ],
+     "hit": null
+    }
+   ]
+  },
+  {
+   "id": "3.6.1",
+   "statement": "Each turn gets a budgeted block regenerated at the model port; only ids are logged. The block is always well-formed or empty: 1,716 renders across budgets, 0 malformed.",
+   "evidence": "[REVIEWED] RV-AD confirm N5 FIXED at c20e208 (local probes)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.2",
+   "statement": "Records are framed with a per-turn random delimiter, one JSON-escaped record per line, so a stored `</memory>` or `SYSTEM:` line cannot forge the framing.",
+   "evidence": "[REVIEWED] RV-AD confirm (forging finding fixed)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.3",
+   "statement": "The primary budget is 4,000 tokens, chosen on the pilot after the first selection rule failed to fire.",
+   "evidence": "[EXPLORATORY] PREREG 5.1 (budget_pilot.json); pilot-chosen",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": [
+    {
+     "file": "budget_pilot.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/budget_pilot.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.6.4",
+   "statement": "Gold presence grows with budget. At the whole pool, at least one gold session is present for 0.53, 0.62, 0.71 and 0.79 of questions at 4,000, 8,000, 16,000 and 32,000 tokens. No claim about context rot follows.",
+   "evidence": "[EXPLORATORY] XP x01_budget_presence (H3, flat)",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.5",
+   "statement": "Injection and trimming keep tool-call and tool-result pairing valid (in the Anthropic Messages API a tool_result must follow its tool_use).",
+   "evidence": "[DESIGNED-UNTESTED] LEDGER X24; RV-SRC critic",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.6",
+   "statement": "Compaction is recorded as an event that ends in-context status and forces the state card and manifest to regenerate. A resumed turn re-sends the sealed block verbatim plus a labelled delta.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #3 and #14",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.7",
+   "statement": "Every item presented as current carries its source event and a checked-through watermark, and a bounded scan after that watermark surfaces challengers.",
+   "evidence": "[DESIGNED-UNTESTED] RV-SYS: the I3 PASS is not supported; as built the scan averages 7.59 false challengers per scan, 91% of scans without a planted statement show one, and its vector leg is a hash-embedding stand-in",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.8",
+   "statement": "The session-id egress guard runs on every outbound path and fails closed without its id list.",
+   "evidence": "[REVIEWED] RV-AD confirm N4 FIXED; residuals: homoglyph, encoding and separator variants pass, and real-id matching is off by default",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.9",
+   "statement": "The prompt-cache cost of a regenerated block is unmeasured.",
+   "evidence": "[DESIGNED-UNTESTED] OPEN-QUESTIONS C6; UNCOVERED-TOP30 #14",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.6.10",
+   "statement": "Agent Builder injection must use the same randomised framing; a Kibana template that uses the raw `<memory>` format is superseded.",
+   "evidence": "[DESIGNED-UNTESTED] RV-AD confirm",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.7.1",
+   "statement": "Retrieval is BM25 plus dense vectors, fused client-side with RRF (rank constant 60) on the Basic required path. The rank constant was selected on the pilot.",
+   "evidence": "[EXPLORATORY] PREREG 4.3 (grid_pilot.json)",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": [
+    {
+     "file": "grid_pilot.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/grid_pilot.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.7.2",
+   "statement": "Recall falls monotonically with pool size. RRF session recall@10 is 0.968, 0.859, 0.684 and 0.4754 at H0 to H3. At H3 plain BM25 (0.494) and linear fusion (0.492) score slightly higher than RRF, and dense alone 0.345.",
+   "evidence": "[EXPLORATORY] CURVE levels.*.*.session_recall@10",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.7.3",
+   "statement": "23 of 94 pilot questions are low-overlap at the whole pool (gold round ranked worse than 100 on both BM25 and dense). The cut was chosen after the counts were seen.",
+   "evidence": "[EXPLORATORY] PREREG 3.2 (lowoverlap_pool_h3.json)",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": [
+    {
+     "file": "lowoverlap_pool_h3.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/lowoverlap_pool_h3.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.7.4",
+   "statement": "Session length alone separates gold from other sessions (AUROC 0.687 against a null of 0.448 to 0.547), so this benchmark carries a length shortcut.",
+   "evidence": "[EXPLORATORY] XP E2 label-blind probe",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.7.5",
+   "statement": "A cross-encoder rerank (top 20) sits after fusion. It cost about 64 s per question at top 50 on CPU.",
+   "evidence": "[OWNER-REPORTED] PREREG 4.3 (rerank_timing.json)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "rerank_timing.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/rerank_timing.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.7.10",
+   "statement": "The rerank beats plain RRF at the whole pool: session recall@10 +0.059 [+0.016, +0.113], on 78 of 94 questions while the pooled rerank run was still in progress.",
+   "evidence": "[EXPLORATORY] AFULL runs.H3 paired \"RERANK minus RRF\" (n 78)",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.7.6",
+   "statement": "Concept links boost and never filter.",
+   "evidence": "[DESIGNED-UNTESTED] v1 DESIGN.md",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "DESIGN.md",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab@603bb3b:found"
+     ],
+     "hit": [
+      "elastic-memory-lab",
+      "603bb3b",
+      [
+       "DESIGN.md"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.7.7",
+   "statement": "Pull tools for the model: recall(query, as_of), open_event(id), query_facts(subject, predicate, as_of), timeline(entity). A Claude Code headless session used them over MCP to answer a current-versus-past question.",
+   "evidence": "[OBSERVED] MC NOTES \"MCP\" demo",
+   "tag": "OBSERVED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.7.8",
+   "statement": "As-of filtering is only a safety rule on this benchmark: the day rule removes 0 gold sessions, so it cannot change a ranking here.",
+   "evidence": "[OWNER-REPORTED] PREREG section 2 (verify.json)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "verify.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-eval@5d39de1:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-eval",
+      "5d39de1",
+      [
+       "eval/results/pilot/verify.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.7.9",
+   "statement": "Standing queries (percolator) are lexical only: Elasticsearch rejects vector queries inside the percolator.",
+   "evidence": "[OBSERVED] LEDGER \"Did not hold\"; BEH percolator result",
+   "tag": "OBSERVED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.1",
+   "statement": "Analysts are long-lived headless sessions with read-only pull tools and a fixed tool-call budget. Findings come back as ids with provenance, never on the synchronous path of a turn. The tier was the user's proposal (WAL w014c9fca229).",
+   "evidence": "[DESIGNED-UNTESTED] PREREG 5.2; asynchronous delivery not exercised by the eval (offline scoring only)",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.12",
+   "statement": "Analysts reorder better than plain RRF at pool scale: session recall@10 +0.130 at H3 and +0.099 at H2 (0.660 to 0.758, [+0.023, +0.175]); not resolvable at H1 (+0.031 [-0.031, +0.089]). Failures (2.1% to 4.3% of files) are counted as misses.",
+   "evidence": "[EXPLORATORY] AFULL runs.H1, H2, H3 paired \"ANALYST minus RRF\"",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.13",
+   "statement": "With a 4,000-token context at H3, the analyst puts the current value of a changed fact in context for 0.93 of knowledge-update questions (stale only: 0.07), against 0.80 for the cross-encoder rerank and 0.27 for the RRF baseline (n 15; differences among the reordering arms not resolvable).",
+   "evidence": "[EXPLORATORY] AFULL runs.H3 b4000 ku_gold_latest, ku_stale_only",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.14",
+   "statement": "Analysts used no tool at all in about half of the answered questions (42 of 92 at H3); a disclosed daemon defect shared one tool budget between two H3 variants.",
+   "evidence": "[EXPLORATORY] PREREG results section \"Disclosed defect\" and tool-use lines",
+   "tag": "EXPLORATORY",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.2",
+   "statement": "The canary ran end to end: 46 calls; the analyst used a mean of 3.59 tool calls per question, about 100k tokens and 22 s per call; a rerank call took about 31k tokens and 10 s.",
+   "evidence": "[OWNER-REPORTED] PF DEVLOG \"analyst canary\"; CANARY",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.3",
+   "statement": "Inbox claims carry a fencing token and a 330 s renewable lease. A second turn at +40 s and +300 s gets nothing; a forged token and a superseded claimant confirm 0.",
+   "evidence": "[REVIEWED] RV-AD confirm N7 FIXED (local probes); residuals: renew returns 0 on a lapsed lease while confirm returns 1, and confirm without a token is silent",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.4",
+   "statement": "A fixed 30 s claim lease delivers each inbox item once. It did not: it double-delivered for turns longer than 30 s. So: the renewable lease in 3.8.3.",
+   "evidence": "[DID-NOT-HOLD] RV-AD N7 at 888c94b",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.5",
+   "statement": "Inbox delivery is exactly once across a paused turn, a checkpoint rollback and a fork of the native session id; the delivery cursor travels in the checkpoint.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #2",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.6",
+   "statement": "An analyst run is keyed on (logical session, step, manifest hash), draws on the originating step's budget reservation and is killed when it stops making progress.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #17",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.7",
+   "statement": "Findings follow a fixed schema with an explicit \"nothing relevant\" outcome that suppresses injection.",
+   "evidence": "[DESIGNED-UNTESTED] LEDGER X07",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.8",
+   "statement": "Analysts read untrusted transcripts and must never relay a planted instruction.",
+   "evidence": "[DESIGNED-UNTESTED] OPEN-QUESTIONS H6",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.9",
+   "statement": "Policy is re-evaluated at delivery, not only at enqueue.",
+   "evidence": "[DESIGNED-UNTESTED] LEDGER X20",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.10",
+   "statement": "Reviewer and click-tester sessions never receive items whose origin is in the author set.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #26",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.8.11",
+   "statement": "A long-lived session is cheaper than one call per step: 20 single calls cost $0.7751 notional against $0.1246 for one 20-turn session (one run). The reviewer matched the single-call figures; the session figures could not be recomputed.",
+   "evidence": "[OWNER-REPORTED] MC h3_rerun_head.json; RV-AD",
+   "tag": "OWNER-REPORTED",
+   "problems": [
+    "artifact h3_rerun_head.json not found at the cited commit (elastic-memory-lab-adapters-fix@c20e208:absent) but present at memcore-out/results"
+   ],
+   "checked": [
+    {
+     "file": "h3_rerun_head.json",
+     "found": false,
+     "tried": [
+      "elastic-memory-lab-adapters-fix@c20e208:absent"
+     ],
+     "hit": null
+    }
+   ]
+  },
+  {
+   "id": "3.9.1",
+   "statement": "One set of ports (chat model, embeddings, rerank, search, agent tool surface, injection hook); the core depends on no vendor.",
+   "evidence": "[OWNER-REPORTED] MC contract tests (fix/adapters-delta-16096 c20e208)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.2",
+   "statement": "The customer default chat route is the Elasticsearch inference API. Generative AI connectors are deprecated in favour of inference endpoints that support `chat_completion`.",
+   "evidence": "[REVIEWED] RV-G1 (with adversarial challenge)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.3",
+   "statement": "Subscription adapters refuse to construct without an explicit development flag. The gateway gate uses an exact-type allow-list, a read-only copy of the backend map and a per-request re-check.",
+   "evidence": "[REVIEWED] RV-AD confirm N1, N2 FIXED; residual: patching the class at runtime is not detected",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.4",
+   "statement": "The first subscription gate kept subscription adapters out of production paths. It did not: it failed open twice (a wrapper that did not carry the taint; a backend map mutable after the check).",
+   "evidence": "[DID-NOT-HOLD] RV-AD N1, N2 at 888c94b",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.5",
+   "statement": "Call caps are atomic across processes and fail closed on a corrupt counter. Each budget is a separate counter, so there is no single global cap, and the Elasticsearch embedder and reranker adapters have no budget.",
+   "evidence": "[REVIEWED] RV-AD PARTLY",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.6",
+   "statement": "Results do not depend on the adapter. The earlier \"11 of 12 agree\" used a lenient metric; raw text F1 between Codex and Claude answers was 0.35.",
+   "evidence": "[DID-NOT-HOLD] MC NOTES \"review corrections\"",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.7",
+   "statement": "Pin and ban rules for models are data read at run time, never model literals in source.",
+   "evidence": "[DESIGNED-UNTESTED] FAB (rule R23); OPEN-QUESTIONS J6",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.9.8",
+   "statement": "Each headless subscription call carries about 10.5k tokens of harness overhead.",
+   "evidence": "[OWNER-REPORTED] MC h3_rerun_head.json first_turn_input; PF DEVLOG",
+   "tag": "OWNER-REPORTED",
+   "problems": [
+    "artifact h3_rerun_head.json not found at the cited commit (elastic-memory-lab-phasef@27a4c64:absent; elastic-memory-lab-adapters-fix@c20e208:absent) but present at memcore-out/results"
+   ],
+   "checked": [
+    {
+     "file": "h3_rerun_head.json",
+     "found": false,
+     "tried": [
+      "elastic-memory-lab-phasef@27a4c64:absent",
+      "elastic-memory-lab-adapters-fix@c20e208:absent"
+     ],
+     "hit": null
+    }
+   ]
+  },
+  {
+   "id": "3.10.1",
+   "statement": "One policy decision point sits at the model port, append, projection, context assembly and inbox delivery, never in a hook. It fails closed and doubles as the out-of-band kill list.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES; UNCOVERED-TOP30 #7 and #11",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.10.2",
+   "statement": "Labels (tenant, access list, classification, region, handling) travel with every event; a derived row's access is the intersection of its inputs' access and its restrictions the union.",
+   "evidence": "[DESIGNED-UNTESTED] OPEN-QUESTIONS J3",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.10.3",
+   "statement": "Identity and tenant attributes cannot be overwritten by derived attributes; a non-boolean or erroring evaluation denies.",
+   "evidence": "[DESIGNED-UNTESTED] LEDGER X18",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.10.4",
+   "statement": "A refusal or a policy denial is never retried on another model without a recorded, authorised route.",
+   "evidence": "[DESIGNED-UNTESTED] OPEN-QUESTIONS J9",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.10.5",
+   "statement": "The policy point refuses subscription adapters in any production profile.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #30",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.10.6",
+   "statement": "Which concrete policies apply (regions, classifications, approved models) is the client's or the user's choice; the system ships with none assumed.",
+   "evidence": "[OPEN-DECISION] OPEN-QUESTIONS J11",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.1",
+   "statement": "The durable engine (Temporal) gives exactly-once effects under abrupt worker exit, for an external system that honours an idempotency key with unbounded retention. 34 exits placed inside the two critical windows gave exact counts; both broken-key controls fail.",
+   "evidence": "[REVIEWED] RV-ENG F4t SUPPORTED; limit M7 (key retention of the stand-in)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.2",
+   "statement": "A Postgres crash, a server crash with activities in flight and a crash with a workflow task in flight were not tested; only the SQLite dev server was used.",
+   "evidence": "[DESIGNED-UNTESTED] RV-ENG F4 limits and M6",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.3",
+   "statement": "Replaying captured histories before every deploy catches an incompatible build (20 of 20 replays failed); deployed anyway, all sessions froze without failing.",
+   "evidence": "[REVIEWED] RV-ENG F5a SUPPORTED (one class of nondeterminism tested)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.4",
+   "statement": "Patching works as a hotfix: old runs adopt the patch only after continue-as-new, and removing a patch early strands idle sessions.",
+   "evidence": "[REVIEWED] RV-ENG F5b1, F5c SUPPORTED",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.5",
+   "statement": "A continue-as-new hop to a new task queue moves old sessions to new code.",
+   "evidence": "[REVIEWED] RV-ENG F5b3 SUPPORTED; requires the hop in the old code",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.6",
+   "statement": "Pinned worker deployments keep old sessions on their build; for long sessions the old build runs until every session ends.",
+   "evidence": "[REVIEWED] RV-ENG F5b2 PARTLY: pinning works; the labelled control does not discriminate",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.7",
+   "statement": "The recommended combination of pinned deployments plus a continue-as-new hop was never run together.",
+   "evidence": "[DESIGNED-UNTESTED] RV-ENG \"recommended combination\" UNSUPPORTED",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.8",
+   "statement": "State migrations happen at a continue-as-new boundary. Ship the reader of the next shape before the writer: rolling back after a migration left 4 of 4 sessions stuck.",
+   "evidence": "[REVIEWED] RV-ENG F6 SUPPORTED (rollback failure confirmed); the count \"4 of 4\" is the owner's (LEDGER, ENG F6)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.9",
+   "statement": "Server and SDK upgrades by one minor version kept sessions running. There is no failing control, and the production schema-tool path was not used.",
+   "evidence": "[OWNER-REPORTED] ENG F7; RV-ENG F7 PARTLY",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.10",
+   "statement": "A session is rebuilt into a fresh engine from the Postgres log alone; doorbells dropped by the new engine are recovered by reconcile.",
+   "evidence": "[REVIEWED] RV-ENG F8 SUPPORTED with limits",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.11",
+   "statement": "\"Reconcile re-derives pending turns after any restart\" is false: reconcile runs only at the start of a run and when `more` is set.",
+   "evidence": "[DID-NOT-HOLD] RV-ENG M1 (code; ENG NOTES still carries the claim)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.12",
+   "statement": "After a rebuild the engine resolves granted approvals promptly, isolates poison inputs, creates inputs idempotently and keys rollups stably. It did not: a granted approval waits for its full deadline; a poison input (including a crypto-erased one) wedges the session; input creation is not idempotent",
+   "evidence": "[DID-NOT-HOLD] RV-ENG M2 to M5 (code; M3 shown by an artifact)",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.13",
+   "statement": "Elasticsearch upgrades, mapping changes and embedding-model changes go through reindex and an alias swap under load. After the cutover, the new index family sat outside erasure.",
+   "evidence": "[OWNER-REPORTED] SYS F9 results; RV-SYS N2",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.11.14",
+   "statement": "Postgres event schema changes use event versions and upcasting on read.",
+   "evidence": "[OWNER-REPORTED] SYS F10_schema_evolution.json",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "F10_schema_evolution.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/F10_schema_evolution.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.11.15",
+   "statement": "An extraction-recipe change never serves mixed versions. The rule-based case passes; the real extractor is unmeasured.",
+   "evidence": "[OWNER-REPORTED] SYS F11_recipe_change.json",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "F11_recipe_change.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/F11_recipe_change.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.11.16",
+   "statement": "The engine fixes for tenant keys, bound approvals and validated doorbells exist on the branch.",
+   "evidence": "[OWNER-REPORTED] feat/engine-evolution ffa4ce5, 05593c7 (no review)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.12.1",
+   "statement": "A task amendment is an event; the next turn shows the new definition as current and the old one as superseded. User requirement: WAL w83503ef64b7.",
+   "evidence": "[OWNER-REPORTED] SYS F1_F2_task_amend.json",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "F1_F2_task_amend.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-systems",
+      "a13b524",
+      [
+       "systems/results/F1_F2_task_amend.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.12.2",
+   "statement": "Sessions holding an assumption are registered on the ask. On resume, a mandatory pre-turn reconciliation compares the sealed watermark against answers and decisions recorded since.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES; UNCOVERED-TOP30 #27",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.12.3",
+   "statement": "A stale approval (approve version 3, amend to 4, execute) is refused.",
+   "evidence": "[DID-NOT-HOLD] RV-WP row 27 PARTLY and F5(a): refused only if the executor passes the approval's version; an executor that reads the head first executes it",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.12.4",
+   "statement": "Memory written by a rolled-back, cancelled or unmerged run is retracted and cascades through provenance.",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #13",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.13.1",
+   "statement": "One index family per tenant. Document-level security on a shared index leaks term statistics: tenant A's BM25 scores change when tenant B adds documents, and `dfs_query_then_fetch` does not fix it.",
+   "evidence": "[REVIEWED] RV-ES tenancy E9b and E9c REPRODUCED; E9d REFUTED",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.13.2",
+   "statement": "The adapters' physical index names are injective: wildcard, encoded and look-alike names are refused and the tenant term is forced. 100 names over 2 prefixes gave 0 collisions.",
+   "evidence": "[REVIEWED] RV-AD confirm (tenant boundary passes); residual: no tenant term on a kNN query without a caller filter",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.13.3",
+   "statement": "The engine has tenant isolation.",
+   "evidence": "[DID-NOT-HOLD] RV-ENG H1 (code, at 62916ae): keys and the workflow id carry no tenant, so two tenants sharing a session id collide; fix in 3.11.16 unreviewed",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.13.4",
+   "statement": "Cross-tenant red team including the connection pooler (forged tenant field, collisions, fuzzed ids, quota flood).",
+   "evidence": "[DESIGNED-UNTESTED] UNCOVERED-TOP30 #9",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.13.5",
+   "statement": "Tenant validation in the write path holds in every component.",
+   "evidence": "[DID-NOT-HOLD] RV-WP minor finding: it is an `assert`, stripped under `python -O`, and absent from erasure, reader and log",
+   "tag": "DID-NOT-HOLD",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.1",
+   "statement": "On an Elasticsearch Basic licence these work: the standard (BM25) retriever, kNN, rescorer, pinned, MMR diversify, and ES | QL MATCH, FORK and LOOKUP JOIN.",
+   "evidence": "[OWNER-REPORTED] BEH E7_basic.json (feat/elastic-behaviour 6f53c80)",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "E7_basic.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-behaviour@6f53c80:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-behaviour",
+      "6f53c80",
+      [
+       "behaviour/results/E7_basic.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.14.2",
+   "statement": "On Basic these return a licence error: the `rrf` and `linear` retrievers, `text_similarity_reranker`, ES | QL FUSE, ES | QL RERANK (`[inference]`), document-level security, and indexing into bbq_disk (the mapping is accepted; each document fails).",
+   "evidence": "[OWNER-REPORTED] BEH E7_basic.json, E9_dls_basic.json, E6_bbqdisk_basic.json",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": [
+    {
+     "file": "E6_bbqdisk_basic.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-behaviour@5229e75:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-behaviour",
+      "5229e75",
+      [
+       "behaviour/results/E6_bbqdisk_basic.json"
+      ]
+     ]
+    },
+    {
+     "file": "E7_basic.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-behaviour@5229e75:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-behaviour",
+      "5229e75",
+      [
+       "behaviour/results/E7_basic.json"
+      ]
+     ]
+    },
+    {
+     "file": "E9_dls_basic.json",
+     "found": true,
+     "tried": [
+      "elastic-memory-lab-behaviour@5229e75:found"
+     ],
+     "hit": [
+      "elastic-memory-lab-behaviour",
+      "5229e75",
+      [
+       "behaviour/results/E9_dls_basic.json"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "id": "3.14.3",
+   "statement": "So the Basic required path is: own embeddings computed outside Elasticsearch and stored as dense_vector, client-side fusion and rerank, one index family per tenant, and model calls made directly to the client's providers. Basic as the required path is main's framing (ASSUMPTION); the build tier is o",
+   "evidence": "[OPEN-DECISION] WAL w6ffbac116a6; OPEN-QUESTIONS D4",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.4",
+   "statement": "bbq_hnsw and int8_hnsw dense_vector indexing on a Basic node has no Basic-labelled artifact in the lab.",
+   "evidence": "[DESIGNED-UNTESTED] RV-LIC untested list",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.5",
+   "statement": "Elastic-side fusion and rerank are declared optional Enterprise features with a client-side fallback. The licence probe re-checks after a TTL and does not latch on a transient error.",
+   "evidence": "[REVIEWED] RV-AD (licence probe fixed); the Basic fallback was tested only against a 403 stub (MC NOTES)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.6",
+   "statement": "The Elasticsearch inference API, semantic_text and the built-in E5 and ELSER models need Enterprise, or a trial, on self-managed clusters.",
+   "evidence": "[REVIEWED] RV-LIC (semantic_text unusable on Basic); RV-G1 (inference API tiers; the exact Basic error is UNCONFIRMED)",
+   "tag": "REVIEWED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.7",
+   "statement": "Agent Builder, its `.mcp` connector and workflows were observed only on a trial licence, and research says Agent Builder needs Enterprise outside Serverless. Agent Builder is therefore not on the Basic required path, although the deployment brief lists it.",
+   "evidence": "[OPEN-DECISION] MC NOTES (\".mcp\" is an enterprise licence type, enabled under the trial); RV-G1 (UNCONFIRMED snippets)",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.8",
+   "statement": "Agent Builder's pre-execution workflow replaces the user message with the rewritten prompt (one user message, prefixed with a sent-time line).",
+   "evidence": "[OBSERVED] MC NOTES-addendum-g7 variant 1 (Kibana 9.5.6, stub model)",
+   "tag": "OBSERVED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.9",
+   "statement": "The pre-execution hook fails closed by itself: a failing step, or a run past 120 s, returns HTTP 500 and the agent run stops. Fail-open has to be built into the workflow.",
+   "evidence": "[OBSERVED] MC NOTES-addendum-g7 variants 2 and 3",
+   "tag": "OBSERVED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.10",
+   "statement": "The fail-open template (memcore returns the original prompt after 20 s or any error; a Kibana step timeout of 25 s with continue-on-failure) has not run live. Its step keys are an ASSUMPTION.",
+   "evidence": "[DESIGNED-UNTESTED] MC NOTES-addendum-g7 (\"not run live\")",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.11",
+   "statement": "No real model has driven the Agent Builder path; only a stub has.",
+   "evidence": "[DESIGNED-UNTESTED] GOT DESIGN-CHANGES \"still missing\"",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.12",
+   "statement": "A trial licence expires (the lab's on 2026-12-15) and switches features off under live indices. Every licensed feature needs a declared degrade mode that fails closed for isolation.",
+   "evidence": "[DESIGNED-UNTESTED] GOT NEW-GOTCHAS MEM-14; UNCOVERED-TOP30 #21",
+   "tag": "DESIGNED-UNTESTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.13",
+   "statement": "agent-fabric is a later provider adapter. Its memory slice F14 is planned, not built, and specified on a Postgres vector extension; this system would plug in as an out-of-process `memory` provider under ADR 0002. Fabric's append-only triggers conflict with an erasure cascade unless content stays out",
+   "evidence": "[OPEN-DECISION] FAB headline and section F; WAL w6ffbac116a6",
+   "tag": "OPEN-DECISION",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.14.14",
+   "statement": "Claude Code reaches the memory through a UserPromptSubmit hook or MCP. Codex hooks exist but none were installed, and the Codex pool refuses MCP configuration.",
+   "evidence": "[OWNER-REPORTED] MC NOTES",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.15.1",
+   "statement": "The write-path owner reproduced review findings F1 to F7 on the reviewed code (all seven \"property_holds=false\"), and added controls for N3S_eraser and N6 plus a ten-run registry check (dry runs only).",
+   "evidence": "[OWNER-REPORTED] feat/writepath-rescue e5f6aca, 1ebee08",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.15.2",
+   "statement": "The engine owner committed fixes for review findings H1 to H3 and M1 to M5 (tenant keys, approval request ids, validated doorbells, periodic reconcile, prompt approval resolution, rollups keyed by deadline, a dead-letter path, idempotent input append) and result provenance; 12 unit tests fail on 629",
+   "evidence": "[OWNER-REPORTED] feat/engine-evolution ffa4ce5, 05593c7, 492f900, f834ad2, ff285c2",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.15.3",
+   "statement": "The adapter owner committed fixes for the inbox residuals (lapsed renewals reported, confirm token required), guards and budgets on the embedder and reranker, and a gateway route for the Kibana pre-execution workflow; each with tests that fail on c20e208.",
+   "evidence": "[OWNER-REPORTED] fix/adapters-delta-16096 515cebf, 611d21c, d109124",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "3.15.4",
+   "statement": "A policy decision point with a label lattice and enforcement exists, with thresholds pre-registered first; only unit tests and dry runs so far.",
+   "evidence": "[OWNER-REPORTED] feat/policy-decisions c2153af, 4fda42f",
+   "tag": "OWNER-REPORTED",
+   "problems": [],
+   "checked": []
+  },
+  {
+   "id": "9.9.9",
+   "statement": "Planted control row.",
+   "evidence": "[OWNER-REPORTED] SYS rep16096_planted_missing.json (feat/systems-skeleton a13b524)",
+   "tag": "OWNER-REPORTED",
+   "problems": [
+    "artifact rep16096_planted_missing.json not found at the cited commit (elastic-memory-lab-systems@a13b524:absent; elastic-memory-lab-systems@a13b524:absent)"
+   ],
+   "checked": [
+    {
+     "file": "rep16096_planted_missing.json",
+     "found": false,
+     "tried": [
+      "elastic-memory-lab-systems@a13b524:absent",
+      "elastic-memory-lab-systems@a13b524:absent"
+     ],
+     "hit": null
+    }
+   ]
+  }
+ ]
+}
