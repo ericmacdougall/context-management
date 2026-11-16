@@ -27,6 +27,8 @@ import hmac
 import json
 import os
 import secrets
+import time
+from typing import Iterable, List, Protocol
 
 import psycopg
 from psycopg import sql
@@ -154,8 +156,13 @@ def _scram_verifier(password: str) -> str:
     return "SCRAM-SHA-256$%d:%s$%s:%s" % (it, b(salt), b(hashlib.sha256(ck).digest()), b(sk))
 
 
+def _dbname() -> str:
+    """The database name: POL_PG_DB (a name, never a secret), default "pol". Every connect call goes through here."""
+    return os.environ.get("POL_PG_DB") or "pol"
+
+
 def _connect(user, passfile, port, app):
-    c = psycopg.connect(host=HOST, port=port, dbname="pol", user=user, passfile=passfile, autocommit=True, application_name=app)
+    c = psycopg.connect(host=HOST, port=port, dbname=_dbname(), user=user, passfile=passfile, autocommit=True, application_name=app)
     c.isolation_level = psycopg.IsolationLevel.READ_COMMITTED            # explicit; the lock protocol is argued for READ COMMITTED
     return c
 
@@ -437,3 +444,66 @@ class PgVault:
 
     def _refs_about(self, tenant, subject):
         return [r for (r,) in self._c.execute("select ref from dc.vals where tenant=%s and %s = any(subjects) order by ref", (tenant, subject)).fetchall()]
+
+
+# ------------------------------------------------------------------------------------------------ R3-8: external anchor
+class Anchor(Protocol):
+    """Where chain heads are recorded OUTSIDE the database. A WORM bucket, an object store with retention or a transparency log can replace
+    FileAnchor; the contract is append-only records and reading them back in order."""
+
+    def append(self, rec: dict) -> None: ...
+
+    def records(self) -> Iterable[dict]: ...
+
+
+class FileAnchor:
+    """Append-only JSONL file outside the database: one {"tenant", "n", "hash", "utc"} per line. O_APPEND, fsync per record; the class has no
+    method that rewrites or removes a record. (A file on the same host is only as strong as that host's file permissions: for a real
+    guarantee point the path at storage the database owner cannot write, or implement Anchor over a WORM store.)"""
+
+    def __init__(self, path: str):
+        self.path = path
+
+    def append(self, rec: dict) -> None:
+        line = json.dumps(rec, sort_keys=True, separators=(",", ":")) + "\n"
+        fd = os.open(self.path, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        try:
+            os.write(fd, line.encode())
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
+    def records(self) -> List[dict]:
+        try:
+            with open(self.path, encoding="utf-8") as f:
+                return [json.loads(x) for x in f if x.strip()]
+        except FileNotFoundError:
+            return []
+
+
+def anchor_export(conn, anchor: Anchor, tenant: str) -> dict:
+    """Append the tenant's current chain head (n, hash) to the anchor. Runs on an owner/operator connection, never dc_app (which cannot
+    read the chain). Returns the record."""
+    r = conn.execute("select n, hash from dc.chainhead where tenant = %s", (tenant,)).fetchone()
+    if r is None:
+        raise LookupError("tenant not installed")
+    rec = {"tenant": tenant, "n": int(r[0]), "hash": r[1], "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    anchor.append(rec)
+    return rec
+
+
+def anchor_check(conn, anchor: Anchor, tenant: str) -> dict:
+    """True only when the chain verifies inside the database AND every anchored (n, hash) of this tenant is still the event at chain_n = n.
+    Detects an owner who rewrote history and recomputed the hashes for any event up to the LAST export: the recomputed hash of an anchored
+    event differs from the anchored one as soon as any earlier byte changed. It does NOT detect a rewrite of events after the last export
+    (nothing outside the database has seen them yet): export often."""
+    recs = [x for x in anchor.records() if x.get("tenant") == tenant]
+    n_ok, chain_ok = conn.execute("select n, ok from dc.verify_chain(%s)", (tenant,)).fetchone()
+    bad = []
+    for x in recs:
+        row = conn.execute("select hash from dc.events where tenant = %s and chain_n = %s", (tenant, x["n"])).fetchone()
+        if row is None:
+            bad.append({"n": x["n"], "problem": "missing", "anchored": x["hash"]})
+        elif row[0] != x["hash"]:
+            bad.append({"n": x["n"], "problem": "hash_differs", "anchored": x["hash"], "found": row[0]})
+    return {"ok": bool(chain_ok) and not bad, "chain_ok": bool(chain_ok), "events": int(n_ok), "anchored": len(recs), "mismatches": bad}
