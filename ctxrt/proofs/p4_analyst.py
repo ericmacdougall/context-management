@@ -619,10 +619,15 @@ def exp_4f(rng):
         th = threading.Thread(target=run.run, daemon=True)
         th.start()
         hang = sorted(turn() for _ in range(15))[7]
-        # sync control: the turn waits for the analyst
-        t0 = time.perf_counter()
-        turn()
         th.join()
+        # sync control: a turn that WAITS for a fresh analyst (same hanging stub) before it can proceed; measured from the analyst launch
+        r1 = db.launch("sess", "step-A", "asyncS%d" % t, 1, "v1", 10, "o")
+        runS = make_run(db, inbox, log, r1["key"], r1["epoch"], [{"type": "tool", "name": "search", "args": {"query": "a"}, "hang": 0.25}, {"type": "final", "text": nothing()}], "asyncS")
+        t0 = time.perf_counter()
+        ths = threading.Thread(target=runS.run, daemon=True)
+        ths.start()
+        turn()
+        ths.join()
         sync = time.perf_counter() - t0
         c["runs"] += 1
         c["ok_latency"] += hang <= 1.5 * base + 0.05
