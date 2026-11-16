@@ -95,7 +95,7 @@ def dls_battery():
 
 def quick_probes(sem_idx="lic-sem"):
     """Fast subset. Keys are stable; values are class strings plus status."""
-    out = {}
+    out = {"_times": {}}
     std = {"standard": {"query": {"match": {"title": "paris"}}}}
     knn = {"knn": {"field": "v", "query_vector": embed("paris trip planning"), "k": 3, "num_candidates": 10}}
     t = time.time()
@@ -104,14 +104,22 @@ def quick_probes(sem_idx="lic-sem"):
                                                                           {"retriever": knn, "weight": 1.0, "normalizer": "minmax"}], "rank_window_size": 10}}}),
                        ("bm25", {"query": {"match": {"title": "paris"}}}),
                        ("knn", {"knn": knn["knn"]})):
+        t0 = time.time()
         c, j, _ = req("POST", "/%s/_search" % BASE_IDX, body, timeout=15)
         out[name] = [classify(c, j), c]
+        out["_times"][name] = [t0, time.time()]
+    t0 = time.time()
     c, j, _ = req("POST", "/%s/_search" % sem_idx, {"query": {"semantic": {"field": "body", "query": "paris"}}}, timeout=15)
     out["semantic_query"] = [classify(c, j), c]
+    out["_times"]["semantic_query"] = [t0, time.time()]
+    t0 = time.time()
     c, j, _ = req("POST", "/_inference/text_embedding/%s" % STUB_EP, {"input": "x"}, timeout=15)
     out["inference_use"] = [classify(c, j), c]
+    out["_times"]["inference_use"] = [t0, time.time()]
+    t0 = time.time()
     d = dls_search() if os.path.exists(DLS_PW) else {"class": "SKIP", "status": None}
     out["dls_search"] = [d["class"], d["status"], d.get("returned")]
+    out["_times"]["dls_search"] = [t0, time.time()]
     out["_t"] = t
     return out
 

@@ -315,6 +315,8 @@ def unrefreshed_fixture():
 
 def unrefreshed_partial(ix):
     """Bulk partial update (tag only) of documents that are not yet refreshed, then refresh and count what survived."""
+    cv, jv, _ = req("POST", "/%s/_search" % ix, {"size": 0, "track_total_hits": True, "query": {"match_all": {}}})
+    searchable_before = jv.get("hits", {}).get("total", {}).get("value") if cv == 200 else None   # 0 proves the documents were still unrefreshed
     c, s = bulk(ix, [(str(i), {"tag": "u"}) for i in range(20)], refresh="false", op="update")
     req("POST", "/%s/_refresh" % ix)
     tags = {}
@@ -323,6 +325,40 @@ def unrefreshed_partial(ix):
         t = (j.get("_source") or {}).get("tag") if cc == 200 else "MISSING"
         tags[t] = tags.get(t, 0) + 1
     cs, js, _ = req("POST", "/%s/_search" % ix, {"query": {"semantic": {"field": "body", "query": "paris"}}, "size": 50})
-    return {"bulk_status": c, "bulk": s, "tags": tags, "embeddings": inference_stored(ix, list(range(20))),
+    return {"searchable_before_update": searchable_before, "bulk_status": c, "bulk": s, "tags": tags, "embeddings": inference_stored(ix, list(range(20))),
             "semantic_search": {"status": cs, "hits": js.get("hits", {}).get("total", {}).get("value") if cs == 200 else None, "error": err(js) if cs >= 300 else None},
             "count": count(ix)}
+
+
+SEMONLY = "lic3-semonly"
+
+
+def semonly_fixture(n=30):
+    """Index whose ONLY text lives in a semantic_text field (no lexical field), so a lexical-looking query cannot be answered from another field."""
+    req("DELETE", "/" + SEMONLY)
+    c, j, _ = req("PUT", "/" + SEMONLY, {"settings": {"number_of_shards": 1, "number_of_replicas": 0},
+                                         "mappings": {"properties": {"body": {"type": "semantic_text", "inference_id": matrix.STUB_EP}}}})
+    cb, sb = bulk(SEMONLY, [(str(i), {"body": "doc %d about %s" % (i, ["paris", "berlin"][i % 2])}) for i in range(n)])
+    return {"create": c, "bulk": sb}
+
+
+def semonly_queries():
+    """Every lexical-looking query form against the semantic-only index. Result per form: status, class, total hits (None on error)."""
+    forms = {
+        "q_param_default": ("GET", "/%s/_search?q=paris&track_total_hits=true&size=0" % SEMONLY, None),
+        "q_param_field": ("GET", "/%s/_search?q=body:paris&track_total_hits=true&size=0" % SEMONLY, None),
+        "query_string_fields": ("POST", "/%s/_search" % SEMONLY, {"query": {"query_string": {"query": "paris", "fields": ["body"]}}}),
+        "query_string_default": ("POST", "/%s/_search" % SEMONLY, {"query": {"query_string": {"query": "paris"}}}),
+        "simple_query_string": ("POST", "/%s/_search" % SEMONLY, {"query": {"simple_query_string": {"query": "paris", "fields": ["body"]}}}),
+        "multi_match": ("POST", "/%s/_search" % SEMONLY, {"query": {"multi_match": {"query": "paris", "fields": ["body"]}}}),
+        "match": ("POST", "/%s/_search" % SEMONLY, {"query": {"match": {"body": "paris"}}}),
+        "semantic": ("POST", "/%s/_search" % SEMONLY, {"query": {"semantic": {"field": "body", "query": "paris"}}}),
+        "match_all": ("POST", "/%s/_search" % SEMONLY, {"query": {"match_all": {}}}),
+    }
+    out = {}
+    for name, (m, path, body) in forms.items():
+        b = dict(body or {}, track_total_hits=True, size=0) if body is not None else None
+        c, j, _ = req(m, path, b)
+        out[name] = {"status": c, "class": classify(c, j), "hits": j.get("hits", {}).get("total", {}).get("value") if c == 200 else None,
+                     "error": err(j) if c >= 300 else None}
+    return out

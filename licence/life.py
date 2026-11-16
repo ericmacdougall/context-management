@@ -72,7 +72,7 @@ def basic_call():
 
 
 def down(n, ttl, post):
-    R = {"mode": "down", "n": n, "seed": 1000 + n, "ttl": ttl, "post_s": post}
+    R = {"mode": "down", "n": n, "seed": 1000 + n, "ttl": ttl, "post_s": post, "harness": {"http_patch": exp2.HTTP_PATCHED, "patch": "cached no-redirect opener replaces per-call opener (CA load 21 ms/request)"}}
     log("fresh node")
     R["stub"] = stub_ok()
     R["exp4_fresh_start"] = fresh_node()
@@ -87,8 +87,7 @@ def down(n, ttl, post):
     matrix.make_base()
     R["dls_setup"] = matrix.ensure_dls()
     R["fixtures"] = exp3.fixtures()
-    R["fixtures_unrefreshed"] = exp3.unrefreshed_fixture()
-    R["unrefreshed_twin_on_trial"] = exp3.unrefreshed_partial("lic3-semu-t")
+    R["semonly_fixture"] = exp3.semonly_fixture()
     log("fixtures done; trial matrix")
     R["exp1_trial"] = matrix.run("trial")
     R["exp1_trial_quick"] = matrix.quick_probes("lic3-sem")
@@ -105,6 +104,10 @@ def down(n, ttl, post):
     R["exp4_restart_trial"] = exp4.restart_and_poll(CONTAINER)
     wait_health()
     R["exp4_state_trial_after_restart"] = exp4.state_probe()
+    R["semonly_trial"] = exp3.semonly_queries()
+    # unrefreshed fixture is written AFTER the restart so nothing refreshes it before start_basic
+    R["fixtures_unrefreshed"] = exp3.unrefreshed_fixture()
+    R["unrefreshed_twin_on_trial"] = exp3.unrefreshed_partial("lic3-semu-t")
     # exp 2
     log("workload")
     W = exp2.Workload(R["seed"], ttl)
@@ -121,6 +124,7 @@ def down(n, ttl, post):
     sb = basic_call()
     R["start_basic"] = sb
     R["licence_after_start_basic"] = lib.licence()
+    R["unrefreshed_after_start_basic"] = exp3.unrefreshed_partial("lic3-semu")
     time.sleep(post)
     poll.stop_ev.set()
     poll.join(10)
@@ -133,9 +137,14 @@ def down(n, ttl, post):
     R["exp1_moment"] = exp2.moment_analysis(poll.rows, sb["t_resp"])
     R["exp1_moment_n_polls"] = len(poll.rows)
     W.dump(os.path.join(RES, "down_%d.rows.gz" % n))
+    W.dump_oracles(os.path.join(RES, "down_%d.oracle.gz" % n))
+    import gzip
+    with gzip.open(os.path.join(RES, "down_%d.poll.gz" % n), "wt") as fh:
+        json.dump(poll.rows, fh)
     log("after matrix")
     R["stamp_after"] = lib.stamp()
     R["dls_battery_after"] = matrix.dls_battery()
+    R["semonly_after"] = exp3.semonly_queries()
     R["exp1_after"] = matrix.run("after")
     R["exp1_after_quick"] = matrix.quick_probes("lic3-sem")
     # exp 3 after
@@ -147,7 +156,6 @@ def down(n, ttl, post):
         A["mutations"][kind] = exp3.mutations(kind, ix)
         A["reads_after_mut"][kind] = exp3.reads(kind, ix)
     E3["after"] = A
-    A["unrefreshed_partial_on_basic"] = exp3.unrefreshed_partial("lic3-semu")
     log("migrations")
     M = {}
     try:
@@ -207,7 +215,7 @@ def _latch_changes(lat, t_ref):
 
 
 def up(n, ttl, post):
-    R = {"mode": "up", "n": n, "seed": 2000 + n, "ttl": ttl, "post_s": post}
+    R = {"mode": "up", "n": n, "seed": 2000 + n, "ttl": ttl, "post_s": post, "harness": {"http_patch": exp2.HTTP_PATCHED, "patch": "cached no-redirect opener replaces per-call opener (CA load 21 ms/request)"}}
     log("fresh node")
     R["stub"] = stub_ok()
     R["exp4_fresh_start"] = fresh_node()
@@ -242,6 +250,10 @@ def up(n, ttl, post):
     R["exp2"]["sem_first_ok_after_trial_s"] = None if sw is None else round(sw - st["t_resp"], 2)
     R["exp1_moment"] = exp2.moment_analysis(poll.rows, st["t_resp"], features=("rrf", "linear", "semantic_query", "inference_use"), direction="up")
     W.dump(os.path.join(RES, "up_%d.rows.gz" % n))
+    W.dump_oracles(os.path.join(RES, "up_%d.oracle.gz" % n))
+    import gzip
+    with gzip.open(os.path.join(RES, "up_%d.poll.gz" % n), "wt") as fh:
+        json.dump(poll.rows, fh)
     R["stamp_after"] = lib.stamp()
     R["exp1_trial_after_up"] = matrix.run("trialb")
     R["exp4_state_trial"] = exp4.state_probe()

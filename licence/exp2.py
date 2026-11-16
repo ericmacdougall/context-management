@@ -33,6 +33,7 @@ def patch_fast_http():
 
 
 patch_fast_http()
+HTTP_PATCHED = True
 
 
 def make_adapter(strategy="auto", ttl=5.0, backend_fusion="rrf"):
@@ -308,6 +309,12 @@ class Workload:
                                                            "set_differs": sum(1 for qi in self.oracle_lin if set(self.oracle_lin[qi]) != set(_client_ids(self.oracle_legs[qi])))}
         out["linear_arm_labels"] = {k: v for k, v in arms.get("lin", {}).items() if k in ("backend", "client")}
         return out
+
+    def dump_oracles(self, path):
+        with gzip.open(path, "wt") as fh:
+            json.dump({"queries": [q[0] for q in self.queries], "legs": {str(k): v for k, v in self.oracle_legs.items()},
+                       "rrf": {str(k): v for k, v in self.oracle_rrf.items()}, "linear": {str(k): v for k, v in self.oracle_lin.items()},
+                       "seed": self.seed, "http_patch": True}, fh)
 
     def dump(self, path):
         with gzip.open(path, "wt") as fh:
