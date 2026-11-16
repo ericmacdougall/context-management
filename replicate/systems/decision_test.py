@@ -100,7 +100,7 @@ def gen_scenario(rng, sid):
 # ------------------------------------------------------------------ oracle (mine)
 def oracle(evs):
     ver, items, defs, seen_ids, defined = 0, {}, {}, set(), False
-    steps, amends = {}, []
+    steps, amends, net_zero = {}, [], []
     for e in sorted(evs, key=lambda e: e["seq"]):
         k, b, tr = e["kind"], e["body"], e["trust_origin"]
         if k == "task_defined":
@@ -112,15 +112,23 @@ def oracle(evs):
         elif k == "task_amended":
             if tr != "user_typed" or not defined or b["amendment_id"] in seen_ids:
                 continue
-            new = dict(items)
+            new, effective = dict(items), 0
             for op in b["ops"]:
                 if op["op"] == "add" and op["item"]["id"] not in new:
                     new[op["item"]["id"]] = (op["item"]["type"], op["item"]["text"])
-                elif op["op"] == "remove":
-                    new.pop(op["id"], None)
-                elif op["op"] == "change" and op["id"] in new:
+                    effective += 1
+                elif op["op"] == "remove" and op["id"] in new:
+                    new.pop(op["id"])
+                    effective += 1
+                elif op["op"] == "change" and op["id"] in new and new[op["id"]][1] != op["text"]:
                     new[op["id"]] = (new[op["id"]][0], op["text"])
-            if new != items:
+                    effective += 1
+            # Run 1 (d77bd1d) compared the net definition (new != items) instead of counting effective ops, contrary
+            # to the rule stated above; it disagreed with the owner on a net-zero amendment (change X then change X
+            # back in one amendment). Fixed to the stated rule; net-zero amendments are counted as a finding.
+            if effective:
+                if new == items:
+                    net_zero.append(e["seq"])
                 seen_ids.add(b["amendment_id"])
                 ver += 1
                 amends.append({"seq": e["seq"], "version": ver, "prev": dict(items), "now": dict(new)})
@@ -157,7 +165,7 @@ def oracle(evs):
                 out[sid] = "ambiguous"
             else:
                 out[sid] = "still_valid"
-    return {"version": ver, "items": {k: v[1] for k, v in items.items()}, "classes": out, "amends": amends}
+    return {"version": ver, "items": {k: v[1] for k, v in items.items()}, "classes": out, "amends": amends, "net_zero": net_zero}
 
 
 def compare(o, v):
@@ -221,6 +229,7 @@ def part_f1(n, rng):
             res["class_counts"][str(c)] = res["class_counts"].get(str(c), 0) + 1
         res["low_trust_amendments"] += sum(1 for e in evs if e["kind"] == "task_amended" and e["trust_origin"] != "user_typed")
         res["effective_amendments"] += len(o["amends"]) - 1
+        res["net_zero_amendments_new_version_same_definition"] = res.get("net_zero_amendments_new_version_same_definition", 0) + len(o["net_zero"])
         if d:
             res["scenarios_with_disagreement"] += 1
             if len(res["disagreement_examples"]) < 5:
