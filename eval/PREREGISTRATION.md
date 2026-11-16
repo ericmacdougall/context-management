@@ -245,3 +245,275 @@ Dated 2026-11-15; none uses a test, held_back or dev2 outcome.
 | M | Test and guard fixes (non-`_abs` twin, hash content-only, whole-token real-id match, level assertion, curve requires --sets, stale text) | delta review N10 to N16 | see tests |
 | I | Rerank top-n 20 accepted; budget 4,000 primary and 8,000 secondary; final analyst prompts; synthetic distractor dates; event_time rule; FACTS-NOCUE diagnostic; hybrid ES end-metric comparison | main's confirmations of 2026-11-15 | Sections 4.3.6, 5.1, 5.2 |
 
+## Results: full analyst run (pilot split; appended after the freeze; a results section only, no design section changed)
+
+Frozen blob a72ee4563142d45b9491f1643e238d7e72b0f851. Scorer `emlab.analyst_full`, raw file results/pilot/analyst_full.json. Retriever for tier 0, the baselines and the tools: exact in-process (not Elasticsearch). Failures counted is the headline: the 26 `rejected` result files (ANALYST 10 of 305: H1 3, H2 4, H3 2, H3_top20 1; ANALYST-RERANK-ONLY 16 of 282: H1 6, H2 6, H3 4) are scored as empty rankings (zero recall, a miss on knowledge-update) and stay in every denominator; ok-only numbers are listed under each analyst arm. Rejection rates (all questions): ANALYST H1 3.2%, H2 4.3%, H3 2.1%, H3_top20 4.3%; ANALYST-RERANK-ONLY H1 6.4%, H2 6.4%, H3 4.3%. 0 ids were rejected inside ok files (every returned id was a candidate or a tool-returned id). The call log's first row (the runner's probe for 078150f1, tool null) is excluded. Metrics: session recall@10 (gold sessions in the first 10 distinct sessions of the ranking); the 4,000- and 8,000-token contexts use the registered strict-prefix packing (analyst arms: at most 20 ids; RRF and rerank: the full list); `any` = share of questions whose context holds at least one gold session; gold-session and gold-round recall are fractions of the question's gold sessions and rounds.
+
+**Status under the pre-registration.** Everything here is the PILOT split, so none of it is confirmatory (the test split stays locked); it is descriptive scoring as Section 5.2 registers it. Section 5.2 registers NO pass or fail rule for the analyst arms (the registered decision rules H1/K1 and H2/K2 concern facts and concept documents and need Phase F answers), so there is no pre-registered rule that held or failed; where differences below exclude 0 that is a pilot observation, not a test of a hypothesis. The analysts were NOT blind to candidate order: the task files list the 50 candidates (20 in the secondary variant) in tier-0 rank order (rank 1 first) and nothing shuffled them, so the analyst and rerank-only arms could anchor on the tier-0 order. The cross-encoder rerank arm (top-n 20) comes from the new-sets rerank run, which has NOT finished: it had processed 78 of 94 questions (all 23 low-overlap questions first) when scored, so every comparison with RERANK uses those 78 questions (74 content clusters) and is labelled n 78; the run is still in progress.
+
+**Disclosed defect in the tool backend.** My daemon's defensive tool budget (12 calls per question and level) was keyed on (question, level) and the secondary top-20 runs used level H3 like the main H3 runs, so the two runs of the same question shared one budget, and the runner's invalid probe also consumed one call for question 078150f1. Three calls in the secondary variant were therefore refused by the daemon although the runner counted them as made (6e984302: 2 of its 14 combined calls; 078150f1: 1 of its 12 plus the probe): 2 of the 23 H3_top20 questions had their last tool calls refused (the call count in my log is 491 against 494 in the result files). The main H1, H2 and H3 runs are unaffected except for the probe on 078150f1 (11 calls available instead of 12; the analyst used 10).
+
+
+### Reading of the pilot numbers (descriptive; failures counted; n 94 unless stated)
+
+- Against plain RRF the analyst arm raises session recall@10 at the pooled levels: H3 0.473 to 0.603 (+0.130 [+0.060, +0.202]), H2 0.660 to 0.758 (+0.099 [+0.023, +0.175]); at H1 0.863 to 0.894 (+0.031 [-0.031, +0.089], not resolvable). The 4,000-token context holds more gold with the analyst at every level (4k gold-session recall +0.133, +0.164, +0.164 at H1, H2, H3, all intervals above 0) and a much larger share of the gold ROUNDS (H1 0.870 against 0.621; H3 0.541 against 0.332), with fewer tokens used (H3 2,878 against 3,692) because the analyst returns at most 20 ids.
+- Against the cross-encoder rerank arm (top-n 20; 78 questions, 74 clusters) the analyst is NOT distinguishable on session recall@10 at any level (+0.015, +0.043, +0.024; all intervals include 0); it is better on gold rounds in the 4k context at H1 (+0.122 [+0.037, +0.202]) and H2 (+0.120 [+0.036, +0.203]) and not at H3 (+0.047 [-0.019, +0.108]). Rerank alone already beats RRF at H3 (+0.059 [+0.016, +0.113], n 78).
+- Digging with tools adds little over reordering the same 50 candidates: ANALYST minus ANALYST-RERANK-ONLY is +0.036, +0.025, +0.022 on session recall@10 at H1, H2, H3 (all intervals include 0, 4k gold-round recall at H3 +0.046 [+0.002, +0.092]); only the H2 low-overlap stratum shows a resolvable tool advantage (+0.120 [+0.007, +0.239], n 23). The analysts used no tool at all in 56 of 91 ok files at H1, 49 of 90 at H2 and 42 of 92 at H3 (mean calls per ok file 1.00, 1.61, 1.97; on the low-overlap questions 2.77, 4.22, 3.59).
+- The hardest stratum is unchanged: on the 23 low-overlap questions at H3 every arm is near the floor (session recall@10 RRF 0.032, RERANK 0.041, ANALYST 0.072, ANALYST-RERANK-ONLY 0.093; ANALYST minus RRF +0.041 [-0.020, +0.114]); gold is in the 50 tier-0 candidates for only 7 of the 23, so reordering cannot recover the rest. The secondary 20-candidate variant gives 0.110 against a weaker RRF top-20 baseline of 0.014 (+0.096 [+0.017, +0.200]); that baseline is not the 50-candidate one, so the two H3 variants are not comparable by their differences.
+- Knowledge-update (n 15, none low-overlap), gold-latest in the 4k context / stale-only at H3: RRF 0.27 / 0.67, RERANK 0.80 / 0.13, ANALYST 0.93 / 0.07, ANALYST-RERANK-ONLY 0.80 / 0.20 (8k: 0.80 / 0.20, 0.87 / 0.07, 1.00 / 0.00, 1.00 / 0.00): with n 15 the differences between the three reordering arms are not resolvable.
+- Rejections: 3.2%, 4.3%, 2.1% of ANALYST files at H1, H2, H3 and 6.4%, 6.4%, 4.3% of ANALYST-RERANK-ONLY files; counting them as failures lowers the analyst arms (ok-only session recall@10 at H3: ANALYST 0.616 against 0.603 with failures counted).
+- Not established: any claim about answer accuracy (no reader or judge ran on these contexts here); any claim on the test split; a difference between ANALYST and the cross-encoder rerank beyond gold rounds at H1 and H2; a tool advantage at H3. The RERANK arm is a partial run (78 of 94 questions). Candidate order was the tier-0 order for all analyst arms (anchoring not controlled).
+
+
+### H1 (own + 500)
+
+**all pilot questions with gold (n 94)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 94 | 0.863 | 0.851 | 0.744 | 0.621 | 3515 | 0.894 | 0.817 | 0.743 |
+| RERANK | 78 | 0.874 | 0.910 | 0.817 | 0.741 | 3618 | 0.923 | 0.869 | 0.795 |
+| ANALYST | 94 | 0.894 | 0.926 | 0.877 | 0.870 | 2481 | 0.936 | 0.894 | 0.891 |
+| ANALYST, ok-only | 91 | 0.923 | 0.956 | 0.906 | 0.899 | 2563 | 0.967 | 0.923 | 0.920 |
+| ANALYST-RERANK-ONLY | 94 | 0.857 | 0.894 | 0.837 | 0.809 | 3448 | 0.894 | 0.853 | 0.829 |
+| ANALYST-RERANK-ONLY, ok-only | 88 | 0.916 | 0.955 | 0.894 | 0.864 | 3683 | 0.955 | 0.911 | 0.886 |
+
+Knowledge-update (n 15; no knowledge-update question is low-overlap), gold-latest in context / stale-only: RRF 4k 0.87 / 0.13, 8k 1.00 / 0.00; RERANK 4k 1.00 / 0.00, 8k 1.00 / 0.00; ANALYST 4k 1.00 / 0.00, 8k 1.00 / 0.00; ANALYST-RERANK-ONLY 4k 0.87 / 0.00, 8k 0.87 / 0.00.
+
+Tool use and cost (ok files): ANALYST rejected 3 (3.2%), tool calls 1.00, zero-tool 56, runner seconds 10.9, output tokens 508, prompt-cache creation 32879; ANALYST-RERANK-ONLY rejected 6 (6.4%), tool calls 0.00, zero-tool 88, runner seconds 8.4, output tokens 691, prompt-cache creation 30178. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 94 / 90 | +0.031 [-0.031, +0.089] | +0.133 [+0.071, +0.199] | +0.250 [+0.173, +0.329] |
+| ANALYST minus RERANK | 78 / 74 | +0.015 [-0.045, +0.073] | +0.053 [-0.023, +0.123] | +0.122 [+0.037, +0.202] |
+| ANALYST-RERANK-ONLY minus RRF | 94 / 90 | -0.005 [-0.063, +0.051] | +0.092 [+0.012, +0.170] | +0.188 [+0.104, +0.277] |
+| ANALYST-RERANK-ONLY minus RERANK | 78 / 74 | -0.042 [-0.104, +0.013] | +0.000 [-0.069, +0.066] | +0.044 [-0.036, +0.121] |
+| RERANK minus RRF | 78 / 74 | +0.018 [-0.002, +0.041] | +0.093 [+0.044, +0.151] | +0.147 [+0.078, +0.215] |
+| ANALYST minus ANALYST-RERANK-ONLY | 94 / 90 | +0.036 [-0.031, +0.103] | +0.041 [-0.031, +0.108] | +0.062 [-0.010, +0.131] |
+
+**23 pool-level low-overlap questions (n 23)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 23 | 0.571 | 0.522 | 0.314 | 0.130 | 3498 | 0.652 | 0.482 | 0.272 |
+| RERANK | 23 | 0.610 | 0.739 | 0.488 | 0.328 | 3540 | 0.739 | 0.599 | 0.425 |
+| ANALYST | 23 | 0.718 | 0.826 | 0.666 | 0.699 | 3096 | 0.870 | 0.718 | 0.749 |
+| ANALYST, ok-only | 22 | 0.751 | 0.864 | 0.696 | 0.730 | 3237 | 0.909 | 0.751 | 0.783 |
+| ANALYST-RERANK-ONLY | 23 | 0.678 | 0.783 | 0.633 | 0.614 | 3475 | 0.783 | 0.667 | 0.628 |
+| ANALYST-RERANK-ONLY, ok-only | 22 | 0.709 | 0.818 | 0.662 | 0.642 | 3633 | 0.818 | 0.698 | 0.657 |
+
+Tool use and cost (ok files): ANALYST rejected 1 (4.3%), tool calls 2.77, zero-tool 6, runner seconds 15.2, output tokens 846, prompt-cache creation 36332; ANALYST-RERANK-ONLY rejected 1 (4.3%), tool calls 0.00, zero-tool 22, runner seconds 8.5, output tokens 731, prompt-cache creation 30466. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 23 / 23 | +0.147 [-0.015, +0.306] | +0.352 [+0.222, +0.492] | +0.568 [+0.394, +0.742] |
+| ANALYST minus RERANK | 23 / 23 | +0.108 [-0.046, +0.265] | +0.178 [-0.032, +0.362] | +0.371 [+0.146, +0.580] |
+| ANALYST-RERANK-ONLY minus RRF | 23 / 23 | +0.107 [+0.032, +0.184] | +0.320 [+0.175, +0.471] | +0.483 [+0.307, +0.654] |
+| ANALYST-RERANK-ONLY minus RERANK | 23 / 23 | +0.068 [+0.009, +0.142] | +0.146 [+0.063, +0.236] | +0.286 [+0.152, +0.435] |
+| RERANK minus RRF | 23 / 23 | +0.039 [-0.020, +0.106] | +0.174 [+0.040, +0.330] | +0.197 [+0.017, +0.371] |
+| ANALYST minus ANALYST-RERANK-ONLY | 23 / 23 | +0.040 [-0.109, +0.188] | +0.033 [-0.155, +0.207] | +0.085 [-0.113, +0.271] |
+
+**the other questions (n 71)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 71 | 0.957 | 0.958 | 0.884 | 0.779 | 3520 | 0.972 | 0.926 | 0.896 |
+| RERANK | 55 | 0.985 | 0.982 | 0.955 | 0.914 | 3650 | 1.000 | 0.982 | 0.950 |
+| ANALYST | 71 | 0.951 | 0.958 | 0.946 | 0.926 | 2281 | 0.958 | 0.951 | 0.937 |
+| ANALYST, ok-only | 69 | 0.978 | 0.986 | 0.973 | 0.953 | 2348 | 0.986 | 0.978 | 0.964 |
+| ANALYST-RERANK-ONLY | 71 | 0.915 | 0.930 | 0.902 | 0.872 | 3439 | 0.930 | 0.913 | 0.894 |
+| ANALYST-RERANK-ONLY, ok-only | 66 | 0.985 | 1.000 | 0.971 | 0.938 | 3699 | 1.000 | 0.982 | 0.962 |
+
+Knowledge-update (n 15; no knowledge-update question is low-overlap), gold-latest in context / stale-only: RRF 4k 0.87 / 0.13, 8k 1.00 / 0.00; RERANK 4k 1.00 / 0.00, 8k 1.00 / 0.00; ANALYST 4k 1.00 / 0.00, 8k 1.00 / 0.00; ANALYST-RERANK-ONLY 4k 0.87 / 0.00, 8k 0.87 / 0.00.
+
+Tool use and cost (ok files): ANALYST rejected 2 (2.8%), tool calls 0.43, zero-tool 50, runner seconds 9.6, output tokens 401, prompt-cache creation 31778; ANALYST-RERANK-ONLY rejected 5 (7.0%), tool calls 0.00, zero-tool 66, runner seconds 8.4, output tokens 677, prompt-cache creation 30081. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 71 / 69 | -0.007 [-0.064, +0.047] | +0.062 [-0.004, +0.124] | +0.147 [+0.069, +0.223] |
+| ANALYST minus RERANK | 55 / 53 | -0.024 [-0.083, +0.022] | +0.000 [-0.070, +0.062] | +0.018 [-0.052, +0.077] |
+| ANALYST-RERANK-ONLY minus RRF | 71 / 69 | -0.042 [-0.112, +0.024] | +0.019 [-0.068, +0.100] | +0.093 [+0.003, +0.186] |
+| ANALYST-RERANK-ONLY minus RERANK | 55 / 53 | -0.088 [-0.170, -0.019] | -0.061 [-0.152, +0.019] | -0.058 [-0.148, +0.022] |
+| RERANK minus RRF | 55 / 53 | +0.009 [+0.000, +0.028] | +0.059 [+0.022, +0.102] | +0.126 [+0.065, +0.191] |
+| ANALYST minus ANALYST-RERANK-ONLY | 71 / 69 | +0.035 [-0.043, +0.113] | +0.044 [-0.031, +0.117] | +0.054 [-0.021, +0.129] |
+
+### H2 (own + 3,900)
+
+**all pilot questions with gold (n 94)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 94 | 0.660 | 0.723 | 0.568 | 0.470 | 3633 | 0.787 | 0.666 | 0.571 |
+| RERANK | 78 | 0.678 | 0.705 | 0.617 | 0.549 | 3688 | 0.795 | 0.682 | 0.588 |
+| ANALYST | 94 | 0.758 | 0.830 | 0.731 | 0.711 | 2704 | 0.851 | 0.758 | 0.730 |
+| ANALYST, ok-only | 90 | 0.792 | 0.867 | 0.764 | 0.743 | 2824 | 0.889 | 0.792 | 0.763 |
+| ANALYST-RERANK-ONLY | 94 | 0.733 | 0.766 | 0.688 | 0.647 | 3398 | 0.819 | 0.728 | 0.670 |
+| ANALYST-RERANK-ONLY, ok-only | 88 | 0.783 | 0.818 | 0.735 | 0.691 | 3630 | 0.875 | 0.777 | 0.716 |
+
+Knowledge-update (n 15; no knowledge-update question is low-overlap), gold-latest in context / stale-only: RRF 4k 0.73 / 0.20, 8k 1.00 / 0.00; RERANK 4k 0.93 / 0.07, 8k 1.00 / 0.00; ANALYST 4k 0.87 / 0.00, 8k 0.87 / 0.00; ANALYST-RERANK-ONLY 4k 1.00 / 0.00, 8k 1.00 / 0.00.
+
+Tool use and cost (ok files): ANALYST rejected 4 (4.3%), tool calls 1.61, zero-tool 49, runner seconds 12.7, output tokens 679, prompt-cache creation 34212; ANALYST-RERANK-ONLY rejected 6 (6.4%), tool calls 0.00, zero-tool 88, runner seconds 8.3, output tokens 684, prompt-cache creation 30582. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 94 / 90 | +0.099 [+0.023, +0.175] | +0.164 [+0.085, +0.246] | +0.241 [+0.158, +0.323] |
+| ANALYST minus RERANK | 78 / 74 | +0.043 [-0.038, +0.121] | +0.073 [-0.008, +0.152] | +0.120 [+0.036, +0.203] |
+| ANALYST-RERANK-ONLY minus RRF | 94 / 90 | +0.073 [+0.001, +0.145] | +0.121 [+0.043, +0.199] | +0.177 [+0.105, +0.253] |
+| ANALYST-RERANK-ONLY minus RERANK | 78 / 74 | +0.047 [-0.006, +0.101] | +0.062 [+0.007, +0.126] | +0.081 [+0.023, +0.147] |
+| RERANK minus RRF | 78 / 74 | +0.031 [-0.019, +0.080] | +0.057 [+0.004, +0.110] | +0.081 [+0.037, +0.130] |
+| ANALYST minus ANALYST-RERANK-ONLY | 94 / 90 | +0.025 [-0.044, +0.093] | +0.043 [-0.028, +0.113] | +0.064 [-0.005, +0.133] |
+
+**23 pool-level low-overlap questions (n 23)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 23 | 0.142 | 0.261 | 0.120 | 0.000 | 3650 | 0.304 | 0.164 | 0.000 |
+| RERANK | 23 | 0.157 | 0.261 | 0.099 | 0.022 | 3736 | 0.391 | 0.171 | 0.022 |
+| ANALYST | 23 | 0.337 | 0.522 | 0.285 | 0.272 | 3357 | 0.565 | 0.337 | 0.293 |
+| ANALYST, ok-only | 23 | 0.337 | 0.522 | 0.285 | 0.272 | 3357 | 0.565 | 0.337 | 0.293 |
+| ANALYST-RERANK-ONLY | 23 | 0.217 | 0.261 | 0.136 | 0.043 | 3254 | 0.435 | 0.217 | 0.065 |
+| ANALYST-RERANK-ONLY, ok-only | 21 | 0.238 | 0.286 | 0.149 | 0.048 | 3564 | 0.476 | 0.238 | 0.071 |
+
+Tool use and cost (ok files): ANALYST rejected 0 (0.0%), tool calls 4.22, zero-tool 4, runner seconds 18.9, output tokens 1153, prompt-cache creation 38781; ANALYST-RERANK-ONLY rejected 2 (8.7%), tool calls 0.00, zero-tool 21, runner seconds 8.3, output tokens 701, prompt-cache creation 30775. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 23 / 23 | +0.195 [+0.033, +0.337] | +0.164 [-0.000, +0.304] | +0.272 [+0.130, +0.420] |
+| ANALYST minus RERANK | 23 / 23 | +0.180 [+0.054, +0.302] | +0.186 [+0.057, +0.312] | +0.250 [+0.109, +0.395] |
+| ANALYST-RERANK-ONLY minus RRF | 23 / 23 | +0.075 [-0.057, +0.191] | +0.016 [-0.109, +0.117] | +0.043 [+0.000, +0.130] |
+| ANALYST-RERANK-ONLY minus RERANK | 23 / 23 | +0.061 [-0.006, +0.135] | +0.038 [-0.051, +0.126] | +0.022 [-0.065, +0.130] |
+| RERANK minus RRF | 23 / 23 | +0.014 [-0.094, +0.116] | -0.022 [-0.130, +0.065] | +0.022 [+0.000, +0.065] |
+| ANALYST minus ANALYST-RERANK-ONLY | 23 / 23 | +0.120 [+0.007, +0.239] | +0.149 [+0.007, +0.290] | +0.228 [+0.101, +0.370] |
+
+**the other questions (n 71)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 71 | 0.827 | 0.873 | 0.712 | 0.622 | 3627 | 0.944 | 0.829 | 0.756 |
+| RERANK | 55 | 0.895 | 0.891 | 0.833 | 0.770 | 3669 | 0.964 | 0.895 | 0.824 |
+| ANALYST | 71 | 0.895 | 0.930 | 0.876 | 0.853 | 2493 | 0.944 | 0.895 | 0.872 |
+| ANALYST, ok-only | 67 | 0.948 | 0.985 | 0.928 | 0.904 | 2641 | 1.000 | 0.948 | 0.924 |
+| ANALYST-RERANK-ONLY | 71 | 0.900 | 0.930 | 0.867 | 0.843 | 3445 | 0.944 | 0.893 | 0.866 |
+| ANALYST-RERANK-ONLY, ok-only | 67 | 0.954 | 0.985 | 0.919 | 0.893 | 3650 | 1.000 | 0.946 | 0.918 |
+
+Knowledge-update (n 15; no knowledge-update question is low-overlap), gold-latest in context / stale-only: RRF 4k 0.73 / 0.20, 8k 1.00 / 0.00; RERANK 4k 0.93 / 0.07, 8k 1.00 / 0.00; ANALYST 4k 0.87 / 0.00, 8k 0.87 / 0.00; ANALYST-RERANK-ONLY 4k 1.00 / 0.00, 8k 1.00 / 0.00.
+
+Tool use and cost (ok files): ANALYST rejected 4 (5.6%), tool calls 0.72, zero-tool 45, runner seconds 10.6, output tokens 516, prompt-cache creation 32644; ANALYST-RERANK-ONLY rejected 4 (5.6%), tool calls 0.00, zero-tool 67, runner seconds 8.3, output tokens 679, prompt-cache creation 30521. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 71 / 69 | +0.067 [-0.014, +0.148] | +0.163 [+0.077, +0.254] | +0.231 [+0.140, +0.327] |
+| ANALYST minus RERANK | 55 / 53 | -0.015 [-0.109, +0.074] | +0.026 [-0.068, +0.127] | +0.065 [-0.027, +0.164] |
+| ANALYST-RERANK-ONLY minus RRF | 71 / 69 | +0.073 [-0.012, +0.153] | +0.155 [+0.059, +0.247] | +0.221 [+0.129, +0.315] |
+| ANALYST-RERANK-ONLY minus RERANK | 55 / 53 | +0.041 [-0.029, +0.111] | +0.073 [+0.000, +0.157] | +0.106 [+0.032, +0.186] |
+| RERANK minus RRF | 55 / 53 | +0.038 [-0.008, +0.095] | +0.089 [+0.039, +0.147] | +0.106 [+0.048, +0.173] |
+| ANALYST minus ANALYST-RERANK-ONLY | 71 / 69 | -0.005 [-0.084, +0.071] | +0.009 [-0.068, +0.088] | +0.011 [-0.065, +0.086] |
+
+### H3 (whole pool), 50 candidates
+
+**all pilot questions with gold (n 94)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 94 | 0.473 | 0.564 | 0.421 | 0.332 | 3692 | 0.638 | 0.509 | 0.426 |
+| RERANK | 78 | 0.553 | 0.615 | 0.533 | 0.455 | 3705 | 0.641 | 0.553 | 0.474 |
+| ANALYST | 94 | 0.603 | 0.670 | 0.585 | 0.541 | 2878 | 0.713 | 0.619 | 0.569 |
+| ANALYST, ok-only | 92 | 0.616 | 0.685 | 0.598 | 0.553 | 2941 | 0.728 | 0.632 | 0.582 |
+| ANALYST-RERANK-ONLY | 94 | 0.581 | 0.670 | 0.545 | 0.495 | 3509 | 0.713 | 0.587 | 0.512 |
+| ANALYST-RERANK-ONLY, ok-only | 90 | 0.607 | 0.700 | 0.570 | 0.517 | 3665 | 0.744 | 0.613 | 0.535 |
+
+Knowledge-update (n 15; no knowledge-update question is low-overlap), gold-latest in context / stale-only: RRF 4k 0.27 / 0.67, 8k 0.80 / 0.20; RERANK 4k 0.80 / 0.13, 8k 0.87 / 0.07; ANALYST 4k 0.93 / 0.07, 8k 1.00 / 0.00; ANALYST-RERANK-ONLY 4k 0.80 / 0.20, 8k 1.00 / 0.00.
+
+Tool use and cost (ok files): ANALYST rejected 2 (2.1%), tool calls 1.97, zero-tool 42, runner seconds 16.1, output tokens 794, prompt-cache creation 34514; ANALYST-RERANK-ONLY rejected 4 (4.3%), tool calls 0.00, zero-tool 90, runner seconds 9.3, output tokens 697, prompt-cache creation 30312. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 94 / 90 | +0.130 [+0.060, +0.202] | +0.164 [+0.089, +0.242] | +0.209 [+0.135, +0.289] |
+| ANALYST minus RERANK | 78 / 74 | +0.024 [-0.033, +0.079] | +0.022 [-0.038, +0.085] | +0.047 [-0.019, +0.108] |
+| ANALYST-RERANK-ONLY minus RRF | 94 / 90 | +0.108 [+0.046, +0.173] | +0.124 [+0.060, +0.194] | +0.163 [+0.092, +0.237] |
+| ANALYST-RERANK-ONLY minus RERANK | 78 / 74 | +0.024 [-0.033, +0.077] | +0.002 [-0.052, +0.059] | +0.019 [-0.038, +0.078] |
+| RERANK minus RRF | 78 / 74 | +0.059 [+0.016, +0.113] | +0.082 [+0.035, +0.136] | +0.105 [+0.056, +0.162] |
+| ANALYST minus ANALYST-RERANK-ONLY | 94 / 90 | +0.022 [-0.027, +0.070] | +0.040 [-0.005, +0.086] | +0.046 [+0.002, +0.092] |
+
+**23 pool-level low-overlap questions (n 23)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 23 | 0.032 | 0.130 | 0.032 | 0.000 | 3706 | 0.130 | 0.032 | 0.000 |
+| RERANK | 23 | 0.041 | 0.130 | 0.041 | 0.000 | 3688 | 0.130 | 0.041 | 0.000 |
+| ANALYST | 23 | 0.072 | 0.130 | 0.072 | 0.051 | 3159 | 0.130 | 0.072 | 0.051 |
+| ANALYST, ok-only | 22 | 0.076 | 0.136 | 0.076 | 0.053 | 3303 | 0.136 | 0.076 | 0.053 |
+| ANALYST-RERANK-ONLY | 23 | 0.093 | 0.174 | 0.062 | 0.000 | 3494 | 0.217 | 0.093 | 0.000 |
+| ANALYST-RERANK-ONLY, ok-only | 22 | 0.097 | 0.182 | 0.065 | 0.000 | 3653 | 0.227 | 0.097 | 0.000 |
+
+Tool use and cost (ok files): ANALYST rejected 1 (4.3%), tool calls 3.59, zero-tool 6, runner seconds 21.9, output tokens 1152, prompt-cache creation 37301; ANALYST-RERANK-ONLY rejected 1 (4.3%), tool calls 0.00, zero-tool 22, runner seconds 10.2, output tokens 733, prompt-cache creation 30190. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 23 / 23 | +0.041 [-0.020, +0.114] | +0.041 [-0.020, +0.114] | +0.051 [+0.000, +0.130] |
+| ANALYST minus RERANK | 23 / 23 | +0.032 [-0.038, +0.113] | +0.032 [-0.038, +0.113] | +0.051 [+0.000, +0.130] |
+| ANALYST-RERANK-ONLY minus RRF | 23 / 23 | +0.061 [+0.000, +0.130] | +0.030 [+0.000, +0.083] | +0.000 [+0.000, +0.000] |
+| ANALYST-RERANK-ONLY minus RERANK | 23 / 23 | +0.052 [+0.000, +0.117] | +0.022 [+0.000, +0.065] | +0.000 [+0.000, +0.000] |
+| RERANK minus RRF | 23 / 23 | +0.009 [+0.000, +0.026] | +0.009 [+0.000, +0.026] | +0.000 [+0.000, +0.000] |
+| ANALYST minus ANALYST-RERANK-ONLY | 23 / 23 | -0.020 [-0.104, +0.065] | +0.010 [-0.048, +0.078] | +0.051 [+0.000, +0.130] |
+
+**the other questions (n 71)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 71 | 0.616 | 0.704 | 0.547 | 0.439 | 3688 | 0.803 | 0.663 | 0.563 |
+| RERANK | 55 | 0.767 | 0.818 | 0.739 | 0.645 | 3712 | 0.855 | 0.767 | 0.673 |
+| ANALYST | 71 | 0.775 | 0.845 | 0.751 | 0.700 | 2787 | 0.901 | 0.796 | 0.737 |
+| ANALYST, ok-only | 70 | 0.786 | 0.857 | 0.762 | 0.710 | 2827 | 0.914 | 0.807 | 0.748 |
+| ANALYST-RERANK-ONLY | 71 | 0.739 | 0.831 | 0.702 | 0.655 | 3514 | 0.873 | 0.746 | 0.678 |
+| ANALYST-RERANK-ONLY, ok-only | 68 | 0.772 | 0.868 | 0.733 | 0.684 | 3669 | 0.912 | 0.779 | 0.708 |
+
+Knowledge-update (n 15; no knowledge-update question is low-overlap), gold-latest in context / stale-only: RRF 4k 0.27 / 0.67, 8k 0.80 / 0.20; RERANK 4k 0.80 / 0.13, 8k 0.87 / 0.07; ANALYST 4k 0.93 / 0.07, 8k 1.00 / 0.00; ANALYST-RERANK-ONLY 4k 0.80 / 0.20, 8k 1.00 / 0.00.
+
+Tool use and cost (ok files): ANALYST rejected 1 (1.4%), tool calls 1.46, zero-tool 36, runner seconds 14.3, output tokens 681, prompt-cache creation 33638; ANALYST-RERANK-ONLY rejected 3 (4.2%), tool calls 0.00, zero-tool 68, runner seconds 8.9, output tokens 685, prompt-cache creation 30351. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 71 / 69 | +0.158 [+0.074, +0.244] | +0.204 [+0.113, +0.297] | +0.261 [+0.162, +0.362] |
+| ANALYST minus RERANK | 55 / 53 | +0.021 [-0.059, +0.091] | +0.018 [-0.065, +0.100] | +0.045 [-0.041, +0.123] |
+| ANALYST-RERANK-ONLY minus RRF | 71 / 69 | +0.123 [+0.043, +0.201] | +0.155 [+0.072, +0.237] | +0.216 [+0.122, +0.312] |
+| ANALYST-RERANK-ONLY minus RERANK | 55 / 53 | +0.012 [-0.062, +0.080] | -0.006 [-0.082, +0.071] | +0.027 [-0.056, +0.109] |
+| RERANK minus RRF | 55 / 53 | +0.080 [+0.018, +0.149] | +0.112 [+0.050, +0.179] | +0.148 [+0.083, +0.226] |
+| ANALYST minus ANALYST-RERANK-ONLY | 71 / 69 | +0.035 [-0.023, +0.093] | +0.049 [-0.009, +0.106] | +0.045 [-0.012, +0.103] |
+
+### H3 secondary variant: 20 candidates, 23 low-overlap questions
+
+**all pilot questions with gold (n 23)**
+
+| arm | n | session recall@10 | 4k any gold | 4k gold-session recall | 4k gold-round recall | 4k tokens | 8k any gold | 8k gold-session recall | 8k gold-round recall |
+|---|---|---|---|---|---|---|---|---|---|
+| RRF | 23 | 0.014 | 0.043 | 0.014 | 0.000 | 3776 | 0.130 | 0.032 | 0.000 |
+| ANALYST | 23 | 0.110 | 0.217 | 0.099 | 0.076 | 3051 | 0.217 | 0.110 | 0.076 |
+| ANALYST, ok-only | 22 | 0.115 | 0.227 | 0.104 | 0.080 | 3189 | 0.227 | 0.115 | 0.080 |
+
+Tool use and cost (ok files): ANALYST rejected 1 (4.3%), tool calls 3.14, zero-tool 2, runner seconds 18.4, output tokens 963, prompt-cache creation 24425. Model-token cost beyond this belongs to the other owner's ledger.
+
+Paired differences (clustered by content cluster, 95% interval; n / clusters in the table note), session recall@10 | 4k gold-session recall | 4k gold-round recall:
+
+| comparison | n / clusters | session recall@10 | 4k gold-session recall | 4k gold-round recall |
+|---|---|---|---|---|
+| ANALYST minus RRF | 23 / 23 | +0.096 [+0.017, +0.200] | +0.085 [+0.017, +0.172] | +0.076 [+0.000, +0.163] |
+
