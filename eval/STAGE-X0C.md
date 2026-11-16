@@ -43,4 +43,9 @@ A rate for the pool (20 sessions, 10 replicate pairs); stability of extraction f
 
 ## 7. Handoff
 
-Filled in below after the inputs are built (second commit).
+Filled in after the inputs were built (second commit; the rules above were committed in f040706 and are unchanged).
+
+Inputs on t2-dev (counts checked): 20 session files in `~/emlab-16096/out/stage_x0c/sessions/<opaque id>.json`; the run order `~/emlab-16096/out/stage_x0c/run_order.json` (key `order`: the 20 ids, key `jobs`: the 40 jobs in order with `arm`, `replicate`, `order_index`); the key `~/emlab-16096/out/stage_x0c_key/selection_key.json` is for the scorer only (the runner must not read it). Results: `~/emlab-16096/in/stage_x0c/S/<opaque id>.json`, `~/emlab-16096/in/stage_x0c/P/<opaque id>.json` and `~/emlab-16096/in/stage_x0c/_run.json`.
+Composition: the 10 X0B sessions, 4 other gold sessions of single-session-preference or single-session-user questions, and 6 random non-gold sessions (length strata 1, 2, 3, 4, 5 and a second from 4). Order (first six jobs): s0bafda9b9382 S, P; se821aca3328d P, S; sd2c1ef3cf116 S, P; and so on, alternating which arm goes first.
+Prompts: arm S `extract-v2-cap30` sha16 `ae055bca99452fb6` with replicate id `x0c-s-1`; arm P `extract-v3-pref` sha16 `56c79c2119472532`. Calls: 40 (hard cap; no retries).
+
