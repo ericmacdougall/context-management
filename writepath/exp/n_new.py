@@ -130,14 +130,23 @@ def n3s(arm, taker):
         if name == "rebuild_before_swap:events" and "taken" not in w:
             stage = [(i, a) for i, al in es.alias_map(f"{F.P}{t}-events-*").items() for a in al if a.startswith(f"{F.P}{t}-events-s")]
             w["A_staging_has_Y"] = es.count(stage[0][0], Xq("Y")) if stage else None
+            w["A_stage_index"] = stage[0][0] if stage else None
             w["t_A_bulk_done"] = now()
             if taker == "eraser":
-                w["taken"] = erasure.erase(db.connect(), ks, es, t, "Y")["done"]
+                real = F._family_state
+                if arm == "control":                        # BROKEN: B's fence and cleanup see only aliased read/write indices
+                    def narrow(es_, t_, f_):
+                        return {i: a for i, a in real(es_, t_, f_).items() if any(x == F.read_alias(t_, f_) or f"-{f_}-w" in x for x in a)}
+                    F._family_state = narrow
+                try:
+                    w["taken"] = erasure.erase(db.connect(), ks, es, t, "Y")["done"]
+                finally:
+                    F._family_state = real
             else:
                 p2 = projector.Projector(db.connect(), K.KeyService(), es, t)
                 w["taken"] = p2.start(force=True)
             w["t_taken"] = now()
-            if arm == "control" and stage:                  # BROKEN: A swaps without the compare-and-set (no must_exist anchor)
+            if (arm == "control" and taker == "projector" or arm == "ablate_cas") and stage:   # BROKEN: A swaps without the CAS
                 si, sa = stage[0]
                 others = [i for i in F._family_state(es, t, "events") if i != si]
                 try:
@@ -157,13 +166,15 @@ def n3s(arm, taker):
         out["p2_write_alias_present"] = any(F.write_alias(t, "events", p2.lease.epoch) in al for al in es.alias_map(f"{F.P}{t}-events-*").values()) if p2.lease else False
         p2.stop()
     live = [i for i, a in es.alias_map(f"{F.P}{t}-events-*").items() if F.read_alias(t, "events") in a]
+    out["stale_swap_took_effect"] = bool(w.get("A_stage_index")) and w.get("A_stage_index") in live
     out.update({"read_alias_indices": len(live), "Y_live": es_count_live(es, t, "events", Xq("Y")), "Z_live": es_count_live(es, t, "events", Xq("Z"))})
     out["sweep"] = erasure.sweep(conn, ks, es)
     out["Y_all_after_sweep"] = es_count_all(es, t, Xq("Y"))
     out.update({k: w.get(k) for k in ("A_staging_has_Y", "taken", "control_swapped")})
     out["overlap"] = bool(w) and w["t_A_bulk_done"] < w["t_taken"] <= w["t_A_swap_attempt"]
     if taker == "eraser":
-        holds = out["Y_live"] == 0 and out["read_alias_indices"] == 1 and out["Z_live"] == 1 and out["Y_all_after_sweep"] == 0
+        holds = (out["Y_live"] == 0 and out["read_alias_indices"] == 1 and out["Z_live"] == 1 and out["Y_all_after_sweep"] == 0
+                 and not out["stale_swap_took_effect"])
     else:
         holds = out["W_live"] == 1 and out["p2_write_alias_present"] and out["read_alias_indices"] == 1 and out["Z_live"] == 1
     return holds, "" if holds else "stale swap took effect", out
@@ -358,12 +369,15 @@ def _decide_with_barrier(c, ks, s, hv, src, ts, bar):
 SCEN = {"N1": n1, "N2": n2, "N3": n3, "N3S_eraser": n3s_eraser, "N3S_projector": n3s_projector, "N4": n4, "N5": n5, "N7": n7, "N8": n8}
 
 
-NO_CONTROL = {"N3S_eraser"}     # pre-registered: no sensitive control exists (the taker deletes the stale staging index)
+NO_CONTROL = set()
+# Amendment 2: N3S_eraser control = B's fence and cleanup blind to staging indices; supporting arm ablate_cas = A swaps
+# without the CAS while B is correct (shows which layer stops the stale swap). Supporting arms never decide PASS.
+EXTRA_ARMS = {"N3S_eraser": ("ablate_cas",)}
 
 
 def run(name, R):
     arms = {}
-    for arm in (("fenced",) if name in NO_CONTROL else ("fenced", "control")):
+    for arm in (("fenced",) if name in NO_CONTROL else ("fenced", "control")) + EXTRA_ARMS.get(name, ()):
         runs = []
         for i in range(R):
             try:

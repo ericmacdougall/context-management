@@ -11,6 +11,7 @@
    X's key hex: grep of the key database files before destroy (positive) and after (must be 0).
 Greps run inside this stream's own containers via docker exec; patterns go in on stdin, never on a command line."""
 import subprocess
+import sys
 import uuid
 
 from exp.common import write_result
@@ -37,9 +38,16 @@ def sql_scan(conn, marker):
     return hits
 
 
-def main():
+def broken_rebuild(conn, ks, es, t, f, epoch, hook=None):
+    """BROKEN purge (control): delete-by-query in place, no fresh index (deleted docs stay in segments)."""
+    q = {"bool": {"should": [{"term": {"subject_id": "X"}}]}}
+    es.req("POST", f"/{config.INDEX_PREFIX}{t}-{f}-*/_delete_by_query", {"query": q}, refresh="true", conflicts="proceed")
+    return {"family": f, "broken": True}
+
+
+def run_one(arm):
     conn, ks, es = db.connect(), K.KeyService(), ES()
-    out = {}
+    out = {"arm": arm}
     # ---- 1. inventory
     out["unregistered_clean"] = registry.unregistered(conn, ks.conn, es)
     conn.execute("create table rogue_cache(x text)")
@@ -79,9 +87,16 @@ def main():
     keyhex = ks.keys(t, ["X"])["X"].hex()
     out["before"]["keydb_disk_files_keyhex"] = grep_files(PG_C, "/var/lib/postgresql/data", keyhex)
     # ---- 4. erase
-    rec = erasure.erase(conn, ks, es, t, "X")
+    real = erasure.rebuild_family
+    if arm == "control":                    # BROKEN: in-place delete, key kept, no force merge
+        erasure.rebuild_family = broken_rebuild
+    try:
+        rec = erasure.erase(conn, ks, es, t, "X", destroy_key=(arm != "control"))
+    finally:
+        erasure.rebuild_family = real
     names = [i for i in es.indices(f"{config.INDEX_PREFIX}{t}-*")]
-    es.req("POST", f"/{','.join(names)}/_forcemerge", max_num_segments=1)
+    if arm != "control":
+        es.req("POST", f"/{','.join(names)}/_forcemerge", max_num_segments=1)
     es.req("POST", f"/{','.join(names)}/_flush")
     conn.execute("checkpoint")
     out["receipt"] = {k: rec[k] for k in ("done", "verify", "rebuilt", "error_type", "untested_stores")}
@@ -95,14 +110,35 @@ def main():
     b, a = out["before"], out["after"]
     es_disk_claim = b["es_disk_files_X"] > 0
     out["es_on_disk_claim_made"] = es_disk_claim
-    out["pass"] = (out["unregistered_clean"] == [] and all(out["controls_flagged"].values()) and out["unregistered_after_cleanup"] == []
+    out["holds"] = (out["unregistered_clean"] == [] and all(out["controls_flagged"].values()) and out["unregistered_after_cleanup"] == []
                    and not b["pg_sql_hits_events_db"] and not b["pg_sql_hits_keys_db"] and b["pg_disk_files_X"] == 0
                    and b["pg_disk_positive_control_old_plaintext"] > 0 and b["es_api_X"] > 0 and b["keydb_disk_files_keyhex"] > 0
                    and rec["done"] and a["es_api_X"] == 0 and a["es_api_Y"] > 0 and a["keydb_disk_files_keyhex"] == 0
                    and (a["es_disk_files_X"] == 0 if es_disk_claim else True))
-    print(out)
-    write_result("registry_marker", out)
+    out["residue_on_disk"] = {"es_X_files": a["es_disk_files_X"], "keyhex_files": a["keydb_disk_files_keyhex"], "es_api_X": a["es_api_X"]}
+    conn.close(); ks.conn.close()
+    return out
+
+
+def main(R):
+    arms = {}
+    for arm in ("fenced", "control"):
+        runs = []
+        for _ in range(R):
+            try:
+                runs.append(run_one(arm))
+            except Exception as e:  # noqa: BLE001
+                runs.append({"arm": arm, "holds": None, "error": f"{type(e).__name__}: {str(e)[:160]}"})
+        arms[arm] = runs
+    f_ok = sum(1 for r in arms["fenced"] if r["holds"] is True)
+    # control violated = erasure reported, yet marker or key bytes remain on disk / in the API
+    c_viol = sum(1 for r in arms["control"] if r.get("residue_on_disk") and (r["residue_on_disk"]["es_X_files"] > 0 or r["residue_on_disk"]["keyhex_files"] > 0))
+    res = {"R": R, "fenced_holds": f_ok, "control_violated": c_viol, "pass": f_ok == R and c_viol >= int(0.9 * R), "arms": arms}
+    print("registry_marker", "PASS" if res["pass"] else "FAIL", "fenced", f_ok, "/", R, "control violated", c_viol, "/", R)
+    print("  sample fenced:", {k: arms["fenced"][0].get(k) for k in ("before", "after", "controls_flagged")})
+    print("  sample control:", arms["control"][0].get("residue_on_disk"))
+    write_result("registry_marker", res)
 
 
 if __name__ == "__main__":
-    main()
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 10)

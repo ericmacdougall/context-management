@@ -44,3 +44,16 @@ N8 writers racing phase 1: a derive that read X's fact before phase 1, an inbox 
   Pass = job done and zero X residue in facts, inbox, quarantine and ES. Control = wp_ctl: residue > 0 after done.
 ES probe P8: remove_index combined with a failing must_exist remove must leave the index in place.
 Row 27 (stale-approval half): amended -> execution refused 10/10; not amended -> accepted 10/10; control accepts >= 9/10.
+
+## Amendment 2 (2026-11-16, committed before any run that uses it)
+N3S_eraser now has a control: eraser B's fence and cleanup see only indices carrying the read or a write alias (blind to
+  staging indices). Pass = fenced 10/10 (Y_live 0, Y_all_after_sweep 0, read alias on 1 index, Z live, A's staging
+  index never carries the read alias) AND control violated >= 9/10, where the violation must include
+  stale_swap_took_effect (A's staging index, holding Y, became the live index). Supporting arm ablate_cas (A swaps without its CAS, B correct) is reported, never decides PASS.
+N6 + registry (registry_marker) now R = 10 per arm. Fenced pass per run = the original conditions. Control = erasure with
+  an in-place delete-by-query purge, the subject key kept, no force merge: violated when the marker (ES data dir) or the
+  key hex (PG data dir) is still found on disk after the job. PASS = fenced 10/10 AND control violated >= 9/10.
+Independent replications: where a race is claimed, a "jitter" mode (competing thread released after a random delay drawn
+  from a seeded RNG, seeds recorded) is reported next to the hook-forced mode; the jitter mode reports how many runs
+  actually overlapped (DB clock witness) and is judged only on runs that overlapped (>= 5 of 10 must overlap, else the
+  jitter result is reported INCONCLUSIVE, not PASS).
