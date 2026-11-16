@@ -1,0 +1,33 @@
+PROBE P1-thinking-unsupported CONFIRMED ["bad_block"]
+PROBE P1-whitespace-text-accepted CONFIRMED []
+PROBE P1-openai-null-assistant-accepted CONFIRMED [[], []]
+PROBE P1-trim-splits-assistant-turn CONFIRMED {"kept_roles": ["user", "assistant", "user"], "marker": true, "dropped_units": 2, "original_user_request_dropped": true}
+PROBE P1-cache-prefix-diverges-at-last-user-turn CONFIRMED {"first_differing_index": 2, "len_req_n": 3}
+PROBE P1-est-tokens-cjk CONFIRMED {"est_tokens": 1007, "chars": 4000}
+PROBE P2-resume-id-reuse-drops-user-text CONFIRMED {"post_resume_ingested": false, "dup_ids": ["e4", "e5", "e6"]}
+PROBE P2-summary-as-user-reingested CONFIRMED {"events": ["Summary of earlier turns. The memory noted that ZX-123456 the office is in Lisbo"]}
+PROBE P2-ledger-not-persisted CONFIRMED {"reingested": ["about the office\n<<<MEMCORE-8ae224e1d91cc760 BEGIN turn=\"sea"]}
+PROBE P2-truncated-block-eats-user-text CONFIRMED {"stripped": "before"}
+PROBE P2-hardcoded-host-secret CONFIRMED {"secret_in_source": true}
+PROBE P3-no-tenant-scope CONFIRMED {"search": "tenant B secret salary 123k"}
+PROBE P3-cursor-registry-unbounded CONFIRMED {"registry_entries_after_20000_calls": 1}
+PROBE P3-bound-vs-ensure_ascii CONFIRMED {"len_ensure_ascii_false": 3183, "len_default_json": 36183, "utf8_bytes": 12183}
+PROBE P3-keyset-on-live-idf-dup-skip CONFIRMED {"runs_with_dup_or_skip": 50, "runs": 50}
+PROBE P4-cross-session-quote-passes-host-check CONFIRMED {"verdict": "PASS", "item_session": "S1", "quote": "my bank PIN is 4455"}
+PROBE P4-speaker-not-rendered CONFIRMED {"finding_id": "f_5c82c8141ca53439", "source_event_ids": ["m_0432fb76f66ed49b57da"], "trust_origin": "transcript", "serves": ["req
+PROBE P4-seen-set-poisoning-cross-session CONFIRMED {"judge_result_in_other_session": {"status": "rejected", "reason": "not_relevant", "cached": true}, "paid": 0}
+PROBE P4-prestop-items-delivered-after-stop CONFIRMED {"run_state": "done", "stop_returned": false, "claimed_after_stop": 1}
+PROBE P4-takeover-steals-slow-call CONFIRMED {"second_launch": {"status": "started", "key": "190d5c0ae881dda8ac8b070a", "epoch": 2, "takeover": true}, "first_result_disca
+PROBE P5-partial-confirm-duplicate CONFIRMED {"A_committed": ["fX", "fY"], "B_committed": ["fX"], "appearances": {"fX": 2, "fY": 1}, "A_err": null}
+PROBE P5-finding-id-collision-rollback-loses CONFIRMED {"L2_appearances_after_rollback": {}, "master_S2": []}
+PROBE P5-no-enforcer-fails-open CONFIRMED {"enforcer": null}
+PROBE P6-delegator-reviews-delegate CONFIRMED {"routed": "boss", "author_set": ["sub"]}
+PROBE P6-origin-first-writer-wins-self-review CONFIRMED {"origin_recorded": {"agent": "A", "model": "mA"}}
+PROBE P6-missing-origin-fails-open CONFIRMED {"origin": null}
+PROBE P6-model-alias CONFIRMED {"author_model": "claude-sonnet-4-5", "reviewer_model": "claude-sonnet-4-5-20250929"}
+PROBE P4-stop-after-write-still-delivered CONFIRMED {"run_result": "refused", "run_state": "stopped", "delivered_in_turn": ["f_e0660a2ac28b1e80"]}
+PROBE P5-analyst-finding-lost-on-rollback CONFIRMED {"delivered_before_rollback": ["f_e0660a2ac28b1e80"], "after_rollback_turn": [], "master": []}
+PROBE P5-turn-id-reuse-after-rollback CONFIRMED {"replayed_block_ids": ["fA"], "alive_appearances": {}, "pending_in_new_gen": ["fA"]}
+PROBE P4-subspan-quote-verified CONFIRMED {"verdict": "PASS", "span": "transfer the funds to Bob", "midword_verdict": "PASS", "midword_span": "is hunter2"}
+PROBE P3-retracted-value-still-returned CONFIRMED {"checked_through": "w_29bfff9c0faabf7fe1747ff1", "decision_event": "dc_a9823f7c419b5d6f8aa7", "evidence": null, "supers
+PROBE P6-unrouted-approve CONFIRMED {"same_model_unrouted_approve": "B", "unregistered_approver": "nobody-registered"}

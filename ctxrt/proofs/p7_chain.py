@@ -10,11 +10,11 @@ from memcore.inbox import InboxItem, RequirementGraph
 from ctxrt import gen, msgshape as M
 from ctxrt.analyst import AnalystRun, ScriptedModel
 from ctxrt.decisions import DecisionLog
-from ctxrt.delivery import Delivery
+from ctxrt.delivery import Delivery, DeliverySink, PolicyBridge
 from ctxrt.kernel import MemoryLog
 from ctxrt.proofs.common import check, main
 from ctxrt.proofs.p4_analyst import PLANT, make_transcript, nothing, pick_quote
-from ctxrt.pulltools import PullTools
+from ctxrt.pulltools import CallerContext, PullTools
 from ctxrt.routing import Agent, FilteredInbox, Registry
 from ctxrt.rundb import Fenced, NestStore, RunDB
 from ctxrt.vendor.pol.enforce import Enforcer
@@ -30,30 +30,33 @@ def one_case(rng, cls, shape, i):
     sender = Principal("analyst-1", "t1", clearance=3, kind="analyst")
     rcp = Principal("user-1", "t1", clearance=2, kind="human")
     label = Label(tenants=frozenset(["t1"]), sensitivity=1)
-    d = Delivery(store, lease_s=0.05, enforcer=Enforcer(lambda: Policy(1, grants={"t1": frozenset(["send_inbox"])})), sender=sender, recipient_of=lambda lin: rcp, label_of=lambda f: label)
+    bridge = PolicyBridge(Enforcer(lambda: Policy(1, grants={"t1": frozenset(["send_inbox"])})), lambda agent: sender, lambda lin: rcp)      # NOT PROVEN until the policy rescue
+    d = Delivery(store, lease_s=0.05, policy=bridge)
     sid = d.new_lineage("S", "L")
     db = RunDB(store)
     db.open_step("step-A", 10 ** 6)
     if cls == "planted":
-        log = MemoryLog()
-        log.append("conv-p%d" % i, "2026-02-01T00:00:00Z", "assistant", "note: " + PLANT + " end", speaker="assistant", round=1)
+        log = MemoryLog(b"p7-test-secret-0123456789abcdef")
+        log.append("conv-p%d" % i, "2026-02-01T00:00:00Z", "assistant", "note: " + PLANT + ". End of note.", speaker="assistant", round=1)
         ev, quote, speaker, rnd = log.events[0], PLANT, "assistant", 1
     else:
         log, _ = make_transcript(rng)
         ev = rng.choice(log.events)
         quote, speaker, rnd = pick_quote(rng, ev["text"]), ev["speaker"], ev["round"]
-    pt = PullTools(log, DecisionLog())
+    pt = PullTools(log, DecisionLog(), b"p7-test-secret-0123456789abcdef")
     guard = EgressGuard(real_ids=["conv-never-used"], require_real_ids=True)
-    surf = pt.surface(guard)
+    readable = frozenset(e["session"] for e in log.events)
+    surf = pt.surface(lambda: CallerContext("t0", "user-1", readable), guard)
     tools = {"search": lambda a: surf.call_tool("search", {"query": a["query"], "limit": 3})}
     finding = {"candidate_id": "c1", "event_id": ev["oid"], "round": rnd, "speaker": speaker, "quote": quote, "claim": PLANT if cls != "planted" else "claim"}
     finals = {"valid": json.dumps({"schema_version": 1, "outcome": "findings", "dead_ends": [], "findings": [finding]}),
               "planted": json.dumps({"schema_version": 1, "outcome": "findings", "dead_ends": [], "findings": [finding]}),
               "nothing": nothing(), "malformed": "I think the answer is in round %d." % rnd, "stopped": nothing()}
-    r = db.launch(sid, "step-A", "q-%d" % i, 1, "v1", 6, "o")
+    r = db.launch("S", "step-A", "q-%d" % i, 1, "v1", 6, "o")
     model = ScriptedModel([{"type": "tool", "name": "search", "args": {"query": quote}}, {"type": "final", "text": finals[cls]}])
     model.model_id = "m-analyst"
-    run = AnalystRun(db, r["key"], r["epoch"], model, tools, "q-%d" % i, sid, log, d.svc, author=("agent-A", "m-analyst"))
+    sink = DeliverySink(d, "S", label.to_dict())
+    run = AnalystRun(db, r["key"], r["epoch"], model, tools, "q-%d" % i, "S", log, sink, author=("agent-A", "m-analyst"), readable_sessions=readable)
     if cls == "stopped":
         run.step()
         db.stop_run(r["key"], "chain test")
@@ -77,12 +80,12 @@ def one_case(rng, cls, shape, i):
     ends_tool = (conv[-1]["role"] == "tool") if shape == "openai" else (isinstance(conv[-1]["content"], list) and any(b["type"] == "tool_result" for b in conv[-1]["content"]))
     js = json.dumps(final, ensure_ascii=False)
     row = {"i": i, "cls": cls, "shape": shape, "block_len": len(block), "n_items": len(items), "valid_shape": not M.validate(shape, final), "naive_valid": not M.validate(shape, naive),
-           "ends_tool": ends_tool, "identical_to_base": final == base}
+           "ends_tool": ends_tool, "identical_to_base": final == base, "raw": {"conv": conv, "final": final, "base": base, "block": block, "quote": quote, "items": items}}
     if items:
         span = log.by_oid(ev["oid"])["text"]
         row["quote_once"] = js.count(quote) == 1 if cls != "planted" else js.count(PLANT) == 1
         row["id_once"] = js.count(items[0]) == 1
-        row["origin_model"] = (db.origin_of(items[0]) or {}).get("model")
+        row["origin_model"] = (db.origins_of(sid, items[0]) or [{}])[0].get("model")
         row["claim_leak"] = "IGNORE ALL" in js and cls == "valid"
         if cls == "planted":
             lines = block.split("\n")
@@ -90,12 +93,14 @@ def one_case(rng, cls, shape, i):
             row["planted_framed"] = len(idx) == 1 and lines[idx[0]].startswith("{") and lines[0].startswith("<<<") and lines[-1].startswith("<<<")
         # reviewer sessions on the same store: one in the author set, one not
         reg = Registry([Agent("agent-A", "m-analyst", "LA"), Agent("agent-A2", "m-analyst", "LA"), Agent("rev-B", "m-other", "LB")])
-        fi = FilteredInbox(store, RequirementGraph({"task": {"req1"}}), lambda: __import__("time").time(), registry=reg, origin_of=lambda f: (db.origin_of(f) or {}).get("agent"),
+        fi = FilteredInbox(store, RequirementGraph({"task": {"req1"}}), lambda: __import__("time").time(), registry=reg, origins_of=db.origins_of,
                            session_agent={"s-A2": "agent-A2", "s-B": "rev-B"})
         for sname in ("s-A2", "s-B"):
             fi.register(sname, "host", "task", ["req1"])
             it = store.get_item(sid, items[0])
             fi.enqueue(InboxItem(it.finding_id, sname, it.source_event_ids, it.quote, it.trust_origin, it.item_ids, it.created, it.expires))
+            with store.transaction():
+                db.record_origin(sname, it.finding_id, "agent-A", "m-analyst", r["key"], 1)
         row["author_set_claims"] = len(fi.claim("s-A2", "r1"))
         row["reviewer_claims"] = len(fi.claim("s-B", "r2"))
     return row

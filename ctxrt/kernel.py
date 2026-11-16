@@ -17,7 +17,9 @@ def sha(o) -> str:
 
 
 class MemoryLog:
-    def __init__(self, secret: bytes = b"ctxrt-test-secret"):
+    def __init__(self, secret: bytes):
+        if not isinstance(secret, (bytes, bytearray)) or len(secret) < 16:
+            raise ValueError("MemoryLog needs a configured secret of at least 16 bytes (ctxrt.config.load_secret)")
         self._lock = threading.RLock()
         self.events: List[dict] = []
         self._secret = secret
@@ -28,14 +30,14 @@ class MemoryLog:
         return "m_" + hmac.new(self._secret, key.encode(), hashlib.sha256).hexdigest()[:20]
 
     def append(self, session: str, ts: str, origin: str, text: str, speaker: Optional[str] = None, round: Optional[int] = None,
-               entities: Optional[List[str]] = None, kind: str = "statement", meta: Optional[dict] = None) -> int:
+               entities: Optional[List[str]] = None, kind: str = "statement", meta: Optional[dict] = None, tenant: str = "t0") -> int:
         if origin not in MEMORY_ORIGINS:
             raise ValueError("origin %r may not become a memory event" % origin)
         with self._lock:
             seq = len(self.events) + 1
             key = "ev-%s-%d" % (session, seq)
             prev = self.events[-1]["chain"] if self.events else "0"
-            e = {"seq": seq, "key": key, "oid": self.oid(key), "session": session, "ts": ts, "origin": origin, "speaker": speaker or origin, "round": round,
+            e = {"seq": seq, "key": key, "oid": self.oid(key), "tenant": tenant, "session": session, "ts": ts, "origin": origin, "speaker": speaker or origin, "round": round,
                  "text": text, "entities": list(entities or []), "kind": kind, "meta": dict(meta or {})}
             e["chain"] = sha([prev, e["key"], e["ts"], e["origin"], e["text"]])
             self.events.append(e)

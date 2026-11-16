@@ -47,11 +47,12 @@ class ScriptedModel:
 class AnalystRun:
     def __init__(self, db: RunDB, key: str, epoch: int, model, tools: Dict[str, Callable[[dict], dict]], question: str, session: str, log: MemoryLog,
                  inbox: Optional[InboxService], item_ids=("req1",), global_budget=None, now: Callable[[], float] = time.time,
-                 author: Optional[tuple] = None):
+                 author: Optional[tuple] = None, tenant: str = "t0", readable_sessions=frozenset()):
         self.db, self.key, self.epoch, self.tools, self.question, self.session, self.log, self.inbox = db, key, epoch, tools, question, session, log, inbox
         self.gm = GuardedModel(db, key, epoch, model, global_budget)
         self.cancel = db.cancel.setdefault(key, threading.Event())
         self.item_ids, self.now = item_ids, now
+        self.tenant, self.readable = tenant, frozenset(readable_sessions)
         self.author = author or ("analyst-%s" % key[:6], getattr(model, "model_id", "stub-model"))     # (agent id, model id) recorded on every finding
         self.messages: List[dict] = [{"role": "user", "content": question}]
         self.n = 0
@@ -94,25 +95,26 @@ class AnalystRun:
             self.db.fail(self.key, self.epoch, "schema:" + e.code)
             self.outcome = "schema_rejected:" + e.code
             return "failed"
-        for d in obj["dead_ends"]:
-            self.db.seen_add(self.question, d["candidate_id"], d["reason"])
+        for d in obj["dead_ends"]:                # the analyst's own declarations are recorded for humans and NEVER seed the seen-set
+            self.db.note_analyst_claim(self.key, self.question, d["candidate_id"], d["reason"])
         items = []
         for f in obj["findings"]:
-            verdict, ev = host_check(self.log, f)
+            verdict, ev = host_check(self.log, f, self.readable, self.tenant)
             if verdict == "PASS":
                 items.append(to_item(self.question, self.session, ev["event"], ev["span"], ev["speaker"], self.item_ids, self.now()))
             elif verdict == "REVIEW":
                 self.review.append({"candidate_id": f["candidate_id"], "speakers": ev["speakers"]})
             else:
                 self.rejected.append(verdict)
-                self.db.seen_add(self.question, f["candidate_id"], "unverifiable")
+                self.db.seen_add(self.key, self.epoch, self.tenant, self.session, self.question, f["candidate_id"], verdict)     # host-verified outcome, fenced
 
         def write():
             n = 0
             for it in items:
-                if self.inbox is not None and self.inbox.enqueue(it):
-                    self.db.record_origin(it.finding_id, self.author[0], self.author[1], self.key, self.epoch)
-                    n += 1
+                if self.inbox is not None:
+                    new = self.inbox.enqueue(it, author=self.author, run_key=self.key) if getattr(self.inbox, "wants_author", False) else self.inbox.enqueue(it)
+                    self.db.record_origin(it.session_id, it.finding_id, self.author[0], self.author[1], self.key, self.epoch)     # every producer of this finding, new copy or not
+                    n += bool(new)
             return n
         self.written = self.db.write_gate(self.key, self.epoch, write)
         self.outcome = obj["outcome"]
@@ -133,18 +135,19 @@ class AnalystRun:
 
 
 class Judge:
-    """Host tool `judge(candidate_id)`: a model call decides whether a candidate is relevant. A candidate in the per-question seen-set returns its
-    earlier rejection at ZERO cost; otherwise one guarded call is paid and a rejection is recorded. use_seen=False is the control."""
+    """Host tool `judge(candidate_id)`: a model call decides whether a candidate is relevant. A candidate already rejected by the HOST in this
+    (tenant, session, question) returns its earlier rejection at ZERO cost; otherwise one guarded call is paid and the host's own rejection is recorded
+    (fenced). use_seen=False is the control. Analyst self-declared dead ends never reach this table."""
 
-    def __init__(self, db: RunDB, gm: GuardedModel, question: str, judge_model, use_seen: bool = True):
-        self.db, self.gm, self.question, self.model, self.use_seen = db, gm, question, judge_model, use_seen
+    def __init__(self, db: RunDB, gm: GuardedModel, question: str, judge_model, use_seen: bool = True, tenant: str = "t0", session: str = "sess"):
+        self.db, self.gm, self.question, self.model, self.use_seen, self.tenant, self.session = db, gm, question, judge_model, use_seen, tenant, session
         self.paid = 0
         self.skipped = 0
 
     def __call__(self, args: dict) -> dict:
         cid = args["candidate_id"]
         if self.use_seen:
-            r = self.db.seen_get(self.question, cid)
+            r = self.db.seen_get(self.tenant, self.session, self.question, cid)
             if r is not None:
                 self.skipped += 1
                 return {"status": "rejected", "reason": r, "cached": True}
@@ -152,5 +155,5 @@ class Judge:
         self.paid += 1
         if out.get("accept"):
             return {"status": "relevant"}
-        self.db.seen_add(self.question, cid, "not_relevant")
+        self.db.seen_add(self.gm.key, self.gm.epoch, self.tenant, self.session, self.question, cid, "not_relevant")
         return {"status": "rejected", "reason": "not_relevant", "cached": False}

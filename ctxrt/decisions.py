@@ -11,8 +11,8 @@ from ctxrt.vendor.pol import core as C
 PRINCIPALS = {"owner": "human", "owner2": "human"}
 
 
-def req_id(subject: str, predicate: str) -> str:
-    return "%s|%s" % (subject.strip().lower(), predicate.strip().lower())
+def req_id(subject: str, predicate: str, tenant: str = "t0") -> str:
+    return "%s|%s|%s" % (tenant, subject.strip().lower(), predicate.strip().lower())
 
 
 def _ensure(state: dict, req: str) -> dict:
@@ -47,11 +47,11 @@ class DecisionLog:
         self._live = genesis()
         self._n = 0
 
-    def _append(self, kind: str, subject: str, predicate: str, ts: str, source_key: Optional[str], principal: str, value=None, based_on: Optional[int] = None) -> str:
+    def _append(self, kind: str, subject: str, predicate: str, ts: str, source_key: Optional[str], principal: str, value=None, based_on: Optional[int] = None, tenant: str = "t0") -> str:
         with self._lock:
             if self.items and ts < self.items[-1]["ts"]:
                 raise ValueError("decision log is time-ordered")
-            req = req_id(subject, predicate)
+            req = req_id(subject, predicate, tenant)
             self._live = _ensure(self._live, req)
             self._n += 1
             did = "d%d" % self._n
@@ -63,11 +63,11 @@ class DecisionLog:
             self.items.append({"req": req, "ev": ev, "ts": ts, "source_key": source_key, "code": code, "pos": len(self.items) + 1})
             return did
 
-    def set(self, subject, predicate, value, ts, source_key=None, principal="owner", based_on=None) -> str:
-        return self._append("supersede", subject, predicate, ts, source_key, principal, value, based_on)
+    def set(self, subject, predicate, value, ts, source_key=None, principal="owner", based_on=None, tenant="t0") -> str:
+        return self._append("supersede", subject, predicate, ts, source_key, principal, value, based_on, tenant)
 
-    def retract(self, subject, predicate, ts, source_key=None, principal="owner", based_on=None) -> str:
-        return self._append("retract", subject, predicate, ts, source_key, principal, None, based_on)
+    def retract(self, subject, predicate, ts, source_key=None, principal="owner", based_on=None, tenant="t0") -> str:
+        return self._append("retract", subject, predicate, ts, source_key, principal, None, based_on, tenant)
 
     def position(self) -> int:
         with self._lock:
@@ -78,8 +78,8 @@ class DecisionLog:
             its = [i for i in self.items[: upto if upto is not None else len(self.items)] if as_of is None or i["ts"] <= as_of]
         return replay(its)
 
-    def first_ts(self, subject: str, predicate: str) -> Optional[str]:
-        r = req_id(subject, predicate)
+    def first_ts(self, subject: str, predicate: str, tenant: str = "t0") -> Optional[str]:
+        r = req_id(subject, predicate, tenant)
         with self._lock:
             for i in self.items:
                 if i["req"] == r:

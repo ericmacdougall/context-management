@@ -63,32 +63,53 @@ def parse_findings(raw) -> dict:
 
 
 # ---------------------------------------------------------------- host check (quote and speaker), after PROVENANCE_CHECK.md
+MIN_QUOTE_WORDS = 3
+
+
 def collapse(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip().lower()
 
 
-def quote_span(text: str, quote: str) -> Optional[str]:
-    """The ORIGINAL span of `text` that equals `quote` after whitespace collapsing and lower-casing, or None."""
+def quote_span(text: str, quote: str):
+    """(original span, status). The quote must match, after whitespace collapsing and lower-casing, on TOKEN boundaries, have at least
+    MIN_QUOTE_WORDS words, and cover a COMPLETE sentence of the turn (start at the turn start or after . ! ? : or a newline; end at the turn end or
+    before . ! ?). A fragment is rejected: 'transfer the funds to Bob' is not verified out of 'please do NOT transfer the funds to Bob'.
+    status: ok | partial (found, but not a whole sentence) | too_short | None (absent)."""
     words = quote.split()
-    if not words:
-        return None
-    m = re.search(r"\s+".join(map(re.escape, words)), text, re.I)
-    return m.group(0) if m else None
+    if len(words) < MIN_QUOTE_WORDS:
+        return None, "too_short"
+    pat = r"(?<!\w)" + r"\s+".join(map(re.escape, words)) + r"(?!\w)"
+    partial = False
+    for m in re.finditer(pat, text, re.I):
+        pre, rest = text[:m.start()].rstrip(), text[m.end():]
+        start_ok = pre == "" or pre[-1] in ".!?:" or text[:m.start()].endswith("\n")
+        end_ok = rest.strip() == "" or rest[0] in ".!?" or rest.startswith("\n") or quote.rstrip()[-1:] in ".!?"
+        if start_ok and end_ok:
+            return m.group(0), "ok"
+        partial = True
+    return None, ("partial" if partial else None)
 
 
-def host_check(log: MemoryLog, finding: dict) -> Tuple[str, Optional[dict]]:
-    """Returns (verdict, evidence). verdict: PASS | REVIEW (ambiguous speaker) | REJECT:<code>. Evidence (on PASS) is read from the LOG, not from the analyst:
-    the event, its speaker and the verbatim span."""
+def host_check(log: MemoryLog, finding: dict, readable_sessions=frozenset(), tenant: str = "t0") -> Tuple[str, Optional[dict]]:
+    """Returns (verdict, evidence). verdict: PASS | REVIEW (ambiguous speaker) | REJECT:<code>. The event must belong to the REQUESTER's tenant and to a
+    session the requester may read; evidence (on PASS) is read from the LOG, not from the analyst: the event, its speaker and the verbatim span."""
     ev = log.by_oid(finding["event_id"])
     if ev is None:
         return "REJECT:unknown_event", None
+    if ev.get("tenant", "t0") != tenant or ev["session"] not in readable_sessions:
+        return "REJECT:session_not_readable", None
     turns = [e for e in log.upto(log.watermark()) if e["session"] == ev["session"] and e["round"] == finding["round"]]
     if not turns:
         return "REJECT:round_not_found", None
-    hits = [(t, quote_span(t["text"], finding["quote"])) for t in turns]
-    hits = [(t, s) for t, s in hits if s is not None]
+    hits, partial, short = [], False, False
+    for t in turns:
+        span, status = quote_span(t["text"], finding["quote"])
+        if span is not None:
+            hits.append((t, span))
+        partial |= status == "partial"
+        short |= status == "too_short"
     if not hits:
-        return "REJECT:quote_not_in_cited_round", None
+        return ("REJECT:quote_too_short" if short else "REJECT:partial_sentence" if partial else "REJECT:quote_not_in_cited_round"), None
     speakers = {t["speaker"] for t, _ in hits}
     if len(speakers) > 1:
         return "REVIEW", {"speakers": sorted(speakers)}
@@ -100,15 +121,18 @@ def host_check(log: MemoryLog, finding: dict) -> Tuple[str, Optional[dict]]:
 
 
 # ---------------------------------------------------------------- rendering
-def finding_id(question: str, event_oid: str, span: str) -> str:
+def finding_id(question: str, event_oid: str, span: str, session: str = "") -> str:
     import hashlib
-    return "f_" + hashlib.sha256(json.dumps([question, event_oid, span]).encode()).hexdigest()[:16]
+    return "f_" + hashlib.sha256(json.dumps([session, question, event_oid, span]).encode()).hexdigest()[:16]
+
+
+TRUST_BY_SPEAKER = {"user": "user", "assistant": "agent", "tool": "tool"}
 
 
 def to_item(question: str, session: str, ev: dict, span: str, speaker: str, item_ids, now: float, ttl: float = 3600.0) -> InboxItem:
-    """An inbox item built ONLY from log-verified data. trust_origin is `transcript`: DATA, never an instruction."""
-    return InboxItem(finding_id=finding_id(question, ev["oid"], span), session_id=session, source_event_ids=[ev["oid"]], quote=span[:2000],
-                     trust_origin="transcript", item_ids=list(item_ids), created=now, expires=now + ttl)
+    """An inbox item built ONLY from log-verified data. trust_origin carries the VERIFIED speaker (user, agent, tool): DATA, never an instruction."""
+    return InboxItem(finding_id=finding_id(question, ev["oid"], span, session), session_id=session, source_event_ids=[ev["oid"]], quote=span[:2000],
+                     trust_origin=TRUST_BY_SPEAKER.get(speaker, "unknown"), item_ids=list(item_ids), created=now, expires=now + ttl)
 
 
 def render_findings(items: List[InboxItem], turn_id: str) -> str:

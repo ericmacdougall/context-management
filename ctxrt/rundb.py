@@ -69,16 +69,18 @@ def run_key(session: str, question: str, watermark: int, prompt_version: str) ->
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs(key TEXT PRIMARY KEY, session TEXT, step_id TEXT, question TEXT, watermark INT, prompt_version TEXT, state TEXT, epoch INT,
-  owner TEXT, reserved INT, spent INT, started REAL, last_progress REAL, progress_n INT, result TEXT, reason TEXT);
+  owner TEXT, reserved INT, spent INT, started REAL, last_progress REAL, progress_n INT, result TEXT, reason TEXT, last_heartbeat REAL, tenant TEXT);
 CREATE TABLE IF NOT EXISTS steps(step_id TEXT PRIMARY KEY, allowance INT, reserved INT, spent INT);
 CREATE TABLE IF NOT EXISTS calls(id INTEGER PRIMARY KEY AUTOINCREMENT, run_key TEXT, epoch INT, step_id TEXT, ts REAL, landed INT);
 CREATE TABLE IF NOT EXISTS prog(run_key TEXT, fp TEXT, PRIMARY KEY(run_key, fp));
-CREATE TABLE IF NOT EXISTS seen(question TEXT, candidate TEXT, reason TEXT, PRIMARY KEY(question, candidate));
-CREATE TABLE IF NOT EXISTS item_origin(finding_id TEXT PRIMARY KEY, author_agent TEXT NOT NULL, author_model TEXT NOT NULL, run_key TEXT, epoch INT);
+CREATE TABLE IF NOT EXISTS seen(tenant TEXT, session TEXT, question TEXT, candidate TEXT, reason TEXT, PRIMARY KEY(tenant, session, question, candidate));
+CREATE TABLE IF NOT EXISTS analyst_claims(run_key TEXT, question TEXT, candidate TEXT, reason TEXT);
+CREATE TABLE IF NOT EXISTS withdrawn(session_id TEXT, finding_id TEXT, run_key TEXT, delivered INT, ts REAL, PRIMARY KEY(session_id, finding_id, run_key));
+CREATE TABLE IF NOT EXISTS item_origin(session_id TEXT NOT NULL, finding_id TEXT NOT NULL, author_agent TEXT NOT NULL, author_model TEXT NOT NULL, run_key TEXT, epoch INT, PRIMARY KEY(session_id, finding_id, author_agent));
 CREATE TABLE IF NOT EXISTS refusals(id INTEGER PRIMARY KEY AUTOINCREMENT, run_key TEXT, epoch INT, what TEXT, why TEXT, ts REAL);
 """
 COLS = ("key", "session", "step_id", "question", "watermark", "prompt_version", "state", "epoch", "owner", "reserved", "spent", "started", "last_progress",
-        "progress_n", "result", "reason")
+        "progress_n", "result", "reason", "last_heartbeat", "tenant")
 
 
 class RunDB:
@@ -105,7 +107,7 @@ class RunDB:
             return self._row(key)
 
     # ---- launch (idempotent per key)
-    def launch(self, session, step_id, question, watermark, prompt_version, max_calls, owner):
+    def launch(self, session, step_id, question, watermark, prompt_version, max_calls, owner, tenant="t0"):
         key = run_key(session, question, watermark, prompt_version)
         now = self.clock()
         with self.store.transaction():
@@ -115,15 +117,15 @@ class RunDB:
                 if max_calls > s["allowance"] - s["reserved"]:
                     return {"status": "refused_budget", "key": key}
                 self.store.db.execute("UPDATE steps SET reserved=reserved+? WHERE step_id=?", (max_calls, step_id))
-                self.store.db.execute("INSERT INTO runs VALUES(?,?,?,?,?,?, 'running',1,?,?,0,?,?,0,NULL,NULL)",
-                                      (key, session, step_id, question, watermark, prompt_version, owner, max_calls, now, now))
+                self.store.db.execute("INSERT INTO runs VALUES(?,?,?,?,?,?, 'running',1,?,?,0,?,?,0,NULL,NULL,?,?)",
+                                      (key, session, step_id, question, watermark, prompt_version, owner, max_calls, now, now, now, tenant))
                 return {"status": "started", "key": key, "epoch": 1}
             if r["state"] == "done":
                 return {"status": "done", "key": key, "result": json.loads(r["result"])}
             if r["state"] in ("stopped", "failed"):
                 return {"status": r["state"], "key": key, "reason": r["reason"]}
-            if now - r["last_progress"] > self.takeover_s:       # the owner evidently died: take over under a new epoch
-                self.store.db.execute("UPDATE runs SET epoch=epoch+1, owner=?, last_progress=? WHERE key=?", (owner, now, key))
+            if now - r["last_heartbeat"] > self.takeover_s:      # no HEARTBEAT (not "no progress") for the lease: the owner evidently died; take over under a new epoch
+                self.store.db.execute("UPDATE runs SET epoch=epoch+1, owner=?, last_progress=?, last_heartbeat=? WHERE key=?", (owner, now, now, key))
                 return {"status": "started", "key": key, "epoch": r["epoch"] + 1, "takeover": True}
             return {"status": "attached", "key": key}
 
@@ -143,10 +145,16 @@ class RunDB:
             r = self._live(key, epoch)
             if r["spent"] >= r["reserved"]:
                 raise BudgetExhausted("reservation %d used up" % r["reserved"])
-            self.store.db.execute("UPDATE runs SET spent=spent+1 WHERE key=?", (key,))
+            self.store.db.execute("UPDATE runs SET spent=spent+1, last_heartbeat=? WHERE key=?", (self.clock(), key))
             self.store.db.execute("UPDATE steps SET spent=spent+1 WHERE step_id=?", (r["step_id"],))
             self.store.db.execute("INSERT INTO calls(run_key,epoch,step_id,ts,landed) VALUES(?,?,?,?,1)", (key, epoch, r["step_id"], self.clock()))
             return r["spent"] + 1
+
+    def heartbeat(self, key, epoch):
+        """Lease heartbeat of a LIVE run (called while a slow model call is in flight). Raises Fenced when the run is no longer live."""
+        with self.store.transaction():
+            self._live(key, epoch)
+            self.store.db.execute("UPDATE runs SET last_heartbeat=? WHERE key=?", (self.clock(), key))
 
     def assert_live(self, key, epoch):
         with self.store.transaction():
@@ -179,17 +187,42 @@ class RunDB:
 
     def stop_run(self, key, reason: str) -> bool:
         """Out-of-band stop. The commit of this transaction is the linearisation point: after it returns, every spend() and write_gate() of the
-        run's epochs is refused. An in-flight model call is DISCARDED when it returns (assert_live), not recalled."""
+        run's epochs is refused, and the run's findings are WITHDRAWN (pending or claimed items are dropped, delivered ones get a tombstone that the
+        next turn renders as a retraction). An in-flight model call is DISCARDED when it returns (assert_live), not recalled. A stop on a run that
+        already finished only withdraws its findings."""
         with self.store.transaction():
             r = self._row(key)
-            if r is None or r["state"] != "running":
+            if r is None:
                 return False
-            self._release(r)
-            self.store.db.execute("UPDATE runs SET state='stopped', epoch=epoch+1, reason=? WHERE key=?", (reason, key))
+            fenced = False
+            if r["state"] == "running":
+                self._release(r)
+                self.store.db.execute("UPDATE runs SET state='stopped', epoch=epoch+1, reason=? WHERE key=?", (reason, key))
+                fenced = True
+            n = self._withdraw(key)
+            if not fenced and not n:
+                return False
         ev = self.cancel.get(key)
         if ev:
             ev.set()
         return True
+
+    def _withdraw(self, key) -> int:
+        n = 0
+        for sid, fid in self.store.db.execute("SELECT session_id, finding_id FROM item_origin WHERE run_key=?", (key,)).fetchall():
+            it = self.store.get_item(sid, fid)
+            if it is None:
+                continue
+            if it.state in ("pending", "claimed"):
+                it.state = "dropped"
+                self.store.put_item(it)
+                self.store.log_drop(sid, fid, "withdrawn:run_stopped", self.clock())
+                self.store.db.execute("INSERT OR IGNORE INTO withdrawn VALUES(?,?,?,0,?)", (sid, fid, key, self.clock()))
+                n += 1
+            elif it.state == "delivered":
+                self.store.db.execute("INSERT OR IGNORE INTO withdrawn VALUES(?,?,?,1,?)", (sid, fid, key, self.clock()))
+                n += 1
+        return n
 
     def write_gate(self, key, epoch, fn: Callable[[], object]):
         """Run fn (an inbox write) inside the transaction that checks the run is live: check and write are atomic against stop_run()."""
@@ -207,24 +240,29 @@ class RunDB:
                 stopped.append(k)
         return stopped
 
-    # ---- origin of every finding that reaches an inbox (author agent and author model are NOT NULL)
-    def record_origin(self, finding_id, author_agent, author_model, run_key, epoch):
-        if not author_agent or not author_model:
-            raise ValueError("author agent and model are required on every finding")
-        self.store.db.execute("INSERT OR IGNORE INTO item_origin VALUES(?,?,?,?,?)", (finding_id, author_agent, author_model, run_key, epoch))
+    # ---- origin of every finding instance: who produced THIS copy (many authors per finding are kept; nothing is first-writer-wins)
+    def record_origin(self, session_id, finding_id, author_agent, author_model, run_key, epoch):
+        if not session_id or not finding_id or not author_agent or not author_model:
+            raise ValueError("session, finding, author agent and author model are required on every finding")
+        self.store.db.execute("INSERT OR IGNORE INTO item_origin VALUES(?,?,?,?,?,?)", (session_id, finding_id, author_agent, author_model, run_key, epoch))
 
-    def origin_of(self, finding_id):
-        r = self.store.db.execute("SELECT author_agent, author_model FROM item_origin WHERE finding_id=?", (finding_id,)).fetchone()
-        return None if r is None else {"agent": r[0], "model": r[1]}
+    def origins_of(self, session_id, finding_id):
+        return [{"agent": a, "model": m} for a, m in self.store.db.execute("SELECT author_agent, author_model FROM item_origin WHERE session_id=? AND finding_id=?", (session_id, finding_id)).fetchall()]
 
-    # ---- seen set
-    def seen_add(self, question, candidate, reason):
+    # ---- seen set: scoped (tenant, session, question), filled ONLY from host-verified outcomes, fenced like any other write
+    def seen_add(self, key, epoch, tenant, session, question, candidate, reason):
         with self.store.transaction():
-            self.store.db.execute("INSERT OR IGNORE INTO seen VALUES(?,?,?)", (question, candidate, reason))
+            self._live(key, epoch)
+            self.store.db.execute("INSERT OR IGNORE INTO seen VALUES(?,?,?,?,?)", (tenant, session, question, candidate, reason))
 
-    def seen_get(self, question, candidate):
-        r = self.store.db.execute("SELECT reason FROM seen WHERE question=? AND candidate=?", (question, candidate)).fetchone()
+    def seen_get(self, tenant, session, question, candidate):
+        r = self.store.db.execute("SELECT reason FROM seen WHERE tenant=? AND session=? AND question=? AND candidate=?", (tenant, session, question, candidate)).fetchone()
         return r[0] if r else None
+
+    def note_analyst_claim(self, key, question, candidate, reason):
+        """The analyst's own dead-end declarations: informational only, never consulted by the Judge."""
+        with self.store.transaction():
+            self.store.db.execute("INSERT INTO analyst_claims VALUES(?,?,?,?)", (key, question, candidate, reason))
 
     def calls_for(self, key=None, step_id=None):
         q, a = "SELECT COUNT(*) FROM calls WHERE landed=1", []
@@ -241,8 +279,8 @@ class GuardedModel:
     """The only path from an analyst to a model: reserves and charges one call (fenced) BEFORE the call, and discards the result if the
     run was stopped while the call was in flight."""
 
-    def __init__(self, db: RunDB, key: str, epoch: int, model, global_budget=None):
-        self.db, self.key, self.epoch, self.model, self.global_budget = db, key, epoch, model, global_budget
+    def __init__(self, db: RunDB, key: str, epoch: int, model, global_budget=None, heartbeat: bool = True):
+        self.db, self.key, self.epoch, self.model, self.global_budget, self.heartbeat = db, key, epoch, model, global_budget, heartbeat
         self.calls = 0
 
     def call(self, messages, cancel: Optional[threading.Event] = None):
@@ -254,7 +292,21 @@ class GuardedModel:
         if self.global_budget is not None:
             self.global_budget.reserve()
         self.calls += 1
-        out = self.model.complete(messages, cancel)
+        done = threading.Event()
+
+        def beat():                           # lease heartbeat while the call is in flight: a slow but live call is not taken over
+            while not done.wait(max(0.01, self.db.takeover_s / 3.0)):
+                try:
+                    self.db.heartbeat(self.key, self.epoch)
+                except Exception:
+                    return
+        hb = threading.Thread(target=beat, daemon=True)
+        if self.heartbeat:
+            hb.start()
+        try:
+            out = self.model.complete(messages, cancel)
+        finally:
+            done.set()
         try:
             self.db.assert_live(self.key, self.epoch)
         except Fenced:
