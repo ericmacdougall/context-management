@@ -86,3 +86,40 @@ host. A race claim reports `overlapped / runs`; below the stated overlap floor t
 ## Not provable here (stated beforehand)
 Real model behaviour of any analyst; real provider acceptance of the shapes (validators encode the documented rules, not a live API call); Elasticsearch point-in-time
 semantics; prompt-cache cost; multi-host clock skew; hosts that strip provenance from transcripts entirely.
+
+## Amendment 1 (committed before any proof run; supersedes the text above where it differs)
+- Artifacts (rule 5): every proof P1-P6 writes a hashed per-case JSONL (`results/<proof>-<seed>.jsonl`, sha256 recorded in the summary JSON) and
+  `ctxrt/recompute.py` recomputes the headline counts from the JSONL for P1-P6. recompute.py is written by the same author: it is a SECOND
+  implementation, not independent evidence; the report says so. The runner (`ctxrt/harness.py`) refuses a dirty tree and stamps code commit,
+  threshold commit (67a2842 + this amendment's commit), UTC time, parameters, python version, host, load average.
+- Canaries: every "0 of N" criterion has a positive canary in the SAME arm and the same code path that must be non-zero: P2b user-typed marker
+  ingested; P5/policy: the same item IS delivered when policy is untightened; P6 inbox: a non-author reviewer DOES receive the item; 4d/4e: a
+  non-planted valid finding IS injected. A zero canary makes that criterion VACUOUS. Delivery-time eligibility (expiry, requirement graph) is
+  asserted in the canary arm so a graph mismatch cannot yield a vacuous 0.
+- Control reasons: each control records a histogram of violation classes; the class named in the criterion must itself reach the 10% floor
+  (P1 C1: class `orphan_result_or_split_pair`, not a leading-assistant start; P3 C1: class `duplicate_or_skip`; P5: class `duplicate` for paused turn and crash,
+  class `lost` for rollback and fork).
+- P1: also the head-orphan case (trimmed output that starts with a tool result) is a validator class and must be 0 for the real trimmer; trimming may add
+  one synthetic user marker message when the surviving head would be an assistant message (counted, reported). Pairing rules source: Anthropic Messages tool
+  use ("all tool_result blocks for one assistant turn in a single user message; tool_result blocks first, text after"), cross-checked in the claude-api skill
+  shared/tool-use-concepts.md (parallel tool use paragraph), 2026-11-15, confidence medium-high; NOT verified against a live API (no model call allowed).
+  OpenAI-compatible rule: an assistant message with tool_calls must be followed by one `tool` message per call id before any other role; confidence high, not live-verified.
+- P2: the write-path checkpoint seal is a STUB in this branch (a recorded watermark + hash-chain digest of the log prefix). Results hold for a stub seal only.
+  Deviation from the plan row "byte-identical": the proof is on the record-set hash plus rendered text with the delimiter sealed per checkpoint; the real
+  per-turn random delimiter is an open design question (whether to seal it). The provenance filter is keyed on a LEDGER of issued blocks plus message origin; the
+  delimiter strip is applied only to ledgered delimiters, never a bare regex on the framing.
+- P3: decision state = vendored pol/core.py reducer (515e594: supersede, retract, contested, explain); the egress guard stays on in PASS arms (real-id
+  helper from memcore/tests/_realids.py); no `egress_guard=None` in any PASS arm.
+- P4: the run key is the task's (question or trigger, input watermark, prompt version) plus logical session as namespace. DESIGN 3.8.6 says (logical session,
+  step, manifest hash): mismatch recorded as an open design question, including who is charged when two steps share a key (first launcher is charged; later
+  launchers attach and are charged 0). 4b adds an overlap witness and a stale-epoch zombie actor to the concurrent reservation test (>= 100 trials per seed
+  where >= 2 threads were inside reserve at once; a zombie run with a revoked epoch attempts >= 1 spend and is refused). The stop proof uses child PROCESSES
+  in their own process group with SIGKILL escalation, a parent-death watchdog and a hard self-timeout; children are registered and reaped; threads are used
+  only for non-killable logic. An in-flight call at stop is DISCARDED (its result is refused at the gateway), not recalled. Timing results (4c, 4f) record the
+  load average and are labelled NOT QUIESCED; stall decisions use an injected clock wherever the case allows it.
+- P5: appearance is counted in the committed transcript of the surviving lineage, not by delivery rows. The checkpoint cursor is the single source of truth;
+  the turn commit (transcript + cursor + confirm) is one store transaction with a fence check by the store, not by the caller. Rollback and fork use
+  lineage-scoped inbox session ids with re-enqueue of everything not in the checkpoint cursor. Controls map to schedules: tokenless delivery -> paused turn and
+  crash (duplicate); cursor outside checkpoint -> rollback (lost); shared native id -> fork (lost for one branch). Each control is judged only on the schedule
+  it can fail. memcore has no reject transition for an item denied at delivery: ctxrt handles it and it is reported as an upstream gap.
+- 4e: quotes that also occur verbatim in the adjacent round are excluded from the adjacent-round control and counted separately (as in PROVENANCE_CHECK).
