@@ -105,6 +105,30 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | X09 | Agent chooses when to compact | not proven in the source; out of reach for host sessions | not adopted |
 | X10 | Post-train a small model to use memory tools | rejected: the target is the client's own models through one port | not adopted |
 
+## Write path, second-generation build (feat/writepath-rescue 4960f50; owner-reported unless stated; lab host, stand-in key store, single-node Elasticsearch)
+
+Held (lab evidence; the fence and erasure mechanisms passed an independent delta review with limits at 963e597, later items owner-reported):
+
+| Mechanism | Figures |
+|---|---|
+| Fence enforced by the stores against a stale writer | 14 of 14 schema attacks refused; races with randomised timing hold with measured overlap |
+| Erasure of a 100,000-event subject, per-subject fencing, sweep survives a failed job | done, residue 0 |
+| Legal hold protects the held person's own messages when another subject is erased | 5 of 5 in three cases; controls violated 5 of 5 |
+| Secret scan before append, including encoded variants | planted secrets caught 880 of 880; 2 false blocks in 3,862 clean files; without decoding only 340 of 880 |
+| Forged append, tampering and lost log tail detected against an anchor outside the database | 10 of 10 in four cases; controls violated 10 of 10 |
+| Checkpoint seal | edited seal and truncated log rejected 10 of 10 |
+| Destroyed key bytes really gone from disk | key on disk in 6 of 6 runs before the purge waited for older transactions; 0 of 6 after |
+
+Did not hold or measured as a problem:
+
+| Finding | Figures | State |
+|---|---|---|
+| Erasure cost at tenant scale | 1,000,000-document tenant: a 10-event subject takes 48 s, 1,000 events 90 s, 100,000 events did NOT finish (claim lost after 109 s). Every erasure pays a 22 to 30 s Elasticsearch retention-lease wait | open |
+| One tenant's erasure does not affect others | Another tenant waited up to 60 s for its events to become visible during the large erasure (the projector waits for the oldest open transaction in the database) | open |
+| Role separation | All credential files belong to one OS user; verifier runs in the eraser's process | open: needs separate service identities |
+| Elasticsearch fence against a dishonest writer | not started (security off on the test node) | open |
+| A test node can hold the per-tenant index layout | The node hit its 1,000-shard limit during the suite | open: layout rule needed for many tenants |
+
 ## Stage G: deeper shuffled candidates and a first look at answers (2026-11-16, pilot, feat/eval-scaffold c9e3909; design and scorer committed before any result; judge NOT validated)
 
 Held (pilot observations, owner-reported):
