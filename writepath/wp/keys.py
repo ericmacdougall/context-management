@@ -6,6 +6,7 @@ erased. No key is cached across calls (an in-process key cache would be an unreg
 import hashlib
 import hmac
 import os
+import time
 
 import psycopg
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -25,7 +26,8 @@ class KeyStore:
       keys(tenant, subjects, create=False) -> {subject: key bytes | None}   (create refuses a destroyed subject)
       tenant_hmac(tenant, text) / tenant_hmac_many(tenant, texts)          keyed hashes under the tenant key
       is_destroyed(tenant, subject), key_exists(tenant, subject)
-      destroy(tenant, subject)                                              idempotent
+      destroy(tenant, subject)                                              idempotent logical delete
+      purge(timeout_s) -> {"purged": bool, ...}                          physical removal; False = not proven gone
       describe() -> {"kind", "stand_in": bool, "deletion"}                  copied into every result and receipt"""
     KIND = "abstract"
     STAND_IN = True
@@ -41,7 +43,7 @@ class KeyService(KeyStore):
     replica, no backup). It is NOT a KMS: no HSM, no deletion window, no audited key lifecycle."""
     KIND = "lab-postgres-keystore"
     STAND_IN = True
-    DELETION = "row delete + VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)"
+    DELETION = "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)"
 
     def __init__(self, conn=None):
         self.conn = conn or db.keys_connect()
@@ -81,20 +83,39 @@ class KeyService(KeyStore):
         return self.conn.execute("select 1 from subject_keys where tenant_id=%s and subject_id=%s", (tenant, subject)).fetchone() is not None
 
     def destroy(self, tenant, subject):
-        """Delete the key, then VACUUM and rotate WAL so the tuple leaves heap and WAL (lab conditions: no archive,
-        no replica, wal_recycle=off). Idempotent."""
+        """Logical delete: the key row goes and `destroyed` is recorded, in one transaction (callers may wrap it in their
+        own hold-check transaction). Idempotent. The bytes stay on disk until purge()."""
         with self.conn.transaction():
             self.conn.execute("select pg_advisory_xact_lock(hashtextextended(%s, 0))", (f"key:{tenant}/{subject}",))
             self.conn.execute("delete from subject_keys where tenant_id=%s and subject_id=%s", (tenant, subject))
             self.conn.execute("insert into destroyed(tenant_id, subject_id) values (%s,%s) on conflict do nothing", (tenant, subject))
-        # VACUUM FULL, not VACUUM: plain VACUUM frees the dead tuple's space without zeroing it, and the key bytes were
-        # found in the heap file after destroy in 3 of 10 reported runs (exp/probe_keyresidue.py). VACUUM FULL rewrites
-        # the table into a new file; the old file is unlinked at the next checkpoint (below). Cost grows with the number
-        # of live keys and takes an exclusive lock on subject_keys while it runs: a lab stand-in, not a KMS design.
+
+    def purge(self, timeout_s=60.0, poll_s=0.25):
+        """Physical purge after destroy(), run with NO transaction of the caller open. VACUUM FULL copies a deleted tuple
+        into the rewritten file while any backend in the cluster still holds an xid or snapshot older than the delete
+        (exp/probe_keyresidue.py `held`: 4/4 runs kept the key hex in the new relfilenode). So: take a fresh xid as the
+        mark, wait until every other backend's backend_xid and backend_xmin is newer than it (wp_kms has
+        pg_read_all_stats), then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT. Returns {"waited_s", "purged"};
+        purged=False (timeout) means the key bytes may remain on disk and the caller must not report the erasure done.
+        Lab limits: prepared transactions and replication slots are not checked (none exist in this lab)."""
+        t0 = time.time()
+        mark = self.conn.execute("select txid_current()").fetchone()[0]       # autocommit: own short transaction
+        # age() orders xids modulo wraparound: an older xid has a larger age than the mark
+        q = ("with m as (select age(((%s::bigint) %% 4294967296)::text::xid) a) select count(*) from pg_stat_activity, m"
+             " where pid <> pg_backend_pid() and ((backend_xid is not null and age(backend_xid) >= m.a) or"
+             " (backend_xmin is not null and age(backend_xmin) >= m.a))")
+        while True:
+            old = self.conn.execute(q, (mark,)).fetchone()[0]
+            if old == 0:
+                break
+            if time.time() - t0 > timeout_s:
+                return {"waited_s": round(time.time() - t0, 3), "purged": False, "blocking_backends": old}
+            time.sleep(poll_s)
         self.conn.execute("vacuum full subject_keys")
         for _ in range(2):
             self.conn.execute("select pg_switch_wal()")
             self.conn.execute("checkpoint")
+        return {"waited_s": round(time.time() - t0, 3), "purged": True}
 
 
 def aad(tenant, subject, row_id):

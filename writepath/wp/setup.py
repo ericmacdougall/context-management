@@ -64,6 +64,7 @@ def main(reset):
     admin.execute(f'revoke connect on database "{config.KEYS_DB}" from public')
     admin.execute(f'grant connect on database "{config.KEYS_DB}" to wp_kms, wp_verifier')
     admin.execute("grant pg_checkpoint to wp_kms with inherit true")
+    admin.execute("grant pg_read_all_stats to wp_kms with inherit true")   # purge() reads other backends' xid/xmin
     ev, ks = db.admin(), db.admin(db=config.KEYS_DB)
     ks.execute("grant execute on function pg_switch_wal() to wp_kms")
     if reset:

@@ -23,11 +23,15 @@ from wp.es import ES
 PG_C, ES_C = "emlab-pg-wp-16096", "emlab-es-wp-16096"
 
 
-def grep_files(container, path, pattern):
-    """Number of files under path containing pattern (fixed string, from stdin)."""
+def grep_paths(container, path, pattern):
+    """Paths under path containing pattern (fixed string, from stdin). Paths only; the pattern is never printed."""
     r = subprocess.run(["docker", "exec", "-i", container, "grep", "-rlaF", "-f", "-", path], input=pattern.encode() + b"\n",
                        capture_output=True, timeout=600)
-    return len([x for x in r.stdout.decode().splitlines() if x.strip()])
+    return [x for x in r.stdout.decode().splitlines() if x.strip()]
+
+
+def grep_files(container, path, pattern):
+    return len(grep_paths(container, path, pattern))
 
 
 def sql_scan(conn, marker):
@@ -95,6 +99,7 @@ def run_one(arm):
                     "es_disk_files_X": grep_files(ES_C, "/usr/share/elasticsearch/data", mx),
                     "es_disk_files_Y": grep_files(ES_C, "/usr/share/elasticsearch/data", my),
                     "keydb_disk_files_keyhex": grep_files(PG_C, "/var/lib/postgresql/data", keyhex)}
+    out["after"]["keydb_disk_paths_keyhex"] = grep_paths(PG_C, "/var/lib/postgresql/data", keyhex) if out["after"]["keydb_disk_files_keyhex"] else []
     del keyhex
     b, a = out["before"], out["after"]
     es_disk_claim = b["es_disk_files_X"] > 0

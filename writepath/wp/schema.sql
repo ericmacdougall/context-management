@@ -69,6 +69,9 @@ returns table(epoch bigint, at timestamptz) language plpgsql security definer se
 begin
   perform set_config('lock_timeout', greatest(coalesce(lock_ms, 2000), 1)::text, true);
   insert into leases(tenant_id, scope) values (t, sc) on conflict do nothing;
+  -- the tenant's identifier-set version row exists before any append: otherwise the first appender's uncommitted
+  -- insert of it (events_guard) makes every other appender in the tenant wait until that writer commits (row 23)
+  insert into identifier_epochs(tenant_id) values (t) on conflict do nothing;
   return query update leases l set epoch = l.epoch + 1, holder = who, expires_at = clock_timestamp() + make_interval(secs => ttl_s)
     where l.tenant_id = t and l.scope = sc and (force or l.expires_at is null or l.expires_at < clock_timestamp())
     returning l.epoch, clock_timestamp();

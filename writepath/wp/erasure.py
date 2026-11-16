@@ -36,6 +36,10 @@ class ClaimLost(Exception):
     pass
 
 
+class KeyPurgePending(Exception):
+    """The key row is deleted but its bytes are not proven gone from disk (purge timed out); the job stays open."""
+
+
 def request(conn, tenant, subject_id):
     """Job id of the open erasure job for (tenant, subject), creating it if none is open."""
     L.check_tenant(tenant)
@@ -189,6 +193,12 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
                     conn.execute("select wp_hold_check(%s, %s)", (t, s))
                     ks.destroy(t, s)
                 rec["steps"]["key_destroy_s"] = round(time.time() - ts, 3)
+                # physical purge only after the hold-check transaction commits: an open xid anywhere in the cluster
+                # (this one included) makes VACUUM FULL carry the deleted key into the rewritten file
+                pr = ks.purge()
+                rec["steps"]["key_purge"] = pr
+                if not pr["purged"]:
+                    raise KeyPurgePending(jid)
             _state(conn, jid, ce, "keys_destroyed")
             hook("before_complete")
             ts = time.time()
