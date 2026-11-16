@@ -22,6 +22,11 @@ def untar(cmd, dest):
     tarfile.open(fileobj=io.BytesIO(sh(cmd))).extractall(dest)
 
 
+def fetch_300():
+    untar("cd %s/analyst_tasks_g300 && tar -cf - H3" % REMOTE, os.path.join(G, "A300"))
+    print("A300 task files", len(os.listdir(os.path.join(G, "A300", "H3"))))
+
+
 def main():
     untar("cd %s/analyst_tasks_g && tar -cf - H3" % REMOTE, os.path.join(G, "A"))
     untar("cd %s/stage_g && COPYFILE_DISABLE=1 tar -cf - B" % REMOTE, G)
@@ -31,4 +36,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    fetch_300() if sys.argv[1:] == ["300"] else main()

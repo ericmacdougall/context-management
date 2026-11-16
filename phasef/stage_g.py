@@ -19,9 +19,10 @@ from .prompts import JUDGE_SYSTEM, READER_SYSTEM, READER_TEMPLATE_V12, READER_V1
 
 G = os.path.join(R.OUT, "stage_g")
 V_DIG, V_REORDER = "analyst-prompt-g1", "reorder-prompt-g1"
-CAP_A, CAP_B = 188, 460
-LEVEL = "H3_g"
-CAND_N = 400
+CAP_A, CAP_B = 190, 460
+LEVEL = "H3_g300"
+CAND_N = 300
+TASK_DIR = "A300"
 ARMS_B = ("RRF", "ANALYST", "ORACLE")
 OVERHEAD = 10500
 MAX_PROMPT_TOKENS = 60000
@@ -66,7 +67,7 @@ def forbidden_ids():
 
 
 def result_base(a):
-    return os.path.join(G, "A", "out")
+    return os.path.join(G, "A300", "out")
 
 
 def stop_requested(a):
@@ -91,7 +92,7 @@ def run_a_item(arm, task, a, runner=None):
         extra_log = None
     else:
         prompt, system = build_dig_prompt(task), ANALYST_SYSTEM
-        run_dir = os.path.join(G, "A", "run")
+        run_dir = os.path.join(G, "A300", "run")
         os.makedirs(run_dir, exist_ok=True)
         extra_log = os.path.join(run_dir, key + ".toolcalls.jsonl")
         if os.path.exists(extra_log):
@@ -117,6 +118,10 @@ def run_a_item(arm, task, a, runner=None):
     except Exception as e:
         return dict(base, status="rejected", error=str(e)[:200], ranked_round_ids=[])
     return dict(base, status="ok", ranked_round_ids=[r for r, _ in out][:MAX_RESULTS], reasons={r: w for r, w in out})
+
+
+def tool_error_seen(rec):
+    return any(x.get("error") for x in rec.get("tool_log", []) or [])
 
 
 def part_a_items(qids, arms=("A-REORDER", "A-DIG")):
@@ -224,13 +229,15 @@ def run(a, runner=None):
         if stop_requested(a):
             return None
         arm, q = item
-        task = json.load(open(os.path.join(G, "A", "H3", q + ".json")))
+        task = json.load(open(os.path.join(G, TASK_DIR, "H3", q + ".json")))
         try:
             rec = run_a_item(arm, task, a, runner)
         except Exception as e:
             rec = {"question_id": q, "level": LEVEL, "arm": arm, "status": "failed", "error": str(e)[:200], "ranked_round_ids": []}
         if rec.get("prompt_tokens_measured") and rec["prompt_tokens_measured"] > MAX_PROMPT_TOKENS:
             open(a.stop_file, "w").write("prompt too large: %s" % rec["prompt_tokens_measured"])
+        if tool_error_seen(rec):
+            open(a.stop_file, "w").write("tool wrapper error on variant g300 (first tool call is the test): stop and report")
         return write_result(result_base(a), dict(rec, arm=arm, level=LEVEL, question_id=q))
 
     def one_b(item):
@@ -293,10 +300,10 @@ def parse(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--phase", choices=["canary", "rest"], required=True)
     ap.add_argument("--part", choices=["A", "B", "AB"], default="AB")
-    ap.add_argument("--backend", default="ssh -F /Users/eric/.ssh/config_fleetops t2-dev /home/eric/emlab-16096/bin/analyst_tool --question {qid} --level H3 --variant g")
+    ap.add_argument("--backend", default="ssh -F /Users/eric/.ssh/config_fleetops t2-dev /home/eric/emlab-16096/bin/analyst_tool --question {qid} --level H3 --variant g300")
     ap.add_argument("--remote", default="t2-dev")
     ap.add_argument("--concurrency", type=int, default=2)
-    ap.add_argument("--stop-file", default=os.path.join(G, "STOP"))
+    ap.add_argument("--stop-file", default=os.path.join(G, "STOP.g300"))
     a = ap.parse_args(argv)
     a.forbidden = forbidden_ids()
     return a

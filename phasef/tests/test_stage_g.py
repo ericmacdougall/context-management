@@ -66,7 +66,7 @@ class StageG(unittest.TestCase):
         self.assertEqual(ok["prompt_tokens_measured"], 2 + 20000 + 500 - 10500)
 
     def test_part_a_counter_is_separate_and_capped(self):
-        self.assertTrue(S.CAP_A + S.CAP_B <= 650 and (S.CAP_A, S.CAP_B) == (188, 460))
+        self.assertTrue( (S.CAP_A, S.CAP_B) == (190, 460) and S.CAP_A + S.CAP_B == 650)
         calls = []
         S.run_a_item("A-REORDER", TASK, self.a, fake_runner(calls))
         self.assertEqual(open(os.path.join(self.d, "A", "cache", "calls.count")).read(), "1")
