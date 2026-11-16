@@ -83,11 +83,14 @@ def p12(expunge):
     before = grep_files(ES_C, "/usr/share/elasticsearch/data", mk)
     es.bulk_fenced([({"index": {"_index": f"{idx}-w", "_id": "d0", "version": BIGV, "version_type": "external"}}, {"erased": True})])
     es.req("POST", f"/{idx}/_refresh")
-    if expunge:
-        es.req("POST", f"/{idx}/_forcemerge", only_expunge_deletes=True)
+    info = None
+    if expunge:                                            # the shipped expunge (waits for the retention leases)
+        from wp import families as F
+        info = F.expunge_index(es, idx)
     es.req("POST", f"/{idx}/_flush")
     st = es.req("GET", f"/{idx}/_stats/docs")[1]["_all"]["primaries"]["docs"]
-    return {"files_before": before, "files_after": grep_files(ES_C, "/usr/share/elasticsearch/data", mk), "docs_deleted": st["deleted"], "docs_count": st["count"]}
+    return {"files_before": before, "files_after": grep_files(ES_C, "/usr/share/elasticsearch/data", mk), "docs_deleted": st["deleted"], "docs_count": st["count"],
+            "expunge": info}
 
 
 out["P12_expunge"] = p12(True)

@@ -6,7 +6,7 @@ import uuid
 
 import psycopg
 
-from . import keys as K
+from . import keys as K, mentions as M
 from .lease import is_stale_error, session_scope
 
 ANALYST_KINDS = ("message",)        # kinds whose append also enqueues an analyst job (same transaction)
@@ -24,12 +24,23 @@ def _h(*parts):
     return hashlib.sha256("\x1f".join(str(p) for p in parts).encode()).hexdigest()
 
 
-def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_enc, epoch, item, action, based_on, source):
-    return _h(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, hashlib.sha256(bytes(content_enc)).hexdigest(), epoch, item, action, based_on, source)
+def digest(content_enc):
+    return hashlib.sha256(bytes(content_enc)).hexdigest()
+
+
+def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source, mentions=(), scan=0):
+    """The chain covers the ciphertext DIGEST (so erasure can null the ciphertext and the chain still verifies), the
+    mentions and the identifier-set version the matcher ran against."""
+    base = _h(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source)
+    return _h(base, ",".join(mentions), scan) if (mentions or scan) else base
 
 
 def _noop(_name, _data=None):
     pass
+
+
+class MentionsErased(Exception):
+    """The content mentions a subject that has been erased (store SQLSTATE WPS18); the write is refused."""
 
 
 class IdempotencyConflict(Exception):
@@ -53,17 +64,23 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
     for e in events:
         eid = uuid.uuid4().hex
         d = e.get("decision") or {}
+        enc = K.seal(keys[e["subject_id"]], t, e["subject_id"], eid, e["content"])
         prepared.append(dict(e, event_id=eid, idem_key=e.get("idem_key") or eid,
-                             req_hash=K.req_hmac(keys[e["subject_id"]], _canonical(e)),
-                             content_enc=K.seal(keys[e["subject_id"]], t, e["subject_id"], eid, e["content"]),
+                             req_hash=K.req_hmac(keys[e["subject_id"]], _canonical(e)), content_enc=enc, content_digest=digest(enc),
                              item=ks.tenant_hmac(t, "item:" + d["item"]) if d else None, action=d.get("action"),
                              based_on=d.get("based_on_event_id"), source=d.get("source_event_id")))
+    _scan(conn, ks, t, prepared, events)
     hook("before_txn")
     for attempt in range(8):
         try:
             return _append_txn(conn, t, sid, lease, prepared, hook)
         except psycopg.Error as ex:
             st = getattr(ex, "sqlstate", None)
+            if st == "WPS17" and attempt < 7:
+                _scan(conn, ks, t, prepared, events)   # identifiers declared meanwhile: match against the new set
+                continue
+            if st == "WPS18":
+                raise MentionsErased(str(ex).split("\n")[0]) from None
             if st in ("WPS15", "23505", "WPS14") and attempt < 7:
                 continue                    # chain moved or a concurrent duplicate landed: re-read and retry
             if st == "WPS09":
@@ -73,8 +90,9 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
                 for p in prepared:
                     try:
                         with conn.transaction():
-                            n = conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc) values (%s,%s,%s,%s,%s,%s,%s)",
-                                             (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"])).rowcount
+                            n = conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc, mentions) "
+                                             "values (%s,%s,%s,%s,%s,%s,%s,%s)",
+                                             (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"], p["mentions"])).rowcount
                         q += n
                         dropped += 1 - n
                     except psycopg.Error as qe:
@@ -86,6 +104,13 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
             raise
 
 
+def _scan(conn, ks, t, prepared, events):
+    version, found = M.scan(conn, ks, t, [e["content"] for e in events])
+    for p, f in zip(prepared, found):
+        p["mentions"] = [x for x in f if x != p["subject_id"]]
+        p["scan"] = version
+
+
 def _existing(conn, t, sid, prepared):
     return {k: (eid, h) for k, eid, h in conn.execute("select idem_key, event_id, req_hash from events where tenant_id=%s and session_id=%s and idem_key = any(%s)",
                                                        (t, sid, [p["idem_key"] for p in prepared])).fetchall()}
@@ -93,7 +118,7 @@ def _existing(conn, t, sid, prepared):
 
 def _append_txn(conn, t, sid, lease, prepared, hook):
     with conn.transaction():
-        conn.execute("select wp_subjects_ensure(%s::tenant_t, %s)", (t, sorted({p["subject_id"] for p in prepared})))
+        conn.execute("select wp_subjects_ensure(%s::tenant_t, %s)", (t, sorted({p["subject_id"] for p in prepared} | {m for p in prepared for m in p["mentions"]})))
         have = _existing(conn, t, sid, prepared)
         for p in prepared:
             if p["idem_key"] in have and have[p["idem_key"]][1] != p["req_hash"]:
@@ -110,13 +135,14 @@ def _append_txn(conn, t, sid, lease, prepared, hook):
         for i, p in enumerate(todo):
             seq = next_seq + i
             ts = p["ts_event"].isoformat()
-            h = event_hash(prev, t, sid, seq, p["event_id"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], ts, p["content_enc"], lease.epoch,
-                           p["item"], p["action"], p["based_on"], p["source"])
+            h = event_hash(prev, t, sid, seq, p["event_id"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], ts, p["content_digest"], lease.epoch,
+                           p["item"], p["action"], p["based_on"], p["source"], p["mentions"], p["scan"])
             conn.execute(
-                "insert into events(tenant_id,session_id,seq,event_id,idem_key,req_hash,kind,subject_id,actor,trust_origin,ts_event,content_enc,prev_hash,hash,"
-                "decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-                (t, sid, seq, p["event_id"], p["idem_key"], p["req_hash"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], p["ts_event"], p["content_enc"], prev, h,
-                 p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch))
+                "insert into events(tenant_id,session_id,seq,event_id,idem_key,req_hash,kind,subject_id,actor,trust_origin,ts_event,content_enc,content_digest,"
+                "mentions,mention_scan_upto,prev_hash,hash,decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch) "
+                "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (t, sid, seq, p["event_id"], p["idem_key"], p["req_hash"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], p["ts_event"], p["content_enc"],
+                 p["content_digest"], p["mentions"], p["scan"], prev, h, p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch))
             if p["kind"] in ANALYST_KINDS:
                 conn.execute("insert into analyst_jobs(tenant_id, job_id, idem_key, session_id, input_event_ids, lease_scope, lease_epoch) values (%s,%s,%s,%s,%s,%s,%s)",
                              (t, uuid.uuid4().hex, "analyst:" + p["event_id"], sid, [p["event_id"]], lease.scope, lease.epoch))
@@ -128,12 +154,14 @@ def _append_txn(conn, t, sid, lease, prepared, hook):
 
 def verify_chain(conn, tenant, session_id):
     """(ok, n, epochs): recompute every hash; seqs must be 1..n with no gap or fork."""
-    rows = conn.execute("select seq, event_id, kind, subject_id, actor, trust_origin, ts_event, content_enc, prev_hash, hash, lease_epoch, decision_item, "
-                        "decision_action, based_on_event_id, source_event_id from events where tenant_id=%s and session_id=%s order by seq", (tenant, session_id)).fetchall()
+    rows = conn.execute("select seq, event_id, kind, subject_id, actor, trust_origin, ts_event, content_digest, prev_hash, hash, lease_epoch, decision_item, "
+                        "decision_action, based_on_event_id, source_event_id, content_enc, mentions, mention_scan_upto "
+                        "from events where tenant_id=%s and session_id=%s order by seq", (tenant, session_id)).fetchall()
     prev, ok = "0" * 64, True
     for i, r in enumerate(rows):
-        h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14])
-        ok = ok and r[0] == i + 1 and r[8] == prev and r[9] == h
+        h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14], r[16], r[17])
+        intact = r[15] is None or digest(r[15]) == r[7]      # redacted (NULL) content is allowed; present content must match its digest
+        ok = ok and r[0] == i + 1 and r[8] == prev and r[9] == h and intact
         prev = r[9]
     return ok, len(rows), sorted({r[10] for r in rows})
 

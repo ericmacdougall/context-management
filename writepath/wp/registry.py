@@ -30,10 +30,14 @@ def _pg(table, content, erase, verifiable, note=""):
 
 
 STORES = [
-    _pg("events", "ciphertext under the subject key (AAD-bound); req_hash = HMAC under the subject key",
-        "tombstoned in the cascade; key destroyed (crypto-shred)", True),
+    _pg("events", "ciphertext under the speaker's key (AAD-bound); req_hash = HMAC under the speaker key; mentions = subject ids",
+        "own and mentioning events tombstoned and content nulled in the cascade (chain keeps the digest); own key destroyed", True),
     _pg("quarantine", "ciphertext of unadopted stale writes", "rows of the subject deleted in the cascade; key destroyed", True),
     _pg("quarantine_quota", "per-session counters", "no content", False),
+    _pg("subject_identifiers", "HMAC (tenant key) of declared identifiers", "the subject's rows deleted in the cascade after the rescan used them", True),
+    _pg("identifier_epochs", "identifier-set version per tenant", "no content", False),
+    _pg("erasure_mentions", "event ids found by the erasure rescan", "kept with the job (ids only)", False),
+    _pg("legal_holds", "hold ids, subject ids, reason codes, times", "kept as the hold record", False),
     _pg("inbox", "ciphertext payloads", "rows of the subject deleted in the cascade", True),
     _pg("analyst_jobs", "ciphertext results; input ids", "jobs over the subject's events deleted in the cascade; completion refused over erased inputs", True),
     _pg("facts", "ciphertext fact bodies; keyed slot hash", "facts of the subject or derived from its events deleted in the cascade", True),

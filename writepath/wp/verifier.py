@@ -15,9 +15,9 @@ import json
 from . import config, db, families as F, registry
 from .es import ES
 
-SCOPE = ("speaker_provenance: the subject's own events; facts and analyst jobs derived from them; the subject's inbox "
-         "and quarantine items; the subject's key. NOT checked: mentions of the subject inside other subjects' content "
-         "(review F8; scope is an open decision for the user).")
+SCOPE = ("verifier: ES counted by subject_id OR mentions over every index of every family; key presence in the key store "
+         "(see key_store in the receipt: the lab key store is a STAND-IN for a KMS). The stated erasure scope (speaker plus "
+         "mentions found by the matcher) is computed by the store in wp_erasure_complete.")
 
 
 class Verifier:
@@ -39,7 +39,8 @@ class Verifier:
         for f in F.FAMILIES:
             pat = f"{F.P}{t}-{f}-*"
             self.es.req("POST", f"/{pat}/_refresh", ok=(200, 404), expand_wildcards="all", ignore_unavailable=True, allow_no_indices=True)
-            out[f"es:{f}"] = self.es.count(pat, {"term": {"subject_id": s}})
+            q = {"bool": {"should": [{"term": {"subject_id": s}}, {"term": {"mentions": s}}], "minimum_should_match": 1}}
+            out[f"es:{f}"] = self.es.count(pat, q)
         out["keys:subject_keys"] = self.kconn.execute("select count(*) from subject_keys where tenant_id=%s and subject_id=%s", (t, s)).fetchone()[0]
         unreg = registry.unregistered(self.conn, self.kconn, self.es)
         out["gate:unregistered"] = len(unreg)

@@ -57,3 +57,38 @@ Independent replications: where a race is claimed, a "jitter" mode (competing th
   from a seeded RNG, seeds recorded) is reported next to the hook-forced mode; the jitter mode reports how many runs
   actually overlapped (DB clock witness) and is judged only on runs that overlapped (>= 5 of 10 must overlap, else the
   jitter result is reported INCONCLUSIVE, not PASS).
+
+## Amendment 3 (2026-11-16, after the BLOCK review of aaa0fec and the user decisions relayed the same day; committed before any reported run that uses it)
+Superseded: N3, N3S_projector, N3S_eraser and N8's wp_ctl control (the rebuild and the all-triggers-dropped wp_ctl
+database are removed); the "5 of 10 overlap" jitter rule (replaced by exp/races.py below).
+Controls: every control is the shipped system with ONE named patch (exp/patches.py SQL variant cut from wp/schema.sql,
+  or a named in-process substitution), the patch text is recorded in the result, and exp/guard_check.py runs before and
+  after every reported run and must PASS both times (a patch that failed to revert fails the run). Where a property is
+  enforced in two places, the control removes both and says so.
+Attacks are run inside a rolled-back transaction and counted with rows affected; an attack that touches 0 rows is
+  neither a refusal nor a breach (it makes the case FAIL as vacuous).
+Deterministic cases, one run each (exp/review_fix.py F3, F4, F5, F7): PASS = every fenced case refused/holds AND every
+  control violated; F5 positive cases (current approval executes; first decision; same key in another session) accepted.
+F1 one subject with 100,000 events (plus subject Y with 2): job done, X docs 0 in every index, Y docs 2.
+F1S sweep isolation, R=10 per arm: the first job fails (injected); PASS = fenced 10/10 (B done, A not done and its
+  claim released) AND control (aaa0fec loop that aborts on the first failure) violated >= 9/10.
+F6 takeover with a zombie stalled 20 s before COMMIT, R=3 per arm: fenced takeover <= 8 s; control (idle-in-transaction
+  timeout reset) > 8 s in 3/3. Quarantine: 1,500 stale attempts, kept <= 1,000 in 3/3; control (cap 10^9) keeps 1,500.
+  xmin: MEASUREMENT only (another database's transaction held 20 s, unmitigated vs cluster-wide
+  idle_in_transaction_session_timeout=5s); no PASS.
+Races (exp/races.py R1, R2, R3): real processes, random delays from seeded RNGs (seeds recorded), instants on the
+  database clock. N = 40 per arm. A run counts toward the verdict only if it OVERLAPPED (definition per race in the
+  module docstring). PASS = fenced: 0 violations in all 40 runs and 0 errors; control: >= 1 violation among overlapping
+  runs; both arms >= 20 overlapping runs, else INCONCLUSIVE. Reported: Wilson 95% interval of the hold rate over
+  overlapping runs (fenced 20/20 gives lower bound 0.839, 40/40 gives 0.912), and of the control's violation rate.
+Mentions and legal hold (exp/scope_hold.py, user decisions 2026-11-16), R=3 per arm:
+  M fenced: done; every planted in-scope marker (own, 4 write-time hits, 2 rescan hits) absent from Postgres plaintext
+    (oracle decrypts every remaining ciphertext) and from ES; every out-of-scope marker (4 documented matcher misses,
+    1 other subject) still present; receipt counts found_at_write = 4, found_by_rescan = 2, declared_identifiers = 3,
+    not_covered listed. norescan_fenced (runner skips the rescan): the store refuses done with pg:mentions_unscanned.
+    Controls violated 3/3: ctl_write_matcher (matcher returns nothing), ctl_norescan (store rescan gate removed).
+  H fenced 3/3 over three cases: hold before request (X held and readable; concurrent Y erasure done during the hold;
+    X done after release), request before hold (held; final receipt lists the released hold and delay_s >= 1),
+    hold placed after mark (cascade stopped, key kept; done after release). Control (wp_hold_check no-op) violated 3/3.
+Every result carries env.key_store: the lab key store is a STAND-IN for the client's KMS (keys.KeyStore interface).
+Erasure cost (exp/erasure_cost.py): measurement only.

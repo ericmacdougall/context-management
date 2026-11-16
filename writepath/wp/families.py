@@ -38,6 +38,7 @@ FAMILIES = {
     "events": {"mappings": {"properties": {
         "event_id": {"type": "keyword"}, "session_id": {"type": "keyword"}, "seq": {"type": "long"}, "kind": {"type": "keyword"},
         "subject_id": {"type": "keyword"}, "actor": {"type": "keyword"}, "trust_origin": {"type": "keyword"},
+        "mentions": {"type": "keyword"},
         "ts_event": {"type": "date"}, "content": {"type": "text"}, "erased": {"type": "boolean"}}}},
     "facts": {"mappings": {"properties": {
         "fact_id": {"type": "keyword"}, "subject_id": {"type": "keyword"}, "entity": {"type": "keyword"}, "attribute": {"type": "keyword"},
@@ -129,28 +130,29 @@ def expunge(es: ES, t, wait_s=180.0, poll_s=2.0):
     """Remove overwritten documents' bytes from the tenant's family indices: refresh, flush, wait until every
     retention lease retains nothing at or below the current max_seq_no, then _forcemerge?only_expunge_deletes and
     flush. Returns {index: {'lease_wait_s', 'docs_deleted_after'}}; raises TimeoutError if the leases do not advance."""
-    out = {}
-    for f in FAMILIES:
-        idx = base_index(t, f)
-        es.req("POST", f"/{idx}/_refresh")
-        es.req("POST", f"/{idx}/_flush")
+    return {base_index(t, f): expunge_index(es, base_index(t, f), wait_s, poll_s) for f in FAMILIES}
+
+
+def expunge_index(es: ES, idx, wait_s=180.0, poll_s=2.0):
+    """One index: refresh, flush, wait for every retention lease to pass max_seq_no, expunge deletes, flush."""
+    es.req("POST", f"/{idx}/_refresh")
+    es.req("POST", f"/{idx}/_flush")
+    j = es.req("GET", f"/{idx}/_stats", level="shards")[1]
+    target = max(sh["seq_no"]["max_seq_no"] for copies in j["indices"][idx]["shards"].values() for sh in copies)
+    t0 = time.time()
+    while True:
         j = es.req("GET", f"/{idx}/_stats", level="shards")[1]
-        target = max(sh["seq_no"]["max_seq_no"] for copies in j["indices"][idx]["shards"].values() for sh in copies)
-        t0 = time.time()
-        while True:
-            j = es.req("GET", f"/{idx}/_stats", level="shards")[1]
-            leases = [l["retaining_seq_no"] for copies in j["indices"][idx]["shards"].values() for sh in copies for l in sh["retention_leases"]["leases"]]
-            if all(r > target for r in leases):
-                break
-            if time.time() - t0 > wait_s:
-                raise TimeoutError(f"retention leases did not pass seq {target} on {idx}")
-            time.sleep(poll_s)
-        waited = round(time.time() - t0, 1)
-        es.req("POST", f"/{idx}/_forcemerge", only_expunge_deletes=True)
-        es.req("POST", f"/{idx}/_flush")
-        st = es.req("GET", f"/{idx}/_stats/docs")[1]["_all"]["primaries"]["docs"]
-        out[idx] = {"lease_wait_s": waited, "docs_deleted_after": st["deleted"], "target_seq": target}
-    return out
+        leases = [l["retaining_seq_no"] for copies in j["indices"][idx]["shards"].values() for sh in copies for l in sh["retention_leases"]["leases"]]
+        if all(r > target for r in leases):
+            break
+        if time.time() - t0 > wait_s:
+            raise TimeoutError(f"retention leases did not pass seq {target} on {idx}")
+        time.sleep(poll_s)
+    waited = round(time.time() - t0, 1)
+    es.req("POST", f"/{idx}/_forcemerge", only_expunge_deletes=True)
+    es.req("POST", f"/{idx}/_flush")
+    st = es.req("GET", f"/{idx}/_stats/docs")[1]["_all"]["primaries"]["docs"]
+    return {"lease_wait_s": waited, "docs_deleted_after": st["deleted"], "target_seq": target}
 
 
 def tenant_indices(es: ES, t):

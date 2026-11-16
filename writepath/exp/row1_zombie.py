@@ -1,7 +1,7 @@
 """Top-30 row 1: a zombie session run. Run A stalls (named hook) past its lease; run B takes the lease (epoch+1); A
 resumes, appends 20 events and claims/confirms an inbox item. The inbox client used here is deliberately NAIVE (no epoch
 predicate of its own) in both arms, so only the store can stop the zombie.
-Arms: fenced = wp_events; control = wp_ctl (same schema without the fence triggers).
+Arms: fenced = shipped store; control = ONE patch: wp_fence() without the epoch comparison.
 Stall points: 'before_txn' (stalled after preparing ciphertext) and 'in_txn' (stalled inside the append transaction
 holding the session chain row). usage: python -m exp.row1_zombie [R]"""
 import json
@@ -10,10 +10,10 @@ import threading
 import time
 
 from exp.common import write_result
+from exp.patches import patched, variant, NOOP
 from exp.util import tenant, msg, es_count_all
 from wp import db, keys as K, lease as L, log, projector
 from wp.es import ES
-from wp.setup import CTL_DB
 
 
 def naive_claim(conn, lease, item):
@@ -27,9 +27,7 @@ def naive_confirm(conn, lease, item):
 
 
 def one(arm, stall_at):
-    dbname = CTL_DB if arm == "control" else None
-    mk = (lambda: db.connect(db=dbname)) if dbname else db.connect
-    cA, cB, cM = mk(), mk(), mk()
+    cA, cB, cM = db.connect(), db.connect(), db.connect()
     ksA, ksB, es = K.KeyService(), K.KeyService(), ES()
     t = tenant("r1")
     clock = lambda: cM.execute("select clock_timestamp()").fetchone()[0]  # noqa: E731
@@ -101,7 +99,9 @@ if __name__ == "__main__":
     for stall_at in ("before_txn", "in_txn"):
         for arm in ("fenced", "control"):
             runs = []
-            for _ in range(R):
+            patch = variant("wp_fence", "if cur is null or cur <> e then", "if false then") if arm == "control" else NOOP
+            with patched(*patch):
+              for _ in range(R):
                 try:
                     h, why, wit = one(arm, stall_at)
                 except Exception as e:  # noqa: BLE001

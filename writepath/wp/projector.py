@@ -92,6 +92,8 @@ class Projector:
             "and (e.commit_xid, e.ingest_seq) > (%s, %s) and e.commit_xid < %s and e.kind = %s "
             "and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) "
             "and not exists (select 1 from subjects sj where sj.tenant_id=e.tenant_id and sj.subject_id=e.subject_id and sj.erased) "
+            "and not exists (select 1 from subjects sm where sm.tenant_id=e.tenant_id and sm.subject_id = any(e.mentions) and sm.erased) "
+            "and e.content_enc is not null "
             "order by e.commit_xid, e.ingest_seq limit %s", (FACT_KIND, self.batch))
         if not rows:
             self._advance("derive", xm - 1, BIG)
@@ -126,10 +128,12 @@ class Projector:
     # ------------------------------------------------------------ events -> ES
     def mirror_events(self):
         xm, rows = self._snapshot_rows("events",
-            "select e.event_id, e.session_id, e.seq, e.kind, e.subject_id, e.actor, e.trust_origin, e.ts_event, e.content_enc, e.commit_xid, e.ingest_seq "
+            "select e.event_id, e.session_id, e.seq, e.kind, e.subject_id, e.actor, e.trust_origin, e.ts_event, e.content_enc, e.commit_xid, e.ingest_seq, e.mentions "
             "from events e where e.tenant_id=%s and (e.commit_xid, e.ingest_seq) > (%s, %s) and e.commit_xid < %s "
             "and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) "
             "and not exists (select 1 from subjects sj where sj.tenant_id=e.tenant_id and sj.subject_id=e.subject_id and sj.erased) "
+            "and not exists (select 1 from subjects sm where sm.tenant_id=e.tenant_id and sm.subject_id = any(e.mentions) and sm.erased) "
+            "and e.content_enc is not null "
             "order by e.commit_xid, e.ingest_seq limit %s", (self.batch,))
         if not rows:
             self._advance("events", xm - 1, BIG)
@@ -190,12 +194,12 @@ def decode_events(ks, t, rows):
     """[(action_template, doc)] for event rows (decrypted; rows whose key is gone are skipped)."""
     keys = ks.keys(t, [r[4] for r in rows])
     out = []
-    for eid, sid, seq, kind, subj, actor, trust, ts, enc, *_ in rows:
-        plain = K.open_(keys[subj], t, subj, eid, enc)
+    for eid, sid, seq, kind, subj, actor, trust, ts, enc, _cx, _cs, mentions, *_ in rows:
+        plain = K.open_(keys[subj], t, subj, eid, enc) if enc is not None else None
         if plain is None:
             continue
         out.append(({"create": {"_id": eid}}, {"event_id": eid, "session_id": sid, "seq": seq, "kind": kind, "subject_id": subj, "actor": actor,
-                                                "trust_origin": trust, "ts_event": ts.isoformat(), "content": plain}))
+                                                "trust_origin": trust, "ts_event": ts.isoformat(), "content": plain, "mentions": list(mentions or [])}))
     return out
 
 

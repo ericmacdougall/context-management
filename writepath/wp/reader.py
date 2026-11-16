@@ -19,8 +19,8 @@ class Reader:
 
     def search(self, text, k=10):
         hits = self._search("events", {"match": {"content": text}}, k * 3)
-        ev, sj = self._hidden([h["event_id"] for h in hits], [h["subject_id"] for h in hits])
-        out = [h for h in hits if h["event_id"] not in ev and h["subject_id"] not in sj]
+        ev, sj = self._hidden([h["event_id"] for h in hits], [h["subject_id"] for h in hits] + [m for h in hits for m in h.get("mentions", [])])
+        out = [h for h in hits if h["event_id"] not in ev and h["subject_id"] not in sj and not (set(h.get("mentions", [])) & sj)]
         self.filtered += len(hits) - len(out)
         return out[:k]
 

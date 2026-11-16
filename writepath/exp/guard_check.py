@@ -26,13 +26,14 @@ POLICY = {
     "erasure_jobs": {S, I},              # plus column-level UPDATE of runner fields (checked separately)
     "tombstones": {S}, "store_registry": {S}, "decision_heads": {S}, "chains": {S}, "subjects": {S},
     "leases": set(), "quarantine_quota": set(),
+    "identifier_epochs": {S}, "subject_identifiers": {S}, "erasure_mentions": {S}, "legal_holds": {S},
 }
 PRIVS = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"]
 ROW, BEFORE, INS, DEL, UPD, TRUNC = 1, 2, 4, 8, 16, 32
 
 
 def check(adm, kadm):
-    out = {k: [] for k in ("G1", "G2", "G3", "G4", "G5", "G6")}
+    out = {k: [] for k in ("G1", "G2", "G3", "G4", "G5", "G6", "G7")}
     tables = adm.execute("select c.relname, pg_get_userbyid(c.relowner) from pg_class c join pg_namespace n on n.oid=c.relnamespace "
                          "where n.nspname='public' and c.relkind in ('r','p')").fetchall()
     for rel, owner in tables:
@@ -73,6 +74,11 @@ def check(adm, kadm):
         if owner != "wp_kms":
             out["G5"].append(f"{rel}:owner={owner}")
     out["G6"] = registry.unregistered(db.verifier(), db.verifier(db=config.KEYS_DB), ES())
+    # G7: the unique indexes that carry guarantees (single-use source, one open erasure job) exist and are valid
+    for ix in ("decision_source_once", "erasure_one_open"):
+        if not adm.execute("select 1 from pg_index i join pg_class c on c.oid=i.indexrelid where c.relname=%s and i.indisunique and i.indisvalid",
+                           (ix,)).fetchone():
+            out["G7"].append(f"{ix}:missing")
     return out
 
 

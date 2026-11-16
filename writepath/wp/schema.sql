@@ -96,6 +96,35 @@ create function wp_subjects_ensure(t tenant_t, ss text[]) returns void language 
   insert into subjects(tenant_id, subject_id) select t, s from unnest(ss) s on conflict do nothing;
 $$;
 
+-- Declared identifiers of a subject (names, handles, customer numbers), stored ONLY as HMAC under the tenant key of
+-- the normalised token sequence (wp/mentions.py). One identifier names one subject in a tenant (ambiguity is refused).
+-- identifier_epochs.max_seq is the tenant's identifier-set version: events_guard refuses an event scanned against an
+-- older version (WPS17), so after a declaration commits no event can be written without being matched against it.
+create sequence ident_seq;
+create table identifier_epochs (tenant_id tenant_t primary key, max_seq bigint not null default 0);
+create table subject_identifiers (
+  tenant_id tenant_t not null, ident_hmac text not null, subject_id text not null, declared_seq bigint not null,
+  primary key (tenant_id, ident_hmac)
+);
+create index subject_identifiers_subject on subject_identifiers (tenant_id, subject_id);
+create function wp_identifier_declare(t tenant_t, s text, hmacs text[]) returns bigint language plpgsql security definer set search_path = public, pg_temp as $$
+declare n bigint; er boolean;
+begin
+  insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
+  select erased into er from subjects where tenant_id = t and subject_id = s for update;
+  if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
+  insert into identifier_epochs(tenant_id) values (t) on conflict do nothing;
+  perform 1 from identifier_epochs where tenant_id = t for update;
+  n := nextval('ident_seq');
+  insert into subject_identifiers(tenant_id, ident_hmac, subject_id, declared_seq) select t, h, s, n from unnest(hmacs) h
+    on conflict (tenant_id, ident_hmac) do nothing;
+  if exists (select 1 from subject_identifiers where tenant_id = t and ident_hmac = any(hmacs) and subject_id <> s) then
+    raise exception 'identifier_names_another_subject' using errcode = 'WPS20';
+  end if;
+  update identifier_epochs set max_seq = n where tenant_id = t;
+  return n;
+end $$;
+
 create table chains (
   tenant_id tenant_t not null, session_id text not null,
   next_seq bigint not null default 1, last_hash text not null default repeat('0', 64),
@@ -113,7 +142,11 @@ create table events (
   kind text not null, subject_id text not null,
   actor text not null, trust_origin text not null,
   ts_event timestamptz not null, ts_ingested timestamptz not null default clock_timestamp(),
-  content_enc bytea not null, prev_hash text not null, hash text not null,
+  content_enc bytea,                                        -- NULL only after erasure redaction (wp_erasure_cascade)
+  content_digest text not null,                             -- sha256 of the ciphertext; the chain hashes THIS, so redaction keeps the chain verifiable
+  mentions text[] not null default '{}',                    -- subjects whose declared identifiers the write-time matcher found
+  mention_scan_upto bigint not null default 0,              -- identifier-set version the matcher ran against
+  prev_hash text not null, hash text not null,
   decision_item text, decision_action text, based_on_event_id text, source_event_id text,
   lease_scope text not null, lease_epoch bigint not null,
   ingest_seq bigint not null default nextval('ingest_seq'),
@@ -130,6 +163,8 @@ create table events (
 );
 create index events_cursor on events (tenant_id, commit_xid, ingest_seq);
 create index events_subject on events (tenant_id, subject_id, event_id);
+create index events_mentions on events using gin (mentions);
+create index events_scan on events (tenant_id, mention_scan_upto);
 create unique index decision_source_once on events (tenant_id, source_event_id) where kind = 'decision';
 
 create table decision_heads (
@@ -139,7 +174,7 @@ create table decision_heads (
 );
 
 create function events_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
-declare er boolean; ch record; src record; hd record; prior record;
+declare er boolean; ch record; src record; hd record; prior record; mx bigint;
 begin
   if NEW.lease_scope is distinct from 'session:' || NEW.session_id then
     raise exception 'scope_not_bound table=events presented=% required=session:%', NEW.lease_scope, NEW.session_id using errcode = 'WPS12';
@@ -148,6 +183,21 @@ begin
   select erased into er from subjects where tenant_id = NEW.tenant_id and subject_id = NEW.subject_id for share;
   if er is null then raise exception 'unknown_subject' using errcode = 'WPS02'; end if;
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
+  if NEW.content_enc is null or NEW.content_digest is distinct from encode(sha256(NEW.content_enc), 'hex') then
+    raise exception 'content_digest_mismatch' using errcode = 'WPS19';
+  end if;
+  -- mentions: the event must have been matched against the CURRENT identifier set, and may not mention an erased subject
+  insert into identifier_epochs(tenant_id) values (NEW.tenant_id) on conflict do nothing;
+  select max_seq into mx from identifier_epochs where tenant_id = NEW.tenant_id for share;
+  if mx > NEW.mention_scan_upto then
+    raise exception 'mention_scan_stale scanned=% current=%', NEW.mention_scan_upto, mx using errcode = 'WPS17';
+  end if;
+  if cardinality(NEW.mentions) > 0 then
+    perform 1 from subjects where tenant_id = NEW.tenant_id and subject_id = any(NEW.mentions) for share;
+    if exists (select 1 from subjects where tenant_id = NEW.tenant_id and subject_id = any(NEW.mentions) and erased) then
+      raise exception 'mentions_erased_subject' using errcode = 'WPS18';
+    end if;
+  end if;
   -- idempotency: the same key with different content is an error, never a silent duplicate
   select req_hash, event_id into prior from events where tenant_id = NEW.tenant_id and session_id = NEW.session_id and idem_key = NEW.idem_key;
   if found then
@@ -185,12 +235,20 @@ begin
   return NEW;
 end $$;
 create trigger events_guard before insert on events for each row execute function events_guard();
-create trigger events_no_change before update or delete on events for each row execute function wp_append_only();
+create function events_change_guard() returns trigger language plpgsql as $$
+begin
+  if TG_OP = 'UPDATE' and current_user = 'wp_owner' and OLD.content_enc is not null and NEW.content_enc is null
+     and (to_jsonb(NEW) - 'content_enc') = (to_jsonb(OLD) - 'content_enc') then
+    return NEW;                                             -- redaction by wp_erasure_cascade: content only, chain intact
+  end if;
+  raise exception 'events is append-only (% refused)', TG_OP using errcode = 'WPS06';
+end $$;
+create trigger events_no_change before update or delete on events for each row execute function events_change_guard();
 
 -- ------------------------------------------------------------------ quarantine (bounded per session)
 create table quarantine (
   id bigserial primary key, tenant_id tenant_t not null, session_id text not null, subject_id text not null,
-  presented_epoch bigint not null, reason text not null, kind text not null, content_enc bytea not null,
+  presented_epoch bigint not null, reason text not null, kind text not null, content_enc bytea not null, mentions text[] not null default '{}',
   at timestamptz not null default clock_timestamp()
 );
 create table quarantine_quota (
@@ -215,9 +273,9 @@ create trigger quarantine_guard before insert on quarantine for each row execute
 
 create table tombstones (
   tenant_id tenant_t not null, event_id text not null, subject_id text not null, job_id text not null,
-  primary key (tenant_id, event_id)
+  primary key (tenant_id, subject_id, event_id)
 );
-create index tombstones_subject on tombstones (tenant_id, subject_id, event_id);
+create index tombstones_event on tombstones (tenant_id, event_id);
 
 -- ------------------------------------------------------------------ inbox, analyst jobs, facts, cursors
 create function subject_not_erased() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
@@ -312,9 +370,50 @@ create table erasure_jobs (
   state text not null default 'requested' check (state in ('requested','marked','cascaded','purged','keys_destroyed','done')),
   verify jsonb, scope text, attempts int not null default 0, last_error_type text,
   claim_epoch bigint not null default 0, claim_expires timestamptz,
+  ident_xmax bigint, ident_count int,                       -- the subject's identifier-set version and size, fixed at mark
+  rescanned_xmax bigint,                                    -- identifier-set version the erasure rescan covered (attested by the runner)
   created_at timestamptz not null default clock_timestamp(), updated_at timestamptz not null default clock_timestamp()
 );
 create unique index erasure_one_open on erasure_jobs (tenant_id, subject_id) where state <> 'done';
+
+-- Mentions found by the erasure-time rescan (events written before the subject's identifiers were declared).
+create table erasure_mentions (
+  tenant_id tenant_t not null, subject_id text not null, event_id text not null, job_id text not null,
+  primary key (tenant_id, subject_id, event_id)
+);
+
+-- Legal hold: a recorded hold wins. Erasure of a held subject is QUEUED (the job stays open, refused at mark, at every
+-- cascade batch and at key destruction with WPS16) and runs when the last hold is released.
+create table legal_holds (
+  tenant_id tenant_t not null, subject_id text not null, hold_id text primary key, reason_code text not null,
+  placed_at timestamptz not null default clock_timestamp(), released_at timestamptz
+);
+create index legal_holds_subject on legal_holds (tenant_id, subject_id) where released_at is null;
+create function wp_hold_place(t tenant_t, s text, hid text, reason text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare st text;
+begin
+  insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
+  perform 1 from subjects where tenant_id = t and subject_id = s for update;
+  insert into legal_holds(tenant_id, subject_id, hold_id, reason_code) values (t, s, hid, reason);
+  select state into st from erasure_jobs where tenant_id = t and subject_id = s and state <> 'done';
+  return jsonb_build_object('hold_id', hid, 'open_erasure_state', st,
+    'note', case when st is null or st = 'requested' then 'nothing erased yet'
+                 else 'erasure already past mark: content removed before this hold is not recoverable; the rest is held' end);
+end $$;
+create function wp_hold_release(hid text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare h record;
+begin
+  select tenant_id, subject_id into h from legal_holds where hold_id = hid;
+  perform 1 from subjects where tenant_id = h.tenant_id and subject_id = h.subject_id for update;
+  update legal_holds set released_at = clock_timestamp() where hold_id = hid and released_at is null;
+end $$;
+create function wp_hold_check(t text, s text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare hs text;
+begin
+  perform 1 from subjects where tenant_id = t and subject_id = s for update;
+  select string_agg(hold_id, ',') into hs from legal_holds where tenant_id = t and subject_id = s and released_at is null;
+  if hs is not null then raise exception 'legal_hold %', hs using errcode = 'WPS16'; end if;
+end $$;
 create function erasure_guard() returns trigger language plpgsql as $$
 begin
   if TG_OP = 'INSERT' and (NEW.state <> 'requested' or NEW.verify is not null) then
@@ -338,21 +437,45 @@ declare j record;
 begin
   select tenant_id, subject_id into j from erasure_jobs where job_id = jid for update;
   insert into subjects(tenant_id, subject_id) values (j.tenant_id, j.subject_id) on conflict do nothing;
-  perform 1 from subjects where tenant_id = j.tenant_id and subject_id = j.subject_id for update;
+  perform wp_hold_check(j.tenant_id, j.subject_id);
+  update erasure_jobs set ident_xmax = wp_subject_xmax(j.tenant_id, j.subject_id),
+    ident_count = (select count(*) from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id)
+    where job_id = jid and state = 'requested';
   update subjects set erased = true where tenant_id = j.tenant_id and subject_id = j.subject_id;
   update erasure_jobs set state = 'marked', updated_at = clock_timestamp() where job_id = jid and state = 'requested';
 end $$;
+
+create function wp_erasure_add_mentions(jid text, ids text[]) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare j record;
+begin
+  select tenant_id, subject_id, state into j from erasure_jobs where job_id = jid;
+  if j.state not in ('marked', 'cascaded') then raise exception 'rescan only after mark (state %)', j.state using errcode = 'WPS08'; end if;
+  insert into erasure_mentions(tenant_id, subject_id, event_id, job_id)
+    select j.tenant_id, j.subject_id, e.event_id, jid from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids)
+    on conflict do nothing;
+end $$;
+create function wp_erasure_rescan_done(jid text, upto bigint) returns void language sql security definer set search_path = public, pg_temp as $$
+  update erasure_jobs set rescanned_xmax = upto where job_id = jid and state in ('marked', 'cascaded');
+$$;
+create function wp_subject_xmax(t text, s text) returns bigint language sql stable security definer set search_path = public, pg_temp as $$
+  select coalesce(max(declared_seq), 0) from subject_identifiers where tenant_id = t and subject_id = s;
+$$;
 
 -- One bounded batch of tombstones and cascade deletes; returns the number of events tombstoned. Idempotent.
 create function wp_erasure_cascade(jid text, batch int) returns int language plpgsql security definer set search_path = public, pg_temp as $$
 declare j record; n int; ids text[];
 begin
   select tenant_id, subject_id into j from erasure_jobs where job_id = jid;
+  perform wp_hold_check(j.tenant_id, j.subject_id);         -- a hold placed after mark stops the cascade at the next batch
   select coalesce(array_agg(event_id), '{}') into ids from (
-    select e.event_id from events e where e.tenant_id = j.tenant_id and e.subject_id = j.subject_id
-      and not exists (select 1 from tombstones tb where tb.tenant_id = e.tenant_id and tb.event_id = e.event_id)
-    order by e.event_id limit batch) x;
+    select event_id from (
+      select e.event_id from events e where e.tenant_id = j.tenant_id and e.subject_id = j.subject_id
+      union select e.event_id from events e where e.tenant_id = j.tenant_id and e.mentions @> array[j.subject_id]
+      union select m.event_id from erasure_mentions m where m.tenant_id = j.tenant_id and m.subject_id = j.subject_id) u
+    where not exists (select 1 from tombstones tb where tb.tenant_id = j.tenant_id and tb.subject_id = j.subject_id and tb.event_id = u.event_id)
+    order by event_id limit batch) x;
   insert into tombstones(tenant_id, event_id, subject_id, job_id) select j.tenant_id, unnest(ids), j.subject_id, jid;
+  update events set content_enc = null where tenant_id = j.tenant_id and event_id = any(ids) and content_enc is not null;
   n := cardinality(ids);
   if n > 0 then
     delete from analyst_jobs a where a.tenant_id = j.tenant_id and a.input_event_ids && ids;
@@ -360,8 +483,9 @@ begin
   end if;
   delete from facts where tenant_id = j.tenant_id and subject_id = j.subject_id;
   delete from inbox where tenant_id = j.tenant_id and subject_id = j.subject_id;
-  delete from quarantine where tenant_id = j.tenant_id and subject_id = j.subject_id;
-  if n = 0 then
+  delete from quarantine where tenant_id = j.tenant_id and (subject_id = j.subject_id or mentions @> array[j.subject_id]);
+  if n = 0 and (select coalesce(rescanned_xmax, -1) >= coalesce(ident_xmax, 0) from erasure_jobs where job_id = jid) then
+    delete from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id;   -- only after the rescan used them
     update erasure_jobs set state = 'cascaded', updated_at = clock_timestamp() where job_id = jid and state = 'marked';
   end if;
   return n;
@@ -370,8 +494,19 @@ end $$;
 -- Postgres residue for a subject, computed by the store (never taken from a caller).
 create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
   select jsonb_build_object(
-    'pg:events_untombstoned', (select count(*) from events e where e.tenant_id = t and e.subject_id = s
-                                and not exists (select 1 from tombstones tb where tb.tenant_id = t and tb.event_id = e.event_id)),
+    'pg:events_untombstoned', (select count(*) from events e where e.tenant_id = t
+                                and (e.subject_id = s or e.mentions @> array[s]
+                                     or exists (select 1 from erasure_mentions m where m.tenant_id = t and m.subject_id = s and m.event_id = e.event_id))
+                                and not exists (select 1 from tombstones tb where tb.tenant_id = t and tb.subject_id = s and tb.event_id = e.event_id)),
+    'pg:content_present', (select count(*) from events e join tombstones tb on tb.tenant_id = e.tenant_id and tb.event_id = e.event_id
+                           where e.tenant_id = t and tb.subject_id = s and e.content_enc is not null),
+    'pg:mentions_unscanned', (select case when coalesce(jb.rescanned_xmax, -1) >= coalesce(jb.ident_xmax, 0) then 0
+                              else (select count(*) from events e where e.tenant_id = t and e.subject_id <> s and e.content_enc is not null
+                                    and e.mention_scan_upto < coalesce(jb.ident_xmax, 0)) end
+                              from (select rescanned_xmax, ident_xmax from erasure_jobs where tenant_id = t and subject_id = s
+                                    order by created_at desc limit 1) jb),
+    'pg:identifiers', (select count(*) from subject_identifiers where tenant_id = t and subject_id = s),
+    'pg:quarantine_mentions', (select count(*) from quarantine where tenant_id = t and mentions @> array[s]),
     'pg:facts', (select count(*) from facts f where f.tenant_id = t and (f.subject_id = s or exists (
                    select 1 from tombstones tb where tb.tenant_id = t and tb.subject_id = s and tb.event_id = any(f.input_event_ids)))),
     'pg:inbox', (select count(*) from inbox where tenant_id = t and subject_id = s),
@@ -384,7 +519,7 @@ $$;
 -- Completion: callable by wp_verifier only. ext = counts for every non-Postgres verifiable store, measured by the
 -- verifier itself. Every registered verifiable store must be present and zero; Postgres counts are recomputed here.
 create function wp_erasure_complete(jid text, ext jsonb, scope_note text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
-declare j record; v jsonb; bad text; missing text;
+declare j record; v jsonb; bad text; missing text; sc jsonb; hl jsonb;
 begin
   select * into j from erasure_jobs where job_id = jid for update;
   if j.state <> 'keys_destroyed' then raise exception 'job not ready (state %)', j.state using errcode = 'WPS08'; end if;
@@ -396,15 +531,34 @@ begin
     update erasure_jobs set verify = v, last_error_type = 'residue', updated_at = clock_timestamp() where job_id = jid;
     return jsonb_build_object('done', false, 'residue', bad, 'verify', v);
   end if;
-  update erasure_jobs set state = 'done', verify = v, scope = scope_note, updated_at = clock_timestamp() where job_id = jid;
-  return jsonb_build_object('done', true, 'verify', v);
+  sc := jsonb_build_object(
+    'speaker', 'the subject''s own events, facts and analyst jobs derived from them, inbox and quarantine items, the subject key',
+    'mentions', jsonb_build_object(
+      'rule', 'every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted',
+      'matcher', 'm1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)',
+      'declared_identifiers', j.ident_count, 'identifier_set_version', j.ident_xmax, 'rescan_covered_version', j.rescanned_xmax,
+      'found_at_write', (select count(*) from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
+                         where tb.tenant_id = j.tenant_id and tb.subject_id = j.subject_id and e.subject_id <> j.subject_id and e.mentions @> array[j.subject_id]),
+      'found_by_rescan', (select count(*) from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id),
+      'rescan_attested_by', 'erasure runner (the store cannot decrypt; it enforces only that the rescan covered the identifier-set version)',
+      'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials)', 'pronouns and indirect references',
+                                       'mentions inside inbox payloads and analyst-job results',
+                                       'content outside this store (ES snapshots, backups, logs: see store_registry ext:*)')),
+    'note', scope_note);
+  hl := (select coalesce(jsonb_agg(jsonb_build_object('hold_id', hold_id, 'placed_at', placed_at, 'released_at', released_at) order by placed_at), '[]')
+         from legal_holds where tenant_id = j.tenant_id and subject_id = j.subject_id);
+  update erasure_jobs set state = 'done', verify = v, scope = sc::text, claim_expires = null, updated_at = clock_timestamp() where job_id = jid;
+  return jsonb_build_object('done', true, 'verify', v, 'scope', sc, 'holds', hl,
+                            'requested_at', j.created_at, 'completed_at', clock_timestamp(),
+                            'delay_s', round(extract(epoch from clock_timestamp() - j.created_at)::numeric, 3));
 end $$;
 
 -- ------------------------------------------------------------------ guards on every table (enabled ALWAYS)
 do $$
 declare t text;
 begin
-  foreach t in array array['leases','subjects','chains','decision_heads','tombstones','store_registry','quarantine_quota'] loop
+  foreach t in array array['leases','subjects','chains','decision_heads','tombstones','store_registry','quarantine_quota',
+                           'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds'] loop
     execute format('create trigger %I before insert or update or delete on %I for each row execute function wp_owner_only()', t || '_owner_only', t);
   end loop;
   foreach t in array array['inbox','analyst_jobs','facts','cursors','quarantine','erasure_jobs'] loop
@@ -412,7 +566,8 @@ begin
   end loop;
   execute 'create trigger quarantine_no_update before update on quarantine for each row execute function wp_append_only()';
   foreach t in array array['leases','subjects','chains','events','decision_heads','quarantine','quarantine_quota','tombstones','inbox',
-                           'analyst_jobs','facts','cursors','store_registry','erasure_jobs'] loop
+                           'analyst_jobs','facts','cursors','store_registry','erasure_jobs',
+                           'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds'] loop
     execute format('create trigger %I before truncate on %I for each statement execute function wp_no_truncate()', t || '_no_truncate', t);
   end loop;
   for t in select format('alter table %I enable always trigger %I', c.relname, g.tgname) from pg_trigger g join pg_class c on c.oid = g.tgrelid
@@ -432,9 +587,12 @@ grant select, insert on events, quarantine to wp_app;
 grant select, insert, update on inbox, analyst_jobs, facts, cursors to wp_app;
 grant select, insert on erasure_jobs to wp_app;
 grant update (state, attempts, last_error_type, claim_epoch, claim_expires, updated_at) on erasure_jobs to wp_app;
-grant select on tombstones, store_registry, decision_heads, chains, subjects to wp_app;
+grant select on tombstones, store_registry, decision_heads, chains, subjects, identifier_epochs, subject_identifiers, erasure_mentions, legal_holds to wp_app;
 grant usage on sequence ingest_seq, fact_rev, quarantine_id_seq to wp_app;
 grant execute on function wp_lease_acquire(tenant_t, text, double precision, boolean, text, int), wp_lease_renew(tenant_t, text, bigint, text, double precision),
   wp_lease_release(tenant_t, text, bigint, text), wp_subjects_ensure(tenant_t, text[]), wp_erasure_mark(text), wp_erasure_cascade(text, int),
-  wp_erasure_pg_residue(text, text), wp_fence(text, text, bigint) to wp_app;
+  wp_erasure_pg_residue(text, text), wp_fence(text, text, bigint), wp_identifier_declare(tenant_t, text, text[]),
+  wp_hold_place(tenant_t, text, text, text), wp_hold_release(text), wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]),
+  wp_erasure_rescan_done(text, bigint), wp_subject_xmax(text, text) to wp_app;
+-- In a client deployment wp_hold_place/wp_hold_release belong to a legal-operations role, not the application.
 grant execute on function wp_erasure_pg_residue(text, text), wp_erasure_complete(text, jsonb, text) to wp_verifier;

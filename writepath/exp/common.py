@@ -37,6 +37,10 @@ def fingerprint():
     except Exception as e:  # noqa: BLE001
         fp["postgres"] = {"error": type(e).__name__}
     fp["model_calls"] = "none (deterministic stub only)"
+    from wp.keys import KeyService
+    fp["key_store"] = dict(KeyService.describe(KeyService.__new__(KeyService)),
+                           note="LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion")
+    fp["licence_required"] = "basic (no Enterprise feature on the required path)"
     return fp
 
 

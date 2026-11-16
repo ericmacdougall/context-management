@@ -17,7 +17,32 @@ class SubjectErased(Exception):
     pass
 
 
-class KeyService:
+class KeyStore:
+    """The ONE interface the write path uses for subject keys. A client deployment implements it over its KMS with real
+    key deletion (e.g. one KMS key or one wrapped data key per subject, destroyed through the KMS deletion API, with
+    the KMS's own deletion-window and backup semantics stated in the receipt). Nothing else in wp/ touches key storage.
+
+      keys(tenant, subjects, create=False) -> {subject: key bytes | None}   (create refuses a destroyed subject)
+      tenant_hmac(tenant, text) / tenant_hmac_many(tenant, texts)          keyed hashes under the tenant key
+      is_destroyed(tenant, subject), key_exists(tenant, subject)
+      destroy(tenant, subject)                                              idempotent
+      describe() -> {"kind", "stand_in": bool, "deletion"}                  copied into every result and receipt"""
+    KIND = "abstract"
+    STAND_IN = True
+    DELETION = "unspecified"
+
+    def describe(self):
+        return {"kind": self.KIND, "stand_in": self.STAND_IN, "deletion": self.DELETION}
+
+
+class KeyService(KeyStore):
+    """LAB STAND-IN for a KMS: keys in a separate Postgres database (wp_keys) owned by wp_kms. Deletion = row delete +
+    VACUUM + WAL switch + checkpoint, which removes the key from heap and current WAL in this lab (no WAL archive, no
+    replica, no backup). It is NOT a KMS: no HSM, no deletion window, no audited key lifecycle."""
+    KIND = "lab-postgres-keystore"
+    STAND_IN = True
+    DELETION = "row delete + VACUUM + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup)"
+
     def __init__(self, conn=None):
         self.conn = conn or db.keys_connect()
 
@@ -42,6 +67,12 @@ class KeyService:
             self.conn.execute("insert into tenant_keys values (%s,%s) on conflict do nothing", (tenant, os.urandom(32).hex()))
             k = bytes.fromhex(self.conn.execute("select hkey_hex from tenant_keys where tenant_id=%s", (tenant,)).fetchone()[0])
         return hmac.new(k, text.encode(), hashlib.sha256).hexdigest()
+
+    def tenant_hmac_many(self, tenant, texts):
+        with self.conn.transaction():
+            self.conn.execute("insert into tenant_keys values (%s,%s) on conflict do nothing", (tenant, os.urandom(32).hex()))
+            k = bytes.fromhex(self.conn.execute("select hkey_hex from tenant_keys where tenant_id=%s", (tenant,)).fetchone()[0])
+        return [hmac.new(k, x.encode(), hashlib.sha256).hexdigest() for x in texts]
 
     def is_destroyed(self, tenant, subject):
         return self.conn.execute("select 1 from destroyed where tenant_id=%s and subject_id=%s", (tenant, subject)).fetchone() is not None
