@@ -40,6 +40,8 @@ OUT=../results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.cleanup exp.row19_secrets
   $PY -m exp.row6_chain "$R"
   $PY -m exp.cleanup exp.row6_chain
+  $PY -m exp.d4_store_mark 5
+  $PY -m exp.cleanup exp.d4_store_mark
   $PY -m exp.phys_purge
   $PY -m exp.cleanup exp.phys_purge
   $PY -m exp.races R1 R2 R3 40

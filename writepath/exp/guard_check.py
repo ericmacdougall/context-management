@@ -26,7 +26,7 @@ POLICY = {
     "erasure_jobs": {S, I},              # plus column-level UPDATE of runner fields (checked separately)
     "tombstones": {S}, "store_registry": {S}, "decision_heads": {S}, "chains": {S}, "subjects": {S},
     "leases": set(), "quarantine_quota": set(),
-    "identifier_epochs": {S}, "subject_identifiers": {S}, "erasure_mentions": {S}, "legal_holds": {S}, "erasure_withheld": {S},
+    "identifier_epochs": {S}, "subject_identifiers": {S}, "erasure_mentions": {S}, "legal_holds": {S}, "erasure_withheld": {S}, "erasure_rescanned": {S},
 }
 PRIVS = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"]
 ROW, BEFORE, INS, DEL, UPD, TRUNC = 1, 2, 4, 8, 16, 32

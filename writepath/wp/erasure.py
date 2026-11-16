@@ -148,6 +148,7 @@ def rescan(conn, ks, jid, page=2000):
         hits = [eid for eid, ws in texts.items() if any(h[w] in hm for w in ws)]
         if hits:
             conn.execute("select wp_erasure_add_mentions(%s, %s)", (jid, hits))
+        conn.execute("select wp_erasure_rescan_page(%s, %s)", (jid, [r[0] for r in rows]))   # D4: coverage, store-checked
         scanned += len(rows)
         found += len(hits)
     conn.execute("select wp_erasure_rescan_done(%s, %s)", (jid, xmax))

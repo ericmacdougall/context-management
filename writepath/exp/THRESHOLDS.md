@@ -194,3 +194,9 @@ exp/phys_purge.py, R=5 per arm. PASS = fenced 5/5: default run returns receipt_s
   that moment; then the follow-up sweep reaches done with docs.deleted == 0 within the store deadline (300 s);
   AND control (wp_erasure_complete ignoring es:soft_deleted and keys:physical_pending) 5/5 claims done while
   docs.deleted > 0. Not tested here: the overdue path (a job past its deadline), which is code-reviewed only.
+
+## Amendment 10 (2026-11-16, written before the run): D4 store-set rescan-done mark (exp/d4_store_mark.py)
+R=5. PASS = honest runner (every candidate reported page by page) accepted 5/5 with 12 examined; lazy runner (first
+page only) refused WPS24 5/5 with the covered version unset; control (store check removed) accepts the lazy runner 5/5.
+Limit stated in the receipt: the store verifies that every candidate was EXAMINED; whether an examined event matched is
+still the runner's word (the store cannot decrypt).
