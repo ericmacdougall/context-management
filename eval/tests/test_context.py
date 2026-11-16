@@ -323,3 +323,22 @@ class StageX0B(unittest.TestCase):
         new = [{"quote": "I adopted a dog named Rex"}, {"quote": "works at Borealis Labs"}, {"quote": "plays the cello"}]
         s = stability(old, new)
         self.assertEqual((s["old"], s["new"], s["old_reappearing"], s["new_without_old_match"], s["beyond_old_count"]), (2, 3, 1, 2, 1))
+
+
+class StageX0C(unittest.TestCase):
+    def test_pair_stability_both_directions(self):
+        from emlab.stage_x0c_score import pair_stability
+        a = [{"quote": "adopted a dog named Rex"}, {"quote": "lives in Lisbon now"}]
+        b = [{"quote": "I adopted a dog named Rex"}, {"quote": "plays the cello every week"}, {"quote": "works at Borealis Labs"}]
+        s = pair_stability(a, b)
+        self.assertEqual((s["a_in_b"], s["b_in_a"], s["a"], s["b"]), (1, 1, 2, 3))
+        self.assertAlmostEqual(s["stability"], 2 / 5.0)
+        self.assertEqual(pair_stability(a, a)["stability"], 1.0)
+
+    def test_user_stats_and_cluster_wilson(self):
+        from emlab.stage_x0c_score import cluster_wilson_mean, user_stats
+        u = user_stats([{"author": "user"}, {"author": "assistant"}, {"author": "user"}])
+        self.assertEqual((u["total"], u["user"]), (3, 2))
+        w = cluster_wilson_mean([0.9, 0.8, 1.0, 0.9])
+        self.assertTrue(w["low"] < w["mean"] < w["high"])
+        self.assertEqual(cluster_wilson_mean([])["n"], 0)
