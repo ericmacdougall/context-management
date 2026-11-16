@@ -177,3 +177,20 @@ transactions and replication slots are not bounded by the watchdog; with one sha
 tenant's projection for its duration. Deployment requirement: the role timeouts AND (PostgreSQL >= 17
 transaction_timeout on every role, or this watchdog), an alert on the age of the oldest xid / xmin, no
 long-running superuser sessions, prepared transactions monitored; or one database cluster per tenant.
+
+## Amendment 9 (2026-11-16, written before the runs): erasure at tenant scale and the physical-purge receipt
+Diagnosis already observed (exp/explain_cascade.py, 200k tenant, 100k subject, not a PASS): 95% of a cascade batch was
+a sequential scan of analyst_jobs for `input_event_ids && ids` (3.7-4 ms per event at 200k, proportional to tenant
+rows; unchanged by ANALYZE; the generic plan from the sixth call used the GIN index at 0.16 ms per event).
+exp/scale_1m.py at N = 100,000 and 1,000,000 (S100000 only at 1M). PASS =
+  every S-subject done; no cascade batch > 5 s; heartbeat_transient == 0 in every real erasure;
+  at 1M the per-event cascade time of S100000 <= 2 x that of S10000 (linear in the subject);
+  S10000 cascade time at 1M <= 2 x at 100k (independent of tenant size);
+  wp_erasure_pg_residue for S10 <= 1 s at each N, and at 1M the 4960f50 control body >= 10 x the shipped one;
+  heartbeat (35 s job-row lock during a job): fenced 3/3 done, control (no transient tolerance) 3/3 ClaimLost.
+  EXPLAIN, verify step timings and the time to done are reported, not thresholded.
+exp/phys_purge.py, R=5 per arm. PASS = fenced 5/5: default run returns receipt_state
+  logically_erased_physical_purge_pending, done False, within 10 s, with docs.deleted > 0 or a key purge pending at
+  that moment; then the follow-up sweep reaches done with docs.deleted == 0 within the store deadline (300 s);
+  AND control (wp_erasure_complete ignoring es:soft_deleted and keys:physical_pending) 5/5 claims done while
+  docs.deleted > 0. Not tested here: the overdue path (a job past its deadline), which is code-reviewed only.
