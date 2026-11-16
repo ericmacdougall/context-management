@@ -1,0 +1,3 @@
+results/DEV.*
+__pycache__/
+*.pyc
