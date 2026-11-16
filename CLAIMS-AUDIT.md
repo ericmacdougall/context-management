@@ -4,7 +4,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v2. This file traces every numer
 
 ## How the check was done
 
-1. A script (`docs-tools/numerals.py` in the work directory, not in the repo) lists every numeral in every table row of DESIGN.md, after removing identifiers. Exclusion rule: git SHAs and hex ids, WAL entry ids, row and section ids (3.2.1, #12, F4, N7, H3, M1, X04, E9b, MEM-14), version numbers (9.5.6, 1.32.2, v2), dates, the ticket number, file names, inline code, and HTTP status codes in prose (200, 400, 403, 500). Result at the time of commit: 136 rows with 372 numerals.
+1. A script (`docs-tools/numerals.py` in the work directory, not in the repo) lists every numeral in every table row of DESIGN.md, after removing identifiers. Exclusion rule: git SHAs and hex ids, WAL entry ids, row and section ids (3.2.1, #12, F4, N7, H3, M1, X04, E9b, MEM-14), version numbers (9.5.6, 1.32.2, v2), dates, the ticket number, file names, inline code, and HTTP status codes in prose (200, 400, 403, 500). Result at the time of the second commit: 140 rows with 386 numerals (this count includes the sources table and section 6).
 2. Every numeral in sections 1 to 3 was matched to a row of the table below. Section 5 numerals are UNCOVERED-TOP30 rank numbers and item ordinals, not claims. Section 6 numerals are the contradictions themselves; their sources are named in section 6 and repeated in the last table here. Numerals that are only references to other rows (for example "UNCOVERED-TOP30 #19", "owner question 6", "PREREG 4.3", "row 27", "phase 1", "ADR 0002"), HTTP status codes, and the illustrative versions 3 and 4 in row 3.12.3 are not claims and are not listed. A second script pass listed every DESIGN row in sections 2 and 3 whose numerals have no row here; after adding 3.3.7 and 3.3.10, every remaining entry on that list was one of these references.
 3. Check column:
    - **field**: read from the named JSON field in this session by a script.
@@ -19,9 +19,9 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v2. This file traces every numer
 | RRF session recall@10, whole pool | 0.4754 | CURVE | levels.H3.rrf.session_recall@10.mean (0.47535) | field |
 | Pilot size | 94 questions, 90 clusters | CURVE; AFULL | n per level; effective_n 90 | field |
 | Drop H0 to H3 and 95% interval | -0.493 [-0.579, -0.401] | CURVE | levels.H3.rrf.session_recall@10.drop_vs_H0.mean_diff, ci_low, ci_high | field |
-| Mean gold-session recall in a 4,000-token context, H3 | 0.41 | RAGCTX | arm rag, level H3, budget 4000, gold_session_recall, mean over 94 non-abstention questions (0.4124; my aggregation) | carried |
+| Mean gold-session recall in a 4,000-token context, H3 | 0.41 | RAGCTX | per-question rows with arm rag, level H3, budget 4000, abstention false (n 94): mean of gold_session_recall = 0.4124 (aggregated by script) | field |
 | Any / all gold session present at 4,000 tokens, H3 | 0.53 / 0.33 | XP | xp_e2.json x01_budget_presence.H3.flat.4000.any_gold_session.rate (0.533), all_gold_sessions.rate (0.328) | field |
-| Stale-only / current, knowledge-update, H3, 4,000 | 0.467 / 0.333 (n 15) | RAGCTX | stale_only, gold_latest_in_context over the 15 knowledge-update rows (my aggregation) | carried |
+| Stale-only / current, knowledge-update, H3, 4,000 | 0.467 / 0.333 (n 15) | RAGCTX | same rows where gold_latest_in_context is not null (n 15): share with stale_only true = 0.467, gold_latest_in_context true = 0.333 (aggregated by script) | field |
 | Same, analyst run's RRF baseline | 0.667 / 0.267 | AFULL | runs.H3.summary.all.RRF.failures_counted.b4000.ku_stale_only, ku_gold_latest | field |
 | Two-stage S = 20 vs flat | 0.462 vs 0.481, -0.019 [-0.074, 0.040] | XP | xp_e2.json e2.two_stage_S20.mean_session_recall10, flat_mean, diff_vs_flat | field |
 | Planted-gold control vs bar | 0.504 vs 0.90 | XP; LEDGER X02 | EXPLORATORY.md E2; LEDGER row X02 | text |
@@ -43,7 +43,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v2. This file traces every numer
 | 2.2.2 | 75 dropped doorbells; "lost 6 of 6" | RV-ENG F8 row; LEDGER "Held" row 2 | review table F8; LEDGER (owner count) | text |
 | 2.2.3 | 54 duplicates; 825 results for 800 inputs | RV-ENG F4t row | "ledger duplicates: 54", "825 result events for 800 inputs" | text |
 | 2.2.6 | 10 of 16 | LR | G5 row | text |
-| 2.2.7 | 12 material findings each | LEDGER "Did not hold" | row "Adapter and write-path passes" | text |
+| 2.2.7 and sources RV-AD0, RV-WP0 | 22 material, 12 challenged and confirmed (adapters); 17 material, 12 challenged and confirmed (write path) | research/wkdcbf32g.output; research/wxd8dtb2d.output | "3/3 reviews; 22 material, 21 minor"; "17 material, 18 minor"; "challenge capped at 12"; count of "verdict": "CONFIRMED" = 12 in each | text |
 
 ## Section 3 (components)
 
@@ -51,6 +51,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v2. This file traces every numer
 |---|---|---|---|---|
 | 3.1.2 | 16 writers | SYS C7_writers.json | workload ("16 processes") | field |
 | 3.1.3 | 20 of 20 zombie appends | RV-WP | "Zombie row (row 1)" | text |
+| 3.1.10 | 12 s hold; catch-up 0.73 s | SYS XMIN_stall.json | hold_s, catchup_s, reader_found_probe_via_tail_during_hold | field |
 | 3.2.3 | p50 1,001 ms over 200 writes | BEH E1_refresh.json | delay_active_ms (1001) | text |
 | 3.2.4 | 100 of 100; 600 events | GOT CORRECTIONS | line on ORC-14, EFX-02 (C2_lag_tail.json) | text |
 | 3.2.11 | up to about 0.08; oversample 3 | PREREG | 4.3 item 5(b) (es_hybrid_pooled.json) | text |
@@ -95,7 +96,6 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v2. This file traces every numer
 | 3.14.10 | 20 s; 25 s | MC NOTES-addendum-g7.md | fail-open template | text |
 | 3.14.12 | expiry 2026-12-15 (date, excluded from the count) | GOT NEW-GOTCHAS.md | MEM-14 | text |
 | 3.15.2 | 12 unit tests | engine commit ffa4ce5 message | Testing line | text |
-
 ## Section 6 (contradictions): the numbers on each side
 
 | # | Values | Sources |
@@ -137,6 +137,7 @@ Figures in DESIGN.md that rest on an ASSUMPTION inside their source, and are lab
 | 28 at a cut of 50, 35 at 20 | B3 | PREREG 3.2 | carried |
 | G4 precision 20 of 32 | B6 | PF GATE_RESULT.md | carried |
 | 0.863 (client linear vs Elastic linear) | A11 | PREREG 4.3 item 5(c) | text |
+| E7 trial statuses (200 for rrf, linear, reranker, FUSE, RERANK; 400 for COMPLETION; 408 and 409 on the first trial run) | A7 | BEH E7_trial.json, E7_trial2.json tests.*.status | field |
 | 1 detection in 3,600 (freshness vector leg) | I3 | RV-SYS | carried |
 | about 5,100 calls to resume fact extraction | M10 | main WAL (ask text: "5,100 calls for the pilot plus 500 distractors") | text |
 | 16 of 16 (reader picks the current value) | I intro | PF (owner-reported) | carried |

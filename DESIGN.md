@@ -22,6 +22,7 @@ Rules used to choose the tag:
 - A claim is tagged at the commit a reviewer read, not at the branch head. A fix committed after a review is OWNER-REPORTED until a delta review confirms it.
 - A review verdict of SUPPORTED becomes REVIEWED with the reviewer's limit. A verdict of PARTLY is split into a REVIEWED part and a DESIGNED-UNTESTED or OWNER-REPORTED part. UNSUPPORTED, or a mechanism never run, becomes DESIGNED-UNTESTED. DID-NOT-HOLD is used only when a result or a review shows the claim false.
 - A negative exploratory result is DID-NOT-HOLD with "(exploratory)" in the cite. A positive exploratory result is EXPLORATORY.
+- A DID-NOT-HOLD row always states the claim or mechanism that was tested, written as a claim, followed by what happened and, where there is one, the design consequence. A design rule adopted because of a failure is stated in the same row after "So:", and the tag belongs to the failed claim, not to the rule.
 - `ASSUMPTION` is an extra label on a statement that is neither the user's words nor the user's decision. It never replaces a tag.
 
 Statements are table rows with an Evidence column. Sections 1, 4 and 5 summarise tagged statements; section 6 lists contradictions and carries no tags.
@@ -47,6 +48,8 @@ Statements are table rows with an Evidence column. Sections 1, 4 and 5 summarise
 | RV-WP | research/writepath-review-aaa0fec.md (review of feat/writepath-rescue at aaa0fec) |
 | RV-SYS | delta review of feat/systems-skeleton f6ade14..a13b524 (delta-review-16096.md) |
 | RV-AD | delta review of the adapters at 888c94b, including its confirm section at c20e208 (delta-review-888c94b.md) |
+| RV-AD0 | research/wkdcbf32g.output (first adversarial review of the adapters: 22 material findings, 12 challenged, all 12 confirmed) |
+| RV-WP0 | research/wxd8dtb2d.output (first adversarial review of the write-path skeleton: 17 material findings, 12 challenged, all 12 confirmed) |
 | RV-ES | research/w7r8hj8n6.output (independent re-run of the Elasticsearch behaviour results) |
 | RV-G1 | research/w3dv5r478.output (customer-stack research with adversarial challenges) |
 | RV-LIC | research/wev7th3nu.output (licence-tier re-verification) |
@@ -58,7 +61,7 @@ Statements are table rows with an Evidence column. Sections 1, 4 and 5 summarise
 | RAGCTX | eval/results/pilot/rag_context_metrics.json (feat/eval-scaffold 5d39de1) |
 | CANARY | eval/results/pilot/analyst_canary_h3.json (feat/eval-scaffold 5d39de1) |
 | AFULL | eval/results/pilot/analyst_full.json and the "Results: full analyst run" section of PREREG (feat/eval-scaffold cc83d26; appended after the freeze, pilot split, descriptive) |
-| ENG | engine/NOTES.md and engine/results/final/ (feat/engine-evolution; reviewed at 62916ae, branch head 55ce812) |
+| ENG | engine/NOTES.md and engine/results/final/ (feat/engine-evolution; reviewed at 62916ae; later owner commits in 3.15) |
 | WP | writepath/ and its results (feat/writepath-rescue aaa0fec) |
 | SYS | systems/results/ (feat/systems-skeleton a13b524) |
 | MC | memcore/NOTES.md and memcore/NOTES-addendum-g7.md (fix/adapters-delta-16096 c20e208); memcore-out/results/ |
@@ -108,9 +111,9 @@ What does hold, with limits, is listed per component in section 3.
 | 2.2.2 | Every input is a log event before any signal; the workflow signal is only a doorbell. | [REVIEWED] RV-ENG F8 SUPPORTED (75 dropped doorbells covered by reconcile; the signal-only groups fail for the stated reason). The count "lost 6 of 6" is the owner's (LEDGER, ENG F8) |
 | 2.2.3 | Idempotency keys derive from stable input identity, never from an attempt number. | [REVIEWED] RV-ENG F4t: attempt-derived keys gave 54 duplicate ledger rows and 825 results for 800 inputs |
 | 2.2.4 | A stale writer is refused by the store, not by caller discipline. The lease epoch travels in the write and is checked under lock in Postgres, and by a per-epoch Elasticsearch write alias with require_alias. | [REVIEWED] RV-WP N3, N3S_projector, N5, N8 SUPPORTED; limit: holds for honest stale writers that present their own token (RV-WP F3) |
-| 2.2.5 | Retrieval is one input to context, not the answer source. A current-state table and an analyst tier sit above it. | [DID-NOT-HOLD] LEDGER "Did not hold": hybrid retrieval alone as the memory (whole-pool recall in section 1) |
-| 2.2.6 | Supersession labels are advisory, never a filter: a wrong link must not hide a true fact. | [DID-NOT-HOLD] LR GATE3_RESULT (link recall 10 of 16); the user chose "Dated facts, links optional" (WAL w0fdb289edad) |
-| 2.2.7 | No pass counts until an independent review confirms it. | [REVIEWED] LEDGER "Did not hold": adapter and write-path passes had 12 material findings each on first review |
+| 2.2.5 | Hybrid retrieval alone can serve as the memory. It did not: whole-pool recall in section 1 (exploratory, pilot). So: retrieval is one input to context, with a current-state table and an analyst tier above it. | [DID-NOT-HOLD] CURVE; LEDGER "Did not hold" row 1 (exploratory) |
+| 2.2.6 | Automatic supersession links can act as a filter. They did not: link recall 10 of 16. So: supersession labels are advisory, never a filter, and the user chose "Dated facts, links optional" (WAL w0fdb289edad). | [DID-NOT-HOLD] LR GATE3_RESULT (gate G5) |
+| 2.2.7 | Owner-reported passes hold without independent review. They did not: the first adversarial reviews confirmed 12 challenged material findings in the adapters and 12 in the write-path skeleton. So: no pass counts until an independent review confirms it. | [DID-NOT-HOLD] RV-AD0; RV-WP0 |
 | 2.2.8 | The proof rules in gotchas/PROOF-RULES.md apply to every experiment: a failing control above a stated sensitivity floor, witness counts, pre-committed thresholds, per-item artifacts and an environment fingerprint. | [OWNER-REPORTED] GOT PROOF-RULES.md (lab main 603bb3b) |
 
 ## 3. Components
@@ -122,8 +125,9 @@ What does hold, with limits, is listed per component in section 3.
 | 3.1.1 | Events are appended to a Postgres table with a per-stream sequence and a hash chain (seq, prev_hash). | [OWNER-REPORTED] SYS C7_writers.json (feat/systems-skeleton a13b524) |
 | 3.1.2 | 16 concurrent live writers produced a gapless sequence. This says nothing about clock skew, cross-host ordering or a stale writer. | [REVIEWED] RV-SYS "recomputed and matching" (C7); limit from GOT CORRECTIONS |
 | 3.1.3 | A zombie session that lost its lease is quarantined: 20 of 20 zombie appends were stored as unadopted in both stall positions, the chain verified and nothing was projected. | [REVIEWED] RV-WP "Zombie row (row 1)": safety SUPPORTED |
-| 3.1.4 | A zombie that stalls after its insert while holding its lease row blocks takeover indefinitely, because `acquire` sets no lock timeout. | [DID-NOT-HOLD] RV-WP F6 (from code; not run) |
+| 3.1.4 | Takeover always completes after a zombie loses its lease. It does not: a zombie that stalls after its insert while holding its lease row blocks takeover indefinitely, because `acquire` sets no lock timeout. | [DID-NOT-HOLD] RV-WP F6 (from code; not run) |
 | 3.1.5 | The projector cursor reads only rows whose transaction committed below the cluster-wide snapshot xmin, so a late commit is never skipped. | [REVIEWED] RV-WP "Late commit (row 23)": Postgres half SUPPORTED; limit: any long transaction anywhere in the cluster stalls projection for every tenant |
+| 3.1.10 | While one transaction is held open for 12 s, a reader still finds a new event through the log tail, and projection catches up 0.73 s after the commit. The run has no failing control and covers one database, not a cluster-wide stall across databases. | [OWNER-REPORTED] SYS XMIN_stall.json (a13b524) |
 | 3.1.6 | The signed chain head is anchored outside the database with a promotion epoch, and projection stops at the replication-confirmed LSN. | [DESIGNED-UNTESTED] GOT DESIGN-CHANGES; UNCOVERED-TOP30 #6 |
 | 3.1.7 | The hash chain covers stored bytes, so an upcaster bug changes what an old event means without breaking verification. Old-event golden replays are needed. | [DESIGNED-UNTESTED] GOT DESIGN-CHANGES "still missing" |
 | 3.1.8 | A memory append must never fail silently. | [DESIGNED-UNTESTED] LEDGER X23 (rule, queued) |
@@ -139,8 +143,8 @@ What does hold, with limits, is listed per component in section 3.
 | 3.2.4 | Read-after-write through the tail scan held for 100 of 100 reads, and 600 events written during a projector pause were all found. | [OWNER-REPORTED] SYS C2_lag_tail.json; GOT CORRECTIONS |
 | 3.2.5 | Every projection is rebuildable from the log. A blue/green rebuild showed no mixed view, but its control never produced a mixed view, so that half is unproven. A dropped bucket stays missing until an explicit repair. | [DESIGNED-UNTESTED] RV-SYS "result claims the raw files do not support" (C1 v2) |
 | 3.2.6 | The fence is pinned before any read: the epoch is captured at start, and the bulk goes through the per-epoch write alias with require_alias. | [REVIEWED] RV-WP N1 SUPPORTED, narrow; limit: the control re-acquires the lease by force, and an in-flight bulk is not exercised |
-| 3.2.7 | The old fence (a lock plus an alias resolved after the read) let erased plaintext into a live generation. | [DID-NOT-HOLD] RV-SYS N1, confirmed by a pure model (fence_window.py) |
-| 3.2.8 | Fence scope binding: the trigger checks the scope the row names, not the scope that owns the table, and DELETE and TRUNCATE are unfenced on several tables. | [DID-NOT-HOLD] RV-WP F3 (schema reading; reproducer given, not run) |
+| 3.2.7 | A fence made of a lock plus an alias resolved after the read keeps erased plaintext out of a live generation. It did not. So: the epoch is pinned before the read (3.2.6). | [DID-NOT-HOLD] RV-SYS N1, confirmed by a pure model (fence_window.py) |
+| 3.2.8 | The fence binds the scope that owns each table and covers every write. It does not: the trigger checks the scope the row names, and DELETE and TRUNCATE are unfenced on several tables. | [DID-NOT-HOLD] RV-WP F3 (schema reading; reproducer given, not run) |
 | 3.2.9 | Elasticsearch `_aliases` can return HTTP 200 with `errors: true`; the client must raise on it. | [DESIGNED-UNTESTED] RV-WP F7 (docs plus code; hypothesis) |
 | 3.2.10 | The projector never passes unacknowledged items under an Elasticsearch flood-stage write block. | [DESIGNED-UNTESTED] UNCOVERED-TOP30 #22 |
 | 3.2.11 | Exact rescoring on approximate vector search is needed: without it the Elasticsearch dense leg cost up to about 0.08 session recall@10; with oversample 3 on bbq_hnsw the loss intervals all include 0. | [OWNER-REPORTED] PREREG 4.3 (es_hybrid_pooled.json) |
@@ -166,7 +170,7 @@ What does hold, with limits, is listed per component in section 3.
 | 3.3.12 | Erasure covers speaker provenance only: what other users said about the subject survives, and the tenant HMAC keeps slot hashes confirmable. Whether that is enough is an open ask. | [OPEN-DECISION] RV-WP F8 and owner question 7; WAL wc4b140b9a4f |
 | 3.3.13 | Legal hold versus erasure needs a defined precedence and an audit trail. | [OPEN-DECISION] RV-WP owner question 10; GOT DESIGN-CHANGES "still missing" |
 | 3.3.14 | Erasure reaches every content store (search, async search, Agent Builder conversations, inbox, sealed checkpoints, snapshots) from an inventory enumerated by code, and a snapshot restore is gated on replay. | [DESIGNED-UNTESTED] UNCOVERED-TOP30 #5; GOT DESIGN-CHANGES |
-| 3.3.15 | The plaintext task state written by the evolution phase (task_view) sits outside the subject key and the cascade. | [DID-NOT-HOLD] RV-SYS N6 (at a13b524; not re-reviewed since) |
+| 3.3.15 | Erasure covers the task state written by the evolution phase. It does not: task_view holds plaintext outside the subject key and the cascade. | [DID-NOT-HOLD] RV-SYS N6 (at a13b524; not re-reviewed since) |
 | 3.3.16 | Erasure cost grows with the work it triggers: 40 erasures took 254 s. | [OWNER-REPORTED] GOT DESIGN-CHANGES "still missing" (erasure amplification) |
 
 ### 3.4 Facts and provenance
@@ -189,9 +193,9 @@ What does hold, with limits, is listed per component in section 3.
 | 3.5.1 | A task definition change is an event. Earlier work is kept and re-classified as still valid, needs rework or obsolete. | [OWNER-REPORTED] SYS F1_F2_task_amend.json (a13b524) |
 | 3.5.2 | An amendment while work is in flight leaves no torn state: 200 runs per race, and the fence-off controls committed stale state 74 and 71 times. | [OWNER-REPORTED] SYS F3_inflight.json; GOT CORRECTIONS |
 | 3.5.3 | A detected prose change becomes a pending update; it becomes current only through an explicit decision event. | [DESIGNED-UNTESTED] OPEN-QUESTIONS I4; the prose detector itself did not hold (section 1) |
-| 3.5.4 | Decisions in the systems skeleton were not bound to a version and not idempotent: a stale acceptance overwrote a newer user decision, a replay re-applied a reverted change, and a retried decision dropped a pending change. | [DID-NOT-HOLD] RV-SYS N7 (pure probes) |
+| 3.5.4 | Decisions in the systems skeleton are version-bound and idempotent. They were not: a stale acceptance overwrote a newer user decision, a replay re-applied a reverted change, and a retried decision dropped a pending change. | [DID-NOT-HOLD] RV-SYS N7 (pure probes) |
 | 3.5.5 | In the rebuilt write path, decisions use compare-and-set: the stale-acceptance, replay and retry cases hold 10 of 10. | [REVIEWED] RV-WP N7 PARTLY: cases (a), (b) and (c) hold |
-| 3.5.6 | Decisions are not yet bound to the approval itself: the version comes from the caller, heads are per session, one typed message can authorise unlimited decisions, and an idempotency key reused with different content returns "duplicate". | [DID-NOT-HOLD] RV-WP F5 (code; reproducers given) |
+| 3.5.6 | In the rebuilt write path, decisions are bound to the approval itself. They are not yet: the version comes from the caller, heads are per session, one typed message can authorise unlimited decisions, and an idempotency key reused with different content returns "duplicate". | [DID-NOT-HOLD] RV-WP F5 (code; reproducers given) |
 | 3.5.7 | Whether decision items are per session or tenant-wide is a product choice (OPEN-QUESTIONS J1 implies tenant-wide). | [OPEN-DECISION] RV-WP F5(b) |
 | 3.5.8 | Every step and every injected block records the definition version and watermark it used (the acted-on version). The generated-scenario oracle shares the fold's version-blind rule, so its result is not independent. | [DESIGNED-UNTESTED] RV-SYS oracle note; SYS I4_I5_decisions.json |
 | 3.5.9 | Only an authorised human-typed decision flips state; two agents cannot approve each other; a revoked principal's pending decision is invalidated. | [DESIGNED-UNTESTED] UNCOVERED-TOP30 #10 |
@@ -238,7 +242,7 @@ What does hold, with limits, is listed per component in section 3.
 | 3.8.14 | Analysts used no tool at all in about half of the answered questions (42 of 92 at H3); a disclosed daemon defect shared one tool budget between two H3 variants. | [EXPLORATORY] PREREG results section "Disclosed defect" and tool-use lines |
 | 3.8.2 | The canary ran end to end: 46 calls; the analyst used a mean of 3.59 tool calls per question, about 100k tokens and 22 s per call; a rerank call took about 31k tokens and 10 s. | [OWNER-REPORTED] PF DEVLOG "analyst canary"; CANARY |
 | 3.8.3 | Inbox claims carry a fencing token and a 330 s renewable lease. A second turn at +40 s and +300 s gets nothing; a forged token and a superseded claimant confirm 0. | [REVIEWED] RV-AD confirm N7 FIXED (local probes); residuals: renew returns 0 on a lapsed lease while confirm returns 1, and confirm without a token is silent |
-| 3.8.4 | The earlier fixed 30 s lease double-delivered for turns longer than 30 s. | [DID-NOT-HOLD] RV-AD N7 at 888c94b |
+| 3.8.4 | A fixed 30 s claim lease delivers each inbox item once. It did not: it double-delivered for turns longer than 30 s. So: the renewable lease in 3.8.3. | [DID-NOT-HOLD] RV-AD N7 at 888c94b |
 | 3.8.5 | Inbox delivery is exactly once across a paused turn, a checkpoint rollback and a fork of the native session id; the delivery cursor travels in the checkpoint. | [DESIGNED-UNTESTED] UNCOVERED-TOP30 #2 |
 | 3.8.6 | An analyst run is keyed on (logical session, step, manifest hash), draws on the originating step's budget reservation and is killed when it stops making progress. | [DESIGNED-UNTESTED] UNCOVERED-TOP30 #17 |
 | 3.8.7 | Findings follow a fixed schema with an explicit "nothing relevant" outcome that suppresses injection. | [DESIGNED-UNTESTED] LEDGER X07 |
@@ -254,7 +258,7 @@ What does hold, with limits, is listed per component in section 3.
 | 3.9.1 | One set of ports (chat model, embeddings, rerank, search, agent tool surface, injection hook); the core depends on no vendor. | [OWNER-REPORTED] MC contract tests (fix/adapters-delta-16096 c20e208) |
 | 3.9.2 | The customer default chat route is the Elasticsearch inference API. Generative AI connectors are deprecated in favour of inference endpoints that support `chat_completion`. | [REVIEWED] RV-G1 (with adversarial challenge) |
 | 3.9.3 | Subscription adapters refuse to construct without an explicit development flag. The gateway gate uses an exact-type allow-list, a read-only copy of the backend map and a per-request re-check. | [REVIEWED] RV-AD confirm N1, N2 FIXED; residual: patching the class at runtime is not detected |
-| 3.9.4 | The subscription gate failed open twice before (a wrapper that did not carry the taint; a backend map mutable after the check). | [DID-NOT-HOLD] RV-AD N1, N2 at 888c94b |
+| 3.9.4 | The first subscription gate kept subscription adapters out of production paths. It did not: it failed open twice (a wrapper that did not carry the taint; a backend map mutable after the check). | [DID-NOT-HOLD] RV-AD N1, N2 at 888c94b |
 | 3.9.5 | Call caps are atomic across processes and fail closed on a corrupt counter. Each budget is a separate counter, so there is no single global cap, and the Elasticsearch embedder and reranker adapters have no budget. | [REVIEWED] RV-AD PARTLY |
 | 3.9.6 | Results do not depend on the adapter. The earlier "11 of 12 agree" used a lenient metric; raw text F1 between Codex and Claude answers was 0.35. | [DID-NOT-HOLD] MC NOTES "review corrections" |
 | 3.9.7 | Pin and ban rules for models are data read at run time, never model literals in source. | [DESIGNED-UNTESTED] FAB (rule R23); OPEN-QUESTIONS J6 |
@@ -286,7 +290,7 @@ What does hold, with limits, is listed per component in section 3.
 | 3.11.9 | Server and SDK upgrades by one minor version kept sessions running. There is no failing control, and the production schema-tool path was not used. | [OWNER-REPORTED] ENG F7; RV-ENG F7 PARTLY |
 | 3.11.10 | A session is rebuilt into a fresh engine from the Postgres log alone; doorbells dropped by the new engine are recovered by reconcile. | [REVIEWED] RV-ENG F8 SUPPORTED with limits |
 | 3.11.11 | "Reconcile re-derives pending turns after any restart" is false: reconcile runs only at the start of a run and when `more` is set. | [DID-NOT-HOLD] RV-ENG M1 (code; ENG NOTES still carries the claim) |
-| 3.11.12 | A granted approval waits for its full deadline after a rebuild; a poison input (including a crypto-erased one) wedges the session; input creation is not idempotent on a retried API call; the rollup key comes from a counter. | [DID-NOT-HOLD] RV-ENG M2 to M5 (code; M3 shown by an artifact) |
+| 3.11.12 | After a rebuild the engine resolves granted approvals promptly, isolates poison inputs, creates inputs idempotently and keys rollups stably. It did not: a granted approval waits for its full deadline; a poison input (including a crypto-erased one) wedges the session; input creation is not idempotent on a retried API call; the rollup key comes from a counter. | [DID-NOT-HOLD] RV-ENG M2 to M5 (code; M3 shown by an artifact) |
 | 3.11.13 | Elasticsearch upgrades, mapping changes and embedding-model changes go through reindex and an alias swap under load. After the cutover, the new index family sat outside erasure. | [OWNER-REPORTED] SYS F9 results; RV-SYS N2 |
 | 3.11.14 | Postgres event schema changes use event versions and upcasting on read. | [OWNER-REPORTED] SYS F10_schema_evolution.json |
 | 3.11.15 | An extraction-recipe change never serves mixed versions. The rule-based case passes; the real extractor is unmeasured. | [OWNER-REPORTED] SYS F11_recipe_change.json |
@@ -337,7 +341,7 @@ These commits landed after the reviewed commits above. Only their commit message
 | # | Statement | Evidence |
 |---|---|---|
 | 3.15.1 | The write-path owner reproduced review findings F1 to F7 on the reviewed code (all seven "property_holds=false"), and added controls for N3S_eraser and N6 plus a ten-run registry check (dry runs only). | [OWNER-REPORTED] feat/writepath-rescue e5f6aca, 1ebee08 |
-| 3.15.2 | The engine owner committed fixes for tenant keys, bound approvals and validated doorbells (12 unit tests fail on 62916ae and pass after), a run of pinned deployments plus continue-as-new (F5b4), approvals that wait for their request, and driver retries across a Postgres restart (its effect "to be shown"). | [OWNER-REPORTED] feat/engine-evolution ffa4ce5, 05593c7, 492f900, f834ad2, ff285c2 |
+| 3.15.2 | The engine owner committed fixes for review findings H1 to H3 and M1 to M5 (tenant keys, approval request ids, validated doorbells, periodic reconcile, prompt approval resolution, rollups keyed by deadline, a dead-letter path, idempotent input append) and result provenance; 12 unit tests fail on 62916ae and pass after. Later commits add a pinned-plus-continue-as-new case (F5b4), approvals that wait for their request, and driver retries across a Postgres restart (effect "to be shown"). | [OWNER-REPORTED] feat/engine-evolution ffa4ce5, 05593c7, 492f900, f834ad2, ff285c2 |
 | 3.15.3 | The adapter owner committed fixes for the inbox residuals (lapsed renewals reported, confirm token required), guards and budgets on the embedder and reranker, and a gateway route for the Kibana pre-execution workflow; each with tests that fail on c20e208. | [OWNER-REPORTED] fix/adapters-delta-16096 515cebf, 611d21c, d109124 |
 | 3.15.4 | A policy decision point with a label lattice and enforcement exists, with thresholds pre-registered first; only unit tests and dry runs so far. | [OWNER-REPORTED] feat/policy-decisions c2153af, 4fda42f |
 

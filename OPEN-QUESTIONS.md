@@ -36,7 +36,7 @@ Where a row has several sub-questions, the status is the most conservative acros
 | A4 | Validity intervals: date_range vs two date fields; as-of, currently-valid, sort | EXP E4 | answered-owner-reported | BEH E4 results (6f53c80) |
 | A5 | Percolator: lexical triggers at 1k/10k/100k stored queries; knn/sparse/semantic stored queries | EXP E5 | answered-owner-reported | BEH E5 results (e1da2d9 Basic, 15e0743 trial); vector queries rejected in the percolator |
 | A6 | Filtered kNN recall and latency (bbq_hnsw, int8_hnsw; acorn vs fanout); bbq_disk licence failure point | EXP E6 | answered-owner-reported | BEH E6 results; bbq_disk on Basic: mapping 200, every document 403 (E6_bbqdisk_basic.json). RV-ES confirmed only the direction (fanout better at a 5% filter); exact figures not re-tested |
-| A7 | Which fusion and rerank features work on Basic vs trial, with exact errors | EXP E7 | answered-owner-reported | BEH E7_basic.json, E7_trial: on Basic rrf, linear, text_similarity_reranker and ES|QL RERANK return 403, ES|QL FUSE 400; all fine on trial |
+| A7 | Which fusion and rerank features work on Basic vs trial, with exact errors | EXP E7 | answered-owner-reported | BEH E7_basic.json, E7_trial: on Basic rrf, linear, text_similarity_reranker and ES|QL RERANK return 403, ES|QL FUSE 400. On trial (E7_trial2.json) all of these return 200; ES|QL COMPLETION returns 400 on trial too; the first trial run (E7_trial.json) had the reranker time out (408) and ES|QL RERANK 409 |
 | A8 | semantic_text: which update paths re-run inference | EXP E8 | answered-reviewed | RV-ES E8a (bulk partial: 0 inference calls; embeddings lost after an unrefreshed write), E8b PARTLY, E8c, E8e |
 | A9 | Document-level security: hit isolation, score/aggregation leakage, kNN and semantic coverage | EXP E9 | answered-reviewed | RV-ES E9a hit isolation, E9b term-stat leak, E9c index per tenant removes it, E9d dfs does not, E9e constant-score removes it |
 | A10 | Deleted content persistence on disk before and after merge | EXP E10 | answered-reviewed | RV-ES: deleted text persists in segments; lease-synced single-segment merge purges (6 of 6); whole-index DELETE removes at once; "only reindex purges" refuted |
@@ -190,15 +190,15 @@ Position: one policy decision point, enforced at the choke points the design alr
 | K1 | Engine tenant isolation: workflow ids and keys carry the tenant, so two tenants with one session id never collide | EXP + delta review | in-progress | RV-ENG H1 (client blocker); owner fix ffa4ce5 unreviewed |
 | K2 | Engine approvals are bound to the request they approve; two approval gates in one session cannot cross | EXP + delta review | in-progress | RV-ENG H2; owner fix ffa4ce5 unreviewed |
 | K3 | Engine doorbell signals are validated (a signal carrying another session's id is refused) | EXP + delta review | in-progress | RV-ENG H3; owner fix ffa4ce5 unreviewed |
-| K4 | Inputs appended to an idle live session are processed without a signal (reconcile is not only at run start) | EXP | todo | RV-ENG M1: "reconcile after any restart" is false |
-| K5 | A granted approval resolves promptly after a rebuild instead of waiting for its deadline | EXP | todo | RV-ENG M2 |
-| K6 | Rollup keys derive from stable identity, not a counter | EXP | todo | RV-ENG M3 (artifact shows it) |
-| K7 | A poison input (including a crypto-erased one) goes to a dead letter instead of wedging the session | EXP | todo | RV-ENG M4 |
-| K8 | Input append is idempotent on a retried API call | EXP | todo | RV-ENG M5 |
-| K9 | Engine behaviour under Postgres failure and restart, server crash with activities in flight, two workers on one queue | EXP | todo | RV-ENG M6, F4 limits; only the SQLite dev server used |
+| K4 | Inputs appended to an idle live session are processed without a signal (reconcile is not only at run start) | EXP | in-progress | RV-ENG M1: "reconcile after any restart" is false. Owner fix ffa4ce5 (periodic reconcile; integration case m1 passes; unreviewed) |
+| K5 | A granted approval resolves promptly after a rebuild instead of waiting for its deadline | EXP | in-progress | RV-ENG M2. Owner fix ffa4ce5 (case m2 passes) and f834ad2; unreviewed |
+| K6 | Rollup keys derive from stable identity, not a counter | EXP | in-progress | RV-ENG M3 (artifact shows it). Owner fix ffa4ce5 (rollups keyed by scheduled deadline); unreviewed |
+| K7 | A poison input (including a crypto-erased one) goes to a dead letter instead of wedging the session | EXP | in-progress | RV-ENG M4. Owner fix ffa4ce5 (dead-letter path; case m4 passes); unreviewed |
+| K8 | Input append is idempotent on a retried API call | EXP | in-progress | RV-ENG M5. Owner fix ffa4ce5 (append keyed by request id); unreviewed |
+| K9 | Engine behaviour under Postgres failure and restart, server crash with activities in flight, two workers on one queue | EXP | in-progress | RV-ENG M6, F4 limits; only the SQLite dev server used. Owner commit ff285c2 prepares a Postgres-restart run (result file f4pg.json not yet read) |
 | K10 | Exactly-once holds when the external system's key retention is bounded | EXP + DR | todo | RV-ENG M7 |
 | K11 | Pinned worker deployments plus a continue-as-new hop, run together | EXP | in-progress | RV-ENG "recommended combination" UNSUPPORTED; owner commit 492f900 adds the F5b4 case (no result read, unreviewed) |
-| K12 | Engine results carry their git SHA and times, and NOTES matches the files | EXP rerun | todo | RV-ENG P1, P4 (200/202, 19/18, 15/13, 100/107) |
+| K12 | Engine results carry their git SHA and times, and NOTES matches the files | EXP rerun | in-progress | RV-ENG P1, P4 (200/202, 19/18, 15/13, 100/107). Owner commit ffa4ce5 adds provenance to results and 55ce812 chains stamped reruns; NOTES not yet corrected |
 | K13 | Erasure verify works for a subject with more than 65,536 events; one failing job does not stop the sweeper | EXP | in-progress | RV-WP F1 (HIGH); write-path owner reproduced F1 to F7 on aaa0fec (e5f6aca, owner-reported); fixes not yet committed |
 | K14 | Erasure completes when a tenant rebuild outlasts the 120 s lease | EXP | in-progress | RV-WP F2 (HIGH; model with an ASSUMPTION rate) |
 | K15 | The fence binds the scope that owns the table, and DELETE and TRUNCATE are fenced; the app role does not own its tables | EXP | in-progress | RV-WP F3 |
@@ -206,7 +206,7 @@ Position: one policy decision point, enforced at the choke points the design alr
 | K17 | Decisions are bound to the approval event; idempotency keys detect reuse with different content | EXP | in-progress | RV-WP F5 |
 | K18 | Takeover cannot wait forever on a stalled zombie (lock and idle timeouts) | EXP | in-progress | RV-WP F6 |
 | K19 | `_aliases` responses with `errors: true` are raised, not ignored | EXP | in-progress | RV-WP F7 |
-| K20 | A long transaction anywhere in the Postgres cluster cannot stall projection for every tenant (xmin stall) | EXP | todo | RV-WP row 23 limit; UNCOVERED-TOP30 #23 |
+| K20 | A long transaction anywhere in the Postgres cluster cannot stall projection for every tenant (xmin stall) | EXP | todo | RV-WP row 23 limit; UNCOVERED-TOP30 #23. SYS XMIN_stall.json (owner-reported): a 12 s hold on one database leaves the tail read working and projection catching up 0.73 s after commit; no failing control, no cross-database case (RV-WP F6 names a cross-database xmin stall) |
 | K21 | Erasure scope: speaker provenance only, or also statements about the person | USER | needs-user | RV-WP F8, owner question 7; WAL wc4b140b9a4f; M2 |
 | K22 | Production key store (KMS with real deletion) and a backup-retention bound in the erasure receipt | USER or client | needs-user | RV-WP owner question 6; M12 |
 | K23 | Whether the tenant HMAC may survive a subject's erasure (slot hashes stay confirmable) | USER | needs-user | RV-WP F8; M2 |
