@@ -244,3 +244,31 @@ class Budget(unittest.TestCase):
         self.assertEqual(budget_state(p, "q", "H3"), {"calls": 10, "seconds": 10.0})            # the top-20 run does not eat it
         self.assertEqual(budget_state(p, "q", "H3", "top20"), {"calls": 3, "seconds": 6.0})
         self.assertEqual(budget_state(p, "nobody", "H3"), {"calls": 0, "seconds": 0.0})
+
+
+class StageG(unittest.TestCase):
+    def test_string_match_heuristic(self):
+        from emlab.stage_g_score import final_line, string_match
+        self.assertTrue(string_match("Borealis Labs", "I now work at borealis labs."))
+        self.assertTrue(string_match("25 minutes and 50 seconds (or 25:50)", "Answer: 25 minutes, 50 seconds"))   # numbers 25 and 50
+        self.assertTrue(string_match("1,200 dollars", "about 1200 dollars"))
+        self.assertFalse(string_match("four", "three"))
+        self.assertFalse(string_match("Paris", ""))
+        self.assertEqual(final_line("steps\nAnswer: the suburbs"), "the suburbs")
+
+    def test_digging_compliance_is_mechanical(self):
+        from emlab.stage_g_score import DIG_N, followed
+        self.assertEqual(DIG_N, 3)
+        self.assertTrue(followed(3))
+        self.assertFalse(followed(2))
+        self.assertFalse(followed(None))
+
+    def test_audit_sample_is_stratified_seeded_and_stable(self):
+        from emlab.stage_g_score import audit_sample
+        rows = [{"question_id": "q%d" % i, "arm": "A", "judge_yes": i % 3 != 0} for i in range(90)]
+        a = audit_sample(rows)
+        self.assertEqual(sum(1 for r in a if r["judge_yes"]), 20)
+        self.assertEqual(sum(1 for r in a if not r["judge_yes"]), 20)
+        self.assertEqual(a, audit_sample(list(reversed(rows))))
+        small = audit_sample(rows[:6])
+        self.assertEqual(len(small), 6)
