@@ -220,3 +220,9 @@ wp_erasure_complete as wp_app refused; a dishonest runner (placeholders skipped,
 reach done; the honest runner with verifier="external" reaches done through the separate verifier process; AND control
 5/5 (one credential directory for every role): the dishonest runner reaches done while X's content is still in ES.
 Limits: one OS user (file permissions do not separate the processes); the runner holds the key-service credential.
+
+## Amendment 13 (2026-11-16, written before the run): D6 per-role Elasticsearch API keys (exp/d6_es_keys.py)
+Security on for this stream's node only (wp/es_security.py). R=3. PASS = fenced 3/3: P_alias, E_erase, V_merge allowed;
+P_concrete, P_erase, E_concrete, E_walias, V_write refused with 403; AND control (one shared key) 3/3: every refused
+case succeeds. Reported only: the projector's `manage` privilege lets it delete its family index (data loss, rebuilt
+from Postgres; not a content plant).

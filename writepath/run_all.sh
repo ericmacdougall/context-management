@@ -51,6 +51,7 @@ OUT=../results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.races R1 R2 R3 40
   $PY -m exp.cleanup exp.races
   $PY -m exp.guard_check end || echo "GATE guard_check end FAILED"
+  $PY -m wp.es_security enable && $PY -m exp.d6_es_keys 3; $PY -m exp.cleanup exp.d6_es_keys; $PY -m wp.es_security disable
   echo "end $(date -u +%FT%TZ)"
 } > "$OUT" 2>&1
 echo "$OUT"

@@ -1,0 +1,98 @@
+"""Turn security on (or off) for THIS stream's own Elasticsearch node, container emlab-es-wp-16096 only (D6).
+
+enable: recreate the container from its own docker-inspect record (same image, ports, mounts, ulimits, memory) with
+  xpack.security.enabled=true (HTTP without TLS on 127.0.0.1, single node), wait for it to answer 401, reset the
+  `elastic` password inside the container with its stdout written straight to secrets/es_elastic_password (0600; the
+  value never reaches a terminal, argv or the environment), then create the per-role keys (wp/es_keys.py).
+disable: the same recreation with xpack.security.enabled=false (rollback).
+Refuses any other container name. Data on the node is not preserved unless the container has a volume; the lab
+recreates every index from Postgres on demand. usage: python -m wp.es_security enable|disable"""
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+
+from . import config
+
+NAME = "emlab-es-wp-16096"
+
+
+def _inspect():
+    j = json.loads(subprocess.run(["docker", "inspect", NAME], check=True, capture_output=True, text=True).stdout)[0]
+    assert j["Name"].lstrip("/") == NAME
+    return j
+
+
+def _run_args(j, security):
+    hc, cfg = j["HostConfig"], j["Config"]
+    args = ["docker", "run", "-d", "--name", NAME]
+    for cport, binds in (hc.get("PortBindings") or {}).items():
+        for b in binds or []:
+            args += ["-p", f"{b.get('HostIp') or '127.0.0.1'}:{b['HostPort']}:{cport.split('/')[0]}"]
+    for m in j.get("Mounts") or []:
+        src = m["Name"] if m["Type"] == "volume" else m["Source"]
+        args += ["-v", f"{src}:{m['Destination']}" + ("" if m.get("RW", True) else ":ro")]
+    for u in hc.get("Ulimits") or []:
+        args += ["--ulimit", f"{u['Name']}={u['Soft']}:{u['Hard']}"]
+    if hc.get("Memory"):
+        args += ["-m", str(hc["Memory"])]
+    env = [e for e in cfg.get("Env") or [] if not e.startswith(("xpack.security.", "ELASTIC_PASSWORD"))]
+    env += [f"xpack.security.enabled={'true' if security else 'false'}"]
+    if security:
+        env += ["xpack.security.http.ssl.enabled=false", "xpack.security.transport.ssl.enabled=false"]
+    for e in env:
+        if e.split("=", 1)[0] in ("PATH", "ELASTIC_CONTAINER", "JAVA_HOME", "LANG", "LC_ALL"):
+            continue
+        args += ["-e", e]
+    return args + [cfg["Image"]]
+
+
+def _status():
+    try:
+        return urllib.request.urlopen(config.ES_URL, timeout=5).status
+    except urllib.error.HTTPError as e:
+        return e.code
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _recreate(security):
+    j = _inspect()
+    args = _run_args(j, security)
+    subprocess.run(["docker", "rm", "-f", NAME], check=True, capture_output=True)
+    subprocess.run(args, check=True, capture_output=True)
+    want = 401 if security else 200
+    t0 = time.time()
+    while _status() != want:
+        if time.time() - t0 > 300:
+            raise SystemExit(f"node did not answer {want} within 300 s")
+        time.sleep(2)
+
+
+def enable():
+    _recreate(True)
+    p = config.SECRETS / "es_elastic_password"
+    fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        r = subprocess.run(["docker", "exec", NAME, "bin/elasticsearch-reset-password", "-u", "elastic", "-a", "-b", "-s"],
+                           stdout=fd, stderr=subprocess.DEVNULL)
+    finally:
+        os.close(fd)
+    if r.returncode != 0:
+        raise SystemExit("password reset failed (nothing printed)")
+    from . import es_keys
+    print("security on; key ids", es_keys.create())
+
+
+def disable():
+    for f in list(config.SECRETS.glob("es_api_key*.json")):
+        f.unlink()
+    _recreate(False)
+    print("security off; key files removed")
+
+
+if __name__ == "__main__":
+    {"enable": enable, "disable": disable}[sys.argv[1]]()
