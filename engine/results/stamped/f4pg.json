@@ -1,0 +1,108 @@
+{
+ "provenance": {
+  "git_commit": "a7b4b3961460146636598dd40062643c6570436d",
+  "git_dirty": false,
+  "run_id": "r1794789423x319693",
+  "started_at": "2026-11-16T00:37:03Z",
+  "ended_at": "2026-11-16T00:39:48Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4pg"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-52400",
+     "cli": "1.7.3",
+     "db": "f4pg-1794789423.db",
+     "port": 52400,
+     "at": 0.0011088848114013672
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4pgloop-319693",
+     "kind": "loop",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4pg",
+     "crashes": 0,
+     "seed": 9,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.01",
+      "ENGINE_CRASH_AFTER_APPEND": "0.01"
+     },
+     "at": 2.603149652481079
+    }
+   ],
+   "params": {
+    "sessions": 40,
+    "turns_each": 20,
+    "period_s": 6,
+    "pg_restart_at_s": [
+     20,
+     55
+    ]
+   }
+  }
+ },
+ "id": "F4-postgres-restart",
+ "pg_restarts": [
+  {
+   "at_s": 20.0,
+   "took_s": 0.5,
+   "rc": 0
+  },
+  {
+   "at_s": 55.0,
+   "took_s": 0.5,
+   "rc": 0
+  }
+ ],
+ "exits": {
+  "exits": 12,
+  "by_window": {
+   "result_committed_not_acked": 4,
+   "effect_applied_not_recorded": 8
+  },
+  "with_activity_in_flight": 12,
+  "in_turn_effect": 10,
+  "in_turn_append": 5
+ },
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "driver": {
+  "appended": 800,
+  "signaled": 800,
+  "retries": 0
+ },
+ "verify": {
+  "tag": "pge625f3",
+  "tenant": "t1",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 817,
+  "redundant_external_calls": 17,
+  "chains_verified": 40,
+  "payload_check_this_run": {
+   "run_id": "r1794789423x319693",
+   "processes_reporting": 14,
+   "payloads_inspected_at_least": 77714,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

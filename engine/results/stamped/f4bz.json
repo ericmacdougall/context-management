@@ -1,0 +1,115 @@
+{
+ "provenance": {
+  "git_commit": "f834ad2a66fad80fa43b5bd11da23d10def31423",
+  "git_dirty": false,
+  "run_id": "r1794788347x44643",
+  "started_at": "2026-11-16T00:19:07Z",
+  "ended_at": "2026-11-16T00:24:56Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4b",
+   "--zombie"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-51040",
+     "cli": "1.7.3",
+     "db": "f4b-1794788347.db",
+     "port": 51040,
+     "at": 0.0011284351348876953
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4bA-44643",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4b",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.004"
+     },
+     "at": 2.603193998336792
+    },
+    {
+     "name": "f4bB-44643",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostB",
+     "task_queue": "f4b",
+     "code_dir": "/home/eric/emlab-16096/engine/hostB/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05"
+     },
+     "at": 65.02496075630188
+    }
+   ],
+   "params": {
+    "sessions": 100,
+    "turns_each": 20,
+    "period_s": 15,
+    "move_at_s": 60,
+    "zombie_old_worker": true,
+    "gap_s": 8
+   }
+  }
+ },
+ "id": "F4b-zombie",
+ "worker_A_exit_code": null,
+ "worker_A_self_exits": {
+  "exits": 1,
+  "by_window": {
+   "effect_applied_not_recorded": 1
+  },
+  "with_activity_in_flight": 1,
+  "in_turn_effect": 1,
+  "in_turn_append": 0
+ },
+ "workflow_statuses": {
+  "COMPLETED": 100
+ },
+ "wait_s": 0.4,
+ "controls": {},
+ "verify": {
+  "tag": "peb629b",
+  "tenant": "t1",
+  "sessions": 100,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 2000,
+  "result_events": 2000,
+  "result_keys": 2000,
+  "ledger_rows": 2000,
+  "effect_rows": 2000,
+  "external_calls": 2001,
+  "redundant_external_calls": 1,
+  "chains_verified": 100,
+  "payload_check_this_run": {
+   "run_id": "r1794788347x44643",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 44751,
+   "rejected": 0,
+   "max_payload_bytes": 253
+  },
+  "PASS": true
+ },
+ "external_calls_by_worker": {
+  "hostA": 501,
+  "hostB": 1500
+ },
+ "driver": {
+  "appended": 2000,
+  "signaled": 2000,
+  "retries": 0
+ },
+ "PASS": true
+}

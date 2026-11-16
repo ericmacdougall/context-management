@@ -1,0 +1,207 @@
+{
+ "provenance": {
+  "git_commit": "a7b4b3961460146636598dd40062643c6570436d",
+  "git_dirty": false,
+  "run_id": "r1794789588x345685",
+  "started_at": "2026-11-16T00:39:48Z",
+  "ended_at": "2026-11-16T00:43:43Z",
+  "host": "t2-dev",
+  "argv": [
+   "f8"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-59880",
+     "cli": "1.7.3",
+     "db": "f8a-1794789588.db",
+     "port": 59880,
+     "at": 0.002134561538696289
+    },
+    {
+     "name": "server-59880",
+     "cli": "1.10.1",
+     "db": "f8b-1794789667.db",
+     "port": 59880,
+     "at": 80.15571975708008
+    }
+   ],
+   "workers": [
+    {
+     "name": "f8w1-345685",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "engine-1",
+     "task_queue": "f8",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6068332195281982
+    },
+    {
+     "name": "f8w2-345685",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "engine-2",
+     "task_queue": "f8",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 83.06081128120422
+    }
+   ],
+   "params": {
+    "busy_sessions": 60,
+    "turns_each": 24,
+    "period_s": 8,
+    "approval_sessions": 10,
+    "rollup_sessions": 10,
+    "grant_signal_only_sessions": 6,
+    "unstored_deadline_sessions": 6,
+    "approval_timeout_s": 150,
+    "rollup_s": 120,
+    "cut_at_s": 70
+   }
+  }
+ },
+ "id": "F8",
+ "engine_discarded_at_s": 70.0,
+ "sessions": 92,
+ "rebuilt": 89,
+ "already_finished_before_cut": 3,
+ "rebuild_wall_s": 11.8,
+ "new_engine": "fresh server 1.32.2 (CLI 1.10.1), empty SQLite, new worker identity; old SQLite file deleted",
+ "doorbells_dropped_by_new_engine_not_found": 55,
+ "statuses": {
+  "h777f74a": {
+   "COMPLETED": 60
+  },
+  "h777f74b": {
+   "ERR:RPCError": 3,
+   "COMPLETED": 7
+  },
+  "h777f74c": {
+   "COMPLETED": 10
+  },
+  "h777f74d": {
+   "COMPLETED": 6
+  },
+  "h777f74e": {
+   "COMPLETED": 6
+  }
+ },
+ "finished_in_postgres": {
+  "h777f74a": 60,
+  "h777f74b": 10,
+  "h777f74c": 10,
+  "h777f74d": 6,
+  "h777f74e": 6
+ },
+ "grant_results_P": {
+  "granted": 4
+ },
+ "granted_with_lost_doorbell": {
+  "granted": 2
+ },
+ "verify_A": {
+  "tag": "h777f74a",
+  "tenant": "t1",
+  "sessions": 60,
+  "expect_turns_each": 24,
+  "problems": [],
+  "inputs_total": 1440,
+  "result_events": 1440,
+  "result_keys": 1440,
+  "ledger_rows": 1440,
+  "effect_rows": 1440,
+  "external_calls": 1453,
+  "redundant_external_calls": 13,
+  "chains_verified": 60,
+  "payload_check_this_run": {
+   "run_id": "r1794789588x345685",
+   "processes_reporting": 4,
+   "payloads_inspected_at_least": 27917,
+   "rejected": 0,
+   "max_payload_bytes": 363
+  },
+  "PASS": true
+ },
+ "verify_P": {
+  "tag": "h777f74b",
+  "tenant": "t1",
+  "sessions": 10,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 40,
+  "result_events": 40,
+  "result_keys": 40,
+  "ledger_rows": 40,
+  "effect_rows": 40,
+  "external_calls": 41,
+  "redundant_external_calls": 1,
+  "chains_verified": 10,
+  "payload_check_this_run": {
+   "run_id": "r1794789588x345685",
+   "processes_reporting": 4,
+   "payloads_inspected_at_least": 27917,
+   "rejected": 0,
+   "max_payload_bytes": 363
+  },
+  "PASS": true
+ },
+ "timers_main_groups": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "timer_lateness_s_min_max": [
+   0.9,
+   4.4
+  ],
+  "granted_resolution_latency_s_min_max": [
+   0.8,
+   10.9
+  ],
+  "granted": 6,
+  "timed_out": 4
+ },
+ "stored_in_postgres_and_used": [
+  "session_started.params",
+  "turn_input events (unprocessed = no result row)",
+  "turn_result / rollup events (rollup deadline = last rollup deadline + interval)",
+  "approval_requested (request id, deadline_ms)",
+  "approval_grant bound to the request id, written BEFORE the signal"
+ ],
+ "loss_if_not_stored": {
+  "grant_only_as_signal_X": {
+   "verify": true,
+   "outcomes": {
+    "approvals_exactly_once_and_correct": false,
+    "rollups_exactly_once": true,
+    "timer_lateness_s_min_max": [
+     0.9,
+     4.4
+    ],
+    "granted_resolution_latency_s_min_max": null,
+    "granted": 0,
+    "timed_out": 6
+   }
+  },
+  "deadline_not_stored_L": {
+   "outcomes": {
+    "approvals_exactly_once_and_correct": true,
+    "rollups_exactly_once": true,
+    "timer_lateness_s_min_max": [
+     0.4,
+     11.7
+    ],
+    "granted_resolution_latency_s_min_max": null,
+    "granted": 0,
+    "timed_out": 6
+   }
+  }
+ },
+ "PASS": true
+}

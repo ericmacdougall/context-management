@@ -1,0 +1,128 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794786614x3810012",
+  "started_at": "2026-11-15T23:50:14Z",
+  "ended_at": "2026-11-16T00:08:08Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4a"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-50840",
+     "cli": "1.7.3",
+     "db": "f4a-1794786614.db",
+     "port": 50840,
+     "at": 0.0011796951293945312
+    },
+    {
+     "name": "server-50840",
+     "cli": "1.7.3",
+     "db": "f4a-1794786614.db",
+     "port": 50840,
+     "at": 372.7711169719696
+    }
+   ],
+   "workers": [
+    {
+     "name": "bench-3810012",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "bench",
+     "task_queue": "f4a-bench",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.611893892288208
+    },
+    {
+     "name": "f4aloop-3810012",
+     "kind": "loop",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4a",
+     "crashes": 50,
+     "seed": 21,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "CMAX": "19"
+     },
+     "at": 75.49492907524109
+    }
+   ],
+   "params": {
+    "sessions": 100,
+    "turns_each": 30,
+    "planned_exits": 50,
+    "measured_drain_turns_per_s": 8.27,
+    "inject_period_s": 24.17,
+    "inject_rate_turns_per_s": 4.14,
+    "planned_duration_s": 725,
+    "crash_after_max_s": 19,
+    "effect_gap_s": 0.05
+   }
+  }
+ },
+ "id": "F4a",
+ "drain_bench": {
+  "sessions": 60,
+  "turns_each": 10,
+  "turns_per_s": 8.27
+ },
+ "server_stop": {
+  "abrupt": true,
+  "returncode": 137,
+  "down_s": 6.6,
+  "at_s": 293.0
+ },
+ "worker_exits": {
+  "exits": 50,
+  "by_window": {
+   "timed": 50
+  },
+  "with_activity_in_flight": 11,
+  "in_turn_effect": 6,
+  "in_turn_append": 1
+ },
+ "inject_wall_s": 795.7,
+ "drain_wait_s": 199.3,
+ "driver": {
+  "appended": 3000,
+  "signaled": 3000,
+  "retries": 0
+ },
+ "statuses": {
+  "COMPLETED": 100
+ },
+ "verify": {
+  "tag": "a8be93c",
+  "tenant": "t1",
+  "sessions": 100,
+  "expect_turns_each": 30,
+  "problems": [],
+  "inputs_total": 3000,
+  "result_events": 3000,
+  "result_keys": 3000,
+  "ledger_rows": 3000,
+  "effect_rows": 3000,
+  "external_calls": 3006,
+  "redundant_external_calls": 6,
+  "chains_verified": 100,
+  "payload_check_this_run": {
+   "run_id": "r1794786614x3810012",
+   "processes_reporting": 53,
+   "payloads_inspected_at_least": 647277,
+   "rejected": 0,
+   "max_payload_bytes": 421
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

@@ -1,0 +1,101 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794786785x3843721",
+  "started_at": "2026-11-15T23:53:05Z",
+  "ended_at": "2026-11-15T23:55:58Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4t",
+   "--mode",
+   "brokenkeys"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-57320",
+     "cli": "1.7.3",
+     "db": "f4tbrokenkeys-1794786785.db",
+     "port": 57320,
+     "at": 0.0012431144714355469
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4tbrokenkeys-3843721",
+     "kind": "loop",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4t",
+     "crashes": 0,
+     "seed": 5,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.02",
+      "ENGINE_CRASH_AFTER_APPEND": "0.02",
+      "ENGINE_BROKEN_KEYS": "1"
+     },
+     "at": 2.6066818237304688
+    }
+   ],
+   "params": {
+    "sessions": 40,
+    "turns_each": 20,
+    "period_s": 6,
+    "mode": "brokenkeys",
+    "crash_in_effect_gap_p": 0.02,
+    "crash_after_append_p": 0.02
+   }
+  }
+ },
+ "id": "F4a-targeted-brokenkeys",
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "exits": {
+  "exits": 35,
+  "by_window": {
+   "result_committed_not_acked": 21,
+   "effect_applied_not_recorded": 14
+  },
+  "with_activity_in_flight": 35,
+  "in_turn_effect": 26,
+  "in_turn_append": 24
+ },
+ "verify": {
+  "tag": "tb45217b",
+  "tenant": "t1",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [
+   "ledger duplicates: 45",
+   "effects rows per input != 1: 14"
+  ],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 852,
+  "effect_rows": 814,
+  "external_calls": 852,
+  "redundant_external_calls": 0,
+  "chains_verified": 40,
+  "payload_check_this_run": {
+   "run_id": "r1794786785x3843721",
+   "processes_reporting": 30,
+   "payloads_inspected_at_least": 79516,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": false
+ },
+ "problems_sample": [
+  "ledger duplicates: 45",
+  "effects rows per input != 1: 14"
+ ],
+ "verify_PASS_expected": false,
+ "as_expected": true
+}

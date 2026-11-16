@@ -1,0 +1,265 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794787729x4053713",
+  "started_at": "2026-11-16T00:08:49Z",
+  "ended_at": "2026-11-16T00:12:40Z",
+  "host": "t2-dev",
+  "argv": [
+   "f6"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-58520",
+     "cli": "1.7.3",
+     "db": "f6v2s-1794787729.db",
+     "port": 58520,
+     "at": 0.0023114681243896484
+    }
+   ],
+   "workers": [
+    {
+     "name": "f6a-4053713",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "old",
+     "task_queue": "f6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6042063236236572
+    },
+    {
+     "name": "f6b-4053713",
+     "venv": "venv-new",
+     "variant": "v2s",
+     "identity": "new",
+     "task_queue": "f6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 48.66754913330078
+    },
+    {
+     "name": "f6c-4053713",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "rollback",
+     "task_queue": "f6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 175.5060636997223
+    },
+    {
+     "name": "f6d-4053713",
+     "venv": "venv-new",
+     "variant": "v2s",
+     "identity": "forward",
+     "task_queue": "f6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 220.36394786834717
+    }
+   ],
+   "params": {
+    "nA": 20,
+    "nB": 10,
+    "nC": 10,
+    "turns": 30,
+    "period": 4,
+    "pre": 45
+   }
+  }
+ },
+ "id": "F6",
+ "variant": "v2s",
+ "state_before_upgrade_sample": {
+  "mb030baa-0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 4
+  },
+  "mb030baa-0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 4
+  },
+  "mb030bab-0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  },
+  "mb030bab-0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  }
+ },
+ "carried_state_versions_per_run_sample": {
+  "mb030baa-0001": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mb030baa-0002": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mb030baa-0003": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mb030bab-0001": [
+   1
+  ],
+  "mb030bab-0002": [
+   1
+  ],
+  "mb030bac-0001": [
+   2
+  ]
+ },
+ "statuses": {
+  "mb030baa": {
+   "COMPLETED": 20
+  },
+  "mb030bab": {
+   "COMPLETED": 10
+  },
+  "mb030bac": {
+   "COMPLETED": 10
+  }
+ },
+ "mismatches_vs_postgres": [],
+ "mismatch_count": 0,
+ "verify": [
+  {
+   "tag": "mb030baa",
+   "tenant": "t1",
+   "sessions": 20,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 600,
+   "result_events": 600,
+   "result_keys": 600,
+   "ledger_rows": 600,
+   "effect_rows": 600,
+   "external_calls": 600,
+   "redundant_external_calls": 0,
+   "chains_verified": 20,
+   "payload_check_this_run": {
+    "run_id": "r1794787729x4053713",
+    "processes_reporting": 3,
+    "payloads_inspected_at_least": 23971,
+    "rejected": 0,
+    "max_payload_bytes": 1151
+   },
+   "PASS": true
+  },
+  {
+   "tag": "mb030bab",
+   "tenant": "t1",
+   "sessions": 10,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 300,
+   "result_events": 300,
+   "result_keys": 300,
+   "ledger_rows": 300,
+   "effect_rows": 300,
+   "external_calls": 300,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "payload_check_this_run": {
+    "run_id": "r1794787729x4053713",
+    "processes_reporting": 3,
+    "payloads_inspected_at_least": 23971,
+    "rejected": 0,
+    "max_payload_bytes": 1151
+   },
+   "PASS": true
+  },
+  {
+   "tag": "mb030bac",
+   "tenant": "t1",
+   "sessions": 10,
+   "expect_turns_each": 15,
+   "problems": [],
+   "inputs_total": 150,
+   "result_events": 150,
+   "result_keys": 150,
+   "ledger_rows": 150,
+   "effect_rows": 150,
+   "external_calls": 150,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "payload_check_this_run": {
+    "run_id": "r1794787729x4053713",
+    "processes_reporting": 3,
+    "payloads_inspected_at_least": 23971,
+    "rejected": 0,
+    "max_payload_bytes": 1151
+   },
+   "PASS": true
+  }
+ ],
+ "rollback_to_v1_with_v2_state": {
+  "statuses": {
+   "RUNNING": 4
+  },
+  "sessions_with_wft_failures": 4,
+  "sample": "'rollups'",
+  "after_rolling_forward": {
+   "COMPLETED": 4
+  }
+ },
+ "PASS": true
+}

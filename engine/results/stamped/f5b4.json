@@ -1,0 +1,154 @@
+{
+ "provenance": {
+  "git_commit": "492f90021b99080a97df278983c05e46e728489d",
+  "git_dirty": false,
+  "run_id": "r1794788323x29131",
+  "started_at": "2026-11-16T00:18:43Z",
+  "ended_at": "2026-11-16T00:20:13Z",
+  "host": "t2-dev",
+  "argv": [
+   "f5b4"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-59360",
+     "cli": "1.10.1",
+     "db": "f5b4-1794788323.db",
+     "port": 59360,
+     "at": 0.0027370452880859375
+    }
+   ],
+   "workers": [
+    {
+     "name": "f5b4a-29131",
+     "venv": "venv-new",
+     "variant": "v1cv",
+     "identity": "old",
+     "task_queue": "f5b4",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [
+      "--deployment",
+      "sessdep",
+      "--pinned",
+      "--build-id",
+      "b1"
+     ],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6045982837677
+    },
+    {
+     "name": "f5b4b-29131",
+     "venv": "venv-new",
+     "variant": "v2cv",
+     "identity": "new",
+     "task_queue": "f5b4",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [
+      "--deployment",
+      "sessdep",
+      "--pinned",
+      "--build-id",
+      "b2"
+     ],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 32.14182758331299
+    }
+   ],
+   "params": {
+    "old_sessions": 20,
+    "turns_each": 24,
+    "period_s": 3,
+    "cutover_after_s": 25,
+    "new_sessions": 6,
+    "can_len": 60,
+    "demotion_signal_enabled": false
+   }
+  }
+ },
+ "id": "F5b-4-pinned-plus-continue-as-new",
+ "server": "1.32.2",
+ "demotion_signal_enabled": false,
+ "ops": {
+  "set_current_b1": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "set_current_b2": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "describe_b1": {
+   "rc": 0,
+   "out": "Worker Deployment Version:\n  DeploymentName           sessdep\n  BuildID                  b1\n  Status                   draining\n  CreateTime               1 minute ago\n  RoutingChangedTime       51 seconds ago\n  RampPercentage           0\n  DrainageStatus           draining\n  DrainageLastChangedTime  50 seconds ago\n  DrainageLastCheckedTime  50 seconds ago\n\nTask Queues:\n  Name    Type  \n  f5b4  activity\n  f5b4  workflow\n"
+  },
+  "describe_b2": {
+   "rc": 0,
+   "out": "Worker Deployment Version:\n  DeploymentName      sessdep\n  BuildID             b2\n  Status              current\n  CreateTime          54 seconds ago\n  RoutingChangedTime  51 seconds ago\n  CurrentSinceTime    51 seconds ago\n  RampPercentage      0\n\nTask Queues:\n  Name    Type  \n  f5b4  workflow\n  f5b4  activity\n"
+  }
+ },
+ "code_profile_old": {
+  "v1cv>v2cv": 20
+ },
+ "code_profile_new": {
+  "v2cv": 6
+ },
+ "all_old_done_s_after_cutover": 55.0,
+ "statuses_old": {
+  "COMPLETED": 20
+ },
+ "statuses_new": {
+  "COMPLETED": 6
+ },
+ "verify_old": {
+  "tag": "wa1e87ef",
+  "tenant": "t1",
+  "sessions": 20,
+  "expect_turns_each": 24,
+  "problems": [],
+  "inputs_total": 480,
+  "result_events": 480,
+  "result_keys": 480,
+  "ledger_rows": 480,
+  "effect_rows": 480,
+  "external_calls": 480,
+  "redundant_external_calls": 0,
+  "chains_verified": 20,
+  "payload_check_this_run": {
+   "run_id": "r1794788323x29131",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 11281,
+   "rejected": 0,
+   "max_payload_bytes": 968
+  },
+  "PASS": true
+ },
+ "verify_new": {
+  "tag": "wb1e87ef",
+  "tenant": "t1",
+  "sessions": 6,
+  "expect_turns_each": 12,
+  "problems": [],
+  "inputs_total": 72,
+  "result_events": 72,
+  "result_keys": 72,
+  "ledger_rows": 72,
+  "effect_rows": 72,
+  "external_calls": 72,
+  "redundant_external_calls": 0,
+  "chains_verified": 6,
+  "payload_check_this_run": {
+   "run_id": "r1794788323x29131",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 11281,
+   "rejected": 0,
+   "max_payload_bytes": 968
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

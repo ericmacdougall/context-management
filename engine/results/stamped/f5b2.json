@@ -1,0 +1,169 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794787370x3978487",
+  "started_at": "2026-11-16T00:02:50Z",
+  "ended_at": "2026-11-16T00:04:55Z",
+  "host": "t2-dev",
+  "argv": [
+   "f5b2"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-51960",
+     "cli": "1.7.3",
+     "db": "f5b2-1794787370.db",
+     "port": 51960,
+     "at": 0.0034401416778564453
+    }
+   ],
+   "workers": [
+    {
+     "name": "f5b2a-3978487",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "old",
+     "task_queue": "f5b2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [
+      "--deployment",
+      "sessdep",
+      "--pinned",
+      "--build-id",
+      "b1"
+     ],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6093332767486572
+    },
+    {
+     "name": "f5b2b-3978487",
+     "venv": "venv-new",
+     "variant": "v2i",
+     "identity": "new",
+     "task_queue": "f5b2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [
+      "--deployment",
+      "sessdep",
+      "--pinned",
+      "--build-id",
+      "b2"
+     ],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 47.364540576934814
+    },
+    {
+     "name": "f5b2a-3978487",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "old2",
+     "task_queue": "f5b2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [
+      "--deployment",
+      "sessdep",
+      "--pinned",
+      "--build-id",
+      "b1"
+     ],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 72.43501114845276
+    }
+   ],
+   "params": {
+    "n": 30,
+    "turns": 24,
+    "period": 4,
+    "pre": 40,
+    "n2": 10
+   }
+  }
+ },
+ "id": "F5b-2-worker-versioning-pinned",
+ "server": "1.7.3",
+ "old_sessions": 30,
+ "new_sessions": 10,
+ "ops": {
+  "server": "1.7.3",
+  "set_current_b1": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "set_current_b2": {
+   "rc": 0,
+   "out": "Successfully set the current worker deployment version\n"
+  },
+  "describe_b1": {
+   "rc": 0,
+   "out": "Worker Deployment Version:\n  DeploymentName           sessdep\n  BuildID                  b1\n  CreateTime               1 minute ago\n  RoutingChangedTime       1 minute ago\n  CurrentSinceTime         a long while ago\n  RampingSinceTime         a long while ago\n  RampPercentage           0\n  DrainageStatus           draining\n  DrainageLastChangedTime  1 minute ago\n  DrainageLastCheckedTime  1 minute ago\n\nTask Queues:\n  Name    Type  \n  f5b2  workflow\n  f5b2  activity\n"
+  }
+ },
+ "old_code_profile": {
+  "v1": 30
+ },
+ "new_code_profile": {
+  "v2i": 10
+ },
+ "old_build_needed_until_s_after_cutover": 74.8,
+ "control_old_build_stopped_20s_results_progress": 0,
+ "statuses_old": {
+  "COMPLETED": 30
+ },
+ "statuses_new": {
+  "COMPLETED": 10
+ },
+ "verify_old": {
+  "tag": "fxd73c31",
+  "tenant": "t1",
+  "sessions": 30,
+  "expect_turns_each": 24,
+  "problems": [],
+  "inputs_total": 720,
+  "result_events": 720,
+  "result_keys": 720,
+  "ledger_rows": 720,
+  "effect_rows": 720,
+  "external_calls": 720,
+  "redundant_external_calls": 0,
+  "chains_verified": 30,
+  "payload_check_this_run": {
+   "run_id": "r1794787370x3978487",
+   "processes_reporting": 4,
+   "payloads_inspected_at_least": 18810,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "verify_new": {
+  "tag": "fyd73c31",
+  "tenant": "t1",
+  "sessions": 10,
+  "expect_turns_each": 12,
+  "problems": [],
+  "inputs_total": 120,
+  "result_events": 120,
+  "result_keys": 120,
+  "ledger_rows": 120,
+  "effect_rows": 120,
+  "external_calls": 120,
+  "redundant_external_calls": 0,
+  "chains_verified": 10,
+  "payload_check_this_run": {
+   "run_id": "r1794787370x3978487",
+   "processes_reporting": 4,
+   "payloads_inspected_at_least": 18810,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

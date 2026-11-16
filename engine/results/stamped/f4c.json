@@ -1,0 +1,187 @@
+{
+ "provenance": {
+  "git_commit": "ff285c232ca8167d3f6b45efec0a87a80c2d79a4",
+  "git_dirty": false,
+  "run_id": "r1794788755x178110",
+  "started_at": "2026-11-16T00:25:55Z",
+  "ended_at": "2026-11-16T00:30:15Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4c"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-51040",
+     "cli": "1.7.3",
+     "db": "f4c-1794788755.db",
+     "port": 51040,
+     "at": 0.0010721683502197266
+    },
+    {
+     "name": "server-51040",
+     "cli": "1.7.3",
+     "db": "f4c-1794788755.db",
+     "port": 51040,
+     "at": 69.1623637676239
+    },
+    {
+     "name": "server-51040",
+     "cli": "1.7.3",
+     "db": "f4c-1794788755.db",
+     "port": 51040,
+     "at": 158.2606644630432
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4cA-178110",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 3.804466962814331
+    },
+    {
+     "name": "f4cA-178110",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 37.03939175605774
+    },
+    {
+     "name": "f4cA-178110",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 101.86187100410461
+    },
+    {
+     "name": "f4cA-178110",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 176.94664311408997
+    }
+   ],
+   "params": {
+    "approval_sessions": 30,
+    "rollup_sessions": 30,
+    "approval_timeout_s": 240,
+    "rollup_s": 180
+   }
+  }
+ },
+ "id": "F4c",
+ "events": [
+  {
+   "t": 25.1,
+   "what": "early_check",
+   "exit_code": null
+  },
+  {
+   "t": 33.2,
+   "what": "worker_exit_1",
+   "exit_code": 137
+  },
+  {
+   "t": 67.6,
+   "what": "server_abrupt_stop_restart",
+   "exit_code": 137
+  },
+  {
+   "t": 98.0,
+   "what": "worker_exit_2",
+   "exit_code": 137
+  },
+  {
+   "t": 120.8,
+   "what": "approve_half",
+   "exit_code": {
+    "granted": 15
+   }
+  },
+  {
+   "t": 156.7,
+   "what": "server_graceful_restart",
+   "exit_code": 0
+  },
+  {
+   "t": 173.1,
+   "what": "worker_exit_3",
+   "exit_code": 137
+  }
+ ],
+ "worker_exit_records": {
+  "exits": 3,
+  "by_window": {
+   "hard-file": 3
+  },
+  "with_activity_in_flight": 0,
+  "in_turn_effect": 0,
+  "in_turn_append": 0
+ },
+ "control_early_check": {
+  "approval_resolved": 0,
+  "rollups": 0
+ },
+ "statuses_A": {
+  "COMPLETED": 30
+ },
+ "statuses_B": {
+  "COMPLETED": 30
+ },
+ "approval_exactly_once_and_correct_outcome": true,
+ "rollup_exactly_once": true,
+ "lateness_s_min_max_for_timer_driven": [
+  0.04,
+  6.17
+ ],
+ "verify_A_turns": {
+  "tag": "r2559c8",
+  "tenant": "t1",
+  "sessions": 30,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 120,
+  "result_events": 120,
+  "result_keys": 120,
+  "ledger_rows": 120,
+  "effect_rows": 120,
+  "external_calls": 120,
+  "redundant_external_calls": 0,
+  "chains_verified": 30,
+  "payload_check_this_run": {
+   "run_id": "r1794788755x178110",
+   "processes_reporting": 5,
+   "payloads_inspected_at_least": 10787,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "granted": 15,
+ "timed_out": 15,
+ "PASS": true
+}

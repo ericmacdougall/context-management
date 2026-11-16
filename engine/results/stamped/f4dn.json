@@ -1,0 +1,99 @@
+{
+ "provenance": {
+  "git_commit": "a7b4b3961460146636598dd40062643c6570436d",
+  "git_dirty": false,
+  "run_id": "r1794789951x425970",
+  "started_at": "2026-11-16T00:45:51Z",
+  "ended_at": "2026-11-16T00:48:12Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4d",
+   "--naive",
+   "--turns",
+   "400",
+   "--rate",
+   "6",
+   "--can-len",
+   "400"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-50560",
+     "cli": "1.7.3",
+     "db": "f4dv1n-1794789951.db",
+     "port": 50560,
+     "at": 0.0012309551239013672
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4dA-425970",
+     "venv": "venv-new",
+     "variant": "v1n",
+     "identity": "hostA",
+     "task_queue": "f4d",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.604255199432373
+    }
+   ],
+   "params": {
+    "turns": 400,
+    "inject_rate_per_s": 6.0,
+    "can_len": 400,
+    "variant": "v1n"
+   }
+  }
+ },
+ "id": "F4d-control-naive",
+ "variant": "v1n",
+ "wall_s": 139.0,
+ "inject_s": 76.9,
+ "signals_acknowledged_by_server": 400,
+ "workflow_result": null,
+ "workflow_status": {
+  "RUNNING": 1
+ },
+ "runs": 15,
+ "continue_as_new_boundaries": 14,
+ "max_run_history_events": 427,
+ "total_history_events": 5735,
+ "events_per_turn": 14.34,
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "verify": {
+  "tag": "k9a613f",
+  "tenant": "t1",
+  "sessions": 1,
+  "expect_turns_each": 400,
+  "problems": [
+   "k9a613f-0001: results rows/distinct (258, 258) != 400",
+   "ledger missing: 142",
+   "effects missing: 142"
+  ],
+  "inputs_total": 400,
+  "result_events": 258,
+  "result_keys": 258,
+  "ledger_rows": 258,
+  "effect_rows": 258,
+  "external_calls": 258,
+  "redundant_external_calls": 0,
+  "chains_verified": 1,
+  "payload_check_this_run": {
+   "run_id": "r1794789951x425970",
+   "processes_reporting": 2,
+   "payloads_inspected_at_least": 4598,
+   "rejected": 0,
+   "max_payload_bytes": 1327
+  },
+  "PASS": false
+ },
+ "control_failed_as_required": true
+}

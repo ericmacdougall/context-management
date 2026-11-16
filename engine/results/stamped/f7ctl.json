@@ -1,0 +1,123 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794788159x4132223",
+  "started_at": "2026-11-16T00:15:59Z",
+  "ended_at": "2026-11-16T00:16:55Z",
+  "host": "t2-dev",
+  "argv": [
+   "f7ctl"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-58640",
+     "cli": "1.7.3",
+     "db": "f7ctl-1794788159.db",
+     "port": 58640,
+     "at": 0.001791238784790039
+    },
+    {
+     "name": "server-58640",
+     "cli": "1.10.1",
+     "db": "f7ctl-fresh-1794788177.db",
+     "port": 58640,
+     "at": 18.508418560028076
+    }
+   ],
+   "workers": [
+    {
+     "name": "f7c1-4132223",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "sdk-1.31.0",
+     "task_queue": "f7c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.606161117553711
+    },
+    {
+     "name": "f7c2-4132223",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "sdk-1.36.1",
+     "task_queue": "f7c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 21.110331773757935
+    }
+   ],
+   "params": {
+    "sessions": 20,
+    "turns_each": 8,
+    "period_s": 3,
+    "upgrade_at_s": 14
+   }
+  }
+ },
+ "id": "F7-control-fresh-database",
+ "statuses": {
+  "ERR:RPCError": 20
+ },
+ "driver": {
+  "appended": 160,
+  "signaled": 97,
+  "retries": 0,
+  "doorbell_dropped": 63,
+  "dropped": 63
+ },
+ "verify": {
+  "tag": "udd2ee9f",
+  "tenant": "t1",
+  "sessions": 20,
+  "expect_turns_each": 8,
+  "problems": [
+   "udd2ee9f-0001: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0002: results rows/distinct (6, 6) != 8",
+   "udd2ee9f-0003: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0004: results rows/distinct (4, 4) != 8",
+   "udd2ee9f-0005: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0006: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0007: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0008: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0009: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0010: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0011: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0012: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0013: results rows/distinct (4, 4) != 8",
+   "udd2ee9f-0014: results rows/distinct (4, 4) != 8",
+   "udd2ee9f-0015: results rows/distinct (4, 4) != 8",
+   "udd2ee9f-0016: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0017: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0018: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0019: results rows/distinct (5, 5) != 8",
+   "udd2ee9f-0020: results rows/distinct (5, 5) != 8",
+   "ledger missing: 63",
+   "effects missing: 63"
+  ],
+  "inputs_total": 160,
+  "result_events": 97,
+  "result_keys": 97,
+  "ledger_rows": 97,
+  "effect_rows": 97,
+  "external_calls": 97,
+  "redundant_external_calls": 0,
+  "chains_verified": 20,
+  "payload_check_this_run": {
+   "run_id": "r1794788159x4132223",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 1695,
+   "rejected": 0,
+   "max_payload_bytes": 253
+  },
+  "PASS": false
+ },
+ "control_failed_as_required": true
+}

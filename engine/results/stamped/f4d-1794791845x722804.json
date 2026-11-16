@@ -1,0 +1,104 @@
+{
+ "provenance": {
+  "git_commit": "a2858c8b6f9865c530d66226aaefc286898844b1",
+  "git_dirty": false,
+  "run_id": "r1794791845x722804",
+  "started_at": "2026-11-16T01:17:25Z",
+  "ended_at": "2026-11-16T01:19:30Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4d",
+   "--turns",
+   "400",
+   "--rate",
+   "6",
+   "--can-len",
+   "400"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-58320",
+     "cli": "1.7.3",
+     "db": "f4dv1-1794791845.db",
+     "port": 58320,
+     "at": 0.001192331314086914
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4dA-722804",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4d",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.3029110431671143
+    }
+   ],
+   "params": {
+    "turns": 400,
+    "inject_rate_per_s": 6.0,
+    "can_len": 400,
+    "variant": "v1"
+   }
+  }
+ },
+ "id": "F4d",
+ "variant": "v1",
+ "wall_s": 123.1,
+ "inject_s": 73.1,
+ "signals_acknowledged_by_server": 400,
+ "workflow_result": {
+  "approval": "none",
+  "cans": 5,
+  "code": "v1",
+  "dead": 0,
+  "erased": false,
+  "rejected": 0,
+  "rollups": 0,
+  "sig": 400,
+  "turns": 400
+ },
+ "workflow_status": {
+  "COMPLETED": 1
+ },
+ "runs": 6,
+ "continue_as_new_boundaries": 5,
+ "max_run_history_events": 6183,
+ "total_history_events": 8188,
+ "events_per_turn": 20.47,
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "verify": {
+  "tag": "k076eed",
+  "tenant": "t1",
+  "sessions": 1,
+  "expect_turns_each": 400,
+  "problems": [],
+  "inputs_total": 400,
+  "result_events": 400,
+  "result_keys": 400,
+  "ledger_rows": 400,
+  "effect_rows": 400,
+  "external_calls": 400,
+  "redundant_external_calls": 0,
+  "chains_verified": 1,
+  "payload_check_this_run": {
+   "run_id": "r1794791845x722804",
+   "processes_reporting": 2,
+   "payloads_inspected_at_least": 6439,
+   "rejected": 0,
+   "max_payload_bytes": 2207
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

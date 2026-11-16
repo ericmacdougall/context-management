@@ -1,0 +1,131 @@
+{
+ "provenance": {
+  "git_commit": "a7b4b3961460146636598dd40062643c6570436d",
+  "git_dirty": false,
+  "run_id": "r1794789592x346940",
+  "started_at": "2026-11-16T00:39:52Z",
+  "ended_at": "2026-11-16T00:57:27Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4t",
+   "--mode",
+   "brokenresult"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-59360",
+     "cli": "1.7.3",
+     "db": "f4tbrokenresult-1794789592.db",
+     "port": 59360,
+     "at": 0.0017154216766357422
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4tbrokenresult-346940",
+     "kind": "loop",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4t",
+     "crashes": 0,
+     "seed": 5,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.02",
+      "ENGINE_CRASH_AFTER_APPEND": "0.02",
+      "ENGINE_BROKEN_RESULT": "1"
+     },
+     "at": 2.603879690170288
+    }
+   ],
+   "params": {
+    "sessions": 40,
+    "turns_each": 20,
+    "period_s": 6,
+    "mode": "brokenresult",
+    "crash_in_effect_gap_p": 0.02,
+    "crash_after_append_p": 0.02
+   }
+  }
+ },
+ "id": "F4a-targeted-brokenresult",
+ "statuses": {
+  "COMPLETED": 31,
+  "RUNNING": 9
+ },
+ "exits": {
+  "exits": 33,
+  "by_window": {
+   "effect_applied_not_recorded": 21,
+   "result_committed_not_acked": 12
+  },
+  "with_activity_in_flight": 33,
+  "in_turn_effect": 23,
+  "in_turn_append": 16
+ },
+ "verify": {
+  "tag": "tc854059",
+  "tenant": "t1",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [
+   "tc854059-0002: results rows/distinct (3, 3) != 20",
+   "tc854059-0003: results rows/distinct (21, 20) != 20",
+   "tc854059-0004: results rows/distinct (4, 4) != 20",
+   "tc854059-0005: results rows/distinct (1, 1) != 20",
+   "tc854059-0006: results rows/distinct (21, 20) != 20",
+   "tc854059-0008: results rows/distinct (21, 20) != 20",
+   "tc854059-0009: results rows/distinct (21, 20) != 20",
+   "tc854059-0010: results rows/distinct (3, 3) != 20",
+   "tc854059-0012: results rows/distinct (21, 20) != 20",
+   "tc854059-0013: results rows/distinct (21, 20) != 20",
+   "tc854059-0014: results rows/distinct (12, 12) != 20",
+   "tc854059-0015: results rows/distinct (9, 9) != 20",
+   "tc854059-0016: results rows/distinct (21, 20) != 20",
+   "tc854059-0017: results rows/distinct (21, 20) != 20",
+   "tc854059-0019: results rows/distinct (21, 20) != 20",
+   "tc854059-0020: results rows/distinct (2, 2) != 20",
+   "tc854059-0022: results rows/distinct (21, 20) != 20",
+   "tc854059-0024: results rows/distinct (21, 20) != 20",
+   "tc854059-0027: results rows/distinct (22, 20) != 20",
+   "tc854059-0029: results rows/distinct (21, 20) != 20",
+   "tc854059-0031: results rows/distinct (21, 20) != 20",
+   "tc854059-0032: results rows/distinct (16, 16) != 20",
+   "tc854059-0034: results rows/distinct (22, 20) != 20",
+   "tc854059-0035: results rows/distinct (21, 20) != 20",
+   "tc854059-0036: results rows/distinct (5, 4) != 20",
+   "tc854059-0038: results rows/distinct (21, 20) != 20",
+   "tc854059-0040: results rows/distinct (21, 20) != 20",
+   "ledger missing: 126",
+   "effects missing: 126"
+  ],
+  "inputs_total": 800,
+  "result_events": 695,
+  "result_keys": 695,
+  "ledger_rows": 674,
+  "effect_rows": 674,
+  "external_calls": 727,
+  "redundant_external_calls": 53,
+  "chains_verified": 40,
+  "payload_check_this_run": {
+   "run_id": "r1794789592x346940",
+   "processes_reporting": 30,
+   "payloads_inspected_at_least": 204865,
+   "rejected": 0,
+   "max_payload_bytes": 879
+  },
+  "PASS": false
+ },
+ "problems_sample": [
+  "tc854059-0002: results rows/distinct (3, 3) != 20",
+  "tc854059-0003: results rows/distinct (21, 20) != 20",
+  "tc854059-0004: results rows/distinct (4, 4) != 20",
+  "tc854059-0005: results rows/distinct (1, 1) != 20"
+ ],
+ "verify_PASS_expected": false,
+ "as_expected": true
+}

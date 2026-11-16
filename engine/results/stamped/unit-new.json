@@ -1,0 +1,77 @@
+{
+ "label": "new",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "dirty": false
+ },
+ "modules": [
+  "engine.tests.test_review_fixes",
+  "engine.tests.test_pgstore"
+ ],
+ "host": "t2-dev",
+ "started_at": "2026-11-15T23:50:14Z",
+ "ended_at": "2026-11-15T23:50:15Z",
+ "tests_run": 19,
+ "failures": 0,
+ "errors": 0,
+ "tests": {
+  "engine.tests.test_review_fixes.H1Tenant.test_finish_and_start_keys_are_per_tenant": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H1Tenant.test_other_tenants_grant_does_not_approve_my_gate": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_after_the_deadline_is_not_honoured": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_before_the_request_is_not_honoured": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_needs_an_approver": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_second_gate_resolves_against_its_own_request": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_a_non_input_event_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_foreign_id_cannot_mark_the_victims_input_processed": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_reading_another_sessions_input_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M3Rollup.test_rollup_identity_is_the_scheduled_deadline_not_a_counter": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4Erased.test_erased_subject_raises_a_non_retryable_class": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M5Idempotent.test_input_creation_is_idempotent_by_request_id": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_append_once_is_exactly_once": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_approval_happy_path_and_request_binding": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_dead_letter_counts_as_processed_even_for_an_erased_subject": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_effect_retry_applies_once_but_broken_keys_apply_twice": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_grant_recorded_after_the_deadline_by_a_bypass_is_ignored": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_key_without_the_tenant_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_unprocessed_inputs_antijoin_in_seq_order": {
+   "outcome": "pass"
+  }
+ }
+}

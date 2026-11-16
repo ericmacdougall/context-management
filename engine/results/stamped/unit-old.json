@@ -1,0 +1,67 @@
+{
+ "label": "old",
+ "code_dir": "/home/eric/emlab-16096/engine/old",
+ "code_commit": {
+  "commit": "62916ae",
+  "dirty": false
+ },
+ "modules": [
+  "engine.tests.test_review_fixes"
+ ],
+ "host": "t2-dev",
+ "started_at": "2026-11-15T23:50:15Z",
+ "ended_at": "2026-11-15T23:50:16Z",
+ "tests_run": 12,
+ "failures": 12,
+ "errors": 0,
+ "tests": {
+  "engine.tests.test_review_fixes.H1Tenant.test_finish_and_start_keys_are_per_tenant": {
+   "outcome": "fail",
+   "reason": "0 != 1"
+  },
+  "engine.tests.test_review_fixes.H1Tenant.test_other_tenants_grant_does_not_approve_my_gate": {
+   "outcome": "fail",
+   "reason": "'granted' != 'timeout'"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_after_the_deadline_is_not_honoured": {
+   "outcome": "fail",
+   "reason": "'granted' != 'timeout'"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_before_the_request_is_not_honoured": {
+   "outcome": "fail",
+   "reason": "'granted' != 'pending'"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_needs_an_approver": {
+   "outcome": "fail",
+   "reason": "'granted' != 'pending'"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_second_gate_resolves_against_its_own_request": {
+   "outcome": "fail",
+   "reason": "'granted' != 'timeout'"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_a_non_input_event_is_refused": {
+   "outcome": "fail",
+   "reason": "Exception not raised"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_foreign_id_cannot_mark_the_victims_input_processed": {
+   "outcome": "fail",
+   "reason": "Lists differ: [] != ['t1/rva136e4a94c/1']"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_reading_another_sessions_input_is_refused": {
+   "outcome": "fail",
+   "reason": "Exception not raised"
+  },
+  "engine.tests.test_review_fixes.M3Rollup.test_rollup_identity_is_the_scheduled_deadline_not_a_counter": {
+   "outcome": "fail",
+   "reason": "1 != 2"
+  },
+  "engine.tests.test_review_fixes.M4Erased.test_erased_subject_raises_a_non_retryable_class": {
+   "outcome": "fail",
+   "reason": "'LookupError' != 'SubjectErased'"
+  },
+  "engine.tests.test_review_fixes.M5Idempotent.test_input_creation_is_idempotent_by_request_id": {
+   "outcome": "fail",
+   "reason": "'t1/rv04e72bcd79/1' != 't1/rv04e72bcd79/2'"
+  }
+ }
+}

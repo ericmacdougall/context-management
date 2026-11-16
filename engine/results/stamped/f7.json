@@ -1,0 +1,190 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794787689x4046135",
+  "started_at": "2026-11-16T00:08:09Z",
+  "ended_at": "2026-11-16T00:15:58Z",
+  "host": "t2-dev",
+  "argv": [
+   "f7"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-54120",
+     "cli": "1.7.3",
+     "db": "f7-1794787689.db",
+     "port": 54120,
+     "at": 0.0015609264373779297
+    },
+    {
+     "name": "server-54120",
+     "cli": "1.10.1",
+     "db": "f7-1794787689.db",
+     "port": 54120,
+     "at": 66.41337823867798
+    }
+   ],
+   "workers": [
+    {
+     "name": "f7a-4046135",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "sdk-1.31.0",
+     "task_queue": "f7",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.03"
+     },
+     "at": 2.6046698093414307
+    },
+    {
+     "name": "f7b-4046135",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "sdk-1.36.1",
+     "task_queue": "f7",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.03"
+     },
+     "at": 173.1306436061859
+    }
+   ],
+   "params": {
+    "busy_sessions": 80,
+    "turns_each": 30,
+    "period_s": 10,
+    "approval_sessions": 15,
+    "rollup_sessions": 15,
+    "approval_timeout_s": 200,
+    "rollup_s": 150,
+    "server_upgrade_at_s": 60,
+    "sdk_swap_at_s": 170
+   }
+  }
+ },
+ "id": "F7",
+ "from": {
+  "server": "1.31.2 (CLI 1.7.3)",
+  "sdk": "temporalio 1.31.0"
+ },
+ "to": {
+  "server": "1.32.2 (CLI 1.10.1)",
+  "sdk": "temporalio 1.36.1"
+ },
+ "events": [
+  {
+   "t": 62.6,
+   "what": "server 1.31.2 -> 1.32.2 on the same sqlite file",
+   "downtime_s": 3.5
+  },
+  {
+   "t": 85.7,
+   "what": "approved half of the parked approval sessions",
+   "grant_results": {
+    "granted": 7
+   }
+  },
+  {
+   "t": 170.0,
+   "what": "SDK 1.31.0 -> 1.36.1 (worker swap)",
+   "gap_s": 0.5
+  }
+ ],
+ "persistence": "SQLite file run/f7-1794787689.db opened by both CLI versions; not the documented schema-tool path (Postgres persistence: NOT TESTED)",
+ "statuses": [
+  {
+   "COMPLETED": 80
+  },
+  {
+   "COMPLETED": 15
+  },
+  {
+   "COMPLETED": 15
+  }
+ ],
+ "verify_A": {
+  "tag": "uaa2c576",
+  "tenant": "t1",
+  "sessions": 80,
+  "expect_turns_each": 30,
+  "problems": [],
+  "inputs_total": 2400,
+  "result_events": 2400,
+  "result_keys": 2400,
+  "ledger_rows": 2400,
+  "effect_rows": 2400,
+  "external_calls": 2400,
+  "redundant_external_calls": 0,
+  "chains_verified": 80,
+  "payload_check_this_run": {
+   "run_id": "r1794787689x4046135",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 283381,
+   "rejected": 0,
+   "max_payload_bytes": 353
+  },
+  "PASS": true
+ },
+ "verify_P": {
+  "tag": "uba2c576",
+  "tenant": "t1",
+  "sessions": 15,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 60,
+  "result_events": 60,
+  "result_keys": 60,
+  "ledger_rows": 60,
+  "effect_rows": 60,
+  "external_calls": 60,
+  "redundant_external_calls": 0,
+  "chains_verified": 15,
+  "payload_check_this_run": {
+   "run_id": "r1794787689x4046135",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 283381,
+   "rejected": 0,
+   "max_payload_bytes": 353
+  },
+  "PASS": true
+ },
+ "timers": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "timer_lateness_s_min_max": [
+   0.5,
+   18.0
+  ],
+  "granted_resolution_latency_s_min_max": [
+   1.6,
+   1.7
+  ],
+  "granted": 7,
+  "timed_out": 8
+ },
+ "external_calls_by_worker": {
+  "sdk-1.31.0": 1264,
+  "sdk-1.36.1": 1136
+ },
+ "new_server_log_error_lines": 4,
+ "new_server_log_error_samples": [
+  "time=2026-11-16T00:11:01.840 level=ERROR msg=\"Update workflow execution operation failed.\" shard-id=1 address=127.0.0.1:43551 wf-namespace-id=01a1e1ae-c3d3-73f2-8d2d-c2ffe64b1562 wf-id=s:t1:uaa2c576-0",
+  "time=2026-11-16T00:11:01.841 level=ERROR msg=\"Update workflow execution operation failed.\" shard-id=1 address=127.0.0.1:43551 wf-namespace-id=01a1e1ae-c3d3-73f2-8d2d-c2ffe64b1562 wf-id=s:t1:uaa2c576-0",
+  "time=2026-11-16T00:11:01.841 level=ERROR msg=\"Update workflow execution operation failed.\" shard-id=1 address=127.0.0.1:43551 wf-namespace-id=01a1e1ae-c3d3-73f2-8d2d-c2ffe64b1562 wf-id=s:t1:uaa2c576-0"
+ ],
+ "driver": {
+  "appended": 2460,
+  "signaled": 2460,
+  "retries": 0
+ },
+ "PASS": true
+}

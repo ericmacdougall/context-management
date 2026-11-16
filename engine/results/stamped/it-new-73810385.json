@@ -1,0 +1,211 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794786617x3810385",
+  "started_at": "2026-11-15T23:50:17Z",
+  "ended_at": "2026-11-15T23:52:13Z",
+  "host": "t2-dev",
+  "argv": [
+   "--code",
+   "new"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-59200",
+     "cli": "1.7.3",
+     "db": "it-new-73810385.db",
+     "port": 59200,
+     "at": 0.0009305477142333984
+    }
+   ],
+   "workers": [
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-m1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6109087467193604
+    },
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-m2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 28.020222187042236
+    },
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-m4",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 42.302603006362915
+    },
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-h3",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 49.655728340148926
+    },
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-l1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 68.15449070930481
+    },
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-l2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 93.63211703300476
+    },
+    {
+     "name": "w-3810385",
+     "venv": "venv-new",
+     "variant": "v1c",
+     "identity": "it-new",
+     "task_queue": "it-new-73810385-l3",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 100.97099924087524
+    }
+   ],
+   "params": {}
+  }
+ },
+ "code": "new",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "dirty": false
+ },
+ "task_queue": "it-new-73810385-l3",
+ "cases": {
+  "m1": {
+   "processed_within_s": 19.1,
+   "idle_session_results": {
+    "m173810385-0001": 1,
+    "m173810385-0002": 1,
+    "m173810385-0003": 1,
+    "m173810385-0004": 1,
+    "m173810385-0005": 1,
+    "m173810385-0006": 1
+   },
+   "order_session_results": [
+    "t1/m1o73810385-0001/2",
+    "t1/m1o73810385-0001/3",
+    "t1/m1o73810385-0001/4"
+   ],
+   "order_expected": [
+    "t1/m1o73810385-0001/2",
+    "t1/m1o73810385-0001/3",
+    "t1/m1o73810385-0001/4"
+   ],
+   "passed": true,
+   "seconds": 25.2
+  },
+  "m2": {
+   "grant_to_resolution_s": 10.0,
+   "grant_result": "granted",
+   "approval_deadline_s": 120,
+   "passed": true,
+   "seconds": 13.9
+  },
+  "m4": {
+   "erased_session_status": "COMPLETED",
+   "control_session_status": "COMPLETED",
+   "waited_s": 2.0,
+   "passed": true,
+   "seconds": 7.1
+  },
+  "h3": {
+   "results_in_A": 0,
+   "results_in_B": 1,
+   "A_history_events": 24,
+   "A_signals_received": 2,
+   "A_activities_scheduled": 2,
+   "passed": true,
+   "seconds": 18.2
+  },
+  "l1": {
+   "results_in_postgres": 6,
+   "workflow_status": "COMPLETED",
+   "workflow_result": {
+    "approval": "none",
+    "cans": 4,
+    "code": "v1",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 7,
+    "turns": 6
+   },
+   "passed": true,
+   "seconds": 25.2
+  },
+  "l2": {
+   "workflow_status": "COMPLETED",
+   "results": 5,
+   "passed": true,
+   "seconds": 7.2
+  },
+  "l3": {
+   "doorbells_sent": 11,
+   "workflow_result": {
+    "approval": "none",
+    "cans": 6,
+    "code": "v1c",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 11,
+    "turns": 11
+   },
+   "results_in_postgres": 11,
+   "history_debug": null,
+   "passed": true,
+   "seconds": 13.3
+  }
+ },
+ "all_passed": true
+}

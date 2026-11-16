@@ -1,0 +1,162 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794787627x4033724",
+  "started_at": "2026-11-16T00:07:07Z",
+  "ended_at": "2026-11-16T00:08:48Z",
+  "host": "t2-dev",
+  "argv": [
+   "f5c"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-53640",
+     "cli": "1.7.3",
+     "db": "f5c-1794787627.db",
+     "port": 53640,
+     "at": 0.003847837448120117
+    }
+   ],
+   "workers": [
+    {
+     "name": "f5c1-4033724",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "v1",
+     "task_queue": "f5c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.605785846710205
+    },
+    {
+     "name": "f5c2-4033724",
+     "venv": "venv-new",
+     "variant": "v2p",
+     "identity": "v2",
+     "task_queue": "f5c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 8.046302080154419
+    },
+    {
+     "name": "f5c3-4033724",
+     "venv": "venv-new",
+     "variant": "v3p",
+     "identity": "v3",
+     "task_queue": "f5c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 28.433114767074585
+    },
+    {
+     "name": "f5c4-4033724",
+     "venv": "venv-new",
+     "variant": "v2i",
+     "identity": "cleaned",
+     "task_queue": "f5c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 67.63588690757751
+    },
+    {
+     "name": "f5c5-4033724",
+     "venv": "venv-new",
+     "variant": "v3p",
+     "identity": "v3b",
+     "task_queue": "f5c",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 93.19890189170837
+    }
+   ],
+   "params": {
+    "n": 10,
+    "wake_wait": 20
+   }
+  }
+ },
+ "id": "F5c",
+ "sessions_each_group": 10,
+ "idle_through": [
+  "v2p",
+  "v3p"
+ ],
+ "statuses_woken_on_v3p": {
+  "COMPLETED": 10
+ },
+ "verify_v3p": {
+  "tag": "ib3d602",
+  "tenant": "t1",
+  "sessions": 10,
+  "expect_turns_each": 3,
+  "problems": [],
+  "inputs_total": 30,
+  "result_events": 30,
+  "result_keys": 30,
+  "ledger_rows": 30,
+  "effect_rows": 30,
+  "external_calls": 30,
+  "redundant_external_calls": 0,
+  "chains_verified": 10,
+  "payload_check_this_run": {
+   "run_id": "r1794787627x4033724",
+   "processes_reporting": 4,
+   "payloads_inspected_at_least": 2190,
+   "rejected": 0,
+   "max_payload_bytes": 252
+  },
+  "PASS": true
+ },
+ "code_profile_v3p": {
+  "v1>v3p": 10
+ },
+ "control_cleaned_up_patch": {
+  "statuses_after_25s": {
+   "RUNNING": 10
+  },
+  "sessions_with_wft_failures": 10,
+  "sample": "[TMPRL1100] Nondeterminism error: Activity type of scheduled event 'turn_effect' does not match activity type of activity command 'turn_policy'",
+  "after_restoring_patched_code": {
+   "COMPLETED": 10
+  },
+  "verify_after_restore": {
+   "tag": "jb3d602",
+   "tenant": "t1",
+   "sessions": 10,
+   "expect_turns_each": 3,
+   "problems": [],
+   "inputs_total": 30,
+   "result_events": 30,
+   "result_keys": 30,
+   "ledger_rows": 30,
+   "effect_rows": 30,
+   "external_calls": 30,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "payload_check_this_run": {
+    "run_id": "r1794787627x4033724",
+    "processes_reporting": 6,
+    "payloads_inspected_at_least": 3259,
+    "rejected": 0,
+    "max_payload_bytes": 252
+   },
+   "PASS": true
+  }
+ },
+ "required": "v3 must still contain the v2 patch (workflow.patched('policy-check')) while any pre-patch execution exists; histories are replayed in full on wake",
+ "PASS": true
+}

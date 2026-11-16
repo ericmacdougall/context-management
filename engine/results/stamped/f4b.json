@@ -1,0 +1,131 @@
+{
+ "provenance": {
+  "git_commit": "492f90021b99080a97df278983c05e46e728489d",
+  "git_dirty": false,
+  "run_id": "r1794788007x4085220",
+  "started_at": "2026-11-16T00:13:27Z",
+  "ended_at": "2026-11-16T00:19:06Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4b"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-55680",
+     "cli": "1.7.3",
+     "db": "f4b-1794788007.db",
+     "port": 55680,
+     "at": 0.0011527538299560547
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4bA-4085220",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4b",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.004"
+     },
+     "at": 2.603288412094116
+    },
+    {
+     "name": "f4bW-4085220",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "wrongq",
+     "task_queue": "f4b-wrong",
+     "code_dir": "/home/eric/emlab-16096/engine/hostB/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 73.20714402198792
+    },
+    {
+     "name": "f4bB-4085220",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostB",
+     "task_queue": "f4b",
+     "code_dir": "/home/eric/emlab-16096/engine/hostB/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05"
+     },
+     "at": 82.93505692481995
+    }
+   ],
+   "params": {
+    "sessions": 100,
+    "turns_each": 20,
+    "period_s": 15,
+    "move_at_s": 60,
+    "zombie_old_worker": false,
+    "gap_s": 8
+   }
+  }
+ },
+ "id": "F4b",
+ "worker_A_exit_code": 137,
+ "worker_A_self_exits": {
+  "exits": 1,
+  "by_window": {
+   "hard-file": 1
+  },
+  "with_activity_in_flight": 0,
+  "in_turn_effect": 0,
+  "in_turn_append": 0
+ },
+ "workflow_statuses": {
+  "COMPLETED": 100
+ },
+ "wait_s": 0.3,
+ "controls": {
+  "no_worker_progress_in_8s": 0,
+  "wrong_queue_worker_progress_in_8s": 0,
+  "verify_while_unfinished_PASS": false,
+  "verify_while_unfinished_problems": 202
+ },
+ "verify": {
+  "tag": "p06330f",
+  "tenant": "t1",
+  "sessions": 100,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 2000,
+  "result_events": 2000,
+  "result_keys": 2000,
+  "ledger_rows": 2000,
+  "effect_rows": 2000,
+  "external_calls": 2001,
+  "redundant_external_calls": 1,
+  "chains_verified": 100,
+  "payload_check_this_run": {
+   "run_id": "r1794788007x4085220",
+   "processes_reporting": 4,
+   "payloads_inspected_at_least": 45626,
+   "rejected": 0,
+   "max_payload_bytes": 253
+  },
+  "PASS": true
+ },
+ "external_calls_by_worker": {
+  "hostB": 1602,
+  "hostA": 399
+ },
+ "driver": {
+  "appended": 2000,
+  "signaled": 2000,
+  "retries": 0
+ },
+ "PASS": true
+}

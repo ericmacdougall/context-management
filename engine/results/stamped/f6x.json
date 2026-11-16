@@ -1,0 +1,309 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794787960x4081146",
+  "started_at": "2026-11-16T00:12:40Z",
+  "ended_at": "2026-11-16T00:15:28Z",
+  "host": "t2-dev",
+  "argv": [
+   "f6",
+   "--broken"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-54680",
+     "cli": "1.7.3",
+     "db": "f6v2sx-1794787960.db",
+     "port": 54680,
+     "at": 0.0024383068084716797
+    }
+   ],
+   "workers": [
+    {
+     "name": "f6a-4081146",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "old",
+     "task_queue": "f6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.9047155380249023
+    },
+    {
+     "name": "f6b-4081146",
+     "venv": "venv-new",
+     "variant": "v2sx",
+     "identity": "new",
+     "task_queue": "f6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 49.434887409210205
+    }
+   ],
+   "params": {
+    "nA": 20,
+    "nB": 10,
+    "nC": 10,
+    "turns": 30,
+    "period": 4,
+    "pre": 45
+   }
+  }
+ },
+ "id": "F6-control-broken-migration",
+ "variant": "v2sx",
+ "state_before_upgrade_sample": {
+  "mxcfa388a-0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 3
+  },
+  "mxcfa388a-0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 3
+  },
+  "mxcfa388b-0001": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  },
+  "mxcfa388b-0002": {
+   "ver": 1,
+   "has_rollups": true,
+   "has_rollup_count": false,
+   "cans": 0
+  }
+ },
+ "carried_state_versions_per_run_sample": {
+  "mxcfa388a-0001": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mxcfa388a-0002": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mxcfa388a-0003": [
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   1
+  ],
+  "mxcfa388b-0001": [
+   1
+  ],
+  "mxcfa388b-0002": [
+   1
+  ],
+  "mxcfa388c-0001": [
+   2
+  ]
+ },
+ "statuses": {
+  "mxcfa388a": {
+   "COMPLETED": 20
+  },
+  "mxcfa388b": {
+   "COMPLETED": 10
+  },
+  "mxcfa388c": {
+   "COMPLETED": 10
+  }
+ },
+ "mismatches_vs_postgres": [
+  {
+   "sid": "mxcfa388a-0001",
+   "result": {
+    "approval": "none",
+    "cans": 11,
+    "code": "v2sx",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 1,
+    "sig": 30,
+    "turns": 30
+   },
+   "pg_rollups": 25,
+   "pg_turns": 30
+  },
+  {
+   "sid": "mxcfa388a-0002",
+   "result": {
+    "approval": "none",
+    "cans": 11,
+    "code": "v2sx",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 30,
+    "turns": 30
+   },
+   "pg_rollups": 24,
+   "pg_turns": 30
+  },
+  {
+   "sid": "mxcfa388a-0003",
+   "result": {
+    "approval": "none",
+    "cans": 12,
+    "code": "v2sx",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 30,
+    "turns": 30
+   },
+   "pg_rollups": 25,
+   "pg_turns": 30
+  },
+  {
+   "sid": "mxcfa388a-0004",
+   "result": {
+    "approval": "none",
+    "cans": 12,
+    "code": "v2sx",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 30,
+    "turns": 30
+   },
+   "pg_rollups": 24,
+   "pg_turns": 30
+  },
+  {
+   "sid": "mxcfa388a-0005",
+   "result": {
+    "approval": "none",
+    "cans": 12,
+    "code": "v2sx",
+    "dead": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 30,
+    "turns": 30
+   },
+   "pg_rollups": 25,
+   "pg_turns": 30
+  }
+ ],
+ "mismatch_count": 40,
+ "verify": [
+  {
+   "tag": "mxcfa388a",
+   "tenant": "t1",
+   "sessions": 20,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 600,
+   "result_events": 600,
+   "result_keys": 600,
+   "ledger_rows": 600,
+   "effect_rows": 600,
+   "external_calls": 600,
+   "redundant_external_calls": 0,
+   "chains_verified": 20,
+   "payload_check_this_run": {
+    "run_id": "r1794787960x4081146",
+    "processes_reporting": 3,
+    "payloads_inspected_at_least": 23938,
+    "rejected": 0,
+    "max_payload_bytes": 1181
+   },
+   "PASS": true
+  },
+  {
+   "tag": "mxcfa388b",
+   "tenant": "t1",
+   "sessions": 10,
+   "expect_turns_each": 30,
+   "problems": [],
+   "inputs_total": 300,
+   "result_events": 300,
+   "result_keys": 300,
+   "ledger_rows": 300,
+   "effect_rows": 300,
+   "external_calls": 300,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "payload_check_this_run": {
+    "run_id": "r1794787960x4081146",
+    "processes_reporting": 3,
+    "payloads_inspected_at_least": 23938,
+    "rejected": 0,
+    "max_payload_bytes": 1181
+   },
+   "PASS": true
+  },
+  {
+   "tag": "mxcfa388c",
+   "tenant": "t1",
+   "sessions": 10,
+   "expect_turns_each": 15,
+   "problems": [],
+   "inputs_total": 150,
+   "result_events": 150,
+   "result_keys": 150,
+   "ledger_rows": 150,
+   "effect_rows": 150,
+   "external_calls": 150,
+   "redundant_external_calls": 0,
+   "chains_verified": 10,
+   "payload_check_this_run": {
+    "run_id": "r1794787960x4081146",
+    "processes_reporting": 3,
+    "payloads_inspected_at_least": 23938,
+    "rejected": 0,
+    "max_payload_bytes": 1181
+   },
+   "PASS": true
+  }
+ ],
+ "PASS_expected_false": false
+}

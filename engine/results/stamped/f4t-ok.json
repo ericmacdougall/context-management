@@ -1,0 +1,94 @@
+{
+ "provenance": {
+  "git_commit": "55ce812244024c3f29edea9baf5017b7f1a1e56e",
+  "git_dirty": false,
+  "run_id": "r1794786614x3810013",
+  "started_at": "2026-11-15T23:50:14Z",
+  "ended_at": "2026-11-15T23:53:04Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4t",
+   "--mode",
+   "ok"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-52080",
+     "cli": "1.7.3",
+     "db": "f4tok-1794786614.db",
+     "port": 52080,
+     "at": 0.001146554946899414
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4tok-3810013",
+     "kind": "loop",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4t",
+     "crashes": 0,
+     "seed": 5,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.02",
+      "ENGINE_CRASH_AFTER_APPEND": "0.02"
+     },
+     "at": 2.6030771732330322
+    }
+   ],
+   "params": {
+    "sessions": 40,
+    "turns_each": 20,
+    "period_s": 6,
+    "mode": "ok",
+    "crash_in_effect_gap_p": 0.02,
+    "crash_after_append_p": 0.02
+   }
+  }
+ },
+ "id": "F4a-targeted-ok",
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "exits": {
+  "exits": 35,
+  "by_window": {
+   "effect_applied_not_recorded": 17,
+   "result_committed_not_acked": 18
+  },
+  "with_activity_in_flight": 35,
+  "in_turn_effect": 23,
+  "in_turn_append": 19
+ },
+ "verify": {
+  "tag": "taf70a41",
+  "tenant": "t1",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 854,
+  "redundant_external_calls": 54,
+  "chains_verified": 40,
+  "payload_check_this_run": {
+   "run_id": "r1794786614x3810013",
+   "processes_reporting": 29,
+   "payloads_inspected_at_least": 76504,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "problems_sample": [],
+ "verify_PASS_expected": true,
+ "as_expected": true
+}
