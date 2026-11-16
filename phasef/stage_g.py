@@ -223,60 +223,100 @@ def run(a, runner=None):
     items_b = [(q, arm) for q, arm in b_items(qb_all) if q in qb and not done_b(q, arm)] if a.part in ("B", "AB") else []
     print("phase %s: part A %d items, part B %d items (%d calls max)" % (a.phase, len(items_a), len(items_b), 2 * len(items_b)), flush=True)
     stats = {"A_ok": 0, "A_failed": 0, "B_ok": 0, "B_failed": 0}
-    pending_a, pending_b = [], []
+    meter = TokenMeter(initial_input_tokens(), a.ceiling)
+    skipped = {"A": [], "B": []}
+
+    def tok_in(tok):
+        return tok.get("in", 0) + tok.get("cache_creation", 0) + tok.get("cache_read", 0)
 
     def one_a(item):
-        if stop_requested(a):
-            return None
         arm, q = item
+        if stop_requested(a) or meter.over():
+            skipped["A"].append(item)
+            return None
         task = json.load(open(os.path.join(G, TASK_DIR, "H3", q + ".json")))
         try:
             rec = run_a_item(arm, task, a, runner)
         except Exception as e:
             rec = {"question_id": q, "level": LEVEL, "arm": arm, "status": "failed", "error": str(e)[:200], "ranked_round_ids": []}
+        meter.add(tok_in(rec.get("tokens", {})))
         if rec.get("prompt_tokens_measured") and rec["prompt_tokens_measured"] > MAX_PROMPT_TOKENS:
             open(a.stop_file, "w").write("prompt too large: %s" % rec["prompt_tokens_measured"])
         if tool_error_seen(rec):
-            open(a.stop_file, "w").write("tool wrapper error on variant g300 (first tool call is the test): stop and report")
-        return write_result(result_base(a), dict(rec, arm=arm, level=LEVEL, question_id=q))
+            open(a.stop_file, "w").write("tool wrapper error on variant g300: stop and report")
+        return write_result(result_base(a), dict(rec, arm=arm, level=LEVEL, question_id=q)), rec
 
     def one_b(item):
-        if stop_requested(a):
-            return None
         q, arm = item
+        if stop_requested(a) or meter.over():
+            skipped["B"].append(item)
+            return None
         try:
             rec = run_b_item(q, arm, questions[q], a, runner)
         except Exception as e:
             rec = {"question_id": q, "arm": arm, "arm_key": arm_key(q, arm), "status": "failed", "error": str(e)[:200], "judge": None, "judge_status": "skipped"}
+        meter.add(tok_in(rec.get("tokens", {})))
         p = os.path.join(G, "B", "records", arm, q + ".json")
         os.makedirs(os.path.dirname(p), exist_ok=True)
         json.dump(rec, open(p, "w"))
         return p, rec
 
-    with ThreadPoolExecutor(a.concurrency) as ex:
-        fa = list(ex.map(one_a, items_a))
-        fb = list(ex.map(one_b, items_b))
-    for r in fa:
-        if r:
-            pending_a.append(r)
-            stats["A_ok" if json.load(open(r))["status"] == "ok" else "A_failed"] += 1
-    for r in fb:
-        if r:
-            pending_b.append(r[0])
-            stats["B_ok" if r[1]["status"] == "ok" and r[1]["judge_status"] == "ok" else "B_failed"] += 1
-    if a.remote:
-        class NS:
-            pass
-        ns = NS()
-        ns.work, ns.remote = os.path.join(G, "work"), a.remote
-        os.makedirs(ns.work, exist_ok=True)
-        ns.out = result_base(a)
-        push(ns, pending_a)
-        ns.out = os.path.join(G, "B", "records")
-        ns.remote_subdir = "stage_g/B"
-        push_b(ns, pending_b)
-    print("PHASE DONE", a.phase, stats, "stopped" if stop_requested(a) else "complete", flush=True)
+    class NS:
+        pass
+    ns_a, ns_b = NS(), NS()
+    ns_a.work = ns_b.work = os.path.join(G, "work")
+    ns_a.remote = ns_b.remote = a.remote
+    ns_a.out, ns_b.out = result_base(a), os.path.join(G, "B", "records")
+    os.makedirs(ns_a.work, exist_ok=True)
+
+    def drain(fn, items, tag, ns, pusher, ok_fn):
+        pending, t0 = [], time.time()
+        with ThreadPoolExecutor(a.concurrency) as ex:
+            for k, r in enumerate(ex.map(fn, items)):
+                if r is None:
+                    continue
+                path, rec = r
+                stats[tag + ("_ok" if ok_fn(rec) else "_failed")] += 1
+                pending.append(path)
+                if a.remote and len(pending) >= 40:
+                    pusher(ns, pending)
+                    pending = []
+                if k % 20 == 0:
+                    print("%s progress %d of %d" % (tag, k, len(items)), stats, "input tokens so far %.1fM" % (meter.total / 1e6), "elapsed %.0fs" % (time.time() - t0), flush=True)
+        if a.remote:
+            pusher(ns, pending)
+
+    drain(one_b, items_b, "B", ns_b, push_b, lambda r: r["status"] == "ok" and r["judge_status"] == "ok")  # part B first: its cost is predictable
+    drain(one_a, items_a, "A", ns_a, push, lambda r: r["status"] == "ok")  # part A interleaved question by question
+    json.dump({"input_tokens_total": meter.total, "ceiling": a.ceiling, "ceiling_hit": meter.over(), "unspent_A": skipped["A"], "unspent_B": skipped["B"]}, open(os.path.join(G, "unspent.json"), "w"))
+    print("PHASE DONE", a.phase, stats, "input tokens %.2fM" % (meter.total / 1e6), "ceiling hit" if meter.over() else ("stopped" if stop_requested(a) else "complete"), flush=True)
     return stats
+
+
+class TokenMeter:
+    """Running total of input tokens (uncached, cache creation and cache reads) over ALL stage-G calls, including those already made."""
+
+    def __init__(self, initial, ceiling):
+        import threading
+        self.total, self.ceiling, self._lock = initial, ceiling, threading.Lock()
+
+    def add(self, n):
+        with self._lock:
+            self.total += n
+
+    def over(self):
+        return self.total > self.ceiling
+
+
+def initial_input_tokens():
+    total = 0
+    for part in ("A", "B"):
+        p = os.path.join(G, part, "ledger.jsonl")
+        if os.path.exists(p):
+            for l in open(p):
+                r = json.loads(l)
+                total += r.get("in_tokens", 0) + r.get("cache_creation", 0) + r.get("cache_read", 0)
+    return total
 
 
 def push_b(ns, paths):
@@ -302,6 +342,7 @@ def parse(argv=None):
     ap.add_argument("--part", choices=["A", "B", "AB"], default="AB")
     ap.add_argument("--backend", default="ssh -F /Users/eric/.ssh/config_fleetops t2-dev /home/eric/emlab-16096/bin/analyst_tool --question {qid} --level H3 --variant g300")
     ap.add_argument("--remote", default="t2-dev")
+    ap.add_argument("--ceiling", type=float, default=40e6, help="stop cleanly when the running total of input tokens passes this")
     ap.add_argument("--concurrency", type=int, default=2)
     ap.add_argument("--stop-file", default=os.path.join(G, "STOP.g300"))
     a = ap.parse_args(argv)

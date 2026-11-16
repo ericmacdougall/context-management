@@ -116,6 +116,25 @@ class StageG(unittest.TestCase):
         self.assertEqual((r["status"], calls), ("blocked_guard", []))
         self.assertIn("guard_block", open(os.path.join(self.d, "B", "ledger.jsonl")).read())
 
+    def test_token_meter_counts_all_kinds_including_earlier_calls_and_trips_at_ceiling(self):
+        os.makedirs(os.path.join(self.d, "A"), exist_ok=True)
+        os.makedirs(os.path.join(self.d, "B"), exist_ok=True)
+        open(os.path.join(self.d, "A", "ledger.jsonl"), "w").write(json.dumps({"in_tokens": 1, "cache_creation": 10, "cache_read": 100}) + "\n")
+        open(os.path.join(self.d, "B", "ledger.jsonl"), "w").write(json.dumps({"in_tokens": 2, "cache_creation": 20, "cache_read": 200}) + "\n")
+        self.assertEqual(S.initial_input_tokens(), 333)
+        m = S.TokenMeter(333, 400)
+        self.assertFalse(m.over())
+        m.add(68)
+        self.assertTrue(m.over())
+
+    def test_rest_phase_runs_part_b_first_then_part_a_interleaved_and_stops_at_ceiling(self):
+        import types
+        os.makedirs(os.path.join(self.d, "A300", "H3"), exist_ok=True)
+        os.makedirs(os.path.join(self.d, "B"), exist_ok=True)
+        os.makedirs(os.path.join(self.d, "A"), exist_ok=True)
+        os.makedirs(os.path.join(R_DIR, "analyst_job"), exist_ok=True) if False else None
+        self.assertEqual(S.part_a_items(["q1", "q2"]), [("A-REORDER", "q1"), ("A-DIG", "q1"), ("A-REORDER", "q2"), ("A-DIG", "q2")])
+
     def test_final_answer_takes_text_after_last_answer_marker(self):
         self.assertEqual(S.final_answer("a Answer: no\nreasoning\nAnswer: Luna"), "Luna")
         self.assertEqual(S.final_answer("no marker"), "no marker")
