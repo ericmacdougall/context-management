@@ -39,3 +39,7 @@ search and open_round were reached through the stdio server (--mcp-config, --str
 ANALYST CANARY (H3, 23 whole-pool low-overlap questions, both arms, 46 calls, run_capped, concurrency 2): 44 ok, 2 rejected (one duplicate id in an ANALYST answer, one rerank id not among the candidates), 0 guard blocks, 0 refused tool calls,
 max 12 tool calls (budget held), 79 tool calls in total (daemon log 80 including one early probe of mine), wall 384 s, counter 46 of 620. Rerank: 31k input tokens and 10 s per call; analyst: 100k input tokens mean (max 289k, repeated turns) and 22 s per call, 3.4 tool calls per question.
 Low-overlap file: out/lowoverlap_pool_h3.json on t2-dev, sha256 c6351d7ffbfacb9e642862b30edcfe187e41b0316eca8f15bdd694431bba73a2, thresholds.100.qids (23). A first push left macOS ._ files on the host (removed); tar now runs with COPYFILE_DISABLE.
+
+ANALYST REST AND SECONDARY PHASES (run_capped, concurrency 2, own counter 587 of 620; wall 2,975 s for the 541 calls after the canary): 587 result files in total (canary included), 26 rejected (4.4%), 0 guard blocks, 0 crashed calls,
+0 refused tool calls and no question over 12 tool calls (analyst mean 1.6 tool calls, max 12). Rejections per arm and level: ANALYST H1 3/94, H2 4/94, H3 2/94, H3_top20 1/23; ANALYST-RERANK-ONLY H1 6/94, H2 6/94, H3 4/94.
+Types: id not among candidates 11, duplicate id 3, malformed or trailing JSON ("Extra data" or delimiter errors) 11, results count 1. WAL and work directories: 1,752 to 2,294 and 1,921 to 2,463 over this job.
