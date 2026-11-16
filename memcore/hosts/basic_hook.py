@@ -34,7 +34,9 @@ def _open(req, timeout):
 
 
 def fetch_new_prompt(url: str, token: str, prompt: str, session_id: str = "", timeout_s: float = CLIENT_TIMEOUT_S) -> dict:
-    """{"new_prompt", "injected", "reason", "seconds"}. Never raises; the original prompt on any failure."""
+    """{"new_prompt", "injected", "reason", "seconds"}. For a str prompt it never raises: the original prompt on any
+    failure (a non-str prompt is a caller bug: TypeError). The time-out applies per socket operation; a reply that
+    trickles in past the budget is discarded as "timeout" once read, so the worst case is a few multiples of timeout_s."""
     t0 = time.monotonic()
 
     def orig(reason):

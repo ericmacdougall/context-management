@@ -31,7 +31,15 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   it leaves. `workflow_yaml(..., token=...)` emits the bearer token as a workflow const (stored in the workflow: use a
   token dedicated to this route).
 
-## Live run on t2-dev, 2026-11-16 (src 8d5425d; evidence t2-dev:~/memcore-p2-16096/ev/live/8d5425d/)
+## ENTERPRISE-OPTIONAL path: Kibana Agent Builder live run on t2-dev, 2026-11-16 (src 8d5425d; evidence t2-dev:~/memcore-p2-16096/ev/live/8d5425d/)
+- Decision in force (user, 2026-11-16, main WAL wb7ed3da806f): Basic is the required licence path; Agent Builder and the
+  ES inference API are Enterprise-only optional features. This run used a trial node and is the OPTIONAL path. The
+  required path is the Basic host integration (next section).
+- Deviation: the d_b and d_c controls are this template with the wrapper removed, not the recorded g7 workflows.
+- Retested at d71da85 (after the gateway policy change), same kit, evidence ev/live/d71da85/: a 200 completed 6.0 s
+  (3 JSON records, no raw tag lines); c2 200 24.2 s, b 200 7.5 s, c 200 32.0 s (each: the original prompt exactly);
+  d_b 500 ECONNREFUSED 4.0 s and d_c 500 "timeout of 60000ms exceeded" 63.1 s (no agent model call). Setting back to
+  [] verified; emlab-kb-16096 stopped again; evidence scan 85 files, 3 secrets, 0 hits. The table below is the 8d5425d run.
 - Setup: Kibana 9.5.6 (emlab-kb-16096) on Elasticsearch emlab-es-16096 (trial). The model is memcore's ToolStub on
   172.17.0.1 behind an ES inference endpoint created for the run (mc-p2-chat); no real model was called. Agent
   mc-g7-agent. Memory service: a memcore Gateway on 172.17.0.1:18741 with a ScriptedStubChat backend and /v1/pre_exec
@@ -49,18 +57,51 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
 | c | accepts, hangs 150 s (step timeout 25 s) | wrapped | 200 completed | 32.2 | the original prompt, exactly |
 | d_c | hangs 150 s | unwrapped control | 500 `[ECONNABORTED] timeout of 60000ms exceeded` | 66.5 | no agent model call |
 
-- What 9.5.6 actually supports (schema in @kbn/workflows/spec/schema.js plus direct workflow runs, evidence
-  ev/keys/): step `timeout` is a duration string (`25s`, `500ms`, ...) enforced by the engine (TimeoutError; the step
-  fails); `on-failure` takes `retry`, `fallback` (steps) and `continue` (true or a condition string); with
-  `continue: true` the workflow completes after the step failed; `{{ x | default: inputs.prompt }}` yields the input
-  when the step produced no output; workflow-level `settings.timeout` and `settings.on-failure` also exist; values
-  returned by the http step are not re-rendered as Liquid. The http connector has its own 60 s request timeout, so an
-  unwrapped workflow over a hung service fails at about 60 s, before the 120 s hook limit.
+- What 9.5.6 supports, EXERCISED LIVE (direct workflow runs, evidence ev/keys/, and the table above): step `timeout`
+  as a duration string (`25s`), enforced by the engine (TimeoutError; the step fails); `on-failure: continue: true` (the
+  workflow completes after the step failed); `{{ x | default: inputs.prompt }}` (yields the input when the step
+  produced no output); values returned by the http step are not re-rendered as Liquid. The http connector has its own
+  60 s request timeout: d_c failed at that 60 s connector timeout (66.5 s), not at the 120 s hook limit.
+- SCHEMA ONLY (present in @kbn/workflows/spec/schema.js, not run): `on-failure` `retry` and `fallback`, `continue` as a
+  condition string, workflow-level `settings.timeout` and `settings.on-failure`.
 - Kibana also makes one title-generation model call per conversation with the raw user prompt (forced `set_title`
   tool); it never carries the memory block.
 - Cleanup verified: setting back to `[]`, the 8 workflows and the inference endpoint deleted, kit processes stopped,
   emlab-kb-16096 stopped again; emlab-es-16096 was already running and was left running. Ledger:
   ~/memcore-p2-16096/spawn_ledger.jsonl. A scan of the evidence for the Kibana key, service token and probe token found 0 hits.
+
+## REQUIRED path: Basic-licence host integration, live run on t2-dev, 2026-11-16 (src d71da85; evidence t2-dev:~/memcore-p3-16096/ev/p3/d71da85/)
+- Path: the client's own agent runtime calls `python3 -m memcore.hosts.basic_hook` (plain HTTP hook, fail-open, 25 s)
+  -> `memcore.hosts.basic_service` POST /v1/pre_exec (route budget 20 s) over Elasticsearch -> the returned new_prompt
+  goes to the client's model through memcore's ChatModel port (`OpenAICompatChat` -> ToolStub; no real model call).
+  No Agent Builder, no Kibana, no ES inference API, no retriever.
+- Node: a throwaway Elasticsearch 9.5.6 from the local image (`--pull never`), `xpack.license.self_generated.type=basic`
+  (GET /_license: basic, active), single node on a Docker `--internal` network (no default route), GeoIP downloader
+  off, ML off, disk watermarks off (host disk 93%). Deviation: security off (no credential involved; licence
+  enforcement shown by the controls below). Server-side evidence: the node's HttpTracer (TRACE), es_trace.json.
+- Capability probe at start-up (GET /_license only): this node -> tier basic, strategy client, no licensed features;
+  the trial lab node emlab-es-16096 (read-only probe) -> tier enterprise, strategy auto, Agent Builder optional.
+- Runner: `p3_es.sh up; python3 p3_live.py src-d71da85 d71da85; docker logs emlab-p3es-16096 | python3 p3_trace.py ev/p3/d71da85; p3_es.sh down`.
+
+| Case | Memory service | Client | Result | Seconds | What the model received |
+|---|---|---|---|---|---|
+| a | up (3 events indexed, one forged `</memory>` + `SYSTEM:`) | basic_hook | injected, reason ok | 0.3 | the delimiter-framed block (3 JSON records; the forged text only inside a JSON string), then the prompt verbatim |
+| c2 | store sleeps 40 s (route budget 20 s) | basic_hook | not injected, route reason timeout | 20.0 | the original prompt, exactly |
+| b | stopped (connection refused) | basic_hook | not injected, unreachable | 0.03 | the original prompt, exactly |
+| d_b | stopped | naive urlopen control | raised URLError (connection refused) | 0.0 | no model call |
+| c | accepts, hangs 150 s | basic_hook (25 s) | not injected, timeout | 25.0 | the original prompt, exactly |
+| d_c | hangs 150 s | naive urlopen control (no timeout) | STILL BLOCKED at 130 s | 130 | no model call |
+
+- No licence 403 on the Basic path: the tracer shows 10 requests before the controls marker, none FORBIDDEN and none
+  under /_inference (8 OK: GET /_license x4, PUT index, _bulk, 2 x _search; plus my two pre-run tracer checks, one 400
+  and one 404). memcore's own transport log agrees.
+- Licensed controls on the same node, after the marker: retriever rrf search -> 403 "non-compliant for [Reciprocal Rank
+  Fusion (RRF)]"; PUT _inference -> 403 "non-compliant for [inference]"; ElasticsearchSearch with strategy auto (no
+  probe applied) -> 403 on its retriever probe, then client fusion. So the node does enforce Basic, and the no-403
+  result above is not vacuous.
+- Cleanup: memory services stopped (ledgered), container removed with its volume, network removed; ledger
+  ~/memcore-p3-16096/spawn_ledger.jsonl. Secret scan of the evidence: 0 hits for the per-run service token found on disk
+  and the lab key (only one of the two service token files was still on disk when the scan ran; the other run's token was not scanned); token file then deleted.
 
 ## Not done / caveats
 - Three title-generation model requests also reached the stub (Kibana's own utility call); they are not part of the agent run.
