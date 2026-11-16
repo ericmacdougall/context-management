@@ -1,0 +1,203 @@
+{
+ "header": {
+  "commit": "71f3bfaa28eab7992fa9e859e5731e9daefeeb69",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 9.35498046875,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item11",
+  "params": {
+   "calls": [
+    20,
+    60
+   ],
+   "hosts": [
+    "window4",
+    "window8",
+    "compacting"
+   ],
+   "providers": 2
+  },
+  "time_utc": "2026-11-16T19:28:07Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "assistant_events": 20,
+   "blocking_gaps": [],
+   "calls": 20,
+   "distinct_assistant": 20,
+   "distinct_user": 20,
+   "host": "window4",
+   "provider": "anthropic",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 20
+  },
+  {
+   "assistant_events": 60,
+   "blocking_gaps": [],
+   "calls": 60,
+   "distinct_assistant": 60,
+   "distinct_user": 60,
+   "host": "window4",
+   "provider": "anthropic",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 60
+  },
+  {
+   "assistant_events": 20,
+   "blocking_gaps": [],
+   "calls": 20,
+   "distinct_assistant": 20,
+   "distinct_user": 20,
+   "host": "window8",
+   "provider": "anthropic",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 20
+  },
+  {
+   "assistant_events": 60,
+   "blocking_gaps": [],
+   "calls": 60,
+   "distinct_assistant": 60,
+   "distinct_user": 60,
+   "host": "window8",
+   "provider": "anthropic",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 60
+  },
+  {
+   "assistant_events": 20,
+   "blocking_gaps": [],
+   "calls": 20,
+   "distinct_assistant": 20,
+   "distinct_user": 20,
+   "host": "compacting",
+   "provider": "anthropic",
+   "state": "complete",
+   "summary_events": 17,
+   "summary_provs": [
+    "host"
+   ],
+   "user_events": 20
+  },
+  {
+   "assistant_events": 60,
+   "blocking_gaps": [],
+   "calls": 60,
+   "distinct_assistant": 60,
+   "distinct_user": 60,
+   "host": "compacting",
+   "provider": "anthropic",
+   "state": "complete",
+   "summary_events": 57,
+   "summary_provs": [
+    "host"
+   ],
+   "user_events": 60
+  },
+  {
+   "assistant_events": 20,
+   "blocking_gaps": [],
+   "calls": 20,
+   "distinct_assistant": 20,
+   "distinct_user": 20,
+   "host": "window4",
+   "provider": "openai",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 20
+  },
+  {
+   "assistant_events": 60,
+   "blocking_gaps": [],
+   "calls": 60,
+   "distinct_assistant": 60,
+   "distinct_user": 60,
+   "host": "window4",
+   "provider": "openai",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 60
+  },
+  {
+   "assistant_events": 20,
+   "blocking_gaps": [],
+   "calls": 20,
+   "distinct_assistant": 20,
+   "distinct_user": 20,
+   "host": "window8",
+   "provider": "openai",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 20
+  },
+  {
+   "assistant_events": 60,
+   "blocking_gaps": [],
+   "calls": 60,
+   "distinct_assistant": 60,
+   "distinct_user": 60,
+   "host": "window8",
+   "provider": "openai",
+   "state": "complete",
+   "summary_events": 0,
+   "summary_provs": [],
+   "user_events": 60
+  },
+  {
+   "assistant_events": 20,
+   "blocking_gaps": [],
+   "calls": 20,
+   "distinct_assistant": 20,
+   "distinct_user": 20,
+   "host": "compacting",
+   "provider": "openai",
+   "state": "complete",
+   "summary_events": 17,
+   "summary_provs": [
+    "host"
+   ],
+   "user_events": 20
+  },
+  {
+   "assistant_events": 60,
+   "blocking_gaps": [],
+   "calls": 60,
+   "distinct_assistant": 60,
+   "distinct_user": 60,
+   "host": "compacting",
+   "provider": "openai",
+   "state": "complete",
+   "summary_events": 57,
+   "summary_provs": [
+    "host"
+   ],
+   "user_events": 60
+  }
+ ],
+ "summary": {
+  "failing_first_baseline_aa30130": {
+   "window4_user_events_for_20": 54,
+   "window8_user_events_for_20": 80
+  },
+  "pass": 12,
+  "runs": 12
+ }
+}
