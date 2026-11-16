@@ -153,13 +153,14 @@ POOLS = {
         E("retract", "CT", "r1", "u1", based_on="HEAD"),
         E("revoke", "CREV", None, "u1", target="n1"),
         E("propose", "C6", "r1", "a1", value_ref="vC6", based_on=0),
+        E("grant", "CGR", "r1", "u1", target="a1", role="propose"),    # round 3: a second non-human proposer, so non-human items can reach the per-req cap
     ],
 }
 for _name, _pool in POOLS.items():
     _missing = set(BINDING) - {e["type"] for e in _pool if e.get("based_on") == "HEAD"}
     assert not _missing, ("every pool needs a HEAD-bound event of every binding type", _name, _missing)
 
-SMALL_CAPS = [("MAX_OPEN_PER_PRINCIPAL = 16\n", "MAX_OPEN_PER_PRINCIPAL = 2\n"), ("MAX_OPEN_PER_REQ = 256\n", "MAX_OPEN_PER_REQ = 3\n")]
+SMALL_CAPS = [("MAX_OPEN_PER_PRINCIPAL = 16\n", "MAX_OPEN_PER_PRINCIPAL = 2\n"), ("MAX_OPEN_PER_REQ = 256 ", "MAX_OPEN_PER_REQ = 3 ")]
 DEPTH = {"r1": 6, "r2": 8, "r3": 8, "caps": 8, "joint": 4}
 CTL_DEPTH = {"r1": 6, "r2": 6, "r3": 6, "caps": 6}
 if os.environ.get("B1_QUICK"):
@@ -167,23 +168,23 @@ if os.environ.get("B1_QUICK"):
     CTL_DEPTH = {"r1": 3, "r2": 4, "r3": 4, "caps": 5}
 
 OWN = {
-    "self_approval_removed": ("pol._core", "            if verb == \"accept\" and not human and prop[\"author_kind\"] != \"human\":\n                return \"self_approval\", []\n", ""),
     "idempotency_removed": ("pol._core", "    old = view.idem(pid, ev[\"idem\"])\n", "    old = None\n"),
     "authority_removed": ("pol._core", "    # ---- head-moving types\n    if not view.has_authority(req, pid):\n        return \"unauthorized\", []\n",
                           "    # ---- head-moving types\n"),
 }
 # (name, (module, old, new), expected invariant, scenarios)
+# Round 3 (amendment 5): agent_may_decide replaces the two N3 controls and self_approval_removed (the rules they broke are gone: a
+# non-human never decides); cap_blocks_humans is R3-4 reintroduced.
 CONTROLS = [
-    ("n3_agent_reject_moves_head", PATCHES["n3_agent_reject_moves_head"], "L2_head_starvation", ["r3", "r1"]),
+    ("agent_may_decide", PATCHES["agent_may_decide"], "I2_agent_head_move", ["r3"]),
+    ("cap_blocks_humans", PATCHES["cap_blocks_humans"], "I18_human_locked_out_by_nonhumans", ["caps"]),
     ("n2_no_role", PATCHES["n2_no_role"], "I15_proposal_without_role", ["r2"]),
     ("n2_no_cap", PATCHES["n2_no_cap"], "I17_open_cap", ["caps"]),
     ("stale_unchecked", PATCHES["stale_unchecked"], "I4_decision_not_bound_to_head", ["r1", "r2"]),
     ("agent_may_supersede", PATCHES["agent_may_supersede"], "I2_agent_head_move", ["r3"]),
     ("m2_no_original", PATCHES["m2_no_original"], "I6_redelivery_changed_state_or_lost_outcome", ["r2"]),
-    ("self_approval_removed", OWN["self_approval_removed"], "I2_agent_head_move", ["r3"]),
     ("idempotency_removed", OWN["idempotency_removed"], "I6_redelivery_changed_state_or_lost_outcome", ["r2"]),
     ("authority_removed", OWN["authority_removed"], "I1_authority", ["r2"]),
-    ("n3_value_unchanged_moves_head", PATCHES["n3_value_unchanged_moves_head"], "I16_nonhuman_head_move_without_value_change", ["r1"]),
 ]
 CTL_BY_NAME = {c[0]: c for c in CONTROLS}
 
@@ -304,7 +305,7 @@ def explore(arm, scen, depth, max_cex=2):
             stats["transitions"] += 1
             stats["codes"][code] = stats["codes"].get(code, 0) + 1
             ps = json.loads(snap(post)) if post is not st else pre
-            bad = INV.transition(pre, ev, ps, code, orig, refused)
+            bad = INV.transition(pre, ev, ps, code, orig, refused, core.MAX_OPEN_PER_PRINCIPAL)
             k2 = INV.sha(snap(post))
             if k2 not in seen:
                 seen.add(k2)
@@ -383,7 +384,7 @@ def main():
             "outcome_codes_not_reached": missing, "unreachable_by_design": UNREACHABLE, "controls": ctl, "pass_conditions_met": ok, "controls_found_expected": ctl_ok,
             "liveness_bound": "L2: attempts <= (open human-authored proposals on the requirement at the read) + 1, CORE-RULES section 7; checked inductively on every transition",
             "seconds_total": round(time.time() - t0, 1),
-            "not_proven": "bounded exhaustive search (depths in params); joint pool only to depth 3; the caps scenario runs a variant whose caps are 2 and 3 "
+            "not_proven": "bounded exhaustive search (depths in params; the joint pool is the shallowest); the caps scenario runs a variant whose caps are 2 and 3 "
                           "(constants only); candidates_full not reached by BFS; four principals (two humans, one agent, one analyst)"}
     data["items"] = dict(zip(("file", "sha256"), write_items("b1_modelcheck", rows)))
     write_result("b1_modelcheck", {"depth": DEPTH, "ctl_depth": CTL_DEPTH, "principals": PRINCIPALS, "authority": AUTHORITY, "proposers": PROPOSERS,

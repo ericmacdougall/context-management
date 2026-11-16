@@ -2,7 +2,8 @@
 code), written independently of the reducer's branching. Each function returns a list of violated invariant names (empty = holds).
 
   I1  authority: a decision-like outcome needs decide authority and an unrevoked principal
-  I2  a non-human moves the head or the value only by accepting an open HUMAN-authored proposal
+  I2  a non-human never moves the head or the value and never obtains a decision-like outcome (round 3, CORE-RULES 3b948ac,
+      ASSUMPTION until the user confirms: non-humans only propose and remark)
   I3  a proposal or remark never changes the head
   I4  head-moving outcomes are bound to the head version (or the contested sibling / contest base)
   I5  a refused event changes nothing
@@ -16,7 +17,9 @@ code), written independently of the reducer's branching. Each function returns a
   I14 every contested candidate is human-authored and there are at most MAX_CANDIDATES
   I15 proposing or remarking needs a role (decide authority or proposer) and an unrevoked principal
   I16 a non-human event that changes no value never moves the head (N3; CORE-RULES rules 11 and 15)
-  I17 open items stay within the caps (per principal per requirement, per requirement)
+  I17 open items stay within the caps (per principal per requirement; per requirement for NON-HUMAN-authored items only, R3-4)
+  I18 a human is refused proposal_cap only when that human's own per-principal cap on the requirement is reached (non-human items never
+      lock a human out, R3-4)
   L2  head-movement starvation bound: a non-human event never increases the number of open human-authored proposals on a requirement,
       and moves the head only if it consumes one of them. By induction, a human who reads version v and retries after each `stale` is
       applied within (open human-authored proposals at the read) + 1 attempts, whatever non-humans deliver."""
@@ -42,7 +45,7 @@ def open_human(s, req):
     return sum(1 for d in s["props"].get(req, {}).values() if d["kind"] == "proposal" and d["status"] == "open" and d["author_kind"] == "human")
 
 
-def transition(pre, ev, post, code, orig, refused):
+def transition(pre, ev, post, code, orig, refused, max_open_principal=None):
     bad = []
     if not isinstance(ev, dict):
         return ["I5_refused_event_changed_state"] if (code in refused and canon(pre) != canon(post)) else []
@@ -64,14 +67,10 @@ def transition(pre, ev, post, code, orig, refused):
         moved = h1["version"] != h0["version"]
         valchg = (h0["value_ref"], h0["status"]) != (h1["value_ref"], h1["status"])
         if kind != "human" and kind is not None:
-            if moved or valchg:
-                prop = pre["props"][req].get(ev.get("proposal"))
-                if not (code == "decided_accept" and prop is not None and prop["kind"] == "proposal" and prop["author_kind"] == "human"):
-                    bad.append("I2_agent_head_move")
-            # I16 is CORE-RULES rule 11 exactly: a non-human REJECT changes no value and never moves the head. (An earlier, stricter
-            # reading, "any non-human event that changes no value never moves the head", is contradicted by rule 15 + section 7 +
-            # reference ambiguity 11: a non-human may accept an open human proposal whose value is already current after a resolve.)
-            # I16 (N3 as the brief states it, amendment 3): a non-human event that changes no value never moves the head.
+            if moved or valchg or code in DECISION_LIKE:
+                bad.append("I2_agent_head_move")
+            # I16 (N3 as the brief states it, amendment 3): a non-human event that changes no value never moves the head. Round 3 makes it a
+            # consequence of I2; kept as a separate, weaker check.
             if moved and not valchg:
                 bad.append("I16_nonhuman_head_move_without_value_change")
             oh0, oh1 = open_human(pre, req), open_human(post, req)
@@ -100,6 +99,10 @@ def transition(pre, ev, post, code, orig, refused):
                 bad.append("I12_value_from_closed_proposal")
         if code not in refused and t != "grant" and ev.get("id") in pre["ids"][req]:
             bad.append("I13_duplicate_event_id_applied")
+        if code == "proposal_cap" and kind == "human" and max_open_principal is not None:
+            own = sum(1 for d in pre["props"][req].values() if d["status"] == "open" and d["author"] == pid)
+            if own < max_open_principal:
+                bad.append("I18_human_locked_out_by_nonhumans")
     return bad
 
 
@@ -116,7 +119,7 @@ def state(s, restore_snapshot, max_candidates, max_open_principal, max_open_req)
         for d in s["props"][r].values():
             if d["status"] == "open":
                 per[d["author"]] = per.get(d["author"], 0) + 1
-                tot += 1
+                tot += d["author_kind"] != "human"
         if tot > max_open_req or any(v > max_open_principal for v in per.values()):
             bad.append("I17_open_cap")
     if canon(restore_snapshot(s)) != canon(s):

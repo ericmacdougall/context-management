@@ -13,12 +13,12 @@ import random
 import time
 
 from exp import common  # noqa: F401  (adds the policy root to sys.path)
-from exp.common import write_items, write_result
+from exp.common import write_items, write_result, lab_authority, lab_issue
 from exp.patches import variant
 from exp.seeds import seeds
 from pol import _pdp
 from pol import labels as LAB
-from pol.directory import Directory, Principal, SessionAuthority
+from pol.directory import Directory, Principal
 from pol.enforce import AuditLog, Enforcer, PolicyDenied, Store
 from pol.labels import DIMENSIONS, Label, violated_dims
 from pol.policy import ACTIONS, Dest, Policy
@@ -81,17 +81,18 @@ def rand_principal(rng, tenant="t1", pid=None):
 def base_policy():
     T = ["t1", "t2"]
     dests = {
-        "d_model_eu": Dest("model", "eu", True, 3, "m1", None, T),
-        "d_model_eu_cloud": Dest("model", "eu", False, 3, "m2", None, T),
-        "d_model_us": Dest("model", "us", False, 2, "m3", None, T),
-        "d_model_cyber": Dest("model", "us", False, 3, "m4", "cyber", T),
-        "d_embed_eu": Dest("embedder", "eu", True, 3, "m1", None, T),
-        "d_embed_us": Dest("embedder", "us", False, 2, "m3", None, T),
+        # R3-6 (amendment 5): destinations name PINNED ids "<family>@<version>"; labels keep naming families (a family spec covers its versions)
+        "d_model_eu": Dest("model", "eu", True, 3, "m1@1", None, T),
+        "d_model_eu_cloud": Dest("model", "eu", False, 3, "m2@1", None, T),
+        "d_model_us": Dest("model", "us", False, 2, "m3@1", None, T),
+        "d_model_cyber": Dest("model", "us", False, 3, "m4@1", "cyber", T),
+        "d_embed_eu": Dest("embedder", "eu", True, 3, "m1@1", None, T),
+        "d_embed_us": Dest("embedder", "us", False, 2, "m3@1", None, T),
         "d_export_eu": Dest("export", "eu", True, 3, None, None, T),
         "d_export_us": Dest("export", "us", False, 1, None, None, T),
     }
     return Policy(1, grants={t: frozenset(ACTIONS) for t in T}, hold_events=frozenset(["h1"]), destinations=dests,
-                  models={m: {"family": m, "version": "1"} for m in MODELS},
+                  models={m + "@1": {"family": m, "version": "1"} for m in MODELS},
                   authorizations={"auth1": {"tenant": "t1", "programme": "cyber", "expires": 1000, "principal": "p1"}})
 
 
@@ -177,11 +178,11 @@ def roundtrip(seed):
     rng = random.Random("%s|roundtrip" % seed)
     me = Principal("rt", "t1", frozenset(GROUPS), 3, True, "human", "eu", None)
     d = Directory([me])
-    sa = SessionAuthority(d)
+    sa = lab_authority(d)
     pol = base_policy()
     enf = Enforcer(lambda: pol, d, sa, AuditLog())
     store = Store(enf)
-    s = sa.issue("rt", "owner_ui")
+    s = lab_issue(sa, "rt", "owner_ui")
     rows, bad, stored = [], 0, 0
     for k in range(RT_PER_SEED):
         leaves = [rand_label(rng, permissive=0.9) for _ in range(rng.randint(1, 4))]

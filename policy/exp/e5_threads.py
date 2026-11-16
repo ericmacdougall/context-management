@@ -24,11 +24,11 @@ import time
 from exp import common  # noqa: F401
 from exp import e245_kit as K
 from exp import threads_world as TW
-from exp.common import write_items, write_result
+from exp.common import write_items, write_result, lab_authority, lab_issue
 from exp.patches import control, variant
 from exp.seeds import seeds
 from pol import _core
-from pol.directory import Directory, Principal, SessionAuthority
+from pol.directory import Directory, Principal
 from pol.enforce import AuditLog, Enforcer
 from pol.labels import Label
 from pol.policy import parse_policy
@@ -96,14 +96,14 @@ def build_decision_views(D, attrs, authority, script, notice, mutated_for=None):
     a viewer, every value that viewer may not read gets other text (the same events otherwise)."""
     ps = [Principal(h, "t1", frozenset(a["groups"]), a["clearance"], a["restricted_ok"], "human", a["region"], None) for h, a in attrs.items()]
     d = Directory(ps)
-    sa = SessionAuthority(d)
+    sa = lab_authority(d)
     pol = parse_policy({"version": 1, "grants": {"t1": ["read", "append"]}, "conflict_notice": notice})
     enf = Enforcer(lambda: pol, d, sa, AuditLog())
     eng = D.MemoryEngine({"tenant": "t1", "principals": {h: "human" for h in attrs}, "authority": authority, "admins": []})
     vault = D.Vault()
     vault._key = b"e5-fixed-key-so-refs-compare-across-replays"
     svc = D.DecisionService(enf, {"t1": eng}, vault)
-    sess = {h: sa.issue(h, "owner_ui") for h in attrs}
+    sess = {h: lab_issue(sa, h, "owner_ui") for h in attrs}
     refs, n = {}, [0]
     for step in script:
         if step[0] == "props":

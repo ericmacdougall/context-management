@@ -17,7 +17,7 @@ import random
 import time
 
 from exp import common  # noqa: F401
-from exp.common import write_items, write_result
+from exp.common import write_items, write_result, lab_authority, lab_issue
 from exp.core_gen import Gen, TENANT, config, label
 from exp.patches import CONTROLS as PATCHES, variant
 from exp.ref_reducer import RefCore
@@ -25,13 +25,17 @@ from exp.seeds import seeds
 import pol._core as CORE
 
 PER_SEED = int(__import__("os").environ.get("B2_PER_SEED", "600"))
+FLOORS = {}                                       # per-control mismatch-rate floor; default 0.10 (amendment 5 lists any exception)
 MODES = (("random", 0.70), ("cap", 0.15), ("contest", 0.15))
 SNAP_CONTROLS = {
     "snapshot_drops_revocations": ("pol._core", "\"revoked\": sorted(self.revoked),\n                \"req_labels\": self.req_labels",
                                    "\"revoked\": [],\n                \"req_labels\": self.req_labels"),
     "restore_drops_idempotency": ("pol._core", "        s.idems = {(x[0], x[1]): [x[2], x[3]] for x in snap[\"idems\"]}\n", "        s.idems = {}\n"),
 }
-DIFF_CONTROLS = ["n3_agent_reject_moves_head", "n3_value_unchanged_moves_head", "n2_no_cap", "n2_no_role", "m2_no_original", "stale_unchecked", "agent_may_supersede"]
+# amendment 5 (round 3): agent_may_decide replaces the two N3 controls (their rules are gone). cap_blocks_humans is NOT a B2 control:
+# the per-requirement cap (256 non-human items) is unreachable here (3 non-human principals x per-principal cap 16 = 48), so the dev
+# run found it in 0 logs; it is detected by B1 (caps scenario with MAX_OPEN_PER_REQ patched to 3) and by exp/pg_diff's caps arm.
+DIFF_CONTROLS = ["agent_may_decide", "n2_no_cap", "n2_no_role", "m2_no_original", "stale_unchecked", "agent_may_supersede"]
 
 
 def canon(o):
@@ -145,18 +149,18 @@ def run_log(core, evs, rng, rows, arm, li, record_events):
 def service_audit(evs):
     """Drive the DecisionService over MemoryEngine with real sessions from the same log; every refusal returned must be in the AuditLog."""
     from pol.decisions import DecisionService, MemoryEngine, Vault
-    from pol.directory import Directory, Principal, SessionAuthority
+    from pol.directory import Directory, Principal
     from pol.enforce import AuditLog, Enforcer
     from pol.policy import parse_policy
     cfg = config()
     d = Directory([Principal(p, TENANT, frozenset(["g1"]), 3, False, k, "eu", None) for p, k in cfg["principals"].items()])
     pol = parse_policy({"version": 1})
-    sa, audit = SessionAuthority(d), AuditLog()
+    sa, audit = lab_authority(d), AuditLog()
     svc = DecisionService(Enforcer(lambda: pol, d, sa, audit), {TENANT: MemoryEngine(cfg)}, Vault())
     sess = {}
     for p, k in cfg["principals"].items():
         for ch in (("owner_ui", "owner_cli") if k == "human" else ("agent_api",)):
-            sess[(p, ch)] = sa.issue(p, ch)
+            sess[(p, ch)] = lab_issue(sa, p, ch)
     full = {}                                         # generator id -> (service id, value_ref, author)
     returned = []
     for ev in evs:
@@ -231,7 +235,7 @@ def main():
             n_bad += bad
             r = sub[-1]
             rows.append({"kind": "ctl_log", "arm": name, "log": lid, "first_mismatch": r["first_mismatch"], "live_sha": r["live_sha"], "rebuild_sha": r["rebuild_sha"]})
-        ctl[name] = {"logs_with_mismatch": n_bad, "rate": n_bad / len(logs), "meets_floor": n_bad / len(logs) >= (0.03 if name == "n3_value_unchanged_moves_head" else 0.10)}
+        ctl[name] = {"logs_with_mismatch": n_bad, "rate": n_bad / len(logs), "meets_floor": n_bad / len(logs) >= FLOORS.get(name, 0.10)}
     ok = (mism == 0 and reb_bad == 0 and not missing and contested_logs >= 0.10 * len(logs) and restores >= 3000 and svc_bad == 0 and svc_refusals > 0)
     ctl_ok = all(c["meets_floor"] for c in ctl.values())
     verdict = "PASS" if ok and ctl_ok else "FAIL"

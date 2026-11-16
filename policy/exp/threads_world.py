@@ -11,7 +11,8 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
-from pol.directory import Directory, Principal, SessionAuthority
+from exp.common import lab_authority, lab_issue
+from pol.directory import Directory, Principal
 from pol.labels import Label
 from pol.policy import parse_policy
 
@@ -98,7 +99,7 @@ def build_view(E, world, viewer):
     ps = [Principal(v[0], v[1], frozenset(v[2]), 3, False, "human", "eu", None) for v in viewers(world)]
     ps.append(Principal("an", "t1", frozenset(all_groups(world)), 3, False, "analyst", "eu", None))
     d = Directory(ps)
-    sa = SessionAuthority(d)
+    sa = lab_authority(d)
     pol = parse_policy({"version": 1, "grants": {"t1": ["append", "read", "inject", "send_inbox", "send_model"], "t2": ["read", "inject"]},
                         "models": {"m-eu-1": {"family": "m-eu", "version": "1"}},
                         "destinations": {"d_local": {"kind": "model", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m-eu-1",
@@ -110,11 +111,11 @@ def build_view(E, world, viewer):
     for iid in world.order:
         it = world.items[iid]
         rid[iid] = store._put(sorted(it.label.tenants)[0], it.text, it.label, ())          # planted
-    an = sa.issue("an", "agent_api")
+    an = lab_issue(sa, "an", "agent_api")
     for fid, ins in world.findings:
         text = "finding %s (" % fid + " + ".join(world.items[i].text for i in ins) + ")"
         rid[fid] = store.append_derived(an, text, [rid[i] for i in ins])
-    vs = sa.issue(vid, "owner_ui")
+    vs = lab_issue(sa, vid, "owner_ui")
     view = {"records": []}
     for k in [rid[i] for i in world.order] + [rid[f] for f, _ in world.findings]:
         try:

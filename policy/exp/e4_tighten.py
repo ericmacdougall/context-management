@@ -12,9 +12,9 @@ from dataclasses import replace
 
 from exp import common  # noqa: F401
 from exp import e245_kit as K
-from exp.common import write_items, write_result
+from exp.common import write_items, write_result, lab_authority, lab_issue
 from exp.seeds import seeds
-from pol.directory import Directory, Principal, SessionAuthority
+from pol.directory import Directory, Principal
 from pol.labels import Label
 from pol.policy import ACTIONS, parse_policy
 import pol.enforce as PE
@@ -40,11 +40,11 @@ def one(E, seed, ci, path, tighten, i):
     rgroups = rng.choice([["g1"], ["g1", "g2"]])
     dr = Directory([Principal("s", "t1", frozenset(["g1", "g2"]), 3, True, "human", "eu", None),
                     Principal("r", "t1", frozenset(rgroups), rng.choice([2, 3]), False, "agent", "eu", "d_model_eu")])
-    sessions = SessionAuthority(dr)
+    sessions = lab_authority(dr)
     audit = E.AuditLog()
     enf = E.Enforcer(lambda: cur[0], dr, sessions, audit)
     store = E.Store(enf)
-    s = sessions.issue("s", "owner_ui")
+    s = lab_issue(sessions, "s", "owner_ui")
     marker = "MK%08x" % rng.getrandbits(32)
     lab = Label(["t1"], acl=[["g1"]] + ([["g2", "g1"]] if rng.random() < 0.5 else []), regions=["eu"], sensitivity=rng.choice([0, 1, 2]),
                 subjects=rng.choice([[], ["s1"]]))

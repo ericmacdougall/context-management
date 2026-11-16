@@ -13,7 +13,7 @@ import types
 
 from exp.patches import ROOT, variant
 
-DECIDE_LINE = "        d = evaluate(p, action, labels, request, pol, float(self._clock()), rcp)"
+DECIDE_LINE = "    d = _evaluate(p, action, labels, request, pol, float(enf._clock()), rcp)"
 
 
 def multi_variant(module_name, pairs, tag):
@@ -36,7 +36,7 @@ def multi_variant(module_name, pairs, tag):
 
 def bypass(action):
     return variant("pol.enforce", DECIDE_LINE,
-                   DECIDE_LINE + " if action != %r else Decision(True, 'ctl_bypass', ver, action)" % action, "bypass_" + action)
+                   DECIDE_LINE + " if action != %r else _Decision(True, 'ctl_bypass', ver, action)" % action, "bypass_" + action)
 
 
 def derive_first():
@@ -51,7 +51,7 @@ def id_pattern_guard():
          "            if __import__('re').search(r'answer_[0-9a-f]{4,}|sharegpt_\\w+', r.text):\n"
          "                self._enf._deny('id_pattern', action, self._pid(session), self._enf._ver())\n"
          "            recs.append(r)\n        return recs"),
-        (DECIDE_LINE, "        d = Decision(True, 'id_guard_only', ver, action)"),
+        (DECIDE_LINE, "    d = _Decision(True, 'id_guard_only', ver, action)"),
     ], "id_pattern_guard")
 
 
@@ -62,10 +62,9 @@ def read_without_decision():
 
 def enqueue_only():
     """Outbox delivery trusts the enqueue-time decision: no decision at delivery (labels and recipient not re-checked)."""
-    old = ("                d, sender, rcp = self._enf._decide(it[\"sender\"], it[\"tenant\"], self._action, [r.label for r in recs], it[\"request\"],\n"
-           "                                                   it[\"recipient_id\"], it[\"request\"].get(\"destination\"))\n")
-    new = ("                d = Decision(True, 'enqueue_only', it['enqueue_version'], self._action)\n"
-           "                sender, rcp = self._enf._dir.lookup(it['sender']), (self._enf._dir.lookup(it['recipient_id']) if it['recipient_id'] else None)\n")
+    old = "                d, sender, rcp = self._enf._redeem(ticket, [r.label for r in recs])\n"
+    new = ("                d = _Decision(True, 'enqueue_only', ticket.enqueue_version, self._action)\n"
+           "                sender, rcp = self._enf._dir.lookup(ticket.sender), (self._enf._dir.lookup(ticket.recipient_id) if ticket.recipient_id else None)\n")
     return variant("pol.enforce", old, new, "enqueue_only")
 
 

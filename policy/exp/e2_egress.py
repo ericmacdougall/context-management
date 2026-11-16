@@ -15,9 +15,9 @@ import time
 
 from exp import common  # noqa: F401
 from exp import e245_kit as K
-from exp.common import write_items, write_result
+from exp.common import write_items, write_result, lab_authority, lab_issue
 from exp.seeds import seeds
-from pol.directory import Directory, Principal, Session, SessionAuthority
+from pol.directory import Directory, Principal, Session
 from pol.labels import Label
 from pol.policy import ACTIONS, parse_policy
 import pol.enforce as PE
@@ -101,7 +101,7 @@ class Scenario:
         for rid, (reg, rok, model) in RECIPIENTS.items():
             ps.append(Principal(rid, "t1", frozenset(["g1"]), 3, rok, "agent" if model else "human", reg, model))
         self.dir = Directory(ps)
-        self.sessions = SessionAuthority(self.dir)
+        self.sessions = lab_authority(self.dir)
         self.audit = E.AuditLog()
         self.enf = E.Enforcer(lambda: self.pol, self.dir, self.sessions, self.audit)
         self.store = E.Store(self.enf)
@@ -120,7 +120,7 @@ class Scenario:
                                lambda s, r, texts, q: [net.record("model", q["destination"], dest_attrs(q["destination"]), s.tenant, t) for t in texts])
         self.xqueue = E.Outbox(self.enf, self.store, "export",
                                lambda s, r, texts, q: [net.record("export", q["destination"], dest_attrs(q["destination"]), s.tenant, t) for t in texts])
-        self.s = self.sessions.issue("p1", "owner_ui")
+        self.s = lab_issue(self.sessions, "p1", "owner_ui")
         self.cls_of = {}
 
     def classes(self, rids):
@@ -284,9 +284,9 @@ def forge(sc, rng, pool, arm, seed, i, rows):
     elif f == "forged_session":
         s = Session("t1", "p1", "owner_ui", "forged-token")
     elif f == "other_authority_session":
-        s = SessionAuthority(sc.dir).issue("p1", "owner_ui")
+        s = lab_issue(lab_authority(sc.dir), "p1", "owner_ui")
     elif f == "ended_session":
-        s = sc.sessions.issue("p1", "owner_cli")
+        s = lab_issue(sc.sessions, "p1", "owner_cli")
         sc.sessions.end(s)
     elif f == "principal_as_session":
         s = sc.dir.lookup("p1")

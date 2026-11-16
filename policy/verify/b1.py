@@ -8,16 +8,20 @@ import json
 
 APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
+# round 3 (amendment 5): self_approval and no_value_change are gone with rule 11 (non-humans never decide)
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
            "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation", "unknown_proposal",
-           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested", "no_value_change",
+           "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested",
            "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 UNREACHABLE = {"candidates_full"}
-EXPECTED = {"n3_agent_reject_moves_head": "L2_head_starvation", "n2_no_role": "I15_proposal_without_role", "n2_no_cap": "I17_open_cap",
+# amendment 5 (round 3): agent_may_decide replaces the two N3 controls and self_approval_removed; cap_blocks_humans is R3-4 reintroduced
+EXPECTED = {"agent_may_decide": "I2_agent_head_move", "cap_blocks_humans": "I18_human_locked_out_by_nonhumans",
+            "n2_no_role": "I15_proposal_without_role", "n2_no_cap": "I17_open_cap",
             "stale_unchecked": "I4_decision_not_bound_to_head", "agent_may_supersede": "I2_agent_head_move",
-            "m2_no_original": "I6_redelivery_changed_state_or_lost_outcome", "self_approval_removed": "I2_agent_head_move",
-            "idempotency_removed": "I6_redelivery_changed_state_or_lost_outcome", "authority_removed": "I1_authority",
-            "n3_value_unchanged_moves_head": "I16_nonhuman_head_move_without_value_change"}
+            "m2_no_original": "I6_redelivery_changed_state_or_lost_outcome",
+            "idempotency_removed": "I6_redelivery_changed_state_or_lost_outcome", "authority_removed": "I1_authority"}
+DECISION_LIKE = ("decided_accept", "decided_amend", "superseded", "retracted", "confirmed_applied", "resolved", "decided_reject", "contested_opened",
+                 "contested_joined", "concurrent_agree")
 COMMON = ("type", "id", "idem", "tenant", "principal", "channel")
 
 
@@ -42,12 +46,16 @@ def violated(name, row, caps=(2, 3)):
             if p == pid and k == ev.get("idem") and fp == _fp(ev):
                 return code != "duplicate" or orig != c or _c(pre) != _c(post)
         return False
-    if name == "I17_open_cap":
+    if name == "I17_open_cap":                        # round 3: the per-requirement cap counts non-human-authored items only
         for r in post["props"]:
             op = [d["author"] for d in post["props"][r].values() if d["status"] == "open"]
-            if len(op) > caps[1] or any(op.count(a) > caps[0] for a in set(op)):
+            nh = [d for d in post["props"][r].values() if d["status"] == "open" and d["author_kind"] != "human"]
+            if len(nh) > caps[1] or any(op.count(a) > caps[0] for a in set(op)):
                 return True
         return False
+    if name == "I18_human_locked_out_by_nonhumans":
+        own = [d for d in pre["props"].get(req, {}).values() if d["status"] == "open" and d["author"] == pid]
+        return code == "proposal_cap" and kind == "human" and len(own) < caps[0]
     if req not in pre["heads"]:
         return False
     h0, h1 = pre["heads"][req], post["heads"][req]
@@ -60,11 +68,8 @@ def violated(name, row, caps=(2, 3)):
         return code in ("decided_accept", "decided_amend", "superseded", "retracted", "confirmed_applied", "resolved") and ev.get("based_on") != h0["version"]
     moved = h0["version"] != h1["version"]
     changed = (h0["value_ref"], h0["status"]) != (h1["value_ref"], h1["status"])
-    if name == "I2_agent_head_move":
-        if kind in (None, "human") or not (moved or changed):
-            return False
-        p = pre["props"][req].get(ev.get("proposal"))
-        return not (code == "decided_accept" and p is not None and p["kind"] == "proposal" and p["author_kind"] == "human")
+    if name == "I2_agent_head_move":                  # round 3: a non-human never moves the head or obtains a decision-like outcome
+        return kind not in (None, "human") and (moved or changed or code in DECISION_LIKE)
     if name == "I16_nonhuman_head_move_without_value_change":
         # amendment 3 wording (N3 as the brief states it): a non-human event that changes no value never moves the head
         return kind not in (None, "human") and moved and not changed

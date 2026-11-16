@@ -126,8 +126,8 @@ def P(pid, tenant="t1", groups=("g1",), clearance=2, restricted_ok=False, region
 
 
 def mk_policy(extra=(), revoked=()):
-    return Policy(1, grants={"t1": frozenset(ACTIONS)}, models={"m1": {"family": "m1", "version": "1"}},
-                  destinations={"dm": Dest("model", "eu", True, 3, "m1", "cyber", ["t1"])}, extra_rules=tuple(extra), revoked=frozenset(revoked),
+    return Policy(1, grants={"t1": frozenset(ACTIONS)}, models={"m1@1": {"family": "m1", "version": "1"}},          # R3-6: pinned id
+                  destinations={"dm": Dest("model", "eu", True, 3, "m1@1", "cyber", ["t1"])}, extra_rules=tuple(extra), revoked=frozenset(revoked),
                   authorizations={"a": {"tenant": "t1", "programme": "cyber", "expires": 5, "principal": "pq"}})
 
 
@@ -250,24 +250,20 @@ def pdp_arms(rng, rows):
 def surface_entries():
     """Every public class method of `pol` whose first parameter is `session` (request-handler entry points), from the surface walk."""
     sys.path.insert(0, os.path.join(ROOT, "tests"))
-    from tests.surface import _exported, _public_modules
+    from tests.surface import class_methods, exported, public_modules      # the public API of tests/surface since 7080a22
     out, others = [], []
-    for mod, name, _path in _public_modules("pol"):
+    for mod, name, _path in public_modules("pol"):
         if mod is None:
             others.append(name + " (AST-only: driver-specific module, reached through DecisionService)")
+    for where, obj in exported("pol"):
+        if not inspect.isclass(obj):
             continue
-        for n, obj in _exported(mod):
-            if not inspect.isclass(obj):
-                continue
-            for mn, m in obj.__dict__.items():
-                f = m.__func__ if isinstance(m, (staticmethod, classmethod)) else m
-                if not inspect.isfunction(f) or (mn.startswith("_") and mn != "__init__"):
-                    continue
-                ps = [p for p in inspect.signature(f).parameters if p not in ("self", "cls")]
-                if ps and ps[0] == "session":
-                    out.append({"entry": "%s.%s.%s" % (name, n, mn), "params": ps})
-                else:
-                    others.append("%s.%s.%s(%s)" % (name, n, mn, ",".join(ps)))
+        for mn, f, _static in class_methods(obj, "pol"):                  # inherited public methods count too
+            ps = [p for p in inspect.signature(f).parameters if p not in ("self", "cls")]
+            if ps and ps[0] == "session":
+                out.append({"entry": "%s.%s" % (where, mn), "params": ps})
+            else:
+                others.append("%s.%s(%s)" % (where, mn, ",".join(ps)))
     return out, others
 
 
@@ -277,7 +273,7 @@ class Stub:
 
     def complete(self, msgs, system=None):
         self.payloads.append(json.dumps(msgs) + str(system))
-        return types.SimpleNamespace(text="answer", model="m1")
+        return types.SimpleNamespace(text="answer", model="m1@1")
 
     def embed(self, texts, kind):
         self.payloads.append(json.dumps(texts))

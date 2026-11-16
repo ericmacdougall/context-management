@@ -39,9 +39,9 @@ def lenient_load(doc):
     lp = LEN.safe_policy(doc)
     return Policy(**{f.name: getattr(lp, f.name) for f in dataclasses.fields(lp)})
 
-GOOD = {"version": 3, "grants": {"t1": list(ACTIONS), "t2": list(ACTIONS)}, "models": {"m1": {"family": "m1", "version": "1"}},
-        "destinations": {"m": {"kind": "model", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m1", "tenants": ["t1", "t2"]},
-                         "e": {"kind": "embedder", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m1", "tenants": ["t1", "t2"]},
+GOOD = {"version": 3, "grants": {"t1": list(ACTIONS), "t2": list(ACTIONS)}, "models": {"m1@1": {"family": "m1", "version": "1"}},
+        "destinations": {"m": {"kind": "model", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m1@1", "tenants": ["t1", "t2"]},
+                         "e": {"kind": "embedder", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m1@1", "tenants": ["t1", "t2"]},
                          "x": {"kind": "export", "region": "eu", "local": False, "max_sensitivity": 2, "model": None, "tenants": ["t1"]}},
         "authorizations": {"a": {"tenant": "t1", "programme": "x", "expires": 5, "principal": "p"}}, "banned_models": ["m9"], "hold_events": ["h1"]}
 
@@ -75,7 +75,7 @@ def mutate(rng, doc):
     elif k == "drop_version":
         d.pop("version")
     elif k == "model_family":
-        d["models"]["m1x"] = {"family": "m1-other", "version": "1"}
+        d["models"]["m1x@1"] = {"family": "m1-other", "version": "1"}
     elif k == "alias_cycle":
         d["model_aliases"] = {"a1": "a2", "a2": "a1"}
     elif k == "alias_dangling":
@@ -180,7 +180,7 @@ def main():
     hp = {r["case"]: r["returned"] for r in rows if r["arm"] == "hold_pdp" and r["seed"] == sd[0]}
     es = next(r for r in rows if r["arm"] == "erase_service")
     holds_ok = (hp["recorded_hold"][1] == "erasure_queued" and hp["unrecorded_hold"][0] and hp["no_hold"][0] and hp["hold_event_removed"][0]
-                and not hp["other_tenant"][0] and es["admin"] == {"erased": 2, "queued": 1, "denied": 0, "refused": None}
+                and not hp["other_tenant"][0] and es["admin"] == {"erased": 2, "queued": 1, "denied": 0, "refused": None, "result": "incomplete"}
                 and es["after"] == ["alice-about-dana-held", "bob-about-erin"])
     ok = (res["empty_allows"] == 0 and res["safe_allows"] == 0 and res["parse_errors"] == res["malformed"] and res["malformed"] >= 3000
           and res["valid_allow_rate"] > 0.05 and holds_ok and EXAMPLE_POLICY.get("example") is True)

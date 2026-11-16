@@ -68,3 +68,25 @@ def write_items(name, rows):
     with open(os.path.join(RESULTS, fn), "wb") as fh:
         fh.write(data)
     return fn, h
+
+
+# ---------------------------------------------------------------------------------------------- sessions for experiments (R3-1)
+# Since f065905 a SessionAuthority issues sessions only from a credential its identity adapter verifies. Experiments use the TEST
+# DOUBLE tests.kit.LabIdP (an HMAC-signed, single-use credential minted per call): lab_authority(directory) builds the authority with
+# its own LabIdP, lab_issue(sa, pid, channel) mints a credential and issues through the production path (channel/kind checks apply).
+_LAB_IDP = {}
+
+
+def lab_authority(directory):
+    from pol.directory import SessionAuthority
+    from tests.kit import LabIdP
+    idp = LabIdP(ttl=24 * 3600.0)
+    sa = SessionAuthority(directory, idp)
+    _LAB_IDP[id(sa)] = (sa, idp)
+    return sa
+
+
+def lab_issue(sa, pid, channel):
+    held, idp = _LAB_IDP[id(sa)]
+    assert held is sa, "lab_issue needs an authority from lab_authority"
+    return sa.issue(idp.credential(pid, channel))

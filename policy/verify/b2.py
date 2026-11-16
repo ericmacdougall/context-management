@@ -7,11 +7,12 @@ import json
 
 APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
-# amendment 4: the value-unchanged N3 control is rare in random logs (about 7 percent on dev probes); its floor is 3 percent
-FLOORS = {"n3_value_unchanged_moves_head": 0.03}
+# amendment 5: the amendment-4 floor exception went with the value-unchanged N3 control; every control's floor is 10 percent
+FLOORS = {}
+# round 3 (amendment 5): self_approval and no_value_change are gone with rule 11 (non-humans never decide)
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
            "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation", "unknown_proposal",
-           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested", "no_value_change",
+           "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested",
            "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 SERVICE_REFUSALS = REFUSED + ("identity_in_body", "unknown_tenant")
 
