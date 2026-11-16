@@ -310,3 +310,16 @@ class StageX0(unittest.TestCase):
         from emlab.stage_x0_prep import allocate
         self.assertEqual(sum(allocate([0.2] * 5, 121)), 121)
         self.assertEqual(allocate([0.2] * 5, 121), [25, 24, 24, 24, 24])
+
+
+class StageX0B(unittest.TestCase):
+    def test_quote_match_and_stability(self):
+        from emlab.stage_x0b_score import quote_match, stability
+        self.assertTrue(quote_match("I adopted a dog named Rex", "i adopted a dog named rex."))
+        self.assertTrue(quote_match("adopted a dog", "I adopted a dog named Rex"))
+        self.assertFalse(quote_match("dog", "I adopted a dog named Rex"))  # too short to count as containment
+        self.assertFalse(quote_match("", "x"))
+        old = [{"quote": "adopted a dog named Rex"}, {"quote": "lives in Lisbon now"}]
+        new = [{"quote": "I adopted a dog named Rex"}, {"quote": "works at Borealis Labs"}, {"quote": "plays the cello"}]
+        s = stability(old, new)
+        self.assertEqual((s["old"], s["new"], s["old_reappearing"], s["new_without_old_match"], s["beyond_old_count"]), (2, 3, 1, 2, 1))
