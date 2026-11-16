@@ -7,6 +7,20 @@ Local, unpublished. Python 3.9, standard library only in the core.
 - Decision in force (user, 2026-11-16, relayed by main, WAL wb7ed3da806f): subscription CLIs stay direct development adapters and are never put behind the Elasticsearch inference API. The gateway (the HTTP surface an inference endpoint would call) refuses every subscription-backed backend on every bind, dev flag or not (`SubscriptionBehindHttpRefused`), and its CLI offers `--backend stub` only (tests: `test_phase3_16096.SubscriptionNeverBehindInferenceTests`). G5 with a subscription CLI behind the gateway is CLOSED, not on hold.
 - Licence (same decision): Basic is the required path. Customer route: the client's own model (any `ChatModel`, e.g. `OpenAICompatChat`) with memory from `POST /v1/pre_exec` called by the client runtime (`memcore.hosts.basic_hook`, served by `memcore.hosts.basic_service`). `ElasticInferenceChat`, the ES retriever fusion and the Agent Builder pre-execution workflow are Enterprise-only optional paths; `memcore.capabilities` probes `GET /_license` at start-up and pins Basic to client-side fusion. An API-key adapter beyond `OpenAICompatChat(token=...)` is NOT built; no key was looked for or used.
 - No third-party account-pool proxy was adopted.
+- Basic host path, client contract (review R3-1/R3-2, 2026-11-16): `basic_hook.fetch_new_prompt` has a wall-clock
+  deadline for the whole exchange (default 25 s; a trickling peer is cut off and the socket shut down), accepts only the
+  prompt itself or exactly one rendered DATA block + blank line + the prompt (`inbox.parse_data_block`), applies the
+  egress guard, and refuses plain http to a non-loopback host unless `allow_plain_http`. The route bounds concurrent
+  builds (`--max-concurrent`, default 8, abandoned builds included) and answers `reason: busy` beyond it.
+- DESIGN ONLY, NOT BUILT (review R3-4): /v1/pre_exec recall is scoped per SERVICE (one `--tenant` per basic_service);
+  `session_id` is used only for the header and the guard, never for scoping, and every holder of the token recalls the
+  whole tenant. Until a policy point exists, deploy one service and one token per trust domain. Once it exists the
+  route should: (1) derive the principal from the credential, not from the body (a per-principal token or a signed
+  claim the service verifies); (2) scope recall by a server-side filter on that principal (tenant term plus a
+  principal/ACL keyword term on every lexical and kNN query, as `ElasticsearchSearch._filters` already does for the
+  tenant), never by a client-supplied id; (3) treat a missing or unknown principal as no memory (original prompt,
+  reason `unscoped`), not as the whole tenant; (4) log the principal id (not the token) with each build; and (5) test
+  cross-principal recall, a forged session_id in the body, and a revoked principal.
 
 ## MCP (checked 2026-11-15)
 - Spec: https://modelcontextprotocol.io/specification/2026-07-28/basic/transports  (latest revision 2026-07-28; stdio = newline-delimited JSON-RPC over the client-launched subprocess's streams; that revision carries protocol metadata per request and drops the connection-scoped initialize handshake, with a backward-compatibility section for earlier eras).

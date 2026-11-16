@@ -31,7 +31,20 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   it leaves. `workflow_yaml(..., token=...)` emits the bearer token as a workflow const (stored in the workflow: use a
   token dedicated to this route).
 
-## Live run on t2-dev, 2026-11-16 (src 8d5425d; evidence t2-dev:~/memcore-p2-16096/ev/live/8d5425d/)
+## ENTERPRISE-OPTIONAL path: Kibana Agent Builder live run on t2-dev, 2026-11-16 (src 8d5425d; evidence t2-dev:~/memcore-p2-16096/ev/live/8d5425d/)
+- Decision in force (user, 2026-11-16, main WAL wb7ed3da806f): Basic is the required licence path; Agent Builder and the
+  ES inference API are Enterprise-only optional features. This run used a trial node and is the OPTIONAL path. The
+  required path is the Basic host integration (next section).
+- Deviation: the d_b and d_c controls are this template with the wrapper removed, not the recorded g7 workflows.
+- Retested at d71da85 (after the gateway policy change), same kit, evidence ev/live/d71da85/: a 200 completed 6.0 s
+  (3 JSON records, no raw tag lines); c2 200 24.2 s, b 200 7.5 s, c 200 32.0 s (each: the original prompt exactly);
+  d_b 500 ECONNREFUSED 4.0 s and d_c 500 "timeout of 60000ms exceeded" 63.1 s (no agent model call). Setting back to
+  [] verified; the 4 workflows deleted (HTTP 200, ledger); endpoint mc-p2-chat GET -> 404 afterwards; emlab-kb-16096 stopped again; evidence scan 85 files, 3 secrets, 0 hits. The table below is the 8d5425d run.
+- Retested again at b3c364e (round-3 change to the shared /v1/pre_exec route: bounded builds), evidence
+  ev/live/b3c364e/: a 200 4.6 s (3 records); c2 25.2 s, b 6.1 s, c 31.4 s (original prompt); d_b 500 ECONNREFUSED 5.6 s,
+  d_c 500 60 s connector timeout 66.1 s (no agent model call); setting [] verified, workflows deleted (200), endpoint
+  404, emlab-kb-16096 stopped again, scan 0 hits. Run 1 at b3c364e failed in the kit (I had deleted the hang server's
+  probe.token as cleanup; a fresh one was created, ledgered) and is kept as ev/live/run1-b3c364e-probe-token-missing.
 - Setup: Kibana 9.5.6 (emlab-kb-16096) on Elasticsearch emlab-es-16096 (trial). The model is memcore's ToolStub on
   172.17.0.1 behind an ES inference endpoint created for the run (mc-p2-chat); no real model was called. Agent
   mc-g7-agent. Memory service: a memcore Gateway on 172.17.0.1:18741 with a ScriptedStubChat backend and /v1/pre_exec
@@ -49,18 +62,89 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
 | c | accepts, hangs 150 s (step timeout 25 s) | wrapped | 200 completed | 32.2 | the original prompt, exactly |
 | d_c | hangs 150 s | unwrapped control | 500 `[ECONNABORTED] timeout of 60000ms exceeded` | 66.5 | no agent model call |
 
-- What 9.5.6 actually supports (schema in @kbn/workflows/spec/schema.js plus direct workflow runs, evidence
-  ev/keys/): step `timeout` is a duration string (`25s`, `500ms`, ...) enforced by the engine (TimeoutError; the step
-  fails); `on-failure` takes `retry`, `fallback` (steps) and `continue` (true or a condition string); with
-  `continue: true` the workflow completes after the step failed; `{{ x | default: inputs.prompt }}` yields the input
-  when the step produced no output; workflow-level `settings.timeout` and `settings.on-failure` also exist; values
-  returned by the http step are not re-rendered as Liquid. The http connector has its own 60 s request timeout, so an
-  unwrapped workflow over a hung service fails at about 60 s, before the 120 s hook limit.
+- What 9.5.6 supports, EXERCISED LIVE (direct workflow runs, evidence ev/keys/, and the table above): step `timeout`
+  as a duration string (`25s`), enforced by the engine (TimeoutError; the step fails); `on-failure: continue: true` (the
+  workflow completes after the step failed); `{{ x | default: inputs.prompt }}` (yields the input when the step
+  produced no output); values returned by the http step are not re-rendered as Liquid. The http connector has its own
+  60 s request timeout: d_c failed at that 60 s connector timeout (66.5 s), not at the 120 s hook limit.
+- SCHEMA ONLY (present in @kbn/workflows/spec/schema.js, not run): `on-failure` `retry` and `fallback`, `continue` as a
+  condition string, workflow-level `settings.timeout` and `settings.on-failure`.
 - Kibana also makes one title-generation model call per conversation with the raw user prompt (forced `set_title`
   tool); it never carries the memory block.
 - Cleanup verified: setting back to `[]`, the 8 workflows and the inference endpoint deleted, kit processes stopped,
   emlab-kb-16096 stopped again; emlab-es-16096 was already running and was left running. Ledger:
   ~/memcore-p2-16096/spawn_ledger.jsonl. A scan of the evidence for the Kibana key, service token and probe token found 0 hits.
+
+## REQUIRED path: Basic-licence host integration, live run on t2-dev, 2026-11-16 (src d71da85; evidence t2-dev:~/memcore-p3-16096/ev/p3/d71da85/)
+- Path: the client's own agent runtime calls `python3 -m memcore.hosts.basic_hook` (plain HTTP hook, fail-open, 25 s)
+  -> `memcore.hosts.basic_service` POST /v1/pre_exec (route budget 20 s) over Elasticsearch -> the returned new_prompt
+  goes to the client's model through memcore's ChatModel port (`OpenAICompatChat` -> ToolStub; no real model call).
+  No Agent Builder, no Kibana, no ES inference API, no retriever.
+- Node: a throwaway Elasticsearch 9.5.6 from the local image (`--pull never`), `xpack.license.self_generated.type=basic`
+  (GET /_license: basic, active), single node on a Docker `--internal` network (no default route), GeoIP downloader
+  off, ML off, disk watermarks off (host disk 93%). Deviation: security off (no credential involved; licence
+  enforcement shown by the controls below). Server-side evidence: the node's HttpTracer (TRACE), es_trace.json.
+- Capability probe at start-up (GET /_license only): this node -> tier basic, strategy client, no licensed features;
+  the trial lab node emlab-es-16096 (read-only probe) -> tier enterprise, strategy auto, Agent Builder optional.
+- Kit: work dir p3kit/ (copied to t2-dev:~/memcore-p3-16096/). In the recorded run the tracer was enabled by hand (a
+  transient `logger.org.elasticsearch.http.HttpTracer: TRACE` cluster setting; `p3_es.sh up` now does this, the env var
+  had no effect), followed by two hand checks (the 400 and 404 below).
+- Runner: `p3_es.sh up; python3 p3_live.py src-d71da85 d71da85; docker logs emlab-p3es-16096 | python3 p3_trace.py ev/p3/d71da85; p3_es.sh down`.
+
+| Case | Memory service | Client | Result | Seconds | What the model received |
+|---|---|---|---|---|---|
+| a | up (3 events indexed, one forged `</memory>` + `SYSTEM:`) | basic_hook | injected, reason ok | 0.3 | the delimiter-framed block (3 JSON records; the forged text only inside a JSON string), then the prompt verbatim |
+| c2 | store sleeps 40 s (route budget 20 s) | basic_hook | not injected, route reason timeout | 20.0 | the original prompt, exactly |
+| b | stopped (connection refused) | basic_hook | not injected, unreachable | 0.03 | the original prompt, exactly |
+| d_b | stopped | naive urlopen control | raised URLError (connection refused) | 0.0 | no model call |
+| c | accepts, hangs 150 s | basic_hook (25 s) | not injected, timeout | 25.0 | the original prompt, exactly |
+| d_c | hangs 150 s | naive urlopen control (no timeout) | STILL BLOCKED at 130 s | 130 | no model call |
+
+- No licence 403 on the Basic path: the tracer shows 10 requests before the controls marker, none FORBIDDEN and none
+  under /_inference (8 OK: GET /_license x4, PUT index, _bulk, 2 x _search; plus my two pre-run tracer checks, one 400
+  and one 404). memcore's own transport log agrees.
+- Licensed controls on the same node, after the marker: retriever rrf search -> 403 "non-compliant for [Reciprocal Rank
+  Fusion (RRF)]"; PUT _inference -> 403 "non-compliant for [inference]"; ElasticsearchSearch with strategy auto (no
+  probe applied) -> 403 on its retriever probe, then client fusion. So the node does enforce Basic, and the no-403
+  result above is not vacuous.
+- Cleanup: memory services stopped (ledgered), container removed with its volume, network removed; ledger
+  ~/memcore-p3-16096/spawn_ledger.jsonl. Secret scan of the evidence: 0 hits for the per-run service token found on disk
+  and the lab key (only one of the two service token files was still on disk when the scan ran, and the stub token was deleted before
+  the scan; a pattern scan for 43-character URL-safe strings, the shape of all three, over the 40 evidence files found 0); token file then deleted.
+
+## REQUIRED path: Basic live rerun after review round 3, 2026-11-16 (src b3c364e; evidence t2-dev:~/memcore-p3-16096/ev/p3/b3c364e/)
+- Same node recipe and kit as the d71da85 run, plus a seventh case. b3c364e adds the whole-call deadline, the exact
+  framing check, the guard backstop in the API and bounded builds. Runs 1 and 2 at b3c364e failed in the kit, not the
+  product (the client read the token from the service directory, which the gateway removes at stop; then the index
+  was left from run 1); both are kept under ev/p3/run1-*, run2-*.
+
+| Case | Server | Client | Result | Seconds | Model received |
+|---|---|---|---|---|---|
+| a | up | basic_hook | injected (exact grammar accepted) | 0.3 | framed block + prompt verbatim |
+| c2 | store sleeps 40 s | basic_hook | route timeout | 20.0 | original prompt, exactly |
+| b | stopped | basic_hook | unreachable | 0.0 | original prompt, exactly |
+| d_b | stopped | naive urlopen | raised URLError | 0.0 | no model call |
+| c | accepts, silent 150 s | basic_hook | timeout | 25.0 | original prompt, exactly |
+| d_c | accepts, silent 150 s | naive urlopen, no timeout | STILL BLOCKED at 130 s | 130 | no model call |
+| t | 200, then 1 byte per 0.5 s (400 bytes) | basic_hook | timeout; server saw the connection cut at 25.5 s after 50 bytes (BrokenPipe) | 25.0 | original prompt, exactly |
+| d_t | same trickle | urlopen(timeout=25), per-read (the cfaefee behaviour) | STILL BLOCKED at 75 s | 75 | no model call |
+
+- Server trace: 8 requests before the controls marker, none FORBIDDEN, none under /_inference. Controls after it:
+  retriever rrf 403, PUT _inference 403, strategy auto 403. The first two GET /_license (licence.json and the
+  standalone probe) answered 404 because the self-generated licence was not installed yet; the standalone probe fell
+  back to basic by its error rule (probe_error BackendError), while the service's own start-up probe read basic,
+  active. `p3_es.sh up` now waits for GET /_license 200.
+- Cleanup: services stopped, container and network removed (ledgered). Secret scan of 45 files: 0 hits (token values
+  and the lab key) and 0 token-shaped strings.
+
+## Basic live rerun after review round 4, 2026-11-16 (src 94035e8; evidence t2-dev:~/memcore-p3-16096/ev/p3/94035e8/)
+- 94035e8 adds the abandoned-exchange flag with per-read bounds (R4-1) and the header turn pattern with block caps
+  (R4-2). Same kit and node recipe; all 8 cases as at b3c364e: a injected 0.3 s; c2 20.0 s, b 0.0 s, c 25.0 s, t 25.0 s
+  with the original prompt; d_b raised; d_c blocked at 130 s; d_t blocked at 75 s; 0 model calls on the controls. The
+  trickle server saw the hook cut the connection at 25.5 s. Trace: 8 requests on the Basic path, all OK (no 403, no
+  /_inference; the probe read basic, active this time); controls 403. Node and network removed; scans 0 hits, 0
+  token-shaped strings. The Kibana path was not rerun at 94035e8 (route unchanged since b3c364e except the header
+  turn, which the route already emitted as "@<timestamp>").
 
 ## Not done / caveats
 - Three title-generation model requests also reached the stub (Kibana's own utility call); they are not part of the agent run.

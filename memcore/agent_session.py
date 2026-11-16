@@ -156,6 +156,8 @@ class ClaudeStreamJsonSession(AgentSession):
     --tools "" (plus an explicit --allowedTools only for the MCP servers passed in), --strict-mcp-config, no session
     persistence; hooks and setting sources are left untouched."""
 
+    subscription_backed = True        # never served over HTTP (gateway.check_gate); decision of 2026-11-16
+
     def __init__(self, cwd: str, system: str, budget: CallBudget, dev_subscription_backends: bool = False, tools: Sequence[McpServerSpec] = (), model: str = "sonnet", mcp_config_dir: Optional[str] = None,
                  turn_timeout_s: float = 300.0, claude_bin: str = "claude",
                  strip_patterns: Sequence[str] = ()):

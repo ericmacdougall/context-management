@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from .fakes import tokens
 from .guard import DEFAULT_GUARD, EgressLeak
-from .inbox import render_data_block
+from .inbox import MEMORY_TURN_RE, MEMORY_TURN_SID, render_data_block
 from .ports import AgentToolSurface, ContextInjector, Injection, ToolSpec, Turn
 
 
@@ -118,6 +118,12 @@ class BudgetedInjector(ContextInjector):
         turn_label = "%s@%s" % (turn.session_id, turn.time)
         if self.egress_guard is not None:     # the header carries the host's session id: refuse (raise) rather than inject it
             self.egress_guard.check_text(turn_label, "injection header")
+        # Header discipline (review R4-2): only a short id and a UTC second timestamp ever reach the header prose. A
+        # session id outside the pattern is left out; a time outside it is refused (callers fail open).
+        sid = turn.session_id if MEMORY_TURN_SID.fullmatch(turn.session_id or "") else ""
+        turn_label = "%s@%s" % (sid, turn.time)
+        if not MEMORY_TURN_RE.match(turn_label):
+            raise ValueError("turn time must be YYYY-MM-DDTHH:MM:SSZ")
         recs, used, dropped = [], [], 0
         for h in self.store.recall(turn.user_text, as_of=turn.time, k=self.k):
             rec = {"id": h["id"], "ts": h["ts"], "text": h["text"]}

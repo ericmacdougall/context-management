@@ -69,6 +69,8 @@ def parser():
     ap.add_argument("--ingest", default=None, help="events file to index into --es at start (creates the index)")
     ap.add_argument("--budget-s", type=float, default=20.0)
     ap.add_argument("--max-chars", type=int, default=4000)
+    ap.add_argument("--max-concurrent", type=int, default=8, help="concurrent memory builds; beyond it the route answers "
+                    "reason busy with the original prompt")
     return ap
 
 
@@ -77,7 +79,7 @@ def serve(a, store, rep, stderr=sys.stderr):
     from ..memtools import BudgetedInjector
     gw = Gateway({}, a.out, host=a.host, port=a.port, allow_bridge_host=a.allow_bridge_host,
                  pre_exec_injector=BudgetedInjector(store, char_budget=a.max_chars), pre_exec_budget_s=a.budget_s,
-                 pre_exec_max_chars=a.max_chars)
+                 pre_exec_max_chars=a.max_chars, pre_exec_max_concurrent=a.max_concurrent)
     if rep is not None:
         with open(os.path.join(a.out, "capabilities.json"), "w") as fh:
             json.dump(rep, fh, indent=1)

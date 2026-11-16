@@ -47,17 +47,24 @@ def compose_prompt(block: str, prompt: str) -> str:
 
 
 def pre_exec_new_prompt(injector: BudgetedInjector, payload: dict, now_iso: str, budget_s: float = DEFAULT_BUDGET_S,
-                        max_chars: int = DEFAULT_MAX) -> dict:
-    """{"new_prompt", "injected", "reason"}. Fail-open: the original prompt on error, refusal, empty result or timeout."""
+                        max_chars: int = DEFAULT_MAX, slots: Optional[threading.BoundedSemaphore] = None) -> dict:
+    """{"new_prompt", "injected", "reason"}. Fail-open: the original prompt on error, refusal, empty result, timeout or,
+    when `slots` is given and every slot is held, "busy". A slot is held by the BUILD thread until that thread ends, so
+    builds abandoned at the budget still count: a hung store cannot pile up unbounded threads (review R3-3)."""
     prompt = payload.get("prompt")
     prompt = prompt if isinstance(prompt, str) else ""
     box: dict = {}
+    if slots is not None and not slots.acquire(blocking=False):
+        return {"new_prompt": prompt, "injected": False, "reason": "busy"}
 
     def work():
         try:
             box["out"] = build_output(injector, {"prompt": prompt, "session_id": payload.get("session_id", "")}, now_iso, max_chars)
         except Exception as e:  # noqa: BLE001 - fail open; only the type is reported (no content)
             box["err"] = type(e).__name__
+        finally:
+            if slots is not None:
+                slots.release()
 
     t = threading.Thread(target=work, daemon=True)   # a stuck build is abandoned, never awaited past the budget
     t.start()
