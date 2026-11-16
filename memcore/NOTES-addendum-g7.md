@@ -47,3 +47,17 @@ Still open (one line each):
 - 18 (partial): BOM handling is now tested, but ElasticInferenceChat itself has never run against the node (only the openai-service/gateway path and recorded bytes).
 - 20: the schema k-of-20 cannot discriminate (all-required, extractable prompts) and hides repairs; the ES stub 20/20 is a regex.
 My count is 8 open plus 2 partial among the 21; main's "13" may use a different split, so please map any item I have called addressed.
+
+## Delta review of 888c94b: status on fix/adapters-delta-16096 (2026-11-15, local commits, unreviewed, nothing live)
+- Fixed with regression tests (memcore/tests/test_delta16096.py): N1, N2 (gateway gate), N4 (egress guard), N7 (inbox
+  fencing), N5 and N6 (hook framing and injector drops), N3, N8, N9, finding 8 residual (gateway 502s), MCP HTTP
+  RecursionError (part of N10), minor 19 (escaping test), the vacuous item-7 and renderer-control tests.
+- Behaviour changes callers must know: BudgetedInjector.char_budget is now the RENDERED size; InboxService.confirm needs
+  the claim token (Claim.token), the default lease is 330 s (crash re-offer after 330 s, not 30 s) and renew() exists but no
+  in-repo host calls it yet; every OpenAICompatChat is subscription-tainted unless operator_declares_not_subscription=True;
+  FakeChat is refused on the bridge address (use ScriptedStubChat): memcore-out/g5/g5_run.py, which starts a bridge
+  gateway over FakeChat, will now be refused; deliver() refuses a whole batch if one item leaks.
+- Still open: N10 schema keyword values (enum/minimum/minItems/properties/required types, deep schema recursion), N11
+  (first session turn ledgered with session ''), finding 4 residual (AcpClient.request public and uncounted; embedders and
+  rerankers without a budget; and the guard is not applied to embed/rerank inputs), the real-id set is opt-in
+  (MEMCORE_REAL_IDS_FILE or --real-ids), and the minors listed above except 19.

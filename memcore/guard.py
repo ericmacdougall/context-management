@@ -5,8 +5,8 @@ implementation for this layer; the pattern follows the eval guard (gold sessions
 
 Matching runs on NORMALISED text: NFKC (fullwidth letters and underscores fold to ASCII), format characters (zero-width
 space, joiners, bidi marks) removed, dash-like punctuation folded to '-', connector punctuation to '_', then casefold. The
-hyphen forms (`answer-..`, `sharegpt-..`, `ultrachat-..`) count as ids too; a `sharegpt-` form must contain a digit so that
-prose such as "sharegpt-style" is not refused.
+hyphen forms (`answer-..`, `sharegpt-..`, `ultrachat-..`) count as ids too; an `answer-` or `sharegpt-` form must contain
+a digit so that prose such as "question-answer-feedback" or "sharegpt-style" is not refused.
 
 Real ids: EgressGuard(real_ids=...), or for the process-wide DEFAULT_GUARD the file named by MEMCORE_REAL_IDS_FILE (a JSON
 list or one id per line). A guard with require_real_ids=True and no loaded ids refuses EVERY check (fail closed); so does a
@@ -23,8 +23,8 @@ from typing import Any, Iterable, Mapping, Optional, Set
 
 from .ports import PortError
 
-PATTERN = re.compile(r"(?:^|[^a-z0-9])(answer[_-][0-9a-f]{4,}|sharegpt_[a-z0-9]+|sharegpt-(?=[a-z0-9_]*\d)[a-z0-9]+|ultrachat[_-]\d+)")
-_TOKENS = (re.compile(r"[a-z0-9_]+"), re.compile(r"[a-z0-9_.:/]+"))
+PATTERN = re.compile(r"(?:^|[^a-z0-9])(answer_[0-9a-f]{4,}|answer-(?=[0-9a-f]*\d)[0-9a-f]{4,}|sharegpt_[a-z0-9]+"
+                     r"|sharegpt-(?=[a-z0-9_]*\d)[a-z0-9]+|ultrachat[_-]\d+)")
 _SCALARS = (int, float, bool, type(None))
 
 
@@ -69,7 +69,11 @@ class EgressGuard:
         self.set_real_ids(real_ids or ())
 
     def set_real_ids(self, ids: Iterable[str]) -> None:
-        self.real_ids: Set[str] = {_id_key(i) for i in ids if i}
+        """Ids are matched as whole words in normalised text (any characters; '-' and '_' equivalent): an id is found
+        unless a letter, digit or '_' touches it on either side, so 'conv-7f.2.' at the end of a sentence still matches."""
+        self.real_ids: Set[str] = {_id_key(i) for i in ids if i and _id_key(i).strip()}
+        alts = sorted(self.real_ids, key=len, reverse=True)
+        self._ids_rx = re.compile(r"(?<![a-z0-9_])(?:%s)(?![a-z0-9_])" % "|".join(map(re.escape, alts))) if alts else None
 
     def load(self, path: str) -> None:
         """Load the id file and make the id set required. On failure the guard refuses everything (fail closed)."""
@@ -87,10 +91,8 @@ class EgressGuard:
         n = normalise(s)
         if PATTERN.search(n) or any(p.search(s) or p.search(n) for p in self.extra):
             raise EgressLeak("label-bearing session id pattern in %s" % where)
-        if self.real_ids:
-            k = n.replace("-", "_")
-            if any(t in self.real_ids for rx in _TOKENS for t in rx.findall(k)):
-                raise EgressLeak("real session id in %s" % where)
+        if self._ids_rx is not None and self._ids_rx.search(n.replace("-", "_")):
+            raise EgressLeak("real session id in %s" % where)
 
     def check(self, obj: Any, where: str = "value") -> None:
         if isinstance(obj, str):

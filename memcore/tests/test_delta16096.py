@@ -110,6 +110,33 @@ class N1BridgeAllowListTests(unittest.TestCase):
             self.gw(s, dev_subscription_backends=True)
 
 
+class BridgeRequestPathTests(unittest.TestCase):
+    """The per-request gate with the BRIDGE rules, driven through make_handler on a loopback socket (the bridge address
+    itself cannot be bound on a dev Mac): an allow-listed stub is served; after code is injected into it, it is refused."""
+
+    def test_stub_served_through_the_bridge_gate_then_refused_after_injection(self):
+        from http.server import ThreadingHTTPServer
+        from memcore.fakes import ScriptedStubChat
+        stub = ScriptedStubChat(cache_dir=tempfile.mkdtemp(), ledger_path=os.devnull, cap=5, rules=[("staging", "Dublin")])
+        gate = lambda sub: gw_mod.check_gate(sub, BRIDGE, BRIDGE, False)
+        gate({"stub-1": stub})                                             # the construction-time check passes
+        tok = "t" * 40
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), gw_mod.make_handler({"stub-1": stub}, tok, gate=gate))
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            base = "http://127.0.0.1:%d/v1" % srv.server_address[1]
+            r = json.load(_post(base, tok, {"model": "stub-1", "messages": [{"role": "user", "content": "where is staging?"}]}))
+            self.assertEqual(r["choices"][0]["message"]["content"], "Dublin")
+            ran = []
+            stub._call_backend = lambda *a, **k: ran.append(1)
+            with self.assertRaises(urllib.error.HTTPError) as c:
+                _post(base, tok, {"model": "stub-1", "messages": [{"role": "user", "content": "staging again"}]})
+            self.assertEqual((c.exception.code, ran), (503, []))
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+
 class N2SnapshotTests(unittest.TestCase):
     """N2: the gate must cover exactly what the handler serves, for the gateway's whole life."""
 
@@ -163,7 +190,8 @@ class N4EgressGuardTests(unittest.TestCase):
                   "SHAREGPT_QROQ758_9", "ultrachat-123", "ULTRACHAT_355211", "x (answer⁠_4be1b6b4)"):
             with self.assertRaises(EgressLeak, msg=repr(v)):
                 DEFAULT_GUARD.check_text("see %s here" % v)
-        for ok in ("sharegpt-style prompts", "the answer is 42", "ultrachat corpus", "answer_key", "Answer: dead"):
+        for ok in ("sharegpt-style prompts", "the answer is 42", "ultrachat corpus", "answer_key", "Answer: dead",
+                   "the answer\u2014added later", "question-answer-feedback"):
             DEFAULT_GUARD.check_text(ok)
 
     def test_tool_results_of_any_container_type_are_checked_and_unknown_types_refused(self):
@@ -260,12 +288,12 @@ class N4EgressGuardTests(unittest.TestCase):
         d = tempfile.mkdtemp()
         f = os.path.join(d, "ids.txt")
         with open(f, "w") as fh:
-            fh.write("conv-7f.2\nSess_ABC123\n")
+            fh.write("conv-7f.2\nSess_ABC123\nabc=def\n")
         g = configure_from_env(EgressGuard(), {"MEMCORE_REAL_IDS_FILE": f})
-        for leak in ("see conv-7f.2 now", "see CONV_7F.2", "sess-abc123", "ｓess_ABC123"):
+        for leak in ("see conv-7f.2 now", "see CONV_7F.2", "sess-abc123", "ｓess_ABC123", "the id is conv-7f.2.", "(abc=def)"):
             with self.assertRaises(EgressLeak, msg=leak):
                 g.check_text(leak)
-        g.check_text("an unrelated conversation about sessions")
+        g.check_text("an unrelated conversation about sessions, abc=defg, conv-7f.23")
         empty = os.path.join(d, "empty.txt")
         open(empty, "w").close()
         for path in (os.path.join(d, "missing.txt"), empty):
@@ -290,6 +318,7 @@ class N4EgressGuardTests(unittest.TestCase):
         with open(ids, "w") as fh:
             json.dump(["SESS_77"], fh)
         saved = (set(DEFAULT_GUARD.real_ids), DEFAULT_GUARD.require_real_ids, DEFAULT_GUARD.load_error)
+        self.assertEqual(saved[:2], (set(), False))                         # the test process runs without an id file
         try:
             out = io.StringIO()
             main(["--store", p, "--now", NOW, "--real-ids", ids], stdin=io.StringIO(json.dumps({"prompt": "staging database"})), stdout=out)
@@ -301,8 +330,8 @@ class N4EgressGuardTests(unittest.TestCase):
                  stdin=io.StringIO(json.dumps({"prompt": "staging database"})), stdout=out)
             self.assertEqual(out.getvalue(), "")                              # id file missing: nothing injected
         finally:
-            DEFAULT_GUARD.set_real_ids(())
-            DEFAULT_GUARD.real_ids, DEFAULT_GUARD.require_real_ids, DEFAULT_GUARD.load_error = saved
+            DEFAULT_GUARD.set_real_ids(saved[0])
+            DEFAULT_GUARD.require_real_ids, DEFAULT_GUARD.load_error = saved[1], saved[2]
 
 
 
@@ -332,6 +361,12 @@ class _N7Common:
         return [i.finding_id for i in xs]
 
     def test_two_overlapping_turns_only_one_shows_and_one_confirm_wins(self):
+        self.overlap(40)
+
+    def test_overlap_at_the_full_300s_turn_timeout(self):
+        self.overlap(300)
+
+    def overlap(self, step):
         log, res, errs = [], {}, []
         a_claimed, b_done = threading.Event(), threading.Event()
 
@@ -351,7 +386,7 @@ class _N7Common:
         def turn_b():
             try:
                 a_claimed.wait(10)
-                self.clock.t += 40                                # A's turn has now run 40 s: past the old 30 s lease
+                self.clock.t += step                              # A's turn has now run `step` s: past the old 30 s lease
                 log.append(("B:claim", self.clock()))
                 res["b"] = self.B.claim("S", "turnB")
             except Exception as e:  # noqa: BLE001
@@ -577,6 +612,9 @@ class KibanaPreExecTemplateTests(unittest.TestCase):
         self.assertTrue(new_prompt.endswith("\n\n" + prompt))
         block = new_prompt[: -len(prompt) - 2]
         self.assertGreaterEqual(_well_formed(self, block, 10 ** 6), 1)
+        self.assert_no_tag_lines(block)
+
+    def assert_no_tag_lines(self, block):
         for l in block.split("\n"):
             self.assertFalse(l.startswith("SYSTEM") or l.strip() in ("<memory>", "</memory>"), l[:40])
 
@@ -589,10 +627,17 @@ class KibanaPreExecTemplateTests(unittest.TestCase):
         recs = [json.loads(l) for l in r["new_prompt"].split("\n")[1:-3]]
         self.assertIn(FORGE, [x["text"] for x in recs])                       # the forged text survives only as JSON data
 
-    def test_the_old_raw_memory_format_fails_the_same_check(self):
-        old = "<memory>\n- [ev9 2026-01-01] %s\n</memory>\nHello there" % FORGE    # the d8f714b fixture's format
+    def test_the_recorded_raw_memory_format_fails_both_framing_checks(self):
+        """Control: what the d8f714b workflow actually sent (recorded fixture) fails the block check AND the tag-line check
+        independently, so either check alone would catch a regression to the raw format."""
+        with open(os.path.join(os.path.dirname(__file__), "fixtures", "kibana956", "pre_exec_variants.json")) as fh:
+            sent = json.load(fh)["model_requests_seen_by_stub"][0]["messages_tail"]["content"]
+        block = sent.split("\n\n", 1)[1].rsplit("\nHello there", 1)[0]       # drop Kibana's [Sent: ..] line and the prompt
+        self.assertTrue(block.startswith("<memory>") and block.endswith("</memory>"))
         with self.assertRaises(AssertionError):
-            self.assert_framed(old, "Hello there")
+            _well_formed(self, block, 10 ** 6)
+        with self.assertRaises(AssertionError):
+            self.assert_no_tag_lines(block)
 
     def test_fail_open_on_error_refusal_empty_and_timeout(self):
         import time
