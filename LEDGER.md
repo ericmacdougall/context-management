@@ -201,6 +201,17 @@ Stage X1 (800 further calls, a 1,000-session fact pool; decision rule committed 
 | Cost of the cap-30 prompt | Ordinary sessions return 11.7 facts at cap 30 against 8.6 at cap 12, so output is +33% and time +24% for every session, not only capped ones | Supersedes the earlier "+1.5%" estimate: 22,500 calls would be about 333M input and 51M output tokens, 58 h wall, about 1,756 USD notional |
 | Whole-pool fact count | About 12 facts per ordinary session, so about 220,000 facts for the pool, not the 295,000 implied by gold-heavy samples | Corrected |
 
+Dense and fused follow-up on the same 1,000-session pool (no model calls; exploratory; rules and thresholds committed first; feat/eval-scaffold 99d816e). It does not reverse the stop; it passed a pre-set screen for "worth designing a larger test":
+
+| Arm, 11 unreachable questions | Top 10 | Top 50 | Median rank of first gold item |
+|---|---|---|---|
+| Dense over facts | 4 | 7 | 24 |
+| Keyword plus dense over facts (fused) | 5 | 7 | 15 |
+| Facts and raw rounds in one fused list | 4 | 8 | 19 |
+| Controls over raw rounds: keyword / dense / fused | 1 / 0 / 1 | 4 / 6 / 6 | 93 / 48 / 49 |
+
+Scaling from 200 to 1,000 sessions at top 10: facts arms keep about half their hits (fused 9 to 5); raw-text arms lose 80% or all (dense 7 to 0). So facts degrade more slowly than raw text as the pool grows; the earlier keyword-only test understated them. Limits: 11 questions (best exact sign p about 0.06), a pool 5% of the real one, absolute top-10 still only 4 to 5 of 11. Three questions stay outside the top 50 in every arm. Likely missing signals, by the owner's reading: time anchoring (questions say "a week ago"; event time exists on 10% of facts), preferences never stated as facts, and cross-session aggregation (the test scores the first gold item only).
+
 Cost extrapolation (random sample only; interval is sampling noise; the pool's longest sessions are 3.7 times longer than any sampled):
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
