@@ -258,6 +258,11 @@ def surface_entries():
     for where, obj in exported("pol"):
         if not inspect.isclass(obj):
             continue
+        if where.startswith("pol.pgcore."):
+            # driver-specific (imports only where psycopg is installed, so the entry list would differ by host): its session
+            # forgeries are tests/test_pg_boundary.py and B3 against the database role boundary, not this in-memory world
+            others.append(where + " (driver-specific: covered by tests.test_pg_boundary and exp.b3_pg)")
+            continue
         for mn, f, _static in class_methods(obj, "pol"):                  # inherited public methods count too
             ps = [p for p in inspect.signature(f).parameters if p not in ("self", "cls")]
             if ps and ps[0] == "session":
