@@ -141,6 +141,29 @@ class PgBoundary(unittest.TestCase):
             self.assertTrue(out["code"].startswith("unauthenticated"), out)
         self.assertEqual(self.s.execute("select count(*) from dc.events").fetchone()[0], 0)
 
+    def test_every_read_and_erase_call_refuses_a_forged_token(self):
+        """The four non-submit API calls, with a guessed, empty or one-character-altered token, return nothing and change nothing; the
+        same calls with the real admin token do return data (so the refusal is the token check, not an empty world). exp/e3 leaves
+        pol.pgcore to this file, so each API call is covered here."""
+        from psycopg.types.json import Jsonb
+        self.s.execute("insert into dc.vals values (%s, 'ref-x', 'about dana', %s, array['dana'])", (T, Jsonb(LAB)))
+        idp = pgcore.connect_idp(self.port, os.environ["POL_PG_IDP_PASSFILE"])
+        try:
+            tok = idp.execute("select dc.open_session(%s,'admin','owner_ui','f',60)", (T,)).fetchone()[0]
+        finally:
+            idp.close()
+        q = self.c.execute
+        self.assertIsNotNone(q("select dc.explain(%s,'r1')", (tok,)).fetchone()[0])
+        self.assertNotEqual(q("select dc.read_table(%s)", (tok,)).fetchone()[0], [])
+        self.assertEqual(len(q("select dc.erase_candidates(%s,'dana')", (tok,)).fetchone()[0]["values"]), 1)
+        for bad in ("", "forged", "0" * 64, tok[:-1] + ("0" if tok[-1] != "0" else "1")):
+            self.assertIsNone(q("select dc.explain(%s,'r1')", (bad,)).fetchone()[0])
+            self.assertEqual(q("select dc.read_table(%s)", (bad,)).fetchone()[0], [])
+            self.assertEqual(q("select dc.erase_candidates(%s,'dana')", (bad,)).fetchone()[0], {"refused": "unauthorized", "values": []})
+            self.assertEqual(q("select dc.erase_values(%s,'dana',array['ref-x'])", (bad,)).fetchone()[0], {"refused": "unauthorized"})
+        self.assertEqual(self.s.execute("select count(*) from dc.vals where tenant=%s", (T,)).fetchone()[0], 1)
+        self.assertEqual(self.s.execute("select count(*) from dc.audit where code='erase_subject'").fetchone()[0], 0)
+
     # ---------------------------------------------------------------- R3-8 external anchor
     def test_owner_who_recomputes_the_chain_is_detected_by_the_external_anchor(self):
         """p10 C left this as a hypothesis: an owner who rewrites a row AND recomputes every hash passes dc.verify_chain. The anchor file
