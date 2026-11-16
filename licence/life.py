@@ -87,6 +87,8 @@ def down(n, ttl, post):
     matrix.make_base()
     R["dls_setup"] = matrix.ensure_dls()
     R["fixtures"] = exp3.fixtures()
+    R["fixtures_unrefreshed"] = exp3.unrefreshed_fixture()
+    R["unrefreshed_twin_on_trial"] = exp3.unrefreshed_partial("lic3-semu-t")
     log("fixtures done; trial matrix")
     R["exp1_trial"] = matrix.run("trial")
     R["exp1_trial_quick"] = matrix.quick_probes("lic3-sem")
@@ -114,6 +116,7 @@ def down(n, ttl, post):
     poll.start()
     time.sleep(25)
     R["stamp_before_transition"] = lib.stamp()
+    R["dls_battery_trial"] = matrix.dls_battery()
     log("start_basic under load")
     sb = basic_call()
     R["start_basic"] = sb
@@ -132,6 +135,7 @@ def down(n, ttl, post):
     W.dump(os.path.join(RES, "down_%d.rows.gz" % n))
     log("after matrix")
     R["stamp_after"] = lib.stamp()
+    R["dls_battery_after"] = matrix.dls_battery()
     R["exp1_after"] = matrix.run("after")
     R["exp1_after_quick"] = matrix.quick_probes("lic3-sem")
     # exp 3 after
@@ -143,6 +147,7 @@ def down(n, ttl, post):
         A["mutations"][kind] = exp3.mutations(kind, ix)
         A["reads_after_mut"][kind] = exp3.reads(kind, ix)
     E3["after"] = A
+    A["unrefreshed_partial_on_basic"] = exp3.unrefreshed_partial("lic3-semu")
     log("migrations")
     M = {}
     try:

@@ -134,6 +134,10 @@ def mutations(kind, ix):
 
     def rec(name, c, j, check=None):
         M[name] = {"class": classify(c, j), "status": c, "error": err(j) if c >= 300 else None}
+        if c >= 300 and M[name]["error"] is None:
+            M[name]["body"] = json.dumps(j)[:400]
+            if "non-compliant" in M[name]["body"]:
+                M[name]["class"] = "LICENCE_ERROR"
         if check:
             M[name]["effect"] = check()
     ntag = lambda i: (get(i)[1].get("_source") or {}).get("tag")
@@ -293,3 +297,32 @@ def check_semantic(docs, dst):
             tops += 1
     return {"docs": len(docs), "dst_count": len(got), "vector_mismatches_vs_stored": len(mism), "worst_abs_err_vs_stub": worst_abs, "worst_cosine_vs_stub": worst_cos,
             "knn_self_top1": tops, "knn_self_of": tot}
+
+
+def unrefreshed_fixture():
+    """semantic_text index with refresh off: 20 docs written (on trial) and NOT refreshed; plus a twin for the trial-side baseline."""
+    out = {}
+    for suffix in ("", "-t"):
+        ix = "lic3-semu" + suffix
+        req("DELETE", "/" + ix)
+        m = mapping("sem")
+        m["settings"]["refresh_interval"] = "-1"
+        c, j, _ = req("PUT", "/" + ix, m)
+        cb, sb = bulk(ix, [(str(i), doc("sem", i)) for i in range(20)], refresh="false")
+        out[ix] = {"create": c, "bulk": sb}
+    return out
+
+
+def unrefreshed_partial(ix):
+    """Bulk partial update (tag only) of documents that are not yet refreshed, then refresh and count what survived."""
+    c, s = bulk(ix, [(str(i), {"tag": "u"}) for i in range(20)], refresh="false", op="update")
+    req("POST", "/%s/_refresh" % ix)
+    tags = {}
+    for i in range(20):
+        cc, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))
+        t = (j.get("_source") or {}).get("tag") if cc == 200 else "MISSING"
+        tags[t] = tags.get(t, 0) + 1
+    cs, js, _ = req("POST", "/%s/_search" % ix, {"query": {"semantic": {"field": "body", "query": "paris"}}, "size": 50})
+    return {"bulk_status": c, "bulk": s, "tags": tags, "embeddings": inference_stored(ix, list(range(20))),
+            "semantic_search": {"status": cs, "hits": js.get("hits", {}).get("total", {}).get("value") if cs == 200 else None, "error": err(js) if cs >= 300 else None},
+            "count": count(ix)}

@@ -70,6 +70,29 @@ def dls_search():
     return r
 
 
+def dls_battery():
+    """Every read path as the DLS-restricted user. Allowed doc: id 0 (kw a). Hidden doc: id 1 (kw b). Returns status plus whether any document body came back."""
+    U = dict(user=DLS_USER, pwfile=DLS_PW)
+    out = {}
+
+    def rec(name, c, j):
+        body = json.dumps(j)
+        out[name] = {"status": c, "returned_hidden_doc": ('"kw":"b"' in body.replace(" ", "")) or ("berlin move notes" in body), "returned_any_source": '"_source"' in body and c < 300}
+    rec("get_allowed_doc0", *req("GET", "/%s/_doc/0" % BASE_IDX, **U)[:2])
+    rec("get_hidden_doc1", *req("GET", "/%s/_doc/1" % BASE_IDX, **U)[:2])
+    rec("search_match_all", *req("POST", "/%s/_search" % BASE_IDX, {"query": {"match_all": {}}, "size": 20}, **U)[:2])
+    rec("search_term_hidden", *req("POST", "/%s/_search" % BASE_IDX, {"query": {"term": {"kw": "b"}}}, **U)[:2])
+    rec("count", *req("GET", "/%s/_count" % BASE_IDX, **U)[:2])
+    rec("mget", *req("POST", "/%s/_mget" % BASE_IDX, {"ids": ["0", "1"]}, **U)[:2])
+    rec("msearch", *req("POST", "/_msearch", ndjson='{"index":"%s"}\n{"query":{"match_all":{}}}\n' % BASE_IDX, **U)[:2])
+    rec("scroll_open", *req("POST", "/%s/_search?scroll=1m" % BASE_IDX, {"size": 2, "query": {"match_all": {}}}, **U)[:2])
+    rec("knn_search", *req("POST", "/%s/_search" % BASE_IDX, {"knn": {"field": "v", "query_vector": embed("berlin move notes"), "k": 3, "num_candidates": 10}}, **U)[:2])
+    rec("termvectors_hidden", *req("GET", "/%s/_termvectors/1?fields=title" % BASE_IDX, **U)[:2])
+    rec("wildcard_index", *req("POST", "/lic1-*/_search", {"query": {"match_all": {}}}, **U)[:2])
+    rec("esql", *req("POST", "/_query", {"query": "FROM %s | LIMIT 10" % BASE_IDX}, **U)[:2])
+    return out
+
+
 def quick_probes(sem_idx="lic-sem"):
     """Fast subset. Keys are stable; values are class strings plus status."""
     out = {}
