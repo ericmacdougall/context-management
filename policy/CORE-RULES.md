@@ -18,8 +18,15 @@ config = {
 Requirements are exactly the keys of `authority` (a req missing from `proposers` has no extra proposers). Initial per-requirement head:
 `version 0, status "unset", value_ref None, value_label None, value_event None, value_by None, value_version 0, last None, contested None`.
 
+ROUND 3 (2026-11-16), ASSUMPTION until the user confirms (the reviewer's safe defaults, relayed by the coordinator, not the user's own
+words): non-humans may only propose and remark; every head-moving or closing event (confirm, decide with any verb, supersede,
+retract) needs a HUMAN with authority; an agent's disagreement is expressed as its own proposal or remark, never as a binding reject.
+This removes rule 11 (non-human reject), `self_approval` and `no_value_change`. The per-requirement cap counts and binds non-humans
+only, so non-humans cannot lock humans out of proposing (R3-4).
+
 Constants: `MAX_CANDIDATES = 8`, `MAX_OPEN_PER_PRINCIPAL = 16` (open proposals plus open pending changes of one principal on one
-requirement), `MAX_OPEN_PER_REQ = 256` (all open proposals plus open pending changes on one requirement).
+requirement, any kind), `MAX_OPEN_PER_REQ = 256` (open proposals plus open pending changes on one requirement whose AUTHOR is
+NON-HUMAN; it applies to non-human authors only).
 Channels: owner channels `owner_ui`, `owner_cli`; agent channel `agent_api`.
 
 ## 2. Event format (as logged; stamped by the service from the authenticated session)
@@ -58,42 +65,38 @@ those fields is `bad_event`.
 7. req not a requirement -> `unknown_req`.
 8. `id` already used by an applied event on this req -> `duplicate_id`.
 9. `propose` / `remark`: principal must be in authority[req] or proposers[req] (`unauthorized`); the principal's open count on req
-   must be < MAX_OPEN_PER_PRINCIPAL and the req's open count < MAX_OPEN_PER_REQ (`proposal_cap`). Applied: a proposal (propose) or
+   must be < MAX_OPEN_PER_PRINCIPAL, and, for a NON-HUMAN principal only, the req's non-human-authored open count must be
+   < MAX_OPEN_PER_REQ (`proposal_cap`). A human's proposal is never refused because of other principals' items. Applied: a proposal (propose) or
    a pending change (remark, which also records `channel`) with status `open`, author, author kind, value_ref, label, base = based_on.
    Codes `proposed` / `pending_created`. The head does not change.
 10. Head-moving types (confirm, decide, supersede, retract), in order:
     a. principal not in authority[req] -> `unauthorized`;
     b. human on a channel that is not an owner channel, or non-human on a channel that is not `agent_api` -> `channel_mismatch`;
-    c. non-human and (type is supersede, retract, or decide with verb amend or resolve) -> `agent_not_permitted`;
-    d. confirm: non-human -> `agent_cannot_confirm`; pending unknown -> `unknown_pending`; pending not open -> `pending_closed`;
-       pending's channel equals this event's channel -> `same_channel_confirmation`;
+    c. non-human: confirm -> `agent_cannot_confirm`; every other head-moving type (decide with any verb, supersede, retract) ->
+       `agent_not_permitted`. (From here on the principal is human.)
+    d. confirm: pending unknown -> `unknown_pending`; pending not open -> `pending_closed`; pending's channel equals this event's
+       channel -> `same_channel_confirmation`;
     e. decide: verb not in {accept, reject, amend, resolve} -> `bad_event`; for accept, reject, amend: proposal unknown on this req ->
-       `unknown_proposal`; accept by a non-human of a proposal whose author is non-human -> `self_approval`; proposal_hash must equal
-       sha256 of the canonical JSON of `[proposal id, proposal value_ref, proposal author]` (`proposal_mismatch`).
-11. NON-HUMAN REJECT (changes no value, never moves the head): requires based_on == head version (`stale`) and the proposal open
-    (`proposal_closed`). Applied: the proposal becomes `rejected` with closed_by = this event. Version, value, last and contested are
-    unchanged. Code `decided_reject`.
+       `unknown_proposal`; proposal_hash must equal sha256 of the canonical JSON of `[proposal id, proposal value_ref, proposal author]`
+       (`proposal_mismatch`).
+11. (Removed in round 3: there is no non-human reject.)
 12. Requirement contested:
     - decide resolve: based_on != version -> `stale`; otherwise RESOLVE (section 4).
-    - based_on == contested base: the candidate's effect is computed (section 5); if the principal is non-human, or any existing
-      candidate's author is non-human -> `stale`; candidates already MAX_CANDIDATES -> `candidates_full`; the adopted content is not
+    - based_on == contested base: the candidate's effect is computed (section 5); candidates already MAX_CANDIDATES -> `candidates_full`; the adopted content is not
       open and was not closed by one of the existing candidates' events -> `proposal_closed`. Applied: appended as a candidate
       (event, by, effect, verb, computed label). Code `contested_joined`. Version unchanged.
     - based_on == version -> `contested_needs_resolve`; otherwise `stale`.
 13. Not contested and verb resolve: based_on != version -> `stale`, else `not_contested`.
 14. based_on != version (stale binding): it is a SIBLING when all hold: last exists; based_on == last.based_on; version == based_on + 1;
-    last.by != principal; last.verb != "resolve"; principal is human and last.by is human. Not a sibling -> `stale`. A sibling whose
+    last.by != principal; last.verb != "resolve". Not a sibling -> `stale`. A sibling whose
     adopted content is not open and was not closed by last.event -> `proposal_closed`. Effect equal to last.effect ->
     `concurrent_agree` (nothing changes, but the idempotency key and the id ARE recorded). Otherwise CONTEST: contested = {base:
     based_on, prior: last.prev, candidates: [last's (event, by, effect, verb, label), this event's]}; status `contested`; value_ref
     None; version + 1; last None. Code `contested_opened`.
 15. Normal application (based_on == version):
-    - decide accept: proposal must be open (`proposal_closed`); a NON-HUMAN accept whose proposal value_ref equals the head's current
-      value_ref while status is `current` is refused `no_value_change` (N3: a non-human event that changes no value never moves the
-      head; amendment 3, after B1 found an agent re-accepting a value a resolve had already installed); proposal becomes `accepted`
-      (closed_by this event); value set. `decided_accept`.
-    - decide reject (human): proposal must be open (`proposal_closed`); proposal becomes `rejected`; value unchanged.
-      `decided_reject`.
+    - decide accept: proposal must be open (`proposal_closed`); proposal becomes `accepted` (closed_by this event); value set.
+      `decided_accept`.
+    - decide reject: proposal must be open (`proposal_closed`); proposal becomes `rejected`; value unchanged. `decided_reject`.
     - decide amend: proposal must be open (`proposal_closed`); proposal becomes `accepted`; value set to the event's value_ref.
       `decided_amend`.
     - supersede: value set to the event's value_ref. `superseded`.
@@ -129,17 +132,16 @@ confirm -> pending label; supersede or resolve-by-value -> event label; reject a
 The idempotency key is recorded with (fingerprint, code); the event id is recorded as used on its req (types with a req); the event is
 appended to the log. REFUSED codes: bad_event, tenant_mismatch, unauthorized, principal_revoked, unknown_req, duplicate_id,
 proposal_cap, channel_mismatch, agent_not_permitted, agent_cannot_confirm, unknown_pending, pending_closed, same_channel_confirmation,
-unknown_proposal, self_approval, proposal_mismatch, stale, proposal_closed, candidates_full, contested_needs_resolve, not_contested,
-nothing_to_retract, unknown_candidate, idem_conflict, no_value_change, plus `duplicate` (not applied again).
+unknown_proposal, proposal_mismatch, stale, proposal_closed, candidates_full, contested_needs_resolve, not_contested,
+nothing_to_retract, unknown_candidate, idem_conflict, plus `duplicate` (not applied again).
 Every refused event is written to the audit log with its code (not to the event log).
 
 ## 7. Liveness bound (what N3 needs)
 
-A non-human can move the head only by accepting an OPEN HUMAN-authored proposal whose value differs from the current one (rules 10c,
-10e, 11, 15). So between two reads of the head
-by a human, non-humans can move it at most once per open human proposal, and new human proposals come only from humans. A human who
-re-reads the head and resubmits is therefore applied within (open human-authored proposals on that req) + 1 attempts, whatever
-non-humans do.
+A non-human never moves the head, never changes a value and never closes a proposal or pending change (rule 10c; propose and remark
+only add open items, rule 9). So non-humans cannot make a human's read stale: between two reads by a human only other humans can move
+the head, and a human with authority is never refused `proposal_cap` because of non-human items (rule 9). Contention among humans
+is visible and audited (contested, resolve), not starvation by non-humans.
 
 ## 8. Canonical forms and the comparable view (what B2 compares, event by event)
 
