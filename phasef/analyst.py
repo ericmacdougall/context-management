@@ -163,7 +163,7 @@ def analyst_extra_args(cfg_path):
 
 def result_path(base, arm, level, qid):
     """<base>/analyst_results/<ARM>/<level>/<question id>.json with ARM in {ANALYST, ANALYST-RERANK-ONLY} (final layout from main)."""
-    assert arm in ("ANALYST", "ANALYST-RERANK-ONLY")
+    assert arm in ("ANALYST", "ANALYST-RERANK-ONLY", "A-DIG", "A-REORDER")
     return os.path.join(base, "analyst_results", arm, level, qid + ".json")
 
 
