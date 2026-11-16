@@ -37,6 +37,9 @@ create table dc.events(seq bigserial primary key, tenant text not null, principa
 create unique index events_idem on dc.events(tenant, principal, idem);
 -- grants are exempt from the duplicate-id rule (CORE-RULES rule 6 precedes rule 8), so the backstop index excludes them (found by exp/pg_diff)
 create unique index events_id on dc.events(tenant, req, evid) where req is not null and code <> 'granted';
+-- the duplicate-id lookup in dc._reduce (every event) cannot use the partial index above (its predicate names no code), so without this
+-- one it scans the tenant's events: per-event cost grew with the log (tests.test_pg proposal-cost test failed at f66f76c, 4.0x > 3x)
+create index events_by_id on dc.events(tenant, req, evid);
 create table dc.chainhead(tenant text primary key, n bigint not null default 0, hash text not null);
 create table dc.audit(n bigserial primary key, tenant text, principal text, code text not null, original text, ev jsonb);
 -- the vault: value text, its label as submitted (subject NAMES, needed to find what to erase), erased on request
