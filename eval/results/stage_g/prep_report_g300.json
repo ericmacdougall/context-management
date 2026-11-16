@@ -1,0 +1,19 @@
+{
+ "depth": 300,
+ "chars_per_token": 2.47,
+ "n_files": 94,
+ "est_tokens_depth300": {
+  "max": 56641,
+  "mean": 56129.14893617021,
+  "min": 50085
+ },
+ "est_tokens_depth400_same_method": {
+  "max": 75143,
+  "mean": 74356.05319148937
+ },
+ "calibration_078150f1_depth400": {
+  "estimate": 75124,
+  "measured": 66388
+ },
+ "largest_over_60000": []
+}

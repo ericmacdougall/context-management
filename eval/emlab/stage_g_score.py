@@ -80,14 +80,16 @@ def main(dataset, art, sets_path, out_root, in_root, rerank_final, out_json):
     a = art.rstrip("/") + "/"
     ex = ExactRetriever(a + "chunks.jsonl", a + "chunk_vectors.npy", a + "queries.json", a + "query_vectors.npy")
     ex.prepare_terms(qs)
-    lists: Dict[str, Dict[str, List[str]]] = {k: {} for k in ("A-DIG", "A-REORDER", "RRF depth 400", "cross-encoder v2", "ANALYST (50, unshuffled)")}
+    lists: Dict[str, Dict[str, List[str]]] = {k: {} for k in ("A-DIG", "A-REORDER", "RRF depth 300", "RRF depth 400", "cross-encoder v2", "ANALYST (50, unshuffled)")}
     info: Dict[str, Dict[str, Any]] = {"A-DIG": {}, "A-REORDER": {}}
     dates_of: Dict[str, Dict[str, str]] = {}
     weak: Dict[str, bool] = {}
     for q in qs:
         ids = ctx.level_sessions(q, "H3", sets)
         dates_of[q.qid], _ = level_dates(q, ids)
-        lists["RRF depth 400"][q.qid] = run_arm(ex, with_sessions(q, ids), "rrf", 400, "off", rrf_k=60)
+        full = run_arm(ex, with_sessions(q, ids), "rrf", 400, "off", rrf_k=60)
+        lists["RRF depth 300"][q.qid] = full[:300]
+        lists["RRF depth 400"][q.qid] = full
         lists["cross-encoder v2"][q.qid] = rr[q.qid]
         old = json.load(open(os.path.join(in_root, "analyst_results", "ANALYST", "H3", q.qid + ".json")))
         t50 = json.load(open(os.path.join(out_root, "analyst_tasks", "H3", q.qid + ".json")))
@@ -96,11 +98,11 @@ def main(dataset, art, sets_path, out_root, in_root, rerank_final, out_json):
             if c["qid"] == q.qid and c["level"] == "H3" and c.get("variant", "") == "":
                 ok50 |= set(c.get("returned_ids", []))
         lists["ANALYST (50, unshuffled)"][q.qid] = ([anon.real_rid(i) for i in (old.get("ranked_round_ids") or []) if i in ok50] if old.get("status") == "ok" else [])
-        tg = json.load(open(os.path.join(out_root, "analyst_tasks_g", "H3", q.qid + ".json")))
+        tg = json.load(open(os.path.join(out_root, "analyst_tasks_g300", "H3", q.qid + ".json")))
         cand_open = {c["round_id"] for c in tg["candidates"]}
         weak[q.qid] = not any(anon.real_rid(c["round_id"]).rsplit(":", 1)[0] in set(q.gold_session_ids) for c in tg["candidates"])
         for arm in ("A-DIG", "A-REORDER"):
-            rp = os.path.join(in_root, "analyst_results", arm, "H3_g", q.qid + ".json")
+            rp = os.path.join(in_root, "analyst_results", arm, "H3_g300", q.qid + ".json")
             if not os.path.exists(rp):
                 lists[arm][q.qid] = []
                 info[arm][q.qid] = {"status": "missing", "tool_calls": None}
@@ -114,7 +116,7 @@ def main(dataset, art, sets_path, out_root, in_root, rerank_final, out_json):
             ids_out = rj.get("ranked_round_ids") or []
             good = [anon.real_rid(i) for i in ids_out if i in ok][:20] if rj.get("status") == "ok" else []
             lists[arm][q.qid] = good
-            logn = sum(1 for c in calls if c["qid"] == q.qid and c["level"] == "H3" and c.get("variant", "") == "g")
+            logn = sum(1 for c in calls if c["qid"] == q.qid and c["level"] == "H3" and c.get("variant", "") == "g300")
             info[arm][q.qid] = {"status": rj.get("status"), "tool_calls": rj.get("tool_calls"), "log_calls": logn if arm == "A-DIG" else 0,
                                 "rejected_ids": len(ids_out) - len([i for i in ids_out if i in ok]) if rj.get("status") == "ok" else None,
                                 "seconds": rj.get("seconds"), "out_tokens": (rj.get("tokens") or {}).get("out")}
@@ -136,7 +138,8 @@ def main(dataset, art, sets_path, out_root, in_root, rerank_final, out_json):
             summ[sname]["arms"][k] = {"sr10": mean(r["sr10"] for r in rows), "any_gold_4k": mean(r["any"] for r in rows), "gold_session_4k": mean(r["sess"] for r in rows),
                                       "gold_round_4k": mean(r["round"] for r in rows), "ku_n": len(ku),
                                       "ku_latest": mean(1.0 if r["latest"] else 0.0 for r in ku), "ku_stale_only": mean(1.0 if r["stale"] else 0.0 for r in ku)}
-        for a_, b_ in (("A-DIG", "A-REORDER"), ("A-REORDER", "cross-encoder v2"), ("A-DIG", "cross-encoder v2"), ("A-DIG", "RRF depth 400"), ("A-REORDER", "RRF depth 400"),
+        for a_, b_ in (("A-DIG", "A-REORDER"), ("A-REORDER", "cross-encoder v2"), ("A-DIG", "cross-encoder v2"), ("A-DIG", "RRF depth 300"), ("A-REORDER", "RRF depth 300"),
+                       ("A-DIG", "RRF depth 400"), ("A-REORDER", "RRF depth 400"),
                        ("A-DIG", "ANALYST (50, unshuffled)"), ("A-REORDER", "ANALYST (50, unshuffled)")):
             d = {}
             for m in ("sr10", "sess", "round"):
