@@ -84,5 +84,11 @@ variant("v2sx", "BROKEN state migration (loses the renamed counter): control tha
     ('        self.st = dict(st)\n', '        self.st = state_mod.migrate_lossy(dict(st))\n'),
 ], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]'))
 
+
+CAV = ('                workflow.continue_as_new(st)',
+       '                workflow.continue_as_new(st, initial_versioning_behavior=workflow.ContinueAsNewVersioningBehavior.AUTO_UPGRADE)')
+variant("v1cv", "continue-as-new asks to be moved to the current Worker Deployment Version (AUTO_UPGRADE)", [CAV])
+variant("v2cv", "v1cv plus the unguarded policy step (incompatible with v1cv histories)", [CAV, (READ, READ + POLICY)])
+
 if __name__ == "__main__":
     print("generated", sorted(p.name for p in HERE.glob("v*.py")))

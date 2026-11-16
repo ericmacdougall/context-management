@@ -1,6 +1,7 @@
 """F5 (code evolution) and F6 (state migration) experiments: python -m engine.exps5 <f5a|f5b1|f5b2|f5b3|f5c|f6> [--small]"""
 import asyncio
 import importlib
+import os
 import json
 import subprocess
 import sys
@@ -218,6 +219,50 @@ async def f5b2():
     print(out["PASS"], po, pn, stalled, ops["set_current_b1"]["rc"], ops["set_current_b2"]["rc"])
 
 
+# ------------------------------------------------------------------ F5b(4) pinned deployments + continue-as-new upgrade point
+async def f5b4():
+    demotion = "--demotion" in sys.argv and sys.argv[sys.argv.index("--demotion") + 1] == "on"
+    n, turns, period, pre, n2 = sizes((20, 24, 3, 25, 6), (4, 14, 1.5, 8, 2))
+    lib.record(old_sessions=n, turns_each=turns, period_s=period, cutover_after_s=pre, new_sessions=n2, can_len=60,
+               demotion_signal_enabled=demotion)
+    if demotion:
+        os.environ["EXTRA"] = "--dynamic-config-value matching.enableWorkerDeploymentVersionDemotionSignal=true"
+    lib.start_server("1.10.1", f"f5b4{suffix()}-{int(time.time())}.db", TPORT)
+    os.environ.pop("EXTRA", None)
+    dep, w = "sessdep", ["--deployment", "sessdep", "--pinned"]
+    lib.start_worker("f5b4a", "venv-new", "v1cv", "old", "f5b4", extra=w + ["--build-id", "b1"])
+    client, _ = await lib.connect_retry()
+    await asyncio.sleep(4)
+    ops = {"set_current_b1": cli("1.10.1", "worker", "deployment", "set-current-version", "--deployment-name", dep, "--build-id", "b1", "--yes")}
+    stats = {"appended": 0, "signaled": 0, "retries": 0}
+    old, new = T("wa"), T("wb")
+    tasks = await lib.launch(client, old, n, "f5b4", stats, turns=turns, period=period, expected=turns, can_len=60)
+    await asyncio.sleep(pre)
+    t_cut = time.time()
+    lib.start_worker("f5b4b", "venv-new", "v2cv", "new", "f5b4", extra=w + ["--build-id", "b2"])   # incompatible code, new build
+    await asyncio.sleep(4)
+    ops["set_current_b2"] = cli("1.10.1", "worker", "deployment", "set-current-version", "--deployment-name", dep, "--build-id", "b2", "--yes")
+    tasks += await lib.launch(client, new, n2, "f5b4", stats, turns=turns // 2, period=period, expected=turns // 2)
+    await asyncio.gather(*tasks)
+    st, _ = await lib.wait_done(client, old, n, 900)
+    t_old_done = time.time() - t_cut
+    st2, _ = await lib.wait_done(client, new, n2, 600)
+    ops["describe_b1"] = cli("1.10.1", "worker", "deployment", "describe-version", "--deployment-name", dep, "--build-id", "b1")
+    ops["describe_b2"] = cli("1.10.1", "worker", "deployment", "describe-version", "--deployment-name", dep, "--build-id", "b2")
+    v1, v2 = ctl.verify(old, n, turns), ctl.verify(new, n2, turns // 2)
+    lib.stop_worker("f5b4a")
+    lib.stop_worker("f5b4b")
+    lib.stop_server()
+    po, pn = code_profile(old), code_profile(new)
+    out = {"id": "F5b-4-pinned-plus-continue-as-new", "server": "1.32.2", "demotion_signal_enabled": demotion, "ops": ops,
+           "code_profile_old": po, "code_profile_new": pn, "all_old_done_s_after_cutover": round(t_old_done, 1),
+           "statuses_old": st, "statuses_new": st2, "verify_old": v1, "verify_new": v2,
+           "PASS": v1["PASS"] and v2["PASS"] and st == {"COMPLETED": n} and st2 == {"COMPLETED": n2}
+           and all(k.startswith("v1cv") for k in po) and set(pn) == {"v2cv"} and any(k.endswith("v2cv") for k in po)}
+    lib.save(f"f5b4{'-demotion' if demotion else ''}{suffix()}", out)
+    print(out["PASS"], po, pn, ops["describe_b1"]["out"][:200].replace("\n", " "))
+
+
 # ------------------------------------------------------------------ F5b(3) continue-as-new as the upgrade point
 async def f5b3():
     n1, n2, turns, period, pre, nn = sizes((15, 15, 24, 4, 40, 10), (3, 3, 10, 1.5, 8, 3))
@@ -417,4 +462,4 @@ async def f6():
 
 
 if __name__ == "__main__":
-    asyncio.run({"f5a": f5a, "f5b1": f5b1, "f5b2": f5b2, "f5b3": f5b3, "f5c": f5c, "f6": f6}[sys.argv[1]]())
+    asyncio.run({"f5a": f5a, "f5b1": f5b1, "f5b2": f5b2, "f5b3": f5b3, "f5b4": f5b4, "f5c": f5c, "f6": f6}[sys.argv[1]]())

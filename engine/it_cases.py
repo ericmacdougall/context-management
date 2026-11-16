@@ -129,6 +129,20 @@ async def case_m4(client):
             "passed": sx == "COMPLETED" and sy == "COMPLETED"}
 
 
+async def wait_signal_handled(client, sid, timeout=90):
+    """Wait until a workflow task has completed AFTER the last signal in the history (the signal was handled)."""
+    from temporalio.api.enums.v1 import EventType
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        h = await client.get_workflow_handle(ctl.wid(sid, TENANT)).fetch_history()
+        sig = [e.event_id for e in h.events if e.event_type == EventType.EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED]
+        done = [e.event_id for e in h.events if e.event_type == EventType.EVENT_TYPE_WORKFLOW_TASK_COMPLETED]
+        if sig and any(d > sig[-1] for d in done):
+            return True
+        await asyncio.sleep(1)
+    return False
+
+
 async def case_h3(client):
     """A doorbell naming another session's input is rejected before anything is read or marked."""
     await up("v1")
@@ -138,7 +152,8 @@ async def case_h3(client):
     a, b = ctl.sids(t, 2)
     eb = pgstore.append_input(TENANT, b, "r1", {"n": 1})[0]
     await signal(client, a, eb)                                  # foreign id into A
-    await asyncio.sleep(12)                                      # long enough for A's worker to have handled it
+    await wait_signal_handled(client, a)                         # A's worker has really processed the foreign doorbell
+    await asyncio.sleep(6)                                       # (the old code then runs its three activities)
     await signal(client, b, eb)                                  # B's own doorbell
     await wait_for(lambda: len(results_of_session(b)) >= 1, 30)
     await signal(client, a, "f", "finish_now")
