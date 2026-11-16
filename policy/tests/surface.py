@@ -25,7 +25,7 @@ SAFETY_PARAMS = {"directory", "clock", "policy_source", "sessions", "authority",
                  "vault", "keyring", "enforcer", "sink", "decisions"}
 FORBIDDEN_PARAMS = {"trusted", "now", "principal", "viewer", "recipient", "tenant", "flags", "disabled", "enqueue_only", "check_lineage",
                     "derive_mode", "mode", "resolve", "clock_override", "skip", "unsafe", "actor", "requester"}
-UNSCOPED_READS = {"explain", "current_table", "read_state", "log_rows", "state", "dump", "records", "snapshot_plain"}
+UNSCOPED_READS = {"current_table", "read_state", "log_rows", "state", "dump", "records", "snapshot_plain"}
 READ_RE = re.compile(r"^(read|explain|table|retrieve|view|show|values|history|candidates)(_|$)")
 TEST_ONLY_MODULES = ("tests", "exp", "testkit")
 

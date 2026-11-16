@@ -1,21 +1,29 @@
-"""Enforcement at the choke points. Every outbound or state-changing path calls Enforcer.check, which evaluates the CURRENT
-policy (policy_source is called at every use, never cached), logs the decision with its policy version, and raises
-PolicyDenied on anything but an explicit allow.
+"""Enforcement at the choke points. Nothing here takes a principal, a tenant, a clock, a label of stored data, or a recipient object from a
+caller:
 
-Labelled data travels as Block(text, label, lineage). Plain str is never accepted at a choke point. derive() is the only
-sanctioned way to make a derived block: its label is the join of the inputs'. Python str operations drop labels, which is why
-labels live on Block and not on a str subclass.
-
-Wrappers duck-type memcore.ports.ChatModel / Embedder (complete(messages, system=...) / embed(texts, kind)) so they sit in
-front of the real adapters; PolicyDenied is deliberately not a PortError, so no failover wrapper may retry it on another model.
-"""
+- Enforcer(policy_source, directory, sessions, audit): every argument is required. The clock is the runtime's (time.time); there is no
+  parameter for it. Each check verifies the Session by identity with the SessionAuthority, reads the principal from the Directory by
+  the session's principal id (a missing entry denies `unknown_principal`; a directory that raises denies `directory_error`), reads the
+  policy from policy_source at that moment, and logs the decision with its policy version to the audit log.
+- Store holds labelled records. Ids are assigned by the store. A label is supplied only for NEW content (append) and must be at least the
+  join of its lineage; derived content (append_derived, model answers) gets the join of its inputs, never a caller label. A read of a
+  missing record and a denied read return the same refusal to the caller (the audit log keeps the real reason).
+- Guarded ports (model, embedder, export) and the Outbox take record ids and read text and CURRENT labels from the store. The Outbox
+  queues references, re-reads labels and existence at delivery (mandatory: there is no option to skip it), resolves the recipient from
+  the directory ONCE per delivery and hands that same object to the decision and to the sink. Erasing a record purges queued items.
+PolicyDenied is not a port error, so no failover may retry it on another endpoint."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+import itertools
+import threading
+import time
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
+from ._pdp import Decision, evaluate
+from .directory import Directory, SessionAuthority
 from .labels import Label, join, leq
-from .pdp import Decision, Policy, Principal, decide
+from .policy import Policy
 
 
 class PolicyDenied(Exception):
@@ -26,245 +34,316 @@ class PolicyDenied(Exception):
         self.decision = decision
 
 
-@dataclass(frozen=True)
-class Block:
-    text: str
-    label: Label
-    lineage: Tuple[str, ...] = ()
+class AuditLog:
+    """Append-only, thread-safe log of every decision (allow and deny) with its policy version. In memory here; growth is one row per
+    checked request (bounded by request admission, which is outside this module)."""
 
-
-def derive(inputs: Sequence[Block], text: str, mode: str = "join", lineage_id: Optional[str] = None) -> Block:
-    """Derived data inherits the join of its inputs' labels. mode='first' is the broken control (drops the other inputs)."""
-    if not inputs:
-        raise ValueError("derive needs inputs")
-    lab = join(b.label for b in inputs) if mode == "join" else inputs[0].label
-    lin = tuple(l for b in inputs for l in b.lineage) + ((lineage_id,) if lineage_id else ())
-    return Block(text, lab, lin)
-
-
-class DecisionLog:
     def __init__(self):
-        self.entries: List[Dict[str, Any]] = []
+        self._rows: List[dict] = []
+        self._lock = threading.Lock()
 
-    def add(self, d: Decision, principal_id, label_digest, dest):
-        self.entries.append({"seq": len(self.entries), "policy_version": d.policy_version, "action": d.action, "principal": principal_id,
-                             "allow": d.allow, "reason": d.reason, "label": label_digest, "dest": dest})
+    def add(self, row: dict):
+        with self._lock:
+            self._rows.append(dict(row, seq=len(self._rows)))
 
-
-ALLOWED_CTX = frozenset(["destination", "authorization", "recipient_id", "credential", "derived"])
+    def rows(self) -> List[dict]:
+        with self._lock:
+            return [dict(r) for r in self._rows]
 
 
 class Enforcer:
-    """The only place where trusted facts enter a decision. A request may NAME ids (destination, authorization, recipient_id);
-    region, clock, the principal's attributes and the recipient's attributes come from the directory and clock the Enforcer owns.
-    Any other context key is a forged context and denies."""
+    def __init__(self, policy_source: Callable[[], Policy], directory: Directory, sessions: SessionAuthority, audit: AuditLog):
+        if not callable(policy_source) or not isinstance(directory, Directory) or not isinstance(sessions, SessionAuthority) or not isinstance(audit, AuditLog):
+            raise TypeError("Enforcer needs a policy source, a Directory, a SessionAuthority and an AuditLog")
+        self._policy_source, self._dir, self._sessions, self._audit = policy_source, directory, sessions, audit
+        self._clock = time.time
 
-    def __init__(self, policy_source: Callable[[], Policy], log: Optional[DecisionLog] = None, disabled: Iterable[str] = (),
-                 directory: Optional[Callable[[str], Optional[Principal]]] = None, clock: Callable[[], float] = None):
-        import time as _t
-        self.policy_source = policy_source
-        self.log = log if log is not None else DecisionLog()
-        self.disabled = frozenset(disabled)         # CONTROL ONLY: actions whose enforcement is switched off
-        self.evaluated_actions = set()
-        self.directory = directory
-        self.clock = clock or _t.time
+    def policy(self) -> Policy:
+        return self._policy_source()
 
-    def check(self, principal, action, labels: Sequence[Label], ctx: Optional[dict] = None, texts: Sequence[str] = (), resolve=None) -> Decision:
-        ctx = dict(ctx or {})
-        pol = self.policy_source()                  # evaluated at the moment of use
-        pid = getattr(principal, "id", None)
+    def _deny(self, reason, action, pid, ver, extra=None):
+        d = Decision(False, reason, ver, action if isinstance(action, str) else "")
+        self._audit.add(dict(extra or {}, action=d.action, principal=pid, allow=False, reason=reason, policy_version=ver))
+        raise PolicyDenied(d)
+
+    def _ver(self):
         try:
-            dig = join(labels).digest()
-        except Exception:
-            dig = None
-        if action in self.disabled:
-            d = Decision(True, "ENFORCEMENT_DISABLED", getattr(pol, "version", None), action)
-            self.log.add(d, pid, dig, ctx.get("destination"))
-            return d
-        self.evaluated_actions.add(action)
-        res = resolve or self.directory
-        d = self._decide(principal, pid, action, labels, ctx, pol, res)
-        self.log.add(d, pid, dig, ctx.get("destination"))
+            return getattr(self._policy_source(), "version", None)
+        except Exception:       # noqa: BLE001
+            return None
+
+    def _lookup(self, pid):
+        try:
+            return self._dir.lookup(pid), None
+        except Exception as e:      # noqa: BLE001  a failing directory denies
+            return None, "directory_error:" + type(e).__name__
+
+    def principal_of(self, session):
+        """The CURRENT directory entry behind a valid session, or PolicyDenied."""
+        ver = self._ver()
+        if not self._sessions.verify(session):
+            self._deny("invalid_session", "session", None, ver)
+        p, err = self._lookup(session.principal_id)
+        if err:
+            self._deny(err, "session", session.principal_id, ver)
+        if p is None:
+            self._deny("unknown_principal", "session", session.principal_id, ver)
+        if p.tenant != session.tenant:
+            self._deny("session_tenant_mismatch", "session", session.principal_id, ver)
+        return p
+
+    def _decide(self, principal_id, tenant, action, labels, request, recipient_id=None, dest=None):
+        """Decision for a principal named by a verified session or a queued item. Returns (decision, principal, recipient snapshot)."""
+        try:
+            pol = self._policy_source()
+        except Exception:       # noqa: BLE001
+            pol = None
+        ver = getattr(pol, "version", None)
+        extra = {"dest": dest}
+        try:
+            extra["label"] = join(labels).digest()
+        except Exception:       # noqa: BLE001
+            extra["label"] = None
+        p, err = self._lookup(principal_id)
+        rcp = None
+        if err:
+            self._deny(err, action, principal_id, ver, extra)
+        if p is None:
+            self._deny("unknown_principal", action, principal_id, ver, extra)
+        if p.tenant != tenant:
+            self._deny("session_tenant_mismatch", action, principal_id, ver, extra)
+        if action == "send_inbox":
+            if not isinstance(recipient_id, str):
+                self._deny("recipient_required", action, principal_id, ver, extra)
+            rcp, err = self._lookup(recipient_id)
+            if err:
+                self._deny(err, action, principal_id, ver, extra)
+            if rcp is None:
+                self._deny("recipient_unknown", action, principal_id, ver, extra)
+        d = evaluate(p, action, labels, request, pol, float(self._clock()), rcp)
+        self._audit.add(dict(extra, action=d.action, principal=p.id, allow=d.allow, reason=d.reason, policy_version=d.policy_version,
+                             recipient=None if rcp is None else rcp.id))
         if not d.allow:
             raise PolicyDenied(d)
-        return d
+        return d, p, rcp
 
-    def _decide(self, principal, pid, action, labels, ctx, pol, res):
-        ver = getattr(pol, "version", None)
-        deny = lambda r: Decision(False, r, ver, action)
-        if set(ctx) - ALLOWED_CTX:
-            return deny("forged_context")
-        if res is not None:
-            principal = res(pid)
-            if principal is None:
-                return deny("unknown_principal")
-        trusted = {"now": self.clock()}
-        if action == "send_inbox":
-            rid = ctx.get("recipient_id")
-            if not isinstance(rid, str) or res is None:
-                return deny("recipient_required")
-            rcp = res(rid)
-            if rcp is None:
-                return deny("recipient_unknown")
-            trusted["recipient"] = rcp
-        return decide(principal, action, list(labels), {k: v for k, v in ctx.items() if k != "recipient_id"}, policy=pol, trusted=trusted)
+    def _check(self, session, action, labels, request, recipient_id=None):
+        p = self.principal_of(session)
+        dest = request.get("destination") if isinstance(request, dict) else None
+        return self._decide(p.id, p.tenant, action, labels, request, recipient_id, dest)
 
 
-def public_label(tenant: str) -> Label:
-    return Label(tenants=frozenset([tenant]))
-
-
-# ------------------------------------------------------------------------------------------------ guarded ports
-class GuardedChat:
-    """Front of a ChatModel. The destination id names a policy destination; its pinned model must be what answers."""
-
-    def __init__(self, inner, enforcer: Enforcer, dest_id: str):
-        self.inner, self.enf, self.dest_id = inner, enforcer, dest_id
-
-    def complete(self, principal: Principal, blocks: Sequence[Block], system: Sequence[Block] = (), ctx: Optional[dict] = None,
-                 derive_mode: str = "join") -> Block:
-        allb = list(system) + list(blocks)
-        c = dict(ctx or {}, destination=self.dest_id)
-        self.enf.check(principal, "send_model", [b.label for b in allb], c, [b.text for b in allb])
-        msgs = [{"role": "user", "content": "\n".join(b.text for b in blocks)}]
-        res = self.inner.complete(msgs, system="\n".join(b.text for b in system) or None)
-        pinned = self.enf.policy_source().destinations[self.dest_id].model
-        if getattr(res, "model", None) != pinned:
-            d = Decision(False, "pin_drift", self.enf.policy_source().version, "send_model")
-            self.enf.log.add(d, principal.id, None, self.dest_id)
-            raise PolicyDenied(d)               # the answer is dropped and never becomes a record
-        return derive(allb, res.text, derive_mode)
-
-
-class GuardedEmbedder:
-    def __init__(self, inner, enforcer: Enforcer, dest_id: str):
-        self.inner, self.enf, self.dest_id = inner, enforcer, dest_id
-
-    def embed(self, principal: Principal, blocks: Sequence[Block], kind: str = "document", ctx: Optional[dict] = None):
-        c = dict(ctx or {}, destination=self.dest_id)
-        self.enf.check(principal, "embed", [b.label for b in blocks], c, [b.text for b in blocks])
-        return self.inner.embed([b.text for b in blocks], kind)
-
-
-class GuardedExport:
-    def __init__(self, sink: Callable[[str, str, str], None], enforcer: Enforcer, dest_id: str):
-        self.sink, self.enf, self.dest_id = sink, enforcer, dest_id
-
-    def export(self, principal: Principal, blocks: Sequence[Block], ctx: Optional[dict] = None):
-        c = dict(ctx or {}, destination=self.dest_id)
-        self.enf.check(principal, "export", [b.label for b in blocks], c, [b.text for b in blocks])
-        for b in blocks:
-            self.sink(self.dest_id, principal.tenant, b.text)
-
-
-@dataclass
+@dataclass(frozen=True)
 class Record:
     id: str
+    tenant: str
     text: str
     label: Label
-    lineage: Tuple[str, ...] = ()
-    kind: str = "message"
-    thread: str = ""
+    lineage: Tuple[str, ...]
+
+
+def _req(request):
+    if request is None:
+        return {}
+    if not isinstance(request, dict):
+        return {"__not_a_dict__": True}
+    return dict(request)
 
 
 class Store:
-    """Labelled record store: append and read are choke points. append refuses a record whose label is less restrictive than
-    the join of its lineage (derived data can never be less restricted than its inputs)."""
+    def __init__(self, enforcer: Enforcer):
+        if not isinstance(enforcer, Enforcer):
+            raise TypeError("Store needs an Enforcer")
+        self._enf = enforcer
+        self._recs: Dict[str, Record] = {}
+        self._ids = itertools.count(1)
+        self._lock = threading.Lock()
+        self._listeners: List[Callable[[str], None]] = []
+        self.erasure_queue: List[Tuple[str, str]] = []           # (principal id, record id): erasures held by a recorded legal hold
 
-    def __init__(self, enforcer: Enforcer, check_lineage: bool = True):
-        self.enf, self.records, self.check_lineage = enforcer, {}, check_lineage
+    def _get(self, rid) -> Optional[Record]:
+        with self._lock:
+            return self._recs.get(rid) if isinstance(rid, str) else None
 
-    def append(self, principal: Principal, rec: Record, ctx: Optional[dict] = None):
-        labels = [rec.label]
-        if self.check_lineage and rec.lineage:
-            src = [self.records[i].label for i in rec.lineage]            # KeyError = unknown lineage = refused below
-            if not leq(join(src), rec.label):
-                d = Decision(False, "label_below_lineage", self.enf.policy_source().version, "append")
-                self.enf.log.add(d, principal.id, rec.label.digest(), None)
-                raise PolicyDenied(d)
-            labels = labels + src
-        self.enf.check(principal, "append", labels, ctx)
-        self.records[rec.id] = rec
+    def _put(self, tenant, text, label, lineage) -> str:
+        with self._lock:
+            rid = "r%d" % next(self._ids)
+            self._recs[rid] = Record(rid, tenant, text, label, tuple(lineage))
+        return rid
 
-    def read(self, principal: Principal, rid: str, ctx: Optional[dict] = None) -> Record:
-        r = self.records[rid]
-        self.enf.check(principal, "read", [r.label], ctx)
+    def _pid(self, session):
+        return getattr(session, "principal_id", None)
+
+    def _sources(self, session, refs, action):
+        if isinstance(refs, (str, bytes)):
+            self._enf._deny("refs_type", action, self._pid(session), self._enf._ver())
+        recs = []
+        for rid in refs:
+            r = self._get(rid)
+            if r is None:
+                self._enf._deny("not_found_or_denied", action, self._pid(session), self._enf._ver())
+            recs.append(r)
+        return recs
+
+    def append(self, session, text: str, label: Label, lineage: Sequence[str] = ()) -> str:
+        if not isinstance(text, str) or not isinstance(label, Label):
+            self._enf._deny("bad_record", "append", self._pid(session), self._enf._ver())
+        src = self._sources(session, lineage, "append")
+        if src and not leq(join(r.label for r in src), label):
+            self._enf._deny("label_below_lineage", "append", self._pid(session), self._enf._ver())
+        _d, p, _r = self._enf._check(session, "append", [label] + [r.label for r in src], {})
+        return self._put(p.tenant, text, label, [r.id for r in src])
+
+    def append_derived(self, session, text: str, lineage: Sequence[str]) -> str:
+        src = self._sources(session, lineage, "append")
+        if not src or not isinstance(text, str):
+            self._enf._deny("derived_needs_lineage", "append", self._pid(session), self._enf._ver())
+        label = join(r.label for r in src)
+        _d, p, _r = self._enf._check(session, "append", [label], {})
+        return self._put(p.tenant, text, label, [r.id for r in src])
+
+    def read(self, session, rid: str) -> Record:
+        r = self._get(rid)
+        try:
+            if r is None:
+                self._enf._deny("not_found", "read", self._pid(session), self._enf._ver())
+            self._enf._check(session, "read", [r.label], {})
+        except PolicyDenied as e:
+            raise PolicyDenied(Decision(False, "not_found_or_denied", e.decision.policy_version, "read"))
         return r
 
-    def retrieve(self, principal: Principal, rids: Iterable[str], ctx: Optional[dict] = None) -> List[Record]:
-        out = []
-        for rid in rids:
+    def context(self, session, refs: Sequence[str], destination: str) -> Tuple[List[str], int]:
+        """Context assembly for a prompt to `destination`: the refs the principal may inject; the rest are withheld (count only)."""
+        ok, withheld = [], 0
+        for rid in refs:
+            r = self._get(rid)
             try:
-                out.append(self.read(principal, rid, ctx))
+                if r is None:
+                    raise PolicyDenied(Decision(False, "not_found", None, "inject"))
+                self._enf._check(session, "inject", [r.label], {"destination": destination})
+                ok.append(rid)
             except PolicyDenied:
-                pass
-        return out
+                withheld += 1
+        return ok, withheld
 
-
-def inject(enf: Enforcer, principal: Principal, records: Sequence[Record], ctx: Optional[dict] = None) -> Tuple[List[Block], int]:
-    """Context assembly: a record the principal may not have in a prompt for this destination is withheld, with an opaque
-    placeholder that carries no content, id or count of hidden labels."""
-    out, withheld = [], 0
-    for r in records:
+    def erase(self, session, rid: str) -> str:
+        r = self._get(rid)
         try:
-            enf.check(principal, "inject", [r.label], ctx)
-            out.append(Block(r.text, r.label, (r.id,)))
-        except PolicyDenied:
-            withheld += 1
-    if withheld:
-        out.append(Block("[context withheld by policy]", public_label(principal.tenant)))
-    return out, withheld
+            if r is None:
+                self._enf._deny("not_found", "erase", self._pid(session), self._enf._ver())
+            self._enf._check(session, "erase", [r.label], {})
+        except PolicyDenied as e:
+            if e.decision.reason == "erasure_queued":
+                with self._lock:
+                    self.erasure_queue.append((session.principal_id, rid))
+                return "queued"
+            raise
+        with self._lock:
+            self._recs.pop(rid, None)
+            listeners = list(self._listeners)
+        for fn in listeners:
+            fn(rid)
+        return "erased"
+
+    def _subscribe(self, fn):
+        with self._lock:
+            self._listeners.append(fn)
+
+
+class GuardedChat:
+    """Front of a ChatModel (duck-typed memcore.ports.ChatModel). The answer is stored as a derived record (join of the inputs' labels).
+    A pinned model that answers with another model id is `pin_drift` and the answer is dropped. The request has already reached that
+    model by then: a pin can only be checked on the answer."""
+
+    def __init__(self, inner, enforcer: Enforcer, store: Store, dest_id: str):
+        self._inner, self._enf, self._store, self._dest = inner, enforcer, store, dest_id
+
+    def complete(self, session, refs: Sequence[str], system_refs: Sequence[str] = ()) -> Record:
+        src = self._store._sources(session, list(system_refs) + list(refs), "send_model")
+        sysn = len(system_refs)
+        _d, p, _r = self._enf._check(session, "send_model", [r.label for r in src], {"destination": self._dest})
+        msgs = [{"role": "user", "content": "\n".join(r.text for r in src[sysn:])}]
+        res = self._inner.complete(msgs, system="\n".join(r.text for r in src[:sysn]) or None)
+        pol = self._enf.policy()
+        want = pol.resolve_model(pol.destinations[self._dest].model)
+        if want is None or pol.resolve_model(getattr(res, "model", None) or "") != want:
+            self._enf._deny("pin_drift", "send_model", p.id, pol.version, {"dest": self._dest})
+        rid = self._store.append_derived(session, res.text, [r.id for r in src])
+        return self._store._get(rid)
+
+
+class GuardedEmbedder:
+    def __init__(self, inner, enforcer: Enforcer, store: Store, dest_id: str):
+        self._inner, self._enf, self._store, self._dest = inner, enforcer, store, dest_id
+
+    def embed(self, session, refs: Sequence[str], kind: str = "document"):
+        """(vectors, label): vectors carry the join of their inputs' labels (a vector is derived data)."""
+        src = self._store._sources(session, refs, "embed")
+        self._enf._check(session, "embed", [r.label for r in src], {"destination": self._dest})
+        return self._inner.embed([r.text for r in src], kind), join(r.label for r in src)
+
+
+class GuardedExport:
+    def __init__(self, export_fn: Callable[[str, str, str], None], enforcer: Enforcer, store: Store, dest_id: str):
+        self._fn, self._enf, self._store, self._dest = export_fn, enforcer, store, dest_id
+
+    def export(self, session, refs: Sequence[str]):
+        src = self._store._sources(session, refs, "export")
+        _d, p, _r = self._enf._check(session, "export", [r.label for r in src], {"destination": self._dest})
+        for r in src:
+            self._fn(self._dest, p.tenant, r.text)
 
 
 class Outbox:
-    """Queued delivery. The decision is taken at enqueue AND again at delivery against the current policy, the current directory entries of
-    sender and recipient, and (when `resolver` is given) the CURRENT labels and existence of the source records: a record that was narrowed,
-    put under hold or erased after enqueue is re-labelled or refused. enqueue_only=True is the broken control."""
+    """Queued delivery for send_inbox, send_model and export. sink(sender: Principal, recipient: Principal or None, texts, request)."""
 
-    def __init__(self, enforcer: Enforcer, directory: Callable[[str], Optional[Principal]], action: str,
-                 sink: Callable[[Principal, Sequence[Block], dict], None], enqueue_only: bool = False, resolver: Optional[Callable] = None):
-        self.enf, self.directory, self.action, self.sink, self.enqueue_only, self.resolver = enforcer, directory, action, sink, enqueue_only, resolver
-        self.queue: List[dict] = []
+    def __init__(self, enforcer: Enforcer, store: Store, action: str, sink: Callable):
+        if action not in ("send_inbox", "send_model", "export") or not isinstance(enforcer, Enforcer) or not isinstance(store, Store) or not callable(sink):
+            raise TypeError("Outbox(enforcer, store, action, sink)")
+        self._enf, self._store, self._action, self._sink = enforcer, store, action, sink
+        self._queue: List[dict] = []
+        self._lock = threading.Lock()
         self.delivered: List[dict] = []
         self.refused: List[dict] = []
+        store._subscribe(self._purge)
 
-    def _labels(self, item):
-        labs = [b.label for b in item["blocks"]]
-        if self.resolver and item.get("record_ids"):
-            for rid in item["record_ids"]:
-                r = self.resolver(rid)
-                if r is None:
-                    d = Decision(False, "source_erased_or_missing", self.enf.policy_source().version, self.action)
-                    self.enf.log.add(d, item["sender"], None, None)
-                    raise PolicyDenied(d)
-                labs.append(r.label)                   # as they are NOW; joined with the queued label (never less restrictive)
-        return labs
+    def _purge(self, rid):
+        with self._lock:
+            keep = []
+            for it in self._queue:
+                if rid in it["refs"]:
+                    it["refusal"] = "source_erased"
+                    self.refused.append(it)
+                else:
+                    keep.append(it)
+            self._queue = keep
 
-    def _ctx(self, item):
-        c = dict(item["ctx"])
-        if item.get("recipient"):
-            c["recipient_id"] = item["recipient"]
-        return c
-
-    def _check(self, item):
-        self.enf.check(self.directory(item["sender"]) if self.directory(item["sender"]) else Principal("?", "?"), self.action, self._labels(item), self._ctx(item),
-                       [b.text for b in item["blocks"]], resolve=self.directory)
-
-    def enqueue(self, sender_id: str, blocks: Sequence[Block], ctx: dict, recipient_id: Optional[str] = None, record_ids: Optional[Sequence[str]] = None):
-        item = {"sender": sender_id, "blocks": list(blocks), "ctx": dict(ctx), "recipient": recipient_id, "record_ids": list(record_ids or [])}
-        self._check(item)
-        item["enqueue_version"] = self.enf.policy_source().version
-        self.queue.append(item)
+    def enqueue(self, session, refs: Sequence[str], request: Optional[dict] = None):
+        rq = _req(request)
+        rid = rq.pop("recipient_id", None)
+        src = self._store._sources(session, refs, self._action)
+        d, p, _r = self._enf._check(session, self._action, [r.label for r in src], rq, rid)
+        with self._lock:
+            self._queue.append({"sender": p.id, "tenant": p.tenant, "refs": [r.id for r in src], "request": rq, "recipient_id": rid,
+                                "enqueue_version": d.policy_version})
 
     def deliver_all(self):
-        q, self.queue = self.queue, []
-        for item in q:
+        with self._lock:
+            q, self._queue = self._queue, []
+        for it in q:
             try:
-                if not self.enqueue_only:
-                    self._check(item)
-                self.sink(self.directory(item["sender"]), item["blocks"], dict(self._ctx(item), recipient=self.directory(item["recipient"]) if item.get("recipient") else None))
-                self.delivered.append(item)
+                recs = []
+                for rid in it["refs"]:                       # labels and existence as they are NOW
+                    r = self._store._get(rid)
+                    if r is None:
+                        self._enf._deny("source_erased_or_missing", self._action, it["sender"], self._enf._ver())
+                    recs.append(r)
+                d, sender, rcp = self._enf._decide(it["sender"], it["tenant"], self._action, [r.label for r in recs], it["request"],
+                                                   it["recipient_id"], it["request"].get("destination"))
+                self._sink(sender, rcp, [r.text for r in recs], dict(it["request"]))          # the very objects the decision used
+                it["delivery_version"] = d.policy_version
+                self.delivered.append(it)
             except PolicyDenied as e:
-                item["refusal"] = e.decision
-                self.refused.append(item)
+                it["refusal"] = e.decision.reason
+                self.refused.append(it)
         return self.delivered, self.refused
