@@ -208,8 +208,25 @@ class Gate(unittest.TestCase):
         self.assertFalse(X.canary_check(bad)[0])
         self.assertTrue(X.canary_check([self.rec("ok", i=i) for i in range(19)] + [self.rec("repaired", i=19)])[0])
         big = [self.rec(i=i) for i in range(19)] + [self.rec(tokens=60000, i=19)]
-        self.assertFalse(X.canary_check(big)[0])
+        ok, why = X.canary_check(big)
+        self.assertTrue(ok)
+        self.assertIn("1 prompts over 40000", why)  # reported, the run continues
         self.assertTrue(X.canary_check(good[:10])[0])
+
+    def test_oversized_prompt_is_rejected_before_any_call(self):
+        d = tempfile.mkdtemp()
+        old = X.X
+        X.X = d
+        try:
+            os.makedirs(os.path.join(d, "sessions"))
+            big = {"session_id": "sBIG0000000aa", "date": DATE, "turns": [{"role": "user", "content": "x" * 90000}, {"role": "assistant", "content": "y"}]}
+            json.dump(big, open(os.path.join(d, "sessions", "sBIG0000000aa.json"), "w"))
+            calls = []
+            r = X.run_one(0, "sBIG0000000aa", None, X.Meter(), runner_for(GOOD, calls))
+            self.assertEqual((r["status"], calls), ("rejected", []))
+            self.assertIn("over the 40000 limit", r["reject_reason"])
+        finally:
+            X.X = old
 
     def test_no_earlier_cache_clash_check_finds_a_planted_key(self):
         from phasef.llm import request_hash

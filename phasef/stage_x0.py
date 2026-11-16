@@ -43,6 +43,7 @@ PRICE_TABLE = "claude CLI total_cost_usd (notional, subscription path)"
 REMOTE_IN = "~/emlab-16096/in/stage_x0"
 FIELDS = ("subject", "slot", "predicate", "object")
 RECIPE = EXTRACT_V2_RECIPE
+PROMPT_TOKEN_LIMIT = 40000
 
 
 def render_session(sid, date, turns):
@@ -123,9 +124,12 @@ def run_one(idx, sid, a, meter, runner=None, cfg=None):
     turns = sess["turns"]
     cfg = cfg or {"template": TEMPLATE, "version": VERSION, "recipe": RECIPE + ("#rep" + REPLICATE if REPLICATE else ""), "replicate": REPLICATE, "sha16": SHA16}
     prompt = build_prompt(sid, sess["date"], turns, cfg["template"])
+    est_tokens = int(len(prompt) / 2.0)  # conservative (measured 2.5 to 3.4 characters per token on sessions)
     rec = {"session_id": sid, "order_index": idx, "status": "ok", "reject_reason": None, "prompt_version": cfg["version"], "prompt_sha16": cfg["sha16"], "model": MODEL, "input_tokens": 0, "output_tokens": 0,
            "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None,
            "replicate": cfg["replicate"], "session_chars": sum(len(t["content"]) for t in turns), "session_rounds": len(data.rounds_of(sid, turns, sess["date"])), "n_facts": 0, "error": None}
+    if est_tokens > PROMPT_TOKEN_LIMIT:
+        return dict(rec, status="rejected", reject_reason="estimated prompt %d tokens over the %d limit; not sent" % (est_tokens, PROMPT_TOKEN_LIMIT))
     rawdir = os.path.join(X, "raw")
     os.makedirs(rawdir, exist_ok=True)
     llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=cfg["recipe"], cwd=R.NEUTRAL_CWD, runner=runner)
@@ -171,9 +175,8 @@ def canary_check(recs, n=20, min_parse=0.95, max_prompt=40000):
     if rate < min_parse:
         return False, "parse rate %.2f below %.2f in the first %d calls" % (rate, min_parse, n)
     big = [r for r in first if r["input_tokens"] + r["cache_creation_input_tokens"] + r["cache_read_input_tokens"] - 10500 > max_prompt]
-    if big:
-        return False, "prompt over %d tokens in %d of the first %d calls" % (max_prompt, len(big), n)
-    return True, "canary ok: parse rate %.2f" % rate
+    note = "; %d prompts over %d tokens (recorded, run continues: such a session is rejected before the call)" % (len(big), max_prompt) if big else ""
+    return True, "canary ok: parse rate %.2f%s" % (rate, note)
 
 
 def confirm_no_earlier_cache(order, cfg=None):
