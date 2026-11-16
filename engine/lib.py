@@ -237,6 +237,11 @@ def save(name, obj):
 
 # ------------------------------------------------------------------ Temporal server containers on Postgres persistence
 TPG_MAP = {"1.7.3": "1.31.5", "1.10.1": "1.32.2"}       # the experiments' CLI labels, mapped to server image versions
+def set_pg_versions(old, new):
+    """Choose which server image versions the labels '1.7.3' (older) and '1.10.1' (newer) stand for on the pg backend."""
+    TPG_MAP["1.7.3"], TPG_MAP["1.10.1"] = old, new
+
+
 TPG_NET = "emlab-temporal-16096-net"                    # private bridge: no published Postgres port, no password exists
 TPG_PG = "emlab-pg-temporal-16096"
 TPG_DIR = HOME / "tpg"

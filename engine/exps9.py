@@ -269,7 +269,10 @@ async def n6():
            "ledger_duplicates_problem": [p for p in v["problems"] if "ledger duplicates" in p]}
     expect_pass = mode == "ok"
     out["verify_PASS_expected"] = expect_pass
-    out["as_expected"] = (v["PASS"] == expect_pass) and timed_out > 0 and len(resumed) > 0 and (not expect_pass or len(late) > 0)
+    # a task held past its timeout is retried elsewhere: the effect is called again (redundant calls) but applied once
+    redispatched = v["redundant_external_calls"] > 0 if expect_pass else v["ledger_rows"] > v["inputs_total"]
+    out["task_redispatched_evidence"] = {"redundant_external_calls": v["redundant_external_calls"], "ledger_rows": v["ledger_rows"], "inputs": v["inputs_total"]}
+    out["as_expected"] = (v["PASS"] == expect_pass) and len(resumed) > 0 and redispatched and (not expect_pass or len(late) > 0)
     lib.save(f"n6-{mode}{suffix()}", out)
     print(mode, v["PASS"], timed_out, len(resumed), len(late), done_by)
 

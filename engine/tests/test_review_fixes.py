@@ -168,5 +168,18 @@ class M4Residual(unittest.TestCase):
         self.assertTrue(transient(psycopg.OperationalError("connection lost")))
 
 
+class N4Stamp(unittest.TestCase):
+    def test_a_changed_commit_file_is_refused_mid_run(self):
+        from engine import lib                      # old trees have no check_tree at all (AttributeError)
+        saved = lib.START_GIT
+        try:
+            lib.START_GIT = {"commit": "0" * 40, "dirty": False}      # the commit this run started from
+            with self.assertRaises(RuntimeError):
+                lib.check_tree()                                      # the tree's commit file now says something else
+        finally:
+            lib.START_GIT = saved
+        lib.check_tree()                                              # unchanged tree: allowed
+
+
 if __name__ == "__main__":
     unittest.main()

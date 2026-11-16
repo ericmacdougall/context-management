@@ -9,7 +9,7 @@ import time
 from . import ctl, lib, pgstore, state
 from .common import DEMO_TENANT as TENANT
 from .common import HOME
-from .exps import T, TPORT, sizes, suffix
+from .exps import T, TPORT, arg, sizes, suffix
 
 
 def timer_check(tagP, nP, tagR, nR, roll_s, approved):
@@ -51,6 +51,10 @@ async def f7():
     lib.record(busy_sessions=nA, turns_each=turns, period_s=period, approval_sessions=nP, rollup_sessions=nR,
                approval_timeout_s=appr, rollup_s=roll, server_upgrade_at_s=t_srv, sdk_swap_at_s=t_sdk)
     db = f"f7{suffix()}-{int(time.time())}.db"
+    pg_old, pg_new = arg("--pg-old", "1.31.5", str), arg("--pg-new", "1.32.2", str)
+    if lib.BACKEND == "pg":
+        lib.set_pg_versions(pg_old, pg_new)
+        lib.record(server_from=pg_old, server_to=pg_new)
     lib.start_server("1.7.3", db, TPORT)
     lib.start_worker("f7a", "venv-old", "v1", "sdk-1.31.0", "f7", env={"ENGINE_EFFECT_GAP": "0.03"})
     client, _ = await lib.connect_retry()
@@ -66,7 +70,8 @@ async def f7():
     ts = time.time()
     lib.stop_server()
     lib.start_server("1.10.1", db, TPORT)      # same persistence file
-    ev.append({"t": round(ts - t0, 1), "what": "server 1.31.2 -> 1.32.2 on the same sqlite file", "downtime_s": round(time.time() - ts, 1)})
+    ev.append({"t": round(ts - t0, 1), "what": (f"server {pg_old} -> {pg_new}: temporal-sql-tool update-schema, then the new server" if lib.BACKEND == "pg"
+                                                  else "server 1.31.2 -> 1.32.2 on the same sqlite file"), "downtime_s": round(time.time() - ts, 1)})
     await asyncio.sleep(max(0, t_sdk / 2 - (time.time() - t0)))
     grants = [await ctl.approve_session(client, s, TENANT) for s in approved]
     ev.append({"t": round(time.time() - t0, 1), "what": "approved half of the parked approval sessions", "grant_results": {g: grants.count(g) for g in set(grants)}})
@@ -86,8 +91,9 @@ async def f7():
     lib.stop_worker("f7b")
     lib.stop_server()
     text = lib.server_log_text(TPORT, "1.10.1")
-    out = {"id": "F7", "from": {"server": "1.31.2 (CLI 1.7.3)", "sdk": "temporalio 1.31.0"},
-           "to": {"server": "1.32.2 (CLI 1.10.1)", "sdk": "temporalio 1.36.1"}, "events": ev,
+    srv_from, srv_to = ((pg_old, pg_new) if lib.BACKEND == "pg" else ("1.31.2 (CLI 1.7.3)", "1.32.2 (CLI 1.10.1)"))
+    out = {"id": "F7", "from": {"server": srv_from, "sdk": "temporalio 1.31.0"},
+           "to": {"server": srv_to, "sdk": "temporalio 1.36.1"}, "events": ev,
            "persistence": (f"Postgres persistence, schema updated with temporal-sql-tool of the target version before the server started "
                            "(see provenance.recorded.servers[*].schema_before/schema_after)" if lib.BACKEND == "pg" else
                            f"SQLite file run/{db} opened by both CLI versions; not the documented schema-tool path"),
@@ -253,7 +259,9 @@ async def f7pgctl():
     update-schema, and (B) a 1.31.5 server started on the upgraded 1.32 schema (a downgrade). Both are recorded as they
     behave; the documented path (schema tool first) is the F7 run itself."""
     assert lib.BACKEND == "pg"
-    lib.record(servers="temporalio/server 1.31.5 then 1.32.2")
+    old, new = arg("--pg-old", "1.30.9", str), arg("--pg-new", "1.31.5", str)
+    lib.set_pg_versions(old, new)
+    lib.record(server_old=old, server_new=new)
     db = f"f7pgctl{suffix()}-{int(time.time())}.db"
     lib.start_server("1.7.3", db, TPORT)
     dbname = lib.TPG_DBS[-1]
@@ -281,11 +289,11 @@ async def f7pgctl():
         return {"attempt": label, "server": version, "running_after_wait": st, "port_opened_and_stayed_up": up,
                 "log_tail": logs[-700:]}
 
-    a = attempt("1.32.2", "A: 1.32.2 on the 1.31 schema, schema tool skipped")
+    a = attempt(new, f"A: {new} on the {old} schema, temporal-sql-tool update-schema skipped")
     lib.start_server("1.10.1", db, TPORT)        # the documented path: schema tool of 1.32.2 first, then the server
     v1 = lib.tpg_schema_versions(dbname)
     lib.stop_server()
-    b = attempt("1.31.5", "B: 1.31.5 on the upgraded 1.32 schema (downgrade)")
+    b = attempt(old, f"B: {old} on the upgraded {new} schema (downgrade)")
     out = {"id": "F7-postgres-upgrade-controls", "schema_versions_initial": v0, "schema_versions_after_documented_upgrade": v1,
            "control_A_skipped_schema_update": a, "control_B_downgrade": b,
            "control_A_refused": not a["port_opened_and_stayed_up"], "control_B_refused": not b["port_opened_and_stayed_up"]}
