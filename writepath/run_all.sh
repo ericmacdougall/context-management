@@ -22,6 +22,10 @@ OUT=../results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.row23_latecommit "$R"
   $PY -m exp.e_verify "$R"
   $PY -m exp.registry_marker "$R"
+  $PY -m exp.d1_hold_mentions 5
+  $PY -m exp.d4_rescan_es 5
+  $PY -m exp.row19_secrets
+  $PY -m exp.row6_chain "$R"
   $PY -m exp.races R1 R2 R3 40
   $PY -m exp.guard_check end || echo "GATE guard_check end FAILED"
   echo "end $(date -u +%FT%TZ)"
