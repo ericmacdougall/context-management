@@ -161,14 +161,16 @@ def read_digest(tenant, sid, event_id):
     return "d" + hashlib.sha256(row[2].encode()).hexdigest()[:16]
 
 
-def has_older_unprocessed(tenant, sid, event_id):
-    """True when an input with a lower seq has no recorded result yet (so this one must wait: sequence order)."""
+def has_older_unprocessed(tenant, sid, event_id, skip=()):
+    """True when an input with a lower seq has no recorded result yet (so this one must wait: sequence order). Inputs
+    in `skip` (poisoned: dead-letter failed, alert raised) do not block newer ones."""
     seq = keys.parse_event_id(event_id)[2]
     with pool().connection() as conn:
         row = conn.execute(
             "select 1 from events e where e.tenant_id=%s and e.session_id=%s and e.kind='turn_input' and e.seq < %s "
-            "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id) limit 1",
-            (tenant, sid, seq, keys.result_key_prefix(tenant))).fetchone()
+            "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id) "
+            "and not (e.event_id = any(%s)) limit 1",
+            (tenant, sid, seq, keys.result_key_prefix(tenant), list(skip))).fetchone()
     return row is not None
 
 
@@ -321,35 +323,38 @@ def grant_approval(tenant, sid, request_id, approver, now_ms=None):
 
 
 def resolve_approval(tenant, sid, request_id, now_ms=None):
-    """Postgres decides, from the request event and the Postgres clock: granted if a grant bound to THIS request
-    exists, was recorded after the request and no later than its deadline; timed out once the deadline has passed;
-    else pending. (`now_ms` is accepted for compatibility and ignored.)"""
+    """Postgres decides, from the request event and the Postgres clock, INSIDE the session lock (the same lock a grant
+    takes): granted if a grant bound to THIS request exists, was recorded after the request and no later than its
+    deadline; timed out once the deadline has passed; else pending. (`now_ms` is accepted for compatibility and ignored.)
+    Reading the grant and writing the resolution in one locked transaction closes the race at the exact deadline."""
     deadline_ms, req_ts = _request_info(tenant, sid, request_id)
+    rkey = keys.approval_resolve_key(tenant, request_id)
     with pool().connection() as conn:
-        now_ms = pg_now_ms(conn)
-        done = conn.execute("select result_ref from effects where tenant_id=%s and key=%s",
-                            (tenant, keys.approval_resolve_key(tenant, request_id))).fetchone()
-        if done:
-            return conn.execute("select kind from events where tenant_id=%s and event_id=%s",
-                                (tenant, done[0])).fetchone()[0]
-        g = conn.execute("select result_ref from effects where tenant_id=%s and key=%s",
-                         (tenant, keys.approval_grant_key(tenant, request_id))).fetchone()
-        grant_ok = False
-        if g and g[0]:
-            row = _event_row(conn, tenant, sid, g[0])
-            if row and row[0] == "approval_grant" and row[2] is not None:
-                body = json.loads(row[2])
-                grant_ok = (body.get("request") == request_id and bool(body.get("approver"))
-                            and row[1] > req_ts and row[1].timestamp() * 1000 <= deadline_ms)
-    if not grant_ok and now_ms < deadline_ms:
-        return "pending"
-    kind = "approval_granted" if grant_ok else "approval_timeout"
-    eid, created = append_once(tenant, keys.approval_resolve_key(tenant, request_id), sid, "approval", kind,
-                               {"request": request_id})
-    if created:
-        return kind
-    with pool().connection() as conn:
-        return conn.execute("select kind from events where tenant_id=%s and event_id=%s", (tenant, eid)).fetchone()[0]
+        with conn.transaction():
+            cur = conn.cursor()
+            cur.execute("select 1 from sessions where tenant_id=%s and session_id=%s for update", (tenant, sid))
+            done = cur.execute("select result_ref from effects where tenant_id=%s and key=%s", (tenant, rkey)).fetchone()
+            if done:
+                return cur.execute("select kind from events where tenant_id=%s and event_id=%s", (tenant, done[0])).fetchone()[0]
+            now_ms = pg_now_ms(conn)
+            g = cur.execute("select result_ref from effects where tenant_id=%s and key=%s",
+                            (tenant, keys.approval_grant_key(tenant, request_id))).fetchone()
+            grant_ok = False
+            if g and g[0]:
+                row = _event_row(conn, tenant, sid, g[0])
+                if row and row[0] == "approval_grant" and row[2] is not None:
+                    body = json.loads(row[2])
+                    grant_ok = (body.get("request") == request_id and bool(body.get("approver"))
+                                and row[1] > req_ts and row[1].timestamp() * 1000 <= deadline_ms)
+            if not grant_ok and now_ms < deadline_ms:
+                return "pending"
+            kind = "approval_granted" if grant_ok else "approval_timeout"
+            cur.execute("insert into effects(key,tenant_id,session_id,step,status) values (%s,%s,%s,'approval','done')",
+                        (rkey, tenant, sid))
+            eid = _append_locked(cur, tenant, sid, {"kind": kind, "content": {"request": request_id}, "actor": "engine",
+                                                    "trust": "assistant"})
+            cur.execute("update effects set result_ref=%s where key=%s and tenant_id=%s", (eid, rkey, tenant))
+            return kind
 
 
 def events_of(tenant, sid, kind=None):

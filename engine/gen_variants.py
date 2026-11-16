@@ -32,7 +32,7 @@ def variant(code, doc, edits, post=None):
 
 
 POLICY = '        await act_turn("turn_policy", t, sid, eid)\n'
-READ = '        digest = await act_turn("turn_read", t, sid, eid)\n        if digest == "defer":\n            return "defer"\n'
+READ = '        digest = await act_turn("turn_read", t, sid, eid, sorted(self.poisoned)[:20])\n        if digest == "defer":\n            return "defer"\n'
 APPEND = '        res = await act_turn("turn_append", t, sid, eid, digest, key, CODE)\n'
 PATCHED_POLICY = '        policy = workflow.patched("policy-check")\n        if policy:\n            await act_turn("turn_policy", t, sid, eid)\n'
 APPEND_P = '        res = await act_turn("turn_append", t, sid, eid, digest, key, CODE + ("+policy" if policy else ""))\n'

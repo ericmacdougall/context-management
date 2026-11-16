@@ -268,9 +268,13 @@ async def f7pgctl():
     cname = f"emlab-temporal-16096-{TPORT}"
     v0 = lib.tpg_schema_versions(dbname)
     lib.stop_server()
+    lib.tpg_snapshot(dbname, "pre")         # the rollback path: restore this snapshot, never redeploy the old image
 
     def attempt(version, label):
-        lib.tpg_start(version, dbname, TPORT, cname)
+        return attempt_on(version, dbname, label)
+
+    def attempt_on(version, dbn, label):
+        lib.tpg_start(version, dbn, TPORT, cname)
         t0 = time.time()
         up = False
         while time.time() - t0 < 60:
@@ -294,7 +298,15 @@ async def f7pgctl():
     v1 = lib.tpg_schema_versions(dbname)
     lib.stop_server()
     b = attempt(old, f"B: {old} on the upgraded {new} schema (downgrade)")
-    out = {"id": "F7-postgres-upgrade-controls", "schema_versions_initial": v0, "schema_versions_after_documented_upgrade": v1,
+    # C3: the deploy guard refuses the older image on the upgraded database; today's behaviour (no guard) is attempt B
+    try:
+        lib.tpg_guard(old, dbname)
+        guard_result = {"refused": False}
+    except lib.SchemaTooNew as ex:
+        guard_result = {"refused": True, "message": str(ex)}
+    lib.tpg_restore(dbname, "pre", dbname + "rb")
+    rb = attempt_on(old, dbname + "rb", f"C: {old} on the restored pre-upgrade snapshot (the documented rollback)")
+    out = {"id": "F7-postgres-upgrade-controls", "deploy_guard_on_downgrade": guard_result, "rollback_by_snapshot_restore": rb, "schema_versions_initial": v0, "schema_versions_after_documented_upgrade": v1,
            "control_A_skipped_schema_update": a, "control_B_downgrade": b,
            "control_A_refused": not a["port_opened_and_stayed_up"], "control_B_refused": not b["port_opened_and_stayed_up"]}
     lib.save(f"f7pgctl{suffix()}", out)

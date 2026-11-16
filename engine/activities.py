@@ -27,6 +27,18 @@ def is_transient(e) -> bool:
     return isinstance(e, TRANSIENT) and not isinstance(e, DETERMINISTIC)
 
 
+def classify_failure(e, attempt):
+    """What the wrapper does with an exception: 'invalid' and 'erased' are non-retryable at once; 'transient' (an
+    outage) is retried without bound; 'poison' is non-retryable after POISON_AFTER_ATTEMPTS; 'retry' is retried."""
+    if isinstance(e, pgstore.InvalidInput):
+        return "invalid"
+    if isinstance(e, pgstore.SubjectErased):
+        return "erased"
+    if is_transient(e):
+        return "transient"
+    return "poison" if attempt >= POISON_AFTER_ATTEMPTS else "retry"
+
+
 def note_transient(name, e):
     """Evidence for the Postgres-crash run: every transient database error an activity met (class, activity, time)."""
     path = os.environ.get("ENGINE_ERR_LOG")
@@ -49,17 +61,18 @@ def tracked(fn):
             INFLIGHT[fn.__name__] = INFLIGHT.get(fn.__name__, 0) + 1
         try:
             return fn(*a, **k)
-        except pgstore.InvalidInput as e:
-            raise ApplicationError(str(e), type="InvalidInput", non_retryable=True)
-        except pgstore.SubjectErased as e:
-            raise ApplicationError(str(e), type="SubjectErased", non_retryable=True)
         except ApplicationError:
             raise
         except Exception as e:
-            if is_transient(e):
+            kind = classify_failure(e, _attempt())
+            if kind == "invalid":
+                raise ApplicationError(str(e), type="InvalidInput", non_retryable=True)
+            if kind == "erased":
+                raise ApplicationError(str(e), type="SubjectErased", non_retryable=True)
+            if kind == "transient":
                 note_transient(fn.__name__, e)
                 raise                      # an outage: retry without bound
-            if _attempt() >= POISON_AFTER_ATTEMPTS:
+            if kind == "poison":
                 raise ApplicationError(f"{type(e).__name__}", type="Poison", non_retryable=True)
             raise
         finally:
@@ -86,9 +99,9 @@ def _worker():
 
 @activity.defn
 @tracked
-def turn_read(tenant: str, sid: str, event_id: str) -> str:
+def turn_read(tenant: str, sid: str, event_id: str, skip: list) -> str:
     digest = pgstore.read_digest(tenant, sid, event_id)
-    if pgstore.has_older_unprocessed(tenant, sid, event_id):
+    if pgstore.has_older_unprocessed(tenant, sid, event_id, skip):
         return "defer"        # an older input is unprocessed (its doorbell was lost): the workflow reconciles first
     return digest
 

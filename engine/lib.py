@@ -32,6 +32,19 @@ def _read_git():
 START_GIT = _read_git()      # the commit this run STARTED from; every process of the run must still be on it
 
 
+TREE_COMMITS = {}
+
+
+def tree_commit(root):
+    """The commit of the code tree a process will run from, read once at first use (the code under test; for the
+    prev/old exports this is NOT the testbed commit)."""
+    key = str(root)
+    if key not in TREE_COMMITS:
+        gc = pathlib.Path(root) / "engine" / "GIT_COMMIT"
+        TREE_COMMITS[key] = json.loads(gc.read_text()).get("commit") if gc.exists() else "unknown"
+    return TREE_COMMITS[key]
+
+
 def check_tree():
     """Refuse to start anything, or to save a result, if the synced tree's commit file changed since the run began."""
     now = _read_git()
@@ -131,12 +144,13 @@ def start_worker(name, venv, variant, ident, tq, cwd=None, extra=(), env=None, c
     if crash_after:
         cmd += ["--crash-after", str(crash_after)]
     cmd += list(extra)
-    e = {**os.environ, "ENGINE_CRASH_LOG": str(HOME / "logs" / f"{name}.crashes"), **(env or {})}
+    e = {**os.environ, "ENGINE_CRASH_LOG": str(HOME / "logs" / f"{name}.crashes"), **(env or {}),
+         "ENGINE_EXPECT_COMMIT": tree_commit(cwd or CODE)}
     if home:
         e["ENGINE_HOME"] = str(home)
     log = open(HOME / "logs" / f"{name}.log", "ab")
     RECORD["workers"].append({"name": name, "venv": venv, "variant": variant, "identity": ident, "task_queue": tq,
-                              "code_dir": str(cwd or CODE), "extra": list(extra), "crash_after": crash_after,
+                              "code_dir": str(cwd or CODE), "code_commit": tree_commit(cwd or CODE), "extra": list(extra), "crash_after": crash_after,
                               "knobs": {k: v for k, v in (env or {}).items() if k.startswith("ENGINE_")}, "at": time.time() - STARTED})
     PROCS[name] = subprocess.Popen(cmd, cwd=str(cwd or CODE), env=e, stdout=log, stderr=log,
                                    stdin=subprocess.DEVNULL, start_new_session=True)
@@ -220,7 +234,9 @@ def provenance():
     import sys
     from importlib import metadata
     git = START_GIT
-    return {"git_commit": git.get("commit"), "git_dirty": git.get("dirty"), "run_id": RUN_ID,
+    under_test = {w["code_dir"]: w["code_commit"] for w in RECORD["workers"] if w.get("code_dir")}
+    under_test.setdefault(str(CODE), tree_commit(CODE))
+    return {"testbed_commit": git.get("commit"), "code_under_test": under_test, "git_commit": git.get("commit"), "git_dirty": git.get("dirty"), "run_id": RUN_ID,
             "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(STARTED)),
             "ended_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "host": platform.node(),
             "argv": sys.argv[1:], "python": platform.python_version(),
@@ -307,6 +323,43 @@ def tpg_schema_versions(db):
     return {d: tpg_psql(d, "select curr_version from schema_version order by creation_time desc limit 1")[1] for d in (db, db + "_vis")}
 
 
+class SchemaTooNew(RuntimeError):
+    """The database schema is newer than the server image expects: an older image must not be started on it."""
+
+
+def tpg_expected_schema(version):
+    out = {}
+    for sub, key in (("temporal", "main"), ("visibility", "visibility")):
+        _, o = _dk("run", "--rm", "--entrypoint", "sh", f"temporalio/admin-tools:{version}", "-c",
+                   f"ls /etc/temporal/schema/postgresql/v12/{sub}/versioned | sort -V | tail -n 1")
+        out[key] = o.strip().lstrip("v")
+    return out
+
+
+def _vt(v):
+    return tuple(int(x) for x in v.split("."))
+
+
+def tpg_guard(version, db):
+    """Deploy guard: refuse a server image whose expected schema is OLDER than the database's schema_version. (Temporal
+    itself refuses only the other direction.) Rollback is restoring the pre-upgrade snapshot, never redeploying the old
+    image on the upgraded database."""
+    exp, act = tpg_expected_schema(version), tpg_schema_versions(db)
+    if _vt(act[db]) > _vt(exp["main"]) or _vt(act[db + "_vis"]) > _vt(exp["visibility"]):
+        raise SchemaTooNew(f"server {version} expects schema {exp}, database is at {act}: restore the pre-upgrade snapshot instead")
+    return {"image": version, "expected": exp, "actual": act}
+
+
+def tpg_snapshot(db, tag):
+    for d in (db, db + "_vis"):
+        _dk("exec", TPG_PG, "pg_dump", "-U", "temporal", "-Fc", "-f", f"/tmp/{tag}-{d}.dump", d)
+
+
+def tpg_restore(db, tag, newdb):
+    for d, n in ((db, newdb), (db + "_vis", newdb + "_vis")):
+        _dk("exec", TPG_PG, "sh", "-c", f"createdb -U temporal {n} && pg_restore -U temporal -d {n} /tmp/{tag}-{d}.dump")
+
+
 def tpg_config(db, tport):
     cfg = TPG_DIR / f"server-{tport}.yaml"
     def store(d):
@@ -355,7 +408,9 @@ def _start_pg(cli, db, tport, name):
     name = name or f"server-{tport}"
     cname = f"emlab-temporal-16096-{tport}"
     tpg_ensure_pg()
-    before = tpg_schema_versions(dbname) if tpg_psql("postgres", f"select 1 from pg_database where datname='{dbname}'")[1] else None
+    existing = bool(tpg_psql("postgres", f"select 1 from pg_database where datname='{dbname}'")[1])
+    guard = tpg_guard(ver, dbname) if existing else None      # refuses an older image on a newer schema
+    before = tpg_schema_versions(dbname) if existing else None
     outs = tpg_schema(ver, dbname)
     after = tpg_schema_versions(dbname)
     rc, out = tpg_start(ver, dbname, tport, cname)
@@ -377,7 +432,7 @@ def _start_pg(cli, db, tport, name):
     time.sleep(3)
     TPG_DBS.append(dbname)
     RECORD["servers"].append({"name": name, "backend": "postgres persistence", "server_image": f"temporalio/server:{ver}", "label": cli,
-                              "database": dbname, "port": tport, "container": cname, "schema_before": before, "schema_after": after,
+                              "database": dbname, "port": tport, "container": cname, "guard": guard, "schema_before": before, "schema_after": after,
                               "schema_tool": outs, "at": time.time() - STARTED})
     PROCS[name] = PROCS["server"] = Container(cname)
     return PROCS[name]
@@ -459,8 +514,8 @@ def start_loop(name, venv, variant, ident, tq, env=None, seed=1, crashes=0):
     check_tree()
     name = _u(name)
     _clear(name)
-    e = {**os.environ, **(env or {})}
-    RECORD["workers"].append({"name": name, "kind": "loop", "venv": venv, "variant": variant, "identity": ident,
+    e = {**os.environ, **(env or {}), "ENGINE_EXPECT_COMMIT": tree_commit(CODE)}
+    RECORD["workers"].append({"name": name, "kind": "loop", "code_commit": tree_commit(CODE), "venv": venv, "variant": variant, "identity": ident,
                               "task_queue": tq, "crashes": crashes, "seed": seed,
                               "knobs": {k: v for k, v in (env or {}).items() if k.startswith("ENGINE_") or k == "CMAX"},
                               "at": time.time() - STARTED})

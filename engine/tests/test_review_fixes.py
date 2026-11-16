@@ -168,6 +168,77 @@ class M4Residual(unittest.TestCase):
         self.assertTrue(transient(psycopg.OperationalError("connection lost")))
 
 
+class C4Floor(unittest.TestCase):
+    def test_a_workflow_clock_ahead_of_postgres_cannot_make_the_approval_poll_spin(self):
+        from engine import waits                  # 96a80b2 and the confirm-round tree have no such floor
+        self.assertGreaterEqual(waits.approval_wait_s(-30.0, 10.0), 1.0)    # old formula: max(0.001, min(remaining, poll)) = 0.001
+        self.assertGreaterEqual(waits.approval_wait_s(0.0004, 10.0), 1.0)
+        self.assertEqual(waits.approval_wait_s(500.0, 10.0), 10.0)
+        self.assertEqual(waits.approval_wait_s(3.0, 10.0), 3.0)
+
+    def test_the_workflow_uses_the_floor(self):
+        import pathlib
+        src = (pathlib.Path(__file__).parent.parent / "wf" / "v1.py").read_text()
+        self.assertIn("waits_mod.approval_wait_s(", src)
+
+
+class M4RealClassification(unittest.TestCase):
+    """The REAL wrapper (`tracked`), not a predicate re-implemented in the test."""
+
+    def run_wrapped(self, exc, attempt):
+        from unittest import mock
+        from engine import activities
+        def boom():
+            raise exc
+        wrapped = activities.tracked(boom)
+        with mock.patch.object(activities, "_attempt", return_value=attempt):
+            try:
+                wrapped()
+            except Exception as e:
+                return e
+        return None
+
+    def test_a_deterministic_database_error_becomes_poison_after_bounded_attempts(self):
+        import psycopg
+        from temporalio.exceptions import ApplicationError
+        e = self.run_wrapped(psycopg.errors.QueryCanceled("statement timeout"), 5)
+        self.assertIsInstance(e, ApplicationError)               # old: re-raised as an outage, retried without bound
+        self.assertEqual(e.type, "Poison")
+        self.assertTrue(e.non_retryable)
+
+    def test_the_same_error_is_retried_before_the_bound(self):
+        import psycopg
+        e = self.run_wrapped(psycopg.errors.QueryCanceled("statement timeout"), 2)
+        self.assertIsInstance(e, psycopg.errors.QueryCanceled)
+
+    def test_an_outage_is_never_poison(self):
+        import psycopg
+        e = self.run_wrapped(psycopg.errors.AdminShutdown("restart"), 50)
+        self.assertIsInstance(e, psycopg.errors.AdminShutdown)
+
+
+class C2Resolve(unittest.TestCase):
+    def test_resolve_and_grant_serialise_on_the_session_lock(self):
+        """A grant that commits at the deadline is either honoured by the resolution or answered 'rejected': never
+        'granted' with a timeout. Stress of the real race is in engine/race.py (results/stamped/c2-race-*.json)."""
+        import threading
+        s = c.sid()
+        r = c.request(A, s, "anchor-1", c.now_ms() + 150)
+        out = {}
+        def g():
+            time.sleep(0.145)
+            out["g"] = c.grant(A, s, r)
+        th = threading.Thread(target=g)
+        th.start()
+        time.sleep(0.15)
+        res = c.resolve(A, s, r, 0)
+        while res == "pending":
+            time.sleep(0.005)
+            res = c.resolve(A, s, r, 0)
+        th.join()
+        self.assertFalse(out["g"] == "granted" and res == "timeout")
+
+
 class N4Stamp(unittest.TestCase):
     def test_a_changed_commit_file_is_refused_mid_run(self):
         from engine import lib                      # old trees have no check_tree at all (AttributeError)

@@ -49,6 +49,15 @@ async def main():
     ap.add_argument("--crash-after", type=float, default=0)  # abrupt self-exit (no cleanup, no flush): crash test
     ap.add_argument("--stop-file", default="")                 # graceful stop when this file appears
     a = ap.parse_args()
+    exp = os.environ.get("ENGINE_EXPECT_COMMIT")        # set by the orchestrator: the commit of THIS tree at run start
+    if exp:
+        import json
+        import pathlib
+        gc = pathlib.Path(__file__).parent / "GIT_COMMIT"
+        cur = json.loads(gc.read_text()).get("commit") if gc.exists() else None
+        if cur != exp:                                  # a crash-loop restart must not load a tree that was re-synced
+            print(f"tree changed since the run started: expected {exp}, found {cur}", flush=True)
+            sys.exit(3)
     os.environ["ENGINE_WORKER_IDENT"] = a.identity
     mod = importlib.import_module(f"engine.wf.{a.variant}")
     proc = f"{a.identity}-{os.getpid()}"

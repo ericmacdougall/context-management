@@ -14,6 +14,7 @@ from temporalio.exceptions import TimeoutError as TemporalTimeout
 
 with workflow.unsafe.imports_passed_through():
     from engine import keys as keys_mod
+    from engine import waits as waits_mod
 
 CODE = "v2c"
 AT = dict(start_to_close_timeout=timedelta(seconds=8),
@@ -24,7 +25,8 @@ MAX_CARRY = 40       # pending ids carried across continue-as-new (the rest are 
 DONE_CARRY = 40      # recently processed ids carried (a late duplicate doorbell must not run a turn twice)
 DEFAULTS = {"done": [], "pend": [], "finish": False, "rejected": 0, "dead": 0, "dead_failed": 0, "alert": "",
             "erased": False, "approval_req": "", "last_eid": "", "reconcile_s": 20, "reconcile_max_s": 600,
-            "approval_poll_s": 10, "approval_poll_max_s": 900, "stop_after_rollups": 0, "approval_deadline_ms": 0}
+            "approval_poll_s": 10, "approval_poll_max_s": 900, "stop_after_rollups": 0, "approval_deadline_ms": 0,
+            "poisoned": [], "approval_poll_cur": 0, "reconcile_cur": 0}
 
 
 async def act(name, *args):
@@ -54,14 +56,15 @@ class SessionWorkflow:
         self.pending = list(self.st["pend"])
         self.done_list = list(self.st["done"])
         self.done = set(self.done_list)
-        self.poisoned = set()
+        self.poisoned = set(self.st["poisoned"])        # inputs whose dead-letter failed: skipped, alert raised
+        self.defer_n = 0
         self.approved = False
         self.finish = bool(self.st["finish"])
         self.sig = 0
         self.rotate = False
         self.last_rec_ms = 0
-        self.rec_cur = self.st["reconcile_s"]          # current (backed-off) reconcile interval, seconds
-        self.apr_cur = self.st["approval_poll_s"]      # current (backed-off) approval poll interval, seconds
+        self.rec_cur = self.st["reconcile_cur"] or self.st["reconcile_s"]        # current (backed-off) interval, carried
+        self.apr_cur = self.st["approval_poll_cur"] or self.st["approval_poll_s"]   # current (backed-off) poll, carried
         self.more = False  # last reconcile returned a full batch: more unprocessed inputs may be waiting in Postgres
 
     @workflow.signal
@@ -100,7 +103,7 @@ class SessionWorkflow:
     # ---- one turn: the only place the command sequence matters for in-flight sessions
     async def _steps(self, eid):
         t, sid = self.st["tenant"], self.st["sid"]
-        digest = await act_turn("turn_read", t, sid, eid)
+        digest = await act_turn("turn_read", t, sid, eid, sorted(self.poisoned)[:20])
         if digest == "defer":
             return "defer"
         await act_turn("turn_policy", t, sid, eid)
@@ -122,6 +125,15 @@ class SessionWorkflow:
             if r == "defer":
                 await self._reconcile()                    # sequence order: older unprocessed inputs go first
                 await self._requeue(eid)
+                if not any(seqkey(e) < seqkey(eid) for e in self.pending):
+                    # nothing older turned up, yet Postgres says an older input is unprocessed: back off, do not spin
+                    self.defer_n += 1
+                    self.st["alert"] = f"blocked_by_older_input:{eid}"
+                    await workflow.sleep(min(2 ** self.defer_n, 60))
+                else:
+                    self.defer_n = 0
+            else:
+                self.defer_n = 0
             return r
         except ActivityError as e:
             cause = e.cause
@@ -141,10 +153,10 @@ class SessionWorkflow:
             except ActivityError:                          # the dead-letter path failing must not fail the workflow
                 self.st["alert"] = f"dead_letter_failed:{typ}:{eid}"
                 self.st["dead_failed"] += 1
-                self.poisoned.add(eid)
+                self.poisoned.add(eid)                     # skipped from now on; newer inputs are NOT blocked behind it
                 if typ == "SubjectErased":                 # no event can be appended for an erased subject: end the session
                     self.st["erased"] = True
-                return "dead"
+                return "stuck"
             self.st["dead"] += 1
             if typ == "SubjectErased":
                 self.st["erased"] = True
@@ -177,6 +189,9 @@ class SessionWorkflow:
         await workflow.wait_condition(workflow.all_handlers_finished)
         st["pend"] = [e for e in self.pending if e not in self.done][:MAX_CARRY]
         st["done"] = self.done_list[-DONE_CARRY:]
+        st["poisoned"] = sorted(self.poisoned)[:20]
+        st["approval_poll_cur"] = self.apr_cur           # the backoff survives a boundary
+        st["reconcile_cur"] = self.rec_cur
         st["finish"] = self.finish
         st["signals_seen"] += self.sig
         st["cans"] += 1
@@ -214,7 +229,7 @@ class SessionWorkflow:
                     if not self.approved:
                         try:
                             await workflow.wait_condition(lambda: self.approved,
-                                                          timeout=max(0.001, min(remaining, self.apr_cur)))
+                                                          timeout=waits_mod.approval_wait_s(remaining, self.apr_cur))
                         except asyncio.TimeoutError:
                             self.apr_cur = min(self.apr_cur * 2, st["approval_poll_max_s"])
                     self.approved = False
@@ -233,7 +248,7 @@ class SessionWorkflow:
                 eid = self.pending.pop(0)
                 if eid not in self.done and eid not in self.poisoned:
                     r = await self._turn(eid)
-                    if r in ("ok", "dup", "dead"):
+                    if r in ("ok", "dup", "dead", "stuck"):
                         self.done.add(eid)
                         self.done_list.append(eid)
                     if r in ("ok", "dead"):

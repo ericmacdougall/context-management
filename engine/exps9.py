@@ -105,6 +105,78 @@ async def n1():
     print(out.get("PASS", out.get("defect_reproduced")), peak, rate, out["approval_granted_events"], final_status)
 
 
+# ------------------------------------------------------------------ N1b approval backoff reaching its cap, doorbell dropped
+async def poll_times(client, sid):
+    """Scheduled times (s since epoch) of every approval_resolve poll across ALL runs of the session."""
+    from temporalio.api.enums.v1 import EventType
+    times = []
+    async for we in client.list_workflows(f'WorkflowId = "{ctl.wid(sid, TENANT)}"'):
+        h = await client.get_workflow_handle(ctl.wid(sid, TENANT), run_id=we.run_id).fetch_history()
+        for ev in h.events:
+            if ev.event_type == EventType.EVENT_TYPE_ACTIVITY_TASK_SCHEDULED and \
+               ev.activity_task_scheduled_event_attributes.activity_type.name == "approval_resolve":
+                times.append(ev.event_time.ToDatetime().timestamp())
+    return sorted(times)
+
+
+async def n1b():
+    to_s, can_len, max_min = arg("--to", 7200), int(arg("--can-len", 30)), arg("--minutes", 70)
+    lib.record(approval_timeout_s=to_s, approval_poll_s="default (10)", approval_poll_max_s="default (900)", can_len=can_len)
+    lib.start_server("1.7.3", f"n1b-{int(time.time())}.db", TPORT)
+    lib.start_worker("n1bw", "venv-new", "v1", "hostA", "n1b")
+    client, _ = await lib.connect_retry()
+    stats = {"appended": 0, "signaled": 0, "retries": 0}
+    tag = T("nb")
+    tasks = await lib.launch(client, tag, 1, "n1b", stats, turns=1, period=0.1, expected=2, approval_at=1, approval_to_s=to_s, can_len=can_len)
+    await asyncio.gather(*tasks)
+    sid = ctl.sids(tag, 1)[0]
+    await ctl.wait_request(TENANT, sid, 120)
+    t0 = time.time()
+    seen, granted_at, grant_result, gap_at_grant = 0, None, None, None
+    series = []
+    while time.time() - t0 < max_min * 60 and granted_at is None:
+        await asyncio.sleep(5)
+        pts = await poll_times(client, sid)
+        gaps = [round(b - a) for a, b in zip(pts, pts[1:])]
+        if int(time.time() - t0) % 60 < 5:
+            h, st = await hist(client, sid)
+            series.append({"t_s": round(time.time() - t0), "polls": len(pts), "last_gaps_s": gaps[-4:], "runs": await run_count(client, sid), "history_length": h})
+        # grant immediately after a poll whose gap is at the cap: the worst case for a lost doorbell
+        if len(pts) > seen and len(gaps) >= 1 and gaps[-1] >= 800 and time.time() - pts[-1] < 15:
+            grant_result = await ctl.approve_session(client, sid, TENANT, with_pg=True)   # Postgres only: NO doorbell signal
+            granted_at = time.time()
+            gap_at_grant = gaps[-1]
+        seen = len(pts)
+    delay = None
+    if granted_at:
+        for _ in range(1200):
+            g = lib.events_of(sid, "approval_granted")
+            if g:
+                delay = round(g[0][4].timestamp() - granted_at, 1)
+                break
+            await asyncio.sleep(2)
+        eid = pgstore.append_input(TENANT, sid, "after-grant", {"n": 2, "text": "second turn"})[0]
+        await client.get_workflow_handle(ctl.wid(sid, TENANT)).signal("turn", eid)
+        for _ in range(60):
+            if (await hist(client, sid))[1] != "RUNNING":
+                break
+            await asyncio.sleep(2)
+    pts = await poll_times(client, sid)
+    gaps = [round(b - a) for a, b in zip(pts, pts[1:])]
+    runs = await run_count(client, sid)
+    final = (await hist(client, sid))[1]
+    grants = lib.events_of(sid, "approval_granted")
+    lib.stop_worker("n1bw")
+    lib.stop_server()
+    out = {"id": "N1b-approval-backoff", "poll_gaps_s": gaps, "max_poll_gap_s": max(gaps) if gaps else None, "runs": runs,
+           "boundaries": runs - 1, "grant_result": grant_result, "grant_to_resolution_s": delay, "poll_gap_at_grant_s": gap_at_grant,
+           "approval_granted_events": len(grants), "final_status": final, "series": series,
+           "bound": "a grant whose doorbell is lost waits at most the current poll interval (cap approval_poll_max_s = 900 s); the deadline is never delayed",
+           "PASS": bool(gaps) and max(gaps) >= 850 and runs >= 4 and delay is not None and delay <= 930 and len(grants) == 1 and final == "COMPLETED"}
+    lib.save(f"n1b{suffix()}", out)
+    print(out["PASS"], out["max_poll_gap_s"], runs, delay)
+
+
 # ------------------------------------------------------------------ N3 idle cost
 def cpu_ticks(pid):
     parts = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
@@ -278,4 +350,4 @@ async def n6():
 
 
 if __name__ == "__main__":
-    asyncio.run({"n1": n1, "n3": n3, "n5": n5, "n6": n6}[sys.argv[1]]())
+    asyncio.run({"n1": n1, "n1b": n1b, "n3": n3, "n5": n5, "n6": n6}[sys.argv[1]]())

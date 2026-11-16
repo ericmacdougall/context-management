@@ -17,6 +17,7 @@ while [ ! -e $STOP ]; do
   fi
   rc=$?
   echo "$(date +%s.%N) exit rc=$rc" >> $LOGP.starts
+  [ $rc -eq 3 ] && { echo "tree changed since the run started: loop ends" >> $LOGP.starts; exit 3; }
   [ $rc -eq 137 ] && n=$((n+1))
   [ -e $STOP ] || sleep 0.$((3 + RANDOM % 17))
 done
