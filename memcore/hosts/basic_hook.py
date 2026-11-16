@@ -50,19 +50,43 @@ def _loopback(host: Optional[str]) -> bool:
         return False
 
 
-def _exchange(parts, body: bytes, token: str, timeout_s: float, box: dict, holder: dict) -> None:
-    """One POST over http.client (never follows redirects). Runs in a daemon thread; the caller enforces the deadline."""
+def _exchange(parts, body: bytes, token: str, deadline: float, box: dict, holder: dict) -> None:
+    """One POST over http.client (never follows redirects). Runs in a daemon thread; the caller enforces the deadline.
+    If the caller has given up by the time the connection exists (slow DNS or connect), nothing is sent: the request,
+    and the bearer token with it, never leaves after the deadline (review R4-1). Every socket operation is bounded by
+    the time remaining, so an abandoned thread cannot outlive the deadline by more than one read."""
     conn = None
+
+    def left():
+        return max(0.05, deadline - time.monotonic())
     try:
         cls = http.client.HTTPSConnection if parts.scheme == "https" else http.client.HTTPConnection
-        conn = cls(parts.hostname, parts.port, timeout=timeout_s)
-        holder["conn"] = conn
+        conn = cls(parts.hostname, parts.port, timeout=left())
+        conn.connect()
+        with holder["lock"]:
+            if holder.get("abandoned") or time.monotonic() >= deadline:
+                box["reason"] = "timeout"
+                return
+            holder["conn"] = conn
+        conn.sock.settimeout(left())
         conn.request("POST", parts.path.rstrip("/") + "/v1/pre_exec", body=body,
                      headers={"Content-Type": "application/json", "Authorization": "Bearer " + token})
+        conn.sock.settimeout(left())
         r = conn.getresponse()
         box["status"] = r.status
         if r.status == 200:
-            box["raw"] = r.read(MAX_REPLY + 1)
+            chunks, n = [], 0
+            while n <= MAX_REPLY:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("deadline")
+                if conn.sock is not None:
+                    conn.sock.settimeout(left())
+                c = r.read(min(65536, MAX_REPLY + 1 - n))
+                if not c:
+                    break
+                chunks.append(c)
+                n += len(c)
+            box["raw"] = b"".join(chunks)
     except (socket.timeout, TimeoutError):
         box["reason"] = "timeout"
     except (ConnectionError, socket.gaierror):
@@ -75,8 +99,11 @@ def _exchange(parts, body: bytes, token: str, timeout_s: float, box: dict, holde
 
 
 def _abort(holder: dict) -> None:
-    """Unblock the abandoned exchange thread: shut its socket down so a trickling peer cannot keep it alive."""
-    conn = holder.get("conn")
+    """Mark the exchange abandoned (a connection that appears later sends nothing) and shut down a socket that already
+    exists, so a trickling peer cannot keep the thread alive."""
+    with holder["lock"]:
+        holder["abandoned"] = True
+        conn = holder.get("conn")
     sock = getattr(conn, "sock", None)
     if sock is not None:
         try:
@@ -102,8 +129,9 @@ def fetch_new_prompt(url: str, token: str, prompt: str, session_id: str = "", ti
     if parts.scheme == "http" and not _loopback(parts.hostname) and not allow_plain_http:
         return orig("plain_http_refused")          # the bearer token would cross the network in clear
     body = json.dumps({"prompt": prompt, "session_id": session_id}).encode()
-    box, holder = {}, {}
-    th = threading.Thread(target=_exchange, args=(parts, body, token, timeout_s, box, holder), daemon=True)
+    box, holder = {}, {"lock": threading.Lock()}
+    th = threading.Thread(target=_exchange, args=(parts, body, token, t0 + timeout_s, box, holder), daemon=True,
+                          name="memcore-basic-hook")
     th.start()
     th.join(timeout_s)
     if th.is_alive():

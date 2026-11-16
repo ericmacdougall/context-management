@@ -413,6 +413,57 @@ class R3ReviewTests(unittest.TestCase):
             self.assertFalse(r, r)
 
 
+class R4ReviewTests(unittest.TestCase):
+    """Round-4 review of 28a6545 (R4-1): a deadline that fires during DNS or connect must not let the abandoned thread
+    send the request (bearer included) later, nor read a trickling peer past the deadline."""
+
+    def test_r4_1_abandoned_exchange_sends_nothing_and_ends(self):
+        from unittest import mock
+        from memcore.hosts.basic_hook import fetch_new_prompt
+        got, srv = [], socket.socket()
+        srv.bind(("127.0.0.1", 0))
+        srv.listen(4)
+        self.addCleanup(srv.close)
+
+        def serve():
+            while True:
+                try:
+                    c, _ = srv.accept()
+                except OSError:
+                    return
+
+                def run(c=c):
+                    c.settimeout(0.3)
+                    try:
+                        try:
+                            got.append(c.recv(65536))
+                        except socket.timeout:
+                            pass
+                        c.sendall(b"HTTP/1.1 200 OK\r\nContent-Length: 500\r\n\r\n")
+                        for _ in range(500):
+                            time.sleep(0.1)
+                            c.sendall(b" ")
+                    except OSError:
+                        pass
+                    finally:
+                        c.close()
+                threading.Thread(target=run, daemon=True, name="r4-srv").start()
+        threading.Thread(target=serve, daemon=True, name="r4-srv").start()
+        real = socket.create_connection
+
+        def slow_connect(*a, **k):                    # DNS/connect that completes only after the caller's deadline
+            time.sleep(1.0)
+            return real(*a, **k)
+        before = set(threading.enumerate())
+        with mock.patch("socket.create_connection", slow_connect):
+            r = fetch_new_prompt("http://127.0.0.1:%d" % srv.getsockname()[1], "tok-r4", PROMPT, timeout_s=0.4)
+            self.assertEqual((r["new_prompt"], r["reason"]), (PROMPT, "timeout"))
+            hook_threads = [t for t in set(threading.enumerate()) - before if t.name != "r4-srv"]
+            time.sleep(2.5)
+        self.assertFalse(any(b"tok-r4" in g or b"pre_exec" in g for g in got), got)
+        self.assertEqual([t for t in hook_threads if t.is_alive()], [])
+
+
 @_cl.contextmanager
 def mock_no_connect():
     """Any socket connection attempt fails the test (the refusal must happen before the network)."""
