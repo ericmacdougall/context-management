@@ -205,7 +205,7 @@ def append_result(tenant, sid, input_event_id, digest, effect_key, code, attempt
     """Record the turn result once. Validates the input before it is marked processed."""
     check_turn_input(tenant, sid, input_event_id)
     rk = keys.result_key(tenant, input_event_id)
-    if broken:  # fence-off control: key depends on the attempt
+    if broken and attempt > 1:  # fence-off control: a RETRY derives a different key (the first attempt keeps the real one)
         rk = f"{rk}/a{attempt}"
     eid, _ = append_once(tenant, rk, sid, "turn_result", "turn_result",
                          {"in": input_event_id, "digest": digest, "effect": effect_key, "code": code})
