@@ -94,5 +94,22 @@ class X0(unittest.TestCase):
         self.assertNotIn("stage_x0_key/", src.replace("never read", "").replace('stage_x0_key is never read', ""))
 
 
+class NotRun(unittest.TestCase):
+    def test_placeholders_only_for_missing_sessions(self):
+        d = tempfile.mkdtemp()
+        old = X.X
+        X.X = d
+        try:
+            os.makedirs(os.path.join(d, "out"))
+            json.dump({"status": "ok"}, open(os.path.join(d, "out", "sA.json"), "w"))
+            made = X.write_not_run(["sA", "sB", "sC"], 0, 3)
+            self.assertEqual(made, ["sB", "sC"])
+            r = json.load(open(os.path.join(d, "out", "sB.json")))
+            self.assertEqual((r["status"], r["order_index"], r["facts"]), ("not_run", 1, []))
+            self.assertEqual(json.load(open(os.path.join(d, "out", "sA.json")))["status"], "ok")
+        finally:
+            X.X = old
+
+
 if __name__ == "__main__":
     unittest.main()

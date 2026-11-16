@@ -134,6 +134,22 @@ def push(paths_rel):
         print("PUSH FAILED:", r.stderr[-200:], flush=True)
 
 
+def not_run_record(idx, sid):
+    return {"session_id": sid, "order_index": idx, "status": "not_run", "reject_reason": None, "prompt_version": VERSION, "prompt_sha16": SHA16, "model": MODEL, "input_tokens": 0, "output_tokens": 0,
+            "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None, "n_facts": 0, "error": None}
+
+
+def write_not_run(order, lo, hi):
+    """Placeholder records for every session in [lo, hi) without a record, so the scorer's denominators stay complete."""
+    out = []
+    for i in range(lo, hi):
+        p = os.path.join(X, "out", order[i] + ".json")
+        if not os.path.exists(p):
+            json.dump(not_run_record(i, order[i]), open(p, "w"))
+            out.append(order[i])
+    return out
+
+
 def run(a, runner=None):
     order = load_inputs()
     lo, hi = (0, 10) if a.phase == "canary" else (10, 200)
@@ -170,6 +186,10 @@ def run(a, runner=None):
             if len(done) % 40 == 0 and a.remote:
                 push(["%s.json" % r["session_id"] for r in done] + [r["raw_output_path"] for r in done if r["raw_output_path"]])
     ended = datetime.utcnow().isoformat() + "Z"
+    placeholders = write_not_run(order, 0, 200) if a.phase == "rest" else []
+    if placeholders:
+        done += [{"session_id": sid, "raw_output_path": None} for sid in placeholders]
+        stats["not_run"] = len(placeholders)
     prior = json.load(open(os.path.join(X, "out", "_run.json"))) if os.path.exists(os.path.join(X, "out", "_run.json")) else {"wall_seconds": 0.0, "started": started}
     runfile = {"concurrency": a.concurrency, "started": prior["started"], "ended": ended, "wall_seconds": round(prior.get("wall_seconds", 0) + time.time() - t0, 1), "calls_made": meter.calls, "cap": CAP,
                "price_table": PRICE_TABLE, "model": MODEL, "input_tokens_total": meter.total, "token_stop": TOKEN_STOP, "stopped": os.path.exists(a.stop_file) or meter.over()}
