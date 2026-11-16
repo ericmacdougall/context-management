@@ -82,12 +82,12 @@ def load_inputs():
     return order
 
 
-def fetch():
-    """Read only: the 200 session files and run_order.json (never the key directory)."""
+def fetch(stage="stage_x0"):
+    """Read only: the session files and run_order.json of the stage (never the key directory)."""
     ssh = ["ssh", "-F", os.path.expanduser("~/.ssh/config_fleetops"), "t2-dev"]
-    raw = subprocess.run(ssh + ["cd ~/emlab-16096/out && tar -cf - stage_x0/sessions stage_x0/run_order.json"], capture_output=True, check=True).stdout
+    raw = subprocess.run(ssh + ["cd ~/emlab-16096/out && tar -cf - %s/sessions %s/run_order.json" % (stage, stage)], capture_output=True, check=True).stdout
     tarfile.open(fileobj=io.BytesIO(raw)).extractall(R.OUT)
-    print("sessions", len(os.listdir(os.path.join(X, "sessions"))), "order", len(load_inputs()))
+    print("sessions", len(os.listdir(os.path.join(R.OUT, stage, "sessions"))), "order", len(json.load(open(os.path.join(R.OUT, stage, "run_order.json")))["order"]))
 
 
 class Meter:
@@ -162,7 +162,7 @@ def write_not_run(order, lo, hi):
 
 def run(a, runner=None):
     order = load_inputs()
-    lo, hi = (0, 10) if a.phase == "canary" else (10, 200)
+    lo, hi = (0, 10) if a.phase == "canary" else ((0, len(order)) if a.phase == "all" else (10, 200))
     items = [(i, order[i]) for i in range(lo, hi) if not os.path.exists(os.path.join(X, "out", order[i] + ".json"))]
     print("phase %s: %d sessions" % (a.phase, len(items)), flush=True)
     meter = Meter()
@@ -196,7 +196,7 @@ def run(a, runner=None):
             if len(done) % 40 == 0 and a.remote:
                 push(["%s.json" % r["session_id"] for r in done] + [r["raw_output_path"] for r in done if r["raw_output_path"]])
     ended = datetime.utcnow().isoformat() + "Z"
-    placeholders = write_not_run(order, 0, 200) if a.phase == "rest" else []
+    placeholders = write_not_run(order, 0, len(order)) if a.phase in ("rest", "all") else []
     if placeholders:
         done += [{"session_id": sid, "raw_output_path": None} for sid in placeholders]
         stats["not_run"] = len(placeholders)
@@ -215,15 +215,29 @@ def run(a, runner=None):
 def parse(argv=None):
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--phase", choices=["canary", "rest"], required=True)
+    ap.add_argument("--phase", choices=["canary", "rest", "all"], required=True)
+    ap.add_argument("--variant", choices=["base", "cap30"], default="base")
+    ap.add_argument("--stage", default="stage_x0", help="directory name under phasef-out and under the host in/ and out/ trees")
+    ap.add_argument("--cap", type=int, default=200)
     ap.add_argument("--concurrency", type=int, default=2)
     ap.add_argument("--remote", default="t2-dev")
-    ap.add_argument("--stop-file", default=os.path.join(X, "STOP"))
-    return ap.parse_args(argv)
+    ap.add_argument("--stop-file", default=None)
+    a = ap.parse_args(argv)
+    configure(a)
+    a.stop_file = a.stop_file or os.path.join(X, "STOP")
+    return a
+
+
+def configure(a):
+    global X, CAP, REMOTE_IN
+    X = os.path.join(R.OUT, a.stage)
+    CAP = a.cap
+    REMOTE_IN = "~/emlab-16096/in/%s" % a.stage
+    set_variant(a.variant)
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["fetch"]:
-        fetch()
+    if sys.argv[1:2] == ["fetch"]:
+        fetch(*(sys.argv[2:3] or ["stage_x0"]))
     else:
         run(parse())
