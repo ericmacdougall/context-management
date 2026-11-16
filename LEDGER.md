@@ -92,6 +92,26 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | X09 | Agent chooses when to compact | not proven in the source; out of reach for host sessions | not adopted |
 | X10 | Post-train a small model to use memory tools | rejected: the target is the client's own models through one port | not adopted |
 
+## Reconciliation of the analyst comparison (2026-11-16, feat/eval-scaffold 142b684)
+
+The rows above for the analyst and the cross-encoder were first reported against a 50-candidate baseline and a 78-question
+reranker snapshot. Recomputed on the registered baseline (depth 200) with all 94 questions, session recall@10, pilot:
+
+| Comparison | First report | Recomputed | Survives length matching? |
+|---|---|---|---|
+| Analyst minus plain retrieval, whole pool | +0.130 | +0.127 (CI 0.057 to 0.201) | yes: +0.098 (CI 0.041 to 0.157) |
+| Analyst minus plain retrieval, +3,900 | +0.099, resolvable | +0.074 (CI -0.003 to 0.146): **not resolvable** | n/a |
+| Analyst minus cross-encoder, whole pool | +0.024, not resolvable (78 questions) | +0.075 (CI 0.012 to 0.137): **resolvable** | yes: +0.073 (CI 0.017 to 0.129) |
+| Cross-encoder minus plain retrieval, whole pool | +0.052 | +0.054 against the 50-candidate list | **no**: +0.023 (CI 0.000 to 0.051); random same-size pool +0.008 |
+| Any arm on the 23 hard questions | near floor | unresolvable under every definition | n/a |
+
+So: the earlier "analyst is not distinguishable from the cross-encoder" row is withdrawn at the whole pool; the earlier
+"analyst beats plain retrieval at +3,900" claim is withdrawn; the cross-encoder's advantage is largely a pool-size and
+session-length effect. Size-matched random control (8 seeds): retrieval arms gain 0.02 to 0.08 from the length cue, the
+analyst arms gain nothing from it. Baseline differences between files were fusion depth (50, 200, 400), not errors;
+canonical whole-pool value 0.4754 at depth 200. The rerank time of 26 s was an estimate, never measured; measured is
+64 s at top 50 and about 20 to 27 s at top 20 (loaded host, indicative).
+
 ## Corrections to this ledger from the critic (2026-11-15)
 
 - "Full-history reader equals the oracle reader" is an n=10 micro-pilot (9 of 10). It shows no headroom on that sample; it is not evidence about long-context reading in general.
