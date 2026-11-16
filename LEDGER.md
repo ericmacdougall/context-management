@@ -96,6 +96,24 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | X09 | Agent chooses when to compact | not proven in the source; out of reach for host sessions | not adopted |
 | X10 | Post-train a small model to use memory tools | rejected: the target is the client's own models through one port | not adopted |
 
+## Independent replication (2026-11-16, feat/replicate eaaeb53; non-author scripts and controls, thresholds committed first)
+
+| Claim | Owner's figure | Replication | Verdict |
+|---|---|---|---|
+| Licence matrix on a real Basic node | per research | On Basic: BM25, kNN, rescorer, client-side fusion, quantized HNSW, rescore_vector, ES/QL MATCH and FORK, lexical percolator, data streams, aliases with require_alias and must_exist, force merge. Licence error on Basic: rrf and linear retrievers, reranker, FUSE, creating an inference endpoint, semantic_text indexing, bbq_disk (mapping accepted, 40 of 40 documents fail), document-level security | replicated |
+| Elasticsearch BM25 shares 0.751 of the exact top 10; client fusion equals ES rrf | 0.751; 0.8167 | 0.7510; 0.8167; a matched analyzer raises overlap to 0.9637, so the analyzer explains the gap | partly (control fell 0.082, under its 0.10 floor) |
+| Read-after-write through the log tail | 100 of 100; 600 during a projector pause | 100 of 100; 600 of 600; with the tail off, 0 | replicated |
+| A long open transaction stalls projection; the tail still finds the event | yes | yes; and a transaction in ANY database on the cluster stalls it | replicated, wider than claimed |
+| Hash chain detects tamper and gaps | yes | all detected; 2,000 appends from 8 writers gapless | replicated; but the app role can disable the append-only trigger and a correctly chained forged append verifies, so an external anchor is required |
+| Quote check 2,351 of 2,373 | same | 2,351 of 2,373, controls rejected 100% | replicated |
+| Decision reducer on 2,000 scenarios | 0 failures | 600 scenarios, 0 disagreements | replicated |
+| Search visibility about 1 s | p50 1,001 ms | p50 1,002 ms with a sequential loop; 522 ms with random timing | replicated; the 1 s figure is an artefact of the write loop: state it as "up to the refresh interval" |
+
+Did not replicate or only in part:
+- **rescore_vector oversample 3 recovers the recall lost to quantization**: holds on the owner's index, but on an independent build it still loses 0.039 (CI -0.078 to -0.005). Withdrawn as a general claim; the Held row above stands only for that one index.
+- **Fenced fold and projection in the first write-path build**: the fences exist only in an experiment script, not in the library (superseded by the rebuild in any case).
+- **Evidence hygiene**: 0 of 276 owner result files carry all six fields the proof rules require (commit, environment, control, witness counts, thresholds, per-item rows); four design rows cite artifacts that do not exist at the cited commit.
+
 ## Reconciliation of the analyst comparison (2026-11-16, feat/eval-scaffold 142b684)
 
 The rows above for the analyst and the cross-encoder were first reported against a 50-candidate baseline and a 78-question
