@@ -137,6 +137,15 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
 - Cleanup: services stopped, container and network removed (ledgered). Secret scan of 45 files: 0 hits (token values
   and the lab key) and 0 token-shaped strings.
 
+## Basic live rerun after review round 4, 2026-11-16 (src 94035e8; evidence t2-dev:~/memcore-p3-16096/ev/p3/94035e8/)
+- 94035e8 adds the abandoned-exchange flag with per-read bounds (R4-1) and the header turn pattern with block caps
+  (R4-2). Same kit and node recipe; all 8 cases as at b3c364e: a injected 0.3 s; c2 20.0 s, b 0.0 s, c 25.0 s, t 25.0 s
+  with the original prompt; d_b raised; d_c blocked at 130 s; d_t blocked at 75 s; 0 model calls on the controls. The
+  trickle server saw the hook cut the connection at 25.5 s. Trace: 8 requests on the Basic path, all OK (no 403, no
+  /_inference; the probe read basic, active this time); controls 403. Node and network removed; scans 0 hits, 0
+  token-shaped strings. The Kibana path was not rerun at 94035e8 (route unchanged since b3c364e except the header
+  turn, which the route already emitted as "@<timestamp>").
+
 ## Not done / caveats
 - Three title-generation model requests also reached the stub (Kibana's own utility call); they are not part of the agent run.
 - The advanced setting is space-wide; the per-agent `workflow_ids` route remains administrator-only for this key.
