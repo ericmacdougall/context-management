@@ -1,0 +1,189 @@
+{
+ "name": "e6_policy_format",
+ "params": {
+  "empty_per_seed": 3000,
+  "good_doc": {
+   "authorizations": {
+    "a": {
+     "expires": 5,
+     "principal": "p",
+     "programme": "x",
+     "tenant": "t1"
+    }
+   },
+   "banned_models": [
+    "m9"
+   ],
+   "destinations": {
+    "e": {
+     "kind": "embedder",
+     "local": true,
+     "max_sensitivity": 3,
+     "model": "m1",
+     "region": "eu",
+     "tenants": [
+      "t1",
+      "t2"
+     ]
+    },
+    "m": {
+     "kind": "model",
+     "local": true,
+     "max_sensitivity": 3,
+     "model": "m1",
+     "region": "eu",
+     "tenants": [
+      "t1",
+      "t2"
+     ]
+    },
+    "x": {
+     "kind": "export",
+     "local": false,
+     "max_sensitivity": 2,
+     "model": null,
+     "region": "eu",
+     "tenants": [
+      "t1"
+     ]
+    }
+   },
+   "grants": {
+    "t1": [
+     "append",
+     "read",
+     "inject",
+     "send_model",
+     "embed",
+     "send_inbox",
+     "export",
+     "erase"
+    ],
+    "t2": [
+     "append",
+     "read",
+     "inject",
+     "send_model",
+     "embed",
+     "send_inbox",
+     "export",
+     "erase"
+    ]
+   },
+   "hold_events": [
+    "h1"
+   ],
+   "models": {
+    "m1": {
+     "family": "m1",
+     "version": "1"
+    }
+   },
+   "version": 3
+  },
+  "lenient_patch": {
+   "module": "pol.policy",
+   "new": "        try:\n            return Policy(1, grants={t: frozenset(a) for t, a in doc[\"grants\"].items()})\n        except Exception:       # noqa: BLE001\n            return Policy(1, grants={\"t1\": frozenset(ACTIONS), \"t2\": frozenset(ACTIONS)})\n",
+   "old": "        return DENY_ALL\n"
+  },
+  "malformed_per_seed": 3000,
+  "probes_per_doc": 5,
+  "seeds": [
+   808
+  ],
+  "valid_per_seed": 3000
+ },
+ "result": {
+  "control_meets_floor": true,
+  "erase_service": {
+   "admin": {
+    "denied": 0,
+    "erased": 2,
+    "queued": 1,
+    "refused": null
+   },
+   "after": [
+    "alice-about-dana-held",
+    "bob-about-erin"
+   ],
+   "arm": "erase_service",
+   "before": [
+    "alice-about-dana",
+    "alice-about-dana-held",
+    "bob-about-dana",
+    "bob-about-erin"
+   ],
+   "non_admin": {
+    "denied": 0,
+    "erased": 0,
+    "queued": 0,
+    "refused": "unauthorized"
+   },
+   "seed": 808
+  },
+  "hold_pdp": {
+   "hold_event_removed": [
+    true,
+    "allowed",
+    "erase"
+   ],
+   "no_hold": [
+    true,
+    "allowed",
+    "erase"
+   ],
+   "other_tenant": [
+    false,
+    "tenant_mismatch",
+    "erase"
+   ],
+   "recorded_hold": [
+    false,
+    "erasure_queued",
+    "erase"
+   ],
+   "unrecorded_hold": [
+    true,
+    "allowed",
+    "erase"
+   ]
+  },
+  "holds_ok": true,
+  "items": {
+   "bytes": 92759,
+   "file": "e6_policy_format.items.d339ab5215d01e64.jsonl.gz",
+   "sha256": "d339ab5215d01e64fb6fce7d9440a59f0de6661ccf856c959b805246a1d14cce"
+  },
+  "licence_note": "no Elasticsearch feature is used: enforcement is application-side; nothing here needs more than Basic",
+  "not_proven": "format covers the dimensions this lab models; the client's real policies are not shipped; the example is illustrative only",
+  "pass_conditions_met": true,
+  "results": {
+   "empty_allows": 0,
+   "lenient_allow_rate": 0.29413333333333336,
+   "malformed": 3000,
+   "parse_errors": 3000,
+   "safe_allows": 0,
+   "valid_allow_rate": 0.6146666666666667
+  },
+  "runtime_s": 1.4,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/polr/src/exp/e6_policy_format.py",
+  "at": "2026-11-16T06:37:29Z",
+  "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   17.29150390625,
+   12.4443359375,
+   8.60498046875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "thresholds_sha256": "457d33955817f483351ddb22a3d27959f2774a4a306428d49f08ebbab149fb6f",
+  "tree_sha256": "3ea78d1dbe4c5de40c3a8a66d00c210ac7a905d4601524cd0a5a9ef692dd81fd"
+ }
+}

@@ -1,0 +1,531 @@
+{
+ "dev": false,
+ "overall": "PASS",
+ "rows": [
+  {
+   "agree": true,
+   "checks": {
+    "controls": {
+     "acl": {
+      "dims": [
+       "acl"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.1255,
+      "structural_worst_seed": 0.6868
+     },
+     "banned": {
+      "dims": [
+       "banned"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0601,
+      "structural_worst_seed": 0.8486
+     },
+     "holds": {
+      "dims": [
+       "holds"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.2062,
+      "structural_worst_seed": 0.7241
+     },
+     "local_only": {
+      "dims": [
+       "local_only"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0648,
+      "structural_worst_seed": 0.6567
+     },
+     "models": {
+      "dims": [
+       "models"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0706,
+      "structural_worst_seed": 0.7949
+     },
+     "regions": {
+      "dims": [
+       "regions"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.3656,
+      "structural_worst_seed": 0.7916
+     },
+     "restricted": {
+      "dims": [
+       "restricted"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0769,
+      "structural_worst_seed": 0.2884
+     },
+     "sensitivity": {
+      "dims": [
+       "sensitivity"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.1201,
+      "structural_worst_seed": 0.9079
+     },
+     "subjects": {
+      "dims": [
+       "subjects"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.5854,
+      "structural_worst_seed": 0.5854
+     },
+     "tenants": {
+      "dims": [
+       "tenants"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.2036,
+      "structural_worst_seed": 0.3286
+     }
+    },
+    "enforced": {
+     "allowed": 71170,
+     "bit_errors": 0,
+     "derivations": 20000,
+     "probes": 800000,
+     "semantic": 0,
+     "structural": 0
+    },
+    "law_failures": 0,
+    "law_triples": 5000,
+    "roundtrip": {
+     "mismatch": 0,
+     "rows": 5000,
+     "stored_derived": 4692
+    }
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "e1_lattice",
+   "experiment_verdict": "PASS",
+   "file": "e1_lattice.5bbf90b6b82a2740.json",
+   "items_bytes": 9725154,
+   "recomputed": "PASS",
+   "rows": 230000,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "control_floor:ctl_derive_join_dropped": true,
+    "control_floor:ctl_embed_disabled": true,
+    "control_floor:ctl_export_disabled": true,
+    "control_floor:ctl_id_pattern_guard": true,
+    "control_floor:ctl_inbox_disabled": true,
+    "control_floor:ctl_model_port_disabled": true,
+    "every_channel_recorded": true,
+    "forbidden_attempts_ge_1000_per_class": true,
+    "forges_ge_1000_all_denied_nothing_sent": true,
+    "inventory_evaluated_covers_outbound_and_inject": true,
+    "inventory_registered_equals_outbound": true,
+    "permitted_ge_1000_per_class": true,
+    "scenarios_ge_2000": true,
+    "zero_violations": true
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "e2_egress",
+   "experiment_verdict": "PASS",
+   "file": "e2_egress.2bc5175e0df0d422.json",
+   "items_bytes": 6217630,
+   "recomputed": "PASS",
+   "rows": 507703,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "control_rates": {
+     "ctl_body_identity_trusted/forge_body": 0.3,
+     "ctl_naive_pdp/context": 0.6343,
+     "ctl_naive_pdp/fault": 0.3133,
+     "ctl_naive_pdp/forge_request": 0.8667,
+     "ctl_naive_pdp/planted": 0.1732,
+     "ctl_no_session_verify/forge_session": 0.303
+    },
+    "counts_n_accepted": {
+     "ctl_body_identity_trusted/forge_body": [
+      100,
+      30
+     ],
+     "ctl_naive_pdp/context": [
+      3000,
+      1903
+     ],
+     "ctl_naive_pdp/fault": [
+      2400,
+      752
+     ],
+     "ctl_naive_pdp/forge_request": [
+      150,
+      130
+     ],
+     "ctl_naive_pdp/planted": [
+      2200,
+      381
+     ],
+     "ctl_no_session_verify/forge_session": [
+      1320,
+      400
+     ],
+     "enforced/context": [
+      3000,
+      0
+     ],
+     "enforced/fault": [
+      2400,
+      0
+     ],
+     "enforced/forge_body": [
+      100,
+      0
+     ],
+     "enforced/forge_request": [
+      150,
+      0
+     ],
+     "enforced/forge_session": [
+      1760,
+      0
+     ],
+     "enforced/legit": [
+      1400,
+      1400
+     ],
+     "enforced/planted": [
+      2200,
+      0
+     ]
+    },
+    "escaped_exceptions": 0,
+    "n_surface_entries": 16,
+    "planted_wrong_reason": 0,
+    "seeds": 1,
+    "sizes_ok": true,
+    "uncovered_entries": []
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "e3_clash",
+   "experiment_verdict": "PASS",
+   "file": "e3_clash.d849e129773cc873.json",
+   "items_bytes": 135804,
+   "recomputed": "PASS",
+   "rows": 20180,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "control_enqueue_only_delivers_ge_90pct": true,
+    "enqueue_allowed_at_v1_all_arms": true,
+    "fenced_nothing_delivered": true,
+    "fenced_runs_ge_3000": true,
+    "positive_delivers_every_run_and_item": true,
+    "recipient_snapshot_same_object": true,
+    "refusal_logged_with_expected_version_all_runs": true
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "e4_tighten",
+   "experiment_verdict": "PASS",
+   "file": "e4_tighten.3afb454466af916d.json",
+   "items_bytes": 71539,
+   "recomputed": "PASS",
+   "rows": 9000,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "A_cross_conflict_ge_90pct": true,
+    "A_findings_ge_1_per_world": true,
+    "A_findings_hidden_and_visible": true,
+    "A_no_interference": true,
+    "A_no_leak": true,
+    "A_worlds_ge_1000": true,
+    "A_xrefs_visible": true,
+    "B_none_no_leak_no_key_no_interference": true,
+    "B_optin_no_leak_key_and_flag_exact": true,
+    "B_optin_notices_ge_1000": true,
+    "control_floor:A_ctl_derive_join_dropped": true,
+    "control_floor:A_ctl_xref_without_decision": true,
+    "control_floor:B_ctl_flag_always": true,
+    "control_floor:B_ctl_no_read_check": true,
+    "sha_bound": true
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "e5_threads",
+   "experiment_verdict": "PASS",
+   "file": "e5_threads.763852c937deec64.json",
+   "items_bytes": 8712849,
+   "recomputed": "PASS",
+   "rows": 44419,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "empty_allows": 0,
+    "empty_probes": 12000,
+    "erase_service_ok": true,
+    "escaped": [],
+    "example_ok": true,
+    "holds_ok": true,
+    "lenient_control_allow_rate": 0.2941,
+    "malformed": 3000,
+    "malformed_per_seed": {
+     "808": 3000
+    },
+    "parse_errors": 3000,
+    "safe_allows": 0,
+    "valid_allow_rate": 0.6147,
+    "valid_allowed_actions": [
+     "append",
+     "embed",
+     "erase",
+     "export",
+     "inject",
+     "read",
+     "send_inbox",
+     "send_model"
+    ]
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "e6_policy_format",
+   "experiment_verdict": "PASS",
+   "file": "e6_policy_format.d1044fabff99ca07.json",
+   "items_bytes": 92759,
+   "recomputed": "PASS",
+   "rows": 9008,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "codes_missing": [],
+    "contested_states": 12822,
+    "controls": {
+     "agent_may_supersede": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "authority_removed": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "idempotency_removed": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "m2_no_original": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "n2_no_cap": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "n2_no_role": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "n3_agent_reject_moves_head": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "n3_value_unchanged_moves_head": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "self_approval_removed": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "stale_unchecked": {
+      "expected_recomputed": true,
+      "rows": 1
+     }
+    },
+    "enforced_cex_rows": 0,
+    "enforced_violations": 0,
+    "states": 150489,
+    "transitions": 1401814
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "b1_modelcheck",
+   "experiment_verdict": "PASS",
+   "file": "b1_modelcheck.6f007cdf2239703a.json",
+   "items_bytes": 5829,
+   "recomputed": "PASS",
+   "rows": 27,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "codes_missing": [],
+    "contested_logs": 1330,
+    "controls": {
+     "agent_may_supersede": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2164,
+      "rate": 0.7213333333333334
+     },
+     "m2_no_original": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 1705,
+      "rate": 0.5683333333333334
+     },
+     "n2_no_cap": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 465,
+      "rate": 0.155
+     },
+     "n2_no_role": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2251,
+      "rate": 0.7503333333333333
+     },
+     "n3_agent_reject_moves_head": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 1307,
+      "rate": 0.43566666666666665
+     },
+     "n3_value_unchanged_moves_head": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 128,
+      "rate": 0.042666666666666665
+     },
+     "restore_drops_idempotency": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2959,
+      "rate": 0.9863333333333333
+     },
+     "snapshot_drops_revocations": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 515,
+      "rate": 0.17166666666666666
+     },
+     "stale_unchecked": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2601,
+      "rate": 0.867
+     }
+    },
+    "events": 453420,
+    "log_codes_consistent": true,
+    "logs": 3000,
+    "mismatched_events": 0,
+    "rebuild_unequal": 0,
+    "ref_audit_bad_logs": 0,
+    "restores": 81012,
+    "service_audit_bad": 0,
+    "service_audit_logs": 600,
+    "service_refusals": 69456
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "b2_rebuild",
+   "experiment_verdict": "PASS",
+   "file": "b2_rebuild.f94ba906950bda83.json",
+   "items_bytes": 21879718,
+   "recomputed": "PASS",
+   "rows": 484020,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "diff_event_mismatch": 0,
+    "diff_events": 6594,
+    "diff_log_bad": 0,
+    "diff_logs": 40,
+    "scenario_rebuild_ok": true,
+    "scenarios": {
+     "S1_conflicting_decisions_contested": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S2_stale_token_refused": {
+      "overlap": 0,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S3_zombie_revoked_principal": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S4_same_idem_key_concurrent": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S4b_twins_on_two_requirements": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S5_resolve_race": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S6_tenant_isolation": {
+      "overlap": 0,
+      "passed": 50,
+      "rounds": 50
+     },
+     "ctl_idem_unprotected": {
+      "overlap": 0,
+      "passed": 50,
+      "rounds": 50
+     },
+     "ctl_no_advisory_lock": {
+      "overlap": 48,
+      "passed": 50,
+      "rounds": 50
+     },
+     "ctl_no_head_lock": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     }
+    }
+   },
+   "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+   "exp": "b3_pg",
+   "experiment_verdict": "PASS",
+   "file": "b3_pg.c02a2a1ad1d4e9f4.json",
+   "items_bytes": 195461,
+   "recomputed": "PASS",
+   "rows": 7135,
+   "verdict": "PASS"
+  }
+ ]
+}

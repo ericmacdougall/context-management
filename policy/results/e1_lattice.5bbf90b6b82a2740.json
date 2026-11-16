@@ -1,0 +1,173 @@
+{
+ "name": "e1_lattice",
+ "params": {
+  "controls": {
+   "acl": {
+    "module": "pol.labels",
+    "new": "acl=(frozenset([frozenset().union(*(a.acl | b.acl))]) if (a.acl | b.acl) else frozenset())",
+    "old": "acl=a.acl | b.acl"
+   },
+   "banned": {
+    "module": "pol.labels",
+    "new": "banned=a.banned & b.banned",
+    "old": "banned=a.banned | b.banned"
+   },
+   "holds": {
+    "module": "pol.labels",
+    "new": "holds=a.holds & b.holds",
+    "old": "holds=a.holds | b.holds"
+   },
+   "local_only": {
+    "module": "pol.labels",
+    "new": "local_only=a.local_only and b.local_only",
+    "old": "local_only=a.local_only or b.local_only"
+   },
+   "models": {
+    "module": "pol.labels",
+    "new": "models=(None if (a.models is None or b.models is None) else a.models | b.models)",
+    "old": "models=_inter(a.models, b.models)"
+   },
+   "regions": {
+    "module": "pol.labels",
+    "new": "regions=(None if (a.regions is None or b.regions is None) else a.regions | b.regions)",
+    "old": "regions=_inter(a.regions, b.regions)"
+   },
+   "restricted": {
+    "module": "pol.labels",
+    "new": "restricted=a.restricted and b.restricted",
+    "old": "restricted=a.restricted or b.restricted"
+   },
+   "sensitivity": {
+    "module": "pol.labels",
+    "new": "sensitivity=min(a.sensitivity, b.sensitivity)",
+    "old": "sensitivity=max(a.sensitivity, b.sensitivity)"
+   },
+   "subjects": {
+    "module": "pol.labels",
+    "new": "subjects=a.subjects",
+    "old": "subjects=a.subjects | b.subjects"
+   },
+   "tenants": {
+    "module": "pol.labels",
+    "new": "tenants=a.tenants",
+    "old": "tenants=a.tenants | b.tenants"
+   }
+  },
+  "law_triples": 5000,
+  "n_per_seed": 4000,
+  "probes_per_derivation": 40,
+  "roundtrip_per_seed": 1000,
+  "seeds": [
+   31,
+   32,
+   33,
+   34,
+   35
+  ]
+ },
+ "result": {
+  "controls": {
+   "acl": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.1255,
+    "structural_worst_seed": 0.6868
+   },
+   "banned": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.0601,
+    "structural_worst_seed": 0.8486
+   },
+   "holds": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.2062,
+    "structural_worst_seed": 0.7241
+   },
+   "local_only": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.0648,
+    "structural_worst_seed": 0.6567
+   },
+   "models": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.0706,
+    "structural_worst_seed": 0.7949
+   },
+   "regions": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.3656,
+    "structural_worst_seed": 0.7916
+   },
+   "restricted": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.0769,
+    "structural_worst_seed": 0.2884
+   },
+   "sensitivity": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.1201,
+    "structural_worst_seed": 0.9079
+   },
+   "subjects": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.5854,
+    "structural_worst_seed": 0.5854
+   },
+   "tenants": {
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_worst_seed": 0.2036,
+    "structural_worst_seed": 0.3286
+   }
+  },
+  "controls_meet_floor": true,
+  "enforced_totals": {
+   "allowed": 71170,
+   "derivations": 20000,
+   "multi": 18171,
+   "probes": 800000,
+   "semantic": 0,
+   "structural": 0
+  },
+  "items": {
+   "bytes": 9725154,
+   "file": "e1_lattice.items.9aed4ca768bc1aca.jsonl.gz",
+   "sha256": "9aed4ca768bc1aca4f710a2edd4cdd646247583b7a45a3a21428a0c8851041e7"
+  },
+  "law_failures": 0,
+  "not_proven": "label universe is small (4 groups, 3 regions, 4 models, 2 tenants); decide() monotone under join, not proven complete",
+  "pass_conditions_met": true,
+  "roundtrip": {
+   "mismatch": 0,
+   "stored_derived": 4692
+  },
+  "runtime_s": 43.9,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/polr/src/exp/e1_lattice.py",
+  "at": "2026-11-16T06:33:14Z",
+  "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   12.35888671875,
+   7.2685546875,
+   6.16015625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "thresholds_sha256": "457d33955817f483351ddb22a3d27959f2774a4a306428d49f08ebbab149fb6f",
+  "tree_sha256": "3ea78d1dbe4c5de40c3a8a66d00c210ac7a905d4601524cd0a5a9ef692dd81fd"
+ }
+}

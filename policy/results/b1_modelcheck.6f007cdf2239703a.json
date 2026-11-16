@@ -1,0 +1,436 @@
+{
+ "name": "b1_modelcheck",
+ "params": {
+  "authority": {
+   "r1": [
+    "u1",
+    "u2"
+   ],
+   "r2": [
+    "u1"
+   ],
+   "r3": [
+    "u1",
+    "a1"
+   ]
+  },
+  "ctl_depth": {
+   "caps": 6,
+   "r1": 6,
+   "r2": 6,
+   "r3": 6
+  },
+  "depth": {
+   "caps": 8,
+   "joint": 4,
+   "r1": 6,
+   "r2": 8,
+   "r3": 8
+  },
+  "pools": {
+   "caps": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "CR",
+    "CA",
+    "CK",
+    "CS",
+    "CT",
+    "CREV",
+    "C6"
+   ],
+   "r1": [
+    "P1",
+    "P2",
+    "D1",
+    "D2",
+    "D3",
+    "D5",
+    "S1",
+    "T1",
+    "RES1",
+    "RES2",
+    "RES4",
+    "RESV",
+    "D9",
+    "D10",
+    "Dc",
+    "Dx",
+    "Dp",
+    "Dbad",
+    "D1x",
+    "S2",
+    "REV",
+    "GR1",
+    "D2h",
+    "D3h",
+    "S1h",
+    "S4h",
+    "T1h",
+    "AGJ",
+    "AGA",
+    "P5h",
+    "Xh",
+    "Xt",
+    "Xu",
+    "P1",
+    "RMh",
+    "KMh"
+   ],
+   "r2": [
+    "R1",
+    "R3",
+    "K2",
+    "K3",
+    "K3b",
+    "K3h",
+    "K4",
+    "K5",
+    "RES3",
+    "T2",
+    "T2h",
+    "S3",
+    "S3h",
+    "REV",
+    "RVa",
+    "GR",
+    "NP",
+    "P7h",
+    "R5h",
+    "D7h"
+   ],
+   "r3": [
+    "P3",
+    "P4",
+    "D4",
+    "D8",
+    "D8b",
+    "D8h",
+    "R2",
+    "K1",
+    "K6h",
+    "AG1",
+    "AG2",
+    "AG3",
+    "AG4",
+    "AG4h",
+    "AR3",
+    "AR4",
+    "N1",
+    "N2",
+    "GR3",
+    "REVn",
+    "S5h",
+    "T5h",
+    "P8h",
+    "RM3h",
+    "D11"
+   ]
+  },
+  "principals": {
+   "a1": "agent",
+   "n1": "analyst",
+   "u1": "human",
+   "u2": "human"
+  },
+  "proposers": {
+   "r1": [
+    "n1"
+   ],
+   "r3": [
+    "n1"
+   ]
+  },
+  "small_caps": [
+   [
+    "MAX_OPEN_PER_PRINCIPAL = 16\n",
+    "MAX_OPEN_PER_PRINCIPAL = 2\n"
+   ],
+   [
+    "MAX_OPEN_PER_REQ = 256\n",
+    "MAX_OPEN_PER_REQ = 3\n"
+   ]
+  ]
+ },
+ "result": {
+  "controls": {
+   "agent_may_supersede": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "game": {
+     "attempts": 2,
+     "bound": 1,
+     "probe1_code": "stale",
+     "probe2_code": "superseded",
+     "read_version": 0
+    },
+    "shortest_trace_ids": [
+     "AG1"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I2_agent_head_move": 1289,
+     "L2_head_starvation": 1289
+    }
+   },
+   "authority_removed": {
+    "expected_found": true,
+    "expected_invariant": "I1_authority",
+    "game": null,
+    "shortest_trace_ids": [
+     "S3"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I1_authority": 560
+    }
+   },
+   "idempotency_removed": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state_or_lost_outcome",
+    "game": null,
+    "shortest_trace_ids": [
+     "R1",
+     "R1"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I6_redelivery_changed_state_or_lost_outcome": 2476
+    }
+   },
+   "m2_no_original": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state_or_lost_outcome",
+    "game": null,
+    "shortest_trace_ids": [
+     "R1",
+     "R1"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I6_redelivery_changed_state_or_lost_outcome": 2476
+    }
+   },
+   "n2_no_cap": {
+    "expected_found": true,
+    "expected_invariant": "I17_open_cap",
+    "game": null,
+    "shortest_trace_ids": [
+     "C1",
+     "C2",
+     "C3"
+    ],
+    "shortest_trace_len": 3,
+    "violated": {
+     "I17_open_cap": 89
+    }
+   },
+   "n2_no_role": {
+    "expected_found": true,
+    "expected_invariant": "I15_proposal_without_role",
+    "game": null,
+    "shortest_trace_ids": [
+     "NP"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I15_proposal_without_role": 874
+    }
+   },
+   "n3_agent_reject_moves_head": {
+    "expected_found": true,
+    "expected_invariant": "L2_head_starvation",
+    "game": {
+     "attempts": 2,
+     "bound": 1,
+     "probe1_code": "stale",
+     "probe2_code": "superseded",
+     "read_version": 0
+    },
+    "shortest_trace_ids": [
+     "P3",
+     "AR3"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I16_nonhuman_head_move_without_value_change": 804,
+     "I2_agent_head_move": 804,
+     "L2_head_starvation": 555
+    }
+   },
+   "n3_value_unchanged_moves_head": {
+    "expected_found": true,
+    "expected_invariant": "I16_nonhuman_head_move_without_value_change",
+    "game": null,
+    "shortest_trace_ids": [
+     "P2",
+     "GR1",
+     "S1h",
+     "D2",
+     "RES1",
+     "AGA"
+    ],
+    "shortest_trace_len": 6,
+    "violated": {
+     "I16_nonhuman_head_move_without_value_change": 1
+    }
+   },
+   "self_approval_removed": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "game": {
+     "attempts": 2,
+     "bound": 1,
+     "probe1_code": "stale",
+     "probe2_code": "superseded",
+     "read_version": 0
+    },
+    "shortest_trace_ids": [
+     "P3",
+     "D4"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I2_agent_head_move": 42,
+     "L2_head_starvation": 42
+    }
+   },
+   "stale_unchecked": {
+    "expected_found": true,
+    "expected_invariant": "I4_decision_not_bound_to_head",
+    "game": null,
+    "shortest_trace_ids": [
+     "S1"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I4_decision_not_bound_to_head": 80260
+    }
+   }
+  },
+  "controls_found_expected": true,
+  "enforced": {
+   "codes": {
+    "agent_cannot_confirm": 21346,
+    "agent_not_permitted": 64038,
+    "bad_event": 37206,
+    "channel_mismatch": 25755,
+    "concurrent_agree": 517,
+    "confirmed_applied": 11710,
+    "contested_joined": 4466,
+    "contested_needs_resolve": 11966,
+    "contested_opened": 5283,
+    "decided_accept": 11384,
+    "decided_amend": 217,
+    "decided_reject": 7071,
+    "duplicate": 141989,
+    "duplicate_id": 9304,
+    "granted": 33107,
+    "idem_conflict": 123614,
+    "no_value_change": 1,
+    "not_contested": 33140,
+    "nothing_to_retract": 11858,
+    "pending_closed": 5583,
+    "pending_created": 44198,
+    "principal_revoked": 40664,
+    "proposal_cap": 781,
+    "proposal_closed": 32318,
+    "proposal_mismatch": 10018,
+    "proposed": 64258,
+    "resolved": 3016,
+    "retracted": 24399,
+    "revoked": 40238,
+    "same_channel_confirmation": 1863,
+    "self_approval": 14737,
+    "stale": 163012,
+    "superseded": 37064,
+    "tenant_mismatch": 18219,
+    "unauthorized": 101766,
+    "unknown_candidate": 3736,
+    "unknown_pending": 46790,
+    "unknown_proposal": 176963,
+    "unknown_req": 18219
+   },
+   "contested_states": 12822,
+   "per_scenario": {
+    "caps": {
+     "depth": 8,
+     "pool": 12,
+     "seconds": 21.6,
+     "states": 9516,
+     "transitions": 61560,
+     "violations": 0
+    },
+    "joint": {
+     "depth": 4,
+     "pool": 81,
+     "seconds": 55.9,
+     "states": 23070,
+     "transitions": 228501,
+     "violations": 0
+    },
+    "r1": {
+     "depth": 6,
+     "pool": 36,
+     "seconds": 175.8,
+     "states": 69369,
+     "transitions": 554328,
+     "violations": 0
+    },
+    "r2": {
+     "depth": 8,
+     "pool": 20,
+     "seconds": 28.0,
+     "states": 8188,
+     "transitions": 94300,
+     "violations": 0
+    },
+    "r3": {
+     "depth": 8,
+     "pool": 25,
+     "seconds": 139.6,
+     "states": 40346,
+     "transitions": 463125,
+     "violations": 0
+    }
+   },
+   "states": 150489,
+   "transitions": 1401814,
+   "violations": 0
+  },
+  "items": {
+   "file": "b1_modelcheck.items.28bfebe1ef850c2d.jsonl.gz",
+   "sha256": "28bfebe1ef850c2d696489aeb3aff66040e14b3efe7c78cfc6b27620f48b1c5c"
+  },
+  "liveness_bound": "L2: attempts <= (open human-authored proposals on the requirement at the read) + 1, CORE-RULES section 7; checked inductively on every transition",
+  "not_proven": "bounded exhaustive search (depths in params); joint pool only to depth 3; the caps scenario runs a variant whose caps are 2 and 3 (constants only); candidates_full not reached by BFS; four principals (two humans, one agent, one analyst)",
+  "outcome_codes_not_reached": [],
+  "pass_conditions_met": true,
+  "seconds_total": 414.9,
+  "unreachable_by_design": {
+   "candidates_full": "needs 8 joined candidates (depth >= 10); covered by the B2 targeted mode"
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/polr/src/exp/b1_modelcheck.py",
+  "at": "2026-11-16T06:44:24Z",
+  "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   15.0361328125,
+   16.43603515625,
+   12.49267578125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "thresholds_sha256": "457d33955817f483351ddb22a3d27959f2774a4a306428d49f08ebbab149fb6f",
+  "tree_sha256": "3ea78d1dbe4c5de40c3a8a66d00c210ac7a905d4601524cd0a5a9ef692dd81fd"
+ }
+}

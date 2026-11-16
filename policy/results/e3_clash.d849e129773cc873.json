@@ -1,0 +1,316 @@
+{
+ "name": "e3_clash",
+ "params": {
+  "body_trust_patches": [
+   [
+    "        if IDENTITY_KEYS & set(body):\n            return self._refuse(p.id, \"identity_in_body\", body)\n",
+    ""
+   ],
+   [
+    "        if set(body) - BODY_KEYS:\n",
+    "        if set(body) - BODY_KEYS - IDENTITY_KEYS:\n"
+   ],
+   [
+    "        ev.update(id=p.id + \"/\" + cid, tenant=session.tenant, principal=p.id, channel=session.channel)\n",
+    "        ev.update({k: v for k, v in dict(id=p.id + \"/\" + cid, tenant=session.tenant, principal=p.id, channel=session.channel).items() if k not in body})\n"
+   ]
+  ],
+  "context": 3000,
+  "fault": 2400,
+  "forge_rounds": 10,
+  "legit": 1400,
+  "naive_pdp_patches": [
+   [
+    "        if not isinstance(k, str) or not k.isascii() or k not in CREDENTIAL_KEYS:\n            _deny(\"attr_unrecognised_key\")\n",
+    "        pass\n"
+   ],
+   [
+    "    if not isinstance(request, dict) or set(request) - REQUEST_KEYS:\n",
+    "    if not isinstance(request, dict):\n"
+   ],
+   [
+    "    t = principal.tenant\n",
+    "    _over = {}\n    for _src in (request, request.get(\"credential\")):\n        if isinstance(_src, dict):\n            _over.update({_k: _v for _k, _v in _src.items() if isinstance(_k, str)})\n    import types as _types\n    principal = _types.SimpleNamespace(**dict(principal.__dict__, **{_k: _v for _k, _v in _over.items() if _k in principal.__dict__}))\n    t = principal.tenant\n"
+   ],
+   [
+    "or auth.expires <= now)",
+    "or auth.expires <= request.get(\"now\", now))"
+   ],
+   [
+    "        rcp = recipient\n",
+    "        rcp = request.get(\"recipient\", recipient)\n"
+   ],
+   [
+    "        if fn(principal, action, label, request) is not True:\n",
+    "        try:\n            _r = bool(fn(principal, action, label, request))\n        except BaseException:\n            _r = True\n        if not _r:\n"
+   ],
+   [
+    "        return Decision(False, \"label_error\", ver, act)",
+    "        return Decision(True, \"label_error_swallowed\", ver, act)"
+   ],
+   [
+    "        return Decision(False, \"eval_error:\" + type(e).__name__, ver, act)",
+    "        return Decision(True, \"eval_error_swallowed:\" + type(e).__name__, ver, act)"
+   ]
+  ],
+  "no_session_verify_patch": [
+   "pol.enforce",
+   "        if not self._sessions.verify(session):\n",
+   "        if False:\n"
+  ],
+  "planted": 2200,
+  "seeds": [
+   99
+  ],
+  "surface_entries": [
+   {
+    "entry": "pol.decisions.DecisionService.submit",
+    "params": [
+     "session",
+     "body"
+    ]
+   },
+   {
+    "entry": "pol.decisions.DecisionService.erase_subject",
+    "params": [
+     "session",
+     "subject"
+    ]
+   },
+   {
+    "entry": "pol.decisions.DecisionService.explain",
+    "params": [
+     "session",
+     "req"
+    ]
+   },
+   {
+    "entry": "pol.decisions.DecisionService.table",
+    "params": [
+     "session"
+    ]
+   },
+   {
+    "entry": "pol.directory.SessionAuthority.end",
+    "params": [
+     "session"
+    ]
+   },
+   {
+    "entry": "pol.directory.SessionAuthority.verify",
+    "params": [
+     "session"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Enforcer.principal_of",
+    "params": [
+     "session"
+    ]
+   },
+   {
+    "entry": "pol.enforce.GuardedChat.complete",
+    "params": [
+     "session",
+     "refs",
+     "system_refs"
+    ]
+   },
+   {
+    "entry": "pol.enforce.GuardedEmbedder.embed",
+    "params": [
+     "session",
+     "refs",
+     "kind"
+    ]
+   },
+   {
+    "entry": "pol.enforce.GuardedExport.export",
+    "params": [
+     "session",
+     "refs"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Outbox.enqueue",
+    "params": [
+     "session",
+     "refs",
+     "request"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Store.append",
+    "params": [
+     "session",
+     "text",
+     "label",
+     "lineage"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Store.append_derived",
+    "params": [
+     "session",
+     "text",
+     "lineage"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Store.read",
+    "params": [
+     "session",
+     "rid"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Store.context",
+    "params": [
+     "session",
+     "refs",
+     "destination"
+    ]
+   },
+   {
+    "entry": "pol.enforce.Store.erase",
+    "params": [
+     "session",
+     "rid"
+    ]
+   }
+  ],
+  "surface_non_session_callables": [
+   "pol.decisions.DecisionService.__init__(enforcer,engines,vault)",
+   "pol.decisions.MemoryEngine.__init__(config)",
+   "pol.decisions.Vault.__init__()",
+   "pol.directory.Directory.__init__(entries)",
+   "pol.directory.Directory.put(entry)",
+   "pol.directory.Directory.remove(pid)",
+   "pol.directory.Directory.lookup(pid)",
+   "pol.directory.Directory.version()",
+   "pol.directory.Principal.__init__(id,tenant,groups,clearance,restricted_ok,kind,region,model)",
+   "pol.directory.Session.__init__(tenant,principal_id,channel,token)",
+   "pol.directory.SessionAuthority.__init__(directory)",
+   "pol.directory.SessionAuthority.issue(principal_id,channel)",
+   "pol.enforce.AuditLog.__init__()",
+   "pol.enforce.AuditLog.add(row)",
+   "pol.enforce.AuditLog.rows()",
+   "pol.enforce.Enforcer.__init__(policy_source,directory,sessions,audit)",
+   "pol.enforce.Enforcer.policy()",
+   "pol.enforce.GuardedChat.__init__(inner,enforcer,store,dest_id)",
+   "pol.enforce.GuardedEmbedder.__init__(inner,enforcer,store,dest_id)",
+   "pol.enforce.GuardedExport.__init__(export_fn,enforcer,store,dest_id)",
+   "pol.enforce.Outbox.__init__(enforcer,store,action,sink)",
+   "pol.enforce.Outbox.deliver_all()",
+   "pol.enforce.PolicyDenied.__init__(decision)",
+   "pol.enforce.Record.__init__(id,tenant,text,label,lineage)",
+   "pol.enforce.Store.__init__(enforcer)",
+   "pol.labels.Label.to_dict()",
+   "pol.labels.Label.from_dict(d)",
+   "pol.labels.Label.digest()",
+   "pol.labels.Label.__init__(tenants,acl,regions,sensitivity,models,banned,local_only,restricted,holds,subjects)",
+   "pol.pgcore.PgEngine.__init__(conn,tenant)",
+   "pol.pgcore.PgVault.__init__(conn,key_file)",
+   "pol.policy.Authorization.__init__(principal,tenant,programme,expires)",
+   "pol.policy.Dest.__init__(kind,region,local,max_sensitivity,model,programme,tenants)",
+   "pol.policy.ModelDecl.__init__(family,version)",
+   "pol.policy.Policy.with_changes(changes)",
+   "pol.policy.Policy.resolve_model(model_id)",
+   "pol.policy.Policy.spec_matches(spec,model_id)",
+   "pol.policy.Policy.__init__(version,grants,destinations,models,model_aliases,banned_models,tenant_banned,deny_tenants,revoked,authorizations,extra_rules,conflict_notice,hold_events)"
+  ]
+ },
+ "result": {
+  "control_rates": {
+   "ctl_body_identity_trusted/forge_body": 0.3,
+   "ctl_naive_pdp/context": 0.6343333333333333,
+   "ctl_naive_pdp/fault": 0.31333333333333335,
+   "ctl_naive_pdp/forge_request": 0.8666666666666667,
+   "ctl_naive_pdp/planted": 0.1731818181818182,
+   "ctl_no_session_verify/forge_session": 0.30303030303030304
+  },
+  "controls_meet_floor": true,
+  "counts_n_accepted": {
+   "ctl_body_identity_trusted/forge_body": [
+    100,
+    30
+   ],
+   "ctl_naive_pdp/context": [
+    3000,
+    1903
+   ],
+   "ctl_naive_pdp/fault": [
+    2400,
+    752
+   ],
+   "ctl_naive_pdp/forge_request": [
+    150,
+    130
+   ],
+   "ctl_naive_pdp/planted": [
+    2200,
+    381
+   ],
+   "ctl_no_session_verify/forge_session": [
+    1320,
+    400
+   ],
+   "enforced/context": [
+    3000,
+    0
+   ],
+   "enforced/fault": [
+    2400,
+    0
+   ],
+   "enforced/forge_body": [
+    100,
+    0
+   ],
+   "enforced/forge_request": [
+    150,
+    0
+   ],
+   "enforced/forge_session": [
+    1760,
+    0
+   ],
+   "enforced/legit": [
+    1400,
+    1400
+   ],
+   "enforced/planted": [
+    2200,
+    0
+   ]
+  },
+  "items": {
+   "bytes": 135804,
+   "file": "e3_clash.items.b2d67737cd43d4bf.jsonl.gz",
+   "sha256": "b2d67737cd43d4bfea40fdcd865d5a1bfed82337641a788d18cf31d09b52b052"
+  },
+  "not_proven": "forgeries are the enumerated kinds; pgcore is reached only through DecisionService (its engine is not a request-handler entry point); Python in-process code can still reach private names (see DESIGN.md)",
+  "pass_conditions_met": true,
+  "runtime_s": 2.8,
+  "uncovered_entries": [],
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/polr/src/exp/e3_clash.py",
+  "at": "2026-11-16T06:34:49Z",
+  "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   20.8271484375,
+   11.2314453125,
+   7.6572265625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "thresholds_sha256": "457d33955817f483351ddb22a3d27959f2774a4a306428d49f08ebbab149fb6f",
+  "tree_sha256": "3ea78d1dbe4c5de40c3a8a66d00c210ac7a905d4601524cd0a5a9ef692dd81fd"
+ }
+}

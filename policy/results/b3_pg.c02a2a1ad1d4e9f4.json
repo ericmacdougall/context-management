@@ -1,0 +1,165 @@
+{
+ "name": "b3_pg",
+ "params": {
+  "R": 50,
+  "diff_logs": 40,
+  "pg_port": 25490,
+  "seeds": [
+   31
+  ]
+ },
+ "result": {
+  "backstop_total": 0,
+  "controls": {
+   "idem_unprotected": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "no_advisory_lock": {
+    "failures_sample": [],
+    "overlap_witnessed": 48,
+    "passed": 50,
+    "rounds": 50
+   },
+   "no_head_lock": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   }
+  },
+  "controls_meet_floor": true,
+  "differential": {
+   "audit_bad_logs": 0,
+   "chain_bad_logs": 0,
+   "codes": {
+    "agent_cannot_confirm": 155,
+    "agent_not_permitted": 431,
+    "bad_event": 107,
+    "channel_mismatch": 64,
+    "concurrent_agree": 2,
+    "confirmed_applied": 46,
+    "contested_joined": 5,
+    "contested_needs_resolve": 60,
+    "contested_opened": 14,
+    "decided_accept": 104,
+    "decided_amend": 24,
+    "decided_reject": 112,
+    "duplicate": 75,
+    "duplicate_id": 25,
+    "granted": 20,
+    "idem_conflict": 37,
+    "no_value_change": 3,
+    "not_contested": 91,
+    "nothing_to_retract": 23,
+    "pending_closed": 19,
+    "pending_created": 507,
+    "principal_revoked": 312,
+    "proposal_closed": 117,
+    "proposal_mismatch": 36,
+    "proposed": 840,
+    "resolved": 1,
+    "retracted": 41,
+    "revoked": 16,
+    "same_channel_confirmation": 19,
+    "self_approval": 107,
+    "stale": 291,
+    "superseded": 139,
+    "tenant_mismatch": 71,
+    "unauthorized": 2172,
+    "unknown_candidate": 3,
+    "unknown_pending": 92,
+    "unknown_proposal": 374,
+    "unknown_req": 39
+   },
+   "events": 6594,
+   "logs": 40,
+   "mismatch_events": 0,
+   "rebuild_mismatch_logs": 0,
+   "view_mismatch_logs": 0
+  },
+  "items": {
+   "file": "b3_pg.items.b95bbba6130afc99.jsonl.gz",
+   "sha256": "b95bbba6130afc994d5173dd4f20d1a154cbe8a2b221ee6c118cf9da1ea3d1f3"
+  },
+  "not_proven": "single Postgres 16 instance, READ COMMITTED, two overlapping writers per round (not N-way); no process kill or network partition mid-transaction; revoke takes the tenant row FOR UPDATE and so serialises the whole tenant (a scaling limit)",
+  "pass_conditions_met": true,
+  "scenario_chain": [
+   850,
+   true
+  ],
+  "scenario_rebuild_equal": true,
+  "scenarios": {
+   "S1_conflicting_decisions_contested": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S2_stale_token_refused": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S3_zombie_revoked_principal": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S4_same_idem_key_concurrent": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S4b_twins_on_two_requirements": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S5_resolve_race": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S6_tenant_isolation": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   }
+  },
+  "seconds": 1069.5,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/polr/src/exp/b3_pg.py",
+  "at": "2026-11-16T07:34:07Z",
+  "commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "dirty": false,
+  "env": {
+   "container": "emlab-pg-polr-16096",
+   "isolation": "read committed",
+   "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+   "role": "dc_app"
+  },
+  "host": "t2-dev",
+  "load_avg": [
+   2.92333984375,
+   3.6376953125,
+   6.1533203125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "8c03f0297c7155bfc56a2c93a8f36810a81007a8",
+  "thresholds_sha256": "457d33955817f483351ddb22a3d27959f2774a4a306428d49f08ebbab149fb6f",
+  "tree_sha256": "3ea78d1dbe4c5de40c3a8a66d00c210ac7a905d4601524cd0a5a9ef692dd81fd"
+ }
+}
