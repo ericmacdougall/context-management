@@ -33,8 +33,19 @@ def like(tag):
     return esc + "-%"
 
 
-async def blocking(fn, *a):
-    return await asyncio.get_running_loop().run_in_executor(POOL, lambda: fn(*a))
+async def blocking(fn, *a, budget=180):
+    """Run a Postgres call off the event loop. A Postgres restart or dropped connection is retried (every call made
+    through here is idempotent: input creation is keyed by a request id, grants by request id, the rest are reads)."""
+    import psycopg
+    import psycopg_pool
+    t0 = time.time()
+    while True:
+        try:
+            return await asyncio.get_running_loop().run_in_executor(POOL, lambda: fn(*a))
+        except (psycopg.OperationalError, psycopg.InterfaceError, psycopg_pool.PoolTimeout, psycopg_pool.PoolClosed):
+            if time.time() - t0 > budget:
+                raise
+            await asyncio.sleep(1.0)
 
 
 async def retry(coro_fn, what, stats, budget=600):
