@@ -268,5 +268,74 @@ class InboxResidualsSqliteTests(_InboxResiduals, unittest.TestCase):
         N7SqliteStoreTests.strip_new_fields(self)
 
 
+class N11FirstTurnSessionIdTests(unittest.TestCase):
+    """N11: c20e208 ledgers the first turn of a Claude session with session '' (the backend id arrives in that turn's
+    output), so first turns of different sessions cannot be told apart in the ledger."""
+
+    def test_first_turn_rows_carry_a_distinct_session_id(self):
+        from memcore.agent_session import ClaudeStreamJsonSession
+        from memcore.budget import CallBudget
+        fake = os.path.join(os.path.dirname(__file__), "fake_claude_bin.py")
+        d = tempfile.mkdtemp()
+        led = os.path.join(d, "ledger.jsonl")
+        sessions = []
+        for _ in range(2):
+            s = ClaudeStreamJsonSession(d, "sys", CallBudget(d, 10, led), dev_subscription_backends=True, claude_bin=fake)
+            sessions.append(s)
+            self.addCleanup(s.close)
+            s.send_collect("hello")
+            s.send_collect("again")
+        with open(led) as fh:
+            rows = [json.loads(l) for l in fh if l.strip()]
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(r["session"] for r in rows), [r["session"] for r in rows])
+        self.assertEqual(rows[0]["session"], rows[1]["session"])           # one id for the whole session
+        self.assertNotEqual(rows[0]["session"], rows[2]["session"])        # and distinct between sessions
+        self.assertEqual(rows[1].get("backend_session"), "fake-sess")      # the backend id is kept once known
+
+
+class N10SchemaKeywordTypingTests(unittest.TestCase):
+    """N10: c20e208 checks keyword NAMES only, so bad keyword VALUES fail after the call is spent (TypeError /
+    AttributeError), or are silently misread ("a" passes enum "abc"), and a deep schema raises RecursionError."""
+
+    BAD = [{"enum": 5}, {"enum": "abc"}, {"minimum": "0"}, {"minItems": "1"}, {"maxLength": None},
+           {"properties": ["a"]}, {"required": "abc"}, {"anyOf": {}}, {"type": 7}]
+
+    def chat(self, d, answer='"a"'):
+        from memcore.fakes import FakeChat
+        return FakeChat(lambda p, s, j: answer, cache_dir=tempfile.mkdtemp(dir=d), ledger_path=os.devnull, cap=50)
+
+    def deep(self, n):
+        sch = {"type": "string"}
+        for _ in range(n):
+            sch = {"type": "object", "properties": {"a": sch}}
+        return sch
+
+    def test_bad_keyword_values_are_refused_before_any_spend(self):
+        from memcore.jsonschema_min import SchemaUnsupported
+        d = tempfile.mkdtemp()
+        cases = [(json.dumps(x), x) for x in self.BAD] + [("5000-deep", self.deep(5000))]
+        for label, sch in cases:
+            c = self.chat(d)
+            with self.assertRaises(SchemaUnsupported, msg=label):
+                c.complete([{"role": "user", "content": "pick one"}], json_schema=sch)
+            self.assertEqual(c.budget.used(), 0, label)
+
+    def test_well_formed_schemas_still_pass(self):
+        """Control: the typing must not refuse ordinary schemas (or a moderately nested one)."""
+        d = tempfile.mkdtemp()
+        good = [{"enum": ["a", "b"]}, {"type": "integer", "minimum": 0, "maximum": 5.5},
+                {"type": "array", "items": {"type": "string", "maxLength": 3}, "minItems": 0},
+                {"type": "object", "properties": {"a": {"type": "string"}}, "required": ["a"], "title": "t"}]
+        answers = ['"a"', "3", '["ab"]', '{"a": "x"}']
+        for sch, ans in zip(good, answers):
+            r = self.chat(d, ans).complete([{"role": "user", "content": "x"}], json_schema=sch)
+            self.assertIsNotNone(r.parsed, sch)
+        ans = '"x"'
+        for _ in range(20):
+            ans = '{"a": %s}' % ans
+        self.assertIsNotNone(self.chat(d, ans).complete([{"role": "user", "content": "x"}], json_schema=self.deep(20)).parsed)
+
+
 if __name__ == "__main__":
     unittest.main()

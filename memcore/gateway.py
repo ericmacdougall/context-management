@@ -23,6 +23,7 @@ from types import MappingProxyType
 from typing import Callable, Optional
 
 from .budget import CallBudget
+from .jsonschema_min import SchemaUnsupported
 from .ports import (BackendError, CallCapExceeded, CallTimeout, ChatModel, InputTooLong, PortError, SchemaError)
 from .sse import chat_chunks
 
@@ -229,6 +230,8 @@ def make_handler(backends, token: str, embedder=None, default_model: Optional[st
                 res = backend.complete(**kw)
             except InputTooLong as e:
                 return self._err(400, str(e), "context_length_exceeded")
+            except SchemaUnsupported as e:          # a malformed or unsupported schema is the caller's error, refused before spend
+                return self._err(400, str(e), "unsupported_schema")
             except CallCapExceeded as e:
                 return self._err(429, str(e), "call_cap_exceeded", {"Retry-After": "3600"})  # fast: never queue past the caller's timeout
             except CallTimeout as e:

@@ -195,9 +195,9 @@ class CachedChatModel(ChatModel):
     # ---- port
     def complete(self, messages, system=None, json_schema=None, max_output_tokens=None, temperature=None,
                  timeout_s=None) -> ChatResult:
-        norm = self._normalise(messages, system, json_schema, max_output_tokens, temperature)
         if json_schema is not None:
-            check_schema(json_schema)   # refuse schemas the validator cannot enforce
+            check_schema(json_schema)   # refuse schemas the validator cannot enforce, before hashing or any spend (N10)
+        norm = self._normalise(messages, system, json_schema, max_output_tokens, temperature)
         key = canonical_hash(norm)
         prompt = render_messages(messages)
         if self.egress_guard is not None:

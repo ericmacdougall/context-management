@@ -23,28 +23,62 @@ class SchemaUnsupported(PortError, ValueError):
     pass
 
 
-def check_schema(schema: Any, path: str = "$") -> None:
+MAX_DEPTH = 32          # nesting of properties/items/anyOf; deeper schemas are refused before any spend (no RecursionError)
+
+
+def _nonneg_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool) and v >= 0
+
+
+def _finite_number(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def check_schema(schema: Any, path: str = "$", _depth: int = 0) -> None:
+    """Refuse (SchemaUnsupported) anything outside the subset, including a keyword whose VALUE has the wrong type, before
+    any backend call is made: a schema that would fail during validation must fail here, not after the call is spent."""
+    if _depth > MAX_DEPTH:
+        raise SchemaUnsupported("%s: schema nested deeper than %d" % (path, MAX_DEPTH))
     if not isinstance(schema, dict):
         raise SchemaUnsupported("%s: schema must be an object" % path)
-    bad = sorted(set(schema) - SUPPORTED)
+    bad = sorted(str(k) for k in set(schema) - SUPPORTED)
     if bad:
         raise SchemaUnsupported("%s: unsupported keyword(s) %s (supported subset: see jsonschema_min)" % (path, bad))
     t = schema.get("type")
-    if t is not None:
+    if "type" in schema:
         ts = t if isinstance(t, list) else [t]
-        if not ts or any(x not in TYPES for x in ts):
+        if not ts or any(not isinstance(x, str) or x not in TYPES for x in ts):
             raise SchemaUnsupported("%s: unsupported type %r" % (path, t))
     ap = schema.get("additionalProperties", True)
     if not isinstance(ap, bool):
         raise SchemaUnsupported("%s: additionalProperties must be a boolean" % path)
+    for k in ("minItems", "maxItems", "minLength", "maxLength"):
+        if k in schema and not _nonneg_int(schema[k]):
+            raise SchemaUnsupported("%s: %s must be a non-negative integer" % (path, k))
+    for k in ("minimum", "maximum"):
+        if k in schema and not _finite_number(schema[k]):
+            raise SchemaUnsupported("%s: %s must be a finite number" % (path, k))
+    if "enum" in schema and not (isinstance(schema["enum"], list) and schema["enum"]):
+        raise SchemaUnsupported("%s: enum must be a non-empty array" % path)
+    if "required" in schema and not (isinstance(schema["required"], list) and all(isinstance(r, str) for r in schema["required"])):
+        raise SchemaUnsupported("%s: required must be an array of strings" % path)
+    if "properties" in schema and not (isinstance(schema["properties"], dict) and all(isinstance(k, str) for k in schema["properties"])):
+        raise SchemaUnsupported("%s: properties must be an object" % path)
+    if "anyOf" in schema and not (isinstance(schema["anyOf"], list) and schema["anyOf"]):
+        raise SchemaUnsupported("%s: anyOf must be a non-empty array" % path)
+    for k in ("title", "description", "$comment"):
+        if k in schema and not isinstance(schema[k], str):
+            raise SchemaUnsupported("%s: %s must be a string" % (path, k))
+    if "examples" in schema and not isinstance(schema["examples"], list):
+        raise SchemaUnsupported("%s: examples must be an array" % path)
     if "items" in schema and not isinstance(schema["items"], dict):
         raise SchemaUnsupported("%s: list-form items is unsupported" % path)
     for k, sub in (schema.get("properties") or {}).items():
-        check_schema(sub, "%s.%s" % (path, k))
+        check_schema(sub, "%s.%s" % (path, k), _depth + 1)
     if "items" in schema:
-        check_schema(schema["items"], path + "[]")
+        check_schema(schema["items"], path + "[]", _depth + 1)
     for i, sub in enumerate(schema.get("anyOf") or []):
-        check_schema(sub, "%s.anyOf[%d]" % (path, i))
+        check_schema(sub, "%s.anyOf[%d]" % (path, i), _depth + 1)
 
 
 def _eq(a: Any, b: Any) -> bool:

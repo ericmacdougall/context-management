@@ -16,6 +16,7 @@ import itertools
 import json
 import os
 import queue
+import secrets
 import signal
 import subprocess
 import threading
@@ -71,7 +72,16 @@ class AgentSession:
         if self.budget is None:
             raise BackendError("session has no CallBudget")
         self.budget.reserve()
-        self.budget.ledger(kind="session_turn", session=self.session_id, turn=turn_id, adapter=type(self).__name__)
+        # N11: the backend's own session id (Claude) is only known after the first turn's output, so every ledger row
+        # carries a local id fixed at the first turn; the backend id is added once it is known.
+        self.budget.ledger(kind="session_turn", session=self.ledger_session_id(), backend_session=self.session_id or None,
+                           turn=turn_id, adapter=type(self).__name__)
+
+    def ledger_session_id(self) -> str:
+        lid = self.__dict__.get("_ledger_session")
+        if not lid:
+            lid = self._ledger_session = "%s-%s" % (type(self).__name__, secrets.token_hex(6))
+        return lid
 
     def _take_context(self, turn_id: str) -> str:
         items, self._pending = self._pending, []
