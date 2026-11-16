@@ -157,3 +157,40 @@ All entries cite WAL ids: wb7ed3da806f (decided defaults), w7562bc5d6b7 (assumed
 | Independent review of the eval harness | component 23 | Cited through WAL ids wf989ae14f68 and w21b65218be1 and LEDGER Corrections; report files not re-read |
 
 Figures resting on an ASSUMPTION in their source: erasure livelock model (RV-WP aaa0fec, not used in v3); idempotency scope, agent-propose-only, identifier rule and conflict notices (DESIGN section 7).
+
+## Corrections after the primary-file check (2026-11-16)
+
+Six read-only checkers compared DESIGN.md with the result JSON files, stage
+documents, review reports and git logs (about 266 claims confirmed, 40
+discrepancies reported, 42 statements changed). The checkers ran on the same
+model rung as the author: this is a check, not an independent review. Main
+confirmed the rows below from the files named.
+
+| Design statement before | Primary source says | Source |
+|---|---|---|
+| Truncation with no witness: 12 of 20 falsely report complete | 0 of 20 detected, 8 of 20 falsely complete (20 of 20 in the first run). 12 of 20 is in no result file; LEDGER corrected | ingest/results2/item3-76b99c151ef3.json at 0801866 |
+| Cross-encoder length-matched gain +0.020 (CI -0.004 to +0.049) | +0.023 (CI 0.000 to 0.051), random same-size pool +0.008, on the final 94 questions; +0.020 is the superseded 83-question value | eval/EXPLORATORY.md line 130; LEDGER reconciliation table |
+| Analyst gain survives length matching at +0.098 | True for the earlier 50-candidate unshuffled analyst; the 300-candidate arm was not length-matched | eval/EXPLORATORY.md |
+| 12 material findings each (write path, engine, adapters) | Adapters 12, write path 8 (F1 to F8), durable-session testbed 10 (H1 to H3, M1 to M7); LEDGER corrected | the three review reports |
+| Evaluation harness REVIEWED-WITH-LIMITS | Latest independent verdict: "NOT safe to freeze Phase R at a81d42d"; fixes and freeze checked by main only. Now LAB-EVIDENCE-UNREVIEWED | agent-a63b2d2ca8f38c01c/delta_review_goodqa16096.md |
+| Per-role Elasticsearch keys as lab evidence at 4960f50 | Code at 5fc4bd6 only; commit records py_compile and "run waits for the cluster" | git log, feat/writepath-rescue |
+| Policy: "Postgres port not built" | Decision core in plpgsql exists on the branch (20 commits after 80bb6a7, unreviewed); the composition into the write-path trigger is what is not built | policy/COMPOSITION.md at 3fa69c1 |
+| Freshness scan "failed" | Owner's pass withdrawn (7.59 false challengers per scan, hash-embedding stand-in); no real-embedder test exists | research/wr128embl.output statement 3.6.7 |
+| Build path: freeze V2, then threshold pilots | V2 section 4: thresholds are fixed from pilots BEFORE the freeze; order reversed in the path | eval/PREREGISTRATION-V2.md line 57 |
+| 1,630 USD and 49 h attributed to the dense follow-up | It is the Stage X0 estimate at cap 12, superseded by 1,756 USD and 58.5 h at cap 30 | eval/STAGE-X0.md line 75; eval/STAGE-X1.md line 76 |
+| 20 of 20 refused "behind any HTTP gateway" | 5 named backend classes on 4 binds; relies on a self-declared flag (R3-5) | adapters delta review, cfaefee confirm |
+| Provider 400 on `search_result` injection | From provider documents and an offline probe; no live call | research/ctxrt-review-1d19cd8.md |
+| Elasticsearch parity: "client RRF equals Elasticsearch rrf at 0.8167" | 0.8167 is top-10 overlap over the exact legs (same order in 1%); over Elasticsearch's own legs it is 1.0; replication verdict partly | replicate/results/round_parity.json |
+
+Other changes are added caveats (sample sizes, "after a fix", unreviewed later
+commits on the write-path, policy and adapter branches, statements the reviews
+predicted from code and did not run). Numbers added to DESIGN.md by these
+changes and traced above or in the cited files: 0.023, 0.000, 0.051, 0.008, 83,
+7.59, 0.955, 0.960, 0.55, 35, 0.47, 0.94, 0.58, 0.082, 0.10, 1.0, 1%, 400, 8, 10,
+20, 5, 4, 7, 42, 47a932a, dcb311f, 38cf34a, 5c599d8, 5fc4bd6, b98da9a, 94035e8,
+ec4191f, f7efdc1, a81d42d.
+
+Not checked by anyone (27 items the checkers could not trace to a primary
+file), among them: the ids-and-cursors-only property of the engine; the per-claim
+mapping of the Elasticsearch re-run verdicts to component 4; the composition
+order in section 5.
