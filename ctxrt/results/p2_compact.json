@@ -4,9 +4,9 @@
  "per_seed": [
   {
    "artifact": {
-    "n": 1800,
+    "n": 1950,
     "path": "ctxrt/results/p2_compact-16096001.jsonl",
-    "sha256": "c5635ee466d50df77326e3c3a39cf08578d798f276f43509db362953a83aa8ab"
+    "sha256": "38fc94588ac9fea2b06002a757b880627bad2837cf1dfd62e055ada25fea0cc2"
    },
    "criteria": [
     {
@@ -157,6 +157,71 @@
      }
     },
     {
+     "criterion": "ledger persisted: 0 marker re-ingested after a restart (merged layer)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: in-memory ledger re-ingests after restart >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "summary recorded as a USER message: 0 re-ingested (compaction event marks it)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: no compaction-event marking re-ingests >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "truncated block keeps the user's text after it (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: old strip swallows the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "resume+ingest together: post-resume user text ingested exactly once, ids unique (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: counter restored on resume drops the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
      "criterion": "ablation: origin allow-list alone fails the merged layer",
      "ok": true,
      "value": {
@@ -176,6 +241,19 @@
     }
    ],
    "metrics": {
+    "extra": {
+     "ids_unique_ctrl": 0,
+     "ids_unique_real": 150,
+     "ledger_restart_ctrl": 150,
+     "ledger_restart_real": 0,
+     "n": 150,
+     "resume_ingest_ctrl": 0,
+     "resume_ingest_real": 150,
+     "summary_user_ctrl": 150,
+     "summary_user_real": 0,
+     "trunc_ctrl": 0,
+     "trunc_real": 150
+    },
     "from_summary": {
      "by_mode": {
       "copy": [
@@ -335,14 +413,14 @@
      "turns": 1500
     }
    },
-   "seconds": 1.8,
+   "seconds": 2.1,
    "seed": 16096001
   },
   {
    "artifact": {
-    "n": 1800,
+    "n": 1950,
     "path": "ctxrt/results/p2_compact-16096002.jsonl",
-    "sha256": "5735f9023ecc4598236732557758800c32bc1ea708f3c549051b3d0789b79fa3"
+    "sha256": "77118070a2b6c9f7c2c0518bc7dbddd8fc59d6a51c72a60501a9c767b09f4874"
    },
    "criteria": [
     {
@@ -493,6 +571,71 @@
      }
     },
     {
+     "criterion": "ledger persisted: 0 marker re-ingested after a restart (merged layer)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: in-memory ledger re-ingests after restart >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "summary recorded as a USER message: 0 re-ingested (compaction event marks it)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: no compaction-event marking re-ingests >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "truncated block keeps the user's text after it (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: old strip swallows the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "resume+ingest together: post-resume user text ingested exactly once, ids unique (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: counter restored on resume drops the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
      "criterion": "ablation: origin allow-list alone fails the merged layer",
      "ok": true,
      "value": {
@@ -512,6 +655,19 @@
     }
    ],
    "metrics": {
+    "extra": {
+     "ids_unique_ctrl": 0,
+     "ids_unique_real": 150,
+     "ledger_restart_ctrl": 150,
+     "ledger_restart_real": 0,
+     "n": 150,
+     "resume_ingest_ctrl": 0,
+     "resume_ingest_real": 150,
+     "summary_user_ctrl": 150,
+     "summary_user_real": 0,
+     "trunc_ctrl": 0,
+     "trunc_real": 150
+    },
     "from_summary": {
      "by_mode": {
       "copy": [
@@ -671,14 +827,14 @@
      "turns": 1483
     }
    },
-   "seconds": 1.7,
+   "seconds": 1.9,
    "seed": 16096002
   },
   {
    "artifact": {
-    "n": 1800,
+    "n": 1950,
     "path": "ctxrt/results/p2_compact-16096003.jsonl",
-    "sha256": "24a524af066f89a390fdb8f9b2f7cb3278f7ac183a8775142b23324483fd71d2"
+    "sha256": "113581106a066d71f694946e99b0af71e0a080fb3385c34a9bf433006864f833"
    },
    "criteria": [
     {
@@ -829,6 +985,71 @@
      }
     },
     {
+     "criterion": "ledger persisted: 0 marker re-ingested after a restart (merged layer)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: in-memory ledger re-ingests after restart >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "summary recorded as a USER message: 0 re-ingested (compaction event marks it)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: no compaction-event marking re-ingests >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "truncated block keeps the user's text after it (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: old strip swallows the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "resume+ingest together: post-resume user text ingested exactly once, ids unique (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: counter restored on resume drops the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
      "criterion": "ablation: origin allow-list alone fails the merged layer",
      "ok": true,
      "value": {
@@ -848,6 +1069,19 @@
     }
    ],
    "metrics": {
+    "extra": {
+     "ids_unique_ctrl": 0,
+     "ids_unique_real": 150,
+     "ledger_restart_ctrl": 150,
+     "ledger_restart_real": 0,
+     "n": 150,
+     "resume_ingest_ctrl": 0,
+     "resume_ingest_real": 150,
+     "summary_user_ctrl": 150,
+     "summary_user_real": 0,
+     "trunc_ctrl": 0,
+     "trunc_real": 150
+    },
     "from_summary": {
      "by_mode": {
       "copy": [
@@ -1007,14 +1241,14 @@
      "turns": 1439
     }
    },
-   "seconds": 1.7,
+   "seconds": 2.2,
    "seed": 16096003
   },
   {
    "artifact": {
-    "n": 1800,
+    "n": 1950,
     "path": "ctxrt/results/p2_compact-16096004.jsonl",
-    "sha256": "ae3649adc490d9629cdef80acba58c0fa72aecc95c1d33b672578e78370359e6"
+    "sha256": "58b13363caf1bb25a8bf204ffeca1717df1e92fff26d45b28b65f479543af31a"
    },
    "criteria": [
     {
@@ -1165,6 +1399,71 @@
      }
     },
     {
+     "criterion": "ledger persisted: 0 marker re-ingested after a restart (merged layer)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: in-memory ledger re-ingests after restart >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "summary recorded as a USER message: 0 re-ingested (compaction event marks it)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: no compaction-event marking re-ingests >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "truncated block keeps the user's text after it (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: old strip swallows the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "resume+ingest together: post-resume user text ingested exactly once, ids unique (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: counter restored on resume drops the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
      "criterion": "ablation: origin allow-list alone fails the merged layer",
      "ok": true,
      "value": {
@@ -1184,6 +1483,19 @@
     }
    ],
    "metrics": {
+    "extra": {
+     "ids_unique_ctrl": 0,
+     "ids_unique_real": 150,
+     "ledger_restart_ctrl": 150,
+     "ledger_restart_real": 0,
+     "n": 150,
+     "resume_ingest_ctrl": 0,
+     "resume_ingest_real": 150,
+     "summary_user_ctrl": 150,
+     "summary_user_real": 0,
+     "trunc_ctrl": 0,
+     "trunc_real": 150
+    },
     "from_summary": {
      "by_mode": {
       "copy": [
@@ -1343,14 +1655,14 @@
      "turns": 1525
     }
    },
-   "seconds": 1.7,
+   "seconds": 2.0,
    "seed": 16096004
   },
   {
    "artifact": {
-    "n": 1800,
+    "n": 1950,
     "path": "ctxrt/results/p2_compact-16096005.jsonl",
-    "sha256": "f2bcd19572b72c602ab1f5a6ad315cb608229203af618425f7af1675e982dcd4"
+    "sha256": "f3bcb7929706463ad316df378443557acf34b5b0ba48df5348cfb0a8cf786efe"
    },
    "criteria": [
     {
@@ -1501,6 +1813,71 @@
      }
     },
     {
+     "criterion": "ledger persisted: 0 marker re-ingested after a restart (merged layer)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: in-memory ledger re-ingests after restart >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "summary recorded as a USER message: 0 re-ingested (compaction event marks it)",
+     "ok": true,
+     "value": [
+      0,
+      150
+     ]
+    },
+    {
+     "criterion": "control: no compaction-event marking re-ingests >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "truncated block keeps the user's text after it (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: old strip swallows the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "resume+ingest together: post-resume user text ingested exactly once, ids unique (100%)",
+     "ok": true,
+     "value": [
+      150,
+      150,
+      150
+     ]
+    },
+    {
+     "criterion": "control: counter restored on resume drops the user's text >=10%",
+     "ok": true,
+     "value": [
+      150,
+      150
+     ]
+    },
+    {
      "criterion": "ablation: origin allow-list alone fails the merged layer",
      "ok": true,
      "value": {
@@ -1520,6 +1897,19 @@
     }
    ],
    "metrics": {
+    "extra": {
+     "ids_unique_ctrl": 0,
+     "ids_unique_real": 150,
+     "ledger_restart_ctrl": 150,
+     "ledger_restart_real": 0,
+     "n": 150,
+     "resume_ingest_ctrl": 0,
+     "resume_ingest_real": 150,
+     "summary_user_ctrl": 150,
+     "summary_user_real": 0,
+     "trunc_ctrl": 0,
+     "trunc_real": 150
+    },
     "from_summary": {
      "by_mode": {
       "copy": [
@@ -1685,7 +2075,7 @@
  ],
  "proof": "p2_compact",
  "stamp": {
-  "code_commit": "6cfb90246c68db288125237f8113113e43f8166b",
+  "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
   "dirty": false,
   "fingerprint": {
    "es": "none (in-process stubs)",
@@ -1694,9 +2084,9 @@
   },
   "host": "Mac-2.lan",
   "loadavg": [
-   14.28369140625,
-   15.19189453125,
-   15.677734375
+   4.6884765625,
+   5.01708984375,
+   6.3642578125
   ],
   "machine": "macOS-26.6-arm64-arm-64bit",
   "params": {
@@ -1716,7 +2106,7 @@
    "67a2842",
    "05aafb0"
   ],
-  "time_utc": "2026-11-16T01:39:40Z",
+  "time_utc": "2026-11-16T03:11:30Z",
   "timing_quiesced": false
  },
  "verdict_by_criterion": {
@@ -1739,6 +2129,14 @@
   "control C1 own: no-filter ingest re-ingests marker >=10%": "PASS",
   "control C1 paraphrase: no-filter ingest re-ingests marker >=10%": "PASS",
   "control C2 block-from-summary diverges >=10% of turns": "PASS",
-  "control C3 skip-regeneration serves stale >=10% of turns": "PASS"
+  "control C3 skip-regeneration serves stale >=10% of turns": "PASS",
+  "control: counter restored on resume drops the user's text >=10%": "PASS",
+  "control: in-memory ledger re-ingests after restart >=10%": "PASS",
+  "control: no compaction-event marking re-ingests >=10%": "PASS",
+  "control: old strip swallows the user's text >=10%": "PASS",
+  "ledger persisted: 0 marker re-ingested after a restart (merged layer)": "PASS",
+  "resume+ingest together: post-resume user text ingested exactly once, ids unique (100%)": "PASS",
+  "summary recorded as a USER message: 0 re-ingested (compaction event marks it)": "PASS",
+  "truncated block keeps the user's text after it (100%)": "PASS"
  }
 }

@@ -6,7 +6,7 @@
    "artifact": {
     "n": 30,
     "path": "ctxrt/results/p4_process-16096001.jsonl",
-    "sha256": "0df76213186db51be93524f39f2dd845e5ead36fceef991dbc643e621f7462cb"
+    "sha256": "4e8b9f611dc21cabcc683f914a0bc3d9a795b9d85afc9f73774eda10bca7f92a"
    },
    "criteria": [
     {
@@ -71,14 +71,14 @@
     "pre_landed_runs": 30,
     "runs": 30
    },
-   "seconds": 49.7,
+   "seconds": 40.6,
    "seed": 16096001
   },
   {
    "artifact": {
     "n": 30,
     "path": "ctxrt/results/p4_process-16096002.jsonl",
-    "sha256": "5437ea3f5b531186653256646d655d0c9ea5be587bc598b72acdfcbd332efd76"
+    "sha256": "2931b5d5e7a824bf02235f505edeb44bcc0ea7e5696b9734b3c157aeccd4f560"
    },
    "criteria": [
     {
@@ -143,14 +143,14 @@
     "pre_landed_runs": 30,
     "runs": 30
    },
-   "seconds": 46.0,
+   "seconds": 41.3,
    "seed": 16096002
   },
   {
    "artifact": {
     "n": 30,
     "path": "ctxrt/results/p4_process-16096003.jsonl",
-    "sha256": "8cef033a48e87e796ec6e9a0c74eb49a52dc2d467f077dce2387efed6c9c40d8"
+    "sha256": "b8780d9c3d0675174426be6aa313bf8b868c3a6dcd271739cace64d0c2745fa8"
    },
    "criteria": [
     {
@@ -215,14 +215,14 @@
     "pre_landed_runs": 30,
     "runs": 30
    },
-   "seconds": 43.0,
+   "seconds": 40.7,
    "seed": 16096003
   },
   {
    "artifact": {
     "n": 30,
     "path": "ctxrt/results/p4_process-16096004.jsonl",
-    "sha256": "5009a99c1e5891c321444e3a95df9c7cdca38042e6f5f5b015e815283118db73"
+    "sha256": "1fd11741999d754f4d6023f0cd40a39d53bac7315979357826b920abc59b9d7c"
    },
    "criteria": [
     {
@@ -287,14 +287,14 @@
     "pre_landed_runs": 30,
     "runs": 30
    },
-   "seconds": 40.0,
+   "seconds": 36.9,
    "seed": 16096004
   },
   {
    "artifact": {
     "n": 30,
     "path": "ctxrt/results/p4_process-16096005.jsonl",
-    "sha256": "c774d450eb7ff632b761295d2c3f8671c05e36956a8956e64491dca99b0e637d"
+    "sha256": "d8a68a5532a59e513bd90d05b77426070f8d07034f472c3d1388a05cae8178f3"
    },
    "criteria": [
     {
@@ -359,13 +359,13 @@
     "pre_landed_runs": 30,
     "runs": 30
    },
-   "seconds": 39.5,
+   "seconds": 40.7,
    "seed": 16096005
   }
  ],
  "proof": "p4_process",
  "stamp": {
-  "code_commit": "a0b885b9dfddb6704a367526a89f762e67ed5a52",
+  "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
   "dirty": false,
   "fingerprint": {
    "es": "none (in-process stubs)",
@@ -374,9 +374,9 @@
   },
   "host": "Mac-2.lan",
   "loadavg": [
-   11.8212890625,
-   13.9580078125,
-   17.455078125
+   7.6728515625,
+   6.13916015625,
+   6.56103515625
   ],
   "machine": "macOS-26.6-arm64-arm-64bit",
   "params": {
@@ -396,7 +396,7 @@
    "67a2842",
    "05aafb0"
   ],
-  "time_utc": "2026-11-16T02:24:07Z",
+  "time_utc": "2026-11-16T03:14:33Z",
   "timing_quiesced": false
  },
  "verdict_by_criterion": {

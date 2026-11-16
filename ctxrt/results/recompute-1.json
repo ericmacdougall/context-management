@@ -1,0 +1,77 @@
+{
+ "p1_trim": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 3000,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true
+ },
+ "p2_compact": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 4500,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true
+ },
+ "p3_pull": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 1500,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true
+ },
+ "p4_analyst": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 0,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true,
+  "note": "per-case outcomes of the proof's own judgments only: integrity and arithmetic check, no raw re-judgment"
+ },
+ "p4_process": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 0,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true,
+  "note": "per-case outcomes of the proof's own judgments only: integrity and arithmetic check, no raw re-judgment"
+ },
+ "p5_delivery": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 16000,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true
+ },
+ "p6_routing": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 10000,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true
+ },
+ "p7_chain": {
+  "stamp_commit": "7f075d4",
+  "recorded_overall": "PASS",
+  "raw_cases_rejudged": 1000,
+  "hash_and_rowcount_ok": true,
+  "rejudgment_failures": [],
+  "rejudgment_failure_count": 0,
+  "all_ok": true
+ },
+ "all_ok": true
+}

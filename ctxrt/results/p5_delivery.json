@@ -1,12 +1,12 @@
 {
- "claim": "inbox exactly-once into the surviving lineage under pause, crash, rollback, fork; policy re-checked at delivery",
+ "claim": "inbox exactly-once into the surviving lineage under pause, crash, rollback, fork, mixed claim limits, analyst path, id collision, reused turn id",
  "overall": "PASS",
  "per_seed": [
   {
    "artifact": {
-    "n": 2000,
+    "n": 3700,
     "path": "ctxrt/results/p5_delivery-16096001.jsonl",
-    "sha256": "29f4ad1c8d54f235fc7ac5fe29a295ed526e80cdf8afc4b027d995c3f9b8854d"
+    "sha256": "d50592831c8d9801671503ca6ab6164f0495bff7d76717584026e861bfa0a813"
    },
    "criteria": [
     {
@@ -25,7 +25,6 @@
      "ok": true,
      "value": {
       "after_commit_runs": 63,
-      "dup_after_commit": 0,
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
@@ -41,7 +40,7 @@
       "lost_runs": 0,
       "rewound": 168,
       "runs": 200,
-      "x_refused": 92
+      "x_refused": 94
      }
     },
     {
@@ -50,6 +49,45 @@
      "value": {
       "dup_runs": 0,
       "forked_with_item": 128,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "mixed: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "a_refused": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "partial": 200,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "analyst_rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "delivered_after": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "turn_reuse: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "id collision across logical sessions: exactly once in each",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200
      }
@@ -68,6 +106,22 @@
      "value": [
       37,
       37
+     ]
+    },
+    {
+     "criterion": "mixed limits witness: >=100 runs where B took part of A's claim before A committed",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "mixed limits: A's partial-confirm commit refused in every such run",
+     "ok": true,
+     "value": [
+      200,
+      200
      ]
     },
     {
@@ -92,9 +146,14 @@
      "criterion": "rollback: in-flight old-generation commits refused",
      "ok": true,
      "value": [
-      92,
+      94,
       200
      ]
+    },
+    {
+     "criterion": "analyst path witness: >=100 runs with an analyst finding delivered after the checkpoint",
+     "ok": true,
+     "value": 200
     },
     {
      "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
@@ -105,12 +164,12 @@
      "criterion": "control paused (tokenless) duplicates >=10%",
      "ok": true,
      "value": [
-      42,
+      36,
       200
      ]
     },
     {
-     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "criterion": "control crash (send then confirm) duplicates >=10%",
      "ok": true,
      "value": [
       133,
@@ -121,7 +180,7 @@
      "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
      "ok": true,
      "value": [
-      188,
+      185,
       200
      ]
     },
@@ -134,42 +193,93 @@
      ]
     },
     {
-     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "criterion": "control mixed limits (1d19cd8 partial-confirm commit) duplicates >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control analyst path (direct enqueue, no durable record) loses on rollback >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control reused turn id replays the dead turn (shown twice) >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control id collision (global finding id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)",
      "ok": true,
      "value": [
       0,
-      145
+      200
      ]
     },
     {
-     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item",
      "ok": true,
      "value": [
-      55,
-      55
+      50,
+      50
      ]
     },
     {
-     "criterion": "policy: dropped items carry a recorded reason",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason",
      "ok": true,
      "value": [
-      145,
-      145
+      200,
+      200
      ]
     },
     {
-     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "criterion": "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%",
      "ok": true,
      "value": [
-      130,
-      130
+      200,
+      200
      ]
+    },
+    {
+     "criterion": "no policy bridge configured: nothing is delivered (fail closed)",
+     "ok": true,
+     "value": {
+      "cases": 50,
+      "delivered": 0
+     }
     }
    ],
    "metrics": {
+    "analyst_rollback_ctrl": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "analyst_rollback_real": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
     "crash_ctrl": {
      "after_commit_runs": 62,
-     "dup_after_commit": 62,
      "dup_runs": 133,
      "lost_runs": 0,
      "runs": 200,
@@ -178,7 +288,6 @@
     },
     "crash_real": {
      "after_commit_runs": 63,
-     "dup_after_commit": 0,
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
@@ -197,11 +306,39 @@
      "lost_runs": 0,
      "runs": 200
     },
+    "id_collision_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "id_collision_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "mixed_ctrl": {
+     "a_refused": 0,
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "mixed_real": {
+     "a_refused": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "no_policy": {
+     "cases": 50,
+     "delivered": 0
+    },
     "paused_ctrl": {
-     "dup_runs": 42,
+     "dup_runs": 36,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 40,
+     "zombie": 35,
      "zombie_refused": 0
     },
     "paused_real": {
@@ -212,24 +349,22 @@
      "zombie_refused": 37
     },
     "policy_ctrl": {
-     "cases": 200,
-     "tightened": 130,
-     "tightened_delivered": 130,
+     "tightened": 200,
+     "tightened_delivered": 200,
      "tightened_with_drop_reason": 0,
-     "untightened": 70,
-     "untightened_delivered": 70
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "policy_real": {
-     "cases": 200,
-     "tightened": 145,
+     "tightened": 200,
      "tightened_delivered": 0,
-     "tightened_with_drop_reason": 145,
-     "untightened": 55,
-     "untightened_delivered": 55
+     "tightened_with_drop_reason": 200,
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "rollback_ctrl": {
      "dup_runs": 0,
-     "lost_runs": 188,
+     "lost_runs": 185,
      "rewound": 179,
      "runs": 200,
      "x_refused": 0
@@ -239,17 +374,27 @@
      "lost_runs": 0,
      "rewound": 168,
      "runs": 200,
-     "x_refused": 92
+     "x_refused": 94
+    },
+    "turn_reuse_ctrl": {
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "turn_reuse_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
     }
    },
-   "seconds": 225.0,
+   "seconds": 408.4,
    "seed": 16096001
   },
   {
    "artifact": {
-    "n": 2000,
+    "n": 3700,
     "path": "ctxrt/results/p5_delivery-16096002.jsonl",
-    "sha256": "e7c3c069b7b49dacfd4b1d5fcaca188e24b6e3d1e84e2a420f282adb902818f4"
+    "sha256": "dd2e4219a530a10cca55390b52b2bd7196158b64bba483a5d50da0317bd79557"
    },
    "criteria": [
     {
@@ -259,8 +404,8 @@
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
-      "zombie": 50,
-      "zombie_refused": 50
+      "zombie": 44,
+      "zombie_refused": 44
      }
     },
     {
@@ -268,7 +413,6 @@
      "ok": true,
      "value": {
       "after_commit_runs": 60,
-      "dup_after_commit": 0,
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
@@ -284,7 +428,7 @@
       "lost_runs": 0,
       "rewound": 175,
       "runs": 200,
-      "x_refused": 89
+      "x_refused": 99
      }
     },
     {
@@ -298,10 +442,49 @@
      }
     },
     {
+     "criterion": "mixed: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "a_refused": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "partial": 200,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "analyst_rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "delivered_after": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "turn_reuse: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "id collision across logical sessions: exactly once in each",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
      "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
      "ok": true,
      "value": [
-      50,
+      44,
       200
      ]
     },
@@ -309,8 +492,24 @@
      "criterion": "paused: stale-token commits refused 100%",
      "ok": true,
      "value": [
-      50,
-      50
+      44,
+      44
+     ]
+    },
+    {
+     "criterion": "mixed limits witness: >=100 runs where B took part of A's claim before A committed",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "mixed limits: A's partial-confirm commit refused in every such run",
+     "ok": true,
+     "value": [
+      200,
+      200
      ]
     },
     {
@@ -335,9 +534,14 @@
      "criterion": "rollback: in-flight old-generation commits refused",
      "ok": true,
      "value": [
-      89,
+      99,
       200
      ]
+    },
+    {
+     "criterion": "analyst path witness: >=100 runs with an analyst finding delivered after the checkpoint",
+     "ok": true,
+     "value": 200
     },
     {
      "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
@@ -348,12 +552,12 @@
      "criterion": "control paused (tokenless) duplicates >=10%",
      "ok": true,
      "value": [
-      51,
+      45,
       200
      ]
     },
     {
-     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "criterion": "control crash (send then confirm) duplicates >=10%",
      "ok": true,
      "value": [
       140,
@@ -364,7 +568,7 @@
      "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
      "ok": true,
      "value": [
-      190,
+      189,
       200
      ]
     },
@@ -377,42 +581,93 @@
      ]
     },
     {
-     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "criterion": "control mixed limits (1d19cd8 partial-confirm commit) duplicates >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control analyst path (direct enqueue, no durable record) loses on rollback >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control reused turn id replays the dead turn (shown twice) >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control id collision (global finding id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)",
      "ok": true,
      "value": [
       0,
-      130
+      200
      ]
     },
     {
-     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item",
      "ok": true,
      "value": [
-      70,
-      70
+      50,
+      50
      ]
     },
     {
-     "criterion": "policy: dropped items carry a recorded reason",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason",
      "ok": true,
      "value": [
-      130,
-      130
+      200,
+      200
      ]
     },
     {
-     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "criterion": "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%",
      "ok": true,
      "value": [
-      124,
-      124
+      200,
+      200
      ]
+    },
+    {
+     "criterion": "no policy bridge configured: nothing is delivered (fail closed)",
+     "ok": true,
+     "value": {
+      "cases": 50,
+      "delivered": 0
+     }
     }
    ],
    "metrics": {
+    "analyst_rollback_ctrl": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "analyst_rollback_real": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
     "crash_ctrl": {
      "after_commit_runs": 70,
-     "dup_after_commit": 70,
      "dup_runs": 140,
      "lost_runs": 0,
      "runs": 200,
@@ -421,7 +676,6 @@
     },
     "crash_real": {
      "after_commit_runs": 60,
-     "dup_after_commit": 0,
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
@@ -440,39 +694,65 @@
      "lost_runs": 0,
      "runs": 200
     },
+    "id_collision_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "id_collision_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "mixed_ctrl": {
+     "a_refused": 0,
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "mixed_real": {
+     "a_refused": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "no_policy": {
+     "cases": 50,
+     "delivered": 0
+    },
     "paused_ctrl": {
-     "dup_runs": 51,
+     "dup_runs": 45,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 51,
+     "zombie": 45,
      "zombie_refused": 0
     },
     "paused_real": {
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 50,
-     "zombie_refused": 50
+     "zombie": 44,
+     "zombie_refused": 44
     },
     "policy_ctrl": {
-     "cases": 200,
-     "tightened": 124,
-     "tightened_delivered": 124,
+     "tightened": 200,
+     "tightened_delivered": 200,
      "tightened_with_drop_reason": 0,
-     "untightened": 76,
-     "untightened_delivered": 76
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "policy_real": {
-     "cases": 200,
-     "tightened": 130,
+     "tightened": 200,
      "tightened_delivered": 0,
-     "tightened_with_drop_reason": 130,
-     "untightened": 70,
-     "untightened_delivered": 70
+     "tightened_with_drop_reason": 200,
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "rollback_ctrl": {
      "dup_runs": 0,
-     "lost_runs": 190,
+     "lost_runs": 189,
      "rewound": 172,
      "runs": 200,
      "x_refused": 0
@@ -482,17 +762,27 @@
      "lost_runs": 0,
      "rewound": 175,
      "runs": 200,
-     "x_refused": 89
+     "x_refused": 99
+    },
+    "turn_reuse_ctrl": {
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "turn_reuse_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
     }
    },
-   "seconds": 234.1,
+   "seconds": 411.1,
    "seed": 16096002
   },
   {
    "artifact": {
-    "n": 2000,
+    "n": 3700,
     "path": "ctxrt/results/p5_delivery-16096003.jsonl",
-    "sha256": "2832575374556d01ce4419a71bf706a38514f182bdbefbf4469b328cbdc7f5b3"
+    "sha256": "416094f97d3f900886a873bde9578496b7df41559623454cb4636395732e6941"
    },
    "criteria": [
     {
@@ -502,8 +792,8 @@
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
-      "zombie": 39,
-      "zombie_refused": 39
+      "zombie": 40,
+      "zombie_refused": 40
      }
     },
     {
@@ -511,7 +801,6 @@
      "ok": true,
      "value": {
       "after_commit_runs": 77,
-      "dup_after_commit": 0,
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
@@ -527,7 +816,7 @@
       "lost_runs": 0,
       "rewound": 172,
       "runs": 200,
-      "x_refused": 92
+      "x_refused": 87
      }
     },
     {
@@ -541,10 +830,49 @@
      }
     },
     {
+     "criterion": "mixed: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "a_refused": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "partial": 200,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "analyst_rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "delivered_after": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "turn_reuse: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "id collision across logical sessions: exactly once in each",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
      "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
      "ok": true,
      "value": [
-      39,
+      40,
       200
      ]
     },
@@ -552,8 +880,24 @@
      "criterion": "paused: stale-token commits refused 100%",
      "ok": true,
      "value": [
-      39,
-      39
+      40,
+      40
+     ]
+    },
+    {
+     "criterion": "mixed limits witness: >=100 runs where B took part of A's claim before A committed",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "mixed limits: A's partial-confirm commit refused in every such run",
+     "ok": true,
+     "value": [
+      200,
+      200
      ]
     },
     {
@@ -578,9 +922,14 @@
      "criterion": "rollback: in-flight old-generation commits refused",
      "ok": true,
      "value": [
-      92,
+      87,
       200
      ]
+    },
+    {
+     "criterion": "analyst path witness: >=100 runs with an analyst finding delivered after the checkpoint",
+     "ok": true,
+     "value": 200
     },
     {
      "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
@@ -591,12 +940,12 @@
      "criterion": "control paused (tokenless) duplicates >=10%",
      "ok": true,
      "value": [
-      32,
+      42,
       200
      ]
     },
     {
-     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "criterion": "control crash (send then confirm) duplicates >=10%",
      "ok": true,
      "value": [
       141,
@@ -607,7 +956,7 @@
      "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
      "ok": true,
      "value": [
-      187,
+      184,
       200
      ]
     },
@@ -620,42 +969,93 @@
      ]
     },
     {
-     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "criterion": "control mixed limits (1d19cd8 partial-confirm commit) duplicates >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control analyst path (direct enqueue, no durable record) loses on rollback >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control reused turn id replays the dead turn (shown twice) >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control id collision (global finding id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)",
      "ok": true,
      "value": [
       0,
-      117
+      200
      ]
     },
     {
-     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item",
      "ok": true,
      "value": [
-      83,
-      83
+      50,
+      50
      ]
     },
     {
-     "criterion": "policy: dropped items carry a recorded reason",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason",
      "ok": true,
      "value": [
-      117,
-      117
+      200,
+      200
      ]
     },
     {
-     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "criterion": "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%",
      "ok": true,
      "value": [
-      134,
-      134
+      200,
+      200
      ]
+    },
+    {
+     "criterion": "no policy bridge configured: nothing is delivered (fail closed)",
+     "ok": true,
+     "value": {
+      "cases": 50,
+      "delivered": 0
+     }
     }
    ],
    "metrics": {
+    "analyst_rollback_ctrl": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "analyst_rollback_real": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
     "crash_ctrl": {
      "after_commit_runs": 61,
-     "dup_after_commit": 61,
      "dup_runs": 141,
      "lost_runs": 0,
      "runs": 200,
@@ -664,7 +1064,6 @@
     },
     "crash_real": {
      "after_commit_runs": 77,
-     "dup_after_commit": 0,
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
@@ -683,39 +1082,65 @@
      "lost_runs": 0,
      "runs": 200
     },
+    "id_collision_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "id_collision_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "mixed_ctrl": {
+     "a_refused": 0,
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "mixed_real": {
+     "a_refused": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "no_policy": {
+     "cases": 50,
+     "delivered": 0
+    },
     "paused_ctrl": {
-     "dup_runs": 32,
+     "dup_runs": 42,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 32,
+     "zombie": 42,
      "zombie_refused": 0
     },
     "paused_real": {
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 39,
-     "zombie_refused": 39
+     "zombie": 40,
+     "zombie_refused": 40
     },
     "policy_ctrl": {
-     "cases": 200,
-     "tightened": 134,
-     "tightened_delivered": 134,
+     "tightened": 200,
+     "tightened_delivered": 200,
      "tightened_with_drop_reason": 0,
-     "untightened": 66,
-     "untightened_delivered": 66
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "policy_real": {
-     "cases": 200,
-     "tightened": 117,
+     "tightened": 200,
      "tightened_delivered": 0,
-     "tightened_with_drop_reason": 117,
-     "untightened": 83,
-     "untightened_delivered": 83
+     "tightened_with_drop_reason": 200,
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "rollback_ctrl": {
      "dup_runs": 0,
-     "lost_runs": 187,
+     "lost_runs": 184,
      "rewound": 174,
      "runs": 200,
      "x_refused": 0
@@ -725,17 +1150,27 @@
      "lost_runs": 0,
      "rewound": 172,
      "runs": 200,
-     "x_refused": 92
+     "x_refused": 87
+    },
+    "turn_reuse_ctrl": {
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "turn_reuse_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
     }
    },
-   "seconds": 236.1,
+   "seconds": 424.8,
    "seed": 16096003
   },
   {
    "artifact": {
-    "n": 2000,
+    "n": 3700,
     "path": "ctxrt/results/p5_delivery-16096004.jsonl",
-    "sha256": "77ac32ec5cbcce83f2da94d0c477897ea4ba0200b7629d699cb585208e0bcd60"
+    "sha256": "524ff6b975c7dd6e181a0ebf2ab5d692245de987e07ffb1ff3f25dbd4f75df25"
    },
    "criteria": [
     {
@@ -745,8 +1180,8 @@
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
-      "zombie": 44,
-      "zombie_refused": 44
+      "zombie": 39,
+      "zombie_refused": 39
      }
     },
     {
@@ -754,7 +1189,6 @@
      "ok": true,
      "value": {
       "after_commit_runs": 77,
-      "dup_after_commit": 0,
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
@@ -770,7 +1204,7 @@
       "lost_runs": 0,
       "rewound": 183,
       "runs": 200,
-      "x_refused": 97
+      "x_refused": 93
      }
     },
     {
@@ -784,10 +1218,49 @@
      }
     },
     {
+     "criterion": "mixed: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "a_refused": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "partial": 200,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "analyst_rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "delivered_after": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "turn_reuse: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "id collision across logical sessions: exactly once in each",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
      "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
      "ok": true,
      "value": [
-      44,
+      39,
       200
      ]
     },
@@ -795,8 +1268,24 @@
      "criterion": "paused: stale-token commits refused 100%",
      "ok": true,
      "value": [
-      44,
-      44
+      39,
+      39
+     ]
+    },
+    {
+     "criterion": "mixed limits witness: >=100 runs where B took part of A's claim before A committed",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "mixed limits: A's partial-confirm commit refused in every such run",
+     "ok": true,
+     "value": [
+      200,
+      200
      ]
     },
     {
@@ -821,9 +1310,14 @@
      "criterion": "rollback: in-flight old-generation commits refused",
      "ok": true,
      "value": [
-      97,
+      93,
       200
      ]
+    },
+    {
+     "criterion": "analyst path witness: >=100 runs with an analyst finding delivered after the checkpoint",
+     "ok": true,
+     "value": 200
     },
     {
      "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
@@ -834,12 +1328,12 @@
      "criterion": "control paused (tokenless) duplicates >=10%",
      "ok": true,
      "value": [
-      39,
+      42,
       200
      ]
     },
     {
-     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "criterion": "control crash (send then confirm) duplicates >=10%",
      "ok": true,
      "value": [
       133,
@@ -850,7 +1344,7 @@
      "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
      "ok": true,
      "value": [
-      188,
+      187,
       200
      ]
     },
@@ -863,42 +1357,93 @@
      ]
     },
     {
-     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "criterion": "control mixed limits (1d19cd8 partial-confirm commit) duplicates >=10%",
+     "ok": true,
+     "value": [
+      199,
+      200
+     ]
+    },
+    {
+     "criterion": "control analyst path (direct enqueue, no durable record) loses on rollback >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control reused turn id replays the dead turn (shown twice) >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control id collision (global finding id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)",
      "ok": true,
      "value": [
       0,
-      142
+      200
      ]
     },
     {
-     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item",
      "ok": true,
      "value": [
-      58,
-      58
+      50,
+      50
      ]
     },
     {
-     "criterion": "policy: dropped items carry a recorded reason",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason",
      "ok": true,
      "value": [
-      142,
-      142
+      200,
+      200
      ]
     },
     {
-     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "criterion": "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%",
      "ok": true,
      "value": [
-      128,
-      128
+      200,
+      200
      ]
+    },
+    {
+     "criterion": "no policy bridge configured: nothing is delivered (fail closed)",
+     "ok": true,
+     "value": {
+      "cases": 50,
+      "delivered": 0
+     }
     }
    ],
    "metrics": {
+    "analyst_rollback_ctrl": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "analyst_rollback_real": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
     "crash_ctrl": {
      "after_commit_runs": 69,
-     "dup_after_commit": 69,
      "dup_runs": 133,
      "lost_runs": 0,
      "runs": 200,
@@ -907,7 +1452,6 @@
     },
     "crash_real": {
      "after_commit_runs": 77,
-     "dup_after_commit": 0,
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
@@ -926,8 +1470,36 @@
      "lost_runs": 0,
      "runs": 200
     },
+    "id_collision_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "id_collision_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "mixed_ctrl": {
+     "a_refused": 0,
+     "dup_runs": 199,
+     "lost_runs": 0,
+     "partial": 199,
+     "runs": 200
+    },
+    "mixed_real": {
+     "a_refused": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "no_policy": {
+     "cases": 50,
+     "delivered": 0
+    },
     "paused_ctrl": {
-     "dup_runs": 39,
+     "dup_runs": 42,
      "lost_runs": 0,
      "runs": 200,
      "zombie": 39,
@@ -937,28 +1509,26 @@
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 44,
-     "zombie_refused": 44
+     "zombie": 39,
+     "zombie_refused": 39
     },
     "policy_ctrl": {
-     "cases": 200,
-     "tightened": 128,
-     "tightened_delivered": 128,
+     "tightened": 200,
+     "tightened_delivered": 200,
      "tightened_with_drop_reason": 0,
-     "untightened": 72,
-     "untightened_delivered": 72
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "policy_real": {
-     "cases": 200,
-     "tightened": 142,
+     "tightened": 200,
      "tightened_delivered": 0,
-     "tightened_with_drop_reason": 142,
-     "untightened": 58,
-     "untightened_delivered": 58
+     "tightened_with_drop_reason": 200,
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "rollback_ctrl": {
      "dup_runs": 0,
-     "lost_runs": 188,
+     "lost_runs": 187,
      "rewound": 174,
      "runs": 200,
      "x_refused": 0
@@ -968,17 +1538,27 @@
      "lost_runs": 0,
      "rewound": 183,
      "runs": 200,
-     "x_refused": 97
+     "x_refused": 93
+    },
+    "turn_reuse_ctrl": {
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "turn_reuse_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
     }
    },
-   "seconds": 233.2,
+   "seconds": 432.5,
    "seed": 16096004
   },
   {
    "artifact": {
-    "n": 2000,
+    "n": 3700,
     "path": "ctxrt/results/p5_delivery-16096005.jsonl",
-    "sha256": "e7cd182e4fab952ff8a4c30f8d88254f1b05574bac6150582c1db5d209cc6f84"
+    "sha256": "ffa0ce2c83fc6b43cc54ba4c7d69b5ffd6fd4706be24b6a960595e263fe8da6d"
    },
    "criteria": [
     {
@@ -988,8 +1568,8 @@
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
-      "zombie": 47,
-      "zombie_refused": 47
+      "zombie": 53,
+      "zombie_refused": 53
      }
     },
     {
@@ -997,7 +1577,6 @@
      "ok": true,
      "value": {
       "after_commit_runs": 59,
-      "dup_after_commit": 0,
       "dup_runs": 0,
       "lost_runs": 0,
       "runs": 200,
@@ -1013,7 +1592,7 @@
       "lost_runs": 0,
       "rewound": 176,
       "runs": 200,
-      "x_refused": 110
+      "x_refused": 113
      }
     },
     {
@@ -1027,10 +1606,49 @@
      }
     },
     {
+     "criterion": "mixed: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "a_refused": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "partial": 200,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "analyst_rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "delivered_after": 200,
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "turn_reuse: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
+     "criterion": "id collision across logical sessions: exactly once in each",
+     "ok": true,
+     "value": {
+      "dup_runs": 0,
+      "lost_runs": 0,
+      "runs": 200
+     }
+    },
+    {
      "criterion": "paused witness: >=30 runs with a stale-token commit after takeover",
      "ok": true,
      "value": [
-      47,
+      53,
       200
      ]
     },
@@ -1038,8 +1656,24 @@
      "criterion": "paused: stale-token commits refused 100%",
      "ok": true,
      "value": [
-      47,
-      47
+      53,
+      53
+     ]
+    },
+    {
+     "criterion": "mixed limits witness: >=100 runs where B took part of A's claim before A committed",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "mixed limits: A's partial-confirm commit refused in every such run",
+     "ok": true,
+     "value": [
+      200,
+      200
      ]
     },
     {
@@ -1064,9 +1698,14 @@
      "criterion": "rollback: in-flight old-generation commits refused",
      "ok": true,
      "value": [
-      110,
+      113,
       200
      ]
+    },
+    {
+     "criterion": "analyst path witness: >=100 runs with an analyst finding delivered after the checkpoint",
+     "ok": true,
+     "value": 200
     },
     {
      "criterion": "fork witness: >=100 runs forked with an undelivered-to-child item",
@@ -1082,7 +1721,7 @@
      ]
     },
     {
-     "criterion": "control crash (send then confirm) duplicates >=10% of runs",
+     "criterion": "control crash (send then confirm) duplicates >=10%",
      "ok": true,
      "value": [
       133,
@@ -1093,7 +1732,7 @@
      "criterion": "control rollback (cursor outside checkpoint) loses >=10%",
      "ok": true,
      "value": [
-      188,
+      187,
       200
      ]
     },
@@ -1106,42 +1745,93 @@
      ]
     },
     {
-     "criterion": "policy: tightened between enqueue and delivery -> 0 delivered",
+     "criterion": "control mixed limits (1d19cd8 partial-confirm commit) duplicates >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control analyst path (direct enqueue, no durable record) loses on rollback >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control reused turn id replays the dead turn (shown twice) >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "control id collision (global finding id) loses >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)",
      "ok": true,
      "value": [
       0,
-      123
+      200
      ]
     },
     {
-     "criterion": "policy canary: untightened policy DOES deliver the same item",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item",
      "ok": true,
      "value": [
-      77,
-      77
+      50,
+      50
      ]
     },
     {
-     "criterion": "policy: dropped items carry a recorded reason",
+     "criterion": "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason",
      "ok": true,
      "value": [
-      123,
-      123
+      200,
+      200
      ]
     },
     {
-     "criterion": "control enqueue-only policy delivers tightened items >=10%",
+     "criterion": "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%",
      "ok": true,
      "value": [
-      124,
-      124
+      200,
+      200
      ]
+    },
+    {
+     "criterion": "no policy bridge configured: nothing is delivered (fail closed)",
+     "ok": true,
+     "value": {
+      "cases": 50,
+      "delivered": 0
+     }
     }
    ],
    "metrics": {
+    "analyst_rollback_ctrl": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "analyst_rollback_real": {
+     "delivered_after": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
     "crash_ctrl": {
      "after_commit_runs": 72,
-     "dup_after_commit": 72,
      "dup_runs": 133,
      "lost_runs": 0,
      "runs": 200,
@@ -1150,7 +1840,6 @@
     },
     "crash_real": {
      "after_commit_runs": 59,
-     "dup_after_commit": 0,
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
@@ -1169,39 +1858,65 @@
      "lost_runs": 0,
      "runs": 200
     },
+    "id_collision_ctrl": {
+     "dup_runs": 0,
+     "lost_runs": 200,
+     "runs": 200
+    },
+    "id_collision_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "mixed_ctrl": {
+     "a_refused": 0,
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "mixed_real": {
+     "a_refused": 200,
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "partial": 200,
+     "runs": 200
+    },
+    "no_policy": {
+     "cases": 50,
+     "delivered": 0
+    },
     "paused_ctrl": {
      "dup_runs": 44,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 43,
+     "zombie": 41,
      "zombie_refused": 0
     },
     "paused_real": {
      "dup_runs": 0,
      "lost_runs": 0,
      "runs": 200,
-     "zombie": 47,
-     "zombie_refused": 47
+     "zombie": 53,
+     "zombie_refused": 53
     },
     "policy_ctrl": {
-     "cases": 200,
-     "tightened": 124,
-     "tightened_delivered": 124,
+     "tightened": 200,
+     "tightened_delivered": 200,
      "tightened_with_drop_reason": 0,
-     "untightened": 76,
-     "untightened_delivered": 76
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "policy_real": {
-     "cases": 200,
-     "tightened": 123,
+     "tightened": 200,
      "tightened_delivered": 0,
-     "tightened_with_drop_reason": 123,
-     "untightened": 77,
-     "untightened_delivered": 77
+     "tightened_with_drop_reason": 200,
+     "untightened": 50,
+     "untightened_delivered": 50
     },
     "rollback_ctrl": {
      "dup_runs": 0,
-     "lost_runs": 188,
+     "lost_runs": 187,
      "rewound": 175,
      "runs": 200,
      "x_refused": 0
@@ -1211,16 +1926,26 @@
      "lost_runs": 0,
      "rewound": 176,
      "runs": 200,
-     "x_refused": 110
+     "x_refused": 113
+    },
+    "turn_reuse_ctrl": {
+     "dup_runs": 200,
+     "lost_runs": 0,
+     "runs": 200
+    },
+    "turn_reuse_real": {
+     "dup_runs": 0,
+     "lost_runs": 0,
+     "runs": 200
     }
    },
-   "seconds": 227.6,
+   "seconds": 412.9,
    "seed": 16096005
   }
  ],
  "proof": "p5_delivery",
  "stamp": {
-  "code_commit": "27838be1b72b78902d0366c5a4dade1098080f5a",
+  "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
   "dirty": false,
   "fingerprint": {
    "es": "none (in-process stubs)",
@@ -1229,14 +1954,17 @@
   },
   "host": "Mac-2.lan",
   "loadavg": [
-   27.54052734375,
-   20.81396484375,
-   17.81787109375
+   7.689453125,
+   9.43359375,
+   9.15771484375
   ],
   "machine": "macOS-26.6-arm64-arm-64bit",
   "params": {
+   "concurrency": "one in-process SQLite connection behind a lock",
    "lease_s": 0.04,
-   "policy_cases": 200,
+   "policy_canary": 50,
+   "policy_status": "NOT PROVEN until the rescued policy point lands",
+   "policy_tightened": 200,
    "runs": 200,
    "seeds": [
     16096001,
@@ -1251,28 +1979,40 @@
    "67a2842",
    "05aafb0"
   ],
-  "time_utc": "2026-11-16T01:44:18Z",
+  "time_utc": "2026-11-16T03:36:09Z",
   "timing_quiesced": false
  },
  "verdict_by_criterion": {
-  "control crash (send then confirm) duplicates >=10% of runs": "PASS",
-  "control enqueue-only policy delivers tightened items >=10%": "PASS",
+  "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%": "PASS",
+  "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item": "PASS",
+  "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason": "PASS",
+  "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)": "PASS",
+  "analyst path witness: >=100 runs with an analyst finding delivered after the checkpoint": "PASS",
+  "analyst_rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "control analyst path (direct enqueue, no durable record) loses on rollback >=10%": "PASS",
+  "control crash (send then confirm) duplicates >=10%": "PASS",
   "control fork (shared native id) loses >=10%": "PASS",
+  "control id collision (global finding id) loses >=10%": "PASS",
+  "control mixed limits (1d19cd8 partial-confirm commit) duplicates >=10%": "PASS",
   "control paused (tokenless) duplicates >=10%": "PASS",
+  "control reused turn id replays the dead turn (shown twice) >=10%": "PASS",
   "control rollback (cursor outside checkpoint) loses >=10%": "PASS",
   "crash witness: crash after commit exercised": "PASS",
   "crash witness: late zombie commit attempted and refused": "PASS",
   "crash: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
   "fork witness: >=100 runs forked with an undelivered-to-child item": "PASS",
   "fork: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "id collision across logical sessions: exactly once in each": "PASS",
+  "mixed limits witness: >=100 runs where B took part of A's claim before A committed": "PASS",
+  "mixed limits: A's partial-confirm commit refused in every such run": "PASS",
+  "mixed: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
+  "no policy bridge configured: nothing is delivered (fail closed)": "PASS",
   "paused witness: >=30 runs with a stale-token commit after takeover": "PASS",
   "paused: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
   "paused: stale-token commits refused 100%": "PASS",
-  "policy canary: untightened policy DOES deliver the same item": "PASS",
-  "policy: dropped items carry a recorded reason": "PASS",
-  "policy: tightened between enqueue and delivery -> 0 delivered": "PASS",
   "rollback witness: >=100 runs rewound with an item delivered after the checkpoint": "PASS",
   "rollback: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS",
-  "rollback: in-flight old-generation commits refused": "PASS"
+  "rollback: in-flight old-generation commits refused": "PASS",
+  "turn_reuse: exactly once in surviving lineage (0 dup, 0 lost, 100% of runs)": "PASS"
  }
 }

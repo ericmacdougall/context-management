@@ -4,9 +4,9 @@
  "per_seed": [
   {
    "artifact": {
-    "n": 1898,
+    "n": 2118,
     "path": "ctxrt/results/p4_analyst-16096001.jsonl",
-    "sha256": "b01589b3d01e15cb99eecc30938028669538f4c005ce7c2e0c3b5c810d58fa67"
+    "sha256": "d9a5db0dd38cd606e92ae44847f1ea1e728de97696ee44e90d140bfb559c84c0"
    },
    "criteria": [
     {
@@ -20,7 +20,7 @@
     {
      "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
      "ok": true,
-     "value": 605
+     "value": 320
     },
     {
      "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
@@ -71,7 +71,7 @@
     {
      "criterion": "4b overlap witness: >=100 contended reservations per seed",
      "ok": true,
-     "value": 337
+     "value": 216
     },
     {
      "criterion": "4b zombie actor refused",
@@ -310,22 +310,19 @@
      ]
     },
     {
-     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "criterion": "4f structural: the turn completes while the analyst is blocked inside a model call (ordering, no timing threshold)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.0007897919999990677,
-      0.0008221250000062241
+      100
      ]
     },
     {
-     "criterion": "4f synchronous control adds >= analyst delay",
+     "criterion": "4f control: a synchronous turn is still blocked while the analyst is blocked (100%)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.2557530830000019
+      100
      ]
     },
     {
@@ -336,13 +333,112 @@
       300,
       100
      ]
+    },
+    {
+     "criterion": "F3 cross-session citation: 0 findings accepted from a session the requester cannot read",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F3 control: host check without the readable-session rule accepts it >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F13 fragment quotes ('...transfer the funds to Bob', 'is hunter2') rejected 100%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 control: sub-span rule verifies the fragments >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 verified speaker rendered as trust_origin (user, agent, tool) 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "F5 seen-set: another session's dead-end declaration is paid for again (100%); analyst claims never seed it",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "F5 control: declaration-seeded, session-blind seen-set hides the true answer >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F5 seen-set writes fenced (stopped run refused 100%)",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 stop withdraws written-undelivered findings (0 delivered), also when the stop lands between write and finish",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 control: without withdrawal the stopped run's finding is still delivered >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F12 takeover: a slow but live call (heartbeat) is never taken over (100%)",
+     "ok": true,
+     "value": [
+      0,
+      10
+     ]
+    },
+    {
+     "criterion": "F12 control: without heartbeat the slow call is taken over >=10%",
+     "ok": true,
+     "value": [
+      10,
+      10
+     ]
     }
    ],
    "metrics": {
     "4a": {
      "calls_wrong": 0,
      "conc_n": 67,
-     "contended": 605,
+     "contended": 320,
      "crash_completed_one": 66,
      "crash_n": 66,
      "ctrl_dup_keys": 67,
@@ -360,7 +456,7 @@
     "4b": {
      "charge_checks": 100,
      "charge_ok": 100,
-     "conc_contended": 337,
+     "conc_contended": 216,
      "conc_started_eq_allow": 100,
      "conc_started_le_allow": 100,
      "conc_trials": 100,
@@ -416,6 +512,7 @@
      "ctrl_empty_injects": 100,
      "ctrl_run2_paid": 336,
      "dead_n": 158,
+     "dead_seeded_seen": 0,
      "dead_stored": 158,
      "deadend_only_ok": 100,
      "injected_after_malformed": 0,
@@ -457,25 +554,47 @@
      "word_rejected": 100
     },
     "4f": {
-     "base_med": 0.0007897919999990677,
-     "hang_med": 0.0008221250000062241,
+     "async_done_while_blocked": 100,
      "log_unchanged": 100,
-     "ok_latency": 100,
      "runs": 100,
-     "sync_adds": 100,
-     "sync_med": 0.2557530830000019,
+     "sync_blocked": 100,
      "write_attempts": 300,
      "write_refused": 300
+    },
+    "4g": {
+     "fence_seen_n": 100,
+     "fence_seen_refused": 100,
+     "frag_ctrl_pass": 200,
+     "frag_n": 200,
+     "frag_real_rej": 200,
+     "hb_ctrl_stolen": 10,
+     "hb_n": 10,
+     "hb_real_stolen": 0,
+     "n": 100,
+     "poison_ctrl_skipped": 100,
+     "poison_n": 100,
+     "poison_real_paid": 100,
+     "speaker_ctrl": 0,
+     "speaker_n": 300,
+     "speaker_real": 300,
+     "wd_ctrl_delivered": 100,
+     "wd_mid_ctrl_delivered": 100,
+     "wd_mid_n": 100,
+     "wd_mid_real_delivered": 0,
+     "wd_n": 100,
+     "wd_real_delivered": 0,
+     "xs_ctrl_items": 100,
+     "xs_real_items": 0
     }
    },
-   "seconds": 72.6,
+   "seconds": 33.9,
    "seed": 16096001
   },
   {
    "artifact": {
-    "n": 1898,
+    "n": 2118,
     "path": "ctxrt/results/p4_analyst-16096002.jsonl",
-    "sha256": "902eb296c3a2eba43590addb10d45e4e2300e396ec298dc3152e5826de40fe29"
+    "sha256": "af812d913cba5108203594e63c0713319557b90f58198132ef23c5bc8ebd1dba"
    },
    "criteria": [
     {
@@ -489,7 +608,7 @@
     {
      "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
      "ok": true,
-     "value": 395
+     "value": 414
     },
     {
      "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
@@ -540,7 +659,7 @@
     {
      "criterion": "4b overlap witness: >=100 contended reservations per seed",
      "ok": true,
-     "value": 389
+     "value": 225
     },
     {
      "criterion": "4b zombie actor refused",
@@ -779,22 +898,19 @@
      ]
     },
     {
-     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "criterion": "4f structural: the turn completes while the analyst is blocked inside a model call (ordering, no timing threshold)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.0013045419999855312,
-      0.0013101249999749598
+      100
      ]
     },
     {
-     "criterion": "4f synchronous control adds >= analyst delay",
+     "criterion": "4f control: a synchronous turn is still blocked while the analyst is blocked (100%)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.25584291600000597
+      100
      ]
     },
     {
@@ -805,13 +921,112 @@
       300,
       100
      ]
+    },
+    {
+     "criterion": "F3 cross-session citation: 0 findings accepted from a session the requester cannot read",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F3 control: host check without the readable-session rule accepts it >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F13 fragment quotes ('...transfer the funds to Bob', 'is hunter2') rejected 100%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 control: sub-span rule verifies the fragments >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 verified speaker rendered as trust_origin (user, agent, tool) 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "F5 seen-set: another session's dead-end declaration is paid for again (100%); analyst claims never seed it",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "F5 control: declaration-seeded, session-blind seen-set hides the true answer >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F5 seen-set writes fenced (stopped run refused 100%)",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 stop withdraws written-undelivered findings (0 delivered), also when the stop lands between write and finish",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 control: without withdrawal the stopped run's finding is still delivered >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F12 takeover: a slow but live call (heartbeat) is never taken over (100%)",
+     "ok": true,
+     "value": [
+      0,
+      10
+     ]
+    },
+    {
+     "criterion": "F12 control: without heartbeat the slow call is taken over >=10%",
+     "ok": true,
+     "value": [
+      10,
+      10
+     ]
     }
    ],
    "metrics": {
     "4a": {
      "calls_wrong": 0,
      "conc_n": 67,
-     "contended": 395,
+     "contended": 414,
      "crash_completed_one": 66,
      "crash_n": 66,
      "ctrl_dup_keys": 67,
@@ -829,7 +1044,7 @@
     "4b": {
      "charge_checks": 100,
      "charge_ok": 100,
-     "conc_contended": 389,
+     "conc_contended": 225,
      "conc_started_eq_allow": 100,
      "conc_started_le_allow": 100,
      "conc_trials": 100,
@@ -885,6 +1100,7 @@
      "ctrl_empty_injects": 100,
      "ctrl_run2_paid": 352,
      "dead_n": 160,
+     "dead_seeded_seen": 0,
      "dead_stored": 160,
      "deadend_only_ok": 100,
      "injected_after_malformed": 0,
@@ -926,25 +1142,47 @@
      "word_rejected": 100
     },
     "4f": {
-     "base_med": 0.0013045419999855312,
-     "hang_med": 0.0013101249999749598,
+     "async_done_while_blocked": 100,
      "log_unchanged": 100,
-     "ok_latency": 100,
      "runs": 100,
-     "sync_adds": 100,
-     "sync_med": 0.25584291600000597,
+     "sync_blocked": 100,
      "write_attempts": 300,
      "write_refused": 300
+    },
+    "4g": {
+     "fence_seen_n": 100,
+     "fence_seen_refused": 100,
+     "frag_ctrl_pass": 200,
+     "frag_n": 200,
+     "frag_real_rej": 200,
+     "hb_ctrl_stolen": 10,
+     "hb_n": 10,
+     "hb_real_stolen": 0,
+     "n": 100,
+     "poison_ctrl_skipped": 100,
+     "poison_n": 100,
+     "poison_real_paid": 100,
+     "speaker_ctrl": 0,
+     "speaker_n": 300,
+     "speaker_real": 300,
+     "wd_ctrl_delivered": 100,
+     "wd_mid_ctrl_delivered": 100,
+     "wd_mid_n": 100,
+     "wd_mid_real_delivered": 0,
+     "wd_n": 100,
+     "wd_real_delivered": 0,
+     "xs_ctrl_items": 100,
+     "xs_real_items": 0
     }
    },
-   "seconds": 75.4,
+   "seconds": 35.6,
    "seed": 16096002
   },
   {
    "artifact": {
-    "n": 1898,
+    "n": 2118,
     "path": "ctxrt/results/p4_analyst-16096003.jsonl",
-    "sha256": "97a5ac161c1d8d2531411c617ebae90823a1b8f1bf65c9f1605e5bc69003f0fb"
+    "sha256": "6c5f1b2e0fe33d7795d39210d0b9ed62d324b91d55fefe2828496e7b027c6740"
    },
    "criteria": [
     {
@@ -958,7 +1196,7 @@
     {
      "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
      "ok": true,
-     "value": 622
+     "value": 280
     },
     {
      "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
@@ -1009,7 +1247,7 @@
     {
      "criterion": "4b overlap witness: >=100 contended reservations per seed",
      "ok": true,
-     "value": 374
+     "value": 224
     },
     {
      "criterion": "4b zombie actor refused",
@@ -1248,22 +1486,19 @@
      ]
     },
     {
-     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "criterion": "4f structural: the turn completes while the analyst is blocked inside a model call (ordering, no timing threshold)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.001281125000019756,
-      0.0013166249999869706
+      100
      ]
     },
     {
-     "criterion": "4f synchronous control adds >= analyst delay",
+     "criterion": "4f control: a synchronous turn is still blocked while the analyst is blocked (100%)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.25599500000001285
+      100
      ]
     },
     {
@@ -1274,13 +1509,112 @@
       300,
       100
      ]
+    },
+    {
+     "criterion": "F3 cross-session citation: 0 findings accepted from a session the requester cannot read",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F3 control: host check without the readable-session rule accepts it >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F13 fragment quotes ('...transfer the funds to Bob', 'is hunter2') rejected 100%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 control: sub-span rule verifies the fragments >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 verified speaker rendered as trust_origin (user, agent, tool) 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "F5 seen-set: another session's dead-end declaration is paid for again (100%); analyst claims never seed it",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "F5 control: declaration-seeded, session-blind seen-set hides the true answer >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F5 seen-set writes fenced (stopped run refused 100%)",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 stop withdraws written-undelivered findings (0 delivered), also when the stop lands between write and finish",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 control: without withdrawal the stopped run's finding is still delivered >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F12 takeover: a slow but live call (heartbeat) is never taken over (100%)",
+     "ok": true,
+     "value": [
+      0,
+      10
+     ]
+    },
+    {
+     "criterion": "F12 control: without heartbeat the slow call is taken over >=10%",
+     "ok": true,
+     "value": [
+      10,
+      10
+     ]
     }
    ],
    "metrics": {
     "4a": {
      "calls_wrong": 0,
      "conc_n": 67,
-     "contended": 622,
+     "contended": 280,
      "crash_completed_one": 66,
      "crash_n": 66,
      "ctrl_dup_keys": 67,
@@ -1298,7 +1632,7 @@
     "4b": {
      "charge_checks": 100,
      "charge_ok": 100,
-     "conc_contended": 374,
+     "conc_contended": 224,
      "conc_started_eq_allow": 100,
      "conc_started_le_allow": 100,
      "conc_trials": 100,
@@ -1354,6 +1688,7 @@
      "ctrl_empty_injects": 100,
      "ctrl_run2_paid": 324,
      "dead_n": 150,
+     "dead_seeded_seen": 0,
      "dead_stored": 150,
      "deadend_only_ok": 100,
      "injected_after_malformed": 0,
@@ -1395,25 +1730,47 @@
      "word_rejected": 100
     },
     "4f": {
-     "base_med": 0.001281125000019756,
-     "hang_med": 0.0013166249999869706,
+     "async_done_while_blocked": 100,
      "log_unchanged": 100,
-     "ok_latency": 100,
      "runs": 100,
-     "sync_adds": 100,
-     "sync_med": 0.25599500000001285,
+     "sync_blocked": 100,
      "write_attempts": 300,
      "write_refused": 300
+    },
+    "4g": {
+     "fence_seen_n": 100,
+     "fence_seen_refused": 100,
+     "frag_ctrl_pass": 200,
+     "frag_n": 200,
+     "frag_real_rej": 200,
+     "hb_ctrl_stolen": 10,
+     "hb_n": 10,
+     "hb_real_stolen": 0,
+     "n": 100,
+     "poison_ctrl_skipped": 100,
+     "poison_n": 100,
+     "poison_real_paid": 100,
+     "speaker_ctrl": 0,
+     "speaker_n": 300,
+     "speaker_real": 300,
+     "wd_ctrl_delivered": 100,
+     "wd_mid_ctrl_delivered": 100,
+     "wd_mid_n": 100,
+     "wd_mid_real_delivered": 0,
+     "wd_n": 100,
+     "wd_real_delivered": 0,
+     "xs_ctrl_items": 100,
+     "xs_real_items": 0
     }
    },
-   "seconds": 73.7,
+   "seconds": 33.3,
    "seed": 16096003
   },
   {
    "artifact": {
-    "n": 1898,
+    "n": 2118,
     "path": "ctxrt/results/p4_analyst-16096004.jsonl",
-    "sha256": "586222df40bd13d461a223d173ed652e3437348598c1ecc7cf482ac742f3b2ba"
+    "sha256": "90b37fb42dc55c060eded91b65bd4aea17337ea60b5496342180c8674e34677d"
    },
    "criteria": [
     {
@@ -1427,7 +1784,7 @@
     {
      "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
      "ok": true,
-     "value": 646
+     "value": 347
     },
     {
      "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
@@ -1478,7 +1835,7 @@
     {
      "criterion": "4b overlap witness: >=100 contended reservations per seed",
      "ok": true,
-     "value": 376
+     "value": 200
     },
     {
      "criterion": "4b zombie actor refused",
@@ -1717,22 +2074,19 @@
      ]
     },
     {
-     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "criterion": "4f structural: the turn completes while the analyst is blocked inside a model call (ordering, no timing threshold)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.0011061659999995754,
-      0.0011249579999912385
+      100
      ]
     },
     {
-     "criterion": "4f synchronous control adds >= analyst delay",
+     "criterion": "4f control: a synchronous turn is still blocked while the analyst is blocked (100%)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.25994808400002967
+      100
      ]
     },
     {
@@ -1743,13 +2097,112 @@
       300,
       100
      ]
+    },
+    {
+     "criterion": "F3 cross-session citation: 0 findings accepted from a session the requester cannot read",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F3 control: host check without the readable-session rule accepts it >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F13 fragment quotes ('...transfer the funds to Bob', 'is hunter2') rejected 100%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 control: sub-span rule verifies the fragments >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 verified speaker rendered as trust_origin (user, agent, tool) 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "F5 seen-set: another session's dead-end declaration is paid for again (100%); analyst claims never seed it",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "F5 control: declaration-seeded, session-blind seen-set hides the true answer >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F5 seen-set writes fenced (stopped run refused 100%)",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 stop withdraws written-undelivered findings (0 delivered), also when the stop lands between write and finish",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 control: without withdrawal the stopped run's finding is still delivered >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F12 takeover: a slow but live call (heartbeat) is never taken over (100%)",
+     "ok": true,
+     "value": [
+      0,
+      10
+     ]
+    },
+    {
+     "criterion": "F12 control: without heartbeat the slow call is taken over >=10%",
+     "ok": true,
+     "value": [
+      10,
+      10
+     ]
     }
    ],
    "metrics": {
     "4a": {
      "calls_wrong": 0,
      "conc_n": 67,
-     "contended": 646,
+     "contended": 347,
      "crash_completed_one": 66,
      "crash_n": 66,
      "ctrl_dup_keys": 67,
@@ -1767,7 +2220,7 @@
     "4b": {
      "charge_checks": 100,
      "charge_ok": 100,
-     "conc_contended": 376,
+     "conc_contended": 200,
      "conc_started_eq_allow": 100,
      "conc_started_le_allow": 100,
      "conc_trials": 100,
@@ -1823,6 +2276,7 @@
      "ctrl_empty_injects": 100,
      "ctrl_run2_paid": 328,
      "dead_n": 156,
+     "dead_seeded_seen": 0,
      "dead_stored": 156,
      "deadend_only_ok": 100,
      "injected_after_malformed": 0,
@@ -1864,25 +2318,47 @@
      "word_rejected": 100
     },
     "4f": {
-     "base_med": 0.0011061659999995754,
-     "hang_med": 0.0011249579999912385,
+     "async_done_while_blocked": 100,
      "log_unchanged": 100,
-     "ok_latency": 100,
      "runs": 100,
-     "sync_adds": 100,
-     "sync_med": 0.25994808400002967,
+     "sync_blocked": 100,
      "write_attempts": 300,
      "write_refused": 300
+    },
+    "4g": {
+     "fence_seen_n": 100,
+     "fence_seen_refused": 100,
+     "frag_ctrl_pass": 200,
+     "frag_n": 200,
+     "frag_real_rej": 200,
+     "hb_ctrl_stolen": 10,
+     "hb_n": 10,
+     "hb_real_stolen": 0,
+     "n": 100,
+     "poison_ctrl_skipped": 100,
+     "poison_n": 100,
+     "poison_real_paid": 100,
+     "speaker_ctrl": 0,
+     "speaker_n": 300,
+     "speaker_real": 300,
+     "wd_ctrl_delivered": 100,
+     "wd_mid_ctrl_delivered": 100,
+     "wd_mid_n": 100,
+     "wd_mid_real_delivered": 0,
+     "wd_n": 100,
+     "wd_real_delivered": 0,
+     "xs_ctrl_items": 100,
+     "xs_real_items": 0
     }
    },
-   "seconds": 74.0,
+   "seconds": 34.0,
    "seed": 16096004
   },
   {
    "artifact": {
-    "n": 1898,
+    "n": 2118,
     "path": "ctxrt/results/p4_analyst-16096005.jsonl",
-    "sha256": "2b8beda2ed59bedb6a0015c545c8d12628d9ed549ba80077435130e1db8a3b74"
+    "sha256": "0b75d79bb55b9cf755af183d8e77a482e70e46ce299f2b2e8fd8c5d19bf5b8c0"
    },
    "criteria": [
     {
@@ -1896,7 +2372,7 @@
     {
      "criterion": "4a overlap: >=100 contended launches per seed (8-way barrier)",
      "ok": true,
-     "value": 514
+     "value": 552
     },
     {
      "criterion": "4a crash retry: exactly 1 completed run, zombie refused",
@@ -1947,7 +2423,7 @@
     {
      "criterion": "4b overlap witness: >=100 contended reservations per seed",
      "ok": true,
-     "value": 326
+     "value": 260
     },
     {
      "criterion": "4b zombie actor refused",
@@ -2186,22 +2662,19 @@
      ]
     },
     {
-     "criterion": "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)",
+     "criterion": "4f structural: the turn completes while the analyst is blocked inside a model call (ordering, no timing threshold)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.0014002500000174223,
-      0.001373791999981222
+      100
      ]
     },
     {
-     "criterion": "4f synchronous control adds >= analyst delay",
+     "criterion": "4f control: a synchronous turn is still blocked while the analyst is blocked (100%)",
      "ok": true,
      "value": [
       100,
-      100,
-      0.259254583000029
+      100
      ]
     },
     {
@@ -2212,13 +2685,112 @@
       300,
       100
      ]
+    },
+    {
+     "criterion": "F3 cross-session citation: 0 findings accepted from a session the requester cannot read",
+     "ok": true,
+     "value": [
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F3 control: host check without the readable-session rule accepts it >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F13 fragment quotes ('...transfer the funds to Bob', 'is hunter2') rejected 100%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 control: sub-span rule verifies the fragments >=10%",
+     "ok": true,
+     "value": [
+      200,
+      200
+     ]
+    },
+    {
+     "criterion": "F13 verified speaker rendered as trust_origin (user, agent, tool) 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "F5 seen-set: another session's dead-end declaration is paid for again (100%); analyst claims never seed it",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      0
+     ]
+    },
+    {
+     "criterion": "F5 control: declaration-seeded, session-blind seen-set hides the true answer >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F5 seen-set writes fenced (stopped run refused 100%)",
+     "ok": true,
+     "value": [
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 stop withdraws written-undelivered findings (0 delivered), also when the stop lands between write and finish",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      100
+     ]
+    },
+    {
+     "criterion": "F11 control: without withdrawal the stopped run's finding is still delivered >=10%",
+     "ok": true,
+     "value": [
+      100,
+      100,
+      100
+     ]
+    },
+    {
+     "criterion": "F12 takeover: a slow but live call (heartbeat) is never taken over (100%)",
+     "ok": true,
+     "value": [
+      0,
+      10
+     ]
+    },
+    {
+     "criterion": "F12 control: without heartbeat the slow call is taken over >=10%",
+     "ok": true,
+     "value": [
+      10,
+      10
+     ]
     }
    ],
    "metrics": {
     "4a": {
      "calls_wrong": 0,
      "conc_n": 67,
-     "contended": 514,
+     "contended": 552,
      "crash_completed_one": 66,
      "crash_n": 66,
      "ctrl_dup_keys": 67,
@@ -2236,7 +2808,7 @@
     "4b": {
      "charge_checks": 100,
      "charge_ok": 100,
-     "conc_contended": 326,
+     "conc_contended": 260,
      "conc_started_eq_allow": 100,
      "conc_started_le_allow": 100,
      "conc_trials": 100,
@@ -2292,6 +2864,7 @@
      "ctrl_empty_injects": 100,
      "ctrl_run2_paid": 333,
      "dead_n": 172,
+     "dead_seeded_seen": 0,
      "dead_stored": 172,
      "deadend_only_ok": 100,
      "injected_after_malformed": 0,
@@ -2333,24 +2906,46 @@
      "word_rejected": 100
     },
     "4f": {
-     "base_med": 0.0014002500000174223,
-     "hang_med": 0.001373791999981222,
+     "async_done_while_blocked": 100,
      "log_unchanged": 100,
-     "ok_latency": 100,
      "runs": 100,
-     "sync_adds": 100,
-     "sync_med": 0.259254583000029,
+     "sync_blocked": 100,
      "write_attempts": 300,
      "write_refused": 300
+    },
+    "4g": {
+     "fence_seen_n": 100,
+     "fence_seen_refused": 100,
+     "frag_ctrl_pass": 200,
+     "frag_n": 200,
+     "frag_real_rej": 200,
+     "hb_ctrl_stolen": 10,
+     "hb_n": 10,
+     "hb_real_stolen": 0,
+     "n": 100,
+     "poison_ctrl_skipped": 100,
+     "poison_n": 100,
+     "poison_real_paid": 100,
+     "speaker_ctrl": 0,
+     "speaker_n": 300,
+     "speaker_real": 300,
+     "wd_ctrl_delivered": 100,
+     "wd_mid_ctrl_delivered": 100,
+     "wd_mid_n": 100,
+     "wd_mid_real_delivered": 0,
+     "wd_n": 100,
+     "wd_real_delivered": 0,
+     "xs_ctrl_items": 100,
+     "xs_real_items": 0
     }
    },
-   "seconds": 76.1,
+   "seconds": 35.6,
    "seed": 16096005
   }
  ],
  "proof": "p4_analyst",
  "stamp": {
-  "code_commit": "a19452535e459c2366098bbc0bf21f3fcb1ad2f0",
+  "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
   "dirty": false,
   "fingerprint": {
    "es": "none (in-process stubs)",
@@ -2359,9 +2954,9 @@
   },
   "host": "Mac-2.lan",
   "loadavg": [
-   24.92578125,
-   23.5224609375,
-   22.9140625
+   5.2900390625,
+   5.1318359375,
+   6.388671875
   ],
   "machine": "macOS-26.6-arm64-arm-64bit",
   "params": {
@@ -2384,7 +2979,7 @@
    "67a2842",
    "05aafb0"
   ],
-  "time_utc": "2026-11-16T02:10:51Z",
+  "time_utc": "2026-11-16T03:11:41Z",
   "timing_quiesced": false
  },
  "verdict_by_criterion": {
@@ -2423,9 +3018,21 @@
   "4e speaker-flip rejected 100%": "PASS",
   "4e valid accepted 100%": "PASS",
   "4e word-replaced rejected 100%": "PASS",
-  "4f synchronous control adds >= analyst delay": "PASS",
-  "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)": "PASS",
+  "4f control: a synchronous turn is still blocked while the analyst is blocked (100%)": "PASS",
+  "4f structural: the turn completes while the analyst is blocked inside a model call (ordering, no timing threshold)": "PASS",
   "4f write attempts refused 100%, log hash unchanged": "PASS",
+  "F11 control: without withdrawal the stopped run's finding is still delivered >=10%": "PASS",
+  "F11 stop withdraws written-undelivered findings (0 delivered), also when the stop lands between write and finish": "PASS",
+  "F12 control: without heartbeat the slow call is taken over >=10%": "PASS",
+  "F12 takeover: a slow but live call (heartbeat) is never taken over (100%)": "PASS",
+  "F13 control: sub-span rule verifies the fragments >=10%": "PASS",
+  "F13 fragment quotes ('...transfer the funds to Bob', 'is hunter2') rejected 100%": "PASS",
+  "F13 verified speaker rendered as trust_origin (user, agent, tool) 100%": "PASS",
+  "F3 control: host check without the readable-session rule accepts it >=10%": "PASS",
+  "F3 cross-session citation: 0 findings accepted from a session the requester cannot read": "PASS",
+  "F5 control: declaration-seeded, session-blind seen-set hides the true answer >=10%": "PASS",
+  "F5 seen-set writes fenced (stopped run refused 100%)": "PASS",
+  "F5 seen-set: another session's dead-end declaration is paid for again (100%); analyst claims never seed it": "PASS",
   "origin: every finding that reached an inbox records author agent and model (4c canary, 4d, 4e)": "PASS"
  }
 }

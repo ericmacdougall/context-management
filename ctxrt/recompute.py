@@ -245,7 +245,7 @@ def main():
                                 anc.add(pr)
                                 nxt |= {j for j in ag if ag[j]["lineage"] == ag[pr]["lineage"]}
                         frontier = nxt - done
-                    full = s | anc
+                    full = s | anc | {j for j in ag if ag[j]["lineage"] in {ag[x]["lineage"] for x in anc}}     # a delegator's aliases are delegators too
                     if sorted(full) != r["author_set"]:
                         bad.append(("author_set_mismatch", r["k"]))
                     if r["assigned"] and (r["assigned"] in full or not r["author_model"] or FAM(ag[r["assigned"]]["model"]) == FAM(ag[r["author"]]["model"])):
@@ -268,6 +268,9 @@ def main():
         ok_all &= rec["all_ok"]
         out[name] = rec
     out["all_ok"] = ok_all
+    if len(sys.argv) > 2 and sys.argv[1] == "--out":
+        with open(sys.argv[2], "w") as fh:
+            json.dump(out, fh, indent=1)
     print(json.dumps(out, indent=1))
     return 0 if ok_all else 1
 

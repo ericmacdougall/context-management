@@ -1,12 +1,12 @@
 {
- "claim": "author never routed to review or approve; model recorded; inbox origin filter",
+ "claim": "author, aliases, delegates and delegators never review or approve; model recorded; origin per instance; fail closed",
  "overall": "PASS",
  "per_seed": [
   {
    "artifact": {
     "n": 2001,
     "path": "ctxrt/results/p6_routing-16096001.jsonl",
-    "sha256": "0907e11939dba2afe4f06cac9d138936862130be93d594ec768159cbcc053794"
+    "sha256": "3f8db565902a2cc988154712a8e47b43b56ebc23d3f06a1cd9e85ca6c9715656"
    },
    "criteria": [
     {
@@ -14,11 +14,11 @@
      "ok": true,
      "value": [
       0,
-      1257
+      1182
      ]
     },
     {
-     "criterion": "different-model rule held on every assignment",
+     "criterion": "different-model-family rule held on every assignment",
      "ok": true,
      "value": 0
     },
@@ -31,7 +31,7 @@
      ]
     },
     {
-     "criterion": "author-set closure equals independent fixpoint",
+     "criterion": "author-set closure (incl. delegators) equals independent fixpoint",
      "ok": true,
      "value": 0
     },
@@ -39,16 +39,48 @@
      "criterion": "author-only pools: typed refusal, never fallback",
      "ok": true,
      "value": [
-      301,
-      301
+      294,
+      294
      ]
     },
     {
-     "criterion": "approvals: 0 by author set, all others allowed",
+     "criterion": "approvals: exactly the routed, registered, distinct, different-model reviewer (100%)",
      "ok": true,
      "value": [
       0,
       6000
+     ]
+    },
+    {
+     "criterion": "approve with no routing record or an unregistered id refused (100%)",
+     "ok": true,
+     "value": [
+      3880,
+      2000
+     ]
+    },
+    {
+     "criterion": "delegator may not review its delegate (100%)",
+     "ok": true,
+     "value": [
+      1923,
+      1923
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 author set lets the delegator review >=10%",
+     "ok": true,
+     "value": [
+      1616,
+      1923
+     ]
+    },
+    {
+     "criterion": "same-model agents on another id are not reviewers (100%)",
+     "ok": true,
+     "value": [
+      1278,
+      1278
      ]
     },
     {
@@ -73,64 +105,113 @@
      "value": 0
     },
     {
-     "criterion": "canary: non-author sessions DO receive the item",
+     "criterion": "canary: distinct non-author different-model sessions DO receive the item",
      "ok": true,
      "value": [
-      948,
-      948
+      492,
+      492
+     ]
+    },
+    {
+     "criterion": "fail closed: items with no origin and unmapped recipients are never delivered to a reviewer",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      2404
+     ]
+    },
+    {
+     "criterion": "origin collision: a co-producer is excluded (0 self-review through a second producer)",
+     "ok": true,
+     "value": [
+      0,
+      699
      ]
     },
     {
      "criterion": "control: availability-only routing assigns author set >=10%",
      "ok": true,
      "value": [
-      927,
-      1947
+      1244,
+      1976
      ]
     },
     {
      "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
      "ok": true,
      "value": [
-      1101,
+      1213,
       500
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 inbox delivers origin-less items and unmapped recipients >=10%",
+     "ok": true,
+     "value": [
+      2404,
+      500,
+      2404
+     ]
+    },
+    {
+     "criterion": "control: first-writer-wins origin lets a second producer review its own finding (counted per collision)",
+     "ok": true,
+     "value": [
+      699,
+      699
      ]
     }
    ],
    "metrics": {
-    "approve_author_refused": 2296,
     "approve_checks": 6000,
     "approve_wrong": 0,
     "cases": 2000,
+    "collision_ctrl_self_review": 699,
+    "collision_n": 699,
+    "collision_real_self_review": 0,
     "create_attempts": 10000,
     "create_refused": 10000,
-    "ctrl_assigned_author": 927,
-    "ctrl_cases": 1947,
-    "ctrl_inbox_author_claims": 1101,
-    "ctrl_only_author_assigned": 283,
+    "ctrl_assigned_author": 1244,
+    "ctrl_cases": 1976,
+    "ctrl_inbox_author_claims": 1213,
+    "delegator_ctrl": 1616,
+    "delegator_n": 1923,
+    "delegator_refused": 1923,
     "inbox_author_claims": 0,
     "inbox_cases": 500,
-    "inbox_nonauthor_claims": 948,
-    "inbox_nonauthor_expected": 948,
-    "only_author_pool": 301,
-    "only_author_refused": 301,
+    "inbox_nonauthor_claims": 492,
+    "inbox_nonauthor_expected": 492,
+    "noorigin_ctrl_claims": 2404,
+    "noorigin_n": 2404,
+    "noorigin_real_claims": 0,
+    "only_author_pool": 294,
+    "only_author_refused": 294,
     "records": 2000,
     "records_with_model": 2000,
     "refusal_correct": 2000,
-    "route_assigned": 1257,
+    "route_assigned": 1182,
     "route_in_author_set": 0,
-    "route_refused": 743,
+    "route_refused": 818,
     "route_same_model": 0,
-    "set_mismatch": 0
+    "samemodel_ctrl": 1278,
+    "samemodel_n": 1278,
+    "samemodel_refused": 1278,
+    "set_mismatch": 0,
+    "unmapped_ctrl": 500,
+    "unmapped_real": 0,
+    "unrouted_ctrl_ok": 2000,
+    "unrouted_n": 2000,
+    "unrouted_refused": 3880
    },
-   "seconds": 3.8,
+   "seconds": 1.7,
    "seed": 16096001
   },
   {
    "artifact": {
     "n": 2001,
     "path": "ctxrt/results/p6_routing-16096002.jsonl",
-    "sha256": "02363e6c81aa61c9c53cf8c9f1083a3d8419d57a9c1f5f0502d06e7ca83d53e7"
+    "sha256": "49765e2a8f75066c05af65e39f11bf077690555f725f0d985e40271a6569dbf2"
    },
    "criteria": [
     {
@@ -138,11 +219,11 @@
      "ok": true,
      "value": [
       0,
-      1247
+      1155
      ]
     },
     {
-     "criterion": "different-model rule held on every assignment",
+     "criterion": "different-model-family rule held on every assignment",
      "ok": true,
      "value": 0
     },
@@ -155,7 +236,7 @@
      ]
     },
     {
-     "criterion": "author-set closure equals independent fixpoint",
+     "criterion": "author-set closure (incl. delegators) equals independent fixpoint",
      "ok": true,
      "value": 0
     },
@@ -163,16 +244,48 @@
      "criterion": "author-only pools: typed refusal, never fallback",
      "ok": true,
      "value": [
-      328,
-      328
+      292,
+      292
      ]
     },
     {
-     "criterion": "approvals: 0 by author set, all others allowed",
+     "criterion": "approvals: exactly the routed, registered, distinct, different-model reviewer (100%)",
      "ok": true,
      "value": [
       0,
       6000
+     ]
+    },
+    {
+     "criterion": "approve with no routing record or an unregistered id refused (100%)",
+     "ok": true,
+     "value": [
+      3860,
+      2000
+     ]
+    },
+    {
+     "criterion": "delegator may not review its delegate (100%)",
+     "ok": true,
+     "value": [
+      1915,
+      1915
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 author set lets the delegator review >=10%",
+     "ok": true,
+     "value": [
+      1622,
+      1915
+     ]
+    },
+    {
+     "criterion": "same-model agents on another id are not reviewers (100%)",
+     "ok": true,
+     "value": [
+      1264,
+      1264
      ]
     },
     {
@@ -197,64 +310,113 @@
      "value": 0
     },
     {
-     "criterion": "canary: non-author sessions DO receive the item",
+     "criterion": "canary: distinct non-author different-model sessions DO receive the item",
      "ok": true,
      "value": [
-      931,
-      931
+      478,
+      478
+     ]
+    },
+    {
+     "criterion": "fail closed: items with no origin and unmapped recipients are never delivered to a reviewer",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      2404
+     ]
+    },
+    {
+     "criterion": "origin collision: a co-producer is excluded (0 self-review through a second producer)",
+     "ok": true,
+     "value": [
+      0,
+      707
      ]
     },
     {
      "criterion": "control: availability-only routing assigns author set >=10%",
      "ok": true,
      "value": [
-      991,
-      1955
+      1237,
+      1974
      ]
     },
     {
      "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
      "ok": true,
      "value": [
-      1095,
+      1219,
       500
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 inbox delivers origin-less items and unmapped recipients >=10%",
+     "ok": true,
+     "value": [
+      2404,
+      500,
+      2404
+     ]
+    },
+    {
+     "criterion": "control: first-writer-wins origin lets a second producer review its own finding (counted per collision)",
+     "ok": true,
+     "value": [
+      707,
+      707
      ]
     }
    ],
    "metrics": {
-    "approve_author_refused": 2289,
     "approve_checks": 6000,
     "approve_wrong": 0,
     "cases": 2000,
+    "collision_ctrl_self_review": 707,
+    "collision_n": 707,
+    "collision_real_self_review": 0,
     "create_attempts": 10000,
     "create_refused": 10000,
-    "ctrl_assigned_author": 991,
-    "ctrl_cases": 1955,
-    "ctrl_inbox_author_claims": 1095,
-    "ctrl_only_author_assigned": 306,
+    "ctrl_assigned_author": 1237,
+    "ctrl_cases": 1974,
+    "ctrl_inbox_author_claims": 1219,
+    "delegator_ctrl": 1622,
+    "delegator_n": 1915,
+    "delegator_refused": 1915,
     "inbox_author_claims": 0,
     "inbox_cases": 500,
-    "inbox_nonauthor_claims": 931,
-    "inbox_nonauthor_expected": 931,
-    "only_author_pool": 328,
-    "only_author_refused": 328,
+    "inbox_nonauthor_claims": 478,
+    "inbox_nonauthor_expected": 478,
+    "noorigin_ctrl_claims": 2404,
+    "noorigin_n": 2404,
+    "noorigin_real_claims": 0,
+    "only_author_pool": 292,
+    "only_author_refused": 292,
     "records": 2000,
     "records_with_model": 2000,
     "refusal_correct": 2000,
-    "route_assigned": 1247,
+    "route_assigned": 1155,
     "route_in_author_set": 0,
-    "route_refused": 753,
+    "route_refused": 845,
     "route_same_model": 0,
-    "set_mismatch": 0
+    "samemodel_ctrl": 1264,
+    "samemodel_n": 1264,
+    "samemodel_refused": 1264,
+    "set_mismatch": 0,
+    "unmapped_ctrl": 500,
+    "unmapped_real": 0,
+    "unrouted_ctrl_ok": 2000,
+    "unrouted_n": 2000,
+    "unrouted_refused": 3860
    },
-   "seconds": 1.5,
+   "seconds": 1.7,
    "seed": 16096002
   },
   {
    "artifact": {
     "n": 2001,
     "path": "ctxrt/results/p6_routing-16096003.jsonl",
-    "sha256": "d725036a7420438cc06486971f922d06e2dd0dbb1f800ed8a641ebd79432c683"
+    "sha256": "bb5cef0982e03e802021f5c58a47ad6ae68bf3c168afe6cb68e2e6932f0c8ac9"
    },
    "criteria": [
     {
@@ -262,11 +424,11 @@
      "ok": true,
      "value": [
       0,
-      1291
+      1194
      ]
     },
     {
-     "criterion": "different-model rule held on every assignment",
+     "criterion": "different-model-family rule held on every assignment",
      "ok": true,
      "value": 0
     },
@@ -279,7 +441,7 @@
      ]
     },
     {
-     "criterion": "author-set closure equals independent fixpoint",
+     "criterion": "author-set closure (incl. delegators) equals independent fixpoint",
      "ok": true,
      "value": 0
     },
@@ -287,16 +449,48 @@
      "criterion": "author-only pools: typed refusal, never fallback",
      "ok": true,
      "value": [
-      276,
-      276
+      296,
+      296
      ]
     },
     {
-     "criterion": "approvals: 0 by author set, all others allowed",
+     "criterion": "approvals: exactly the routed, registered, distinct, different-model reviewer (100%)",
      "ok": true,
      "value": [
       0,
       6000
+     ]
+    },
+    {
+     "criterion": "approve with no routing record or an unregistered id refused (100%)",
+     "ok": true,
+     "value": [
+      3887,
+      2000
+     ]
+    },
+    {
+     "criterion": "delegator may not review its delegate (100%)",
+     "ok": true,
+     "value": [
+      1913,
+      1913
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 author set lets the delegator review >=10%",
+     "ok": true,
+     "value": [
+      1629,
+      1913
+     ]
+    },
+    {
+     "criterion": "same-model agents on another id are not reviewers (100%)",
+     "ok": true,
+     "value": [
+      1298,
+      1298
      ]
     },
     {
@@ -321,18 +515,445 @@
      "value": 0
     },
     {
-     "criterion": "canary: non-author sessions DO receive the item",
+     "criterion": "canary: distinct non-author different-model sessions DO receive the item",
      "ok": true,
      "value": [
-      940,
-      940
+      468,
+      468
+     ]
+    },
+    {
+     "criterion": "fail closed: items with no origin and unmapped recipients are never delivered to a reviewer",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      2405
+     ]
+    },
+    {
+     "criterion": "origin collision: a co-producer is excluded (0 self-review through a second producer)",
+     "ok": true,
+     "value": [
+      0,
+      705
      ]
     },
     {
      "criterion": "control: availability-only routing assigns author set >=10%",
      "ok": true,
      "value": [
-      924,
+      1254,
+      1964
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1232,
+      500
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 inbox delivers origin-less items and unmapped recipients >=10%",
+     "ok": true,
+     "value": [
+      2405,
+      500,
+      2405
+     ]
+    },
+    {
+     "criterion": "control: first-writer-wins origin lets a second producer review its own finding (counted per collision)",
+     "ok": true,
+     "value": [
+      705,
+      705
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "collision_ctrl_self_review": 705,
+    "collision_n": 705,
+    "collision_real_self_review": 0,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 1254,
+    "ctrl_cases": 1964,
+    "ctrl_inbox_author_claims": 1232,
+    "delegator_ctrl": 1629,
+    "delegator_n": 1913,
+    "delegator_refused": 1913,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 468,
+    "inbox_nonauthor_expected": 468,
+    "noorigin_ctrl_claims": 2405,
+    "noorigin_n": 2405,
+    "noorigin_real_claims": 0,
+    "only_author_pool": 296,
+    "only_author_refused": 296,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1194,
+    "route_in_author_set": 0,
+    "route_refused": 806,
+    "route_same_model": 0,
+    "samemodel_ctrl": 1298,
+    "samemodel_n": 1298,
+    "samemodel_refused": 1298,
+    "set_mismatch": 0,
+    "unmapped_ctrl": 500,
+    "unmapped_real": 0,
+    "unrouted_ctrl_ok": 2000,
+    "unrouted_n": 2000,
+    "unrouted_refused": 3887
+   },
+   "seconds": 1.8,
+   "seed": 16096003
+  },
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096004.jsonl",
+    "sha256": "864b1b990dca5c09f32c585b525c8ce4289a69d77170856a18fe0250b7c4ab5d"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1201
+     ]
+    },
+    {
+     "criterion": "different-model-family rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure (incl. delegators) equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      309,
+      309
+     ]
+    },
+    {
+     "criterion": "approvals: exactly the routed, registered, distinct, different-model reviewer (100%)",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "approve with no routing record or an unregistered id refused (100%)",
+     "ok": true,
+     "value": [
+      3889,
+      2000
+     ]
+    },
+    {
+     "criterion": "delegator may not review its delegate (100%)",
+     "ok": true,
+     "value": [
+      1931,
+      1931
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 author set lets the delegator review >=10%",
+     "ok": true,
+     "value": [
+      1634,
+      1931
+     ]
+    },
+    {
+     "criterion": "same-model agents on another id are not reviewers (100%)",
+     "ok": true,
+     "value": [
+      1314,
+      1314
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: distinct non-author different-model sessions DO receive the item",
+     "ok": true,
+     "value": [
+      463,
+      463
+     ]
+    },
+    {
+     "criterion": "fail closed: items with no origin and unmapped recipients are never delivered to a reviewer",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      2373
+     ]
+    },
+    {
+     "criterion": "origin collision: a co-producer is excluded (0 self-review through a second producer)",
+     "ok": true,
+     "value": [
+      0,
+      687
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      1248,
+      1969
+     ]
+    },
+    {
+     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
+     "ok": true,
+     "value": [
+      1223,
+      500
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 inbox delivers origin-less items and unmapped recipients >=10%",
+     "ok": true,
+     "value": [
+      2373,
+      500,
+      2373
+     ]
+    },
+    {
+     "criterion": "control: first-writer-wins origin lets a second producer review its own finding (counted per collision)",
+     "ok": true,
+     "value": [
+      687,
+      687
+     ]
+    }
+   ],
+   "metrics": {
+    "approve_checks": 6000,
+    "approve_wrong": 0,
+    "cases": 2000,
+    "collision_ctrl_self_review": 687,
+    "collision_n": 687,
+    "collision_real_self_review": 0,
+    "create_attempts": 10000,
+    "create_refused": 10000,
+    "ctrl_assigned_author": 1248,
+    "ctrl_cases": 1969,
+    "ctrl_inbox_author_claims": 1223,
+    "delegator_ctrl": 1634,
+    "delegator_n": 1931,
+    "delegator_refused": 1931,
+    "inbox_author_claims": 0,
+    "inbox_cases": 500,
+    "inbox_nonauthor_claims": 463,
+    "inbox_nonauthor_expected": 463,
+    "noorigin_ctrl_claims": 2373,
+    "noorigin_n": 2373,
+    "noorigin_real_claims": 0,
+    "only_author_pool": 309,
+    "only_author_refused": 309,
+    "records": 2000,
+    "records_with_model": 2000,
+    "refusal_correct": 2000,
+    "route_assigned": 1201,
+    "route_in_author_set": 0,
+    "route_refused": 799,
+    "route_same_model": 0,
+    "samemodel_ctrl": 1314,
+    "samemodel_n": 1314,
+    "samemodel_refused": 1314,
+    "set_mismatch": 0,
+    "unmapped_ctrl": 500,
+    "unmapped_real": 0,
+    "unrouted_ctrl_ok": 2000,
+    "unrouted_n": 2000,
+    "unrouted_refused": 3889
+   },
+   "seconds": 1.7,
+   "seed": 16096004
+  },
+  {
+   "artifact": {
+    "n": 2001,
+    "path": "ctxrt/results/p6_routing-16096005.jsonl",
+    "sha256": "c719036d9ceb2802229d63d3180846b1bd7b0ca89b6158f06c439e829742dc4f"
+   },
+   "criteria": [
+    {
+     "criterion": "0 routings to the author set",
+     "ok": true,
+     "value": [
+      0,
+      1184
+     ]
+    },
+    {
+     "criterion": "different-model-family rule held on every assignment",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "routing equals independent expectation or typed refusal (100%)",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "author-set closure (incl. delegators) equals independent fixpoint",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "author-only pools: typed refusal, never fallback",
+     "ok": true,
+     "value": [
+      294,
+      294
+     ]
+    },
+    {
+     "criterion": "approvals: exactly the routed, registered, distinct, different-model reviewer (100%)",
+     "ok": true,
+     "value": [
+      0,
+      6000
+     ]
+    },
+    {
+     "criterion": "approve with no routing record or an unregistered id refused (100%)",
+     "ok": true,
+     "value": [
+      3887,
+      2000
+     ]
+    },
+    {
+     "criterion": "delegator may not review its delegate (100%)",
+     "ok": true,
+     "value": [
+      1913,
+      1913
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 author set lets the delegator review >=10%",
+     "ok": true,
+     "value": [
+      1621,
+      1913
+     ]
+    },
+    {
+     "criterion": "same-model agents on another id are not reviewers (100%)",
+     "ok": true,
+     "value": [
+      1291,
+      1291
+     ]
+    },
+    {
+     "criterion": "creation without author id/model refused 100%",
+     "ok": true,
+     "value": [
+      10000,
+      10000
+     ]
+    },
+    {
+     "criterion": "author model on 100% of records",
+     "ok": true,
+     "value": [
+      2000,
+      2000
+     ]
+    },
+    {
+     "criterion": "inbox: 0 author-origin claims by author-set sessions",
+     "ok": true,
+     "value": 0
+    },
+    {
+     "criterion": "canary: distinct non-author different-model sessions DO receive the item",
+     "ok": true,
+     "value": [
+      504,
+      504
+     ]
+    },
+    {
+     "criterion": "fail closed: items with no origin and unmapped recipients are never delivered to a reviewer",
+     "ok": true,
+     "value": [
+      0,
+      0,
+      2399
+     ]
+    },
+    {
+     "criterion": "origin collision: a co-producer is excluded (0 self-review through a second producer)",
+     "ok": true,
+     "value": [
+      0,
+      715
+     ]
+    },
+    {
+     "criterion": "control: availability-only routing assigns author set >=10%",
+     "ok": true,
+     "value": [
+      1230,
       1965
      ]
     },
@@ -340,292 +961,76 @@
      "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
      "ok": true,
      "value": [
-      1041,
+      1180,
       500
+     ]
+    },
+    {
+     "criterion": "control: 1d19cd8 inbox delivers origin-less items and unmapped recipients >=10%",
+     "ok": true,
+     "value": [
+      2399,
+      500,
+      2399
+     ]
+    },
+    {
+     "criterion": "control: first-writer-wins origin lets a second producer review its own finding (counted per collision)",
+     "ok": true,
+     "value": [
+      715,
+      715
      ]
     }
    ],
    "metrics": {
-    "approve_author_refused": 2110,
     "approve_checks": 6000,
     "approve_wrong": 0,
     "cases": 2000,
+    "collision_ctrl_self_review": 715,
+    "collision_n": 715,
+    "collision_real_self_review": 0,
     "create_attempts": 10000,
     "create_refused": 10000,
-    "ctrl_assigned_author": 924,
+    "ctrl_assigned_author": 1230,
     "ctrl_cases": 1965,
-    "ctrl_inbox_author_claims": 1041,
-    "ctrl_only_author_assigned": 264,
+    "ctrl_inbox_author_claims": 1180,
+    "delegator_ctrl": 1621,
+    "delegator_n": 1913,
+    "delegator_refused": 1913,
     "inbox_author_claims": 0,
     "inbox_cases": 500,
-    "inbox_nonauthor_claims": 940,
-    "inbox_nonauthor_expected": 940,
-    "only_author_pool": 276,
-    "only_author_refused": 276,
+    "inbox_nonauthor_claims": 504,
+    "inbox_nonauthor_expected": 504,
+    "noorigin_ctrl_claims": 2399,
+    "noorigin_n": 2399,
+    "noorigin_real_claims": 0,
+    "only_author_pool": 294,
+    "only_author_refused": 294,
     "records": 2000,
     "records_with_model": 2000,
     "refusal_correct": 2000,
-    "route_assigned": 1291,
+    "route_assigned": 1184,
     "route_in_author_set": 0,
-    "route_refused": 709,
+    "route_refused": 816,
     "route_same_model": 0,
-    "set_mismatch": 0
+    "samemodel_ctrl": 1291,
+    "samemodel_n": 1291,
+    "samemodel_refused": 1291,
+    "set_mismatch": 0,
+    "unmapped_ctrl": 500,
+    "unmapped_real": 0,
+    "unrouted_ctrl_ok": 2000,
+    "unrouted_n": 2000,
+    "unrouted_refused": 3887
    },
    "seconds": 1.7,
-   "seed": 16096003
-  },
-  {
-   "artifact": {
-    "n": 2001,
-    "path": "ctxrt/results/p6_routing-16096004.jsonl",
-    "sha256": "0346ed0bc0fb9b4e62679fa38eade74bb24c1f105e3ffa06d7ad7a5f24919c7d"
-   },
-   "criteria": [
-    {
-     "criterion": "0 routings to the author set",
-     "ok": true,
-     "value": [
-      0,
-      1251
-     ]
-    },
-    {
-     "criterion": "different-model rule held on every assignment",
-     "ok": true,
-     "value": 0
-    },
-    {
-     "criterion": "routing equals independent expectation or typed refusal (100%)",
-     "ok": true,
-     "value": [
-      2000,
-      2000
-     ]
-    },
-    {
-     "criterion": "author-set closure equals independent fixpoint",
-     "ok": true,
-     "value": 0
-    },
-    {
-     "criterion": "author-only pools: typed refusal, never fallback",
-     "ok": true,
-     "value": [
-      320,
-      320
-     ]
-    },
-    {
-     "criterion": "approvals: 0 by author set, all others allowed",
-     "ok": true,
-     "value": [
-      0,
-      6000
-     ]
-    },
-    {
-     "criterion": "creation without author id/model refused 100%",
-     "ok": true,
-     "value": [
-      10000,
-      10000
-     ]
-    },
-    {
-     "criterion": "author model on 100% of records",
-     "ok": true,
-     "value": [
-      2000,
-      2000
-     ]
-    },
-    {
-     "criterion": "inbox: 0 author-origin claims by author-set sessions",
-     "ok": true,
-     "value": 0
-    },
-    {
-     "criterion": "canary: non-author sessions DO receive the item",
-     "ok": true,
-     "value": [
-      946,
-      946
-     ]
-    },
-    {
-     "criterion": "control: availability-only routing assigns author set >=10%",
-     "ok": true,
-     "value": [
-      943,
-      1953
-     ]
-    },
-    {
-     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
-     "ok": true,
-     "value": [
-      1087,
-      500
-     ]
-    }
-   ],
-   "metrics": {
-    "approve_author_refused": 2159,
-    "approve_checks": 6000,
-    "approve_wrong": 0,
-    "cases": 2000,
-    "create_attempts": 10000,
-    "create_refused": 10000,
-    "ctrl_assigned_author": 943,
-    "ctrl_cases": 1953,
-    "ctrl_inbox_author_claims": 1087,
-    "ctrl_only_author_assigned": 297,
-    "inbox_author_claims": 0,
-    "inbox_cases": 500,
-    "inbox_nonauthor_claims": 946,
-    "inbox_nonauthor_expected": 946,
-    "only_author_pool": 320,
-    "only_author_refused": 320,
-    "records": 2000,
-    "records_with_model": 2000,
-    "refusal_correct": 2000,
-    "route_assigned": 1251,
-    "route_in_author_set": 0,
-    "route_refused": 749,
-    "route_same_model": 0,
-    "set_mismatch": 0
-   },
-   "seconds": 2.0,
-   "seed": 16096004
-  },
-  {
-   "artifact": {
-    "n": 2001,
-    "path": "ctxrt/results/p6_routing-16096005.jsonl",
-    "sha256": "e4d8ffcc31f42249fe7cdbc3c561e809afbe7310b81e4af5dd9732ea964228fa"
-   },
-   "criteria": [
-    {
-     "criterion": "0 routings to the author set",
-     "ok": true,
-     "value": [
-      0,
-      1249
-     ]
-    },
-    {
-     "criterion": "different-model rule held on every assignment",
-     "ok": true,
-     "value": 0
-    },
-    {
-     "criterion": "routing equals independent expectation or typed refusal (100%)",
-     "ok": true,
-     "value": [
-      2000,
-      2000
-     ]
-    },
-    {
-     "criterion": "author-set closure equals independent fixpoint",
-     "ok": true,
-     "value": 0
-    },
-    {
-     "criterion": "author-only pools: typed refusal, never fallback",
-     "ok": true,
-     "value": [
-      280,
-      280
-     ]
-    },
-    {
-     "criterion": "approvals: 0 by author set, all others allowed",
-     "ok": true,
-     "value": [
-      0,
-      6000
-     ]
-    },
-    {
-     "criterion": "creation without author id/model refused 100%",
-     "ok": true,
-     "value": [
-      10000,
-      10000
-     ]
-    },
-    {
-     "criterion": "author model on 100% of records",
-     "ok": true,
-     "value": [
-      2000,
-      2000
-     ]
-    },
-    {
-     "criterion": "inbox: 0 author-origin claims by author-set sessions",
-     "ok": true,
-     "value": 0
-    },
-    {
-     "criterion": "canary: non-author sessions DO receive the item",
-     "ok": true,
-     "value": [
-      951,
-      951
-     ]
-    },
-    {
-     "criterion": "control: availability-only routing assigns author set >=10%",
-     "ok": true,
-     "value": [
-      936,
-      1947
-     ]
-    },
-    {
-     "criterion": "control: unfiltered inbox delivers author-origin items >=10%",
-     "ok": true,
-     "value": [
-      1082,
-      500
-     ]
-    }
-   ],
-   "metrics": {
-    "approve_author_refused": 2108,
-    "approve_checks": 6000,
-    "approve_wrong": 0,
-    "cases": 2000,
-    "create_attempts": 10000,
-    "create_refused": 10000,
-    "ctrl_assigned_author": 936,
-    "ctrl_cases": 1947,
-    "ctrl_inbox_author_claims": 1082,
-    "ctrl_only_author_assigned": 256,
-    "inbox_author_claims": 0,
-    "inbox_cases": 500,
-    "inbox_nonauthor_claims": 951,
-    "inbox_nonauthor_expected": 951,
-    "only_author_pool": 280,
-    "only_author_refused": 280,
-    "records": 2000,
-    "records_with_model": 2000,
-    "refusal_correct": 2000,
-    "route_assigned": 1249,
-    "route_in_author_set": 0,
-    "route_refused": 751,
-    "route_same_model": 0,
-    "set_mismatch": 0
-   },
-   "seconds": 1.5,
    "seed": 16096005
   }
  ],
  "proof": "p6_routing",
  "stamp": {
-  "code_commit": "a19452535e459c2366098bbc0bf21f3fcb1ad2f0",
+  "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
   "dirty": false,
   "fingerprint": {
    "es": "none (in-process stubs)",
@@ -634,9 +1039,9 @@
   },
   "host": "Mac-2.lan",
   "loadavg": [
-   17.0146484375,
-   18.41943359375,
-   20.5703125
+   4.21044921875,
+   4.95166015625,
+   6.3740234375
   ],
   "machine": "macOS-26.6-arm64-arm-64bit",
   "params": {
@@ -654,21 +1059,29 @@
    "67a2842",
    "05aafb0"
   ],
-  "time_utc": "2026-11-16T02:17:03Z",
+  "time_utc": "2026-11-16T03:11:12Z",
   "timing_quiesced": false
  },
  "verdict_by_criterion": {
   "0 routings to the author set": "PASS",
-  "approvals: 0 by author set, all others allowed": "PASS",
+  "approvals: exactly the routed, registered, distinct, different-model reviewer (100%)": "PASS",
+  "approve with no routing record or an unregistered id refused (100%)": "PASS",
   "author model on 100% of records": "PASS",
   "author-only pools: typed refusal, never fallback": "PASS",
-  "author-set closure equals independent fixpoint": "PASS",
-  "canary: non-author sessions DO receive the item": "PASS",
+  "author-set closure (incl. delegators) equals independent fixpoint": "PASS",
+  "canary: distinct non-author different-model sessions DO receive the item": "PASS",
+  "control: 1d19cd8 author set lets the delegator review >=10%": "PASS",
+  "control: 1d19cd8 inbox delivers origin-less items and unmapped recipients >=10%": "PASS",
   "control: availability-only routing assigns author set >=10%": "PASS",
+  "control: first-writer-wins origin lets a second producer review its own finding (counted per collision)": "PASS",
   "control: unfiltered inbox delivers author-origin items >=10%": "PASS",
   "creation without author id/model refused 100%": "PASS",
-  "different-model rule held on every assignment": "PASS",
+  "delegator may not review its delegate (100%)": "PASS",
+  "different-model-family rule held on every assignment": "PASS",
+  "fail closed: items with no origin and unmapped recipients are never delivered to a reviewer": "PASS",
   "inbox: 0 author-origin claims by author-set sessions": "PASS",
-  "routing equals independent expectation or typed refusal (100%)": "PASS"
+  "origin collision: a co-producer is excluded (0 self-review through a second producer)": "PASS",
+  "routing equals independent expectation or typed refusal (100%)": "PASS",
+  "same-model agents on another id are not reviewers (100%)": "PASS"
  }
 }

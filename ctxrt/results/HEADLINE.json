@@ -1,0 +1,156 @@
+{
+ "final_runs": {
+  "p1_trim": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:23:51Z",
+   "loadavg": [
+    11.568359375,
+    11.21337890625,
+    8.923828125
+   ],
+   "failed_criteria": []
+  },
+  "p2_compact": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:11:30Z",
+   "loadavg": [
+    4.6884765625,
+    5.01708984375,
+    6.3642578125
+   ],
+   "failed_criteria": []
+  },
+  "p3_pull": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:17:53Z",
+   "loadavg": [
+    8.05859375,
+    7.021484375,
+    6.84814453125
+   ],
+   "failed_criteria": []
+  },
+  "p4_analyst": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:11:41Z",
+   "loadavg": [
+    5.2900390625,
+    5.1318359375,
+    6.388671875
+   ],
+   "failed_criteria": []
+  },
+  "p4_process": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:14:33Z",
+   "loadavg": [
+    7.6728515625,
+    6.13916015625,
+    6.56103515625
+   ],
+   "failed_criteria": []
+  },
+  "p5_delivery": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:36:09Z",
+   "loadavg": [
+    7.689453125,
+    9.43359375,
+    9.15771484375
+   ],
+   "failed_criteria": []
+  },
+  "p6_routing": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:11:12Z",
+   "loadavg": [
+    4.21044921875,
+    4.95166015625,
+    6.3740234375
+   ],
+   "failed_criteria": []
+  },
+  "p7_chain": {
+   "overall": "PASS",
+   "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
+   "time_utc": "2026-11-16T03:11:20Z",
+   "loadavg": [
+    4.63232421875,
+    5.01806640625,
+    6.380859375
+   ],
+   "failed_criteria": []
+  }
+ },
+ "not_proven": [
+  {
+   "proof": "p3_pull",
+   "criterion": "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)",
+   "verdict_on_stub": "PASS",
+   "status": "NOT PROVEN until the policy rescue lands"
+  },
+  {
+   "proof": "p5_delivery",
+   "criterion": "[NOT PROVEN until the policy rescue lands] control enqueue-only policy delivers tightened items >=10%",
+   "verdict_on_stub": "PASS",
+   "status": "NOT PROVEN until the policy rescue lands"
+  },
+  {
+   "proof": "p5_delivery",
+   "criterion": "[NOT PROVEN until the policy rescue lands] policy canary: untightened policy DOES deliver the same item",
+   "verdict_on_stub": "PASS",
+   "status": "NOT PROVEN until the policy rescue lands"
+  },
+  {
+   "proof": "p5_delivery",
+   "criterion": "[NOT PROVEN until the policy rescue lands] policy: dropped items carry a recorded reason",
+   "verdict_on_stub": "PASS",
+   "status": "NOT PROVEN until the policy rescue lands"
+  },
+  {
+   "proof": "p5_delivery",
+   "criterion": "[NOT PROVEN until the policy rescue lands] policy: tightened between enqueue and delivery -> 0 delivered (>=200 tightened cases)",
+   "verdict_on_stub": "PASS",
+   "status": "NOT PROVEN until the policy rescue lands"
+  }
+ ],
+ "earlier_failed_runs": [
+  {
+   "dir": "run1-p4-6cfb902",
+   "proof": "p4_analyst",
+   "overall": "FAIL",
+   "code_commit": "6cfb90246c68db288125237f8113113e43f8166b",
+   "failed_criteria": [
+    "4f synchronous control adds >= analyst delay",
+    "4f turn latency with hanging analyst <=1.5x baseline + 50ms (NOT QUIESCED)"
+   ]
+  },
+  {
+   "dir": "run1-p4process-a194525",
+   "proof": "p4_process",
+   "overall": "FAIL",
+   "code_commit": "a19452535e459c2366098bbc0bf21f3fcb1ad2f0",
+   "failed_criteria": [
+    "witness: child was alive and landing calls before the fence"
+   ]
+  },
+  {
+   "note": "earlier all-PASS runs of P1-P7 at bd92199, 6cfb902, a194525, 27838be, a0b885b are superseded by the rerun above and were judged BLOCK by research/ctxrt-review-1d19cd8.md; their files are in git history at 1d19cd8"
+  }
+ ],
+ "deviations": [
+  "P5 policy arm ran about 133 of 200 tightened cases per seed in the 1d19cd8 results (now 200 plus 50 canaries); still NOT PROVEN (policy point unrescued)",
+  "4f synchronous control was changed after it failed in 3 of 5 seeds; p4_process readiness wait added after the witness failed in 2 seeds; the 4f latency criterion is dropped (a 1 ms stub makes it meaningless)",
+  "4b C1 control was arithmetic in the first runs and was rebuilt as a real broken gateway",
+  "P1 budgets draw from 0.3 x the live turn (first runs: 0.6 x the tail); over-budget cases are flagged and still valid",
+  "recompute.py is a second implementation by the same author, not independent evidence; P4 has no raw re-judgment",
+  "one in-process SQLite connection behind a lock for all concurrency proofs except p4_process"
+ ]
+}

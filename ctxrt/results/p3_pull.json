@@ -4,17 +4,18 @@
  "per_seed": [
   {
    "artifact": {
-    "n": 201,
+    "n": 301,
     "path": "ctxrt/results/p3_pull-16096001.jsonl",
-    "sha256": "8ef7bea204c3b2024b877ef91881983e43eab48c3997ead7d5fc41b48895a7ff"
+    "sha256": "4672b0450bfeadbf56c860b42a971d8678b26f7e58a70e8e375b9f9504833c28"
    },
    "criteria": [
     {
-     "criterion": "bounded: 0 results over 6000 chars",
+     "criterion": "bounded: 0 results over 8000 UTF-8 bytes",
      "ok": true,
      "value": [
       0,
-      16131
+      18344,
+      3639
      ]
     },
     {
@@ -25,14 +26,14 @@
     {
      "criterion": "witness: forced-small-bound instance truncated at least once",
      "ok": true,
-     "value": 1146
+     "value": 1154
     },
     {
      "criterion": "opaque: 0 internal keys/session ids/fields in outputs",
      "ok": true,
      "value": [
       0,
-      16131
+      18344
      ]
     },
     {
@@ -57,14 +58,62 @@
      ]
     },
     {
-     "criterion": "pagination: snapshot cursor 0 dup/skip in all runs",
+     "criterion": "tenant scope: 0 leaks of another tenant's event via search, open, timeline",
+     "ok": true,
+     "value": [
+      0,
+      900
+     ]
+    },
+    {
+     "criterion": "control: unscoped tools leak across tenants >=10%",
+     "ok": true,
+     "value": [
+      900,
+      900
+     ]
+    },
+    {
+     "criterion": "cursor bound to its owner: another principal refused 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "control: unbound cursor accepted for another principal >=10%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "cursor survives a restart (new object, same configured secret) 100%, size bounded",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      0
+     ]
+    },
+    {
+     "criterion": "pagination: snapshot cursor (tf) 0 dup/skip in all runs",
      "ok": true,
      "value": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
+      "violations": 0,
+      "violations_overlapped": 0
+     }
+    },
+    {
+     "criterion": "pagination: snapshot cursor with an idf scorer pinned to the snapshot: 0 dup/skip",
+     "ok": true,
+     "value": {
+      "overlapped": 50,
+      "runs": 50,
       "violations": 0,
       "violations_overlapped": 0
      }
@@ -83,107 +132,133 @@
      ]
     },
     {
-     "criterion": "current_value equals decision-state fold 100%",
+     "criterion": "control C4 keyset paging with LIVE idf statistics dup_or_skip >=10% of overlapped runs",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "current_value equals decision-state fold 100%, other tenant never bleeds in",
      "ok": true,
      "value": [
       0,
-      300
+      300,
+      0
      ]
     },
     {
      "criterion": "current_value independent of search index (decision-only store)",
      "ok": true,
      "value": [
-      214,
-      214
+      208,
+      208
      ]
     },
     {
-     "criterion": "canary: retraction and contested typed",
+     "criterion": "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)",
      "ok": true,
      "value": [
-      61,
-      61,
-      25,
-      25
+      66,
+      66,
+      26,
+      26
      ]
     },
     {
      "criterion": "control C2 search-backed current_value wrong >=10%",
      "ok": true,
      "value": [
-      199,
-      214
+      192,
+      208
      ]
     }
    ],
    "metrics": {
     "chains": {
-     "asof_checked": 214,
+     "asof_checked": 208,
      "chains": 300,
-     "contested_n": 25,
-     "contested_ok": 25,
-     "ctrl_chains": 214,
-     "ctrl_wrong": 199,
-     "decision_only_n": 214,
-     "decision_only_ok": 214,
-     "missing_meta": 0,
-     "retract_n": 61,
-     "retract_ok": 61,
-     "state_wrong": 0
+     "contested_n": 26,
+     "contested_ok": 26,
+     "ctrl_chains": 208,
+     "ctrl_wrong": 192,
+     "decision_only_n": 208,
+     "decision_only_ok": 208,
+     "retract_n": 66,
+     "retract_ok": 66,
+     "state_wrong": 0,
+     "tenant_bleed": 0
     },
     "counts": {
+     "bytes_cjk_max": 3639,
+     "cur_ctrl_accepted": 300,
+     "cur_owner_probes": 300,
+     "cur_owner_refused": 300,
+     "cur_restart_n": 300,
+     "cur_restart_ok": 300,
      "forged": 1200,
      "forged_ok": 1200,
      "guard_canary_blocked": 300,
-     "huge_open": 219,
-     "huge_open_chunks": 5592,
+     "huge_open": 239,
+     "huge_open_chunks": 7629,
      "leaks": 0,
      "no_results": 1200,
      "no_results_bad": 0,
-     "outputs": 16131,
+     "outputs": 18344,
      "over_bound": 0,
+     "token_oversize": 0,
+     "tokens": 300,
      "truncated_flag_missing": 0,
-     "truncated_witness": 1146,
-     "typed_bad": 0
+     "truncated_witness": 1154,
+     "xt_ctrl_leaks": 900,
+     "xt_leaks": 0,
+     "xt_probes": 900
     },
     "pagination": {
+     "idf_snapshot": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 0,
+      "violations_overlapped": 0
+     },
+     "live_idf": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 50,
+      "violations_overlapped": 50
+     },
      "live_offset": {
-      "dup": 100,
-      "dup_or_skip_runs": 100,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 100,
       "violations_overlapped": 100
      },
      "snapshot": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 0,
       "violations_overlapped": 0
      }
     }
    },
-   "seconds": 68.7,
+   "seconds": 61.4,
    "seed": 16096001
   },
   {
    "artifact": {
-    "n": 201,
+    "n": 301,
     "path": "ctxrt/results/p3_pull-16096002.jsonl",
-    "sha256": "fc65556a39a3c75e990b2d547d76b3defd0ba5ea991e215fefb27feed31d79c2"
+    "sha256": "abff7566a1d9d6dc6c8e37091156a67d6ae32fcda53e2a6c9f0e872e1a77076d"
    },
    "criteria": [
     {
-     "criterion": "bounded: 0 results over 6000 chars",
+     "criterion": "bounded: 0 results over 8000 UTF-8 bytes",
      "ok": true,
      "value": [
       0,
-      17544
+      18141,
+      3968
      ]
     },
     {
@@ -194,14 +269,14 @@
     {
      "criterion": "witness: forced-small-bound instance truncated at least once",
      "ok": true,
-     "value": 1165
+     "value": 1174
     },
     {
      "criterion": "opaque: 0 internal keys/session ids/fields in outputs",
      "ok": true,
      "value": [
       0,
-      17544
+      18141
      ]
     },
     {
@@ -226,14 +301,62 @@
      ]
     },
     {
-     "criterion": "pagination: snapshot cursor 0 dup/skip in all runs",
+     "criterion": "tenant scope: 0 leaks of another tenant's event via search, open, timeline",
+     "ok": true,
+     "value": [
+      0,
+      900
+     ]
+    },
+    {
+     "criterion": "control: unscoped tools leak across tenants >=10%",
+     "ok": true,
+     "value": [
+      900,
+      900
+     ]
+    },
+    {
+     "criterion": "cursor bound to its owner: another principal refused 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "control: unbound cursor accepted for another principal >=10%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "cursor survives a restart (new object, same configured secret) 100%, size bounded",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      0
+     ]
+    },
+    {
+     "criterion": "pagination: snapshot cursor (tf) 0 dup/skip in all runs",
      "ok": true,
      "value": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
+      "violations": 0,
+      "violations_overlapped": 0
+     }
+    },
+    {
+     "criterion": "pagination: snapshot cursor with an idf scorer pinned to the snapshot: 0 dup/skip",
+     "ok": true,
+     "value": {
+      "overlapped": 50,
+      "runs": 50,
       "violations": 0,
       "violations_overlapped": 0
      }
@@ -247,112 +370,138 @@
      "criterion": "control C1 offset pagination dup_or_skip >=10% of overlapped runs",
      "ok": true,
      "value": [
-      99,
+      100,
       100
      ]
     },
     {
-     "criterion": "current_value equals decision-state fold 100%",
+     "criterion": "control C4 keyset paging with LIVE idf statistics dup_or_skip >=10% of overlapped runs",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "current_value equals decision-state fold 100%, other tenant never bleeds in",
      "ok": true,
      "value": [
       0,
-      300
+      300,
+      0
      ]
     },
     {
      "criterion": "current_value independent of search index (decision-only store)",
      "ok": true,
      "value": [
-      224,
-      224
+      212,
+      212
      ]
     },
     {
-     "criterion": "canary: retraction and contested typed",
+     "criterion": "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)",
      "ok": true,
      "value": [
-      54,
-      54,
-      22,
-      22
+      62,
+      62,
+      26,
+      26
      ]
     },
     {
      "criterion": "control C2 search-backed current_value wrong >=10%",
      "ok": true,
      "value": [
-      201,
-      224
+      185,
+      212
      ]
     }
    ],
    "metrics": {
     "chains": {
-     "asof_checked": 224,
+     "asof_checked": 212,
      "chains": 300,
-     "contested_n": 22,
-     "contested_ok": 22,
-     "ctrl_chains": 224,
-     "ctrl_wrong": 201,
-     "decision_only_n": 224,
-     "decision_only_ok": 224,
-     "missing_meta": 0,
-     "retract_n": 54,
-     "retract_ok": 54,
-     "state_wrong": 0
+     "contested_n": 26,
+     "contested_ok": 26,
+     "ctrl_chains": 212,
+     "ctrl_wrong": 185,
+     "decision_only_n": 212,
+     "decision_only_ok": 212,
+     "retract_n": 62,
+     "retract_ok": 62,
+     "state_wrong": 0,
+     "tenant_bleed": 0
     },
     "counts": {
+     "bytes_cjk_max": 3968,
+     "cur_ctrl_accepted": 300,
+     "cur_owner_probes": 300,
+     "cur_owner_refused": 300,
+     "cur_restart_n": 300,
+     "cur_restart_ok": 300,
      "forged": 1200,
      "forged_ok": 1200,
      "guard_canary_blocked": 300,
-     "huge_open": 252,
-     "huge_open_chunks": 6744,
+     "huge_open": 242,
+     "huge_open_chunks": 7365,
      "leaks": 0,
      "no_results": 1200,
      "no_results_bad": 0,
-     "outputs": 17544,
+     "outputs": 18141,
      "over_bound": 0,
+     "token_oversize": 0,
+     "tokens": 300,
      "truncated_flag_missing": 0,
-     "truncated_witness": 1165,
-     "typed_bad": 0
+     "truncated_witness": 1174,
+     "xt_ctrl_leaks": 900,
+     "xt_leaks": 0,
+     "xt_probes": 900
     },
     "pagination": {
+     "idf_snapshot": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 0,
+      "violations_overlapped": 0
+     },
+     "live_idf": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 50,
+      "violations_overlapped": 50
+     },
      "live_offset": {
-      "dup": 99,
-      "dup_or_skip_runs": 99,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
-      "violations": 99,
-      "violations_overlapped": 99
+      "violations": 100,
+      "violations_overlapped": 100
      },
      "snapshot": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 0,
       "violations_overlapped": 0
      }
     }
    },
-   "seconds": 74.4,
+   "seconds": 72.8,
    "seed": 16096002
   },
   {
    "artifact": {
-    "n": 201,
+    "n": 301,
     "path": "ctxrt/results/p3_pull-16096003.jsonl",
-    "sha256": "a9653f55611c173178df90667001e1bc23ae331a65bfe981e0d1416ecc15dc38"
+    "sha256": "1a5f341fbc55dc555cd6cee24c35b619ac7aaf3c060ad2333959048e65a94779"
    },
    "criteria": [
     {
-     "criterion": "bounded: 0 results over 6000 chars",
+     "criterion": "bounded: 0 results over 8000 UTF-8 bytes",
      "ok": true,
      "value": [
       0,
-      15484
+      18184,
+      3639
      ]
     },
     {
@@ -363,14 +512,14 @@
     {
      "criterion": "witness: forced-small-bound instance truncated at least once",
      "ok": true,
-     "value": 1159
+     "value": 1161
     },
     {
      "criterion": "opaque: 0 internal keys/session ids/fields in outputs",
      "ok": true,
      "value": [
       0,
-      15484
+      18184
      ]
     },
     {
@@ -395,14 +544,62 @@
      ]
     },
     {
-     "criterion": "pagination: snapshot cursor 0 dup/skip in all runs",
+     "criterion": "tenant scope: 0 leaks of another tenant's event via search, open, timeline",
+     "ok": true,
+     "value": [
+      0,
+      900
+     ]
+    },
+    {
+     "criterion": "control: unscoped tools leak across tenants >=10%",
+     "ok": true,
+     "value": [
+      900,
+      900
+     ]
+    },
+    {
+     "criterion": "cursor bound to its owner: another principal refused 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "control: unbound cursor accepted for another principal >=10%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "cursor survives a restart (new object, same configured secret) 100%, size bounded",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      0
+     ]
+    },
+    {
+     "criterion": "pagination: snapshot cursor (tf) 0 dup/skip in all runs",
      "ok": true,
      "value": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
+      "violations": 0,
+      "violations_overlapped": 0
+     }
+    },
+    {
+     "criterion": "pagination: snapshot cursor with an idf scorer pinned to the snapshot: 0 dup/skip",
+     "ok": true,
+     "value": {
+      "overlapped": 50,
+      "runs": 50,
       "violations": 0,
       "violations_overlapped": 0
      }
@@ -421,107 +618,133 @@
      ]
     },
     {
-     "criterion": "current_value equals decision-state fold 100%",
+     "criterion": "control C4 keyset paging with LIVE idf statistics dup_or_skip >=10% of overlapped runs",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "current_value equals decision-state fold 100%, other tenant never bleeds in",
      "ok": true,
      "value": [
       0,
-      300
+      300,
+      0
      ]
     },
     {
      "criterion": "current_value independent of search index (decision-only store)",
      "ok": true,
      "value": [
-      203,
-      203
+      218,
+      218
      ]
     },
     {
-     "criterion": "canary: retraction and contested typed",
+     "criterion": "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)",
      "ok": true,
      "value": [
-      62,
-      62,
-      35,
-      35
+      53,
+      53,
+      29,
+      29
      ]
     },
     {
      "criterion": "control C2 search-backed current_value wrong >=10%",
      "ok": true,
      "value": [
-      184,
-      203
+      204,
+      218
      ]
     }
    ],
    "metrics": {
     "chains": {
-     "asof_checked": 203,
+     "asof_checked": 218,
      "chains": 300,
-     "contested_n": 35,
-     "contested_ok": 35,
-     "ctrl_chains": 203,
-     "ctrl_wrong": 184,
-     "decision_only_n": 203,
-     "decision_only_ok": 203,
-     "missing_meta": 0,
-     "retract_n": 62,
-     "retract_ok": 62,
-     "state_wrong": 0
+     "contested_n": 29,
+     "contested_ok": 29,
+     "ctrl_chains": 218,
+     "ctrl_wrong": 204,
+     "decision_only_n": 218,
+     "decision_only_ok": 218,
+     "retract_n": 53,
+     "retract_ok": 53,
+     "state_wrong": 0,
+     "tenant_bleed": 0
     },
     "counts": {
+     "bytes_cjk_max": 3639,
+     "cur_ctrl_accepted": 300,
+     "cur_owner_probes": 300,
+     "cur_owner_refused": 300,
+     "cur_restart_n": 300,
+     "cur_restart_ok": 300,
      "forged": 1200,
      "forged_ok": 1200,
      "guard_canary_blocked": 300,
-     "huge_open": 190,
-     "huge_open_chunks": 4939,
+     "huge_open": 251,
+     "huge_open_chunks": 7683,
      "leaks": 0,
      "no_results": 1200,
      "no_results_bad": 0,
-     "outputs": 15484,
+     "outputs": 18184,
      "over_bound": 0,
+     "token_oversize": 0,
+     "tokens": 300,
      "truncated_flag_missing": 0,
-     "truncated_witness": 1159,
-     "typed_bad": 0
+     "truncated_witness": 1161,
+     "xt_ctrl_leaks": 900,
+     "xt_leaks": 0,
+     "xt_probes": 900
     },
     "pagination": {
+     "idf_snapshot": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 0,
+      "violations_overlapped": 0
+     },
+     "live_idf": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 50,
+      "violations_overlapped": 50
+     },
      "live_offset": {
-      "dup": 100,
-      "dup_or_skip_runs": 100,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 100,
       "violations_overlapped": 100
      },
      "snapshot": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 0,
       "violations_overlapped": 0
      }
     }
    },
-   "seconds": 60.5,
+   "seconds": 63.8,
    "seed": 16096003
   },
   {
    "artifact": {
-    "n": 201,
+    "n": 301,
     "path": "ctxrt/results/p3_pull-16096004.jsonl",
-    "sha256": "6320556b8da5b71a5c1df1f4755ccb17bc0ad27c0cc4aa429fa7a7fc8ef6034d"
+    "sha256": "cfc39c5884d871a674fa78d034059269a5694a6a1477426bc92a8c3b73654978"
    },
    "criteria": [
     {
-     "criterion": "bounded: 0 results over 6000 chars",
+     "criterion": "bounded: 0 results over 8000 UTF-8 bytes",
      "ok": true,
      "value": [
       0,
-      17052
+      17586,
+      3639
      ]
     },
     {
@@ -532,14 +755,14 @@
     {
      "criterion": "witness: forced-small-bound instance truncated at least once",
      "ok": true,
-     "value": 1168
+     "value": 1157
     },
     {
      "criterion": "opaque: 0 internal keys/session ids/fields in outputs",
      "ok": true,
      "value": [
       0,
-      17052
+      17586
      ]
     },
     {
@@ -564,14 +787,62 @@
      ]
     },
     {
-     "criterion": "pagination: snapshot cursor 0 dup/skip in all runs",
+     "criterion": "tenant scope: 0 leaks of another tenant's event via search, open, timeline",
+     "ok": true,
+     "value": [
+      0,
+      900
+     ]
+    },
+    {
+     "criterion": "control: unscoped tools leak across tenants >=10%",
+     "ok": true,
+     "value": [
+      900,
+      900
+     ]
+    },
+    {
+     "criterion": "cursor bound to its owner: another principal refused 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "control: unbound cursor accepted for another principal >=10%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "cursor survives a restart (new object, same configured secret) 100%, size bounded",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      0
+     ]
+    },
+    {
+     "criterion": "pagination: snapshot cursor (tf) 0 dup/skip in all runs",
      "ok": true,
      "value": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
+      "violations": 0,
+      "violations_overlapped": 0
+     }
+    },
+    {
+     "criterion": "pagination: snapshot cursor with an idf scorer pinned to the snapshot: 0 dup/skip",
+     "ok": true,
+     "value": {
+      "overlapped": 50,
+      "runs": 50,
       "violations": 0,
       "violations_overlapped": 0
      }
@@ -590,107 +861,133 @@
      ]
     },
     {
-     "criterion": "current_value equals decision-state fold 100%",
+     "criterion": "control C4 keyset paging with LIVE idf statistics dup_or_skip >=10% of overlapped runs",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "current_value equals decision-state fold 100%, other tenant never bleeds in",
      "ok": true,
      "value": [
       0,
-      300
+      300,
+      0
      ]
     },
     {
      "criterion": "current_value independent of search index (decision-only store)",
      "ok": true,
      "value": [
-      214,
-      214
+      219,
+      219
      ]
     },
     {
-     "criterion": "canary: retraction and contested typed",
+     "criterion": "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)",
      "ok": true,
      "value": [
-      62,
-      62,
-      24,
-      24
+      58,
+      58,
+      23,
+      23
      ]
     },
     {
      "criterion": "control C2 search-backed current_value wrong >=10%",
      "ok": true,
      "value": [
-      198,
-      214
+      195,
+      219
      ]
     }
    ],
    "metrics": {
     "chains": {
-     "asof_checked": 214,
+     "asof_checked": 219,
      "chains": 300,
-     "contested_n": 24,
-     "contested_ok": 24,
-     "ctrl_chains": 214,
-     "ctrl_wrong": 198,
-     "decision_only_n": 214,
-     "decision_only_ok": 214,
-     "missing_meta": 0,
-     "retract_n": 62,
-     "retract_ok": 62,
-     "state_wrong": 0
+     "contested_n": 23,
+     "contested_ok": 23,
+     "ctrl_chains": 219,
+     "ctrl_wrong": 195,
+     "decision_only_n": 219,
+     "decision_only_ok": 219,
+     "retract_n": 58,
+     "retract_ok": 58,
+     "state_wrong": 0,
+     "tenant_bleed": 0
     },
     "counts": {
+     "bytes_cjk_max": 3639,
+     "cur_ctrl_accepted": 300,
+     "cur_owner_probes": 300,
+     "cur_owner_refused": 300,
+     "cur_restart_n": 300,
+     "cur_restart_ok": 300,
      "forged": 1200,
      "forged_ok": 1200,
      "guard_canary_blocked": 300,
-     "huge_open": 240,
-     "huge_open_chunks": 6371,
+     "huge_open": 229,
+     "huge_open_chunks": 6937,
      "leaks": 0,
      "no_results": 1200,
      "no_results_bad": 0,
-     "outputs": 17052,
+     "outputs": 17586,
      "over_bound": 0,
+     "token_oversize": 0,
+     "tokens": 300,
      "truncated_flag_missing": 0,
-     "truncated_witness": 1168,
-     "typed_bad": 0
+     "truncated_witness": 1157,
+     "xt_ctrl_leaks": 900,
+     "xt_leaks": 0,
+     "xt_probes": 900
     },
     "pagination": {
+     "idf_snapshot": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 0,
+      "violations_overlapped": 0
+     },
+     "live_idf": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 50,
+      "violations_overlapped": 50
+     },
      "live_offset": {
-      "dup": 100,
-      "dup_or_skip_runs": 100,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 100,
       "violations_overlapped": 100
      },
      "snapshot": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 0,
       "violations_overlapped": 0
      }
     }
    },
-   "seconds": 80.8,
+   "seconds": 72.5,
    "seed": 16096004
   },
   {
    "artifact": {
-    "n": 201,
+    "n": 301,
     "path": "ctxrt/results/p3_pull-16096005.jsonl",
-    "sha256": "82e6a9dfed96b7ae7a17dbfc87100824b1d2eb6f57397ef68e4ad52a0bf53922"
+    "sha256": "da6ce14671ae821110a4c4120949c9a7c71d3edb86c30197bbcef8ada55e4a99"
    },
    "criteria": [
     {
-     "criterion": "bounded: 0 results over 6000 chars",
+     "criterion": "bounded: 0 results over 8000 UTF-8 bytes",
      "ok": true,
      "value": [
       0,
-      16351
+      18350,
+      3731
      ]
     },
     {
@@ -701,14 +998,14 @@
     {
      "criterion": "witness: forced-small-bound instance truncated at least once",
      "ok": true,
-     "value": 1170
+     "value": 1162
     },
     {
      "criterion": "opaque: 0 internal keys/session ids/fields in outputs",
      "ok": true,
      "value": [
       0,
-      16351
+      18350
      ]
     },
     {
@@ -733,14 +1030,62 @@
      ]
     },
     {
-     "criterion": "pagination: snapshot cursor 0 dup/skip in all runs",
+     "criterion": "tenant scope: 0 leaks of another tenant's event via search, open, timeline",
+     "ok": true,
+     "value": [
+      0,
+      900
+     ]
+    },
+    {
+     "criterion": "control: unscoped tools leak across tenants >=10%",
+     "ok": true,
+     "value": [
+      900,
+      900
+     ]
+    },
+    {
+     "criterion": "cursor bound to its owner: another principal refused 100%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "control: unbound cursor accepted for another principal >=10%",
+     "ok": true,
+     "value": [
+      300,
+      300
+     ]
+    },
+    {
+     "criterion": "cursor survives a restart (new object, same configured secret) 100%, size bounded",
+     "ok": true,
+     "value": [
+      300,
+      300,
+      0
+     ]
+    },
+    {
+     "criterion": "pagination: snapshot cursor (tf) 0 dup/skip in all runs",
      "ok": true,
      "value": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
+      "violations": 0,
+      "violations_overlapped": 0
+     }
+    },
+    {
+     "criterion": "pagination: snapshot cursor with an idf scorer pinned to the snapshot: 0 dup/skip",
+     "ok": true,
+     "value": {
+      "overlapped": 50,
+      "runs": 50,
       "violations": 0,
       "violations_overlapped": 0
      }
@@ -754,103 +1099,128 @@
      "criterion": "control C1 offset pagination dup_or_skip >=10% of overlapped runs",
      "ok": true,
      "value": [
-      99,
+      100,
       100
      ]
     },
     {
-     "criterion": "current_value equals decision-state fold 100%",
+     "criterion": "control C4 keyset paging with LIVE idf statistics dup_or_skip >=10% of overlapped runs",
+     "ok": true,
+     "value": [
+      50,
+      50
+     ]
+    },
+    {
+     "criterion": "current_value equals decision-state fold 100%, other tenant never bleeds in",
      "ok": true,
      "value": [
       0,
-      300
+      300,
+      0
      ]
     },
     {
      "criterion": "current_value independent of search index (decision-only store)",
      "ok": true,
      "value": [
-      224,
-      224
+      216,
+      216
      ]
     },
     {
-     "criterion": "canary: retraction and contested typed",
+     "criterion": "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)",
      "ok": true,
      "value": [
-      58,
-      58,
-      18,
-      18
+      44,
+      44,
+      40,
+      40
      ]
     },
     {
      "criterion": "control C2 search-backed current_value wrong >=10%",
      "ok": true,
      "value": [
-      211,
-      224
+      202,
+      216
      ]
     }
    ],
    "metrics": {
     "chains": {
-     "asof_checked": 224,
+     "asof_checked": 216,
      "chains": 300,
-     "contested_n": 18,
-     "contested_ok": 18,
-     "ctrl_chains": 224,
-     "ctrl_wrong": 211,
-     "decision_only_n": 224,
-     "decision_only_ok": 224,
-     "missing_meta": 0,
-     "retract_n": 58,
-     "retract_ok": 58,
-     "state_wrong": 0
+     "contested_n": 40,
+     "contested_ok": 40,
+     "ctrl_chains": 216,
+     "ctrl_wrong": 202,
+     "decision_only_n": 216,
+     "decision_only_ok": 216,
+     "retract_n": 44,
+     "retract_ok": 44,
+     "state_wrong": 0,
+     "tenant_bleed": 0
     },
     "counts": {
+     "bytes_cjk_max": 3731,
+     "cur_ctrl_accepted": 300,
+     "cur_owner_probes": 300,
+     "cur_owner_refused": 300,
+     "cur_restart_n": 300,
+     "cur_restart_ok": 300,
      "forged": 1200,
      "forged_ok": 1200,
      "guard_canary_blocked": 300,
-     "huge_open": 223,
-     "huge_open_chunks": 5707,
+     "huge_open": 250,
+     "huge_open_chunks": 7667,
      "leaks": 0,
      "no_results": 1200,
      "no_results_bad": 0,
-     "outputs": 16351,
+     "outputs": 18350,
      "over_bound": 0,
+     "token_oversize": 0,
+     "tokens": 300,
      "truncated_flag_missing": 0,
-     "truncated_witness": 1170,
-     "typed_bad": 0
+     "truncated_witness": 1162,
+     "xt_ctrl_leaks": 900,
+     "xt_leaks": 0,
+     "xt_probes": 900
     },
     "pagination": {
+     "idf_snapshot": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 0,
+      "violations_overlapped": 0
+     },
+     "live_idf": {
+      "overlapped": 50,
+      "runs": 50,
+      "violations": 50,
+      "violations_overlapped": 50
+     },
      "live_offset": {
-      "dup": 99,
-      "dup_or_skip_runs": 99,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
-      "violations": 99,
-      "violations_overlapped": 99
+      "violations": 100,
+      "violations_overlapped": 100
      },
      "snapshot": {
-      "dup": 0,
-      "dup_or_skip_runs": 0,
       "overlapped": 100,
       "runs": 100,
-      "skip": 0,
       "violations": 0,
       "violations_overlapped": 0
      }
     }
    },
-   "seconds": 65.1,
+   "seconds": 86.8,
    "seed": 16096005
   }
  ],
  "proof": "p3_pull",
  "stamp": {
-  "code_commit": "a19452535e459c2366098bbc0bf21f3fcb1ad2f0",
+  "code_commit": "7f075d45e6f80c9d026ff8142afa54a2ce34682f",
   "dirty": false,
   "fingerprint": {
    "es": "none (in-process stubs)",
@@ -859,15 +1229,17 @@
   },
   "host": "Mac-2.lan",
   "loadavg": [
-   20.11279296875,
-   19.10205078125,
-   20.76904296875
+   8.05859375,
+   7.021484375,
+   6.84814453125
   ],
   "machine": "macOS-26.6-arm64-arm-64bit",
   "params": {
    "chains": 300,
    "forged": 1000,
+   "max_bytes": 8000,
    "pagination_runs": 100,
+   "policy_dependent": "NOT PROVEN for multi-principal current_value",
    "seeds": [
     16096001,
     16096002,
@@ -882,22 +1254,29 @@
    "67a2842",
    "05aafb0"
   ],
-  "time_utc": "2026-11-16T02:17:24Z",
+  "time_utc": "2026-11-16T03:17:53Z",
   "timing_quiesced": false
  },
  "verdict_by_criterion": {
-  "bounded: 0 results over 6000 chars": "PASS",
+  "bounded: 0 results over 8000 UTF-8 bytes": "PASS",
   "bounded: truncated flag set whenever open cut text": "PASS",
-  "canary: retraction and contested typed": "PASS",
+  "canary: retraction and contested typed (single-principal states only; multi-principal NOT PROVEN)": "PASS",
   "control C1 offset pagination dup_or_skip >=10% of overlapped runs": "PASS",
   "control C2 search-backed current_value wrong >=10%": "PASS",
-  "current_value equals decision-state fold 100%": "PASS",
+  "control C4 keyset paging with LIVE idf statistics dup_or_skip >=10% of overlapped runs": "PASS",
+  "control: unbound cursor accepted for another principal >=10%": "PASS",
+  "control: unscoped tools leak across tenants >=10%": "PASS",
+  "current_value equals decision-state fold 100%, other tenant never bleeds in": "PASS",
   "current_value independent of search index (decision-only store)": "PASS",
+  "cursor bound to its owner: another principal refused 100%": "PASS",
+  "cursor survives a restart (new object, same configured secret) 100%, size bounded": "PASS",
   "forged ids 100% typed not_found": "PASS",
   "guard canary: planted real session id blocked": "PASS",
   "opaque: 0 internal keys/session ids/fields in outputs": "PASS",
   "pagination overlap floor >=30% of runs": "PASS",
-  "pagination: snapshot cursor 0 dup/skip in all runs": "PASS",
+  "pagination: snapshot cursor (tf) 0 dup/skip in all runs": "PASS",
+  "pagination: snapshot cursor with an idf scorer pinned to the snapshot: 0 dup/skip": "PASS",
+  "tenant scope: 0 leaks of another tenant's event via search, open, timeline": "PASS",
   "typed nothing found 100%": "PASS",
   "witness: forced-small-bound instance truncated at least once": "PASS"
  }
