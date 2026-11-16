@@ -95,8 +95,14 @@ class ES:
         return n_ok, bad
 
     def aliases(self, actions):
-        """Atomic alias update (all actions or none)."""
-        return self.req("POST", "/_aliases", {"actions": actions})[1]
+        """Alias update. Raises ESError on a non-2xx status AND on a 200 that reports errors:true (per-action
+        partial results; the docs allow them even though 9.5.6 fails must_exist requests as a whole)."""
+        j = self.req("POST", "/_aliases", {"actions": actions})[1]
+        if isinstance(j, dict) and j.get("errors"):
+            failed = [r for r in j.get("action_results", []) if (r.get("status") or 200) >= 300]
+            et = ((failed[0].get("error") or {}).get("type") if failed else None) or "partial_alias_update"
+            raise ESError(200, et, "_aliases errors:true")
+        return j
 
     def indices(self, pattern):
         s, j = self.req("GET", f"/_cat/indices/{pattern}", ok=(200, 404), format="json", h="index,docs.count", expand_wildcards="all")
@@ -108,5 +114,5 @@ class ES:
         return {i: set(v.get("aliases", {})) for i, v in j.items()} if s == 200 else {}
 
     def count(self, target, query):
-        s, j = self.req("POST", f"/{target}/_count", {"query": query}, ok=(200, 404), ignore_unavailable=True, allow_no_indices=True)
+        s, j = self.req("POST", f"/{target}/_count", {"query": query}, ok=(200, 404), ignore_unavailable=True, allow_no_indices=True, expand_wildcards="all")
         return j.get("count", 0) if s == 200 else 0

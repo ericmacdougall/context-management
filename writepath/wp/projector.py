@@ -1,10 +1,11 @@
 """Projector: Postgres log -> derived facts (Postgres) -> Elasticsearch families. At-least-once, idempotent, fenced.
 
-Fence: the projector takes the per-tenant 'projector' lease (epoch E) and fences ES to E before any write. Each batch
-reads its rows in a REPEATABLE READ transaction that also checks the lease epoch, so the rows and the epoch come from
-one snapshot. The batch then writes ONLY through w<E> (require_alias) and advances its cursor with lease_epoch=E
-(store-fenced). An erasure commits tombstones and the epoch bump in one transaction and moves the aliases before it
-purges, so a batch read before the tombstones can only address w<E>, which no longer exists by then.
+Fence: the projector takes the per-tenant 'projector' lease (epoch E), renews it every step (heartbeat), and fences
+ES to E before any write. Each batch reads its rows and cursor in one REPEATABLE READ snapshot, writes ONLY through
+w<E> (require_alias) and advances its cursor with lease_epoch=E (store-fenced): a projector that lost the lease can
+no longer write ES (alias gone) or Postgres (WPS01). Erasure does not touch the projector lease: rows of an erased
+subject are filtered here from the moment the subject is marked, and a batch read before that is stopped per
+document by the erasure placeholders (409), whichever arrives first (families.py).
 
 Late commits: rows are read only below pg_snapshot_xmin, so a transaction that commits after later ones is never
 skipped (top-30 row 23)."""
@@ -30,7 +31,7 @@ class LostLease(Exception):
 
 class Projector:
     def __init__(self, conn, ks: K.KeyService, es: ES, tenant, ttl_s=30.0, batch=500, hook=_noop):
-        assert "-" not in tenant
+        L.check_tenant(tenant)
         self.conn, self.ks, self.es, self.t = conn, ks, es, tenant
         self.ttl, self.batch, self.hook = ttl_s, batch, hook
         self.lease = None
@@ -90,6 +91,7 @@ class Projector:
             "select e.event_id, e.subject_id, e.ts_event, e.content_enc, e.commit_xid, e.ingest_seq from events e where e.tenant_id=%s "
             "and (e.commit_xid, e.ingest_seq) > (%s, %s) and e.commit_xid < %s and e.kind = %s "
             "and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) "
+            "and not exists (select 1 from subjects sj where sj.tenant_id=e.tenant_id and sj.subject_id=e.subject_id and sj.erased) "
             "order by e.commit_xid, e.ingest_seq limit %s", (FACT_KIND, self.batch))
         if not rows:
             self._advance("derive", xm - 1, BIG)
@@ -127,6 +129,7 @@ class Projector:
             "select e.event_id, e.session_id, e.seq, e.kind, e.subject_id, e.actor, e.trust_origin, e.ts_event, e.content_enc, e.commit_xid, e.ingest_seq "
             "from events e where e.tenant_id=%s and (e.commit_xid, e.ingest_seq) > (%s, %s) and e.commit_xid < %s "
             "and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) "
+            "and not exists (select 1 from subjects sj where sj.tenant_id=e.tenant_id and sj.subject_id=e.subject_id and sj.erased) "
             "order by e.commit_xid, e.ingest_seq limit %s", (self.batch,))
         if not rows:
             self._advance("events", xm - 1, BIG)
@@ -145,6 +148,7 @@ class Projector:
             "select f.fact_id, f.subject_id, f.body_enc, f.valid_from, f.valid_to, f.input_event_ids, f.rev, f.changed_xid from facts f where f.tenant_id=%s "
             "and (f.changed_xid, f.rev) > (%s, %s) and f.changed_xid < %s "
             "and not exists (select 1 from tombstones tb where tb.tenant_id=f.tenant_id and tb.event_id = any(f.input_event_ids)) "
+            "and not exists (select 1 from subjects sj where sj.tenant_id=f.tenant_id and sj.subject_id=f.subject_id and sj.erased) "
             "order by f.changed_xid, f.rev limit %s", (self.batch,))
         if not rows:
             self._advance("facts", xm - 1, BIG)
@@ -161,8 +165,9 @@ class Projector:
         if self.lease is None and not self.start():
             return 0
         try:
+            L.renew(self.conn, self.lease, self.ttl)          # heartbeat: a live projector never expires
             return self.derive() + self.mirror_events() + self.mirror_facts()
-        except (StaleWrite, F.StaleEpoch):
+        except (StaleWrite, F.StaleEpoch, L.LeaseLost):
             self.lease = None
             return -1
 

@@ -1,16 +1,30 @@
 """Database-time leases. Taking a lease bumps its epoch; the epoch is the fence token every effect presents.
 
-This is the ONLY module that reads the leases table (tests/test_static.py enforces it): a path that re-read the
-current epoch just before writing would defeat the fence, so the token always comes from acquire()."""
+The leases table is written only by the wp_lease_* SECURITY DEFINER functions (the app role has no privilege on it),
+and this is the only module that calls them or names the table (exp/static_check.py S1 enforces it): a path that
+re-read the current epoch just before writing would defeat the fence, so the token always comes from acquire().
+Takeover waits on a lock at most lock_timeout_ms (default 2 s); a holder stuck inside a transaction is ended by the
+role's idle_in_transaction_session_timeout (setup.py), so takeover is bounded (review F6)."""
+import re
+import threading
+import time
 import uuid
 
 import psycopg
 
 STALE = "WPS01"
+TENANT_RX = re.compile(r"^[a-z0-9_]{1,40}$")
 
 
 class LeaseLost(Exception):
     pass
+
+
+def check_tenant(t):
+    """API-boundary validation (also enforced by the tenant_t domain in every table)."""
+    if not isinstance(t, str) or not TENANT_RX.match(t):
+        raise ValueError("invalid tenant id")
+    return t
 
 
 class Lease:
@@ -28,45 +42,74 @@ def session_scope(session_id):
 PROJECTOR = "projector"
 
 
-def acquire(conn, tenant, scope, ttl_s=30.0, force=False, holder=None, lock_timeout_ms=None):
-    """Take the lease if it is free or expired (DB clock), or unconditionally with force=True (erasure, admin).
-    Returns a Lease with the NEW epoch, or None if someone else holds a live lease."""
+def acquire(conn, tenant, scope, ttl_s=30.0, force=False, holder=None, lock_timeout_ms=2000):
+    """Take the lease if it is free or expired (DB clock), or unconditionally with force=True.
+    Returns a Lease with the NEW epoch, or None if someone else holds a live lease. Raises psycopg LockNotAvailable
+    if a current holder keeps the lease row locked longer than lock_timeout_ms (callers retry: acquire_wait)."""
+    check_tenant(tenant)
     holder = holder or uuid.uuid4().hex
     with conn.transaction():
-        if lock_timeout_ms:
-            conn.execute(f"set local lock_timeout = {int(lock_timeout_ms)}")
-        conn.execute("insert into leases(tenant_id, scope) values (%s,%s) on conflict do nothing", (tenant, scope))
-        r = conn.execute(
-            "update leases set epoch = epoch + 1, holder = %s, expires_at = clock_timestamp() + make_interval(secs => %s) "
-            "where tenant_id = %s and scope = %s and (%s or expires_at is null or expires_at < clock_timestamp()) "
-            "returning epoch, clock_timestamp()", (holder, ttl_s, tenant, scope, force)).fetchone()
+        r = conn.execute("select epoch, at from wp_lease_acquire(%s::tenant_t, %s, %s, %s, %s, %s)",
+                         (tenant, scope, ttl_s, force, holder, lock_timeout_ms)).fetchone()
     return Lease(tenant, scope, r[0], holder, r[1]) if r else None
 
 
-def acquire_in_txn(conn, tenant, scope, ttl_s, holder):
-    """Forced acquisition inside the caller's transaction (erasure phase 1: tombstones and the bump commit together)."""
-    conn.execute("insert into leases(tenant_id, scope) values (%s,%s) on conflict do nothing", (tenant, scope))
-    r = conn.execute("update leases set epoch = epoch + 1, holder = %s, expires_at = clock_timestamp() + make_interval(secs => %s) "
-                     "where tenant_id = %s and scope = %s returning epoch, clock_timestamp()", (holder, ttl_s, tenant, scope)).fetchone()
-    return Lease(tenant, scope, r[0], holder, r[1])
+def acquire_wait(conn, tenant, scope, ttl_s=30.0, force=False, holder=None, deadline_s=30.0, lock_timeout_ms=2000):
+    """acquire() retried on lock timeouts until deadline_s. Returns (Lease|None, attempts)."""
+    t0, n = time.time(), 0
+    while True:
+        n += 1
+        try:
+            return acquire(conn, tenant, scope, ttl_s, force, holder, lock_timeout_ms), n
+        except psycopg.errors.LockNotAvailable:
+            if time.time() - t0 > deadline_s:
+                return None, n
 
 
 def renew(conn, lease, ttl_s=30.0):
-    r = conn.execute("update leases set expires_at = clock_timestamp() + make_interval(secs => %s) where tenant_id=%s and scope=%s and epoch=%s and holder=%s returning 1",
-                     (ttl_s, lease.tenant, lease.scope, lease.epoch, lease.holder)).fetchone()
-    if not r:
+    with conn.transaction():
+        ok = conn.execute("select wp_lease_renew(%s::tenant_t, %s, %s, %s, %s)", (lease.tenant, lease.scope, lease.epoch, lease.holder, ttl_s)).fetchone()[0]
+    if not ok:
         raise LeaseLost(lease)
 
 
 def release(conn, lease):
-    conn.execute("update leases set expires_at = clock_timestamp() - interval '1 second' where tenant_id=%s and scope=%s and epoch=%s and holder=%s",
-                 (lease.tenant, lease.scope, lease.epoch, lease.holder))
-
-
-def expire_now(conn, tenant, scope):
-    """Test/admin helper: mark a lease expired (models a holder that stalled past its TTL)."""
-    conn.execute("update leases set expires_at = clock_timestamp() - interval '1 second' where tenant_id=%s and scope=%s", (tenant, scope))
+    with conn.transaction():
+        conn.execute("select wp_lease_release(%s::tenant_t, %s, %s, %s)", (lease.tenant, lease.scope, lease.epoch, lease.holder))
 
 
 def is_stale_error(e):
     return isinstance(e, psycopg.Error) and getattr(e, "sqlstate", None) == STALE
+
+
+class Heartbeat:
+    """Renews a lease (or, with renew_fn, any claim) every period_s on its own connection until stopped.
+    `lost` is set if a renewal is refused (someone took over): the holder must stop."""
+    def __init__(self, renew_fn, period_s):
+        self.renew_fn, self.period = renew_fn, period_s
+        self.lost = threading.Event()
+        self._stop = threading.Event()
+        self.beats = 0
+        self._t = threading.Thread(target=self._run, daemon=True)
+
+    def _run(self):
+        while not self._stop.wait(self.period):
+            try:
+                self.renew_fn()
+                self.beats += 1
+            except Exception:  # noqa: BLE001
+                self.lost.set()
+                return
+
+    def __enter__(self):
+        self._t.start()
+        return self
+
+    def __exit__(self, *a):
+        self._stop.set()
+        self._t.join(5)
+
+
+def lease_heartbeat(conn_factory, lease, ttl_s, period_s=None):
+    c = conn_factory()
+    return Heartbeat(lambda: renew(c, lease, ttl_s), period_s or ttl_s / 3)

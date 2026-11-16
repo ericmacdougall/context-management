@@ -1,51 +1,59 @@
-"""Elasticsearch projection families and the epoch-bound write aliases that fence them.
+"""Elasticsearch projection families, the epoch-bound write aliases that fence the projector, and the per-document
+erasure fence (placeholders).
 
 Per tenant t and registered family f (FAMILIES is the single list; registry.py and the erasure iterate it):
-  base index      wp16096-<t>-<f>-base             first index, fixed name, so concurrent creation is create-once
-  rebuilt index   wp16096-<t>-<f>-e<E>-<nonce>     made by a rebuild under projector epoch E
-  read alias      wp16096-<t>-<f>
+  index           wp16096-<t>-<f>-base             one index, fixed name, so concurrent creation is create-once
+  read alias      wp16096-<t>-<f>                  is_write_index=false: nothing writes through it
   write alias     wp16096-<t>-<f>-w<E>             exists ONLY for the current projector epoch E
-  staging alias   wp16096-<t>-<f>-s<E>             attached to a rebuild index only under a successful CAS
+  erase alias     wp16096-<t>-<f>-x                placeholders only (erasure)
 
-Every document write uses require_alias=true (es.bulk_fenced), so it can only land through w<E> or s<E>.
-fence_es(E) is an alias compare-and-set: it observes the family's write aliases, refuses if any is newer than E, and
-in ONE atomic _aliases request removes each observed alias with must_exist=true and adds w<E>. If anything changed
-since the observation the request fails as a whole (verified live: exp/es_semantics.py P3). Hence once a holder of
-epoch E' > E has fenced, no write by a holder of E can land in any index the readers see.
+Projector fence: every document write uses require_alias=true (es.bulk_fenced), so it can only land through an
+alias. fence_es(E) is an alias compare-and-set: it observes the family's write aliases, refuses if any is newer than
+E, and in ONE atomic _aliases request removes each observed alias with must_exist=true and adds w<E> (probe P3: the
+request fails as a whole if anything changed; es.aliases also raises on errors:true).
 
-Docs: https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-indices-update-aliases and
-https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-bulk (read 2026-11-15; behaviour confirmed by
-the live probe on 9.5.6 Basic, not only by the docs: the docs say partial per-action results are possible)."""
+Erasure fence (per document, no time bound, no projector lease): for every erased event id (from Postgres
+tombstones, never from what ES happens to contain) a content-free placeholder is written at the same _id with
+external version 2^62. Event docs are written with op_type=create and fact docs with external_gte versions far
+below 2^62, so a stale projector write that arrives later gets 409 in either order (probes P9-P11), and a write that
+arrived earlier is overwritten. The overwritten bytes stay in soft-deleted segments until the peer-recovery
+retention lease advances; expunge() waits for that and then force-merges with only_expunge_deletes (probe P12).
+
+Docs (read 2026-11-15/16): https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-indices-update-aliases ,
+https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-bulk ,
+https://www.elastic.co/docs/reference/elasticsearch/index-settings/merge (expunge_deletes_allowed) ,
+https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-indices-forcemerge (only_expunge_deletes).
+Behaviour is taken from the live probes on 9.5.6 Basic (exp/es_semantics.py), not only from the docs."""
 import re
-import uuid
+import time
 
 from . import config
 from .es import ES, ESError
 
 P = config.INDEX_PREFIX
-SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0}
+SETTINGS = {"number_of_shards": 1, "number_of_replicas": 0, "index.merge.policy.expunge_deletes_allowed": 0}
+PLACEHOLDER_VERSION = 2 ** 62
 
 FAMILIES = {
     "events": {"mappings": {"properties": {
         "event_id": {"type": "keyword"}, "session_id": {"type": "keyword"}, "seq": {"type": "long"}, "kind": {"type": "keyword"},
         "subject_id": {"type": "keyword"}, "actor": {"type": "keyword"}, "trust_origin": {"type": "keyword"},
-        "ts_event": {"type": "date"}, "content": {"type": "text"}}}},
+        "ts_event": {"type": "date"}, "content": {"type": "text"}, "erased": {"type": "boolean"}}}},
     "facts": {"mappings": {"properties": {
         "fact_id": {"type": "keyword"}, "subject_id": {"type": "keyword"}, "entity": {"type": "keyword"}, "attribute": {"type": "keyword"},
         "value": {"type": "text", "fields": {"raw": {"type": "keyword"}}}, "valid_from": {"type": "date"}, "valid_to": {"type": "date"},
-        "input_event_ids": {"type": "keyword"}, "rev": {"type": "long"}}}},
+        "input_event_ids": {"type": "keyword"}, "rev": {"type": "long"}, "erased": {"type": "boolean"}}}},
 }
 
 
 def read_alias(t, f):       return f"{P}{t}-{f}"
 def write_alias(t, f, e):   return f"{P}{t}-{f}-w{e}"
-def stage_alias(t, f, e):   return f"{P}{t}-{f}-s{e}"
+def erase_alias(t, f):      return f"{P}{t}-{f}-x"
 def base_index(t, f):       return f"{P}{t}-{f}-base"
-def rebuilt_index(t, f, e): return f"{P}{t}-{f}-e{e}-{uuid.uuid4().hex[:8]}"
 
 
 def family_index_re(t, f):
-    return re.compile(rf"^{re.escape(P + t)}-{re.escape(f)}-(base|e\d+-[0-9a-f]{{8}})$")
+    return re.compile(rf"^{re.escape(P + t)}-{re.escape(f)}-base$")
 
 
 class StaleEpoch(Exception):
@@ -59,17 +67,17 @@ def _family_state(es: ES, t, f):
 
 
 def _walias_epochs(t, f, aliases):
-    """[(alias, epoch)] for the write (w) and staging (s) aliases among `aliases`."""
-    rx = re.compile(rf"^{re.escape(P + t)}-{re.escape(f)}-[ws](\d+)$")
+    rx = re.compile(rf"^{re.escape(P + t)}-{re.escape(f)}-w(\d+)$")
     return [(a, int(m.group(1))) for a in aliases for m in [rx.match(a)] if m]
 
 
 def ensure_family(es: ES, t, f):
-    """Create the base index once (fixed name: a second creator gets resource_already_exists and moves on)."""
+    """Create the index once (fixed name: a second creator gets resource_already_exists and moves on)."""
     if _family_state(es, t, f):
         return
     try:
-        es.req("PUT", f"/{base_index(t, f)}", {"settings": SETTINGS, "mappings": FAMILIES[f]["mappings"], "aliases": {read_alias(t, f): {}}})
+        es.req("PUT", f"/{base_index(t, f)}", {"settings": SETTINGS, "mappings": FAMILIES[f]["mappings"],
+                                                "aliases": {read_alias(t, f): {"is_write_index": False}, erase_alias(t, f): {"is_write_index": True}}})
     except ESError as e:
         if e.etype != "resource_already_exists_exception":
             raise
@@ -82,17 +90,17 @@ def fence_es(es: ES, t, epoch):
     for f in FAMILIES:
         ensure_family(es, t, f)
         st = _family_state(es, t, f)
-        live = [i for i, al in st.items() if read_alias(t, f) in al]
-        if len(live) != 1:
-            raise RuntimeError(f"family {f}: read alias on {len(live)} indices")
-        seen = [(i, a, e) for i, al in st.items() for a, e in _walias_epochs(t, f, al)]
-        if any(e > epoch for _, _, e in seen):
-            raise StaleEpoch(f"{f}: newer write/staging alias than e{epoch}")
-        if any(a == write_alias(t, f, epoch) for _, a, _ in seen):
-            continue                                     # already fenced at this epoch
-        for i, a, e in seen:                             # older write AND staging aliases go, each as a CAS
-            actions.append({"remove": {"index": i, "alias": a, "must_exist": True}})
-        actions.append({"add": {"index": live[0], "alias": write_alias(t, f, epoch), "is_write_index": True}})
+        if len(st) != 1:
+            raise RuntimeError(f"family {f}: {len(st)} indices")
+        (idx, als), = st.items()
+        seen = _walias_epochs(t, f, als)
+        if any(e > epoch for _, e in seen):
+            raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
+        if any(e == epoch for _, e in seen):
+            continue
+        for a, _ in seen:
+            actions.append({"remove": {"index": idx, "alias": a, "must_exist": True}})
+        actions.append({"add": {"index": idx, "alias": write_alias(t, f, epoch), "is_write_index": True}})
     if not actions:
         return
     try:
@@ -101,17 +109,48 @@ def fence_es(es: ES, t, epoch):
         raise StaleEpoch(f"alias CAS failed: {e.etype}") from None
 
 
-def assert_epoch(es: ES, t, f, epoch, extra_actions=()):
-    """CAS that w<epoch> still exists (remove+re-add it in one request) together with extra_actions."""
-    st = _family_state(es, t, f)
-    live = [i for i, al in st.items() if read_alias(t, f) in al]
-    acts = [{"remove": {"index": live[0], "alias": write_alias(t, f, epoch), "must_exist": True}},
-            {"add": {"index": live[0], "alias": write_alias(t, f, epoch), "is_write_index": True}}] + list(extra_actions)
-    try:
-        es.aliases(acts)
-    except ESError as e:
-        raise StaleEpoch(f"epoch CAS failed: {e.etype}") from None
-    return live[0], st
+def place_placeholders(es: ES, t, f, ids, batch=1000):
+    """Content-free placeholders at the given _ids (version 2^62). Returns (written, already_placeholders)."""
+    ensure_family(es, t, f)
+    w = same = 0
+    for i in range(0, len(ids), batch):
+        acts = [({"index": {"_index": erase_alias(t, f), "_id": d, "version": PLACEHOLDER_VERSION, "version_type": "external"}}, {"erased": True})
+                for d in ids[i:i + batch]]
+        ok, bad = es.bulk_fenced(acts)
+        hard = [b for b in bad if b[1] != 409]            # 409: a placeholder is already there (idempotent rerun)
+        if hard:
+            raise ESError(hard[0][1], hard[0][2], f"placeholders {f}")
+        w += ok
+        same += len(bad)
+    return w, same
+
+
+def expunge(es: ES, t, wait_s=180.0, poll_s=2.0):
+    """Remove overwritten documents' bytes from the tenant's family indices: refresh, flush, wait until every
+    retention lease retains nothing at or below the current max_seq_no, then _forcemerge?only_expunge_deletes and
+    flush. Returns {index: {'lease_wait_s', 'docs_deleted_after'}}; raises TimeoutError if the leases do not advance."""
+    out = {}
+    for f in FAMILIES:
+        idx = base_index(t, f)
+        es.req("POST", f"/{idx}/_refresh")
+        es.req("POST", f"/{idx}/_flush")
+        j = es.req("GET", f"/{idx}/_stats", level="shards")[1]
+        target = max(sh["seq_no"]["max_seq_no"] for copies in j["indices"][idx]["shards"].values() for sh in copies)
+        t0 = time.time()
+        while True:
+            j = es.req("GET", f"/{idx}/_stats", level="shards")[1]
+            leases = [l["retaining_seq_no"] for copies in j["indices"][idx]["shards"].values() for sh in copies for l in sh["retention_leases"]["leases"]]
+            if all(r > target for r in leases):
+                break
+            if time.time() - t0 > wait_s:
+                raise TimeoutError(f"retention leases did not pass seq {target} on {idx}")
+            time.sleep(poll_s)
+        waited = round(time.time() - t0, 1)
+        es.req("POST", f"/{idx}/_forcemerge", only_expunge_deletes=True)
+        es.req("POST", f"/{idx}/_flush")
+        st = es.req("GET", f"/{idx}/_stats/docs")[1]["_all"]["primaries"]["docs"]
+        out[idx] = {"lease_wait_s": waited, "docs_deleted_after": st["deleted"], "target_seq": target}
+    return out
 
 
 def tenant_indices(es: ES, t):

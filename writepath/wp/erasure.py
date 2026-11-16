@@ -1,206 +1,179 @@
-"""Erasure of one data subject (speaker provenance: events the subject produced and everything derived from them).
+"""Erasure of one data subject: speaker provenance (the subject's own events and everything derived from them).
 
-  request()  durable record first (state 'requested'), before any work: an outage later cannot lose the request.
-  phase 1    ONE transaction: subject fence FOR UPDATE + erased, tombstones, delete derived rows in every registered
-             Postgres store, and take the projector lease by force (epoch E). Tombstones and the epoch bump commit
-             together, so every reader snapshot without the tombstones carries an epoch < E.
-  fence      alias CAS to E for every family (stale writers can no longer land anywhere readers look).
-  purge      per registered family: fresh index, staging alias attached under a CAS on w<E>, survivors read AFTER the
-             fence, bulk through the staging alias, then one atomic request that deletes every other index of the family,
-             removes the staging alias (must_exist: fails if a newer holder fenced) and points read and write aliases
-             at the new index.
-  keys       per-subject key destroyed (independent of the purge; an outage here does not block it).
-  verify     a count per verifiable registered store; the store accepts state 'done' only if every count is 0.
-Readers filter tombstones unconditionally, so nothing erased is served while a job is open or after it fails."""
-import json
+  request()   durable record first; one open job per (tenant, subject) (a second request returns it: same subject
+              serialises, different subjects run concurrently and independently).
+  claim       a runner claims the job (claim_epoch+1) and a heartbeat renews the claim; a crashed runner's job is
+              picked up by sweep() after the claim expires.
+  mark        one short transaction: the subject row FOR UPDATE, erased=true. From its commit every content insert
+              for the subject is refused by the store (WPS03) and every reader and the projector filter the subject.
+  cascade     bounded batches (own transactions): tombstones for the subject's events, delete derived facts, analyst
+              jobs, inbox and quarantine rows. No long transaction, so no long lock hold and no long xmin hold.
+  placeholders  for every tombstoned event id (paged from Postgres, never from ES): a content-free placeholder at the
+              event's _id and at the derived fact's _id (external version 2^62). A stale projector write that arrives
+              later is refused by Elasticsearch (409), one that arrived earlier is overwritten (families.py).
+              The projector lease is NOT taken: projection of every other subject continues.
+  keys        the subject key is destroyed (key service).
+  complete    the VERIFIER (role wp_verifier, own connections, own ES client) runs the expunge, counts the
+              cross-store residue itself, runs the unregistered-store gate, and calls wp_erasure_complete, which
+              recomputes every Postgres count in the store and writes 'done' only if all are zero.
+Every step is idempotent; any exception leaves the job open with its error TYPE recorded; the claim is always
+released; sweep() isolates jobs from each other."""
 import time
 import uuid
 
 import psycopg
 
-from . import families as F, keys as K, lease as L, registry as R
-from .es import ESError
-from .projector import decode_events, decode_facts, to_actions
+from . import db, families as F, keys as K, lease as L
+from .verifier import Verifier, SCOPE
 
 
 def _noop(_n, _data=None):
     pass
 
 
+class ClaimLost(Exception):
+    pass
+
+
 def request(conn, tenant, subject_id):
-    jid = uuid.uuid4().hex[:16]
-    conn.execute("insert into erasure_jobs(job_id, tenant_id, subject_id, lease_scope, lease_epoch) values (%s,%s,%s,%s,0)", (jid, tenant, subject_id, L.PROJECTOR))
-    return jid
+    """Job id of the open erasure job for (tenant, subject), creating it if none is open."""
+    L.check_tenant(tenant)
+    for _ in range(3):
+        r = conn.execute("select job_id from erasure_jobs where tenant_id=%s and subject_id=%s and state <> 'done'", (tenant, subject_id)).fetchone()
+        if r:
+            return r[0]
+        jid = uuid.uuid4().hex[:16]
+        try:
+            conn.execute("insert into erasure_jobs(job_id, tenant_id, subject_id) values (%s,%s,%s)", (jid, tenant, subject_id))
+            return jid
+        except psycopg.errors.UniqueViolation:
+            continue
+    raise RuntimeError("could not create or find the open job")
+
+
+def _claim(conn, jid, ttl_s):
+    r = conn.execute("update erasure_jobs set claim_epoch = claim_epoch + 1, claim_expires = clock_timestamp() + make_interval(secs => %s), "
+                     "attempts = attempts + 1, updated_at = clock_timestamp() where job_id = %s and state <> 'done' "
+                     "and (claim_expires is null or claim_expires < clock_timestamp()) returning claim_epoch", (ttl_s, jid)).fetchone()
+    return r[0] if r else None
+
+
+def _renew(conn, jid, ce, ttl_s):
+    r = conn.execute("update erasure_jobs set claim_expires = clock_timestamp() + make_interval(secs => %s) where job_id=%s and claim_epoch=%s "
+                     "and state <> 'done' returning 1", (ttl_s, jid, ce)).fetchone()
+    if not r:
+        raise ClaimLost(jid)
+
+
+def _release(conn, jid, ce, err=None):
+    conn.execute("update erasure_jobs set claim_expires = clock_timestamp() - interval '1 second', last_error_type = %s, updated_at = clock_timestamp() "
+                 "where job_id=%s and claim_epoch=%s and state <> 'done'", (err, jid, ce))
+
+
+def _state(conn, jid, ce, state):
+    r = conn.execute("update erasure_jobs set state=%s, updated_at=clock_timestamp() where job_id=%s and claim_epoch=%s and state <> 'done' returning 1",
+                     (state, jid, ce)).fetchone()
+    if not r:
+        raise ClaimLost(jid)
 
 
 def _job(conn, jid):
-    r = conn.execute("select tenant_id, subject_id, state, event_ids from erasure_jobs where job_id=%s", (jid,)).fetchone()
-    return dict(zip(("tenant", "subject", "state", "event_ids"), r))
+    r = conn.execute("select tenant_id, subject_id, state from erasure_jobs where job_id=%s", (jid,)).fetchone()
+    return dict(zip(("tenant", "subject", "state"), r))
 
 
-def _cascade(conn, t, s, ids):
-    """Idempotent deletes of the subject's derived rows in every registered Postgres content store."""
-    return {
-        "facts": conn.execute("delete from facts where tenant_id=%s and (input_event_ids && %s or subject_id=%s)", (t, ids, s)).rowcount,
-        "inbox": conn.execute("delete from inbox where tenant_id=%s and subject_id=%s", (t, s)).rowcount,
-        "analyst_jobs": conn.execute("delete from analyst_jobs where tenant_id=%s and input_event_ids && %s", (t, ids)).rowcount,
-        "quarantine": conn.execute("delete from quarantine where tenant_id=%s and subject_id=%s", (t, s)).rowcount,
-    }
+def tombstoned_ids(conn, t, s, page=10000):
+    """Yield pages of (event_id, kind) for the subject's tombstoned events, keyset-paged (bounded memory)."""
+    last = ""
+    while True:
+        rows = conn.execute("select tb.event_id, e.kind from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id "
+                            "where tb.tenant_id=%s and tb.subject_id=%s and tb.event_id > %s order by tb.event_id limit %s", (t, s, last, page)).fetchall()
+        if not rows:
+            return
+        yield rows
+        last = rows[-1][0]
 
 
-def phase1(conn, jid, ttl_s, hook=_noop):
-    """One transaction. The projector-lease bump comes FIRST, so any fenced writer racing this transaction blocks on
-    the lease row and then sees the new epoch; content inserts for the subject block on the subject row and then see
-    erased=true (subject_not_erased trigger). Then tombstones and the cascade."""
-    j = _job(conn, jid)
-    t, s = j["tenant"], j["subject"]
-    with conn.transaction():
-        conn.execute("select 1 from erasure_jobs where job_id=%s for update", (jid,))
-        lease = L.acquire_in_txn(conn, t, L.PROJECTOR, ttl_s, holder="erasure:" + jid)
-        conn.execute("insert into subjects(tenant_id, subject_id) values (%s,%s) on conflict do nothing", (t, s))
-        conn.execute("select 1 from subjects where tenant_id=%s and subject_id=%s for update", (t, s))
-        conn.execute("update subjects set erased=true where tenant_id=%s and subject_id=%s", (t, s))
-        ids = [r[0] for r in conn.execute("select event_id from events where tenant_id=%s and subject_id=%s order by event_id", (t, s)).fetchall()]
-        conn.execute("insert into tombstones(tenant_id, event_id, subject_id, job_id) select %s, e, %s, %s from unnest(%s::text[]) e on conflict do nothing", (t, s, jid, ids))
-        counts = _cascade(conn, t, s, ids)
-        conn.execute("update erasure_jobs set state='fenced', event_ids=%s, attempts=attempts+1, lease_scope=%s, lease_epoch=%s, updated_at=clock_timestamp() where job_id=%s",
-                     (ids, L.PROJECTOR, lease.epoch, jid))
-        hook("phase1_before_commit")
-    return lease, ids, counts
-
-
-def _set(conn, jid, lease, **kv):
-    cols = ", ".join(f"{k}=%s" for k in kv)
-    with conn.transaction():
-        conn.execute(f"update erasure_jobs set {cols}, lease_scope=%s, lease_epoch=%s, updated_at=clock_timestamp() where job_id=%s",
-                     tuple(json.dumps(v) if isinstance(v, dict) else v for v in kv.values()) + (L.PROJECTOR, lease.epoch, jid))
-
-
-def _survivors(conn, t, f):
-    with conn.transaction():
-        conn.execute("set transaction isolation level repeatable read")
-        if f == "events":
-            return conn.execute(
-                "select e.event_id, e.session_id, e.seq, e.kind, e.subject_id, e.actor, e.trust_origin, e.ts_event, e.content_enc from events e where e.tenant_id=%s "
-                "and not exists (select 1 from tombstones tb where tb.tenant_id=e.tenant_id and tb.event_id=e.event_id) "
-                "and not exists (select 1 from subjects sj where sj.tenant_id=e.tenant_id and sj.subject_id=e.subject_id and sj.erased) order by e.ingest_seq", (t,)).fetchall()
-        return conn.execute(
-            "select f.fact_id, f.subject_id, f.body_enc, f.valid_from, f.valid_to, f.input_event_ids, f.rev from facts f where f.tenant_id=%s "
-            "and not exists (select 1 from tombstones tb where tb.tenant_id=f.tenant_id and tb.event_id = any(f.input_event_ids)) order by f.rev", (t,)).fetchall()
-
-
-def rebuild_family(conn, ks, es, t, f, epoch, hook=_noop):
-    new = F.rebuilt_index(t, f, epoch)
-    es.req("PUT", f"/{new}", {"settings": F.SETTINGS, "mappings": F.FAMILIES[f]["mappings"]})
-    try:
-        F.assert_epoch(es, t, f, epoch, [{"add": {"index": new, "alias": F.stage_alias(t, f, epoch)}}])
-    except F.StaleEpoch:
-        es.req("DELETE", f"/{new}", ok=(200, 404))
-        raise
-    rows = _survivors(conn, t, f)
-    docs = decode_events(ks, t, rows) if f == "events" else decode_facts(ks, t, rows)
-    hook(f"rebuild_after_read:{f}", rows)
-    acts = to_actions(docs, F.stage_alias(t, f, epoch))
-    for i in range(0, len(acts), 500):
-        ok, bad = es.bulk_fenced(acts[i:i + 500])
-        hard = [b for b in bad if b[1] != 409]
-        if hard:
-            raise F.StaleEpoch(f"rebuild {f}: {len(hard)} refused ({hard[0][2]})")
-    es.req("POST", f"/{new}/_refresh")
-    hook(f"rebuild_before_swap:{f}")
-    others = [i for i in F._family_state(es, t, f) if i != new]
-    actions = [{"remove_index": {"index": i}} for i in others] + [
-        {"remove": {"index": new, "alias": F.stage_alias(t, f, epoch), "must_exist": True}},
-        {"add": {"index": new, "alias": F.write_alias(t, f, epoch), "is_write_index": True}},
-        {"add": {"index": new, "alias": F.read_alias(t, f)}}]
-    try:
-        es.aliases(actions)
-    except ESError as e:
-        raise F.StaleEpoch(f"swap {f} refused: {e.etype}") from None
-    return {"family": f, "new_index": new, "docs": len(acts), "deleted_indices": len(others)}
-
-
-def verify(conn, kconn_ks, es, t, s, ids):
-    ks = kconn_ks
-    out = {}
-    key_present = ks.key_exists(t, s)
-    for st in R.verifiable():
-        if st.name == "pg:events":
-            n = conn.execute("select count(*) from events where tenant_id=%s and subject_id=%s", (t, s)).fetchone()[0]
-            out[st.name] = n if key_present else 0          # ciphertext without a key is not recoverable content
-        elif st.name == "pg:quarantine":
-            out[st.name] = conn.execute("select count(*) from quarantine where tenant_id=%s and subject_id=%s", (t, s)).fetchone()[0]
-        elif st.name == "pg:inbox":
-            out[st.name] = conn.execute("select count(*) from inbox where tenant_id=%s and subject_id=%s", (t, s)).fetchone()[0]
-        elif st.name == "pg:analyst_jobs":
-            out[st.name] = conn.execute("select count(*) from analyst_jobs where tenant_id=%s and input_event_ids && %s", (t, ids)).fetchone()[0]
-        elif st.name == "pg:facts":
-            out[st.name] = conn.execute("select count(*) from facts where tenant_id=%s and (input_event_ids && %s or subject_id=%s)", (t, ids, s)).fetchone()[0]
-        elif st.name == "keys:subject_keys":
-            out[st.name] = int(key_present)
-        elif st.kind == "es":
-            q = {"bool": {"should": [{"term": {"subject_id": s}}, {"terms": {"event_id": ids or ["-"]}}, {"terms": {"input_event_ids": ids or ["-"]}}]}}
-            es.req("POST", f"/{F.P}{t}-{st.where}-*/_refresh", ok=(200, 404), expand_wildcards="all", ignore_unavailable=True, allow_no_indices=True)
-            out[st.name] = es.count(f"{F.P}{t}-{st.where}-*", q)   # every index of the family, aliased or orphaned
-        else:
-            raise RuntimeError(f"no verifier for registered store {st.name}")
-    return out
-
-
-def run(conn, ks: K.KeyService, es, jid, ttl_s=120.0, hook=_noop, destroy_key=True):
-    """Drive a job to 'done' or leave it open with its residue recorded. Returns the receipt."""
+def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, batch=5000, destroy_key=True, placeholders=True):
+    """Drive one job as far as it goes. Never raises: returns a receipt with done and error_type."""
     t0 = time.time()
     j = _job(conn, jid)
     t, s = j["tenant"], j["subject"]
-    if j["state"] == "requested":
-        lease, ids, p1 = phase1(conn, jid, ttl_s, hook)
-    else:                                                    # resume (sweeper): take the lease again under a new epoch
-        lease = L.acquire(conn, t, L.PROJECTOR, ttl_s, force=True, holder="erasure:" + jid)
-        ids = j["event_ids"]
-        with conn.transaction():
-            p1 = _cascade(conn, t, s, ids)
-        _set(conn, jid, lease, attempts=_attempts(conn, jid) + 1)
-    hook("after_phase1")
-    rebuilt, err = [], None
+    rec = {"job_id": jid, "tenant": t, "subject": s, "done": False, "error_type": None, "steps": {}}
+    if j["state"] == "done":
+        rec["done"] = True
+        return rec
+    ce = _claim(conn, jid, ttl_s)
+    if ce is None:
+        rec["error_type"] = "claimed_elsewhere"
+        return rec
+    hconn = db.connect(application_name="wp-erasure-hb")
+    hb = L.Heartbeat(lambda: _renew(hconn, jid, ce, ttl_s), ttl_s / 3)
+    err = None
     try:
-        F.fence_es(es, t, lease.epoch)
-        hook("after_fence")
-        for f in F.FAMILIES:
-            rebuilt.append(rebuild_family(conn, ks, es, t, f, lease.epoch, hook))
-        _set(conn, jid, lease, state="purged")
-    except (F.StaleEpoch, ESError, psycopg.Error) as e:
+        with hb:
+            ts = time.time()
+            conn.execute("select wp_erasure_mark(%s)", (jid,))
+            rec["steps"]["mark_s"] = round(time.time() - ts, 3)
+            hook("after_mark")
+            ts, n, batches = time.time(), 1, 0
+            while n:
+                if hb.lost.is_set():
+                    raise ClaimLost(jid)
+                n = conn.execute("select wp_erasure_cascade(%s, %s)", (jid, batch)).fetchone()[0]
+                batches += 1
+            rec["steps"].update(cascade_s=round(time.time() - ts, 3), cascade_batches=batches)
+            hook("after_cascade")
+            ts, ev_n, fa_n = time.time(), 0, 0
+            if placeholders:
+                for page in tombstoned_ids(conn, t, s):
+                    if hb.lost.is_set():
+                        raise ClaimLost(jid)
+                    F.place_placeholders(es, t, "events", [e for e, _ in page])
+                    F.place_placeholders(es, t, "facts", [K.derive_id(t, e) for e, k in page if k == "fact"])
+                    ev_n += len(page)
+                    fa_n += sum(1 for _, k in page if k == "fact")
+            rec["steps"].update(placeholders_s=round(time.time() - ts, 3), placeholder_events=ev_n, placeholder_facts=fa_n)
+            hook("after_placeholders")
+            _state(conn, jid, ce, "purged")
+            if destroy_key:
+                ts = time.time()
+                ks.destroy(t, s)
+                rec["steps"]["key_destroy_s"] = round(time.time() - ts, 3)
+            _state(conn, jid, ce, "keys_destroyed")
+            hook("before_complete")
+            ts = time.time()
+            v = verifier or Verifier()
+            res = v.complete(jid)
+            rec["steps"]["verify_s"] = round(time.time() - ts, 3)
+            rec["steps"]["expunge"] = res.get("expunge")
+            rec.update(done=bool(res["done"]), verify=res.get("verify"), residue=res.get("residue"), scope=SCOPE)
+            if not res["done"]:
+                err = "residue"
+    except Exception as e:  # noqa: BLE001  (any failure leaves the job open with its type recorded)
         err = type(e).__name__
-    if destroy_key:
+    finally:
         try:
-            ks.destroy(t, s)
-            if err is None:
-                _set(conn, jid, lease, state="keys_destroyed")
-        except Exception as e:  # noqa: BLE001
-            err = err or type(e).__name__
-    v = verify(conn, ks, es, t, s, ids)
-    done = False
-    try:
-        _set(conn, jid, lease, state="done", verify=v)
-        done = True
-    except psycopg.Error as e:
-        err = err or getattr(e, "sqlstate", type(e).__name__)
-        try:
-            _set(conn, jid, lease, verify=v, last_error_type=err)
+            _release(conn, jid, ce, err)
         except psycopg.Error:
             pass
-    L.release(conn, lease)
-    return {"job_id": jid, "tenant": t, "subject": s, "done": done, "epoch": lease.epoch, "events": len(ids), "phase1_deleted": p1,
-            "rebuilt": rebuilt, "verify": v, "error_type": err, "seconds": round(time.time() - t0, 3),
-            "untested_stores": [x.name for x in R.STORES if x.kind == "external"]}
-
-
-def _attempts(conn, jid):
-    return conn.execute("select attempts from erasure_jobs where job_id=%s", (jid,)).fetchone()[0]
+        hconn.close()
+    rec["error_type"] = err
+    rec["seconds"] = round(time.time() - t0, 3)
+    return rec
 
 
 def erase(conn, ks, es, tenant, subject_id, **kw):
     return run(conn, ks, es, request(conn, tenant, subject_id), **kw)
 
 
-def sweep(conn, ks, es):
-    return {jid: run(conn, ks, es, jid)["done"] for (jid,) in conn.execute("select job_id from erasure_jobs where state <> 'done' order by created_at").fetchall()}
+def sweep(conn, ks, es, **kw):
+    """Run every open job whose claim is free or expired. One job's failure never stops another."""
+    out = {}
+    for (jid,) in conn.execute("select job_id from erasure_jobs where state <> 'done' and (claim_expires is null or claim_expires < clock_timestamp()) "
+                               "order by created_at").fetchall():
+        try:
+            out[jid] = run(conn, ks, es, jid, **kw)["done"]
+        except Exception as e:  # noqa: BLE001
+            out[jid] = f"error {type(e).__name__}"
+    return out

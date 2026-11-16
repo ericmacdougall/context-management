@@ -3,7 +3,8 @@
 The erasure cascade, the completion check (mirrored into Postgres table store_registry) and tombstone filtering all
 iterate STORES. `unregistered()` introspects the real system (both Postgres databases, every Elasticsearch index,
 alias and template under the prefix, the log directory) and returns anything not covered: a deploy or test with a
-non-empty result fails (exp/registry_check.py)."""
+non-empty result fails: the verifier runs it as a gate before any erasure completes (wp/verifier.py), and
+exp/guard_check.py runs it at the start and end of every proof run."""
 import re
 from dataclasses import dataclass, field
 
@@ -29,31 +30,37 @@ def _pg(table, content, erase, verifiable, note=""):
 
 
 STORES = [
-    _pg("events", "ciphertext under the subject key (AAD-bound)", "tombstone in phase 1; key destroyed (crypto-shred)", True),
-    _pg("quarantine", "ciphertext of unadopted stale writes", "rows of the subject deleted in phase 1; key destroyed", True),
-    _pg("inbox", "ciphertext payloads", "rows of the subject deleted in phase 1", True),
-    _pg("analyst_jobs", "ciphertext results; input ids", "jobs over the subject's events deleted in phase 1; completion refused over erased inputs", True),
-    _pg("facts", "ciphertext fact bodies; keyed slot hash", "facts derived from the subject's events deleted in phase 1", True),
-    _pg("tombstones", "event ids only", "kept (needed to filter readers and rebuilds)", False),
+    _pg("events", "ciphertext under the subject key (AAD-bound); req_hash = HMAC under the subject key",
+        "tombstoned in the cascade; key destroyed (crypto-shred)", True),
+    _pg("quarantine", "ciphertext of unadopted stale writes", "rows of the subject deleted in the cascade; key destroyed", True),
+    _pg("quarantine_quota", "per-session counters", "no content", False),
+    _pg("inbox", "ciphertext payloads", "rows of the subject deleted in the cascade", True),
+    _pg("analyst_jobs", "ciphertext results; input ids", "jobs over the subject's events deleted in the cascade; completion refused over erased inputs", True),
+    _pg("facts", "ciphertext fact bodies; keyed slot hash", "facts of the subject or derived from its events deleted in the cascade", True),
+    _pg("tombstones", "event ids only", "kept (filters readers; source of the placeholder ids)", False),
     _pg("subjects", "subject ids and erased flag", "kept as the erasure fence", False),
     _pg("chains", "session head hash", "kept (hash only)", False),
     _pg("leases", "lease epochs", "no content", False),
     _pg("cursors", "projection cursors", "no content", False),
-    _pg("decision_heads", "keyed item hash, version, event id", "no plaintext; the item hash uses the tenant key (survives erasure, see N15)", False),
+    _pg("decision_heads", "keyed item hash, version, event id, action", "no plaintext; the item hash uses the tenant key (survives erasure, N15)", False),
     _pg("store_registry", "this list", "no content", False),
-    _pg("erasure_jobs", "subject id, event ids, verify counts, error TYPE only", "kept as the audit record", False),
+    _pg("erasure_jobs", "subject id, verify counts, error TYPE only", "kept as the audit record", False),
     Store("keys:subject_keys", "keys", "subject_keys", "per-subject data keys", "deleted + VACUUM + WAL switch/checkpoint", True),
     Store("keys:destroyed", "keys", "destroyed", "subject ids", "kept: refuses re-creating an erased subject's key", False),
     Store("keys:tenant_keys", "keys", "tenant_keys", "tenant HMAC key", "kept; HMACs of erased subjects stay confirmable with it (N15, open)", False),
-    Store("es:events", "es", "events", "plaintext event content", "every index of the family rebuilt from surviving rows under a new epoch; old indices deleted", True),
-    Store("es:facts", "es", "facts", "plaintext fact values", "as es:events", True),
-    Store("dir:logs", "dir", "logs", "no content by construction (errors keep type and status only)", "marker scan in exp/erasure_e2e.py", False,
+    Store("es:events", "es", "events", "plaintext event content", "placeholder over every tombstoned event id; verified by subject id over every index of the family", True),
+    Store("es:facts", "es", "facts", "plaintext fact values", "placeholder over every derived fact id; verified as es:events", True),
+    Store("es:soft_deleted", "es", "segments", "overwritten documents kept in soft-deleted segments",
+          "verifier waits for the retention leases, then expunges deletes (exp/es_semantics.py P12)", True),
+    Store("gate:unregistered", "gate", "registry.unregistered()", "any store not in this list", "erasure cannot complete while it is non-empty", True),
+    Store("dir:logs", "dir", "logs", "no content by construction (errors keep type and status only)", "marker scan in exp/registry_marker.py", False,
           extra={"allowed": [r".*\.log$"]}),
     # Stores that exist in a client deployment but are NOT exercised here: listed so nothing is silently assumed covered.
     Store("ext:es-snapshots", "external", "snapshot repositories", "plaintext segment copies", "UNTESTED: restore must be gated on replaying tombstones", False),
     Store("ext:es-async-search", "external", ".async-search", "stored search responses", "UNTESTED (expire with keep_alive; not used by this code)", False),
     Store("ext:kibana-agent-builder", "external", "Kibana saved objects / conversations", "conversation text", "UNTESTED", False),
     Store("ext:es-slowlog", "external", "ES slow logs", "query text", "UNTESTED (slowlog off by default)", False),
+    Store("ext:es-replicas", "external", "replica shard copies", "plaintext segments", "UNTESTED: single node; expunge must reach every copy's retention lease", False),
     Store("ext:pg-wal-backups", "external", "Postgres WAL archive, replicas, backups", "ciphertext and keys", "UNTESTED: needs a KMS with real deletion and stated backup retention", False),
     Store("ext:process-memory", "external", "process heaps", "transient plaintext", "UNTESTED", False),
 ]
@@ -71,7 +78,7 @@ def sync_db(conn):
     with conn.transaction():
         conn.execute("delete from store_registry")
         for s in STORES:
-            conn.execute("insert into store_registry(name, verifiable) values (%s,%s)", (s.name, s.verifiable))
+            conn.execute("insert into store_registry(name, kind, verifiable) values (%s,%s,%s)", (s.name, s.kind, s.verifiable))
 
 
 # --------------------------------------------------------------- introspection
@@ -88,9 +95,9 @@ def unregistered(conn, kconn, es):
     out += [f"pg:{r}" for r in sorted(_pg_relations(conn) - pg)]
     kk = {s.where for s in STORES if s.kind == "keys"}
     out += [f"keys:{r}" for r in sorted(_pg_relations(kconn) - kk)]
-    fam_rx = re.compile(rf"^{re.escape(P)}[a-z0-9_]+-({'|'.join(map(re.escape, F.FAMILIES))})-(base|e\d+-[0-9a-f]{{8}})$")
+    fam_rx = re.compile(rf"^{re.escape(P)}[a-z0-9_]+-({'|'.join(map(re.escape, F.FAMILIES))})-base$")
     out += [f"es-index:{i}" for i in sorted(es.indices(P + "*")) if not fam_rx.match(i)]
-    alias_rx = re.compile(rf"^{re.escape(P)}[a-z0-9_]+-({'|'.join(map(re.escape, F.FAMILIES))})(-[ws]\d+)?$")
+    alias_rx = re.compile(rf"^{re.escape(P)}[a-z0-9_]+-({'|'.join(map(re.escape, F.FAMILIES))})(-w\d+|-x)?$")
     for i, als in es.alias_map(P + "*").items():
         out += [f"es-alias:{a}" for a in sorted(als) if not alias_rx.match(a)]
     s, j = es.req("GET", f"/_index_template/{P}*", ok=(200, 404))

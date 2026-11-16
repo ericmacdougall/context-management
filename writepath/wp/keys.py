@@ -79,6 +79,12 @@ def open_(key, tenant, subject, row_id, blob: bytes):
     return AESGCM(key).decrypt(blob[:12], blob[12:], aad(tenant, subject, row_id)).decode()
 
 
+def req_hmac(key, canonical: str):
+    """Request fingerprint for idempotency, keyed by the SUBJECT key: after the key is destroyed nobody can confirm a
+    guessed request against it (it is not a tenant-key hash that survives erasure)."""
+    return hmac.new(key, canonical.encode(), hashlib.sha256).hexdigest()
+
+
 def derive_id(*parts):
     """Derivation-addressed id (a function of inputs, never of plaintext)."""
     return hashlib.sha256("\x1f".join(str(x) for x in parts).encode()).hexdigest()[:32]

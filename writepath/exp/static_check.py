@@ -3,7 +3,8 @@
  S2 only wp/es.py sends /_bulk, and it always sets require_alias=true;
  S3 no module under wp/ writes documents with PUT/POST /<index>/_doc or _update (the alias-only write path is the only one);
  S4 every family in wp.families.FAMILIES is registered in wp.registry.STORES;
- S5 every Postgres table created by schema.sql is registered.
+ S5 every Postgres table created by schema.sql is registered;
+ S6 no module under wp/ uses _reindex, _delete_by_query or _update_by_query (writes that bypass the alias fence).
 Control: each check is also run on a mutated copy of the source that violates it and must fail there."""
 import pathlib
 import re
@@ -22,6 +23,7 @@ def checks(src: dict):
     out["S4"] = [f for f in fams if f'"es", "{f}"' not in reg]
     tables = re.findall(r"^create table ([a-z_]+)", src.get("schema.sql", ""), re.M)
     out["S5"] = [t for t in tables if f'_pg("{t}"' not in reg]
+    out["S6"] = sorted(n for n, s in src.items() if n.endswith(".py") and re.search(r"_reindex|_delete_by_query|_update_by_query", s))
     return out, fams, tables
 
 
@@ -39,6 +41,7 @@ if __name__ == "__main__":
         "S3": ("reader.py", '\nY = "/idx/_doc/1"\n'),
         "S4": ("families.py", '\n    "ghost": {"mappings": {}},\n'),
         "S5": ("schema.sql", "\ncreate table ghost_cache (x text);\n"),
+        "S6": ("erasure.py", '\nZ = "/idx/_delete_by_query"\n'),
     }
     ctl = {}
     for k, (fn, add) in muts.items():
