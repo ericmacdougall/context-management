@@ -205,7 +205,7 @@ def provenance():
 
 def save(name, obj):
     obj = {"provenance": provenance(), **obj}
-    p = HOME / "results" / f"{name}.json"
+    p = HOME / "results" / f"{name}-{RUN_ID.replace('r', '', 1)}.json"   # never overwrite another run's result
     json.dump(obj, open(p, "w"), indent=1, default=str)
     return p
 
