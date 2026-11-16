@@ -46,4 +46,11 @@ Directory on t2-dev: inputs `~/emlab-16096/out/stage_x0/sessions/<opaque id>.jso
 
 ## 6. Handoff to the runner
 
-Filled in below after the inputs are built (second commit).
+Filled in after the inputs were built (second commit; the rules above were committed in 24e442c and are unchanged).
+
+Inputs built on t2-dev (counts checked): 200 session files in `~/emlab-16096/out/stage_x0/sessions/<opaque id>.json` (about 2.9 million characters; no `has_answer` field anywhere), the run order `~/emlab-16096/out/stage_x0/run_order.json` (key `order`: the 200 opaque ids), the report `~/emlab-16096/out/stage_x0/prep_report.json` (copy in `eval/results/stage_x0/`). The key `~/emlab-16096/out/stage_x0_key/selection_key.json` is for the scorer only: the runner must not read it. Results go to `~/emlab-16096/in/stage_x0/<opaque id>.json` and `_run.json` (fields in Section 3).
+Composition: 79 gold sessions (weak_list 20 for the 11 questions, low_overlap 33 for 12 questions, the cap of 40 did not bind, knowledge_update 26 for 15 questions) and 121 random non-gold sessions (strata quotas 25, 24, 24, 24, 24 over the whole-pool length quintiles with edges 4,935, 8,579, 12,051 and 15,112 characters). Group labels exist only in the key.
+Length distribution (characters; p25 / median / p75 / p90 / max): whole pool of 18,464 contents 5,791 / 10,264 / 14,376 / 16,878 / 78,117 (mean 10,191); pilot non-gold candidates (4,358) 5,703 / 10,140 / 14,191 / 16,720 / 42,867; random sample (121) 5,536 / 10,819 / 14,327 / 17,232 / 21,041 (mean 10,174); gold sessions (79) 13,488 / 14,916 / 16,854 / 18,999 / 22,408; all 200: 8,425 / 13,251 / 15,727 / 17,577 / 22,408. The random sample matches the pool's quantiles and mean; its upper tail is thin (the largest pilot-haystack non-gold session is 42,867 characters against 78,117 in the whole pool, and the top stratum holds only 24 draws), so the cost of the longest pool sessions is an extrapolation beyond the sample, which the scorer states.
+Date rule applied: the earliest date over all occurrences of the content in the dataset, in the dataset's own spelling.
+Calls: 200 (hard cap; one per session; no retries). Expected from the runner's earlier measurement: about 15,000 input and 1,900 output tokens per call, about 3 million input tokens in total.
+
