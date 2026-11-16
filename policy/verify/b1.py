@@ -66,7 +66,8 @@ def violated(name, row, caps=(2, 3)):
         p = pre["props"][req].get(ev.get("proposal"))
         return not (code == "decided_accept" and p is not None and p["kind"] == "proposal" and p["author_kind"] == "human")
     if name == "I16_nonhuman_head_move_without_value_change":
-        return kind not in (None, "human") and ev.get("type") == "decide" and ev.get("verb") == "reject" and (moved or changed)
+        # amendment 3 wording (N3 as the brief states it): a non-human event that changes no value never moves the head
+        return kind not in (None, "human") and moved and not changed
     if name == "L2_head_starvation":
         if kind in (None, "human"):
             return False
