@@ -13,8 +13,6 @@ import socket
 import sys
 import time
 
-import requests
-
 H = os.path.expanduser("~/emlab-16096")
 REP = os.path.join(H, "rep")
 RESULTS = os.environ.get("REP_RESULTS", os.path.join(REP, "results"))
@@ -66,6 +64,7 @@ class Es:
 
 
 def shared_es():
+    import requests
     k = json.load(open(os.path.join(H, "key.json")))["encoded"]
     s = requests.Session()
     s.verify = os.path.join(H, "http_ca.crt")
@@ -74,6 +73,7 @@ def shared_es():
 
 
 def rep_es():
+    import requests
     pw = open(os.path.join(REP, "secrets", "es_pw")).read().strip()
     s = requests.Session()
     s.auth = ("elastic", pw)
