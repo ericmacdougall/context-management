@@ -355,9 +355,12 @@ def tpg_snapshot(db, tag):
         _dk("exec", TPG_PG, "pg_dump", "-U", "temporal", "-Fc", "-f", f"/tmp/{tag}-{d}.dump", d)
 
 
-def tpg_restore(db, tag, newdb):
-    for d, n in ((db, newdb), (db + "_vis", newdb + "_vis")):
-        _dk("exec", TPG_PG, "sh", "-c", f"createdb -U temporal {n} && pg_restore -U temporal -d {n} /tmp/{tag}-{d}.dump")
+def tpg_restore(db, tag):
+    """Rollback: replace the upgraded databases, under the SAME names (Temporal stores the database name in its
+    schema_version rows), with the pre-upgrade snapshot."""
+    for d in (db, db + "_vis"):
+        _dk("exec", TPG_PG, "psql", "-U", "temporal", "-d", "postgres", "-c", f"drop database if exists {d} with (force)")
+        _dk("exec", TPG_PG, "sh", "-c", f"createdb -U temporal {d} && pg_restore -U temporal -d {d} /tmp/{tag}-{d}.dump")
 
 
 def tpg_config(db, tport):

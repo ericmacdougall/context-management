@@ -304,8 +304,9 @@ async def f7pgctl():
         guard_result = {"refused": False}
     except lib.SchemaTooNew as ex:
         guard_result = {"refused": True, "message": str(ex)}
-    lib.tpg_restore(dbname, "pre", dbname + "rb")
-    rb = attempt_on(old, dbname + "rb", f"C: {old} on the restored pre-upgrade snapshot (the documented rollback)")
+    lib.tpg_restore(dbname, "pre")
+    rb = attempt_on(old, dbname, f"C: {old} on the restored pre-upgrade snapshot (the documented rollback)")
+    rb["schema_versions_after_restore"] = lib.tpg_schema_versions(dbname)
     out = {"id": "F7-postgres-upgrade-controls", "deploy_guard_on_downgrade": guard_result, "rollback_by_snapshot_restore": rb, "schema_versions_initial": v0, "schema_versions_after_documented_upgrade": v1,
            "control_A_skipped_schema_update": a, "control_B_downgrade": b,
            "control_A_refused": not a["port_opened_and_stayed_up"], "control_B_refused": not b["port_opened_and_stayed_up"]}
