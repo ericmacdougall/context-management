@@ -84,26 +84,31 @@ class N2_Proposals(unittest.TestCase):
         self.assertEqual(codes.count("proposed"), _core.MAX_OPEN_PER_PRINCIPAL)
 
     def test_per_requirement_cap(self):
-        names = ["h%d" % i for i in range(20)]
-        cfg = {"tenant": T, "principals": {n: "human" for n in names}, "authority": {"r1": names}, "admins": []}
+        """The per-req cap binds non-human authors (R3-4): 20 analysts fill it at 256; a human with authority still proposes."""
+        names = ["n%d" % i for i in range(20)]
+        cfg = {"tenant": T, "principals": dict({n: "analyst" for n in names}, h="human"), "authority": {"r1": ["h"]}, "proposers": {"r1": names},
+               "admins": []}
         st = _core.MemoryState(cfg)
         lab = L().to_dict()
         n = 0
         last = None
         for who in names:
             for i in range(_core.MAX_OPEN_PER_PRINCIPAL):
-                ev = {"type": "propose", "id": "%s/%d" % (who, i), "idem": "%s-%d" % (who, i), "tenant": T, "principal": who, "channel": "owner_ui",
+                ev = {"type": "propose", "id": "%s/%d" % (who, i), "idem": "%s-%d" % (who, i), "tenant": T, "principal": who, "channel": "agent_api",
                       "req": "r1", "value_ref": "v", "label": lab, "based_on": 0}
                 last, _o, d = _core.reduce(st, ev)
                 st.apply_delta(d)
                 n += last == "proposed"
         self.assertEqual(n, _core.MAX_OPEN_PER_REQ)
         self.assertEqual(last, "proposal_cap")
+        ev = {"type": "propose", "id": "h/0", "idem": "h-0", "tenant": T, "principal": "h", "channel": "owner_ui", "req": "r1", "value_ref": "v",
+              "label": lab, "based_on": 0}
+        self.assertEqual(_core.reduce(st, ev)[0], "proposed")
 
     def test_cost_per_event_is_bounded_up_to_20000_proposals(self):
         """Deterministic witness: view calls and delta ops per event stay constant (proposals are rows/dict entries; nothing scans or
-        copies all of them). 20,000 proposals are created and closed (propose by an analyst, reject by an agent)."""
-        cfg = {"tenant": T, "principals": {"x": "analyst", "bot": "agent"}, "authority": {"r1": ["bot"]}, "proposers": {"r1": ["x"]}, "admins": []}
+        copies all of them). 20,000 proposals are created and closed (propose by an analyst, reject by a human with authority)."""
+        cfg = {"tenant": T, "principals": {"x": "analyst", "hu": "human"}, "authority": {"r1": ["hu"]}, "proposers": {"r1": ["x"]}, "admins": []}
         st = _core.MemoryState(cfg)
 
         class Counting:
@@ -127,8 +132,9 @@ class N2_Proposals(unittest.TestCase):
             c, _o, d = _core.reduce(cv, ev)
             self.assertEqual(c, "proposed")
             st.apply_delta(d)
-            ev2 = {"type": "decide", "id": "bot/%d" % i, "idem": "r%d" % i, "tenant": T, "principal": "bot", "channel": "agent_api", "req": "r1",
-                   "verb": "reject", "proposal": "x/%d" % i, "proposal_hash": _core.proposal_hash("x/%d" % i, "v%d" % i, "x"), "based_on": 0}
+            ev2 = {"type": "decide", "id": "hu/%d" % i, "idem": "r%d" % i, "tenant": T, "principal": "hu", "channel": "owner_ui", "req": "r1",
+                   "verb": "reject", "proposal": "x/%d" % i, "proposal_hash": _core.proposal_hash("x/%d" % i, "v%d" % i, "x"),
+                   "based_on": st.heads["r1"]["version"]}
             cv2 = Counting(st)
             c2, _o, d2 = _core.reduce(cv2, ev2)
             self.assertEqual(c2, "decided_reject")
@@ -140,25 +146,28 @@ class N2_Proposals(unittest.TestCase):
                 t0 = t1
         self.assertLessEqual(worst, 20)
         self.assertEqual(len(st.props["r1"]), 20000)
-        self.assertEqual(st.heads["r1"]["version"], 0)             # N3: agent rejects never moved the head
+        self.assertEqual((st.heads["r1"]["version"], st.heads["r1"]["value_ref"]), (20000, None))   # each human reject versions the head, no value
         self.assertLess(max(t_blocks[-3:]) / min(t_blocks[:3]), 3.0, t_blocks)
 
 
 class N3_HeadStarvation(unittest.TestCase):
-    def test_non_human_reject_never_moves_head_and_human_reader_succeeds_first_try(self):
+    def test_non_human_churn_never_moves_head_and_human_reader_succeeds_first_try(self):
+        """Round 3 (ASSUMPTION): non-humans only propose and remark, so their churn never makes a human's read stale."""
         w = World()
         a, b, ann = w.s("alice"), w.s("bot"), w.s("ann")
         mine = w.propose(a, "mine", "keep")["id"]
         for i in range(12):
             h = w.svc.explain(a, "r1")["version"]                 # the human reads the head ...
             junk = w.propose(ann, "j%d" % i, "junk")["id"]
-            self.assertEqual(w.decide(b, "rej%d" % i, "reject", junk, h)["code"], "decided_reject")   # ... the agent churns ...
+            self.assertEqual(w.propose(b, "b%d" % i, "agent value")["code"], "proposed")                    # ... non-humans churn ...
+            self.assertEqual(w.decide(b, "acc%d" % i, "accept", junk, h)["code"], "agent_not_permitted")
+            self.assertEqual(w.decide(b, "rej%d" % i, "reject", mine, h)["code"], "agent_not_permitted")     # ... no veto ...
             self.assertEqual(w.svc.explain(a, "r1")["version"], h)                                       # ... the head did not move
         self.assertEqual(w.decide(a, "acc", "accept", mine, h)["code"], "decided_accept")
 
 
-class N3_ValueUnchanged(unittest.TestCase):
-    def test_agent_accept_of_current_value_never_moves_head(self):
+class N3_AgentsDoNotDecide(unittest.TestCase):
+    def test_agent_decide_is_refused_and_the_control_is_caught(self):
         from exp.patches import control
         cfg = {"tenant": T, "principals": {"h": "human", "g": "human", "bot": "agent"}, "authority": {"r1": ["h", "g", "bot"]}, "admins": []}
         lab = L().to_dict()
@@ -179,8 +188,8 @@ class N3_ValueUnchanged(unittest.TestCase):
             c = ev("decide", "bot", "a1", req="r1", verb="accept", proposal="g/p1", proposal_hash=core.proposal_hash("g/p1", "V", "g"),
                    based_on=v)
             return c, st.heads["r1"]["version"] - v
-        self.assertEqual(run(_core), ("no_value_change", 0))
-        self.assertEqual(run(control("n3_value_unchanged_moves_head")), ("decided_accept", 1))     # the control is caught
+        self.assertEqual(run(_core), ("agent_not_permitted", 0))
+        self.assertEqual(run(control("agent_may_decide")), ("decided_accept", 1))     # the control (refusal deleted) is caught
 
 
 class H2_CredentialKeys(unittest.TestCase):

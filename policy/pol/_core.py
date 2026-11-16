@@ -19,12 +19,12 @@ AGENT_CHANNELS = ("agent_api",)
 VERBS = ("accept", "reject", "amend", "resolve")
 MAX_CANDIDATES = 8
 MAX_OPEN_PER_PRINCIPAL = 16
-MAX_OPEN_PER_REQ = 256
+MAX_OPEN_PER_REQ = 256          # open items authored by NON-HUMANS on one req; binds non-human authors only (R3-4)
 
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap",
            "channel_mismatch", "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation",
-           "unknown_proposal", "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve",
-           "not_contested", "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate", "no_value_change")
+           "unknown_proposal", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve",
+           "not_contested", "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
 OUTCOME_CODES = APPLIED + REFUSED
@@ -142,7 +142,7 @@ def _rules(view, ev):
     if t in ("propose", "remark"):
         if not (view.has_authority(req, pid) or view.is_proposer(req, pid)):
             return "unauthorized", []
-        if view.open_count(req, pid) >= MAX_OPEN_PER_PRINCIPAL or view.open_total(req) >= MAX_OPEN_PER_REQ:
+        if view.open_count(req, pid) >= MAX_OPEN_PER_PRINCIPAL or (kind != "human" and view.open_nonhuman(req) >= MAX_OPEN_PER_REQ):
             return "proposal_cap", []
         doc = {"id": ev["id"], "kind": "proposal" if t == "propose" else "pending", "author": pid, "author_kind": kind, "value_ref": ev["value_ref"],
                "label": Label.from_dict(ev["label"]).to_dict(), "status": "open", "closed_by": None, "base": ev["based_on"],
@@ -157,12 +157,10 @@ def _rules(view, ev):
     if (human and chan not in OWNER_CHANNELS) or (not human and chan not in AGENT_CHANNELS):
         return "channel_mismatch", []
     verb = ev.get("verb") if t == "decide" else None
-    if not human and (t in ("supersede", "retract") or verb in ("amend", "resolve")):
-        return "agent_not_permitted", []
+    if not human:                                   # round 3 (ASSUMPTION): non-humans only propose and remark
+        return ("agent_cannot_confirm" if t == "confirm" else "agent_not_permitted"), []
     pend = prop = None
     if t == "confirm":
-        if not human:
-            return "agent_cannot_confirm", []
         pend = view.prop(req, ev["pending"])
         if pend is None or pend["kind"] != "pending":
             return "unknown_pending", []
@@ -177,21 +175,11 @@ def _rules(view, ev):
             prop = view.prop(req, ev["proposal"])
             if prop is None or prop["kind"] != "proposal":
                 return "unknown_proposal", []
-            if verb == "accept" and not human and prop["author_kind"] != "human":
-                return "self_approval", []
             if ev["proposal_hash"] != proposal_hash(prop["id"], prop["value_ref"], prop["author"]):
                 return "proposal_mismatch", []
     h = copy.deepcopy(view.head(req))
     based = ev["based_on"]
     rl = view.req_label(req)
-
-    # rule 11: a non-human reject changes no value and never moves the head
-    if t == "decide" and verb == "reject" and not human:
-        if based != h["version"]:
-            return "stale", []
-        if prop["status"] != "open":
-            return "proposal_closed", []
-        return "decided_reject", [("prop_close", req, prop["id"], "rejected", ev["id"])]
 
     eff = _effect(ev, prop, pend)
     elab = _eff_label(ev, prop, pend, rl)
@@ -203,8 +191,6 @@ def _rules(view, ev):
                 return "stale", []
             return _resolve(view, req, h, ev, rl)
         if based == c["base"]:
-            if not human or any(view.kind(x["by"]) != "human" for x in c["candidates"]):
-                return "stale", []
             if len(c["candidates"]) >= MAX_CANDIDATES:
                 return "candidates_full", []
             if not _adopted_open(prop, pend, {x["event"] for x in c["candidates"]}):
@@ -219,8 +205,7 @@ def _rules(view, ev):
 
     if based != h["version"]:
         last = h["last"]
-        sib = (last is not None and based == last["based_on"] and h["version"] == based + 1 and last["by"] != pid and last["verb"] != "resolve"
-               and human and view.kind(last["by"]) == "human")
+        sib = (last is not None and based == last["based_on"] and h["version"] == based + 1 and last["by"] != pid and last["verb"] != "resolve")
         if not sib:
             return "stale", []
         if not _adopted_open(prop, pend, {last["event"]}):
@@ -241,8 +226,6 @@ def _rules(view, ev):
     if t == "decide":
         if prop["status"] != "open":
             return "proposal_closed", []
-        if not human and verb == "accept" and h["status"] == "current" and eff[1] == h["value_ref"]:
-            return "no_value_change", []                 # N3: a non-human event that changes no value never moves the head
         if verb == "reject":
             code = "decided_reject"
             delta.append(("prop_close", req, prop["id"], "rejected", ev["id"]))
@@ -370,7 +353,7 @@ class MemoryState:
         self.heads = {r: new_head() for r in config["authority"]}
         self.props = {r: {} for r in config["authority"]}
         self.open_by = {}                 # (req, principal) -> set of open item ids
-        self.open_n = {r: 0 for r in config["authority"]}
+        self.open_n = {r: 0 for r in config["authority"]}           # open items with a NON-HUMAN author, per req
         self.ids = {r: set() for r in config["authority"]}
         self.idems = {}
         self.chains = {r: [] for r in config["authority"]}
@@ -409,7 +392,7 @@ class MemoryState:
     def open_count(self, req, pid):
         return len(self.open_by.get((req, pid), ()))
 
-    def open_total(self, req):
+    def open_nonhuman(self, req):
         return self.open_n[req]
 
     def idem(self, pid, key):
@@ -425,13 +408,13 @@ class MemoryState:
                 req, doc = op[1], op[2]
                 self.props[req][doc["id"]] = doc
                 self.open_by.setdefault((req, doc["author"]), set()).add(doc["id"])
-                self.open_n[req] += 1
+                self.open_n[req] += doc["author_kind"] != "human"
             elif k == "prop_close":
                 req, iid, status, by = op[1:]
                 d = self.props[req][iid]
                 if d["status"] == "open":
                     self.open_by[(req, d["author"])].discard(iid)
-                    self.open_n[req] -= 1
+                    self.open_n[req] -= d["author_kind"] != "human"
                 self.props[req][iid] = dict(d, status=status, closed_by=by)
             elif k == "chain":
                 self.chains[op[1]].append(op[2])
@@ -446,8 +429,8 @@ class MemoryState:
                     if author != tgt:
                         continue
                     for iid in list(ids):
+                        self.open_n[req] -= self.props[req][iid]["author_kind"] != "human"
                         self.props[req][iid] = dict(self.props[req][iid], status="invalidated", closed_by=None)
-                        self.open_n[req] -= 1
                     ids.clear()
             elif k == "grant":
                 req, role, tgt = op[1:]
@@ -493,7 +476,7 @@ class MemoryState:
             for i, d in p.items():
                 if d["status"] == "open":
                     s.open_by.setdefault((r, d["author"]), set()).add(i)
-                    s.open_n[r] += 1
+                    s.open_n[r] += d["author_kind"] != "human"
         return s
 
     def copy(self):

@@ -257,8 +257,10 @@ class _View:
     def open_count(self, req, pid):
         return self.c.execute("select count(*) from dc.props where tenant=%s and req=%s and author=%s and status='open'", (self.tenant, req, pid)).fetchone()[0]
 
-    def open_total(self, req):
-        return self._head(req)[1]
+    def open_nonhuman(self, req):
+        # open items with a non-human author (R3-4); bounded by MAX_OPEN_PER_REQ plus 16 per human, under the head lock
+        return self.c.execute("select count(*) from dc.props where tenant=%s and req=%s and status='open' and doc->>'author_kind' <> 'human'",
+                              (self.tenant, req)).fetchone()[0]
 
     def idem(self, pid, key):
         r = self.c.execute("select fp, code from dc.events where tenant=%s and principal=%s and idem=%s", (self.tenant, pid, key)).fetchone()

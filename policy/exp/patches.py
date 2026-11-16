@@ -29,14 +29,13 @@ def variant(module_name, old, new, tag):
 
 
 CONTROLS = {
-    # N3 reintroduced: a non-human reject moves the head like any decision.
-    "n3_agent_reject_moves_head": ("pol._core", "    if t == \"decide\" and verb == \"reject\" and not human:\n",
-                                   "    if False:\n"),
-    # N3 reintroduced in its value-unchanged form: a non-human accept of the current value moves the head (amendment 4).
-    "n3_value_unchanged_moves_head": ("pol._core", "        if not human and verb == \"accept\" and h[\"status\"] == \"current\" and eff[1] == h[\"value_ref\"]:\n",
-                                      "        if False:\n"),
+    # N3 / R3-5 reintroduced (round 3): a non-human may decide (accept, reject, amend, resolve), so it can move the head or veto.
+    "agent_may_decide": ("pol._core", "    if not human:                                   # round 3 (ASSUMPTION): non-humans only propose and remark\n",
+                         "    if not human and t != \"decide\":\n"),
+    # R3-4 reintroduced: the per-requirement cap also binds humans, so non-human items lock a human out of proposing.
+    "cap_blocks_humans": ("pol._core", "(kind != \"human\" and view.open_nonhuman(req) >= MAX_OPEN_PER_REQ)", "view.open_nonhuman(req) >= MAX_OPEN_PER_REQ"),
     # N2 reintroduced: no open-proposal cap.
-    "n2_no_cap": ("pol._core", "        if view.open_count(req, pid) >= MAX_OPEN_PER_PRINCIPAL or view.open_total(req) >= MAX_OPEN_PER_REQ:\n",
+    "n2_no_cap": ("pol._core", "        if view.open_count(req, pid) >= MAX_OPEN_PER_PRINCIPAL or (kind != \"human\" and view.open_nonhuman(req) >= MAX_OPEN_PER_REQ):\n",
                   "        if False:\n"),
     # N2 reintroduced: proposing needs no role.
     "n2_no_role": ("pol._core", "        if not (view.has_authority(req, pid) or view.is_proposer(req, pid)):\n            return \"unauthorized\", []\n", ""),
@@ -46,9 +45,9 @@ CONTROLS = {
     # Stale binding not checked (lost update).
     "stale_unchecked": ("pol._core", "    if based != h[\"version\"]:\n        last = h[\"last\"]\n",
                         "    if False:\n        last = h[\"last\"]\n"),
-    # Agent may supersede (humans-only rule dropped).
-    "agent_may_supersede": ("pol._core", "    if not human and (t in (\"supersede\", \"retract\") or verb in (\"amend\", \"resolve\")):\n",
-                            "    if not human and verb in (\"amend\", \"resolve\"):\n"),
+    # Agent may supersede (humans-only rule dropped for supersede).
+    "agent_may_supersede": ("pol._core", "    if not human:                                   # round 3 (ASSUMPTION): non-humans only propose and remark\n",
+                            "    if not human and t != \"supersede\":\n"),
     # H8 reintroduced: the recipient used for the send is looked up again after the decision.
     "h8_second_lookup": ("pol.enforce", "                self._sink(sender, rcp, [r.text for r in recs], dict(it[\"request\"]))",
                          "                self._sink(sender, self._enf._dir.lookup(it[\"recipient_id\"]), [r.text for r in recs], dict(it[\"request\"]))"),
