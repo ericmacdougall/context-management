@@ -1,0 +1,162 @@
+{
+ "1": {
+  "question_id": "gpt4_2f56ae70",
+  "arm": "ORACLE"
+ },
+ "2": {
+  "question_id": "6e984301",
+  "arm": "ANALYST"
+ },
+ "3": {
+  "question_id": "bc8a6e93",
+  "arm": "RRF"
+ },
+ "4": {
+  "question_id": "50635ada",
+  "arm": "ORACLE"
+ },
+ "5": {
+  "question_id": "e25c3b8d",
+  "arm": "RRF"
+ },
+ "6": {
+  "question_id": "gpt4_78cf46a3",
+  "arm": "RRF"
+ },
+ "7": {
+  "question_id": "51a45a95",
+  "arm": "ORACLE"
+ },
+ "8": {
+  "question_id": "3b6f954b",
+  "arm": "ANALYST"
+ },
+ "9": {
+  "question_id": "60bf93ed",
+  "arm": "ANALYST"
+ },
+ "10": {
+  "question_id": "b3c15d39",
+  "arm": "ORACLE"
+ },
+ "11": {
+  "question_id": "7024f17c",
+  "arm": "ORACLE"
+ },
+ "12": {
+  "question_id": "7161e7e2",
+  "arm": "ANALYST"
+ },
+ "13": {
+  "question_id": "89941a94",
+  "arm": "RRF"
+ },
+ "14": {
+  "question_id": "fca70973",
+  "arm": "RRF"
+ },
+ "15": {
+  "question_id": "3b6f954b",
+  "arm": "ORACLE"
+ },
+ "16": {
+  "question_id": "3a704032",
+  "arm": "ORACLE"
+ },
+ "17": {
+  "question_id": "b9cfe692",
+  "arm": "ORACLE"
+ },
+ "18": {
+  "question_id": "bc8a6e93",
+  "arm": "ANALYST"
+ },
+ "19": {
+  "question_id": "gpt4_5438fa52",
+  "arm": "ANALYST"
+ },
+ "20": {
+  "question_id": "gpt4_e414231f",
+  "arm": "ANALYST"
+ },
+ "21": {
+  "question_id": "7161e7e2",
+  "arm": "RRF"
+ },
+ "22": {
+  "question_id": "54026fce",
+  "arm": "RRF"
+ },
+ "23": {
+  "question_id": "gpt4_2d58bcd6",
+  "arm": "ANALYST"
+ },
+ "24": {
+  "question_id": "gpt4_7abb270c",
+  "arm": "ORACLE"
+ },
+ "25": {
+  "question_id": "b6025781",
+  "arm": "RRF"
+ },
+ "26": {
+  "question_id": "07741c45",
+  "arm": "ANALYST"
+ },
+ "27": {
+  "question_id": "3a704032",
+  "arm": "RRF"
+ },
+ "28": {
+  "question_id": "0e4e4c46",
+  "arm": "RRF"
+ },
+ "29": {
+  "question_id": "51b23612",
+  "arm": "ANALYST"
+ },
+ "30": {
+  "question_id": "bcbe585f",
+  "arm": "ANALYST"
+ },
+ "31": {
+  "question_id": "gpt4_8279ba03",
+  "arm": "ANALYST"
+ },
+ "32": {
+  "question_id": "d6233ab6",
+  "arm": "RRF"
+ },
+ "33": {
+  "question_id": "gpt4_fa19884d",
+  "arm": "ANALYST"
+ },
+ "34": {
+  "question_id": "b46e15ee",
+  "arm": "RRF"
+ },
+ "35": {
+  "question_id": "4f54b7c9",
+  "arm": "RRF"
+ },
+ "36": {
+  "question_id": "e6041065",
+  "arm": "RRF"
+ },
+ "37": {
+  "question_id": "gpt4_7abb270c",
+  "arm": "RRF"
+ },
+ "38": {
+  "question_id": "3f1e9474",
+  "arm": "ANALYST"
+ },
+ "39": {
+  "question_id": "a3838d2b",
+  "arm": "ORACLE"
+ },
+ "40": {
+  "question_id": "6e984301",
+  "arm": "RRF"
+ }
+}
