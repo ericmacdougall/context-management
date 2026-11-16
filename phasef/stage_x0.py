@@ -197,6 +197,15 @@ def confirm_no_earlier_cache(order, cfg=None):
     return clashes
 
 
+def free_gb(path):
+    import shutil
+    return shutil.disk_usage(path).free / 1e9
+
+
+def dir_bytes(path):
+    return sum(os.path.getsize(os.path.join(dp, f)) for dp, _, fs in os.walk(path) for f in fs)
+
+
 def not_run_record(idx, sid):
     return {"session_id": sid, "order_index": idx, "status": "not_run", "reject_reason": None, "prompt_version": VERSION, "prompt_sha16": SHA16, "model": MODEL, "input_tokens": 0, "output_tokens": 0,
             "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None, "n_facts": 0, "error": None}
@@ -216,6 +225,10 @@ def write_not_run(order, lo, hi):
 def run(a, runner=None):
     order = load_inputs()
     lo, hi = (0, 10) if a.phase == "canary" else ((0, len(order)) if a.phase == "all" else (10, 200))
+    if free_gb(R.OUT) < a.min_free_gb:
+        print("ABORT: only %.1f GB free on the data volume, minimum %.1f GB" % (free_gb(R.OUT), a.min_free_gb), flush=True)
+        return {}
+    bytes_before = dir_bytes(X) if os.path.isdir(X) else 0
     if a.gate:
         clashes = confirm_no_earlier_cache(order, variant_cfg("base" if VERSION == "extract-v2-anon" else ("pref" if VERSION == "extract-v3-pref" else "cap30"), REPLICATE))
         if clashes:
@@ -274,7 +287,7 @@ def run(a, runner=None):
         pass
     if a.remote:
         push(["%s.json" % r["session_id"] for r in done] + [r["raw_output_path"] for r in done if r["raw_output_path"]] + ["_run.json"])
-    print("PHASE DONE", a.phase, stats, "calls", meter.calls, "input tokens %.2fM" % (meter.total / 1e6), flush=True)
+    print("PHASE DONE", a.phase, stats, "calls", meter.calls, "input tokens %.2fM" % (meter.total / 1e6), "local bytes written %d" % (dir_bytes(X) - bytes_before), "free GB %.1f" % free_gb(R.OUT), flush=True)
     return stats
 
 
@@ -333,6 +346,7 @@ def parse(argv=None):
     ap.add_argument("--stage", default="stage_x0", help="directory name under phasef-out and under the host in/ and out/ trees")
     ap.add_argument("--cap", type=int, default=200)
     ap.add_argument("--token-stop", type=float, default=12e6)
+    ap.add_argument("--min-free-gb", type=float, default=2.0, help="do not start (or abort) when the data volume has less free space")
     ap.add_argument("--gate", action="store_true", help="X1: after the first 20 results stop unless parse rate >= 95 percent and every prompt <= 40,000 tokens")
     ap.add_argument("--replicate", default=None, help="replicate id: separate cache namespace, same prompt_version and prompt_sha16 in the records")
     ap.add_argument("--concurrency", type=int, default=2)

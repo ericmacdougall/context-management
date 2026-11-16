@@ -197,6 +197,24 @@ class Jobs(unittest.TestCase):
             X.X = old
 
 
+class Space(unittest.TestCase):
+    def test_free_space_gate_aborts_without_any_call(self):
+        d = tempfile.mkdtemp()
+        old = X.X
+        X.X = d
+        try:
+            os.makedirs(os.path.join(d, "sessions"))
+            json.dump({"order": ["sA00000000aa"]}, open(os.path.join(d, "run_order.json"), "w"))
+            a = Args()
+            a.phase, a.concurrency, a.remote, a.stop_file, a.gate, a.min_free_gb = "all", 1, "", os.path.join(d, "STOP"), False, 1e9  # needs 1e9 GB free: aborts
+            self.assertEqual(X.run(a, runner_for(GOOD)), {})
+            self.assertFalse(os.path.exists(os.path.join(d, "out", "sA00000000aa.json")))
+            self.assertGreater(X.free_gb(d), 0)
+            self.assertGreaterEqual(X.dir_bytes(d), 0)
+        finally:
+            X.X = old
+
+
 class Gate(unittest.TestCase):
     def rec(self, status="ok", tokens=15000, i=0):
         return {"status": status, "order_index": i, "input_tokens": 2, "cache_creation_input_tokens": tokens, "cache_read_input_tokens": 0}
