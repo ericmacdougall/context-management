@@ -54,11 +54,9 @@ AMBIGUITIES (each with the choice made)
     that label (None for reject/retract effects).
 13. The same principal may join a contested requirement as a candidate more than once, and
     a candidate may repeat another candidate's effect (no rule forbids it).
-14. In the contested-join path, the check "principal is non-human or any existing candidate's
-    author is non-human" uses the config kind of the candidate's `by` principal.
-15. Non-human decide with verb reject is handled by rule 11 before any contested check,
-    even when the requirement is contested. Non-human accept while contested is `stale`
-    (rule 12) when based_on equals the contested base; otherwise per rule 12's last bullet.
+14. (Round 3: obsolete.) Non-humans never reach rules 12-15 because rule 10c refuses every
+    head-moving type by a non-human, so candidates and `last.by` are always human.
+15. (Round 3: obsolete.) There is no non-human reject; it is `agent_not_permitted` (rule 10c).
 16. Idempotency of a refused event: refused events never record keys, so a retry after a
     refusal is evaluated afresh. `duplicate`/`idem_conflict` are audited too (the spec lists
     duplicate as refused; idem_conflict is in the refused list).
@@ -68,14 +66,29 @@ AMBIGUITIES (each with the choice made)
 18. Candidate/last label for reject and retract is None; join of labels always normalises
     (sorted, deduplicated), so even a single label is written canonically.
 19. The open caps count proposals and pending changes with status `open` authored by the
-    principal on that requirement (per-principal) or all such on the requirement (per-req).
-21. `no_value_change` (rule 15, decide accept) is refused although section 6's refused list does
-    not name it (rule 15 says "refused"). Placement: after the `proposal_closed` check and
-    before the retract check, within rule 15 (so only when based_on == version, not contested,
-    and after rules 10-14). It compares the proposal value_ref with the head value_ref only
-    (labels are not compared) and applies to non-human principals only.
+    principal on that requirement (per-principal) or, for the per-req cap, authored by any
+    non-human on the requirement (round 3; see 24, 25).
+21. (Round 3: obsolete.) `no_value_change` and `self_approval` no longer exist.
 20. An applied but unchanged event (`concurrent_agree`) still appends to the event log and
     records its idem key and id.
+22. (Round 3) A non-human holding a head-moving type is checked in rule 10 order: not in
+    authority[req] -> `unauthorized` (10a, so a proposers-only analyst gets unauthorized, not
+    agent_not_permitted); non-human on a non-`agent_api` channel -> `channel_mismatch` (10b);
+    only then 10c. Driver: "10. Head-moving types ... in order: a, b, c".
+23. (Round 3) Rule 10c fires before any shape-adjacent check in 10d/10e, so a non-human
+    `decide` with an unknown verb, unknown proposal, or bad hash is `agent_not_permitted`, and a
+    non-human `confirm` of an unknown/closed pending is `agent_cannot_confirm`. Driver: "(From
+    here on the principal is human.)" placed before 10d and 10e. Shape errors (rule 1) still win.
+24. (Round 3) "Non-human" for the per-requirement cap is the AUTHOR kind recorded on the
+    proposal/pending record at creation (the config kind of the author; any kind other than
+    "human"). Invalidated/closed items never count (only status `open`). Driver: "open proposals
+    plus open pending changes on one requirement whose AUTHOR is NON-HUMAN".
+25. (Round 3) The per-principal cap (16, any kind of principal) is checked and returns
+    `proposal_cap` for humans and non-humans alike; the per-req cap is additionally checked only
+    when the proposing principal is non-human. A human at fewer than 16 own open items is never
+    refused regardless of others' items. Driver: rule 9 "and, for a NON-HUMAN principal only".
+26. (Round 3) Rule 14's sibling test no longer mentions kinds; with only humans able to reach it,
+    no kind check is made at all. Rule 12's contested join likewise has no kind check.
 """
 
 import copy
@@ -99,9 +112,9 @@ REFUSED = {
     "bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req",
     "duplicate_id", "proposal_cap", "channel_mismatch", "agent_not_permitted",
     "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation",
-    "unknown_proposal", "self_approval", "proposal_mismatch", "stale", "proposal_closed",
+    "unknown_proposal", "proposal_mismatch", "stale", "proposal_closed",
     "candidates_full", "contested_needs_resolve", "not_contested", "nothing_to_retract",
-    "unknown_candidate", "idem_conflict", "duplicate", "no_value_change",
+    "unknown_candidate", "idem_conflict", "duplicate",
 }
 
 HEAD_TYPES = ("confirm", "decide", "supersede", "retract")
@@ -403,10 +416,12 @@ class RefCore:
         return ("granted", None, commit)
 
     def _open_counts(self, req, principal):
+        """(open items by `principal`, open items on req authored by a non-human)."""
         mine = total = 0
         for rec in list(self.proposals[req].values()) + list(self.pending[req].values()):
             if rec["status"] == "open":
-                total += 1
+                if rec["kind"] != "human":
+                    total += 1
                 if rec["author"] == principal:
                     mine += 1
         return mine, total
@@ -415,8 +430,10 @@ class RefCore:
         p, req, t = ev["principal"], ev["req"], ev["type"]
         if p not in self.authority[req] and p not in self.proposers[req]:
             return ("unauthorized", None, None)
-        mine, total = self._open_counts(req, p)
-        if mine >= MAX_OPEN_PER_PRINCIPAL or total >= MAX_OPEN_PER_REQ:
+        mine, nonhuman_total = self._open_counts(req, p)
+        if mine >= MAX_OPEN_PER_PRINCIPAL:
+            return ("proposal_cap", None, None)
+        if self.principals[p] != "human" and nonhuman_total >= MAX_OPEN_PER_REQ:
             return ("proposal_cap", None, None)
 
         def commit():
@@ -499,13 +516,11 @@ class RefCore:
             return ("channel_mismatch", None, None)
         if not human and ch != AGENT_CHANNEL:
             return ("channel_mismatch", None, None)
-        if not human and (t in ("supersede", "retract")
-                          or (t == "decide" and verb in ("amend", "resolve"))):   # 10c
-            return ("agent_not_permitted", None, None)
+        if not human:                                                         # 10c
+            return ("agent_cannot_confirm" if t == "confirm" else "agent_not_permitted",
+                    None, None)
         prop = pend = None
         if t == "confirm":                                                    # 10d
-            if not human:
-                return ("agent_cannot_confirm", None, None)
             pend = self.pending[req].get(ev["pending"])
             if pend is None:
                 return ("unknown_pending", None, None)
@@ -520,22 +535,8 @@ class RefCore:
                 prop = self.proposals[req].get(ev["proposal"])
                 if prop is None:
                     return ("unknown_proposal", None, None)
-                if verb == "accept" and not human and prop["kind"] != "human":
-                    return ("self_approval", None, None)
                 if ev["proposal_hash"] != sha([ev["proposal"], prop["value_ref"], prop["author"]]):
                     return ("proposal_mismatch", None, None)
-
-        # rule 11: non-human reject
-        if t == "decide" and verb == "reject" and not human:
-            if bo != h["version"]:
-                return ("stale", None, None)
-            if prop["status"] != "open":
-                return ("proposal_closed", None, None)
-
-            def commit_nh():
-                prop["status"] = "rejected"
-                prop["closed_by"] = ev["id"]
-            return ("decided_reject", None, commit_nh)
 
         # rule 12: contested requirement
         c = h["contested"]
@@ -546,9 +547,6 @@ class RefCore:
                 return self._resolve(ev, c)
             if bo == c["base"]:
                 effect, label, adopted = self._effect(ev, prop, pend)
-                if not human or any(self.principals.get(x["by"]) != "human"
-                                    for x in c["candidates"]):
-                    return ("stale", None, None)
                 if len(c["candidates"]) >= MAX_CANDIDATES:
                     return ("candidates_full", None, None)
                 if not self._adopted_ok(adopted, {x["event"] for x in c["candidates"]}):
@@ -574,8 +572,7 @@ class RefCore:
             last = h["last"]
             sibling = (last is not None and bo == last["based_on"]
                        and h["version"] == bo + 1 and last["by"] != p
-                       and last["verb"] != "resolve" and human
-                       and self.principals.get(last["by"]) == "human")
+                       and last["verb"] != "resolve")
             if not sibling:
                 return ("stale", None, None)
             effect, label, adopted = self._effect(ev, prop, pend)
@@ -605,9 +602,6 @@ class RefCore:
         effect, label, adopted = self._effect(ev, prop, pend)
         if t == "decide" and verb in ("accept", "reject", "amend") and prop["status"] != "open":
             return ("proposal_closed", None, None)
-        if (t == "decide" and verb == "accept" and not human and h["status"] == "current"
-                and prop["value_ref"] == h["value_ref"]):
-            return ("no_value_change", None, None)
         if t == "retract" and h["status"] in ("unset", "retracted"):
             return ("nothing_to_retract", None, None)
         if t == "decide":
@@ -624,7 +618,7 @@ class RefCore:
             if t == "decide" and verb in ("accept", "amend"):
                 prop["status"] = "accepted"
                 prop["closed_by"] = ev["id"]
-            elif t == "decide":      # human reject
+            elif t == "decide":      # reject
                 prop["status"] = "rejected"
                 prop["closed_by"] = ev["id"]
             elif t == "confirm":
@@ -747,24 +741,82 @@ def _selfcheck():
           and v["value_ref"] == "Y" and v["version"] == 3 and v["contested"] is None
           and v["value_event"] == "h1/r1" and v["value_by"] == "h1")
 
-    # 3 non-human reject leaves the version unchanged
+    # 3 non-human accept / reject / confirm are refused and change nothing
     c = mk()
     propose(c, "h1", "p1", "v1")
-    before = c.view()["reqs"]["R"]
+    before = c.view()
+    ra = c.apply(accept("a1", "d0", "h1/p1", "v1", "h1", 0, "agent_api"))
     rj = c.apply(ev("decide", "a1", "d1", "agent_api", req="R", verb="reject", proposal="h1/p1",
                     proposal_hash=sha(["h1/p1", "v1", "h1"]), based_on=0))
+    c.apply(ev("remark", "an1", "m1", "agent_api", req="R", value_ref="w", label=lab(),
+               based_on=0))
+    rc = c.apply(ev("confirm", "a1", "c1", "agent_api", req="R", pending="an1/m1", based_on=0))
+    rs = c.apply(ev("supersede", "a1", "s1", "agent_api", req="R", value_ref="z", label=lab(),
+                    based_on=0))
+    rn = c.apply(ev("retract", "a1", "t1", "agent_api", req="R", based_on=0))
+    ru = c.apply(ev("confirm", "an1", "c2", "agent_api", req="R", pending="an1/m1", based_on=0))
+    rb = c.apply(ev("decide", "a1", "d9", "agent_api", req="R", verb="reject", proposal="nope",
+                    proposal_hash="x", based_on=7))
+    rm = c.apply(ev("decide", "a1", "d8", "owner_ui", req="R", verb="reject", proposal="h1/p1",
+                    proposal_hash=sha(["h1/p1", "v1", "h1"]), based_on=0))
     after = c.view()
-    ok = (rj == ("decided_reject", None) and after["reqs"]["R"] == before
-          and after["proposals"]["R"] == {"h1/p1": "rejected"})
-    stale = c.apply(ev("decide", "a1", "d2", "agent_api", req="R", verb="reject",
-                       proposal="h1/p1", proposal_hash=sha(["h1/p1", "v1", "h1"]), based_on=5))
-    check("non-human reject", ok and stale == ("stale", None))
+    ok = (ra == ("agent_not_permitted", None) and rj == ("agent_not_permitted", None)
+          and rc == ("agent_cannot_confirm", None) and rs == ("agent_not_permitted", None)
+          and rn == ("agent_not_permitted", None) and ru == ("unauthorized", None)
+          and rb == ("agent_not_permitted", None) and rm == ("channel_mismatch", None))
+    check("agent head-moving refused", ok and after["reqs"] == before["reqs"]
+          and after["proposals"]["R"] == {"h1/p1": "open"}
+          and after["pending"]["R"] == {"an1/m1": "open"}
+          and [x["code"] for x in c.audit][-8:] == [
+              "agent_not_permitted", "agent_not_permitted", "agent_cannot_confirm",
+              "agent_not_permitted", "agent_not_permitted", "unauthorized",
+              "agent_not_permitted", "channel_mismatch"])
+    # the human reject still works and closes the proposal
+    hr = c.apply(ev("decide", "h2", "d2", req="R", verb="reject", proposal="h1/p1",
+                    proposal_hash=sha(["h1/p1", "v1", "h1"]), based_on=0))
+    check("human reject", hr == ("decided_reject", None)
+          and c.view()["proposals"]["R"] == {"h1/p1": "rejected"}
+          and c.view()["reqs"]["R"]["version"] == 1)
 
-    # 4 proposal cap at 17 open proposals
+    # 4 per-principal cap at 17 open proposals (human and non-human alike)
     c = mk()
     codes = [propose(c, "an1", "q%d" % i, "v%d" % i)[0] for i in range(17)]
     check("proposal cap", codes[:16] == ["proposed"] * 16 and codes[16] == "proposal_cap"
           and len(c.audit) == 1 and c.audit[0]["code"] == "proposal_cap")
+    c = mk()
+    codes = [propose(c, "h1", "q%d" % i, "v%d" % i)[0] for i in range(17)]
+    check("human bound by 16 per principal", codes[:16] == ["proposed"] * 16
+          and codes[16] == "proposal_cap")
+
+    # 4b per-requirement cap counts and binds non-humans only
+    def mk_many():
+        ags = ["g%d" % i for i in range(17)]
+        return RefCore({
+            "tenant": T,
+            "principals": dict([("h1", "human"), ("h2", "human"), ("adm", "human")]
+                               + [(g, "agent") for g in ags]),
+            "authority": {"R": ["h1", "h2"]},
+            "proposers": {"R": ags},
+            "admins": ["adm"],
+        })
+    c = mk_many()
+    ok = True
+    for i in range(16):
+        for j in range(16):
+            ok = ok and propose(c, "g%d" % i, "q%d" % j, "v%d_%d" % (i, j),
+                                "agent_api")[0] == "proposed"
+    hp = [propose(c, "h1", "x%d" % i, "hv%d" % i)[0] for i in range(16)]
+    check("256 non-human open items do not block a human",
+          ok and hp == ["proposed"] * 16 and len(c.audit) == 0)
+    cap = propose(c, "g16", "z", "zz", "agent_api")
+    check("non-human at the per-req cap is refused", cap == ("proposal_cap", None)
+          and c.audit[-1]["code"] == "proposal_cap")
+    # revoking a non-human invalidates its items, which stop counting
+    rv = c.apply({"type": "revoke", "id": "adm/rv", "idem": "rv", "tenant": T,
+                  "principal": "adm", "channel": "owner_ui", "target": "g0"})
+    again = propose(c, "g16", "z2", "zz2", "agent_api")
+    check("revoked non-human items stop counting",
+          rv == ("revoked", None) and again == ("proposed", None))
 
     # 5 idempotent duplicate returns the original code
     c = mk()
@@ -775,20 +827,6 @@ def _selfcheck():
     f3 = c.apply(e2)
     check("idempotent duplicate", f1 == ("proposed", None) and f2 == ("duplicate", "proposed")
           and f3 == ("idem_conflict", "proposed") and len(c.log) == 1)
-
-    # 5b non-human accept of the already-current value is no_value_change
-    c = mk()
-    propose(c, "h1", "p1", "v1")
-    c.apply(accept("h1", "d1", "h1/p1", "v1", "h1", 0))
-    propose(c, "h2", "p2", "v1", based_on=1)
-    before = c.view()
-    nv = c.apply(accept("a1", "d2", "h2/p2", "v1", "h2", 1, "agent_api"))
-    propose(c, "h2", "p3", "v9", based_on=1)
-    ok_other = c.apply(accept("a1", "d3", "h2/p3", "v9", "h2", 1, "agent_api"))
-    check("no_value_change", nv == ("no_value_change", None)
-          and c.view()["reqs"]["R"]["version"] == 2 and before["reqs"] == {
-              "R": dict(before["reqs"]["R"])} and ok_other == ("decided_accept", None)
-          and c.audit[-1]["code"] == "no_value_change")
 
     # 6 malformed events never raise
     c = mk()
