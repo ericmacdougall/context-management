@@ -536,10 +536,14 @@ class N5HookFramingTests(unittest.TestCase):
             _well_formed(self, out["hookSpecificOutput"]["additionalContext"] if out else "", mx)
         self.assertGreater(nonempty, 10)
 
-    def test_oversized_header_gives_no_output(self):
-        p = _events_file(filler="")                                          # small records: they fit, the header does not
+    def test_oversized_header_never_reaches_the_block(self):
+        """N5: the block is never cut. Since R4-2 an over-long session id is left out of the header (only a short id and
+        the timestamp may sit there), so the block stays well-formed within the budget instead of being dropped."""
+        p = _events_file(filler="")                                          # small records: they fit
         self.assertGreaterEqual(_well_formed(self, self.run_main(p, 600, {"prompt": "staging database", "session_id": "s1"}), 600), 1)
-        self.assertEqual(self.run_main(p, 600, {"prompt": "staging database", "session_id": "s" * 700}), "")
+        b = self.run_main(p, 600, {"prompt": "staging database", "session_id": "s" * 700})
+        self.assertGreaterEqual(_well_formed(self, b, 600), 1)
+        self.assertIn('turn="@%s"' % NOW, b.split("\n")[0])
 
 
 class N6InjectorDropTests(unittest.TestCase):

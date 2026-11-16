@@ -383,15 +383,21 @@ def render_data_block(records: Sequence[dict], turn_id: str, delimiter: Optional
     return "\n".join([head] + recs + ["<<<%s END>>>" % d]) if recs else ""
 
 
+# The header turn value of a MEMORY block (memtools.BudgetedInjector): a short id, "@", a UTC second timestamp. Nothing
+# else may sit in the header prose (review R4-2: a rogue server put an instruction, and 800k characters, there).
+MEMORY_TURN_SID = re.compile(r"[A-Za-z0-9._:\-]{0,128}")
+MEMORY_TURN_RE = re.compile(r"^[A-Za-z0-9._:\-]{0,128}@\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
 _BLOCK_HEAD = re.compile(r'^<<<(MEMCORE-[0-9a-f]{16}) BEGIN turn=("(?:[^"\\]|\\.)*")>>> ')
 
 
-def parse_data_block(block: str, label: str, fields: Optional[Sequence[str]] = None) -> Optional[List[dict]]:
+def parse_data_block(block: str, label: str, fields: Optional[Sequence[str]] = None, turn_pattern=None,
+                     max_chars: Optional[int] = None) -> Optional[List[dict]]:
     """The inverse of render_data_block, for a CLIENT checking what a memory service sent: the records if `block` is
     exactly what render_data_block renders for them (same delimiter, turn and label, one JSON object per line, each with
     exactly `fields` as strings when given), else None. Anything else (a prepended instruction, an edited header, a
-    missing or different END line, a non-JSON line) is refused."""
-    if not isinstance(block, str):
+    missing or different END line, a non-JSON line) is refused. turn_pattern (e.g. MEMORY_TURN_RE) constrains the header
+    turn value; max_chars caps the whole block."""
+    if not isinstance(block, str) or (max_chars is not None and len(block) > max_chars):
         return None
     lines = block.split("\n")
     m = _BLOCK_HEAD.match(lines[0]) if len(lines) >= 3 else None
@@ -403,6 +409,8 @@ def parse_data_block(block: str, label: str, fields: Optional[Sequence[str]] = N
     except ValueError:
         return None
     if not isinstance(turn, str) or not all(isinstance(r, dict) for r in recs):
+        return None
+    if turn_pattern is not None and not turn_pattern.match(turn):
         return None
     if fields is not None and not all(list(r) == list(fields) and all(isinstance(r[k], str) for k in fields) for r in recs):
         return None

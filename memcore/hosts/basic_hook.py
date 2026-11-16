@@ -8,7 +8,8 @@ body) has not finished within timeout_s (CLIENT_TIMEOUT_S = 25 s, above memcore'
 wall-clock for the whole call, not per socket read: a peer trickling bytes cannot hold the turn (review R3-1).
 
 Accepted replies (review R3-2): new_prompt equal to the prompt, or exactly one memcore DATA block as render_data_block
-renders it (MEMCORE-<16 hex> BEGIN/END pair, the fixed header, one JSON object {id, ts, text} per line), then a blank
+renders it (MEMCORE-<16 hex> BEGIN/END pair, the fixed header whose turn is a short id @ a UTC timestamp, one JSON object
+{id, ts, text} per line, at most MAX_BLOCK_CHARS in all), then a blank
 line, then the prompt byte for byte. Anything else, e.g. an instruction prepended by a rogue or on-path server, is
 refused (injected false, original prompt). The bearer token travels with the request, so plain http is refused for a
 non-loopback service unless allow_plain_http is set explicitly (prefer https or a loopback/bridge-only service).
@@ -36,6 +37,7 @@ CLIENT_TIMEOUT_S = 25.0
 MAX_REPLY = 1_000_000
 BLOCK_LABEL = "remembered events"            # what memtools.BudgetedInjector renders
 BLOCK_FIELDS = ("id", "ts", "text")
+MAX_BLOCK_CHARS = 16000                      # well above the route's default 4000 (basic_service) / 9000 (prompt_hook)
 _REASON = re.compile(r"^[A-Za-z0-9_:.\-]{1,64}$")
 
 
@@ -113,7 +115,7 @@ def _abort(holder: dict) -> None:
 
 
 def fetch_new_prompt(url: str, token: str, prompt: str, session_id: str = "", timeout_s: float = CLIENT_TIMEOUT_S,
-                     allow_plain_http: bool = False, egress_guard=None) -> dict:
+                     allow_plain_http: bool = False, egress_guard=None, max_block_chars: int = MAX_BLOCK_CHARS) -> dict:
     """{"new_prompt", "injected", "reason", "seconds"}. For a str prompt it never raises and returns within timeout_s
     (plus thread start-up): the original prompt on any failure (a non-str prompt is a caller bug: TypeError). The
     injected text goes through the egress guard (default: guard.DEFAULT_GUARD) before it is returned."""
@@ -157,8 +159,8 @@ def fetch_new_prompt(url: str, token: str, prompt: str, session_id: str = "", ti
         return orig(reason)
     if not np.endswith("\n\n" + prompt):
         return orig("malformed")
-    from ..inbox import parse_data_block
-    if not parse_data_block(np[: len(np) - len(prompt) - 2], BLOCK_LABEL, BLOCK_FIELDS):
+    from ..inbox import MEMORY_TURN_RE, parse_data_block
+    if not parse_data_block(np[: len(np) - len(prompt) - 2], BLOCK_LABEL, BLOCK_FIELDS, MEMORY_TURN_RE, max_block_chars):
         return orig("malformed")
     try:
         from ..guard import DEFAULT_GUARD
@@ -183,6 +185,7 @@ def main(argv=None, stdin=sys.stdin, stdout=sys.stdout) -> int:
     ap.add_argument("--token-file", required=True)
     ap.add_argument("--timeout", type=float, default=CLIENT_TIMEOUT_S, help="wall-clock deadline for the whole call")
     ap.add_argument("--session-id", default="")
+    ap.add_argument("--max-block-chars", type=int, default=MAX_BLOCK_CHARS, help="longest memory block accepted")
     ap.add_argument("--allow-plain-http", action="store_true", help="allow http:// to a non-loopback host (the bearer "
                     "token then crosses the network in clear)")
     ap.add_argument("--real-ids", default=None, help="REQUIRED (or $MEMCORE_REAL_IDS_FILE); without it the prompt is "
@@ -195,7 +198,8 @@ def main(argv=None, stdin=sys.stdin, stdout=sys.stdout) -> int:
         require_real_ids(DEFAULT_GUARD, a.real_ids, "basic_hook")
         with open(a.token_file) as fh:
             token = fh.read().strip()
-        out = fetch_new_prompt(a.url, token, prompt, a.session_id, a.timeout, a.allow_plain_http, DEFAULT_GUARD)
+        out = fetch_new_prompt(a.url, token, prompt, a.session_id, a.timeout, a.allow_plain_http, DEFAULT_GUARD,
+                               a.max_block_chars)
     except Exception as e:  # noqa: BLE001 - the hook never blocks the user's prompt
         out = {"new_prompt": prompt, "injected": False, "reason": "error:" + type(e).__name__}
     stdout.write(json.dumps(out) + "\n")
