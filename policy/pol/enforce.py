@@ -51,14 +51,25 @@ class DecisionLog:
                              "allow": d.allow, "reason": d.reason, "label": label_digest, "dest": dest})
 
 
+ALLOWED_CTX = frozenset(["destination", "authorization", "recipient_id", "credential", "derived"])
+
+
 class Enforcer:
-    def __init__(self, policy_source: Callable[[], Policy], log: Optional[DecisionLog] = None, disabled: Iterable[str] = ()):
+    """The only place where trusted facts enter a decision. A request may NAME ids (destination, authorization, recipient_id);
+    region, clock, the principal's attributes and the recipient's attributes come from the directory and clock the Enforcer owns.
+    Any other context key is a forged context and denies."""
+
+    def __init__(self, policy_source: Callable[[], Policy], log: Optional[DecisionLog] = None, disabled: Iterable[str] = (),
+                 directory: Optional[Callable[[str], Optional[Principal]]] = None, clock: Callable[[], float] = None):
+        import time as _t
         self.policy_source = policy_source
         self.log = log if log is not None else DecisionLog()
         self.disabled = frozenset(disabled)         # CONTROL ONLY: actions whose enforcement is switched off
         self.evaluated_actions = set()
+        self.directory = directory
+        self.clock = clock or _t.time
 
-    def check(self, principal, action, labels: Sequence[Label], ctx: Optional[dict] = None, texts: Sequence[str] = ()) -> Decision:
+    def check(self, principal, action, labels: Sequence[Label], ctx: Optional[dict] = None, texts: Sequence[str] = (), resolve=None) -> Decision:
         ctx = dict(ctx or {})
         pol = self.policy_source()                  # evaluated at the moment of use
         pid = getattr(principal, "id", None)
@@ -71,11 +82,32 @@ class Enforcer:
             self.log.add(d, pid, dig, ctx.get("destination"))
             return d
         self.evaluated_actions.add(action)
-        d = decide(principal, action, list(labels), ctx, policy=pol)
+        res = resolve or self.directory
+        d = self._decide(principal, pid, action, labels, ctx, pol, res)
         self.log.add(d, pid, dig, ctx.get("destination"))
         if not d.allow:
             raise PolicyDenied(d)
         return d
+
+    def _decide(self, principal, pid, action, labels, ctx, pol, res):
+        ver = getattr(pol, "version", None)
+        deny = lambda r: Decision(False, r, ver, action)
+        if set(ctx) - ALLOWED_CTX:
+            return deny("forged_context")
+        if res is not None:
+            principal = res(pid)
+            if principal is None:
+                return deny("unknown_principal")
+        trusted = {"now": self.clock()}
+        if action == "send_inbox":
+            rid = ctx.get("recipient_id")
+            if not isinstance(rid, str) or res is None:
+                return deny("recipient_required")
+            rcp = res(rid)
+            if rcp is None:
+                return deny("recipient_unknown")
+            trusted["recipient"] = rcp
+        return decide(principal, action, list(labels), {k: v for k, v in ctx.items() if k != "recipient_id"}, policy=pol, trusted=trusted)
 
 
 def public_label(tenant: str) -> Label:
@@ -185,37 +217,52 @@ def inject(enf: Enforcer, principal: Principal, records: Sequence[Record], ctx: 
 
 
 class Outbox:
-    """Queued delivery. The decision is taken at enqueue AND again at delivery against the current policy and the current
-    directory entry of the sender and recipient. enqueue_only=True is the broken control (the old check is trusted)."""
+    """Queued delivery. The decision is taken at enqueue AND again at delivery against the current policy, the current directory entries of
+    sender and recipient, and (when `resolver` is given) the CURRENT labels and existence of the source records: a record that was narrowed,
+    put under hold or erased after enqueue is re-labelled or refused. enqueue_only=True is the broken control."""
 
     def __init__(self, enforcer: Enforcer, directory: Callable[[str], Optional[Principal]], action: str,
-                 sink: Callable[[Principal, Sequence[Block], dict], None], enqueue_only: bool = False):
-        self.enf, self.directory, self.action, self.sink, self.enqueue_only = enforcer, directory, action, sink, enqueue_only
+                 sink: Callable[[Principal, Sequence[Block], dict], None], enqueue_only: bool = False, resolver: Optional[Callable] = None):
+        self.enf, self.directory, self.action, self.sink, self.enqueue_only, self.resolver = enforcer, directory, action, sink, enqueue_only, resolver
         self.queue: List[dict] = []
         self.delivered: List[dict] = []
         self.refused: List[dict] = []
 
+    def _labels(self, item):
+        labs = [b.label for b in item["blocks"]]
+        if self.resolver and item.get("record_ids"):
+            for rid in item["record_ids"]:
+                r = self.resolver(rid)
+                if r is None:
+                    d = Decision(False, "source_erased_or_missing", self.enf.policy_source().version, self.action)
+                    self.enf.log.add(d, item["sender"], None, None)
+                    raise PolicyDenied(d)
+                labs.append(r.label)                   # as they are NOW; joined with the queued label (never less restrictive)
+        return labs
+
     def _ctx(self, item):
         c = dict(item["ctx"])
         if item.get("recipient"):
-            c["recipient"] = self.directory(item["recipient"])
+            c["recipient_id"] = item["recipient"]
         return c
 
-    def enqueue(self, sender_id: str, blocks: Sequence[Block], ctx: dict, recipient_id: Optional[str] = None):
-        p = self.directory(sender_id)
-        item = {"sender": sender_id, "blocks": list(blocks), "ctx": dict(ctx), "recipient": recipient_id}
-        self.enf.check(p, self.action, [b.label for b in blocks], self._ctx(item), [b.text for b in blocks])
+    def _check(self, item):
+        self.enf.check(self.directory(item["sender"]) if self.directory(item["sender"]) else Principal("?", "?"), self.action, self._labels(item), self._ctx(item),
+                       [b.text for b in item["blocks"]], resolve=self.directory)
+
+    def enqueue(self, sender_id: str, blocks: Sequence[Block], ctx: dict, recipient_id: Optional[str] = None, record_ids: Optional[Sequence[str]] = None):
+        item = {"sender": sender_id, "blocks": list(blocks), "ctx": dict(ctx), "recipient": recipient_id, "record_ids": list(record_ids or [])}
+        self._check(item)
         item["enqueue_version"] = self.enf.policy_source().version
         self.queue.append(item)
 
     def deliver_all(self):
         q, self.queue = self.queue, []
         for item in q:
-            p = self.directory(item["sender"])
             try:
                 if not self.enqueue_only:
-                    self.enf.check(p, self.action, [b.label for b in item["blocks"]], self._ctx(item), [b.text for b in item["blocks"]])
-                self.sink(p, item["blocks"], self._ctx(item))
+                    self._check(item)
+                self.sink(self.directory(item["sender"]), item["blocks"], dict(self._ctx(item), recipient=self.directory(item["recipient"]) if item.get("recipient") else None))
                 self.delivered.append(item)
             except PolicyDenied as e:
                 item["refusal"] = e.decision

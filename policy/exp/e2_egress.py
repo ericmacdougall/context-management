@@ -7,19 +7,20 @@ import re
 import sys
 
 from exp import common  # noqa: F401
-from exp.common import write_result
+from exp.common import write_items, write_result
 from exp.gen import base_policy
 from pol.enforce import Block, Enforcer, GuardedChat, GuardedEmbedder, GuardedExport, Outbox, PolicyDenied, Record, Store, derive, inject
 from pol.labels import Label
 from pol.pdp import ACTIONS, Decision, Principal
 from pol.stubs import Network, StubChat, StubEmbedder
 
-SEEDS = [11, 12, 13, 14, 15]
+ROWS = []
+SEEDS = [21, 22, 23, 24, 25]
 PER_SEED = 400
 CLASSES = ["eu_only", "local_only", "model_banned", "restricted_channel", "other_tenant", "plain"]
 MARKER_RE = re.compile(r"@@([a-z_]+):([0-9a-f]{8})@@")
 
-P1 = Principal("P1", "t1", frozenset(["g1", "g2", "g3", "g4"]), clearance=3, restricted_ok=True)
+P1 = Principal("P1", "t1", frozenset(["g1", "g2", "g3", "g4"]), clearance=3, restricted_ok=True, region="EU")
 RECIPIENTS = {
     "r1": Principal("r1", "t1", frozenset(["g1"]), 3, True, region="EU", model="d_model_eu"),
     "r2": Principal("r2", "t1", frozenset(["g1"]), 3, True, region="EU", model="d_model_us"),
@@ -91,9 +92,10 @@ def run_scenario(seed, mode):
     rng = random.Random(seed)
     pol = base_policy()
     net = Network()
-    enf = Enforcer(lambda: pol, disabled=[mode[1]] if mode and mode[0] == "disable" else ())
+    directory = {"P1": P1, **RECIPIENTS}
+    enf = Enforcer(lambda: pol, disabled=[mode[1]] if mode and mode[0] == "disable" else (), directory=directory.get, clock=lambda: 10)
     if mode and mode[0] == "idguard":
-        enf = IdPatternGuard(lambda: pol)
+        enf = IdPatternGuard(lambda: pol, directory=directory.get, clock=lambda: 10)
     store = Store(enf, check_lineage=not (mode and mode[0] == "derive_first"))
     dmode = "first" if mode and mode[0] == "derive_first" else "join"
     for ch, act in (("model", "send_model"), ("embed", "embed"), ("inbox", "send_inbox"), ("export", "export")):
@@ -120,7 +122,7 @@ def run_scenario(seed, mode):
     pool = list(recs)                          # grows with derived records
 
     st = {"attempts_forbidden": {c: 0 for c in CLASSES}, "attempts_total": 0, "denied": 0, "ops": 0}
-    ctx_base = lambda: {"now": 10, "authorization": rng.choice(["auth1", None, "zzz"]), "region": rng.choice(["EU", "US"])}
+    ctx_base = lambda: {"authorization": rng.choice(["auth1", None, "zzz"])}
 
     def forbidden_classes(blocks, ch, dest):
         out = set()
@@ -176,7 +178,7 @@ def run_scenario(seed, mode):
             if res is not None and rng.random() < 0.6:
                 d = Record("d%d" % len(pool), res.text, res.label, tuple(res.lineage), "summary")
                 try:
-                    store.append(P1, d, {"region": "EU", "now": 10})
+                    store.append(P1, d, {})
                     pool.append(d)
                 except PolicyDenied:
                     pass
@@ -188,7 +190,7 @@ def run_scenario(seed, mode):
             if res is not None and rng.random() < 0.5:
                 d = Record("d%d" % len(pool), res.text, res.label, tuple(res.lineage), "summary")
                 try:
-                    store.append(P1, d, {"region": "EU", "now": 10})
+                    store.append(P1, d, {})
                     pool.append(d)
                 except PolicyDenied:
                     pass
@@ -238,13 +240,14 @@ def run_scenario(seed, mode):
             "evaluated_actions": sorted(enf.evaluated_actions)}
 
 
-def run_arm(mode):
+def run_arm(mode, arm_name=""):
     tot = {"scenarios": 0, "scenarios_with_leak": 0, "violations": 0, "leak_classes": {}, "leak_channels": {},
            "attempts_forbidden": {c: 0 for c in CLASSES}, "permitted": {c: 0 for c in CLASSES}, "channels": {}, "denied": 0, "attempts_total": 0,
            "registered_actions": None, "evaluated_actions": set()}
     for seed in SEEDS:
         for i in range(PER_SEED):
             r = run_scenario(seed * 100000 + i, mode)
+            ROWS.append({"arm": arm_name, "seed": seed, "i": i, "violations": len(r["violations"]), "violation_classes": sorted({v["marker_class"] for v in r["violations"]}), "forbidden_attempts": r["attempts"]["attempts_forbidden"], "permitted": r["permitted"], "channels": r["channels"]})
             tot["scenarios"] += 1
             tot["violations"] += len(r["violations"])
             tot["scenarios_with_leak"] += bool(r["violations"])
@@ -265,12 +268,12 @@ def run_arm(mode):
 
 
 def main():
-    arms = {"enforced": run_arm(None)}
+    arms = {"enforced": run_arm(None, "enforced")}
     for name, mode in [("ctl_model_port_disabled", ("disable", "send_model")), ("ctl_embed_disabled", ("disable", "embed")),
                        ("ctl_inbox_disabled", ("disable", "send_inbox")), ("ctl_export_disabled", ("disable", "export")),
                        ("ctl_derive_join_dropped", ("derive_first",)), ("ctl_id_pattern_guard", ("idguard",)),
                        ("info_inject_only_disabled", ("disable", "inject"))]:
-        arms[name] = run_arm(mode)
+        arms[name] = run_arm(mode, name)
     a = arms["enforced"]
     expected_actions = sorted(x for x in ACTIONS if x not in ("append", "read", "inject", "erase"))
     pos_ok = (a["violations"] == 0 and a["scenarios"] >= 2000 and all(a["attempts_forbidden"][c] >= 1000 for c in CLASSES if c != "plain")
@@ -290,6 +293,7 @@ def main():
             "idpattern_guard_blocks_idlike_strings": IdPatternGuard.blocked,
             "not_proven": "stubs only (no real adapter); oracle and decide share the destination table; other_tenant has no permitted delivery by design; "
                           "record content is plain strings (no encodings, translations or paraphrase of markers, which no label system can follow)"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("e2_egress", ROWS)))
     write_result("e2_egress", {"seeds": SEEDS, "per_seed": PER_SEED, "classes": CLASSES}, data)
     print(verdict, "enforced violations", a["violations"], "forbidden attempts", a["attempts_forbidden"], "permitted", a["permitted"], a["channels"])
     for k, c in ctl_report.items():

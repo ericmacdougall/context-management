@@ -8,25 +8,41 @@ import threading
 import time
 
 from exp import common  # noqa: F401
-from exp.common import write_result
+from exp.common import write_items, write_result
 from pol import pgcore
-from pol.core import canon, current_table, genesis, idem_key, manifest_hash
+from pol.core import canon, current_table, genesis, idem_key, manifest_hash, sha
+from pol.testkit import LAB
 
+ROWS = []
 R = 50
-SCEN = ["s1", "s2", "s3", "s4", "s5"]
+SCEN = ["s1", "s2", "s3", "s4", "s5", "s4b"]
 PRINCIPALS = {"u1": "human", "u2": "human", "a1": "agent"}
 for _i in range(R):
     PRINCIPALS["z%d" % _i] = "human"
 AUTHORITY = {}
 for _s in SCEN + ["c1", "c2", "c3"]:
     for _i in range(R):
+        if _s == "s4b":
+            AUTHORITY["s4b_a%d" % _i] = ["u1", "u2"]
+            AUTHORITY["s4b_b%d" % _i] = ["u1", "u2"]
+            continue
         AUTHORITY["%s_%d" % (_s, _i)] = ["u1", "u2"] + (["z%d" % _i] if _s == "s3" else [])
 ADMINS = ["u1"]
+PRINCIPALS_T2 = {"x1": "human", "u1": "human"}
+AUTHORITY_T2 = {"t2r": ["x1"]}
 TIMEOUT = 20.0
 
 
+PROP = {"P1": ("A", "u1"), "P2": ("B", "u2")}
+
+
 def E(type, id, **kw):
-    d = {"type": type, "id": id, "idem": kw.pop("idem", id)}
+    d = {"type": type, "id": id, "idem": kw.pop("idem", id), "tenant": kw.pop("tenant", "T1")}
+    if type in ("propose", "supersede") or (type == "decide" and kw.get("verb") == "amend"):
+        d["label"] = dict(LAB)
+    if kw.get("proposal") and "proposal_hash" not in kw:
+        val, auth = PROP[kw["proposal"].rsplit("_", 1)[1]]
+        d["proposal_hash"] = sha([kw["proposal"], val, auth])
     d.update(kw)
     return d
 
@@ -45,7 +61,7 @@ def wait_blocked(mon, pid, timeout=TIMEOUT):
     return None
 
 
-def race(first, second, mon, pid_second):
+def race(first, second, mon, pid_second, wait_at="locked"):
     """first(hook) runs a transaction that holds its locks until the monitor sees `second` blocked; second(hook) is then started."""
     w, res, errs = {}, {}, []
     started = threading.Event()
@@ -54,9 +70,12 @@ def race(first, second, mon, pid_second):
         if name == "locked":
             w["a_locked"] = ts(c)
             started.set()
-            w["b_blocked"] = wait_blocked(mon, pid_second)
+            if wait_at == "locked":
+                w["b_blocked"] = wait_blocked(mon, pid_second)
         elif name == "before_commit":
             w["a_before_commit"] = ts(c)
+            if wait_at == "before_commit":
+                w["b_blocked"] = wait_blocked(mon, pid_second)
 
     def hookB(name, c):
         if name == "locked":
@@ -82,12 +101,15 @@ def race(first, second, mon, pid_second):
     tb.start()
     ta.join(TIMEOUT * 2)
     tb.join(TIMEOUT * 2)
-    ok = all(k in w and w[k] is not None for k in ("a_locked", "b_blocked", "a_before_commit", "b_locked")) and w["a_locked"] < w["b_blocked"] < w["a_before_commit"] < w["b_locked"]
+    if wait_at == "locked":
+        ok = all(k in w and w[k] is not None for k in ("a_locked", "b_blocked", "a_before_commit", "b_locked")) and w["a_locked"] < w["b_blocked"] < w["a_before_commit"] < w["b_locked"]
+    else:          # the twin blocks on the unique index (after A's insert, before A's commit); it takes its own locks first
+        ok = all(k in w and w[k] is not None for k in ("a_locked", "b_blocked", "a_before_commit")) and w["a_locked"] < w["a_before_commit"] and w["b_blocked"] is not None
     return res, bool(ok), w, errs
 
 
-def head(conn, req):
-    return conn.execute("select doc from dc_reqs where req=%s", (req,)).fetchone()[0]
+def head(conn, req, tenant="T1"):
+    return conn.execute("select doc from dc_reqs where tenant=%s and req=%s", (tenant, req)).fetchone()[0]
 
 
 def seed_two_proposals(conn, req):
@@ -150,7 +172,7 @@ def s4(c, i):
     twin = dict(ev) if i % 2 == 0 else dict(ev, value="DIFFERENT")           # same payload -> duplicate; other payload -> idem_conflict
     res, ov, w, errs = race(lambda h: pgcore.submit(c.a, ev, h), lambda h: pgcore.submit(c.b, twin, h), c.mon, c.pid_b)
     d = head(c.adm, req)
-    n = c.adm.execute("select count(*) from dc_events where idem=%s", (idem_key(ev),)).fetchone()[0]
+    n = c.adm.execute("select count(*) from dc_events where tenant='T1' and idem=%s", (idem_key(ev),)).fetchone()[0]
     want = "duplicate" if i % 2 == 0 else "idem_conflict"
     ok = res.get("a") == "superseded" and res.get("b") == want and n == 1 and d["version"] == 1 and d["value"] == "V" and not errs
     return ok, ov, {"codes": res, "event_rows": n, "version": d["version"], "errs": errs}
@@ -169,6 +191,31 @@ def s5(c, i):
     d = head(c.adm, req)
     ok = res.get("a") == "resolved" and res.get("b") == "stale" and d["status"] == "current" and d["version"] == 3 and not errs
     return ok, ov, {"codes": res, "version": d["version"], "errs": errs}
+
+
+def s4b(c, i):
+    """The unique-index backstop: one principal reuses an idempotency key on two DIFFERENT requirements concurrently. They do not serialise on a
+    requirement row, so the second blocks on the unique index; after the first commits it hits a UniqueViolation, retries, and reads the stored key."""
+    ra, rb = "s4b_a%d" % i, "s4b_b%d" % i
+    ea = E("supersede", ra + "_X", req=ra, principal="u1", value="V", channel="owner_ui", based_on=0, idem="shared-key-%d" % i)
+    eb = E("supersede", rb + "_X", req=rb, principal="u1", value="V", channel="owner_ui", based_on=0, idem="shared-key-%d" % i)
+    before = pgcore.BACKSTOP_RETRIES[0]
+    res, ov, w, errs = race(lambda h: pgcore.submit(c.a, ea, h), lambda h: pgcore.submit(c.b, eb, h), c.mon, c.pid_b, wait_at="before_commit")
+    retries = pgcore.BACKSTOP_RETRIES[0] - before
+    n = c.adm.execute("select count(*) from dc_events where tenant='T1' and idem=%s", (idem_key(ea),)).fetchone()[0]
+    ok = res.get("a") == "superseded" and res.get("b") == "idem_conflict" and n == 1 and retries >= 1 and head(c.adm, rb)["version"] == 0 and not errs
+    return ok, ov and retries >= 1, {"codes": res, "event_rows": n, "backstop_retries": retries, "errs": errs}
+
+
+def s6(c, i):
+    """Tenant isolation: an admin of tenant T2 cannot revoke or grant in T1, and a T1 event stamped T2 changes nothing."""
+    before = canon(pgcore.read_state(c.adm, "T1"))
+    c1 = pgcore.submit(c.adm, E("revoke", "t2rev%d" % i, principal="x1", target="u2", tenant="T1"))
+    c2 = pgcore.submit(c.adm, E("revoke", "t2rev2_%d" % i, principal="u1", target="x1", tenant="T2"))
+    c3 = pgcore.submit(c.adm, E("grant", "t2g%d" % i, principal="x1", req="s1_0", target="x1", tenant="T1"))
+    after = canon(pgcore.read_state(c.adm, "T1"))
+    ok = c1 == "unauthorized" and c2 == "unauthorized" and c3 == "unauthorized" and before == after
+    return ok, True, {"codes": [c1, c2, c3]}
 
 
 def ctl_lww(c, i):
@@ -246,6 +293,7 @@ def run_scenario(name, fn, conns):
             ok, ov, info = fn(conns, i)
         except Exception as e:      # noqa: BLE001
             ok, ov, info = False, False, {"exception": repr(e)}
+        ROWS.append({"scenario": name, "round": i, "ok": bool(ok), "overlap": bool(ov), "info": info})
         ok_n += bool(ok)
         ov_n += bool(ov)
         if not ok and len(fails) < 3:
@@ -257,16 +305,16 @@ def run_scenario(name, fn, conns):
 
 def main():
     c = Conns()
-    g0 = pgcore.setup(c.adm, PRINCIPALS, AUTHORITY, ADMINS)
+    g0 = pgcore.setup(c.adm, {"T1": (PRINCIPALS, AUTHORITY, ADMINS), "T2": (PRINCIPALS_T2, AUTHORITY_T2, ["x1"])})
     out = {}
     for name, fn in [("S1_conflicting_decisions_contested", s1), ("S2_stale_token_refused", s2), ("S3_zombie_revoked_principal", s3), ("S4_same_idem_key_concurrent", s4),
-                     ("S5_resolve_race", s5)]:
+                     ("S5_resolve_race", s5), ("S4b_unique_index_backstop", s4b), ("S6_tenant_isolation", s6)]:
         out[name] = run_scenario(name, fn, c)
     ctl = {"ctl_engine_last_writer_wins": run_scenario("lww_engine", ctl_lww_engine, c), "ctl_blind_update_no_lock": run_scenario("lww", ctl_lww, c), "ctl_no_lock_read_modify_write": run_scenario("nolock", ctl_nolock, c)}
     # rebuild from the event table equals the live head rows, per requirement and as a manifest
-    live = pgcore.read_state(c.adm)
-    reb = pgcore.rebuild(c.adm, PRINCIPALS, AUTHORITY, ADMINS)
-    rows = pgcore.log_rows(c.adm)
+    live = pgcore.read_state(c.adm, "T1")
+    reb = pgcore.rebuild(c.adm, "T1", PRINCIPALS, AUTHORITY, ADMINS)
+    rows = pgcore.log_rows(c.adm, "T1")
     per_req_equal, per_req_total = {}, {}
     for r in live["reqs"]:
         sc = r.split("_")[0]
@@ -280,7 +328,7 @@ def main():
     man_equal = manifest_hash(live_f, rows_f) == manifest_hash(reb_f, rows_f)
     rebuild_rep = {"events_in_log": len(rows), "per_scenario_reqs_equal": per_req_equal, "per_scenario_reqs_total": per_req_total, "authority_equal": auth_equal, "manifest_equal": man_equal}
     ok = all(v["passed"] == R for v in out.values()) and all(out[k]["overlap_witnessed"] == R for k in ("S1_conflicting_decisions_contested", "S3_zombie_revoked_principal",
-                                                                                                         "S5_resolve_race")) \
+                                                                                                         "S5_resolve_race", "S4b_unique_index_backstop")) \
         and all(per_req_equal.get(s, 0) == per_req_total.get(s) for s in SCEN) and auth_equal and man_equal
     # controls: the controls' own requirements (c1, c2) are expected to diverge from a rebuild for the lost-update control
     ctl_ok = ctl["ctl_engine_last_writer_wins"]["passed"] >= 45 and ctl["ctl_engine_last_writer_wins"]["overlap_witnessed"] >= 45 and ctl["ctl_blind_update_no_lock"]["passed"] >= 45 and ctl["ctl_no_lock_read_modify_write"]["passed"] >= 45
@@ -291,6 +339,7 @@ def main():
             "controls_meet_floor": ctl_ok,
             "not_proven": "single Postgres instance, READ COMMITTED, one writer pair per round (two overlapping transactions, not N-way); no process kill or network partition mid-transaction; "
                           "the events table has no hash chain enforced by the database; revoke locks every requirement row (a scaling limit)"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("b3_pg", ROWS)))
     write_result("b3_pg", {"R": R, "scenarios": SCEN, "pg_port": pgcore.PG["port"]}, data, extra_env={"postgres": pgv, "container": "emlab-pg-pol-16096", "isolation": "read committed"})
     print(verdict, {k: (v["passed"], v["overlap_witnessed"]) for k, v in out.items()}, {k: (v["passed"], v["overlap_witnessed"]) for k, v in ctl.items()}, rebuild_rep)
 

@@ -4,13 +4,13 @@ import random
 import sys
 
 from exp import common  # noqa: F401  (adds the policy root to sys.path)
-from exp.common import write_result
+from exp.common import write_items, write_result
 from exp.gen import rand_label, rand_principal, rand_probe, base_policy
 from pol.labels import DIMENSIONS, Label, join2, violated_dims
 from pol.pdp import decide
 
 N_PER_SEED = 4000
-SEEDS = [11, 12, 13, 14, 15]      # fresh seeds for the stamped run; dev tuning used 1..5
+SEEDS = [21, 22, 23, 24, 25]
 PROBES = 40
 LAW_TRIPLES = 5000
 
@@ -59,7 +59,10 @@ def derive_tree(rng, joiner):
     return cur, leaves
 
 
-def run(seed, n, joiner):
+ROWS = []
+
+
+def run(seed, n, joiner, arm="enforced"):
     rng = random.Random(seed)
     pol = base_policy()
     st = {"derivations": 0, "multi_input": 0, "structural_viol": 0, "semantic_viol_derivations": 0, "probes": 0, "probe_allowed": 0,
@@ -78,13 +81,13 @@ def run(seed, n, joiner):
         sem = False
         for _p in range(PROBES):
             pr = rand_principal(rng)
-            action, ctx = rand_probe(rng, pol)
-            da = decide(pr, action, d, ctx, policy=pol).allow
+            action, ctx, trusted = rand_probe(rng, pol)
+            da = decide(pr, action, d, ctx, policy=pol, trusted=trusted).allow
             st["probes"] += 1
             st["probe_allowed" if da else "probe_denied"] += 1
             if da:
                 for l in leaves:
-                    if not decide(pr, action, l, ctx, policy=pol).allow:
+                    if not decide(pr, action, l, ctx, policy=pol, trusted=trusted).allow:
                         sem = True
                         if st["first_counterexample"] is None:
                             st["first_counterexample"] = {"action": action, "dims": sorted(violated_dims(l, d))}
@@ -96,6 +99,7 @@ def run(seed, n, joiner):
                 if st["first_counterexample"] is None:
                     st["first_counterexample"] = {"action": "erase_subject", "dims": ["subjects"]}
         st["semantic_viol_derivations"] += sem
+        ROWS.append({"arm": arm, "seed": seed, "n_leaves": len(leaves), "structural": bool(bad), "bad_dims": sorted(bad), "semantic": bool(sem)})
     return st
 
 
@@ -118,7 +122,7 @@ def main():
           and tot["probes"] >= 200000 and tot["probe_allowed"] >= 0.05 * tot["probes"] and tot["probe_denied"] >= 0.05 * tot["probes"])
     controls = {}
     for dim in DIMENSIONS:
-        runs = [run(sd, N_PER_SEED, naive(dim)) for sd in SEEDS]
+        runs = [run(sd, N_PER_SEED, naive(dim), "ctl_" + dim) for sd in SEEDS]
         sfs = [r["structural_viol"] / max(1, r["multi_input"]) for r in runs]
         sms = [r["semantic_viol_derivations"] / max(1, r["multi_input"]) for r in runs]
         only = all(set(r["viol_dims"]) == {dim} for r in runs)
@@ -129,6 +133,7 @@ def main():
     verdict = "PASS" if ok and ok_ctl else "FAIL"
     data = {"verdict": verdict, "per_seed": good, "totals": tot, "lattice_law_failures": lw, "controls": controls, "pass_conditions_met": ok,
             "controls_meet_floor": ok_ctl, "not_proven": "label generator universe is small (4 groups, 3 regions, 4 models, 2 tenants); decide() rules not proven complete, only monotone under join"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("e1_lattice", ROWS)))
     write_result("e1_lattice", params, data)
     print(verdict, tot, lw)
     for d, c in controls.items():

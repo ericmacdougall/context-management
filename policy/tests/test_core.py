@@ -2,15 +2,16 @@ import json
 import unittest
 
 from pol.core import apply, current_table, explain, genesis, manifest_hash
+from pol.testkit import prepare
 
 PR = {"u1": "human", "u2": "human", "a1": "agent"}
 AU = {"r1": ["u1", "u2"], "r2": ["u1"], "r3": ["u1", "a1"]}
 
 
 def run(events):
-    st, codes = genesis(PR, AU, ["u1"]), []
+    st, codes = genesis("T1", PR, AU, ["u1"]), []
     for e in events:
-        st, c = apply(st, e)
+        st, c = apply(st, prepare(st, e))
         codes.append(c)
     return st, codes
 
@@ -44,9 +45,9 @@ class T(unittest.TestCase):
         ex = explain(st, "r1")
         self.assertEqual(ex["status"], "contested")
         self.assertEqual(sorted(x["event"] for x in ex["contested"]["candidates"]), ["D1", "D2"])
-        st, c = apply(st, E("decide", "R", req="r1", principal="u1", verb="resolve", choose="D2", channel="owner_ui", based_on=2))
+        st, c = apply(st, prepare(st, E("decide", "R", req="r1", principal="u1", verb="resolve", choose="D2", channel="owner_ui", based_on=2)))
         self.assertEqual(c, "resolved")
-        st, c = apply(st, E("supersede", "S", req="r1", principal="u1", value="Z", channel="owner_ui", based_on=3))
+        st, c = apply(st, prepare(st, E("supersede", "S", req="r1", principal="u1", value="Z", channel="owner_ui", based_on=3)))
         ex = explain(st, "r1")
         self.assertEqual((ex["value"], ex["decided_by"], ex["decision_event"]), ("Z", "u1", "S"))
         self.assertEqual([x["value"] for x in ex["superseded_chain"]], ["B"])

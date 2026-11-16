@@ -8,13 +8,14 @@ import json
 import random
 
 from exp import common  # noqa: F401
-from exp.common import write_result
+from exp.common import write_items, write_result
 from pol.labels import Label
 from exp.gen import GRANTS
 from pol.pdp import Policy, Principal
 from pol.threads import Item, World, build_view, conflict_notice, serialise
 
-SEEDS = [11, 12, 13, 14, 15]
+ROWS = []
+SEEDS = [21, 22, 23, 24, 25]
 PER_SEED = 200
 
 
@@ -53,6 +54,9 @@ def gen_world(rng):
         a = rng.choice(by_thread[threads[0]])
         b = rng.choice(by_thread[threads[1]])
         edges.append((a, b, "conflicts_with"))
+    t2ids = [i for i in items if items[i].label.tenants == frozenset(["t2"])]
+    if t2ids and rng.random() < 0.4:                     # adversarial: a conflict edge from a t1 item to a t2 item (must never produce a notice)
+        edges.append((rng.choice(ids), rng.choice(t2ids), "conflicts_with"))
     findings = []
     for _ in range(rng.randint(3, 5)):
         a, b = rng.sample(ids, 2)
@@ -103,8 +107,8 @@ def tokens_of(it):
     return [it.id, it.value, it.decider] + [w for w in it.text.split() if w.startswith(("MK-", "THREADNAME-"))]
 
 
-def check_world(world, mode):
-    pol = Policy(1, grants=GRANTS)
+def check_world(world, mode, notice="existence_only"):
+    pol = Policy(1, grants=GRANTS, conflict_notice=notice)
     out = {"leaks": 0, "notice_expected": 0, "notice_found": 0, "notice_wrong": 0, "views": 0, "interference": 0, "bytes_checked": 0, "xrefs_visible": 0,
            "finding_hidden": 0, "finding_visible": 0}
     for p in principals(world):
@@ -128,8 +132,10 @@ def check_world(world, mode):
             if t != "conflicts_with":
                 continue
             for l, o in ((a, b), (b, a)):
-                if readable(world.items[l].label, p) and not readable(world.items[o].label, p):
+                if readable(world.items[l].label, p) and not readable(world.items[o].label, p) and world.items[l].label.tenants == world.items[o].label.tenants:
                     expect.add(l)
+        if notice == "none":
+            expect = set()
         want = sorted([conflict_notice(l, world.items[l].version) for l in expect], key=lambda n: n["item"])
         got = sorted(view["notices"], key=lambda n: n["item"])
         out["notice_expected"] += len(want)
@@ -140,7 +146,7 @@ def check_world(world, mode):
     return out
 
 
-def run_arm(mode):
+def run_arm(mode, notice="existence_only", name=""):
     tot = {"worlds": 0, "worlds_with_leak": 0, "worlds_with_cross_conflict": 0, "findings_joining": 0, "views": 0, "leaks": 0, "notice_expected": 0,
            "notice_found": 0, "notice_wrong_views": 0, "interference_views": 0, "bytes_checked": 0, "xrefs_visible": 0, "finding_hidden": 0, "finding_visible": 0,
            "worlds_with_interference": 0}
@@ -148,7 +154,8 @@ def run_arm(mode):
         for i in range(PER_SEED):
             rng = random.Random(seed * 10000 + i)
             w = gen_world(rng)
-            r = check_world(w, mode)
+            r = check_world(w, mode, notice)
+            ROWS.append({"arm": name, "seed": seed, "i": i, "leak": r["leaks"], "notice_expected": r["notice_expected"], "notice_found": r["notice_found"], "notice_wrong": r["notice_wrong"], "interference": r["interference"], "cross_conflict": any(w.items[a].thread != w.items[b].thread and t == "conflicts_with" for a, b, t in w.edges)})
             tot["worlds"] += 1
             tot["worlds_with_leak"] += r["leaks"] > 0
             tot["worlds_with_cross_conflict"] += any(w.items[a].thread != w.items[b].thread and t == "conflicts_with" for a, b, t in w.edges)
@@ -162,11 +169,12 @@ def run_arm(mode):
 
 
 def main():
-    arms = {"enforced": run_arm(None)}
+    arms = {"enforced": run_arm(None, name="enforced"), "enforced_notice_none_default": run_arm(None, "none", "notice_none")}
     for name, mode in [("ctl_derive_join_dropped", "derive_first"), ("ctl_notice_carries_other_side", "notice_full"), ("ctl_xref_without_decision", "xref_no_check")]:
-        arms[name] = run_arm(mode)
+        arms[name] = run_arm(mode, name=name)
     a = arms["enforced"]
-    pos = (a["worlds_with_leak"] == 0 and a["notice_wrong_views"] == 0 and a["notice_found"] == a["notice_expected"] and a["interference_views"] == 0
+    n0 = arms["enforced_notice_none_default"]
+    pos = (n0["worlds_with_leak"] == 0 and n0["notice_wrong_views"] == 0 and n0["notice_expected"] == 0 and n0["interference_views"] == 0) and (a["worlds_with_leak"] == 0 and a["notice_wrong_views"] == 0 and a["notice_found"] == a["notice_expected"] and a["interference_views"] == 0
            and a["worlds"] >= 1000 and a["worlds_with_cross_conflict"] >= 0.9 * a["worlds"] and a["findings_joining"] >= a["worlds"] and a["notice_found"] >= 1000
            and a["finding_hidden"] > 0 and a["finding_visible"] > 0 and a["xrefs_visible"] > 0)
     ctl = {}
@@ -181,6 +189,7 @@ def main():
             "notice_contract": ["kind", "item", "version", "state"],
             "not_proven": "timing and ordering side channels (a notice appearing later than the item), notice frequency over time, and the generic 'context withheld' placeholder "
                           "which tells a viewer that something was withheld; graph shape beyond one hop; real concurrent write paths"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("e5_threads", ROWS)))
     write_result("e5_threads", {"seeds": SEEDS, "per_seed": PER_SEED}, data)
     print(verdict, {k: a[k] for k in ("worlds", "worlds_with_leak", "notice_expected", "notice_found", "notice_wrong_views", "interference_views", "worlds_with_cross_conflict", "findings_joining", "finding_hidden", "finding_visible", "xrefs_visible")})
     for k, c in ctl.items():

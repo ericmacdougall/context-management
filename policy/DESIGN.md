@@ -46,7 +46,14 @@ Pure `apply(state, event) -> (state, outcome)`. Events: propose, remark (plain t
 - `current_table`, `manifest_hash`, `explain` derive from state/log only. Postgres: per-requirement `FOR UPDATE`, authority `FOR SHARE`
   (revoke and grant `FOR UPDATE` on authority and every requirement), idem row read after the locks, unique idem index as backstop.
 
-### Composition with the write path
+### Fix round after the independent review (515e594)
+Trusted facts only: the Enforcer resolves the principal and the recipient from a directory and owns the clock; a request may name ids only and any other
+context key denies (`forged_context`). Narrowing keys are normalised like identity keys; an unrecognised one denies. Closed principal kinds (non-human =
+agent restrictions). Contest is human-only, bounded, never against a resolve; sibling content must be open; event ids unique; accept binds proposal id and
+content hash; installed value labels are computed; idempotent retry returns the original outcome and refusals do not burn keys; the core is per tenant.
+Outbox re-reads source records at delivery. Conflict notice default is none. See COMPOSITION.md for the write-path interface.
+
+### Composition with the write path (superseded by COMPOSITION.md)
 `feat/writepath-rescue` `wp.log.decide(item, based_on_version, action, payload, source_event_id, idem_key)` is the same shape:
 core event -> (item=req, based_on_version=based_on, action=verb, idem_key=idem). It compares-and-sets the head and raises
 `StaleDecision`; it does not have the sibling window, so two concurrent decisions on one version end as one winner and one

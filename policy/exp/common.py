@@ -49,3 +49,21 @@ def write_result(name, params, data, extra_env=None):
         fh.write(raw)
     print("RESULT %s verdict=%s sha256=%s file=%s" % (name, data.get("verdict"), h, p))
     return h, p
+
+
+def write_items(name, rows):
+    """Per-item artifact (proof rule 5): one JSON row per examined item, gzip with a fixed mtime, content-addressed. Returns (file name, sha256)."""
+    import gzip
+    import io
+    os.makedirs(RESULTS, exist_ok=True)
+    raw = ("\n".join(json.dumps(r, sort_keys=True, default=str) for r in rows) + "\n").encode()
+    buf = io.BytesIO()
+    with gzip.GzipFile(fileobj=buf, mode="wb", mtime=0) as g:
+        g.write(raw)
+    data = buf.getvalue()
+    h = hashlib.sha256(data).hexdigest()
+    tag = "DEV." if os.environ.get("ALLOW_DIRTY") == "1" else ""
+    fn = "%s%s.items.%s.jsonl.gz" % (tag, name, h[:16])
+    with open(os.path.join(RESULTS, fn), "wb") as fh:
+        fh.write(data)
+    return fn, h

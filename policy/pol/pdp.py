@@ -24,6 +24,7 @@ ACTION_KIND = {"send_model": "model", "embed": "embedder", "export": "export"}
 IDENTITY_KEYS = frozenset(["tenant", "tenants", "id", "subject", "subject.id", "subject.identifier", "principal", "groups", "group",
                            "clearance", "restricted.ok", "kind", "region", "model", "tenant.id", "user", "user.id"])
 CREDENTIAL_NARROWING_KEYS = frozenset(["cap_clearance", "cap_actions", "cap_restricted"])
+_NARROW_NORM = frozenset(["cap.clearance", "cap.actions", "cap.restricted"])
 
 
 @dataclass(frozen=True)
@@ -69,7 +70,8 @@ class Policy:
     revoked: FrozenSet[str] = frozenset()
     authorizations: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)   # id -> {tenant, programme, expires}
     extra_rules: Tuple[Tuple[str, Callable], ...] = ()
-    conflict_notice: str = "existence_only"      # existence_only | none (see threads.py)
+    conflict_notice: str = "none"                # none (default) | existence_only (opt-in; see threads.py)
+    model_aliases: Mapping[str, str] = field(default_factory=dict)   # canonical alias -> canonical model id
     grants: Mapping[str, FrozenSet[str]] = field(default_factory=dict)   # tenant -> actions the tenant's policy allows; EMPTY = deny everything
     hold_events: FrozenSet[str] = frozenset()    # legal holds that have a RECORDED hold event; a label's hold only binds once recorded
 
@@ -83,6 +85,23 @@ class Decision:
     reason: str
     policy_version: Any
     action: str = ""
+
+
+def canon_id(x):
+    """Canonical identifier: NFKC, format characters removed, trimmed, casefolded. Used for principals, models and revocation lists."""
+    s = unicodedata.normalize("NFKC", str(x))
+    return "".join(ch for ch in s if unicodedata.category(ch) != "Cf").strip().casefold()
+
+
+def _model_banned(model, bans, aliases):
+    m = canon_id(model)
+    m = aliases.get(m, m)
+    for b in bans:
+        c = canon_id(b)
+        c = aliases.get(c, c)
+        if m == c or m.startswith(c + "-"):
+            return True
+    return False
 
 
 def _norm_key(k):
@@ -119,6 +138,9 @@ def effective_caps(principal: Principal, context: Mapping) -> Dict[str, Any]:
             nk = _norm_key(k)
             if nk in IDENTITY_KEYS:
                 _deny("attr_clash")
+            if nk in _NARROW_NORM or nk.startswith("cap.") or nk.replace(".", "") in {"capclearance", "capactions", "caprestricted"}:
+                if k not in CREDENTIAL_NARROWING_KEYS:
+                    _deny("attr_unrecognised_narrowing_key")     # a misspelt narrowing key must not be silently ignored
             if k in CREDENTIAL_NARROWING_KEYS:
                 if k in caps and caps[k] != v:
                     _deny("attr_clash")          # the same narrowing key from two sources that disagree
@@ -126,7 +148,7 @@ def effective_caps(principal: Principal, context: Mapping) -> Dict[str, Any]:
     return caps
 
 
-def _dest(policy: Policy, dest_id, want_kind, label: Label, tenant: str, ctx: Mapping):
+def _dest(policy: Policy, dest_id, want_kind, label: Label, tenant: str, ctx: Mapping, now=None, pid=None):
     if not isinstance(dest_id, str) or dest_id not in policy.destinations:
         _deny("unknown_destination")
     d = policy.destinations[dest_id]
@@ -138,9 +160,10 @@ def _dest(policy: Policy, dest_id, want_kind, label: Label, tenant: str, ctx: Ma
         m = d.model
         if m is None:
             _deny("destination_model_unpinned")
-        if m in policy.banned_models or m in policy.tenant_banned.get(tenant, frozenset()) or m in label.banned:
+        al = policy.model_aliases
+        if _model_banned(m, set(policy.banned_models) | set(policy.tenant_banned.get(tenant, frozenset())) | set(label.banned), al):
             _deny("model_banned")
-        if label.models is not None and m not in label.models:
+        if label.models is not None and al.get(canon_id(m), canon_id(m)) not in {al.get(canon_id(x), canon_id(x)) for x in label.models}:
             _deny("model_not_allowed")
     if label.local_only and not d.local:
         _deny("local_inference_required")
@@ -152,19 +175,18 @@ def _dest(policy: Policy, dest_id, want_kind, label: Label, tenant: str, ctx: Ma
         if d.programme is None:
             _deny("restricted_channel_required")
         auth = policy.authorizations.get(ctx.get("authorization"))
-        now = ctx.get("now")
-        if (auth is None or auth.get("tenant") != tenant or auth.get("programme") != d.programme
+        if (auth is None or auth.get("principal") != pid or auth.get("tenant") != tenant or auth.get("programme") != d.programme
                 or not isinstance(now, (int, float)) or isinstance(now, bool) or not isinstance(auth.get("expires"), (int, float))
                 or auth["expires"] <= now):
             _deny("restricted_authorization_missing")
 
 
-def _region_known(label: Label, ctx: Mapping, region):
+def _region_known(label: Label, ctx, region):
     if label.regions is not None and (not isinstance(region, str) or region not in label.regions):
         _deny("region_forbidden")
 
 
-def _evaluate(principal, action, resource_labels, context, policy) -> str:
+def _evaluate(principal, action, resource_labels, context, policy, trusted) -> str:
     if action not in ACTIONS:
         _deny("unknown_action")
     if not isinstance(policy, Policy):
@@ -189,7 +211,7 @@ def _evaluate(principal, action, resource_labels, context, policy) -> str:
         _deny("no_grant")                        # default deny: an empty policy grants nothing
     if principal.tenant in policy.deny_tenants:
         _deny("tenant_killed")
-    if principal.id in policy.revoked:
+    if canon_id(principal.id) in {canon_id(x) for x in policy.revoked}:
         _deny("principal_revoked")
     if label.tenants != frozenset([principal.tenant]):
         _deny("tenant_mismatch")
@@ -210,27 +232,29 @@ def _evaluate(principal, action, resource_labels, context, policy) -> str:
         _deny("restricted_clearance")
 
     t = principal.tenant
+    trusted = trusted or {}
+    now = trusted.get("now")
     if action == "erase":
         # precedence rule: a legal hold beats erasure only under a recorded hold event; the erasure is then queued, not refused for good
         if label.holds & policy.hold_events:
             _deny("legal_hold_erasure_queued")
-        _region_known(label, context, context.get("region"))
+        _region_known(label, context, principal.region)
     elif action in ("append", "read"):
-        _region_known(label, context, context.get("region"))
+        _region_known(label, context, principal.region)
     elif action == "inject":
-        _region_known(label, context, context.get("region"))
+        _region_known(label, context, principal.region)
         if context.get("destination") is not None:
-            _dest(policy, context["destination"], "model", label, t, context)
+            _dest(policy, context["destination"], "model", label, t, context, now, principal.id)
     elif action in ("send_model", "embed", "export"):
-        _dest(policy, context.get("destination"), ACTION_KIND[action], label, t, context)
+        _dest(policy, context.get("destination"), ACTION_KIND[action], label, t, context, now, principal.id)
     elif action == "send_inbox":
-        rcp = context.get("recipient")
+        rcp = trusted.get("recipient")          # resolved by the enforcer from the directory, never taken from the request
         if not isinstance(rcp, Principal):
             _deny("recipient_type")
         rcp.validate()
         if rcp.tenant != t or rcp.tenant in policy.deny_tenants:
             _deny("recipient_tenant")
-        if rcp.id in policy.revoked:
+        if canon_id(rcp.id) in {canon_id(x) for x in policy.revoked}:
             _deny("recipient_revoked")
         if not acl_satisfied(label, rcp.groups):
             _deny("recipient_acl")
@@ -240,7 +264,7 @@ def _evaluate(principal, action, resource_labels, context, policy) -> str:
             _deny("recipient_restricted_clearance")
         _region_known(label, context, rcp.region)
         if rcp.model is not None:
-            _dest(policy, rcp.model, "model", label, t, context)
+            _dest(policy, rcp.model, "model", label, t, context, now, rcp.id)
         elif label.local_only or label.models is not None:
             pass        # a human screen: no inference happens here
     for name, fn in policy.extra_rules:
@@ -250,11 +274,11 @@ def _evaluate(principal, action, resource_labels, context, policy) -> str:
     return "allowed"
 
 
-def decide(principal, action, resource_labels, context, *, policy) -> Decision:
+def decide(principal, action, resource_labels, context, *, policy, trusted=None) -> Decision:
     ver = getattr(policy, "version", None)
     act = action if isinstance(action, str) else ""
     try:
-        reason = _evaluate(principal, action, resource_labels, context, policy)
+        reason = _evaluate(principal, action, resource_labels, context, policy, trusted)
         return Decision(reason == "allowed", reason, ver, act)
     except _Deny as d:
         return Decision(False, str(d), ver, act)
@@ -282,7 +306,7 @@ def parse_policy(doc) -> Policy:
        "authorizations": {id: {tenant, programme, expires}}, "conflict_notice": "existence_only"|"none"}"""
     if not isinstance(doc, dict):
         raise PolicyError("document must be an object")
-    allowed = {"version", "grants", "destinations", "banned_models", "tenant_banned", "deny_tenants", "revoked", "hold_events", "authorizations", "conflict_notice", "example"}
+    allowed = {"version", "grants", "destinations", "banned_models", "tenant_banned", "deny_tenants", "revoked", "hold_events", "authorizations", "conflict_notice", "model_aliases", "example"}
     if set(doc) - allowed:
         raise PolicyError("unknown keys")
     v = doc.get("version")
@@ -319,15 +343,16 @@ def parse_policy(doc) -> Policy:
     if not isinstance(tb, dict):
         raise PolicyError("tenant_banned")
     auths = doc.get("authorizations", {})
-    if not isinstance(auths, dict) or not all(isinstance(a, dict) and set(a) == {"tenant", "programme", "expires"} for a in auths.values()):
+    if not isinstance(auths, dict) or not all(isinstance(a, dict) and set(a) == {"tenant", "programme", "expires", "principal"} for a in auths.values()):
         raise PolicyError("authorizations")
-    cn = doc.get("conflict_notice", "existence_only")
+    cn = doc.get("conflict_notice", "none")
     if cn not in ("existence_only", "none"):
         raise PolicyError("conflict_notice")
     return Policy(v, destinations=dests, banned_models=strs(doc.get("banned_models", []), "banned_models"),
                   tenant_banned={t: strs(x, "tenant_banned") for t, x in tb.items()}, deny_tenants=strs(doc.get("deny_tenants", []), "deny_tenants"),
                   revoked=strs(doc.get("revoked", []), "revoked"), authorizations=dict(auths), conflict_notice=cn, grants=grants,
-                  hold_events=strs(doc.get("hold_events", []), "hold_events"))
+                  hold_events=strs(doc.get("hold_events", []), "hold_events"),
+                  model_aliases={canon_id(k): canon_id(v) for k, v in dict(doc.get("model_aliases", {})).items()})
 
 
 def safe_policy(doc) -> Policy:

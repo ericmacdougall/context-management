@@ -11,7 +11,7 @@ from exp.gen import rand_label, rand_principal, rand_probe, base_policy
 from pol.labels import Label
 from pol.pdp import ACTIONS, DENY_ALL, EXAMPLE_POLICY, Policy, PolicyError, Principal, decide, parse_policy, safe_policy
 
-SEED = 606
+SEED = 707
 N_MALFORMED = 3000
 N_PROBES = 5
 
@@ -68,7 +68,7 @@ def probes(rng, pol, n):
     out = []
     for _ in range(n):
         p = rand_principal(rng)
-        a, ctx = rand_probe(rng, base_policy())
+        a, ctx, tr = rand_probe(rng, base_policy())
         out.append((p, a, rand_label(rng, 0.9), ctx))
     return out
 

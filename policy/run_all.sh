@@ -7,3 +7,4 @@ PY=${PY:-../venv/bin/python}
 for m in e1_lattice e2_egress e3_clash e4_tighten e5_threads e6_policy_format b2_rebuild b3_pg b1_modelcheck; do
   echo "== $m"; $PY -W ignore -m exp.$m
 done
+$PY -W ignore -m exp.verify results

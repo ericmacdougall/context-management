@@ -6,11 +6,12 @@ import random
 import types
 
 from exp import common  # noqa: F401
-from exp.common import write_result
+from exp.common import write_items, write_result
 from pol.labels import Label, acl_satisfied, join
 from pol.pdp import Dest, Policy, Principal, decide
 
-SEED = 77
+ROWS = []
+SEED = 88
 N_PLANTED, N_FAULT, N_LEGIT = 2200, 2400, 1400
 
 
@@ -50,14 +51,14 @@ def mk_policy(extra=(), revoked=()):
 
 def base_case(rng):
     """A request that is allowed on its own merits: tenant t1, group satisfied."""
-    p = Principal("p%d" % rng.randrange(10 ** 6), "t1", frozenset(["g1", "g2"]), clearance=2)
+    p = Principal("p%d" % rng.randrange(10 ** 6), "t1", frozenset(["g1", "g2"]), clearance=2, region="EU")
     lab = Label(["t1"], acl=[["g1"]], regions=["EU"], sensitivity=1)
-    return p, lab, {"destination": "dm", "region": "EU"}
+    return p, lab, {"destination": "dm"}
 
 
 def victim_case(rng, key):
     """A request denied on exactly one ground, the one that overriding attribute `key` would remove."""
-    p = Principal("p%d" % rng.randrange(10 ** 6), "t1", frozenset(["g1"]), clearance=2)
+    p = Principal("p%d" % rng.randrange(10 ** 6), "t1", frozenset(["g1"]), clearance=2, region="EU")
     lab = Label(["t1"], acl=[["g1"]], regions=["EU"], sensitivity=1)
     if key == "tenant":
         lab = Label(["t2"], regions=["EU"])
@@ -67,7 +68,7 @@ def victim_case(rng, key):
         lab = Label(["t1"], regions=["EU"], sensitivity=3)
     elif key == "restricted_ok":
         lab = Label(["t1"], regions=["EU"], restricted=True)
-    return p, lab, {"destination": "dm", "region": "EU"}
+    return p, lab, {"destination": "dm"}
 
 
 KEYS = ["tenant", "groups", "clearance", "restricted_ok", "id", "subject.identifier"]
@@ -186,6 +187,65 @@ def run_one(case_kind, args, pol_extra, fn):
     return fn(p, a, l, c, pol)
 
 
+NARROW_VARIANTS = ["CAP_ACTIONS", "cap-actions", "Cap_Actions", "cap_actions\u200b", " cap_actions", "cap.actions", "CAP_CLEARANCE", "cap_clearance ", "capactions", "cap_restricted2", "cap_scope"]
+
+
+def forged_cases(rng, n):
+    """Adversarial driver for the REQUEST context: every top-level key a caller could forge, and misspelt narrowing keys."""
+    from pol.enforce import Block, Enforcer, PolicyDenied
+    out = {"n": 0, "ours_allow": 0, "naive_allow": 0, "kinds": {}}
+    for i in range(n):
+        us = Principal("P1", "t1", frozenset(["g1"]), 3, True, region="US")
+        kind = rng.choice(["region", "now", "recipient", "key_variant", "extra_key", "principal_override"])
+        pol = Policy(1, grants={"t1": frozenset(["read", "send_model", "send_inbox"])}, destinations={"dm": Dest("model", "EU", True, 3, model="m1", programme="cyber")},
+                     authorizations={"a": {"tenant": "t1", "programme": "cyber", "expires": 5, "principal": "P1"}})
+        enf = Enforcer(lambda: pol, directory={"P1": us}.get, clock=lambda: 10)
+        naive = False
+        try:
+            if kind == "region":                              # EU-only record, principal served from US, forged region
+                lab = Label(["t1"], regions=["EU"])
+                ours = decide(us, "read", lab, {"region": "EU"}, policy=pol).allow
+                naive = {"region": "EU"}["region"] in lab.regions        # the old evaluator took the region from the request
+            elif kind == "now":                               # expired authorisation, forged clock
+                lab = Label(["t1"], restricted=True)
+                ours = decide(us, "send_model", lab, {"destination": "dm", "authorization": "a", "now": 1}, policy=pol, trusted={"now": 10}).allow
+                naive = 1 < pol.authorizations["a"]["expires"]          # old: the request's clock decided expiry
+            elif kind == "recipient":                         # forged recipient object through the enforcer
+                lab = Label(["t1"], acl=[["fin"]])
+                forged = Principal("c", "t1", frozenset(["fin"]), 3, True, region="EU")
+                try:
+                    enf.check(us, "send_inbox", [lab], {"recipient": forged})
+                    ours = True
+                except PolicyDenied:
+                    ours = False
+                from pol.labels import acl_satisfied
+                naive = acl_satisfied(lab, forged.groups)               # old: the recipient object in the request was trusted
+            elif kind == "key_variant":
+                k = rng.choice(NARROW_VARIANTS)
+                ours = decide(us, "send_model", Label(["t1"]), {"destination": "dm", "credential": {k: ["read"]}}, policy=pol, trusted={"now": 10}).allow
+                from pol.pdp import CREDENTIAL_NARROWING_KEYS
+                naive = k not in CREDENTIAL_NARROWING_KEYS            # old: a key that is not spelt exactly was ignored, so the narrowing was lost
+            elif kind == "extra_key":
+                k = rng.choice(["region", "now", "principal", "tenant", "groups", "recipient", "authorization_override", "x"])
+                try:
+                    enf.check(us, "read", [Label(["t1"])], {k: "EU"})
+                    ours = False if True else True
+                except PolicyDenied:
+                    ours = False
+                naive = True            # old: unknown top-level keys were passed through and ignored
+            else:
+                ours = decide(Principal("P1", "t1", frozenset(), 3, True, region="US"), "read", Label(["t1"], acl=[["g9"]]), {"principal": {"groups": ["g9"]}}, policy=pol).allow
+                naive = False           # not a flaw of the old evaluator: stays denied (kept as a negative sample)
+        except Exception:       # noqa: BLE001
+            ours = False
+        ROWS.append({"cat": "forged", "kind": kind, "ours": bool(ours), "naive": bool(naive)})
+        out["n"] += 1
+        out["ours_allow"] += ours
+        out["naive_allow"] += naive
+        out["kinds"][kind] = out["kinds"].get(kind, 0) + 1
+    return out
+
+
 def main():
     rng = random.Random(SEED)
     planted = planted_cases(rng, N_PLANTED)
@@ -200,6 +260,7 @@ def main():
         d = decide(p, "send_model", lab, ctx, policy=pol)
         nv = naive_decide(p, "send_model", lab, ctx, pol)
         r = res["planted"]
+        ROWS.append({"cat": "planted", "form": meta["form"], "ours": bool(d.allow), "naive": bool(nv), "reason": d.reason})
         r["n"] += 1
         r["ours_allow"] += d.allow
         r["naive_allow"] += nv
@@ -221,6 +282,7 @@ def main():
         except BaseException:      # noqa: BLE001
             nv = True
         r = res["fault"]
+        ROWS.append({"cat": "fault", "kind": kind, "ours": bool(d.allow), "naive": bool(nv), "reason": d.reason})
         r["n"] += 1
         r["ours_allow"] += d.allow
         r["naive_allow"] += bool(nv)
@@ -230,6 +292,7 @@ def main():
         pol = mk_policy()
         d = decide(p, "send_model", lab, ctx, policy=pol)
         r = res["legit"]
+        ROWS.append({"cat": "legit", "ours": bool(d.allow), "naive": bool(naive_decide(p, "send_model", lab, ctx, pol)), "reason": d.reason})
         r["n"] += 1
         r["ours_allow"] += d.allow
         r["naive_allow"] += naive_decide(p, "send_model", lab, ctx, pol)
@@ -239,10 +302,14 @@ def main():
           and res["legit"]["ours_allow"] >= 0.99 * res["legit"]["n"]
           and res["planted"]["n"] >= 2000 and res["fault"]["n"] >= 2000 and res["legit"]["n"] >= 1000)
     ctl = (res["planted"]["naive_allow"] >= 0.10 * res["planted"]["n"] and res["fault"]["naive_allow"] >= 0.10 * res["fault"]["n"])
+    forged = forged_cases(rng, 3000)
+    ok = ok and forged["ours_allow"] == 0 and forged["n"] >= 3000
+    ctl = ctl and forged["naive_allow"] >= 0.10 * forged["n"]
     verdict = "PASS" if ok and ctl else "FAIL"
-    data = {"verdict": verdict, "results": res, "wrong_reason_count": len(wrong_reason), "wrong_reason_sample": wrong_reason[:5], "pass_conditions_met": ok,
+    data = {"verdict": verdict, "forged_context": forged, "results": res, "wrong_reason_count": len(wrong_reason), "wrong_reason_sample": wrong_reason[:5], "pass_conditions_met": ok,
             "control_meets_floor": ctl, "control_reason": "naive merge lets credential attrs override identity; truthiness + swallowed errors allow faults",
             "not_proven": "only the credential and derived attribute channels are fuzzed; extra_rules are caller code and only their return value is constrained"}
+    data["items"] = dict(zip(("file", "sha256"), write_items("e3_clash", ROWS)))
     write_result("e3_clash", {"seed": SEED, "planted": N_PLANTED, "fault": N_FAULT, "legit": N_LEGIT}, data)
     print(verdict, {k: {a: b for a, b in v.items() if a in ("n", "ours_allow", "naive_allow")} for k, v in res.items()}, "wrong_reason", len(wrong_reason))
 

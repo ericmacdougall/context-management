@@ -46,10 +46,12 @@ class World:
 def build_view(world: World, viewer: Principal, policy: Policy, mode: Optional[str] = None) -> dict:
     """Everything `viewer` can observe from this world, assembled only through enforced choke points. mode selects a broken
     control: 'derive_first', 'notice_full', 'xref_no_check'."""
-    enf = Enforcer(lambda: policy)
+    analyst = Principal("analyst-for-" + viewer.id, viewer.tenant, viewer.groups, viewer.clearance, viewer.restricted_ok, kind="analyst", region=viewer.region)
+    directory = {analyst.id: analyst, viewer.id: viewer}
+    enf = Enforcer(lambda: policy, directory=directory.get, clock=lambda: 10)
     store = Store(enf, check_lineage=(mode != "derive_first"))
     dmode = "first" if mode == "derive_first" else "join"
-    ctx = {"region": "EU"}
+    ctx = {}
     for it in world.items.values():
         store.records[it.id] = Record(it.id, it.text + " | value=" + it.value + " | decider=" + it.decider, it.label, (), "item", it.thread)
     for fid, ins in world.findings:
@@ -64,14 +66,12 @@ def build_view(world: World, viewer: Principal, policy: Policy, mode: Optional[s
     blocks, withheld = inject(enf, viewer, [store.records[i] for i in ids], ctx)
     view["injection"] = [b.text for b in blocks]
     # analyst findings through the inbox (the analyst acts with the viewer's rights; the recipient must be entitled to every input)
-    analyst = Principal("analyst-for-" + viewer.id, viewer.tenant, viewer.groups, viewer.clearance, viewer.restricted_ok, kind="analyst", region=viewer.region)
-    directory = {analyst.id: analyst, viewer.id: viewer}
     delivered = []
     ob = Outbox(enf, directory.get, "send_inbox", lambda p, b, c: delivered.append(b[0].text))
     for fid, _ins in world.findings:
         r = store.records[fid]
         try:
-            ob.enqueue(analyst.id, [Block(r.text, r.label, r.lineage)], {"region": "EU"}, viewer.id)
+            ob.enqueue(analyst.id, [Block(r.text, r.label, r.lineage)], {}, viewer.id)
         except PolicyDenied:
             pass
     ob.deliver_all()
@@ -88,10 +88,11 @@ def build_view(world: World, viewer: Principal, policy: Policy, mode: Optional[s
             if other is None:
                 continue
             o = world.items[other]
-            readable = decide(viewer, "read", o.label, ctx, policy=policy).allow
+            dd = decide(viewer, "read", o.label, ctx, policy=policy, trusted={"now": 10})
+            readable = dd.allow
             if readable or mode == "xref_no_check":
                 xrefs.append({"from": it_id, "edge": typ, "id": o.id, "text": o.text})
-            elif typ == "conflicts_with":
+            elif typ == "conflicts_with" and dd.reason != "tenant_mismatch":      # never a signal across tenants
                 hidden_conflict = True
         if hidden_conflict and policy.conflict_notice == "existence_only":
             n = conflict_notice(it.id, it.version)

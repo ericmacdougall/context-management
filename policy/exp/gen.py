@@ -23,7 +23,7 @@ def rand_label(rng, permissive=0.65):
 
 
 def rand_principal(rng, tenant="t1", pid=None):
-    return Principal(pid or "p%d" % rng.randrange(10 ** 6), tenant, frozenset(rng.sample(GROUPS, rng.choice([2, 3, 4, 4]))),
+    return Principal(pid or ("P1" if rng.random() < 0.15 else "p%d" % rng.randrange(10 ** 6)), tenant, frozenset(rng.sample(GROUPS, rng.choice([2, 3, 4, 4]))),
                      clearance=rng.choice([2, 3, 3, 3]), restricted_ok=rng.random() < 0.7, kind=rng.choice(["human", "agent", "analyst"]),
                      region=rng.choice(REGIONS + [None]), model=rng.choice(["d_model_eu", "d_model_us", None]))
 
@@ -39,16 +39,17 @@ def base_policy():
         "d_export_eu": Dest("export", "EU", True, 3),
         "d_export_us": Dest("export", "US", False, 1),
     }
-    return Policy(1, grants=GRANTS, hold_events=frozenset(["h1"]), destinations=dests, authorizations={"auth1": {"tenant": "t1", "programme": "cyber", "expires": 1000}})
+    return Policy(1, grants=GRANTS, hold_events=frozenset(["h1"]), destinations=dests, authorizations={"auth1": {"tenant": "t1", "programme": "cyber", "expires": 1000, "principal": "P1"}})
 
 
 def rand_probe(rng, policy):
     action = rng.choice(ACTIONS) if rng.random() < 0.5 else rng.choice(["send_model", "embed", "send_inbox", "export", "send_model", "erase"])
-    ctx = {"region": rng.choice(REGIONS + [None]), "now": 10, "authorization": rng.choice(["auth1", None, "zzz"])}
+    ctx = {"authorization": rng.choice(["auth1", None, "zzz"])}
+    trusted = {"now": 10}
     if action in ("send_model", "embed", "export") or (action == "inject" and rng.random() < 0.7):
         kind = {"send_model": "model", "embed": "embedder", "export": "export", "inject": "model"}[action]
         names = [n for n, d in policy.destinations.items() if d.kind == kind]
         ctx["destination"] = rng.choice(names + ["unknown_dest"] if rng.random() < 0.05 else names)
     if action == "send_inbox":
-        ctx["recipient"] = rand_principal(rng, pid="rcp%d" % rng.randrange(1000))
-    return action, ctx
+        trusted["recipient"] = rand_principal(rng, pid="rcp%d" % rng.randrange(1000))
+    return action, ctx, trusted

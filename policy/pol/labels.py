@@ -20,6 +20,9 @@ SENSITIVITY_MAX = 3
 DIMENSIONS = ("tenants", "acl", "regions", "sensitivity", "models", "banned", "local_only", "restricted", "holds", "subjects")
 
 
+DIMENSIONS_KEYS = ("tenants", "acl", "regions", "sensitivity", "models", "banned", "local_only", "restricted", "holds", "subjects")
+
+
 class LabelError(Exception):
     pass
 
@@ -86,8 +89,10 @@ class Label:
 
     @staticmethod
     def from_dict(d):
+        if not isinstance(d, dict) or set(d) != set(DIMENSIONS_KEYS):
+            raise LabelError("label dict must have exactly the keys " + ",".join(DIMENSIONS_KEYS))
         return Label(tenants=d["tenants"], acl=d["acl"], regions=d["regions"], sensitivity=d["sensitivity"], models=d["models"], banned=d["banned"],
-                     local_only=d["local_only"], restricted=d["restricted"], holds=d.get("holds", []), subjects=d.get("subjects", []))
+                     local_only=d["local_only"], restricted=d["restricted"], holds=d["holds"], subjects=d["subjects"])
 
     def digest(self):
         import hashlib
