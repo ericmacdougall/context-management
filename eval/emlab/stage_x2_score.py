@@ -85,7 +85,15 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     groups = {o: prov.rounds_of_turns(f["turns"]) for o, f in sfile.items()}
     # ---- fact pool: X0 (cap-30 output where one exists, else cap 12; a Stage X2 cap-30 re-extraction replaces the cap-12 output), X1, X2 new gold
     def facts_of(path):
-        return L(path)["facts"] if os.path.exists(path) else None
+        """Facts of a record, or None when the record is missing or its status is not ok or repaired (a failed Stage X2 call counts as not extracted:
+        a failed re-extraction keeps the earlier cap-12 or cap-30 facts of the session; a failed new gold session has no facts)."""
+        if not os.path.exists(path):
+            return None
+        try:
+            r = L(path)
+        except ValueError:  # an empty or truncated record (the host disk was full while the runner wrote it): not extracted
+            return None
+        return r["facts"] if r.get("status", "ok") in ("ok", "repaired") else None
     raw_facts = []
     n_reextracted = 0
     for o in rows0:
@@ -117,6 +125,8 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     types: Dict[str, List[str]] = {}
     for x in complete:
         types.setdefault(qmap[x].qtype, []).append(x)
+    has_facts = {o for o in set(f["session_id"] for f in facts)}
+    facts_complete = [x for x in complete if all(o in has_facts for o in gold[x])]
     emb = Embedder(model_dir)
     qvec = {x: v for x, v in zip(complete, emb.embed(["query: " + qmap[x].question for x in complete]))}
     fv = emb.embed(["passage: " + " ".join(str(f.get(k, "")) for k in ("subject", "predicate", "object")) for f in facts])
@@ -162,6 +172,7 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     res["by_stratum"] = {k: table(v, prim) for k, v in strata.items()}
     res["by_type"] = {k: table(v, prim) for k, v in types.items()}
     res["item_hit10_all"] = table(complete, "item_hit10")
+    res["sensitivity_questions_with_facts_for_every_gold_session"] = {"n": len(facts_complete), "questions_without": [x for x in complete if x not in facts_complete], "sess_any_10": table(facts_complete, prim)}
     res["control_levels"] = {"all": sum(per_full[x][CONTROL][prim] for x in complete) / max(1, len(complete))}
     low = strata["weak_list"] + strata["low_overlap_other"]
     res["low_overlap_23"] = {"sess_any_10": table(low, prim), "n": len(low)}
