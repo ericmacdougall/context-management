@@ -48,3 +48,11 @@ States: fresh Basic, trial, after start_basic, node restarting (polled every 100
 
 ## Evidence rules
 Every result file carries: code commit, UTC time, parameters, node licence read back from the node (type, status, uid), host load, witness counts. Control arms listed beside every PASS. Artifacts are stored on t2-dev ~/emlab-16096/lic/results/ (bulky) and small summaries in licence/results/.
+
+## Addendum A (committed after two smoke lives, before any counted life; smoke results are not counted)
+- Harness deviation, recorded in every result: the reviewed `http_util.urlopen` loads the system CA store on every call (measured by cProfile, 21 ms of GIL-held CPU per request, one process capped near 45 requests/s). The workload patches the adapter's opener to one cached no-redirect opener. Latch, fusion and request shapes are unchanged. The unpatched cost is reported as a finding.
+- EXP2-T1 control (sensitivity of the wrong-answer check): arm `brk` is an adapter whose Basic fallback silently returns lexical-only results labelled fused. Floor: the check flags >= 90% of its client-labelled responses. Below 90% the T1 PASS is CLAIMED, not proven.
+- EXP2-T4 control: the write verifier is self-tested by injecting one acknowledged-but-absent id; it must report it.
+- Workload threads: 8 auto, 2 auto+linear, 4 control (backend), 2 broken-fallback, 2 lexical-only, 2 vector-only readers; 3 plain writers; 1 semantic_text writer; 1 latch sampler (100 ms).
+- Vectors are read with `_source.exclude_vectors=false` (Elasticsearch 9 omits dense_vector from _source by default); vector equality compares float32 values as returned by the node, and the ground truth (the stub embedding) within 1e-6 absolute.
+- Cluster node counts: `_cat` doc counts for semantic_text include chunk documents; document counts use `_count`.
