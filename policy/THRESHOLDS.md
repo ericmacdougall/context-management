@@ -570,3 +570,51 @@ Either change needs the same edit in CORE-RULES and RefCore.
 Resolution (rescue owner, this amendment): the second option is adopted. A non-human accept of the current value is refused
 `no_value_change` (CORE-RULES rule 15). I16 is restored to the broad wording ("any non-human event that changes no value never moves the
 head"), and the narrowed I16 and the B1 dev runs above that used it are superseded.
+
+## Amendment 4 (2026-11-16T06:29Z, after DEV runs at 0bcabe4; committed ALONE, before the stamped run of this round)
+
+Why: code changed after amendment 3 (931c95a). Each change is listed here so the stamped run is read against the committed rules. The
+stamped seeds, the once-only rule and the verifier rule of amendment 3 are unchanged.
+
+Changes since amendment 3:
+- f23f119 (code and controls):
+  - New control `n3_value_unchanged_moves_head` in exp.patches.CONTROLS. It deletes the `no_value_change` refusal in pol/_core.py.
+  - B1 expects I16 for it (r1 pool, control depth 6, the shortest trace found by the spec observation).
+  - B2 runs it on all 3000 logs with a floor of 3 percent mismatch, not 10 percent: the trace needs a resolve, a still-open adopted
+    proposal and an agent with decide rights, so it is rare in random logs. DEV at 0bcabe4: 4.57 percent (137 of 3000).
+  - The reference reducer's `no_value_change` rule was written by an independent helper (agent a633415) from the CORE-RULES text,
+    not by the rescue owner. It is recorded as ambiguity 21 in exp/ref_reducer.py, and the selfcheck prints ALL PASS. This replaces
+    the rescue owner's edit described in amendment 3.
+  - PgVault reads its HMAC key from a 0600 key file. The key is never stored in the database.
+  - Stamped preflight: exp/seeds.py refuses stamped seeds unless GIT_STAMP says dirty=false and no dev override variable
+    (E2_PER_SEED, E5_PER_SEED, B2_PER_SEED, B1_QUICK) is set.
+  - verify/b1, b2 and b3 list `no_value_change` among the refused codes. The DEV disagreement of B2 7f75b6cb and B3 7556d62d came from
+    verifiers without it; at f23f119 both agree PASS.
+- 0bcabe4 (privacy and M2), found by the new tests.test_pg service-over-Postgres test:
+  - The append-only event log, heads and proposal rows held subject names inside the label. DecisionService now puts into the event a
+    label whose subjects are keyed per-tenant tokens (vault key). The vault keeps the real subjects for reads and erasure. A body
+    label without a value is refused `bad_event`.
+  - A duplicate retry returns the original value_ref (M2).
+  - The experiments drive the core with their own labels, so their outcome codes are unaffected. E2, E5, E6 and B2's service arm go
+    through the service and pass.
+- ca427b7 (verifier): verify/b1.py recomputes I16 with the amendment 3 wording (a non-human event that changes no value never moves
+  the head), not the narrowed reject-only draft. Before this fix, verify/b1 could not recompute the new control's counterexample.
+
+Seeds used since amendment 3, all outside the stamped set:
+- The string seeds "dev-<exp>-1".."dev-<exp>-5".
+- For one in-memory differential probe of _core against RefCore at f23f119, the integer seeds 100..159.
+- No stamped seed (31..35, 99, 808) has been used, and no run used POL_SEEDS=stamped.
+
+DEV results at 0bcabe4 (dev seeds; development observations, not proof):
+- All agree PASS after the verifier fix: E1 b8ca506e, E2 2950c15a, E3 44d90789, E4 9f6a4f86, E5 9d608bb2, E6 3f2d3aa4, B1 97f7f477,
+  B2 5c02b1a0, B3 02c0aa95.
+- B1: 150,489 states, 1,401,814 transitions, 12,822 contested, 0 enforced violations, every control recomputed. B1 reaches
+  `no_value_change` (the verifier's codes_missing is empty).
+- B2: 3000 logs, 454,450 events, 0 mismatches, 0 unequal rebuilds, service audit 600 logs and 0 bad.
+- B3: S1 to S6 and S4b 50 of 50, overlap witnesses 50 of 50 where required, differential arm 40 logs and 7672 events with 0
+  mismatches. Controls: no_head_lock 50 (overlap 49), no_advisory_lock 50 (overlap 48), idem_unprotected 50.
+- tests.test_pg: 8 OK on t2-dev, including test_service_over_postgres.
+- Superseded DEV artifacts, which fail the current verifiers because they lack the new control or the new code: B1 e0a51a60,
+  7bff4be0, c49a6220, 99a66737; B2 6f2d4ceb; B3 90e08a7e.
+
+The stamped run follows this commit once, on a clean tree, with POL_SEEDS=stamped. Its verdict is reported as it falls.
