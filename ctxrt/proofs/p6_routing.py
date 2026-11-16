@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import random
 
-from memcore.inbox import InboxItem, InboxService, MemoryStore, RequirementGraph
+from memcore.inbox import InboxItem, InboxService, RequirementGraph
+from ctxrt.rundb import NestStore, RunDB
 from ctxrt.proofs.common import check, main
 from ctxrt.routing import Agent, FilteredInbox, RecordStore, Registry, RoutingRefused, route_by_availability
 
@@ -96,11 +97,13 @@ def run_seed(seed, params):
         # inbox filter: reviewer sessions
         if k % 4 == 0:
             c["inbox_cases"] += 1
-            origins, sess_agent = {}, {}
+            sess_agent = {}
             graph = RequirementGraph({"task": {"req1"}})
             now = [1000.0]
-            real = FilteredInbox(MemoryStore(), graph, lambda: now[0], registry=reg, origins=origins, session_agent=sess_agent)
-            plain = InboxService(MemoryStore(), graph, lambda: now[0])
+            ostore = NestStore(":memory:")
+            odb = RunDB(ostore)
+            real = FilteredInbox(ostore, graph, lambda: now[0], registry=reg, origin_of=lambda f: (odb.origin_of(f) or {}).get("agent"), session_agent=sess_agent)
+            plain = InboxService(NestStore(":memory:"), graph, lambda: now[0])
             nonauthors = [i for i in reg.agents if i not in bset]
             targets = sorted(bset)[:3] + nonauthors[:2]
             for svc in (real, plain):
@@ -108,7 +111,8 @@ def run_seed(seed, params):
                     svc.register("s-" + a, "host", "task", ["req1"])
                     sess_agent["s-" + a] = a
                     svc.enqueue(InboxItem("f-%d" % k, "s-" + a, ["ev1"], "quote", "agent", ["req1"], 1000.0, 5000.0))
-            origins["f-%d" % k] = author
+            with ostore.transaction():
+                odb.record_origin("f-%d" % k, author, reg.agents[author].model_id, "run-%d" % k, 1)
             for a in targets:
                 got = real.claim("s-" + a, "t1")
                 g2 = plain.claim("s-" + a, "t1")
@@ -118,8 +122,8 @@ def run_seed(seed, params):
                 else:
                     c["inbox_nonauthor_expected"] += 1
                     c["inbox_nonauthor_claims"] += len(got) == 1
-        if k < 50:
-            rows.append({"k": k, "author": author, "set": sorted(aset), "pool": pool, "assigned": rec["reviewer"]})
+        rows.append({"k": k, "author": author, "author_model": rec["author_model"], "author_set": sorted(aset), "brute_set": sorted(bset), "pool": pool, "assigned": rec["reviewer"],
+                     "expected_first": exp[:1], "ctrl_assigned": pc, "only_author_pool": only_author})
     rows.append({"counts": c})
     return rows, c
 

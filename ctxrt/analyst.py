@@ -24,8 +24,8 @@ class ScriptedModel:
     """Deterministic stub. `script` is a list of actions (the last one repeats forever: that is the loop stub) or a callable(i, messages) -> action.
     Action: {"type":"tool","name":..,"args":..} | {"type":"final","text":..} | {"type":"garbage"} | {"type":"tool",...,"hang":seconds}."""
 
-    def __init__(self, script, delay: float = 0.0):
-        self.script, self.delay, self.i, self.in_flight = script, delay, 0, 0
+    def __init__(self, script, delay: float = 0.0, ignore_cancel: bool = False):
+        self.script, self.delay, self.i, self.in_flight, self.ignore_cancel = script, delay, 0, 0, ignore_cancel
 
     def complete(self, messages, cancel: Optional[threading.Event] = None):
         i, self.i = self.i, self.i + 1
@@ -34,7 +34,7 @@ class ScriptedModel:
         if wait:
             self.in_flight += 1
             try:
-                if cancel is not None:
+                if cancel is not None and not self.ignore_cancel:
                     if cancel.wait(wait):
                         raise Cancelled()
                 else:
@@ -46,11 +46,13 @@ class ScriptedModel:
 
 class AnalystRun:
     def __init__(self, db: RunDB, key: str, epoch: int, model, tools: Dict[str, Callable[[dict], dict]], question: str, session: str, log: MemoryLog,
-                 inbox: Optional[InboxService], item_ids=("req1",), global_budget=None, now: Callable[[], float] = time.time):
+                 inbox: Optional[InboxService], item_ids=("req1",), global_budget=None, now: Callable[[], float] = time.time,
+                 author: Optional[tuple] = None):
         self.db, self.key, self.epoch, self.tools, self.question, self.session, self.log, self.inbox = db, key, epoch, tools, question, session, log, inbox
         self.gm = GuardedModel(db, key, epoch, model, global_budget)
         self.cancel = db.cancel.setdefault(key, threading.Event())
         self.item_ids, self.now = item_ids, now
+        self.author = author or ("analyst-%s" % key[:6], getattr(model, "model_id", "stub-model"))     # (agent id, model id) recorded on every finding
         self.messages: List[dict] = [{"role": "user", "content": question}]
         self.n = 0
         self.write_refused = 0
@@ -109,6 +111,7 @@ class AnalystRun:
             n = 0
             for it in items:
                 if self.inbox is not None and self.inbox.enqueue(it):
+                    self.db.record_origin(it.finding_id, self.author[0], self.author[1], self.key, self.epoch)
                     n += 1
             return n
         self.written = self.db.write_gate(self.key, self.epoch, write)

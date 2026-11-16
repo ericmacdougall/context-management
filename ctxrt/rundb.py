@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS steps(step_id TEXT PRIMARY KEY, allowance INT, reserv
 CREATE TABLE IF NOT EXISTS calls(id INTEGER PRIMARY KEY AUTOINCREMENT, run_key TEXT, epoch INT, step_id TEXT, ts REAL, landed INT);
 CREATE TABLE IF NOT EXISTS prog(run_key TEXT, fp TEXT, PRIMARY KEY(run_key, fp));
 CREATE TABLE IF NOT EXISTS seen(question TEXT, candidate TEXT, reason TEXT, PRIMARY KEY(question, candidate));
+CREATE TABLE IF NOT EXISTS item_origin(finding_id TEXT PRIMARY KEY, author_agent TEXT NOT NULL, author_model TEXT NOT NULL, run_key TEXT, epoch INT);
 CREATE TABLE IF NOT EXISTS refusals(id INTEGER PRIMARY KEY AUTOINCREMENT, run_key TEXT, epoch INT, what TEXT, why TEXT, ts REAL);
 """
 COLS = ("key", "session", "step_id", "question", "watermark", "prompt_version", "state", "epoch", "owner", "reserved", "spent", "started", "last_progress",
@@ -205,6 +206,16 @@ class RunDB:
             if self.stop_run(k, "stall"):
                 stopped.append(k)
         return stopped
+
+    # ---- origin of every finding that reaches an inbox (author agent and author model are NOT NULL)
+    def record_origin(self, finding_id, author_agent, author_model, run_key, epoch):
+        if not author_agent or not author_model:
+            raise ValueError("author agent and model are required on every finding")
+        self.store.db.execute("INSERT OR IGNORE INTO item_origin VALUES(?,?,?,?,?)", (finding_id, author_agent, author_model, run_key, epoch))
+
+    def origin_of(self, finding_id):
+        r = self.store.db.execute("SELECT author_agent, author_model FROM item_origin WHERE finding_id=?", (finding_id,)).fetchone()
+        return None if r is None else {"agent": r[0], "model": r[1]}
 
     # ---- seen set
     def seen_add(self, question, candidate, reason):

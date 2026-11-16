@@ -94,18 +94,18 @@ def route_by_availability(reg: Registry, record: dict, pool: List[str]) -> Optio
 
 
 class FilteredInbox(InboxService):
-    """Reviewer / click-tester inbox: an item whose origin agent is in the recipient's author set is never eligible. Origin per finding_id is
-    kept in `origins` (finding_id -> author agent id); sessions map to agents in `session_agent`."""
+    """Reviewer / click-tester inbox: an item whose origin agent is in the recipient's author set is never eligible. Origin per finding_id comes from
+    `origin_of(finding_id) -> author agent id` (backed by the item_origin table written with the finding); sessions map to agents in `session_agent`."""
 
-    def __init__(self, *a, registry: Registry, origins: Dict[str, str], session_agent: Dict[str, str], **k):
+    def __init__(self, *a, registry: Registry, origin_of, session_agent: Dict[str, str], **k):
         super().__init__(*a, **k)
-        self.reg, self.origins, self.session_agent = registry, origins, session_agent
+        self.reg, self.origin_of, self.session_agent = registry, origin_of, session_agent
 
     def _eligible(self, s: SessionRecord, it: InboxItem, now: float) -> bool:
         if not super()._eligible(s, it, now):
             return False
         recipient = self.session_agent.get(s.session_id)
-        origin = self.origins.get(it.finding_id)
+        origin = self.origin_of(it.finding_id)          # the author agent recorded with the finding (RunDB.item_origin), not a test-side dict
         if recipient is not None and origin is not None and recipient in self.reg.author_set(origin):
             return False
         return True

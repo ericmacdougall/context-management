@@ -97,7 +97,7 @@ def counts_run(rng):
             c["no_results"] += 1
             if not (isinstance(r, dict) and r.get("status") == "no_results" and r.get("reason") in NO_RESULT_REASONS):
                 c["no_results_bad"] += 1
-        r = call(PullTools(MemoryLog(), DecisionLog()).surface(None), "search", {"query": "anything"})
+        r = call(PullTools(MemoryLog(), DecisionLog()).surface(guard), "search", {"query": "anything"})
         c["no_results"] += 1
         if not (r.get("status") == "no_results" and r.get("reason") == "empty_store"):
             c["no_results_bad"] += 1
