@@ -230,3 +230,17 @@ class Registered(unittest.TestCase):
         self.assertNotIn("ab_002_abs", res["ranks"])
         self.assertEqual(set(res["thresholds"]), {"100", "50", "20"})
         self.assertEqual(res["n_with_gold"], 2)
+
+
+class Budget(unittest.TestCase):
+    def test_budget_is_keyed_on_variant_and_ignores_probe_rows(self):
+        import json as _j, os as _o, tempfile
+        from emlab.analyst_tools import budget_state
+        p = _o.path.join(tempfile.mkdtemp(), "log.jsonl")
+        rows = [{"qid": "q", "level": "H3", "variant": "", "seconds": 1.0}] * 10 + \
+               [{"qid": "q", "level": "H3", "variant": "top20", "seconds": 2.0}] * 3 + \
+               [{"qid": "other", "level": "H3", "variant": "", "seconds": 5.0}]
+        open(p, "w").write("\n".join(_j.dumps(r) for r in rows) + "\n")
+        self.assertEqual(budget_state(p, "q", "H3"), {"calls": 10, "seconds": 10.0})            # the top-20 run does not eat it
+        self.assertEqual(budget_state(p, "q", "H3", "top20"), {"calls": 3, "seconds": 6.0})
+        self.assertEqual(budget_state(p, "nobody", "H3"), {"calls": 0, "seconds": 0.0})

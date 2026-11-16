@@ -216,19 +216,19 @@ def returned_ids(resp: Dict[str, Any]) -> List[str]:
     return ids
 
 
-def budget_state(log_path: str, qid: str, level: str) -> Dict[str, float]:
+def budget_state(log_path: str, qid: str, level: str, variant: str = "") -> Dict[str, float]:
     calls, secs = 0, 0.0
     if os.path.exists(log_path):
         for line in open(log_path, encoding="utf-8"):
             r = json.loads(line)
-            if r.get("qid") == qid and r.get("level") == level:
+            if r.get("qid") == qid and r.get("level") == level and r.get("variant", "") == variant:
                 calls += 1
                 secs += float(r.get("seconds", 0))
     return {"calls": calls, "seconds": secs}
 
 
-def handle(backend: Backend, req: Dict[str, Any], log_path: str, qid: str, level: str) -> Dict[str, Any]:
-    st = budget_state(log_path, qid, level)
+def handle(backend: Backend, req: Dict[str, Any], log_path: str, qid: str, level: str, variant: str = "") -> Dict[str, Any]:
+    st = budget_state(log_path, qid, level, variant)
     if st["calls"] >= MAX_CALLS or st["seconds"] >= MAX_TOOL_SECONDS:
         return {"error": "tool budget exhausted", "budget": {"max_calls": MAX_CALLS, "max_tool_seconds": MAX_TOOL_SECONDS, **st}}
     t0 = time.time()
@@ -238,7 +238,7 @@ def handle(backend: Backend, req: Dict[str, Any], log_path: str, qid: str, level
         resp = {"error": str(e)[:300]}
     dt = time.time() - t0
     with open(log_path, "a", encoding="utf-8") as fh:
-        fh.write(json.dumps({"ts": time.time(), "qid": qid, "level": level, "tool": req.get("tool"),
+        fh.write(json.dumps({"ts": time.time(), "qid": qid, "level": level, "variant": variant, "tool": req.get("tool"),
                              "args": req.get("args", {}), "returned_ids": returned_ids(resp), "seconds": dt,
                              "error": resp.get("error")}) + "\n")
     try:
@@ -282,7 +282,7 @@ def serve_socket(art: str, scope_dir: str, sock_path: str, log_path: str, model_
             msg = json.loads(data)
             try:
                 b.set_scope(load_scope(scope_dir, msg["level"], msg["qid"]))
-                resp = handle(b, msg["request"], log_path, msg["qid"], msg["level"])
+                resp = handle(b, msg["request"], log_path, msg["qid"], msg["level"], msg.get("variant", ""))
             except Exception as e:
                 resp = {"error": str(e)[:300]}
             conn.sendall((json.dumps(resp) + "\n").encode())
@@ -292,14 +292,14 @@ def serve_socket(art: str, scope_dir: str, sock_path: str, log_path: str, model_
     os.remove(sock_path)
 
 
-def client(sock_path: str, qid: str, level: str, req: Dict[str, Any]) -> Dict[str, Any]:
+def client(sock_path: str, qid: str, level: str, req: Dict[str, Any], variant: str = "") -> Dict[str, Any]:
     import socket
     c = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
         c.connect(sock_path)
     except OSError:
         return {"error": "analyst daemon not running"}
-    c.sendall((json.dumps({"qid": qid, "level": level, "request": req}) + "\n").encode())
+    c.sendall((json.dumps({"qid": qid, "level": level, "variant": variant, "request": req}) + "\n").encode())
     data = b""
     while not data.endswith(b"\n"):
         chunk = c.recv(1 << 20)
@@ -319,6 +319,7 @@ def main(argv=None) -> int:
     ap.add_argument("--log", default=os.path.expanduser("~/emlab-16096/out/analyst_calls.jsonl"))
     ap.add_argument("--question")
     ap.add_argument("--level", choices=["H1", "H2", "H3"])
+    ap.add_argument("--variant", default="", help="task variant (for example top20); the budget and the call log are keyed on it")
     ap.add_argument("--model-dir", default=os.path.expanduser("~/emlab-16096/models"))
     ap.add_argument("--daemon", action="store_true")
     ap.add_argument("--build-postings", action="store_true")
@@ -330,7 +331,7 @@ def main(argv=None) -> int:
         os.makedirs(os.path.dirname(a.socket), exist_ok=True)
         serve_socket(a.artifacts, a.scope_dir, a.socket, a.log, a.model_dir)
         return 0
-    print(json.dumps(client(a.socket, a.question, a.level, json.loads(sys.stdin.read()))))
+    print(json.dumps(client(a.socket, a.question, a.level, json.loads(sys.stdin.read()), a.variant)))
     return 0
 
 
