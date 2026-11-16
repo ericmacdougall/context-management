@@ -51,8 +51,16 @@ def render_session(sid, date, turns):
     return "### SESSION id=%s date=%s\n%s" % (sid, date, "\n".join("[r%d] %s" % (r.index, r.text) for r in rs))
 
 
-def build_prompt(sid, date, turns):
-    return TEMPLATE.format(n=1, sessions=render_session(sid, date, turns))
+def build_prompt(sid, date, turns, template=None):
+    return (template or TEMPLATE).format(n=1, sessions=render_session(sid, date, turns))
+
+
+def variant_cfg(name, replicate=None):
+    """Per-call configuration (thread safe: no module globals are touched)."""
+    t = {"base": (EXTRACT_V2_TEMPLATE, "extract-v2-anon", EXTRACT_V2_RECIPE), "cap30": (EXTRACT_V2_CAP30_TEMPLATE, EXTRACT_V2_CAP30_RECIPE, EXTRACT_V2_CAP30_RECIPE),
+         "pref": (EXTRACT_V3_PREF_TEMPLATE, EXTRACT_V3_PREF_RECIPE, EXTRACT_V3_PREF_RECIPE)}[name]
+    return {"template": t[0], "version": t[1], "recipe": t[2] + ("#rep" + replicate if replicate else ""), "replicate": replicate,
+            "sha16": hashlib.sha256((EXTRACT_SYSTEM + "\n" + t[0]).encode()).hexdigest()[:16]}
 
 
 def parse_one(text, sid):
@@ -109,16 +117,18 @@ class Meter:
         return self.total > TOKEN_STOP
 
 
-def run_one(idx, sid, a, meter, runner=None):
+def run_one(idx, sid, a, meter, runner=None, cfg=None):
     sess = json.load(open(os.path.join(X, "sessions", sid + ".json")))
     assert sess["session_id"] == sid
     turns = sess["turns"]
-    prompt = build_prompt(sid, sess["date"], turns)
-    rec = {"session_id": sid, "order_index": idx, "status": "ok", "reject_reason": None, "prompt_version": VERSION, "prompt_sha16": SHA16, "model": MODEL, "input_tokens": 0, "output_tokens": 0,
+    cfg = cfg or {"template": TEMPLATE, "version": VERSION, "recipe": RECIPE + ("#rep" + REPLICATE if REPLICATE else ""), "replicate": REPLICATE, "sha16": SHA16}
+    prompt = build_prompt(sid, sess["date"], turns, cfg["template"])
+    rec = {"session_id": sid, "order_index": idx, "status": "ok", "reject_reason": None, "prompt_version": cfg["version"], "prompt_sha16": cfg["sha16"], "model": MODEL, "input_tokens": 0, "output_tokens": 0,
            "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0, "seconds": 0.0, "cost_usd": None, "dropped": 0, "facts": [], "raw_output_path": None,
-           "replicate": REPLICATE, "session_chars": sum(len(t["content"]) for t in turns), "session_rounds": len(data.rounds_of(sid, turns, sess["date"])), "n_facts": 0, "error": None}
-    os.makedirs(os.path.join(X, "raw"), exist_ok=True)
-    llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=RECIPE + ("#rep" + REPLICATE if REPLICATE else ""), cwd=R.NEUTRAL_CWD, runner=runner)
+           "replicate": cfg["replicate"], "session_chars": sum(len(t["content"]) for t in turns), "session_rounds": len(data.rounds_of(sid, turns, sess["date"])), "n_facts": 0, "error": None}
+    rawdir = os.path.join(X, "raw")
+    os.makedirs(rawdir, exist_ok=True)
+    llm = LLM(os.path.join(X, "cache"), os.path.join(X, "ledger.jsonl"), cap=CAP, concurrency=2, recipe=cfg["recipe"], cwd=R.NEUTRAL_CWD, runner=runner)
     try:
         c = llm.call(prompt, EXTRACT_SYSTEM, "sonnet", "X0", sid, "extract")
     except PromptLeak as e:
@@ -126,10 +136,11 @@ def run_one(idx, sid, a, meter, runner=None):
     except Exception as e:
         return dict(rec, status="call_error", error=str(e)[:300])
     meter.add(c["in_tokens"] + c["cache_creation"] + c["cache_read"])
-    rawp = os.path.join(X, "raw", sid + ".txt")
+    tag = (cfg.get("arm") + "_") if cfg.get("arm") else ""
+    rawp = os.path.join(X, "raw", tag + sid + ".txt")
     open(rawp, "w").write(c["result"])
     rec.update({"input_tokens": c["in_tokens"], "output_tokens": c["out_tokens"], "cache_read_input_tokens": c["cache_read"], "cache_creation_input_tokens": c["cache_creation"],
-                "seconds": c["seconds"], "cost_usd": c["cost_usd"], "raw_output_path": "raw/%s.txt" % sid})
+                "seconds": c["seconds"], "cost_usd": c["cost_usd"], "raw_output_path": "raw/%s%s.txt" % (tag, sid)})
     try:
         facts, dropped, repaired = parse_one(c["result"], sid)
     except Exception as e:
@@ -218,10 +229,57 @@ def run(a, runner=None):
     return stats
 
 
+def run_jobs(a, runner=None):
+    """One invocation following run_order.json["jobs"] exactly (arms interleaved session by session). Records go to out/<ARM>/<id>.json, raw outputs to out/<ARM>/raw/."""
+    jobs = json.load(open(os.path.join(X, "run_order.json")))["jobs"]
+    meter = Meter()
+    t0, started = time.time(), datetime.utcnow().isoformat() + "Z"
+    arms = {"S": "cap30", "P": "pref"}
+    stats = {}
+    done = []
+
+    def one(job):
+        arm, sid, idx = job["arm"], job["session_id"], job["order_index"]
+        if os.path.exists(a.stop_file) or meter.over():
+            return None
+        cfg = variant_cfg(arms[arm], job.get("replicate") or None)
+        cfg["arm"] = arm
+        rec = run_one(idx, sid, a, meter, runner, cfg)
+        rec["arm"] = arm
+        os.makedirs(os.path.join(X, "out", arm, "raw"), exist_ok=True)
+        json.dump(rec, open(os.path.join(X, "out", arm, sid + ".json"), "w"))
+        if rec["raw_output_path"]:
+            rel = "%s/raw/%s" % (arm, os.path.basename(rec["raw_output_path"]))
+            open(os.path.join(X, "out", rel), "w").write(open(os.path.join(X, rec["raw_output_path"])).read())
+            rec2 = dict(rec, raw_output_path=rel)
+            json.dump(rec2, open(os.path.join(X, "out", arm, sid + ".json"), "w"))
+        return rec
+
+    with ThreadPoolExecutor(a.concurrency) as ex:
+        for job, rec in zip(jobs, ex.map(one, jobs)):
+            if rec is None:
+                continue
+            stats[(rec["arm"], rec["status"])] = stats.get((rec["arm"], rec["status"]), 0) + 1
+            done.append(rec)
+    for job in jobs:  # not_run placeholders keep the denominators complete
+        p = os.path.join(X, "out", job["arm"], job["session_id"] + ".json")
+        if not os.path.exists(p):
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            json.dump(dict(not_run_record(job["order_index"], job["session_id"]), arm=job["arm"], replicate=job.get("replicate")), open(p, "w"))
+            stats[(job["arm"], "not_run")] = stats.get((job["arm"], "not_run"), 0) + 1
+    ended = datetime.utcnow().isoformat() + "Z"
+    json.dump({"concurrency": a.concurrency, "started": started, "ended": ended, "wall_seconds": round(time.time() - t0, 1), "calls_made": meter.calls, "cap": CAP, "price_table": PRICE_TABLE, "model": MODEL,
+               "input_tokens_total": meter.total, "token_stop": TOKEN_STOP}, open(os.path.join(X, "out", "_run.json"), "w"))
+    if a.remote:
+        push([os.path.relpath(os.path.join(dp, f), os.path.join(X, "out")) for dp, _, fs in os.walk(os.path.join(X, "out")) for f in fs])
+    print("JOBS DONE", {"%s/%s" % k: v for k, v in sorted(stats.items())}, "calls", meter.calls, "input tokens %.2fM" % (meter.total / 1e6), flush=True)
+    return stats
+
+
 def parse(argv=None):
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--phase", choices=["canary", "rest", "all"], required=True)
+    ap.add_argument("--phase", choices=["canary", "rest", "all", "jobs"], required=True)
     ap.add_argument("--variant", choices=["base", "cap30", "pref"], default="base")
     ap.add_argument("--stage", default="stage_x0", help="directory name under phasef-out and under the host in/ and out/ trees")
     ap.add_argument("--cap", type=int, default=200)
@@ -248,4 +306,5 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["fetch"]:
         fetch(*(sys.argv[2:3] or ["stage_x0"]))
     else:
-        run(parse())
+        a = parse()
+        run_jobs(a) if a.phase == "jobs" else run(a)

@@ -157,5 +157,45 @@ class Pref(unittest.TestCase):
             X.set_variant("base")
 
 
+class Jobs(unittest.TestCase):
+    def test_jobs_run_in_given_order_with_arm_prompts_replicate_and_separate_dirs(self):
+        d = tempfile.mkdtemp()
+        old = X.X
+        X.X = d
+        try:
+            os.makedirs(os.path.join(d, "sessions"))
+            ids = ["sAAAAAAAAAAAA", "sBBBBBBBBBBBB"]
+            for i, sid in enumerate(ids):
+                json.dump({"session_id": sid, "date": DATE, "turns": TURNS + [{"role": "user", "content": sid}, {"role": "assistant", "content": "k"}]}, open(os.path.join(d, "sessions", sid + ".json"), "w"))
+            jobs = [{"order_index": 0, "session_id": ids[0], "arm": "S", "replicate": "x0c-s-1"}, {"order_index": 1, "session_id": ids[0], "arm": "P", "replicate": None},
+                    {"order_index": 2, "session_id": ids[1], "arm": "P", "replicate": None}, {"order_index": 3, "session_id": ids[1], "arm": "S", "replicate": "x0c-s-1"}]
+            json.dump({"jobs": jobs}, open(os.path.join(d, "run_order.json"), "w"))
+            a = Args()
+            a.concurrency, a.remote, a.stop_file = 1, "", os.path.join(d, "STOP")
+            calls = []
+
+            def factory():
+                def run(model, system, prompt):
+                    calls.append(prompt)
+                    sid = ids[0] if ids[0] in prompt else ids[1]
+                    return {"result": json.dumps({"sessions": [{"session_id": sid, "facts": [{"subject": "u", "slot": "u.x", "predicate": "p", "object": "o", "round": 0, "author": "user", "quote": "q"}]}]}),
+                            "usage": {"input_tokens": 1, "output_tokens": 2, "cache_creation_input_tokens": 3, "cache_read_input_tokens": 4}, "total_cost_usd": 0.1}
+                return run
+            stats = X.run_jobs(a, factory())
+            self.assertEqual(len(calls), 4)
+            self.assertIn("At most 30 facts", calls[0])
+            self.assertNotIn("preferences, interests, wishes and plans", calls[0])  # arm S
+            self.assertIn("preferences, interests, wishes and plans", calls[1])  # arm P
+            self.assertEqual([("S" if "preferences, interests" not in c else "P") for c in calls], ["S", "P", "P", "S"])
+            rs = json.load(open(os.path.join(d, "out", "S", ids[0] + ".json")))
+            rp = json.load(open(os.path.join(d, "out", "P", ids[0] + ".json")))
+            self.assertEqual((rs["arm"], rs["replicate"], rs["prompt_version"], rs["prompt_sha16"]), ("S", "x0c-s-1", "extract-v2-cap30", "ae055bca99452fb6"))
+            self.assertEqual((rp["arm"], rp["replicate"], rp["prompt_version"], rp["prompt_sha16"]), ("P", None, "extract-v3-pref", "56c79c2119472532"))
+            self.assertTrue(os.path.exists(os.path.join(d, "out", rs["raw_output_path"])))
+            self.assertEqual(sum(stats.values()), 4)
+        finally:
+            X.X = old
+
+
 if __name__ == "__main__":
     unittest.main()
