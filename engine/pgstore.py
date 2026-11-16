@@ -309,7 +309,10 @@ def grant_approval(tenant, sid, request_id, approver, now_ms=None):
             if cur.execute("select 1 from effects where tenant_id=%s and key=%s",
                            (tenant, keys.approval_resolve_key(tenant, request_id))).fetchone():
                 return "rejected:already_resolved"
-            if pg_now_ms(conn) > deadline_ms:
+            # ONE clock reading decides both the deadline check and the grant event's time, so resolve (which compares the
+            # event's time with the deadline) can never disagree with the answer given here
+            ts = cur.execute("select clock_timestamp()").fetchone()[0]
+            if ts.timestamp() * 1000 > deadline_ms:
                 return "rejected:after_deadline"
             got = cur.execute("insert into effects(key,tenant_id,session_id,step,status) values (%s,%s,%s,'approval','done') "
                               "on conflict do nothing returning key", (gkey, tenant, sid)).fetchone()
@@ -317,7 +320,7 @@ def grant_approval(tenant, sid, request_id, approver, now_ms=None):
                 return "duplicate"
             eid = _append_locked(cur, tenant, sid, {"kind": "approval_grant",
                                                     "content": {"request": request_id, "approver": approver},
-                                                    "actor": "approver", "trust": "user_typed"})
+                                                    "actor": "approver", "trust": "user_typed", "ts": ts})
             cur.execute("update effects set result_ref=%s where key=%s and tenant_id=%s", (eid, gkey, tenant))
             return "granted"
 
