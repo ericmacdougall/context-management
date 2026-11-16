@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from typing import FrozenSet, Iterable, Optional, Sequence
 
 SENSITIVITY_MAX = 3
-DIMENSIONS = ("tenants", "acl", "regions", "sensitivity", "models", "banned", "local_only", "restricted")
+DIMENSIONS = ("tenants", "acl", "regions", "sensitivity", "models", "banned", "local_only", "restricted", "holds", "subjects")
 
 
 class LabelError(Exception):
@@ -56,6 +56,8 @@ class Label:
     banned: FrozenSet[str] = frozenset()
     local_only: bool = False
     restricted: bool = False
+    holds: FrozenSet[str] = frozenset()      # legal-hold ids covering this data; join = union
+    subjects: FrozenSet[str] = frozenset()   # data subjects this record mentions (also what others said about them); join = union
 
     def __post_init__(self):
         s = object.__setattr__
@@ -71,13 +73,26 @@ class Label:
             raise LabelError("sensitivity: int 0..%d" % SENSITIVITY_MAX)
         s(self, "models", _fs_str("models", self.models, True))
         s(self, "banned", _fs_str("banned", self.banned))
+        s(self, "holds", _fs_str("holds", self.holds))
+        s(self, "subjects", _fs_str("subjects", self.subjects))
         if not isinstance(self.local_only, bool) or not isinstance(self.restricted, bool):
             raise LabelError("flags must be bool")
+
+    def to_dict(self):
+        return {"tenants": sorted(self.tenants), "acl": sorted(sorted(c) for c in self.acl), "regions": None if self.regions is None else sorted(self.regions),
+                "sensitivity": self.sensitivity, "models": None if self.models is None else sorted(self.models), "banned": sorted(self.banned),
+                "local_only": self.local_only, "restricted": self.restricted,
+                "holds": sorted(self.holds), "subjects": sorted(self.subjects)}
+
+    @staticmethod
+    def from_dict(d):
+        return Label(tenants=d["tenants"], acl=d["acl"], regions=d["regions"], sensitivity=d["sensitivity"], models=d["models"], banned=d["banned"],
+                     local_only=d["local_only"], restricted=d["restricted"], holds=d.get("holds", []), subjects=d.get("subjects", []))
 
     def digest(self):
         import hashlib
         parts = [sorted(self.tenants), sorted(sorted(c) for c in self.acl), None if self.regions is None else sorted(self.regions),
-                 self.sensitivity, None if self.models is None else sorted(self.models), sorted(self.banned), self.local_only, self.restricted]
+                 self.sensitivity, None if self.models is None else sorted(self.models), sorted(self.banned), self.local_only, self.restricted, sorted(self.holds), sorted(self.subjects)]
         return hashlib.sha256(repr(parts).encode()).hexdigest()[:16]
 
 
@@ -92,7 +107,8 @@ def _inter(a, b):
 def join2(a: Label, b: Label) -> Label:
     return Label(tenants=a.tenants | b.tenants, acl=a.acl | b.acl, regions=_inter(a.regions, b.regions),
                  sensitivity=max(a.sensitivity, b.sensitivity), models=_inter(a.models, b.models), banned=a.banned | b.banned,
-                 local_only=a.local_only or b.local_only, restricted=a.restricted or b.restricted)
+                 local_only=a.local_only or b.local_only, restricted=a.restricted or b.restricted,
+                 holds=a.holds | b.holds, subjects=a.subjects | b.subjects)
 
 
 def join(labels: Iterable[Label]) -> Label:
@@ -126,6 +142,10 @@ def dim_leq(dim: str, a: Label, b: Label) -> bool:
         return (not a.local_only) or b.local_only
     if dim == "restricted":
         return (not a.restricted) or b.restricted
+    if dim == "holds":
+        return a.holds <= b.holds
+    if dim == "subjects":
+        return a.subjects <= b.subjects
     raise LabelError("unknown dimension " + dim)
 
 
@@ -141,3 +161,10 @@ def leq(a: Label, b: Label) -> bool:
 def acl_satisfied(label: Label, groups: Iterable[str]) -> bool:
     g = set(groups)
     return all(c & g for c in label.acl)
+
+
+def join_dicts(*ds):
+    """Join of label dicts; any missing (None) label makes the result None, and None is read as unlabelled = denied."""
+    if not ds or any(d is None for d in ds):
+        return None
+    return join(Label.from_dict(d) for d in ds).to_dict()

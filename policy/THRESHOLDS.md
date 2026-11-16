@@ -106,3 +106,26 @@ No model call of any kind is made: all model, embedding, inbox and export endpoi
   rows (manifest hash) in 100 percent of rounds.
 - Controls: (a) blind last-writer-wins update with no lock and no version check: silent loss of one decision in >= 45 of 50
   rounds of S1; (b) read-then-write without lock: lost update in >= 45 of 50 rounds under forced interleaving.
+
+## Amendment 1 (written after DEV dry runs, before any stamped run; the DEV runs used seeds 1..5 and tuned generators)
+Disclosed deviations and additions. Stamped runs use FRESH seeds (E1, E2, E5, B2: 11..15; E3: 77; E6: 606).
+- E1: 40 probes per derivation (was 10; the semantic floor was marginal at 10), so probes >= 800000; the semantic floor is measured over
+  derivations with >= 2 inputs; controls run on all five seeds and the WORST seed must meet the floors. Dimensions are now ten:
+  holds and subjects added (their naive merges: intersection of holds; subjects of the first input only). Subject semantic check: every
+  subject mentioned by any input is mentioned by the derived record.
+- E2: "permitted deliveries >= 1000 per class" excludes other_tenant (it has no permitted destination by design). Control (f) now scans text for
+  id-shaped strings (it must block >= 1 planted id-shaped string and still let markers escape). The oracle does not see the restricted authorisation
+  (only the destination programme): listed as not proven.
+- E4: group_removed is a directory change, so its refusal is logged with policy version 1; the other combinations log version 2. Runs vary
+  sensitivity, ACL, recipient groups and clearance, item count; the structural distinct cases remain 12 combinations x 200 randomised runs.
+- B1: minimum depth L = 6 applies PER REQUIREMENT scenario (r1 depth 6, r2 and r3 depth 8); the joint three-requirement pool is explored to depth 4
+  (controls: depth 3). Decomposition is argued, not proven (see DESIGN.md). Added agent rule (an agent only accepts human-authored proposals or
+  rejects; it never supersedes, retracts, amends or resolves), idempotency keys scoped per principal, invariant I2 generalised to I2_agent_head_move.
+- B2: adds a second agent and runs every B1 invariant over every step of the random logs.
+- B3: control (a) is now the engine with the last-writer-wins flag under the S1 overlap (log bases [0,0], no contested state); the blind UPDATE
+  is a further control. Rebuild is compared once at the end of the scenario set, per requirement (each round's requirement) and as a manifest.
+- New E6 (exp/e6_policy_format.py): empty, absent and 3000 malformed policy documents deny every probe (zero allows over >= 15000 probes) and the
+  validator raises on 3000 of 3000; a lenient loader (control) allows >= 10 percent; a valid document allows > 5 percent (not deny-all); legal hold
+  beats erasure only with a recorded hold event; hold and subjects labels are inherited by derived records.
+- Not built: per-item result artifacts with an independent recomputation script (rule 5), viewer-scoped explain for contested candidates (E5b),
+  a password for the Postgres container (loopback trust auth on the host).

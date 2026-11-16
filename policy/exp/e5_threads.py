@@ -10,10 +10,11 @@ import random
 from exp import common  # noqa: F401
 from exp.common import write_result
 from pol.labels import Label
+from exp.gen import GRANTS
 from pol.pdp import Policy, Principal
 from pol.threads import Item, World, build_view, conflict_notice, serialise
 
-SEEDS = [1, 2, 3, 4, 5]
+SEEDS = [11, 12, 13, 14, 15]
 PER_SEED = 200
 
 
@@ -103,7 +104,7 @@ def tokens_of(it):
 
 
 def check_world(world, mode):
-    pol = Policy(1)
+    pol = Policy(1, grants=GRANTS)
     out = {"leaks": 0, "notice_expected": 0, "notice_found": 0, "notice_wrong": 0, "views": 0, "interference": 0, "bytes_checked": 0, "xrefs_visible": 0,
            "finding_hidden": 0, "finding_visible": 0}
     for p in principals(world):

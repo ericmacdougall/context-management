@@ -65,6 +65,11 @@ POOL = [
     E("confirm", "K5", "r2", "u1", pending="R1", channel="chat", based_on=0),
     E("grant", "GR1", "r1", "u1", target="a1"),
     E("grant", "GR3", "r3", "u1", target="u2"),
+    E("propose", "P4", "r3", "u1", value="H", based_on=0),
+    E("supersede", "AG1", "r3", "a1", value="AV", channel="agent_api", based_on=0),
+    E("retract", "AG2", "r3", "a1", channel="agent_api", based_on=1),
+    E("decide", "AG3", "r3", "a1", verb="amend", proposal="P4", value="AV2", channel="agent_api", based_on=0),
+    E("decide", "AG4", "r3", "a1", verb="accept", proposal="P4", channel="agent_api", based_on=0),
 ]
 # the second D1 clashes with the id of the first: keep ids unique, only the idem key is shared
 POOL[30] = dict(POOL[30], id="D1x")
@@ -73,7 +78,7 @@ POOL[30] = dict(POOL[30], id="D1x")
 SCENARIOS = {
     "r1": ["P1", "P2", "D1", "D2", "D3", "D5", "S1", "T1", "RES1", "RES2", "RES4", "D9", "D10", "Dc", "Dp", "Dbad", "D1x", "S2", "REV", "GR1"],
     "r2": ["R1", "R3", "K2", "K3", "K3b", "K4", "K5", "RES3", "T2", "S3", "REV", "GR", "Dx"],
-    "r3": ["P3", "R2", "D4", "D8", "D8b", "K1", "REV", "GR3", "D1x"],
+    "r3": ["P3", "R2", "D4", "D8", "D8b", "K1", "REV", "GR3", "P4", "AG1", "AG2", "AG3", "AG4"],
 }
 
 
@@ -126,7 +131,7 @@ def explore(flags, depth, collect_cex=True, max_cex=3, pool=None):
     return stats
 
 
-CONTROLS = [("remove_self_approval_check", frozenset(["self_approval"]), "I2_agent_approved_agent_proposal"),
+CONTROLS = [("remove_self_approval_check", frozenset(["self_approval"]), "I2_agent_head_move"),
             ("remove_staleness_check", frozenset(["staleness"]), "I4_decision_not_bound_to_head"),
             ("remove_idempotency_key", frozenset(["idempotency"]), "I6_redelivery_changed_state"),
             ("remove_authority_check", frozenset(["authority_check"]), "I1_authority"),

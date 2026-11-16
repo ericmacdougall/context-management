@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from .core import AGENT_CHANNELS, DECISION_VERBS, OWNER_CHANNELS, STATE_CHANGING, canon
+from .core import AGENT_CHANNELS, DECISION_VERBS, OWNER_CHANNELS, STATE_CHANGING, canon, idem_key, sha
 
 DECISIONLIKE = STATE_CHANGING + ("contested_joined", "concurrent_agree")
 REFUSAL_LIKE = None
@@ -41,10 +41,12 @@ def transition_invariants(pre, ev, post, code):
         q0, q1 = pre["reqs"][rid], post["reqs"][rid]
         if code in DECISIONLIKE and (ev["principal"] not in pre["authority"][rid] or ev["principal"] in pre["revoked"]):
             bad.append("I1_authority")
-        if code in ("decided_accept", "decided_amend", "contested_opened", "contested_joined", "concurrent_agree") and ev.get("verb") in ("accept", "amend"):
+        if kind == "agent" and code in DECISIONLIKE:
+            # an agent may only accept (a proposal a human authored) or reject; it never installs a value of its own
             prop = next((p for p in q0["proposals"] if p["id"] == ev.get("proposal")), None)
-            if prop and prop["author_kind"] == "agent" and kind == "agent":
-                bad.append("I2_agent_approved_agent_proposal")
+            allowed = t == "decide" and (ev.get("verb") == "reject" or (ev.get("verb") == "accept" and prop is not None and prop["author_kind"] == "human"))
+            if not allowed:
+                bad.append("I2_agent_head_move")
         if t in ("propose", "remark") and (q0["value"], q0["status"], q0["version"]) != (q1["value"], q1["status"], q1["version"]):
             bad.append("I3_remark_or_proposal_changed_value")
         if (q0["value"], q0["status"]) != (q1["value"], q1["status"]) and t not in ("confirm", "decide", "supersede", "retract"):
@@ -67,6 +69,7 @@ def transition_invariants(pre, ev, post, code):
     refused = code not in DECISIONLIKE and code not in ("proposed", "pending_created", "revoked", "granted")
     if refused and _strip(pre) != _strip(post):
         bad.append("I5_refused_event_changed_state")
-    if ev.get("idem") in pre["idem"] and pre["idem"][ev["idem"]][0] == __import__("pol.core", fromlist=["sha"]).sha(ev) and _strip(pre) != _strip(post):
+    ik = idem_key(ev) if isinstance(ev.get("idem"), str) and isinstance(ev.get("principal"), str) else None
+    if ik in pre["idem"] and pre["idem"][ik][0] == sha(ev) and _strip(pre) != _strip(post):
         bad.append("I6_redelivery_changed_state")
     return bad

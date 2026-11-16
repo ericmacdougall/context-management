@@ -11,10 +11,10 @@ from exp.common import write_result
 from exp.gen import base_policy
 from pol.enforce import Block, Enforcer, GuardedChat, GuardedEmbedder, GuardedExport, Outbox, PolicyDenied, Record, Store, derive, inject
 from pol.labels import Label
-from pol.pdp import ACTIONS, Principal
+from pol.pdp import ACTIONS, Decision, Principal
 from pol.stubs import Network, StubChat, StubEmbedder
 
-SEEDS = [1, 2, 3, 4, 5]
+SEEDS = [11, 12, 13, 14, 15]
 PER_SEED = 400
 CLASSES = ["eu_only", "local_only", "model_banned", "restricted_channel", "other_tenant", "plain"]
 MARKER_RE = re.compile(r"@@([a-z_]+):([0-9a-f]{8})@@")
@@ -77,8 +77,13 @@ class IdPatternGuard(Enforcer):
     """Control (f): a canary-blind guard that only refuses text that looks like a real session id."""
     PAT = re.compile(r"answer_[0-9a-f]{4,}|sharegpt_\w+")
 
-    def check(self, principal, action, labels, ctx=None):
+    blocked = 0
+
+    def check(self, principal, action, labels, ctx=None, texts=()):
         self.evaluated_actions.add(action)
+        if any(self.PAT.search(t) for t in texts):  # scans the text for id-shaped strings only
+            IdPatternGuard.blocked += 1
+            raise PolicyDenied(Decision(False, "id_pattern", None, action))
         return None
 
 
@@ -108,7 +113,8 @@ def run_scenario(seed, mode):
         cls = CLASSES[i] if i < len(CLASSES) else rng.choice(CLASSES)
         mk = "@@%s:%08x@@" % (cls, rng.getrandbits(32))
         cls_of[mk] = cls
-        rec = Record("rec%d" % i, "note %s about item %d" % (mk, i), label_for(cls))
+        idlike = " answer_%08x" % rng.getrandbits(32) if (cls == "plain" and rng.random() < 0.5) else ""
+        rec = Record("rec%d" % i, "note %s about item %d%s" % (mk, i, idlike), label_for(cls))
         store.records[rec.id] = rec           # planted directly: this experiment is about egress, not append
         recs.append(rec)
     pool = list(recs)                          # grows with derived records
@@ -277,10 +283,11 @@ def main():
             frac = v["scenarios_with_leak"] / v["scenarios"]
             ctl_report[k] = {"leak_rate": frac, "violations_detected": v["violations"], "leak_classes": v["leak_classes"], "leak_channels": v["leak_channels"],
                              "meets_floor": frac >= 0.10 and v["violations"] >= 1}
-    ctl_ok = all(c["meets_floor"] for c in ctl_report.values())
+    ctl_ok = all(c["meets_floor"] for c in ctl_report.values()) and IdPatternGuard.blocked > 0
     verdict = "PASS" if pos_ok and ctl_ok else "FAIL"
     data = {"verdict": verdict, "arms": arms, "controls": ctl_report, "positive_conditions_met": pos_ok, "controls_meet_floor": ctl_ok,
             "defence_in_depth_inject_only_disabled": {"violations": arms["info_inject_only_disabled"]["violations"]},
+            "idpattern_guard_blocks_idlike_strings": IdPatternGuard.blocked,
             "not_proven": "stubs only (no real adapter); oracle and decide share the destination table; other_tenant has no permitted delivery by design; "
                           "record content is plain strings (no encodings, translations or paraphrase of markers, which no label system can follow)"}
     write_result("e2_egress", {"seeds": SEEDS, "per_seed": PER_SEED, "classes": CLASSES}, data)

@@ -10,8 +10,8 @@ from pol.labels import DIMENSIONS, Label, join2, violated_dims
 from pol.pdp import decide
 
 N_PER_SEED = 4000
-SEEDS = [1, 2, 3, 4, 5]
-PROBES = 10
+SEEDS = [11, 12, 13, 14, 15]      # fresh seeds for the stamped run; dev tuning used 1..5
+PROBES = 40
 LAW_TRIPLES = 5000
 
 
@@ -20,7 +20,7 @@ def naive(dim):
     def f(a, b):
         good = join2(a, b)
         kw = dict(tenants=good.tenants, acl=good.acl, regions=good.regions, sensitivity=good.sensitivity, models=good.models,
-                  banned=good.banned, local_only=good.local_only, restricted=good.restricted)
+                  banned=good.banned, local_only=good.local_only, restricted=good.restricted, holds=good.holds, subjects=good.subjects)
         if dim == "tenants":
             kw["tenants"] = a.tenants
         elif dim == "acl":
@@ -37,6 +37,10 @@ def naive(dim):
             kw["local_only"] = a.local_only and b.local_only
         elif dim == "restricted":
             kw["restricted"] = a.restricted and b.restricted
+        elif dim == "holds":
+            kw["holds"] = a.holds & b.holds
+        elif dim == "subjects":
+            kw["subjects"] = a.subjects
         return Label(**kw)
     return f
 
@@ -85,6 +89,12 @@ def run(seed, n, joiner):
                         if st["first_counterexample"] is None:
                             st["first_counterexample"] = {"action": action, "dims": sorted(violated_dims(l, d))}
                         break
+        # erasure semantics: whoever is erased must be reachable from every derived record that was computed from a record mentioning them
+        for subj in ("s1", "s2", "s3"):
+            if any(subj in l.subjects for l in leaves) and subj not in d.subjects:
+                sem = True
+                if st["first_counterexample"] is None:
+                    st["first_counterexample"] = {"action": "erase_subject", "dims": ["subjects"]}
         st["semantic_viol_derivations"] += sem
     return st
 
@@ -108,12 +118,13 @@ def main():
           and tot["probes"] >= 200000 and tot["probe_allowed"] >= 0.05 * tot["probes"] and tot["probe_denied"] >= 0.05 * tot["probes"])
     controls = {}
     for dim in DIMENSIONS:
-        stc = run(1, N_PER_SEED, naive(dim))
-        sf = stc["structural_viol"] / max(1, stc["multi_input"])
-        sm = stc["semantic_viol_derivations"] / max(1, stc["multi_input"])
-        only = set(stc["viol_dims"]) == {dim}
-        controls[dim] = {"structural_rate": sf, "semantic_rate": sm, "violated_dimensions": stc["viol_dims"], "reason_is_dropped_dimension": only,
-                         "meets_floor": sf >= 0.10 and sm >= 0.05 and only, "first_counterexample": stc["first_counterexample"]}
+        runs = [run(sd, N_PER_SEED, naive(dim)) for sd in SEEDS]
+        sfs = [r["structural_viol"] / max(1, r["multi_input"]) for r in runs]
+        sms = [r["semantic_viol_derivations"] / max(1, r["multi_input"]) for r in runs]
+        only = all(set(r["viol_dims"]) == {dim} for r in runs)
+        sf, sm = min(sfs), min(sms)          # worst seed (proof rule 7)
+        controls[dim] = {"structural_rate_worst_seed": sf, "semantic_rate_worst_seed": sm, "per_seed_structural": sfs, "per_seed_semantic": sms,
+                         "reason_is_dropped_dimension": only, "meets_floor": sf >= 0.10 and sm >= 0.05 and only, "first_counterexample": runs[0]["first_counterexample"]}
     ok_ctl = all(c["meets_floor"] for c in controls.values())
     verdict = "PASS" if ok and ok_ctl else "FAIL"
     data = {"verdict": verdict, "per_seed": good, "totals": tot, "lattice_law_failures": lw, "controls": controls, "pass_conditions_met": ok,
@@ -121,7 +132,7 @@ def main():
     write_result("e1_lattice", params, data)
     print(verdict, tot, lw)
     for d, c in controls.items():
-        print(" control", d, "structural %.2f semantic %.2f only=%s floor=%s" % (c["structural_rate"], c["semantic_rate"], c["reason_is_dropped_dimension"], c["meets_floor"]))
+        print(" control", d, "structural %.2f semantic %.2f only=%s floor=%s" % (c["structural_rate_worst_seed"], c["semantic_rate_worst_seed"], c["reason_is_dropped_dimension"], c["meets_floor"]))
 
 
 if __name__ == "__main__":

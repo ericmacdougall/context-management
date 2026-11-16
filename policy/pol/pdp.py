@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, FrozenSet, Iterable, Mapping, Optional, 
 
 from .labels import Label, LabelError, acl_satisfied, join
 
-ACTIONS = ("append", "read", "inject", "send_model", "embed", "send_inbox", "export")
+ACTIONS = ("append", "read", "inject", "send_model", "embed", "send_inbox", "export", "erase")
 KINDS = ("model", "embedder", "export")
 ACTION_KIND = {"send_model": "model", "embed": "embedder", "export": "export"}
 
@@ -70,6 +70,8 @@ class Policy:
     authorizations: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)   # id -> {tenant, programme, expires}
     extra_rules: Tuple[Tuple[str, Callable], ...] = ()
     conflict_notice: str = "existence_only"      # existence_only | none (see threads.py)
+    grants: Mapping[str, FrozenSet[str]] = field(default_factory=dict)   # tenant -> actions the tenant's policy allows; EMPTY = deny everything
+    hold_events: FrozenSet[str] = frozenset()    # legal holds that have a RECORDED hold event; a label's hold only binds once recorded
 
     def tighten(self, **changes) -> "Policy":
         return replace(self, version=self.version + 1, **changes)
@@ -183,6 +185,8 @@ def _evaluate(principal, action, resource_labels, context, policy) -> str:
         ca = caps["cap_actions"]
         if not isinstance(ca, (set, frozenset, list, tuple)) or action not in ca:
             _deny("credential_scope")
+    if action not in policy.grants.get(principal.tenant, frozenset()):
+        _deny("no_grant")                        # default deny: an empty policy grants nothing
     if principal.tenant in policy.deny_tenants:
         _deny("tenant_killed")
     if principal.id in policy.revoked:
@@ -206,7 +210,12 @@ def _evaluate(principal, action, resource_labels, context, policy) -> str:
         _deny("restricted_clearance")
 
     t = principal.tenant
-    if action in ("append", "read"):
+    if action == "erase":
+        # precedence rule: a legal hold beats erasure only under a recorded hold event; the erasure is then queued, not refused for good
+        if label.holds & policy.hold_events:
+            _deny("legal_hold_erasure_queued")
+        _region_known(label, context, context.get("region"))
+    elif action in ("append", "read"):
         _region_known(label, context, context.get("region"))
     elif action == "inject":
         _region_known(label, context, context.get("region"))
@@ -255,3 +264,79 @@ def decide(principal, action, resource_labels, context, *, policy) -> Decision:
         if isinstance(e, (KeyboardInterrupt, SystemExit)):
             raise
         return Decision(False, "eval_error:" + type(e).__name__, ver, act)
+
+
+# ------------------------------------------------------------------------------------------------ policy format
+class PolicyError(Exception):
+    pass
+
+
+DENY_ALL = Policy(0)
+
+
+def parse_policy(doc) -> Policy:
+    """Strict validator for the client-supplied policy document (JSON-able dict). Unknown keys, wrong types, unknown actions or
+    dangling references raise PolicyError. Format:
+      {"version": int, "grants": {tenant: [action,...]}, "destinations": {id: {kind, region, local, max_sensitivity, model?, programme?, tenants?}},
+       "banned_models": [...], "tenant_banned": {tenant: [...]}, "deny_tenants": [...], "revoked": [...], "hold_events": [...],
+       "authorizations": {id: {tenant, programme, expires}}, "conflict_notice": "existence_only"|"none"}"""
+    if not isinstance(doc, dict):
+        raise PolicyError("document must be an object")
+    allowed = {"version", "grants", "destinations", "banned_models", "tenant_banned", "deny_tenants", "revoked", "hold_events", "authorizations", "conflict_notice", "example"}
+    if set(doc) - allowed:
+        raise PolicyError("unknown keys")
+    v = doc.get("version")
+    if not isinstance(v, int) or isinstance(v, bool) or v < 1:
+        raise PolicyError("version")
+    def strs(x, name):
+        if not isinstance(x, list) or not all(isinstance(i, str) and i for i in x):
+            raise PolicyError(name)
+        return frozenset(x)
+    grants = {}
+    if not isinstance(doc.get("grants", {}), dict):
+        raise PolicyError("grants")
+    for t, acts in doc.get("grants", {}).items():
+        if not isinstance(t, str) or not t:
+            raise PolicyError("grants tenant")
+        a = strs(acts, "grants actions")
+        if a - set(ACTIONS):
+            raise PolicyError("unknown action")
+        grants[t] = a
+    dests = {}
+    if not isinstance(doc.get("destinations", {}), dict):
+        raise PolicyError("destinations")
+    for n, d in doc.get("destinations", {}).items():
+        if not isinstance(d, dict) or set(d) - {"kind", "region", "local", "max_sensitivity", "model", "programme", "tenants"}:
+            raise PolicyError("destination keys")
+        if d.get("kind") not in KINDS or not isinstance(d.get("local"), bool) or not isinstance(d.get("max_sensitivity"), int) or isinstance(d.get("max_sensitivity"), bool) \
+                or not 0 <= d["max_sensitivity"] <= 3 or not (d.get("region") is None or isinstance(d.get("region"), str)):
+            raise PolicyError("destination fields")
+        if d["kind"] in ("model", "embedder") and not isinstance(d.get("model"), str):
+            raise PolicyError("destination model pin required")
+        dests[n] = Dest(d["kind"], d.get("region"), d["local"], d["max_sensitivity"], d.get("model"), d.get("programme"),
+                        None if d.get("tenants") is None else strs(d["tenants"], "dest tenants"))
+    tb = doc.get("tenant_banned", {})
+    if not isinstance(tb, dict):
+        raise PolicyError("tenant_banned")
+    auths = doc.get("authorizations", {})
+    if not isinstance(auths, dict) or not all(isinstance(a, dict) and set(a) == {"tenant", "programme", "expires"} for a in auths.values()):
+        raise PolicyError("authorizations")
+    cn = doc.get("conflict_notice", "existence_only")
+    if cn not in ("existence_only", "none"):
+        raise PolicyError("conflict_notice")
+    return Policy(v, destinations=dests, banned_models=strs(doc.get("banned_models", []), "banned_models"),
+                  tenant_banned={t: strs(x, "tenant_banned") for t, x in tb.items()}, deny_tenants=strs(doc.get("deny_tenants", []), "deny_tenants"),
+                  revoked=strs(doc.get("revoked", []), "revoked"), authorizations=dict(auths), conflict_notice=cn, grants=grants,
+                  hold_events=strs(doc.get("hold_events", []), "hold_events"))
+
+
+def safe_policy(doc) -> Policy:
+    """Load a client policy; on ANY error return the deny-everything policy."""
+    try:
+        return parse_policy(doc)
+    except Exception:       # noqa: BLE001
+        return DENY_ALL
+
+
+EXAMPLE_POLICY = {"example": True, "version": 1, "grants": {"tenant-a": ["append", "read", "inject", "send_model", "erase"]},
+                  "destinations": {"eu-local-llm": {"kind": "model", "region": "EU", "local": True, "max_sensitivity": 3, "model": "example-model-1"}}}

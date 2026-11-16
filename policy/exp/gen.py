@@ -6,9 +6,10 @@ TENANTS = ["t1", "t2"]
 GROUPS = ["g1", "g2", "g3", "g4"]
 REGIONS = ["EU", "US", "APAC"]
 MODELS = ["m1", "m2", "m3", "m4"]
+GRANTS = {t: frozenset(ACTIONS) for t in ("t1", "t2")}
 
 
-def rand_label(rng, permissive=0.75):
+def rand_label(rng, permissive=0.65):
     tenants = ["t1"] if rng.random() < 0.85 else ["t1", "t2"]
     acl = []
     for _ in range(rng.choice([0, 0, 0, 1, 1, 2])):
@@ -17,7 +18,8 @@ def rand_label(rng, permissive=0.75):
     models = None if rng.random() < permissive else rng.sample(MODELS, rng.choice([1, 2, 3]))
     banned = [] if rng.random() < 0.6 else rng.sample(MODELS, rng.choice([1, 2]))
     return Label(tenants=tenants, acl=acl, regions=regions, sensitivity=rng.choice([0, 0, 0, 1, 1, 2, 3]), models=models, banned=banned,
-                 local_only=rng.random() < 0.25, restricted=rng.random() < 0.08)
+                 local_only=rng.random() < 0.25, restricted=rng.random() < 0.08,
+                 holds=[] if rng.random() < 0.7 else ["h1"], subjects=[] if rng.random() < 0.7 else rng.sample(["s1", "s2", "s3"], rng.choice([1, 2])))
 
 
 def rand_principal(rng, tenant="t1", pid=None):
@@ -37,11 +39,11 @@ def base_policy():
         "d_export_eu": Dest("export", "EU", True, 3),
         "d_export_us": Dest("export", "US", False, 1),
     }
-    return Policy(1, destinations=dests, authorizations={"auth1": {"tenant": "t1", "programme": "cyber", "expires": 1000}})
+    return Policy(1, grants=GRANTS, hold_events=frozenset(["h1"]), destinations=dests, authorizations={"auth1": {"tenant": "t1", "programme": "cyber", "expires": 1000}})
 
 
 def rand_probe(rng, policy):
-    action = rng.choice(ACTIONS) if rng.random() < 0.4 else rng.choice(["send_model", "embed", "send_inbox", "export", "send_model"])
+    action = rng.choice(ACTIONS) if rng.random() < 0.5 else rng.choice(["send_model", "embed", "send_inbox", "export", "send_model", "erase"])
     ctx = {"region": rng.choice(REGIONS + [None]), "now": 10, "authorization": rng.choice(["auth1", None, "zzz"])}
     if action in ("send_model", "embed", "export") or (action == "inject" and rng.random() < 0.7):
         kind = {"send_model": "model", "embed": "embedder", "export": "export", "inject": "model"}[action]

@@ -10,7 +10,7 @@ from exp.common import write_result
 from pol.labels import Label, acl_satisfied, join
 from pol.pdp import Dest, Policy, Principal, decide
 
-SEED = 31
+SEED = 77
 N_PLANTED, N_FAULT, N_LEGIT = 2200, 2400, 1400
 
 
@@ -45,7 +45,7 @@ FAULT_RESULTS = [lambda *a: "yes", lambda *a: 1, lambda *a: 2, lambda *a: None, 
 
 
 def mk_policy(extra=(), revoked=()):
-    return Policy(1, destinations={"dm": Dest("model", "EU", True, 3, model="m1")}, extra_rules=tuple(extra), revoked=frozenset(revoked))
+    return Policy(1, grants={"t1": frozenset(["send_model"])}, destinations={"dm": Dest("model", "EU", True, 3, model="m1")}, extra_rules=tuple(extra), revoked=frozenset(revoked))
 
 
 def base_case(rng):

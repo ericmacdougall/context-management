@@ -8,12 +8,13 @@ import random
 
 from exp import common  # noqa: F401
 from exp.common import write_result
+from pol.invariants import state_invariants, transition_invariants
 from pol.core import REFUSED, apply, canon, current_table, explain, genesis, manifest_hash
 
-SEEDS = [1, 2, 3, 4, 5]
+SEEDS = [11, 12, 13, 14, 15]
 PER_SEED = 600
-PRINCIPALS = {"u1": "human", "u2": "human", "u3": "human", "a1": "agent"}
-AUTHORITY = {"r1": ["u1", "u2"], "r2": ["u1"], "r3": ["u1", "a1"]}
+PRINCIPALS = {"u1": "human", "u2": "human", "u3": "human", "a1": "agent", "a2": "agent"}
+AUTHORITY = {"r1": ["u1", "u2", "a2"], "r2": ["u1"], "r3": ["u1", "a1", "a2"]}
 ADMINS = ["u1"]
 REQS = list(AUTHORITY)
 
@@ -138,6 +139,18 @@ def rebuild(log):
     return st, outs
 
 
+def invariant_violations(events):
+    """Every B1 invariant over a long random log (two agents, so peer-agent approval is reachable)."""
+    st = genesis(PRINCIPALS, AUTHORITY, ADMINS)
+    bad = {}
+    for ev in events:
+        post, code = apply(st, ev)
+        for b in transition_invariants(st, ev, post, code) + state_invariants(post):
+            bad[b] = bad.get(b, 0) + 1
+        st = post
+    return bad
+
+
 def compare(events, rng, **kw):
     live, log, outs_live, snaps = run_live(events, rng, **kw)
     reb, outs_reb = rebuild(log)
@@ -162,6 +175,9 @@ def main():
                 events = gen_events(rng, n)
                 c = compare(events, random.Random(rng.random()), **kw)
                 r["logs"] += 1
+                if name == "enforced":
+                    for b, n_ in invariant_violations(events).items():
+                        r.setdefault("invariant_violations", {})[b] = r.get("invariant_violations", {}).get(b, 0) + n_
                 r["events"] += len(events)
                 r["state_equal"] += c["state"]
                 r["hash_equal"] += c["hash"]
@@ -183,7 +199,7 @@ def main():
                     r["explain_ok"] += ok
         res[name] = r
     e = res["enforced"]
-    ok = (e["all_equal"] == e["logs"] and e["logs"] >= 3000 and e["contested_logs"] >= 0.10 * e["logs"] and e["snapshots_restored"] >= 3000 and e["explain_ok"] == e["logs"]
+    ok = (not e.get("invariant_violations") and e["all_equal"] == e["logs"] and e["logs"] >= 3000 and e["contested_logs"] >= 0.10 * e["logs"] and e["snapshots_restored"] >= 3000 and e["explain_ok"] == e["logs"]
           and all(e["codes"].get(c, 0) > 0 for c in ("stale", "unauthorized", "self_approval", "duplicate", "idem_conflict", "contested_opened", "resolved", "decided_accept",
                                                   "pending_created", "confirmed_applied", "revoked", "granted", "principal_revoked", "channel_mismatch")))
     ctl = {k: {"mismatch_rate": 1 - v["all_equal"] / v["logs"], "meets_floor": (1 - v["all_equal"] / v["logs"]) >= 0.10} for k, v in res.items() if k != "enforced"}

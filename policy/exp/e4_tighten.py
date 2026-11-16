@@ -27,11 +27,12 @@ def one(seed, path, tighten, enqueue_only):
     net.register("inbox", "send_inbox")
     net.register("export", "export")
     sender = Principal("S", "t1", frozenset(["g1", "g2"]), 3, True, region="EU")
-    rcp = Principal("R", "t1", frozenset(["g1"]), 3, False, region="EU", model="d_model_eu")
+    rcp = Principal("R", "t1", frozenset(rng.choice([["g1"], ["g1", "g2"]])), rng.choice([2, 3]), False, region="EU", model="d_model_eu")
     directory = {"S": sender, "R": rcp}
     marker = "MK%08x" % rng.getrandbits(32)
-    lab = Label(["t1"], acl=[["g1"]], regions=["EU"], sensitivity=1)
-    blocks = [Block("payload " + marker, lab, ("x",))]
+    lab = Label(["t1"], acl=[["g1"]] + ([["g2", "g1"]] if rng.random() < 0.5 else []), regions=["EU"], sensitivity=rng.choice([0, 1, 2]),
+                subjects=rng.choice([[], ["s1"]]))
+    blocks = [Block("payload %d " % k + marker, lab, ("x",)) for k in range(rng.randint(1, 3))]
     chat = StubChat(net, "d_model_eu", "m1")
     if path == "model":
         ob = Outbox(enf, directory.get, "send_model", lambda p, b, c: chat.complete([{"role": "user", "content": b[0].text}]), enqueue_only)

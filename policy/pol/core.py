@@ -25,12 +25,14 @@ import hashlib
 import json
 from typing import Any, Dict, FrozenSet, List, Optional, Tuple
 
+from .labels import join_dicts
+
 OWNER_CHANNELS = ("owner_ui", "owner_cli")
 AGENT_CHANNELS = ("agent_api",)
 DECISION_VERBS = ("accept", "reject", "amend", "resolve")
 APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
-REFUSED = ("bad_event", "unauthorized", "principal_revoked", "self_approval", "stale", "unknown_req", "unknown_proposal", "proposal_closed",
+REFUSED = ("bad_event", "unauthorized", "principal_revoked", "self_approval", "agent_not_permitted", "stale", "unknown_req", "unknown_proposal", "proposal_closed",
            "channel_mismatch", "agent_cannot_confirm", "same_channel_confirmation", "unknown_pending", "pending_closed", "idem_conflict",
            "nothing_to_retract", "not_contested", "contested_needs_resolve", "unknown_candidate")
 OUTCOME_CODES = APPLIED + REFUSED + ("duplicate",)
@@ -48,6 +50,11 @@ REQUIRED = {
 }
 
 
+def idem_key(ev) -> str:
+    """Idempotency keys are scoped to the principal: one principal cannot burn another's key."""
+    return "%s\x1f%s" % (ev["principal"], ev["idem"])
+
+
 def canon(o) -> str:
     return json.dumps(o, sort_keys=True, separators=(",", ":"), default=str)
 
@@ -57,7 +64,7 @@ def sha(o) -> str:
 
 
 def new_req():
-    return {"version": 0, "status": "unset", "value": None, "value_event": None, "value_by": None, "value_version": 0, "chain": [], "log": [],
+    return {"version": 0, "status": "unset", "value": None, "value_label": None, "value_event": None, "value_by": None, "value_version": 0, "chain": [], "log": [],
             "proposals": [], "pending": [], "contested": None, "last": None}
 
 
@@ -79,12 +86,12 @@ def _find(lst, key, val):
 
 def _push_chain(rq):
     if rq["value"] is not None:
-        rq["chain"].append({"version": rq["value_version"], "value": rq["value"], "event": rq["value_event"], "by": rq["value_by"]})
+        rq["chain"].append({"version": rq["value_version"], "value": rq["value"], "event": rq["value_event"], "by": rq["value_by"], "label": rq["value_label"]})
 
 
-def _set_value(rq, value, status, ev, by):
+def _set_value(rq, value, status, ev, by, label=None):
     _push_chain(rq)
-    rq["value"], rq["status"], rq["value_event"], rq["value_by"] = value, status, ev, by
+    rq["value"], rq["status"], rq["value_event"], rq["value_by"], rq["value_label"] = value, status, ev, by, label
     rq["value_version"] = rq["version"] + 1
     rq["contested"] = None
 
@@ -110,15 +117,29 @@ def _effect(ev, rq):
     return None
 
 
+def _eff_label(ev, rq):
+    """Label of the value a decision would install: the join of the labels of the content it adopts and of the event itself."""
+    t = ev["type"]
+    own = ev.get("label")
+    if t == "decide" and ev.get("verb") in ("accept", "amend"):
+        p = _find(rq["proposals"], "id", ev.get("proposal"))
+        return join_dicts(p["label"], own) if (ev["verb"] == "amend" and p) else (p["label"] if p else None)
+    if t == "confirm":
+        pc = _find(rq["pending"], "id", ev["pending"])
+        return join_dicts(pc["label"], own) if pc else None
+    return own
+
+
 def apply(state: dict, ev: dict, flags: FrozenSet[str] = frozenset()) -> Tuple[dict, str]:
     """Pure. `flags` switch off individual rules: ONLY for the model-check controls."""
     if not isinstance(ev, dict) or ev.get("type") not in REQUIRED or not all(k in ev for k in REQUIRED[ev["type"]]):
         return state, "bad_event"
-    if not all(isinstance(ev[k], str) and ev[k] for k in ("id", "idem")):
+    if not all(isinstance(ev[k], str) and ev[k] for k in ("id", "idem", "principal")):
         return state, "bad_event"
     fp = sha(ev)
-    if "idempotency" not in flags and ev["idem"] in state["idem"]:
-        old = state["idem"][ev["idem"]]
+    ik = idem_key(ev)
+    if "idempotency" not in flags and ik in state["idem"]:
+        old = state["idem"][ik]
         return state, ("duplicate" if old[0] == fp else "idem_conflict")
     try:
         ns, code = _apply(state, ev, flags)
@@ -127,7 +148,7 @@ def apply(state: dict, ev: dict, flags: FrozenSet[str] = frozenset()) -> Tuple[d
     if ns is state:
         ns = dict(state)
     ns["idem"] = dict(ns["idem"])
-    ns["idem"][ev["idem"]] = [fp, code]
+    ns["idem"][ik] = [fp, code]
     return ns, code
 
 
@@ -176,15 +197,15 @@ def _apply(state, ev, flags):
     ns["reqs"][rid] = rq
 
     if t == "propose":
-        rq["proposals"].append({"id": ev["id"], "value": ev["value"], "author": pid, "author_kind": kind, "status": "open", "base": ev["based_on"]})
+        rq["proposals"].append({"id": ev["id"], "value": ev["value"], "author": pid, "author_kind": kind, "status": "open", "base": ev["based_on"], "label": ev.get("label")})
         return ns, "proposed"
     if t == "remark":
         if "remark_is_decision" in flags:                        # CONTROL: a remark applies directly
-            _set_value(rq, ev["value"], "current", ev["id"], pid)
+            _set_value(rq, ev["value"], "current", ev["id"], pid, ev.get("label"))
             rq["version"] += 1
             rq["log"].append({"v": rq["version"], "event": ev["id"], "by": pid, "verb": "remark", "based_on": ev["based_on"]})
             return ns, "confirmed_applied"
-        rq["pending"].append({"id": ev["id"], "value": ev["value"], "author": pid, "channel": ev["channel"], "status": "open", "base": ev["based_on"]})
+        rq["pending"].append({"id": ev["id"], "value": ev["value"], "author": pid, "channel": ev["channel"], "status": "open", "base": ev["based_on"], "label": ev.get("label")})
         return ns, "pending_created"
 
     # ---- everything below changes the head: authority first
@@ -194,6 +215,8 @@ def _apply(state, ev, flags):
     if "channel_check" not in flags:
         if (kind == "human" and chan not in OWNER_CHANNELS) or (kind == "agent" and chan not in AGENT_CHANNELS):
             return _refuse(state, "channel_mismatch")
+    if kind == "agent" and "self_approval" not in flags and (t in ("supersede", "retract") or (t == "decide" and ev["verb"] in ("amend", "resolve"))):
+        return _refuse(state, "agent_not_permitted")      # an agent may only accept or reject proposals; it never installs a value of its own
     if t == "confirm":
         if kind != "human":
             return _refuse(state, "agent_cannot_confirm")
@@ -213,7 +236,7 @@ def _apply(state, ev, flags):
             prop = _find(rq["proposals"], "id", ev.get("proposal"))
             if prop is None:
                 return _refuse(state, "unknown_proposal")
-            if "self_approval" not in flags and verb in ("accept", "amend") and prop["author_kind"] == "agent" and kind == "agent":
+            if "self_approval" not in flags and verb == "accept" and prop["author_kind"] == "agent" and kind == "agent":
                 return _refuse(state, "self_approval")
         if verb == "amend" and "value" not in ev:
             return _refuse(state, "bad_event")
@@ -231,7 +254,7 @@ def _apply(state, ev, flags):
             eff = _effect(ev, rq)
             if eff is None:
                 return _refuse(state, "bad_event")
-            c["candidates"].append({"event": ev["id"], "by": pid, "effect": eff, "verb": ev.get("verb", t)})
+            c["candidates"].append({"event": ev["id"], "by": pid, "effect": eff, "verb": ev.get("verb", t), "label": _eff_label(ev, rq)})
             return ns, "contested_joined"
         if based == head:
             return _refuse(state, "contested_needs_resolve")
@@ -254,8 +277,8 @@ def _apply(state, ev, flags):
             return state, "concurrent_agree"
         # conflicting concurrent decisions from different authorised principals: contested, value withheld
         prior = last["prev"]
-        rq["contested"] = {"base": based, "prior": prior, "candidates": [{"event": last["event"], "by": last["by"], "effect": last["effect"], "verb": last["verb"]},
-                                                                           {"event": ev["id"], "by": pid, "effect": eff, "verb": ev.get("verb", t)}]}
+        rq["contested"] = {"base": based, "prior": prior, "candidates": [{"event": last["event"], "by": last["by"], "effect": last["effect"], "verb": last["verb"], "label": last.get("label")},
+                                                                           {"event": ev["id"], "by": pid, "effect": eff, "verb": ev.get("verb", t), "label": _eff_label(ev, rq)}]}
         rq["status"], rq["value"] = "contested", None
         rq["version"] += 1
         rq["log"].append({"v": rq["version"], "event": ev["id"], "by": pid, "verb": "contest", "based_on": based})
@@ -266,8 +289,10 @@ def _apply(state, ev, flags):
 
 def _normal(ns, rq, ev, pid, kind, prop, flags):
     t = ev["type"]
-    prev = {"value": rq["value"], "status": rq["status"], "value_event": rq["value_event"], "value_by": rq["value_by"], "value_version": rq["value_version"]}
+    prev = {"value": rq["value"], "status": rq["status"], "value_event": rq["value_event"], "value_by": rq["value_by"], "value_version": rq["value_version"],
+            "value_label": rq["value_label"]}
     eff = _effect(ev, rq)
+    eff_label = _eff_label(ev, rq)
     code = None
     if t == "decide":
         v = ev["verb"]
@@ -277,32 +302,32 @@ def _normal(ns, rq, ev, pid, kind, prop, flags):
             if eff[1] is None:
                 raise Refuse("bad_event")
             prop["status"] = "accepted"
-            _set_value(rq, eff[1], "current", ev["id"], pid)
+            _set_value(rq, eff[1], "current", ev["id"], pid, _eff_label(ev, rq))
             code = "decided_accept"
         elif v == "reject":
             prop["status"] = "rejected"
             code = "decided_reject"
         else:
             prop["status"] = "accepted"
-            _set_value(rq, eff[1], "current", ev["id"], pid)
+            _set_value(rq, eff[1], "current", ev["id"], pid, _eff_label(ev, rq))
             code = "decided_amend"
     elif t == "supersede":
-        _set_value(rq, ev["value"], "current", ev["id"], pid)
+        _set_value(rq, ev["value"], "current", ev["id"], pid, ev.get("label"))
         code = "superseded"
     elif t == "retract":
         if rq["status"] in ("unset", "retracted"):
             raise Refuse("nothing_to_retract")
         _push_chain(rq)
-        rq["value"], rq["status"], rq["value_event"], rq["value_by"], rq["value_version"] = None, "retracted", ev["id"], pid, rq["version"] + 1
+        rq["value"], rq["status"], rq["value_event"], rq["value_by"], rq["value_version"], rq["value_label"] = None, "retracted", ev["id"], pid, rq["version"] + 1, None
         code = "retracted"
     elif t == "confirm":
         pc = _find(rq["pending"], "id", ev["pending"])
         pc["status"] = "confirmed"
-        _set_value(rq, pc["value"], "current", ev["id"], pid)
+        _set_value(rq, pc["value"], "current", ev["id"], pid, _eff_label(ev, rq))
         code = "confirmed_applied"
     rq["version"] += 1
     rq["log"].append({"v": rq["version"], "event": ev["id"], "by": pid, "verb": ev.get("verb", t), "based_on": ev["based_on"]})
-    rq["last"] = {"event": ev["id"], "by": pid, "based_on": ev["based_on"], "effect": eff, "verb": ev.get("verb", t), "prev": prev}
+    rq["last"] = {"event": ev["id"], "by": pid, "based_on": ev["based_on"], "effect": eff, "verb": ev.get("verb", t), "prev": prev, "label": eff_label}
     return ns, code
 
 
@@ -314,15 +339,17 @@ def _resolve(ns, rq, ev, pid):
         if cand is None:
             raise Refuse("unknown_candidate")
         eff = cand["effect"]
+        cand_label = cand.get("label")
     elif "value" in ev:
         eff = ["set", ev["value"]]
+        cand_label = ev.get("label")
     else:
         raise Refuse("bad_event")
     rq["contested"] = None
-    rq["value"], rq["status"], rq["value_event"], rq["value_by"], rq["value_version"] = (prev_state["value"], prev_state["status"], prev_state["value_event"],
-                                                                                          prev_state["value_by"], prev_state["value_version"])
+    rq["value"], rq["status"], rq["value_event"], rq["value_by"], rq["value_version"], rq["value_label"] = (
+        prev_state["value"], prev_state["status"], prev_state["value_event"], prev_state["value_by"], prev_state["value_version"], prev_state.get("value_label"))
     if eff[0] == "set":
-        _set_value(rq, eff[1], "current", ev["id"], pid)
+        _set_value(rq, eff[1], "current", ev["id"], pid, cand_label)
     elif eff[0] == "retract":
         _push_chain(rq)
         rq["value"], rq["status"], rq["value_event"], rq["value_by"], rq["value_version"] = None, "retracted", ev["id"], pid, rq["version"] + 1

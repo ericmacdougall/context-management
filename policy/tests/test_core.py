@@ -51,6 +51,23 @@ class T(unittest.TestCase):
         self.assertEqual((ex["value"], ex["decided_by"], ex["decision_event"]), ("Z", "u1", "S"))
         self.assertEqual([x["value"] for x in ex["superseded_chain"]], ["B"])
 
+    def test_heads_are_tenant_wide_across_sessions(self):
+        # a decision in session s1 binds and blocks a stale approval made from session s2 (state is per requirement, not per session)
+        st, c = run([E("propose", "P1", req="r1", principal="u1", value="A", based_on=0, session="s1"),
+                     E("propose", "P2", req="r1", principal="u2", value="B", based_on=0, session="s2"),
+                     E("decide", "D1", req="r1", principal="u1", verb="accept", proposal="P1", channel="owner_ui", based_on=0, session="s1"),
+                     E("supersede", "S1", req="r1", principal="u1", value="Z", channel="owner_ui", based_on=1, session="s1"),
+                     E("decide", "D2", req="r1", principal="u2", verb="accept", proposal="P2", channel="owner_ui", based_on=0, session="s2")])
+        self.assertEqual(c[-1], "stale")
+        self.assertEqual(st["reqs"]["r1"]["value"], "Z")
+
+    def test_agent_cannot_install_values(self):
+        st, c = run([E("supersede", "S", req="r3", principal="a1", value="V", channel="agent_api", based_on=0),
+                     E("propose", "P", req="r3", principal="u1", value="H", based_on=0),
+                     E("decide", "A", req="r3", principal="a1", verb="amend", proposal="P", value="AV", channel="agent_api", based_on=0),
+                     E("decide", "B", req="r3", principal="a1", verb="accept", proposal="P", channel="agent_api", based_on=0)])
+        self.assertEqual(c, ["agent_not_permitted", "proposed", "agent_not_permitted", "decided_accept"])
+
     def test_stale_and_idempotent(self):
         base = [E("propose", "P1", req="r1", principal="u1", value="A", based_on=0),
                 E("decide", "D1", req="r1", principal="u1", verb="accept", proposal="P1", channel="owner_ui", based_on=0)]

@@ -58,7 +58,7 @@ class Enforcer:
         self.disabled = frozenset(disabled)         # CONTROL ONLY: actions whose enforcement is switched off
         self.evaluated_actions = set()
 
-    def check(self, principal, action, labels: Sequence[Label], ctx: Optional[dict] = None) -> Decision:
+    def check(self, principal, action, labels: Sequence[Label], ctx: Optional[dict] = None, texts: Sequence[str] = ()) -> Decision:
         ctx = dict(ctx or {})
         pol = self.policy_source()                  # evaluated at the moment of use
         pid = getattr(principal, "id", None)
@@ -93,7 +93,7 @@ class GuardedChat:
                  derive_mode: str = "join") -> Block:
         allb = list(system) + list(blocks)
         c = dict(ctx or {}, destination=self.dest_id)
-        self.enf.check(principal, "send_model", [b.label for b in allb], c)
+        self.enf.check(principal, "send_model", [b.label for b in allb], c, [b.text for b in allb])
         msgs = [{"role": "user", "content": "\n".join(b.text for b in blocks)}]
         res = self.inner.complete(msgs, system="\n".join(b.text for b in system) or None)
         pinned = self.enf.policy_source().destinations[self.dest_id].model
@@ -110,7 +110,7 @@ class GuardedEmbedder:
 
     def embed(self, principal: Principal, blocks: Sequence[Block], kind: str = "document", ctx: Optional[dict] = None):
         c = dict(ctx or {}, destination=self.dest_id)
-        self.enf.check(principal, "embed", [b.label for b in blocks], c)
+        self.enf.check(principal, "embed", [b.label for b in blocks], c, [b.text for b in blocks])
         return self.inner.embed([b.text for b in blocks], kind)
 
 
@@ -120,7 +120,7 @@ class GuardedExport:
 
     def export(self, principal: Principal, blocks: Sequence[Block], ctx: Optional[dict] = None):
         c = dict(ctx or {}, destination=self.dest_id)
-        self.enf.check(principal, "export", [b.label for b in blocks], c)
+        self.enf.check(principal, "export", [b.label for b in blocks], c, [b.text for b in blocks])
         for b in blocks:
             self.sink(self.dest_id, principal.tenant, b.text)
 
@@ -204,7 +204,7 @@ class Outbox:
     def enqueue(self, sender_id: str, blocks: Sequence[Block], ctx: dict, recipient_id: Optional[str] = None):
         p = self.directory(sender_id)
         item = {"sender": sender_id, "blocks": list(blocks), "ctx": dict(ctx), "recipient": recipient_id}
-        self.enf.check(p, self.action, [b.label for b in blocks], self._ctx(item))
+        self.enf.check(p, self.action, [b.label for b in blocks], self._ctx(item), [b.text for b in blocks])
         item["enqueue_version"] = self.enf.policy_source().version
         self.queue.append(item)
 
@@ -214,7 +214,7 @@ class Outbox:
             p = self.directory(item["sender"])
             try:
                 if not self.enqueue_only:
-                    self.enf.check(p, self.action, [b.label for b in item["blocks"]], self._ctx(item))
+                    self.enf.check(p, self.action, [b.label for b in item["blocks"]], self._ctx(item), [b.text for b in item["blocks"]])
                 self.sink(p, item["blocks"], self._ctx(item))
                 self.delivered.append(item)
             except PolicyDenied as e:

@@ -15,7 +15,7 @@ import os
 
 import psycopg
 
-from .core import apply, canon, genesis, manifest_hash, sha
+from .core import apply, canon, genesis, idem_key, manifest_hash, sha
 
 PG = dict(host="127.0.0.1", port=int(os.environ.get("POL_PG_PORT", "25470")), dbname="pol", user="postgres")
 
@@ -57,7 +57,7 @@ def _load_state(conn, ev, locks):
     return st
 
 
-def submit(conn, ev, hook=None):
+def submit(conn, ev, hook=None, flags=frozenset()):
     """Apply one event atomically. hook(name, conn) is called inside the transaction: 'locked' (all locks held, before apply) and
     'before_commit'. Returns the outcome code."""
     for attempt in range(3):
@@ -66,11 +66,12 @@ def submit(conn, ev, hook=None):
                 st = _load_state(conn, ev, None)
                 if hook:
                     hook("locked", conn)
-                row = conn.execute("select ev, code, fp from dc_events where idem=%s", (ev.get("idem"),)).fetchone() if isinstance(ev.get("idem"), str) else None
-                st["idem"] = {ev["idem"]: [row[2], row[1]]} if row else {}
+                ik = idem_key(ev) if isinstance(ev.get("idem"), str) and isinstance(ev.get("principal"), str) else None
+                row = conn.execute("select ev, code, fp from dc_events where idem=%s", (ik,)).fetchone() if ik else None
+                st["idem"] = {ik: [row[2], row[1]]} if row else {}
                 before_reqs = {r: canon(q) for r, q in st["reqs"].items()}
                 before_auth = canon({k: st[k] for k in ("principals", "authority", "admins", "revoked")})
-                new, code = apply(st, ev)
+                new, code = apply(st, ev, flags)
                 if code not in ("duplicate", "idem_conflict") and not row:
                     for r, q in new["reqs"].items():
                         if canon(q) != before_reqs.get(r):
@@ -79,7 +80,7 @@ def submit(conn, ev, hook=None):
                         conn.execute("update dc_authority set doc=%s where id=1", (json.dumps({k: new[k] for k in ("principals", "authority", "admins", "revoked")}),))
                     if code != "bad_event":
                         conn.execute("insert into dc_events(idem, ev, code, fp, req) values (%s,%s,%s,%s,%s)",
-                                     (ev["idem"], json.dumps(ev), code, sha(ev), ev.get("req") if isinstance(ev.get("req"), str) else None))
+                                     (ik, json.dumps(ev), code, sha(ev), ev.get("req") if isinstance(ev.get("req"), str) else None))
                 if hook:
                     hook("before_commit", conn)
             return code
@@ -126,5 +127,5 @@ def submit_nolock(conn, ev, hook=None):
             hook("after_read", conn)
         new, code = apply(st, ev)
         conn.execute("update dc_reqs set doc=%s where req=%s", (json.dumps(new["reqs"][ev["req"]]), ev["req"]))
-        conn.execute("insert into dc_events(idem, ev, code, fp, req) values (%s,%s,%s,%s,%s)", (ev["idem"], json.dumps(ev), code, sha(ev), ev["req"]))
+        conn.execute("insert into dc_events(idem, ev, code, fp, req) values (%s,%s,%s,%s,%s)", (idem_key(ev), json.dumps(ev), code, sha(ev), ev["req"]))
     return code

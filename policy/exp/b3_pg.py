@@ -10,7 +10,7 @@ import time
 from exp import common  # noqa: F401
 from exp.common import write_result
 from pol import pgcore
-from pol.core import canon, current_table, genesis, manifest_hash
+from pol.core import canon, current_table, genesis, idem_key, manifest_hash
 
 R = 50
 SCEN = ["s1", "s2", "s3", "s4", "s5"]
@@ -18,7 +18,7 @@ PRINCIPALS = {"u1": "human", "u2": "human", "a1": "agent"}
 for _i in range(R):
     PRINCIPALS["z%d" % _i] = "human"
 AUTHORITY = {}
-for _s in SCEN + ["c1", "c2"]:
+for _s in SCEN + ["c1", "c2", "c3"]:
     for _i in range(R):
         AUTHORITY["%s_%d" % (_s, _i)] = ["u1", "u2"] + (["z%d" % _i] if _s == "s3" else [])
 ADMINS = ["u1"]
@@ -150,7 +150,7 @@ def s4(c, i):
     twin = dict(ev) if i % 2 == 0 else dict(ev, value="DIFFERENT")           # same payload -> duplicate; other payload -> idem_conflict
     res, ov, w, errs = race(lambda h: pgcore.submit(c.a, ev, h), lambda h: pgcore.submit(c.b, twin, h), c.mon, c.pid_b)
     d = head(c.adm, req)
-    n = c.adm.execute("select count(*) from dc_events where idem=%s", (ev["idem"],)).fetchone()[0]
+    n = c.adm.execute("select count(*) from dc_events where idem=%s", (idem_key(ev),)).fetchone()[0]
     want = "duplicate" if i % 2 == 0 else "idem_conflict"
     ok = res.get("a") == "superseded" and res.get("b") == want and n == 1 and d["version"] == 1 and d["value"] == "V" and not errs
     return ok, ov, {"codes": res, "event_rows": n, "version": d["version"], "errs": errs}
@@ -179,6 +179,21 @@ def ctl_lww(c, i):
     row = c.adm.execute("select value, decided_by, version from dc_lww where req=%s", (req,)).fetchone()
     silent = res.get("a") == "wrote" and res.get("b") == "wrote" and row[2] == 2 and row[0] == "B"     # both 'succeeded'; A's decision is gone, nothing flags it
     return silent, ov, {"final": row, "errs": errs}
+
+
+def ctl_lww_engine(c, i):
+    """Control (a): the engine with the sibling rule replaced by last-writer-wins (reducer flag), under the S1 overlap. Both decisions
+    'apply', nothing is contested, and the log holds two applied decisions on the same base version."""
+    req = "c3_%d" % i
+    seed_two_proposals(c.adm, req)
+    fl = frozenset(["lww"])
+    ea = E("decide", req + "_Da", req=req, principal="u1", verb="accept", proposal=req + "_P1", channel="owner_ui", based_on=0)
+    eb = E("decide", req + "_Db", req=req, principal="u2", verb="accept", proposal=req + "_P2", channel="owner_cli", based_on=0)
+    res, ov, w, errs = race(lambda h: pgcore.submit(c.a, ea, h, fl), lambda h: pgcore.submit(c.b, eb, h, fl), c.mon, c.pid_b)
+    d = head(c.adm, req)
+    bases = [x["based_on"] for x in d["log"]]
+    lost = (res.get("a") == "decided_accept" and res.get("b") == "decided_accept" and d["status"] == "current" and bases == [0, 0] and d["value"] == "B" and not errs)
+    return lost, ov, {"codes": res, "log_bases": bases, "value": d["value"], "errs": errs}
 
 
 def ctl_nolock(c, i):
@@ -247,7 +262,7 @@ def main():
     for name, fn in [("S1_conflicting_decisions_contested", s1), ("S2_stale_token_refused", s2), ("S3_zombie_revoked_principal", s3), ("S4_same_idem_key_concurrent", s4),
                      ("S5_resolve_race", s5)]:
         out[name] = run_scenario(name, fn, c)
-    ctl = {"ctl_blind_last_writer_wins": run_scenario("lww", ctl_lww, c), "ctl_no_lock_read_modify_write": run_scenario("nolock", ctl_nolock, c)}
+    ctl = {"ctl_engine_last_writer_wins": run_scenario("lww_engine", ctl_lww_engine, c), "ctl_blind_update_no_lock": run_scenario("lww", ctl_lww, c), "ctl_no_lock_read_modify_write": run_scenario("nolock", ctl_nolock, c)}
     # rebuild from the event table equals the live head rows, per requirement and as a manifest
     live = pgcore.read_state(c.adm)
     reb = pgcore.rebuild(c.adm, PRINCIPALS, AUTHORITY, ADMINS)
@@ -258,17 +273,17 @@ def main():
         per_req_total[sc] = per_req_total.get(sc, 0) + 1
         per_req_equal[sc] = per_req_equal.get(sc, 0) + (canon(live["reqs"][r]) == canon(reb["reqs"][r]))
     auth_equal = canon({k: live[k] for k in ("authority", "revoked", "admins")}) == canon({k: reb[k] for k in ("authority", "revoked", "admins")})
-    keep = lambda r: not r.startswith("c2_")        # the no-lock control's requirements are expected to diverge from a rebuild
+    keep = lambda r: not r.startswith(("c2_", "c3_"))        # the no-lock control's requirements are expected to diverge from a rebuild
     live_f = dict(live, idem=reb["idem"], reqs={r: q for r, q in live["reqs"].items() if keep(r)})
     reb_f = dict(reb, reqs={r: q for r, q in reb["reqs"].items() if keep(r)})
-    rows_f = [e for e in rows if not str(e.get("req", "")).startswith("c2_")]
+    rows_f = [e for e in rows if not str(e.get("req", "")).startswith(("c2_", "c3_"))]
     man_equal = manifest_hash(live_f, rows_f) == manifest_hash(reb_f, rows_f)
     rebuild_rep = {"events_in_log": len(rows), "per_scenario_reqs_equal": per_req_equal, "per_scenario_reqs_total": per_req_total, "authority_equal": auth_equal, "manifest_equal": man_equal}
     ok = all(v["passed"] == R for v in out.values()) and all(out[k]["overlap_witnessed"] == R for k in ("S1_conflicting_decisions_contested", "S3_zombie_revoked_principal",
                                                                                                          "S5_resolve_race")) \
         and all(per_req_equal.get(s, 0) == per_req_total.get(s) for s in SCEN) and auth_equal and man_equal
     # controls: the controls' own requirements (c1, c2) are expected to diverge from a rebuild for the lost-update control
-    ctl_ok = ctl["ctl_blind_last_writer_wins"]["passed"] >= 45 and ctl["ctl_no_lock_read_modify_write"]["passed"] >= 45
+    ctl_ok = ctl["ctl_engine_last_writer_wins"]["passed"] >= 45 and ctl["ctl_engine_last_writer_wins"]["overlap_witnessed"] >= 45 and ctl["ctl_blind_update_no_lock"]["passed"] >= 45 and ctl["ctl_no_lock_read_modify_write"]["passed"] >= 45
     c2_mismatch = sum(1 for r in live["reqs"] if r.startswith("c2_") and canon(live["reqs"][r]) != canon(reb["reqs"][r]))
     verdict = "PASS" if ok and ctl_ok else "FAIL"
     pgv = c.adm.execute("show server_version").fetchone()[0]
