@@ -140,6 +140,11 @@ def main(dataset, art, sets_path, out_root, in_root, out_json):
         p = os.path.join(in_root, "stage_x0", o + ".json")
         recs[o] = json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {"session_id": o, "status": "missing"}
     binof = lambda c: sum(1 for e in edges if c > e)
+    OVERHEAD = 10500  # fixed harness overhead per call stated by the runner (about 10.5k tokens); used only for the DERIVED estimate
+    for r in recs.values():
+        if r.get("status") not in ("missing", "not_run", None):
+            r["total_input_tokens"] = sum(int(r.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+            r["derived_input_tokens_no_overhead"] = max(0, r["total_input_tokens"] - OVERHEAD)
     res: Dict[str, Any] = {"pilot": True, "confirmatory": False, "n_sessions": len(srows), "run_meta": run_meta}
     status = Counter(r.get("status") for r in recs.values())
     res["status_counts"] = dict(status)
@@ -150,20 +155,20 @@ def main(dataset, art, sets_path, out_root, in_root, out_json):
     # ---------- 1. time, tokens, cost (every called record, failures included) + per length bin
     def col(name, ids):
         return [recs[o].get(name) for o in ids]
-    perf = {k: dist(col(k, called)) for k in ("seconds", "input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "cost_usd")}
+    perf = {k: dist(col(k, called)) for k in ("seconds", "input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "total_input_tokens", "derived_input_tokens_no_overhead", "cost_usd")}
     by_bin: Dict[int, List[str]] = {}
     for o in called:
         by_bin.setdefault(binof(srows[o]["chars"]), []).append(o)
     res["per_call"] = {"all_called": perf,
                        "by_length_stratum": {str(b): {"n": len(ids), "chars_mean": mean(srows[o]["chars"] for o in ids), "seconds": dist(col("seconds", ids)),
-                                                      "input_tokens": dist(col("input_tokens", ids)), "output_tokens": dist(col("output_tokens", ids)),
+                                                      "input_tokens": dist(col("input_tokens", ids)), "total_input_tokens": dist(col("total_input_tokens", ids)), "output_tokens": dist(col("output_tokens", ids)),
                                                       "cost_usd": dist(col("cost_usd", ids))} for b, ids in sorted(by_bin.items())},
                        "spearman_chars_vs_input_tokens": spearman([srows[o]["chars"] for o in called if recs[o].get("input_tokens") is not None], [recs[o]["input_tokens"] for o in called if recs[o].get("input_tokens") is not None]),
                        "spearman_chars_vs_seconds": spearman([srows[o]["chars"] for o in called if recs[o].get("seconds") is not None], [recs[o]["seconds"] for o in called if recs[o].get("seconds") is not None])}
     # extrapolation from the RANDOM non-gold sample only (equal-share whole-pool length strata)
     rnd = [o for o in called if srows[o]["group"] == "random_non_gold"]
     ext: Dict[str, Any] = {"basis": "random non-gold sample, %d called sessions of %d; stratified estimator over equal-share whole-pool length quintiles; 95%% interval by resampling within strata" % (len(rnd), prep["n_random"]), "calls": {}}
-    for name in ("seconds", "input_tokens", "output_tokens", "cost_usd"):
+    for name in ("seconds", "input_tokens", "total_input_tokens", "derived_input_tokens_no_overhead", "output_tokens", "cost_usd"):
         vb: Dict[int, List[float]] = {}
         for o in rnd:
             v = recs[o].get(name)
@@ -182,6 +187,26 @@ def main(dataset, art, sets_path, out_root, in_root, out_json):
         c = ext["calls"].get(str(n), {}).get("seconds")
         if c:
             ext["calls"][str(n)]["sequential_hours"] = c["total"] / 3600.0
+    # DERIVED estimate (labelled): cost without the fixed overhead. OLS of the notional cost on (total input tokens, output tokens) over all called
+    # records (no intercept), then the fitted cost with the input reduced by the overhead. The runner's cost_usd is not itemised by token kind, so this is a model.
+    pts = [(float(recs[o]["total_input_tokens"]), float(recs[o]["output_tokens"] or 0), float(recs[o]["cost_usd"])) for o in called if recs[o].get("cost_usd") is not None]
+    if len(pts) >= 5:
+        a11 = sum(x * x for x, _, _ in pts); a12 = sum(x * y for x, y, _ in pts); a22 = sum(y * y for _, y, _ in pts)
+        b1 = sum(x * c for x, _, c in pts); b2 = sum(y * c for _, y, c in pts)
+        det = a11 * a22 - a12 * a12
+        if det:
+            ci = (b1 * a22 - b2 * a12) / det
+            co = (a11 * b2 - a12 * b1) / det
+            ss_res = sum((c - ci * x - co * y) ** 2 for x, y, c in pts)
+            mc = sum(c for _, _, c in pts) / len(pts)
+            ss_tot = sum((c - mc) ** 2 for _, _, c in pts)
+            vb_d: Dict[int, List[float]] = {}
+            for o in rnd:
+                if recs[o].get("cost_usd") is not None:
+                    vb_d.setdefault(binof(srows[o]["chars"]), []).append(max(0.0, ci * recs[o]["derived_input_tokens_no_overhead"] + co * float(recs[o]["output_tokens"] or 0)))
+            ext["derived_cost_no_overhead"] = {"label": "DERIVED ESTIMATE, not a measurement: OLS of notional cost on (total input tokens, output tokens), then input reduced by the fixed 10,500-token overhead",
+                                              "cost_per_input_token": ci, "cost_per_output_token": co, "r_squared": (1 - ss_res / ss_tot) if ss_tot else None,
+                                              "calls": {str(n): extrapolate(vb_d, n) for n in CAL} if vb_d else None}
     res["extrapolation"] = ext
 
     # ---------- 2. facts per session against length; cap
@@ -192,6 +217,20 @@ def main(dataset, art, sets_path, out_root, in_root, out_json):
                                 "by_length_stratum": {str(b): {"n": len([o for o in ids if o in fps]), "mean_facts": mean(fps[o] for o in ids if o in fps), "at_cap_share": mean(1.0 if fps[o] >= FACT_CAP else 0.0 for o in ids if o in fps)} for b, ids in sorted(by_bin.items())},
                                 "by_group": {g: dist([fps[o] for o in fps if srows[o]["group"] == g]) for g in ("weak_list", "low_overlap", "knowledge_update", "random_non_gold")},
                                 "note": "the extraction prompt caps output at 12 facts per session, so long sessions cannot yield more; the share at the cap says how binding it is"}
+    cov = {"capped": [], "uncapped": []}
+    def round_cover(o):
+        groups = prov.rounds_of_turns(sess_files[o]["turns"])
+        cited = sorted({f.get("round") for f in recs[o].get("facts") or [] if isinstance(f.get("round"), int) and 0 <= f.get("round") < len(groups)})
+        n = len(groups)
+        last_third = [r for r in range(n) if r >= (2 * n) // 3]
+        return {"rounds": n, "cited_rounds": len(cited), "share_rounds_cited": len(cited) / n if n else None,
+                "last_third_cited": sum(1 for r in cited if r in set(last_third)), "last_third_n": len(last_third), "max_cited_fraction": (max(cited) + 1) / n if cited and n else None}
+    for o in fps:
+        (cov["capped" if fps[o] >= FACT_CAP else "uncapped"]).append(round_cover(o))
+    res["cap_coverage_no_model"] = {name: {"n": len(v), "mean_rounds": mean(x["rounds"] for x in v), "mean_share_rounds_cited": mean(x["share_rounds_cited"] for x in v),
+                                         "mean_max_cited_fraction": mean(x["max_cited_fraction"] for x in v),
+                                         "share_with_any_fact_in_last_third": mean(1.0 if x["last_third_cited"] > 0 else 0.0 for x in v)} for name, v in cov.items()}
+    res["cap_coverage_no_model"]["note"] = "facts lost to the cap cannot be counted from this run; this only shows whether facts of capped sessions reach the end of the session"
     res["dropped_entries"] = sum(int(recs[o].get("dropped") or 0) for o in done)
 
     # ---------- 3. quote and speaker check (vendored phasef checker, commit 27a4c64)
