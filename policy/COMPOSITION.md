@@ -150,6 +150,10 @@ The write path's `legal_holds` (`wp_hold_place`, `wp_hold_release`, `wp_hold_che
 In this branch the hold list is the policy's `hold_events`, which is the lab stand-in. The user's decisions are in force here: a recorded
 legal hold beats erasure, the erasure is queued, and erasure covers what others said about the subject.
 
+Erasure also constrains the ported core: `events_guard` writes to an append-only table, so the event label it stores must carry keyed
+subject tokens (as `DecisionService` does since 0bcabe4), never subject names. The write path's per-subject keys in its KeyStore are the
+natural key for those tokens.
+
 ### 9. N2 and N3 are fixed before porting
 On this branch:
 - proposals are rows with per-principal (16) and per-requirement (256) open caps. Cost is flat to 20,000 proposals in memory and in

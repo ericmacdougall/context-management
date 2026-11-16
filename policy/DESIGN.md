@@ -65,6 +65,10 @@ the examples and default deny are what ships.
   on retry.
 - Values are referenced, not held. The vault keeps the text under a keyed reference, tagged with the label's subjects.
   `erase_subject` deletes every value ABOUT the subject, whoever wrote it. A value under a recorded legal hold is queued instead.
+- The append-only event log and the core state never hold subject names. The service puts a label into the event only after each
+  subject is replaced by a keyed per-tenant token (`_event_label`, HMAC with the vault key). Joins and flow checks are unchanged, since
+  tokens are consistent. Limit: whoever holds the vault key can test a guessed name against a token left in the log after erasure;
+  in the composed system that key belongs in the write path's KeyStore, and destroying it is what makes old tokens unlinkable.
 - Reads are viewer-scoped (`explain(session, req)`, `table(session)`): only values, proposals and candidates the viewer may read.
   `hidden_candidates` exists only when the policy opts in (`conflict_notice: existence_only`). The default is NONE.
 - Every refusal is written to the audit log with its code. The audit log grows by one row per checked request. Bounding it (rotation,
