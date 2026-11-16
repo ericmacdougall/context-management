@@ -13,6 +13,9 @@ COMMIT=$(git rev-parse HEAD)
 TC=$(git log -1 --format=%H -- THRESHOLDS.md)
 TREE=$(git ls-files -s . | shasum -a 256 | cut -d' ' -f1)
 rsync -a --delete --exclude results --exclude __pycache__ --exclude 'GIT_STAMP.json' -e "ssh -F $HOME/.ssh/config_fleetops" ./ "t2-dev:$DEST/"
-printf '{"commit": "%s", "dirty": %s, "thresholds_commit": "%s", "tree_sha256": "%s"}\n' "$COMMIT" "$([ "$DIRTY" = 0 ] && echo false || echo true)" "$TC" "$TREE" \
-  | ssh -F "$HOME/.ssh/config_fleetops" t2-dev "cat > $DEST/GIT_STAMP.json"
+# the stamp is built locally by python (no shell redirect) and copied as one file
+STAMP=$(mktemp -d)/GIT_STAMP.json
+python3 -c 'import json,sys; json.dump({"commit": sys.argv[2], "dirty": sys.argv[3] != "0", "thresholds_commit": sys.argv[4], "tree_sha256": sys.argv[5]}, open(sys.argv[1], "w")); open(sys.argv[1], "a").write("\n")' \
+  "$STAMP" "$COMMIT" "$DIRTY" "$TC" "$TREE"
+rsync -a -e "ssh -F $HOME/.ssh/config_fleetops" "$STAMP" "t2-dev:$DEST/GIT_STAMP.json"
 echo "synced $COMMIT dirty=$DIRTY to $DEST"
