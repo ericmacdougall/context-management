@@ -12,7 +12,7 @@ and its own ES client, so a job is never completed on the runner's word. It
 Cross-store counts (ES, key service) are ATTESTED by this role; Postgres counts are ENFORCED by the store."""
 import json
 
-from . import config, db, families as F, registry
+from . import config, db, families as F, keys as K, registry
 from .es import ES
 
 SCOPE = ("verifier: ES counted by subject_id OR mentions over every index of every family; key presence in the key store "
@@ -41,6 +41,19 @@ class Verifier:
             self.es.req("POST", f"/{pat}/_refresh", ok=(200, 404), expand_wildcards="all", ignore_unavailable=True, allow_no_indices=True)
             q = {"bool": {"should": [{"term": {"subject_id": s}}, {"term": {"mentions": s}}], "minimum_should_match": 1}}
             out[f"es:{f}"] = self.es.count(pat, q)
+        # D4: every tombstoned event (own, write-time mention, rescan hit) must be a placeholder in ES, checked by id in
+        # pages, so an event whose ES document does not carry the subject (a rescan hit) cannot escape the count
+        bad, last = {"events": 0, "facts": 0}, ""
+        while True:
+            ids = [r[0] for r in self.conn.execute("select event_id from tombstones where tenant_id=%s and subject_id=%s and event_id > %s "
+                                                   "order by event_id limit 5000", (t, s, last)).fetchall()]
+            if not ids:
+                break
+            last = ids[-1]
+            for f, page in (("events", ids), ("facts", [K.derive_id(t, e) for e in ids])):
+                q = {"bool": {"filter": [{"ids": {"values": page}}], "must_not": [{"term": {"erased": True}}]}}
+                bad[f] += self.es.count(f"{F.P}{t}-{f}-*", q)
+        out["es:tombstoned_not_placeholder"] = bad["events"] + bad["facts"]
         out["keys:subject_keys"] = self.kconn.execute("select count(*) from subject_keys where tenant_id=%s and subject_id=%s", (t, s)).fetchone()[0]
         unreg = registry.unregistered(self.conn, self.kconn, self.es)
         out["gate:unregistered"] = len(unreg)

@@ -125,3 +125,6 @@ Row 6 (exp/row6_chain.py), R=10 per case: forged append (admin, correctly SHA-ch
   guard function or set session_replication_role (all refused) while the control (wp_app made a member of wp_owner)
   succeeds; truncated tail and regressed head (tail removed then new events appended) are flagged by the anchor check
   10/10 while the chain-only control reports ok 10/10.
+D4 (exp/d4_rescan_es.py), R=5 per arm, written before the run: the runner skips the placeholders of rescan hits;
+  fenced (verifier checks every tombstoned id is a placeholder) not done with es:tombstoned_not_placeholder in the
+  residue 5/5; control (verifier without that check) reports done 5/5 while the hit's ES document keeps its content.
