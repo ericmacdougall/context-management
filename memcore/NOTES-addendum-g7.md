@@ -39,7 +39,7 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
 - Retested at d71da85 (after the gateway policy change), same kit, evidence ev/live/d71da85/: a 200 completed 6.0 s
   (3 JSON records, no raw tag lines); c2 200 24.2 s, b 200 7.5 s, c 200 32.0 s (each: the original prompt exactly);
   d_b 500 ECONNREFUSED 4.0 s and d_c 500 "timeout of 60000ms exceeded" 63.1 s (no agent model call). Setting back to
-  [] verified; emlab-kb-16096 stopped again; evidence scan 85 files, 3 secrets, 0 hits. The table below is the 8d5425d run.
+  [] verified; the 4 workflows deleted (HTTP 200, ledger); endpoint mc-p2-chat GET -> 404 afterwards; emlab-kb-16096 stopped again; evidence scan 85 files, 3 secrets, 0 hits. The table below is the 8d5425d run.
 - Setup: Kibana 9.5.6 (emlab-kb-16096) on Elasticsearch emlab-es-16096 (trial). The model is memcore's ToolStub on
   172.17.0.1 behind an ES inference endpoint created for the run (mc-p2-chat); no real model was called. Agent
   mc-g7-agent. Memory service: a memcore Gateway on 172.17.0.1:18741 with a ScriptedStubChat backend and /v1/pre_exec
@@ -81,6 +81,9 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   enforcement shown by the controls below). Server-side evidence: the node's HttpTracer (TRACE), es_trace.json.
 - Capability probe at start-up (GET /_license only): this node -> tier basic, strategy client, no licensed features;
   the trial lab node emlab-es-16096 (read-only probe) -> tier enterprise, strategy auto, Agent Builder optional.
+- Kit: work dir p3kit/ (copied to t2-dev:~/memcore-p3-16096/). In the recorded run the tracer was enabled by hand (a
+  transient `logger.org.elasticsearch.http.HttpTracer: TRACE` cluster setting; `p3_es.sh up` now does this, the env var
+  had no effect), followed by two hand checks (the 400 and 404 below).
 - Runner: `p3_es.sh up; python3 p3_live.py src-d71da85 d71da85; docker logs emlab-p3es-16096 | python3 p3_trace.py ev/p3/d71da85; p3_es.sh down`.
 
 | Case | Memory service | Client | Result | Seconds | What the model received |
@@ -101,7 +104,8 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   result above is not vacuous.
 - Cleanup: memory services stopped (ledgered), container removed with its volume, network removed; ledger
   ~/memcore-p3-16096/spawn_ledger.jsonl. Secret scan of the evidence: 0 hits for the per-run service token found on disk
-  and the lab key (only one of the two service token files was still on disk when the scan ran; the other run's token was not scanned); token file then deleted.
+  and the lab key (only one of the two service token files was still on disk when the scan ran, and the stub token was deleted before
+  the scan; a pattern scan for 43-character URL-safe strings, the shape of all three, over the 40 evidence files found 0); token file then deleted.
 
 ## Not done / caveats
 - Three title-generation model requests also reached the stub (Kibana's own utility call); they are not part of the agent run.

@@ -24,6 +24,8 @@ from .ports import BackendError, CallTimeout, Usage
 
 
 class AcpClient:
+    subscription_backed = True        # never served over HTTP (gateway.check_gate); decision of 2026-11-16
+
     def __init__(self, cmd: List[str], cwd: str, env: Optional[dict] = None, dev_subscription_backends: bool = False):
         require_dev_subscription(dev_subscription_backends, "AcpClient")
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, cwd=cwd,
@@ -87,6 +89,8 @@ class AcpClient:
 
 
 class AcpSession(AgentSession):
+    subscription_backed = True        # never served over HTTP (gateway.check_gate); decision of 2026-11-16
+
     def __init__(self, cmd: List[str], cwd: str, budget: CallBudget, tools: Sequence[McpServerSpec] = (), dev_subscription_backends: bool = False, turn_timeout_s: float = 300.0, env: Optional[dict] = None,
                  model: Optional[str] = "sonnet", mode: Optional[str] = "default"):
         require_dev_subscription(dev_subscription_backends, "AcpSession")

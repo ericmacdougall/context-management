@@ -274,6 +274,19 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
             g.Gateway(cli, os.path.join(d, "g"), dev_subscription_backends=True)
         self.assertIn("inference", str(c.exception))
 
+    def test_every_subscription_backed_adapter_is_refused_by_the_gate(self):
+        """All four subscription-backed adapter families (claude-cli, codex-cli, claude stream-json session, ACP) carry
+        the marker the gate keys on, so none can be served over HTTP even if passed in a backend mapping."""
+        import memcore.gateway as g
+        from memcore.acp import AcpClient, AcpSession
+        from memcore.adapters.claude_cli import ClaudeCliChat
+        from memcore.adapters.codex_cli import CodexCliChat
+        from memcore.agent_session import ClaudeStreamJsonSession
+        for cls in (ClaudeCliChat, CodexCliChat, ClaudeStreamJsonSession, AcpSession, AcpClient):
+            obj = cls.__new__(cls)               # no constructor: no process, no dev gate needed to reach the check
+            with self.assertRaises(ValueError, msg=cls.__name__):
+                g.check_gate({"m": obj}, "127.0.0.1", None, True)
+
     def test_gateway_cli_no_longer_offers_subscription_backends(self):
         import contextlib
         import io
