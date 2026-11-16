@@ -108,7 +108,7 @@ def erase_one(t, subject):
     from wp.verifier import Verifier
     conn, ks, es = env()
     jid = erasure.request(conn, t, subject)
-    rec = erasure.run(conn, ks, es, jid, ttl_s=60, verifier=Verifier(es), cascade_deadline_s=1800)
+    rec = erasure.run(conn, ks, es, jid, ttl_s=60, verifier=Verifier(es), cascade_deadline_s=1800, physical="wait")
     st = rec.get("steps", {})
     return {"done": rec["done"], "error_type": rec["error_type"], "seconds": rec.get("seconds"), "cascade_s": st.get("cascade_s"),
             "cascade_batches": st.get("cascade_batches"), "cascade_batch_max_s": st.get("cascade_batch_max_s"),
@@ -116,7 +116,8 @@ def erase_one(t, subject):
             "cascade_conflicts": st.get("cascade_conflicts"), "heartbeat_transient": st.get("heartbeat_transient"),
             "mark_s": st.get("mark_s"), "rescan_s": st.get("rescan_s"), "placeholders_s": st.get("placeholders_s"),
             "verify_s": st.get("verify_s"), "verify_timings": st.get("verify_timings"), "expunge": st.get("expunge"), "key_purge": st.get("key_purge"),
-            "residue": rec.get("residue"), "receipt_state": rec.get("receipt_state")}
+            "residue": rec.get("residue"), "receipt_state": rec.get("receipt_state"), "logical_delay_s": rec.get("logical_delay_s"),
+            "physical_s": st.get("physical_s")}
 
 
 def _lock_job(jid, hold_s, q):
@@ -145,7 +146,7 @@ def heartbeat_arm(t, subject, control):
                 q.get(timeout=30)
                 time.sleep(HOLD_S + 1)                       # the "long batch": the runner does nothing while the row is held
                 p.join(10)
-        rec = erasure.run(conn, ks, es, jid, ttl_s=60, hook=hook, verifier=Verifier(es))
+        rec = erasure.run(conn, ks, es, jid, ttl_s=60, hook=hook, verifier=Verifier(es), physical="wait")
     finally:
         erasure.HB_TOLERATE = saved
     return {"done": rec["done"], "error_type": rec["error_type"], "heartbeat_transient": rec.get("steps", {}).get("heartbeat_transient")}

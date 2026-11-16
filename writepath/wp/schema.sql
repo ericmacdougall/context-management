@@ -536,11 +536,10 @@ $$;
 -- by the rescan) are withheld (D1); the rest are tombstoned, their content nulled, derived facts and jobs deleted.
 -- Item 2 (4960f50 round), from EXPLAIN at 200k: the planner estimated that `input_event_ids && <5,000 ids>` matches
 -- every row and chose a sequential scan of analyst_jobs, evaluating the 5,000-element overlap on every live row of the
--- TENANT (19.4 s of a 20.4 s batch; cost per event proportional to tenant size). enable_seqscan = off for this function
--- makes every statement use its index (the input_event_ids GINs, unique (tenant_id, event_id), events_subject), so a
--- batch costs O(batch), independent of tenant size.
-create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp
-  set enable_seqscan = off as $$
+-- TENANT (19.4 s of a 20.4 s batch; cost per event proportional to tenant size). enable_seqscan = off was NOT enough
+-- (scale_1m at 481afae: the planner then used the primary key on tenant_id with the overlap as a filter, still a scan
+-- of the tenant). The deletes below probe the GIN once per event id instead, which the planner costs correctly.
+create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp as $$
 declare ids text[];
 begin
   if cardinality(cand) = 0 then return 0; end if;
@@ -562,8 +561,11 @@ begin
   insert into tombstones(tenant_id, event_id, subject_id, job_id) select t, unnest(ids), s, jid on conflict do nothing;
   update events set content_enc = null where tenant_id = t and event_id = any(ids) and content_enc is not null;
   if cardinality(ids) > 0 then
-    delete from analyst_jobs a where a.tenant_id = t and a.input_event_ids && ids;
-    delete from facts f where f.tenant_id = t and f.input_event_ids && ids;
+    -- one GIN probe per event (input_event_ids @> array[x]), then primary-key deletes: O(batch) at any tenant size
+    delete from analyst_jobs a where a.tenant_id = t and a.job_id = any(array(
+      select a2.job_id from unnest(ids) x join analyst_jobs a2 on a2.input_event_ids @> array[x] where a2.tenant_id = t));
+    delete from facts f where f.tenant_id = t and f.fact_id = any(array(
+      select f2.fact_id from unnest(ids) x join facts f2 on f2.input_event_ids @> array[x] where f2.tenant_id = t));
   end if;
   return cardinality(ids);
 end $$;
@@ -616,15 +618,13 @@ begin
 end $$;
 
 -- Postgres residue for a subject, computed by the store (never taken from a caller).
-create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp
-  set enable_seqscan = off as $$
+create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
   -- Item 3 (4960f50 round): every count is driven by the SUBJECT'S footprint through an index (events_subject, the
   -- mentions GIN, erasure_mentions, tombstones, facts_subject, the input_event_ids GINs), never by a scan of the tenant.
   -- The former OR of three predicates over events could use no index and read every event of the tenant.
   with fp as (select event_id from events where tenant_id = t and subject_id = s
               union select event_id from events where tenant_id = t and mentions @> array[s]
-              union select event_id from erasure_mentions where tenant_id = t and subject_id = s),
-       tb as (select array_agg(event_id) ids from tombstones where tenant_id = t and subject_id = s)
+              union select event_id from erasure_mentions where tenant_id = t and subject_id = s)
   select jsonb_build_object(
     'pg:events_untombstoned', (select count(*) from fp
                                 where not exists (select 1 from tombstones x where x.tenant_id = t and x.subject_id = s and x.event_id = fp.event_id)),
@@ -638,10 +638,12 @@ create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql
     'pg:identifiers', (select count(*) from subject_identifiers where tenant_id = t and subject_id = s),
     'pg:quarantine_mentions', (select count(*) from quarantine where tenant_id = t and mentions @> array[s]),
     'pg:facts', (select count(*) from (select fact_id from facts where tenant_id = t and subject_id = s
-                   union select f.fact_id from facts f, tb where f.input_event_ids && tb.ids and f.tenant_id = t) x),
+                   union select f.fact_id from tombstones x join facts f on f.input_event_ids @> array[x.event_id]
+                          where x.tenant_id = t and x.subject_id = s and f.tenant_id = t) y),
     'pg:inbox', (select count(*) from inbox where tenant_id = t and subject_id = s),
     'pg:quarantine', (select count(*) from quarantine where tenant_id = t and subject_id = s),
-    'pg:analyst_jobs', (select count(*) from analyst_jobs a, tb where a.input_event_ids && tb.ids and a.tenant_id = t),
+    'pg:analyst_jobs', (select count(distinct a.job_id) from tombstones x join analyst_jobs a on a.input_event_ids @> array[x.event_id]
+                          where x.tenant_id = t and x.subject_id = s and a.tenant_id = t),
     'pg:subject_not_marked', (select count(*) from subjects where tenant_id = t and subject_id = s and not erased),
     'pg:withheld_by_hold', (select count(*) from erasure_withheld w join erasure_jobs jb on jb.job_id = w.job_id where jb.tenant_id = t and jb.subject_id = s));
 $$;

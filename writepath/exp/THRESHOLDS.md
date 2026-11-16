@@ -206,3 +206,10 @@ ASSUMPTION (safe default, not a user decision): single-token identifiers without
 identifiers made only of stop-list words are refused (wp/mentions.py identifier_problem). R=5. PASS = fenced 5/5:
 "alex" refused, X's erasure done, Y's "Alex from accounting" event keeps its content and is not tombstoned; AND control
 (rule bypassed) 5/5: Y's event tombstoned with content nulled. Span redaction is not implemented and not claimed.
+
+## Amendment 9a (2026-11-16, after the void 481afae scale_1m run; thresholds of amendment 9 unchanged)
+The scale_1m run at 481afae is VOID and not reported as a result: it erased with the default physical="followup", so
+no subject could reach done, and its EXPLAIN showed that enable_seqscan = off left the overlap delete scanning the
+tenant through the primary key (9.4 s per 5,000 at 100k). Fix: per-event GIN probes for the deletes and the residue
+counts (measured on that tenant: 55 ms per 5,000 events; residue 5 ms against 405 ms for the 4960f50 body). The run is
+repeated in full at the fixing commit with physical="wait".
