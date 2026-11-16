@@ -33,15 +33,15 @@ def once(arm):
         for page in real_ids(c, tt, ss, *a, **k):
             yield [x for x in page if x[0] not in hits]
 
-    def old_verifier(self, tt, ss, expunge=True):
-        out, info = real_ext(self, tt, ss, expunge)
+    def old_verifier(self, tt, ss, expunge=True, wait_s=180.0):
+        out, info = real_ext(self, tt, ss, expunge, wait_s)
         out.pop("es:tombstoned_not_placeholder", None)
         return out, info
     erasure.tombstoned_ids = skip_rescan
     if arm == "control":
         V.Verifier.ext_counts = old_verifier
     try:
-        rec = erasure.erase(conn, ks, es, t, "Y")
+        rec = erasure.erase(conn, ks, es, t, "Y", physical="wait")
     finally:
         erasure.tombstoned_ids, V.Verifier.ext_counts = real_ids, real_ext
     found = rec["steps"].get("rescan_found")

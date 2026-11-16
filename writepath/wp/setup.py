@@ -13,7 +13,7 @@ from psycopg import sql
 from . import config, db, registry
 
 HERE = pathlib.Path(__file__).parent
-LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL)
+LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL, db.WATCHDOG)
 ROLE_TIMEOUTS = {"statement_timeout": "30s", "idle_in_transaction_session_timeout": "5s"}
 ROLE_ATTRS = "nosuperuser nocreatedb nocreaterole noreplication nobypassrls inherit"
 
@@ -83,6 +83,9 @@ def main(reset):
     admin.execute(f'grant connect on database "{config.KEYS_DB}" to wp_kms, wp_verifier')
     admin.execute("grant pg_checkpoint to wp_kms with inherit true")
     admin.execute("grant pg_read_all_stats to wp_kms with inherit true")   # purge() reads other backends' xid/xmin
+    # item 1 (4960f50 round): on PG 16 no setting bounds a transaction that keeps issuing short statements
+    # (transaction_timeout arrives in PG 17); the watchdog terminates such backends (wp/xact_watchdog.py)
+    admin.execute("grant pg_signal_backend, pg_read_all_stats to wp_watchdog with inherit true")
     ev, ks = db.admin(), db.admin(db=config.KEYS_DB)
     ks.execute("grant execute on function pg_switch_wal() to wp_kms")
     if reset:

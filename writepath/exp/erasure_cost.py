@@ -114,7 +114,7 @@ def _window(series, a, b, cols):
 def _erase(t, sub, q):
     from wp import erasure
     conn, ks, es = env()
-    q.put((sub, erasure.erase(conn, ks, es, t, sub)))
+    q.put((sub, erasure.erase(conn, ks, es, t, sub, physical="wait")))
 
 
 def measure(total):
@@ -134,7 +134,7 @@ def measure(total):
     out["single"] = {}
     for sub in [x for x in subjects if x.startswith("S")]:
         t0 = time.time()
-        rec = erasure.erase(conn, ks, es, t, sub)
+        rec = erasure.erase(conn, ks, es, t, sub, physical="wait")
         out["single"][sub] = {"events": subjects[sub], "wall_s": round(time.time() - t0, 2), "done": rec["done"], "t0": round(t0, 2),
                               "t1": round(time.time(), 2), "steps": rec["steps"], "error_type": rec["error_type"]}
     # two different subjects concurrently
@@ -152,7 +152,7 @@ def measure(total):
     first = mp.Process(target=_erase, args=(t, "F7", qa)); first.start()
     time.sleep(0.3)
     jid2 = erasure.request(db.connect(), t, "F7")
-    second = erasure.run(db.connect(), ks, es, jid2)
+    second = erasure.run(db.connect(), ks, es, jid2, physical="wait")
     first.join(900)
     r1 = qa.get(timeout=60)[1]
     out["same_subject"] = {"same_job": jid == jid2, "second_runner": second["error_type"] or ("done" if second["done"] else "?"),

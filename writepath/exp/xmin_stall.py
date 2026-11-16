@@ -12,8 +12,10 @@ database). Holders:
   active_xid_app     app role, txid_current(), then one long statement (pg_sleep)
   idle_xid_verifier  verifier role, txid_current(), then idle
   idle_xid_keysdb    key-store role in the KEY database, txid_current(), then idle (cross-database)
+  chatty_xid_app     app role, txid_current(), then "select 1" every 2 s (no timeout on PG 16 bounds it)
 Arms: fenced = shipped role settings (every login role: statement_timeout and idle_in_transaction_session_timeout,
-wp/setup.py ROLE_TIMEOUTS); control = those settings reset on every role except the app's pre-round values.
+wp/setup.py ROLE_TIMEOUTS) plus the transaction-age watchdog (wp/xact_watchdog.py, 30 s); control = those settings
+reset on every role except the app's pre-round values, and no watchdog.
 Max stall per holder is reported. usage: python -m exp.xmin_stall [HOLD_S]"""
 import json
 import multiprocessing as mp
@@ -62,8 +64,14 @@ def _hold(kind, hold_s, q):
             c = db.verifier(autocommit=False); c.execute("select txid_current()")
         elif kind == "idle_xid_keysdb":
             c = db.keys_connect(autocommit=False); c.execute("select txid_current()")
+        elif kind == "chatty_xid_app":
+            c = db.connect(autocommit=False); c.execute("select txid_current()")
         while time.time() - t0 < hold_s:
-            time.sleep(0.5)
+            if kind == "chatty_xid_app":
+                c.execute("select 1")       # a short statement every 2 s: neither timeout ever fires
+                time.sleep(2)
+            else:
+                time.sleep(0.5)
         c.execute("select 1")             # fails if the server ended the transaction or session
         c.rollback()
         q.put((kind, "held_full", round(time.time() - t0, 2)))
@@ -71,12 +79,20 @@ def _hold(kind, hold_s, q):
         q.put((kind, f"ended_by_server:{getattr(e, 'sqlstate', None) or type(e).__name__}", round(time.time() - t0, 2)))
 
 
-KINDS = ["ro_verifier", "idle_xid_app", "active_xid_app", "idle_xid_verifier", "idle_xid_keysdb"]
+KINDS = ["ro_verifier", "idle_xid_app", "active_xid_app", "idle_xid_verifier", "idle_xid_keysdb", "chatty_xid_app"]
 
 
-def run_arm(hold_s):
+def _watchdog(stop):
+    from wp import xact_watchdog
+    xact_watchdog.run(stop=stop)
+
+
+def run_arm(hold_s, watchdog):
     stop, q = mp.Event(), mp.Queue()
     pr = mp.Process(target=_probe, args=(stop, q)); pr.start()
+    wd = mp.Process(target=_watchdog, args=(stop,)) if watchdog else None
+    if wd:
+        wd.start()
     time.sleep(5)
     wins = {}
     for k in KINDS:
@@ -90,6 +106,8 @@ def run_arm(hold_s):
     stop.set()
     series = q.get(timeout=600)
     pr.join(60)
+    if wd:
+        wd.join(30)
     out = {}
     for k, (a, b, res) in wins.items():
         pts = [d for ts, d in series if a <= ts <= b]
@@ -106,9 +124,10 @@ def main(hold_s):
     restore = [f"alter role {r} set statement_timeout = '{setup.ROLE_TIMEOUTS['statement_timeout']}'" for r in roles] + \
         [f"alter role {r} set idle_in_transaction_session_timeout = '{setup.ROLE_TIMEOUTS['idle_in_transaction_session_timeout']}'" for r in roles]
     res = {"hold_s": hold_s, "role_timeouts": setup.ROLE_TIMEOUTS, "reps": {"fenced": FENCED_R, "control": CONTROL_R}}
-    res["fenced"] = [run_arm(hold_s) for _ in range(FENCED_R)]
+    res["fenced"] = [run_arm(hold_s, True) for _ in range(FENCED_R)]
+    res["timeouts_only"] = run_arm(hold_s, False)          # one-change control for the watchdog
     with patched(reset, restore):
-        res["control"] = [run_arm(hold_s) for _ in range(CONTROL_R)]
+        res["control"] = [run_arm(hold_s, False) for _ in range(CONTROL_R)]
     res["verdict"] = verdict(res)
     print("xmin_stall", json.dumps(res))
     write_result("xmin_stall", res)
@@ -123,16 +142,19 @@ def verdict(res):
             if m is None:
                 why.append(f"fenced[{i}] {k}: no sample")
                 continue
-            lim = 5 if k == "ro_verifier" else (35 if k == "active_xid_app" else 10)
+            lim = 5 if k == "ro_verifier" else (35 if k in ("active_xid_app", "chatty_xid_app") else 10)
             if m > lim:
                 why.append(f"fenced[{i}] {k}: {m} s > {lim} s")
             if k != "ro_verifier" and not a[k]["holder"].startswith("ended_by_server"):
                 why.append(f"fenced[{i}] {k}: holder not ended by the server")
     for i, a in enumerate(res["control"]):
-        for k in ("active_xid_app", "idle_xid_verifier", "idle_xid_keysdb"):
+        for k in ("active_xid_app", "idle_xid_verifier", "idle_xid_keysdb", "chatty_xid_app"):
             m = a[k]["max_visible_s"]
             if m is None or m < 55:
                 why.append(f"control[{i}] {k}: {m} s < 55 s (control did not reproduce the stall)")
+    m = res["timeouts_only"]["chatty_xid_app"]["max_visible_s"]
+    if m is None or m < 55:
+        why.append(f"timeouts_only chatty_xid_app: {m} s < 55 s (timeouts alone were expected not to bound it)")
     return {"pass": not why, "why": why}
 
 

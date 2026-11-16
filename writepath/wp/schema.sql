@@ -377,12 +377,13 @@ create table store_registry (name text primary key, kind text not null, verifiab
 -- verifier role's call; the app role cannot write 'done' or 'verify' at all.
 create table erasure_jobs (
   job_id text primary key, tenant_id tenant_t not null, subject_id text not null,
-  state text not null default 'requested' check (state in ('requested','marked','cascaded','purged','keys_destroyed','done')),
+  state text not null default 'requested' check (state in ('requested','marked','cascaded','purged','keys_destroyed','logically_erased','done')),
   verify jsonb, scope text, attempts int not null default 0, last_error_type text,
   claim_epoch bigint not null default 0, claim_expires timestamptz,
   ident_xmax bigint, ident_count int,                       -- the subject's identifier-set version and size, fixed at mark
   rescanned_xmax bigint,                                    -- identifier-set version the erasure rescan covered (attested by the runner)
   own_after text not null default '', men_after text not null default '',   -- cascade keyset cursors (D5: linear in the subject's events)
+  logical_at timestamptz, physical_deadline timestamptz, physical_pending jsonb,   -- item 4: logically erased, physical purge pending
   created_at timestamptz not null default clock_timestamp(), updated_at timestamptz not null default clock_timestamp()
 );
 create unique index erasure_one_open on erasure_jobs (tenant_id, subject_id) where state <> 'done';
@@ -434,6 +435,9 @@ begin
   select string_agg(hold_id, ',') into hs from legal_holds where tenant_id = t and subject_id = s and released_at is null;
   if hs is not null then raise exception 'legal_hold %', hs using errcode = 'WPS16'; end if;
 end $$;
+create function wp_erasure_rank(st text) returns int language sql immutable as $$
+  select array_position(array['requested','marked','cascaded','purged','keys_destroyed','logically_erased','done'], st);
+$$;
 create function erasure_guard() returns trigger language plpgsql as $$
 begin
   if TG_OP = 'INSERT' and (NEW.state <> 'requested' or NEW.verify is not null) then
@@ -446,6 +450,18 @@ begin
     end if;
     if (NEW.state = 'done' or NEW.verify is distinct from OLD.verify) and current_user <> 'wp_owner' then
       raise exception 'only wp_erasure_complete may complete a job' using errcode = 'WPS08';
+    end if;
+    -- state transition rule (low item of the delta review): forward only; the store-written states (marked,
+    -- cascaded, logically_erased, done) only through the owner's functions; the receipt's physical fields likewise
+    if wp_erasure_rank(NEW.state) < wp_erasure_rank(OLD.state) then
+      raise exception 'state may not move back (% -> %)', OLD.state, NEW.state using errcode = 'WPS08';
+    end if;
+    if NEW.state <> OLD.state and NEW.state in ('marked', 'cascaded', 'logically_erased', 'done') and current_user <> 'wp_owner' then
+      raise exception 'state % is written by the store only', NEW.state using errcode = 'WPS08';
+    end if;
+    if (NEW.logical_at, NEW.physical_deadline, NEW.physical_pending) is distinct from (OLD.logical_at, OLD.physical_deadline, OLD.physical_pending)
+       and current_user <> 'wp_owner' then
+      raise exception 'physical-purge fields are written by the store only' using errcode = 'WPS08';
     end if;
   end if;
   return NEW;
@@ -489,7 +505,13 @@ $$;
 -- One bounded batch of tombstones and cascade deletes; returns the number of events tombstoned. Idempotent.
 -- Apply one candidate batch: events covered by an active legal hold of ANOTHER subject (speaker, mentioned, or linked
 -- by the rescan) are withheld (D1); the rest are tombstoned, their content nulled, derived facts and jobs deleted.
-create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp as $$
+-- Item 2 (4960f50 round), from EXPLAIN at 200k: the planner estimated that `input_event_ids && <5,000 ids>` matches
+-- every row and chose a sequential scan of analyst_jobs, evaluating the 5,000-element overlap on every live row of the
+-- TENANT (19.4 s of a 20.4 s batch; cost per event proportional to tenant size). enable_seqscan = off for this function
+-- makes every statement use its index (the input_event_ids GINs, unique (tenant_id, event_id), events_subject), so a
+-- batch costs O(batch), independent of tenant size.
+create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp
+  set enable_seqscan = off as $$
 declare ids text[];
 begin
   if cardinality(cand) = 0 then return 0; end if;
@@ -523,20 +545,27 @@ end $$;
 create function wp_erasure_cascade(jid text, batch int) returns int language plpgsql security definer set search_path = public, pg_temp as $$
 declare j record; cand text[]; n int := 0; held int;
 begin
-  select * into j from erasure_jobs where job_id = jid for update;
+  -- No FOR UPDATE on the job row for the batch (item 2 of the 4960f50 round): the claim heartbeat updates that row, and
+  -- a batch-long row lock made the heartbeat time out on lock_timeout and declare the claim lost. The cursor advances
+  -- last, conditionally on the value read here (optimistic): a concurrent batch or a rescan rewind makes it fail
+  -- (WPS23) and this batch rolls back; every step is idempotent, so the caller simply runs the next batch.
+  select * into j from erasure_jobs where job_id = jid;
+  if j.state in ('requested', 'done') then raise exception 'cascade only after mark (state %)', j.state using errcode = 'WPS08'; end if;
   perform wp_hold_check(j.tenant_id, j.subject_id);         -- a hold placed after mark stops the cascade at the next batch
   cand := array(select event_id from events where tenant_id = j.tenant_id and subject_id = j.subject_id and event_id > j.own_after
                 order by event_id limit batch);
   if cardinality(cand) > 0 then
-    update erasure_jobs set own_after = cand[cardinality(cand)] where job_id = jid;
     perform public.wp_erasure_apply(j.tenant_id, j.subject_id, jid, cand);
+    update erasure_jobs set own_after = cand[cardinality(cand)] where job_id = jid and own_after = j.own_after;
+    if not found then raise exception 'cascade cursor moved concurrently' using errcode = 'WPS23'; end if;
     return cardinality(cand);
   end if;
   cand := array(select event_id from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id and event_id > j.men_after
                 order by event_id limit batch);
   if cardinality(cand) > 0 then
-    update erasure_jobs set men_after = cand[cardinality(cand)] where job_id = jid;
     perform public.wp_erasure_apply(j.tenant_id, j.subject_id, jid, cand);
+    update erasure_jobs set men_after = cand[cardinality(cand)] where job_id = jid and men_after = j.men_after;
+    if not found then raise exception 'cascade cursor moved concurrently' using errcode = 'WPS23'; end if;
     return cardinality(cand);
   end if;
   -- withheld events: retried each pass; those whose holds are gone are applied now
@@ -558,12 +587,18 @@ begin
 end $$;
 
 -- Postgres residue for a subject, computed by the store (never taken from a caller).
-create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp
+  set enable_seqscan = off as $$
+  -- Item 3 (4960f50 round): every count is driven by the SUBJECT'S footprint through an index (events_subject, the
+  -- mentions GIN, erasure_mentions, tombstones, facts_subject, the input_event_ids GINs), never by a scan of the tenant.
+  -- The former OR of three predicates over events could use no index and read every event of the tenant.
+  with fp as (select event_id from events where tenant_id = t and subject_id = s
+              union select event_id from events where tenant_id = t and mentions @> array[s]
+              union select event_id from erasure_mentions where tenant_id = t and subject_id = s),
+       tb as (select array_agg(event_id) ids from tombstones where tenant_id = t and subject_id = s)
   select jsonb_build_object(
-    'pg:events_untombstoned', (select count(*) from events e where e.tenant_id = t
-                                and (e.subject_id = s or e.mentions @> array[s]
-                                     or exists (select 1 from erasure_mentions m where m.tenant_id = t and m.subject_id = s and m.event_id = e.event_id))
-                                and not exists (select 1 from tombstones tb where tb.tenant_id = t and tb.subject_id = s and tb.event_id = e.event_id)),
+    'pg:events_untombstoned', (select count(*) from fp
+                                where not exists (select 1 from tombstones x where x.tenant_id = t and x.subject_id = s and x.event_id = fp.event_id)),
     'pg:content_present', (select count(*) from events e join tombstones tb on tb.tenant_id = e.tenant_id and tb.event_id = e.event_id
                            where e.tenant_id = t and tb.subject_id = s and e.content_enc is not null),
     'pg:mentions_unscanned', (select case when coalesce(jb.rescanned_xmax, -1) >= coalesce(jb.ident_xmax, 0) then 0
@@ -573,28 +608,53 @@ create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql
                                     order by created_at desc limit 1) jb),
     'pg:identifiers', (select count(*) from subject_identifiers where tenant_id = t and subject_id = s),
     'pg:quarantine_mentions', (select count(*) from quarantine where tenant_id = t and mentions @> array[s]),
-    'pg:facts', (select count(*) from facts f where f.tenant_id = t and (f.subject_id = s or exists (
-                   select 1 from tombstones tb where tb.tenant_id = t and tb.subject_id = s and tb.event_id = any(f.input_event_ids)))),
+    'pg:facts', (select count(*) from (select fact_id from facts where tenant_id = t and subject_id = s
+                   union select f.fact_id from facts f, tb where f.input_event_ids && tb.ids and f.tenant_id = t) x),
     'pg:inbox', (select count(*) from inbox where tenant_id = t and subject_id = s),
     'pg:quarantine', (select count(*) from quarantine where tenant_id = t and subject_id = s),
-    'pg:analyst_jobs', (select count(*) from analyst_jobs a where a.tenant_id = t and exists (
-                   select 1 from tombstones tb where tb.tenant_id = t and tb.subject_id = s and tb.event_id = any(a.input_event_ids))),
+    'pg:analyst_jobs', (select count(*) from analyst_jobs a, tb where a.input_event_ids && tb.ids and a.tenant_id = t),
     'pg:subject_not_marked', (select count(*) from subjects where tenant_id = t and subject_id = s and not erased),
     'pg:withheld_by_hold', (select count(*) from erasure_withheld w join erasure_jobs jb on jb.job_id = w.job_id where jb.tenant_id = t and jb.subject_id = s));
 $$;
 
+-- Item 4: the bound on 'physically purged' after 'logically erased'. ES: the peer-recovery retention lease advances on
+-- its sync interval (30 s default; measured waits 22-30 s), then a merge; key service: the cluster xid/xmin horizon,
+-- which the role timeouts and the transaction watchdog bound to ~30 s. 300 s leaves room for both plus retries; a job
+-- past it is reported overdue (last_error_type physical_purge_overdue) until it completes.
+create function wp_physical_purge_bound_s() returns int language sql immutable as $$ select 300 $$;
+
 -- Completion: callable by wp_verifier only. ext = counts for every non-Postgres verifiable store, measured by the
 -- verifier itself. Every registered verifiable store must be present and zero; Postgres counts are recomputed here.
 create function wp_erasure_complete(jid text, ext jsonb, scope_note text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
-declare j record; v jsonb; bad text; missing text; sc jsonb; hl jsonb;
+declare j record; j2 record; v jsonb; bad text; lbad text; missing text; sc jsonb; hl jsonb;
 begin
   select * into j from erasure_jobs where job_id = jid for update;
-  if j.state <> 'keys_destroyed' then raise exception 'job not ready (state %)', j.state using errcode = 'WPS08'; end if;
+  if j.state not in ('keys_destroyed', 'logically_erased') then raise exception 'job not ready (state %)', j.state using errcode = 'WPS08'; end if;
   v := wp_erasure_pg_residue(j.tenant_id, j.subject_id) || coalesce(ext, '{}'::jsonb);
   select string_agg(name, ',') into missing from store_registry r where r.verifiable and r.kind <> 'pg' and not (coalesce(ext, '{}') ? r.name);
   if missing is not null then raise exception 'done_missing_stores %', missing using errcode = 'WPS08'; end if;
   select string_agg(k, ',') into bad from jsonb_each(v) as x(k, val) where jsonb_typeof(val) <> 'number' or (val #>> '{}')::numeric <> 0;
   if bad is not null then
+    -- item 4: logically erased (every logical count zero) but bytes may remain: soft-deleted ES documents not yet
+    -- merged away, or the key row's bytes not yet purged by the key service. 'done' waits; the receipt says so.
+    select string_agg(k, ',') into lbad from jsonb_each(v) as x(k, val)
+      where k not in ('es:soft_deleted', 'keys:physical_pending') and (jsonb_typeof(val) <> 'number' or (val #>> '{}')::numeric <> 0);
+    if lbad is null then
+      update erasure_jobs set state = 'logically_erased', verify = v,
+             logical_at = coalesce(logical_at, clock_timestamp()),
+             physical_deadline = coalesce(physical_deadline, clock_timestamp() + make_interval(secs => wp_physical_purge_bound_s())),
+             physical_pending = (select jsonb_object_agg(k, val) from jsonb_each(v) as x(k, val)
+                                  where k in ('es:soft_deleted', 'keys:physical_pending') and (val #>> '{}')::numeric <> 0),
+             last_error_type = case when clock_timestamp() > coalesce(physical_deadline, 'infinity') then 'physical_purge_overdue' else null end,
+             updated_at = clock_timestamp()
+       where job_id = jid
+       returning logical_at, physical_deadline, physical_pending, last_error_type into j2;
+      return jsonb_build_object('done', false, 'receipt_state', 'logically_erased_physical_purge_pending', 'verify', v,
+                                'logical_at', j2.logical_at, 'physical_deadline', j2.physical_deadline,
+                                'physical_pending', j2.physical_pending, 'overdue', j2.last_error_type is not null,
+                                'requested_at', j.created_at,
+                                'logical_delay_s', round(extract(epoch from j2.logical_at - j.created_at)::numeric, 3));
+    end if;
     update erasure_jobs set verify = v, last_error_type = 'residue', updated_at = clock_timestamp() where job_id = jid;
     return jsonb_build_object('done', false, 'residue', bad, 'verify', v);
   end if;
@@ -615,8 +675,10 @@ begin
   hl := (select coalesce(jsonb_agg(jsonb_build_object('hold_id', hold_id, 'placed_at', placed_at, 'released_at', released_at) order by placed_at), '[]')
          from legal_holds where tenant_id = j.tenant_id and subject_id = j.subject_id);
   update erasure_jobs set state = 'done', verify = v, scope = sc::text, claim_expires = null, updated_at = clock_timestamp() where job_id = jid;
-  return jsonb_build_object('done', true, 'verify', v, 'scope', sc, 'holds', hl,
+  return jsonb_build_object('done', true, 'receipt_state', 'done', 'verify', v, 'scope', sc, 'holds', hl,
                             'requested_at', j.created_at, 'completed_at', clock_timestamp(),
+                            'logical_at', coalesce(j.logical_at, clock_timestamp()),
+                            'physical_deadline_met', j.physical_deadline is null or clock_timestamp() <= j.physical_deadline,
                             'delay_s', round(extract(epoch from clock_timestamp() - j.created_at)::numeric, 3));
 end $$;
 
@@ -665,3 +727,4 @@ grant execute on function wp_lease_acquire(tenant_t, text, double precision, boo
 grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_release(text) to wp_legal;
 grant select on legal_holds, erasure_jobs, erasure_withheld to wp_legal;
 grant execute on function wp_erasure_pg_residue(text, text), wp_erasure_complete(text, jsonb, text) to wp_verifier;
+grant execute on function wp_erasure_rank(text) to wp_app, wp_verifier, wp_legal;   -- pure: the transition rule reads it in the guard

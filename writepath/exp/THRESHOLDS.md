@@ -159,3 +159,21 @@ Stated residual, not a PASS claim: a role without these settings (the admin/supe
 session) is not bounded by them; with one shared Postgres the bound is the longest statement or idle period any role
 allows. Deployment requirement: the timeouts on every role, a monitor and alert on the age of the oldest xid
 (pg_stat_activity backend_xid/backend_xmin, pg_prepared_xacts, replication slots), or per-tenant databases.
+
+## Amendment 8a (2026-11-16, before any amendment-8 run; supersedes amendment 8's PASS rule and residual)
+Correction: statement_timeout and idle_in_transaction_session_timeout do NOT bound a transaction on PostgreSQL 16 (the
+lab runs 16.15): a session issuing a short statement every few seconds keeps its xid indefinitely (transaction_timeout
+arrives in 17). Amendment 8's residual ("the longest statement or idle period any role allows") was wrong.
+Added: holder chatty_xid_app (txid_current(), then select 1 every 2 s); the transaction-age watchdog
+wp/xact_watchdog.py (role wp_watchdog: pg_signal_backend + pg_read_all_stats, no data access; terminates managed-role
+backends whose transaction holding an xid or snapshot is older than 30 s, polled every 1 s).
+Arms: fenced = role timeouts + watchdog, R=3; timeouts_only = role timeouts, no watchdog, R=1; control = pre-round
+settings, no watchdog, R=1.
+PASS = every fenced repetition: ro_verifier <= 5 s; idle_xid_app, idle_xid_verifier, idle_xid_keysdb <= 10 s each;
+  active_xid_app and chatty_xid_app <= 35 s each; every xid holder ended by the server; AND timeouts_only
+  chatty_xid_app >= 55 s; AND control active_xid_app, idle_xid_verifier, idle_xid_keysdb, chatty_xid_app >= 55 s each.
+Residual (stated, not tested as a PASS): superuser/admin sessions (pg_signal_backend cannot end them), prepared
+transactions and replication slots are not bounded by the watchdog; with one shared Postgres any of these delays every
+tenant's projection for its duration. Deployment requirement: the role timeouts AND (PostgreSQL >= 17
+transaction_timeout on every role, or this watchdog), an alert on the age of the oldest xid / xmin, no
+long-running superuser sessions, prepared transactions monitored; or one database cluster per tenant.

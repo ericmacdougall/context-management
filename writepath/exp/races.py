@@ -46,8 +46,8 @@ def _now(conn):
 
 
 class _StubVerifier:
-    def complete(self, jid, expunge=True):
-        return {"done": False, "skipped": "race experiment: verification by the harness"}
+    def complete(self, jid, expunge=True, wait_s=None):
+        return {"done": False, "receipt_state": "skipped", "skipped": "race experiment: verification by the harness"}
 
 
 # ---------------------------------------------------------------- R1
@@ -81,7 +81,7 @@ def _r1_eraser(t, delay, arm, q):
 
     def hk(name, data=None):
         marks[name] = _now(conn)
-    rec = erasure.erase(conn, ks, es, t, "X", hook=hk, verifier=_StubVerifier())
+    rec = erasure.erase(conn, ks, es, t, "X", hook=hk, verifier=_StubVerifier(), physical="wait")
     q.put(("erase", dict(marks, error=rec["error_type"])))
 
 
@@ -130,7 +130,7 @@ def _r2_eraser(t, delay, q):
 
     def hk(name, data=None):
         marks[name] = _now(conn)
-    rec = erasure.erase(conn, ks, es, t, "X", hook=hk, verifier=_StubVerifier())
+    rec = erasure.erase(conn, ks, es, t, "X", hook=hk, verifier=_StubVerifier(), physical="wait")
     q.put(("erase", dict(marks, error=rec["error_type"])))
 
 

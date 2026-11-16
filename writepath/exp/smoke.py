@@ -24,7 +24,7 @@ try:
 except log.StaleDecision as e:
     print("stale decision refused:", str(e)[:80])
 p.stop()
-rec = erasure.erase(conn, ks, es, t, "X")
+rec = erasure.erase(conn, ks, es, t, "X", physical="wait")
 print("erase", json.dumps(rec, default=str)[:1500])
 print("search X after", len(rd.search("zqsmokex")), "ES all X", es_count_all(es, t, {"term": {"subject_id": "X"}}))
 print("p after erase", p.run(), p.stats, "search Y", len(rd.search("zqsmokey")))

@@ -54,7 +54,7 @@ def n1(arm):
             if arm == "control":
                 F.place_placeholders = as_delete
             try:
-                w["erase"] = erasure.erase(db.connect(), ks, es, t, "X")
+                w["erase"] = erasure.erase(db.connect(), ks, es, t, "X", physical="wait")
             finally:
                 F.place_placeholders = real
             w["t_erase_done"] = now()
@@ -86,7 +86,7 @@ def n2(arm):
         es.req("PUT", f"/{rogue}/_doc/x1", {"subject_id": "X", "content": "X says zqn2x"}, refresh="true")
     before = {f: es_count_live(es, t, f, Xq()) for f in F.FAMILIES}
     unreg_before = [u for u in registry.unregistered(conn, ks.conn, es) if t in u]
-    rec = erasure.erase(conn, ks, es, t, "X")
+    rec = erasure.erase(conn, ks, es, t, "X", physical="wait")
     after_all = es_count_all(es, t, Xq())
     holds = after_all == 0 and rec["done"] and not unreg_before
     if arm == "control":
@@ -114,13 +114,13 @@ def n5(arm):
     def hook(name, data=None):
         if name == "after_mark":
             raise RuntimeError("injected: stop after the mark")
-    erasure.erase(conn, ks, es, t, "X", hook=hook)
+    erasure.erase(conn, ks, es, t, "X", hook=hook, physical="wait")
     state = conn.execute("select state from erasure_jobs where tenant_id=%s", (t,)).fetchone()[0]
     raw = es_count_live(es, t, "facts", Xq()) + es_count_live(es, t, "events", Xq())
     R = UnfilteredReader if arm == "control" else reader.Reader
     r = R(conn, es, t)
     got = len(r.facts("Xavier")) + len(r.facts("Xavier", "diagnosis", as_of="2026-03-02T00:00:00Z")) + len(r.search("zqn5msg"))
-    erasure.sweep(conn, ks, es, tenant=t)
+    erasure.sweep(conn, ks, es, tenant=t, physical="wait")
     return got == 0, ("erased fact/event served while pending" if got else ""), {"job_state_while_pending": state, "raw_es_docs_of_X": raw, "served": got}
 
 
@@ -142,7 +142,7 @@ def n8(arm):
         if name == "derive_after_read" and "erase" not in res:
             res["derive_read_has_X"] = any(r[1] == "X" for r in data)
             res["t_read"] = now()
-            rec = erasure.erase(db.connect(), ks, es, t, "X", destroy_key=False)
+            rec = erasure.erase(db.connect(), ks, es, t, "X", destroy_key=False, physical="wait")
             res["erase"] = rec["state_reached"] if "state_reached" in rec else rec.get("residue")
             res["t_erase_done"] = now()
             try:

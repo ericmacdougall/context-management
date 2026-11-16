@@ -128,7 +128,16 @@ class KeyService(KeyStore):
         for _ in range(2):
             self.conn.execute("select pg_switch_wal()")
             self.conn.execute("checkpoint")
-        return {"waited_s": round(time.time() - t0, 3), "purged": True}
+        # item 4: coalesced: one purge covers every key deleted by a transaction older than the mark (all such
+        # transactions have ended, so their rows are visible here and their dead key tuples were not copied)
+        n = self.conn.execute("update destroyed set purged_at = clock_timestamp() where purged_at is null "
+                              "and age(xmin) > age(((%s::bigint) %% 4294967296)::text::xid)", (mark,)).rowcount
+        return {"waited_s": round(time.time() - t0, 3), "purged": True, "covered": n}
+
+    def physical_pending(self, tenant=None):
+        """(tenant, subject) pairs whose key is deleted but not yet purged from disk."""
+        q = "select tenant_id, subject_id from destroyed where purged_at is null" + (" and tenant_id = %s" if tenant else "")
+        return self.conn.execute(q, (tenant,) if tenant else ()).fetchall()
 
 
 def aad(tenant, subject, row_id):

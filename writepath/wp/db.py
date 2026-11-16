@@ -10,7 +10,7 @@ import psycopg
 
 from . import config
 
-APP, VERIFIER, KMS, LEGAL = "wp_app", "wp_verifier", "wp_kms", "wp_legal"
+APP, VERIFIER, KMS, LEGAL, WATCHDOG = "wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog"
 
 
 def connect(db=None, autocommit=True, application_name="wp", role=APP, **kw):
@@ -31,6 +31,11 @@ def keys_connect(**kw):
 def legal(**kw):
     """Legal-operations role: places and releases holds; nothing else."""
     return connect(application_name="wp-legal", role=LEGAL, **kw)
+
+
+def watchdog(**kw):
+    """Transaction-age watchdog (wp/xact_watchdog.py): pg_signal_backend + pg_read_all_stats, no table access."""
+    return connect(db="postgres", application_name="wp-watchdog", role=WATCHDOG, **kw)
 
 
 def verifier(db=None, **kw):

@@ -82,22 +82,44 @@ def is_stale_error(e):
     return isinstance(e, psycopg.Error) and getattr(e, "sqlstate", None) == STALE
 
 
+TRANSIENT = (psycopg.errors.LockNotAvailable, psycopg.errors.QueryCanceled, psycopg.errors.SerializationFailure,
+             psycopg.errors.DeadlockDetected, psycopg.OperationalError)
+
+
 class Heartbeat:
     """Renews a lease (or, with renew_fn, any claim) every period_s on its own connection until stopped.
-    `lost` is set if a renewal is refused (someone took over): the holder must stop."""
-    def __init__(self, renew_fn, period_s):
+    `lost` is set if a renewal is refused (someone took over): the holder must stop.
+
+    Default (session and projector leases, unchanged): ANY renewal error sets `lost`.
+    tolerate_transient=True (opt-in; the erasure claim uses it): a transient failure (lock or statement timeout,
+    serialization failure, dropped connection) is retried at the next beat, and `lost` is set only when the next
+    attempt could not complete before the claim expires: now - last_ok + period_s + call_max_s >= ttl_s, where
+    call_max_s bounds one renewal call (the renewing connection's lock_timeout). So the holder still stops before its
+    claim can expire and be taken. Reason: at 7e8f28f the S100000 erasure lost its claim on ONE lock_timeout of the
+    renewal against the job row, which the cascade batch held FOR UPDATE (PG log 07:46:29Z, item 2 of the 4960f50
+    round)."""
+    def __init__(self, renew_fn, period_s, ttl_s=None, tolerate_transient=False, call_max_s=0.0):
         self.renew_fn, self.period = renew_fn, period_s
+        self.ttl = ttl_s or 3 * period_s
+        self.tolerate, self.call_max = tolerate_transient, call_max_s
         self.lost = threading.Event()
         self._stop = threading.Event()
-        self.beats = 0
+        self.beats, self.transient = 0, 0
         self._t = threading.Thread(target=self._run, daemon=True)
 
     def _run(self):
+        last_ok = time.time()
         while not self._stop.wait(self.period):
             try:
                 self.renew_fn()
                 self.beats += 1
-            except Exception:  # noqa: BLE001
+                last_ok = time.time()
+            except TRANSIENT:
+                self.transient += 1
+                if not self.tolerate or time.time() - last_ok + self.period + self.call_max >= self.ttl:
+                    self.lost.set()
+                    return
+            except Exception:  # noqa: BLE001  (a refusal: LeaseLost, ClaimLost, or anything unexpected)
                 self.lost.set()
                 return
 

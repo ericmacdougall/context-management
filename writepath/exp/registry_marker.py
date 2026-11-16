@@ -89,7 +89,7 @@ def run_one(arm):
     out["before"]["keydb_disk_files_keyhex"] = grep_files(PG_C, "/var/lib/postgresql/data", keyhex)
     # ---- 4. erase
     # ONE patch per control arm: no ES placeholders (documents stay), or the subject key kept
-    rec = erasure.erase(conn, ks, es, t, "X", placeholders=(arm != "ctl_no_placeholders"), destroy_key=(arm != "ctl_key_kept"))
+    rec = erasure.erase(conn, ks, es, t, "X", placeholders=(arm != "ctl_no_placeholders"), destroy_key=(arm != "ctl_key_kept"), physical="wait")
     es.req("POST", f"/{config.INDEX_PREFIX}{t}-*/_flush", expand_wildcards="all")
     adm.execute("checkpoint")
     out["receipt"] = {k: rec.get(k) for k in ("done", "verify", "residue", "error_type", "key_store")}

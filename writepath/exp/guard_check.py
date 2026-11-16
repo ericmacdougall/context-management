@@ -59,7 +59,7 @@ def check(adm, kadm):
         miss = [k for k, v in cov.items() if not v]
         if miss:
             out["G3"].append(f"{rel}:no guard for {','.join(miss)}")
-    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal"):
+    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog"):
         a = adm.execute("select rolsuper, rolcreaterole, rolcreatedb, rolreplication, rolbypassrls from pg_roles where rolname=%s", (r,)).fetchone()
         if a is None or any(a):
             out["G4"].append(f"{r}:attrs={a}")
@@ -68,7 +68,7 @@ def check(adm, kadm):
     for fn in ("wp_hold_place(tenant_t, text, text, text)", "wp_hold_release(text)"):     # D1: holds are the legal role's alone
         if adm.execute("select has_function_privilege('wp_app', %s, 'EXECUTE')", (fn,)).fetchone()[0]:
             out["G4"].append(f"wp_app can execute {fn}")
-    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal"):                             # D2: one credential file per role
+    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog"):              # D2: one credential file per role
         import os, stat
         f = config.pgpass(r)
         if not os.path.exists(f) or stat.S_IMODE(os.stat(f).st_mode) != 0o600 or any(
@@ -76,6 +76,9 @@ def check(adm, kadm):
             out["G4"].append(f"{r}: credential file missing, not 0600, or holding another role")
     if adm.execute("select has_database_privilege('wp_app', %s, 'CONNECT')", (config.KEYS_DB,)).fetchone()[0]:
         out["G4"].append("wp_app can connect to the key database")
+    for d in (config.EVENTS_DB, config.KEYS_DB):                                           # the watchdog reads no data
+        if adm.execute("select has_database_privilege('wp_watchdog', %s, 'CONNECT')", (d,)).fetchone()[0]:
+            out["G4"].append(f"wp_watchdog can connect to {d}")
     if kadm.execute("select has_column_privilege('wp_verifier', 'public.subject_keys', 'key_hex', 'SELECT')").fetchone()[0]:
         out["G4"].append("wp_verifier can read key material")
     for rel, owner in kadm.execute("select c.relname, pg_get_userbyid(c.relowner) from pg_class c join pg_namespace n on n.oid=c.relnamespace "

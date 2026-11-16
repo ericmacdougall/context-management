@@ -49,7 +49,7 @@ def f1_large(n):
     p.run(max_rounds=10000); p.stop()
     t_project = round(time.time() - t0, 1)
     x_before = es_count_all(es, t, {"term": {"subject_id": "X"}})
-    rec = erasure.erase(conn, ks, es, t, "X", ttl_s=120)
+    rec = erasure.erase(conn, ks, es, t, "X", ttl_s=120, physical="wait")
     x_after = es_count_all(es, t, {"term": {"subject_id": "X"}})
     y_after = es_count_all(es, t, {"term": {"subject_id": "Y"}})
     holds = rec["done"] and x_after == 0 and y_after == 3 and x_before > 65536     # Y: 2 event docs + 1 fact doc (amendment 4)
@@ -85,12 +85,12 @@ def f1_sweep(arm):
             calls["n"] += 1
             raise RuntimeError("injected failure in the first job")
     if arm == "fenced":
-        out = erasure.sweep(conn, ks, es, tenant=t, hook=boom)
+        out = erasure.sweep(conn, ks, es, tenant=t, hook=boom, physical="wait")
     else:                                                  # PATCH: the aaa0fec sweep (one failure aborts the sweep)
         out = {}
         try:
             for (jid,) in conn.execute("select job_id from erasure_jobs where tenant_id=%s and state <> 'done' order by created_at", (t,)).fetchall():
-                r = erasure.run(conn, ks, es, jid, hook=boom)
+                r = erasure.run(conn, ks, es, jid, hook=boom, physical="wait")
                 if r["error_type"]:
                     raise RuntimeError(r["error_type"])
                 out[jid] = r["done"]
@@ -263,13 +263,13 @@ def f4():
         if arm == "control":
             orig = v.ext_counts
 
-            def no_gate(t_, s_, expunge=True, _o=orig):
-                o, i = _o(t_, s_, expunge)
+            def no_gate(t_, s_, expunge=True, wait_s=180.0, _o=orig):
+                o, i = _o(t_, s_, expunge, wait_s)
                 o["gate:unregistered"] = 0
                 return o, i
             v.ext_counts = no_gate
         with patched(["set role wp_owner", "create table zz_rogue_cache(x text)", "reset role"], ["drop table zz_rogue_cache"]):
-            rec = erasure.erase(conn, ks, es, t, "X", verifier=v)
+            rec = erasure.erase(conn, ks, es, t, "X", verifier=v, physical="wait")
         res[arm] = {"done": rec["done"], "gate": (rec.get("verify") or {}).get("gate:unregistered")}
     out["unregistered_gate"] = dict(res, patch="verifier reports gate:unregistered=0")
     fen = [out["fabricated_zeros_with_pg_residue"]["fenced"]["done"] is False, "refused" in out["missing_store_count"]["fenced"],

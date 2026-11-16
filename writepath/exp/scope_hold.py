@@ -94,7 +94,7 @@ def m_once(arm):
                      "if held = 0 then")
     ap, rv = a1 + a2, r2 + r1
     with patched(ap, rv) if arm == "ctl_norescan" else patched(*NOOP):
-        rec = erasure.erase(conn, ks, es, t, "X", do_rescan=arm not in ("norescan_fenced", "ctl_norescan"))
+        rec = erasure.erase(conn, ks, es, t, "X", do_rescan=arm not in ("norescan_fenced", "ctl_norescan"), physical="wait")
     allm = [m for v in cls.values() for m in v]
     o = _oracle(db.admin(), ks, es, t, allm)
     present = lambda m: o[m]["pg"] + o[m]["es"] > 0                      # noqa: E731
@@ -138,15 +138,15 @@ def h_once(arm):
         hid = "hold-" + uuid.uuid4().hex[:8]
         erasure.place_hold(db.legal(), t, "X", hid, "litigation")
         res = {}
-        ty = threading.Thread(target=lambda: res.__setitem__("Y", erasure.erase(db.connect(), K.KeyService(), es, t, "Y")))
+        ty = threading.Thread(target=lambda: res.__setitem__("Y", erasure.erase(db.connect(), K.KeyService(), es, t, "Y", physical="wait")))
         ty.start()
-        rx = erasure.erase(conn, ks, es, t, "X")
+        rx = erasure.erase(conn, ks, es, t, "X", physical="wait")
         ty.join()
         x_still = es_count_all(es, t, {"match": {"content": mk["X"]}}) > 0 and ks.key_exists(t, "X")
         held_ok = (not rx["done"]) and rx.get("held") is True and x_still
         y_ok = res["Y"]["done"] is True
         time.sleep(1.0)
-        sw = erasure.release_hold(db.legal(), ks, es, hid)
+        sw = erasure.release_hold(db.legal(), ks, es, hid, physical="wait")
         jx = conn.execute("select state, verify from erasure_jobs where tenant_id=%s and subject_id='X'", (t,)).fetchone()
         x_after = es_count_all(es, t, {"match": {"content": mk["X"]}})
         out["H1_hold_before_request"] = {"x_held": held_ok, "x_receipt_while_held": {k: rx.get(k) for k in ("done", "error_type", "held", "holds")},
@@ -160,12 +160,12 @@ def h_once(arm):
         jid = erasure.request(conn, t, "X")
         hid = "hold-" + uuid.uuid4().hex[:8]
         erasure.place_hold(db.legal(), t, "X", hid, "regulator")
-        rx = erasure.run(conn, ks, es, jid)
+        rx = erasure.run(conn, ks, es, jid, physical="wait")
         x_still = es_count_all(es, t, {"match": {"content": mk["X"]}}) > 0 and ks.key_exists(t, "X")
         held_ok = (not rx["done"]) and rx.get("held") is True and x_still
         time.sleep(1.0)
-        erasure.release_hold(db.legal(), ks, es, hid)
-        r2 = erasure.run(conn, ks, es, jid)
+        erasure.release_hold(db.legal(), ks, es, hid, physical="wait")
+        r2 = erasure.run(conn, ks, es, jid, physical="wait")
         out["H2_request_before_hold"] = {"x_held": held_ok, "receipt_while_held": {k: rx.get(k) for k in ("done", "error_type", "held")},
                                          "final": {k: r2.get(k) for k in ("done", "holds", "delay_s")}}
         ok.append(held_ok and r2["done"] is True and any(h.get("hold_id") == hid and h.get("released_at") for h in (r2.get("holds") or []))
@@ -179,11 +179,11 @@ def h_once(arm):
         def hk(name, data=None):
             if name == "after_mark" and not placed:
                 placed["r"] = erasure.place_hold(db.legal(), t, "X", hid, "late")
-        rx = erasure.erase(conn, ks, es, t, "X", hook=hk)
+        rx = erasure.erase(conn, ks, es, t, "X", hook=hk, physical="wait")
         content_left = adm.execute("select count(*) from events where tenant_id=%s and subject_id='X' and content_enc is not null", (t,)).fetchone()[0]
         held_ok = (not rx["done"]) and rx.get("held") is True and content_left > 0 and ks.key_exists(t, "X")
-        erasure.release_hold(db.legal(), ks, es, hid)
-        r3 = erasure.erase(conn, ks, es, t, "X")
+        erasure.release_hold(db.legal(), ks, es, hid, physical="wait")
+        r3 = erasure.erase(conn, ks, es, t, "X", physical="wait")
         out["H3_hold_after_mark"] = {"x_held": held_ok, "hold_place_result": placed.get("r"), "pg_content_left_while_held": content_left,
                                      "final_done": r3["done"]}
         ok.append(held_ok and r3["done"] is True)

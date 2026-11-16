@@ -52,6 +52,9 @@ STORES = [
     _pg("erasure_jobs", "subject id, verify counts, error TYPE only", "kept as the audit record", False),
     Store("keys:subject_keys", "keys", "subject_keys", "per-subject data keys", "deleted + VACUUM + WAL switch/checkpoint", True),
     Store("keys:destroyed", "keys", "destroyed", "subject ids", "kept: refuses re-creating an erased subject's key", False),
+    Store("keys:physical_pending", "attest", "destroyed.purged_at", "deleted key bytes not yet purged from disk",
+          "the key service records purged_at after VACUUM FULL past the xid horizon; the verifier reads it (ATTESTED by the "
+          "key service, a lab stand-in; with a KMS this is the KMS's own deletion record and its pending-deletion window)", True),
     Store("keys:tenant_keys", "keys", "tenant_keys", "tenant HMAC key", "kept; HMACs of erased subjects stay confirmable with it (N15, open)", False),
     Store("es:events", "es", "events", "plaintext event content", "placeholder over every tombstoned event id; verified by subject id over every index of the family", True),
     Store("es:facts", "es", "facts", "plaintext fact values", "placeholder over every derived fact id; verified as es:events", True),

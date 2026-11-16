@@ -3,7 +3,9 @@
 -- the verifier may see which subjects still have a key (column privileges, never the key material).
 -- Production replaces this with a KMS whose deletion is real and whose backups have a stated retention bound.
 create table subject_keys (tenant_id text not null, subject_id text not null, key_hex text not null, primary key (tenant_id, subject_id));
-create table destroyed (tenant_id text not null, subject_id text not null, at timestamptz not null default now(), primary key (tenant_id, subject_id));
+create table destroyed (tenant_id text not null, subject_id text not null, at timestamptz not null default now(),
+  purged_at timestamptz,                                    -- set by purge() once the deleted key's bytes are rewritten away
+  primary key (tenant_id, subject_id));
 create table tenant_keys (tenant_id text primary key, hkey_hex text not null);
 revoke all on all tables in schema public from public;
 grant usage on schema public to wp_verifier;

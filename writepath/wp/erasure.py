@@ -28,6 +28,12 @@ from . import db, families as F, keys as K, lease as L, mentions as M
 from .verifier import Verifier
 
 
+BATCH_TARGET_S = 2.0
+HB_TOLERATE = True          # exp/scale_1m.py H control sets False (the 7e8f28f behaviour)
+PHYS_INLINE_S = 2.0         # physical="followup": one short purge attempt before returning the logical receipt
+PHYS_WAIT_S = 60.0          # physical="wait" and the sweep follow-up: per attempt
+
+
 def _noop(_n, _data=None):
     pass
 
@@ -38,6 +44,10 @@ class ClaimLost(Exception):
 
 class Withheld(Exception):
     """Events in scope are covered by another subject's legal hold; the job waits for its release."""
+
+
+class CascadeDeadline(Exception):
+    pass
 
 
 class KeyPurgePending(Exception):
@@ -80,8 +90,10 @@ def _release(conn, jid, ce, err=None):
 
 
 def _state(conn, jid, ce, state):
-    r = conn.execute("update erasure_jobs set state=%s, updated_at=clock_timestamp() where job_id=%s and claim_epoch=%s and state <> 'done' returning 1",
-                     (state, jid, ce)).fetchone()
+    """Advance the job's state (forward only, the store's transition rule): a resumed job already past `state` stays."""
+    r = conn.execute("update erasure_jobs set state = case when wp_erasure_rank(state) < wp_erasure_rank(%s) then %s else state end, "
+                     "updated_at=clock_timestamp() where job_id=%s and claim_epoch=%s and state <> 'done' returning 1",
+                     (state, state, jid, ce)).fetchone()
     if not r:
         raise ClaimLost(jid)
 
@@ -142,9 +154,17 @@ def rescan(conn, ks, jid, page=2000):
     return scanned, found
 
 
-def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, batch=5000, destroy_key=True, placeholders=True, do_rescan=True):
-    """Drive one job as far as it goes. Never raises: returns a receipt with done and error_type. A legal hold leaves
-    the job queued (error_type 'legal_hold', held=True) and it runs once the hold is released (release_hold)."""
+def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, batch=5000, destroy_key=True, placeholders=True, do_rescan=True,
+        cascade_deadline_s=None, physical="followup"):
+    """Drive one job as far as it goes. Never raises: returns a receipt with done, receipt_state and error_type. A legal
+    hold leaves the job queued (error_type 'legal_hold', held=True) and it runs once the hold is released (release_hold).
+
+    Item 4 (physical purge): once every LOGICAL count is zero the store records 'logically_erased' with a deadline;
+    'done' needs the physical purge too (ES soft-deleted documents merged away after the retention lease passes, the
+    key's bytes rewritten away past the xid horizon). physical="followup" (default) makes one short attempt
+    (PHYS_INLINE_S) and returns receipt_state 'logically_erased_physical_purge_pending' if the purge is not yet possible,
+    so a small erasure is not held for the ~30 s lease floor; sweep() finishes it later and an overdue job is reported
+    (error_type physical_purge_overdue). physical="wait" keeps trying (PHYS_WAIT_S per attempt) until done or overdue."""
     t0 = time.time()
     j = _job(conn, jid)
     t, s = j["tenant"], j["subject"]
@@ -159,10 +179,14 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
         rec["error_type"] = "claimed_elsewhere"
         return rec
     hconn = db.connect(application_name="wp-erasure-hb")
-    hb = L.Heartbeat(lambda: _renew(hconn, jid, ce, ttl_s), ttl_s / 3)
+    hconn.execute("set lock_timeout = '2s'")               # bounds one renewal call (call_max_s)
+    hb = L.Heartbeat(lambda: _renew(hconn, jid, ce, ttl_s), ttl_s / 3, ttl_s, tolerate_transient=HB_TOLERATE, call_max_s=3.0)
     err = None
     try:
         with hb:
+            if j["state"] == "logically_erased":            # item 4 follow-up: only the physical phase remains
+                err = _physical(ks, verifier, jid, rec, physical, destroy_key, hb)
+                return rec
             ts = time.time()
             conn.execute("select wp_erasure_mark(%s)", (jid,))
             rec["steps"]["mark_s"] = round(time.time() - ts, 3)
@@ -171,15 +195,32 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
                 ts = time.time()
                 sc, fo = rescan(conn, ks, jid)
                 rec["steps"].update(rescan_s=round(time.time() - ts, 3), rescan_scanned=sc, rescan_found=fo)
-            ts, n, batches, per = time.time(), 1, 0, []
+            # Batches are sized to a TIME target (BATCH_TARGET_S), not only a row count: each batch is its own short
+            # transaction, so it holds an xid (and every tenant's projection fence, see exp/xmin_stall.py) for at most
+            # about that long, and stays far under the claim TTL and the role statement_timeout at any tenant size.
+            ts, n, batches, per, size, conflicts = time.time(), 1, 0, [], min(batch, 500), 0
             while n:
                 if hb.lost.is_set():
                     raise ClaimLost(jid)
+                if cascade_deadline_s and time.time() - ts > cascade_deadline_s:
+                    raise CascadeDeadline(jid)              # experiments only: the job stays open and resumable
                 tb = time.time()
-                n = conn.execute("select wp_erasure_cascade(%s, %s)", (jid, batch)).fetchone()[0]
-                per.append(round(time.time() - tb, 3))
+                try:
+                    n = conn.execute("select wp_erasure_cascade(%s, %s)", (jid, size)).fetchone()[0]
+                except psycopg.Error as e:
+                    if getattr(e, "sqlstate", None) != "WPS23" or conflicts > 20:
+                        raise
+                    conflicts, n = conflicts + 1, 1            # the cursor moved under us (rescan rewind): rerun
+                    continue
+                dt = time.time() - tb
+                per.append(round(dt, 3))
                 batches += 1
-            rec["steps"].update(cascade_s=round(time.time() - ts, 3), cascade_batches=batches, cascade_batch_s=per)
+                if dt > BATCH_TARGET_S:
+                    size = max(50, size // 2)
+                elif dt < BATCH_TARGET_S / 3:
+                    size = min(batch, size * 2)
+            rec["steps"].update(cascade_s=round(time.time() - ts, 3), cascade_batches=batches, cascade_batch_s=per,
+                                cascade_batch_max_s=max(per) if per else 0, cascade_conflicts=conflicts, heartbeat_transient=hb.transient)
             wh = conn.execute("select event_id, speaker, hold_ids from erasure_withheld where job_id=%s order by event_id", (jid,)).fetchall()
             if wh:                                           # D1: covered by another subject's legal hold: queued, not dropped
                 rec["withheld"] = [{"event_id": e, "speaker": sp, "hold_ids": h.split(",")} for e, sp, h in wh]
@@ -202,25 +243,11 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
                 ts = time.time()
                 with conn.transaction():                        # the subject row stays locked: a hold cannot land mid-destroy
                     conn.execute("select wp_hold_check(%s, %s)", (t, s))
-                    ks.destroy(t, s)
+                    ks.destroy(t, s)                            # logical delete; the bytes go in the physical phase
                 rec["steps"]["key_destroy_s"] = round(time.time() - ts, 3)
-                # physical purge only after the hold-check transaction commits: an open xid anywhere in the cluster
-                # (this one included) makes VACUUM FULL carry the deleted key into the rewritten file
-                pr = ks.purge()
-                rec["steps"]["key_purge"] = pr
-                if not pr["purged"]:
-                    raise KeyPurgePending(jid)
             _state(conn, jid, ce, "keys_destroyed")
             hook("before_complete")
-            ts = time.time()
-            v = verifier or Verifier()
-            res = v.complete(jid)
-            rec["steps"]["verify_s"] = round(time.time() - ts, 3)
-            rec["steps"]["expunge"] = res.get("expunge")
-            rec.update(done=bool(res["done"]), verify=res.get("verify"), residue=res.get("residue"), scope=res.get("scope"),
-                       holds=res.get("holds"), delay_s=res.get("delay_s"))
-            if not res["done"]:
-                err = "residue"
+            err = _physical(ks, verifier, jid, rec, physical, destroy_key, hb)
     except Exception as e:  # noqa: BLE001  (any failure leaves the job open with its type recorded)
         err = "legal_hold" if getattr(e, "sqlstate", None) == "WPS16" else ("withheld_by_hold" if isinstance(e, Withheld) else type(e).__name__)
         if err == "legal_hold":
@@ -232,9 +259,40 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
         except psycopg.Error:
             pass
         hconn.close()
-    rec["error_type"] = err
-    rec["seconds"] = round(time.time() - t0, 3)
+        rec["error_type"] = err
+        rec["seconds"] = round(time.time() - t0, 3)
     return rec
+
+
+def _physical(ks, verifier, jid, rec, physical, destroy_key, hb):
+    """Key purge (coalesced: covers every key deleted before it) then the verifier; returns the error type or None."""
+    v = verifier or Verifier()
+    ts, attempts = time.time(), 0
+    while True:
+        attempts += 1
+        if hb.lost.is_set():
+            raise ClaimLost(jid)
+        wait = PHYS_INLINE_S if physical == "followup" else PHYS_WAIT_S
+        if destroy_key:
+            rec["steps"]["key_purge"] = ks.purge(timeout_s=wait)
+        tv = time.time()
+        res = v.complete(jid, wait_s=wait)
+        rec["steps"]["verify_s"] = round(time.time() - tv, 3)
+        rec["steps"]["expunge"] = res.get("expunge")
+        rec["steps"]["verify_timings"] = res.get("timings")
+        rec.update(done=bool(res["done"]), receipt_state=res.get("receipt_state", "residue"), verify=res.get("verify"),
+                   residue=res.get("residue"), scope=res.get("scope"), holds=res.get("holds"), delay_s=res.get("delay_s"),
+                   logical_at=res.get("logical_at"), physical_deadline=res.get("physical_deadline"),
+                   physical_pending=res.get("physical_pending"), logical_delay_s=res.get("logical_delay_s"))
+        rec["steps"]["physical_attempts"], rec["steps"]["physical_s"] = attempts, round(time.time() - ts, 3)
+        if res["done"]:
+            return None
+        if res.get("receipt_state") != "logically_erased_physical_purge_pending":
+            return "residue"
+        if res.get("overdue"):
+            return "physical_purge_overdue"
+        if physical == "followup":
+            return None
 
 
 def erase(conn, ks, es, tenant, subject_id, **kw):
