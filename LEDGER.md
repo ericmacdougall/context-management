@@ -21,6 +21,12 @@ observation with no control; **overturned** = an earlier pass was withdrawn afte
 | One fact extraction call per session | 9.0 facts per session at 1 per call | owner-reported | feat/phasef-harness |
 | Agent Builder pre-execution workflow as the injection point | Rewritten prompt reaches the model as the one user message | observed (Kibana 9.5.6) | feat/ports-adapters d8f714b |
 
+| Tenant boundary in the adapters (index naming, wildcard and encoded names refused, tenant term forced) | 100 names over 2 prefixes, 0 collisions; original reproducers refused | reviewed (local probes) | fix/adapters-delta-16096 c20e208 |
+| Subscription gate: exact-type allow-list, read-only backend copy, gate re-run per request | Forwarder, subclass, instance-attribute and class-reassignment attacks refused; post-construction backend gets 404 or 503 | reviewed (local probes) | c20e208 |
+| Inbox claim with fencing token and 330 s renewable lease | Second turn at +40 s and +300 s gets nothing on both stores; forged token and superseded claimant confirm 0 | reviewed (local probes) | c20e208 |
+| Session-id egress guard on every outbound path, failing closed without its id list | 8 variants and all container types blocked; missing id file refuses everything | reviewed (local probes); pattern gaps remain (homoglyphs, encodings) and real ids are off by default | c20e208 |
+| Memory block always well-formed or empty | 1,716 renders across budgets, 0 malformed | reviewed (local probes) | c20e208 |
+
 ## Did not hold
 
 | Idea | What happened | Class | Consequence for the design |
