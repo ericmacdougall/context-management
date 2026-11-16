@@ -1,0 +1,98 @@
+{
+ "provenance": {
+  "git_commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "git_dirty": false,
+  "run_id": "r1794795535x1160468",
+  "started_at": "2026-11-16T02:18:55Z",
+  "ended_at": "2026-11-16T02:45:03Z",
+  "host": "t2-dev",
+  "argv": [
+   "n3",
+   "--code",
+   "new",
+   "--sessions",
+   "200",
+   "--minutes",
+   "25"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-54440",
+     "cli": "1.7.3",
+     "db": "n3new-1794795535.db",
+     "port": 54440,
+     "at": 0.026206493377685547
+    }
+   ],
+   "workers": [
+    {
+     "name": "n3w-1160468",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "n3",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.328126907348633
+    }
+   ],
+   "params": {
+    "code": "new",
+    "idle_sessions": 200,
+    "observe_minutes": 25.0,
+    "reconcile_s": 20,
+    "reconcile_max_s": 600
+   }
+  }
+ },
+ "id": "N3-idle-cost-new",
+ "sessions": 200,
+ "marks": [
+  {
+   "t_s": 0,
+   "mean_history_events": 22.0,
+   "cpu_ticks": 616,
+   "pg_xacts": 1163394
+  },
+  {
+   "t_s": 750,
+   "mean_history_events": 55.0,
+   "cpu_ticks": 1532,
+   "pg_xacts": 1212926
+  },
+  {
+   "t_s": 1500,
+   "mean_history_events": 66.0,
+   "cpu_ticks": 1926,
+   "pg_xacts": 1237413
+  }
+ ],
+ "windows": [
+  {
+   "window_s": [
+    0,
+    750
+   ],
+   "events_per_session_per_hour": 158.4,
+   "events_per_session_per_day": 3802,
+   "worker_cpu_s_per_1000_sessions_per_hour": 219.8,
+   "postgres_transactions_per_s_all_clients": 66.0
+  },
+  {
+   "window_s": [
+    750,
+    1500
+   ],
+   "events_per_session_per_hour": 52.8,
+   "events_per_session_per_day": 1267,
+   "worker_cpu_s_per_1000_sessions_per_hour": 94.6,
+   "postgres_transactions_per_s_all_clients": 32.6
+  }
+ ],
+ "note": "a session that is idle for a day still replays a growing history; events per day set the continue-as-new cadence"
+}

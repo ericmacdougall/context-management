@@ -1,0 +1,104 @@
+{
+ "provenance": {
+  "git_commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "git_dirty": false,
+  "run_id": "r1794795236x1097108",
+  "started_at": "2026-11-16T02:13:56Z",
+  "ended_at": "2026-11-16T02:21:51Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4d",
+   "--turns",
+   "1500",
+   "--rate",
+   "12"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-57360",
+     "cli": "1.7.3",
+     "db": "f4dv1-1794795236.db",
+     "port": 57360,
+     "at": 0.0018439292907714844
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4dA-1097108",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4d",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6042592525482178
+    }
+   ],
+   "params": {
+    "turns": 1500,
+    "inject_rate_per_s": 12.0,
+    "can_len": 0,
+    "variant": "v1"
+   }
+  }
+ },
+ "id": "F4d",
+ "variant": "v1",
+ "wall_s": 472.4,
+ "inject_s": 154.1,
+ "signals_acknowledged_by_server": 1500,
+ "workflow_result": {
+  "alert": "",
+  "approval": "none",
+  "cans": 7,
+  "code": "v1",
+  "dead": 0,
+  "dead_failed": 0,
+  "erased": false,
+  "rejected": 0,
+  "rollups": 0,
+  "sig": 1500,
+  "turns": 1500
+ },
+ "workflow_status": {
+  "COMPLETED": 1
+ },
+ "runs": 8,
+ "continue_as_new_boundaries": 7,
+ "max_run_history_events": 4121,
+ "total_history_events": 30988,
+ "events_per_turn": 20.66,
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "verify": {
+  "tag": "ke7588d",
+  "tenant": "t1",
+  "sessions": 1,
+  "expect_turns_each": 1500,
+  "problems": [],
+  "inputs_total": 1500,
+  "result_events": 1500,
+  "result_keys": 1500,
+  "ledger_rows": 1500,
+  "effect_rows": 1500,
+  "external_calls": 1500,
+  "redundant_external_calls": 0,
+  "chains_verified": 1,
+  "payload_check_this_run": {
+   "run_id": "r1794795236x1097108",
+   "processes_reporting": 2,
+   "payloads_inspected_at_least": 26483,
+   "rejected": 0,
+   "max_payload_bytes": 2293
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

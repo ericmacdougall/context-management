@@ -1,0 +1,265 @@
+{
+ "provenance": {
+  "git_commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "git_dirty": false,
+  "run_id": "r1794794869x1064399",
+  "started_at": "2026-11-16T02:07:49Z",
+  "ended_at": "2026-11-16T02:10:23Z",
+  "host": "t2-dev",
+  "argv": [
+   "--code",
+   "new"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-55800",
+     "cli": "1.7.3",
+     "db": "it-new-91064399.db",
+     "port": 55800,
+     "at": 0.0010752677917480469
+    }
+   ],
+   "workers": [
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-m1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.61187744140625
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-m2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 47.14691352844238
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-m4",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 61.18303036689758
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-h3",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 68.70124340057373
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-l1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 82.12450456619263
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-l2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 107.5640332698822
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1c",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-l3",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 114.96323871612549
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-n2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 128.34431719779968
+    },
+    {
+     "name": "w-1064399",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-91064399-m4b",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_FAIL_DEAD_LETTER": "1"
+     },
+     "at": 139.80917763710022
+    }
+   ],
+   "params": {}
+  }
+ },
+ "code": "new",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "dirty": false
+ },
+ "task_queue": "it-new-91064399-m4b",
+ "cases": {
+  "m1": {
+   "processed_within_s": 38.1,
+   "idle_session_results": {
+    "m191064399-0001": 1,
+    "m191064399-0002": 1,
+    "m191064399-0003": 1,
+    "m191064399-0004": 1,
+    "m191064399-0005": 1,
+    "m191064399-0006": 1
+   },
+   "order_session_results": [
+    "t1/m1o91064399-0001/2",
+    "t1/m1o91064399-0001/3",
+    "t1/m1o91064399-0001/4"
+   ],
+   "order_expected": [
+    "t1/m1o91064399-0001/2",
+    "t1/m1o91064399-0001/3",
+    "t1/m1o91064399-0001/4"
+   ],
+   "passed": true,
+   "seconds": 44.3
+  },
+  "m2": {
+   "grant_to_resolution_s": 10.0,
+   "grant_result": "granted",
+   "approval_deadline_s": 120,
+   "passed": true,
+   "seconds": 13.9
+  },
+  "m4": {
+   "erased_session_status": "COMPLETED",
+   "control_session_status": "COMPLETED",
+   "waited_s": 2.0,
+   "passed": true,
+   "seconds": 7.2
+  },
+  "h3": {
+   "results_in_A": 0,
+   "results_in_B": 1,
+   "A_history_events": 24,
+   "A_signals_received": 2,
+   "A_activities_scheduled": 2,
+   "passed": true,
+   "seconds": 13.1
+  },
+  "l1": {
+   "results_in_postgres": 6,
+   "workflow_status": "COMPLETED",
+   "workflow_result": {
+    "alert": "",
+    "approval": "none",
+    "cans": 3,
+    "code": "v1",
+    "dead": 0,
+    "dead_failed": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 7,
+    "turns": 6
+   },
+   "passed": true,
+   "seconds": 25.2
+  },
+  "l2": {
+   "workflow_status": "COMPLETED",
+   "results": 5,
+   "passed": true,
+   "seconds": 7.1
+  },
+  "l3": {
+   "doorbells_sent": 11,
+   "workflow_result": {
+    "alert": "",
+    "approval": "none",
+    "cans": 5,
+    "code": "v1c",
+    "dead": 0,
+    "dead_failed": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 11,
+    "turns": 11
+   },
+   "results_in_postgres": 11,
+   "history_debug": null,
+   "passed": true,
+   "seconds": 13.2
+  },
+  "n2": {
+   "results": 7,
+   "processed_within_s": 1.0,
+   "passed": true,
+   "seconds": 11.2
+  },
+  "m4b": {
+   "workflow_status": "COMPLETED",
+   "workflow_result": {
+    "alert": "dead_letter_failed:SubjectErased:t1/m4b91064399-0001/2",
+    "approval": "none",
+    "cans": 0,
+    "code": "v1",
+    "dead": 0,
+    "dead_failed": 1,
+    "erased": true,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 1,
+    "turns": 1
+   },
+   "passed": true,
+   "seconds": 13.1
+  }
+ },
+ "all_passed": true
+}

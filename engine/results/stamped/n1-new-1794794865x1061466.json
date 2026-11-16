@@ -1,0 +1,266 @@
+{
+ "provenance": {
+  "git_commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "git_dirty": false,
+  "run_id": "r1794794865x1061466",
+  "started_at": "2026-11-16T02:07:45Z",
+  "ended_at": "2026-11-16T02:21:56Z",
+  "host": "t2-dev",
+  "argv": [
+   "n1",
+   "--code",
+   "new",
+   "--to",
+   "7200",
+   "--poll",
+   "0.5",
+   "--poll-max",
+   "0.5",
+   "--minutes",
+   "20"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-50480",
+     "cli": "1.7.3",
+     "db": "n1new-1794794865.db",
+     "port": 50480,
+     "at": 0.016594409942626953
+    }
+   ],
+   "workers": [
+    {
+     "name": "n1w-1061466",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "n1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.618846893310547
+    },
+    {
+     "name": "n1w-1061466",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "n1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 397.3131422996521
+    }
+   ],
+   "params": {
+    "code": "new",
+    "approval_timeout_s": 7200.0,
+    "approval_poll_s": 0.5,
+    "approval_poll_max_s": 0.5,
+    "observe_minutes": 20.0
+   }
+  }
+ },
+ "id": "N1-approval-wait-new",
+ "code_tree": "/home/eric/emlab-16096/engine/code",
+ "series": [
+  {
+   "t_s": 30,
+   "history_length": 350,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 60,
+   "history_length": 658,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 90,
+   "history_length": 977,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 120,
+   "history_length": 1296,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 150,
+   "history_length": 1615,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 180,
+   "history_length": 1921,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 210,
+   "history_length": 2231,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 240,
+   "history_length": 2550,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 270,
+   "history_length": 2858,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 300,
+   "history_length": 3177,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 330,
+   "history_length": 3496,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 360,
+   "history_length": 3804,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 390,
+   "history_length": 17,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 424,
+   "history_length": 338,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 454,
+   "history_length": 646,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 484,
+   "history_length": 965,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 514,
+   "history_length": 1273,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 544,
+   "history_length": 1592,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 574,
+   "history_length": 1900,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 604,
+   "history_length": 2219,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 634,
+   "history_length": 2516,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 664,
+   "history_length": 2802,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 694,
+   "history_length": 3110,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 724,
+   "history_length": 3418,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 754,
+   "history_length": 3726,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 784,
+   "history_length": 4045,
+   "status": "RUNNING",
+   "runs": 2
+  },
+  {
+   "t_s": 814,
+   "history_length": 248,
+   "status": "RUNNING",
+   "runs": 3
+  },
+  {
+   "t_s": 845,
+   "history_length": 296,
+   "status": "COMPLETED",
+   "runs": 3
+  }
+ ],
+ "events": [
+  {
+   "t_s": 394,
+   "what": "worker abrupt exit during the wait",
+   "exit_code": 137,
+   "runs": 2
+  },
+  {
+   "t_s": 814,
+   "what": "grant after the boundaries and the exit",
+   "result": "granted",
+   "runs": 3
+  }
+ ],
+ "peak_history_length_observed": 4045,
+ "growth_events_per_s_first_to_last_sample": -0.07,
+ "hours_to_hard_limit_at_that_rate": null,
+ "approval_granted_events": 1,
+ "turn_results": 2,
+ "final_status": "COMPLETED",
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "PASS": true
+}

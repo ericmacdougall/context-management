@@ -1,0 +1,61 @@
+{
+ "provenance": {
+  "git_commit": "901cdad66bed3ffb3b42e28e81965eed87033e34",
+  "git_dirty": false,
+  "run_id": "r1794798285x1452854",
+  "started_at": "2026-11-16T03:04:45Z",
+  "ended_at": "2026-11-16T03:05:03Z",
+  "host": "t2-dev",
+  "argv": [
+   "--code",
+   "new",
+   "--cases",
+   "m2"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-50320",
+     "cli": "1.7.3",
+     "db": "it-new-51452854.db",
+     "port": 50320,
+     "at": 0.0017549991607666016
+    }
+   ],
+   "workers": [
+    {
+     "name": "w-1452854",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-51452854-m2",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.336928606033325
+    }
+   ],
+   "params": {}
+  }
+ },
+ "code": "new",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "901cdad66bed3ffb3b42e28e81965eed87033e34",
+  "dirty": false
+ },
+ "task_queue": "it-new-51452854-m2",
+ "cases": {
+  "m2": {
+   "grant_to_resolution_s": 10.0,
+   "grant_result": "granted",
+   "approval_deadline_s": 120,
+   "passed": true,
+   "seconds": 13.8
+  }
+ },
+ "all_passed": true
+}

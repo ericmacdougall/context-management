@@ -1,0 +1,117 @@
+{
+ "provenance": {
+  "git_commit": "6da1475d870d14bf4812bbe10b70d1f532280675",
+  "git_dirty": false,
+  "run_id": "r1794796126x1260865",
+  "started_at": "2026-11-16T02:28:46Z",
+  "ended_at": "2026-11-16T02:29:25Z",
+  "host": "t2-dev",
+  "argv": [
+   "f7pgctl"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-54760",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.31.5",
+     "label": "1.7.3",
+     "database": "tf7pgctl1794796126db",
+     "port": 54760,
+     "container": "emlab-temporal-16096-54760",
+     "schema_before": null,
+     "schema_after": {
+      "tf7pgctl1794796126db": "1.19",
+      "tf7pgctl1794796126db_vis": "1.14"
+     },
+     "schema_tool": [
+      [
+       "create tf7pgctl1794796126db",
+       ""
+      ],
+      [
+       "setup tf7pgctl1794796126db",
+       ".493Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T02:28:47.493Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf7pgctl1794796126db",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:28:48.042Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.18 to 1.19\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:28:48.042Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "create tf7pgctl1794796126db_vis",
+       ""
+      ],
+      [
+       "setup tf7pgctl1794796126db_vis",
+       ".178Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T02:28:49.179Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf7pgctl1794796126db_vis",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:28:50.075Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.13 to 1.14\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:28:50.075Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 11.690386295318604
+    },
+    {
+     "name": "server-54760",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.32.2",
+     "label": "1.10.1",
+     "database": "tf7pgctl1794796126db",
+     "port": 54760,
+     "container": "emlab-temporal-16096-54760",
+     "schema_before": {
+      "tf7pgctl1794796126db": "1.19",
+      "tf7pgctl1794796126db_vis": "1.14"
+     },
+     "schema_after": {
+      "tf7pgctl1794796126db": "1.19",
+      "tf7pgctl1794796126db_vis": "1.14"
+     },
+     "schema_tool": [
+      [
+       "update tf7pgctl1794796126db",
+       "rk/temporal/temporal/tools/common/schema/updatetask.go:188\"}\n2026-11-16T02:29:09.072Z\t\u001b[35mDEBUG\u001b[0m\tfound zero updates from current version 1.19\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:110\"}\n2026-11-16T02:29:09.072Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "update tf7pgctl1794796126db_vis",
+       "rk/temporal/temporal/tools/common/schema/updatetask.go:188\"}\n2026-11-16T02:29:09.700Z\t\u001b[35mDEBUG\u001b[0m\tfound zero updates from current version 1.14\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:110\"}\n2026-11-16T02:29:09.700Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 29.216380834579468
+    }
+   ],
+   "workers": [],
+   "params": {
+    "servers": "temporalio/server 1.31.5 then 1.32.2"
+   }
+  }
+ },
+ "id": "F7-postgres-upgrade-controls",
+ "schema_versions_initial": {
+  "tf7pgctl1794796126db": "1.19",
+  "tf7pgctl1794796126db_vis": "1.14"
+ },
+ "schema_versions_after_documented_upgrade": {
+  "tf7pgctl1794796126db": "1.19",
+  "tf7pgctl1794796126db_vis": "1.14"
+ },
+ "control_A_skipped_schema_update": {
+  "attempt": "A: 1.32.2 on the 1.31 schema, schema tool skipped",
+  "server": "1.32.2",
+  "running_after_wait": "true 0",
+  "port_opened_and_stayed_up": true,
+  "log_tail": "oral.io/server/common/nexus.(*EndpointRegistryImpl).refreshEndpoints\\n\\t/home/runner/work/temporal/temporal/common/nexus/endpoint_registry.go:307\\ngo.temporal.io/server/common/backoff.ThrottleRetryContext\\n\\t/home/runner/work/temporal/temporal/common/backoff/retry.go:69\\ngo.temporal.io/server/common/nexus.(*EndpointRegistryImpl).refreshEndpointsLoop\\n\\t/home/runner/work/temporal/temporal/common/nexus/endpoint_registry.go:249\\ngo.temporal.io/server/common/nexus.(*EndpointRegistryImpl).setEnabled.func1\\n\\t/home/runner/work/temporal/temporal/common/nexus/endpoint_registry.go:134\\ngo.temporal.io/server/common/goro.(*Handle).Go.func1\\n\\t/home/runner/work/temporal/temporal/common/goro/goro.go:40\"}"
+ },
+ "control_B_downgrade": {
+  "attempt": "B: 1.31.5 on the upgraded 1.32 schema (downgrade)",
+  "server": "1.31.5",
+  "running_after_wait": "true 0",
+  "port_opened_and_stayed_up": true,
+  "log_tail": "{\"level\":\"warn\",\"ts\":\"2026-11-16T02:29:17.586Z\",\"msg\":\"HTTP API port has not been set. Nexus HTTP endpoints will not be available. To enable Nexus, follow these instructions: https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md#enabling-nexus.\",\"service\":\"frontend\",\"logging-call-at\":\"/home/runner/work/temporal/temporal/service/frontend/service.go:493\"}"
+ },
+ "control_A_refused": false,
+ "control_B_refused": false
+}

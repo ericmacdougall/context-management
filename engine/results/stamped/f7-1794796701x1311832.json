@@ -1,0 +1,247 @@
+{
+ "provenance": {
+  "git_commit": "f5445dd60ee8d5b43c451f67f1e1ba7433a2f9bc",
+  "git_dirty": false,
+  "run_id": "r1794796701x1311832",
+  "started_at": "2026-11-16T02:38:21Z",
+  "ended_at": "2026-11-16T02:45:39Z",
+  "host": "t2-dev",
+  "argv": [
+   "f7",
+   "--pg-old",
+   "1.30.9",
+   "--pg-new",
+   "1.31.5"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-59680",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.30.9",
+     "label": "1.7.3",
+     "database": "tf71794796701db",
+     "port": 59680,
+     "container": "emlab-temporal-16096-59680",
+     "schema_before": null,
+     "schema_after": {
+      "tf71794796701db": "1.18",
+      "tf71794796701db_vis": "1.13"
+     },
+     "schema_tool": [
+      [
+       "create tf71794796701db",
+       ""
+      ],
+      [
+       "setup tf71794796701db",
+       ".386Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T02:38:22.387Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf71794796701db",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:38:22.892Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.17 to 1.18\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:38:22.892Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "create tf71794796701db_vis",
+       ""
+      ],
+      [
+       "setup tf71794796701db_vis",
+       ".950Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T02:38:23.950Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf71794796701db_vis",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:38:24.764Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.12 to 1.13\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:38:24.764Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 11.494738817214966
+    },
+    {
+     "name": "server-59680",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.31.5",
+     "label": "1.10.1",
+     "database": "tf71794796701db",
+     "port": 59680,
+     "container": "emlab-temporal-16096-59680",
+     "schema_before": {
+      "tf71794796701db": "1.18",
+      "tf71794796701db_vis": "1.13"
+     },
+     "schema_after": {
+      "tf71794796701db": "1.19",
+      "tf71794796701db_vis": "1.14"
+     },
+     "schema_tool": [
+      [
+       "update tf71794796701db",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:39:35.463Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.18 to 1.19\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:39:35.463Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "update tf71794796701db_vis",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:39:36.184Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.13 to 1.14\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:39:36.184Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 80.88190412521362
+    }
+   ],
+   "workers": [
+    {
+     "name": "f7a-1311832",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "sdk-1.31.0",
+     "task_queue": "f7",
+     "code_dir": "/home/eric/emlab-16096/engine/code2",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.03"
+     },
+     "at": 11.495229244232178
+    },
+    {
+     "name": "f7b-1311832",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "sdk-1.36.1",
+     "task_queue": "f7",
+     "code_dir": "/home/eric/emlab-16096/engine/code2",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.03"
+     },
+     "at": 181.82057571411133
+    }
+   ],
+   "params": {
+    "busy_sessions": 80,
+    "turns_each": 30,
+    "period_s": 10,
+    "approval_sessions": 15,
+    "rollup_sessions": 15,
+    "approval_timeout_s": 200,
+    "rollup_s": 150,
+    "server_upgrade_at_s": 60,
+    "sdk_swap_at_s": 170,
+    "server_from": "1.30.9",
+    "server_to": "1.31.5"
+   }
+  }
+ },
+ "id": "F7",
+ "from": {
+  "server": "1.30.9",
+  "sdk": "temporalio 1.31.0"
+ },
+ "to": {
+  "server": "1.31.5",
+  "sdk": "temporalio 1.36.1"
+ },
+ "events": [
+  {
+   "t": 60.5,
+   "what": "server 1.30.9 -> 1.31.5: temporal-sql-tool update-schema, then the new server",
+   "downtime_s": 8.9
+  },
+  {
+   "t": 85.1,
+   "what": "approved half of the parked approval sessions",
+   "grant_results": {
+    "granted": 7
+   }
+  },
+  {
+   "t": 170.0,
+   "what": "SDK 1.31.0 -> 1.36.1 (worker swap)",
+   "gap_s": 0.3
+  }
+ ],
+ "persistence": "Postgres persistence, schema updated with temporal-sql-tool of the target version before the server started (see provenance.recorded.servers[*].schema_before/schema_after)",
+ "statuses": [
+  {
+   "COMPLETED": 80
+  },
+  {
+   "COMPLETED": 15
+  },
+  {
+   "COMPLETED": 15
+  }
+ ],
+ "verify_A": {
+  "tag": "ua1d453a",
+  "tenant": "t1",
+  "sessions": 80,
+  "expect_turns_each": 30,
+  "problems": [],
+  "inputs_total": 2400,
+  "result_events": 2400,
+  "result_keys": 2400,
+  "ledger_rows": 2400,
+  "effect_rows": 2400,
+  "external_calls": 2400,
+  "redundant_external_calls": 0,
+  "chains_verified": 80,
+  "payload_check_this_run": {
+   "run_id": "r1794796701x1311832",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 303983,
+   "rejected": 0,
+   "max_payload_bytes": 331
+  },
+  "PASS": true
+ },
+ "verify_P": {
+  "tag": "ub1d453a",
+  "tenant": "t1",
+  "sessions": 15,
+  "expect_turns_each": 4,
+  "problems": [],
+  "inputs_total": 60,
+  "result_events": 60,
+  "result_keys": 60,
+  "ledger_rows": 60,
+  "effect_rows": 60,
+  "external_calls": 60,
+  "redundant_external_calls": 0,
+  "chains_verified": 15,
+  "payload_check_this_run": {
+   "run_id": "r1794796701x1311832",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 303983,
+   "rejected": 0,
+   "max_payload_bytes": 331
+  },
+  "PASS": true
+ },
+ "timers": {
+  "approvals_exactly_once_and_correct": true,
+  "rollups_exactly_once": true,
+  "timer_lateness_s_min_max": [
+   0.8,
+   22.8
+  ],
+  "granted_resolution_latency_s_min_max": [
+   0.0,
+   0.1
+  ],
+  "granted": 7,
+  "timed_out": 8
+ },
+ "external_calls_by_worker": {
+  "sdk-1.31.0": 1322,
+  "sdk-1.36.1": 1078
+ },
+ "new_server_log_error_lines": 0,
+ "new_server_log_error_samples": [],
+ "driver": {
+  "appended": 2460,
+  "signaled": 2460,
+  "retries": 0
+ },
+ "PASS": true
+}

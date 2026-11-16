@@ -1,0 +1,122 @@
+{
+ "provenance": {
+  "git_commit": "d50b1071b8948b88b91119c04c4bfe62fe8bd4c8",
+  "git_dirty": false,
+  "run_id": "r1794797994x1434163",
+  "started_at": "2026-11-16T02:59:54Z",
+  "ended_at": "2026-11-16T03:00:32Z",
+  "host": "t2-dev",
+  "argv": [
+   "n6",
+   "--mode",
+   "brokenkeys"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-51680",
+     "cli": "1.7.3",
+     "db": "n6brokenkeys-1794797994.db",
+     "port": 51680,
+     "at": 0.021009206771850586
+    }
+   ],
+   "workers": [
+    {
+     "name": "n6A-1434163",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "workerA",
+     "task_queue": "n6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_PAUSE_FILE": "/home/eric/emlab-16096/engine/run/pause-r1794797994x1434163",
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_BROKEN_KEYS": "1"
+     },
+     "at": 2.623807668685913
+    },
+    {
+     "name": "n6B-1434163",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "workerB",
+     "task_queue": "n6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_BROKEN_KEYS": "1"
+     },
+     "at": 2.6249523162841797
+    }
+   ],
+   "params": {
+    "sessions": 10,
+    "turns_each": 6,
+    "period_s": 3,
+    "hold_s": 28,
+    "start_to_close_s": 8,
+    "mode": "brokenkeys"
+   }
+  }
+ },
+ "id": "N6-zombie-brokenkeys",
+ "hold_s": 28,
+ "activities_timed_out_in_history": 0,
+ "activities_completed_by_identity": {
+  "workerA": 109,
+  "workerB": 101
+ },
+ "worker_A_resumes": 10,
+ "worker_A_late_completion_rejections_logged": 7,
+ "worker_A_log_samples": [
+  "\u001b[2m2026-11-16T03:00:25.636796Z\u001b[0m \u001b[33m WARN\u001b[0m \u001b[2mtemporalio_sdk_core::worker::activities\u001b[0m\u001b[2m:\u001b[0m Activity not found on completion. This may happen if the activity has already been cancelled but completed anywa",
+  "\u001b[2m2026-11-16T03:00:25.650607Z\u001b[0m \u001b[33m WARN\u001b[0m \u001b[2mtemporalio_sdk_core::worker::activities\u001b[0m\u001b[2m:\u001b[0m Activity not found on completion. This may happen if the activity has already been cancelled but completed anywa",
+  "\u001b[2m2026-11-16T03:00:25.658593Z\u001b[0m \u001b[33m WARN\u001b[0m \u001b[2mtemporalio_sdk_core::worker::activities\u001b[0m\u001b[2m:\u001b[0m Activity not found on completion. This may happen if the activity has already been cancelled but completed anywa"
+ ],
+ "statuses": {
+  "COMPLETED": 10
+ },
+ "verify": {
+  "tag": "n6b20e99f",
+  "tenant": "t1",
+  "sessions": 10,
+  "expect_turns_each": 6,
+  "problems": [
+   "ledger duplicates: 13",
+   "effects rows per input != 1: 7"
+  ],
+  "inputs_total": 60,
+  "result_events": 60,
+  "result_keys": 60,
+  "ledger_rows": 82,
+  "effect_rows": 67,
+  "external_calls": 82,
+  "redundant_external_calls": 0,
+  "chains_verified": 10,
+  "payload_check_this_run": {
+   "run_id": "r1794797994x1434163",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 1087,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": false
+ },
+ "ledger_duplicates_problem": [
+  "ledger duplicates: 13"
+ ],
+ "verify_PASS_expected": false,
+ "task_redispatched_evidence": {
+  "redundant_external_calls": 0,
+  "ledger_rows": 82,
+  "inputs": 60
+ },
+ "as_expected": true
+}

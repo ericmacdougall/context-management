@@ -1,0 +1,128 @@
+{
+ "provenance": {
+  "git_commit": "6da1475d870d14bf4812bbe10b70d1f532280675",
+  "git_dirty": false,
+  "run_id": "r1794795133x1086411",
+  "started_at": "2026-11-16T02:12:13Z",
+  "ended_at": "2026-11-16T02:14:58Z",
+  "host": "t2-dev",
+  "argv": [
+   "f4t",
+   "--mode",
+   "ok"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-54280",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.31.5",
+     "label": "1.7.3",
+     "database": "tf4tok1794795133db",
+     "port": 54280,
+     "container": "emlab-temporal-16096-54280",
+     "schema_before": null,
+     "schema_after": {
+      "tf4tok1794795133db": "1.19",
+      "tf4tok1794795133db_vis": "1.14"
+     },
+     "schema_tool": [
+      [
+       "create tf4tok1794795133db",
+       ""
+      ],
+      [
+       "setup tf4tok1794795133db",
+       ".168Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T02:12:16.168Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf4tok1794795133db",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:12:16.748Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.18 to 1.19\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:12:16.748Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "create tf4tok1794795133db_vis",
+       ""
+      ],
+      [
+       "setup tf4tok1794795133db_vis",
+       ".894Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T02:12:17.894Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf4tok1794795133db_vis",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T02:12:18.816Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.13 to 1.14\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T02:12:18.816Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 12.980318307876587
+    }
+   ],
+   "workers": [
+    {
+     "name": "f4tok-1086411",
+     "kind": "loop",
+     "venv": "venv-old",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "f4t",
+     "crashes": 0,
+     "seed": 5,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_CRASH_IN_GAP": "0.02",
+      "ENGINE_CRASH_AFTER_APPEND": "0.02"
+     },
+     "at": 12.980741739273071
+    }
+   ],
+   "params": {
+    "sessions": 40,
+    "turns_each": 20,
+    "period_s": 6,
+    "mode": "ok",
+    "crash_in_effect_gap_p": 0.02,
+    "crash_after_append_p": 0.02
+   }
+  }
+ },
+ "id": "F4a-targeted-ok",
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "exits": {
+  "exits": 35,
+  "by_window": {
+   "result_committed_not_acked": 20,
+   "effect_applied_not_recorded": 15
+  },
+  "with_activity_in_flight": 35,
+  "in_turn_effect": 28,
+  "in_turn_append": 25
+ },
+ "verify": {
+  "tag": "ta153a87",
+  "tenant": "t1",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 850,
+  "redundant_external_calls": 50,
+  "chains_verified": 40,
+  "payload_check_this_run": {
+   "run_id": "r1794795133x1086411",
+   "processes_reporting": 33,
+   "payloads_inspected_at_least": 71742,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "problems_sample": [],
+ "verify_PASS_expected": true,
+ "as_expected": true
+}

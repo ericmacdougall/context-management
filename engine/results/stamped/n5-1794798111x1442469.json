@@ -1,0 +1,128 @@
+{
+ "provenance": {
+  "git_commit": "901cdad66bed3ffb3b42e28e81965eed87033e34",
+  "git_dirty": false,
+  "run_id": "r1794798111x1442469",
+  "started_at": "2026-11-16T03:01:51Z",
+  "ended_at": "2026-11-16T03:04:26Z",
+  "host": "t2-dev",
+  "argv": [
+   "n5"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-53600",
+     "cli": "1.7.3",
+     "db": "n5-1794798111.db",
+     "port": 53600,
+     "at": 0.027313709259033203
+    }
+   ],
+   "workers": [
+    {
+     "name": "n5w-1442469",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "n5",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05",
+      "ENGINE_ERR_LOG": "/home/eric/emlab-16096/engine/logs/n5-r1794798111x1442469.errors"
+     },
+     "at": 2.3293116092681885
+    }
+   ],
+   "params": {
+    "sessions": 40,
+    "turns_each": 20,
+    "period_s": 6,
+    "pg_crash_at_s": [
+     25,
+     60
+    ],
+    "worker_exit_knobs": "none",
+    "effect_gap_s": 0.05
+   }
+  }
+ },
+ "id": "N5-postgres-crash",
+ "crashes": [
+  {
+   "at_s": 25.0,
+   "stop_rc": 0,
+   "exit_code_and_oom": "137 oom=false",
+   "start_rc": 0,
+   "before": {
+    "active": 1,
+    "idle_in_transaction": 0,
+    "clients": 15,
+    "postmaster_start": "2026-11-16 00:38:01.499334+00:00"
+   },
+   "after": {
+    "active": 1,
+    "idle_in_transaction": 0,
+    "clients": 1,
+    "postmaster_start": "2026-11-16 03:02:23.829601+00:00"
+   },
+   "postmaster_restarted": true
+  },
+  {
+   "at_s": 60.0,
+   "stop_rc": 0,
+   "exit_code_and_oom": "137 oom=false",
+   "start_rc": 0,
+   "before": {
+    "active": 1,
+    "idle_in_transaction": 0,
+    "clients": 17,
+    "postmaster_start": "2026-11-16 03:02:23.829601+00:00"
+   },
+   "after": {
+    "active": 1,
+    "idle_in_transaction": 0,
+    "clients": 1,
+    "postmaster_start": "2026-11-16 03:02:58.829511+00:00"
+   },
+   "postmaster_restarted": true
+  }
+ ],
+ "activity_transient_errors_by_class": {
+  "OperationalError": 1,
+  "AdminShutdown": 7
+ },
+ "activity_transient_errors": 8,
+ "driver_postgres_retries": 16,
+ "statuses": {
+  "COMPLETED": 40
+ },
+ "verify": {
+  "tag": "n591656b",
+  "tenant": "t1",
+  "sessions": 40,
+  "expect_turns_each": 20,
+  "problems": [],
+  "inputs_total": 800,
+  "result_events": 800,
+  "result_keys": 800,
+  "ledger_rows": 800,
+  "effect_rows": 800,
+  "external_calls": 801,
+  "redundant_external_calls": 1,
+  "chains_verified": 40,
+  "payload_check_this_run": {
+   "run_id": "r1794798111x1442469",
+   "processes_reporting": 2,
+   "payloads_inspected_at_least": 13784,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "PASS": true
+}

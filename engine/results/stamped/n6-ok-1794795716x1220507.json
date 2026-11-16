@@ -1,0 +1,110 @@
+{
+ "provenance": {
+  "git_commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "git_dirty": false,
+  "run_id": "r1794795716x1220507",
+  "started_at": "2026-11-16T02:21:56Z",
+  "ended_at": "2026-11-16T02:22:35Z",
+  "host": "t2-dev",
+  "argv": [
+   "n6",
+   "--mode",
+   "ok"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-53440",
+     "cli": "1.7.3",
+     "db": "n6ok-1794795716.db",
+     "port": 53440,
+     "at": 0.0365753173828125
+    }
+   ],
+   "workers": [
+    {
+     "name": "n6A-1220507",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "workerA",
+     "task_queue": "n6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_PAUSE_FILE": "/home/eric/emlab-16096/engine/run/pause-r1794795716x1220507",
+      "ENGINE_EFFECT_GAP": "0.05"
+     },
+     "at": 3.239755630493164
+    },
+    {
+     "name": "n6B-1220507",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "workerB",
+     "task_queue": "n6",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_EFFECT_GAP": "0.05"
+     },
+     "at": 3.2406296730041504
+    }
+   ],
+   "params": {
+    "sessions": 10,
+    "turns_each": 6,
+    "period_s": 3,
+    "hold_s": 28,
+    "start_to_close_s": 8,
+    "mode": "ok"
+   }
+  }
+ },
+ "id": "N6-zombie-ok",
+ "hold_s": 28,
+ "activities_timed_out_in_history": 0,
+ "activities_completed_by_identity": {
+  "workerA": 97,
+  "workerB": 112
+ },
+ "worker_A_resumes": 10,
+ "worker_A_late_completion_rejections_logged": 5,
+ "worker_A_log_samples": [
+  "\u001b[2m2026-11-16T02:22:28.585510Z\u001b[0m \u001b[33m WARN\u001b[0m \u001b[2mtemporalio_sdk_core::worker::activities\u001b[0m\u001b[2m:\u001b[0m Activity not found on completion. This may happen if the activity has already been cancelled but completed anywa",
+  "\u001b[2m2026-11-16T02:22:28.586406Z\u001b[0m \u001b[33m WARN\u001b[0m \u001b[2mtemporalio_sdk_core::worker::activities\u001b[0m\u001b[2m:\u001b[0m Activity not found on completion. This may happen if the activity has already been cancelled but completed anywa",
+  "\u001b[2m2026-11-16T02:22:28.604304Z\u001b[0m \u001b[33m WARN\u001b[0m \u001b[2mtemporalio_sdk_core::worker::activities\u001b[0m\u001b[2m:\u001b[0m Activity not found on completion. This may happen if the activity has already been cancelled but completed anywa"
+ ],
+ "statuses": {
+  "COMPLETED": 10
+ },
+ "verify": {
+  "tag": "n6o91fdc3",
+  "tenant": "t1",
+  "sessions": 10,
+  "expect_turns_each": 6,
+  "problems": [],
+  "inputs_total": 60,
+  "result_events": 60,
+  "result_keys": 60,
+  "ledger_rows": 60,
+  "effect_rows": 60,
+  "external_calls": 80,
+  "redundant_external_calls": 20,
+  "chains_verified": 10,
+  "payload_check_this_run": {
+   "run_id": "r1794795716x1220507",
+   "processes_reporting": 3,
+   "payloads_inspected_at_least": 1082,
+   "rejected": 0,
+   "max_payload_bytes": 254
+  },
+  "PASS": true
+ },
+ "ledger_duplicates_problem": [],
+ "verify_PASS_expected": true,
+ "as_expected": false
+}

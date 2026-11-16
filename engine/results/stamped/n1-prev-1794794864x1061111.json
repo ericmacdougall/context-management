@@ -1,0 +1,673 @@
+{
+ "provenance": {
+  "git_commit": "4f2d9feacc197dc4f206425736e658690691084b",
+  "git_dirty": false,
+  "run_id": "r1794794864x1061111",
+  "started_at": "2026-11-16T02:07:44Z",
+  "ended_at": "2026-11-16T02:57:53Z",
+  "host": "t2-dev",
+  "argv": [
+   "n1",
+   "--code",
+   "prev",
+   "--to",
+   "7200",
+   "--poll",
+   "0.5",
+   "--poll-max",
+   "0.5",
+   "--minutes",
+   "50"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-57800",
+     "cli": "1.7.3",
+     "db": "n1prev-1794794864.db",
+     "port": 57800,
+     "at": 0.02019476890563965
+    }
+   ],
+   "workers": [
+    {
+     "name": "n1w-1061111",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "n1",
+     "code_dir": "/home/eric/emlab-16096/engine/prev",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.6223697662353516
+    }
+   ],
+   "params": {
+    "code": "prev",
+    "approval_timeout_s": 7200.0,
+    "approval_poll_s": 0.5,
+    "approval_poll_max_s": 0.5,
+    "observe_minutes": 50.0
+   }
+  }
+ },
+ "id": "N1-approval-wait-prev",
+ "code_tree": "/home/eric/emlab-16096/engine/prev",
+ "series": [
+  {
+   "t_s": 30,
+   "history_length": 361,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 60,
+   "history_length": 669,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 90,
+   "history_length": 977,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 120,
+   "history_length": 1296,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 150,
+   "history_length": 1615,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 180,
+   "history_length": 1928,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 210,
+   "history_length": 2242,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 240,
+   "history_length": 2561,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 270,
+   "history_length": 2869,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 300,
+   "history_length": 3188,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 330,
+   "history_length": 3496,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 361,
+   "history_length": 3815,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 391,
+   "history_length": 4123,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 421,
+   "history_length": 4433,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 451,
+   "history_length": 4750,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 481,
+   "history_length": 5069,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 511,
+   "history_length": 5377,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 541,
+   "history_length": 5693,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 571,
+   "history_length": 6004,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 601,
+   "history_length": 6312,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 631,
+   "history_length": 6609,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 661,
+   "history_length": 6895,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 691,
+   "history_length": 7214,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 721,
+   "history_length": 7522,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 751,
+   "history_length": 7830,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 781,
+   "history_length": 8138,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 811,
+   "history_length": 8446,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 841,
+   "history_length": 8754,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 871,
+   "history_length": 9051,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 901,
+   "history_length": 9370,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 931,
+   "history_length": 9689,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 961,
+   "history_length": 10005,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 991,
+   "history_length": 10316,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1021,
+   "history_length": 10635,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1051,
+   "history_length": 10943,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1081,
+   "history_length": 11262,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1111,
+   "history_length": 11570,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1141,
+   "history_length": 11889,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1171,
+   "history_length": 12208,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1201,
+   "history_length": 12527,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1232,
+   "history_length": 12835,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1262,
+   "history_length": 13154,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1292,
+   "history_length": 13473,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1322,
+   "history_length": 13792,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1352,
+   "history_length": 14100,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1382,
+   "history_length": 14419,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1412,
+   "history_length": 14738,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1442,
+   "history_length": 15057,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1472,
+   "history_length": 15365,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1502,
+   "history_length": 15684,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1532,
+   "history_length": 16003,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1562,
+   "history_length": 16311,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1592,
+   "history_length": 16630,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1622,
+   "history_length": 16947,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1652,
+   "history_length": 17257,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1682,
+   "history_length": 17576,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1712,
+   "history_length": 17895,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1742,
+   "history_length": 18203,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1772,
+   "history_length": 18522,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1802,
+   "history_length": 18841,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1832,
+   "history_length": 19160,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1862,
+   "history_length": 19468,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1892,
+   "history_length": 19787,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1922,
+   "history_length": 20106,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 1952,
+   "history_length": 20414,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 1982,
+   "history_length": 20733,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2012,
+   "history_length": 21052,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2042,
+   "history_length": 21360,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2072,
+   "history_length": 21679,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2102,
+   "history_length": 21998,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2132,
+   "history_length": 22306,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2162,
+   "history_length": 22625,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2192,
+   "history_length": 22944,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2222,
+   "history_length": 23252,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2253,
+   "history_length": 23571,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2283,
+   "history_length": 23890,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2313,
+   "history_length": 24198,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2343,
+   "history_length": 24517,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2373,
+   "history_length": 24836,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2403,
+   "history_length": 25144,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2433,
+   "history_length": 25463,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2463,
+   "history_length": 25782,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2493,
+   "history_length": 26090,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2523,
+   "history_length": 26409,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2553,
+   "history_length": 26728,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2583,
+   "history_length": 27047,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2613,
+   "history_length": 27355,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2643,
+   "history_length": 27674,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2673,
+   "history_length": 27993,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2703,
+   "history_length": 28309,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2733,
+   "history_length": 28620,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2763,
+   "history_length": 28939,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2793,
+   "history_length": 29258,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2823,
+   "history_length": 29566,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2853,
+   "history_length": 29885,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2883,
+   "history_length": 30193,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2913,
+   "history_length": 30512,
+   "status": "RUNNING",
+   "runs": 1
+  },
+  {
+   "t_s": 2943,
+   "history_length": 30831,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 2973,
+   "history_length": 31139,
+   "status": "RUNNING",
+   "runs": null
+  },
+  {
+   "t_s": 3003,
+   "history_length": 31458,
+   "status": "RUNNING",
+   "runs": null
+  }
+ ],
+ "events": [],
+ "peak_history_length_observed": 31458,
+ "growth_events_per_s_first_to_last_sample": 10.46,
+ "hours_to_hard_limit_at_that_rate": 1.35,
+ "approval_granted_events": 0,
+ "turn_results": 1,
+ "final_status": "RUNNING",
+ "doc_limits": {
+  "warn_events": 10240,
+  "hard_events": 51200
+ },
+ "defect_reproduced": true
+}

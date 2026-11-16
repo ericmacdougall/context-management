@@ -1,0 +1,108 @@
+{
+ "provenance": {
+  "git_commit": "7023d1105e3f1d3c2583856dcaf8ec0ca3c10579",
+  "git_dirty": false,
+  "run_id": "r1794794763x1033644",
+  "started_at": "2026-11-16T02:06:03Z",
+  "ended_at": "2026-11-16T02:07:16Z",
+  "host": "t2-dev",
+  "argv": [
+   "--code",
+   "new",
+   "--cases",
+   "m1,l1"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-50760",
+     "cli": "1.7.3",
+     "db": "it-new-31033644.db",
+     "port": 50760,
+     "at": 0.0020165443420410156
+    }
+   ],
+   "workers": [
+    {
+     "name": "w-1033644",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-31033644-m1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.629791498184204
+    },
+    {
+     "name": "w-1033644",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-31033644-l1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 47.04816818237305
+    }
+   ],
+   "params": {}
+  }
+ },
+ "code": "new",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "7023d1105e3f1d3c2583856dcaf8ec0ca3c10579",
+  "dirty": false
+ },
+ "task_queue": "it-new-31033644-l1",
+ "cases": {
+  "m1": {
+   "processed_within_s": 38.1,
+   "idle_session_results": {
+    "m131033644-0001": 1,
+    "m131033644-0002": 1,
+    "m131033644-0003": 1,
+    "m131033644-0004": 1,
+    "m131033644-0005": 1,
+    "m131033644-0006": 1
+   },
+   "order_session_results": [
+    "t1/m1o31033644-0001/2",
+    "t1/m1o31033644-0001/3",
+    "t1/m1o31033644-0001/4"
+   ],
+   "order_expected": [
+    "t1/m1o31033644-0001/2",
+    "t1/m1o31033644-0001/3",
+    "t1/m1o31033644-0001/4"
+   ],
+   "passed": true,
+   "seconds": 44.3
+  },
+  "l1": {
+   "results_in_postgres": 6,
+   "workflow_status": "COMPLETED",
+   "workflow_result": {
+    "alert": "",
+    "approval": "none",
+    "cans": 3,
+    "code": "v1",
+    "dead": 0,
+    "dead_failed": 0,
+    "erased": false,
+    "rejected": 0,
+    "rollups": 0,
+    "sig": 7,
+    "turns": 6
+   },
+   "passed": true,
+   "seconds": 25.2
+  }
+ },
+ "all_passed": true
+}
