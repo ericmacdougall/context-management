@@ -8,7 +8,9 @@ joined by newline, a round starting at each user turn.
 Hybrid: RRF 60 over exact BM25 top-100 rounds and a dense leg (top-100 chunks rolled up to rounds by first occurrence).
 Session recall@10 = share of gold sessions among the first 10 distinct sessions.
 
-usage: python dense_h2.py build | run
+usage: python dense_h2.py build | run | run shared
+  "run shared" repeats the run read-only against the owner's emlab-rounds-v1 on the shared trial node (same chunk ids,
+  same fields), writing dense_h2_shared.json; it separates method differences from index-build variance.
 """
 import hashlib
 import json
@@ -186,8 +188,10 @@ def run():
     vecs = np.load(os.path.join(ART, "chunk_vectors.npy"), mmap_mode="r")
     qv = dict(zip(json.load(open(os.path.join(ART, "queries.json"))), np.load(os.path.join(ART, "query_vectors.npy"))))
     print("prep s", round(time.time() - t0, 1), "questions", len(qs), flush=True)
-    es = repc.rep_es()
-    heur = es.req("GET", "/%s/_settings" % IDX, filter_path="**.hnsw_filter_heuristic")[1]
+    shared = len(sys.argv) > 2 and sys.argv[2] == "shared"
+    es = repc.shared_es() if shared else repc.rep_es()
+    index = "emlab-rounds-v1" if shared else IDX
+    heur = es.req("GET", "/%s/_settings" % index, filter_path="**.hnsw_filter_heuristic")[1]
     rng = np.random.default_rng(16096)
     prep = {}
     for q in qs:
@@ -239,7 +243,7 @@ def run():
                     knn = {"field": field, "query_vector": [float(x) for x in qv[qid]], "k": K, "num_candidates": nc,
                            "filter": {"terms": {"session_id": prep[qid][3]}},
                            "rescore_vector": {"oversample": 3 if resc == "oversample3" else 0}}
-                    c, j, _ = es.req("POST", "/%s/_search" % IDX, {"size": K, "_source": False, "knn": knn})
+                    c, j, _ = es.req("POST", "/%s/_search" % index, {"size": K, "_source": False, "knn": knn})
                     assert c == 200, (c, str(j)[:300])
                     got[qid] = rollup_first([h["_id"] for h in j["hits"]["hits"]])
                 res = {qid: metric(qid, got[qid]) for qid in got}
@@ -259,15 +263,16 @@ def run():
               "b_all_bbq_os3_ci_include_0": all(r["diff_vs_exact"]["ci_low"] <= 0 <= r["diff_vs_exact"]["ci_high"] for r in bbq_os3),
               "control_random_loses_ge_0.10": rows[1]["diff_vs_exact"]["mean_diff"] <= -0.10,
               "sensitivity_bbq_nc100_none_below_os3": get("vector", 100, "none")["hybrid_sess_recall10"] < get("vector", 100, "oversample3")["hybrid_sess_recall10"]}
-    c, j, _ = es.req("GET", "/_cat/segments/%s" % IDX, format="json")
+    heur_after = es.req("GET", "/%s/_settings" % index, filter_path="**.hnsw_filter_heuristic")[1]
+    c, j, _ = es.req("GET", "/_cat/segments/%s" % index, format="json")
     out = {"stamp": repc.stamp(__file__, {"level": "H2", "K": K, "rrf_k": 60, "bootstrap": "per-question, 2000 draws, seed 16096",
                                           "DL_source": SETS}),
-           "es_own": repc.es_fingerprint(es, IDX), "heuristic": heur, "segments": len(j) if isinstance(j, list) else None,
+           "es": repc.es_fingerprint(es, index), "heuristic": heur, "heuristic_after": heur_after, "segments": len(j) if isinstance(j, list) else None,
            "level_sizes": {"min": min(len(v) for v in levels.values()), "max": max(len(v) for v in levels.values())},
            "owner_figures": {"H2_exact_hybrid": 0.6950354609929078, "H2_acorn_bbq_nc100_none": 0.617,
                              "claim": "no-rescore loss up to about 0.08 at H2; bbq oversample 3 loss intervals include 0"},
            "rows": rows, "threshold_checks": checks, "per_question": per_q}
-    p = repc.save("dense_h2.json", out)
+    p = repc.save("dense_h2_shared.json" if shared else "dense_h2.json", out)
     print(json.dumps(checks, indent=1), "saved", p, "s", round(time.time() - t0, 1))
 
 

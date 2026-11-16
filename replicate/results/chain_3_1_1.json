@@ -1,0 +1,145 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "0bff7df-dirty",
+  "script": "chain_test.py",
+  "script_sha256": "bffcbe7cfd8683f652d1b2d7fb34593fd43573651ec927c645bbd4e0668861af",
+  "utc": "2026-11-16T01:38:21Z",
+  "params": {
+   "tenant": "rep",
+   "session": "chain",
+   "writers": 8,
+   "per_writer": 250
+  },
+  "host": {
+   "host": "t2-dev",
+   "loadavg_1_5_15": [
+    20.60498046875,
+    20.2890625,
+    21.40625
+   ],
+   "cpus": 48,
+   "python": "3.12.3",
+   "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+  },
+  "environment": {
+   "sut": {
+    "tree": "feat/systems-skeleton a13b524 (git archive, unmodified)",
+    "path": "/home/eric/emlab-16096/rep/sut/systems-a13b524/systems"
+   },
+   "postgres": {
+    "container": "emlab-pg-rep-16096",
+    "version": "16.15 (Debian 16.15-1.pgdg13+2)"
+   },
+   "host": {
+    "host": "t2-dev",
+    "loadavg_1_5_15": [
+     20.60498046875,
+     20.2890625,
+     21.40625
+    ],
+    "cpus": 48,
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+   }
+  }
+ },
+ "concurrency": {
+  "writers": 8,
+  "appends_each": 250,
+  "rows": 2000,
+  "verify_ok": true,
+  "first_bad_seq": null,
+  "gapless_1_to_n": true,
+  "distinct_payloads": 2000,
+  "expected_payloads": 2000,
+  "wall_s": 3.19,
+  "overlap_witness": {
+   "all_writers_active_s": 3.1,
+   "appends_with_lock_wait_gt_1ms": 1990,
+   "lock_wait_p50_ms": 9.11,
+   "lock_wait_max_ms": 53.26
+  }
+ },
+ "tamper": [
+  {
+   "name": "t0_update_with_trigger_on",
+   "refused_by_database": true,
+   "error": "RaiseException",
+   "message": "events is append-only"
+  },
+  {
+   "name": "t1_update_content_seq700",
+   "app_role_could_disable_trigger": true,
+   "verify_ok": false,
+   "first_bad_seq": 700,
+   "rows": 700,
+   "expected_bad_seq": 700,
+   "detected_as_expected": true,
+   "control_no_hash_verify_ok": true,
+   "control_first_bad_seq": null
+  },
+  {
+   "name": "t2_delete_seq900",
+   "app_role_could_disable_trigger": true,
+   "verify_ok": false,
+   "first_bad_seq": 901,
+   "rows": 900,
+   "expected_bad_seq": 901,
+   "detected_as_expected": true,
+   "control_no_hash_verify_ok": false,
+   "control_first_bad_seq": 901
+  },
+  {
+   "name": "t3_swap_content_1000_1001",
+   "app_role_could_disable_trigger": true,
+   "verify_ok": false,
+   "first_bad_seq": 1000,
+   "rows": 1000,
+   "expected_bad_seq": 1000,
+   "detected_as_expected": true,
+   "control_no_hash_verify_ok": true,
+   "control_first_bad_seq": null
+  },
+  {
+   "name": "t4_duplicate_seq_insert",
+   "refused_by_database": true,
+   "error": "UniqueViolation",
+   "message": "duplicate key value violates unique constraint \"events_pkey\""
+  },
+  {
+   "name": "t5_insert_gap_at_end",
+   "verify_ok": false,
+   "first_bad_seq": 2005,
+   "rows": 2001,
+   "expected_bad_seq": 2005,
+   "detected_as_expected": true,
+   "control_no_hash_verify_ok": false,
+   "control_first_bad_seq": 2005
+  },
+  {
+   "name": "limit_forged_but_correctly_chained_append",
+   "verify_ok": true,
+   "first_bad_seq": null,
+   "rows": 2001,
+   "expected_bad_seq": null,
+   "detected_as_expected": false,
+   "control_no_hash_verify_ok": true,
+   "control_first_bad_seq": null
+  }
+ ],
+ "threshold_checks": {
+  "concurrency_chain_ok_gapless_distinct": true,
+  "overlap_witness_nonzero": true,
+  "t0_update_refused_by_trigger": true,
+  "t1_detected": true,
+  "t2_detected": true,
+  "t3_detected": true,
+  "t4_refused": true,
+  "t5_detected": true,
+  "control_no_hash_verifier_passes_t1": true,
+  "limit_forged_chained_append_passes_verify": true,
+  "app_role_can_disable_append_only_trigger": true
+ },
+ "verdict_gate": true
+}
