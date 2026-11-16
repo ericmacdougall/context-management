@@ -40,6 +40,11 @@ Source reading predicted "the agent run stops" for failure and for over-120 s: o
   (3 JSON records, no raw tag lines); c2 200 24.2 s, b 200 7.5 s, c 200 32.0 s (each: the original prompt exactly);
   d_b 500 ECONNREFUSED 4.0 s and d_c 500 "timeout of 60000ms exceeded" 63.1 s (no agent model call). Setting back to
   [] verified; the 4 workflows deleted (HTTP 200, ledger); endpoint mc-p2-chat GET -> 404 afterwards; emlab-kb-16096 stopped again; evidence scan 85 files, 3 secrets, 0 hits. The table below is the 8d5425d run.
+- Retested again at b3c364e (round-3 change to the shared /v1/pre_exec route: bounded builds), evidence
+  ev/live/b3c364e/: a 200 4.6 s (3 records); c2 25.2 s, b 6.1 s, c 31.4 s (original prompt); d_b 500 ECONNREFUSED 5.6 s,
+  d_c 500 60 s connector timeout 66.1 s (no agent model call); setting [] verified, workflows deleted (200), endpoint
+  404, emlab-kb-16096 stopped again, scan 0 hits. Run 1 at b3c364e failed in the kit (I had deleted the hang server's
+  probe.token as cleanup; a fresh one was created, ledgered) and is kept as ev/live/run1-b3c364e-probe-token-missing.
 - Setup: Kibana 9.5.6 (emlab-kb-16096) on Elasticsearch emlab-es-16096 (trial). The model is memcore's ToolStub on
   172.17.0.1 behind an ES inference endpoint created for the run (mc-p2-chat); no real model was called. Agent
   mc-g7-agent. Memory service: a memcore Gateway on 172.17.0.1:18741 with a ScriptedStubChat backend and /v1/pre_exec
