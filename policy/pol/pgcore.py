@@ -349,7 +349,7 @@ class PgEngine:
 
     # ---- private reads for the service and the experiments
     def _revoked(self):
-        return [r[0] for r in self.c.execute("select pid from dc.principal where tenant=%s and revoked", (self.tenant,)).fetchall()]
+        return [r[0] for r in self._c.execute("select pid from dc.principal where tenant=%s and revoked", (self.tenant,)).fetchall()]
 
     def _participant(self, pid, req):
         c = self._c
