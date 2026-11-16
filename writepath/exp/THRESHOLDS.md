@@ -128,3 +128,9 @@ Row 6 (exp/row6_chain.py), R=10 per case: forged append (admin, correctly SHA-ch
 D4 (exp/d4_rescan_es.py), R=5 per arm, written before the run: the runner skips the placeholders of rescan hits;
   fenced (verifier checks every tombstoned id is a placeholder) not done with es:tombstoned_not_placeholder in the
   residue 5/5; control (verifier without that check) reports done 5/5 while the hit's ES document keeps its content.
+
+## Amendment 6 (2026-11-16, written before the run): row 3 checkpoint seal (exp/row3_seal.py), R=10 per case and arm
+PASS = P_prefix holds 10/10 (verify ok after later appends); E_edited_seal fenced 10/10 mac_invalid, control (unkeyed
+seal) violated 10/10; T_truncated_log fenced 10/10 head_missing, control (seal checked only against itself) violated
+10/10. The seal interface (wp/seal.py seal/verify) is offered to the context-runtime stream; its consumption there is not
+tested by this stream.
