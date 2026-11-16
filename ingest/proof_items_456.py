@@ -20,7 +20,7 @@ from .canon import cj, Hasher
 from .controls import RoleOnlyIngester, ScanAfterWriteTap, TextRoleIngester
 from .ingester import Ingester
 from .portlog import PortLog
-from .proofs_common import scripted_conversation, tmpdir, write_artifact
+from .proofs_common import asst_msg, scripted_conversation, spec_text, tmpdir, write_artifact
 from .stubs import Stub, text, thinking, tool_use
 from .testkit import KEY, Rig
 from .tap import PortTap, StaticIdentity
