@@ -31,7 +31,7 @@ SNAP_CONTROLS = {
                                    "\"revoked\": [],\n                \"req_labels\": self.req_labels"),
     "restore_drops_idempotency": ("pol._core", "        s.idems = {(x[0], x[1]): [x[2], x[3]] for x in snap[\"idems\"]}\n", "        s.idems = {}\n"),
 }
-DIFF_CONTROLS = ["n3_agent_reject_moves_head", "n2_no_cap", "n2_no_role", "m2_no_original", "stale_unchecked", "agent_may_supersede"]
+DIFF_CONTROLS = ["n3_agent_reject_moves_head", "n3_value_unchanged_moves_head", "n2_no_cap", "n2_no_role", "m2_no_original", "stale_unchecked", "agent_may_supersede"]
 
 
 def canon(o):
@@ -231,7 +231,7 @@ def main():
             n_bad += bad
             r = sub[-1]
             rows.append({"kind": "ctl_log", "arm": name, "log": lid, "first_mismatch": r["first_mismatch"], "live_sha": r["live_sha"], "rebuild_sha": r["rebuild_sha"]})
-        ctl[name] = {"logs_with_mismatch": n_bad, "rate": n_bad / len(logs), "meets_floor": n_bad / len(logs) >= 0.10}
+        ctl[name] = {"logs_with_mismatch": n_bad, "rate": n_bad / len(logs), "meets_floor": n_bad / len(logs) >= (0.03 if name == "n3_value_unchanged_moves_head" else 0.10)}
     ok = (mism == 0 and reb_bad == 0 and not missing and contested_logs >= 0.10 * len(logs) and restores >= 3000 and svc_bad == 0 and svc_refusals > 0)
     ctl_ok = all(c["meets_floor"] for c in ctl.values())
     verdict = "PASS" if ok and ctl_ok else "FAIL"

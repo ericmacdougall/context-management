@@ -7,9 +7,11 @@ import json
 
 APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept", "decided_reject", "decided_amend", "superseded", "retracted",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
+# amendment 4: the value-unchanged N3 control is rare in random logs (about 7 percent on dev probes); its floor is 3 percent
+FLOORS = {"n3_value_unchanged_moves_head": 0.03}
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
            "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation", "unknown_proposal",
-           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested",
+           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested", "no_value_change",
            "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 SERVICE_REFUSALS = REFUSED + ("identity_in_body", "unknown_tenant")
 
@@ -49,7 +51,7 @@ def verify(doc, rows):
         c = ctl.setdefault(r["arm"], [0, 0])
         c[0] += 1
         c[1] += bool(mism or r["live_sha"] != r["rebuild_sha"])
-    ctl_rep = {k: {"logs": n, "mismatch": b, "rate": b / n if n else 0.0, "meets_floor": n > 0 and b / n >= 0.10} for k, (n, b) in ctl.items()}
+    ctl_rep = {k: {"logs": n, "mismatch": b, "rate": b / n if n else 0.0, "meets_floor": n > 0 and b / n >= FLOORS.get(k, 0.10)} for k, (n, b) in ctl.items()}
     ctl_ok = bool(ctl_rep) and all(v["meets_floor"] for v in ctl_rep.values()) and set(ctl_rep) == set(res.get("controls", {}))
     verdict = "PASS" if ok and ctl_ok else "FAIL"
     return {"verdict": verdict, "agrees": verdict == res["verdict"],

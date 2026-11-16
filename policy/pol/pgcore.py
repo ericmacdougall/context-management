@@ -393,13 +393,21 @@ class PgEngine:
 class PgVault:
     """dc.vals: referenced values with subject tags (refs assigned here)."""
 
-    def __init__(self, conn):
+    def __init__(self, conn, key_file: str):
+        """key_file: a 0600 file holding the vault's HMAC key (hex); the key is never stored in the database."""
+        if os.stat(key_file).st_mode & 0o077:
+            raise PermissionError("vault key file must be mode 0600")
+        with open(key_file, encoding="utf-8") as f:
+            self._key = bytes.fromhex(f.read().strip())
         self._c = conn
 
-    def _put(self, tenant, text, label: Label):
-        ref = "val-" + secrets.token_hex(12)
-        self._c.execute("insert into dc.vals values (%s,%s,%s,%s,%s)", (tenant, ref, text, json.dumps(label.to_dict()), sorted(label.subjects)))
-        return ref
+    def _ref(self, tenant, principal, idem, text, label: Label):
+        from .decisions import _value_ref
+        return _value_ref(self._key, tenant, principal, idem, text, label)
+
+    def _put(self, tenant, ref, text, label: Label):
+        return self._c.execute("insert into dc.vals values (%s,%s,%s,%s,%s) on conflict do nothing",
+                               (tenant, ref, text, json.dumps(label.to_dict()), sorted(label.subjects))).rowcount == 1
 
     def _get(self, tenant, ref):
         r = self._c.execute("select text, label from dc.vals where tenant=%s and ref=%s", (tenant, ref)).fetchone() if isinstance(ref, str) else None

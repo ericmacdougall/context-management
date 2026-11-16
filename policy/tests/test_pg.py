@@ -138,5 +138,40 @@ class PgProofs(unittest.TestCase):
         self.assertLess(max(blocks[-3:]) / first, 3.0)
 
 
+    def test_service_over_postgres(self):
+        """DecisionService wired to PgEngine + PgVault: value refs, retry, forged body, scoped read, erasure with a hold."""
+        import secrets
+        import tempfile
+        from pol.decisions import DecisionService
+        from pol.policy import parse_policy
+        from tests.kit import L, P, World, policy_doc
+        fd, kf = tempfile.mkstemp()
+        os.write(fd, secrets.token_hex(32).encode())          # a throwaway test key, generated here
+        os.close(fd)
+        os.chmod(kf, 0o600)
+        try:
+            w = World(principals=[P("alice"), P("bob"), P("bot", kind="agent", model="local"), P("x", kind="analyst"), P("admin"),
+                                  P("carol", clearance=0, groups=("other",))],
+                      policy=parse_policy(policy_doc(hold_events=["hold-7"])), core_config=dict(CFG))
+            svc = DecisionService(w.enf, {T: self.e}, pgcore.PgVault(self.c, kf))
+            a = w.s("alice")
+            body = {"type": "supersede", "client_id": "s1", "idem": "k1", "req": "r1", "value": "dana is late",
+                    "label": L(subjects=["dana"], holds=["hold-7"]).to_dict(), "based_on": 0}
+            r1 = svc.submit(a, body)
+            self.assertEqual(r1["code"], "superseded")
+            r2 = svc.submit(a, dict(body))
+            self.assertEqual((r2["code"], r2["original"], r2["value_ref"]), ("duplicate", "superseded", r1["value_ref"]))
+            self.assertEqual(svc.submit(a, dict(body, tenant="tenant-b", client_id="s2", idem="k2"))["code"], "identity_in_body")
+            self.assertEqual(self.c.execute("select count(*) from dc.vals").fetchone()[0], 1)        # refused/duplicate values not kept
+            self.assertEqual(svc.explain(a, "r1")["value"]["text"], "dana is late")
+            self.assertNotIn("dana", repr(self.c.execute("select ev from dc.events").fetchall()))     # the log holds refs only
+            svc.submit(w.s("bob"), {"type": "propose", "client_id": "p1", "idem": "k3", "req": "r1", "value": "bob on dana",
+                                    "label": L(subjects=["dana"]).to_dict(), "based_on": 1})
+            self.assertEqual(svc.erase_subject(w.s("admin"), "dana"), {"erased": 1, "queued": 1, "denied": 0, "refused": None})
+            self.assertEqual(self.c.execute("select count(*) from dc.vals").fetchone()[0], 1)
+        finally:
+            os.unlink(kf)
+
+
 if __name__ == "__main__":
     unittest.main()

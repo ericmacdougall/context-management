@@ -32,6 +32,9 @@ CONTROLS = {
     # N3 reintroduced: a non-human reject moves the head like any decision.
     "n3_agent_reject_moves_head": ("pol._core", "    if t == \"decide\" and verb == \"reject\" and not human:\n",
                                    "    if False:\n"),
+    # N3 reintroduced in its value-unchanged form: a non-human accept of the current value moves the head (amendment 4).
+    "n3_value_unchanged_moves_head": ("pol._core", "        if not human and verb == \"accept\" and h[\"status\"] == \"current\" and eff[1] == h[\"value_ref\"]:\n",
+                                      "        if False:\n"),
     # N2 reintroduced: no open-proposal cap.
     "n2_no_cap": ("pol._core", "        if view.open_count(req, pid) >= MAX_OPEN_PER_PRINCIPAL or view.open_total(req) >= MAX_OPEN_PER_REQ:\n",
                   "        if False:\n"),

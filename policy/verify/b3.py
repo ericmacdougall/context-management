@@ -8,7 +8,7 @@ import json
 
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
            "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation", "unknown_proposal",
-           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested",
+           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested", "no_value_change",
            "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 OVERLAP = ("S1_conflicting_decisions_contested", "S3_zombie_revoked_principal", "S4_same_idem_key_concurrent", "S4b_twins_on_two_requirements", "S5_resolve_race")
 

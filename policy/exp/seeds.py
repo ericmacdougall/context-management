@@ -13,6 +13,13 @@ def seeds(name):
     if mode == "stamped":
         if os.environ.get("ALLOW_DIRTY") == "1":
             sys.exit("stamped seeds are never used on a dirty tree")
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from common import stamp            # refuses a dirty git tree; on a synced host reads GIT_STAMP.json
+        if stamp().get("dirty") is not False:
+            sys.exit("stamped seeds need a clean committed tree (GIT_STAMP dirty=false)")
+        for k in ("E2_PER_SEED", "E5_PER_SEED", "B2_PER_SEED", "B1_QUICK"):
+            if os.environ.get(k):
+                sys.exit("stamped run with dev override %s set" % k)
         return list(STAMPED[name])
     if mode != "dev":
         sys.exit("POL_SEEDS must be dev or stamped")

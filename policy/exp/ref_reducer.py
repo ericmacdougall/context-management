@@ -69,6 +69,11 @@ AMBIGUITIES (each with the choice made)
     (sorted, deduplicated), so even a single label is written canonically.
 19. The open caps count proposals and pending changes with status `open` authored by the
     principal on that requirement (per-principal) or all such on the requirement (per-req).
+21. `no_value_change` (rule 15, decide accept) is refused although section 6's refused list does
+    not name it (rule 15 says "refused"). Placement: after the `proposal_closed` check and
+    before the retract check, within rule 15 (so only when based_on == version, not contested,
+    and after rules 10-14). It compares the proposal value_ref with the head value_ref only
+    (labels are not compared) and applies to non-human principals only.
 20. An applied but unchanged event (`concurrent_agree`) still appends to the event log and
     records its idem key and id.
 """
@@ -600,9 +605,8 @@ class RefCore:
         effect, label, adopted = self._effect(ev, prop, pend)
         if t == "decide" and verb in ("accept", "reject", "amend") and prop["status"] != "open":
             return ("proposal_closed", None, None)
-        # Amendment 3 (spec change applied by the rescue owner, not the reference author): a non-human accept of the current value
         if (t == "decide" and verb == "accept" and not human and h["status"] == "current"
-                and effect[1] == h["value_ref"]):
+                and prop["value_ref"] == h["value_ref"]):
             return ("no_value_change", None, None)
         if t == "retract" and h["status"] in ("unset", "retracted"):
             return ("nothing_to_retract", None, None)
@@ -771,6 +775,20 @@ def _selfcheck():
     f3 = c.apply(e2)
     check("idempotent duplicate", f1 == ("proposed", None) and f2 == ("duplicate", "proposed")
           and f3 == ("idem_conflict", "proposed") and len(c.log) == 1)
+
+    # 5b non-human accept of the already-current value is no_value_change
+    c = mk()
+    propose(c, "h1", "p1", "v1")
+    c.apply(accept("h1", "d1", "h1/p1", "v1", "h1", 0))
+    propose(c, "h2", "p2", "v1", based_on=1)
+    before = c.view()
+    nv = c.apply(accept("a1", "d2", "h2/p2", "v1", "h2", 1, "agent_api"))
+    propose(c, "h2", "p3", "v9", based_on=1)
+    ok_other = c.apply(accept("a1", "d3", "h2/p3", "v9", "h2", 1, "agent_api"))
+    check("no_value_change", nv == ("no_value_change", None)
+          and c.view()["reqs"]["R"]["version"] == 2 and before["reqs"] == {
+              "R": dict(before["reqs"]["R"])} and ok_other == ("decided_accept", None)
+          and c.audit[-1]["code"] == "no_value_change")
 
     # 6 malformed events never raise
     c = mk()

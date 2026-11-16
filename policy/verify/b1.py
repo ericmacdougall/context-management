@@ -10,13 +10,14 @@ APPLIED = ("proposed", "pending_created", "confirmed_applied", "decided_accept",
            "contested_opened", "contested_joined", "concurrent_agree", "resolved", "revoked", "granted")
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
            "agent_not_permitted", "agent_cannot_confirm", "unknown_pending", "pending_closed", "same_channel_confirmation", "unknown_proposal",
-           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested",
+           "self_approval", "proposal_mismatch", "stale", "proposal_closed", "candidates_full", "contested_needs_resolve", "not_contested", "no_value_change",
            "nothing_to_retract", "unknown_candidate", "idem_conflict", "duplicate")
 UNREACHABLE = {"candidates_full"}
 EXPECTED = {"n3_agent_reject_moves_head": "L2_head_starvation", "n2_no_role": "I15_proposal_without_role", "n2_no_cap": "I17_open_cap",
             "stale_unchecked": "I4_decision_not_bound_to_head", "agent_may_supersede": "I2_agent_head_move",
             "m2_no_original": "I6_redelivery_changed_state_or_lost_outcome", "self_approval_removed": "I2_agent_head_move",
-            "idempotency_removed": "I6_redelivery_changed_state_or_lost_outcome", "authority_removed": "I1_authority"}
+            "idempotency_removed": "I6_redelivery_changed_state_or_lost_outcome", "authority_removed": "I1_authority",
+            "n3_value_unchanged_moves_head": "I16_nonhuman_head_move_without_value_change"}
 COMMON = ("type", "id", "idem", "tenant", "principal", "channel")
 
 

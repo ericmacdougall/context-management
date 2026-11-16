@@ -123,8 +123,11 @@ class MemoryEngine:
             return None if h is None else _core.copy.deepcopy(h)
 
     def _open_items(self, req: str) -> List[dict]:
+        """Open items of `req` through the per-author open index (cost bounded by the open caps, not by history)."""
         with self._lock:
-            return [dict(d) for d in self._st.props.get(req, {}).values() if d["status"] == "open"]
+            st = self._st
+            ids = [i for (r, _a), s in st.open_by.items() if r == req for i in s]
+            return [dict(st.props[req][i]) for i in ids]
 
 
 class DecisionService:

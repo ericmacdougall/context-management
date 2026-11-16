@@ -161,7 +161,7 @@ for _name, _pool in POOLS.items():
 
 SMALL_CAPS = [("MAX_OPEN_PER_PRINCIPAL = 16\n", "MAX_OPEN_PER_PRINCIPAL = 2\n"), ("MAX_OPEN_PER_REQ = 256\n", "MAX_OPEN_PER_REQ = 3\n")]
 DEPTH = {"r1": 6, "r2": 8, "r3": 8, "caps": 8, "joint": 4}
-CTL_DEPTH = {"r1": 5, "r2": 6, "r3": 6, "caps": 6}
+CTL_DEPTH = {"r1": 6, "r2": 6, "r3": 6, "caps": 6}
 if os.environ.get("B1_QUICK"):
     DEPTH = {"r1": 3, "r2": 4, "r3": 4, "caps": 5, "joint": 2}
     CTL_DEPTH = {"r1": 3, "r2": 4, "r3": 4, "caps": 5}
@@ -183,6 +183,7 @@ CONTROLS = [
     ("self_approval_removed", OWN["self_approval_removed"], "I2_agent_head_move", ["r3"]),
     ("idempotency_removed", OWN["idempotency_removed"], "I6_redelivery_changed_state_or_lost_outcome", ["r2"]),
     ("authority_removed", OWN["authority_removed"], "I1_authority", ["r2"]),
+    ("n3_value_unchanged_moves_head", PATCHES["n3_value_unchanged_moves_head"], "I16_nonhuman_head_move_without_value_change", ["r1"]),
 ]
 CTL_BY_NAME = {c[0]: c for c in CONTROLS}
 

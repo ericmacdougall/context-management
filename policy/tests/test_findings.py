@@ -157,6 +157,32 @@ class N3_HeadStarvation(unittest.TestCase):
         self.assertEqual(w.decide(a, "acc", "accept", mine, h)["code"], "decided_accept")
 
 
+class N3_ValueUnchanged(unittest.TestCase):
+    def test_agent_accept_of_current_value_never_moves_head(self):
+        from exp.patches import control
+        cfg = {"tenant": T, "principals": {"h": "human", "g": "human", "bot": "agent"}, "authority": {"r1": ["h", "g", "bot"]}, "admins": []}
+        lab = L().to_dict()
+
+        def run(core):
+            st = core.MemoryState(cfg)
+
+            def ev(t, who, n, **kw):
+                d = {"type": t, "id": "%s/%s" % (who, n), "idem": n, "tenant": T, "principal": who,
+                     "channel": "agent_api" if who == "bot" else "owner_ui"}
+                d.update(kw)
+                c, _o, dl = core.reduce(st, d)
+                st.apply_delta(dl)
+                return c
+            ev("propose", "g", "p1", req="r1", value_ref="V", label=lab, based_on=0)
+            ev("supersede", "h", "s1", req="r1", value_ref="V", label=lab, based_on=0)          # V is now current, p1 still open
+            v = st.heads["r1"]["version"]
+            c = ev("decide", "bot", "a1", req="r1", verb="accept", proposal="g/p1", proposal_hash=core.proposal_hash("g/p1", "V", "g"),
+                   based_on=v)
+            return c, st.heads["r1"]["version"] - v
+        self.assertEqual(run(_core), ("no_value_change", 0))
+        self.assertEqual(run(control("n3_value_unchanged_moves_head")), ("decided_accept", 1))     # the control is caught
+
+
 class H2_CredentialKeys(unittest.TestCase):
     def test_only_exact_ascii_keys(self):
         w = World()
