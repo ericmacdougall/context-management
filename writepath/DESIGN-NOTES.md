@@ -1,0 +1,46 @@
+# Write path: design notes and open decisions (goodqa#16096)
+
+Evidence lives in exp/THRESHOLDS.md (pre-registered rules) and the content-addressed results; this file records the
+decisions, the deployment requirements that follow from them, and what is still OPEN. An OPEN item is not implemented.
+
+## OPEN decisions
+
+### OPEN-1. Elasticsearch index layout per tenant (item 5, 4960f50 round)
+- Measured cost today: one index per projection family per tenant, 1 primary shard, 0 replicas in the lab: 2 indices and
+  2 shards per tenant (x (1 + replicas) in production). A node's default cluster.max_shards_per_node is 1,000, so a
+  node holds at most ~500 tenants before replicas, system indices and generations (row 20 adds one index per family per
+  generation during a rebuild).
+- Proposal: keep 1 shard per index. Small tenants could share POOLED family indices (one shared index per family, a
+  tenant_id keyword on every document, per-tenant read / write / erase aliases with a tenant filter and routing).
+- Effect on the projector fence: unchanged in kind; the alias compare-and-set is per tenant alias, aliases are objects of
+  their own even when they point at a shared index. require_alias still forces writes through an alias, but a filtered
+  write alias does not stop a write for another tenant's id; with pooling, the per-role API key (D6) must restrict the
+  projector to its tenant's aliases.
+- Effect on erasure: expunge (retention-lease wait + only_expunge_deletes merge) becomes pool-wide: one wait and one
+  merge serve every tenant of the pool (cheaper per erasure, but the merge rewrites other tenants' segments).
+- Cost, the reason this is OPEN: BM25 term statistics (document frequency, average field length) are per shard, so in a
+  pooled index they mix tenants. Ranking for tenant A depends on tenant B's documents, and document-frequency
+  differences leak, weakly but measurably, whether a term occurs in other tenants' documents (a cross-tenant side
+  channel). dfs_query_then_fetch does not separate them. Mitigation if pooling is chosen: dedicated indices for every
+  tenant that requires isolated statistics, pooling only for tenants that accept the leak in writing.
+- Decision needed from: the user (privacy and cost). Not implemented. run_all now deletes indices between experiments
+  (exp/cleanup.py prints the index and shard count before deleting).
+
+## Decisions with deployment requirements
+
+- Cross-tenant projection delay (amendment 8a): the projector fence is the cluster's oldest running xid, so any long
+  transaction delays every tenant. Required: statement_timeout 30 s and idle_in_transaction_session_timeout 5 s on every
+  role, AND transaction_timeout (PostgreSQL >= 17) or the transaction-age watchdog (wp/xact_watchdog.py, 30 s), an alert
+  on the age of the oldest xid / xmin, no long superuser sessions, prepared transactions monitored; or one cluster per
+  tenant. Superuser sessions, prepared transactions and replication slots are NOT bounded by the watchdog.
+- Physical purge (amendment 9): "logically erased" is reported at once; "done" waits for the physical purge, bounded by
+  the store deadline (300 s). The ES floor is the retention-lease sync (about 30 s). With a real KMS the key's physical
+  deletion is the KMS's own record and its pending-deletion window, which may be days: the receipt must then say
+  "logically erased, key deletion scheduled until <date>".
+- Identifier rule (amendment 11): ASSUMPTION, not a user decision: single-token identifiers without a digit need >= 6
+  characters; stop-word-only identifiers are refused. Span redaction is not implemented: a mention removes the event
+  whole.
+- Service separation (D2): the verifier, the key service and the application must run as separate service identities,
+  each able to read only its own credential. The lab runs them as separate OS processes with separate credential files
+  on one host and one OS user (exp/d2_verifier_process.py); separate OS users or hosts are a deployment requirement,
+  not proven here.

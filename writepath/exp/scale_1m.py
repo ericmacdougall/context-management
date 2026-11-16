@@ -30,6 +30,7 @@ from exp.erasure_cost import _build
 from exp.util import tenant, env
 
 PG_C = "emlab-pg-wp-16096"
+PHYSICAL = "wait"   # the only valid mode: the result is about time to DONE (481afae run was void: default "followup")
 HOLD_S = 35     # claim TTL 60 s, beat every 20 s, role lock_timeout 10 s: the beat at ~20 s fails at ~30 s, the next succeeds
 CONTROLS = (pathlib.Path(__file__).resolve().parent / "controls_4960f50.sql").read_text()
 
@@ -108,7 +109,7 @@ def erase_one(t, subject):
     from wp.verifier import Verifier
     conn, ks, es = env()
     jid = erasure.request(conn, t, subject)
-    rec = erasure.run(conn, ks, es, jid, ttl_s=60, verifier=Verifier(es), cascade_deadline_s=1800, physical="wait")
+    rec = erasure.run(conn, ks, es, jid, ttl_s=60, verifier=Verifier(es), cascade_deadline_s=1800, physical=PHYSICAL)
     st = rec.get("steps", {})
     return {"done": rec["done"], "error_type": rec["error_type"], "seconds": rec.get("seconds"), "cascade_s": st.get("cascade_s"),
             "cascade_batches": st.get("cascade_batches"), "cascade_batch_max_s": st.get("cascade_batch_max_s"),
@@ -146,7 +147,7 @@ def heartbeat_arm(t, subject, control):
                 q.get(timeout=30)
                 time.sleep(HOLD_S + 1)                       # the "long batch": the runner does nothing while the row is held
                 p.join(10)
-        rec = erasure.run(conn, ks, es, jid, ttl_s=60, hook=hook, verifier=Verifier(es), physical="wait")
+        rec = erasure.run(conn, ks, es, jid, ttl_s=60, hook=hook, verifier=Verifier(es), physical=PHYSICAL)
     finally:
         erasure.HB_TOLERATE = saved
     return {"done": rec["done"], "error_type": rec["error_type"], "heartbeat_transient": rec.get("steps", {}).get("heartbeat_transient")}
@@ -192,8 +193,27 @@ def verdict(res):
     return {"pass": not why, "why": why}
 
 
+def preflight(sizes):
+    """Refuse every launch whose result would be void (amendment 9a)."""
+    here = pathlib.Path(__file__).resolve().parent.parent
+    head = (here / "GIT_HEAD").read_text().strip() if (here / "GIT_HEAD").exists() else ""
+    problems = []
+    if PHYSICAL != "wait":
+        problems.append(f"physical={PHYSICAL!r}: done is unreachable in followup mode")
+    if "/runs/" not in str(here):
+        problems.append(f"not a pinned tree ({here}); launch from the directory pin_run.sh prints")
+    if not head or head.endswith("-dirty"):
+        problems.append(f"GIT_HEAD {head!r} is empty or dirty")
+    if sorted(sizes) != [100000, 1000000]:
+        problems.append(f"sizes {sizes}: amendment 9 requires 100000 and 1000000")
+    if problems:
+        raise SystemExit("scale_1m refused: " + "; ".join(problems))
+    return head
+
+
 def main(sizes):
-    res = {"sizes": {}}
+    head = preflight(sizes)
+    res = {"sizes": {}, "physical": PHYSICAL, "code_head": head}
     for i, n in enumerate(sizes):
         st = os.statvfs(os.path.expanduser("~"))
         free = st.f_bavail * st.f_frsize / 1e9
@@ -213,6 +233,8 @@ def main(sizes):
         r["erasures"] = {}
         for s in [k for k in ("S10", "S1000", "S10000", "S100000") if k in subj]:
             r["erasures"][s] = erase_one(t, s)
+            if r["erasures"][s]["receipt_state"] == "logically_erased_physical_purge_pending" and not r["erasures"][s]["error_type"]:
+                raise SystemExit("scale_1m: a receipt stopped at the logical state in wait mode: run is void")
             print("erase", n, s, json.dumps(r["erasures"][s])[:600], flush=True)
         if i == 0:
             res["heartbeat"] = {"fenced": [heartbeat_arm(t, f"H{j}", False) for j in (1, 2, 3)],
