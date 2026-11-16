@@ -152,6 +152,8 @@ def check_turn_input(tenant, sid, event_id):
 def read_digest(tenant, sid, event_id):
     """The 'agent turn' stand-in: read the input event from Postgres and derive a deterministic result digest."""
     check_turn_input(tenant, sid, event_id)
+    if str(keys.parse_event_id(event_id)[2]) in os.environ.get("ENGINE_POISON_SEQS", "").split(","):
+        raise RuntimeError("poison input (test knob ENGINE_POISON_SEQS)")      # a deterministic non-transient failure
     with pool().connection() as conn:
         row = _event_row(conn, tenant, sid, event_id)
     if row[2] is None:

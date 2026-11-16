@@ -13,7 +13,7 @@ from .common import DEMO_TENANT as TENANT
 from .common import HOME
 
 CODE = sys.argv[sys.argv.index("--code") + 1] if "--code" in sys.argv else "new"      # new | old (62916ae) | prev (96a80b2)
-CODE_DIR = HOME / {"new": "code", "old": "old", "prev": "prev"}[CODE]
+CODE_DIR = HOME / {"new": "code", "old": "old", "prev": "prev", "prev2": "prev2"}[CODE]
 RID = lib.RUN_ID.replace("r", "").replace("x", "")[-8:]
 TQ = f"it-{CODE}-{RID}"
 
@@ -300,8 +300,47 @@ async def case_m4b(client):
             "passed": st == "COMPLETED" and res is not None and res["dead_failed"] == 1 and res["alert"].startswith("dead_letter_failed")}
 
 
+async def total_events(client, sid):
+    n = 0
+    async for e in client.list_workflows(f'WorkflowId = "{ctl.wid(sid, TENANT)}"'):
+        n += e.history_length or 0
+    return n
+
+
+async def case_c1(client):
+    """C1: a Poison input whose dead-letter also fails must not turn every newer input into an unbounded activity loop.
+    Rule under test: the poisoned input is skipped (newer inputs proceed), an alert state is surfaced, and the activity
+    rate stays bounded."""
+    await up("v1", env={"ENGINE_POISON_SEQS": "2", "ENGINE_FAIL_DEAD_LETTER": "1"})
+    stats = {"appended": 0, "signaled": 0, "retries": 0}
+    t = tag("c1")
+    await lib.launch(client, t, 1, TQ, stats, turns=0)
+    sid = ctl.sids(t, 1)[0]
+    e1 = pgstore.append_input(TENANT, sid, "r1", {"n": 1})[0]        # sequence 2: forced to Poison, dead-letter also fails
+    await signal(client, sid, e1)
+    await asyncio.sleep(40)                                          # five attempts, then the failed dead-letter
+    newer = [pgstore.append_input(TENANT, sid, f"r{i}", {"n": i})[0] for i in range(2, 6)]
+    for e in newer:
+        await signal(client, sid, e)
+    await asyncio.sleep(20)
+    ev0 = await total_events(client, sid)
+    t0 = time.time()
+    await asyncio.sleep(120)
+    ev1 = await total_events(client, sid)
+    rate = (ev1 - ev0) / (time.time() - t0)
+    h = client.get_workflow_handle(ctl.wid(sid, TENANT))
+    alert = None
+    try:
+        alert = (await h.query("status"))["alert"]
+    except Exception as e:
+        alert = f"query failed: {type(e).__name__}"
+    results = len(results_of_session(sid))
+    return {"history_events_per_s_over_120s": round(rate, 2), "newer_inputs_processed": results, "alert_state": alert,
+            "passed": rate < 2.0 and results == 4 and bool(alert) and "query failed" not in str(alert)}
+
+
 CASES = {"m1": case_m1, "m2": case_m2, "m4": case_m4, "h3": case_h3, "l1": case_l1, "l2": case_l2, "l3": case_l3,
-         "n2": case_n2, "m4b": case_m4b}
+         "n2": case_n2, "m4b": case_m4b, "c1": case_c1}
 
 
 async def main():
