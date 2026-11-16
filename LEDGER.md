@@ -126,6 +126,26 @@ Did not hold:
 
 Cost: 640 calls, 24.4 million input tokens, 81 USD notional.
 
+## Stage X0: extraction canary (2026-11-16, pilot, feat/eval-scaffold a28b0a8; 200 calls, one session per call; design and scorer committed first; mechanical scoring, no judge)
+
+| Finding | Figures | Class |
+|---|---|---|
+| Single-session extraction is reliable and priced | 200 of 200 parsed, 0 repaired or rejected; 15.5k input tokens (10.5k of it fixed harness overhead), 1.9k output, 15.7 s, 0.077 USD notional per call | owner-reported |
+| Extracted facts carry the answer when the session does | Gold answer key present in a fact for 30 of the 32 questions whose raw gold text has it (weak-list 9 of 10, other hard 7 of 8, knowledge-update 14 of 14); crude string heuristic | owner-reported |
+| Quote check as a write gate at volume | 1,829 of 1,905 quotes verbatim in the cited round (0.960, CI 0.950 to 0.968); 1 speaker mismatch, 22 ambiguous; controls rejected 100%. Lower than the earlier 99.1%: 4% of facts would be refused | owner-reported |
+| Fact text is findable when present (toy pool of 200 sessions, optimistic by construction) | Keyword search finds a gold-session fact for 7 of the 11 unreachable questions on statements, 9 of 11 with quote and cue keys; the same search over raw rounds finds 5 of 11 | owner-reported; says nothing about the whole pool |
+
+Did not hold or open:
+
+| Finding | Figures | Consequence |
+|---|---|---|
+| The 12-fact cap in the extraction prompt | 28% of sessions hit it; 49% of gold sessions against 14% of random ones; cap share rises with length (0, 8, 26, 34, 43% by length band). The two questions whose answer is in the raw text but in no fact both involve capped sessions | The cap binds where it matters; facts lost to it cannot be counted from this run; a 10-call re-extraction at a higher cap would measure it |
+| Prompt limits obeyed | 14.6% of quotes exceed the 12-word limit; event time present on only 10.4% of facts | Dated facts are mostly undated in practice; time-aware retrieval cannot rely on event time from this prompt |
+
+Cost extrapolation (random sample only; interval is sampling noise; the pool's longest sessions are 3.7 times longer than any sampled):
+6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
+Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
+
 ## Independent replication (2026-11-16, feat/replicate eaaeb53; non-author scripts and controls, thresholds committed first)
 
 | Claim | Owner's figure | Replication | Verdict |
