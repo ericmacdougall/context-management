@@ -1,0 +1,128 @@
+{
+ "name": "e5_threads",
+ "params": {
+  "per_seed": 200,
+  "seeds": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ]
+ },
+ "result": {
+  "arms": {
+   "ctl_derive_join_dropped": {
+    "bytes_checked": 9475498,
+    "finding_hidden": 11215,
+    "finding_visible": 3416,
+    "findings_joining": 2636,
+    "interference_views": 0,
+    "leaks": 1616,
+    "notice_expected": 2903,
+    "notice_found": 2903,
+    "notice_wrong_views": 0,
+    "views": 5500,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 993,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 943,
+    "xrefs_visible": 11064
+   },
+   "ctl_notice_carries_other_side": {
+    "bytes_checked": 8328372,
+    "finding_hidden": 11215,
+    "finding_visible": 3416,
+    "findings_joining": 2636,
+    "interference_views": 0,
+    "leaks": 2012,
+    "notice_expected": 2903,
+    "notice_found": 0,
+    "notice_wrong_views": 2108,
+    "views": 5500,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 993,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 972,
+    "xrefs_visible": 11064
+   },
+   "ctl_xref_without_decision": {
+    "bytes_checked": 8625173,
+    "finding_hidden": 11215,
+    "finding_visible": 3416,
+    "findings_joining": 2636,
+    "interference_views": 0,
+    "leaks": 2399,
+    "notice_expected": 2903,
+    "notice_found": 0,
+    "notice_wrong_views": 2108,
+    "views": 5500,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 993,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 997,
+    "xrefs_visible": 17662
+   },
+   "enforced": {
+    "bytes_checked": 8081617,
+    "finding_hidden": 11215,
+    "finding_visible": 3416,
+    "findings_joining": 2636,
+    "interference_views": 0,
+    "leaks": 0,
+    "notice_expected": 2903,
+    "notice_found": 2903,
+    "notice_wrong_views": 0,
+    "views": 5500,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 993,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 0,
+    "xrefs_visible": 11064
+   }
+  },
+  "controls": {
+   "ctl_derive_join_dropped": {
+    "leak_rate_worlds": 0.943,
+    "meets_floor": true,
+    "notice_contract_violations": 0
+   },
+   "ctl_notice_carries_other_side": {
+    "leak_rate_worlds": 0.972,
+    "meets_floor": true,
+    "notice_contract_violations": 2108
+   },
+   "ctl_xref_without_decision": {
+    "leak_rate_worlds": 0.997,
+    "meets_floor": true,
+    "notice_contract_violations": 2108
+   }
+  },
+  "controls_meet_floor": true,
+  "not_proven": "timing and ordering side channels (a notice appearing later than the item), notice frequency over time, and the generic 'context withheld' placeholder which tells a viewer that something was withheld; graph shape beyond one hop; real concurrent write paths",
+  "notice_contract": [
+   "kind",
+   "item",
+   "version",
+   "state"
+  ],
+  "positive_conditions_met": true,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e5_threads.py",
+  "at": "2026-11-16T00:29:52Z",
+  "commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   10.2548828125,
+   11.3994140625,
+   11.783203125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "thresholds_sha256": "9ab3799a1cd5d21fca4c3405b36fa1e5c171a4ba8091a466fdf1735a70d918d1"
+ }
+}

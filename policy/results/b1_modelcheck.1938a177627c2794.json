@@ -1,0 +1,367 @@
+{
+ "name": "b1_modelcheck",
+ "params": {
+  "authority": {
+   "r1": [
+    "u1",
+    "u2"
+   ],
+   "r2": [
+    "u1"
+   ],
+   "r3": [
+    "u1",
+    "a1"
+   ]
+  },
+  "joint_depth": 4,
+  "principals": {
+   "a1": "agent",
+   "u1": "human",
+   "u2": "human"
+  },
+  "scen_depth": {
+   "r1": 6,
+   "r2": 8,
+   "r3": 8
+  }
+ },
+ "result": {
+  "controls": {
+   "last_writer_wins": {
+    "expected_found": true,
+    "expected_invariant": "I7_two_applied_decisions_same_base",
+    "shortest_counterexample": {
+     "invariants": [
+      "I4_decision_not_bound_to_head",
+      "I7_two_applied_decisions_same_base"
+     ],
+     "outcome": "retracted",
+     "scenario": "r2",
+     "trace": [
+      "GR",
+      "S3",
+      "T2"
+     ]
+    },
+    "states": 253420,
+    "violated": {
+     "I4_decision_not_bound_to_head": 7987,
+     "I7_two_applied_decisions_same_base": 11045
+    },
+    "violations": 14123
+   },
+   "remark_is_decision": {
+    "expected_found": true,
+    "expected_invariant": "I3_remark_or_proposal_changed_value",
+    "shortest_counterexample": {
+     "invariants": [
+      "I3_remark_or_proposal_changed_value",
+      "I3_value_changed_by_untyped_event"
+     ],
+     "outcome": "confirmed_applied",
+     "scenario": "r2",
+     "trace": [
+      "R1"
+     ]
+    },
+    "states": 253655,
+    "violated": {
+     "I3_remark_or_proposal_changed_value": 32375,
+     "I3_value_changed_by_untyped_event": 32375,
+     "I4_decision_not_bound_to_head": 16985,
+     "I7_two_applied_decisions_same_base": 18181
+    },
+    "violations": 46830
+   },
+   "remove_authority_check": {
+    "expected_found": true,
+    "expected_invariant": "I1_authority",
+    "shortest_counterexample": {
+     "invariants": [
+      "I1_authority"
+     ],
+     "outcome": "superseded",
+     "scenario": "r2",
+     "trace": [
+      "S3"
+     ]
+    },
+    "states": 268354,
+    "violated": {
+     "I1_authority": 4265
+    },
+    "violations": 4265
+   },
+   "remove_channel_check": {
+    "expected_found": true,
+    "expected_invariant": "I11_confirmation_not_typed_on_separate_owner_channel",
+    "shortest_counterexample": {
+     "invariants": [
+      "I11_confirmation_not_typed_on_separate_owner_channel"
+     ],
+     "outcome": "decided_accept",
+     "scenario": "r1",
+     "trace": [
+      "P2",
+      "Dc"
+     ]
+    },
+    "states": 299102,
+    "violated": {
+     "I11_confirmation_not_typed_on_separate_owner_channel": 8008
+    },
+    "violations": 8008
+   },
+   "remove_idempotency_key": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state",
+    "shortest_counterexample": {
+     "invariants": [
+      "I6_redelivery_changed_state"
+     ],
+     "outcome": "proposed",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "P1"
+     ]
+    },
+    "states": 620935,
+    "violated": {
+     "I6_redelivery_changed_state": 324575
+    },
+    "violations": 324575
+   },
+   "remove_self_approval_check": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "shortest_counterexample": {
+     "invariants": [
+      "I2_agent_head_move"
+     ],
+     "outcome": "superseded",
+     "scenario": "r3",
+     "trace": [
+      "AG1"
+     ]
+    },
+    "states": 319687,
+    "violated": {
+     "I2_agent_head_move": 40211
+    },
+    "violations": 40211
+   },
+   "remove_staleness_check": {
+    "expected_found": true,
+    "expected_invariant": "I4_decision_not_bound_to_head",
+    "shortest_counterexample": {
+     "invariants": [
+      "I4_decision_not_bound_to_head"
+     ],
+     "outcome": "superseded",
+     "scenario": "r1",
+     "trace": [
+      "S1"
+     ]
+    },
+    "states": 272024,
+    "violated": {
+     "I4_decision_not_bound_to_head": 97220,
+     "I7_two_applied_decisions_same_base": 31012
+    },
+    "violations": 114879
+   }
+  },
+  "controls_found_expected_invariant": true,
+  "enforced": {
+   "cex": [],
+   "codes": {
+    "agent_cannot_confirm": 26434,
+    "agent_not_permitted": 79302,
+    "bad_event": 59990,
+    "channel_mismatch": 78168,
+    "concurrent_agree": 3711,
+    "confirmed_applied": 6530,
+    "contested_joined": 3358,
+    "contested_needs_resolve": 1390,
+    "contested_opened": 12641,
+    "decided_accept": 32504,
+    "decided_amend": 6386,
+    "decided_reject": 6700,
+    "duplicate": 503090,
+    "granted": 85670,
+    "idem_conflict": 19205,
+    "not_contested": 30326,
+    "nothing_to_retract": 23836,
+    "pending_closed": 3056,
+    "pending_created": 72601,
+    "principal_revoked": 44586,
+    "proposal_closed": 1445,
+    "proposed": 110651,
+    "resolved": 801,
+    "retracted": 6318,
+    "revoked": 66339,
+    "same_channel_confirmation": 7491,
+    "self_approval": 9862,
+    "stale": 275890,
+    "superseded": 13123,
+    "unauthorized": 55780,
+    "unknown_candidate": 3308,
+    "unknown_pending": 84454,
+    "unknown_proposal": 293461,
+    "unknown_req": 29635
+   },
+   "contested_reached": 20854,
+   "per_scenario": {
+    "joint": {
+     "depth": 4,
+     "pool": 44,
+     "seconds": 65.2,
+     "states": 174923,
+     "transitions": 674696,
+     "violations": 0
+    },
+    "r1": {
+     "depth": 6,
+     "pool": 20,
+     "seconds": 98.2,
+     "states": 172274,
+     "transitions": 833420,
+     "violations": 0
+    },
+    "r2": {
+     "depth": 8,
+     "pool": 13,
+     "seconds": 40.4,
+     "states": 39589,
+     "transitions": 303628,
+     "violations": 0
+    },
+    "r3": {
+     "depth": 8,
+     "pool": 13,
+     "seconds": 32.8,
+     "states": 29743,
+     "transitions": 246298,
+     "violations": 0
+    }
+   },
+   "states": 416529,
+   "transitions": 2058042,
+   "violated": {},
+   "violations": 0
+  },
+  "not_proven": "bounded exhaustive search: per-requirement scenarios to depth 6 (r1) and 8 (r2, r3), the joint three-requirement pool only to depth 4 (to depth 3 for controls); the per-requirement decomposition is sound only because the reducer touches one requirement plus global revoke/grant and unique idem keys, which each scenario includes; events carry fixed binding versions so concurrency is modelled as arbitrary delivery order, not parallel transactions (B3 covers those); three principals; two humans, one agent, so peer-agent approval (two agents) is not reached",
+  "outcome_codes_not_reached": [],
+  "pass_conditions_met": true,
+  "pools": {
+   "r1": [
+    "P1",
+    "P2",
+    "D1",
+    "D2",
+    "D3",
+    "D5",
+    "S1",
+    "T1",
+    "RES1",
+    "RES2",
+    "RES4",
+    "D9",
+    "D10",
+    "Dc",
+    "Dp",
+    "Dbad",
+    "D1x",
+    "S2",
+    "REV",
+    "GR1"
+   ],
+   "r2": [
+    "R1",
+    "R3",
+    "K2",
+    "K3",
+    "K3b",
+    "K4",
+    "K5",
+    "RES3",
+    "T2",
+    "S3",
+    "REV",
+    "GR",
+    "Dx"
+   ],
+   "r3": [
+    "P3",
+    "R2",
+    "D4",
+    "D8",
+    "D8b",
+    "K1",
+    "REV",
+    "GR3",
+    "P4",
+    "AG1",
+    "AG2",
+    "AG3",
+    "AG4"
+   ]
+  },
+  "scenarios": {
+   "joint": {
+    "depth": 4,
+    "pool": 44,
+    "seconds": 65.2,
+    "states": 174923,
+    "transitions": 674696,
+    "violations": 0
+   },
+   "r1": {
+    "depth": 6,
+    "pool": 20,
+    "seconds": 98.2,
+    "states": 172274,
+    "transitions": 833420,
+    "violations": 0
+   },
+   "r2": {
+    "depth": 8,
+    "pool": 13,
+    "seconds": 40.4,
+    "states": 39589,
+    "transitions": 303628,
+    "violations": 0
+   },
+   "r3": {
+    "depth": 8,
+    "pool": 13,
+    "seconds": 32.8,
+    "states": 29743,
+    "transitions": 246298,
+    "violations": 0
+   }
+  },
+  "seconds_total": 133.5,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/b1_modelcheck.py",
+  "at": "2026-11-16T01:05:45Z",
+  "commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   27.43212890625,
+   29.35302734375,
+   30.20703125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15",
+  "tree_sha256": "e747cad69c666be994fa1abed3a4dc3ff3fe38a4e2199624efec489c628eaf07"
+ }
+}

@@ -1,0 +1,158 @@
+{
+ "name": "e4_tighten",
+ "params": {
+  "R": 200,
+  "combos": [
+   [
+    "model",
+    "model_banned"
+   ],
+   [
+    "model",
+    "region_removed"
+   ],
+   [
+    "model",
+    "sender_revoked"
+   ],
+   [
+    "model",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "model_banned"
+   ],
+   [
+    "inbox",
+    "region_removed"
+   ],
+   [
+    "inbox",
+    "recipient_revoked"
+   ],
+   [
+    "inbox",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "group_removed"
+   ],
+   [
+    "export",
+    "region_removed"
+   ],
+   [
+    "export",
+    "sender_revoked"
+   ],
+   [
+    "export",
+    "tenant_killed"
+   ]
+  ]
+ },
+ "result": {
+  "control_enqueue_only": {
+   "by_combo": {
+    "export/region_removed": 200,
+    "export/sender_revoked": 200,
+    "export/tenant_killed": 200,
+    "inbox/group_removed": 200,
+    "inbox/model_banned": 200,
+    "inbox/recipient_revoked": 200,
+    "inbox/region_removed": 200,
+    "inbox/tenant_killed": 200,
+    "model/model_banned": 200,
+    "model/region_removed": 200,
+    "model/sender_revoked": 200,
+    "model/tenant_killed": 200
+   },
+   "delivered": 2400,
+   "enqueue_allowed_v1": 2400,
+   "escaped": 2400,
+   "reasons": {},
+   "refusal_logged_v2": 0,
+   "refused": 0,
+   "runs": 2400
+  },
+  "control_meets_floor": true,
+  "control_reason": "enqueue-only check trusts the stale v1 decision and delivers",
+  "fenced_after_tighten": {
+   "by_combo": {
+    "export/region_removed": 0,
+    "export/sender_revoked": 0,
+    "export/tenant_killed": 0,
+    "inbox/group_removed": 0,
+    "inbox/model_banned": 0,
+    "inbox/recipient_revoked": 0,
+    "inbox/region_removed": 0,
+    "inbox/tenant_killed": 0,
+    "model/model_banned": 0,
+    "model/region_removed": 0,
+    "model/sender_revoked": 0,
+    "model/tenant_killed": 0
+   },
+   "delivered": 0,
+   "enqueue_allowed_v1": 2400,
+   "escaped": 0,
+   "reasons": {
+    "model_banned": 400,
+    "principal_revoked": 400,
+    "recipient_acl": 200,
+    "recipient_revoked": 200,
+    "region_forbidden": 600,
+    "tenant_killed": 600
+   },
+   "refusal_logged_v2": 2400,
+   "refused": 2400,
+   "runs": 2400
+  },
+  "not_proven": "refusal logged for the last-checked item only; no in-flight (already sent) item can be recalled",
+  "note": "group_removed is a directory change, not a policy version change: its refusal is logged with policy version 1 and the refusal reason recipient_acl",
+  "pass_conditions_met": true,
+  "positive_no_tighten": {
+   "by_combo": {
+    "export/region_removed": 200,
+    "export/sender_revoked": 200,
+    "export/tenant_killed": 200,
+    "inbox/group_removed": 200,
+    "inbox/model_banned": 200,
+    "inbox/recipient_revoked": 200,
+    "inbox/region_removed": 200,
+    "inbox/tenant_killed": 200,
+    "model/model_banned": 200,
+    "model/region_removed": 200,
+    "model/sender_revoked": 200,
+    "model/tenant_killed": 200
+   },
+   "delivered": 2400,
+   "enqueue_allowed_v1": 2400,
+   "escaped": 2400,
+   "reasons": {},
+   "refusal_logged_v2": 0,
+   "refused": 0,
+   "runs": 2400
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e4_tighten.py",
+  "at": "2026-11-16T01:01:18Z",
+  "commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   23.6328125,
+   30.7763671875,
+   30.91064453125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15",
+  "tree_sha256": "e747cad69c666be994fa1abed3a4dc3ff3fe38a4e2199624efec489c628eaf07"
+ }
+}

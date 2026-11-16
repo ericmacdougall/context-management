@@ -1,0 +1,133 @@
+{
+ "name": "e5_threads",
+ "params": {
+  "per_seed": 200,
+  "seeds": [
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "result": {
+  "arms": {
+   "ctl_derive_join_dropped": {
+    "bytes_checked": 9455817,
+    "finding_hidden": 11214,
+    "finding_visible": 3414,
+    "findings_joining": 2641,
+    "interference_views": 1625,
+    "leaks": 1625,
+    "notice_expected": 2830,
+    "notice_found": 2830,
+    "notice_wrong_views": 0,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 990,
+    "worlds_with_interference": 936,
+    "worlds_with_leak": 936,
+    "xrefs_visible": 10958
+   },
+   "ctl_notice_carries_other_side": {
+    "bytes_checked": 8288400,
+    "finding_hidden": 11214,
+    "finding_visible": 3414,
+    "findings_joining": 2641,
+    "interference_views": 1960,
+    "leaks": 1960,
+    "notice_expected": 2830,
+    "notice_found": 0,
+    "notice_wrong_views": 2061,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 990,
+    "worlds_with_interference": 978,
+    "worlds_with_leak": 978,
+    "xrefs_visible": 10958
+   },
+   "ctl_xref_without_decision": {
+    "bytes_checked": 8564814,
+    "finding_hidden": 11214,
+    "finding_visible": 3414,
+    "findings_joining": 2641,
+    "interference_views": 2377,
+    "leaks": 2377,
+    "notice_expected": 2830,
+    "notice_found": 0,
+    "notice_wrong_views": 2061,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 990,
+    "worlds_with_interference": 1000,
+    "worlds_with_leak": 1000,
+    "xrefs_visible": 17288
+   },
+   "enforced": {
+    "bytes_checked": 8047850,
+    "finding_hidden": 11214,
+    "finding_visible": 3414,
+    "findings_joining": 2641,
+    "interference_views": 0,
+    "leaks": 0,
+    "notice_expected": 2830,
+    "notice_found": 2830,
+    "notice_wrong_views": 0,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 990,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 0,
+    "xrefs_visible": 10958
+   }
+  },
+  "controls": {
+   "ctl_derive_join_dropped": {
+    "interference_views": 1625,
+    "leak_rate_worlds": 0.936,
+    "meets_floor": true,
+    "notice_contract_violations": 0
+   },
+   "ctl_notice_carries_other_side": {
+    "interference_views": 1960,
+    "leak_rate_worlds": 0.978,
+    "meets_floor": true,
+    "notice_contract_violations": 2061
+   },
+   "ctl_xref_without_decision": {
+    "interference_views": 2377,
+    "leak_rate_worlds": 1.0,
+    "meets_floor": true,
+    "notice_contract_violations": 2061
+   }
+  },
+  "controls_meet_floor": true,
+  "not_proven": "timing and ordering side channels (a notice appearing later than the item), notice frequency over time, and the generic 'context withheld' placeholder which tells a viewer that something was withheld; graph shape beyond one hop; real concurrent write paths",
+  "notice_contract": [
+   "kind",
+   "item",
+   "version",
+   "state"
+  ],
+  "positive_conditions_met": true,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e5_threads.py",
+  "at": "2026-11-16T01:01:43Z",
+  "commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   26.611328125,
+   30.8671875,
+   30.9345703125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15",
+  "tree_sha256": "e747cad69c666be994fa1abed3a4dc3ff3fe38a4e2199624efec489c628eaf07"
+ }
+}

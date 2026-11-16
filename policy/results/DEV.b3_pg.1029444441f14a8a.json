@@ -1,0 +1,273 @@
+{
+ "name": "b3_pg",
+ "params": {
+  "R": 50,
+  "pg_port": 25470,
+  "scenarios": [
+   "s1",
+   "s2",
+   "s3",
+   "s4",
+   "s5"
+  ]
+ },
+ "result": {
+  "control_c2_live_vs_rebuild_mismatches": 50,
+  "controls": {
+   "ctl_blind_last_writer_wins": {
+    "failures_sample": [],
+    "overlap_witnessed": 0,
+    "passed": 50,
+    "rounds": 50,
+    "sample": [
+     {
+      "errs": [],
+      "final": [
+       "B",
+       "u2",
+       2
+      ]
+     },
+     {
+      "errs": [],
+      "final": [
+       "B",
+       "u2",
+       2
+      ]
+     }
+    ]
+   },
+   "ctl_no_lock_read_modify_write": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50,
+    "sample": [
+     {
+      "codes": [
+       "decided_accept",
+       "decided_accept"
+      ],
+      "errs": [],
+      "version": 1
+     },
+     {
+      "codes": [
+       "decided_accept",
+       "decided_accept"
+      ],
+      "errs": [],
+      "version": 1
+     }
+    ]
+   }
+  },
+  "controls_meet_floor": true,
+  "not_proven": "single Postgres instance, READ COMMITTED, one writer pair per round (two overlapping transactions, not N-way); no process kill or network partition mid-transaction; the events table has no hash chain enforced by the database; revoke locks every requirement row (a scaling limit)",
+  "pass_conditions_met": false,
+  "rebuild": {
+   "authority_equal": true,
+   "events_in_log": 1200,
+   "manifest_equal": true,
+   "per_scenario_reqs_equal": {
+    "c1": 50,
+    "c2": 0,
+    "s1": 50,
+    "s2": 50,
+    "s3": 50,
+    "s4": 50,
+    "s5": 50
+   },
+   "per_scenario_reqs_total": {
+    "c1": 50,
+    "c2": 50,
+    "s1": 50,
+    "s2": 50,
+    "s3": 50,
+    "s4": 50,
+    "s5": 50
+   }
+  },
+  "scenarios": {
+   "S1_conflicting_decisions_contested": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50,
+    "sample": [
+     {
+      "codes": {
+       "a": "decided_accept",
+       "b": "contested_opened"
+      },
+      "errs": [],
+      "status": "contested",
+      "version": 2
+     },
+     {
+      "codes": {
+       "a": "decided_accept",
+       "b": "contested_opened"
+      },
+      "errs": [],
+      "status": "contested",
+      "version": 2
+     }
+    ]
+   },
+   "S2_stale_token_refused": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50,
+    "sample": [
+     {
+      "codes": {
+       "a": "superseded",
+       "b": "stale"
+      },
+      "errs": [],
+      "value": "Y",
+      "version": 3
+     },
+     {
+      "codes": {
+       "a": "superseded",
+       "b": "stale"
+      },
+      "errs": [],
+      "value": "Y",
+      "version": 3
+     }
+    ]
+   },
+   "S3_zombie_revoked_principal": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50,
+    "sample": [
+     {
+      "codes": {
+       "a": "revoked",
+       "b": "principal_revoked"
+      },
+      "errs": [],
+      "version": 0
+     },
+     {
+      "codes": {
+       "a": "revoked",
+       "b": "principal_revoked"
+      },
+      "errs": [],
+      "version": 0
+     }
+    ]
+   },
+   "S4_same_idem_key_concurrent": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50,
+    "sample": [
+     {
+      "codes": {
+       "a": "superseded",
+       "b": "duplicate"
+      },
+      "errs": [],
+      "event_rows": 1,
+      "version": 1
+     },
+     {
+      "codes": {
+       "a": "superseded",
+       "b": "idem_conflict"
+      },
+      "errs": [],
+      "event_rows": 1,
+      "version": 1
+     }
+    ]
+   },
+   "S5_resolve_race": {
+    "failures_sample": [
+     {
+      "codes": {
+       "a": "resolved",
+       "b": "not_contested"
+      },
+      "errs": [],
+      "round": 0,
+      "version": 3
+     },
+     {
+      "codes": {
+       "a": "resolved",
+       "b": "not_contested"
+      },
+      "errs": [],
+      "round": 1,
+      "version": 3
+     },
+     {
+      "codes": {
+       "a": "resolved",
+       "b": "not_contested"
+      },
+      "errs": [],
+      "round": 2,
+      "version": 3
+     }
+    ],
+    "overlap_witnessed": 50,
+    "passed": 0,
+    "rounds": 50,
+    "sample": [
+     {
+      "codes": {
+       "a": "resolved",
+       "b": "not_contested"
+      },
+      "errs": [],
+      "version": 3
+     },
+     {
+      "codes": {
+       "a": "resolved",
+       "b": "not_contested"
+      },
+      "errs": [],
+      "version": 3
+     }
+    ]
+   }
+  },
+  "verdict": "FAIL"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/b3_pg.py",
+  "at": "2026-11-16T00:41:15Z",
+  "commit": "4fda42f0daf177f768922dde4b5a22376d2958e0",
+  "dirty": true,
+  "env": {
+   "container": "emlab-pg-pol-16096",
+   "isolation": "read committed",
+   "postgres": "16.15 (Debian 16.15-1.pgdg13+2)"
+  },
+  "host": "t2-dev",
+  "load_avg": [
+   46.494140625,
+   30.44775390625,
+   25.96435546875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "thresholds_sha256": "9ab3799a1cd5d21fca4c3405b36fa1e5c171a4ba8091a466fdf1735a70d918d1",
+  "tree_sha256": "93b3541aa0602e8e8f9c1352aa7a5d3f4c4013826e90d784b4b118380237e8a7"
+ }
+}

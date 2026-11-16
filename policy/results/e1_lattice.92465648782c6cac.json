@@ -1,0 +1,372 @@
+{
+ "name": "e1_lattice",
+ "params": {
+  "law_triples": 5000,
+  "n_per_seed": 4000,
+  "probes_per_derivation": 40,
+  "seeds": [
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "result": {
+  "controls": {
+   "acl": {
+    "first_counterexample": {
+     "action": "append",
+     "dims": [
+      "acl"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.14293675118417387,
+     0.12433788681349317,
+     0.13059183106418448,
+     0.13437757625721353,
+     0.12199216564073867
+    ],
+    "per_seed_structural": [
+     0.6823627751462803,
+     0.6941734039587399,
+     0.6957488191164213,
+     0.6773838966749107,
+     0.6894236149972021
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.12199216564073867,
+    "structural_rate_worst_seed": 0.6773838966749107
+   },
+   "banned": {
+    "first_counterexample": {
+     "action": "send_model",
+     "dims": [
+      "banned"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.06380607411535247,
+     0.059381098410928354,
+     0.06168380105584885,
+     0.06375377851057983,
+     0.0629546726357023
+    ],
+    "per_seed_structural": [
+     0.8514906659236556,
+     0.8511290772233063,
+     0.8532925812725757,
+     0.841714756801319,
+     0.8514269725797425
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.059381098410928354,
+    "structural_rate_worst_seed": 0.841714756801319
+   },
+   "holds": {
+    "first_counterexample": {
+     "action": "erase",
+     "dims": [
+      "holds"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.22178879910838672,
+     0.21271257318093115,
+     0.21116976938038343,
+     0.21132179170101675,
+     0.2123670956911024
+    ],
+    "per_seed_structural": [
+     0.7263861799944274,
+     0.7401728463897407,
+     0.729091414281745,
+     0.7164056059356966,
+     0.7188024622271965
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.21116976938038343,
+    "structural_rate_worst_seed": 0.7164056059356966
+   },
+   "local_only": {
+    "first_counterexample": {
+     "action": "send_model",
+     "dims": [
+      "local_only"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.06937865700752299,
+     0.07471424588792863,
+     0.0775215337593776,
+     0.0777686177521297,
+     0.06743144935646335
+    ],
+    "per_seed_structural": [
+     0.6653663973251602,
+     0.6693615834959576,
+     0.6693525979438733,
+     0.6738114866721627,
+     0.6698377168438724
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.06743144935646335,
+    "structural_rate_worst_seed": 0.6653663973251602
+   },
+   "models": {
+    "first_counterexample": {
+     "action": "embed",
+     "dims": [
+      "models"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.07718027305656172,
+     0.07582938388625593,
+     0.07863295359822173,
+     0.07611981313547678,
+     0.07946278679350867
+    ],
+    "per_seed_structural": [
+     0.8088604067985511,
+     0.8098689712851965,
+     0.8180050013892748,
+     0.8054410552349547,
+     0.8035814213766088
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.07582938388625593,
+    "structural_rate_worst_seed": 0.8035814213766088
+   },
+   "regions": {
+    "first_counterexample": {
+     "action": "send_inbox",
+     "dims": [
+      "regions"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.38478684870437446,
+     0.3883468079174798,
+     0.3823284245623784,
+     0.39159109645507006,
+     0.37045327364297703
+    ],
+    "per_seed_structural": [
+     0.8069100027862914,
+     0.805965988291051,
+     0.8032786885245902,
+     0.8004946413849959,
+     0.8033016228315613
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.37045327364297703,
+    "structural_rate_worst_seed": 0.8004946413849959
+   },
+   "restricted": {
+    "first_counterexample": {
+     "action": "send_inbox",
+     "dims": [
+      "restricted"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.07439398161047646,
+     0.08781711736827433,
+     0.07724367879966658,
+     0.08353943391041495,
+     0.07134862898712926
+    ],
+    "per_seed_structural": [
+     0.2811368069100028,
+     0.3013660440479509,
+     0.29313698249513753,
+     0.2959604286892003,
+     0.29294907666480136
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.07134862898712926,
+    "structural_rate_worst_seed": 0.2811368069100028
+   },
+   "sensitivity": {
+    "first_counterexample": {
+     "action": "export",
+     "dims": [
+      "sensitivity"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.1315129562552243,
+     0.12238639531642041,
+     0.12892470130591832,
+     0.1313547677933498,
+     0.12618914381645216
+    ],
+    "per_seed_structural": [
+     0.9267205349679577,
+     0.9183161416225258,
+     0.909141428174493,
+     0.9159109645507008,
+     0.9300503637381086
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.12238639531642041,
+    "structural_rate_worst_seed": 0.909141428174493
+   },
+   "subjects": {
+    "first_counterexample": {
+     "action": "erase_subject",
+     "dims": [
+      "subjects"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.6040679855112845,
+     0.6030108725954837,
+     0.6004445679355377,
+     0.5781808189062929,
+     0.6026860660324567
+    ],
+    "per_seed_structural": [
+     0.6040679855112845,
+     0.6030108725954837,
+     0.6004445679355377,
+     0.5781808189062929,
+     0.6026860660324567
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.5781808189062929,
+    "structural_rate_worst_seed": 0.5781808189062929
+   },
+   "tenants": {
+    "first_counterexample": {
+     "action": "read",
+     "dims": [
+      "tenants"
+     ]
+    },
+    "meets_floor": true,
+    "per_seed_semantic": [
+     0.21036500417943718,
+     0.2051853916922219,
+     0.21561544873575994,
+     0.20719978015938445,
+     0.20229434806939003
+    ],
+    "per_seed_structural": [
+     0.331568682084146,
+     0.33955952049066074,
+     0.34731869963878853,
+     0.3261885133278373,
+     0.3438724118634583
+    ],
+    "reason_is_dropped_dimension": true,
+    "semantic_rate_worst_seed": 0.20229434806939003,
+    "structural_rate_worst_seed": 0.3261885133278373
+   }
+  },
+  "controls_meet_floor": true,
+  "lattice_law_failures": {
+   "associative": 0,
+   "commutative": 0,
+   "idempotent": 0
+  },
+  "not_proven": "label generator universe is small (4 groups, 3 regions, 4 models, 2 tenants); decide() rules not proven complete, only monotone under join",
+  "pass_conditions_met": true,
+  "per_seed": {
+   "11": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3589,
+    "probe_allowed": 15757,
+    "probe_denied": 144243,
+    "probes": 160000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "12": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3587,
+    "probe_allowed": 14253,
+    "probe_denied": 145747,
+    "probes": 160000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "13": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3599,
+    "probe_allowed": 14784,
+    "probe_denied": 145216,
+    "probes": 160000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "14": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3639,
+    "probe_allowed": 15021,
+    "probe_denied": 144979,
+    "probes": 160000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "15": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3574,
+    "probe_allowed": 15360,
+    "probe_denied": 144640,
+    "probes": 160000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   }
+  },
+  "totals": {
+   "derivations": 20000,
+   "multi_input": 17988,
+   "probe_allowed": 75175,
+   "probe_denied": 724825,
+   "probes": 800000,
+   "semantic_viol_derivations": 0,
+   "structural_viol": 0
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e1_lattice.py",
+  "at": "2026-11-16T01:01:05Z",
+  "commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   24.77734375,
+   31.35009765625,
+   31.0947265625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15",
+  "tree_sha256": "e747cad69c666be994fa1abed3a4dc3ff3fe38a4e2199624efec489c628eaf07"
+ }
+}

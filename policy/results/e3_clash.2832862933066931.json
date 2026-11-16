@@ -1,0 +1,98 @@
+{
+ "name": "e3_clash",
+ "params": {
+  "fault": 2400,
+  "legit": 1400,
+  "planted": 2200,
+  "seed": 77
+ },
+ "result": {
+  "control_meets_floor": true,
+  "control_reason": "naive merge lets credential attrs override identity; truthiness + swallowed errors allow faults",
+  "not_proven": "only the credential and derived attribute channels are fuzzed; extra_rules are caller code and only their return value is constrained",
+  "pass_conditions_met": true,
+  "results": {
+   "fault": {
+    "by_kind": {
+     "action": 286,
+     "context": 319,
+     "label": 317,
+     "policy": 286,
+     "principal": 300,
+     "rule": 892
+    },
+    "n": 2400,
+    "naive_allow": 2078,
+    "ours_allow": 0,
+    "reasons": {
+     "attr_source_type": 79,
+     "context_type": 172,
+     "eval_error:TypeError": 136,
+     "eval_error:ValueError": 205,
+     "eval_error:Weird": 68,
+     "extra_rule_non_true:fuzz": 777,
+     "label_error": 85,
+     "no_policy": 286,
+     "principal_type": 142,
+     "unknown_action": 286,
+     "unknown_destination": 68,
+     "unlabelled": 96
+    }
+   },
+   "legit": {
+    "misses": [],
+    "n": 1400,
+    "naive_allow": 1400,
+    "ours_allow": 1400
+   },
+   "planted": {
+    "by_form_naive_allow": {
+     "bytes": 48,
+     "case": 59,
+     "dash": 139,
+     "derived_exact": 175,
+     "exact": 519,
+     "fullwidth": 58,
+     "int": 66,
+     "nested": 57,
+     "space": 47,
+     "tuple": 42,
+     "zerowidth": 55
+    },
+    "n": 2200,
+    "naive_allow": 1265,
+    "ours_allow": 0,
+    "reasons": {
+     "acl": 26,
+     "attr_clash": 1562,
+     "attr_key_type": 463,
+     "clearance": 25,
+     "principal_revoked": 57,
+     "restricted_clearance": 30,
+     "tenant_mismatch": 37
+    }
+   }
+  },
+  "verdict": "PASS",
+  "wrong_reason_count": 0,
+  "wrong_reason_sample": []
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e3_clash.py",
+  "at": "2026-11-16T01:01:17Z",
+  "commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   24.0361328125,
+   30.9755859375,
+   30.97509765625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15",
+  "tree_sha256": "e747cad69c666be994fa1abed3a4dc3ff3fe38a4e2199624efec489c628eaf07"
+ }
+}

@@ -1,0 +1,52 @@
+{
+ "name": "e6_policy_format",
+ "params": {
+  "malformed": 3000,
+  "seed": 606
+ },
+ "result": {
+  "control_lenient_loader_allows_rate": 0.22186666666666666,
+  "control_meets_floor": true,
+  "hold_and_subject_checks": {
+   "derived_inherits_hold_and_subject": true,
+   "hold_released_when_event_removed": true,
+   "no_hold_erases": true,
+   "other_tenant_cannot_erase": true,
+   "recorded_hold_blocks_erase": true,
+   "unrecorded_hold_does_not_block": true
+  },
+  "licence_note": "no Elasticsearch feature is used: enforcement is application-side; nothing here needs more than Basic",
+  "not_proven": "format covers the dimensions this lab models; the client's real policies are not shipped (they supply them); example policy is illustrative only",
+  "pass_conditions_met": true,
+  "results": {
+   "deny_all_allows": 0,
+   "empty_policy_allows": 0,
+   "empty_probes": 3000,
+   "lenient_allows": 3328,
+   "lenient_probes": 15000,
+   "malformed_docs": 3000,
+   "malformed_parse_errors": 3000,
+   "malformed_safe_allows": 0,
+   "malformed_safe_probes": 15000,
+   "valid_doc_allows": 641,
+   "valid_doc_probes": 3000
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e6_policy_format.py",
+  "at": "2026-11-16T00:54:48Z",
+  "commit": "2339b37130cb0b548d0a44dc643d0fde976f286b",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   13.9609375,
+   19.21826171875,
+   17.13427734375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "thresholds_sha256": "9ab3799a1cd5d21fca4c3405b36fa1e5c171a4ba8091a466fdf1735a70d918d1"
+ }
+}

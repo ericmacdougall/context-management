@@ -1,0 +1,260 @@
+{
+ "name": "e1_lattice",
+ "params": {
+  "law_triples": 5000,
+  "n_per_seed": 4000,
+  "probes_per_derivation": 10,
+  "seeds": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ]
+ },
+ "result": {
+  "controls": {
+   "acl": {
+    "first_counterexample": {
+     "action": "append",
+     "dims": [
+      "acl"
+     ]
+    },
+    "meets_floor": false,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.03337010479867623,
+    "structural_rate": 0.685603971318257,
+    "violated_dimensions": {
+     "acl": 2486
+    }
+   },
+   "banned": {
+    "first_counterexample": {
+     "action": "send_inbox",
+     "dims": [
+      "banned"
+     ]
+    },
+    "meets_floor": false,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.04826254826254826,
+    "structural_rate": 0.8521787093215665,
+    "violated_dimensions": {
+     "banned": 3090
+    }
+   },
+   "holds": {
+    "first_counterexample": {
+     "action": "erase",
+     "dims": [
+      "holds"
+     ]
+    },
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.12796469939327082,
+    "structural_rate": 0.7302813017098732,
+    "violated_dimensions": {
+     "holds": 2648
+    }
+   },
+   "local_only": {
+    "first_counterexample": {
+     "action": "send_model",
+     "dims": [
+      "local_only"
+     ]
+    },
+    "meets_floor": false,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.04743519029233315,
+    "structural_rate": 0.6698841698841699,
+    "violated_dimensions": {
+     "local_only": 2429
+    }
+   },
+   "models": {
+    "first_counterexample": {
+     "action": "embed",
+     "dims": [
+      "models"
+     ]
+    },
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.06287920573634859,
+    "structural_rate": 0.809707666850524,
+    "violated_dimensions": {
+     "models": 2936
+    }
+   },
+   "regions": {
+    "first_counterexample": {
+     "action": "send_model",
+     "dims": [
+      "regions"
+     ]
+    },
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.33314947600661887,
+    "structural_rate": 0.803088803088803,
+    "violated_dimensions": {
+     "regions": 2912
+    }
+   },
+   "restricted": {
+    "first_counterexample": {
+     "action": "export",
+     "dims": [
+      "restricted"
+     ]
+    },
+    "meets_floor": false,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.04771097628240485,
+    "structural_rate": 0.29840044125758414,
+    "violated_dimensions": {
+     "restricted": 1082
+    }
+   },
+   "sensitivity": {
+    "first_counterexample": {
+     "action": "export",
+     "dims": [
+      "sensitivity"
+     ]
+    },
+    "meets_floor": false,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.02840595697738555,
+    "structural_rate": 0.9225041367898511,
+    "violated_dimensions": {
+     "sensitivity": 3345
+    }
+   },
+   "subjects": {
+    "first_counterexample": {
+     "action": "erase_subject",
+     "dims": [
+      "subjects"
+     ]
+    },
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.6017650303364589,
+    "structural_rate": 0.6017650303364589,
+    "violated_dimensions": {
+     "subjects": 2182
+    }
+   },
+   "tenants": {
+    "first_counterexample": {
+     "action": "append",
+     "dims": [
+      "tenants"
+     ]
+    },
+    "meets_floor": true,
+    "reason_is_dropped_dimension": true,
+    "semantic_rate": 0.1527854384997242,
+    "structural_rate": 0.33314947600661887,
+    "violated_dimensions": {
+     "tenants": 1208
+    }
+   }
+  },
+  "controls_meet_floor": false,
+  "lattice_law_failures": {
+   "associative": 0,
+   "commutative": 0,
+   "idempotent": 0
+  },
+  "not_proven": "label generator universe is small (4 groups, 3 regions, 4 models, 2 tenants); decide() rules not proven complete, only monotone under join",
+  "pass_conditions_met": true,
+  "per_seed": {
+   "1": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3626,
+    "probe_allowed": 4575,
+    "probe_denied": 35425,
+    "probes": 40000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "2": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3638,
+    "probe_allowed": 4379,
+    "probe_denied": 35621,
+    "probes": 40000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "3": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3630,
+    "probe_allowed": 4297,
+    "probe_denied": 35703,
+    "probes": 40000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "4": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3612,
+    "probe_allowed": 4519,
+    "probe_denied": 35481,
+    "probes": 40000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   },
+   "5": {
+    "derivations": 4000,
+    "first_counterexample": null,
+    "multi_input": 3611,
+    "probe_allowed": 4459,
+    "probe_denied": 35541,
+    "probes": 40000,
+    "semantic_viol_derivations": 0,
+    "structural_viol": 0,
+    "viol_dims": {}
+   }
+  },
+  "totals": {
+   "derivations": 20000,
+   "multi_input": 18117,
+   "probe_allowed": 22229,
+   "probe_denied": 177771,
+   "probes": 200000,
+   "semantic_viol_derivations": 0,
+   "structural_viol": 0
+  },
+  "verdict": "FAIL"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e1_lattice.py",
+  "at": "2026-11-16T00:52:43Z",
+  "commit": "2339b37130cb0b548d0a44dc643d0fde976f286b",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   16.77734375,
+   22.27099609375,
+   17.74169921875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "thresholds_sha256": "9ab3799a1cd5d21fca4c3405b36fa1e5c171a4ba8091a466fdf1735a70d918d1"
+ }
+}

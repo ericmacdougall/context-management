@@ -1,0 +1,96 @@
+{
+ "name": "e3_clash",
+ "params": {
+  "fault": 2400,
+  "legit": 1400,
+  "planted": 2200,
+  "seed": 31
+ },
+ "result": {
+  "control_meets_floor": true,
+  "control_reason": "naive merge lets credential attrs override identity; truthiness + swallowed errors allow faults",
+  "not_proven": "only the credential and derived attribute channels are fuzzed; extra_rules are caller code and only their return value is constrained",
+  "pass_conditions_met": true,
+  "results": {
+   "fault": {
+    "by_kind": {
+     "action": 299,
+     "context": 284,
+     "label": 318,
+     "policy": 299,
+     "principal": 306,
+     "rule": 894
+    },
+    "n": 2400,
+    "naive_allow": 2061,
+    "ours_allow": 0,
+    "reasons": {
+     "attr_source_type": 84,
+     "context_type": 126,
+     "eval_error:TypeError": 127,
+     "eval_error:ValueError": 215,
+     "eval_error:Weird": 62,
+     "extra_rule_non_true:fuzz": 767,
+     "label_error": 92,
+     "no_policy": 299,
+     "principal_type": 156,
+     "unknown_action": 299,
+     "unknown_destination": 74,
+     "unlabelled": 99
+    }
+   },
+   "legit": {
+    "misses": [],
+    "n": 1400,
+    "naive_allow": 1400,
+    "ours_allow": 1400
+   },
+   "planted": {
+    "by_form_naive_allow": {
+     "bytes": 66,
+     "case": 59,
+     "dash": 136,
+     "derived_exact": 167,
+     "exact": 508,
+     "fullwidth": 69,
+     "int": 49,
+     "nested": 48,
+     "space": 56,
+     "tuple": 65,
+     "zerowidth": 45
+    },
+    "n": 2200,
+    "naive_allow": 1268,
+    "ours_allow": 0,
+    "reasons": {
+     "acl": 24,
+     "attr_clash": 1537,
+     "attr_key_type": 501,
+     "clearance": 32,
+     "principal_revoked": 48,
+     "restricted_clearance": 29,
+     "tenant_mismatch": 29
+    }
+   }
+  },
+  "verdict": "PASS",
+  "wrong_reason_count": 0,
+  "wrong_reason_sample": []
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e3_clash.py",
+  "at": "2026-11-16T00:25:06Z",
+  "commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   12.35693359375,
+   11.13330078125,
+   11.84375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "thresholds_sha256": "9ab3799a1cd5d21fca4c3405b36fa1e5c171a4ba8091a466fdf1735a70d918d1"
+ }
+}

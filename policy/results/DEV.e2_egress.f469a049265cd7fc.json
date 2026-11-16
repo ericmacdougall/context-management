@@ -1,0 +1,553 @@
+{
+ "name": "e2_egress",
+ "params": {
+  "classes": [
+   "eu_only",
+   "local_only",
+   "model_banned",
+   "restricted_channel",
+   "other_tenant",
+   "plain"
+  ],
+  "per_seed": 400,
+  "seeds": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ]
+ },
+ "result": {
+  "arms": {
+   "ctl_derive_join_dropped": {
+    "attempts_forbidden": {
+     "eu_only": 1351,
+     "local_only": 1139,
+     "model_banned": 932,
+     "other_tenant": 1880,
+     "plain": 0,
+     "restricted_channel": 2869
+    },
+    "attempts_total": 13481,
+    "channels": {
+     "embed": 977,
+     "export": 1202,
+     "inbox": 2266,
+     "model": 4428
+    },
+    "denied": 5387,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model"
+    ],
+    "leak_channels": {
+     "embed": 88,
+     "export": 109,
+     "inbox": 109,
+     "model": 125
+    },
+    "leak_classes": {
+     "eu_only": 89,
+     "local_only": 42,
+     "model_banned": 19,
+     "other_tenant": 108,
+     "restricted_channel": 173
+    },
+    "permitted": {
+     "eu_only": 1405,
+     "local_only": 1324,
+     "model_banned": 3577,
+     "other_tenant": 0,
+     "plain": 2215,
+     "restricted_channel": 1295
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 318,
+    "violations": 431
+   },
+   "ctl_embed_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 1352,
+     "local_only": 1137,
+     "model_banned": 929,
+     "other_tenant": 1883,
+     "plain": 0,
+     "restricted_channel": 2865
+    },
+    "attempts_total": 13480,
+    "channels": {
+     "embed": 3562,
+     "export": 1115,
+     "inbox": 2172,
+     "model": 4322
+    },
+    "denied": 4509,
+    "evaluated_actions": [
+     "append",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model"
+    ],
+    "leak_channels": {
+     "embed": 2281
+    },
+    "leak_classes": {
+     "eu_only": 285,
+     "local_only": 244,
+     "model_banned": 476,
+     "other_tenant": 422,
+     "restricted_channel": 854
+    },
+    "permitted": {
+     "eu_only": 1472,
+     "local_only": 1365,
+     "model_banned": 3546,
+     "other_tenant": 0,
+     "plain": 2384,
+     "restricted_channel": 1269
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 938,
+    "violations": 2281
+   },
+   "ctl_export_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 1352,
+     "local_only": 1137,
+     "model_banned": 929,
+     "other_tenant": 1883,
+     "plain": 0,
+     "restricted_channel": 2865
+    },
+    "attempts_total": 13480,
+    "channels": {
+     "embed": 911,
+     "export": 3673,
+     "inbox": 2172,
+     "model": 4322
+    },
+    "denied": 4583,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "inject",
+     "send_inbox",
+     "send_model"
+    ],
+    "leak_channels": {
+     "export": 1828
+    },
+    "leak_classes": {
+     "eu_only": 268,
+     "local_only": 222,
+     "other_tenant": 457,
+     "restricted_channel": 881
+    },
+    "permitted": {
+     "eu_only": 1496,
+     "local_only": 1359,
+     "model_banned": 3917,
+     "other_tenant": 0,
+     "plain": 2348,
+     "restricted_channel": 1269
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 873,
+    "violations": 1828
+   },
+   "ctl_id_pattern_guard": {
+    "attempts_forbidden": {
+     "eu_only": 1823,
+     "local_only": 1768,
+     "model_banned": 1274,
+     "other_tenant": 2720,
+     "plain": 0,
+     "restricted_channel": 3965
+    },
+    "attempts_total": 13420,
+    "channels": {
+     "embed": 3575,
+     "export": 3707,
+     "inbox": 4929,
+     "model": 6455
+    },
+    "denied": 0,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model"
+    ],
+    "leak_channels": {
+     "embed": 2478,
+     "export": 1996,
+     "inbox": 2145,
+     "model": 7311
+    },
+    "leak_classes": {
+     "eu_only": 2083,
+     "local_only": 2045,
+     "model_banned": 1614,
+     "other_tenant": 3144,
+     "restricted_channel": 5044
+    },
+    "permitted": {
+     "eu_only": 2169,
+     "local_only": 1836,
+     "model_banned": 5503,
+     "other_tenant": 0,
+     "plain": 3709,
+     "restricted_channel": 1959
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 1979,
+    "violations": 13930
+   },
+   "ctl_inbox_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 1352,
+     "local_only": 1137,
+     "model_banned": 929,
+     "other_tenant": 1883,
+     "plain": 0,
+     "restricted_channel": 2865
+    },
+    "attempts_total": 13480,
+    "channels": {
+     "embed": 911,
+     "export": 1115,
+     "inbox": 4997,
+     "model": 4322
+    },
+    "denied": 4486,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_model"
+    ],
+    "leak_channels": {
+     "inbox": 1994
+    },
+    "leak_classes": {
+     "eu_only": 371,
+     "local_only": 154,
+     "model_banned": 178,
+     "other_tenant": 481,
+     "restricted_channel": 810
+    },
+    "permitted": {
+     "eu_only": 1426,
+     "local_only": 1427,
+     "model_banned": 3867,
+     "other_tenant": 0,
+     "plain": 2430,
+     "restricted_channel": 1391
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 896,
+    "violations": 1994
+   },
+   "ctl_model_port_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 1398,
+     "local_only": 1164,
+     "model_banned": 942,
+     "other_tenant": 1877,
+     "plain": 0,
+     "restricted_channel": 2914
+    },
+    "attempts_total": 13471,
+    "channels": {
+     "embed": 881,
+     "export": 1092,
+     "inbox": 2171,
+     "model": 6461
+    },
+    "denied": 3647,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox"
+    ],
+    "leak_channels": {
+     "model": 3685
+    },
+    "leak_classes": {
+     "eu_only": 642,
+     "local_only": 685,
+     "model_banned": 535,
+     "other_tenant": 788,
+     "restricted_channel": 1035
+    },
+    "permitted": {
+     "eu_only": 1508,
+     "local_only": 1302,
+     "model_banned": 3986,
+     "other_tenant": 0,
+     "plain": 2668,
+     "restricted_channel": 1538
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 1299,
+    "violations": 3685
+   },
+   "enforced": {
+    "attempts_forbidden": {
+     "eu_only": 1352,
+     "local_only": 1137,
+     "model_banned": 929,
+     "other_tenant": 1883,
+     "plain": 0,
+     "restricted_channel": 2865
+    },
+    "attempts_total": 13480,
+    "channels": {
+     "embed": 911,
+     "export": 1115,
+     "inbox": 2172,
+     "model": 4322
+    },
+    "denied": 5734,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model"
+    ],
+    "leak_channels": {},
+    "leak_classes": {},
+    "permitted": {
+     "eu_only": 1350,
+     "local_only": 1236,
+     "model_banned": 3314,
+     "other_tenant": 0,
+     "plain": 2073,
+     "restricted_channel": 1269
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 0,
+    "violations": 0
+   },
+   "info_inject_only_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 1717,
+     "local_only": 1626,
+     "model_banned": 1250,
+     "other_tenant": 2551,
+     "plain": 0,
+     "restricted_channel": 3825
+    },
+    "attempts_total": 13468,
+    "channels": {
+     "embed": 850,
+     "export": 1075,
+     "inbox": 2092,
+     "model": 2349
+    },
+    "denied": 7801,
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "leak_channels": {},
+    "leak_classes": {},
+    "permitted": {
+     "eu_only": 1284,
+     "local_only": 1144,
+     "model_banned": 2601,
+     "other_tenant": 0,
+     "plain": 1525,
+     "restricted_channel": 1207
+    },
+    "registered_actions": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 2000,
+    "scenarios_with_leak": 0,
+    "violations": 0
+   }
+  },
+  "controls": {
+   "ctl_derive_join_dropped": {
+    "leak_channels": {
+     "embed": 88,
+     "export": 109,
+     "inbox": 109,
+     "model": 125
+    },
+    "leak_classes": {
+     "eu_only": 89,
+     "local_only": 42,
+     "model_banned": 19,
+     "other_tenant": 108,
+     "restricted_channel": 173
+    },
+    "leak_rate": 0.159,
+    "meets_floor": true,
+    "violations_detected": 431
+   },
+   "ctl_embed_disabled": {
+    "leak_channels": {
+     "embed": 2281
+    },
+    "leak_classes": {
+     "eu_only": 285,
+     "local_only": 244,
+     "model_banned": 476,
+     "other_tenant": 422,
+     "restricted_channel": 854
+    },
+    "leak_rate": 0.469,
+    "meets_floor": true,
+    "violations_detected": 2281
+   },
+   "ctl_export_disabled": {
+    "leak_channels": {
+     "export": 1828
+    },
+    "leak_classes": {
+     "eu_only": 268,
+     "local_only": 222,
+     "other_tenant": 457,
+     "restricted_channel": 881
+    },
+    "leak_rate": 0.4365,
+    "meets_floor": true,
+    "violations_detected": 1828
+   },
+   "ctl_id_pattern_guard": {
+    "leak_channels": {
+     "embed": 2478,
+     "export": 1996,
+     "inbox": 2145,
+     "model": 7311
+    },
+    "leak_classes": {
+     "eu_only": 2083,
+     "local_only": 2045,
+     "model_banned": 1614,
+     "other_tenant": 3144,
+     "restricted_channel": 5044
+    },
+    "leak_rate": 0.9895,
+    "meets_floor": true,
+    "violations_detected": 13930
+   },
+   "ctl_inbox_disabled": {
+    "leak_channels": {
+     "inbox": 1994
+    },
+    "leak_classes": {
+     "eu_only": 371,
+     "local_only": 154,
+     "model_banned": 178,
+     "other_tenant": 481,
+     "restricted_channel": 810
+    },
+    "leak_rate": 0.448,
+    "meets_floor": true,
+    "violations_detected": 1994
+   },
+   "ctl_model_port_disabled": {
+    "leak_channels": {
+     "model": 3685
+    },
+    "leak_classes": {
+     "eu_only": 642,
+     "local_only": 685,
+     "model_banned": 535,
+     "other_tenant": 788,
+     "restricted_channel": 1035
+    },
+    "leak_rate": 0.6495,
+    "meets_floor": true,
+    "violations_detected": 3685
+   }
+  },
+  "controls_meet_floor": true,
+  "defence_in_depth_inject_only_disabled": {
+   "violations": 0
+  },
+  "not_proven": "stubs only (no real adapter); oracle and decide share the destination table; other_tenant has no permitted delivery by design; record content is plain strings (no encodings, translations or paraphrase of markers, which no label system can follow)",
+  "positive_conditions_met": false,
+  "verdict": "FAIL"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e2_egress.py",
+  "at": "2026-11-16T00:27:24Z",
+  "commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   12.9931640625,
+   11.57421875,
+   11.89013671875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "c2153af23c53149ff46c77758809f6b3b397eed1",
+  "thresholds_sha256": "9ab3799a1cd5d21fca4c3405b36fa1e5c171a4ba8091a466fdf1735a70d918d1"
+ }
+}
