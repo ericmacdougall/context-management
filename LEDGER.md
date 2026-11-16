@@ -153,6 +153,15 @@ Cap check (stage X0B, 10 calls, feat/eval-scaffold 19f19ed; 10 capped sessions r
 
 Reading of the two missing answers (no model, feat/eval-scaffold c3bdb4b): neither is an extraction miss in the sense first assumed. One is a count across five sessions whose five parts are all present as facts (no single fact can hold the count; joining is the reader's or analyst's job). The other is a preference question whose answer is a paraphrase the string heuristic cannot match, plus one real gap: the user's stated wish list was not extracted, because the prompt asks for concrete facts the assistant stated and for specific details, and never for the user's stated preferences. So: the answer-string heuristic is not a valid gate for count or preference questions; the extraction prompt needs a line for user preferences, re-gated under a new version; the facts in that session were mostly assistant-stated (9 of 12).
 
+Stability and preference-line check (stage X0C, 40 calls, feat/eval-scaffold 99f76bf; gate and adoption rule committed first; the scorer was patched once, before any result was read, for records missing the author field):
+
+| Finding | Figures | Verdict |
+|---|---|---|
+| A single extraction pass gives a stable fact set | Two runs of the identical prompt on 10 sessions reproduce 77.6% of facts by quote match (gate 85%, no session under 60%; lowest session 51%); below the pre-declared inconclusive band | **Did not hold.** About one fact in four differs between two runs of the same prompt on the same session |
+| One added sentence makes the extractor record the user's stated preferences | User-authored facts 6.9 to 8.0 per session (+1.1 against a +2.0 bar; higher in 11 of 20 sessions against 14); quote check falls to 0.908; none of the 3 missing wish-list items appears in either arm; displacement and output size within bounds | **Did not hold** (3 of 5 pre-set criteria failed). Effect is real but weak, about twice run-to-run noise |
+| The model's own author field can be relied on | One record's 19 facts carried no author at all | Did not hold: author should be set mechanically from the speaker of the cited quote |
+| Reported notional cost compares prompt variants | Costs differed 39% between arms with identical token counts, because of cache state | Did not hold: compare tokens, not reported dollars |
+
 Cost extrapolation (random sample only; interval is sampling noise; the pool's longest sessions are 3.7 times longer than any sampled):
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
