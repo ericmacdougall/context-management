@@ -29,7 +29,7 @@ DETECTORS = [
     ("stripe_key", re.compile(r"(?<![A-Za-z0-9])(sk|rk)_(live|test)_[0-9A-Za-z]{20,}")),
     ("llm_api_key", re.compile(r"(?<![A-Za-z0-9])sk-(ant-[A-Za-z0-9_-]{20,}|proj-[A-Za-z0-9_-]{20,}|[A-Za-z0-9]{40,})")),
     ("google_api_key", re.compile(r"(?<![A-Za-z0-9])AIza[0-9A-Za-z_-]{35}")),
-    ("private_key_block", re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----")),
+    ("private_key_block", re.compile(r"-----\s*BEGIN\s*(?:RSA\s*|EC\s*|DSA\s*|OPENSSH\s*|ENCRYPTED\s*)?PRIVATE\s*KEY\s*-----")),
     ("jwt", re.compile(r"(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{16,}")),
     ("url_credentials", re.compile(r"(?i)\b[a-z][a-z0-9+.-]{1,20}://[^\s:/@]{1,64}:([^\s:/@]{6,128})@[^\s/]+")),
     ("generic_assignment", re.compile(r"(?i)(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|private[_-]?key)"

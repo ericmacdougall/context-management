@@ -36,6 +36,10 @@ class ClaimLost(Exception):
     pass
 
 
+class Withheld(Exception):
+    """Events in scope are covered by another subject's legal hold; the job waits for its release."""
+
+
 class KeyPurgePending(Exception):
     """The key row is deleted but its bytes are not proven gone from disk (purge timed out); the job stays open."""
 
@@ -167,13 +171,20 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
                 ts = time.time()
                 sc, fo = rescan(conn, ks, jid)
                 rec["steps"].update(rescan_s=round(time.time() - ts, 3), rescan_scanned=sc, rescan_found=fo)
-            ts, n, batches = time.time(), 1, 0
+            ts, n, batches, per = time.time(), 1, 0, []
             while n:
                 if hb.lost.is_set():
                     raise ClaimLost(jid)
+                tb = time.time()
                 n = conn.execute("select wp_erasure_cascade(%s, %s)", (jid, batch)).fetchone()[0]
+                per.append(round(time.time() - tb, 3))
                 batches += 1
-            rec["steps"].update(cascade_s=round(time.time() - ts, 3), cascade_batches=batches)
+            rec["steps"].update(cascade_s=round(time.time() - ts, 3), cascade_batches=batches, cascade_batch_s=per)
+            wh = conn.execute("select event_id, speaker, hold_ids from erasure_withheld where job_id=%s order by event_id", (jid,)).fetchall()
+            if wh:                                           # D1: covered by another subject's legal hold: queued, not dropped
+                rec["withheld"] = [{"event_id": e, "speaker": sp, "hold_ids": h.split(",")} for e, sp, h in wh]
+                rec["queued_until_release"] = True
+                raise Withheld(jid)
             hook("after_cascade")
             ts, ev_n, fa_n = time.time(), 0, 0
             if placeholders:
@@ -211,7 +222,7 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
             if not res["done"]:
                 err = "residue"
     except Exception as e:  # noqa: BLE001  (any failure leaves the job open with its type recorded)
-        err = "legal_hold" if getattr(e, "sqlstate", None) == "WPS16" else type(e).__name__
+        err = "legal_hold" if getattr(e, "sqlstate", None) == "WPS16" else ("withheld_by_hold" if isinstance(e, Withheld) else type(e).__name__)
         if err == "legal_hold":
             rec["held"] = True
             rec["holds"] = _holds(conn, t, s)
@@ -230,15 +241,17 @@ def erase(conn, ks, es, tenant, subject_id, **kw):
     return run(conn, ks, es, request(conn, tenant, subject_id), **kw)
 
 
-def place_hold(conn, tenant, subject_id, hold_id, reason_code):
-    return conn.execute("select wp_hold_place(%s::tenant_t, %s, %s, %s)", (tenant, subject_id, hold_id, reason_code)).fetchone()[0]
+def place_hold(lconn, tenant, subject_id, hold_id, reason_code):
+    """lconn: a legal-operations connection (db.legal()); the application role cannot place or release holds (D1)."""
+    return lconn.execute("select wp_hold_place(%s::tenant_t, %s, %s, %s)", (tenant, subject_id, hold_id, reason_code)).fetchone()[0]
 
 
-def release_hold(conn, ks, es, hold_id, **kw):
-    """Release a hold; queued erasures of that tenant then run (sweep). Returns the sweep result."""
-    conn.execute("select wp_hold_release(%s)", (hold_id,))
-    t = conn.execute("select tenant_id from legal_holds where hold_id=%s", (hold_id,)).fetchone()[0]
-    return sweep(conn, ks, es, tenant=t, **kw)
+def release_hold(lconn, ks, es, hold_id, **kw):
+    """Release a hold (legal-operations connection); queued erasures of that tenant then run (sweep, as the application).
+    Returns the sweep result."""
+    lconn.execute("select wp_hold_release(%s)", (hold_id,))
+    t = lconn.execute("select tenant_id from legal_holds where hold_id=%s", (hold_id,)).fetchone()[0]
+    return sweep(db.connect(application_name="wp-sweep"), ks, es, tenant=t, **kw)
 
 
 def sweep(conn, ks, es, tenant=None, **kw):

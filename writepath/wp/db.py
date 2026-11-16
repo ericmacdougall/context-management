@@ -1,20 +1,22 @@
 """Postgres connections. Passwords via a 0600 pgpass file (never argv or environment values), one entry per role.
 
 Roles: wp_app (the application; default), wp_verifier (erasure completion), wp_kms (the key-service stand-in),
-and the cluster admin (setup, migrations and experiment controls only)."""
+wp_legal (legal holds), and the cluster admin (setup, migrations and experiment controls only).
+D2: every role has its own credential file. In this lab all files belong to one OS user, so the separation is per file,
+not per OS identity; a deployment runs each role as its own service identity that can read only its own secret."""
 import os
 
 import psycopg
 
 from . import config
 
-APP, VERIFIER, KMS = "wp_app", "wp_verifier", "wp_kms"
+APP, VERIFIER, KMS, LEGAL = "wp_app", "wp_verifier", "wp_kms", "wp_legal"
 
 
 def connect(db=None, autocommit=True, application_name="wp", role=APP, **kw):
-    os.environ["PGPASSFILE"] = config.pgpass()
+    """Each role authenticates from ITS OWN 0600 file (config.pgpass(role)); see D2 in the module docstring."""
     return psycopg.connect(host=config.PG_HOST, port=config.PG_PORT, dbname=db or config.EVENTS_DB, user=role,
-                           autocommit=autocommit, application_name=application_name, **kw)
+                           autocommit=autocommit, application_name=application_name, passfile=config.pgpass(role), **kw)
 
 
 def admin(db=None, **kw):
@@ -24,6 +26,11 @@ def admin(db=None, **kw):
 
 def keys_connect(**kw):
     return connect(db=config.KEYS_DB, application_name="wp-keys", role=KMS, **kw)
+
+
+def legal(**kw):
+    """Legal-operations role: places and releases holds; nothing else."""
+    return connect(application_name="wp-legal", role=LEGAL, **kw)
 
 
 def verifier(db=None, **kw):

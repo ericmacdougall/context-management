@@ -13,13 +13,13 @@ from psycopg import sql
 from . import config, db, registry
 
 HERE = pathlib.Path(__file__).parent
-LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS)
+LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL)
 ROLE_ATTRS = "nosuperuser nocreatedb nocreaterole noreplication nobypassrls inherit"
 
 
 def _pgpass_roles():
-    p = pathlib.Path(config.pgpass())
-    return {ln.split(":")[3] for ln in p.read_text().splitlines() if ln.count(":") >= 4}
+    """Roles that already have their own credential file (D2: one 0600 file per role)."""
+    return {r for r in LOGIN_ROLES if pathlib.Path(config.pgpass(r)).exists()}
 
 
 def _ensure_roles(admin):
@@ -35,18 +35,31 @@ def _ensure_roles(admin):
             pw = secrets.token_urlsafe(32)
             h = admin.pgconn.encrypt_password(pw.encode(), r.encode(), b"scram-sha-256").decode()
             admin.execute(sql.SQL("alter role {} password {}").format(sql.Identifier(r), sql.Literal(h)))
-            p = pathlib.Path(config.pgpass())
-            fd = os.open(p, os.O_WRONLY | os.O_APPEND)
+            p = pathlib.Path(config.pgpass(r))
+            fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
             try:
                 os.write(fd, f"{config.PG_HOST}:{config.PG_PORT}:*:{r}:{pw}\n".encode())
             finally:
                 os.close(fd)
             os.chmod(p, 0o600)
             del pw
+    # D2: the admin file keeps only the admin's own line (role secrets live in their own files, written above)
+    ap = pathlib.Path(config.pgpass())
+    lines = ap.read_text().splitlines()
+    keep = [ln for ln in lines if ln.count(":") < 4 or ln.split(":")[3] not in LOGIN_ROLES]
+    if len(keep) != len(lines):
+        fd = os.open(ap, os.O_WRONLY | os.O_TRUNC)
+        try:
+            os.write(fd, ("\n".join(keep) + "\n").encode())
+        finally:
+            os.close(fd)
     # liveness mitigations on the application role (F6): an idle-in-transaction session is ended, never left holding
     # a lease row lock or the cluster xmin.
     admin.execute("alter role wp_app set idle_in_transaction_session_timeout = '5s'")
     admin.execute("alter role wp_app set statement_timeout = '300s'")
+    # D5: lock timeouts for every role (a waiting statement fails and is retried, never queues behind a long lock)
+    for r in LOGIN_ROLES:
+        admin.execute(sql.SQL("alter role {} set lock_timeout = '10s'").format(sql.Identifier(r)))
 
 
 def main(reset):

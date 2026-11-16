@@ -104,7 +104,7 @@ class KeyService(KeyStore):
         mark, wait until every other backend's backend_xid and backend_xmin is newer than it (wp_kms has
         pg_read_all_stats), then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT. Returns {"waited_s", "purged"};
         purged=False (timeout) means the key bytes may remain on disk and the caller must not report the erasure done.
-        Lab limits: prepared transactions and replication slots are not checked (none exist in this lab)."""
+        Prepared transactions and replication slots holding an xmin also block the purge (checked each poll)."""
         t0 = time.time()
         mark = self.conn.execute("select txid_current()").fetchone()[0]       # autocommit: own short transaction
         # age() orders xids modulo wraparound: an older xid has a larger age than the mark
@@ -113,8 +113,14 @@ class KeyService(KeyStore):
              " (backend_xmin is not null and age(backend_xmin) >= m.a))")
         while True:
             old = self.conn.execute(q, (mark,)).fetchone()[0]
-            if old == 0:
+            # D5: a prepared transaction or a replication slot also holds the horizon back; VACUUM FULL would then copy
+            # the dead key row into the new file while reporting success
+            px = self.conn.execute("select count(*) from pg_prepared_xacts").fetchone()[0]
+            sl = self.conn.execute("select count(*) from pg_replication_slots where xmin is not null or catalog_xmin is not null").fetchone()[0]
+            if old == 0 and px == 0 and sl == 0:
                 break
+            if (px or sl) and time.time() - t0 > timeout_s:
+                return {"waited_s": round(time.time() - t0, 3), "purged": False, "prepared_xacts": px, "slots_holding_xmin": sl}
             if time.time() - t0 > timeout_s:
                 return {"waited_s": round(time.time() - t0, 3), "purged": False, "blocking_backends": old}
             time.sleep(poll_s)

@@ -38,6 +38,7 @@ STORES = [
     _pg("identifier_epochs", "identifier-set version per tenant", "no content", False),
     _pg("erasure_mentions", "event ids found by the erasure rescan", "kept with the job (ids only)", False),
     _pg("legal_holds", "hold ids, subject ids, reason codes, times", "kept as the hold record", False),
+    _pg("erasure_withheld", "event ids withheld from an erasure by another subject's legal hold", "kept with the job (ids only)", False),
     _pg("inbox", "ciphertext payloads", "rows of the subject deleted in the cascade", True),
     _pg("analyst_jobs", "ciphertext results; input ids", "jobs over the subject's events deleted in the cascade; completion refused over erased inputs", True),
     _pg("facts", "ciphertext fact bodies; keyed slot hash", "facts of the subject or derived from its events deleted in the cascade", True),

@@ -103,3 +103,25 @@ row23: the 5 s idle-in-transaction timeout (F6 mitigation) ended H's held transa
   120 s for this experiment (stated in the module). Rerun of row23 only.
 registry_marker: the key hex survived in the subject_keys heap after a plain VACUUM in 3/10 fenced runs (a real
   defect: VACUUM does not zero freed tuple space). Fixed with VACUUM FULL in the lab key store; rerun R=10 per arm.
+
+## Amendment 5 (2026-11-16, written before any of these runs; delta review at 963e597 and rows 19, 6)
+D1 (exp/d1_hold_mentions.py), R=5 per case and per control: PASS = fenced S1, S2, S3 hold 5/5 each with 0 errors AND
+  ctl_apply_ignores_holds violates S1 and S2 5/5 AND ctl_app_can_release violates S3 5/5 (definitions in the module).
+D5 cascade (exp/review_fix.py F1 at 100,000 events, and exp/erasure_cost.py): MEASUREMENT of per-batch time against the
+  batch index; the claim "linear" is accepted only if the last 5 batches take <= 2x the first 5 (old code: grows with
+  the remaining set). No PASS for the cost measurement itself.
+Row 19 (exp/row19_secrets.py): planted corpus = 11 detector families x 8 in-scope encodings x 10 random instances
+  (880 items); clean corpus = >= 3,000 chunks of 40 lines from the Python standard library (/usr/lib/python3.12/*.py,
+  top level only) plus 500 synthetic look-alikes (UUIDs, git SHAs, sha256 hex, base64 of prose, URLs without
+  credentials, placeholder assignments, the AWS documentation example keys). PASS = catch-rate Wilson 95% lower bound
+  >= 0.98 on the in-scope planted corpus AND false-block Wilson 95% upper bound <= 0.01 on the clean corpus AND the
+  documented out-of-scope variants (reversed, ROT13, split across two writes) are reported, not counted. Controls:
+  ctl_nodecode (scanner without the decoding layers) must miss >= 1 in-scope encoded family (catch lower bound < 0.98);
+  ctl_noscan (append path without the scanner, store check removed) must store a planted secret; fenced append of a
+  planted secret stores nothing (events and quarantine unchanged) and the store refuses an event without the current
+  scanner version (WPS21); ctl_store_check_removed accepts it.
+Row 6 (exp/row6_chain.py), R=10 per case: forged append (admin, correctly SHA-chained, no chain key) detected by the
+  keyed verify 10/10, while the unkeyed control verifies it 10/10; app role cannot disable or drop a trigger, alter a
+  guard function or set session_replication_role (all refused) while the control (wp_app made a member of wp_owner)
+  succeeds; truncated tail and regressed head (tail removed then new events appended) are flagged by the anchor check
+  10/10 while the chain-only control reports ok 10/10.

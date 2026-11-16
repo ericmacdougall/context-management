@@ -33,5 +33,8 @@ def es_auth_header():
     return None
 
 
-def pgpass():
-    return str(SECRETS / "pgpass")
+def pgpass(role=None):
+    """The cluster admin's file (role None or the admin user) or the role's own file."""
+    if role is None or role == PG_USER:
+        return str(SECRETS / "pgpass")
+    return str(SECRETS / f"pgpass.{role}")

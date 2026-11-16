@@ -60,7 +60,7 @@ begin
   if NEW.lease_scope is distinct from want then
     raise exception 'scope_not_bound table=% presented=% required=%', TG_TABLE_NAME, NEW.lease_scope, want using errcode = 'WPS12';
   end if;
-  perform wp_fence(NEW.tenant_id, NEW.lease_scope, NEW.lease_epoch);
+  perform public.wp_fence(NEW.tenant_id, NEW.lease_scope, NEW.lease_epoch);
   return NEW;
 end $$;
 
@@ -186,7 +186,7 @@ begin
   if NEW.lease_scope is distinct from 'session:' || NEW.session_id then
     raise exception 'scope_not_bound table=events presented=% required=session:%', NEW.lease_scope, NEW.session_id using errcode = 'WPS12';
   end if;
-  perform wp_fence(NEW.tenant_id, NEW.lease_scope, NEW.lease_epoch);
+  perform public.wp_fence(NEW.tenant_id, NEW.lease_scope, NEW.lease_epoch);
   if NEW.secret_scan is distinct from wp_secret_scan_version() then
     raise exception 'secret_scan_missing_or_stale presented=% required=%', NEW.secret_scan, wp_secret_scan_version() using errcode = 'WPS21';
   end if;
@@ -382,6 +382,7 @@ create table erasure_jobs (
   claim_epoch bigint not null default 0, claim_expires timestamptz,
   ident_xmax bigint, ident_count int,                       -- the subject's identifier-set version and size, fixed at mark
   rescanned_xmax bigint,                                    -- identifier-set version the erasure rescan covered (attested by the runner)
+  own_after text not null default '', men_after text not null default '',   -- cascade keyset cursors (D5: linear in the subject's events)
   created_at timestamptz not null default clock_timestamp(), updated_at timestamptz not null default clock_timestamp()
 );
 create unique index erasure_one_open on erasure_jobs (tenant_id, subject_id) where state <> 'done';
@@ -389,7 +390,16 @@ create unique index erasure_one_open on erasure_jobs (tenant_id, subject_id) whe
 -- Mentions found by the erasure-time rescan (events written before the subject's identifiers were declared).
 create table erasure_mentions (
   tenant_id tenant_t not null, subject_id text not null, event_id text not null, job_id text not null,
+  source text not null default 'rescan' check (source in ('write', 'rescan')),   -- 'write': materialised at mark from events.mentions
   primary key (tenant_id, subject_id, event_id)
+);
+create index erasure_mentions_event on erasure_mentions (tenant_id, event_id);
+-- D1: events an erasure must not touch because a legal hold covers them (the speaker, a mentioned subject, or a subject
+-- the rescan linked to the event is held). They stay intact and the job stays open until the hold is released.
+create table erasure_withheld (
+  tenant_id tenant_t not null, job_id text not null, event_id text not null, speaker text not null, hold_ids text not null,
+  withheld_at timestamptz not null default clock_timestamp(),
+  primary key (job_id, event_id)
 );
 
 -- Legal hold: a recorded hold wins. Erasure of a held subject is QUEUED (the job stays open, refused at mark, at every
@@ -452,6 +462,10 @@ begin
     ident_count = (select count(*) from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id)
     where job_id = jid and state = 'requested';
   update subjects set erased = true where tenant_id = j.tenant_id and subject_id = j.subject_id;
+  insert into erasure_mentions(tenant_id, subject_id, event_id, job_id, source)
+    select j.tenant_id, j.subject_id, e.event_id, jid, 'write' from events e
+     where e.tenant_id = j.tenant_id and e.mentions @> array[j.subject_id] and e.subject_id <> j.subject_id
+    on conflict do nothing;
   update erasure_jobs set state = 'marked', updated_at = clock_timestamp() where job_id = jid and state = 'requested';
 end $$;
 
@@ -463,6 +477,7 @@ begin
   insert into erasure_mentions(tenant_id, subject_id, event_id, job_id)
     select j.tenant_id, j.subject_id, e.event_id, jid from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids)
     on conflict do nothing;
+  update erasure_jobs set men_after = '' where job_id = jid and exists (select 1 from unnest(ids) x where x <= men_after);
 end $$;
 create function wp_erasure_rescan_done(jid text, upto bigint) returns void language sql security definer set search_path = public, pg_temp as $$
   update erasure_jobs set rescanned_xmax = upto where job_id = jid and state in ('marked', 'cascaded');
@@ -472,33 +487,74 @@ create function wp_subject_xmax(t text, s text) returns bigint language sql stab
 $$;
 
 -- One bounded batch of tombstones and cascade deletes; returns the number of events tombstoned. Idempotent.
-create function wp_erasure_cascade(jid text, batch int) returns int language plpgsql security definer set search_path = public, pg_temp as $$
-declare j record; n int; ids text[];
+-- Apply one candidate batch: events covered by an active legal hold of ANOTHER subject (speaker, mentioned, or linked
+-- by the rescan) are withheld (D1); the rest are tombstoned, their content nulled, derived facts and jobs deleted.
+create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp as $$
+declare ids text[];
 begin
-  select tenant_id, subject_id into j from erasure_jobs where job_id = jid;
+  if cardinality(cand) = 0 then return 0; end if;
+  -- share-lock every subject the batch touches, so a hold (FOR UPDATE on the subject row) cannot land mid-batch
+  perform 1 from subjects sj where sj.tenant_id = t and sj.subject_id in (
+      select e.subject_id from events e where e.tenant_id = t and e.event_id = any(cand)
+      union select unnest(e.mentions) from events e where e.tenant_id = t and e.event_id = any(cand)
+      union select m.subject_id from erasure_mentions m where m.tenant_id = t and m.event_id = any(cand))
+    order by sj.subject_id for share;
+  insert into erasure_withheld(tenant_id, job_id, event_id, speaker, hold_ids)
+    select t, jid, e.event_id, e.subject_id, string_agg(distinct h.hold_id, ',' order by h.hold_id)
+      from events e join legal_holds h on h.tenant_id = t and h.released_at is null and h.subject_id <> s
+       and (h.subject_id = e.subject_id or h.subject_id = any(e.mentions)
+            or exists (select 1 from erasure_mentions m where m.tenant_id = t and m.event_id = e.event_id and m.subject_id = h.subject_id))
+     where e.tenant_id = t and e.event_id = any(cand)
+     group by e.event_id, e.subject_id
+    on conflict (job_id, event_id) do update set hold_ids = excluded.hold_ids;
+  ids := array(select x from unnest(cand) x where not exists (select 1 from erasure_withheld w where w.job_id = jid and w.event_id = x));
+  insert into tombstones(tenant_id, event_id, subject_id, job_id) select t, unnest(ids), s, jid on conflict do nothing;
+  update events set content_enc = null where tenant_id = t and event_id = any(ids) and content_enc is not null;
+  if cardinality(ids) > 0 then
+    delete from analyst_jobs a where a.tenant_id = t and a.input_event_ids && ids;
+    delete from facts f where f.tenant_id = t and f.input_event_ids && ids;
+  end if;
+  return cardinality(ids);
+end $$;
+
+-- One cascade batch. Linear in the subject's events (D5): keyset cursors over the subject's own events (events_subject)
+-- and over erasure_mentions (write-time mentions materialised at mark, plus rescan hits); then withheld events whose
+-- holds have been released. Returns rows handled; 0 = nothing left that can be done now (withheld events may remain).
+create function wp_erasure_cascade(jid text, batch int) returns int language plpgsql security definer set search_path = public, pg_temp as $$
+declare j record; cand text[]; n int := 0; held int;
+begin
+  select * into j from erasure_jobs where job_id = jid for update;
   perform wp_hold_check(j.tenant_id, j.subject_id);         -- a hold placed after mark stops the cascade at the next batch
-  select coalesce(array_agg(event_id), '{}') into ids from (
-    select event_id from (
-      select e.event_id from events e where e.tenant_id = j.tenant_id and e.subject_id = j.subject_id
-      union select e.event_id from events e where e.tenant_id = j.tenant_id and e.mentions @> array[j.subject_id]
-      union select m.event_id from erasure_mentions m where m.tenant_id = j.tenant_id and m.subject_id = j.subject_id) u
-    where not exists (select 1 from tombstones tb where tb.tenant_id = j.tenant_id and tb.subject_id = j.subject_id and tb.event_id = u.event_id)
-    order by event_id limit batch) x;
-  insert into tombstones(tenant_id, event_id, subject_id, job_id) select j.tenant_id, unnest(ids), j.subject_id, jid;
-  update events set content_enc = null where tenant_id = j.tenant_id and event_id = any(ids) and content_enc is not null;
-  n := cardinality(ids);
-  if n > 0 then
-    delete from analyst_jobs a where a.tenant_id = j.tenant_id and a.input_event_ids && ids;
-    delete from facts f where f.tenant_id = j.tenant_id and f.input_event_ids && ids;
+  cand := array(select event_id from events where tenant_id = j.tenant_id and subject_id = j.subject_id and event_id > j.own_after
+                order by event_id limit batch);
+  if cardinality(cand) > 0 then
+    update erasure_jobs set own_after = cand[cardinality(cand)] where job_id = jid;
+    perform public.wp_erasure_apply(j.tenant_id, j.subject_id, jid, cand);
+    return cardinality(cand);
+  end if;
+  cand := array(select event_id from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id and event_id > j.men_after
+                order by event_id limit batch);
+  if cardinality(cand) > 0 then
+    update erasure_jobs set men_after = cand[cardinality(cand)] where job_id = jid;
+    perform public.wp_erasure_apply(j.tenant_id, j.subject_id, jid, cand);
+    return cardinality(cand);
+  end if;
+  -- withheld events: retried each pass; those whose holds are gone are applied now
+  cand := array(select w.event_id from erasure_withheld w where w.job_id = jid);
+  if cardinality(cand) > 0 then
+    delete from erasure_withheld where job_id = jid;
+    n := public.wp_erasure_apply(j.tenant_id, j.subject_id, jid, cand);
+    if n > 0 then return n; end if;
   end if;
   delete from facts where tenant_id = j.tenant_id and subject_id = j.subject_id;
   delete from inbox where tenant_id = j.tenant_id and subject_id = j.subject_id;
   delete from quarantine where tenant_id = j.tenant_id and (subject_id = j.subject_id or mentions @> array[j.subject_id]);
-  if n = 0 and (select coalesce(rescanned_xmax, -1) >= coalesce(ident_xmax, 0) from erasure_jobs where job_id = jid) then
+  select count(*) into held from erasure_withheld where job_id = jid;
+  if held = 0 and (select coalesce(rescanned_xmax, -1) >= coalesce(ident_xmax, 0) from erasure_jobs where job_id = jid) then
     delete from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id;   -- only after the rescan used them
     update erasure_jobs set state = 'cascaded', updated_at = clock_timestamp() where job_id = jid and state = 'marked';
   end if;
-  return n;
+  return 0;
 end $$;
 
 -- Postgres residue for a subject, computed by the store (never taken from a caller).
@@ -523,7 +579,8 @@ create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql
     'pg:quarantine', (select count(*) from quarantine where tenant_id = t and subject_id = s),
     'pg:analyst_jobs', (select count(*) from analyst_jobs a where a.tenant_id = t and exists (
                    select 1 from tombstones tb where tb.tenant_id = t and tb.subject_id = s and tb.event_id = any(a.input_event_ids))),
-    'pg:subject_not_marked', (select count(*) from subjects where tenant_id = t and subject_id = s and not erased));
+    'pg:subject_not_marked', (select count(*) from subjects where tenant_id = t and subject_id = s and not erased),
+    'pg:withheld_by_hold', (select count(*) from erasure_withheld w join erasure_jobs jb on jb.job_id = w.job_id where jb.tenant_id = t and jb.subject_id = s));
 $$;
 
 -- Completion: callable by wp_verifier only. ext = counts for every non-Postgres verifiable store, measured by the
@@ -568,7 +625,7 @@ do $$
 declare t text;
 begin
   foreach t in array array['leases','subjects','chains','decision_heads','tombstones','store_registry','quarantine_quota',
-                           'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds'] loop
+                           'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds','erasure_withheld'] loop
     execute format('create trigger %I before insert or update or delete on %I for each row execute function wp_owner_only()', t || '_owner_only', t);
   end loop;
   foreach t in array array['inbox','analyst_jobs','facts','cursors','quarantine','erasure_jobs'] loop
@@ -577,7 +634,7 @@ begin
   execute 'create trigger quarantine_no_update before update on quarantine for each row execute function wp_append_only()';
   foreach t in array array['leases','subjects','chains','events','decision_heads','quarantine','quarantine_quota','tombstones','inbox',
                            'analyst_jobs','facts','cursors','store_registry','erasure_jobs',
-                           'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds'] loop
+                           'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds','erasure_withheld'] loop
     execute format('create trigger %I before truncate on %I for each statement execute function wp_no_truncate()', t || '_no_truncate', t);
   end loop;
   for t in select format('alter table %I enable always trigger %I', c.relname, g.tgname) from pg_trigger g join pg_class c on c.oid = g.tgrelid
@@ -597,12 +654,14 @@ grant select, insert on events, quarantine to wp_app;
 grant select, insert, update on inbox, analyst_jobs, facts, cursors to wp_app;
 grant select, insert on erasure_jobs to wp_app;
 grant update (state, attempts, last_error_type, claim_epoch, claim_expires, updated_at) on erasure_jobs to wp_app;
-grant select on tombstones, store_registry, decision_heads, chains, subjects, identifier_epochs, subject_identifiers, erasure_mentions, legal_holds to wp_app;
+grant select on tombstones, store_registry, decision_heads, chains, subjects, identifier_epochs, subject_identifiers, erasure_mentions, legal_holds, erasure_withheld to wp_app;
 grant usage on sequence ingest_seq, fact_rev, quarantine_id_seq to wp_app;
 grant execute on function wp_lease_acquire(tenant_t, text, double precision, boolean, text, int), wp_lease_renew(tenant_t, text, bigint, text, double precision),
   wp_lease_release(tenant_t, text, bigint, text), wp_subjects_ensure(tenant_t, text[]), wp_erasure_mark(text), wp_erasure_cascade(text, int),
   wp_erasure_pg_residue(text, text), wp_fence(text, text, bigint), wp_identifier_declare(tenant_t, text, text[]),
-  wp_hold_place(tenant_t, text, text, text), wp_hold_release(text), wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]),
+  wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]),
   wp_erasure_rescan_done(text, bigint), wp_subject_xmax(text, text) to wp_app;
--- In a client deployment wp_hold_place/wp_hold_release belong to a legal-operations role, not the application.
+-- D1: holds are placed and released only by the legal-operations role; the application cannot lift a hold.
+grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_release(text) to wp_legal;
+grant select on legal_holds, erasure_jobs, erasure_withheld to wp_legal;
 grant execute on function wp_erasure_pg_residue(text, text), wp_erasure_complete(text, jsonb, text) to wp_verifier;

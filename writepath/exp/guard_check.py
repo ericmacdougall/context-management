@@ -26,7 +26,7 @@ POLICY = {
     "erasure_jobs": {S, I},              # plus column-level UPDATE of runner fields (checked separately)
     "tombstones": {S}, "store_registry": {S}, "decision_heads": {S}, "chains": {S}, "subjects": {S},
     "leases": set(), "quarantine_quota": set(),
-    "identifier_epochs": {S}, "subject_identifiers": {S}, "erasure_mentions": {S}, "legal_holds": {S},
+    "identifier_epochs": {S}, "subject_identifiers": {S}, "erasure_mentions": {S}, "legal_holds": {S}, "erasure_withheld": {S},
 }
 PRIVS = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"]
 ROW, BEFORE, INS, DEL, UPD, TRUNC = 1, 2, 4, 8, 16, 32
@@ -59,12 +59,21 @@ def check(adm, kadm):
         miss = [k for k, v in cov.items() if not v]
         if miss:
             out["G3"].append(f"{rel}:no guard for {','.join(miss)}")
-    for r in ("wp_app", "wp_verifier", "wp_kms"):
+    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal"):
         a = adm.execute("select rolsuper, rolcreaterole, rolcreatedb, rolreplication, rolbypassrls from pg_roles where rolname=%s", (r,)).fetchone()
         if a is None or any(a):
             out["G4"].append(f"{r}:attrs={a}")
     if adm.execute("select pg_has_role('wp_app', 'wp_owner', 'member')").fetchone()[0]:
         out["G4"].append("wp_app member of wp_owner")
+    for fn in ("wp_hold_place(tenant_t, text, text, text)", "wp_hold_release(text)"):     # D1: holds are the legal role's alone
+        if adm.execute("select has_function_privilege('wp_app', %s, 'EXECUTE')", (fn,)).fetchone()[0]:
+            out["G4"].append(f"wp_app can execute {fn}")
+    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal"):                             # D2: one credential file per role
+        import os, stat
+        f = config.pgpass(r)
+        if not os.path.exists(f) or stat.S_IMODE(os.stat(f).st_mode) != 0o600 or any(
+                ln.split(":")[3] != r for ln in open(f).read().splitlines() if ln.count(":") >= 4):
+            out["G4"].append(f"{r}: credential file missing, not 0600, or holding another role")
     if adm.execute("select has_database_privilege('wp_app', %s, 'CONNECT')", (config.KEYS_DB,)).fetchone()[0]:
         out["G4"].append("wp_app can connect to the key database")
     if kadm.execute("select has_column_privilege('wp_verifier', 'public.subject_keys', 'key_hex', 'SELECT')").fetchone()[0]:
