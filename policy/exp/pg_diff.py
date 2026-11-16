@@ -223,10 +223,14 @@ def main():
     out["pass"] = (b2["code_mismatches"] == b2["view_mismatches"] == b2["log_mismatches"] == 0 and not b2.get("chain_bad") and not b2.get("errors")
                    and all(x["code_mismatches"] == x["view_mismatches"] == 0 and not x.get("errors") for x in b1) and out["control_caught"]
                    and len(b1) == len(B1.DEPTH) and b2["logs"] > 0)
+    out["verdict"] = "PASS" if out["pass"] else "FAIL"
+    out["judged_by"] = "this module's pass condition (no independent verify/ module; THRESHOLDS amendment 5)"
     out["seconds"] = round(time.time() - t0, 1)
     p = write_result("pg_diff", {"per_seed": PER_SEED, "b1_depth": B1.DEPTH, "seeds": seeds("pgdiff"), "scenarios_only": os.environ.get("PGDIFF_SCEN") or "all"}, out)
     print(json.dumps({k: v for k, v in out.items()}, indent=1, default=str)[:4000])
     print("wrote", p, "sha256", hashlib.sha256(open(p, "rb").read()).hexdigest()[:16])
+    if not out["pass"]:
+        raise SystemExit(1)                          # run_all.sh scores a nonzero exit as FAIL
 
 
 if __name__ == "__main__":

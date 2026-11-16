@@ -243,6 +243,8 @@ def main():
                                                                                       "forward_twice_refused")} for x in out["clean"]],
                       "controls": [{k: x.get(k) for k in ("control", "ok", "refused", "error")} for x in out["controls"]]}, indent=1, default=str)[:4000])
     print("wrote", p)
+    if not out["pass"]:
+        raise SystemExit(1)                          # run_all.sh scores a nonzero exit as FAIL
 
 
 if __name__ == "__main__":
