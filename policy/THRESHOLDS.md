@@ -129,3 +129,29 @@ Disclosed deviations and additions. Stamped runs use FRESH seeds (E1, E2, E5, B2
   beats erasure only with a recorded hold event; hold and subjects labels are inherited by derived records.
 - Not built: per-item result artifacts with an independent recomputation script (rule 5), viewer-scoped explain for contested candidates (E5b),
   a password for the Postgres container (loopback trust auth on the host).
+
+## Amendment 2 (2026-11-16, after the independent review of 515e594; committed alone, before the fix-round runs)
+The first stamped runs (515e594 and earlier) are CLAIMED (tuned then confirmed), superseded by the runs described here. Seeds for the new stamped runs
+are fresh again: E1, E2, E5, B2 use 21..25; E3 uses 88; E6 uses 707. Thresholds below are additions or disclosed corrections.
+- E2: the inventory condition compares the registered outbound stubs with ACTIONS minus append, read, inject and erase (store and context-building paths).
+  This exclusion was previously only in code and caused the stamped FAIL at 47c39df.
+- E3: a new arm fuzzes the REQUEST context (3000 cases): forged region, forged clock, forged recipient object, every extra top-level key, misspelt
+  narrowing keys (case, separators, zero-width, trailing space, missing separator). PASS: 0 allows. Control: the old evaluator's semantics allow >= 10 percent.
+- E4: three more combinations on the inbox path (source record narrowed after enqueue, source erased, hold label added), 15 combinations x 200 randomised
+  runs; the policy is unchanged for these; refusal is logged at the unchanged policy version.
+- E5: the default conflict notice is NONE. Arms: notice none (0 notices, 0 leaks, 0 interference) and existence_only (as before, opt-in); conflict edges to
+  another tenant's item must never produce a notice (3 of 10 worlds carry one).
+- B1: pool adds symbolic bindings ("HEAD" = the requirement's version at delivery), a third principal kind (analyst) and events for id reuse, wrong content
+  hash, other tenant and missing label; invariants I12 (a value never comes from a closed proposal), I13 (event ids unique), I14 (a contest is never held open or
+  grown by a non-human, candidates bounded); I2 covers every non-human kind; liveness L1: in every contested state, after any single non-human pool event, an
+  authorised human resolve succeeds. Controls: ten (adds: agents may contest, duplicate ids allowed, sibling ignores proposal status). The candidate cap is
+  covered by tests/test_review_cap.py (nine humans), not by the pool.
+- B2: hostile events (wrong proposal hash, other tenant, unlabelled install, reused id), a third kind; invariants checked at every step (the rebuild comparison
+  still uses the same reducer: B2 shows determinism and serialisability, the invariants carry correctness).
+- B3: S4 asserts the first caller applies and the twin returns duplicate (same payload) or idem_conflict (other payload), exactly one event row. S4b (new):
+  one principal reuses an idempotency key on two different requirements concurrently; the twin must block on the unique index, hit UniqueViolation, retry,
+  and return idem_conflict; at least one backstop retry per round. S6 (new): another tenant's admin cannot revoke or grant in this tenant. Isolation level is
+  set explicitly (READ COMMITTED); serialisation failures and deadlocks are retried. R = 50 per scenario; S4b overlap witness: the twin seen blocked while the
+  first transaction holds its uncommitted insert.
+- Rule 5: every experiment writes a per-item artifact (results/*.items.*.jsonl.gz, hash recorded in the result); exp/verify.py recomputes each verdict from the
+  rows with its own code (B1: replays every control counterexample through the reducer).
