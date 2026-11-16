@@ -30,4 +30,7 @@ Inputs `~/emlab-16096/out/stage_x2/sessions/<opaque id>.json` and `out/stage_x2/
 
 ## 6. Handoff
 
-Filled in below after the inputs are built (second commit).
+Filled in after the inputs were built (second commit; the rules above were committed in d2559c3 and are unchanged).
+
+Inputs on t2-dev (counts checked): 128 session files in `~/emlab-16096/out/stage_x2/sessions/<opaque id>.json` (no `has_answer` field anywhere); the run order `~/emlab-16096/out/stage_x2/run_order.json` (key `order`: the 128 ids, new and re-extracted interleaved); the report `~/emlab-16096/out/stage_x2/prep_report.json`; the key `~/emlab-16096/out/stage_x2_key/selection_key.json` is for the scorer only (the runner must not read it). Results go to `~/emlab-16096/in/stage_x2/<opaque id>.json` and `_run.json`. Composition: 98 new gold sessions (55 questions; 39 questions already had all their gold in the pool) and 30 cap-30 re-extractions of gold sessions that were at cap 12; 128 calls of the 250 approved (122 unused, none to be made). Nothing large was written on the Mac.
+
