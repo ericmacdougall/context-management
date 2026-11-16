@@ -352,3 +352,23 @@ class StageX0C(unittest.TestCase):
         self.assertEqual((r[0]["a"], r[0]["b"]), ("pass", "author_missing"))
         self.assertEqual((r[1]["a"], r[1]["b"]), ("pass", "pass"))
         self.assertEqual(user_stats(f)["author_missing"], 1)
+
+
+class PostHocX0C(unittest.TestCase):
+    def test_union_dedup_curve(self):
+        from emlab.xp_x0c_posthoc import union_dedup
+        a = [{"quote": "adopted a dog named Rex"}, {"quote": "lives in Lisbon now"}]
+        b = [{"quote": "I adopted a dog named Rex"}, {"quote": "plays the cello every week"}]
+        c = [{"quote": "plays the cello every week"}, {"quote": "works at Borealis Labs"}]
+        u = union_dedup([a, b, c])
+        self.assertEqual(u["added"], [2, 1, 1])
+        self.assertEqual(u["sizes"], [2, 3, 4])
+
+    def test_classify_ungrounded(self):
+        from emlab import provenance_x04 as P
+        from emlab.xp_x0c_posthoc import classify_ungrounded
+        g = P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex, a small terrier"}, {"role": "assistant", "content": "Lovely"}, {"role": "user", "content": "We hike every Sunday morning"}])
+        self.assertEqual(classify_ungrounded("hike every Sunday morning", g, 0), "other_round")
+        self.assertEqual(classify_ungrounded("adopted a dog named Rex a small terrier", g, 0), "punct_cited")
+        self.assertEqual(classify_ungrounded("adopted a dog ... small terrier", g, 0), "punct_cited")
+        self.assertEqual(classify_ungrounded("quantum chromodynamics lecture notes", g, 0), "ungrounded")
