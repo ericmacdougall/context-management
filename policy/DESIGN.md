@@ -5,8 +5,16 @@ Code is in `pol/`, experiments in `exp/`, independent verifiers in `verify/`, pr
 the examples and default deny are what ships.
 
 ## Trust boundary (N1, H1, M1)
-- `SessionAuthority.issue` (the authentication path) creates a `Session`. A session is valid only if it is the very object the authority
-  issued, by identity. A hand-built Session, a copy of one, a Principal or a string is refused.
+- Where the boundary is ENFORCED. In a Postgres deployment the enforced boundary is the database role boundary (`pol/_pgcore.sql`, see
+  Postgres below): the request handler's role `dc_app` holds no table privilege and can only call the session-keyed API, so nothing
+  the Python process does can forge identity or decision state in the database. Everything in-process (`pol.enforce`, `pol.decisions`,
+  the private `_` names) is TRUSTED code: Python cannot stop code in the same process from reaching private names, and the surface
+  tests only enforce what the package exports and imports. Label filtering of reads and the legal-hold check of erasure are in that
+  trusted part.
+- `SessionAuthority.issue(credential)` (the authentication path) creates a `Session` only from a credential the identity adapter
+  (`pol.identity.IdentityAdapter.authenticate`) verified; principal and channel come from the adapter's Assertion, and the channel must
+  match the principal's kind (R3-1). A session is valid only if it is the very object the authority issued, by identity. A hand-built
+  Session, a copy of one, a Principal or a string is refused. `tests/kit.LabIdP` is a test double, never shipped.
 - Every attribute a decision uses comes from the `Directory` by the session's principal id at the moment of use: tenant, groups,
   clearance, restricted flag, kind, region and model. An absent entry denies `unknown_principal`. A directory that raises denies
   `directory_error:*`.
@@ -55,10 +63,12 @@ the examples and default deny are what ships.
 - `pol/_core.reduce(view, event) -> (code, original_code, delta)`. The view gives point reads only; the delta changes a bounded number
   of rows. The memory engine (`MemoryState`) and the Postgres engine (`pgcore._View`) implement the same view.
 - Proposals and pending changes are their own rows. Proposing needs a role (decide authority or proposer). Open items are capped at 16
-  per principal and 256 per requirement. Cost per event is constant: a deterministic count, plus timing to 20,000 proposals in memory
-  and in Postgres.
-- Head moves need a human on an owner channel. A non-human may only reject, which never moves the head, or accept an open
-  human-authored proposal whose value differs from the current one (`no_value_change`, amendment 3).
+  per principal per requirement, and at 256 NON-HUMAN-authored open items per requirement (the per-requirement cap never locks a human
+  out, R3-4). Cost per event is constant: a deterministic count, plus timing to 20,000 proposals in memory and in Postgres.
+- ASSUMPTION (round 3, CORE-RULES.md; the reviewer's safe default, not yet confirmed by the user): non-humans only propose and remark.
+  Every head-moving type (confirm, decide, supersede, retract) by a non-human is refused `agent_not_permitted` (confirm keeps
+  `agent_cannot_confirm`), so an agent can neither move the head nor veto a proposal (R3-5). Head moves need a human on an owner
+  channel. `self_approval` and `no_value_change` are gone with the rule they guarded.
 - Liveness: a human who reads the head is applied within (open human-authored proposals at the read) + 1 attempts.
 - Concurrency: the one-step sibling window gives `contested`, bounded at 8 human candidates, ended by `resolve`.
 - Event ids are `<principal>/<client_id>`, so no id can be squatted. Idempotency is per principal and returns the ORIGINAL outcome code
@@ -66,35 +76,55 @@ the examples and default deny are what ships.
 - Values are referenced, not held. The vault keeps the text under a keyed reference, tagged with the label's subjects.
   `erase_subject` deletes every value ABOUT the subject, whoever wrote it. A value under a recorded legal hold is queued instead.
 - The append-only event log and the core state never hold subject names. The service puts a label into the event only after each
-  subject is replaced by a keyed per-tenant token (`_event_label`, HMAC with the vault key). Joins and flow checks are unchanged, since
-  tokens are consistent. Limit: whoever holds the vault key can test a guessed name against a token left in the log after erasure;
-  in the composed system that key belongs in the write path's KeyStore, and destroying it is what makes old tokens unlinkable.
+  subject is replaced by a per-tenant token. In memory (`MemoryEngine`) the token is keyed (HMAC with the vault key), so whoever holds
+  that key can test a guessed name against a token left in the log after erasure. In Postgres the token is RANDOM
+  (`subj-<random>`), minted under the tenant row lock and kept only in an owner-only mapping table; erasure deletes the mapping once
+  no value about the subject remains, after which no row links the token to the name and a re-appearing subject gets a fresh token
+  (`tests/test_pg.py::test_tokens_unconfirmable_after_erasure_in_the_database`). Value refs are an HMAC under a key in an owner-only
+  table and are not derived from the name.
 - Reads are viewer-scoped (`explain(session, req)`, `table(session)`): only values, proposals and candidates the viewer may read.
   `hidden_candidates` exists only when the policy opts in (`conflict_notice: existence_only`). The default is NONE.
 - Every refusal is written to the audit log with its code. The audit log grows by one row per checked request. Bounding it (rotation,
   retention) is outside this module and not done.
 - Value encryption is an interface only (`_ValueCipher`): in the composed system the write path's KeyStore owns the per-subject keys.
 
-## Postgres (`pol/pgcore.py`)
+## Postgres (`pol/pgcore.py`, `pol/_pgcore.sql`): the enforced boundary
 - Roles:
-  - `dc_owner` (NOLOGIN) owns everything.
-  - `dc_app` logs in with SCRAM. The password is read from a 0600 file, and only its verifier, computed client-side, is sent.
-  - Passwordless connections are refused on TCP and on the socket.
-- `dc.events` is append-only by grants plus triggers: UPDATE, DELETE and TRUNCATE are refused for the app and for the owner.
-  `DISABLE TRIGGER` needs ownership.
-- The hash chain is computed in a trigger under a per-tenant chain-head lock and verified in the database (`dc.verify_chain`). A
-  superuser rewrite with triggers bypassed is detected.
-- Authority tables are SELECT-only for the app. They change through `dc.apply_authority(seq)`, a SECURITY DEFINER function that applies
-  a logged revoke or grant once.
+  - `dc_owner` (NOLOGIN) owns every table, trigger and function.
+  - `dc_app` (the request handler) holds NO table, column or sequence privilege. It may only EXECUTE `dc.submit`, `dc.explain`,
+    `dc.read_table`, `dc.erase_candidates` and `dc.erase_values`: SECURITY DEFINER, `search_path` pinned, each keyed by a session token.
+  - `dc_idp` (the identity adapter) may only EXECUTE `dc.open_session`, which stores sha256 of a fresh random token for a principal
+    and channel the adapter authenticated (channel must match the principal's kind). Python: `PgSessionBridge` (dc_idp) and
+    `PgDecisionService` (dc_app).
+  - Logins use SCRAM. Passwords are read from 0600 files; only verifiers computed client-side are sent. Passwordless connections are
+    refused on TCP and on the socket.
+- Identity comes only from the sessions row; a body naming tenant, principal, channel or id is refused `identity_in_body`. Revoke and
+  grant are applied inside the same function from the event it judged (`dc.apply_authority` is gone, R3-7).
+- The decision rules run in plpgsql (`dc._rules`, a port of `pol/_core.py`). `pol/_core.py` stays as the oracle: `exp/pg_diff.py`
+  replays the B2 logs and every B1 transition through both and compares codes and views, with a mutated-SQL control.
+- `dc._apply_event`, `dc._lock_event` and `dc._reduce_apply` are the raw core: OWNER-ONLY, for the differential and B3; no login role
+  can execute them (`tests/test_pg_boundary.py`).
+- `dc.events` is append-only by grants plus triggers: UPDATE, DELETE and TRUNCATE are refused for the owner too. `DISABLE TRIGGER`
+  needs ownership.
+- The hash chain is computed in a trigger under a per-tenant chain-head lock and verified in the database (`dc.verify_chain`). A rewrite
+  by a superuser with triggers bypassed is detected only against an EXTERNAL anchor (`anchor_export` / `anchor_check`, `FileAnchor`):
+  an owner who recomputes the whole chain passes `dc.verify_chain` (R3-8).
+- Erasure is two calls: `dc.erase_candidates` lists the values about a subject; the in-process policy point applies the hold decision;
+  `dc.erase_values` deletes the chosen ones under the tenant row FOR UPDATE and deletes the subject mapping only if no value about the
+  subject remains. Propose holds the tenant row FOR SHARE from token minting to commit, so erasure and propose cannot interleave.
 - Isolation is READ COMMITTED, set explicitly. Lock order:
-  1. tenant row (FOR SHARE, or FOR UPDATE for revoke and grant);
+  1. tenant row (FOR SHARE, or FOR UPDATE for revoke, grant and erasure);
   2. advisory (tenant, principal);
   3. head FOR UPDATE;
   4. event insert, which takes the chain head.
-- Revoke serialises the tenant, which is a scaling limit.
+- Revoke and erasure serialise the tenant, which is a scaling limit.
 
 ## Not proven / limits (see also each result's `not_proven`)
-- Python cannot stop in-process code from reaching private names. The surface test enforces what the package exports and imports.
+- Python cannot stop in-process code from reaching private names. The surface test enforces what the package exports and imports; the
+  enforced boundary is the database role boundary, and the in-process internals are trusted code.
+- Label filtering of reads and the hold decision of erasure are in-process (trusted), not enforced by the database.
+- The database canonicalises subjects with lower() and NFKC, which can differ from Python's casefold on rare characters; Python
+  canonicalises first and the database refuses non-canonical input (best effort).
 - The skeleton table is partial. Unicode confusables are refused by the ASCII rule, but ASCII look-alikes outside the table are not.
 - Audit growth is unbounded in this module.
 - The pin is checked after the call. Local endpoints are not attested.
