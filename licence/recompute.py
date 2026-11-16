@@ -131,7 +131,7 @@ def one(path):
 
 def main():
     d, o = sys.argv[1], sys.argv[2]
-    res = [one(f) for f in sorted(glob.glob(os.path.join(d, "*_[0-9]*.json"))) if not os.path.basename(f).startswith("summary")]
+    res = [one(f) for f in sorted(glob.glob(os.path.join(d, "down_[0-9]*.json")) + glob.glob(os.path.join(d, "up_[0-9]*.json")))]
     json.dump(res, open(o, "w"), indent=1, sort_keys=True)
     for r in res:
         print(r["file"], "agree:", all(r["agrees_with_harness"].values()), "T1:", r.get("T1_examined", r.get("T1")), r.get("T1_mismatches"), "flip", r["T3_flip_s"])

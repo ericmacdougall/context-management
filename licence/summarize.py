@@ -145,8 +145,19 @@ def exp3_checks(R):
         chk["migrated_ops_ok"] = all(v < 300 for d in M["migrated_basic_ops"].values() for v in d.values())
     out["migration_checks"] = chk
     if "unrefreshed_twin_on_trial" in R:
-        u = lambda x: {"bulk_failed": x["bulk"]["failed"], "bulk_http": x["bulk_status"], "tags": x["tags"], "embeddings": x["embeddings"], "semantic_search": x["semantic_search"].get("status"), "count": x["count"]}
-        out["unrefreshed_partial"] = {"trial": u(R["unrefreshed_twin_on_trial"]), "basic": u(E["after"]["unrefreshed_partial_on_basic"])}
+        u = lambda x: {"searchable_before_update": x.get("searchable_before_update", "not recorded (fixture was refreshed by a restart: not a clean test)"), "bulk_failed": x["bulk"]["failed"], "bulk_http": x["bulk_status"],
+                       "tags": x["tags"], "embeddings": x["embeddings"], "semantic_search": x["semantic_search"].get("status"), "count": x["count"]}
+        bs = R.get("unrefreshed_after_start_basic") or E["after"].get("unrefreshed_partial_on_basic")
+        out["unrefreshed_partial"] = {"trial": u(R["unrefreshed_twin_on_trial"]), "basic": u(bs)}
+    if "semonly_trial" in R:
+        sm = {}
+        for k, t in R["semonly_trial"].items():
+            a = R["semonly_after"][k]
+            sm[k] = {"trial": [t["status"], t["hits"]], "basic": [a["status"], a["hits"], (a["error"] or {}).get("reason", "")[:50]],
+                     "silent_difference": a["status"] < 300 and t["status"] < 300 and a["hits"] != t["hits"]}
+        out["semonly"] = sm
+        out["semonly_silent"] = [k for k, v in sm.items() if v["silent_difference"]]
+        out["semonly_trial_witness_ok"] = all(R["semonly_trial"][k]["hits"] and R["semonly_trial"][k]["hits"] > 0 for k in ("semantic", "match", "match_all"))
     out["restart"] = {"counts_equal": E["after_restart"]["counts_before"] == E["after_restart"]["counts_after"], "counts": E["after_restart"]["counts_after"]}
     return out
 
