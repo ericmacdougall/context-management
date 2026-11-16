@@ -63,6 +63,7 @@ create table dc.audit(n bigserial primary key, tenant text, principal text, code
 create table dc.vals(tenant text not null, ref text not null, text text not null, label jsonb not null, subjects text[] not null,
                      primary key (tenant, ref));
 create index vals_subjects on dc.vals using gin(subjects);
+create table dc.subject_tokens(tenant text not null, subject text not null, token text not null unique, primary key (tenant, subject));
 
 create function dc.events_chain() returns trigger language plpgsql security definer set search_path = dc, pg_temp as $$
 declare h text; k bigint;
@@ -137,6 +138,7 @@ grant select on dc.principal, dc.role, dc.chainhead, dc.auth_applied to dc_app;
 grant select, insert, update on dc.head, dc.props to dc_app;
 grant select, insert on dc.chain, dc.events, dc.audit to dc_app;
 grant select, insert, delete on dc.vals to dc_app;
+grant select, insert, delete on dc.subject_tokens to dc_app;
 grant usage on all sequences in schema dc to dc_app;
 grant execute on function dc.apply_authority(bigint), dc.verify_chain(text) to dc_app;
 revoke update, delete, truncate on dc.events from dc_app;
@@ -346,6 +348,9 @@ class PgEngine:
         return code, orig
 
     # ---- private reads for the service and the experiments
+    def _revoked(self):
+        return [r[0] for r in self.c.execute("select pid from dc.principal where tenant=%s and revoked", (self.tenant,)).fetchall()]
+
     def _participant(self, pid, req):
         c = self._c
         return c.execute("select 1 from dc.head where tenant=%s and req=%s", (self.tenant, req)).fetchone() is not None and (
@@ -408,8 +413,16 @@ class PgVault:
         return _value_ref(self._key, tenant, principal, idem, text, label)
 
     def _event_label(self, tenant, label: Label):
-        from .decisions import _event_label
-        return _event_label(self._key, tenant, label)
+        """Random token per (tenant, canonical subject) in dc.subject_tokens, minted on first use; erasure deletes the row (R3-3)."""
+        from .decisions import _tokenised
+        toks = []
+        for x in sorted(label.subjects):
+            self._c.execute("insert into dc.subject_tokens values (%s,%s,%s) on conflict do nothing", (tenant, x, "subj-" + secrets.token_hex(16)))
+            toks.append(self._c.execute("select token from dc.subject_tokens where tenant=%s and subject=%s", (tenant, x)).fetchone()[0])
+        return _tokenised(label, toks)
+
+    def _forget_subject(self, tenant, subject):
+        self._c.execute("delete from dc.subject_tokens where tenant=%s and subject=%s", (tenant, subject))
 
     def _put(self, tenant, ref, text, label: Label):
         return self._c.execute("insert into dc.vals values (%s,%s,%s,%s,%s) on conflict do nothing",

@@ -27,7 +27,7 @@ from typing import Dict, List, Mapping, Optional, Protocol
 
 from . import _core
 from .enforce import Enforcer, PolicyDenied
-from .labels import Label, LabelError
+from .labels import Label, LabelError, canon_subject
 
 CLIENT_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 IDENTITY_KEYS = frozenset(["tenant", "principal", "channel", "id"])
@@ -50,13 +50,9 @@ def _value_ref(key: bytes, tenant: str, principal: str, idem: str, text: str, la
     return "val-" + hmac.new(key, msg, hashlib.sha256).hexdigest()[:40]
 
 
-def _event_label(key: bytes, tenant: str, label: Label) -> Label:
-    """The label as the append-only log and core state keep it: each subject replaced by a keyed per-tenant token. The log cannot be
-    erased, so it must not hold subject names; the token is consistent, so joins (union) and flow checks (subset) are unchanged, and the
-    vault keeps the real subjects that erasure and reads use. Policy rules never evaluate subject names."""
-    def tok(s):
-        return "subj-" + hmac.new(key, json.dumps(["subject", tenant, s]).encode(), hashlib.sha256).hexdigest()[:32]
-    return dataclasses.replace(label, subjects=frozenset(tok(s) for s in label.subjects))
+def _tokenised(label: Label, tokens) -> Label:
+    """The label as the append-only log and core state keep it: each subject replaced by its token (R3-3)."""
+    return dataclasses.replace(label, subjects=frozenset(tokens))
 
 
 class Vault:
@@ -65,6 +61,7 @@ class Vault:
 
     def __init__(self):
         self._vals: Dict[str, dict] = {}
+        self._subj: Dict[tuple, str] = {}
         self._key = secrets.token_bytes(32)
         self._lock = threading.Lock()
 
@@ -72,7 +69,16 @@ class Vault:
         return _value_ref(self._key, tenant, principal, idem, text, label)
 
     def _event_label(self, tenant: str, label: Label) -> Label:
-        return _event_label(self._key, tenant, label)
+        """Subjects replaced by a RANDOM token per (tenant, canonical subject), minted on first use and held only here. Erasure deletes
+        the mapping (`_forget_subject`), after which a token left in the append-only log is unlinkable and no party, including the vault
+        key holder, can confirm a guessed name; a re-appearing subject gets a fresh token (R3-3)."""
+        with self._lock:
+            toks = [self._subj.setdefault((tenant, x), "subj-" + secrets.token_hex(16)) for x in sorted(label.subjects)]
+        return _tokenised(label, toks)
+
+    def _forget_subject(self, tenant: str, subject: str) -> None:
+        with self._lock:
+            self._subj.pop((tenant, subject), None)
 
     def _put(self, tenant: str, ref: str, text: str, label: Label) -> bool:
         """Store under `ref` unless present; True when this call created it."""
@@ -117,6 +123,10 @@ class MemoryEngine:
                 self._log.append(ev)
             return code, orig
 
+    def _revoked(self):
+        with self._lock:
+            return sorted(self._st.revoked)
+
     def _participant(self, pid: str, req: str) -> bool:
         with self._lock:
             s = self._st
@@ -148,6 +158,9 @@ class DecisionService:
         if not isinstance(enforcer, Enforcer) or not isinstance(engines, Mapping) or not engines or vault is None:
             raise TypeError("DecisionService(enforcer, engines, vault)")
         self._enf, self._engines, self._vault = enforcer, dict(engines), vault
+        for eng in self._engines.values():          # R3-10: revocations already in a core log reach the enforcer at start-up
+            for pid in eng._revoked():
+                enforcer._revocations._add(pid)
 
     # ------------------------------------------------------------------ writes
     def _refuse(self, pid, code, body, orig=None):
@@ -163,6 +176,8 @@ class DecisionService:
             return {"code": "unauthenticated:" + e.decision.reason, "original": None, "id": None, "value_ref": None}
         if not isinstance(body, dict):
             return self._refuse(p.id, "bad_event", {})
+        if self._enf._revocations._is_revoked(p.id):                  # R3-10: one revocation source for core and enforcer
+            return self._refuse(p.id, "principal_revoked", body)
         if IDENTITY_KEYS & set(body):
             return self._refuse(p.id, "identity_in_body", body)
         if set(body) - BODY_KEYS:
@@ -198,19 +213,30 @@ class DecisionService:
             if code == "duplicate" and ref is not None and not created:
                 out["value_ref"] = ref                   # M2: a retry gets the original outcome; same body -> same keyed ref, still stored
             return out
+        if code == "revoked":
+            self._enf._revocations._add(ev["target"])
         self._enf._audit.add({"action": "decision", "principal": p.id, "allow": True, "reason": code, "type": ev.get("type"), "req": ev.get("req"),
                               "policy_version": self._enf._ver()})
         return {"code": code, "original": orig, "id": ev["id"], "value_ref": ref}
 
     def erase_subject(self, session, subject: str) -> dict:
-        """Erase every vault value about `subject` (whoever said it). A value under a recorded legal hold is queued, not erased."""
+        """Erase every vault value about `subject` (whoever said it), matched by THE subject canonicalisation (pol.labels.canon_subject).
+        A value under a recorded legal hold is queued, not erased. `result` is "no_values_found" when nothing is about the subject (never
+        reported as success), "erased" when every value went, "incomplete" when some were queued or denied. When no value about the
+        subject remains, its token mapping is deleted, so tokens left in the log become unlinkable (R3-2, R3-3)."""
         p = self._enf.principal_of(session)
         eng = self._engines.get(session.tenant)
         if eng is None or not eng._is_admin(p.id):
             self._refuse(p.id, "unauthorized", {"type": "erase"})
-            return {"erased": 0, "queued": 0, "denied": 0, "refused": "unauthorized"}
-        out = {"erased": 0, "queued": 0, "denied": 0, "refused": None}
-        for ref in self._vault._refs_about(session.tenant, subject):
+            return {"erased": 0, "queued": 0, "denied": 0, "refused": "unauthorized", "result": None}
+        try:
+            subj = canon_subject(subject)
+        except LabelError:
+            self._refuse(p.id, "bad_event", {"type": "erase"})
+            return {"erased": 0, "queued": 0, "denied": 0, "refused": "bad_subject", "result": None}
+        out = {"erased": 0, "queued": 0, "denied": 0, "refused": None, "result": None}
+        refs = self._vault._refs_about(session.tenant, subj)
+        for ref in refs:
             v = self._vault._get(session.tenant, ref)
             if v is None:
                 continue
@@ -221,6 +247,11 @@ class DecisionService:
                 continue
             self._vault._delete(session.tenant, ref)
             out["erased"] += 1
+        if not self._vault._refs_about(session.tenant, subj):
+            self._vault._forget_subject(session.tenant, subj)
+        out["result"] = "no_values_found" if not refs else ("erased" if out["queued"] == out["denied"] == 0 else "incomplete")
+        self._enf._audit.add({"action": "erase_subject", "principal": p.id, "allow": True, "reason": out["result"], "erased": out["erased"],
+                              "queued": out["queued"], "denied": out["denied"], "policy_version": self._enf._ver()})
         return out
 
     # ------------------------------------------------------------------ viewer-scoped reads

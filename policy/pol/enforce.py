@@ -20,8 +20,9 @@ import time
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-from ._pdp import Decision, evaluate
-from .directory import Directory, SessionAuthority
+from ._pdp import Decision as _Decision, evaluate as _evaluate
+from .directory import Directory as _Directory, SessionAuthority as _SessionAuthority
+from .ids import canon, skeleton
 from .labels import Label, join, leq
 from .policy import Policy
 
@@ -29,7 +30,7 @@ from .policy import Policy
 class PolicyDenied(Exception):
     retryable = False
 
-    def __init__(self, decision: Decision):
+    def __init__(self, decision: _Decision):
         super().__init__(decision.reason)
         self.decision = decision
 
@@ -46,23 +47,58 @@ class AuditLog:
         with self._lock:
             self._rows.append(dict(row, seq=len(self._rows)))
 
-    def rows(self) -> List[dict]:
+    def _snapshot(self) -> List[dict]:
+        """Lab and test access only. Not a public read path: a deployment exports audit rows through its admin channel."""
         with self._lock:
             return [dict(r) for r in self._rows]
 
 
+class Revocations:
+    """THE revocation source (R3-10): a principal is revoked if the current policy document lists it (skeleton match, as the PDP does) or
+    an applied core `revoke` event named it. Every enforcer decision and every decision-service submission asks this one object, so a
+    revocation from either side reaches stores, ports, the outbox and the decision core alike. The core's own revoked set is a replica
+    derived from its event log (it must rebuild deterministically from the log)."""
+
+    def __init__(self, policy_source):
+        self._policy_source = policy_source
+        self._live = set()
+        self._lock = threading.Lock()
+
+    def _add(self, pid):
+        with self._lock:
+            self._live.add(canon(pid))
+
+    def _is_revoked(self, pid) -> bool:
+        try:
+            k = canon(pid)
+        except Exception:       # noqa: BLE001  a malformed id is not a principal: treat as revoked (deny)
+            return True
+        with self._lock:
+            if k in self._live:
+                return True
+        try:
+            revoked = self._policy_source().revoked
+        except Exception:       # noqa: BLE001  no readable policy: the PDP denies anyway
+            return False
+        sk = skeleton(k)
+        return any(skeleton(r) == sk for r in revoked)
+
+
 class Enforcer:
-    def __init__(self, policy_source: Callable[[], Policy], directory: Directory, sessions: SessionAuthority, audit: AuditLog):
-        if not callable(policy_source) or not isinstance(directory, Directory) or not isinstance(sessions, SessionAuthority) or not isinstance(audit, AuditLog):
+    def __init__(self, policy_source: Callable[[], Policy], directory: _Directory, sessions: _SessionAuthority, audit: AuditLog):
+        if not callable(policy_source) or not isinstance(directory, _Directory) or not isinstance(sessions, _SessionAuthority) or not isinstance(audit, AuditLog):
             raise TypeError("Enforcer needs a policy source, a Directory, a SessionAuthority and an AuditLog")
         self._policy_source, self._dir, self._sessions, self._audit = policy_source, directory, sessions, audit
         self._clock = time.time
+        self._revocations = Revocations(policy_source)
+        self._tickets, self._tlock = {}, threading.Lock()
+        self._disabled = set()          # destinations disabled by a pin-drift incident (R3-6); re-enabling is an operator action
 
     def policy(self) -> Policy:
         return self._policy_source()
 
     def _deny(self, reason, action, pid, ver, extra=None):
-        d = Decision(False, reason, ver, action if isinstance(action, str) else "")
+        d = _Decision(False, reason, ver, action if isinstance(action, str) else "")
         self._audit.add(dict(extra or {}, action=d.action, principal=pid, allow=False, reason=reason, policy_version=ver))
         raise PolicyDenied(d)
 
@@ -92,45 +128,90 @@ class Enforcer:
             self._deny("session_tenant_mismatch", "session", session.principal_id, ver)
         return p
 
-    def _decide(self, principal_id, tenant, action, labels, request, recipient_id=None, dest=None):
-        """Decision for a principal named by a verified session or a queued item. Returns (decision, principal, recipient snapshot)."""
-        try:
-            pol = self._policy_source()
-        except Exception:       # noqa: BLE001
-            pol = None
-        ver = getattr(pol, "version", None)
-        extra = {"dest": dest}
-        try:
-            extra["label"] = join(labels).digest()
-        except Exception:       # noqa: BLE001
-            extra["label"] = None
-        p, err = self._lookup(principal_id)
-        rcp = None
-        if err:
-            self._deny(err, action, principal_id, ver, extra)
-        if p is None:
-            self._deny("unknown_principal", action, principal_id, ver, extra)
-        if p.tenant != tenant:
-            self._deny("session_tenant_mismatch", action, principal_id, ver, extra)
-        if action == "send_inbox":
-            if not isinstance(recipient_id, str):
-                self._deny("recipient_required", action, principal_id, ver, extra)
-            rcp, err = self._lookup(recipient_id)
-            if err:
-                self._deny(err, action, principal_id, ver, extra)
-            if rcp is None:
-                self._deny("recipient_unknown", action, principal_id, ver, extra)
-        d = evaluate(p, action, labels, request, pol, float(self._clock()), rcp)
-        self._audit.add(dict(extra, action=d.action, principal=p.id, allow=d.allow, reason=d.reason, policy_version=d.policy_version,
-                             recipient=None if rcp is None else rcp.id))
-        if not d.allow:
-            raise PolicyDenied(d)
-        return d, p, rcp
-
     def _check(self, session, action, labels, request, recipient_id=None):
+        """Decision for the principal behind a VERIFIED session. Returns (decision, principal, recipient snapshot)."""
         p = self.principal_of(session)
         dest = request.get("destination") if isinstance(request, dict) else None
-        return self._decide(p.id, p.tenant, action, labels, request, recipient_id, dest)
+        return _decide_verified(self, p, action, labels, request, recipient_id, dest)
+
+    def _ticket(self, session, action, labels, request, recipient_id=None):
+        """Check now (verified session) and mint a single-use ticket for a later re-check at delivery. A ticket can only be minted here,
+        is recognised by identity, and is consumed by `_redeem`; no decision path takes a principal id (R3-1)."""
+        d, p, rcp = self._check(session, action, labels, request, recipient_id)
+        t = _Ticket(p.id, p.tenant, action, dict(request) if isinstance(request, dict) else {}, recipient_id,
+                    request.get("destination") if isinstance(request, dict) else None, d.policy_version)
+        with self._tlock:
+            self._tickets[id(t)] = t
+        return d, p, rcp, t
+
+    def _discard(self, ticket):
+        with self._tlock:
+            if self._tickets.get(id(ticket)) is ticket:
+                del self._tickets[id(ticket)]
+
+    def _redeem(self, ticket, labels):
+        """Re-decide a queued item at delivery: the ticket must be one this Enforcer minted and not yet used; the sender is read from
+        the directory again (removed or moved principals deny)."""
+        ver = self._ver()
+        with self._tlock:
+            ok = self._tickets.get(id(ticket)) is ticket
+            if ok:
+                del self._tickets[id(ticket)]
+        if not ok:
+            self._deny("invalid_ticket", "ticket", None, ver)
+        p, err = self._lookup(ticket.sender)
+        if err:
+            self._deny(err, ticket.action, ticket.sender, ver)
+        if p is None:
+            self._deny("unknown_principal", ticket.action, ticket.sender, ver)
+        if p.tenant != ticket.tenant:
+            self._deny("session_tenant_mismatch", ticket.action, ticket.sender, ver)
+        return _decide_verified(self, p, ticket.action, labels, ticket.request, ticket.recipient_id, ticket.dest)
+
+
+class _Ticket:
+    __slots__ = ("sender", "tenant", "action", "request", "recipient_id", "dest", "enqueue_version")
+
+    def __init__(self, sender, tenant, action, request, recipient_id, dest, enqueue_version):
+        self.sender, self.tenant, self.action, self.request = sender, tenant, action, request
+        self.recipient_id, self.dest, self.enqueue_version = recipient_id, dest, enqueue_version
+
+
+def _decide_verified(enf, p, action, labels, request, recipient_id=None, dest=None):
+    """The decision itself, for a principal `p` that Enforcer._check or Enforcer._redeem has just read from the directory for a verified
+    session or ticket. Module-private: it is reached only through those two methods (Python cannot enforce this; tests/test_surface.py
+    proves by call that no exported callable decides without a verified session)."""
+    try:
+        pol = enf._policy_source()
+    except Exception:       # noqa: BLE001
+        pol = None
+    ver = getattr(pol, "version", None)
+    extra = {"dest": dest}
+    try:
+        extra["label"] = join(labels).digest()
+    except Exception:       # noqa: BLE001
+        extra["label"] = None
+    rcp = None
+    if dest is not None and dest in enf._disabled:
+        enf._deny("destination_disabled", action, p.id, ver, extra)
+    if enf._revocations._is_revoked(p.id):
+        enf._deny("principal_revoked", action, p.id, ver, extra)
+    if action == "send_inbox":
+        if not isinstance(recipient_id, str):
+            enf._deny("recipient_required", action, p.id, ver, extra)
+        rcp, err = enf._lookup(recipient_id)
+        if err:
+            enf._deny(err, action, p.id, ver, extra)
+        if rcp is None:
+            enf._deny("recipient_unknown", action, p.id, ver, extra)
+        if enf._revocations._is_revoked(rcp.id):
+            enf._deny("recipient_revoked", action, p.id, ver, extra)
+    d = _evaluate(p, action, labels, request, pol, float(enf._clock()), rcp)
+    enf._audit.add(dict(extra, action=d.action, principal=p.id, allow=d.allow, reason=d.reason, policy_version=d.policy_version,
+                        recipient=None if rcp is None else rcp.id))
+    if not d.allow:
+        raise PolicyDenied(d)
+    return d, p, rcp
 
 
 @dataclass(frozen=True)
@@ -209,7 +290,7 @@ class Store:
                 self._enf._deny("not_found", "read", self._pid(session), self._enf._ver())
             self._enf._check(session, "read", [r.label], {})
         except PolicyDenied as e:
-            raise PolicyDenied(Decision(False, "not_found_or_denied", e.decision.policy_version, "read"))
+            raise PolicyDenied(_Decision(False, "not_found_or_denied", e.decision.policy_version, "read"))
         return r
 
     def context(self, session, refs: Sequence[str], destination: str) -> Tuple[List[str], int]:
@@ -219,7 +300,7 @@ class Store:
             r = self._get(rid)
             try:
                 if r is None:
-                    raise PolicyDenied(Decision(False, "not_found", None, "inject"))
+                    raise PolicyDenied(_Decision(False, "not_found", None, "inject"))
                 self._enf._check(session, "inject", [r.label], {"destination": destination})
                 ok.append(rid)
             except PolicyDenied:
@@ -252,8 +333,10 @@ class Store:
 
 class GuardedChat:
     """Front of a ChatModel (duck-typed memcore.ports.ChatModel). The answer is stored as a derived record (join of the inputs' labels).
-    A pinned model that answers with another model id is `pin_drift` and the answer is dropped. The request has already reached that
-    model by then: a pin can only be checked on the answer."""
+    Every policy check (declared model, bans, allow-list, region, sensitivity, local-only, restricted) runs BEFORE the call, against the
+    declared id, and policy parsing guarantees that id is an immutable pinned snapshot (R3-6). The served-model comparison after the call
+    is a DETECTOR only: the request has already reached the provider by then. A mismatch is an incident: the answer is dropped
+    (`pin_drift`) and the destination is disabled for every later request (`destination_disabled`) until an operator re-enables it."""
 
     def __init__(self, inner, enforcer: Enforcer, store: Store, dest_id: str):
         self._inner, self._enf, self._store, self._dest = inner, enforcer, store, dest_id
@@ -267,6 +350,7 @@ class GuardedChat:
         pol = self._enf.policy()
         want = pol.resolve_model(pol.destinations[self._dest].model)
         if want is None or pol.resolve_model(getattr(res, "model", None) or "") != want:
+            self._enf._disabled.add(self._dest)
             self._enf._deny("pin_drift", "send_model", p.id, pol.version, {"dest": self._dest})
         rid = self._store.append_derived(session, res.text, [r.id for r in src])
         return self._store._get(rid)
@@ -313,6 +397,7 @@ class Outbox:
             for it in self._queue:
                 if rid in it["refs"]:
                     it["refusal"] = "source_erased"
+                    self._enf._discard(it.pop("ticket"))
                     self.refused.append(it)
                 else:
                     keep.append(it)
@@ -322,24 +407,25 @@ class Outbox:
         rq = _req(request)
         rid = rq.pop("recipient_id", None)
         src = self._store._sources(session, refs, self._action)
-        d, p, _r = self._enf._check(session, self._action, [r.label for r in src], rq, rid)
+        d, p, _r, ticket = self._enf._ticket(session, self._action, [r.label for r in src], rq, rid)
         with self._lock:
             self._queue.append({"sender": p.id, "tenant": p.tenant, "refs": [r.id for r in src], "request": rq, "recipient_id": rid,
-                                "enqueue_version": d.policy_version})
+                                "enqueue_version": d.policy_version, "ticket": ticket})
 
     def deliver_all(self):
         with self._lock:
             q, self._queue = self._queue, []
         for it in q:
+            ticket = it.pop("ticket")
             try:
                 recs = []
                 for rid in it["refs"]:                       # labels and existence as they are NOW
                     r = self._store._get(rid)
                     if r is None:
+                        self._enf._discard(ticket)
                         self._enf._deny("source_erased_or_missing", self._action, it["sender"], self._enf._ver())
                     recs.append(r)
-                d, sender, rcp = self._enf._decide(it["sender"], it["tenant"], self._action, [r.label for r in recs], it["request"],
-                                                   it["recipient_id"], it["request"].get("destination"))
+                d, sender, rcp = self._enf._redeem(ticket, [r.label for r in recs])
                 self._sink(sender, rcp, [r.text for r in recs], dict(it["request"]))          # the very objects the decision used
                 it["delivery_version"] = d.policy_version
                 self.delivered.append(it)

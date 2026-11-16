@@ -40,6 +40,18 @@ class R3_1_Sessions(unittest.TestCase):
         self.assertNotIn("channel", params)
         self.assertFalse(params & {"principal", "principal_id", "pid"})
 
+    def test_credential_checks(self):
+        """New behaviour (no red counterpart): forged, replayed, expired and kind-mismatched credentials are refused."""
+        w = World()
+        good = w.idp.credential("alice", "owner_ui")
+        self.assertEqual(w.sessions.issue(good).channel, "owner_ui")
+        self.assertTrue(_raises(w.sessions.issue, good))                                         # replay
+        forged = w.idp.credential("alice", "owner_ui").replace('"alice"', '"admin"')
+        self.assertTrue(_raises(w.sessions.issue, forged))                                       # signature
+        self.assertTrue(_raises(w.sessions.issue, w.idp.credential("alice", "owner_ui", expires_at=0)))   # expired
+        self.assertTrue(_raises(w.sessions.issue, w.idp.credential("alice", "agent_api")))       # human on the agent channel
+        self.assertTrue(_raises(w.sessions.issue, World().idp.credential("alice", "owner_ui")))  # another IdP's key
+
     def test_no_decision_without_a_session(self):
         """80bb6a7: Enforcer._decide(principal_id, tenant, ...) allows with no session at all (p8 A3)."""
         w = World()
@@ -140,10 +152,13 @@ class R3_6_Models(unittest.TestCase):
     def test_floating_versions_are_refused_at_parse(self):
         """80bb6a7: parse_policy accepts gpt-x:latest with version 'latest' (p8 E1)."""
         for mid, ver in (("gpt-x:latest", "latest"), ("gpt-x", "latest"), ("gpt-x", "stable"), ("gpt-x", "*"), ("gpt-x", ""),
-                         ("gpt-x-preview", "current")):
-            doc = policy_doc(models={"m-local": {"family": "m-local", "version": "1"}, mid: {"family": "gpt-x", "version": ver}})
+                         ("gpt-x-preview", "current"), ("gpt-x", "1"), ("gpt-x@1:latest", "1"), ("gpt-x@2", "1")):
+            doc = policy_doc(models={"m-local@1": {"family": "m-local", "version": "1"}, mid: {"family": "gpt-x", "version": ver}})
             doc["destinations"] = {"local": doc["destinations"]["local"]}
             self.assertTrue(_raises(parse_policy, doc), (mid, ver))
+        ok = policy_doc(models={"m-local@1": {"family": "m-local", "version": "1"}, "gpt-x@2025-01": {"family": "gpt-x", "version": "2025-01"}})
+        ok["destinations"] = {"local": ok["destinations"]["local"]}
+        parse_policy(ok)                                    # a pinned id carrying its concrete version parses
 
     def test_pin_drift_disables_the_destination(self):
         """80bb6a7: each drifted answer is dropped, but the next request is sent to the same destination again."""
@@ -170,6 +185,18 @@ class R3_10_OneRevocation(unittest.TestCase):
         rid = w.store.append(w.s("bob"), "bob note", L())
         bob = w.s("bob")
         self.assertEqual(w.svc.submit(w.s("admin"), {"type": "revoke", "client_id": "rv1", "idem": "rv1", "target": "bob"})["code"], "revoked")
+        with self.assertRaises(PolicyDenied):
+            w.store.read(bob, rid)
+
+    def test_core_revocations_survive_a_restart(self):
+        """A service built over an engine whose log already revoked bob denies bob's Store reads from the first call."""
+        w = World()
+        bob = w.s("bob")
+        rid = w.store.append(bob, "bob note", L())
+        self.assertEqual(w.svc.submit(w.s("admin"), {"type": "revoke", "client_id": "rv1", "idem": "rv1", "target": "bob"})["code"], "revoked")
+        w.enf._revocations._live.clear()                        # simulate a restart of the enforcer process
+        self.assertEqual(w.store.read(bob, rid).text, "bob note")   # the gap this closes: a fresh enforcer knows nothing yet
+        DecisionService(w.enf, {T: w.engine}, w.vault)
         with self.assertRaises(PolicyDenied):
             w.store.read(bob, rid)
 

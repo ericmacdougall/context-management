@@ -14,7 +14,7 @@ from typing import Any
 
 from .directory import Principal
 from .ids import IdError, skeleton
-from .labels import Label, LabelError, acl_satisfied, join
+from .labels import Label, LabelError, _acl_satisfied, join
 from .policy import ACTIONS, Policy
 
 ACTION_KIND = {"send_model": "model", "embed": "embedder", "export": "export"}
@@ -125,7 +125,7 @@ def _evaluate(principal, action, labels, request, policy, now, recipient):
         _deny("principal_revoked")
     if label.tenants != frozenset([t]):
         _deny("tenant_mismatch")
-    if not acl_satisfied(label, principal.groups):
+    if not _acl_satisfied(label, principal.groups):
         _deny("acl")
     clearance = principal.clearance
     if "cap_clearance" in caps:
@@ -159,7 +159,7 @@ def _evaluate(principal, action, labels, request, policy, now, recipient):
             _deny("recipient_tenant")
         if _revoked(policy, rcp.id):
             _deny("recipient_revoked")
-        if not acl_satisfied(label, rcp.groups):
+        if not _acl_satisfied(label, rcp.groups):
             _deny("recipient_acl")
         if rcp.clearance < label.sensitivity:
             _deny("recipient_clearance")

@@ -13,6 +13,7 @@ Dimensions and how each one gets MORE restrictive:
 """
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 from typing import FrozenSet, Iterable, Optional, Sequence
 
@@ -25,6 +26,19 @@ DIMENSIONS_KEYS = ("tenants", "acl", "regions", "sensitivity", "models", "banned
 
 class LabelError(Exception):
     pass
+
+
+def canon_subject(x) -> str:
+    """THE subject canonicalisation (R3-2), applied wherever a subject enters (every Label, and erase_subject): Unicode NFKC, casefold,
+    every run of whitespace becomes one space, trimmed. Empty results and control characters are refused. 'Alice Smith', 'alice smith',
+    ' ALICE\tSmith ' and NFD 'José' all become the same subject id."""
+    if not isinstance(x, str):
+        raise LabelError("subject: not a str")
+    y = " ".join(unicodedata.normalize("NFKC", x).casefold().split())
+    y = unicodedata.normalize("NFKC", y)
+    if not y or any(unicodedata.category(c)[0] == "C" for c in y):
+        raise LabelError("subject: empty or control characters")
+    return y
 
 
 def _fs_str(name, v, allow_none=False):
@@ -77,7 +91,7 @@ class Label:
         s(self, "models", _fs_str("models", self.models, True))
         s(self, "banned", _fs_str("banned", self.banned))
         s(self, "holds", _fs_str("holds", self.holds))
-        s(self, "subjects", _fs_str("subjects", self.subjects))
+        s(self, "subjects", frozenset(canon_subject(x) for x in _fs_str("subjects", self.subjects)))
         if not isinstance(self.local_only, bool) or not isinstance(self.restricted, bool):
             raise LabelError("flags must be bool")
 
@@ -163,7 +177,7 @@ def leq(a: Label, b: Label) -> bool:
     return not violated_dims(a, b)
 
 
-def acl_satisfied(label: Label, groups: Iterable[str]) -> bool:
+def _acl_satisfied(label: Label, groups: Iterable[str]) -> bool:
     g = set(groups)
     return all(c & g for c in label.acl)
 

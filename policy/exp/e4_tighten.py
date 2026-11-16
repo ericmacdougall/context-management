@@ -50,12 +50,12 @@ def one(E, seed, ci, path, tighten, i):
                 subjects=rng.choice([[], ["s1"]]))
     refs = [store.append(s, "payload %d %s" % (k, marker), lab) for k in range(rng.randint(1, 3))]
     sent, checked = [], []
-    real = E.evaluate
+    real = E._evaluate
 
     def spy(principal, action, labels, request, policy, now, recipient):
         checked.append(id(recipient) if recipient is not None else None)
         return real(principal, action, labels, request, policy, now, recipient)
-    E.evaluate = spy
+    E._evaluate = spy
     try:
         def sink(sender, rcp, texts, req):
             for t in texts:
@@ -65,8 +65,8 @@ def one(E, seed, ci, path, tighten, i):
         ob = E.Outbox(enf, store, action, sink)
         rq = {"model": {"destination": "d_model_eu"}, "export": {"destination": "d_export_eu"}, "inbox": {"recipient_id": "r"}}[path]
         ob.enqueue(s, refs, rq)
-        enq = audit.rows()[-1]
-        n0 = len(audit.rows())
+        enq = audit._snapshot()[-1]
+        n0 = len(audit._snapshot())
         p1 = cur[0]
         if tighten == "model_banned":
             cur[0] = p1.with_changes({"banned_models": frozenset(["m-eu"])})
@@ -93,8 +93,8 @@ def one(E, seed, ci, path, tighten, i):
             store._recs[refs[0]] = E.Record(r0.id, r0.tenant, r0.text, Label(["t1"], acl=[["hr"]], holds=["h1"]), r0.lineage)
         delivered, refused = ob.deliver_all()
     finally:
-        E.evaluate = real
-    after = [{"action": a["action"], "allow": a["allow"], "reason": a["reason"], "policy_version": a["policy_version"]} for a in audit.rows()[n0:]]
+        E._evaluate = real
+    after = [{"action": a["action"], "allow": a["allow"], "reason": a["reason"], "policy_version": a["policy_version"]} for a in audit._snapshot()[n0:]]
     return {"enqueue": {"action": enq["action"], "allow": enq["allow"], "policy_version": enq["policy_version"]}, "audit_after": after,
             "delivered": len(delivered), "refused": [x.get("refusal") for x in refused], "sent": sent}
 

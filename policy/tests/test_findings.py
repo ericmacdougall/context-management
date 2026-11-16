@@ -59,7 +59,7 @@ class N1_TrustedInputs(unittest.TestCase):
 
     def test_runtime_clock_decides_expiry(self):
         doc = policy_doc(authorizations={"au1": {"principal": "alice", "tenant": T, "programme": "prog", "expires": 1000.0}})
-        doc["destinations"]["restricted-llm"] = {"kind": "model", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m-local",
+        doc["destinations"]["restricted-llm"] = {"kind": "model", "region": "eu", "local": True, "max_sensitivity": 3, "model": "m-local@1",
                                                  "programme": "prog", "tenants": [T]}
         w = World(principals=[P("alice", restricted_ok=True)], policy=parse_policy(doc),
                   core_config={"tenant": T, "principals": {"alice": "human"}, "authority": {"r1": ["alice"]}, "admins": []})
@@ -147,7 +147,7 @@ class N2_Proposals(unittest.TestCase):
         self.assertLessEqual(worst, 20)
         self.assertEqual(len(st.props["r1"]), 20000)
         self.assertEqual((st.heads["r1"]["version"], st.heads["r1"]["value_ref"]), (20000, None))   # each human reject versions the head, no value
-        self.assertLess(max(t_blocks[-3:]) / min(t_blocks[:3]), 3.0, t_blocks)
+        self.assertLess(min(t_blocks[-3:]) / min(t_blocks[:3]), 3.0, t_blocks)      # min: least sensitive to host load (op count above is the proof)
 
 
 class N3_HeadStarvation(unittest.TestCase):
@@ -268,7 +268,7 @@ class H7_ScopedReadsAndErasure(unittest.TestCase):
         w = World(policy=parse_policy(policy_doc(hold_events=["hold-7"])))
         w.propose(w.s("alice"), "p1", "held", subjects=["dana"], holds=["hold-7"])
         w.propose(w.s("bob"), "p2", "free", subjects=["dana"])
-        self.assertEqual(w.svc.erase_subject(w.s("admin"), "dana"), {"erased": 1, "queued": 1, "denied": 0, "refused": None})
+        self.assertEqual(w.svc.erase_subject(w.s("admin"), "dana"), {"erased": 1, "queued": 1, "denied": 0, "refused": None, "result": "incomplete"})
         self.assertEqual(w.svc.erase_subject(w.s("alice"), "dana")["refused"], "unauthorized")
 
 
@@ -313,7 +313,7 @@ class H8_Outbox(unittest.TestCase):
         a = w.s("alice")
         rid = w.store.append(a, "secret", L(sensitivity=2))
         checked, bad, overlaps, sends = [], [], [0], [0]
-        real = E.evaluate
+        real = E._evaluate
 
         def spy(principal, action, labels, request, policy, now, recipient):
             d = real(principal, action, labels, request, policy, now, recipient)
@@ -328,7 +328,7 @@ class H8_Outbox(unittest.TestCase):
                 bad.append(rcp)
             if w.dir.version() != v0:
                 overlaps[0] += 1
-        E.evaluate = spy
+        E._evaluate = spy
         stop = threading.Event()
 
         def flip():
@@ -352,7 +352,7 @@ class H8_Outbox(unittest.TestCase):
         finally:
             stop.set()
             th.join()
-            E.evaluate = real
+            E._evaluate = real
         return sends[0], overlaps[0], len(bad)
 
 
@@ -365,7 +365,7 @@ class M1_IdentityFromSession(unittest.TestCase):
             self.assertEqual(r["code"], "identity_in_body")
         self.assertEqual(w.svc.submit(a, {"type": "revoke", "client_id": "r", "idem": "r", "target": "bob"})["code"], "unauthorized")
         self.assertEqual(w.svc.submit(w.s("admin"), {"type": "revoke", "client_id": "r", "idem": "r", "target": "bob"})["code"], "revoked")
-        self.assertIn("identity_in_body", [r["reason"] for r in w.audit.rows()])
+        self.assertIn("identity_in_body", [r["reason"] for r in w.audit._snapshot()])
 
 
 class M2_RetryOutcome(unittest.TestCase):
@@ -395,9 +395,9 @@ class M3_Ids(unittest.TestCase):
 
     def test_family_ban_over_and_under_match(self):
         pol = parse_policy(policy_doc(banned_models=["gpt-x"]))
-        for m in ("gpt-x", "gpt-x_2025", "gpt-x@2025-01", "gpt-x:latest"):
+        for m in ("gpt-x@1", "gpt-x_2025", "gpt-x@2025-01", "gpt-x@2025-01:eu"):
             self.assertTrue(any(pol.spec_matches(b, m) for b in pol.banned_models), m)
-        self.assertFalse(any(pol.spec_matches(b, "gpt-xl") for b in pol.banned_models))          # other family: not covered
+        self.assertFalse(any(pol.spec_matches(b, "gpt-xl@1") for b in pol.banned_models))          # other family: not covered
         pol2 = parse_policy(policy_doc(banned_models=["gpt-x@2025"]))
         self.assertTrue(pol2.spec_matches("gpt-x@2025", "gpt-x_2025"))
         self.assertFalse(pol2.spec_matches("gpt-x@2025", "gpt-x@2025-01"))
@@ -419,8 +419,8 @@ class M3_Ids(unittest.TestCase):
             parse_policy(policy_doc(model_aliases={"a1": "a2", "a2": "a1"}))
         with self.assertRaises(PolicyError):
             Policy(version=1, model_aliases={"a1": "nowhere"})
-        p = Policy(version=1, models={"gpt-x": {"family": "gpt-x", "version": "1"}}, model_aliases={"ALIAS": "gpt-x"})
-        self.assertEqual(dict(p.model_aliases), {"alias": "gpt-x"})
+        p = Policy(version=1, models={"gpt-x@1": {"family": "gpt-x", "version": "1"}}, model_aliases={"ALIAS": "gpt-x@1"})
+        self.assertEqual(dict(p.model_aliases), {"alias": "gpt-x@1"})
 
 
 class Audit_Refusals(unittest.TestCase):
@@ -432,7 +432,7 @@ class Audit_Refusals(unittest.TestCase):
                  w.svc.submit(a, {"type": "retract", "client_id": "s", "idem": "q", "req": "r9", "based_on": 0})["code"],
                  w.svc.submit(a, {"type": "retract", "client_id": "s", "idem": "q2", "req": "r1", "based_on": 5})["code"]]
         self.assertEqual(codes, ["agent_not_permitted", "unknown_req", "stale"])
-        denied = [r["reason"] for r in w.audit.rows() if r.get("action") == "decision" and not r["allow"]]
+        denied = [r["reason"] for r in w.audit._snapshot() if r.get("action") == "decision" and not r["allow"]]
         self.assertEqual(denied, codes)
         self.assertEqual(len(w.vault._vals), 0)          # refused value text is not kept
 

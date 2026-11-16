@@ -295,7 +295,7 @@ def build_world(E, pdp_eval=None, decisions_mod=None):
     w.store = E.Store(w.enf)
     w.E = E
     if pdp_eval is not None:
-        E.evaluate = pdp_eval
+        E._evaluate = pdp_eval
     if E is ENF:
         DS = (decisions_mod or __import__("pol.decisions", fromlist=["DecisionService"])).DecisionService
         w.svc = DS(w.enf, {"tenant-a": w.engine}, w.vault)

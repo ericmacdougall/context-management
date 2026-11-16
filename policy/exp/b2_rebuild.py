@@ -182,7 +182,7 @@ def service_audit(evs):
             full.setdefault(ev["id"], (out["id"], out["value_ref"], p))
         returned.append(out["code"])
     refusals_returned = [c for c in returned if c in CORE.REFUSED or c in ("identity_in_body", "unknown_tenant")]
-    audited = [r["reason"] for r in audit.rows() if r.get("action") == "decision" and not r["allow"]]
+    audited = [r["reason"] for r in audit._snapshot() if r.get("action") == "decision" and not r["allow"]]
     return {"returned": returned, "refusals_returned": refusals_returned, "audited_refusals": audited}
 
 

@@ -249,7 +249,7 @@ def run_scenario(E, seed, i, arm, rows):
         rows.append({"t": "payload", "arm": arm, "seed": seed, "i": i, "channel": p.channel, "dest": p.dest, "attrs": p.attrs, "tenant": p.tenant,
                      "markers": [[m, sc.cls_of[m]] for m in mks if m in sc.cls_of]})
     rows.append({"t": "scenario", "arm": arm, "seed": seed, "i": i, "payloads": len(sc.net.payloads),
-                 "evaluated_actions": sorted({r["action"] for r in sc.audit.rows()}), "registered": sorted(sc.net.registered.values())})
+                 "evaluated_actions": sorted({r["action"] for r in sc.audit._snapshot()}), "registered": sorted(sc.net.registered.values())})
 
 
 FORGES = ["extra_tenant", "extra_principal", "extra_now", "extra_recipient_object", "credential_unknown_key", "foreign_recipient", "unknown_recipient",

@@ -12,7 +12,11 @@ Model matching rule (M3). A destination pins a model id that must be DECLARED in
     all tags). Family membership comes from the declaration, never from string prefixes: a ban on "gpt" does NOT cover family
     "gpt-oss" (over-match is not used as a safety net); an undeclared pinned model denies (`destination_model_undeclared`).
   - The same spec form is used in labels (`banned` and the `models` allow list); an allow-list entry "f", "f@v" or a declared model id.
-  - Aliases are canonicalised, followed to a fixed point, must end at a declared model id, and a cycle is a PolicyError."""
+  - Aliases are canonicalised, followed to a fixed point, must end at a declared model id, and a cycle is a PolicyError.
+  - (R3-6) A declared model is an immutable snapshot: its version is concrete (a digit, no floating word such as latest, stable,
+    current, preview, *) and its id carries that version after the family ("gpt-x@2025-01", "m-local@1"). An unversioned or floating
+    id is refused at parse time, so the id checked before a call is the id that is called. The after-call served-model check in
+    GuardedChat is a DETECTOR only: by then the request has reached the provider; a mismatch disables the destination."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
@@ -27,6 +31,31 @@ DEST_KINDS = ("model", "embedder", "export")
 
 class PolicyError(Exception):
     pass
+
+
+FLOATING = frozenset(["latest", "stable", "current", "default", "preview", "beta", "alpha", "nightly", "canary", "main", "head", "any",
+                      "new", "newest", "auto", "rolling", "edge", "next", "experimental", "*"])
+
+
+def _tokens(x):
+    t = [x]
+    for sep in MODEL_SEPARATORS:
+        t = [y for z in t for y in z.split(sep)]
+    return t
+
+
+def _pinned(m, f, v):
+    """R3-6: a declared model is an IMMUTABLE snapshot. The version must be concrete (it contains a digit and no floating word), and the
+    model id itself must carry that version after the family (the provider is called with the id, so an id without its version, such as
+    "gpt-x" or "gpt-x:latest", may be served as another model). Floating tags anywhere in the id are refused."""
+    if not v or not any(c.isdigit() for c in v) or set(_tokens(v)) & FLOATING:
+        raise PolicyError("models: version %r of %r is not a concrete pinned version" % (v, m))
+    rest = m[len(f) + 1:] if m != f else ""
+    if set(_tokens(rest)) & FLOATING or "*" in m:
+        raise PolicyError("models: id %r carries a floating tag" % (m,))
+    if not any(rest == v or rest.startswith(v + sep) or rest.endswith(sep + v) or (sep + v + sep) in rest
+               for sep in MODEL_SEPARATORS):
+        raise PolicyError("models: id %r does not carry its version %r (unversioned ids may float at the provider)" % (m, v))
 
 
 @dataclass(frozen=True)
@@ -102,6 +131,7 @@ class Policy:
                 m, f, v = canon_model(mid), canon_model(d.family), canon_model(d.version)
                 if not (m == f or (m.startswith(f) and m[len(f)] in MODEL_SEPARATORS)):
                     raise PolicyError("models: id %r is not family %r or a suffixed/tagged variant of it" % (m, f))
+                _pinned(m, f, v)
                 models[m] = ModelDecl(f, v)
             s("models", MappingProxyType(models))
             aliases = {canon_model(k): canon_model(v) for k, v in dict(self.model_aliases).items()}
@@ -253,6 +283,6 @@ def safe_policy(doc) -> Policy:
 
 
 EXAMPLE_POLICY = {"example": True, "version": 1, "grants": {"tenant-a": ["append", "read", "inject", "send_model", "erase"]},
-                  "models": {"example-model-1": {"family": "example-model", "version": "1"}},
-                  "destinations": {"eu-local-llm": {"kind": "model", "region": "EU", "local": True, "max_sensitivity": 3, "model": "example-model-1",
+                  "models": {"example-model@1": {"family": "example-model", "version": "1"}},
+                  "destinations": {"eu-local-llm": {"kind": "model", "region": "EU", "local": True, "max_sensitivity": 3, "model": "example-model@1",
                                                     "tenants": ["tenant-a"]}}}

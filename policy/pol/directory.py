@@ -3,7 +3,7 @@
 Trust boundary. A request handler holds a Session and nothing else; every attribute a decision uses (tenant, groups, clearance,
 restricted flag, kind, region, model) is read from the Directory by the session's principal id at the moment of use. A Session is
 only valid if it is the very object the SessionAuthority issued (identity check against the authority's registry), so a hand-built
-Session, or a Principal object in its place, is refused. Issuing a session (`SessionAuthority.issue`) and editing the directory
+Session, or a Principal object in its place, is refused. Issuing a session (`SessionAuthority.issue`, from a verified credential only) and editing the directory
 (`Directory.put` / `remove`) are the authentication and administration paths; request handlers never call them.
 
 Directory entries are immutable Principal values; `put` replaces an entry atomically under a lock, so a lookup returns either the old
@@ -16,6 +16,7 @@ import threading
 from dataclasses import dataclass
 from typing import FrozenSet, Iterable, Optional
 
+from .identity import Assertion, AuthenticationFailed
 from .ids import IdError, canon, skeleton
 
 KINDS = ("human", "agent", "analyst")
@@ -104,24 +105,30 @@ class Session:
 
 
 class SessionAuthority:
-    """Issues sessions after authentication (the write path's lease and session binding in a deployment) and verifies them by identity."""
+    """Issues sessions ONLY from a credential verified by the identity adapter (pol.identity), and verifies sessions by identity.
+    The principal and the channel come from the adapter's Assertion; nothing about the session is chosen by the caller (R3-1)."""
 
-    def __init__(self, directory: Directory):
-        if not isinstance(directory, Directory):
-            raise TypeError("SessionAuthority needs a Directory")
+    def __init__(self, directory: Directory, identity):
+        if not isinstance(directory, Directory) or not callable(getattr(identity, "authenticate", None)):
+            raise TypeError("SessionAuthority needs a Directory and an identity adapter")
         self._dir = directory
+        self._idp = identity
         self._live = {}
         self._lock = threading.Lock()
 
-    def issue(self, principal_id: str, channel: str) -> Session:
-        p = self._dir.lookup(principal_id)
+    def issue(self, credential) -> Session:
+        try:
+            a = self._idp.authenticate(credential)
+        except Exception as e:          # noqa: BLE001  any adapter failure is a refusal
+            raise AuthenticationFailed("credential not verified: " + type(e).__name__)
+        if not isinstance(a, Assertion):
+            raise AuthenticationFailed("identity adapter returned no Assertion")
+        p = self._dir.lookup(a.principal_id)
         if p is None:
-            raise DirectoryError("unknown principal")
-        if channel not in OWNER_CHANNELS + AGENT_CHANNELS:
-            raise DirectoryError("unknown channel")
-        if (p.kind == "human") != (channel in OWNER_CHANNELS):
-            raise DirectoryError("channel does not match the principal's kind")
-        s = Session(p.tenant, p.id, channel, secrets.token_hex(16))
+            raise AuthenticationFailed("unknown principal")
+        if a.channel not in OWNER_CHANNELS + AGENT_CHANNELS or (p.kind == "human") != (a.channel in OWNER_CHANNELS):
+            raise AuthenticationFailed("credential channel does not match the principal's kind")
+        s = Session(p.tenant, p.id, a.channel, secrets.token_hex(16))
         with self._lock:
             self._live[s.token] = s
         return s

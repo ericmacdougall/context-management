@@ -119,13 +119,14 @@ class PgProofs(unittest.TestCase):
         self.assertEqual(self.c.execute("select count(*) from dc.audit where code='principal_revoked'").fetchone()[0], 1)
 
     def test_proposal_cost_linear_to_20000(self):
-        """Pre-registered (THRESHOLDS amendment 3): 20,000 proposals created and closed (analyst proposes, agent rejects); the mean time
-        per event of each of the last three 2,000-proposal blocks is below 3x the median of the first three blocks."""
+        """Pre-registered (THRESHOLDS amendment 3): 20,000 proposals created and closed; the mean time per event of each of the last three
+        2,000-proposal blocks is below 3x the median of the first three blocks. Workload change (round 3, ASSUMPTION that agents only
+        propose and remark): amendment 3 named an agent reject; a reject now needs a human with authority, and each one versions the head."""
         blocks, t0 = [], time.perf_counter()
         for i in range(20000):
             a = self.e._submit(ev("propose", "x", "p%d" % i, req="r1", value_ref="v%d" % i, label=LAB, based_on=0))
-            b = self.e._submit(ev("decide", "bot", "d%d" % i, req="r1", verb="reject", proposal="x/p%d" % i,
-                                  proposal_hash=_core.proposal_hash("x/p%d" % i, "v%d" % i, "x"), based_on=0))
+            b = self.e._submit(ev("decide", "alice", "d%d" % i, req="r1", verb="reject", proposal="x/p%d" % i,
+                                  proposal_hash=_core.proposal_hash("x/p%d" % i, "v%d" % i, "x"), based_on=i))
             self.assertEqual((a[0], b[0]), ("proposed", "decided_reject"))
             if (i + 1) % 2000 == 0:
                 t1 = time.perf_counter()
@@ -134,7 +135,7 @@ class PgProofs(unittest.TestCase):
         first = sorted(blocks[:3])[1]
         print("\nPG N2 blocks (s per 2000 proposals): " + " ".join("%.2f" % b for b in blocks))
         self.assertEqual(self.c.execute("select count(*) from dc.props").fetchone()[0], 20000)
-        self.assertEqual(self.e._head("r1")["version"], 0)
+        self.assertEqual(self.e._head("r1")["version"], 20000)
         self.assertLess(max(blocks[-3:]) / first, 3.0)
 
 
@@ -167,7 +168,7 @@ class PgProofs(unittest.TestCase):
             self.assertNotIn("dana", repr(self.c.execute("select ev from dc.events").fetchall()))     # the log holds refs only
             svc.submit(w.s("bob"), {"type": "propose", "client_id": "p1", "idem": "k3", "req": "r1", "value": "bob on dana",
                                     "label": L(subjects=["dana"]).to_dict(), "based_on": 1})
-            self.assertEqual(svc.erase_subject(w.s("admin"), "dana"), {"erased": 1, "queued": 1, "denied": 0, "refused": None})
+            self.assertEqual(svc.erase_subject(w.s("admin"), "dana"), {"erased": 1, "queued": 1, "denied": 0, "refused": None, "result": "incomplete"})
             self.assertEqual(self.c.execute("select count(*) from dc.vals").fetchone()[0], 1)
         finally:
             os.unlink(kf)
