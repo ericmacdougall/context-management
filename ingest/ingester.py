@@ -298,7 +298,7 @@ class Ingester:
             st = {"complete": "complete", "turn_incomplete": "turn_incomplete"}.get(status, "incomplete")
             for bi, b in enumerate(shapes.blocks_of_message(provider, msg)):
                 kind = "incomplete_block" if bi in bad else b.kind
-                meta = {"tool_id": b.tool_id, "stop": body.get("stop"), "resp_id": body.get("resp_id")}
+                meta = {"tool_id": b.tool_id, "stop": body.get("stop"), "resp_id": body.get("resp_id"), **note}
                 if bi in quotes:
                     meta["quotes_injected"] = quotes[bi]
                 self._emit(stream, n, "resp", 0, bi, b.prov, kind, "incomplete" if bi in bad else st, cj(b.data), seq, meta)

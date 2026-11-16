@@ -79,6 +79,12 @@ def main(d):
     for lab in ("nonstream_40ms", "stream_20x2ms"):
         off, on = x["runs"][lab]["off_s"], x["runs"][lab]["on_s"]
         check("item6 %s added median ms" % lab, round(1000 * (statistics.median(on) - statistics.median(off)), 3), round(x["summary"][lab]["added_median_ms"], 3), bad)
+    h = x["runs"]["history"]
+    s = x["summary"]["history_cost_60_calls_injector_guard_on"]
+    check("item6 history on 51-60 ms", round(1000 * statistics.median(h["on_s"][50:]), 3), round(s["tap_on_ms_calls_51_60"], 3), bad)
+    check("item6 history on 1-10 ms", round(1000 * statistics.median(h["on_s"][:10]), 3), round(s["tap_on_ms_calls_1_10"], 3), bad)
+    x = load(d, "item7")
+    check("item7 user events (dup measure)", [r["user_events"] for r in x["runs"]], [r["user_events"] for r in x["summary"]["runs"]], bad)
     print("\nMISMATCHES: %d" % len(bad))
     sys.exit(1 if bad else 0)
 

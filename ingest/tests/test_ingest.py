@@ -86,6 +86,8 @@ class IngestTests(Base):
         rig.sync()
         self.assertEqual(len([e for e in rig.events() if e["prov"] == "user"]), 1)
         self.assertEqual(len([e for e in rig.events() if e["prov"] == "assistant"]), 2)
+        resp = [e for e in rig.events() if e["side"] == "resp"]
+        self.assertEqual([json.loads(e["meta"]).get("retry_of") for e in resp], [None, 1])     # the second answer carries the retry marker
 
     def test_openai_stream_tool_calls(self):
         tc = [{"id": "c1", "type": "function", "function": {"name": "f", "arguments": json.dumps({"a": 1})}}]
@@ -142,6 +144,22 @@ class IngestTests(Base):
         self.assertTrue(any("PLANTED_X" in cj for r in rig.stub.received for cj in [json.dumps(r)]))
         self.assertFalse(any("PLANTED_X" in e["content"] for e in rig.events() if e["prov"] != "memory_injected"))
         self.assertEqual([e["prov"] for e in rig.events()].count("memory_injected"), 1)
+
+    def test_injection_after_tool_result_keeps_provider_valid_order(self):
+        inj = make_injector(("Dana likes tea",))
+        rig = Rig(self.d, "anthropic", [{"content": [tool_use("t1", "x", {})], "stop": "tool_use"}, {"content": [text("ok")]}], injector=inj)
+        rig.ask("Dana tea please")
+        rig.msgs.append({"role": "user", "content": [tool_result("t1", "res"), text("Dana tea continue")]})
+        rig.call(rig.request())
+        sent = rig.stub.received[-1]
+        self.assertEqual(shapes.check_pairing("anthropic", sent["messages"]), [])
+        last = sent["messages"][-1]["content"]
+        self.assertEqual([b["type"] for b in last][:2], ["tool_result", "text"])
+        self.assertIn("MEMCORE", last[1]["text"])
+
+    def test_openai_null_fields_do_not_change_message_key(self):
+        a = {"role": "assistant", "content": "x", "refusal": None, "tool_calls": []}
+        self.assertEqual(shapes.message_key("openai", a), shapes.message_key("openai", {"role": "assistant", "content": "x"}))
 
     def test_log_is_append_only(self):
         rig = Rig(self.d, "anthropic", [{"content": [text("ok")]}])

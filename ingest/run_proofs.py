@@ -10,7 +10,7 @@ REG = {"1": p123.item1, "1b": p123.item1b, "2a": p123.item2_delivery, "2b": p123
        "2bctl4": lambda o: p123.item2_race_threads(o, fence=False, unique=False, state_guard=False, tag="item2b_control_4layers"), "3": p123.item3}
 try:
     from . import proof_items_456 as p456
-    REG.update({"4": p456.item4, "5": p456.item5, "6": p456.item6})
+    REG.update({"4": p456.item4, "5": p456.item5, "6": p456.item6, "7": p456.item7_probe})
 except ImportError:
     pass
 

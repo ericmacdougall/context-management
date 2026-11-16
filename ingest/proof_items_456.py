@@ -278,6 +278,39 @@ def item5(out: str) -> dict:
 
 
 # --------------------------------------------------------------------------- item 6
+def item7_probe(out: str) -> dict:
+    """UNREGISTERED probe (not in PREREG): a host that trims history with a sliding window (drops the oldest user/assistant pair each call
+    once the window is full). Measures duplicates and gaps; reported as a failure mode for such hosts, not as a pass."""
+    runs = []
+    for provider in ("anthropic",):
+        for window in (4, 8):
+            d = tmpdir()
+            try:
+                n = 20
+                rig = Rig(d, provider, [{"content": [text("a%d" % i)]} for i in range(n)])
+                for i in range(n):
+                    rig.msgs.append({"role": "user", "content": "q%d" % i})
+                    o = rig.call(rig.request())
+                    rig.msgs.append({"role": "assistant", "content": o["content"]})
+                    while len(rig.msgs) > window:
+                        rig.msgs.pop(0)
+                        rig.msgs.pop(0)
+                rig.sync()
+                ev = rig.events()
+                user_texts = [json.loads(e["content"])["text"] for e in ev if e["prov"] == "user"]
+                asst_texts = [json.loads(e["content"])["text"] for e in ev if e["prov"] == "assistant"]
+                gaps = rig.ing.gaps(rig.stream_id, open_only=False)
+                runs.append({"window_msgs": window, "calls": n, "user_events": len(user_texts), "distinct_user_texts": len(set(user_texts)),
+                             "assistant_events": len(asst_texts), "distinct_assistant_texts": len(set(asst_texts)), "gap_kinds": sorted({g["kind"] for g in gaps}),
+                             "blocking_gaps_open": len([g for g in gaps if g["blocking"] and not g["closed"]]),
+                             "claim_complete": rig.ing.claim_complete(rig.stream_id, rig.log.head(rig.stream_id)[0])})
+            finally:
+                shutil.rmtree(d, ignore_errors=True)
+    S = {"probe": "sliding-window host (UNREGISTERED)", "runs": runs}
+    S["artifact"] = write_artifact(out, "item7", {"window_msgs": [4, 8], "calls": 20}, runs, S)
+    return S
+
+
 def item6(out: str) -> dict:
     res = {}
     for label, stream, n, delay, ev_delay in (("nonstream_40ms", False, 200, 0.040, 0.0), ("stream_20x2ms", True, 100, 0.0, 0.002)):
@@ -339,6 +372,36 @@ def item6(out: str) -> dict:
                                   "naive_full_request_bytes_total": sum(naive_per), "naive_bytes_per_call": sum(naive_per) / 50,
                                   "naive_last_call_bytes": naive_per[-1], "tap_last_call_bytes_records": by_call.get(50, 0),
                                   "commits_per_call": rig.log.writes / 50}
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    # history growth: per-call time with the injector and the egress guard on, tap on vs off, zero-delay stub, 60 calls
+    from memcore.guard import EgressGuard
+    d = tmpdir()
+    try:
+        n = 60
+        script = [{"content": [text("answer " * 10)]}] * n
+        st_on, st_off = Stub("anthropic", script), Stub("anthropic", script)
+        log = PortLog(os.path.join(d, "port.db"))
+        tap = PortTap(st_on, "anthropic", log, StaticIdentity("t1", "s1"), Hasher(KEY), ReferenceScanner(), guard=EgressGuard(real_ids=["conv-zzz-1"]),
+                      injector=_injector("MRKH"), clock=lambda: "2026-01-01T00:00:00Z")
+        msgs: List[dict] = []
+        t_on, t_off = [], []
+        for i in range(n):
+            msgs.append({"role": "user", "content": "tell me about Dana tea number %d" % i})
+            req = {"model": "m", "max_tokens": 64, "messages": [dict(m) for m in msgs]}
+            t0 = time.perf_counter()
+            o = tap.call(req)
+            t_on.append(time.perf_counter() - t0)
+            t0 = time.perf_counter()
+            st_off.call(req)
+            t_off.append(time.perf_counter() - t0)
+            msgs.append({"role": "assistant", "content": o["content"]})
+        m = statistics.median
+        res.setdefault("_raw", {})["history"] = {"on_s": t_on, "off_s": t_off}
+        res["history_cost_60_calls_injector_guard_on"] = {"tap_on_ms_calls_1_10": 1000 * m(t_on[:10]), "tap_on_ms_calls_51_60": 1000 * m(t_on[50:]),
+                                                           "tap_off_ms_calls_51_60": 1000 * m(t_off[50:]), "commits_per_call_with_injector": log.writes / n,
+                                                           "issued_table_writes_not_counted_in_commits": True}
+        log.close()
     finally:
         shutil.rmtree(d, ignore_errors=True)
     raw = res.pop("_raw")

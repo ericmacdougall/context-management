@@ -268,13 +268,17 @@ class PortTap:
         return {"base": last["call"], "with_resp": bool(last["resp_k"]), "p": p, "digest": sha_keys(full[:p])}, mrefs[p:]
 
     def _place(self, sent: dict, block: str) -> None:
-        """Place the injected block as its OWN block at the front of the last user message (never merged into the user's text)."""
+        """Place the injected block as its OWN block in the last user message (never merged into the user's text). tool_result blocks
+        must stay first in a user message (Anthropic: text after tool_results), so the block goes after any leading tool_results."""
         msgs = sent.get("messages") or []
         for m in reversed(msgs):
             if m.get("role") == "user":
                 c = m.get("content")
                 parts = [{"type": "text", "text": c}] if isinstance(c, str) else list(c or [])
-                m["content"] = [{"type": "text", "text": block}] + parts
+                i = 0
+                while i < len(parts) and isinstance(parts[i], dict) and parts[i].get("type") == "tool_result":
+                    i += 1
+                m["content"] = parts[:i] + [{"type": "text", "text": block}] + parts[i:]
                 return
         msgs.append({"role": "user", "content": [{"type": "text", "text": block}]})
         sent["messages"] = msgs

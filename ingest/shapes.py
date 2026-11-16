@@ -119,7 +119,9 @@ def message_key(provider: str, msg: dict) -> str:
     if provider == ANTHROPIC:
         bl = [_simplify_anth(b) for b in _blocks_of_content(msg.get("content"))]
         return cj({"r": msg.get("role"), "b": [b for b in bl if b is not None]})
-    d = {k: v for k, v in msg.items() if k in ("role", "content", "tool_calls", "tool_call_id", "refusal", "name")}
+    # null or empty optional fields (refusal: null, tool_calls: []) are ignored: a host that rebuilds the message without them is the same message
+    d = {k: v for k, v in msg.items() if k in ("role", "content", "tool_calls", "tool_call_id", "refusal", "name") and v not in (None, [], "")
+         or (k == "content" and v == "" and msg.get("role") != "assistant")}
     if isinstance(d.get("content"), list):          # one text part == plain string
         parts = d["content"]
         if len(parts) == 1 and isinstance(parts[0], dict) and parts[0].get("type") == "text":
