@@ -460,14 +460,17 @@ class EntryPointsRequireRealIdsTests(unittest.TestCase):
         self.assertIn('\\"id\\":\\"e1\\"', out.getvalue())             # control: with the file it injects
 
     def test_gateway_refuses_to_start_without_the_id_file(self):
-        from memcore.gateway import main
-        from memcore.ports import PortError
+        import memcore.gateway as g
+
+        class NoServe:
+            def __init__(self, *a, **k):
+                raise _Started()
+        real, g.Gateway = g.Gateway, NoServe
+        self.addCleanup(setattr, g, "Gateway", real)
         for extra in ([], ["--real-ids", self.empty]):
-            self.assert_refused(lambda: main(["--backend", "claude-cli", "--out", self.d] + extra))
-        # control: with the file it gets past the id check and stops at the next gate (no dev flag: no CLI is started)
-        with self.assertRaises((PortError, ValueError)) as c:
-            main(["--backend", "claude-cli", "--out", self.d, "--real-ids", self.ids()])
-        self.assertNotIn("real session id", str(c.exception))
+            self.assert_refused(lambda: g.main(["--backend", "stub", "--out", self.d] + extra))
+        with self.assertRaises(_Started):                     # control: with the file it gets past the id check
+            g.main(["--backend", "stub", "--out", self.d, "--real-ids", self.ids()])
 
     def test_mcp_http_refuses_to_start_without_the_id_file(self):
         import memcore.mcp_http as m

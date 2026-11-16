@@ -1,9 +1,11 @@
-"""Local OpenAI-compatible gateway in front of any ChatModel adapter (claude-cli, codex-cli, ...).
+"""Local OpenAI-compatible gateway in front of a ChatModel adapter that is NOT subscription-backed (subscription CLIs are
+refused: they are direct development adapters only and never sit behind the Elasticsearch inference API), plus the
+POST /v1/pre_exec memory route.
 
 SINGLE-USER, LOCAL, DEVELOPMENT ONLY. Binds 127.0.0.1 and refuses anything else; a random bearer token is written to a
 0600 file; the backend adapter's call cap, cache and ledger apply to every request. Streaming is SIMULATED: the backend
 call completes first, then the text is framed as SSE chunks with a final usage chunk.
-Start:  python3 -m memcore.gateway --backend claude-cli --out <dir>      (writes <dir>/gateway.{token,port,pid})
+Start:  python3 -m memcore.gateway --backend stub --out <dir> --real-ids F   (writes <dir>/gateway.{token,port,pid})
 Stop:   touch <dir>/gateway.stop     (the server polls for it and shuts down cleanly)
 """
 from __future__ import annotations
@@ -30,7 +32,7 @@ from .sse import chat_chunks
 MAX_BODY = 8 * 1024 * 1024
 BRIDGE_ADDRESSES = {"172.17.0.1"}   # the one Docker bridge address a container client may reach; never configurable per call
 BANNER = ("=" * 72 + "\nmemcore gateway: SINGLE-USER, LOCAL, DEVELOPMENT ONLY. Bound to %s:%d.\n"
-          "Backed by a subscription CLI; every request spends the backend call cap. Do not expose.\n" + "=" * 72)
+          "Every request spends the backend call cap. Do not expose.\n" + "=" * 72)
 
 
 def require_loopback(host: str) -> None:
@@ -62,6 +64,10 @@ def _network_safe(b) -> bool:
             and type(inst.get("default")) is str)
 
 
+class SubscriptionBehindHttpRefused(ValueError):
+    pass
+
+
 def check_gate(backs: Mapping, host: str, allow_bridge_host: Optional[str], dev_subscription_backends: bool) -> None:
     """The bind/backend gate. Run at construction over the snapshot the handler will use, and again per request."""
     try:
@@ -69,9 +75,13 @@ def check_gate(backs: Mapping, host: str, allow_bridge_host: Optional[str], dev_
     except ValueError:
         loopback = False
     tainted = [m for m, b in backs.items() if getattr(b, "subscription_backed", False)]
-    if tainted:   # subscription CLIs, or any client/wrapper that declares the taint: explicit dev flag, loopback only
-        from .devgate import require_dev_subscription
-        require_dev_subscription(dev_subscription_backends, "Gateway over subscription-backed backend(s) %s" % tainted)
+    if tainted:
+        # Decision in force (user, 2026-11-16): subscription CLIs stay DIRECT development adapters only and are never put
+        # behind the Elasticsearch inference API. An HTTP front over one is exactly what an inference endpoint would call,
+        # so the gateway refuses them on every bind, with or without the dev flag. Use ClaudeCliChat/CodexCliChat in-process.
+        raise SubscriptionBehindHttpRefused(
+            "refusing to serve subscription-backed backend(s) %s over HTTP: subscription CLIs are direct development adapters "
+            "only and must never sit behind the Elasticsearch inference API" % tainted)
     if loopback:
         require_loopback(host)
         return
@@ -387,14 +397,15 @@ class Gateway:
 
 
 def main(argv=None):
+    """Development front over the allow-listed data-only stub. The subscription CLI backends were removed from this entry
+    point (decision 2026-11-16: never behind the Elasticsearch inference API); the memory route for clients is
+    memcore.hosts.basic_service."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--backend", choices=["claude-cli", "codex-cli"], required=True)
+    ap.add_argument("--backend", choices=["stub"], required=True)
     ap.add_argument("--out", required=True, help="memcore-out directory (cache, ledger, token and port files)")
-    ap.add_argument("--model", default=None)
     ap.add_argument("--cap", type=int, default=200)
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=0)
-    ap.add_argument("--dev-subscription-backends", action="store_true", help="REQUIRED: acknowledge development-only subscription use")
     ap.add_argument("--real-ids", default=None, help="REQUIRED (or $MEMCORE_REAL_IDS_FILE): real dataset session id file; "
                     "the gateway refuses to start without a usable one (fail closed)")
     a = ap.parse_args(argv)
@@ -404,14 +415,9 @@ def main(argv=None):
     except RealIdsMissing as e:
         ap.exit(2, "%s\n" % e)
     require_loopback(a.host)
-    cache, ledger = os.path.join(a.out, "cache", a.backend), os.path.join(a.out, "ledger.jsonl")
-    if a.backend == "claude-cli":
-        from .adapters.claude_cli import ClaudeCliChat
-        backend = ClaudeCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=os.path.join(a.out, "neutral"), model=a.model or "sonnet", cache_dir=cache, ledger_path=ledger, cap=a.cap)
-    else:
-        from .adapters.codex_cli import CodexCliChat
-        backend = CodexCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=os.path.join(a.out, "neutral"), model=a.model, cache_dir=cache, ledger_path=ledger, cap=a.cap)
-    gw = Gateway(backend, a.out, a.host, a.port, dev_subscription_backends=a.dev_subscription_backends)
+    from .fakes import ScriptedStubChat
+    backend = ScriptedStubChat(cache_dir=os.path.join(a.out, "cache", "stub"), ledger_path=os.path.join(a.out, "ledger.jsonl"), cap=a.cap)
+    gw = Gateway(backend, a.out, a.host, a.port)
     print(BANNER % (gw.host, gw.port), file=sys.stderr)
     print("base_url=%s token_file=%s stop_file=%s" % (gw.base_url, os.path.join(a.out, "gateway.token"), gw.stop_file), file=sys.stderr)
     gw.start()

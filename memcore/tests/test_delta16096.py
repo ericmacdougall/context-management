@@ -695,7 +695,7 @@ class ExtrasTests(unittest.TestCase):
                     "http://127.0.0.1.nip.io:9/v1", "http://LOCALHOST:9/v1", "https://api.example.com/v1"):
             c = mk(url)
             self.assertTrue(c.subscription_backed, url)
-            with self.assertRaises(DevSubscriptionNotEnabled):
+            with self.assertRaises((DevSubscriptionNotEnabled, ValueError)):     # phase 3: refused outright (never behind HTTP)
                 gw_mod.Gateway(c, tempfile.mkdtemp(dir=d))
         declared = mk("https://api.example.com/v1", operator_declares_not_subscription=True)
         self.assertFalse(declared.subscription_backed)

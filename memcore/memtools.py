@@ -59,6 +59,30 @@ _S = {"type": "string"}
 _ASOF = {"type": "string", "description": "ISO-8601 UTC time; answer as the world was at this time"}
 
 
+class SearchMemoryStore:
+    """recall() over a SearchBackend (Elasticsearch on any licence): fused lexical + kNN search on one logical index of
+    events {"text", "ts", "vector"}, the query embedded by the given Embedder (a local one on Basic). Events later than
+    as_of are dropped after the search. The stored session id never leaves: only id, ts, text and score are returned."""
+
+    def __init__(self, search, embedder, logical: str = "events", oversample: int = 3):
+        self.search, self.embedder, self.logical, self.oversample = search, embedder, logical, oversample
+
+    def add_events(self, events: List[dict]) -> None:
+        vecs = self.embedder.embed([e["text"] for e in events], "passage").vectors
+        self.search.bulk_add(self.logical, {e["id"]: {"text": e["text"], "ts": e["ts"], "vector": v} for e, v in zip(events, vecs)})
+
+    def recall(self, query: str, as_of: Optional[str] = None, k: int = 5) -> List[dict]:
+        vec = self.embedder.embed([query], "query").vectors[0]
+        res = self.search.fused(self.logical, query, vec, k=k * self.oversample)
+        out = []
+        for h in res.hits:
+            ts, text = h.source.get("ts"), h.source.get("text")
+            if not isinstance(ts, str) or not isinstance(text, str) or (as_of and ts > as_of):
+                continue
+            out.append({"id": h.id, "ts": ts, "text": text, "score": h.score})
+        return out[:k]
+
+
 def memory_tools(store) -> AgentToolSurface:
     def obj(props, req):
         return {"type": "object", "properties": props, "required": req, "additionalProperties": False}

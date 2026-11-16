@@ -1,4 +1,5 @@
-"""ChatModel for Elasticsearch's inference API (the customer route): POST /_inference/chat_completion/{id}/_stream.
+"""ChatModel for Elasticsearch's inference API (an Enterprise-only optional route; Basic, the required path,
+uses the client's own model and memcore.hosts.basic_hook, see memcore.capabilities): POST /_inference/chat_completion/{id}/_stream.
 
 On 9.5 only the streaming form exists (non-streaming is 9.6+, research ES 9.5 source). The request parser is strict: an unknown
 field (for example response_format) is a 400, so this adapter sends only messages, tools, tool_choice, temperature and

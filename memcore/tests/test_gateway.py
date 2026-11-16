@@ -233,16 +233,16 @@ class BindRulesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Gateway(b, os.path.join(d, "g"), host="172.17.0.1")  # private but not loopback and not named as the bridge host
 
-    def test_subscription_backend_needs_flag_and_loopback(self):
-        from memcore.devgate import DevSubscriptionNotEnabled
+    def test_subscription_backend_is_refused_on_every_bind_even_with_the_dev_flag(self):
+        """Decision 2026-11-16: subscription CLIs never sit behind an HTTP front (the ES inference API would call it)."""
+        from memcore.gateway import SubscriptionBehindHttpRefused
         d = tempfile.mkdtemp()
         b = FakeChat(lambda p, s, j: "x", cache_dir=os.path.join(d, "c"), ledger_path=os.devnull, cap=5)
         b.subscription_backed = True
-        with self.assertRaises(DevSubscriptionNotEnabled):
-            Gateway(b, os.path.join(d, "g"))
-        with self.assertRaises(ValueError):
-            Gateway(b, os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1", dev_subscription_backends=True)
-        Gateway(b, os.path.join(d, "g"), dev_subscription_backends=True).srv.server_close()
+        for kw in ({}, {"dev_subscription_backends": True},
+                   {"host": "172.17.0.1", "allow_bridge_host": "172.17.0.1", "dev_subscription_backends": True}):
+            with self.assertRaises(SubscriptionBehindHttpRefused):
+                Gateway(b, os.path.join(d, "g"), **kw)
 
 
 class Delegating:
@@ -275,9 +275,9 @@ class FailClosedTests(unittest.TestCase):
         d, _ = self.mk()
         client = OpenAICompatChat("http://127.0.0.1:9/v1", "m", token="t", cache_dir=os.path.join(d, "cc"), ledger_path=os.devnull, cap=5)
         self.assertTrue(client.subscription_backed)
-        from memcore.devgate import DevSubscriptionNotEnabled
-        with self.assertRaises(DevSubscriptionNotEnabled):
-            Gateway(client, os.path.join(d, "g"))                                   # loopback, no dev flag
+        from memcore.gateway import SubscriptionBehindHttpRefused
+        with self.assertRaises(SubscriptionBehindHttpRefused):
+            Gateway(client, os.path.join(d, "g"), dev_subscription_backends=True)   # loopback, even with the dev flag
         with self.assertRaises(ValueError):
             Gateway(client, os.path.join(d, "g"), host="172.17.0.1", allow_bridge_host="172.17.0.1", dev_subscription_backends=True)
 
