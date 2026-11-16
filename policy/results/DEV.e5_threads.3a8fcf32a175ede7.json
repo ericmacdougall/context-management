@@ -1,0 +1,148 @@
+{
+ "name": "e5_threads",
+ "params": {
+  "per_seed": 200,
+  "seeds": [
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "result": {
+  "arms": {
+   "ctl_derive_join_dropped": {
+    "bytes_checked": 9432187,
+    "finding_hidden": 11183,
+    "finding_visible": 3397,
+    "findings_joining": 2632,
+    "interference_views": 1616,
+    "leaks": 1616,
+    "notice_expected": 2830,
+    "notice_found": 2830,
+    "notice_wrong_views": 0,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 932,
+    "worlds_with_leak": 932,
+    "xrefs_visible": 10958
+   },
+   "ctl_notice_carries_other_side": {
+    "bytes_checked": 8278289,
+    "finding_hidden": 11183,
+    "finding_visible": 3397,
+    "findings_joining": 2632,
+    "interference_views": 1960,
+    "leaks": 1960,
+    "notice_expected": 2830,
+    "notice_found": 0,
+    "notice_wrong_views": 2061,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 978,
+    "worlds_with_leak": 978,
+    "xrefs_visible": 10958
+   },
+   "ctl_xref_without_decision": {
+    "bytes_checked": 8710088,
+    "finding_hidden": 11183,
+    "finding_visible": 3397,
+    "findings_joining": 2632,
+    "interference_views": 3133,
+    "leaks": 3133,
+    "notice_expected": 2830,
+    "notice_found": 0,
+    "notice_wrong_views": 2061,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 1000,
+    "worlds_with_leak": 1000,
+    "xrefs_visible": 18455
+   },
+   "enforced": {
+    "bytes_checked": 8037739,
+    "finding_hidden": 11183,
+    "finding_visible": 3397,
+    "findings_joining": 2632,
+    "interference_views": 0,
+    "leaks": 0,
+    "notice_expected": 2830,
+    "notice_found": 2830,
+    "notice_wrong_views": 0,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 0,
+    "xrefs_visible": 10958
+   },
+   "enforced_notice_none_default": {
+    "bytes_checked": 7753201,
+    "finding_hidden": 11183,
+    "finding_visible": 3397,
+    "findings_joining": 2632,
+    "interference_views": 0,
+    "leaks": 0,
+    "notice_expected": 0,
+    "notice_found": 0,
+    "notice_wrong_views": 0,
+    "views": 5481,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 0,
+    "xrefs_visible": 10958
+   }
+  },
+  "controls": {
+   "ctl_derive_join_dropped": {
+    "interference_views": 1616,
+    "leak_rate_worlds": 0.932,
+    "meets_floor": true,
+    "notice_contract_violations": 0
+   },
+   "ctl_notice_carries_other_side": {
+    "interference_views": 1960,
+    "leak_rate_worlds": 0.978,
+    "meets_floor": true,
+    "notice_contract_violations": 2061
+   },
+   "ctl_xref_without_decision": {
+    "interference_views": 3133,
+    "leak_rate_worlds": 1.0,
+    "meets_floor": true,
+    "notice_contract_violations": 2061
+   }
+  },
+  "controls_meet_floor": true,
+  "not_proven": "timing and ordering side channels (a notice appearing later than the item), notice frequency over time, and the generic 'context withheld' placeholder which tells a viewer that something was withheld; graph shape beyond one hop; real concurrent write paths",
+  "notice_contract": [
+   "kind",
+   "item",
+   "version",
+   "state"
+  ],
+  "positive_conditions_met": true,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e5_threads.py",
+  "at": "2026-11-16T01:34:45Z",
+  "commit": "9c432af0651c11a8b3fb16a65348e6af7709c7c0",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   19.5966796875,
+   19.2294921875,
+   16.92626953125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15"
+ }
+}

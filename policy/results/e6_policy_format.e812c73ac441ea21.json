@@ -1,0 +1,54 @@
+{
+ "name": "e6_policy_format",
+ "params": {
+  "malformed": 3000,
+  "seed": 707
+ },
+ "result": {
+  "control_lenient_loader_allows_rate": 0.18953333333333333,
+  "control_meets_floor": true,
+  "hold_and_subject_checks": {
+   "derived_inherits_hold_and_subject": true,
+   "hold_released_when_event_removed": true,
+   "no_hold_erases": true,
+   "other_tenant_cannot_erase": true,
+   "recorded_hold_blocks_erase": true,
+   "unrecorded_hold_does_not_block": true
+  },
+  "licence_note": "no Elasticsearch feature is used: enforcement is application-side; nothing here needs more than Basic",
+  "not_proven": "format covers the dimensions this lab models; the client's real policies are not shipped (they supply them); example policy is illustrative only",
+  "pass_conditions_met": true,
+  "results": {
+   "deny_all_allows": 0,
+   "empty_policy_allows": 0,
+   "empty_probes": 3000,
+   "lenient_allows": 2843,
+   "lenient_probes": 15000,
+   "malformed_docs": 3000,
+   "malformed_parse_errors": 3000,
+   "malformed_safe_allows": 0,
+   "malformed_safe_probes": 15000,
+   "valid_doc_allows": 518,
+   "valid_doc_probes": 3000
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e6_policy_format.py",
+  "at": "2026-11-16T01:51:19Z",
+  "commit": "41692f7dec5f94c91f8e6d1acd855269b0f35ba1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   21.57958984375,
+   23.5341796875,
+   22.861328125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "2f89fd7e0a2b9a11c8d2aa157c144cd152f25b34",
+  "thresholds_sha256": "de072861b7dc1c894a6bb4e6510f18c5705b199295e42b4f2fac80b5cc65a562",
+  "tree_sha256": "4ba07cf4fb282d723b4d5d7d41c0582aa54ce2d87c7f5f86e4ec32215a4a215f"
+ }
+}

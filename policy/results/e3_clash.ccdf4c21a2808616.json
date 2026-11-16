@@ -1,0 +1,115 @@
+{
+ "name": "e3_clash",
+ "params": {
+  "fault": 2400,
+  "legit": 1400,
+  "planted": 2200,
+  "seed": 88
+ },
+ "result": {
+  "control_meets_floor": true,
+  "control_reason": "naive merge lets credential attrs override identity; truthiness + swallowed errors allow faults",
+  "forged_context": {
+   "kinds": {
+    "extra_key": 484,
+    "key_variant": 506,
+    "now": 450,
+    "principal_override": 527,
+    "recipient": 540,
+    "region": 493
+   },
+   "n": 3000,
+   "naive_allow": 2473,
+   "ours_allow": 0
+  },
+  "items": {
+   "file": "e3_clash.items.096de7f7804dcf97.jsonl.gz",
+   "sha256": "096de7f7804dcf971aa38e2c67df3db91e57f134a80e7e4aeb99e21516f6f36a"
+  },
+  "not_proven": "only the credential and derived attribute channels are fuzzed; extra_rules are caller code and only their return value is constrained",
+  "pass_conditions_met": true,
+  "results": {
+   "fault": {
+    "by_kind": {
+     "action": 326,
+     "context": 283,
+     "label": 297,
+     "policy": 289,
+     "principal": 312,
+     "rule": 893
+    },
+    "n": 2400,
+    "naive_allow": 2065,
+    "ours_allow": 0,
+    "reasons": {
+     "attr_source_type": 66,
+     "context_type": 144,
+     "eval_error:TypeError": 126,
+     "eval_error:ValueError": 219,
+     "eval_error:Weird": 51,
+     "extra_rule_non_true:fuzz": 786,
+     "label_error": 81,
+     "no_policy": 289,
+     "principal_type": 149,
+     "unknown_action": 326,
+     "unknown_destination": 73,
+     "unlabelled": 90
+    }
+   },
+   "legit": {
+    "misses": [],
+    "n": 1400,
+    "naive_allow": 1400,
+    "ours_allow": 1400
+   },
+   "planted": {
+    "by_form_naive_allow": {
+     "bytes": 57,
+     "case": 51,
+     "dash": 147,
+     "derived_exact": 182,
+     "exact": 500,
+     "fullwidth": 55,
+     "int": 62,
+     "nested": 55,
+     "space": 50,
+     "tuple": 69,
+     "zerowidth": 54
+    },
+    "n": 2200,
+    "naive_allow": 1282,
+    "ours_allow": 0,
+    "reasons": {
+     "acl": 25,
+     "attr_clash": 1515,
+     "attr_key_type": 530,
+     "clearance": 24,
+     "principal_revoked": 55,
+     "restricted_clearance": 22,
+     "tenant_mismatch": 29
+    }
+   }
+  },
+  "verdict": "PASS",
+  "wrong_reason_count": 0,
+  "wrong_reason_sample": []
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e3_clash.py",
+  "at": "2026-11-16T01:50:38Z",
+  "commit": "41692f7dec5f94c91f8e6d1acd855269b0f35ba1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   22.51513671875,
+   23.9384765625,
+   22.95556640625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "2f89fd7e0a2b9a11c8d2aa157c144cd152f25b34",
+  "thresholds_sha256": "de072861b7dc1c894a6bb4e6510f18c5705b199295e42b4f2fac80b5cc65a562",
+  "tree_sha256": "4ba07cf4fb282d723b4d5d7d41c0582aa54ce2d87c7f5f86e4ec32215a4a215f"
+ }
+}

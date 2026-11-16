@@ -1,0 +1,185 @@
+{
+ "name": "e4_tighten",
+ "params": {
+  "R": 200,
+  "combos": [
+   [
+    "model",
+    "model_banned"
+   ],
+   [
+    "model",
+    "region_removed"
+   ],
+   [
+    "model",
+    "sender_revoked"
+   ],
+   [
+    "model",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "model_banned"
+   ],
+   [
+    "inbox",
+    "region_removed"
+   ],
+   [
+    "inbox",
+    "recipient_revoked"
+   ],
+   [
+    "inbox",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "group_removed"
+   ],
+   [
+    "export",
+    "region_removed"
+   ],
+   [
+    "export",
+    "sender_revoked"
+   ],
+   [
+    "export",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "label_narrowed"
+   ],
+   [
+    "inbox",
+    "source_erased"
+   ],
+   [
+    "inbox",
+    "legal_hold_recorded"
+   ]
+  ]
+ },
+ "result": {
+  "control_enqueue_only": {
+   "by_combo": {
+    "export/region_removed": 200,
+    "export/sender_revoked": 200,
+    "export/tenant_killed": 200,
+    "inbox/group_removed": 200,
+    "inbox/label_narrowed": 200,
+    "inbox/legal_hold_recorded": 200,
+    "inbox/model_banned": 200,
+    "inbox/recipient_revoked": 200,
+    "inbox/region_removed": 200,
+    "inbox/source_erased": 200,
+    "inbox/tenant_killed": 200,
+    "model/model_banned": 200,
+    "model/region_removed": 200,
+    "model/sender_revoked": 200,
+    "model/tenant_killed": 200
+   },
+   "delivered": 3000,
+   "enqueue_allowed_v1": 3000,
+   "escaped": 3000,
+   "reasons": {},
+   "refusal_logged_v2": 0,
+   "refused": 0,
+   "runs": 3000
+  },
+  "control_meets_floor": true,
+  "control_reason": "enqueue-only check trusts the stale v1 decision and delivers",
+  "fenced_after_tighten": {
+   "by_combo": {
+    "export/region_removed": 0,
+    "export/sender_revoked": 0,
+    "export/tenant_killed": 0,
+    "inbox/group_removed": 0,
+    "inbox/label_narrowed": 0,
+    "inbox/legal_hold_recorded": 0,
+    "inbox/model_banned": 0,
+    "inbox/recipient_revoked": 0,
+    "inbox/region_removed": 0,
+    "inbox/source_erased": 0,
+    "inbox/tenant_killed": 0,
+    "model/model_banned": 0,
+    "model/region_removed": 0,
+    "model/sender_revoked": 0,
+    "model/tenant_killed": 0
+   },
+   "delivered": 0,
+   "enqueue_allowed_v1": 3000,
+   "escaped": 0,
+   "reasons": {
+    "acl": 400,
+    "model_banned": 400,
+    "principal_revoked": 400,
+    "recipient_acl": 200,
+    "recipient_revoked": 200,
+    "region_forbidden": 600,
+    "source_erased_or_missing": 200,
+    "tenant_killed": 600
+   },
+   "refusal_logged_v2": 3000,
+   "refused": 3000,
+   "runs": 3000
+  },
+  "items": {
+   "file": "e4_tighten.items.c8b69d06a5f72fbe.jsonl.gz",
+   "sha256": "c8b69d06a5f72fbe234ea26782d0d070a790bec90858130e2b9c84491db86468"
+  },
+  "not_proven": "refusal logged for the last-checked item only; no in-flight (already sent) item can be recalled",
+  "note": "group_removed is a directory change, not a policy version change: its refusal is logged with policy version 1 and the refusal reason recipient_acl",
+  "pass_conditions_met": true,
+  "positive_no_tighten": {
+   "by_combo": {
+    "export/region_removed": 200,
+    "export/sender_revoked": 200,
+    "export/tenant_killed": 200,
+    "inbox/group_removed": 200,
+    "inbox/label_narrowed": 200,
+    "inbox/legal_hold_recorded": 200,
+    "inbox/model_banned": 200,
+    "inbox/recipient_revoked": 200,
+    "inbox/region_removed": 200,
+    "inbox/source_erased": 200,
+    "inbox/tenant_killed": 200,
+    "model/model_banned": 200,
+    "model/region_removed": 200,
+    "model/sender_revoked": 200,
+    "model/tenant_killed": 200
+   },
+   "delivered": 3000,
+   "enqueue_allowed_v1": 3000,
+   "escaped": 3000,
+   "reasons": {},
+   "refusal_logged_v2": 0,
+   "refused": 0,
+   "runs": 3000
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e4_tighten.py",
+  "at": "2026-11-16T01:50:40Z",
+  "commit": "41692f7dec5f94c91f8e6d1acd855269b0f35ba1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   22.51513671875,
+   23.9384765625,
+   22.95556640625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "2f89fd7e0a2b9a11c8d2aa157c144cd152f25b34",
+  "thresholds_sha256": "de072861b7dc1c894a6bb4e6510f18c5705b199295e42b4f2fac80b5cc65a562",
+  "tree_sha256": "4ba07cf4fb282d723b4d5d7d41c0582aa54ce2d87c7f5f86e4ec32215a4a215f"
+ }
+}

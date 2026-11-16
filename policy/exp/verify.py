@@ -129,21 +129,20 @@ def v_b1(rows, d):
             ok &= r["violations"] == 0
             continue
         pool = {e["id"]: e for e in b1.POOL}
-        # the trace may use ids that appear twice (the duplicate proposal id): replay by trying both and taking the one that reproduces
-        found = False
-        for variant in (0, 1):
-            st = genesis("T1", b1.PRINCIPALS, b1.AUTHORITY, b1.ADMINS)
-            flags = frozenset(r["flags"])
-            bad = set()
-            for i in r["trace"]:
-                cands = [e for e in b1.POOL if e["id"] == i]
-                e0 = cands[min(variant, len(cands) - 1)] if i == "P1" else cands[0]
-                e = b1.deliver(st, e0)
-                post, code = apply(st, e, flags)
-                bad.update(transition_invariants(st, e, post, code) + state_invariants(post))
-                st = post
-            if r["expected"] in bad:
-                found = True
+        # a trace may name an id that exists twice in the pool (the duplicate proposal id): the n-th occurrence in the trace is the n-th pool event with that id
+        st = genesis("T1", b1.PRINCIPALS, b1.AUTHORITY, b1.ADMINS)
+        flags = frozenset(r["flags"])
+        bad = set()
+        seen = {}
+        for i in r["trace"]:
+            cands = [e for e in b1.POOL if e["id"] == i]
+            k = seen.get(i, 0)
+            seen[i] = k + 1
+            e = b1.deliver(st, cands[min(k, len(cands) - 1)])
+            post, code = apply(st, e, flags)
+            bad.update(transition_invariants(st, e, post, code) + state_invariants(post))
+            st = post
+        found = r["expected"] in bad
         ok &= found
     return ok
 

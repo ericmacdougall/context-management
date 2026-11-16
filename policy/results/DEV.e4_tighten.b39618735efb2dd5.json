@@ -1,0 +1,179 @@
+{
+ "name": "e4_tighten",
+ "params": {
+  "R": 200,
+  "combos": [
+   [
+    "model",
+    "model_banned"
+   ],
+   [
+    "model",
+    "region_removed"
+   ],
+   [
+    "model",
+    "sender_revoked"
+   ],
+   [
+    "model",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "model_banned"
+   ],
+   [
+    "inbox",
+    "region_removed"
+   ],
+   [
+    "inbox",
+    "recipient_revoked"
+   ],
+   [
+    "inbox",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "group_removed"
+   ],
+   [
+    "export",
+    "region_removed"
+   ],
+   [
+    "export",
+    "sender_revoked"
+   ],
+   [
+    "export",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "label_narrowed"
+   ],
+   [
+    "inbox",
+    "source_erased"
+   ],
+   [
+    "inbox",
+    "legal_hold_recorded"
+   ]
+  ]
+ },
+ "result": {
+  "control_enqueue_only": {
+   "by_combo": {
+    "export/region_removed": 200,
+    "export/sender_revoked": 200,
+    "export/tenant_killed": 200,
+    "inbox/group_removed": 200,
+    "inbox/label_narrowed": 200,
+    "inbox/legal_hold_recorded": 200,
+    "inbox/model_banned": 200,
+    "inbox/recipient_revoked": 200,
+    "inbox/region_removed": 200,
+    "inbox/source_erased": 200,
+    "inbox/tenant_killed": 200,
+    "model/model_banned": 200,
+    "model/region_removed": 200,
+    "model/sender_revoked": 200,
+    "model/tenant_killed": 200
+   },
+   "delivered": 3000,
+   "enqueue_allowed_v1": 3000,
+   "escaped": 3000,
+   "reasons": {},
+   "refusal_logged_v2": 0,
+   "refused": 0,
+   "runs": 3000
+  },
+  "control_meets_floor": true,
+  "control_reason": "enqueue-only check trusts the stale v1 decision and delivers",
+  "fenced_after_tighten": {
+   "by_combo": {
+    "export/region_removed": 0,
+    "export/sender_revoked": 0,
+    "export/tenant_killed": 0,
+    "inbox/group_removed": 0,
+    "inbox/label_narrowed": 0,
+    "inbox/legal_hold_recorded": 0,
+    "inbox/model_banned": 0,
+    "inbox/recipient_revoked": 0,
+    "inbox/region_removed": 0,
+    "inbox/source_erased": 0,
+    "inbox/tenant_killed": 0,
+    "model/model_banned": 0,
+    "model/region_removed": 0,
+    "model/sender_revoked": 0,
+    "model/tenant_killed": 0
+   },
+   "delivered": 0,
+   "enqueue_allowed_v1": 3000,
+   "escaped": 0,
+   "reasons": {
+    "acl": 400,
+    "model_banned": 400,
+    "principal_revoked": 400,
+    "recipient_acl": 200,
+    "recipient_revoked": 200,
+    "region_forbidden": 600,
+    "source_erased_or_missing": 200,
+    "tenant_killed": 600
+   },
+   "refusal_logged_v2": 3000,
+   "refused": 3000,
+   "runs": 3000
+  },
+  "not_proven": "refusal logged for the last-checked item only; no in-flight (already sent) item can be recalled",
+  "note": "group_removed is a directory change, not a policy version change: its refusal is logged with policy version 1 and the refusal reason recipient_acl",
+  "pass_conditions_met": true,
+  "positive_no_tighten": {
+   "by_combo": {
+    "export/region_removed": 200,
+    "export/sender_revoked": 200,
+    "export/tenant_killed": 200,
+    "inbox/group_removed": 200,
+    "inbox/label_narrowed": 200,
+    "inbox/legal_hold_recorded": 200,
+    "inbox/model_banned": 200,
+    "inbox/recipient_revoked": 200,
+    "inbox/region_removed": 200,
+    "inbox/source_erased": 200,
+    "inbox/tenant_killed": 200,
+    "model/model_banned": 200,
+    "model/region_removed": 200,
+    "model/sender_revoked": 200,
+    "model/tenant_killed": 200
+   },
+   "delivered": 3000,
+   "enqueue_allowed_v1": 3000,
+   "escaped": 3000,
+   "reasons": {},
+   "refusal_logged_v2": 0,
+   "refused": 0,
+   "runs": 3000
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/e4_tighten.py",
+  "at": "2026-11-16T01:35:50Z",
+  "commit": "9c432af0651c11a8b3fb16a65348e6af7709c7c0",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   14.705078125,
+   18.03173828125,
+   16.65576171875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15"
+ }
+}

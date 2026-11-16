@@ -1,0 +1,436 @@
+{
+ "name": "b1_modelcheck",
+ "params": {
+  "authority": {
+   "r1": [
+    "u1",
+    "u2"
+   ],
+   "r2": [
+    "u1"
+   ],
+   "r3": [
+    "u1",
+    "a1",
+    "n1"
+   ]
+  },
+  "joint_depth": 3,
+  "principals": {
+   "a1": "agent",
+   "n1": "analyst",
+   "u1": "human",
+   "u2": "human"
+  },
+  "scen_depth": {
+   "r1": 5,
+   "r2": 5,
+   "r3": 5
+  }
+ },
+ "result": {
+  "controls": {
+   "agents_may_contest": {
+    "expected_found": true,
+    "expected_invariant": "I14_contest_held_open_by_agent_or_unbounded",
+    "shortest_counterexample": {
+     "invariants": [
+      "I14_contest_held_open_by_agent_or_unbounded"
+     ],
+     "outcome": "contested_opened",
+     "scenario": "r1",
+     "trace": [
+      "P2",
+      "GR1",
+      "AGJ",
+      "D2"
+     ]
+    },
+    "states": 16504,
+    "violated": {
+     "I14_contest_held_open_by_agent_or_unbounded": 204
+    },
+    "violations": 204
+   },
+   "allow_duplicate_event_ids": {
+    "expected_found": true,
+    "expected_invariant": "I13_duplicate_event_id_applied",
+    "shortest_counterexample": {
+     "invariants": [
+      "I13_duplicate_event_id_applied"
+     ],
+     "outcome": "proposed",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "P1"
+     ]
+    },
+    "states": 22636,
+    "violated": {
+     "I13_duplicate_event_id_applied": 6516
+    },
+    "violations": 6516
+   },
+   "ignore_proposal_status_in_sibling": {
+    "expected_found": false,
+    "expected_invariant": "I12_value_from_closed_proposal",
+    "shortest_counterexample": null,
+    "states": 16243,
+    "violated": {},
+    "violations": 0
+   },
+   "last_writer_wins": {
+    "expected_found": true,
+    "expected_invariant": "I7_two_applied_decisions_same_base",
+    "shortest_counterexample": {
+     "invariants": [
+      "I4_decision_not_bound_to_head",
+      "I7_two_applied_decisions_same_base"
+     ],
+     "outcome": "decided_accept",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "S1h",
+      "D10"
+     ]
+    },
+    "states": 14819,
+    "violated": {
+     "I4_decision_not_bound_to_head": 1338,
+     "I7_two_applied_decisions_same_base": 2805
+    },
+    "violations": 3033
+   },
+   "remark_is_decision": {
+    "expected_found": true,
+    "expected_invariant": "I3_remark_or_proposal_changed_value",
+    "shortest_counterexample": {
+     "invariants": [
+      "I3_remark_or_proposal_changed_value",
+      "I3_value_changed_by_untyped_event"
+     ],
+     "outcome": "confirmed_applied",
+     "scenario": "r2",
+     "trace": [
+      "R1"
+     ]
+    },
+    "states": 16097,
+    "violated": {
+     "I3_remark_or_proposal_changed_value": 456,
+     "I3_value_changed_by_untyped_event": 456,
+     "I4_decision_not_bound_to_head": 81,
+     "I7_two_applied_decisions_same_base": 87
+    },
+    "violations": 493
+   },
+   "remove_authority_check": {
+    "expected_found": true,
+    "expected_invariant": "I1_authority",
+    "shortest_counterexample": {
+     "invariants": [
+      "I1_authority"
+     ],
+     "outcome": "superseded",
+     "scenario": "r2",
+     "trace": [
+      "S3"
+     ]
+    },
+    "states": 18380,
+    "violated": {
+     "I1_authority": 877
+    },
+    "violations": 877
+   },
+   "remove_channel_check": {
+    "expected_found": true,
+    "expected_invariant": "I11_confirmation_not_typed_on_separate_owner_channel",
+    "shortest_counterexample": {
+     "invariants": [
+      "I11_confirmation_not_typed_on_separate_owner_channel"
+     ],
+     "outcome": "decided_accept",
+     "scenario": "r1",
+     "trace": [
+      "P2",
+      "Dc"
+     ]
+    },
+    "states": 18065,
+    "violated": {
+     "I11_confirmation_not_typed_on_separate_owner_channel": 521
+    },
+    "violations": 521
+   },
+   "remove_idempotency_key": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state",
+    "shortest_counterexample": {
+     "invariants": [
+      "I6_redelivery_changed_state"
+     ],
+     "outcome": "contested_joined",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "D10",
+      "D1",
+      "D3",
+      "D1"
+     ]
+    },
+    "states": 16311,
+    "violated": {
+     "I6_redelivery_changed_state": 6
+    },
+    "violations": 6
+   },
+   "remove_self_approval_check": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "shortest_counterexample": {
+     "invariants": [
+      "I2_agent_head_move"
+     ],
+     "outcome": "superseded",
+     "scenario": "r3",
+     "trace": [
+      "AG1"
+     ]
+    },
+    "states": 18195,
+    "violated": {
+     "I2_agent_head_move": 988
+    },
+    "violations": 988
+   },
+   "remove_staleness_check": {
+    "expected_found": true,
+    "expected_invariant": "I4_decision_not_bound_to_head",
+    "shortest_counterexample": {
+     "invariants": [
+      "I4_decision_not_bound_to_head"
+     ],
+     "outcome": "superseded",
+     "scenario": "r1",
+     "trace": [
+      "S1"
+     ]
+    },
+    "states": 52433,
+    "violated": {
+     "I4_decision_not_bound_to_head": 21510,
+     "I7_two_applied_decisions_same_base": 33071
+    },
+    "violations": 37516
+   }
+  },
+  "controls_found_expected_invariant": false,
+  "enforced": {
+   "cex": [],
+   "codes": {
+    "agent_cannot_confirm": 271,
+    "agent_not_permitted": 1084,
+    "bad_event": 3044,
+    "channel_mismatch": 3454,
+    "concurrent_agree": 135,
+    "confirmed_applied": 37,
+    "contested_joined": 1280,
+    "contested_needs_resolve": 2365,
+    "contested_opened": 1581,
+    "decided_accept": 1791,
+    "decided_amend": 34,
+    "decided_reject": 1080,
+    "duplicate": 8057,
+    "duplicate_id": 2164,
+    "granted": 2857,
+    "idem_conflict": 4177,
+    "not_contested": 3749,
+    "nothing_to_retract": 628,
+    "pending_closed": 17,
+    "pending_created": 475,
+    "principal_revoked": 2646,
+    "proposal_closed": 1732,
+    "proposed": 2605,
+    "resolved": 152,
+    "retracted": 2053,
+    "revoked": 2713,
+    "same_channel_confirmation": 49,
+    "self_approval": 359,
+    "stale": 16233,
+    "superseded": 4532,
+    "unauthorized": 5247,
+    "unknown_candidate": 944,
+    "unknown_pending": 649,
+    "unknown_proposal": 11718,
+    "unknown_req": 204
+   },
+   "contested_reached": 3307,
+   "per_scenario": {
+    "joint": {
+     "depth": 3,
+     "pool": 55,
+     "seconds": 2.8,
+     "states": 1155,
+     "transitions": 7810,
+     "violations": 0
+    },
+    "r1": {
+     "depth": 5,
+     "pool": 28,
+     "seconds": 96.7,
+     "states": 14752,
+     "transitions": 79436,
+     "violations": 0
+    },
+    "r2": {
+     "depth": 5,
+     "pool": 13,
+     "seconds": 0.6,
+     "states": 120,
+     "transitions": 806,
+     "violations": 0
+    },
+    "r3": {
+     "depth": 5,
+     "pool": 16,
+     "seconds": 1.1,
+     "states": 216,
+     "transitions": 2064,
+     "violations": 0
+    }
+   },
+   "states": 16243,
+   "transitions": 90116,
+   "violated": {},
+   "violations": 0
+  },
+  "not_proven": "bounded exhaustive search: per-requirement scenarios to depth 6 (r1) and 8 (r2, r3), the joint three-requirement pool only to depth 4 (to depth 3 for controls); the per-requirement decomposition is sound only because the reducer touches one requirement plus global revoke/grant and unique idem keys, which each scenario includes; events carry fixed binding versions so concurrency is modelled as arbitrary delivery order, not parallel transactions (B3 covers those); three principals; two humans, one agent, so peer-agent approval (two agents) is not reached",
+  "outcome_codes_not_reached": [
+   "candidates_full",
+   "proposal_mismatch",
+   "tenant_mismatch",
+   "unlabelled"
+  ],
+  "pass_conditions_met": false,
+  "pools": {
+   "r1": [
+    "P1",
+    "P2",
+    "D1",
+    "D2",
+    "D3",
+    "D5",
+    "S1",
+    "T1",
+    "RES1",
+    "RES2",
+    "RES4",
+    "D9",
+    "D10",
+    "Dc",
+    "Dp",
+    "Dbad",
+    "D1x",
+    "S2",
+    "REV",
+    "GR1",
+    "D2h",
+    "D3h",
+    "S1h",
+    "S4h",
+    "T1h",
+    "D10h",
+    "AGJ"
+   ],
+   "r2": [
+    "R1",
+    "R3",
+    "K2",
+    "K3",
+    "K3b",
+    "K4",
+    "K5",
+    "RES3",
+    "T2",
+    "S3",
+    "REV",
+    "GR",
+    "Dx"
+   ],
+   "r3": [
+    "P3",
+    "R2",
+    "D4",
+    "D8",
+    "D8b",
+    "K1",
+    "REV",
+    "GR3",
+    "P4",
+    "AG1",
+    "AG2",
+    "AG3",
+    "AG4",
+    "N1",
+    "N2",
+    "N3"
+   ]
+  },
+  "scenarios": {
+   "joint": {
+    "depth": 3,
+    "pool": 55,
+    "seconds": 2.8,
+    "states": 1155,
+    "transitions": 7810,
+    "violations": 0
+   },
+   "r1": {
+    "depth": 5,
+    "pool": 28,
+    "seconds": 96.7,
+    "states": 14752,
+    "transitions": 79436,
+    "violations": 0
+   },
+   "r2": {
+    "depth": 5,
+    "pool": 13,
+    "seconds": 0.6,
+    "states": 120,
+    "transitions": 806,
+    "violations": 0
+   },
+   "r3": {
+    "depth": 5,
+    "pool": 16,
+    "seconds": 1.1,
+    "states": 216,
+    "transitions": 2064,
+    "violations": 0
+   }
+  },
+  "seconds_total": 133.6,
+  "verdict": "FAIL"
+ },
+ "stamp": {
+  "argv": "/Users/eric/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/elastic-memory-lab-policy/policy/exp/b1_modelcheck.py",
+  "at": "2026-11-16T01:31:19Z",
+  "commit": "9c432af0651c11a8b3fb16a65348e6af7709c7c0",
+  "dirty": true,
+  "host": "Mac-2.lan",
+  "load_avg": [
+   27.71826171875,
+   22.47265625,
+   17.3818359375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.9.6",
+  "thresholds_commit": "47c39df85986983ce06d37c55bc2f4fc428cbda7",
+  "thresholds_sha256": "0dae525d1a170127c55e0969a4c30eda30df158ba7acb96240b4c708ec913d15"
+ }
+}

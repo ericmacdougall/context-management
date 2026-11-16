@@ -1,0 +1,154 @@
+{
+ "name": "e5_threads",
+ "params": {
+  "per_seed": 200,
+  "seeds": [
+   21,
+   22,
+   23,
+   24,
+   25
+  ]
+ },
+ "result": {
+  "arms": {
+   "ctl_derive_join_dropped": {
+    "bytes_checked": 9444165,
+    "finding_hidden": 11131,
+    "finding_visible": 3429,
+    "findings_joining": 2634,
+    "interference_views": 1582,
+    "leaks": 1582,
+    "notice_expected": 2808,
+    "notice_found": 2808,
+    "notice_wrong_views": 0,
+    "views": 5477,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 925,
+    "worlds_with_leak": 925,
+    "xrefs_visible": 11206
+   },
+   "ctl_notice_carries_other_side": {
+    "bytes_checked": 8294283,
+    "finding_hidden": 11131,
+    "finding_visible": 3429,
+    "findings_joining": 2634,
+    "interference_views": 1929,
+    "leaks": 1929,
+    "notice_expected": 2808,
+    "notice_found": 0,
+    "notice_wrong_views": 2027,
+    "views": 5477,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 965,
+    "worlds_with_leak": 965,
+    "xrefs_visible": 11206
+   },
+   "ctl_xref_without_decision": {
+    "bytes_checked": 8768953,
+    "finding_hidden": 11131,
+    "finding_visible": 3429,
+    "findings_joining": 2634,
+    "interference_views": 3261,
+    "leaks": 3261,
+    "notice_expected": 2808,
+    "notice_found": 0,
+    "notice_wrong_views": 2027,
+    "views": 5477,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 998,
+    "worlds_with_leak": 998,
+    "xrefs_visible": 19000
+   },
+   "enforced": {
+    "bytes_checked": 8055603,
+    "finding_hidden": 11131,
+    "finding_visible": 3429,
+    "findings_joining": 2634,
+    "interference_views": 0,
+    "leaks": 0,
+    "notice_expected": 2808,
+    "notice_found": 2808,
+    "notice_wrong_views": 0,
+    "views": 5477,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 0,
+    "xrefs_visible": 11206
+   },
+   "enforced_notice_none_default": {
+    "bytes_checked": 7773241,
+    "finding_hidden": 11131,
+    "finding_visible": 3429,
+    "findings_joining": 2634,
+    "interference_views": 0,
+    "leaks": 0,
+    "notice_expected": 0,
+    "notice_found": 0,
+    "notice_wrong_views": 0,
+    "views": 5477,
+    "worlds": 1000,
+    "worlds_with_cross_conflict": 992,
+    "worlds_with_interference": 0,
+    "worlds_with_leak": 0,
+    "xrefs_visible": 11206
+   }
+  },
+  "controls": {
+   "ctl_derive_join_dropped": {
+    "interference_views": 1582,
+    "leak_rate_worlds": 0.925,
+    "meets_floor": true,
+    "notice_contract_violations": 0
+   },
+   "ctl_notice_carries_other_side": {
+    "interference_views": 1929,
+    "leak_rate_worlds": 0.965,
+    "meets_floor": true,
+    "notice_contract_violations": 2027
+   },
+   "ctl_xref_without_decision": {
+    "interference_views": 3261,
+    "leak_rate_worlds": 0.998,
+    "meets_floor": true,
+    "notice_contract_violations": 2027
+   }
+  },
+  "controls_meet_floor": true,
+  "items": {
+   "file": "e5_threads.items.7d5b0581e348a37e.jsonl.gz",
+   "sha256": "7d5b0581e348a37ee1ffa679659ac66e1256dea3c59a0a50c7c65d73c6f81d1f"
+  },
+  "not_proven": "timing and ordering side channels (a notice appearing later than the item), notice frequency over time, and the generic 'context withheld' placeholder which tells a viewer that something was withheld; graph shape beyond one hop; real concurrent write paths",
+  "notice_contract": [
+   "kind",
+   "item",
+   "version",
+   "state"
+  ],
+  "positive_conditions_met": true,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/e5_threads.py",
+  "at": "2026-11-16T01:51:17Z",
+  "commit": "41692f7dec5f94c91f8e6d1acd855269b0f35ba1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   21.28173828125,
+   23.50927734375,
+   22.849609375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "2f89fd7e0a2b9a11c8d2aa157c144cd152f25b34",
+  "thresholds_sha256": "de072861b7dc1c894a6bb4e6510f18c5705b199295e42b4f2fac80b5cc65a562",
+  "tree_sha256": "4ba07cf4fb282d723b4d5d7d41c0582aa54ce2d87c7f5f86e4ec32215a4a215f"
+ }
+}

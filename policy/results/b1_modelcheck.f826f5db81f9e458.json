@@ -1,0 +1,458 @@
+{
+ "name": "b1_modelcheck",
+ "params": {
+  "authority": {
+   "r1": [
+    "u1",
+    "u2"
+   ],
+   "r2": [
+    "u1"
+   ],
+   "r3": [
+    "u1",
+    "a1",
+    "n1"
+   ]
+  },
+  "joint_depth": 4,
+  "principals": {
+   "a1": "agent",
+   "n1": "analyst",
+   "u1": "human",
+   "u2": "human"
+  },
+  "scen_depth": {
+   "r1": 6,
+   "r2": 8,
+   "r3": 8
+  }
+ },
+ "result": {
+  "controls": {
+   "agents_may_contest": {
+    "expected_found": true,
+    "expected_invariant": "I14_contest_held_open_by_agent_or_unbounded",
+    "shortest_counterexample": {
+     "invariants": [
+      "I14_contest_held_open_by_agent_or_unbounded"
+     ],
+     "outcome": "contested_opened",
+     "scenario": "r1",
+     "trace": [
+      "P2",
+      "GR1",
+      "AGJ",
+      "D2"
+     ]
+    },
+    "states": 67919,
+    "violated": {
+     "I14_contest_held_open_by_agent_or_unbounded": 1394
+    },
+    "violations": 1394
+   },
+   "allow_duplicate_event_ids": {
+    "expected_found": true,
+    "expected_invariant": "I13_duplicate_event_id_applied",
+    "shortest_counterexample": {
+     "invariants": [
+      "I13_duplicate_event_id_applied"
+     ],
+     "outcome": "proposed",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "P1"
+     ]
+    },
+    "states": 115754,
+    "violated": {
+     "I13_duplicate_event_id_applied": 50495
+    },
+    "violations": 50495
+   },
+   "ignore_proposal_status_in_sibling": {
+    "expected_found": true,
+    "expected_invariant": "I12_value_from_closed_proposal",
+    "shortest_counterexample": {
+     "invariants": [
+      "I12_value_from_closed_proposal"
+     ],
+     "outcome": "contested_opened",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "D1",
+      "S1",
+      "D10b"
+     ]
+    },
+    "states": 67731,
+    "violated": {
+     "I12_value_from_closed_proposal": 718
+    },
+    "violations": 718
+   },
+   "last_writer_wins": {
+    "expected_found": true,
+    "expected_invariant": "I7_two_applied_decisions_same_base",
+    "shortest_counterexample": {
+     "invariants": [
+      "I4_decision_not_bound_to_head",
+      "I7_two_applied_decisions_same_base"
+     ],
+     "outcome": "decided_accept",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "S1h",
+      "D10"
+     ]
+    },
+    "states": 58800,
+    "violated": {
+     "I4_decision_not_bound_to_head": 5661,
+     "I7_two_applied_decisions_same_base": 16339
+    },
+    "violations": 17500
+   },
+   "remark_is_decision": {
+    "expected_found": true,
+    "expected_invariant": "I3_remark_or_proposal_changed_value",
+    "shortest_counterexample": {
+     "invariants": [
+      "I3_remark_or_proposal_changed_value",
+      "I3_value_changed_by_untyped_event"
+     ],
+     "outcome": "confirmed_applied",
+     "scenario": "r2",
+     "trace": [
+      "R1"
+     ]
+    },
+    "states": 65817,
+    "violated": {
+     "I3_remark_or_proposal_changed_value": 473,
+     "I3_value_changed_by_untyped_event": 473,
+     "I4_decision_not_bound_to_head": 98,
+     "I7_two_applied_decisions_same_base": 106
+    },
+    "violations": 514
+   },
+   "remove_authority_check": {
+    "expected_found": true,
+    "expected_invariant": "I1_authority",
+    "shortest_counterexample": {
+     "invariants": [
+      "I1_authority"
+     ],
+     "outcome": "superseded",
+     "scenario": "r2",
+     "trace": [
+      "S3"
+     ]
+    },
+    "states": 76385,
+    "violated": {
+     "I1_authority": 4083
+    },
+    "violations": 4083
+   },
+   "remove_channel_check": {
+    "expected_found": true,
+    "expected_invariant": "I11_confirmation_not_typed_on_separate_owner_channel",
+    "shortest_counterexample": {
+     "invariants": [
+      "I11_confirmation_not_typed_on_separate_owner_channel"
+     ],
+     "outcome": "decided_accept",
+     "scenario": "r1",
+     "trace": [
+      "P2",
+      "Dc"
+     ]
+    },
+    "states": 77267,
+    "violated": {
+     "I11_confirmation_not_typed_on_separate_owner_channel": 2271
+    },
+    "violations": 2271
+   },
+   "remove_idempotency_key": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state",
+    "shortest_counterexample": {
+     "invariants": [
+      "I6_redelivery_changed_state"
+     ],
+     "outcome": "contested_joined",
+     "scenario": "r1",
+     "trace": [
+      "P1",
+      "D10",
+      "D1",
+      "D3",
+      "D1"
+     ]
+    },
+    "states": 67265,
+    "violated": {
+     "I6_redelivery_changed_state": 89
+    },
+    "violations": 89
+   },
+   "remove_self_approval_check": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "shortest_counterexample": {
+     "invariants": [
+      "I2_agent_head_move"
+     ],
+     "outcome": "superseded",
+     "scenario": "r3",
+     "trace": [
+      "AG1"
+     ]
+    },
+    "states": 69469,
+    "violated": {
+     "I2_agent_head_move": 1408
+    },
+    "violations": 1408
+   },
+   "remove_staleness_check": {
+    "expected_found": true,
+    "expected_invariant": "I4_decision_not_bound_to_head",
+    "shortest_counterexample": {
+     "invariants": [
+      "I4_decision_not_bound_to_head"
+     ],
+     "outcome": "superseded",
+     "scenario": "r1",
+     "trace": [
+      "S1"
+     ]
+    },
+    "states": 394475,
+    "violated": {
+     "I4_decision_not_bound_to_head": 195273,
+     "I7_two_applied_decisions_same_base": 322431
+    },
+    "violations": 341018
+   }
+  },
+  "controls_found_expected_invariant": true,
+  "enforced": {
+   "cex": [],
+   "codes": {
+    "agent_cannot_confirm": 1451,
+    "agent_not_permitted": 5804,
+    "bad_event": 17657,
+    "channel_mismatch": 20179,
+    "concurrent_agree": 273,
+    "confirmed_applied": 168,
+    "contested_joined": 8977,
+    "contested_needs_resolve": 20155,
+    "contested_opened": 6963,
+    "decided_accept": 9079,
+    "decided_amend": 114,
+    "decided_reject": 5547,
+    "duplicate": 56599,
+    "duplicate_id": 13896,
+    "granted": 16285,
+    "idem_conflict": 29930,
+    "not_contested": 11314,
+    "nothing_to_retract": 2572,
+    "pending_closed": 74,
+    "pending_created": 3166,
+    "principal_revoked": 19802,
+    "proposal_closed": 12171,
+    "proposal_mismatch": 14989,
+    "proposed": 10115,
+    "resolved": 1185,
+    "retracted": 9334,
+    "revoked": 14853,
+    "same_channel_confirmation": 313,
+    "self_approval": 1998,
+    "stale": 129888,
+    "superseded": 17738,
+    "tenant_mismatch": 17347,
+    "unauthorized": 29672,
+    "unknown_candidate": 5057,
+    "unknown_pending": 4507,
+    "unknown_proposal": 56047,
+    "unknown_req": 1381,
+    "unlabelled": 17347
+   },
+   "contested_reached": 18588,
+   "per_scenario": {
+    "joint": {
+     "depth": 4,
+     "pool": 59,
+     "seconds": 15.9,
+     "states": 8731,
+     "transitions": 68617,
+     "violations": 0
+    },
+    "r1": {
+     "depth": 6,
+     "pool": 32,
+     "seconds": 184.0,
+     "states": 64434,
+     "transitions": 517888,
+     "violations": 0
+    },
+    "r2": {
+     "depth": 8,
+     "pool": 13,
+     "seconds": 1.0,
+     "states": 218,
+     "transitions": 2834,
+     "violations": 0
+    },
+    "r3": {
+     "depth": 8,
+     "pool": 16,
+     "seconds": 2.0,
+     "states": 288,
+     "transitions": 4608,
+     "violations": 0
+    }
+   },
+   "states": 73671,
+   "transitions": 593947,
+   "violated": {},
+   "violations": 0
+  },
+  "items": {
+   "file": "b1_modelcheck.items.6e6c9dee280ad316.jsonl.gz",
+   "sha256": "6e6c9dee280ad31666ea31c3ac5d9722e1a54d08bb146280440b8dfb431973f9"
+  },
+  "not_proven": "bounded exhaustive search: per-requirement scenarios to depth 6 (r1) and 8 (r2, r3), the joint three-requirement pool only to depth 4 (to depth 3 for controls); the per-requirement decomposition is sound only because the reducer touches one requirement plus global revoke/grant and unique idem keys, which each scenario includes; events carry fixed binding versions so concurrency is modelled as arbitrary delivery order, not parallel transactions (B3 covers those); three principals; two humans, one agent, so peer-agent approval (two agents) is not reached",
+  "outcome_codes_not_reached": [],
+  "pass_conditions_met": true,
+  "pools": {
+   "r1": [
+    "P1",
+    "P2",
+    "D1",
+    "D2",
+    "D3",
+    "D5",
+    "S1",
+    "T1",
+    "RES1",
+    "RES2",
+    "RES4",
+    "D9",
+    "D10",
+    "Dc",
+    "Dp",
+    "Dbad",
+    "D1x",
+    "S2",
+    "REV",
+    "GR1",
+    "D2h",
+    "D3h",
+    "S1h",
+    "S4h",
+    "T1h",
+    "D10h",
+    "AGJ",
+    "D10b",
+    "Xh",
+    "Xt",
+    "Xu"
+   ],
+   "r2": [
+    "R1",
+    "R3",
+    "K2",
+    "K3",
+    "K3b",
+    "K4",
+    "K5",
+    "RES3",
+    "T2",
+    "S3",
+    "REV",
+    "GR",
+    "Dx"
+   ],
+   "r3": [
+    "P3",
+    "R2",
+    "D4",
+    "D8",
+    "D8b",
+    "K1",
+    "REV",
+    "GR3",
+    "P4",
+    "AG1",
+    "AG2",
+    "AG3",
+    "AG4",
+    "N1",
+    "N2",
+    "N3"
+   ]
+  },
+  "scenarios": {
+   "joint": {
+    "depth": 4,
+    "pool": 59,
+    "seconds": 15.9,
+    "states": 8731,
+    "transitions": 68617,
+    "violations": 0
+   },
+   "r1": {
+    "depth": 6,
+    "pool": 32,
+    "seconds": 184.0,
+    "states": 64434,
+    "transitions": 517888,
+    "violations": 0
+   },
+   "r2": {
+    "depth": 8,
+    "pool": 13,
+    "seconds": 1.0,
+    "states": 218,
+    "transitions": 2834,
+    "violations": 0
+   },
+   "r3": {
+    "depth": 8,
+    "pool": 16,
+    "seconds": 2.0,
+    "states": 288,
+    "transitions": 4608,
+    "violations": 0
+   }
+  },
+  "seconds_total": 539.7,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab-16096/pol/src/exp/b1_modelcheck.py",
+  "at": "2026-11-16T02:04:18Z",
+  "commit": "41692f7dec5f94c91f8e6d1acd855269b0f35ba1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   18.517578125,
+   21.1220703125,
+   22.53271484375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "2f89fd7e0a2b9a11c8d2aa157c144cd152f25b34",
+  "thresholds_sha256": "de072861b7dc1c894a6bb4e6510f18c5705b199295e42b4f2fac80b5cc65a562",
+  "tree_sha256": "4ba07cf4fb282d723b4d5d7d41c0582aa54ce2d87c7f5f86e4ec32215a4a215f"
+ }
+}
