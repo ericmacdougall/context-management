@@ -57,7 +57,17 @@ def f1_large(n):
             "N_events": n, "property_holds": holds,
             "witness": {"X_docs_before": x_before, "X_docs_after": x_after, "Y_docs_after": y_after, "append_s": t_append, "project_s": t_project,
                         "receipt": {k: rec.get(k) for k in ("done", "error_type", "verify", "steps", "seconds")}},
+            "cascade_linearity": _linearity((rec.get("steps") or {}).get("cascade_batch_s") or []),
             "control": "aaa0fec at the same property: review_repro F1 (verify ESError, job stuck, lease held, sweep blocked)"}
+
+
+def _linearity(per):
+    """D5 (THRESHOLDS amendment 5): the last 5 full batches take <= 2x the first 5 (the 963e597 cascade grew per batch)."""
+    full = per[:-2] if len(per) > 12 else per          # the last two calls are the empty-cursor and finalize passes
+    if len(full) < 10:
+        return {"batches": len(per), "verdict": "too few batches"}
+    a, b = sum(full[:5]), sum(full[-5:])
+    return {"batches": len(per), "first5_s": round(a, 3), "last5_s": round(b, 3), "linear": b <= 2 * a}
 
 
 # ---------------------------------------------------------------- F1: sweep isolation
