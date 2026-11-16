@@ -19,6 +19,13 @@ def _git(*a):
 
 
 def stamp():
+    sp = os.path.join(ROOT, "GIT_STAMP.json")          # written by sync.sh when the tree is copied to a host without .git
+    if os.path.exists(sp) and not os.path.exists(os.path.join(ROOT, "..", ".git")) and not os.path.exists(os.path.join(ROOT, "..", ".git")):
+        g = json.load(open(sp))
+        return {"commit": g["commit"], "dirty": g["dirty"], "thresholds_commit": g["thresholds_commit"], "tree_sha256": g.get("tree_sha256"),
+                "thresholds_sha256": hashlib.sha256(open(os.path.join(ROOT, "THRESHOLDS.md"), "rb").read()).hexdigest(),
+                "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "host": platform.node(), "python": platform.python_version(),
+                "load_avg": os.getloadavg(), "argv": " ".join(sys.argv), "model_calls": "none (recording stubs only)", "synced_from_git": True}
     dirty = bool(_git("status", "--porcelain", "--", ".", ":!results"))
     if dirty and os.environ.get("ALLOW_DIRTY") != "1":
         sys.exit("refusing to run a proof on a dirty tree (commit first, or ALLOW_DIRTY=1 for a DEV run)")
