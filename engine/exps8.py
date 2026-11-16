@@ -184,8 +184,9 @@ async def f8():
     await asyncio.sleep(10)
     gP = [await ctl.approve_session(client, s, TENANT) for s in approvedP]                    # grant in Postgres first, then the doorbell
     gX = [await ctl.approve_session(client, s, TENANT, with_pg=False) for s in approvedX]     # doorbell only
+    lost_results = []
     for s in lost_doorbell:                                    # granted in Postgres, doorbell lost, engine about to be discarded
-        pgstore.grant_approval(TENANT, s, ctl.latest_request(TENANT, s), "approver-1")
+        lost_results.append(pgstore.grant_approval(TENANT, s, await ctl.wait_request(TENANT, s), "approver-1"))
     approvedP = approvedP + lost_doorbell
     await asyncio.sleep(max(0, t_cut - (time.time() - t0)))
     cut = time.time()
@@ -228,13 +229,14 @@ async def f8():
            "new_engine": "fresh server 1.32.2 (CLI 1.10.1), empty SQLite, new worker identity; old SQLite file deleted",
            "doorbells_dropped_by_new_engine_not_found": stats.get("doorbell_dropped", 0), "statuses": out_st,
            "finished_in_postgres": finished, "grant_results_P": {g: gP.count(g) for g in set(gP)},
-           "granted_with_lost_doorbell": len(lost_doorbell), "verify_A": vA, "verify_P": vP, "timers_main_groups": tmP,
+           "granted_with_lost_doorbell": {g: lost_results.count(g) for g in set(lost_results)}, "verify_A": vA, "verify_P": vP, "timers_main_groups": tmP,
            "stored_in_postgres_and_used": ["session_started.params", "turn_input events (unprocessed = no result row)",
                                           "turn_result / rollup events (rollup deadline = last rollup deadline + interval)",
                                           "approval_requested (request id, deadline_ms)", "approval_grant bound to the request id, written BEFORE the signal"],
            "loss_if_not_stored": {"grant_only_as_signal_X": {"verify": vX["PASS"], "outcomes": tmX},
                                   "deadline_not_stored_L": {"outcomes": tmL}},
            "PASS": vA["PASS"] and vP["PASS"] and tmP["approvals_exactly_once_and_correct"] and tmP["rollups_exactly_once"]
+           and set(gP) <= {"granted"} and set(lost_results) <= {"granted"}
            and all(finished[t] == n for t, n in ((A, nA), (P, nP), (R, nR)))
            and not any(k in ("RUNNING", "FAILED", "TERMINATED", "TIMED_OUT") for t in (A, P, R) for k in out_st[t])}
     lib.save(f"f8{suffix()}", out)

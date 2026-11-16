@@ -96,12 +96,24 @@ def latest_request(tenant, sid):
     return rows[-1][1] if rows else None
 
 
+async def wait_request(tenant, sid, timeout=120):
+    """The approval request is created by the workflow when it reaches the gate; wait for it (a slow host is not a
+    reason to record a grant against a request that does not exist yet)."""
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        rid = await blocking(latest_request, tenant, sid)
+        if rid:
+            return rid
+        await asyncio.sleep(1)
+    return None
+
+
 async def approve_session(client, sid, tenant=DEMO_TENANT, with_pg=True, approver="approver-1"):
     """The API side of an approval: a grant bound to the session's request id is written to Postgres FIRST, then the
     doorbell. with_pg=False sends only the doorbell (the anti-pattern the F8 control uses)."""
     result = "signal-only"
     if with_pg:
-        rid = await blocking(latest_request, tenant, sid)
+        rid = await wait_request(tenant, sid)
         result = "no-request" if rid is None else await blocking(pgstore.grant_approval, tenant, sid, rid, approver)
     await client.get_workflow_handle(wid(sid, tenant)).signal("approve", "g")
     return result
