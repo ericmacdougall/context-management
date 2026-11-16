@@ -405,6 +405,10 @@ class PgVault:
         from .decisions import _value_ref
         return _value_ref(self._key, tenant, principal, idem, text, label)
 
+    def _event_label(self, tenant, label: Label):
+        from .decisions import _event_label
+        return _event_label(self._key, tenant, label)
+
     def _put(self, tenant, ref, text, label: Label):
         return self._c.execute("insert into dc.vals values (%s,%s,%s,%s,%s) on conflict do nothing",
                                (tenant, ref, text, json.dumps(label.to_dict()), sorted(label.subjects))).rowcount == 1

@@ -214,6 +214,19 @@ class H6_IdSquatting(unittest.TestCase):
 
 
 class H7_ScopedReadsAndErasure(unittest.TestCase):
+    def test_append_only_state_holds_no_subject_names(self):
+        """The event log and core state cannot be erased, so they carry keyed subject tokens; the real subjects live in the vault only."""
+        w = World()
+        a = w.s("alice")
+        w.propose(a, "p1", "about dana", subjects=["dana"])
+        w.svc.submit(a, {"type": "supersede", "client_id": "s1", "idem": "k9", "req": "r1", "value": "dana again",
+                         "label": L(subjects=["dana", "erin"]).to_dict(), "based_on": 0})
+        held = repr(w.engine._log) + repr(w.engine._st.snapshot())
+        self.assertNotIn("dana", held)
+        self.assertNotIn("erin", held)
+        self.assertEqual(w.svc.explain(a, "r1")["value"]["text"], "dana again")                  # reads still work through the vault
+        self.assertEqual(w.svc.erase_subject(w.s("admin"), "erin")["erased"], 1)                 # erasure still finds values about erin
+
     def test_hidden_flag_only_when_opted_in(self):
         for notice, expect in (("none", None), ("existence_only", True)):
             w = World(policy=parse_policy(policy_doc(conflict_notice=notice)))
@@ -351,9 +364,11 @@ class M2_RetryOutcome(unittest.TestCase):
         w = World()
         a = w.s("alice")
         body = {"type": "supersede", "client_id": "s1", "idem": "same", "req": "r1", "value": "v", "label": L().to_dict(), "based_on": 0}
-        self.assertEqual(w.svc.submit(a, body)["code"], "superseded")
+        r1 = w.svc.submit(a, body)
+        self.assertEqual(r1["code"], "superseded")
         r = w.svc.submit(a, body)
-        self.assertEqual((r["code"], r["original"]), ("duplicate", "superseded"))
+        self.assertEqual((r["code"], r["original"], r["id"], r["value_ref"]), ("duplicate", "superseded", r1["id"], r1["value_ref"]))
+        self.assertIsNotNone(w.vault._get("tenant-a", r1["value_ref"]))          # the retry did not delete the original's value
 
 
 class M3_Ids(unittest.TestCase):

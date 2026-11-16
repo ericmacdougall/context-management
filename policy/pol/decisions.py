@@ -16,6 +16,7 @@ Value encryption is an INTERFACE only (_ValueCipher, implemented by the write pa
 module does not ship a cipher. Without one the vault stores plaintext in its own table/dict and erasure is deletion."""
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import hmac
 import json
@@ -49,6 +50,15 @@ def _value_ref(key: bytes, tenant: str, principal: str, idem: str, text: str, la
     return "val-" + hmac.new(key, msg, hashlib.sha256).hexdigest()[:40]
 
 
+def _event_label(key: bytes, tenant: str, label: Label) -> Label:
+    """The label as the append-only log and core state keep it: each subject replaced by a keyed per-tenant token. The log cannot be
+    erased, so it must not hold subject names; the token is consistent, so joins (union) and flow checks (subset) are unchanged, and the
+    vault keeps the real subjects that erasure and reads use. Policy rules never evaluate subject names."""
+    def tok(s):
+        return "subj-" + hmac.new(key, json.dumps(["subject", tenant, s]).encode(), hashlib.sha256).hexdigest()[:32]
+    return dataclasses.replace(label, subjects=frozenset(tok(s) for s in label.subjects))
+
+
 class Vault:
     """Referenced value storage. Refs are assigned here. Each value is tagged with the subjects of its label, so erasure of a subject
     covers every value ABOUT that subject, whoever wrote it."""
@@ -60,6 +70,9 @@ class Vault:
 
     def _ref(self, tenant: str, principal: str, idem: str, text: str, label: Label) -> str:
         return _value_ref(self._key, tenant, principal, idem, text, label)
+
+    def _event_label(self, tenant: str, label: Label) -> Label:
+        return _event_label(self._key, tenant, label)
 
     def _put(self, tenant: str, ref: str, text: str, label: Label) -> bool:
         """Store under `ref` unless present; True when this call created it."""
@@ -160,7 +173,7 @@ class DecisionService:
         eng = self._engines.get(session.tenant)
         if eng is None:
             return self._refuse(p.id, "unknown_tenant", body)
-        ev = {k: v for k, v in body.items() if k not in ("client_id", "value")}
+        ev = {k: v for k, v in body.items() if k not in ("client_id", "value", "label")}     # the label enters the event only tokenised
         ev.update(id=p.id + "/" + cid, tenant=session.tenant, principal=p.id, channel=session.channel)
         ref, created = None, False
         if "value" in body:
@@ -173,12 +186,17 @@ class DecisionService:
             ref = self._vault._ref(session.tenant, p.id, str(body.get("idem")), body["value"], lab)
             created = self._vault._put(session.tenant, ref, body["value"], lab)
             ev["value_ref"] = ref
+            ev["label"] = self._vault._event_label(session.tenant, lab).to_dict()
+        elif "label" in body:
+            return self._refuse(p.id, "bad_event", body)  # a label belongs to a value; never let an untokenised label into the log
         code, orig = eng._submit(ev)
         if code in _core.REFUSED:
             if ref is not None and created:
                 self._vault._delete(session.tenant, ref)
             out = self._refuse(p.id, code, body, orig)
             out["id"] = ev["id"]
+            if code == "duplicate" and ref is not None and not created:
+                out["value_ref"] = ref                   # M2: a retry gets the original outcome; same body -> same keyed ref, still stored
             return out
         self._enf._audit.add({"action": "decision", "principal": p.id, "allow": True, "reason": code, "type": ev.get("type"), "req": ev.get("req"),
                               "policy_version": self._enf._ver()})
