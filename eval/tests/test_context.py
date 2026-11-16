@@ -272,3 +272,41 @@ class StageG(unittest.TestCase):
         self.assertEqual(a, audit_sample(list(reversed(rows))))
         small = audit_sample(rows[:6])
         self.assertEqual(len(small), 6)
+
+
+class StageX0(unittest.TestCase):
+    def test_answer_match_heuristic(self):
+        from emlab.stage_x0_score import answer_match
+        self.assertTrue(answer_match("Borealis Labs", "works at borealis labs now")["string"])
+        self.assertTrue(answer_match("25 minutes and 50 seconds", "ran 25 minutes 50 seconds")["key"])
+        self.assertFalse(answer_match("25 minutes and 50 seconds", "ran 30 minutes")["key"])
+        self.assertFalse(answer_match("Paris", "")["key"])
+        self.assertTrue(answer_match("red", "tired")["string"])  # substring heuristic: crude by design, labelled as such
+
+    def test_bm25_ranks_the_matching_doc_first(self):
+        from emlab.stage_x0_score import bm25_rank
+        docs = [["cat", "sat"], ["dog", "barked", "loudly"], ["hamster", "wheel", "cage"]]
+        self.assertEqual(bm25_rank(docs, ["hamster", "cage"])[0], 2)
+        self.assertEqual(bm25_rank(docs, ["unseen"]), [0, 1, 2])
+
+    def test_spearman_and_extrapolation(self):
+        from emlab.stage_x0_score import extrapolate, spearman
+        self.assertAlmostEqual(spearman([1, 2, 3, 4], [10, 20, 30, 40]), 1.0)
+        self.assertAlmostEqual(spearman([1, 2, 3, 4], [4, 3, 2, 1]), -1.0)
+        e = extrapolate({0: [10.0, 10.0], 1: [30.0, 30.0]}, 1000)
+        self.assertAlmostEqual(e["per_call"], 20.0)
+        self.assertAlmostEqual(e["total"], 20000.0)
+        self.assertLessEqual(e["total_low"], e["total"] + 1e-9)
+
+    def test_vendored_provenance_rejects_changed_quote(self):
+        from emlab import provenance_x04 as P
+        sess = {"s1": P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex"}, {"role": "assistant", "content": "Nice"}])}
+        ok = P.check_all([{"session_id": "s1", "round": 0, "quote": "adopted a dog named Rex", "author": "user"}], sess)[0]
+        bad = P.check_all([{"session_id": "s1", "round": 0, "quote": "adopted a cat named Rex", "author": "user"}], sess)[0]
+        self.assertEqual((ok["a"], ok["b"]), ("pass", "pass"))
+        self.assertEqual(bad["a"], "fail")
+
+    def test_allocate_and_prep_lengths(self):
+        from emlab.stage_x0_prep import allocate
+        self.assertEqual(sum(allocate([0.2] * 5, 121)), 121)
+        self.assertEqual(allocate([0.2] * 5, 121), [25, 24, 24, 24, 24])
