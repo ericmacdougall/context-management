@@ -31,7 +31,10 @@ def one_run(rng, i, ledger):
                             cwd=harness.ROOT, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     with open(os.path.join(harness.RESULTS, "p4_process_spawn_ledger.jsonl"), "a") as fh:
         fh.write(json.dumps({"pid": proc.pid, "run": i, "purpose": "p4 process stop proof", "ts": time.time()}) + "\n")
-    time.sleep(rng.uniform(0.25, 0.45))
+    t0 = time.time()
+    while db.calls_for(r["key"]) < 3 and time.time() - t0 < 20.0:     # readiness: the child must have LANDED calls before the fence (a loaded host starts it slowly)
+        time.sleep(0.02)
+    time.sleep(rng.uniform(0.05, 0.2))
     before_calls = db.calls_for(r["key"])
     with store.transaction():
         db.stop_run(r["key"], "p4 process proof")
