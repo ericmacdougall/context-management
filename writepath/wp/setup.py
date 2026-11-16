@@ -14,6 +14,7 @@ from . import config, db, registry
 
 HERE = pathlib.Path(__file__).parent
 LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL)
+ROLE_TIMEOUTS = {"statement_timeout": "30s", "idle_in_transaction_session_timeout": "5s"}
 ROLE_ATTRS = "nosuperuser nocreatedb nocreaterole noreplication nobypassrls inherit"
 
 
@@ -55,8 +56,12 @@ def _ensure_roles(admin):
             os.close(fd)
     # liveness mitigations on the application role (F6): an idle-in-transaction session is ended, never left holding
     # a lease row lock or the cluster xmin.
-    admin.execute("alter role wp_app set idle_in_transaction_session_timeout = '5s'")
-    admin.execute("alter role wp_app set statement_timeout = '300s'")
+    # Every login role: a transaction holds the cluster's oldest running xid only for a bounded time, because the
+    # projector of EVERY tenant reads only below that xid (row 23 fence; exp/xmin_stall.py). Erasure, projection and
+    # append statements are bounded batches well under statement_timeout.
+    for r in LOGIN_ROLES:
+        for k, v in ROLE_TIMEOUTS.items():
+            admin.execute(sql.SQL("alter role {} set {} = {}").format(sql.Identifier(r), sql.Identifier(k), sql.Literal(v)))
     # D5: lock timeouts for every role (a waiting statement fails and is retried, never queues behind a long lock)
     for r in LOGIN_ROLES:
         admin.execute(sql.SQL("alter role {} set lock_timeout = '10s'").format(sql.Identifier(r)))

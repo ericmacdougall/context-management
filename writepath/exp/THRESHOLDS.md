@@ -142,3 +142,20 @@ rescan), fixed by counting source = 'rescan'. The 7e8f28f M result stays reporte
 R1 at 7e8f28f was INCONCLUSIVE (fenced arm 18 overlapping runs < 20; 0 violations in 40). Reported as INCONCLUSIVE; one
   rerun of R1 alone at N=40 with the same rule follows (written before the rerun). If it is again below 20 overlaps it
   is reported INCONCLUSIVE, not combined with this run.
+
+## Amendment 8 (2026-11-16, written before the reported run): cross-tenant projection delay (exp/xmin_stall.py)
+Confirmation already observed at 4960f50 on the pre-round role settings (one arm, 60 s holders, tenant B
+commit-to-visible max): read-only verifier snapshot 0.149 s; app idle xid 4.67 s (ended by its 5 s idle timeout); app
+active xid 59.6 s; verifier idle xid 59.8 s; key-database idle xid 59.75 s; baseline 0.21 s. Mechanism: the
+projector's late-commit fence is the cluster-wide oldest running xid, so ANY xid holder in any tenant or database
+delays every tenant's projection for as long as it is open.
+Fix under test: every login role gets statement_timeout 30 s and idle_in_transaction_session_timeout 5 s
+(wp/setup.py ROLE_TIMEOUTS); erasure batches are sized to a 2 s target. Hold 60 s; fenced arm R=3, control arm R=1
+(control = timeouts reset on every role except the app's pre-round 5 s / 300 s).
+PASS = in every fenced repetition: ro_verifier max <= 5 s; idle_xid_app, idle_xid_verifier, idle_xid_keysdb max <= 10 s
+  each; active_xid_app max <= 35 s; every xid holder ended by the server; AND in the control active_xid_app,
+  idle_xid_verifier and idle_xid_keysdb each >= 55 s (the stall reproduces without the fix).
+Stated residual, not a PASS claim: a role without these settings (the admin/superuser, a migration or an operator
+session) is not bounded by them; with one shared Postgres the bound is the longest statement or idle period any role
+allows. Deployment requirement: the timeouts on every role, a monitor and alert on the age of the oldest xid
+(pg_stat_activity backend_xid/backend_xmin, pg_prepared_xacts, replication slots), or per-tenant databases.
