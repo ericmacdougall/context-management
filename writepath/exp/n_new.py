@@ -125,6 +125,9 @@ def n5(arm):
 
 
 # ------------------------------------------------------------------ N8: a derive that read X before the erasure writes after it
+# Two independent layers stop this: the store (subject_not_erased on facts/inbox) and crypto-shred (the stale derive
+# cannot decrypt once the key is gone). To test the STORE layer alone, both arms keep the key (destroy_key=False);
+# the job then cannot reach 'done' (keys:subject_keys=1), so the property is residue-only.
 def n8(arm):
     conn, ks, es = env()
     t = tenant("n8")
@@ -139,7 +142,8 @@ def n8(arm):
         if name == "derive_after_read" and "erase" not in res:
             res["derive_read_has_X"] = any(r[1] == "X" for r in data)
             res["t_read"] = now()
-            res["erase"] = erasure.erase(db.connect(), ks, es, t, "X")["done"]
+            rec = erasure.erase(db.connect(), ks, es, t, "X", destroy_key=False)
+            res["erase"] = rec["state_reached"] if "state_reached" in rec else rec.get("residue")
             res["t_erase_done"] = now()
             try:
                 log.inbox_enqueue(db.connect(), K.KeyService(), s, "iX", "s1", "X", {"text": "zqn8inbox"})
@@ -157,7 +161,7 @@ def n8(arm):
     resid = db.admin().execute("select wp_erasure_pg_residue(%s, 'X')", (t,)).fetchone()[0]
     bad = {k: v for k, v in resid.items() if v}
     es_x = es_count_all(es, t, Xq())
-    holds = res["erase"] is True and not bad and es_x == 0
+    holds = not bad and es_x == 0
     return holds, "" if holds else f"residue {bad} es {es_x}", {**res, "residue_after": resid, "es_X_after": es_x,
                                                                "overlap": res["t_read"] < res["t_erase_done"] < res["t_write"]}
 
