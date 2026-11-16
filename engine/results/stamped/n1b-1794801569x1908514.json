@@ -1,0 +1,510 @@
+{
+ "provenance": {
+  "testbed_commit": "0b79166a8d97139d4e08a83288bf48a70889535d",
+  "code_under_test": {
+   "/home/eric/emlab-16096/engine/code": "0b79166a8d97139d4e08a83288bf48a70889535d"
+  },
+  "git_commit": "0b79166a8d97139d4e08a83288bf48a70889535d",
+  "git_dirty": false,
+  "run_id": "r1794801569x1908514",
+  "started_at": "2026-11-16T03:59:29Z",
+  "ended_at": "2026-11-16T04:50:47Z",
+  "host": "t2-dev",
+  "argv": [
+   "n1b",
+   "--to",
+   "7200",
+   "--can-len",
+   "30",
+   "--minutes",
+   "75"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-59320",
+     "cli": "1.7.3",
+     "db": "n1b-1794801569.db",
+     "port": 59320,
+     "at": 0.0030717849731445312
+    }
+   ],
+   "workers": [
+    {
+     "name": "n1bw-1908514",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "hostA",
+     "task_queue": "n1b",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "code_commit": "0b79166a8d97139d4e08a83288bf48a70889535d",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {},
+     "at": 2.605039596557617
+    }
+   ],
+   "params": {
+    "approval_timeout_s": 7200.0,
+    "approval_poll_s": "default (10)",
+    "approval_poll_max_s": "default (900)",
+    "can_len": 30
+   }
+  }
+ },
+ "id": "N1b-approval-backoff",
+ "poll_gaps_s": [
+  10,
+  20,
+  40,
+  80,
+  160,
+  320,
+  640,
+  900,
+  900
+ ],
+ "max_poll_gap_s": 900,
+ "runs": 6,
+ "boundaries": 5,
+ "grant_result": "granted",
+ "grant_to_resolution_s": 899.1,
+ "poll_gap_at_grant_s": 900,
+ "approval_granted_events": 1,
+ "final_status": "COMPLETED",
+ "series": [
+  {
+   "t_s": 60,
+   "polls": 3,
+   "last_gaps_s": [
+    10,
+    20
+   ],
+   "runs": 2,
+   "history_length": 28
+  },
+  {
+   "t_s": 120,
+   "polls": 4,
+   "last_gaps_s": [
+    10,
+    20,
+    40
+   ],
+   "runs": 3,
+   "history_length": 17
+  },
+  {
+   "t_s": 181,
+   "polls": 5,
+   "last_gaps_s": [
+    10,
+    20,
+    40,
+    80
+   ],
+   "runs": 3,
+   "history_length": 28
+  },
+  {
+   "t_s": 241,
+   "polls": 5,
+   "last_gaps_s": [
+    10,
+    20,
+    40,
+    80
+   ],
+   "runs": 3,
+   "history_length": 28
+  },
+  {
+   "t_s": 301,
+   "polls": 5,
+   "last_gaps_s": [
+    10,
+    20,
+    40,
+    80
+   ],
+   "runs": 3,
+   "history_length": 28
+  },
+  {
+   "t_s": 362,
+   "polls": 6,
+   "last_gaps_s": [
+    20,
+    40,
+    80,
+    160
+   ],
+   "runs": 4,
+   "history_length": 17
+  },
+  {
+   "t_s": 422,
+   "polls": 6,
+   "last_gaps_s": [
+    20,
+    40,
+    80,
+    160
+   ],
+   "runs": 4,
+   "history_length": 17
+  },
+  {
+   "t_s": 482,
+   "polls": 6,
+   "last_gaps_s": [
+    20,
+    40,
+    80,
+    160
+   ],
+   "runs": 4,
+   "history_length": 17
+  },
+  {
+   "t_s": 542,
+   "polls": 6,
+   "last_gaps_s": [
+    20,
+    40,
+    80,
+    160
+   ],
+   "runs": 4,
+   "history_length": 17
+  },
+  {
+   "t_s": 603,
+   "polls": 6,
+   "last_gaps_s": [
+    20,
+    40,
+    80,
+    160
+   ],
+   "runs": 4,
+   "history_length": 17
+  },
+  {
+   "t_s": 663,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 723,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 784,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 844,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 904,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 965,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 1025,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 1080,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 1140,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 1201,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 1261,
+   "polls": 7,
+   "last_gaps_s": [
+    40,
+    80,
+    160,
+    320
+   ],
+   "runs": 4,
+   "history_length": 28
+  },
+  {
+   "t_s": 1321,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1382,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1442,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1502,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1563,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1623,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1683,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1744,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1804,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1865,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1925,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 1980,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 2041,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 2101,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  },
+  {
+   "t_s": 2161,
+   "polls": 8,
+   "last_gaps_s": [
+    80,
+    160,
+    320,
+    640
+   ],
+   "runs": 5,
+   "history_length": 17
+  }
+ ],
+ "bound": "a grant whose doorbell is lost waits at most the current poll interval (cap approval_poll_max_s = 900 s); the deadline is never delayed",
+ "PASS": true
+}

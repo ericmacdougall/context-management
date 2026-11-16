@@ -1,0 +1,104 @@
+{
+ "label": "prev-c",
+ "code_dir": "/home/eric/emlab-16096/engine/prev",
+ "code_commit": {
+  "commit": "96a80b2",
+  "dirty": false
+ },
+ "modules": [
+  "engine.tests.test_review_fixes"
+ ],
+ "host": "t2-dev",
+ "started_at": "2026-11-16T03:22:02Z",
+ "ended_at": "2026-11-16T03:22:03Z",
+ "tests_run": 25,
+ "failures": 8,
+ "errors": 2,
+ "tests": {
+  "engine.tests.test_review_fixes.C2Resolve.test_resolve_and_grant_serialise_on_the_session_lock": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.C4Floor.test_a_workflow_clock_ahead_of_postgres_cannot_make_the_approval_poll_spin": {
+   "outcome": "error",
+   "reason": "ImportError: cannot import name 'waits' from 'engine' (/home/eric/emlab-16096/engine/prev/engine/__init__.py)"
+  },
+  "engine.tests.test_review_fixes.C4Floor.test_the_workflow_uses_the_floor": {
+   "outcome": "fail",
+   "reason": "'waits_mod.approval_wait_s(' not found in '\"\"\"SessionWorkflow, code version v1. Holds ids, cursors and counters only; every effect is an activity.\\nTurn = read event from Postgres, (stand-in) compute,"
+  },
+  "engine.tests.test_review_fixes.H1Tenant.test_finish_and_start_keys_are_per_tenant": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H1Tenant.test_other_tenants_grant_does_not_approve_my_gate": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_after_the_deadline_is_not_honoured": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_before_the_request_is_not_honoured": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_needs_an_approver": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_second_gate_resolves_against_its_own_request": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Residual.test_a_callers_skewed_clock_cannot_grant_after_the_deadline": {
+   "outcome": "fail",
+   "reason": "'granted' == 'granted'"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_a_non_input_event_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_foreign_id_cannot_mark_the_victims_input_processed": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_reading_another_sessions_input_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.L1Residual.test_a_late_duplicate_is_reported_as_not_counted": {
+   "outcome": "fail",
+   "reason": "True is not false"
+  },
+  "engine.tests.test_review_fixes.M3Rollup.test_rollup_identity_is_the_scheduled_deadline_not_a_counter": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4Erased.test_erased_subject_raises_a_non_retryable_class": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4RealClassification.test_a_deterministic_database_error_becomes_poison_after_bounded_attempts": {
+   "outcome": "fail",
+   "reason": "QueryCanceled('statement timeout') is not an instance of <class 'temporalio.exceptions.ApplicationError'>"
+  },
+  "engine.tests.test_review_fixes.M4RealClassification.test_an_outage_is_never_poison": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4RealClassification.test_the_same_error_is_retried_before_the_bound": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4Residual.test_deterministic_database_errors_are_not_retried_without_bound": {
+   "outcome": "fail",
+   "reason": "True is not false"
+  },
+  "engine.tests.test_review_fixes.M5Idempotent.test_input_creation_is_idempotent_by_request_id": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M5Residual.test_ids_that_could_make_keys_ambiguous_are_refused": {
+   "outcome": "fail",
+   "reason": "Exception not raised"
+  },
+  "engine.tests.test_review_fixes.M5Residual.test_same_request_id_with_different_content_is_an_error": {
+   "outcome": "fail",
+   "reason": "Exception not raised"
+  },
+  "engine.tests.test_review_fixes.N2RefusedIds.test_a_not_yet_existing_sequence_is_never_marked_processed": {
+   "outcome": "fail",
+   "reason": "Lists differ: ['t1/[58 chars] 't1/rv184ee38530/5', 't1/rv184ee38530/6'] != ['t1/[58 chars] 't1/rv184ee38530/5', 't1/rv184ee38530/6', 't1/rv184ee38530/7']"
+  },
+  "engine.tests.test_review_fixes.N4Stamp.test_a_changed_commit_file_is_refused_mid_run": {
+   "outcome": "error",
+   "reason": "AttributeError: module 'engine.lib' has no attribute 'START_GIT'"
+  }
+ }
+}

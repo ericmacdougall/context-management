@@ -1,0 +1,69 @@
+{
+ "provenance": {
+  "testbed_commit": "26bce15dbcaf48b4221c89c0ff91effdd6196cc0",
+  "code_under_test": {
+   "/home/eric/emlab-16096/engine/code": "26bce15dbcaf48b4221c89c0ff91effdd6196cc0"
+  },
+  "git_commit": "26bce15dbcaf48b4221c89c0ff91effdd6196cc0",
+  "git_dirty": false,
+  "run_id": "r1794799325x1565355",
+  "started_at": "2026-11-16T03:22:05Z",
+  "ended_at": "2026-11-16T03:25:12Z",
+  "host": "t2-dev",
+  "argv": [
+   "--code",
+   "new",
+   "--cases",
+   "c1"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-57560",
+     "cli": "1.7.3",
+     "db": "it-new-51565355.db",
+     "port": 57560,
+     "at": 0.0016033649444580078
+    }
+   ],
+   "workers": [
+    {
+     "name": "w-1565355",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-new",
+     "task_queue": "it-new-51565355-c1",
+     "code_dir": "/home/eric/emlab-16096/engine/code",
+     "code_commit": "26bce15dbcaf48b4221c89c0ff91effdd6196cc0",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_POISON_SEQS": "2",
+      "ENGINE_FAIL_DEAD_LETTER": "1"
+     },
+     "at": 2.3318519592285156
+    }
+   ],
+   "params": {}
+  }
+ },
+ "code": "new",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "26bce15dbcaf48b4221c89c0ff91effdd6196cc0",
+  "dirty": false
+ },
+ "task_queue": "it-new-51565355-c1",
+ "cases": {
+  "c1": {
+   "history_events_per_s_over_120s": 0.0,
+   "newer_inputs_processed": 4,
+   "alert_state": "dead_letter_failed:Poison:t1/c151565355-0001/2",
+   "passed": true,
+   "seconds": 183.2
+  }
+ },
+ "all_passed": true
+}

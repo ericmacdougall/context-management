@@ -1,0 +1,64 @@
+{
+ "provenance": {
+  "git_commit": "0392f81dae52363f2d3484efccf749e3e2f26d2f",
+  "git_dirty": false,
+  "run_id": "r1794799045x1547188",
+  "started_at": "2026-11-16T03:17:25Z",
+  "ended_at": "2026-11-16T03:20:32Z",
+  "host": "t2-dev",
+  "argv": [
+   "--code",
+   "prev2",
+   "--cases",
+   "c1"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-58040",
+     "cli": "1.7.3",
+     "db": "it-prev2-51547188.db",
+     "port": 58040,
+     "at": 0.0010936260223388672
+    }
+   ],
+   "workers": [
+    {
+     "name": "w-1547188",
+     "venv": "venv-new",
+     "variant": "v1",
+     "identity": "it-prev2",
+     "task_queue": "it-prev2-51547188-c1",
+     "code_dir": "/home/eric/emlab-16096/engine/prev2",
+     "extra": [],
+     "crash_after": 0,
+     "knobs": {
+      "ENGINE_POISON_SEQS": "2",
+      "ENGINE_FAIL_DEAD_LETTER": "1"
+     },
+     "at": 2.3126420974731445
+    }
+   ],
+   "params": {}
+  }
+ },
+ "code": "prev2",
+ "code_dir": "/home/eric/emlab-16096/engine/prev2",
+ "code_commit": {
+  "commit": "0392f81dae52363f2d3484efccf749e3e2f26d2f",
+  "dirty": false
+ },
+ "task_queue": "it-prev2-51547188-c1",
+ "cases": {
+  "c1": {
+   "history_events_per_s_over_120s": 68.32,
+   "newer_inputs_processed": 0,
+   "alert_state": "dead_letter_failed:Poison:t1/c151547188-0001/2",
+   "passed": false,
+   "seconds": 183.4
+  }
+ },
+ "all_passed": false
+}

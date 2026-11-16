@@ -1,0 +1,153 @@
+{
+ "provenance": {
+  "testbed_commit": "426a1a50fca7e8ee9a313ecd71f645854d670357",
+  "code_under_test": {
+   "/home/eric/emlab-16096/engine/code2": "426a1a50fca7e8ee9a313ecd71f645854d670357"
+  },
+  "git_commit": "426a1a50fca7e8ee9a313ecd71f645854d670357",
+  "git_dirty": false,
+  "run_id": "r1794799485x1574678",
+  "started_at": "2026-11-16T03:24:45Z",
+  "ended_at": "2026-11-16T03:25:37Z",
+  "host": "t2-dev",
+  "argv": [
+   "f7pgctl",
+   "--pg-old",
+   "1.30.9",
+   "--pg-new",
+   "1.31.5"
+  ],
+  "python": "3.12.3",
+  "temporalio_client": "1.36.1",
+  "recorded": {
+   "servers": [
+    {
+     "name": "server-54000",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.30.9",
+     "label": "1.7.3",
+     "database": "tf7pgctl1794799485db",
+     "port": 54000,
+     "container": "emlab-temporal-16096-54000",
+     "guard": null,
+     "schema_before": null,
+     "schema_after": {
+      "tf7pgctl1794799485db": "1.18",
+      "tf7pgctl1794799485db_vis": "1.13"
+     },
+     "schema_tool": [
+      [
+       "create tf7pgctl1794799485db",
+       ""
+      ],
+      [
+       "setup tf7pgctl1794799485db",
+       ".843Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T03:24:46.843Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf7pgctl1794799485db",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T03:24:47.458Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.17 to 1.18\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T03:24:47.458Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "create tf7pgctl1794799485db_vis",
+       ""
+      ],
+      [
+       "setup tf7pgctl1794799485db_vis",
+       ".522Z\t\u001b[35mDEBUG\u001b[0m\tUpdating schema update log\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:118\"}\n2026-11-16T03:24:48.522Z\t\u001b[34mINFO\u001b[0m\tSchema setup complete\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/setuptask.go:126\"}"
+      ],
+      [
+       "update tf7pgctl1794799485db_vis",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T03:24:49.391Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.12 to 1.13\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T03:24:49.391Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 11.706254005432129
+    },
+    {
+     "name": "server-54000",
+     "backend": "postgres persistence",
+     "server_image": "temporalio/server:1.31.5",
+     "label": "1.10.1",
+     "database": "tf7pgctl1794799485db",
+     "port": 54000,
+     "container": "emlab-temporal-16096-54000",
+     "guard": {
+      "image": "1.31.5",
+      "expected": {
+       "main": "1.19",
+       "visibility": "1.14"
+      },
+      "actual": {
+       "tf7pgctl1794799485db": "1.18",
+       "tf7pgctl1794799485db_vis": "1.13"
+      }
+     },
+     "schema_before": {
+      "tf7pgctl1794799485db": "1.18",
+      "tf7pgctl1794799485db_vis": "1.13"
+     },
+     "schema_after": {
+      "tf7pgctl1794799485db": "1.19",
+      "tf7pgctl1794799485db_vis": "1.14"
+     },
+     "schema_tool": [
+      [
+       "update tf7pgctl1794799485db",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T03:25:09.486Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.18 to 1.19\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T03:25:09.486Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ],
+      [
+       "update tf7pgctl1794799485db_vis",
+       "me/runner/work/temporal/temporal/tools/common/schema/updatetask.go:152\"}\n2026-11-16T03:25:10.178Z\t\u001b[35mDEBUG\u001b[0m\tSchema updated from 1.13 to 1.14\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:125\"}\n2026-11-16T03:25:10.178Z\t\u001b[34mINFO\u001b[0m\tUpdateSchemaTask done\t{\"logging-call-at\": \"/home/runner/work/temporal/temporal/tools/common/schema/updatetask.go:103\"}"
+      ]
+     ],
+     "at": 30.419142723083496
+    }
+   ],
+   "workers": [],
+   "params": {
+    "server_old": "1.30.9",
+    "server_new": "1.31.5"
+   }
+  }
+ },
+ "id": "F7-postgres-upgrade-controls",
+ "deploy_guard_on_downgrade": {
+  "refused": true,
+  "message": "server 1.30.9 expects schema {'main': '1.18', 'visibility': '1.13'}, database is at {'tf7pgctl1794799485db': '1.19', 'tf7pgctl1794799485db_vis': '1.14'}: restore the pre-upgrade snapshot instead"
+ },
+ "rollback_by_snapshot_restore": {
+  "attempt": "C: 1.30.9 on the restored pre-upgrade snapshot (the documented rollback)",
+  "server": "1.30.9",
+  "running_after_wait": "true 0",
+  "port_opened_and_stayed_up": true,
+  "log_tail": "{\"level\":\"warn\",\"ts\":\"2026-11-16T03:25:29.100Z\",\"msg\":\"system.enableNexus dynamic config is enabled but the HTTP API port has not been set. Starting with Nexus disabled. To enable Nexus, follow these instructions: https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md#enabling-nexus.\",\"service\":\"frontend\",\"logging-call-at\":\"/home/runner/work/temporal/temporal/service/frontend/service.go:477\"}",
+  "schema_versions_after_restore": {
+   "tf7pgctl1794799485db": "1.18",
+   "tf7pgctl1794799485db_vis": "1.13"
+  }
+ },
+ "schema_versions_initial": {
+  "tf7pgctl1794799485db": "1.18",
+  "tf7pgctl1794799485db_vis": "1.13"
+ },
+ "schema_versions_after_documented_upgrade": {
+  "tf7pgctl1794799485db": "1.19",
+  "tf7pgctl1794799485db_vis": "1.14"
+ },
+ "control_A_skipped_schema_update": {
+  "attempt": "A: 1.31.5 on the 1.30.9 schema, temporal-sql-tool update-schema skipped",
+  "server": "1.31.5",
+  "running_after_wait": "false 1",
+  "port_opened_and_stayed_up": false,
+  "log_tail": "server. Error: could not build arguments for function \"go.uber.org/fx\".(*module).installEventLogger.func2 (/home/runner/go/pkg/mod/go.uber.org/fx@v1.24.0/module.go:307): failed to build fxevent.Logger: could not build arguments for function \"go.temporal.io/server/temporal\".init.func6 (/home/runner/work/temporal/temporal/temporal/fx.go:1097): failed to build log.Logger: received non-nil error from function \"go.temporal.io/server/temporal\".ServerOptionsProvider (/home/runner/work/temporal/temporal/temporal/fx.go:178): sql schema version compatibility check failed: version mismatch for keyspace/database: \"tf7pgctl1794799485db\". Expected version: 1.19 cannot be greater than Actual version: 1.18."
+ },
+ "control_B_downgrade": {
+  "attempt": "B: 1.30.9 on the upgraded 1.31.5 schema (downgrade)",
+  "server": "1.30.9",
+  "running_after_wait": "true 0",
+  "port_opened_and_stayed_up": true,
+  "log_tail": "{\"level\":\"warn\",\"ts\":\"2026-11-16T03:25:18.054Z\",\"msg\":\"system.enableNexus dynamic config is enabled but the HTTP API port has not been set. Starting with Nexus disabled. To enable Nexus, follow these instructions: https://github.com/temporalio/temporal/blob/main/docs/architecture/nexus.md#enabling-nexus.\",\"service\":\"frontend\",\"logging-call-at\":\"/home/runner/work/temporal/temporal/service/frontend/service.go:477\"}"
+ },
+ "control_A_refused": true,
+ "control_B_refused": false
+}

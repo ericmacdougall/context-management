@@ -1,0 +1,20 @@
+{
+ "label": "new-fixed",
+ "iterations": 1500,
+ "violations_granted_but_timed_out": 0,
+ "violations_resolution_granted_without_grant": 0,
+ "overlapping_calls": 1250,
+ "outcomes": {
+  "rejected:already_resolved/approval_timeout": 703,
+  "rejected:after_deadline/approval_timeout": 623,
+  "granted/approval_granted": 174
+ },
+ "code_dir": "/home/eric/emlab-16096/engine/code2",
+ "code_commit": {
+  "commit": "378efd6de0193013956668722bf278dcae6cc2e0",
+  "dirty": false
+ },
+ "host": "t2-dev",
+ "started_at": "2026-11-16T03:29:31Z",
+ "ended_at": "2026-11-16T03:32:42Z"
+}

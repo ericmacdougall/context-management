@@ -1,0 +1,116 @@
+{
+ "label": "new-c",
+ "code_dir": "/home/eric/emlab-16096/engine/code",
+ "code_commit": {
+  "commit": "26bce15dbcaf48b4221c89c0ff91effdd6196cc0",
+  "dirty": false
+ },
+ "modules": [
+  "engine.tests.test_review_fixes",
+  "engine.tests.test_pgstore"
+ ],
+ "host": "t2-dev",
+ "started_at": "2026-11-16T03:21:59Z",
+ "ended_at": "2026-11-16T03:22:01Z",
+ "tests_run": 32,
+ "failures": 0,
+ "errors": 0,
+ "tests": {
+  "engine.tests.test_review_fixes.C2Resolve.test_resolve_and_grant_serialise_on_the_session_lock": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.C4Floor.test_a_workflow_clock_ahead_of_postgres_cannot_make_the_approval_poll_spin": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.C4Floor.test_the_workflow_uses_the_floor": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H1Tenant.test_finish_and_start_keys_are_per_tenant": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H1Tenant.test_other_tenants_grant_does_not_approve_my_gate": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_after_the_deadline_is_not_honoured": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_before_the_request_is_not_honoured": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_grant_needs_an_approver": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Approval.test_second_gate_resolves_against_its_own_request": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H2Residual.test_a_callers_skewed_clock_cannot_grant_after_the_deadline": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_a_non_input_event_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_foreign_id_cannot_mark_the_victims_input_processed": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.H3ForeignEventId.test_reading_another_sessions_input_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.L1Residual.test_a_late_duplicate_is_reported_as_not_counted": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M3Rollup.test_rollup_identity_is_the_scheduled_deadline_not_a_counter": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4Erased.test_erased_subject_raises_a_non_retryable_class": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4RealClassification.test_a_deterministic_database_error_becomes_poison_after_bounded_attempts": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4RealClassification.test_an_outage_is_never_poison": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4RealClassification.test_the_same_error_is_retried_before_the_bound": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M4Residual.test_deterministic_database_errors_are_not_retried_without_bound": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M5Idempotent.test_input_creation_is_idempotent_by_request_id": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M5Residual.test_ids_that_could_make_keys_ambiguous_are_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.M5Residual.test_same_request_id_with_different_content_is_an_error": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.N2RefusedIds.test_a_not_yet_existing_sequence_is_never_marked_processed": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_review_fixes.N4Stamp.test_a_changed_commit_file_is_refused_mid_run": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_append_once_is_exactly_once": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_approval_happy_path_and_request_binding": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_dead_letter_counts_as_processed_even_for_an_erased_subject": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_effect_retry_applies_once_but_broken_keys_apply_twice": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_grant_recorded_after_the_deadline_by_a_bypass_is_ignored": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_key_without_the_tenant_is_refused": {
+   "outcome": "pass"
+  },
+  "engine.tests.test_pgstore.PgStoreTests.test_unprocessed_inputs_antijoin_in_seq_order": {
+   "outcome": "pass"
+  }
+ }
+}
