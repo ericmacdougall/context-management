@@ -42,3 +42,39 @@ Inputs on t2-dev (counts checked): 10 session files in `~/emlab-16096/out/stage_
 Composition (56 capped sessions in Stage X0; pools: 35 further capped gold, 17 capped non-gold): 4 forced (1 weak-list session of fca70973, 3 low-overlap sessions of gpt4_ab202e7f), 3 random capped gold (2 knowledge-update, 1 weak-list) and 3 random capped non-gold sessions.
 Calls: 10 (hard cap; no retries); prompt `extract-v2-cap30`, sha16 `ae055bca99452fb6`.
 
+## 7. Results (eval owner; scored with `emlab.stage_x0b_score`, committed in 2d25936 before any result was read). PILOT, MECHANICAL, NO JUDGE. TEN SESSIONS GIVE A DIRECTION, NOT A RATE
+
+Run facts (runner, relayed by main): 10 of 10 calls ok, 0 repaired, rejected or failed; prompt `extract-v2-cap30` (sha16 `ae055bca99452fb6`); the runner did not read the key directory. Data: `results/stage_x0b/stage_x0b_score.json`.
+
+### 7.1 Facts per session at cap 30 against the 12 of the same session
+Every session returned exactly 12 under the old cap and more under cap 30: 13, 15, 14, 19, 15, 15, 14, 16, 24, 13 (mean 15.8; 3.8 beyond 12 on average, range 1 to 12 beyond). All 10 returned more than 12; NONE reached 30 (0 of 10 at the new cap), so the cap of 30 was not binding here and the loss under the cap of 12 in these sessions was between 1 and 12 facts each (a lower bound only for sessions that would have exceeded 24, which none did). By session type: the 4 forced low-overlap and weak-list sessions 13, 15, 19, 24; the other 3 gold sessions 14, 13, 15; the 3 non-gold sessions 15, 14, 16.
+
+### 7.2 Stability of the original 12 facts (quote match: normalised quotes equal, or one contains the other with the shorter at least 8 characters)
+111 of the 120 original facts reappear (92.5 percent); 9 do not (4 sessions lose between 1 and 4: 8, 10, 10 and 11 of 12 reappear, the other six reappear in full). Of the 158 new facts, 45 (28 percent) match no original fact (the 38 facts beyond 12 plus about 7 replacements; one new fact can match two originals, so the counts are not exactly additive). So single-pass extraction is NOT perfectly stable: about 1 original fact in 13 is replaced when the cap is raised. This comparison mixes two things (the changed cap and the model's run-to-run sampling) and cannot separate them: an identical-prompt replicate was not run.
+
+### 7.3 Quote and speaker check on the new facts (vendored phasef checker)
+(a) Verbatim in the cited round: 151 of 158 = 0.956 [Wilson 0.911, 0.978] (7 not found); speaker: 151 pass, 0 ambiguous, 0 mismatch, 7 undefined. On the 45 new facts with no original match: 41 of 45 pass (0.911). The checker's controls were all rejected (changed word 151 of 151, adjacent round 149 of 149 with 2 excluded, flipped author 151 of 151). 15 of 158 quotes (9.5 percent) exceed the 12-word limit. The extra facts are about as well anchored as the first 12 (0.956 against 0.960 in Stage X0), with wide uncertainty at this size.
+
+### 7.4 The two missing answers
+NO: neither answer appears with cap 30. fca70973: its one gold session was re-extracted (15 facts); the string and key heuristics find the answer in no fact. gpt4_ab202e7f: 3 of its 5 gold sessions were re-extracted (13, 19 and 24 facts); no fact in the question's gold sessions (new facts for the three, cap-12 facts for the other two) carries the answer by either heuristic. So the cap does NOT explain these two misses: the answer is in the raw session text by the key test but not in what the extractor chose to record at 13 to 24 facts per session. Why is not established here (candidates: the answer is spread over several turns or needs counting, it sits in assistant text that the extractor treats as low value, or the heuristic's key match on the raw text is looser than a fact quote); the Stage X0 reading that the two misses were "suggestive" of cap loss is not supported.
+
+### 7.5 Cost and time against cap 12, same 10 sessions
+| | cap 12 | cap 30 | change |
+| output tokens per call | 2,317 | 2,999 | +682 (+29 percent) |
+| seconds per call | 18.0 | 21.4 | +3.4 (+19 percent) |
+| notional cost per call (USD) | 0.0856 | 0.0932 | +0.0076 (+9 percent) |
+| input tokens (cache creation + read + uncached) | unchanged within about 1 percent | | |
+
+### 7.6 Implied change to the Stage X0 extrapolations (DIRECTION ONLY: 10 sessions, 7 of them gold, are not a random draw of the capped pool sessions)
+The pool's capped share, from the Stage X0 random sample by length stratum (0, 8, 17, 13 and 33 percent for strata 1 to 5), is about 14 percent; only capped sessions change; the mean paired per-call increase measured here applies to them.
+| | 6,100 calls | 22,500 calls |
+| extra output tokens | +0.59 million (10.4 to 11.0 million, +5.7 percent) | +2.17 million (38.3 to 40.5 million, +5.7 percent) |
+| extra sequential time | +2,919 s (about 0.8 hour) | +10,767 s (about 3.0 hours) |
+| extra notional cost | +6.6 USD (442 to 448) | +24.2 USD (1,630 to 1,654), about +1.5 percent |
+The derived no-overhead estimate of Stage X0 scales the same way (about +1.5 percent). Raising the cap to 30 therefore costs little in aggregate because few pool sessions are capped, but per capped call it costs about 9 percent more.
+
+### 7.6b What the 10 sessions show and do not show
+Show: in sessions that hit the cap of 12, the extractor given room returns a few more facts (mean +3.8, never close to 30); the extra facts are about as well anchored; about 92 percent of the original facts reappear; and the two answers that were missing from the facts stay missing, so the cap is not their cause. Do not show: the share of the pool whose facts are lost to the cap (10 sessions give a direction, not a rate; they are 7 gold and 3 non-gold); the run-to-run stability of the same prompt (no identical-prompt replicate); anything about uncapped sessions; effects on retrieval or answers.
+
+### 7.7 Recommendation for the V2 draft (not a change to it)
+Cap: use 30 in the extraction prompt of part X. None of the 10 capped sessions reached 30 (maximum 24), the extra cost is about +9 percent per capped call and about +1.5 percent overall, and a cap of 20 would have truncated the 24-fact session and sat close to the 19-fact one. One pass or two: the evidence does not require a second pass but also does not clear single-pass extraction. About 7.5 percent of the original facts were replaced and 28 percent of the new facts were new, but the cap and the sampling are confounded, and the two missing answers were not recovered by more facts, which a second pass over the same session (same prompt) would not be expected to fix either. Recommended for V2: (1) part X's pilot uses a single pass at cap 30; (2) register an extraction-stability gate before volume, measured on an identical-prompt replicate of at least 20 sessions (fact overlap by quote match at least 85 percent; the smallest version of that check is 10 calls re-running these same sessions at cap 30, which needs its own approval); (3) add a second pass or a verification step only if that gate fails or if the facts-versus-raw-text answer gap (30 of 32 in Stage X0) does not close; (4) investigate the two missing answers by reading the sessions (a no-model step) before deciding whether they point to a prompt defect.

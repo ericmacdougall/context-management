@@ -1,0 +1,272 @@
+{
+ "pilot": true,
+ "confirmatory": false,
+ "n_sessions": 10,
+ "direction_not_rate": true,
+ "status_counts": {
+  "ok": 10
+ },
+ "per_session": {
+  "s6de582b428f4": {
+   "old": 12,
+   "new": 24,
+   "old_reappearing": 12,
+   "new_without_old_match": 12,
+   "beyond_old_count": 12,
+   "group": "low_overlap",
+   "why": "forced",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "s827f306f0106": {
+   "old": 12,
+   "new": 19,
+   "old_reappearing": 12,
+   "new_without_old_match": 7,
+   "beyond_old_count": 7,
+   "group": "low_overlap",
+   "why": "forced",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "s994fd89ef0fe": {
+   "old": 12,
+   "new": 13,
+   "old_reappearing": 11,
+   "new_without_old_match": 2,
+   "beyond_old_count": 1,
+   "group": "low_overlap",
+   "why": "forced",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "sc699af8d9a5d": {
+   "old": 12,
+   "new": 15,
+   "old_reappearing": 12,
+   "new_without_old_match": 3,
+   "beyond_old_count": 3,
+   "group": "weak_list",
+   "why": "forced",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "sc2e73c115511": {
+   "old": 12,
+   "new": 14,
+   "old_reappearing": 10,
+   "new_without_old_match": 4,
+   "beyond_old_count": 2,
+   "group": "knowledge_update",
+   "why": "random gold",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "s4d2671e04b9d": {
+   "old": 12,
+   "new": 13,
+   "old_reappearing": 12,
+   "new_without_old_match": 1,
+   "beyond_old_count": 1,
+   "group": "knowledge_update",
+   "why": "random gold",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "sb09bceea100a": {
+   "old": 12,
+   "new": 15,
+   "old_reappearing": 12,
+   "new_without_old_match": 3,
+   "beyond_old_count": 3,
+   "group": "weak_list",
+   "why": "random gold",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "sbe2fabc62aa8": {
+   "old": 12,
+   "new": 15,
+   "old_reappearing": 10,
+   "new_without_old_match": 5,
+   "beyond_old_count": 3,
+   "group": "random_non_gold",
+   "why": "random non-gold",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "s0964e5661ff2": {
+   "old": 12,
+   "new": 14,
+   "old_reappearing": 12,
+   "new_without_old_match": 0,
+   "beyond_old_count": 2,
+   "group": "random_non_gold",
+   "why": "random non-gold",
+   "status": "ok",
+   "at_new_cap": false
+  },
+  "sff21ad092f20": {
+   "old": 12,
+   "new": 16,
+   "old_reappearing": 8,
+   "new_without_old_match": 8,
+   "beyond_old_count": 4,
+   "group": "random_non_gold",
+   "why": "random non-gold",
+   "status": "ok",
+   "at_new_cap": false
+  }
+ },
+ "facts": {
+  "mean_old": 12.0,
+  "mean_new": 15.8,
+  "mean_beyond_old": 3.8,
+  "sessions_with_more_than_old": 10,
+  "at_new_cap_30": 0,
+  "old_reappearing_total": 111,
+  "old_total": 120,
+  "stability_rate": 0.925,
+  "new_without_old_match_total": 45
+ },
+ "provenance_new_facts": {
+  "facts": 158,
+  "a_pass": 151,
+  "a_rate": 0.9556962025316456,
+  "wilson_low": 0.9113825554287603,
+  "wilson_high": 0.9783763199160213,
+  "b": {
+   "pass": 151,
+   "ambiguous": 0,
+   "mismatch": 0,
+   "undefined": 7
+  },
+  "facts_without_old_match": 45,
+  "a_pass_among_those": 41,
+  "quotes_over_12_words": 15,
+  "controls": {
+   "word_changed": [
+    151,
+    151
+   ],
+   "adjacent_round": [
+    149,
+    149,
+    2
+   ],
+   "author_flipped": [
+    151,
+    151
+   ]
+  }
+ },
+ "missing_answers": {
+  "fca70973": {
+   "gold_sessions": 1,
+   "re_extracted": 1,
+   "cap12_facts": {
+    "string": false,
+    "key": false
+   },
+   "with_cap30_facts": {
+    "string": false,
+    "key": false
+   }
+  },
+  "gpt4_ab202e7f": {
+   "gold_sessions": 5,
+   "re_extracted": 3,
+   "cap12_facts": {
+    "string": false,
+    "key": false
+   },
+   "with_cap30_facts": {
+    "string": false,
+    "key": false
+   }
+  }
+ },
+ "per_call_same_sessions": {
+  "seconds": {
+   "cap12_mean": 18.038,
+   "cap30_mean": 21.416,
+   "mean_diff": 3.378,
+   "ratio": 1.1872713161104336
+  },
+  "output_tokens": {
+   "cap12_mean": 2317.1,
+   "cap30_mean": 2998.7,
+   "mean_diff": 681.6,
+   "ratio": 1.294160804453843
+  },
+  "cost_usd": {
+   "cap12_mean": 0.0856097,
+   "cap30_mean": 0.0932146,
+   "mean_diff": 0.007604899999999996,
+   "ratio": 1.0888322234513144
+  },
+  "cache_creation_input_tokens": {
+   "cap12_mean": 15584.3,
+   "cap30_mean": 15786.4,
+   "mean_diff": 202.1,
+   "ratio": 1.012968179513998
+  },
+  "cache_read_input_tokens": {
+   "cap12_mean": 975.0,
+   "cap30_mean": 780.0,
+   "mean_diff": -195.0,
+   "ratio": 0.8
+  },
+  "input_tokens": {
+   "cap12_mean": 2.0,
+   "cap30_mean": 2.0,
+   "mean_diff": 0.0,
+   "ratio": 1.0
+  }
+ },
+ "implied_extrapolation_change": {
+  "pool_capped_share_estimate": 0.14166666666666666,
+  "capped_share_by_stratum": {
+   "0": 0.0,
+   "1": 0.08333333333333333,
+   "2": 0.16666666666666666,
+   "3": 0.125,
+   "4": 0.3333333333333333
+  },
+  "basis": "mean paired per-call difference over these 10 capped sessions (DIRECTION ONLY: 10 sessions, 7 of them gold, are not a random draw of capped pool sessions) times the capped share of the pool; sessions below the cap are assumed unchanged",
+  "calls_6100": {
+   "output_tokens": {
+    "extra_total": 589016.0,
+    "cap12_total": 10393729.0,
+    "cap30_total": 10982745.0
+   },
+   "seconds": {
+    "extra_total": 2919.1549999999997,
+    "cap12_total": 90580.58766666666,
+    "cap30_total": 93499.74266666666
+   },
+   "cost_usd": {
+    "extra_total": 6.57190108333333,
+    "cap12_total": 441.87978083333337,
+    "cap30_total": 448.4516819166667
+   }
+  },
+  "calls_22500": {
+   "output_tokens": {
+    "extra_total": 2172600.0,
+    "cap12_total": 38337525.0,
+    "cap30_total": 40510125.0
+   },
+   "seconds": {
+    "extra_total": 10767.375,
+    "cap12_total": 334108.725,
+    "cap30_total": 344876.1
+   },
+   "cost_usd": {
+    "extra_total": 24.24061874999999,
+    "cap12_total": 1629.8844375,
+    "cap30_total": 1654.1250562500002
+   }
+  }
+ }
+}
