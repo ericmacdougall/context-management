@@ -1,0 +1,813 @@
+{
+ "stamp": {
+  "thresholds_commit": "8c3b5e6",
+  "script_commit": "0bff7df-dirty",
+  "script": "tail_test.py",
+  "script_sha256": "77d5c0840957cbf150d26e1c04efa8396f5609caaade6a7b465d7a5382f9f71b",
+  "utc": "2026-11-16T01:39:59Z",
+  "params": {
+   "tenant": "reptail",
+   "tail_bound_default": 2000,
+   "batch": 500
+  },
+  "host": {
+   "host": "t2-dev",
+   "loadavg_1_5_15": [
+    25.666015625,
+    21.98974609375,
+    21.88330078125
+   ],
+   "cpus": 48,
+   "python": "3.12.3",
+   "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+  },
+  "environment": {
+   "sut": {
+    "tree": "feat/systems-skeleton a13b524 (git archive, unmodified)",
+    "path": "/home/eric/emlab-16096/rep/sut/systems-a13b524/systems"
+   },
+   "postgres": {
+    "container": "emlab-pg-rep-16096",
+    "version": "16.15 (Debian 16.15-1.pgdg13+2)"
+   },
+   "host": {
+    "host": "t2-dev",
+    "loadavg_1_5_15": [
+     25.666015625,
+     21.98974609375,
+     21.88330078125
+    ],
+    "cpus": 48,
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-147-generic-x86_64-with-glibc2.39"
+   },
+   "elasticsearch": {
+    "node": "emlab-es-rep-16096",
+    "version": "9.5.6",
+    "licence": {
+     "type": "trial",
+     "uid": "2af2fc58-d374-42c8-8a66-523e63e06438",
+     "expiry_date": "2026-12-16T01:23:42.765Z"
+    }
+   }
+  }
+ },
+ "A_read_after_write": {
+  "trials": 100,
+  "with_tail": 100,
+  "via": {
+   "es": 0,
+   "tail": 100
+  },
+  "control_tail_off_found": 0,
+  "items": [
+   {
+    "event_id": "reptail/trial/1",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/2",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/3",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/4",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/5",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/6",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/7",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/8",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/9",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/10",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/11",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/12",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/13",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/14",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/15",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/16",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/17",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/18",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/19",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/20",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/21",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/22",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/23",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/24",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/25",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/26",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/27",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/28",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/29",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/30",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/31",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/32",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/33",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/34",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/35",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/36",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/37",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/38",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/39",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/40",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/41",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/42",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/43",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/44",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/45",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/46",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/47",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/48",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/49",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/50",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/51",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/52",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/53",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/54",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/55",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/56",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/57",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/58",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/59",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/60",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/61",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/62",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/63",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/64",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/65",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/66",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/67",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/68",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/69",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/70",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/71",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/72",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/73",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/74",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/75",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/76",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/77",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/78",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/79",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/80",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/81",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/82",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/83",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/84",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/85",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/86",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/87",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/88",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/89",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/90",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/91",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/92",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/93",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/94",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/95",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/96",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/97",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/98",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/99",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   },
+   {
+    "event_id": "reptail/trial/100",
+    "found_with_tail": true,
+    "via": "tail",
+    "found_tail_off": false
+   }
+  ]
+ },
+ "B_paused": {
+  "events_written_while_paused": 600,
+  "hwm_unchanged": true,
+  "found_with_default_tail_bound_2000": 600,
+  "control_tail_off_found": 0,
+  "control_tail_bound_300": {
+   "found": 300,
+   "flagged_truncated": 600,
+   "of": 600
+  },
+  "search_loop_s": 53.8,
+  "catchup_s_indicative": 0.32
+ },
+ "C_hold_same_database": {
+  "database_holding": "emlab",
+  "label": "same database",
+  "holder_xid": "4428",
+  "hold_s": 12,
+  "es_docs_for_probe_at_end_of_hold": 0,
+  "es_samples_during_hold": [
+   [
+    0.0,
+    0
+   ],
+   [
+    1.0,
+    0
+   ],
+   [
+    2.0,
+    0
+   ],
+   [
+    3.0,
+    0
+   ],
+   [
+    4.0,
+    0
+   ],
+   [
+    5.0,
+    0
+   ],
+   [
+    6.0,
+    0
+   ],
+   [
+    7.0,
+    0
+   ],
+   [
+    8.0,
+    0
+   ],
+   [
+    9.0,
+    0
+   ],
+   [
+    10.0,
+    0
+   ],
+   [
+    11.0,
+    0
+   ]
+  ],
+  "reader_with_tail_found_probe": true,
+  "via": "tail",
+  "control_tail_off_found_probe": false,
+  "es_docs_after_commit": 1,
+  "catchup_s_indicative": 0.06
+ },
+ "D_hold_second_database": {
+  "database_holding": "other",
+  "label": "second database, same cluster",
+  "holder_xid": "5080",
+  "hold_s": 12,
+  "es_docs_for_probe_at_end_of_hold": 0,
+  "es_samples_during_hold": [
+   [
+    0.0,
+    0
+   ],
+   [
+    1.0,
+    0
+   ],
+   [
+    2.0,
+    0
+   ],
+   [
+    3.0,
+    0
+   ],
+   [
+    4.0,
+    0
+   ],
+   [
+    5.0,
+    0
+   ],
+   [
+    6.0,
+    0
+   ],
+   [
+    7.0,
+    0
+   ],
+   [
+    8.0,
+    0
+   ],
+   [
+    9.0,
+    0
+   ],
+   [
+    10.1,
+    0
+   ],
+   [
+    11.1,
+    0
+   ]
+  ],
+  "reader_with_tail_found_probe": true,
+  "via": "tail",
+  "control_tail_off_found_probe": false,
+  "es_docs_after_commit": 1,
+  "catchup_s_indicative": 0.12
+ },
+ "threshold_checks": {
+  "3.2.4a_with_tail_100_of_100": true,
+  "3.2.4a_control_tail_off_le_10": true,
+  "3.2.4b_paused_600_of_600": true,
+  "3.2.4b_control_bound300_le_300_and_flagged": true,
+  "3.1.10_tail_finds_probe_during_hold": true,
+  "3.1.10_control_search_only_misses_during_hold": true,
+  "3.1.10_projection_stalled_during_hold": true,
+  "extension_second_database_hold_stalls_projection": true
+ }
+}
