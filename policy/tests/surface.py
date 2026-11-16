@@ -16,8 +16,13 @@
    identity dicts, flags) against a seeded world, and must not return a decision that allows, a session, or data from the seeded
    records and values, and must not call a sink, model or export function. See tests/test_surface.py.
 
-Private names inside a module are not surface; Python cannot stop in-process code from reaching them (disclosed limitation). This
-checks what the package EXPORTS, what its modules IMPORT, and what its exported callables DO."""
+4. INTERNALS (probe_internals): every PRIVATE function and method of every module is probed the same way. Python cannot stop
+   in-process code from calling a private name, so those that do decide on a caller-supplied principal are pinned, with a reason, in
+   TRUSTED_INTERNALS (tests/test_surface.py): a new one fails the test. The enforced boundary against a hostile in-process caller is
+   the database role (R3-7), not this package.
+
+Enumeration is the union of __all__ and dir() (an __all__ cannot hide a public name); exported callable instances and partials count;
+a module-level __getattr__ (names that dir() cannot see) is an S6 violation."""
 from __future__ import annotations
 
 import ast
@@ -69,10 +74,17 @@ def exported(pkg_name):
     for mod, modname, _path in public_modules(pkg_name):
         if mod is None:
             continue
-        names = getattr(mod, "__all__", None) or [n for n in dir(mod) if not n.startswith("_")]
+        names = sorted(set(getattr(mod, "__all__", None) or []) | {n for n in dir(mod) if not n.startswith("_")})
         for n in names:
             obj = getattr(mod, n, None)
-            if obj is None or not (inspect.isclass(obj) or inspect.isfunction(obj)) or not _pkg_of(obj, pkg_name):
+            if obj is None or inspect.ismodule(obj):
+                continue
+            if not (inspect.isclass(obj) or inspect.isfunction(obj)):
+                inner = getattr(obj, "func", None) or type(obj)          # functools.partial, or an instance with __call__
+                if callable(obj) and _pkg_of(inner, pkg_name):
+                    out.append((modname + "." + n, obj))
+                continue
+            if not _pkg_of(obj, pkg_name):
                 continue
             home = obj.__module__
             if home != modname and not any(part.startswith("_") for part in home.split(".")):
@@ -162,6 +174,13 @@ def signatures(pkg_name):
             for where, ps in _ast_defs(modname, path):
                 sigs[where] = ps
     for where, obj in exported(pkg_name):
+        if not inspect.isclass(obj) and not inspect.isfunction(obj):
+            try:
+                ps = [(q.name, q.default is not q.empty, q.kind is q.VAR_KEYWORD) for q in inspect.signature(obj).parameters.values()]
+            except (TypeError, ValueError):
+                ps = [("<opaque callable>", False, True)]
+            sigs[where] = ps
+            continue
         if inspect.isfunction(obj):
             ps = _params_from_sig(obj, False)
             if ps is not None:
@@ -176,7 +195,8 @@ def signatures(pkg_name):
 
 def scan(pkg_name):
     """Every S1-S6 violation, as sorted (rule, where, detail) tuples."""
-    out = []
+    out = [("S6", where, "exported callable object") for where, obj in exported(pkg_name)
+           if not inspect.isclass(obj) and not inspect.isfunction(obj)]          # a partial or instance can carry a bound identity
     for where, ps in signatures(pkg_name).items():
         _rules(where, ps, out)
     out += source_violations(pkg_name)
@@ -207,6 +227,8 @@ def source_violations(pkg_name):
                             out.append(("S5", rel, nm))
                         if nm.split(".")[0] == "importlib":
                             out.append(("S6", rel, nm))
+                    if isinstance(node, ast.FunctionDef) and node.name == "__getattr__" and node in tree.body:
+                        out.append(("S6", rel, "module __getattr__"))
                     if isinstance(node, ast.Call):
                         f = node.func
                         if (isinstance(f, ast.Name) and f.id in DYNAMIC_BUILTINS) or (isinstance(f, ast.Attribute) and f.attr in DYNAMIC_ATTRS):
@@ -230,15 +252,19 @@ def _flat(x, depth=0):
             yield from _flat(y, depth + 1)
 
 
-def observe(where, ret, markers, sent, inert=(), identity_arg=False):
+def observe(where, ret, markers, sent, inert=(), identity_arg=False, accept_codes=(), pool_ids=None):
     """Violations shown by one call's result. `inert`: callables allowed to return a session-shaped object because it is a hand-built
     value that every guard rejects (the Session dataclass itself; tests prove the rejection with the same forged Session)."""
     v = []
+    pool_ids = pool_ids or set()
     for x in _flat(ret):
         if getattr(x, "allow", None) is True or (isinstance(x, dict) and x.get("allow") is True):
             v.append(("B1", where, "returned an allowing decision"))
-        if hasattr(x, "token") and hasattr(x, "principal_id") and where not in inert:
+        if hasattr(x, "token") and hasattr(x, "principal_id") and where not in inert and id(x) not in pool_ids:
             v.append(("B2", where, "returned a session"))
+    head = ret[0] if isinstance(ret, tuple) and ret else (ret.get("code") if isinstance(ret, dict) else None)
+    if isinstance(head, str) and head in accept_codes:
+        v.append(("B1", where, "accepted a forged event: " + head))
     if ret is True and (identity_arg or DECISION_RE.search(where.rsplit(".", 1)[-1])):
         v.append(("B1", where, "returned True for a forged identity" if identity_arg else "decision-shaped callable returned True"))
     try:
@@ -253,12 +279,13 @@ def observe(where, ret, markers, sent, inert=(), identity_arg=False):
     return v
 
 
-def probe(targets, pool, markers, sent, combos=120, seed=7, inert=(), identities=()):
+def probe(targets, pool, markers, sent, combos=120, seed=7, inert=(), identities=(), accept_codes=()):
     """Call each (where, fn) with forged argument combinations drawn from `pool`; return the sorted set of violations.
     `sent` is a list that recording sinks append to; it is cleared before each call. `identities`: the pool members that stand for a
     caller's identity (bare ids, a hand-built Session, a Principal); a True returned for a call that passed one is a decision."""
     rng = random.Random(seed)
     out = set()
+    pool_ids = {id(x) for x in pool}          # echoing a forged input back is not minting it
     for where, fn in targets:
         try:
             ps = [p for p in inspect.signature(fn).parameters.values() if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)]
@@ -280,5 +307,29 @@ def probe(targets, pool, markers, sent, combos=120, seed=7, inert=(), identities
             except Exception:       # noqa: BLE001  refusing is the expected outcome
                 ret = None
             ident = any(a is i for a in args for i in identities)
-            out.update(observe(where, ret, markers, list(sent), inert, ident))
+            out.update(observe(where, ret, markers, list(sent), inert, ident, accept_codes, pool_ids))
     return sorted(out)
+
+
+def internals(pkg_name, instances, skip_modules=()):
+    """[(where, callable)] for every module-level function of a private module, every private module-level function of a public one,
+    and every private method of the given live instances (dunders excluded)."""
+    pkg = importlib.import_module(pkg_name)
+    out = []
+    for info in pkgutil.walk_packages(pkg.__path__, pkg_name + "."):
+        if info.name in skip_modules:
+            continue
+        mod = importlib.import_module(info.name)
+        for n, obj in vars(mod).items():
+            private_mod = any(part.startswith("_") for part in info.name.split("."))
+            if (private_mod or n.startswith("_")) and not n.startswith("__") and inspect.isfunction(obj) and obj.__module__ == info.name:
+                out.append((info.name + "." + n, obj))
+    for inst in instances:
+        cls = type(inst)
+        for base in cls.__mro__:
+            if not _pkg_of(base, pkg_name):
+                continue
+            for n, raw in vars(base).items():
+                if n.startswith("_") and not n.startswith("__") and inspect.isfunction(raw):
+                    out.append(("%s.%s.%s" % (cls.__module__, cls.__name__, n), getattr(inst, n)))
+    return sorted(set(out), key=lambda x: x[0])

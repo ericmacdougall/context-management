@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 
-from surface import class_methods, exported, manifest, probe, scan  # noqa: E402
+from surface import class_methods, exported, internals, manifest, probe, scan  # noqa: E402
 
 MANIFEST = os.path.join(HERE, "surface_manifest.json")
 
@@ -119,6 +119,45 @@ ALLOWED = {
 
 INERT = {"pol.directory.Session"}
 
+# An __all__ that hides a public name, an exported partial and a callable instance, and a module-level __getattr__.
+EVASIVE2 = {
+    "__init__.py": "",
+    "m.py": textwrap.dedent('''
+        import functools
+        __all__ = []
+        def decide_now(principal, action):
+            return True
+        def _g(principal, action):
+            return True
+        quick = functools.partial(_g, "admin")
+        class _Caller:
+            def __call__(self, principal_id):
+                return True
+        gate = _Caller()
+        def __getattr__(name):
+            return _g
+    '''),
+}
+
+# Private callables that, probed with forged inputs, decide, accept or return stored data. Python cannot stop in-process code from
+# calling them; each is reached in the package only after a verified session (or is a pure helper of such a path). A NEW entry fails
+# the test until reviewed. The enforced boundary against a hostile in-process caller is the database role (R3-7), not this list.
+TRUSTED_INTERNALS = {
+    ("B1", "pol._pdp._revoked"): "PDP helper; evaluate() is called only by enforce._decide_verified",
+    ("B1", "pol.labels._acl_satisfied"): "PDP helper (pure label/group predicate)",
+    ("B1", "pol._core._adopted_open"): "pure reducer predicate over proposal dicts (True: nothing closed it); takes no identity",
+    ("B1", "pol.enforce.Revocations._is_revoked"): "predicate; True means DENY (revoked)",
+    ("B1", "pol.enforce.AuditLog._snapshot"): "lab/test access to past audit rows (rows record allow=True decisions already made)",
+    ("B1", "pol.decisions.DecisionService._readable"): "called by explain/table after principal_of(session)",
+    ("B1", "pol.decisions.MemoryEngine._is_admin"): "called by DecisionService after principal_of(session)",
+    ("B1", "pol.decisions.MemoryEngine._participant"): "called by DecisionService after principal_of(session)",
+    ("B1", "pol.decisions.MemoryEngine._submit"): "the in-memory core: DecisionService builds the event from the verified principal; the "
+                                                  "Postgres engine is reached only through definer functions (R3-7)",
+    ("B1", "pol.decisions.Vault._put"): "returns True on store; called by DecisionService.submit after principal_of(session)",
+    ("B3", "pol.enforce.Store._get"): "raw fetch; every caller checks the record's label for the verified principal before text leaves",
+    ("B3", "pol.enforce.Store._sources"): "fetch-then-check: every caller runs Enforcer._check on the returned labels before using text",
+}
+
 
 def _plant(files, name):
     d = tempfile.mkdtemp()
@@ -158,7 +197,9 @@ def _world():
     pool = ["admin", "alice", T, "r1", "read", "send_inbox", "cloud", rid, [rid], Session(T, "admin", "owner_ui", "forged-token"),
             Session(T, "alice", "owner_ui", "forged-token"), w.dir.lookup("admin"),
             {"principal": "admin", "tenant": T, "channel": "owner_ui", "principal_id": "admin", "type": "propose", "req": "r1"},
-            L(), LabIdP().credential("admin", "owner_ui"), None, True, w.store, w.vault, w.engine, sink]
+            L(), LabIdP().credential("admin", "owner_ui"), None, True, w.store, w.vault, w.engine, sink,
+            {"type": "propose", "id": "alice/zz", "idem": "zz", "tenant": T, "principal": "alice", "channel": "owner_ui", "req": "r1",
+             "value_ref": "v", "label": L().to_dict(), "based_on": 0}]
     identities = [x for x in pool if isinstance(x, (Session, type(w.dir.lookup("admin")))) or x in ("admin", "alice")]
     return w, instances, pool, ["MARK-REC-7f3", "MARK-VAL-9c1", "dana"], sent, identities
 
@@ -192,8 +233,41 @@ class Surface(unittest.TestCase):
                 if mn != "__init__":
                     targets.append(("%s.%s.%s" % (cls.__module__, cls.__name__, mn), getattr(inst, mn)))
         self.assertGreater(len(targets), 60)
-        v = probe(targets, pool, markers, sent, inert=INERT, identities=ids)
+        from pol import _core
+        v = probe(targets, pool, markers, sent, inert=INERT, identities=ids, accept_codes=_core.APPLIED)
         self.assertEqual(v, [], "\n".join("%s %s %s" % x for x in v))
+
+    def test_internals_that_decide_are_pinned(self):
+        """Private callables are probed too (R3-9 follow-up): the set that decides on forged input must equal TRUSTED_INTERNALS."""
+        from pol import _core
+        w, instances, pool, markers, sent, ids = _world()
+        targets = internals("pol", instances, skip_modules=("pol.pgcore",))
+        self.assertGreater(len(targets), 50)
+        got = {(r, wh) for r, wh, _x in probe(targets, pool + [w.enf, w.svc, w.dir.lookup("alice")], markers, sent, inert=INERT,
+                                              identities=ids, accept_codes=_core.APPLIED)}
+        self.assertEqual(sorted(got - set(TRUSTED_INTERNALS)), [], "new in-process decider: review it and pin it with a reason")
+        self.assertEqual(sorted(set(TRUSTED_INTERNALS) - got), [], "stale TRUSTED_INTERNALS entry")
+
+    def test_known_in_process_deciders_do_decide(self):
+        """Disclosure, not a guarantee: these private callables allow for a caller-supplied principal (the random probe rarely builds
+        their argument shapes, so they are called directly). They are why the in-process boundary is trusted, not enforced."""
+        from pol import _pdp, enforce
+        from tests.kit import L, T
+        w = _world()[0]
+        p = w.dir.lookup("alice")
+        self.assertTrue(_pdp.evaluate(p, "read", [L()], {}, w.pol, 0.0, None).allow)
+        self.assertTrue(enforce._decide_verified(w.enf, p, "read", [L()], {})[0].allow)
+        ev = {"type": "propose", "id": "alice/zz", "idem": "zz", "tenant": T, "principal": "alice", "channel": "owner_ui", "req": "r1",
+              "value_ref": "v", "label": L().to_dict(), "based_on": 0}
+        self.assertEqual(w.engine._submit(ev)[0], "proposed")
+
+    def test_control_hidden_names_partials_and_module_getattr(self):
+        _plant(EVASIVE2, "evade2_pkg")
+        v = set(scan("evade2_pkg"))
+        want = {("S2", "evade2_pkg.m.decide_now", "principal"), ("S6", "evade2_pkg.m.quick", "exported callable object"),
+                ("S2", "evade2_pkg.m.gate", "principal_id"), ("S6", "evade2_pkg.m.gate", "exported callable object"),
+                ("S6", "m.py", "module __getattr__")}
+        self.assertEqual(sorted(want - v), [], "scanner missed")
 
     def test_control_planted(self):
         _plant(PLANTED, "planted_pkg")
