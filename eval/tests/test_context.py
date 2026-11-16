@@ -372,3 +372,28 @@ class PostHocX0C(unittest.TestCase):
         self.assertEqual(classify_ungrounded("adopted a dog named Rex a small terrier", g, 0), "punct_cited")
         self.assertEqual(classify_ungrounded("adopted a dog ... small terrier", g, 0), "punct_cited")
         self.assertEqual(classify_ungrounded("quantum chromodynamics lecture notes", g, 0), "ungrounded")
+
+
+class StageX1(unittest.TestCase):
+    def test_repair_fact_author_and_quote(self):
+        from emlab import provenance_x04 as P
+        from emlab.stage_x1_score import kept, repair_fact
+        g = P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex, a small terrier"}, {"role": "assistant", "content": "Lovely"}, {"role": "user", "content": "We hike every Sunday morning"}])
+        a = repair_fact({"quote": "adopted a dog named Rex, a small terrier", "round": 0}, g)
+        self.assertEqual((a["grounding"], a["author"], a.get("author_filled")), ("verbatim", "user", True))
+        b = repair_fact({"quote": "adopted a dog named Rex a small terrier", "round": 0, "author": "user"}, g)
+        self.assertEqual(b["grounding"], "punct_cited")
+        c = repair_fact({"quote": "hike every Sunday morning", "round": 0, "author": "user"}, g)
+        self.assertEqual((c["grounding"], c["round"]), ("other_round", 1))
+        d = repair_fact({"quote": "quantum chromodynamics lecture notes", "round": 0, "author": "user"}, g)
+        self.assertFalse(kept(d))
+
+    def test_evaluate_and_tally(self):
+        from emlab.stage_x1_score import evaluate, tally
+        fd = ([["dog", "rex"], ["cello"], ["lisbon"]], [["dog", "rex"], ["cello"], ["lisbon"]])
+        fo = ["s1", "s2", "s3"]
+        rd, ro = [["cello", "week"], ["dog"], ["lisbon", "city"]], ["s2", "s1", "s3"]
+        per = evaluate({"q1": "dog rex", "q2": "unrelated question"}, {"q1": {"s1"}, "q2": {"s3"}}, fd, fo, rd, ro, None)
+        self.assertTrue(per["q1"]["facts_top10"] and per["q1"]["raw_top10"] and per["q1"]["combined_5_5_top10"])
+        t = tally(per)
+        self.assertEqual(t["n"], 2)
