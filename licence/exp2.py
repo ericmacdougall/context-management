@@ -56,6 +56,17 @@ def make_broken(ttl):
     return a
 
 
+def classify_sem_failure(code, e):
+    """Addendum C: a failed semantic write is 'licence' (error text names a non-compliant licence), 'missing_endpoint' (404 resource_not_found for the
+    inference endpoint) or 'other' (any other 403/404, a missing index, a transport failure). Only the first two are loud licensing failures."""
+    text = json.dumps(e).lower() if e else ""
+    if "non-compliant" in text:
+        return "licence"
+    if code == 404 and e and e.get("type") == "resource_not_found_exception" and "inference" in text:
+        return "missing_endpoint"
+    return "other"
+
+
 def mk_text(rng):
     return " ".join(rng.choice(VOCAB) for _ in range(rng.randint(5, 9)))
 
@@ -211,11 +222,11 @@ class Workload:
         sem_present = {h["_id"] for h in j.get("hits", {}).get("hits", [])} if c == 200 else set()
         sem_ack = {r[1] for r in self.sem_rows if r[2] in (200, 201)}
         sem_fail = [r for r in self.sem_rows if r[2] >= 300 or r[2] == 0]
-        loud = sum(1 for r in sem_fail if r[3] and (("non-compliant" in json.dumps(r[3])) or r[2] in (404, 403)))
+        loud = sum(1 for r in sem_fail if classify_sem_failure(r[2], r[3]) != "other")
         return {"control_injected_loss_detected": control_detects, "live_present": len(present), "acked": len(acked), "acked_absent": len(acked - present), "present_unacked": len(present - acked),
                 "failed_batches": len(self.attempted_failed), "failed_ids_present": len(failed_ids & present),
                 "sem_acked": len(sem_ack), "sem_acked_absent": len(sem_ack - sem_present), "sem_present_unacked": len(sem_present - sem_ack),
-                "sem_failed": len(sem_fail), "sem_failed_loud_licence_or_missing": loud,
+                "sem_failed": len(sem_fail), "sem_failed_loud_licence_or_missing": loud, "sem_failed_other": len(sem_fail) - loud,
                 "sem_failed_present": len({r[1] for r in sem_fail} & sem_present),
                 "sem_first_ok_t": min([r[0] for r in self.sem_rows if r[2] in (200, 201)] or [None]) if sem_ack else None}
 
@@ -241,17 +252,17 @@ class Workload:
             if r[2] not in ("auto", "lin") or not r[4]:
                 continue
             qi, ids, fus = r[3], r[6], r[5]
-            ex += 1
             if fus == "client":
                 ok = oracle.valid_topk(ids, list(self.oracle_legs[qi]), 10)
             elif fus == "backend":
                 ref = (self.oracle_rrf if r[2] == "auto" else self.oracle_lin).get(qi)
-                if ref is None:
+                if ref is None:   # no reference: not examined (fail closed through T1_backend_without_oracle, never counted correct)
                     unlabeled_backend_without_oracle += 1
                     continue
                 ok = ids == ref
             else:
                 ok = False
+            ex += 1
             if not ok:
                 wrong += 1
                 if len(wrong_examples) < 5:
@@ -296,7 +307,8 @@ class Workload:
         else:
             pre = [r for r in rows if r[2] == "ctl" and r[1] < t_req]
             post = [r for r in rows if r[2] == "ctl" and r[0] >= t_resp + 1.0]
-            out["T5_control_before_start_trial"] = {"n": len(pre), "failures": sum(1 for r in pre if not r[4])}
+            out["T5_control_before_start_trial"] = {"n": len(pre), "failures": sum(1 for r in pre if not r[4]),
+                                                    "licence_failures": sum(1 for r in pre if (not r[4]) and "non-compliant" in (r[7] or ""))}
             out["T5_control_after_trial"] = {"n": len(post), "success": sum(1 for r in post if r[4])}
         # T6 ranking function change (rrf vs linear vs client), recorded only
         if self.oracle_rrf:

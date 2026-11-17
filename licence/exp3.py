@@ -183,21 +183,65 @@ def mutations(kind, ix):
     return M
 
 
+class ScrollError(RuntimeError):
+    """A scroll collection that cannot be trusted to be complete (addendum C)."""
+
+
+def source_count(ix):
+    """Independent document count of an index: `_count` after a refresh. Never derived from a scroll."""
+    req("POST", "/%s/_refresh" % ix)
+    c, j, _ = req("GET", "/%s/_count" % ix)
+    if c != 200 or not isinstance(j.get("count"), int):
+        raise ScrollError("cannot count %s: status %s" % (ix, c))
+    return j["count"]
+
+
+def _check_page(c, j, where):
+    if c != 200:
+        raise ScrollError("%s: HTTP %s" % (where, c))
+    if j.get("timed_out"):
+        raise ScrollError("%s: timed_out" % where)
+    if (j.get("_shards") or {}).get("failed", 0):
+        raise ScrollError("%s: shard failures %s" % (where, (j.get("_shards") or {}).get("failed")))
+
+
+def scroll_all(path, body, expected=None, page_timeout=120):
+    """Every hit of a scroll search. Raises ScrollError on a non-200 page (including after the first), a timed-out or shard-failed page, a duplicate id,
+    or, when `expected` is given, a hit count different from it. Each page continues from the latest scroll id."""
+    hits, seen, npage = [], set(), 1
+    c, j, _ = req("POST", path, body, timeout=page_timeout)
+    sid = j.get("_scroll_id") if isinstance(j, dict) else None
+    try:
+        while True:
+            _check_page(c, j, "scroll page %d" % npage)
+            page = j["hits"]["hits"]
+            if not page:
+                break
+            for h in page:
+                if h["_id"] in seen:
+                    raise ScrollError("duplicate id %s" % h["_id"])
+                seen.add(h["_id"])
+            hits.extend(page)
+            c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=page_timeout)
+            npage += 1
+            sid = (j.get("_scroll_id") if isinstance(j, dict) else None) or sid
+    finally:
+        if sid:
+            req("DELETE", "/_search/scroll", {"scroll_id": sid})
+    if expected is not None and len(hits) != expected:
+        raise ScrollError("collected %d hits, expected %d" % (len(hits), expected))
+    return hits
+
+
 def migrate_vectors(src, dst, typ="hnsw", corrupt=False):
     """Recipe for bbq_disk (or any float-source index) -> Basic-safe mapping: scroll _source, bulk into a dense_vector index of a Basic type."""
     req("DELETE", "/" + dst)
     c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas": 0}, "mappings": {"properties": {
         "title": {"type": "text"}, "tag": {"type": "keyword"}, "v": {"type": "dense_vector", "dims": DIM, "index": True, "similarity": "cosine", "index_options": {"type": typ}}}}})
     assert c == 200, (c, j)
-    docs, sid = {}, None
-    c, j, _ = req("POST", "/%s/_search?scroll=2m" % src, {"size": 100, "query": {"match_all": {}}, "_source": {"exclude_vectors": False}}, timeout=120)
-    sid = j.get("_scroll_id")
-    while c == 200 and j["hits"]["hits"]:
-        for h in j["hits"]["hits"]:
-            docs[h["_id"]] = h["_source"]
-        c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)
-    if sid:
-        req("DELETE", "/_search/scroll", {"scroll_id": sid})
+    expected = source_count(src)
+    hits = scroll_all("/%s/_search?scroll=2m" % src, {"size": 100, "query": {"match_all": {}}, "_source": {"exclude_vectors": False}}, expected=expected)
+    docs = {h["_id"]: h["_source"] for h in hits}
     items = sorted(docs.items())
     if corrupt and items:
         i0, s0 = items[0]
@@ -214,15 +258,8 @@ def migrate_vectors(src, dst, typ="hnsw", corrupt=False):
 
 def check_vectors(src_docs, dst, dim=DIM):
     """Element-wise equality of dst _source vectors to src_docs; kNN self-hit top-1 rate; count equality."""
-    mism, got = [], {}
-    c, j, _ = req("POST", "/%s/_search?scroll=2m" % dst, {"size": 100, "query": {"match_all": {}}, "_source": {"exclude_vectors": False}}, timeout=120)
-    sid = j.get("_scroll_id")
-    while c == 200 and j["hits"]["hits"]:
-        for h in j["hits"]["hits"]:
-            got[h["_id"]] = h["_source"]
-        c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)
-    if sid:
-        req("DELETE", "/_search/scroll", {"scroll_id": sid})
+    mism = []
+    got = {h["_id"]: h["_source"] for h in scroll_all("/%s/_search?scroll=2m" % dst, {"size": 100, "query": {"match_all": {}}, "_source": {"exclude_vectors": False}})}
     for i, s in src_docs.items():
         if i not in got or got[i].get("v") != s.get("v"):
             mism.append(i)
@@ -247,20 +284,16 @@ def migrate_semantic(src, dst):
         "v": {"type": "dense_vector", "dims": 8, "index": True, "similarity": "cosine"}}}})
     assert c == 200, (c, j)
     docs, multi = {}, 0
-    c, j, _ = req("POST", "/%s/_search?scroll=2m" % src, {"size": 50, "query": {"match_all": {}}, "_source": ["title", "tag", "body", "_inference_fields"]}, timeout=120)
-    first_status = c
-    sid = j.get("_scroll_id")
-    while c == 200 and j["hits"]["hits"]:
-        for h in j["hits"]["hits"]:
-            s = h["_source"]
-            chunks = (s.get("_inference_fields", {}).get("body", {}).get("inference", {}).get("chunks", {}) or {}).get("body") or []
-            if len(chunks) != 1:
-                multi += 1
-                continue
-            docs[h["_id"]] = {"title": s.get("title"), "tag": s.get("tag"), "body": s.get("body"), "v": chunks[0]["embeddings"]}
-        c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)
-    if sid:
-        req("DELETE", "/_search/scroll", {"scroll_id": sid})
+    expected = source_count(src)
+    hits = scroll_all("/%s/_search?scroll=2m" % src, {"size": 50, "query": {"match_all": {}}, "_source": ["title", "tag", "body", "_inference_fields"]}, expected=expected)
+    first_status = 200
+    for h in hits:
+        s = h["_source"]
+        chunks = (s.get("_inference_fields", {}).get("body", {}).get("inference", {}).get("chunks", {}) or {}).get("body") or []
+        if len(chunks) != 1:
+            multi += 1
+            continue
+        docs[h["_id"]] = {"title": s.get("title"), "tag": s.get("tag"), "body": s.get("body"), "v": chunks[0]["embeddings"]}
     items = sorted(docs.items())
     for k in range(0, len(items), 100):
         cb, sb = bulk(dst, items[k:k + 100], refresh="false")
@@ -270,15 +303,7 @@ def migrate_semantic(src, dst):
 
 
 def check_semantic(docs, dst):
-    got = {}
-    c, j, _ = req("POST", "/%s/_search?scroll=2m" % dst, {"size": 100, "query": {"match_all": {}}, "_source": {"exclude_vectors": False}}, timeout=120)
-    sid = j.get("_scroll_id")
-    while c == 200 and j["hits"]["hits"]:
-        for h in j["hits"]["hits"]:
-            got[h["_id"]] = h["_source"]
-        c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)
-    if sid:
-        req("DELETE", "/_search/scroll", {"scroll_id": sid})
+    got = {h["_id"]: h["_source"] for h in scroll_all("/%s/_search?scroll=2m" % dst, {"size": 100, "query": {"match_all": {}}, "_source": {"exclude_vectors": False}})}
     mism = [i for i, s in docs.items() if i not in got or got[i].get("v") != s["v"]]
     worst_abs, worst_cos = 0.0, 1.0
     for i, s in docs.items():

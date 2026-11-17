@@ -1,6 +1,7 @@
 """Independent recomputation of every verdict from the per-life result JSON files (THRESHOLDS.md). Usage: summarize.py RESULTS_DIR [out.json]
 Reads only the result files; does not import the experiment code."""
 import glob
+import gzip
 import json
 import os
 import sys
@@ -16,11 +17,29 @@ def wilson_lower(k, n, z=1.96):
     return (c - r) / d
 
 
+def _backfill_up_licence_failures(R, path):
+    """Lives recorded before addendum C kept only the total failure count of the pre-trial control. Recount licence failures
+    ("non-compliant" in the error text) from the committed raw rows, so the gate can use licence_failures / n."""
+    if R.get("mode") != "up" or "exp2" not in R:
+        return
+    pre = R["exp2"].get("T5_control_before_start_trial")
+    rows_path = path[:-5] + ".rows.gz"
+    if pre is None or "licence_failures" in pre or not os.path.exists(rows_path):
+        return
+    t_req = R["start_trial"]["t_req"]
+    rows = [json.loads(l) for l in gzip.open(rows_path, "rt")]
+    ctl = [r for r in rows if r[2] == "ctl" and r[1] < t_req]
+    if len(ctl) == pre["n"]:   # only trust the recount when it reproduces the recorded denominator
+        pre["licence_failures"] = sum(1 for r in ctl if not r[4] and "non-compliant" in (r[7] or ""))
+        pre["licence_failures_source"] = "recounted from rows.gz"
+
+
 def load(d, mode):
     out = []
     for f in sorted(glob.glob(os.path.join(d, "%s_[0-9]*.json" % mode))):
         R = json.load(open(f))
         R["_file"] = os.path.basename(f)
+        _backfill_up_licence_failures(R, f)
         out.append(R)
     return out
 
@@ -75,20 +94,23 @@ def exp2_checks(R, direction):
     r["T4"] = {"acked": w["acked"], "acked_absent": w["acked_absent"], "present_unacked": w["present_unacked"], "failed_batches": w["failed_batches"],
                "sem_acked": w["sem_acked"], "sem_acked_absent": w["sem_acked_absent"], "sem_failed": w["sem_failed"], "sem_failed_loud": w["sem_failed_loud_licence_or_missing"],
                "sem_failed_present": w["sem_failed_present"], "control_detects_injected_loss": w["control_injected_loss_detected"]}
-    r["T4_pass"] = (w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] and w["sem_failed_present"] == 0
+    r["T4_pass"] = (w.get("sem_failed_other", 0) == 0 and w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] and w["sem_failed_present"] == 0
                     and w["control_injected_loss_detected"])
     if direction == "down":
         c = e["T5_control_after_1s"]
         r["T5"] = {"n": c["n"], "fail_fraction": c["fail_fraction"], "licence_failures": c["licence_failures"]}
         r["T3_pass"] = e["T3_flip_latency_s"] is not None and e["T3_flip_latency_s"] <= 5.0 and e.get("T3_backend_after_first_client") == 0
-        r["T5_pass"] = c["fail_fraction"] >= 0.95
+        r["T5_pass"] = c["n"] > 0 and c.get("licence_failures") is not None and c["licence_failures"] / c["n"] >= 0.95
     else:
         pre = e["T5_control_before_start_trial"]
-        r["T5"] = {"before_n": pre["n"], "before_failures": pre["failures"], "after_trial_n": e["T5_control_after_trial"]["n"], "after_trial_success": e["T5_control_after_trial"]["success"]}
+        r["T5"] = {"before_n": pre["n"], "before_failures": pre["failures"], "before_licence_failures": pre.get("licence_failures"), "after_trial_n": e["T5_control_after_trial"]["n"], "after_trial_success": e["T5_control_after_trial"]["success"]}
         r["T3_pass"] = (e["T3_flip_latency_s"] is not None and e["T3_flip_latency_s"] <= R["ttl"] + 5.0 and e.get("T3_client_after_first_backend") == 0)
-        r["T5_pass"] = pre["n"] > 0 and pre["failures"] / pre["n"] >= 0.95 and e["T5_control_after_trial"]["success"] == e["T5_control_after_trial"]["n"]
+        post = e["T5_control_after_trial"]
+        r["T5_pass"] = (pre["n"] > 0 and pre.get("licence_failures") is not None and pre["licence_failures"] / pre["n"] >= 0.95
+                        and post["n"] > 0 and post["success"] == post["n"])
         r["sem_first_ok_after_trial_s"] = e.get("sem_first_ok_after_trial_s")
-    r["T1_pass"] = e["T1_mismatches"] == 0 and e["T1_examined"] >= 20000 and r["T1_control_flag_rate"] >= 0.9 and r["T1_control_backend_wrong"] == 0
+    r["T1_backend_without_oracle"] = e.get("T1_backend_without_oracle")
+    r["T1_pass"] = e.get("T1_backend_without_oracle") == 0 and e["T1_mismatches"] == 0 and e["T1_examined"] >= 20000 and r["T1_control_flag_rate"] >= 0.9 and r["T1_control_backend_wrong"] == 0
     r["T2_pass"] = r["T2_fail_fraction"] <= 0.001 and r["T2_longest_window_s"] <= 2.0
     return r
 
@@ -142,6 +164,12 @@ def exp3_checks(R):
                                           and s["knn_self_top1"] / s["knn_self_of"] >= 0.99 and s["skipped_not_single_chunk"] == 0)
         chk["control_plain"] = M["control_plain_to_hnsw"]["vector_mismatches"] == 0 and M["control_plain_to_hnsw"]["dst_count"] == M["control_plain_to_hnsw"]["src_count"]
         chk["control_corrupt_caught"] = M["control_corrupted_vs_true_source"]["vector_mismatches"] == 1
+        # independent source counts: `_count` of the source index recorded after the operations and before the restart (never derived from the scroll)
+        ind = E["after_restart"]["counts_before"]
+        chk["source_count_independent"] = (b["src_count"] == ind["bbq_disk"] and b2["src_count"] == ind["bbq_disk"] and s["docs"] + s["skipped_not_single_chunk"] == ind["sem"]
+                                           and M["control_plain_to_hnsw"]["src_count"] == ind["plain"])
+        for k in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw", "semantic_to_text_vector"):
+            chk[k] = chk[k] and chk["source_count_independent"]
         chk["migrated_ops_ok"] = all(v < 300 for d in M["migrated_basic_ops"].values() for v in d.values())
     out["migration_checks"] = chk
     if "unrefreshed_twin_on_trial" in R:

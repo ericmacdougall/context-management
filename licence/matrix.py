@@ -160,7 +160,7 @@ def run(label):
         cb, sb = bulk(idx, [(str(i), {"v": embed("d%d" % i, 64)}) for i in range(40)])
         sr, cs, js = S(idx, {"knn": {"field": "v", "query_vector": embed("d7", 64), "k": 3, "num_candidates": 20}} if not typ.startswith("int8") else
                        {"knn": {"field": "v", "query_vector": embed("d7", 64), "k": 3, "num_candidates": 20, "rescore_vector": {"oversample": 3}}})
-        T["vec_" + typ] = {"mapping": cell(cm, jm), "bulk": sb, "search": sr, "class": "AVAILABLE" if cm < 300 and sb["failed"] == 0 and cs == 200 else
+        T["vec_" + typ] = {"mapping": cell(cm, jm), "bulk": sb, "bulk_http": cb, "search": sr, "class": "AVAILABLE" if cm < 300 and sb["failed"] == 0 and cs == 200 else
                            ("LICENCE_ERROR" if sb["failed"] and "license" in json.dumps(sb["first_error"]).lower() else "OTHER_ERROR")}
         if typ == "int8_hnsw":
             T["knn_rescore_vector"] = sr

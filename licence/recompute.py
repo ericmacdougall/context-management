@@ -66,11 +66,16 @@ def one(path):
         out["ctl_success_started_after_resp"] = sum(1 for r in succ_c if r[0] > t_resp)
         late = [r for r in ctl if r[0] >= t_resp + 1.0]
         out["T5_fail_fraction"] = sum(1 for r in late if not r[4]) / max(1, len(late))
+        out["T5_licence_n"] = len(late)   # addendum C: the gate counts only failures whose error text names the licence
+        out["T5_licence_fail_fraction"] = sum(1 for r in late if not r[4] and "non-compliant" in (r[7] or "")) / max(1, len(late))
     else:
         first = next((r for r in auto if r[5] == "backend" and r[1] >= t_resp), None)
         out["T3_flip_s"] = None if first is None else first[1] - t_resp
         out["T3_client_after_first_backend"] = sum(1 for r in auto if first and r[5] == "client" and r[0] > first[1])
         ctl = [r for r in rows if r[2] == "ctl"]
+        pre = [r for r in ctl if r[1] < t_req]
+        out["T5_licence_n"] = len(pre)
+        out["T5_licence_fail_fraction"] = sum(1 for r in pre if not r[4] and "non-compliant" in (r[7] or "")) / max(1, len(pre))
         out["ctl_before_trial_fail_fraction"] = sum(1 for r in ctl if r[1] < t_req and not r[4]) / max(1, sum(1 for r in ctl if r[1] < t_req))
         out["ctl_first_success_start_rel_resp_s"] = min([r[0] for r in ctl if r[4] and r[0] > t_req] or [None]) - t_resp if any(r[4] and r[0] > t_req for r in ctl) else None
     # T1 from the saved oracle

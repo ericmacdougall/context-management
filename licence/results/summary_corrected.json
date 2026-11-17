@@ -1,0 +1,4085 @@
+{
+ "aggregate": {
+  "all_pass": {
+   "T1_pass": false,
+   "T2_pass": true,
+   "T3_pass": true,
+   "T4_pass": true,
+   "T5_pass": true
+  },
+  "exp2_correct_rate_wilson_lower": 0.9999911375201773,
+  "exp2_lives": {
+   "down": 7,
+   "up": 5
+  },
+  "exp2_total_examined": 433464,
+  "exp2_total_mismatches": 0,
+  "exp2_worst": {
+   "max_fail_fraction": 0.0,
+   "max_flip_down_s": 0.05637025833129883,
+   "max_flip_up_s": 274.855197429657,
+   "max_longest_window_s": 0.0,
+   "min_control_flag_rate": 1.0,
+   "min_examined": 18820,
+   "total_acked_absent": 0,
+   "total_acked_writes": 151085
+  },
+  "matrix_distinct_values_across_lives": {
+   "alias_must_exist": {
+    "after": [
+     "{\"existing\": \"AVAILABLE\", \"ghost_refused\": \"OTHER_ERROR\"}"
+    ],
+    "basic0": [
+     "{\"existing\": \"AVAILABLE\", \"ghost_refused\": \"OTHER_ERROR\"}"
+    ],
+    "trial": [
+     "{\"existing\": \"AVAILABLE\", \"ghost_refused\": \"OTHER_ERROR\"}"
+    ]
+   },
+   "alias_require_alias": {
+    "after": [
+     "{\"write_to_non_alias_refused\": \"OTHER_ERROR\", \"write_via_alias\": \"AVAILABLE\"}"
+    ],
+    "basic0": [
+     "{\"write_to_non_alias_refused\": \"OTHER_ERROR\", \"write_via_alias\": \"AVAILABLE\"}"
+    ],
+    "trial": [
+     "{\"write_to_non_alias_refused\": \"OTHER_ERROR\", \"write_via_alias\": \"AVAILABLE\"}"
+    ]
+   },
+   "bm25_match": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "client_side_fusion": {
+    "after": [
+     "\"AVAILABLE/[200, 200]\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/[200, 200]\""
+    ],
+    "trial": [
+     "\"AVAILABLE/[200, 200]\""
+    ]
+   },
+   "dense_knn": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "dls_role_create": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "dls_search_as_user": {
+    "after": [
+     "\"OTHER_ERROR/403\""
+    ],
+    "basic0": [
+     "\"OTHER_ERROR/403\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "esql_fork": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "esql_fuse": {
+    "after": [
+     "\"LICENCE_ERROR/400\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR/400\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "esql_match": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "force_merge": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "inference_create": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "inference_list": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "inference_use_existing": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"NO_ENDPOINT/404\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "inference_use_new": {
+    "after": [
+     "\"SKIPPED (create refused)\""
+    ],
+    "basic0": [
+     "\"SKIPPED (create refused)\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "knn_rescore_vector": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "match_on_semantic_text": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"OTHER_ERROR/404\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "percolator_lexical": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "retriever_linear": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "retriever_rrf": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "semantic_query": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"OTHER_ERROR/404\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "semantic_text_index": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"OTHER_ERROR/404\""
+    ],
+    "trial": [
+     "\"AVAILABLE/201\""
+    ]
+   },
+   "semantic_text_mapping": {
+    "after": [
+     "\"AVAILABLE/200\""
+    ],
+    "basic0": [
+     "\"AVAILABLE/200\""
+    ],
+    "trial": [
+     "\"AVAILABLE/200\""
+    ]
+   },
+   "text_similarity_reranker_gate": {
+    "after": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR/403\""
+    ],
+    "trial": [
+     "\"OTHER_ERROR/404\""
+    ]
+   },
+   "vec_bbq_disk": {
+    "after": [
+     "\"LICENCE_ERROR\""
+    ],
+    "basic0": [
+     "\"LICENCE_ERROR\""
+    ],
+    "trial": [
+     "\"AVAILABLE\""
+    ]
+   },
+   "vec_bbq_hnsw": {
+    "after": [
+     "\"AVAILABLE\""
+    ],
+    "basic0": [
+     "\"AVAILABLE\""
+    ],
+    "trial": [
+     "\"AVAILABLE\""
+    ]
+   },
+   "vec_int8_hnsw": {
+    "after": [
+     "\"AVAILABLE\""
+    ],
+    "basic0": [
+     "\"AVAILABLE\""
+    ],
+    "trial": [
+     "\"AVAILABLE\""
+    ]
+   }
+  },
+  "matrix_nondeterministic_cells": []
+ },
+ "down": [
+  {
+   "commit": "74e3c1d",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.033560991287231445,
+     "inference_use": 0.24351859092712402,
+     "linear": 0.24351859092712402,
+     "rrf": 0.24351859092712402,
+     "semantic_query": 0.24351859092712402
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 5864,
+    "T1_examined": 27161,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.05637025833129883,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10375,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 83,
+     "sem_acked_absent": 0,
+     "sem_failed": 254,
+     "sem_failed_loud": 254,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 12160,
+     "n": 12160
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "silent": []
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       28.321,
+       404,
+       null
+      ],
+      [
+       30.134,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.104,
+       0,
+       null
+      ],
+      [
+       29.916,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 1.029,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.105,
+       0,
+       null
+      ],
+      [
+       29.122,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_1.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1001,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  },
+  {
+   "commit": "74e3c1d",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.13258028030395508,
+     "inference_use": 0.13258028030395508,
+     "linear": 0.3031764030456543,
+     "rrf": 0.3031764030456543,
+     "semantic_query": 0.13258028030395508
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 5739,
+    "T1_examined": 26780,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.04059767723083496,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10410,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 82,
+     "sem_acked_absent": 0,
+     "sem_failed": 254,
+     "sem_failed_loud": 254,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 11903,
+     "n": 11903
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 1,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "silent": []
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       28.622,
+       404,
+       null
+      ],
+      [
+       30.621,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.104,
+       0,
+       null
+      ],
+      [
+       29.926,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.609,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.723,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.106,
+       0,
+       null
+      ],
+      [
+       29.527,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_2.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1002,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  },
+  {
+   "commit": "74e3c1d",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.12650036811828613,
+     "inference_use": 0.12650036811828613,
+     "linear": 0.12650036811828613,
+     "rrf": 0.12650036811828613,
+     "semantic_query": 0.12650036811828613
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 5749,
+    "T1_examined": 26702,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.037999868392944336,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10435,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 82,
+     "sem_acked_absent": 0,
+     "sem_failed": 253,
+     "sem_failed_loud": 253,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 11971,
+     "n": 11971
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 59
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "silent": []
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       27.835,
+       404,
+       null
+      ],
+      [
+       30.029,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.105,
+       0,
+       null
+      ],
+      [
+       30.904,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.583,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.698,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.107,
+       0,
+       null
+      ],
+      [
+       29.542,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_3.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1003,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  },
+  {
+   "commit": "74e3c1d",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.15451598167419434,
+     "inference_use": 0.15451598167419434,
+     "linear": 0.15451598167419434,
+     "rrf": 0.15451598167419434,
+     "semantic_query": 0.15451598167419434
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 5812,
+    "T1_examined": 27122,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.03200840950012207,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10405,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 82,
+     "sem_acked_absent": 0,
+     "sem_failed": 253,
+     "sem_failed_loud": 253,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 11950,
+     "n": 11950
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "silent": []
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       29.116,
+       404,
+       null
+      ],
+      [
+       31.014,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.105,
+       0,
+       null
+      ],
+      [
+       30.026,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.738,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.855,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.107,
+       0,
+       null
+      ],
+      [
+       29.433,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_4.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1004,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  },
+  {
+   "commit": "74e3c1d",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.0066835880279541016,
+     "inference_use": 0.21494078636169434,
+     "linear": 0.21494078636169434,
+     "rrf": 0.21494078636169434,
+     "semantic_query": 0.21494078636169434
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 5691,
+    "T1_examined": 26552,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.043910980224609375,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10410,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 82,
+     "sem_acked_absent": 0,
+     "sem_failed": 253,
+     "sem_failed_loud": 253,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 11672,
+     "n": 11672
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "FAIL_OTHER(OTHER_ERROR)/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "silent": []
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       27.603,
+       404,
+       null
+      ],
+      [
+       29.486,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.104,
+       0,
+       null
+      ],
+      [
+       29.71,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.105,
+       0,
+       null
+      ],
+      [
+       30.055,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_5.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1005,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  },
+  {
+   "commit": "7566b92",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.24062657356262207,
+     "inference_use": 0.24062657356262207,
+     "linear": 0.24062657356262207,
+     "rrf": 0.24062657356262207,
+     "semantic_query": 0.24062657356262207
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_battery_after_statuses": {
+     "count": 403,
+     "esql": 403,
+     "get_allowed_doc0": 403,
+     "get_hidden_doc1": 403,
+     "knn_search": 403,
+     "mget": 403,
+     "msearch": 403,
+     "scroll_open": 403,
+     "search_match_all": 403,
+     "search_term_hidden": 403,
+     "termvectors_hidden": 403,
+     "wildcard_index": 403
+    },
+    "T4_battery_control_trial_hidden_leak": [],
+    "T4_battery_pass": true,
+    "T4_battery_trial_statuses": {
+     "count": 200,
+     "esql": 200,
+     "get_allowed_doc0": 200,
+     "get_hidden_doc1": 404,
+     "knn_search": 200,
+     "mget": 200,
+     "msearch": 200,
+     "scroll_open": 200,
+     "search_match_all": 200,
+     "search_term_hidden": 200,
+     "termvectors_hidden": 200,
+     "wildcard_index": 200
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 2499,
+    "T1_examined": 18820,
+    "T1_mismatches": 0,
+    "T1_pass": false,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.044356346130371094,
+    "T3_pass": true,
+    "T4": {
+     "acked": 6170,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 86,
+     "sem_acked_absent": 0,
+     "sem_failed": 109,
+     "sem_failed_loud": 109,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 5030,
+     "n": 5030
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "silent": [],
+    "unrefreshed_partial": {
+     "basic": {
+      "bulk_failed": 0,
+      "bulk_http": 200,
+      "count": 20,
+      "embeddings": {
+       "of": 20,
+       "unreadable": 0,
+       "with_embeddings": 20
+      },
+      "searchable_before_update": "not recorded (fixture was refreshed by a restart: not a clean test)",
+      "semantic_search": 403,
+      "tags": {
+       "u": 20
+      }
+     },
+     "trial": {
+      "bulk_failed": 0,
+      "bulk_http": 200,
+      "count": 20,
+      "embeddings": {
+       "of": 20,
+       "unreadable": 0,
+       "with_embeddings": 20
+      },
+      "searchable_before_update": "not recorded (fixture was refreshed by a restart: not a clean test)",
+      "semantic_search": 200,
+      "tags": {
+       "u": 20
+      }
+     }
+    }
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       29.618,
+       404,
+       null
+      ],
+      [
+       31.638,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.107,
+       0,
+       null
+      ],
+      [
+       29.105,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.804,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.925,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.106,
+       0,
+       null
+      ],
+      [
+       30.347,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_6.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1006,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  },
+  {
+   "commit": "c2c7f64",
+   "exp1": {
+    "T2_dls_returned_before": [
+     4
+    ],
+    "T2_first_refusal_s": {
+     "dls_search": 0.0077135562896728516,
+     "inference_use": 0.19491910934448242,
+     "linear": 0.19491910934448242,
+     "rrf": 0.19491910934448242,
+     "semantic_query": 0.19491910934448242
+    },
+    "T2_pass": true,
+    "T3_latch_shape_ok": {
+     "retriever_linear": true,
+     "retriever_rrf": true,
+     "text_similarity_reranker_gate": true
+    },
+    "T4_battery_after_statuses": {
+     "count": 403,
+     "esql": 403,
+     "get_allowed_doc0": 403,
+     "get_hidden_doc1": 403,
+     "knn_search": 403,
+     "mget": 403,
+     "msearch": 403,
+     "scroll_open": 403,
+     "search_match_all": 403,
+     "search_term_hidden": 403,
+     "termvectors_hidden": 403,
+     "wildcard_index": 403
+    },
+    "T4_battery_control_trial_hidden_leak": [],
+    "T4_battery_pass": true,
+    "T4_battery_trial_statuses": {
+     "count": 200,
+     "esql": 200,
+     "get_allowed_doc0": 200,
+     "get_hidden_doc1": 404,
+     "knn_search": 200,
+     "mget": 200,
+     "msearch": 200,
+     "scroll_open": 200,
+     "search_match_all": 200,
+     "search_term_hidden": 200,
+     "termvectors_hidden": 200,
+     "wildcard_index": 200
+    },
+    "T4_control_before_returned": [
+     4
+    ],
+    "T4_dls_after": {
+     "class": "OTHER_ERROR",
+     "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective r",
+     "returned": null,
+     "status": 403
+    },
+    "T4_pass": true
+   },
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 5925,
+    "T1_examined": 27599,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.046076059341430664,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10625,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 85,
+     "sem_acked_absent": 0,
+     "sem_failed": 257,
+     "sem_failed_loud": 257,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "fail_fraction": 1.0,
+     "licence_failures": 12214,
+     "n": 12214
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 59
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "ttl": 5.0
+   },
+   "exp3": {
+    "migration_checks": {
+     "bbq_disk_to_bbq_hnsw": true,
+     "bbq_disk_to_hnsw": true,
+     "control_corrupt_caught": true,
+     "control_plain": true,
+     "migrated_ops_ok": true,
+     "semantic_to_text_vector": true,
+     "source_count_independent": true
+    },
+    "ops": {
+     "bbq_disk": {
+      "bulk_partial_update": {
+       "basic": "LOUD_LICENCE_ITEM/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "bbq_hnsw": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "plain": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "WORKS/201",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      }
+     },
+     "sem": {
+      "bulk_partial_update": {
+       "basic": "WORKS/http200",
+       "trial": "ok/http200"
+      },
+      "delete_one": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "force_merge": {
+       "basic": "WORKS/200",
+       "trial": "AVAILABLE/200"
+      },
+      "index_new_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/201"
+      },
+      "overwrite_full_doc": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "reindex_same_mapping": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_by_query": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_partial_api": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      },
+      "update_scripted": {
+       "basic": "LOUD_LICENCE/403",
+       "trial": "AVAILABLE/200"
+      }
+     }
+    },
+    "reads_diff": [
+     [
+      "sem",
+      "match_on_semantic_field",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ],
+     [
+      "sem",
+      "semantic_query",
+      "AVAILABLE",
+      "LICENCE_ERROR",
+      "current license is non-compliant for [inference]"
+     ]
+    ],
+    "restart": {
+     "counts": {
+      "bbq_disk": 299,
+      "bbq_hnsw": 300,
+      "plain": 300,
+      "sem": 199
+     },
+     "counts_equal": true
+    },
+    "semonly": {
+     "match": {
+      "basic": [
+       403,
+       null,
+       "current license is non-compliant for [inference]"
+      ],
+      "silent_difference": false,
+      "trial": [
+       200,
+       10
+      ]
+     },
+     "match_all": {
+      "basic": [
+       200,
+       30,
+       ""
+      ],
+      "silent_difference": false,
+      "trial": [
+       200,
+       30
+      ]
+     },
+     "multi_match": {
+      "basic": [
+       400,
+       null,
+       "all shards failed"
+      ],
+      "silent_difference": false,
+      "trial": [
+       400,
+       null
+      ]
+     },
+     "q_param_default": {
+      "basic": [
+       200,
+       0,
+       ""
+      ],
+      "silent_difference": false,
+      "trial": [
+       200,
+       0
+      ]
+     },
+     "q_param_field": {
+      "basic": [
+       200,
+       0,
+       ""
+      ],
+      "silent_difference": false,
+      "trial": [
+       200,
+       0
+      ]
+     },
+     "query_string_default": {
+      "basic": [
+       200,
+       0,
+       ""
+      ],
+      "silent_difference": false,
+      "trial": [
+       200,
+       0
+      ]
+     },
+     "query_string_fields": {
+      "basic": [
+       400,
+       null,
+       "all shards failed"
+      ],
+      "silent_difference": false,
+      "trial": [
+       400,
+       null
+      ]
+     },
+     "semantic": {
+      "basic": [
+       403,
+       null,
+       "current license is non-compliant for [inference]"
+      ],
+      "silent_difference": false,
+      "trial": [
+       200,
+       10
+      ]
+     },
+     "simple_query_string": {
+      "basic": [
+       400,
+       null,
+       "all shards failed"
+      ],
+      "silent_difference": false,
+      "trial": [
+       400,
+       null
+      ]
+     }
+    },
+    "semonly_silent": [],
+    "semonly_trial_witness_ok": true,
+    "silent": [],
+    "unrefreshed_partial": {
+     "basic": {
+      "bulk_failed": 0,
+      "bulk_http": 200,
+      "count": 20,
+      "embeddings": {
+       "of": 20,
+       "unreadable": 0,
+       "with_embeddings": 20
+      },
+      "searchable_before_update": 0,
+      "semantic_search": 403,
+      "tags": {
+       "u": 20
+      }
+     },
+     "trial": {
+      "bulk_failed": 0,
+      "bulk_http": 200,
+      "count": 20,
+      "embeddings": {
+       "of": 20,
+       "unreadable": 0,
+       "with_embeddings": 20
+      },
+      "searchable_before_update": 0,
+      "semantic_search": 200,
+      "tags": {
+       "u": 20
+      }
+     }
+    }
+   },
+   "exp4": {
+    "exp4_fresh_start": {
+     "services": {
+      "http404": {
+       "first_probe_error": "BackendError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       0,
+       null
+      ],
+      [
+       28.625,
+       404,
+       null
+      ],
+      [
+       30.636,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_basic": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.0,
+       "reviewed_correct": true
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "basic"
+      ],
+      [
+       0.104,
+       0,
+       null
+      ],
+      [
+       30.645,
+       200,
+       "basic"
+      ]
+     ]
+    },
+    "exp4_restart_trial": {
+     "services": {
+      "ok": {
+       "first_probe_error": null,
+       "first_tier": "enterprise",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 0.897,
+       "reviewed_correct": true
+      },
+      "refused": {
+       "first_probe_error": "ConnectionResetError",
+       "first_tier": "basic",
+       "reprobe_correct": true,
+       "reprobe_seconds_to_correct_after_first_200": 1.012,
+       "reviewed_correct": false
+      }
+     },
+     "status_sequence": [
+      [
+       0.0,
+       200,
+       "trial"
+      ],
+      [
+       0.105,
+       0,
+       null
+      ],
+      [
+       30.234,
+       200,
+       "trial"
+      ]
+     ]
+    },
+    "exp4_state_basic0": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_basic_after": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "basic",
+     "safe": true,
+     "tier": "basic"
+    },
+    "exp4_state_trial": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "exp4_state_trial_after_restart": {
+     "exact": true,
+     "paths": [
+      "/_license"
+     ],
+     "readback": "trial",
+     "safe": true,
+     "tier": "enterprise"
+    },
+    "units": {
+     "basic_active": "basic",
+     "conn_refused": "basic",
+     "empty_dict": "basic",
+     "enterprise_active": "enterprise",
+     "enterprise_inactive": "basic",
+     "gold_active": "basic",
+     "http_404": "basic",
+     "http_503": "basic",
+     "list_instead": "basic",
+     "no_type": "basic",
+     "null_license": "basic",
+     "platinum_active": "basic",
+     "timeout": "basic",
+     "trial_active": "enterprise",
+     "trial_expired": "basic"
+    },
+    "units_enterprise_cases": [
+     "enterprise_active",
+     "trial_active"
+    ],
+    "units_only_license_path": true
+   },
+   "file": "down_7.json",
+   "licence_end": "basic",
+   "second_start_trial": {
+    "acknowledged": true,
+    "error_message": "Operation failed: Trial was already activated.",
+    "trial_was_started": false
+   },
+   "seed": 1007,
+   "start_trial_first": {
+    "acknowledged": true,
+    "trial_was_started": true,
+    "type": "trial"
+   }
+  }
+ ],
+ "up": [
+  {
+   "commit": "74e3c1d",
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 2042,
+    "T1_examined": 39832,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 5.031755685806274,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10790,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 233,
+     "sem_acked_absent": 0,
+     "sem_failed": 93,
+     "sem_failed_loud": 93,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "after_trial_n": 14023,
+     "after_trial_success": 14023,
+     "before_failures": 4348,
+     "before_licence_failures": 4348,
+     "before_n": 4348
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 58
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "sem_first_ok_after_trial_s": 0.39,
+    "ttl": 5.0
+   },
+   "file": "up_1.json",
+   "licence_end": "trial",
+   "moment": {
+    "inference_use": {
+     "first_success_rel_resp_s": 0.3481616973876953,
+     "n": 444
+    },
+    "linear": {
+     "first_success_rel_resp_s": 0.3481616973876953,
+     "n": 444
+    },
+    "rrf": {
+     "first_success_rel_resp_s": 0.3481616973876953,
+     "n": 444
+    },
+    "semantic_query": {
+     "first_success_rel_resp_s": 0.3481616973876953,
+     "n": 444
+    }
+   },
+   "seed": 2001,
+   "ttl": 5.0
+  },
+  {
+   "commit": "74e3c1d",
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 2426,
+    "T1_examined": 40178,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 5.031309366226196,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10845,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 236,
+     "sem_acked_absent": 0,
+     "sem_failed": 93,
+     "sem_failed_loud": 93,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "after_trial_n": 14222,
+     "after_trial_success": 14222,
+     "before_failures": 4264,
+     "before_licence_failures": 4264,
+     "before_n": 4264
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "sem_first_ok_after_trial_s": 0.27,
+    "ttl": 5.0
+   },
+   "file": "up_2.json",
+   "licence_end": "trial",
+   "moment": {
+    "inference_use": {
+     "first_success_rel_resp_s": 0.3177785873413086,
+     "n": 445
+    },
+    "linear": {
+     "first_success_rel_resp_s": 0.3177785873413086,
+     "n": 445
+    },
+    "rrf": {
+     "first_success_rel_resp_s": 0.3177785873413086,
+     "n": 445
+    },
+    "semantic_query": {
+     "first_success_rel_resp_s": 0.3177785873413086,
+     "n": 445
+    }
+   },
+   "seed": 2002,
+   "ttl": 5.0
+  },
+  {
+   "commit": "74e3c1d",
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 2019,
+    "T1_examined": 39574,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 5.04240608215332,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10725,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 234,
+     "sem_acked_absent": 0,
+     "sem_failed": 93,
+     "sem_failed_loud": 93,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "after_trial_n": 13864,
+     "after_trial_success": 13864,
+     "before_failures": 4300,
+     "before_licence_failures": 4300,
+     "before_n": 4300
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 59
+    },
+    "T6_rrf": {
+     "list_differs": 1,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "sem_first_ok_after_trial_s": 0.35,
+    "ttl": 5.0
+   },
+   "file": "up_3.json",
+   "licence_end": "trial",
+   "moment": {
+    "inference_use": {
+     "first_success_rel_resp_s": 0.3141787052154541,
+     "n": 444
+    },
+    "linear": {
+     "first_success_rel_resp_s": 0.3141787052154541,
+     "n": 444
+    },
+    "rrf": {
+     "first_success_rel_resp_s": 0.3141787052154541,
+     "n": 444
+    },
+    "semantic_query": {
+     "first_success_rel_resp_s": 0.5783381462097168,
+     "n": 444
+    }
+   },
+   "seed": 2003,
+   "ttl": 5.0
+  },
+  {
+   "commit": "74e3c1d",
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 2057,
+    "T1_examined": 41396,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 0.2653372287750244,
+    "T3_pass": true,
+    "T4": {
+     "acked": 10805,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 234,
+     "sem_acked_absent": 0,
+     "sem_failed": 94,
+     "sem_failed_loud": 94,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "after_trial_n": 14391,
+     "after_trial_success": 14391,
+     "before_failures": 4388,
+     "before_licence_failures": 4388,
+     "before_n": 4388
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 60
+    },
+    "T6_rrf": {
+     "list_differs": 1,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "sem_first_ok_after_trial_s": 0.49,
+    "ttl": 5.0
+   },
+   "file": "up_4.json",
+   "licence_end": "trial",
+   "moment": {
+    "inference_use": {
+     "first_success_rel_resp_s": 0.4090001583099365,
+     "n": 454
+    },
+    "linear": {
+     "first_success_rel_resp_s": 0.1986684799194336,
+     "n": 454
+    },
+    "rrf": {
+     "first_success_rel_resp_s": 0.1986684799194336,
+     "n": 454
+    },
+    "semantic_query": {
+     "first_success_rel_resp_s": 0.4090001583099365,
+     "n": 454
+    }
+   },
+   "seed": 2004,
+   "ttl": 5.0
+  },
+  {
+   "commit": "74e3c1d",
+   "exp2": {
+    "T1_backend_without_oracle": 0,
+    "T1_control_backend_wrong": 0,
+    "T1_control_flag_rate": 1.0,
+    "T1_control_n": 25050,
+    "T1_examined": 91748,
+    "T1_mismatches": 0,
+    "T1_pass": true,
+    "T2_fail_fraction": 0.0,
+    "T2_longest_window_s": 0.0,
+    "T2_pass": true,
+    "T3_flip_latency_s": 274.855197429657,
+    "T3_pass": true,
+    "T4": {
+     "acked": 39090,
+     "acked_absent": 0,
+     "control_detects_injected_loss": true,
+     "failed_batches": 0,
+     "present_unacked": 0,
+     "sem_acked": 1064,
+     "sem_acked_absent": 0,
+     "sem_failed": 93,
+     "sem_failed_loud": 93,
+     "sem_failed_present": 0
+    },
+    "T4_pass": true,
+    "T5": {
+     "after_trial_n": 53250,
+     "after_trial_success": 53250,
+     "before_failures": 4432,
+     "before_licence_failures": 4432,
+     "before_n": 4432
+    },
+    "T5_pass": true,
+    "T6_linear": {
+     "list_differs": 60,
+     "queries": 60,
+     "set_differs": 59
+    },
+    "T6_rrf": {
+     "list_differs": 0,
+     "queries": 60,
+     "set_differs": 0
+    },
+    "sem_first_ok_after_trial_s": 0.33,
+    "ttl": 300.0
+   },
+   "file": "up_5.json",
+   "licence_end": "trial",
+   "moment": {
+    "inference_use": {
+     "first_success_rel_resp_s": 0.318753719329834,
+     "n": 1432
+    },
+    "linear": {
+     "first_success_rel_resp_s": 0.318753719329834,
+     "n": 1432
+    },
+    "rrf": {
+     "first_success_rel_resp_s": 0.318753719329834,
+     "n": 1432
+    },
+    "semantic_query": {
+     "first_success_rel_resp_s": 0.318753719329834,
+     "n": 1432
+    }
+   },
+   "seed": 2005,
+   "ttl": 300.0
+  }
+ ]
+}
