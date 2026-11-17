@@ -1,0 +1,176 @@
+{
+ "old_counts": {
+  "pilot": 102,
+  "test": 382,
+  "dev2": 16
+ },
+ "new_counts": {
+  "pilot": 102,
+  "test": 363,
+  "held_back": 19,
+  "dev2": 16
+ },
+ "pilot": {
+  "n": 102,
+  "by_type": {
+   "single-session-preference": 6,
+   "knowledge-update": 16,
+   "multi-session": 27,
+   "single-session-user": 14,
+   "single-session-assistant": 12,
+   "temporal-reasoning": 27
+  },
+  "abstention": 8,
+  "content_clusters": 97
+ },
+ "dev2": {
+  "n": 16,
+  "by_type": {
+   "knowledge-update": 16
+  },
+  "abstention": 0,
+  "content_clusters": 16,
+  "ids": [
+   "01493427",
+   "031748ae",
+   "06db6396",
+   "08e075c7",
+   "0977f2af",
+   "0ddfec37",
+   "0f05491a",
+   "10e09553",
+   "184da446",
+   "18bc8abd",
+   "1cea1afa",
+   "22d2cb42",
+   "3ba21379",
+   "41698283",
+   "42ec0761",
+   "4b24c848"
+  ]
+ },
+ "test": {
+  "n": 363,
+  "by_type": {
+   "single-session-user": 54,
+   "multi-session": 101,
+   "single-session-preference": 24,
+   "temporal-reasoning": 99,
+   "single-session-assistant": 44,
+   "knowledge-update": 41
+  },
+  "abstention": 13,
+  "content_clusters": 340
+ },
+ "held_back": {
+  "n": 19,
+  "by_type": {
+   "knowledge-update": 5,
+   "single-session-user": 2,
+   "multi-session": 5,
+   "temporal-reasoning": 7
+  },
+  "abstention": 9,
+  "content_clusters": 19,
+  "ids": [
+   "031748ae_abs",
+   "0862e8bf_abs",
+   "09ba9854",
+   "0ddfec37_abs",
+   "2133c1b5_abs",
+   "2698e78f_abs",
+   "60bf93ed_abs",
+   "80ec1f4f",
+   "a96c20ee_abs",
+   "b46e15ed",
+   "c8090214_abs",
+   "f4f1d8a4",
+   "f685340e",
+   "gpt4_372c3eed",
+   "gpt4_4929293a",
+   "gpt4_93159ced",
+   "gpt4_c27434e8_abs",
+   "gpt4_e414231e",
+   "gpt4_f420262c"
+  ]
+ },
+ "test_primary_strata_nonabstention_clusters": {
+  "knowledge-update": 40,
+  "temporal-reasoning": 86
+ },
+ "test_primary_strata_nonabstention_questions": {
+  "knowledge-update": 40,
+  "temporal-reasoning": 96
+ },
+ "pilot_content_clusters_multi": 5,
+ "content_clusters_total": 453,
+ "pool": {
+  "session_ids": 19195,
+  "distinct_content": 18464,
+  "gold_content_hashes": 861
+ },
+ "sensitivity_excluded": {
+  "rule": "non-abstention test questions whose gold content is verbatim inside a pilot or dev2 haystack",
+  "n": 51,
+  "by_type": {
+   "multi-session": 22,
+   "single-session-assistant": 6,
+   "single-session-user": 3,
+   "temporal-reasoning": 19,
+   "single-session-preference": 1
+  },
+  "ids": [
+   "0100672e",
+   "099778bb",
+   "18dcd5a5",
+   "2311e44b",
+   "2788b940",
+   "28dc39ac",
+   "36580ce8",
+   "3d86fd0a",
+   "41275add",
+   "4adc0475",
+   "4dfccbf7",
+   "4dfccbf8",
+   "6456829e",
+   "71a3fd6b",
+   "75832dbd",
+   "778164c6",
+   "81507db6",
+   "8752c811",
+   "982b5123",
+   "9aaed6a3",
+   "9ee3ecd6",
+   "a4996e51",
+   "ba358f49",
+   "bb7c3b45",
+   "bbf86515",
+   "bc149d6b",
+   "c18a7dc8",
+   "cc06de0d",
+   "d23cf73b",
+   "e01b8e2f",
+   "eeda8a6d",
+   "f0e564bc",
+   "fca762bc",
+   "gpt4_15e38248",
+   "gpt4_194be4b3",
+   "gpt4_1a1dc16d",
+   "gpt4_1e4a8aec",
+   "gpt4_213fd887",
+   "gpt4_2487a7cb",
+   "gpt4_2c50253f",
+   "gpt4_5dcc0aab",
+   "gpt4_74aed68e",
+   "gpt4_7ca326fa",
+   "gpt4_7fce9456",
+   "gpt4_98f46fc6",
+   "gpt4_9a159967",
+   "gpt4_a1b77f9c",
+   "gpt4_d6585ce8",
+   "gpt4_d6585ce9",
+   "gpt4_f49edff3",
+   "gpt4_fa19884c"
+  ]
+ }
+}

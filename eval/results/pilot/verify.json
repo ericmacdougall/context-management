@@ -1,0 +1,125 @@
+{
+ "questions": 500,
+ "types": {
+  "single-session-user": 70,
+  "multi-session": 133,
+  "single-session-preference": 30,
+  "temporal-reasoning": 133,
+  "knowledge-update": 78,
+  "single-session-assistant": 56
+ },
+ "abstention": 30,
+ "abstention_with_gold_sessions": 30,
+ "answer_non_str": 32,
+ "session_refs": 23867,
+ "unique_sessions": 19195,
+ "session_content_conflicts": 0,
+ "session_ids_with_differing_dates_across_questions": 4672,
+ "sessions_per_question": {
+  "min": 38,
+  "median": 48,
+  "max": 62
+ },
+ "haystack_in_chronological_order": 289,
+ "questions_with_late_sessions": 76,
+ "late_by_type": {
+  "temporal-reasoning": 60,
+  "knowledge-update": 16
+ },
+ "late_sessions_that_are_gold": 75,
+ "answer_sessions_in_other_haystacks": 16,
+ "distinct_answer_session_ids_shared_across_questions": 8,
+ "clusters": 495,
+ "multi_question_clusters": 5,
+ "ku_nonabs": 72,
+ "ku_latest_by_date_equals_highest_suffix": 71,
+ "non_abstention_without_has_answer_turn": 0,
+ "evidence_by_type": {
+  "single-session-user": {
+   "n": 70,
+   "questions_without_has_answer_turn": 6,
+   "answer_session_count_hist": {
+    "1": 70
+   },
+   "has_answer_turn_count_hist": {
+    "0": 6,
+    "1": 62,
+    "2": 2
+   }
+  },
+  "multi-session": {
+   "n": 133,
+   "questions_without_has_answer_turn": 8,
+   "answer_session_count_hist": {
+    "2": 84,
+    "3": 26,
+    "4": 17,
+    "5": 6
+   },
+   "has_answer_turn_count_hist": {
+    "0": 8,
+    "1": 4,
+    "2": 77,
+    "3": 20,
+    "4": 14,
+    "5": 7,
+    "6": 3
+   }
+  },
+  "single-session-preference": {
+   "n": 30,
+   "questions_without_has_answer_turn": 0,
+   "answer_session_count_hist": {
+    "1": 30
+   },
+   "has_answer_turn_count_hist": {
+    "1": 19,
+    "2": 8,
+    "3": 3
+   }
+  },
+  "temporal-reasoning": {
+   "n": 133,
+   "questions_without_has_answer_turn": 1,
+   "answer_session_count_hist": {
+    "1": 20,
+    "2": 88,
+    "3": 15,
+    "4": 2,
+    "5": 5,
+    "6": 3
+   },
+   "has_answer_turn_count_hist": {
+    "0": 1,
+    "1": 39,
+    "2": 74,
+    "3": 13,
+    "5": 3,
+    "6": 3
+   }
+  },
+  "knowledge-update": {
+   "n": 78,
+   "questions_without_has_answer_turn": 6,
+   "answer_session_count_hist": {
+    "2": 78
+   },
+   "has_answer_turn_count_hist": {
+    "0": 6,
+    "1": 2,
+    "2": 68,
+    "3": 2
+   }
+  },
+  "single-session-assistant": {
+   "n": 56,
+   "questions_without_has_answer_turn": 0,
+   "answer_session_count_hist": {
+    "1": 56
+   },
+   "has_answer_turn_count_hist": {
+    "1": 56
+   }
+  }
+ }
+}

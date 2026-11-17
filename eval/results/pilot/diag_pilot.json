@@ -1,0 +1,26 @@
+{
+ "split": "pilot",
+ "asof": {
+  "questions": 102,
+  "sessions": 4845,
+  "sessions_removed_by_asof_day_rule": 0,
+  "fraction_sessions_removed": 0.0,
+  "questions_where_asof_removes_any": 0,
+  "by_type": {},
+  "gold_sessions": 183,
+  "gold_sessions_removed_by_day_rule": 0,
+  "questions_losing_gold_to_day_rule": 0,
+  "gold_sessions_removed_by_strict_timestamp_rule": 20
+ },
+ "parser": {
+  "questions": 102,
+  "range_parsed": 10,
+  "fraction_parsed": 0.09803921568627451,
+  "expand_filter_differs_from_asof": 7,
+  "parsed_by_type": {
+   "single-session-user": 1,
+   "multi-session": 3,
+   "temporal-reasoning": 6
+  }
+ }
+}

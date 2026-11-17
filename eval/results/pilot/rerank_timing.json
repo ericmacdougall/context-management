@@ -1,0 +1,25 @@
+{
+ "rows": [
+  {
+   "qid": "51a45a95",
+   "seconds_for_top50": 64.65488934516907
+  },
+  {
+   "qid": "3b6f954b",
+   "seconds_for_top50": 62.338969230651855
+  },
+  {
+   "qid": "66f24dbb",
+   "seconds_for_top50": 53.76806282997131
+  },
+  {
+   "qid": "ad7109d1",
+   "seconds_for_top50": 67.78953266143799
+  },
+  {
+   "qid": "af8d2e46",
+   "seconds_for_top50": 72.20075750350952
+  }
+ ],
+ "mean_seconds": 64.15044231414795
+}
