@@ -70,19 +70,34 @@ CAS_ATTEMPTS = 3
 
 
 def newer_epoch_visible(es: ES, t, f, epoch):
-    """Re-read one family's write aliases (a failure here propagates: it is itself an infrastructure error)."""
-    return any(e > epoch for als in _family_state(es, t, f).values() for _, e in _walias_epochs(t, f, als))
+    """Re-read one family's write aliases on every index (a failure here propagates: it is itself an infrastructure error)."""
+    return any(e > epoch for _, _, e, _ in _walias_state(es, t, f))
 
 
 def _family_state(es: ES, t, f):
-    """{index: aliases} for the family's indices."""
+    """{index: {alias: is_write_index}} for the family's indices."""
     rx = family_index_re(t, f)
-    return {i: a for i, a in es.alias_map(f"{P}{t}-{f}-*").items() if rx.match(i)}
+    return {i: a for i, a in es.alias_meta(f"{P}{t}-{f}-*").items() if rx.match(i)}
 
 
 def _walias_epochs(t, f, aliases):
     rx = re.compile(rf"^{re.escape(P + t)}-{re.escape(f)}-w(\d+)$")
     return [(a, int(m.group(1))) for a in aliases for m in [rx.match(a)] if m]
+
+
+def _walias_state(es: ES, t, f):
+    """Sorted (index, alias, epoch, is_write_index) for EVERY index carrying one of the family's -w aliases (review C F5:
+    looked up by alias name across all indices, joined with the family's own indices, so a -w alias left on another
+    index is seen)."""
+    seen = {}
+    for i, als in list(es.alias_meta(name=f"{P}{t}-{f}-w*").items()) + list(_family_state(es, t, f).items()):
+        for a, e in _walias_epochs(t, f, als):
+            seen[(i, a)] = (i, a, e, als[a] is True)
+    return sorted(seen.values())
+
+
+def _target(t, f, idx, epoch):
+    return [(idx, write_alias(t, f, epoch), epoch, True)]
 
 
 GENERATION0 = 0       # -w0: the generation alias a family is born with; no lease ever holds epoch 0 (the first is 1)
@@ -104,42 +119,47 @@ def ensure_family(es: ES, t, f):
 
 
 def _observe(es: ES, t, epoch):
-    """({family: (index, aliases)}, actions) for the CAS; raises StaleEpoch if a newer epoch is already visible.
+    """({family: observed state}, actions) for the CAS; raises StaleEpoch if a newer epoch is visible anywhere.
 
+    Target per family (review C F5): exactly ONE alias named -w<n> on any index: -w<epoch>, on the family's base index,
+    with is_write_index true. A family at the target needs no action; any other state converges in the same request.
     INVARIANT (review B2): a CAS never ADDS a write alias without REMOVING, in the same atomic request and with
-    must_exist=true, every write alias it observed, and it refuses a family with no write alias at all. A request that
-    observed generation g and stalls cannot install its alias after anyone else's CAS has moved the family past g:
-    its removal of g's alias fails, the whole request fails (P3), and the re-read classifies it."""
+    must_exist=true, every -w alias it observed (wherever it is, including a wrong -w<epoch>), and it refuses a family
+    with no -w alias at all. A request that observed generation g and stalls cannot install its alias after anyone
+    else's CAS has moved the family past g: its removal of g's alias fails, the whole request fails (P3), and the
+    re-read classifies it."""
     seen_all, actions = {}, []
     for f in FAMILIES:
         ensure_family(es, t, f)
         st = _family_state(es, t, f)
         if len(st) != 1:
             raise RuntimeError(f"family {f}: {len(st)} indices")
-        (idx, als), = st.items()
-        seen_all[f] = (idx, frozenset(als))
-        seen = _walias_epochs(t, f, als)
-        if any(e > epoch for _, e in seen):
+        idx, = st
+        ws = _walias_state(es, t, f)
+        seen_all[f] = (idx, tuple(ws))
+        if any(e > epoch for _, _, e, _ in ws):
             raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
-        if any(e == epoch for _, e in seen):
+        if ws == _target(t, f, idx, epoch):
             continue
-        if not seen:
+        if not ws:
             raise ProjectionError(f"{f}: no write or generation alias (created before the -w0 rule); refusing an "
                                   "unconditional add")
-        for a, _ in seen:
-            actions.append({"remove": {"index": idx, "alias": a, "must_exist": True}})
+        for i, a, _, _ in ws:
+            actions.append({"remove": {"index": i, "alias": a, "must_exist": True}})
         actions.append({"add": {"index": idx, "alias": write_alias(t, f, epoch), "is_write_index": True}})
     return seen_all, actions
 
 
 def fence_es(es: ES, t, epoch):
-    """Alias CAS for ALL registered families in one atomic request.
+    """Alias CAS for ALL registered families in one atomic request, then a re-read that must show the target.
 
     A failed request is classified by re-reading the aliases (review-2 N1; at 1fcf3f7 every ESError became StaleEpoch):
       a newer write alias is visible        -> StaleEpoch (a confirmed loss: another projector holds a newer epoch)
       the aliases changed, nothing newer    -> observe again and retry the CAS (at most CAS_ATTEMPTS requests)
       the aliases are unchanged             -> ProjectionError (the request failed for another reason)
-    A failure of the re-read itself propagates as it is (an infrastructure error). Epochs start at 1 (0 is -w0)."""
+    A request that succeeded is not trusted either (review C F5): the next observation must find every family at the
+    target, or it converges again; CAS_ATTEMPTS requests without reaching it is a ProjectionError. A failure of a read
+    propagates as it is (an infrastructure error). Epochs start at 1 (0 is -w0)."""
     if int(epoch) <= GENERATION0:
         raise ValueError(f"epoch {epoch}: projector epochs start at 1")
     for _ in range(CAS_ATTEMPTS):
@@ -148,15 +168,18 @@ def fence_es(es: ES, t, epoch):
             return
         try:
             es.aliases(actions)
-            return
+            continue                                     # re-observe: return only from a read that shows the target
         except ESError as e:
             err = e
-        now = {f: (idx, frozenset(als)) for f in FAMILIES for idx, als in _family_state(es, t, f).items()}
-        if any(e > epoch for f, (_, als) in now.items() for _, e in _walias_epochs(t, f, als)):
+        now = {f: (idx, tuple(_walias_state(es, t, f))) for f in FAMILIES for idx in _family_state(es, t, f)}
+        if any(e > epoch for _, (_, ws) in now.items() for _, _, e, _ in ws):
             raise StaleEpoch(f"alias CAS lost to a newer epoch ({err.etype})") from None
         if now == seen_all:
             raise ProjectionError(f"alias CAS failed: ES {err.status} {err.etype}") from None
-    raise ProjectionError(f"alias CAS: the aliases changed under {CAS_ATTEMPTS} attempts with no newer epoch") from None
+    seen_all, actions = _observe(es, t, epoch)
+    if not actions:
+        return
+    raise ProjectionError(f"alias CAS: no target state after {CAS_ATTEMPTS} requests") from None
 
 
 def place_placeholders(es: ES, t, f, ids, batch=1000, ensure=True):

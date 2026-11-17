@@ -42,6 +42,11 @@ class Cluster:
     def alias_map(self, pattern):
         return {i: set(a) for i, a in self.idx.items() if fnmatch.fnmatch(i, pattern)}
 
+    def alias_meta(self, index=None, name=None):
+        return {i: {a: w for a, w in als.items() if name is None or fnmatch.fnmatch(a, name)}
+                for i, als in self.idx.items() if (index is None or fnmatch.fnmatch(i, index))
+                and (name is None or any(fnmatch.fnmatch(a, name) for a in als))}
+
     def create(self, name, aliases):
         if name in self.idx:
             raise self.ESError(400, "resource_already_exists_exception", "PUT")
@@ -73,6 +78,9 @@ class Client:
 
     def alias_map(self, pattern):
         return self.c.alias_map(pattern)
+
+    def alias_meta(self, index=None, name=None):
+        return self.c.alias_meta(index, name)
 
     def aliases(self, actions):
         self._maybe("before_cas")

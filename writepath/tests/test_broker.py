@@ -76,6 +76,12 @@ class FakeES:
     def alias_map(self, pattern):
         return {i: set(a) for i, a in self.state.items() if fnmatch.fnmatch(i, pattern)}
 
+    def alias_meta(self, index=None, name=None):
+        """The is_write_index view (review C F5): a -w alias is the write index except the generation alias -w0."""
+        return {i: {a: not a.endswith("-w0") for a in als if name is None or fnmatch.fnmatch(a, name)}
+                for i, als in self.state.items() if (index is None or fnmatch.fnmatch(i, index))
+                and (name is None or any(fnmatch.fnmatch(a, name) for a in als))}
+
     def aliases(self, actions):
         self.calls.append("cas")
         for act in actions:
@@ -399,6 +405,9 @@ class BrokerTest(unittest.TestCase):
                 return 0, [("id1", 403, "security_exception")]
 
             def alias_map(self, pattern):
+                raise AssertionError("broker mode never reads aliases")
+
+            def alias_meta(self, index=None, name=None):
                 raise AssertionError("broker mode never reads aliases")
         p.es = BulkES()
         orig = self.L.renew

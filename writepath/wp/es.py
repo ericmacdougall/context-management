@@ -116,6 +116,14 @@ class ES:
         s, j = self.req("GET", f"/{pattern}/_alias", ok=(200, 404), expand_wildcards="all")
         return {i: set(v.get("aliases", {})) for i, v in j.items()} if s == 200 else {}
 
+    def alias_meta(self, index=None, name=None):
+        """{index: {alias: is_write_index (True, False, or None when unset)}} from GET /[index]/_alias[/name]
+        (review C F5: the CAS must see is_write_index and a -w alias on ANY index, not just the family's)."""
+        path = "/" + "/".join(x for x in (index, "_alias", name) if x)
+        s, j = self.req("GET", path, ok=(200, 404), expand_wildcards="all")
+        return {i: {a: (m or {}).get("is_write_index") for a, m in v["aliases"].items()}
+                for i, v in j.items() if isinstance(v, dict) and isinstance(v.get("aliases"), dict)}
+
     def count(self, target, query):
         s, j = self.req("POST", f"/{target}/_count", {"query": query}, ok=(200, 404), ignore_unavailable=True, allow_no_indices=True, expand_wildcards="all")
         return j.get("count", 0) if s == 200 else 0
