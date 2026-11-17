@@ -40,6 +40,7 @@ class Rig:
         self.tap = PortTap(self.stub, provider, self.log, self.identity, self.hasher, ReferenceScanner(), injector=injector, **(tap_kw or {}))
         self.ing = Ingester(os.path.join(tmp, "events.db"), self.log.blob, sync=sync)
         self.msgs: List[dict] = []
+        self.call_kw: dict = {}              # keywords passed to every tap.call (e.g. {'new_count': 1}: a host that declares its boundary)
 
     def ask(self, user: Any, **kw):
         """Append a user message, call through the tap, append the assistant response (as a well-behaved host would)."""
@@ -56,6 +57,7 @@ class Rig:
         return {"model": "stub-model", "max_tokens": 256, "messages": [dict(m) for m in self.msgs]}
 
     def call(self, req: dict, **kw):
+        kw = {**self.call_kw, **kw}
         if not self.stream:
             return self.tap.call(req, **kw)
         acc = shapes.AnthropicAcc() if self.provider == "anthropic" else shapes.OpenAIAcc()

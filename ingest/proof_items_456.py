@@ -72,6 +72,7 @@ def _run_case(placement: str, seed: int, provider: str = "anthropic") -> dict:
             script = [{"content_fn": _quote_fn if provider == "anthropic" else _quote_fn_oa}] * 3
         injector = inj if placement in ("tap_user_block", "model_quotes_back") else None
         rig = Rig(d, provider, script, injector=injector, tap_kw={"clock": lambda: "2026-01-01T00:00:00Z"})
+        rig.call_kw = {"new_count": 1}            # PREREG-amend-5: these hosts repeat the user text each turn, so they declare the boundary
         q = "tell me about Dana tea"
         sysmsg = None
 
