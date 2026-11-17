@@ -3,8 +3,11 @@
   start         refuse (exit 2) unless the host has >= START_GB free; record this stream's own usage as the baseline
   check NAME    before each experiment: own usage may grow by at most CAP_GB over the baseline, else exit 3 (the run
                 stops itself and is VOID); a host under FLOOR_GB from other work is recorded, and the run continues
-  end           VOID (exit 3) if the ES node logged a flood-stage event since start (it then refuses writes)
-  operator stop: write a reason into WP_HOME/state/STOP; the next check ends the run as VOID
+  end           VOID (exit 3) unless the absence of a flood stage and the cap were OBSERVED: VOID if a STOP file exists,
+                the ES container cannot be inspected or (re)started after start, `docker logs` fails or times out, the
+                log shows a flood-stage line, own usage cannot be measured, or own usage grew over CAP_GB (review N2)
+  operator stop: write a reason into WP_HOME/state/STOP; the next check (or end) ends the run as VOID
+Any failure to measure own usage at check or end is VOID (exit 3), never a pass.
 Own usage = du of this stream's Postgres and ES data directories (inside its own containers) plus WP_HOME. Sizes in GiB
 (as df -h prints them). Prints numbers only."""
 import json
@@ -43,6 +46,11 @@ def own():
     return {"pg": pg, "es": es, "home": home, "total": pg + es + home}
 
 
+def void(why):
+    print(f"disk_gate VOID: {why}")
+    sys.exit(3)
+
+
 def free_gb():
     return shutil.disk_usage(HOME).free / GIB
 
@@ -75,7 +83,10 @@ def main(cmd, name=""):
         if STOP.exists():
             print(f"disk_gate VOID: operator stop ({STOP}: {STOP.read_text().strip()[:200]}) before {name}")
             sys.exit(3)
-        o = own()
+        try:
+            o = own()
+        except SystemExit as e:
+            void(f"own usage not measured before {name} ({e})")
         d = (o["total"] - st["base"]["total"]) / GIB
         print(f"disk_gate {name} free {f:.1f} GiB own +{d:.2f} GiB")
         if d > CAP_GB:
@@ -87,14 +98,34 @@ def main(cmd, name=""):
             print(f"disk_gate FLOOR: host free {f:.1f} GiB < {FLOOR_GB} from other work; own usage within cap, continuing")
         return
     if cmd == "end":
-        r = subprocess.run(["docker", "logs", "--since", st["since"], config.ES_CONTAINER], capture_output=True, text=True, timeout=300)
+        # Fail closed (review N2): the run is valid only if the absence of a flood stage was OBSERVED (the log read
+        # succeeded and covers the whole run) and own usage was measured and stayed within the cap.
+        if STOP.exists():
+            void(f"operator stop ({STOP.read_text().strip()[:200]}) during the run")
+        try:
+            started = subprocess.run(["docker", "inspect", "-f", "{{.State.StartedAt}}", config.ES_CONTAINER],
+                                     capture_output=True, text=True, timeout=60)
+            r = subprocess.run(["docker", "logs", "--since", st["since"], config.ES_CONTAINER], capture_output=True,
+                               text=True, timeout=300)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            void(f"cannot read the ES container's state or log ({type(e).__name__})")
+        if started.returncode != 0 or not started.stdout.strip():
+            void(f"cannot read the ES container's start time (docker inspect exit {started.returncode})")
+        if started.stdout.strip()[:19] > st["since"][:19]:
+            void(f"the ES container (re)started at {started.stdout.strip()[:19]}Z, after the run began; log coverage unknown")
+        if r.returncode != 0:
+            void(f"docker logs exited {r.returncode}; the absence of a flood stage was not observed")
         flood = sum(1 for line in (r.stdout + r.stderr).splitlines() if "flood stage" in line.lower())
-        o = own()
-        print(f"disk_gate end free {f:.1f} GiB own +{(o['total'] - st['base']['total']) / GIB:.2f} GiB "
-              f"floor_breaches {len(st['floor_breaches'])} es_flood_lines {flood}")
+        try:
+            o = own()
+        except SystemExit as e:
+            void(f"own usage not measured at end ({e})")
+        d = (o["total"] - st["base"]["total"]) / GIB
+        print(f"disk_gate end free {f:.1f} GiB own +{d:.2f} GiB floor_breaches {len(st['floor_breaches'])} es_flood_lines {flood}")
         if flood:
-            print("disk_gate VOID: the ES node hit its flood stage during the run (writes were refused)")
-            sys.exit(3)
+            void("the ES node hit its flood stage during the run (writes were refused)")
+        if d > CAP_GB:
+            void(f"own usage grew {d:.2f} GiB > cap {CAP_GB} by the end of the run")
         return
     raise SystemExit(__doc__)
 
