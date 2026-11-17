@@ -1,0 +1,66 @@
+{
+ "stamp": {
+  "commit": "ccf6b7478364ba367f7d71cd243922241fd6b426",
+  "tree": "git archive HEAD eval of a clean worktree"
+ },
+ "rows": 376,
+ "questions": 94,
+ "seed": 16096,
+ "depth": 200,
+ "fetch": 600,
+ "seconds": 597.5673604011536,
+ "state_before": {
+  "settings_sha256": "f5e7357fcb8a7349c75e5a7f2a7e1d193a88a5a1615661d9a52b9b28b468053e",
+  "hnsw_filter_heuristic": "acorn",
+  "index_uuid": "LcASMQMyShKmI3dpBOfpEw",
+  "index_health": "green",
+  "docs_count": 150526,
+  "docs_deleted": 0,
+  "cluster_status": "yellow",
+  "unassigned_shards": 5,
+  "indices_with_non_started_shards": [
+   ".ds-logs-agent_builder.otel-default-2026.11.15-000001",
+   ".ds-traces-agent_builder.otel-default-2026.11.15-000001",
+   ".workflows-executions",
+   ".workflows-step-executions",
+   "sys-evo-task"
+  ],
+  "search_rejected": {
+   "3LVbsXnaTXKnVZkwh6gGRg": 0
+  }
+ },
+ "state_after": {
+  "settings_sha256": "f5e7357fcb8a7349c75e5a7f2a7e1d193a88a5a1615661d9a52b9b28b468053e",
+  "hnsw_filter_heuristic": "acorn",
+  "index_uuid": "LcASMQMyShKmI3dpBOfpEw",
+  "index_health": "green",
+  "docs_count": 150526,
+  "docs_deleted": 0,
+  "cluster_status": "yellow",
+  "unassigned_shards": 5,
+  "indices_with_non_started_shards": [
+   ".ds-logs-agent_builder.otel-default-2026.11.15-000001",
+   ".ds-traces-agent_builder.otel-default-2026.11.15-000001",
+   ".workflows-executions",
+   ".workflows-step-executions",
+   "sys-evo-task"
+  ],
+  "search_rejected": {
+   "3LVbsXnaTXKnVZkwh6gGRg": 0
+  }
+ },
+ "request_log": {
+  "GET index_read": 2,
+  "GET cat": 4,
+  "GET cluster_health": 2,
+  "GET node_stats": 2,
+  "POST search": 2256
+ },
+ "search_flags": {
+  "n": 2256,
+  "timed_out": 0,
+  "shards_failed": 0,
+  "shards_incomplete": 0
+ },
+ "wrong_query_map_sha": "eeb62c62ee2a7a875e8e28c6ad954d51a3737991bd9d90be160aa0e40eca223a"
+}
