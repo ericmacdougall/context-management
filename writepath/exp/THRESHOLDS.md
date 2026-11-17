@@ -460,3 +460,67 @@ functions needs a sequential scan of a large table (each other statement has an 
 code's reason to drop enable_seqscan (7f6536c: it pushed the planner onto the tenant primary key) does not apply once
 the tenant predicate is outside the fence. (3) The controls also restore the pre-fix function headers (checked equal
 to the pre-fix bodies apart from comments). Gates, sizes, states, counts and control requirements as in 18 and 18b.
+
+## Amendment 14a (2026-11-17, after the E1 run inside the VOID run_all at fd4ed53, before any further E1 run): E1 judging
+This amendment changes what counts as an E1 violation. It is not a harness-only repair.
+
+Observed at fd4ed53 (VOID run; results/run_all-fd4ed53-VOID/e2e_E1.bf4bd8db3b372a49.json):
+- Fenced arm: 40 runs, 28 overlapping, 28/28 overlapping held. Seven non-overlapping runs were judged violated, and 5
+  runs were errors.
+- Control arm: 23/23 overlapping runs violated, and 6 runs were errors.
+- That run's verdict, FAIL, stands for that run.
+
+Cause 1, the oracle. P1 tags every document it sends. In the 7 runs, P1's bulk went out while P1 still held the lease:
+P1's pre-bulk instant came before P2's fenced_at, P1 wrote 6 documents and none was refused. Its legitimate documents
+were counted as stale.
+
+Cause 2, the product. All 11 errors (5 fenced, 6 control) are P1 processes that died without reporting. Each raised
+StaleEpoch (4, in families.fence_es) or StaleWrite (7, in the cursor insert) from Projector.start(), which step() calls
+outside its stale-error handler. This is fixed in the product (amendment 19), not excused by the harness. A P1 process
+that dies without reporting stays a harness error.
+
+New instants, on the database clock:
+- P1 bulk_done, taken after bulk_fenced returns.
+- P2 cas_start, taken before start(force=True).
+
+Each run falls in exactly one window:
+- **before_takeover:** P1 bulk_done < P2 cas_start. P1 was the live writer and its documents are legitimate. Property:
+  every event of the tenant is in Elasticsearch exactly once; P1-tagged documents are allowed.
+- **in_flight:** P1 sent a bulk, the run is not before_takeover, and P1's pre-bulk instant < P2 fenced_at (the bulk and
+  CAS intervals intersect). Judged strictly: no P1-tagged document, and every event exactly once. A P1 document here is
+  a violation, never excused. These runs are counted and reported separately.
+- **after_takeover:** every other run (P1's bulk sent after fenced_at, or P1 never sent one). Judged strictly.
+
+Unchanged:
+- The overlap definition: P1 read < P2 fenced_at < P1 pre-bulk instant. An overlapping run is never before_takeover.
+- The thresholds of amendment 14.
+
+Plan: one stamped E1 run at the fixed code from a pinned tree, with window counts reported per arm.
+
+## Amendment 19 (2026-11-17, written before the test's first run): projector start race (exp/projector_start_race.py)
+Property: a projector that loses the start-up race to a forced takeover drops its lease and returns -1 from step(), as
+step()'s docstring states. The test is deterministic: one process, two connections, and the takeover injected by
+wrapping families.fence_es. Each case runs on a fresh tenant with 6 events, R=5 times.
+
+| Case | Takeover | Holds when |
+|---|---|---|
+| A | Between acquire and fence_es; P1's CAS then sees w<e+1> | P1.step() returns -1 without raising; P1 holds no lease; the lease row's holder is the taker; the taker then projects all 6 events exactly once |
+| B | Between fence_es and the cursor insert; P1's insert is fenced | As for A |
+| C | A fresh takeover before each of P1's fence_es calls | P1.run(max_rounds=5) returns False without raising after exactly 5 starts; P1 holds no lease; the holder is the last taker |
+
+Control (one mechanism): Projector.step replaced by the fd4ed53 body verbatim, with start() outside the handler.
+
+PASS = the fixed arm holds R/R in each of A, B and C with 0 errors, AND the control is violated R/R in each case.
+Otherwise FAIL.
+
+Order:
+1. Failing-first: the test runs once at its own commit, before the fix. Its fixed arm must FAIL there, because the code
+   under test is still the fd4ed53 step().
+2. One stamped run at the fix commit.
+
+Fix shape: step() moves start() inside its try, so StaleWrite, StaleEpoch and LeaseLost raised by start() drop the
+lease and return -1. Every other exception still propagates; for example, the RuntimeError for a family with other than
+one index.
+
+Residual, reported and not fixed: a non-stale failure inside start() leaves the lease it just took held until its TTL
+expires (30 s).
