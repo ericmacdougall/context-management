@@ -292,3 +292,33 @@ Control (one patch, reverted): wp_erasure_cascade with its mention branch remove
 SEQ mode, R=5.
 PASS = SEQ holds 5/5 AND CONC holds 10/10 with >= 5 overlapping runs AND 0 errors in both AND the control violates 5/5.
 CONC with < 5 overlapping runs and no violation = INCONCLUSIVE. Any error or violation in SEQ or CONC = FAIL.
+Amendment 16a (2026-11-17, harness only, thresholds unchanged): a cascade that fails has no after_cascade instant; its
+interval then ends when its erase() call returns (database clock), so a failed concurrent run still gets an overlap
+witness. The 4f403dd shake-down scored a deadlocked concurrent run as non-overlapping for this reason.
+
+## Amendment 17 (2026-11-17, written before the reproducer runs): lock order of erasure, holds and identifiers
+Finding (shake-down at 4f403dd, PG log): two concurrent erasures of subjects who mention each other deadlock. Each
+cascade batch first runs wp_hold_check (FOR UPDATE on its own subject row), then wp_erasure_apply share-locks every
+subject the batch touches; A holds A and waits for B, B holds B and waits for A. The failed job was left retryable
+(state marked, claim expired, last_error_type DeadlockDetected) and a later sweep finished it (done).
+Suspected by reading the schema, same class: wp_identifier_declare(Y) locks subject Y FOR UPDATE then identifier_epochs
+FOR UPDATE, while an append by X that mentions Y locks identifier_epochs FOR SHARE then Y FOR SHARE.
+Reproducer exp/lock_order.py, deterministic: two transactions on separate connections, the interleaving forced by
+waiting (pg_stat_activity, wait_event_type Lock) until the first blocked statement is really waiting. Cases:
+  MM (R=10) both jobs marked; T1 runs wp_hold_check(A) then T2 wp_hold_check(B), then T1 and T2 each run one
+     wp_erasure_cascade batch. Holds iff both batches commit and no DeadlockDetected.
+  MK (R=5) T1 holds one open cascade batch of A (share on B); T2 claims and marks B. Holds iff T2 commits after T1
+     commits, no deadlock.
+  HP (R=5) T1 holds one open cascade batch of A; the legal role places a hold on B. Holds iff the placement waits for
+     T1, then succeeds, and wp_hold_check(B) afterwards raises WPS16 (the hold is queued, not lost).
+  HR (R=5) a hold on B exists; T1 holds one open cascade batch of A; the legal role releases the hold. Holds iff the
+     release waits for T1, then succeeds, no deadlock.
+  DA (R=5) T1 takes subject Y FOR UPDATE (the first lock of wp_identifier_declare) and waits; T2 appends an event by X
+     that mentions Y; T1 then runs wp_identifier_declare(Y). Holds iff no DeadlockDetected (one of them may be refused
+     WPS17 mention_scan_stale or succeed; both outcomes are retryable by design).
+PASS (at the fixed code) = every case holds in all R runs with 0 deadlocks and 0 other errors, AND controls (one patch
+each, reverted): MM with the pre-fix wp_hold_check (FOR UPDATE) deadlocks in >= 9/10; DA with the pre-fix
+wp_identifier_declare lock order deadlocks in >= 4/5. Before the fix the same module is expected to FAIL (MM, and DA
+if the reading is right); that run is the failing-first evidence, reported, not a PASS.
+Not covered here: the policy core's revoke and tenant-authority row (DESIGN.md lock-order row); they enter the write
+path with build step 3 and are checked there.
