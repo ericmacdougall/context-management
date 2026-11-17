@@ -713,3 +713,55 @@ requirement. Otherwise FAIL.
 Order:
 1. This amendment, alone.
 2. The fixture and gate change, then one stamped run at the post-fix commit named by the rerun amendment.
+
+## Amendment 23 (2026-11-17, review-2, written before any run it governs): reruns under the fixed gate at the post-fix commit
+Why:
+- **Review-2 N2.** The disk gate's `end` failed open until 72c0708: it ignored the return code of `docker logs` and did
+  not reject an own-usage growth over the cap. Every single run so far ran under that gate (list below).
+- **Review-2 N1.** The fix changes product code (families.fence_es, Projector._bulk, Projector.step), so every experiment
+  that exercises the projector has to run again at the fixed code in any case.
+- **Chronology (review-2 item a).** Amendment 20 (9cbc798), the general rule that replaced run_all with gated single
+  runs, was committed after the 62c6be5 singles. Only three of those runs had an earlier amendment that named a
+  standalone run: E1 (14a), projector_start_race (19 and 19a) and heldout_secrets (15b). The others ran before any rule
+  for single runs existed: races, plan_stability, size_probe, review_fix F1, d4_rescan_es, d4_store_mark, d3_identifier
+  and lock_order.
+
+Runs under the old gate (recorded where they are, never stamped under the fixed gate):
+- **5d26746:** projector_start_race, FAIL (19a).
+- **62c6be5:** projector_start_race, E1, races, plan_stability, size_probe, heldout_secrets, review_fix F1,
+  d4_rescan_es, d4_store_mark, d3_identifier and lock_order.
+- **9cbc798, batch step1-b:** all complete, chain end 13:35:43Z, every run with es_flood_lines 0 and own growth between -0.01 and +0.02 GiB:
+  guard_check start PASS; static_check (no violations); es_semantics pass; old_repro n_old (N1 to N7 violated on the old
+  code, as intended); review_fix F3, F4, F5, F7, F1S and F6 PASS; scope_hold M and H PASS; n_new N1, N2, N5 and N8
+  PASS; row1_zombie, row23_latecommit, e_verify, registry_marker, d1, row19, row6, mutual_mentions, d2 and
+  phys_purge PASS; e2e E2 and E3 PASS; guard_check end PASS. No FAIL.
+  - An operator STOP written at 11:32:50Z did not halt that batch. The old `end` ignored STOP, and the next run's
+    `start` deleted it (fixed in ba827fa).
+  - Any FAIL in batch b is reported beside the batch-c result of the same experiment.
+
+Under the fixed gate, not stamped: projector_es_fault at 1539a75 (amendment 21, failing-first;
+projector_es_fault.339305ed8ae5fc13). The fixed arm, still the 1fcf3f7 code, was violated 5/5 in CAS, ITEM, REQ and
+CONN, with 0 errors; STALE held 5/5 in both arms. That is the failing-first result the amendment requires.
+
+The rule for batch c:
+- **Named commit.** The commit that adds this amendment. It changes only this file. Its product and experiment code
+  equal those of the N1 fix commit 8a03b80, and runkit/specs/step1-c.txt was committed before it (24cc6a3).
+- **Pinned tree.** It is built from `git archive <named commit>`, never from a working tree. Its GIT_HEAD is the
+  pushed SHA.
+- **Batch.** runkit/specs/step1-c.txt: every step-1 experiment that uses the stores, in run_all order with run_all's
+  arguments, plus projector_es_fault (amendment 21) and size_probe (exploratory, no verdict). It starts with cleanup,
+  wp.setup --reset and disk_gate preflight, runs plan_stability last (amendment 22), then guard_check end.
+- **Once only.** Each experiment runs exactly once, at the named commit, through runkit/launch_one.sh and
+  chain_singles.sh with the fixed gate (72c0708) and the chain-level stop (ba827fa).
+- **VOID.** A run voided by a gate (flood stage, cap, unreadable log or usage, ES restart, operator stop) may be rerun
+  at the same commit. The rerun is a new chain over the rest of the spec, starting at the voided experiment. Both the
+  void and the rerun are recorded.
+- **FAIL.** A FAIL is recorded and not rerun.
+- **No verdict.** If an experiment exits non-zero or writes no result file, it counts as a FAIL at that commit and is
+  not rerun there. If the cause is a harness defect, a dated amendment says so and the experiment runs at a new
+  commit; the FAIL stands, as in 19a.
+- **Thresholds.** Unchanged, as in each experiment's amendments (21 for projector_es_fault, 22 for plan_stability).
+- **Superseding.** These results replace the old-gate results as the stamped step-1 results. The old-gate files stay
+  in the repository, labelled as old-gate.
+- **heldout_secrets is not rerun.** It uses no store, so the flood-stage gate has nothing to judge in it, and its FAIL
+  is not rerun (amendment 20). ASSUMPTION, open to main's ruling.
