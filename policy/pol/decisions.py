@@ -27,7 +27,7 @@ from .enforce import Enforcer, PolicyDenied
 from .labels import Label, LabelError, canon_subject
 
 CLIENT_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
-IDENTITY_KEYS = frozenset(["tenant", "principal", "channel", "id"])
+IDENTITY_KEYS = frozenset(["tenant", "principal", "channel", "id", "actor", "trust_origin"])     # step 2: origin is derived, never sent
 BODY_KEYS = frozenset(["type", "client_id", "idem", "req", "value", "label", "based_on", "proposal", "proposal_hash", "pending", "verb",
                        "choose", "target", "role"])
 
@@ -198,6 +198,7 @@ class DecisionService:
             return self._refuse(p.id, "unknown_tenant", body)
         ev = {k: v for k, v in body.items() if k not in ("client_id", "value", "label")}     # the label enters the event only tokenised
         ev.update(id=p.id + "/" + cid, tenant=session.tenant, principal=p.id, channel=session.channel)
+        ev["actor"], ev["trust_origin"] = _core.origin(eng._st.kind(p.id), session.channel)       # from the session, as dc.submit
         ref, created = None, False
         if "value" in body:
             if not isinstance(body["value"], str) or "label" not in body:

@@ -11,6 +11,7 @@ import copy
 import hashlib
 import json
 
+from .ids import IdError, canon as canon_id, skeleton
 from .labels import Label, LabelError, join
 
 KINDS = ("human", "agent", "analyst")
@@ -336,6 +337,17 @@ def _resolve(view, req, h, ev, rl):
 
 
 # ------------------------------------------------------------------------------------------------ in-memory state (the view + delta)
+ORIGIN_CHANNELS = ("owner_ui", "owner_cli")
+
+
+def origin(kind, channel):
+    """(actor, trust_origin) DERIVED from a session's principal kind and channel, never taken from a request (step 2; dc._origin is the
+    same table). ASSUMPTION (vocabulary from COMPOSITION.md items 1 and 3): only a human on an owner channel is a typed user decision."""
+    if kind == "human" and channel in ORIGIN_CHANNELS:
+        return "user", "user_typed"
+    return "assistant", "agent_generated"
+
+
 class MemoryState:
     """Per-tenant state with O(1) point reads and O(1) delta ops (revoke: O(open items of the revoked principal))."""
 
@@ -343,6 +355,18 @@ class MemoryState:
         t = config["tenant"]
         if not isinstance(t, str) or not t or any(k not in KINDS for k in config["principals"].values()):
             raise ValueError("tenant must be a non-empty str and principal kinds in %s" % (KINDS,))
+        seen = {}
+        for pid in config["principals"]:
+            try:
+                ok = canon_id(pid) == pid
+            except IdError:
+                ok = False
+            if not ok:
+                raise ValueError("principal id %r is not canonical" % (pid,))
+            sk = skeleton(pid)
+            if sk in seen:                  # step 2: look-alike ids would share sessions' meaning in logs and audits; refuse the config
+                raise ValueError("principal id %r looks like %r" % (pid, seen[sk]))
+            seen[sk] = pid
         self.tenant = t
         self.principals = dict(config["principals"])
         self.authority = {r: set(v) for r, v in config["authority"].items()}
