@@ -62,6 +62,13 @@ def call_poisoned(fn_name="turn_read", args=(TENANT, SID, EID, []), attempt=5, e
 
 
 class AlertFromTheWrapper(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.spool = os.path.join(tempfile.mkdtemp(), "spool.jsonl")
+        self._env = mock.patch.dict(os.environ, {"ENGINE_ALERT_SPOOL": self.spool})
+        self._env.start()
+        self.addCleanup(self._env.stop)
+
     def run_case(self, **kw):
         calls, order = [], []
         fake = mock.Mock(side_effect=lambda *a: (calls.append(a), order.append("alert"), True)[2])
@@ -77,7 +84,7 @@ class AlertFromTheWrapper(unittest.TestCase):
 
     def test_a_poison_raises_a_durable_alert_before_the_non_retryable_failure(self):
         calls, order, raised, log = self.run_case()
-        self.assertEqual(calls, [(TENANT, SID, EID, "poison", "RuntimeError")])
+        self.assertEqual(calls, [(TENANT, SID, EID, "poison", "RuntimeError", 5)])
         self.assertEqual(order, ["alert", "raise"])
         self.assertEqual((raised.type, raised.non_retryable), ("Poison", True))
 
@@ -103,15 +110,6 @@ class AlertFromTheWrapper(unittest.TestCase):
         self.assertEqual(calls, [])
         self.assertIsInstance(raised, activities.psycopg.OperationalError)
 
-    def test_if_the_alert_cannot_be_written_the_activity_retries_instead_of_going_poison_without_a_record(self):
-        with mock.patch.object(pgstore, "raise_alert", mock.Mock(side_effect=activities.psycopg.OperationalError("pg down")), create=True):
-            try:
-                call_poisoned()
-                got = None
-            except Exception as e:  # noqa: BLE001
-                got = e
-            self.assertIsInstance(got, activities.psycopg.OperationalError, "the alert error propagates (retry), not Poison: %r" % (got,))
-
     def test_a_repeat_does_not_log_again(self):
         fake = mock.Mock(return_value=False)                      # already existed
         err = io.StringIO()
@@ -121,16 +119,83 @@ class AlertFromTheWrapper(unittest.TestCase):
         self.assertEqual(fake.call_count, 1)
         self.assertEqual(err.getvalue(), "")
 
-    def test_a_non_turn_activity_poison_is_attached_to_the_session_not_an_event(self):
+    def test_a_non_turn_session_activity_poison_is_attached_to_the_session_not_an_event(self):
         calls, _, _, _ = self.run_case(fn_name="rollup", args=(TENANT, SID, 123))
-        self.assertEqual(calls, [(TENANT, SID, "activity:rollup", "poison", "RuntimeError")])
-        calls, _, raised, _ = self.run_case(fn_name="get_config", args=("target_queue",))
-        self.assertEqual(calls, [], "no session to attach to")
+        self.assertEqual(calls, [(TENANT, SID, "activity:rollup", "poison", "RuntimeError", 5)])
+
+    def test_an_activity_with_no_session_alerts_under_the_unattached_key_and_fails_loudly(self):
+        calls, _, raised, log = self.run_case(fn_name="get_config", args=("target_queue",))
+        self.assertEqual(calls, [("-", "-", "activity:get_config", "poison", "RuntimeError", 5)])
         self.assertEqual(raised.type, "Poison")
+        self.assertEqual(json.loads(log.strip().splitlines()[-1])["engine_alert"], "poison_unattached")
+
+    # ---- F2: a persistent alert-write failure is bounded and has a defined fail-safe
+    def failing_writes(self, attempt):
+        err = io.StringIO()
+        boom = mock.Mock(side_effect=activities.psycopg.OperationalError("alert table not writable"))
+        with mock.patch.object(pgstore, "raise_alert", boom, create=True), contextlib.redirect_stderr(err):
+            try:
+                call_poisoned(attempt=attempt)
+                got = None
+            except Exception as e:  # noqa: BLE001
+                got = e
+        return got, err.getvalue()
+
+    def test_a_failing_alert_write_is_retried_with_the_activity_for_a_bounded_number_of_attempts(self):
+        for attempt in range(5, 10):
+            got, _ = self.failing_writes(attempt)
+            self.assertIsInstance(got, activities.psycopg.OperationalError, "attempt %d retries" % attempt)
+
+    def test_after_the_bound_the_alert_is_spooled_loudly_and_poison_goes_through(self):
+        got, log = self.failing_writes(10)
+        self.assertEqual((getattr(got, "type", None), getattr(got, "non_retryable", None)), ("Poison", True),
+                         "persistent alert failure must not retry for ever: got %r" % (got,))
+        rec = json.loads(log.strip().splitlines()[-1])
+        self.assertEqual((rec["engine_alert"], rec["write_error"], rec["event"]), ("poison_alert_spooled", "OperationalError", EID))
+        with open(self.spool) as fh:
+            spooled = [json.loads(x) for x in fh]
+        self.assertEqual([(r["tenant"], r["session"], r["event"], r["class"]) for r in spooled], [(TENANT, SID, EID, "RuntimeError")])
+        self.assertEqual(oct(os.stat(self.spool).st_mode & 0o777), "0o600")
+        self.assertNotIn("SENSITIVE", json.dumps(spooled))
+
+    def test_the_spool_drains_into_the_alert_table_and_keeps_what_fails(self):
+        from engine import alertspool
+        for i in range(3):
+            alertspool.append({"tenant": TENANT, "session": SID, "event": "%s/%d" % ("t1/s1", i), "class": "RuntimeError", "attempt": 10})
+        seen = []
+
+        def write(rec):
+            if rec["event"].endswith("/1"):
+                raise RuntimeError("still failing")
+            seen.append(rec["event"])
+        self.assertEqual(alertspool.drain(write), {"written": 2, "kept": 1})
+        self.assertEqual(seen, ["t1/s1/0", "t1/s1/2"])
+        self.assertEqual(alertspool.drain(lambda r: None), {"written": 1, "kept": 0})
+        self.assertEqual(alertspool.drain(lambda r: None), {"written": 0, "kept": 0})
+        self.assertFalse(os.path.exists(self.spool))
+
+
+class ResubmissionPlan(unittest.TestCase):
+    def test_a_resubmission_records_its_origin_and_depth(self):
+        new = pgstore.plan_resubmission({"n": 1, "text": "x"}, "t1/s1/2")
+        self.assertEqual(new, {"n": 1, "text": "x", "retry_of": "t1/s1/2", "retry_depth": 1})
+
+    def test_the_chain_is_bounded_so_a_still_poisoned_input_cannot_loop(self):
+        content = {"n": 1}
+        for expected in (1, 2, 3):
+            content = pgstore.plan_resubmission(content, "t1/s1/%d" % expected)
+            self.assertEqual(content["retry_depth"], expected)
+        with self.assertRaises(pgstore.RetryRefused):
+            pgstore.plan_resubmission(content, "t1/s1/9")
+
+    def test_malformed_content_or_depth_is_refused(self):
+        for bad in ("text", ["a"], None, {"retry_depth": "1"}, {"retry_depth": True}, {"retry_depth": -1}):
+            with self.assertRaises(pgstore.RetryRefused, msg=repr(bad)):
+                pgstore.plan_resubmission(bad, "t1/s1/2")
 
 
 class SqlCarriesTheSkip(unittest.TestCase):
-    def test_both_queries_exclude_open_and_acked_alerts_in_sql(self):
+    def test_both_queries_exclude_alerted_inputs_in_sql(self):
         for fn in (pgstore.has_older_unprocessed, pgstore.unprocessed_inputs):
             seen = []
 
@@ -157,62 +222,129 @@ class SqlCarriesTheSkip(unittest.TestCase):
                 else:
                     fn(TENANT, SID)
             self.assertIn("engine_alerts", seen[0], fn.__name__)
-            self.assertIn("'open','acked'", seen[0], fn.__name__)
-        self.assertNotIn("released", pgstore.ALERT_SKIP)
 
     def test_schema_file_defines_the_table_and_the_statuses(self):
         here = os.path.dirname(os.path.dirname(__file__))
-        ddl = open(os.path.join(here, "engine_schema.sql")).read()
+        with open(os.path.join(here, "engine_schema.sql")) as fh:
+            ddl = fh.read()
         self.assertIn("create table if not exists engine_alerts", ddl)
         self.assertIn("check (status in ('open','acked','released'))", ddl)
+        self.assertIn("retried_as", ddl)
 
 
 @unittest.skipUnless(os.environ.get("ENGINE_TEST_PG") == "1", "needs a scratch engine Postgres: ENGINE_TEST_PG=1 (t2-dev, run lock)")
 class PostgresBacked(unittest.TestCase):
-    """25 poisoned inputs in ONE session (the old skip list held 20), then one good input."""
+    """Real Postgres, the real activity wrapper and the real store functions. The poison outcomes are PRODUCED (the engine's own test
+    knob ENGINE_POISON_SEQS makes read_digest fail deterministically), never hand-made alert rows."""
     N_POISON = 25
 
     def setUp(self):
         pgstore.ensure_alert_schema()
         self.sid = "pa" + uuid.uuid4().hex[:8]
-        self.poison = [pgstore.append_input(TENANT, self.sid, "p%d" % i, {"n": i})[0] for i in range(self.N_POISON)]
-        self.good = pgstore.append_input(TENANT, self.sid, "good", {"n": 999})[0]
 
-    def test_poisoned_inputs_beyond_twenty_do_not_block_the_next_one_and_are_not_requeued(self):
-        # witness: before any alert, every input is unprocessed and the good one waits behind the poisoned ones
-        self.assertTrue(pgstore.has_older_unprocessed(TENANT, self.sid, self.good, skip=self.poison[:20]),
-                        "prior behaviour: a skip list capped at 20 leaves input 21 to block input 26")
-        for eid in self.poison:
-            self.assertTrue(pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError"))
-        self.assertFalse(pgstore.has_older_unprocessed(TENANT, self.sid, self.good, skip=[]), "no carried list needed")
-        self.assertEqual(pgstore.unprocessed_inputs(TENANT, self.sid, limit=100), [self.good], "alerted inputs are never re-queued")
+    def inputs(self, n):
+        return [pgstore.append_input(TENANT, self.sid, "p%d" % i, {"n": i})[0] for i in range(n)]
+
+    def poison_through_the_wrapper(self, eid, dead_letter_works):
+        """Drive turn_read to its real poison outcome (attempt 5), then the workflow's reaction: dead_letter."""
+        seq = str(pgstore.keys.parse_event_id(eid)[2])
+        with mock.patch.dict(os.environ, {"ENGINE_POISON_SEQS": seq}), mock.patch.object(activities, "_attempt", lambda: 5):
+            with self.assertRaises(Exception) as cm:
+                activities.turn_read(TENANT, self.sid, eid, [])
+            self.assertEqual(getattr(cm.exception, "type", None), "Poison")
+        env = {} if dead_letter_works else {"ENGINE_FAIL_DEAD_LETTER": "1"}
+        with mock.patch.dict(os.environ, env), mock.patch.object(activities, "_attempt", lambda: 5):
+            try:
+                activities.dead_letter(TENANT, self.sid, eid, "Poison")
+                return "dead"
+            except Exception as e:  # noqa: BLE001
+                self.assertEqual(getattr(e, "type", None), "Poison")
+                return "stuck"
+
+    def process_like_the_workflow(self, eid):
+        digest = activities.turn_read(TENANT, self.sid, eid, [])
+        key = activities.turn_effect(TENANT, self.sid, eid)
+        return activities.turn_append(TENANT, self.sid, eid, digest, key, "v1")
+
+    def test_more_than_twenty_poisoned_inputs_do_not_block_the_next_one_and_are_not_requeued(self):
+        poison = self.inputs(self.N_POISON)
+        good = pgstore.append_input(TENANT, self.sid, "good", {"n": 999})[0]
+        self.assertTrue(pgstore.has_older_unprocessed(TENANT, self.sid, good, skip=poison[:20]),
+                        "witness (the reviewed 20-item skip list): input 21 still blocks input 26")
+        for eid in poison:
+            self.poison_through_the_wrapper(eid, dead_letter_works=False)
+        self.assertFalse(pgstore.has_older_unprocessed(TENANT, self.sid, good, skip=[]))
+        self.assertEqual(pgstore.unprocessed_inputs(TENANT, self.sid, limit=100), [good])
         self.assertEqual(len([r for r in pgstore.list_alerts(TENANT, "open", 1000) if r[1] == self.sid]), self.N_POISON)
 
-    def test_alert_is_idempotent_and_survives_a_fresh_connection_pool(self):
-        self.assertTrue(pgstore.raise_alert(TENANT, self.sid, self.poison[0], "poison", "RuntimeError"))
-        self.assertFalse(pgstore.raise_alert(TENANT, self.sid, self.poison[0], "poison", "RuntimeError"))
+    def test_alert_is_idempotent_per_input_and_survives_a_fresh_pool(self):
+        eid = self.inputs(1)[0]
+        self.assertTrue(pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError", 5))
+        self.assertFalse(pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError", 6))     # crash-retry
+        self.assertFalse(pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError", 5))
         rows = [r for r in pgstore.list_alerts(TENANT, "open", 1000) if r[1] == self.sid]
-        self.assertEqual((len(rows), rows[0][5]), (1, 2))
-        pgstore._pool = None                                      # a restarted worker has a new pool; the row is in Postgres
+        self.assertEqual((len(rows), rows[0][5]), (1, 6), "one row; last_attempt is the highest seen, not a count")
+        pgstore._pool = None
         self.assertEqual(len([r for r in pgstore.list_alerts(TENANT, "open", 1000) if r[1] == self.sid]), 1)
 
-    def test_ack_keeps_the_skip_and_release_lifts_it_and_a_new_poison_reopens(self):
-        eid = self.poison[0]
-        pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError")
-        self.assertTrue(pgstore.set_alert_status(TENANT, self.sid, eid, "poison", "acked", "oncall"))
+    def release_case(self, dead_letter_works):
+        poisoned, later = self.inputs(2)
+        self.assertEqual(self.poison_through_the_wrapper(poisoned, dead_letter_works), "dead" if dead_letter_works else "stuck")
+        self.assertNotIn(poisoned, pgstore.unprocessed_inputs(TENANT, self.sid, limit=100), "witness: skipped after the real poison")
+        # the cause is fixed: the knob is off for the retry. The new input is a different seq, so it is not poisoned.
+        new = pgstore.release_alert(TENANT, self.sid, poisoned, "poison", "oncall")
+        self.assertNotEqual(new, poisoned)
+        self.assertEqual(pgstore.release_alert(TENANT, self.sid, poisoned, "poison", "oncall"), new, "idempotent")
+        pending = pgstore.unprocessed_inputs(TENANT, self.sid, limit=100)
+        self.assertEqual(pending, [later, new], "the original stays skipped; the retry goes to the end of the sequence")
+        for eid in pending:
+            counted = self.process_like_the_workflow(eid)
+            self.assertTrue(counted[1])
+        self.assertEqual(pgstore.unprocessed_inputs(TENANT, self.sid, limit=100), [])
+        self.assertTrue(pgstore.verify_session_chain(TENANT, self.sid)[0], "the hash chain is intact (nothing was deleted or rewritten)")
+        released = [r for r in pgstore.list_alerts(TENANT, "released", 1000) if r[1] == self.sid]
+        self.assertEqual([(r[2], r[9]) for r in released], [(poisoned, new)])
+
+    def test_release_after_a_successful_dead_letter_retries_the_input(self):
+        self.release_case(dead_letter_works=True)
+
+    def test_release_after_a_failed_dead_letter_retries_the_input(self):
+        self.release_case(dead_letter_works=False)
+
+    def test_a_resubmission_that_poisons_again_cannot_loop(self):
+        eid = self.inputs(1)[0]
+        for depth in range(3):
+            self.poison_through_the_wrapper(eid, dead_letter_works=True)
+            eid = pgstore.release_alert(TENANT, self.sid, eid, "poison", "oncall")
+            # poison again: make the new input's seq the poisoned one
+            self.poison_through_the_wrapper(eid, dead_letter_works=True)
+        with self.assertRaises(pgstore.RetryRefused):
+            pgstore.release_alert(TENANT, self.sid, eid, "poison", "oncall")
+
+    def test_release_refuses_unknown_alerts_and_other_tenants(self):
+        eid = self.inputs(1)[0]
+        with self.assertRaises(pgstore.RetryRefused):
+            pgstore.release_alert(TENANT, self.sid, eid, "poison", "oncall")          # no alert yet
+        self.poison_through_the_wrapper(eid, True)
+        with self.assertRaises(pgstore.RetryRefused):
+            pgstore.release_alert("t2", self.sid, eid, "poison", "oncall")            # event id of another tenant
+
+    def test_ack_keeps_the_input_skipped(self):
+        eid = self.inputs(1)[0]
+        self.poison_through_the_wrapper(eid, False)
+        self.assertTrue(pgstore.ack_alert(TENANT, self.sid, eid, "poison", "oncall"))
+        self.assertFalse(pgstore.ack_alert(TENANT, self.sid, eid, "poison", "oncall"))
         self.assertNotIn(eid, pgstore.unprocessed_inputs(TENANT, self.sid, limit=100))
-        pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError")      # a repeat does not reopen an acked alert
-        self.assertEqual([r[6] for r in pgstore.list_alerts(TENANT, "acked", 1000) if r[2] == eid], ["acked"])
-        self.assertTrue(pgstore.set_alert_status(TENANT, self.sid, eid, "poison", "released", "oncall"))
-        self.assertIn(eid, pgstore.unprocessed_inputs(TENANT, self.sid, limit=100))   # retried
-        pgstore.raise_alert(TENANT, self.sid, eid, "poison", "RuntimeError")      # and it failed again: reopened
-        self.assertEqual([r[6] for r in pgstore.list_alerts(TENANT, "open", 1000) if r[2] == eid], ["open"])
 
     def test_one_tenants_alert_does_not_hide_another_tenants_input(self):
-        other = "t2"
-        eid2 = pgstore.append_input(other, self.sid, "x", {"n": 1})[0]
-        pgstore.raise_alert(TENANT, self.sid, self.poison[0], "poison", "RuntimeError")
-        self.assertIn(eid2, pgstore.unprocessed_inputs(other, self.sid, limit=100))
+        eid2 = pgstore.append_input("t2", self.sid, "x", {"n": 1})[0]
+        eid1 = self.inputs(1)[0]
+        pgstore.raise_alert(TENANT, self.sid, eid1, "poison", "RuntimeError", 5)
+        self.assertIn(eid2, pgstore.unprocessed_inputs("t2", self.sid, limit=100))
+
+    def test_unattached_alert_is_stored(self):
+        self.assertIn(pgstore.raise_alert("-", "-", "activity:get_config", "poison", "RuntimeError", 5), (True, False))
+        self.assertTrue([r for r in pgstore.list_alerts("-", "open", 1000) if r[2] == "activity:get_config"])
 
 
 if __name__ == "__main__":

@@ -161,17 +161,24 @@ def read_digest(tenant, sid, event_id):
     return "d" + hashlib.sha256(row[2].encode()).hexdigest()[:16]
 
 
-# An input with an open or acked alert is skipped by SQL: newer inputs are never held behind it and reconcile never re-queues
-# it, however many such inputs a session has (the carried skip list the workflow passes is now only an optimisation).
+# An input with ANY alert row (open, acked, or released = resubmitted as a new input) is skipped by SQL: newer inputs are never
+# held behind it and reconcile never re-queues it, however many such inputs a session has. The workflow's carried skip list is
+# no longer needed for correctness.
 ALERT_SKIP = (" and not exists (select 1 from engine_alerts a where a.tenant_id=e.tenant_id and a.session_id=e.session_id "
-              "and a.event_id=e.event_id and a.status in ('open','acked'))")
+              "and a.event_id=e.event_id)")
 ALERT_KINDS = ("poison",)
 ALERT_STATUSES = ("open", "acked", "released")
+MAX_RETRY_DEPTH = 3
+UNATTACHED = "-"
 _ALERT_DDL = ("create table if not exists engine_alerts (tenant_id text not null, session_id text not null, event_id text not null, "
-              "kind text not null, detail text not null default '', count int not null default 1, status text not null default 'open', "
+              "kind text not null, detail text not null default '', last_attempt int not null default 0, status text not null default 'open', "
               "first_seen timestamptz not null default now(), last_seen timestamptz not null default now(), updated_by text, "
-              "updated_at timestamptz, primary key (tenant_id, session_id, event_id, kind), "
+              "updated_at timestamptz, retried_as text, primary key (tenant_id, session_id, event_id, kind), "
               "check (status in ('open','acked','released')))")
+
+
+class RetryRefused(ValueError):
+    """The alert cannot be released (unknown, erased subject, or the retry chain is too deep)."""
 
 
 def ensure_alert_schema():
@@ -181,40 +188,89 @@ def ensure_alert_schema():
         conn.execute("create index if not exists engine_alerts_open on engine_alerts (tenant_id, status)")
 
 
-def raise_alert(tenant, sid, event_id, kind, detail=""):
-    """Record (or repeat) an alert. Returns True when this call created it. `detail` is an exception CLASS name or a short
-    fixed phrase, never content. A repeat raises count and last_seen. An acked alert stays acked (the operator accepted it); a
-    released alert (the operator asked for a retry) reopens, because the retry has failed again."""
-    keys.check_tenant(tenant)
-    keys.check_part(sid, "session id")
+def raise_alert(tenant, sid, event_id, kind, detail="", attempt=0):
+    """Record (or repeat) an alert. Returns True when this call created it. Idempotent per (tenant, session, input, kind): a retry
+    after a crash between commit and delivery only moves `last_attempt` (the highest activity attempt seen) and `last_seen`; it is
+    not an occurrence count. `detail` is an exception CLASS name or a short fixed phrase, never content. tenant and sid may both be
+    UNATTACHED ('-') for an activity that has no session."""
+    if (tenant, sid) != (UNATTACHED, UNATTACHED):
+        keys.check_tenant(tenant)
+        keys.check_part(sid, "session id")
     if kind not in ALERT_KINDS:
         raise ValueError("unknown alert kind %r" % (kind,))
     with pool().connection() as conn:
         row = conn.execute(
-            "insert into engine_alerts(tenant_id,session_id,event_id,kind,detail) values (%s,%s,%s,%s,%s) "
-            "on conflict (tenant_id,session_id,event_id,kind) do update set count=engine_alerts.count+1, last_seen=now(), "
-            "status=case when engine_alerts.status='released' then 'open' else engine_alerts.status end "
-            "returning (xmax = 0)", (tenant, sid, event_id, kind, str(detail)[:200])).fetchone()
+            "insert into engine_alerts(tenant_id,session_id,event_id,kind,detail,last_attempt) values (%s,%s,%s,%s,%s,%s) "
+            "on conflict (tenant_id,session_id,event_id,kind) do update set "
+            "last_attempt=greatest(engine_alerts.last_attempt, excluded.last_attempt), last_seen=now() "
+            "returning (xmax = 0)", (tenant, sid, event_id, kind, str(detail)[:200], int(attempt))).fetchone()
     return bool(row[0])
 
 
 def list_alerts(tenant=None, status="open", limit=100):
-    q = ("select tenant_id,session_id,event_id,kind,detail,count,status,first_seen,last_seen from engine_alerts "
+    q = ("select tenant_id,session_id,event_id,kind,detail,last_attempt,status,first_seen,last_seen,retried_as from engine_alerts "
          "where status=%s" + (" and tenant_id=%s" if tenant else "") + " order by first_seen limit %s")
     args = (status,) + ((tenant,) if tenant else ()) + (limit,)
     with pool().connection() as conn:
         return conn.execute(q, args).fetchall()
 
 
-def set_alert_status(tenant, sid, event_id, kind, status, by):
-    """Operator action. 'acked' keeps the input skipped; 'released' lets it be retried. Returns True if a row changed."""
-    if status not in ALERT_STATUSES or not isinstance(by, str) or not APPROVER_RE.match(by):
-        raise ValueError("status must be one of %s and `by` a short operator name" % (ALERT_STATUSES,))
+def ack_alert(tenant, sid, event_id, kind, by):
+    """Operator: seen, the input stays skipped. Returns True if an open alert changed."""
+    if not isinstance(by, str) or not APPROVER_RE.match(by):
+        raise ValueError("`by` must be a short operator name")
     with pool().connection() as conn:
-        cur = conn.execute("update engine_alerts set status=%s, updated_by=%s, updated_at=now() "
-                           "where tenant_id=%s and session_id=%s and event_id=%s and kind=%s",
-                           (status, by, tenant, sid, event_id, kind))
+        cur = conn.execute("update engine_alerts set status='acked', updated_by=%s, updated_at=now() "
+                           "where tenant_id=%s and session_id=%s and event_id=%s and kind=%s and status='open'",
+                           (by, tenant, sid, event_id, kind))
         return cur.rowcount == 1
+
+
+def plan_resubmission(content, event_id, max_depth=MAX_RETRY_DEPTH):
+    """Pure: the content of the resubmitted input. A resubmission records where it came from and how deep the chain is; past
+    max_depth it is refused, so a still-poisoned input cannot be released into a loop."""
+    if not isinstance(content, dict):
+        raise RetryRefused("input content is not an object: cannot be resubmitted")
+    depth = content.get("retry_depth", 0)
+    if not isinstance(depth, int) or isinstance(depth, bool) or depth < 0:
+        raise RetryRefused("input has a malformed retry_depth")
+    if depth >= max_depth:
+        raise RetryRefused("retry chain already %d deep (limit %d): fix the cause, or dispose of the input" % (depth, max_depth))
+    return dict(content, retry_of=event_id, retry_depth=depth + 1)
+
+
+def release_alert(tenant, sid, event_id, kind, by, max_depth=MAX_RETRY_DEPTH):
+    """Operator: retry a poisoned input by RESUBMITTING it as a new input of the same session through the normal path
+    (append_input, then reconcile or a doorbell). The original keeps its alert row and stays skipped; its row records `retried_as`.
+    Why not re-open the original: after a successful dead-letter it owns the result-key effects row and a dead-letter event in the
+    hash chain, and after a failed one the workflow holds it in done/poisoned; neither can be undone safely from outside. The new
+    input is processed after any newer inputs (a retried input loses its place in the sequence). Idempotent: releasing twice returns
+    the same new input. Returns the new event id. A resubmission that poisons again raises its own alert; the chain is limited
+    to max_depth. The session needs a running workflow (or a new run) to process it, as for any input."""
+    if not isinstance(by, str) or not APPROVER_RE.match(by):
+        raise ValueError("`by` must be a short operator name")
+    parsed = keys.parse_event_id(event_id)
+    if parsed is None or not keys.belongs_to(tenant, sid, event_id):
+        raise RetryRefused("not an event id of this tenant and session")
+    with pool().connection() as conn:
+        al = conn.execute("select status, retried_as from engine_alerts where tenant_id=%s and session_id=%s and event_id=%s and kind=%s",
+                          (tenant, sid, event_id, kind)).fetchone()
+        if al is None:
+            raise RetryRefused("no such alert")
+        if al[0] == "released" and al[1]:
+            return al[1]
+        row = _event_row(conn, tenant, sid, event_id)
+    if row is None or row[0] != "turn_input":
+        raise RetryRefused("not a turn_input event")
+    if row[2] is None:
+        raise RetryRefused("subject erased: the content is gone and cannot be resubmitted")
+    new = plan_resubmission(json.loads(row[2]), event_id, max_depth)
+    new_eid, _ = append_input(tenant, sid, "retry-%d" % parsed[2], new)
+    with pool().connection() as conn:
+        conn.execute("update engine_alerts set status='released', retried_as=%s, updated_by=%s, updated_at=now() "
+                     "where tenant_id=%s and session_id=%s and event_id=%s and kind=%s",
+                     (new_eid, by, tenant, sid, event_id, kind))
+    return new_eid
 
 
 def has_older_unprocessed(tenant, sid, event_id, skip=()):

@@ -38,14 +38,15 @@ create index if not exists effect_ledger_tenant on effect_ledger (tenant_id);
 alter table effects add column if not exists fingerprint text;
 
 -- v4 (deploy part 1, goodqa#16096): the durable, operational alert for a poisoned input. One row per (tenant, session, input,
--- kind); repeats only raise `count` and `last_seen`. Status: open (needs an operator), acked (seen; the input stays
--- skipped), released (an operator fixed the cause: the input is retried). While open or acked the input is skipped by
--- reconcile and by the older-unprocessed check, in SQL, so no carried list (and no cap on one) decides it.
+-- kind). An input with ANY row here is skipped by reconcile and by the older-unprocessed check, in SQL, so no carried list (and
+-- no cap on one) decides it. Status: open (needs an operator), acked (seen; the input stays skipped), released (the input was
+-- RESUBMITTED as a new input, `retried_as`; the original stays skipped for ever). tenant '-' and session '-' hold alerts that could
+-- not be attached to a session (an activity without one).
 create table if not exists engine_alerts (
   tenant_id text not null, session_id text not null, event_id text not null, kind text not null,
-  detail text not null default '', count int not null default 1, status text not null default 'open',
+  detail text not null default '', last_attempt int not null default 0, status text not null default 'open',
   first_seen timestamptz not null default now(), last_seen timestamptz not null default now(),
-  updated_by text, updated_at timestamptz,
+  updated_by text, updated_at timestamptz, retried_as text,
   primary key (tenant_id, session_id, event_id, kind),
   check (status in ('open','acked','released'))
 );

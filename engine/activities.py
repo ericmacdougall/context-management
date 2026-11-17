@@ -73,7 +73,7 @@ def tracked(fn):
                 note_transient(fn.__name__, e)
                 raise                      # an outage: retry without bound
             if kind == "poison":
-                _alert_poison(fn.__name__, a, e)    # durable BEFORE the non-retryable failure; if it cannot be written this raises and the activity retries
+                _alert_poison(fn.__name__, a, e, _attempt())   # durable BEFORE the non-retryable failure; retried a bounded number of times, then spooled
                 raise ApplicationError(f"{type(e).__name__}", type="Poison", non_retryable=True)
             raise
         finally:
@@ -83,22 +83,42 @@ def tracked(fn):
 
 
 TURN_ACTIVITIES = ("turn_read", "turn_policy", "turn_audit", "turn_effect", "turn_append", "dead_letter")
+ALERT_WRITE_RETRIES = 5     # attempts past POISON_AFTER_ATTEMPTS during which a failing alert write is retried
 
 
-def _alert_poison(name, args, exc):
-    """Deploy part 1: a poisoned input raises a durable alert (engine_alerts, Postgres) before the workflow hears of it, so it
-    exists even when the dead-letter path fails and survives a workflow end, a worker restart and a rebuilt engine. Nothing
-    but ids and the exception class name is stored or logged. If the write fails the error propagates: the activity is retried
-    (and so is the alert write) instead of a poison with no durable record, and the workflow is never failed by the alert."""
-    if len(args) < 2 or not isinstance(args[0], str) or not isinstance(args[1], str):
-        return                                  # not a session activity (get_config): nothing to attach an alert to
-    event_id = args[2] if name in TURN_ACTIVITIES and len(args) > 2 and isinstance(args[2], str) else "activity:" + name
-    created = pgstore.raise_alert(args[0], args[1], event_id, "poison", type(exc).__name__)
-    if created:
-        import json
-        import sys
-        print(json.dumps({"engine_alert": "poison", "tenant": args[0], "session": args[1], "event": event_id,
-                          "activity": name, "class": type(exc).__name__}), file=sys.stderr, flush=True)
+def _log_alert(rec):
+    import json
+    import sys
+    print(json.dumps(rec, sort_keys=True), file=sys.stderr, flush=True)
+
+
+def _alert_poison(name, args, exc, attempt):
+    """Deploy part 1: every Poison failure raises a durable alert (engine_alerts, Postgres) before the workflow hears of it, so it
+    exists even when the dead-letter path fails and survives a workflow end, a worker restart and a rebuilt engine. Only ids, the
+    activity name, the exception CLASS and the attempt are stored or logged.
+
+    Fail-safe when the alert cannot be written (Postgres up but the alert write keeps failing): the write is retried with the
+    activity for ALERT_WRITE_RETRIES more attempts (so a brief fault costs nothing), then the alert goes to the local spool
+    (engine/alertspool.py) with a loud stderr line, and Poison is raised. Chosen because the alternatives are worse: retrying
+    for ever blocks the session behind one input (review F2), and dropping the input silently loses it. The input is not lost
+    (dead-lettered, or skipped by the workflow as before) and the alert is drained into Postgres later.
+    An activity with no session (get_config) is attached to the unattached key ('-', '-') instead of being ignored."""
+    attached = len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], str)
+    tenant, sid = (args[0], args[1]) if attached else (pgstore.UNATTACHED, pgstore.UNATTACHED)
+    event_id = args[2] if attached and name in TURN_ACTIVITIES and len(args) > 2 and isinstance(args[2], str) else "activity:" + name
+    rec = {"engine_alert": "poison", "tenant": tenant, "session": sid, "event": event_id, "activity": name,
+           "class": type(exc).__name__, "attempt": attempt}
+    try:
+        created = pgstore.raise_alert(tenant, sid, event_id, "poison", type(exc).__name__, attempt)
+    except Exception as werr:  # noqa: BLE001
+        if attempt < POISON_AFTER_ATTEMPTS + ALERT_WRITE_RETRIES:
+            raise                                   # retried with the activity (bounded)
+        from . import alertspool
+        alertspool.append(rec)
+        _log_alert(dict(rec, engine_alert="poison_alert_spooled", write_error=type(werr).__name__))
+        return
+    if created or not attached:
+        _log_alert(dict(rec, engine_alert="poison" if attached else "poison_unattached"))
 
 
 def _attempt():
@@ -115,6 +135,16 @@ def inflight_snapshot():
 
 def _worker():
     return os.environ.get("ENGINE_WORKER_IDENT", "w?")
+
+
+def drain_alert_spool():
+    """Best effort: move spooled alerts into Postgres. Never raises."""
+    try:
+        from . import alertspool
+        return alertspool.drain(lambda r: pgstore.raise_alert(r["tenant"], r["session"], r["event"], "poison", r.get("class", ""),
+                                                              r.get("attempt", 0)))
+    except Exception:  # noqa: BLE001
+        return None
 
 
 @activity.defn
@@ -160,6 +190,7 @@ def turn_append(tenant: str, sid: str, event_id: str, digest: str, effect_key: s
 @activity.defn
 @tracked
 def reconcile(tenant: str, sid: str) -> list:
+    drain_alert_spool()
     return pgstore.unprocessed_inputs(tenant, sid, limit=20)
 
 

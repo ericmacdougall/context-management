@@ -62,6 +62,7 @@ async def main():
     for i in range(12):                                # additive: a database loaded before engine_alerts existed keeps working;
         try:                                           # Postgres still starting is waited for (60 s), anything else is raised
             pgstore.ensure_alert_schema()
+            activities.drain_alert_spool()
             break
         except activities.TRANSIENT:
             if i == 11:
