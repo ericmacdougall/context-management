@@ -361,3 +361,16 @@ limit with its bound, not hidden.
 Static part of the answer (recorded in the step-1 report, not a run): the only UPDATE of subjects is in wp_erasure_mark,
 which now takes the row FOR UPDATE first in the same statement; no transaction that share-locks a subject row later
 updates or exclusively locks a subject row (audit of every lock site in wp/schema.sql and every transaction in wp/).
+Amendment 17c (2026-11-17, before the stamped run; written after a disclosed shake-down at 5ab1e2e with tiny counts,
+whose results are not reported). The shake-down's MS run showed the mark waiting through the whole 12 s relay (24 share
+grants passed it) without lock_timeout firing: each wait is on a different holder and lasts about one holder's life,
+so the role lock_timeout (10 s) does not bound it. Change to MS (still a measurement, not gating): the relay runs 35 s,
+longer than the role statement_timeout (30 s); recorded per run: the mark attempt's outcome (completed, or cut by 57014
+statement_timeout / 55P03 lock_timeout = "starved"), its wait, the share grants that passed it, the job state right after
+(an attempt cut short must leave the job requested, not lost) and after a sweep run once the relay ends.
+Run validity (main, 2026-11-17): the stamped run_all starts only with >= 17 GB free on the host; this stream's own
+usage (Postgres and ES data directories and WP_HOME, du) may grow by at most 2 GB, checked before every experiment
+(exp/disk_gate.py); over the cap the run stops itself and is VOID. If the host falls under 15 GB free from other work
+while own usage is within the cap, the run continues, but any ES flood-stage event during the run (ES then refuses
+writes) makes it VOID. Postgres max_wal_size is capped at 256MB for this stream's node (min_wal_size 64MB); that is a
+deviation from the earlier lab's default (1GB), stated, and does not change any threshold.
