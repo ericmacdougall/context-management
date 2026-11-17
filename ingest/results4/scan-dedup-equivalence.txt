@@ -1,0 +1,6 @@
+PREREG-amend-6 check for removing the duplicated block in ingest/scan.py (lines 138 to 233 of 45f3413)
+old scanner: ingest/scan.py at 45f3413; new scanner: after the removal
+corpus: the same 2,883 texts as scan-equivalence.txt (tuned, old held-out, benign, fresh held-out texts, 3 extra strings)
+comparison: full list of (start, end, kind) findings per text; equality count only, no fresh-set score computed
+result: texts 2883, different 0
+module check: no class or function name is defined twice; 53 focused unit tests OK
