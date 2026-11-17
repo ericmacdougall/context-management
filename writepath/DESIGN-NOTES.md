@@ -258,3 +258,105 @@ Not done or not verified (stated, not parked):
   d3_identifier, d4_rescan_es) now propose through their connection and approve through reviewer login wp_rev1:
   the approval's locks are taken on that second connection. lock_order's DA case observes the declaring backend, so it
   must be re-read before any rerun. No stamped run has used this code.
+
+## Redesign after review C (reviewC-1 on 4fe3ac1; written before tests and code, 2026-11-17)
+
+SUPERSEDES, in "Design: D3" and "D3 implementation notes" above: everything about span redaction (mechanism items 6-10,
+scenarios S7, S8, S12, S13, S14 as redaction cases, the event_redactions notes) and S6's "not covered". The saved
+evidence `results/failing-first/d3/d3-store-pg-fb60b2e.red-green.out` is superseded with them.
+
+### Decision R1 (class 1, F1): no span redaction; whole-event removal is the only erasure path
+Source: main's message (review C round) offering "drop span redaction for unverifiable cases and use whole-event
+removal ... as the only path the app can take". Still ASSUMPTION under decision 10 (the user has not decided it).
+Options: (a) redaction computed by the app (rejected: F1, the app holds every key, so it can store the original as a
+"redaction"); (b) computed or checked by the verifier (rejected: by D2 the verifier holds no key material, it reads only
+key ids; giving it keys makes it one more key holder and breaks D2); (c) whole removal only (chosen). Under the current
+key architecture every party that can read plaintext is a key holder equal to the app, so NO redaction is independently
+verifiable; therefore none is offered. Removed: event_redactions, wp_erasure_redact, the runner's redaction step, the
+rescan of redacted text, the residue key, the redaction chain. F1, F2, F4 and F7 (as redaction findings) cannot be
+expressed. Other speakers' removed events are listed per event in the receipt (F10). Span redaction returns only with an
+independent redactor identity holding scoped key access (keysvc per-peer ops), which is not built.
+
+### Class 2 (F8; and F2/F4 before R1 removed them): judge only what you hold locked
+Source: PostgreSQL 18 docs, Transaction Isolation, https://www.postgresql.org/docs/current/transaction-iso.html (read
+2026-11-17, confidence high): in Read Committed a plain SELECT sees a snapshot as of statement start, so a check by a
+plain SELECT can be invalid by the time a later write runs; FOR UPDATE / FOR SHARE wait for a concurrent writer and
+return the updated row version. Rule: every function locks the rows it judges in the statement that judges them.
+- `wp_identifier_propose` takes the subject row FOR SHARE and checks `erased` from that locked row (the same barrier as
+  approve/declare): an open mark (FOR UPDATE) makes it wait; after the mark commits it sees erased and refuses (WPS03).
+  A proposal that committed first is deleted by the cascade. "Proposal after erasure" cannot commit.
+- Lock order, every path: subject rows (sorted by subject id) -> identifier_epochs (tenant row) -> proposal row ->
+  event rows. Mark takes the subject FOR UPDATE; propose, approve/declare, append and cascade take subjects FOR SHARE
+  first. Exclusive subject lockers (mark, hold placement) never wait on an event or proposal row, so no cycle exists.
+- Pairs tested live: propose x open mark (waits, then WPS03); approve x open mark (waits, then WPS03).
+
+### Class 3 (F3): the matcher version is stored and enforced, never implied
+- Matcher id `m3:ucd<unicodedata version>:di<sha12 of the ignorable table>:cf<sha12 of the confusables table>`; the
+  HMAC label carries it, so a different Unicode version or a different table is a different matcher.
+- `identifier_epochs.matcher` is the tenant's matcher, set only by the owner function `wp_matcher_set` (setup/admin);
+  never by a proposal. `subject_identifiers.matcher` with a composite foreign key to (tenant, matcher): an identifier
+  under another matcher than its tenant's cannot exist, so a scan can never silently skip one.
+- Refused, not skipped: approve when the proposal's matcher is not the tenant's (WPS32); an append whose
+  `mention_matcher` differs (WPS38, events_guard, under the identifier_epochs FOR SHARE it already takes); a rescan
+  page or completion with another matcher (WPS38). `wp_matcher_set` on a tenant that has identifiers is refused (the
+  foreign key), so switching cannot orphan them.
+- The event hash covers `mention_matcher` (with mentions and scan version), so a stored tag cannot be changed silently.
+- Migration path (stated, not built): re-review every identifier from its sealed proposal under the new matcher into a
+  staging set, then one owner transaction swaps the tenant's identifier set and matcher (no committed state mixes
+  versions; appends are refused while the swap waits for identifier_epochs). Rollback is the same procedure back,
+  possible while subject keys exist (an erased subject has no identifiers). m1 identifiers from earlier code have no
+  matcher and are refused; the lab rebuilds its databases.
+
+### Class 4 (F6, S6): Unicode properties from Unicode data, pinned
+- Default_Ignorable_Code_Point is enumerated from the host perl's Unicode data (Unicode::UCD; its version must equal
+  Python's unicodedata version: Mac 13.0.0, t2-dev 15.0.0) by `tools/ucd_tables.py`; the table's sha256 is pinned per
+  version in `wp/mentions.py`. A missing or different table fails closed (UCDUnavailable): no fallback to matching
+  without it. A test enumerates the WHOLE property: every code point, inside a name, still matches with correct offsets.
+- Look-alikes (S6): the matching key is a UTS 39 skeleton per cluster, NFKC then NFD, each code point mapped by
+  confusables.txt 18.0.0 (2026-08-06, sha256 6ed3ee96..., downloaded with the user's approval), NFD again, then casefold
+  and NFKC. Order settled by test: skeleton BEFORE casefold ("AIex Kim" with a capital I matches "Alex Kim" only that
+  way). Exact matches are a subset (identical strings have identical skeletons), so only the skeleton HMAC is stored.
+- Rule r3 judges BOTH forms: scripts, unassigned code points and digits on the original letters (a skeleton hides mixed
+  script); the stop list and the short-token rule on skeletons ("custorner" has the skeleton of "customer").
+- Cost, stated in the receipt: confusable variants also match ("Kim" and "Kirn" share a skeleton), and with whole-event
+  removal more of other speakers' events are removed; two subjects whose identifiers share a skeleton are refused
+  (WPS20).
+- Not vendored: the Unicode License V3 (https://www.unicode.org/license.txt, read 2026-11-17) permits redistribution only
+  with its copyright and permission notice; the repository holds the generator and the pins, the lab keeps the tables in
+  its data directory (WP_UCD_DIR). The download was parsed as data only (python3 -I), nothing in it was executed.
+
+### Class 5 (F7): verification must notice deletion
+With R1 there is no redaction chain. NULL content verifies only with a tombstone, and a tombstone only with its erasure
+job present: deleting the tombstone, or the job, under a nulled event fails verification; deleting the event breaks the
+main chain (and its external anchor, row 6).
+
+### F5: one write alias, converged from any observed state
+The CAS converges each family to exactly one write alias, `-w<E>` on the family's base index with is_write_index true:
+it removes (must_exist) every other `-w` alias it observed, including a `-w<E>` that is not the write index or sits on
+another index, and adds the correct one, in one atomic request; a newer epoch is StaleEpoch; no write alias at all is
+refused. After the request it re-reads and requires exactly that state before returning (the broker mints only after).
+Tested from enumerated starting states, single and mixed across families.
+
+### F9: a partial search is not absence
+Each per-copy search sends allow_partial_search_results=false and requires timed_out false, terminated_early not true,
+and _shards total = successful = 1, failed = 0, skipped = 0; anything else raises and the job stays open. Source: the
+Elasticsearch search API reference and partial-results options (search summary of elastic.co reference pages and a
+discuss thread, read 2026-11-17; confidence medium: secondary summary, no Elastic page fetched).
+
+### F10
+DESIGN-NOTES line 45 corrected; the receipt lists other speakers' removed events per event.
+
+### Scenario map (reviews B and C)
+| Finding | Class | Ruled out by |
+|---|---|---|
+| C-F1 app stores the original as a redaction | 1 | R1: no redaction write path exists |
+| C-F2 redaction CAS without event lock | 1, 2 | R1 (function removed) |
+| C-F4 redaction hold check without locking rescan-only subjects | 1, 2 | R1 (function removed) |
+| C-F8 proposal after erasure | 2 | propose locks the subject before judging erased |
+| C-F3 Unicode/matcher skew silently stops matching | 3 | matcher stored, FK, refusals |
+| C-F6 Khmer U+17B4/17B5 not ignored | 4 | DI table from Unicode data, whole-property test |
+| S6 look-alikes in text | 4 | UTS 39 skeleton key |
+| C-F7 deleted redaction history verifies | 5 | R1; tombstone and job required under NULL content |
+| C-F5 extra stale alias hidden by a current one | alias | converge to exactly one, re-read |
+| C-F9 partial search counted as absence | ES | partial responses rejected |
+| B2 interleavings | alias | unchanged (-w0 generation, must_exist removal) |
