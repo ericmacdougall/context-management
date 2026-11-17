@@ -6,7 +6,10 @@ Rows: ["t", arm, unit, oracle_code, oracle_orig, pg_code, pg_orig], ["v", arm, u
 PASS (THRESHOLDS amendment 5): in every enforced arm no event/transition differs in (code, original code) and none is an error, no
 view hash differs, every B2 log's applied events (id, code, chain order) are equal and its chain verifies; the B2 arm holds exactly
 per_seed x seeds logs, each with a view row; every B1 scenario of params.b1_depth is present with transitions and nodes, and the
-counts equal the experiment's own summary; the run covered all scenarios; the control arm shows at least one difference."""
+counts equal the experiment's own summary; the run covered all scenarios. Controls (amendment 6, review-3 N8): EACH control arm has
+transitions and at least one SEMANTIC difference (codes, view hash or applied log differ with no error on either side). An `error:*`
+outcome is never counted as a catch; control-arm errors are reported (`errors`) so a reader sees them (the edb693f run has one: a view
+of ctl:b2 log 41/6 raised TypeError on the broken variant's state)."""
 
 
 def _bad_t(r):
@@ -19,6 +22,23 @@ def _bad_v(r):
 
 def _bad_l(r):
     return r[3] != r[4] or not r[5]
+
+
+def _err(*xs):
+    return any(str(x).startswith("error:") for x in xs)
+
+
+def _sem(r):
+    """A control row's semantic difference: the broken rule produced another outcome, not an error."""
+    if r[0] == "t":
+        return not _err(r[3], r[5]) and (r[3], r[4]) != (r[5], r[6])
+    if r[0] == "v":
+        return not _err(r[3], r[4]) and r[3] != r[4]
+    return r[3] != r[4]
+
+
+def _errors(r):
+    return _err(r[3], r[5]) if r[0] == "t" else _err(r[3], r[4]) if r[0] == "v" else False
 
 
 def verify(doc, rows):
@@ -46,8 +66,9 @@ def verify(doc, rows):
     ctl = {}
     for arm in ("ctl:b2", "ctl:b1:r2"):
         a = by.get(arm, {"t": [], "v": [], "l": []})
-        ctl[arm] = {"transitions": len(a["t"]), "differences": sum(map(_bad_t, a["t"])) + sum(map(_bad_v, a["v"])) + sum(map(_bad_l, a["l"]))}
-    ctl_ok = sum(v["differences"] for v in ctl.values()) > 0 and all(v["transitions"] > 0 for v in ctl.values())
+        rs = a["t"] + a["v"] + a["l"]
+        ctl[arm] = {"transitions": len(a["t"]), "differences": sum(map(_sem, rs)), "errors": sum(map(_errors, rs))}
+    ctl_ok = all(v["transitions"] > 0 and v["differences"] > 0 for v in ctl.values())
     all_scen = par.get("scenarios_only") == "all"
     verdict = "PASS" if ok and logs_ok and counts_ok and ctl_ok and all_scen else "FAIL"
     return {"verdict": verdict, "agrees": verdict == res.get("verdict"),

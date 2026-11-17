@@ -21,7 +21,7 @@ PAR = {"per_seed": 1, "seeds": [1, 2], "b1_depth": {"r1": 2}, "scenarios_only": 
 ROWS = [["t", "b2", "1/0", "a", None, "a", None], ["v", "b2", "1/0", "x", "x"], ["l", "b2", "1/0", [["e", "a"]], [["e", "a"]], True],
         ["t", "b2", "2/0", "a", None, "a", None], ["v", "b2", "2/0", "x", "x"], ["l", "b2", "2/0", [], [], True],
         ["t", "b1:r1", 0, "a", None, "a", None], ["v", "b1:r1", 0, "x", "x"],
-        ["t", "ctl:b2", "1/0", "a", None, "b", None], ["t", "ctl:b1:r2", 0, "a", None, "a", None]]
+        ["t", "ctl:b2", "1/0", "a", None, "b", None], ["t", "ctl:b1:r2", 0, "a", None, "c", None]]
 RES = {"verdict": "PASS", "b2": {"events": 2, "logs": 2}, "b1": [{"scenario": "r1", "transitions": 1, "states": 1}]}
 
 PROBES = ("select count(*) from dc_pre_r3_7.events", "select count(*) from dc.events", "select dc._apply_event('t1', '{}'::jsonb)")
@@ -60,6 +60,23 @@ class PgDiffVerifier(unittest.TestCase):
             self.assertEqual(self.v(rows), "FAIL", row)
         self.assertEqual(self.v(ROWS[:3] + ROWS[6:]), "FAIL")                       # a missing B2 log
         self.assertEqual(self.v(ROWS, dict(PAR, scenarios_only="r1")), "FAIL")      # a partial run
+
+    def test_n8_control_caught_only_by_errors_fails(self):
+        """0a20b64 counted error:* outcomes as control differences: a control arm whose broken run only errored looked 'caught'."""
+        rows = copy.deepcopy(ROWS)
+        rows[8] = ["t", "ctl:b2", "1/0", "a", None, "error:OperationalError", None]
+        rows[9] = ["t", "ctl:b1:r2", 0, "a", None, "error:OperationalError", None]
+        self.assertEqual(self.v(rows), "FAIL")
+
+    def test_n8_each_control_arm_must_catch_semantically(self):
+        rows = copy.deepcopy(ROWS)
+        rows[9] = ["t", "ctl:b1:r2", 0, "a", None, "a", None]                         # one arm shows nothing
+        self.assertEqual(self.v(rows), "FAIL")
+        rows[9] = ["v", "ctl:b1:r2", 0, "x", "error:TypeError"]                         # ... or only an error
+        self.assertEqual(self.v(rows), "FAIL")
+        rows = copy.deepcopy(ROWS) + [["v", "ctl:b2", "1/1", "x", "error:TypeError"]]   # a real difference plus an error: caught, error reported
+        out = self.V.verify({"result": RES, "params": PAR}, rows)
+        self.assertEqual((out["verdict"], out["checks"]["control"]["ctl:b2"]["errors"], out["checks"]["control"]["ctl:b2"]["differences"]), ("PASS", 1, 1))
 
 
 class MigVerifier(unittest.TestCase):
