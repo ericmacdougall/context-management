@@ -409,10 +409,15 @@ def anchor_export(conn, anchor: Anchor, tenant: str) -> dict:
 
 
 def anchor_check(conn, anchor: Anchor, tenant: str) -> dict:
-    """True only when the chain verifies inside the database AND every anchored (n, hash) of this tenant is still the event at chain_n = n.
-    Detects an owner who rewrote history and recomputed the hashes for any event up to the LAST export: the recomputed hash of an anchored
-    event differs from the anchored one as soon as any earlier byte changed. It does NOT detect a rewrite of events after the last export
-    (nothing outside the database has seen them yet): export often."""
+    """ok only when the chain verifies inside the database, at least ONE anchor of this tenant exists, and every anchored (n, hash) is still
+    the event at chain_n = n. Zero anchors is not ok (nothing outside the database was ever compared: review-3, R3-8).
+
+    What it protects: an owner who rewrote history and recomputed the hashes is detected for any event up to the LAST export
+    (`anchored_through`), because the recomputed hash of an anchored event differs as soon as any earlier byte changed.
+    What it does not: events after the last export (`unanchored_suffix` of them) are protected only by the in-database chain, which the
+    owner can recompute; and the anchor is only as strong as its storage. FileAnchor is an ordinary append-only file: whoever can write
+    it (the same host's owner) can rewrite it too. Point it at storage the database owner cannot write, or implement Anchor over a WORM
+    store, and export often."""
     recs = [x for x in anchor.records() if x.get("tenant") == tenant]
     n_ok, chain_ok = conn.execute("select n, ok from dc.verify_chain(%s)", (tenant,)).fetchone()
     bad = []
@@ -422,4 +427,6 @@ def anchor_check(conn, anchor: Anchor, tenant: str) -> dict:
             bad.append({"n": x["n"], "problem": "missing", "anchored": x["hash"]})
         elif row[0] != x["hash"]:
             bad.append({"n": x["n"], "problem": "hash_differs", "anchored": x["hash"], "found": row[0]})
-    return {"ok": bool(chain_ok) and not bad, "chain_ok": bool(chain_ok), "events": int(n_ok), "anchored": len(recs), "mismatches": bad}
+    through = max((int(x["n"]) for x in recs), default=0)
+    return {"ok": bool(chain_ok) and bool(recs) and not bad, "chain_ok": bool(chain_ok), "events": int(n_ok), "anchored": len(recs),
+            "anchored_through": through, "unanchored_suffix": max(int(n_ok) - through, 0), "mismatches": bad}
