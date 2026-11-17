@@ -1,0 +1,17 @@
+# Step 1, batch e (amendment 24a): the rest of batch d after it stopped at 2e1948c (d2 VOID on other tenants' disk),
+# at the commit of amendment 24a, under the 20 GB start line (amendment 24). d2 runs again, then every later line of
+# step1-d.txt with the same arguments. Starts as a batch does: cleanup, setup reset, preflight.
+# label  cleanup  module args
+@ exp.cleanup
+@ wp.setup --reset
+@ exp.disk_gate preflight
+d2 exp.d2_verifier_process exp.d2_verifier_process 5
+phys_purge exp.phys_purge exp.phys_purge
+e1 exp.e2e_restored exp.e2e_restored E1 40
+e2e_E2E3 exp.e2e_restored exp.e2e_restored E2 E3 40
+psr exp.projector_start_race exp.projector_start_race 5
+pef exp.projector_es_fault exp.projector_es_fault 5
+races exp.races exp.races R1 R2 R3 40
+size_probe exp.size_probe exp.size_probe 50000
+plan_stability - exp.plan_stability
+guard_end - exp.guard_check end
