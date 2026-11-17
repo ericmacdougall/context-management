@@ -1,0 +1,264 @@
+# tests.test_gates + tests.test_offline from fix/licence-matrix run against licence/ code at 90faede (detached worktree; only tests/test_gates.py replaced). Command: PYTHONDONTWRITEBYTECODE=1 python3 -W ignore -m unittest tests.test_gates tests.test_offline
+FFF.FF........FF.F..FFFFEFFEEE.EE.....................................................
+======================================================================
+ERROR: test_2xx_without_hits_is_empty_witness (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 708, in test_2xx_without_hits_is_empty_witness
+    self.assertEqual(matrix.verdict("run", "bm25_match", {"base": True}, 200, {}, [])["class"], matrix.EMPTY)
+AttributeError: module 'matrix' has no attribute 'verdict'
+
+======================================================================
+ERROR: test_moment_analysis_does_not_count_unverified_dls_as_refusal (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 741, in test_moment_analysis_does_not_count_unverified_dls_as_refusal
+    rows = [{"_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (1.0, 2.0, 3.0)]
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 741, in <listcomp>
+    rows = [{"_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (1.0, 2.0, 3.0)]
+AttributeError: module 'matrix' has no attribute 'UNVERIFIED'
+
+======================================================================
+ERROR: test_not_observed_classes_agree (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 738, in test_not_observed_classes_agree
+    self.assertEqual(tuple(recompute.NOT_OBSERVED), tuple(matrix.NOT_OBSERVED))
+AttributeError: module 'recompute' has no attribute 'NOT_OBSERVED'
+
+======================================================================
+ERROR: test_observed_licence_refusal_is_kept_over_unestablished_prerequisite (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 688, in test_observed_licence_refusal_is_kept_over_unestablished_prerequisite
+    v = matrix.verdict("run", "semantic_query", {"sem_mapping": True, "sem_doc": {"failure": "write 403"}}, 403, MatrixFake.LICENCE)
+AttributeError: module 'matrix' has no attribute 'verdict'
+
+======================================================================
+ERROR: test_unestablished_prerequisite_nests_the_raw_observation (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 704, in test_unestablished_prerequisite_nests_the_raw_observation
+    v = matrix.verdict("run", "knn_rescore_vector", {"vec_int8_hnsw": {"failure": "count 39"}}, 200, {"hits": {"hits": [{"_id": "7"}]}}, ["7"])
+AttributeError: module 'matrix' has no attribute 'verdict'
+
+======================================================================
+ERROR: test_unregistered_or_duplicate_cell_is_refused (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 711, in test_unregistered_or_duplicate_cell_is_refused
+    K = matrix.Cells("run", {})
+AttributeError: module 'matrix' has no attribute 'Cells'
+
+======================================================================
+FAIL: test_empty_backend_oracle_counts_as_failure (tests.test_gates.Exp2VerifyWritesTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 862, in test_empty_backend_oracle_counts_as_failure
+    self.assertEqual(w.compute_backend_oracles(), 2)
+AssertionError: 0 != 2
+
+======================================================================
+FAIL: test_failed_live_scroll_page_raises (tests.test_gates.Exp2VerifyWritesTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 852, in test_failed_live_scroll_page_raises
+    self._w().verify_writes()
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_failed_semantic_read_back_raises (tests.test_gates.Exp2VerifyWritesTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 841, in test_failed_semantic_read_back_raises
+    self._run(503)
+AssertionError: AssertionError not raised
+
+======================================================================
+FAIL: test_t4_does_not_pass_on_unverified_dls_principal (tests.test_gates.Exp2VerifyWritesTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 870, in test_t4_does_not_pass_on_unverified_dls_principal
+    self.assertFalse(summarize.exp1_checks(R)["T4_pass"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_dls_battery_aborts_on_empty_shared_base (tests.test_gates.MatrixFixtureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 790, in test_dls_battery_aborts_on_empty_shared_base
+    self.aborts(matrix.dls_battery)
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 564, in aborts
+    self.fail("returned normally instead of aborting: %s" % json.dumps(out, default=str)[:200])
+AssertionError: returned normally instead of aborting: {"get_allowed_doc0": {"status": 404, "returned_hidden_doc": false, "returned_any_source": false}, "get_hidden_doc1": {"status": 404, "returned_hidden_doc": false, "returned_any_source": false}, "searc
+
+======================================================================
+FAIL: test_rescore_cell_not_available_after_bulk_503_into_existing_index (tests.test_gates.MatrixFixtureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 786, in test_rescore_cell_not_available_after_bulk_503_into_existing_index
+    self.assertNotEqual(T["knn_rescore_vector"]["class"], "AVAILABLE")
+AssertionError: 'AVAILABLE' == 'AVAILABLE'
+
+======================================================================
+FAIL: test_semantic_searches_not_available_after_failed_document_write (tests.test_gates.MatrixFixtureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 808, in test_semantic_searches_not_available_after_failed_document_write
+    self.assertNotEqual(T["semantic_query"]["class"], "AVAILABLE")
+AssertionError: 'AVAILABLE' == 'AVAILABLE'
+
+======================================================================
+FAIL: test_vector_and_rescore_cells_are_not_available_when_index_is_empty (tests.test_gates.MatrixFixtureTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 802, in test_vector_and_rescore_cells_are_not_available_when_index_is_empty
+    self.assertNotEqual(T["knn_rescore_vector"]["class"], "AVAILABLE")
+AssertionError: 'AVAILABLE' == 'AVAILABLE'
+
+======================================================================
+FAIL: test_healthy_world_every_run_cell_available_with_witness (tests.test_gates.MatrixInvariantTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 626, in test_healthy_world_every_run_cell_available_with_witness
+    self.assertEqual(bad, {}, "a healthy fixture must yield AVAILABLE (else the invariant below is vacuous)")
+AssertionError: {'alias_must_exist': 'NO_CLASS', 'alias_require_alias': 'NO_CLASS'} != {}
+- {'alias_must_exist': 'NO_CLASS', 'alias_require_alias': 'NO_CLASS'}
++ {} : a healthy fixture must yield AVAILABLE (else the invariant below is vacuous)
+
+======================================================================
+FAIL: test_no_dependent_quick_cell_is_available_when_a_prerequisite_fails (tests.test_gates.MatrixInvariantTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 669, in test_no_dependent_quick_cell_is_available_when_a_prerequisite_fails
+    self.assertEqual(problems, [], "\n".join(problems))
+AssertionError: Lists differ: ['dls_principal/create_fail: quick dls_sea[1279 chars]BLE'] != []
+
+First list contains 28 additional elements.
+First extra element 0:
+'dls_principal/create_fail: quick dls_search AVAILABLE'
+
+Diff is 1415 characters long. Set self.maxDiff to None to see it. : dls_principal/create_fail: quick dls_search AVAILABLE
+dls_principal/transport: quick dls_search AVAILABLE
+dls_principal/503: quick dls_search AVAILABLE
+shared_base/503: quick rrf AVAILABLE
+shared_base/503: quick linear AVAILABLE
+shared_base/503: quick bm25 AVAILABLE
+shared_base/503: quick knn AVAILABLE
+shared_base/503: quick dls_search AVAILABLE
+shared_base/transport: quick rrf AVAILABLE
+shared_base/transport: quick linear AVAILABLE
+shared_base/transport: quick bm25 AVAILABLE
+shared_base/transport: quick knn AVAILABLE
+shared_base/transport: quick dls_search AVAILABLE
+shared_base/truncated: quick rrf AVAILABLE
+shared_base/truncated: quick linear AVAILABLE
+shared_base/truncated: quick bm25 AVAILABLE
+shared_base/truncated: quick knn AVAILABLE
+shared_base/truncated: quick dls_search AVAILABLE
+shared_base/empty: quick rrf AVAILABLE
+shared_base/empty: quick linear AVAILABLE
+shared_base/empty: quick bm25 AVAILABLE
+shared_base/empty: quick knn AVAILABLE
+shared_base/empty: quick dls_search AVAILABLE
+shared_base/wrong_count: quick rrf AVAILABLE
+shared_base/wrong_count: quick linear AVAILABLE
+shared_base/wrong_count: quick bm25 AVAILABLE
+shared_base/wrong_count: quick knn AVAILABLE
+shared_base/wrong_count: quick dls_search AVAILABLE
+
+======================================================================
+FAIL: test_no_dependent_run_cell_is_available_when_a_prerequisite_fails (tests.test_gates.MatrixInvariantTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 657, in test_no_dependent_run_cell_is_available_when_a_prerequisite_fails
+    self.assertEqual(problems, [], "\n".join(problems))
+AssertionError: Lists differ: ['dls_principal/create_fail: injection nev[3982 chars]'])"] != []
+
+First list contains 54 additional elements.
+First extra element 0:
+'dls_principal/create_fail: injection never fired (prerequisite never checked)'
+
+Diff is 4256 characters long. Set self.maxDiff to None to see it. : dls_principal/create_fail: injection never fired (prerequisite never checked)
+dls_principal/create_fail: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6', '7'])
+dls_principal/transport: injection never fired (prerequisite never checked)
+dls_principal/transport: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6', '7'])
+dls_principal/503: injection never fired (prerequisite never checked)
+dls_principal/503: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6', '7'])
+perc_doc/transport: percolator_lexical AVAILABLE (witness [])
+perc_doc/transport: percolator_lexical AVAILABLE with an empty witness
+perc_doc/empty: percolator_lexical AVAILABLE (witness [])
+perc_doc/empty: percolator_lexical AVAILABLE with an empty witness
+perc_doc/wrong_count: injection never fired (prerequisite never checked)
+perc_doc/wrong_count: percolator_lexical AVAILABLE (witness ['t1'])
+sem_doc/503: semantic_query AVAILABLE (witness [])
+sem_doc/503: match_on_semantic_text AVAILABLE (witness [])
+sem_doc/503: semantic_query AVAILABLE with an empty witness
+sem_doc/503: match_on_semantic_text AVAILABLE with an empty witness
+sem_doc/transport: semantic_query AVAILABLE (witness [])
+sem_doc/transport: match_on_semantic_text AVAILABLE (witness [])
+sem_doc/transport: semantic_query AVAILABLE with an empty witness
+sem_doc/transport: match_on_semantic_text AVAILABLE with an empty witness
+sem_doc/empty: semantic_query AVAILABLE (witness [])
+sem_doc/empty: match_on_semantic_text AVAILABLE (witness [])
+sem_doc/empty: semantic_query AVAILABLE with an empty witness
+sem_doc/empty: match_on_semantic_text AVAILABLE with an empty witness
+sem_doc/wrong_count: injection never fired (prerequisite never checked)
+sem_doc/wrong_count: semantic_query AVAILABLE (witness ['1'])
+sem_doc/wrong_count: match_on_semantic_text AVAILABLE (witness ['1'])
+sem_doc/licence: semantic_query AVAILABLE (witness [])
+sem_doc/licence: match_on_semantic_text AVAILABLE (witness [])
+sem_doc/licence: semantic_query AVAILABLE with an empty witness
+sem_doc/licence: match_on_semantic_text AVAILABLE with an empty witness
+sem_mapping/create_fail: cell semantic_text_index missing
+sem_mapping/create_fail: cell semantic_query missing
+sem_mapping/create_fail: cell match_on_semantic_text missing
+sem_mapping/503: cell semantic_text_index missing
+sem_mapping/503: cell semantic_query missing
+sem_mapping/503: cell match_on_semantic_text missing
+shared_base/503: injection never fired (prerequisite never checked)
+shared_base/503: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6', '7'])
+shared_base/transport: injection never fired (prerequisite never checked)
+shared_base/transport: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6', '7'])
+shared_base/truncated: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6'])
+shared_base/empty: dls_search_as_user AVAILABLE (witness [])
+shared_base/empty: dls_search_as_user AVAILABLE with an empty witness
+shared_base/wrong_count: injection never fired (prerequisite never checked)
+shared_base/wrong_count: dls_search_as_user AVAILABLE (witness ['0', '1', '2', '3', '4', '5', '6', '7'])
+vec_int8_hnsw/503: knn_rescore_vector AVAILABLE (witness [])
+vec_int8_hnsw/503: knn_rescore_vector AVAILABLE with an empty witness
+vec_int8_hnsw/transport: knn_rescore_vector AVAILABLE (witness [])
+vec_int8_hnsw/transport: knn_rescore_vector AVAILABLE with an empty witness
+vec_int8_hnsw/truncated: knn_rescore_vector AVAILABLE (witness ['0', '1', '10', '11', '12', '13', '14', '15', '16', '17'])
+vec_int8_hnsw/empty: knn_rescore_vector AVAILABLE (witness [])
+vec_int8_hnsw/empty: knn_rescore_vector AVAILABLE with an empty witness
+vec_int8_hnsw/wrong_count: knn_rescore_vector AVAILABLE (witness ['0', '1', '10', '11', '12', '13', '14', '15', '16', '17'])
+
+======================================================================
+FAIL: test_quick_semantic_probe_on_an_empty_index_is_not_available (tests.test_gates.MatrixInvariantTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 674, in test_quick_semantic_probe_on_an_empty_index_is_not_available
+    self.assertNotEqual(self.quick()["semantic_query"][0], "AVAILABLE")
+AssertionError: 'AVAILABLE' == 'AVAILABLE'
+
+======================================================================
+FAIL: test_callsites_table_matches_registry (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 747, in test_callsites_table_matches_registry
+    self.assertIn("| %s | %s | %s | %s |" % (ph, name, ", ".join(pre) or "none", w), doc, name)
+AssertionError: '| run | bm25_match | base | hits |' not found in '# Elasticsearch call sites under licence/ (audit after final-gate review-3 F3)\n\nKinds: **must-succeed** (a fixture or precondition: status and body are checked and failure aborts), **probe** (the licence-gated or error response is the observation: status and class are recorded), **cleanup** (DELETE, 404 expected), **verification read**, **helper**. Scope: every `req(`, `bulk(`, `bulk_strict(`, `bulk_add(` call and the `S(`/`Q(`/`rec(` wrappers in `licence/*.py`; shell scripts only start a container and write a curl config (no Elasticsearch response is read).\n\n| file:line | call | HTTP status checked | body validated | on failure | kind |\n|---|---|---|---|---|---|\n| lib.py:47 | `c, j, _ = req("GET", "/_license")` | yes (c != 200 handled by caller) | partly | returns the error body; recorded | probe |\n| lib.py:84 | `v = req("GET", "/")[1].get("version", {}).get("number")` | no | version field only | version None in the stamp (metadata, not a measurement) | stamp |\n| lib.py:104 | `return req("POST", "/_bulk?refresh=" + refresh, ndjson=nd, timeout=120)` | returned to caller | n/a | see bulk and bulk_strict | helper |\n| matrix.py:22 | `req("DELETE", "/" + idx)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| matrix.py:30 | `c, j, _ = req("POST", "/%s/_search" % idx, body, **kw)` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:48 | `c, j, _ = req("PUT", "/" + idx, body)` | yes (HTTP 200, acknowledged, shard failures, count, spot check) | yes | FixtureError: the run aborts; no cell is produced | must-succeed |\n| matrix.py:52 | `bulk_strict(idx, docs, refresh="false")` | yes (HTTP 200, acknowledged, shard failures, count, spot check) | yes | FixtureError: the run aborts; no cell is produced | must-succeed |\n| matrix.py:59 | `c, j, _ = req("POST", "/%s/_refresh" % idx)` | yes (HTTP 200, acknowledged, shard failures, count, spot check) | yes | FixtureError: the run aborts; no cell is produced | must-succeed |\n| matrix.py:63 | `c, j, _ = req("GET", "/%s/_count" % idx)` | yes (HTTP 200, acknowledged, shard failures, count, spot check) | yes | FixtureError: the run aborts; no cell is produced | must-succeed |\n| matrix.py:67 | `c, j, _ = req("GET", "/%s/_doc/%s" % (idx, spot[0]))` | yes (HTTP 200, acknowledged, shard failures, count, spot check) | yes | FixtureError: the run aborts; no cell is produced | must-succeed |\n| matrix.py:98 | `cr, jr, _ = req("PUT", "/_security/role/" + DLS_ROLE, {"indices": [{"names": [BASE_IDX], "` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:99 | `cu, ju, _ = req("PUT", "/_security/user/" + DLS_USER, {"password": pw, "roles": [DLS_ROLE]` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:104 | `c, j, _ = req("POST", "/%s/_search" % BASE_IDX, {"query": {"match_all": {}}, "size": 20}, ` | recorded (classify) | no | class TRANSPORT/LICENCE_ERROR/OTHER_ERROR recorded with time | probe (polled around the transition) |\n| matrix.py:121 | `rec("get_allowed_doc0", *req("GET", "/%s/_doc/0" % BASE_IDX, **U)[:2])` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:122 | `rec("get_hidden_doc1", *req("GET", "/%s/_doc/1" % BASE_IDX, **U)[:2])` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:123 | `rec("search_match_all", *req("POST", "/%s/_search" % BASE_IDX, {"query": {"match_all": {}}` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:124 | `rec("search_term_hidden", *req("POST", "/%s/_search" % BASE_IDX, {"query": {"term": {"kw":` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:125 | `rec("count", *req("GET", "/%s/_count" % BASE_IDX, **U)[:2])` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:126 | `rec("mget", *req("POST", "/%s/_mget" % BASE_IDX, {"ids": ["0", "1"]}, **U)[:2])` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:127 | `rec("msearch", *req("POST", "/_msearch", ndjson=\'{"index":"%s"}\\n{"query":{"match_all":{}}` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:128 | `rec("scroll_open", *req("POST", "/%s/_search?scroll=1m" % BASE_IDX, {"size": 2, "query": {` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:129 | `rec("knn_search", *req("POST", "/%s/_search" % BASE_IDX, {"knn": {"field": "v", "query_vec` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:130 | `rec("termvectors_hidden", *req("GET", "/%s/_termvectors/1?fields=title" % BASE_IDX, **U)[:` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:131 | `rec("wildcard_index", *req("POST", "/lic1-*/_search", {"query": {"match_all": {}}}, **U)[:` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:132 | `rec("esql", *req("POST", "/_query", {"query": "FROM %s \\| LIMIT 10" % BASE_IDX}, **U)[:2])` | recorded | leak check on body | status recorded; a 200 is judged by whether a hidden document came back | probe (DLS read battery) |\n| matrix.py:148 | `c, j, _ = req("POST", "/%s/_search" % BASE_IDX, body, timeout=15)` | recorded (classify) | no | class TRANSPORT/LICENCE_ERROR/OTHER_ERROR recorded with time | probe (polled around the transition) |\n| matrix.py:152 | `c, j, _ = req("POST", "/%s/_search" % sem_idx, {"query": {"semantic": {"field": "body", "q` | recorded (classify) | no | class TRANSPORT/LICENCE_ERROR/OTHER_ERROR recorded with time | probe (polled around the transition) |\n| matrix.py:156 | `c, j, _ = req("POST", "/_inference/text_embedding/%s" % STUB_EP, {"input": "x"}, timeout=1` | recorded (classify) | no | class TRANSPORT/LICENCE_ERROR/OTHER_ERROR recorded with time | probe (polled around the transition) |\n| matrix.py:176 | `T["bm25_match"] = S(base, {"query": {"match": {"title": "paris"}}})[0]` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:177 | `T["dense_knn"] = S(base, {"knn": knn["knn"]})[0]` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:179 | `lex, c1, j1 = S(base, {"query": {"match": {"title": "paris"}}, "size": 5})` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:180 | `vec, c2, j2 = S(base, {"knn": knn["knn"], "size": 5})` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:186 | `T["retriever_rrf"] = S(base, {"retriever": {"rrf": {"retrievers": [std, knn], "rank_window` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:187 | `T["retriever_linear"] = S(base, {"retriever": {"linear": {"retrievers": [{"retriever": std` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:189 | `T["text_similarity_reranker_gate"] = S(base, {"retriever": {"text_similarity_reranker": {"` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:195 | `cm, jm, _ = req("PUT", "/" + idx, {"settings": {"number_of_shards": 1, "number_of_replicas` | recorded (cell) | error body recorded | class LICENCE_ERROR or OTHER_ERROR; populated=false so never AVAILABLE | probe (licence may refuse the mapping) |\n| matrix.py:198 | `cb, sb = bulk(idx, [(str(i), {"v": embed("d%d" % i, 64)}) for i in range(40)])` | recorded (bulk_http) | items counted | failed counts unanswered operations; AVAILABLE needs populated index (count 40) | probe (licence may refuse the write: the error is the observation) |\n| matrix.py:199 | `sr, cs, js = S(idx, {"knn": {"field": "v", "query_vector": embed("d7", 64), "k": 3, "num_c` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:215 | `c, j, _ = req("POST", "/_query", {"query": q})` | recorded (cell) | values as witness | class recorded | probe |\n| matrix.py:217 | `T["esql_match"] = Q(\'FROM %s METADATA _score \\| WHERE MATCH(title, "paris") \\| SORT _score D` | recorded (cell) | values as witness | class recorded | probe |\n| matrix.py:220 | `T["esql_fork"] = Q(fork + " \\| KEEP _id, _fork, _score")` | recorded (cell) | values as witness | class recorded | probe |\n| matrix.py:221 | `T["esql_fuse"] = Q(fork + " \\| FUSE \\| KEEP _id, _score")` | recorded (cell) | values as witness | class recorded | probe |\n| matrix.py:223 | `c, j, _ = req("GET", "/_inference")` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:226 | `c, j, _ = req("PUT", "/_inference/text_embedding/" + ep, stub_endpoint_body())` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:229 | `c2, j2, _ = req("POST", "/_inference/text_embedding/" + ep, {"input": "x"})` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:231 | `req("DELETE", "/_inference/text_embedding/" + ep + "?force=true")` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| matrix.py:234 | `c, j, _ = req("GET", "/_inference/text_embedding/" + STUB_EP)` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:236 | `c2, j2, _ = req("POST", "/_inference/text_embedding/" + STUB_EP, {"input": "x"})` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:243 | `cm, jm, _ = req("PUT", "/" + sem, {"settings": {"number_of_replicas": 0}, "mappings": {"pr` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:246 | `cd, jd, _ = req("PUT", "/%s/_doc/1?refresh=true" % sem, {"body": "paris trip planning"})` | recorded (cell) | error body recorded | class recorded | probe |\n| matrix.py:248 | `T["semantic_query"] = S(sem, {"query": {"semantic": {"field": "body", "query": "paris"}}})` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:249 | `T["match_on_semantic_text"] = S(sem, {"query": {"match": {"body": "paris"}}})[0]` | recorded (cell) | hit ids as witness | class recorded; base index contents were established first | probe |\n| matrix.py:257 | `cpc, jpc, _ = req("PUT", "/" + perc, {"mappings": {"properties": {"q": {"type": "percolato` | yes (HTTP 200) | no | FixtureError: the run aborts | must-succeed |\n| matrix.py:260 | `ct, jt, _ = req("PUT", "/%s/_doc/t1?refresh=true" % perc, {"q": {"match": {"title": "paris` | recorded (cell) | hits | class recorded; index creation is must-succeed (above) | probe |\n| matrix.py:261 | `cp, jp, _ = req("POST", "/%s/_search" % perc, {"query": {"percolate": {"field": "q", "docu` | recorded (cell) | hits | class recorded; index creation is must-succeed (above) | probe |\n| matrix.py:267 | `cg, jg, _ = req("PUT", "/" + g1, {"aliases": {al: {"is_write_index": True}}, "mappings": {` | yes (HTTP 200) | no | FixtureError: the run aborts | must-succeed |\n| matrix.py:270 | `ca, ja, _ = req("PUT", "/%s/_doc/1?require_alias=true&refresh=true" % al, {"title": "x"})` | recorded | status/class | class recorded | probe (refusals are the observation) |\n| matrix.py:271 | `cb2, jb, _ = req("PUT", "/%s-notalias/_doc/1?require_alias=true" % P, {"title": "x"})` | recorded | status/class | class recorded | probe (refusals are the observation) |\n| matrix.py:272 | `cm2, jm2, _ = req("POST", "/_aliases", {"actions": [{"remove": {"index": g1, "alias": al, ` | recorded | status/class | class recorded | probe (refusals are the observation) |\n| matrix.py:273 | `cm3, jm3, _ = req("POST", "/_aliases", {"actions": [{"remove": {"index": g1, "alias": al +` | recorded | status/class | class recorded | probe (refusals are the observation) |\n| matrix.py:279 | `cf, jf, _ = req("POST", "/%s/_forcemerge?max_num_segments=1" % fm)` | recorded (cell) | no | class recorded; fixture contents were established first | probe |\n| exp2.py:100 | `req("DELETE", "/" + idx)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp2.py:101 | `c, j, _ = req("PUT", "/" + idx, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |\n| exp2.py:106 | `self.a_plain.bulk_add("static", dict(items[i:i + 500]))` | yes (adapter raises on HTTP error and on errors:true) | errors flag only | exception aborts setup; count then checked | must-succeed |\n| exp2.py:108 | `req("DELETE", "/lic-sem2")` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp2.py:109 | `c, j, _ = req("PUT", "/lic-sem2", {"settings": {"number_of_replicas": 0}, "mappings": {"pr` | recorded (events.sem2_create) | error body | recorded | probe (semantic index may be refused) |\n| exp2.py:111 | `c, j, _ = req("GET", "/mc-%s-static/_count" % TENANT)` | yes (c == 200 and count == number of documents) | count | AssertionError aborts (new) | must-succeed |\n| exp2.py:164 | `self.a_plain.bulk_add("live", batch)` | adapter raises on failure | errors flag only | failure recorded as a failed batch (attempted_failed); acknowledged ids reconciled later | workload write |\n| exp2.py:179 | `c, j, _ = req("PUT", "/lic-sem2/_doc/%s" % i, {"body": "alpha bravo %d" % seq}, timeout=20` | recorded per row | error body per row | classified by classify_sem_failure; UNVERIFIED for old lives | workload write (loud failures expected) |\n| exp2.py:210 | `cr, jr, _ = req("POST", "/mc-%s-live/_refresh" % TENANT)` | yes (new) | no | AssertionError aborts verification | must-succeed |\n| exp2.py:214 | `c, j, _ = req("POST", "/mc-%s-live/_search?scroll=2m" % TENANT, {"size": 5000, "_source": ` | loop stops on non-200 | hits | a short read can only inflate acked_absent (fails safe); not raised | verification read |\n| exp2.py:218 | `c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)` | loop stops on non-200 | hits | a short read can only inflate acked_absent (fails safe); not raised | verification read |\n| exp2.py:220 | `req("DELETE", "/_search/scroll", {"scroll_id": sid})` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp2.py:224 | `req("POST", "/lic-sem2/_refresh")` | no | no | a missing refresh can only hide sem documents: sem_acked_absent inflates (fails safe) | verification read |\n| exp2.py:225 | `c, j, _ = req("POST", "/lic-sem2/_search", {"size": 10000, "_source": False, "query": {"ma` | search status checked | hit ids | short read can only inflate sem_acked_absent (fails safe) | verification read |\n| exp3.py:47 | `c, j, _ = req("PUT", "/_inference/text_embedding/" + matrix.STUB_EP, matrix.stub_endpoint_` | yes (new) | no | ScrollError aborts fixtures | must-succeed (on trial) |\n| exp3.py:54 | `req("DELETE", "/" + ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:55 | `c, j, _ = req("PUT", "/" + ix, mapping(kind))` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |\n| exp3.py:58 | `cb, sb = bulk_strict(ix, [(str(i), doc(kind, i)) for i in range(n_docs(kind))])` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |\n| exp3.py:68 | `req("POST", "/%s/_refresh" % ix)` | no (recorded call) | no | the subsequent count/search shows the effect; fixtures re-checked by source_count | helper: recorded |\n| exp3.py:69 | `c, j, _ = req("GET", "/%s/_count" % ix)` | yes | integer count, shards (source_count) | count() returns a status dict; source_count raises | helper: recorded (count) or must-succeed (source_count) |\n| exp3.py:77 | `c, j, _ = req("GET", "/%s/_doc/%s?_source_includes=_inference_fields" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:93 | `c, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:106 | `c, j, _ = req("POST", "/%s/_search" % ix, dict(body, size=50, track_total_hits=True))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:110 | `c, j, _ = req("POST", "/%s/_search" % ix, {"query": {"match": {"title": "paris"}}, "size":` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:114 | `c, j, _ = req("POST", "/%s/_search" % ix, {"knn": {"field": "v", "query_vector": embed(tit` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |\n| exp3.py:121 | `c, j, _ = req("GET", "/%s/_doc/%d?_source_includes=v&_source_exclude_vectors=false" % (ix,` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:138 | `c, j, _ = req("GET", p)` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:154 | `c, j, _ = req("PUT", "/%s/_doc/1?refresh=true" % ix, d)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:155 | `rec("overwrite_full_doc", c, j, lambda: {"tag": ntag(1), "embedding_present": emb(1)})` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:157 | `c, j, _ = req("POST", "/%s/_update/2?refresh=true" % ix, {"doc": {"tag": "partial"}})` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:158 | `rec("update_partial_api", c, j, lambda: {"tag": ntag(2), "embedding_present": emb(2)})` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:160 | `c, s = bulk(ix, [("3", {"tag": "bulkpartial"})], op="update")` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:163 | `c, j, _ = req("POST", "/%s/_update/4?refresh=true" % ix, {"script": {"source": "ctx._sourc` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:164 | `rec("update_scripted", c, j, lambda: {"tag": ntag(4), "embedding_present": emb(4)})` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:166 | `c, j, _ = req("DELETE", "/%s/_doc/5?refresh=true" % ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:167 | `rec("delete_one", c, j, lambda: {"get_after_status": get(5)[0]})` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:169 | `c, j, _ = req("POST", "/%s/_update_by_query?refresh=true&conflicts=proceed" % ix,` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:171 | `rec("update_by_query", c, j, lambda: {"updated": j.get("updated"), "failures": len(j.get("` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:175 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:176 | `cdst, _jd, _ = req("PUT", "/" + dst, mapping(kind)) # recorded below as dst_create (a refu` | recorded (dst_create) | no | recorded | probe |\n| exp3.py:177 | `c, j, _ = req("POST", "/_reindex?refresh=true", {"source": {"index": ix}, "dest": {"index"` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:178 | `rec("reindex_same_mapping", c, j, lambda: {"dst_create": cdst, "dst_count": count(dst), "f` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:180 | `"dst_vectors_present": None if kind == "sem" else sum(1 for q in (0, 10, 20, 30) if len((r` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:181 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:183 | `c, j, _ = req("POST", "/%s/_forcemerge?max_num_segments=1" % ix, timeout=300)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:184 | `rec("force_merge", c, j, lambda: {"count_after": count(ix)})` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:187 | `c, j, _ = req("PUT", "/%s/_doc/9999?refresh=true" % ix, d)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |\n| exp3.py:188 | `rec("index_new_doc", c, j, lambda: {"count": count(ix)})` | recorded or counted | varies | recorded | probe/read (recorded) |\n| exp3.py:204 | `c, j, _ = req("POST", "/%s/_refresh" % ix)` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |\n| exp3.py:214 | `c, j, _ = req("GET", "/%s/_count" % ix)` | yes | integer count, shards (source_count) | count() returns a status dict; source_count raises | helper: recorded (count) or must-succeed (source_count) |\n| exp3.py:234 | `c, j, _ = req("POST", path, body, timeout=page_timeout)` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |\n| exp3.py:247 | `c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=page_` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |\n| exp3.py:252 | `req("DELETE", "/_search/scroll", {"scroll_id": sid})` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:260 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:261 | `c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |\n| exp3.py:275 | `bulk_strict(dst, items[k:k + 100], refresh="false")` | yes | one result per operation | BulkError aborts the migration | must-succeed |\n| exp3.py:293 | `c, j, _ = req("POST", "/%s/_search" % dst, {"knn": {"field": "v", "query_vector": src_docs` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |\n| exp3.py:302 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:303 | `c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |\n| exp3.py:320 | `bulk_strict(dst, items[k:k + 100], refresh="false")` | yes | one result per operation | BulkError aborts the migration | must-succeed |\n| exp3.py:337 | `cc, jj, _ = req("POST", "/%s/_search" % dst, {"knn": {"field": "v", "query_vector": docs[i` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |\n| exp3.py:352 | `req("DELETE", "/" + ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:355 | `c, j, _ = req("PUT", "/" + ix, m)` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |\n| exp3.py:358 | `cb, sb = bulk_strict(ix, [(str(i), doc("sem", i)) for i in range(20)], refresh="false")` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |\n| exp3.py:365 | `cv, jv, _ = req("POST", "/%s/_search" % ix, {"size": 0, "track_total_hits": True, "query":` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:367 | `c, s = bulk(ix, [(str(i), {"tag": "u"}) for i in range(20)], refresh="false", op="update")` | recorded (c) | items counted | failed counts unanswered operations | probe (partial update on Basic) |\n| exp3.py:368 | `req("POST", "/%s/_refresh" % ix)` | no (recorded call) | no | the subsequent count/search shows the effect; fixtures re-checked by source_count | helper: recorded |\n| exp3.py:371 | `cc, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:374 | `cs, js, _ = req("POST", "/%s/_search" % ix, {"query": {"semantic": {"field": "body", "quer` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| exp3.py:385 | `req("DELETE", "/" + SEMONLY)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| exp3.py:386 | `c, j, _ = req("PUT", "/" + SEMONLY, {"settings": {"number_of_shards": 1, "number_of_replic` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |\n| exp3.py:390 | `cb, sb = bulk_strict(SEMONLY, [(str(i), {"body": "doc %d about %s" % (i, ["paris", "berlin` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |\n| exp3.py:412 | `c, j, _ = req(m, path, b)` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |\n| oracle.py:12 | `c1, j1, _ = req("POST", "/%s/_search" % index, {"size": window, "query": {"bool": {"must":` | yes (both 200 or RuntimeError) | hit ids | RuntimeError aborts | must-succeed (oracle legs) |\n| oracle.py:13 | `c2, j2, _ = req("POST", "/%s/_search" % index, {"size": window, "knn": {"field": FIELD_V, ` | yes (both 200 or RuntimeError) | hit ids | RuntimeError aborts | must-succeed (oracle legs) |\n| oracle.py:58 | `c, j, _ = req("POST", "/%s/_search" % index, {"size": k, "retriever": r})` | yes (both 200 or RuntimeError) | hit ids | RuntimeError aborts | must-succeed (oracle legs) |\n| life.py:35 | `c, j, _ = req("GET", "/_cluster/health?wait_for_status=yellow&timeout=90s", timeout=100)` | wait_health loops until 200; first one recorded | status field | recorded; readiness only | readiness |\n| life.py:43 | `c, j, _ = req("GET", "/_cluster/health?wait_for_status=yellow&timeout=10s", timeout=20)` | wait_health loops until 200; first one recorded | status field | recorded; readiness only | readiness |\n| life.py:52 | `with urllib.request.urlopen("http://172.17.0.1:19271/", timeout=3) as r:` | exception caught by caller | no | reported not ready | readiness (stub) |\n| life.py:60 | `c, j, ms = req("POST", "/_license/start_trial?acknowledge=true", timeout=60)` | recorded (c) | body recorded | recorded; later steps depend on the licence state read back from lib.licence() | probe (the licence transition itself) |\n| life.py:66 | `c0, j0, _ = req("POST", "/_license/start_basic")` | recorded (c) | body recorded | recorded; later steps depend on the licence state read back from lib.licence() | probe (the licence transition itself) |\n| life.py:68 | `c, j, ms = req("POST", "/_license/start_basic?acknowledge=true", timeout=60)` | recorded (c) | body recorded | recorded; later steps depend on the licence state read back from lib.licence() | probe (the licence transition itself) |\n| life.py:179 | `c, j, _ = req("POST", "/%s/_update/1?refresh=true" % nm, {"doc": {"tag": "m"}}); r["update` | recorded (status stored) | no | stored status is checked by summarize (migrated_ops_ok: all < 300) | probe (ops on migrated indices) |\n| life.py:180 | `c, j, _ = req("DELETE", "/%s/_doc/2?refresh=true" % nm); r["delete"] = c` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |\n| life.py:181 | `c, j, _ = req("POST", "/%s/_forcemerge?max_num_segments=1" % nm); r["force_merge"] = c` | recorded (status stored) | no | stored status is checked by summarize (migrated_ops_ok: all < 300) | probe (ops on migrated indices) |\n| life.py:182 | `c, j, _ = req("PUT", "/%s/_doc/new1?refresh=true" % nm, {"title": "x", "tag": "n"}); r["in` | recorded (status stored) | no | stored status is checked by summarize (migrated_ops_ok: all < 300) | probe (ops on migrated indices) |\n| life.py:199 | `c, j, _ = req("GET", "/_cat/indices/lic3-*?format=json&h=index,health,docs.count,store.siz` | recorded | no | recorded as is | record |\n| life.py:202 | `R["trial_status"] = req("GET", "/_license/trial_status")[1]` | recorded | no | recorded as is | record |\n| life.py:237 | `c, j, _ = req("PUT", "/_inference/text_embedding/" + matrix.STUB_EP, matrix.stub_endpoint_` | recorded | error recorded | recorded | probe |\n| exp4.py:50 | `return s._req("GET", p)` | recorded | no | the probe\'s own error handling is the thing under test | probe (start-up probe under test) |\n| exp4.py:65 | `c, j, _ = req("GET", "/_license", timeout=1.5)` | recorded | no | the probe\'s own error handling is the thing under test | probe (start-up probe under test) |\n\nNot listed above because they are not `req` calls: the workload readers and writers in `exp2.py` go through the memcore adapter (`a_auto`, `a_lin`, `a_ctl`, `a_brk`, `a_plain`), which raises on any HTTP error or `errors:true`; each exception is recorded as a failed row with its error text and never as a success. The adapter `bulk_add` does not check that every item answered, so `exp2.setup` now establishes the static index count before taking oracle legs.\n' : bm25_match
+
+======================================================================
+FAIL: test_cells_are_decided_only_by_verdict (tests.test_gates.MatrixVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<90faede-worktree>/licence/tests/test_gates.py", line 731, in test_cells_are_decided_only_by_verdict
+    self.assertNotIn("cell", imported, "lib.cell would decide a class outside verdict()")
+AssertionError: 'cell' unexpectedly found in {'bulk_strict', 'embed', 'bulk', 'err', 'BulkError', 'cell', 'classify', 'req'} : lib.cell would decide a class outside verdict()
+
+----------------------------------------------------------------------
+Ran 86 tests in 20.372s
+
+FAILED (failures=14, errors=6)
