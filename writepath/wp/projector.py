@@ -165,10 +165,13 @@ class Projector:
         return len(rows)
 
     def step(self):
-        """One round. Returns rows handled; on a lost lease or refused write, drops the lease and returns -1."""
-        if self.lease is None and not self.start():
-            return 0
+        """One round. Returns rows handled; on a lost lease or refused write, drops the lease and returns -1.
+        start() sits inside the handler: a forced takeover landing between acquire and the alias CAS (StaleEpoch) or
+        before the cursor insert (StaleWrite) means this projector lost the start-up race, not that it crashed
+        (amendment 19; at fd4ed53 the exception escaped and killed the loser's process). Other errors still propagate."""
         try:
+            if self.lease is None and not self.start():
+                return 0
             L.renew(self.conn, self.lease, self.ttl)          # heartbeat: a live projector never expires
             return self.derive() + self.mirror_events() + self.mirror_facts()
         except (StaleWrite, F.StaleEpoch, L.LeaseLost):
