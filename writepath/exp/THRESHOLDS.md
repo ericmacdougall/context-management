@@ -765,3 +765,47 @@ The rule for batch c:
   in the repository, labelled as old-gate.
 - **heldout_secrets is not rerun.** It uses no store, so the flood-stage gate has nothing to judge in it, and its FAIL
   is not rerun (amendment 20). ASSUMPTION, open to main's ruling.
+
+## Amendment 23a (2026-11-17, after batch c stopped at 31112b4, before any further run; thresholds unchanged)
+What happened in batch c at 31112b4:
+- **17 runs held their rules and stand.** In run order: guard_check start, static_check, es_semantics, n_old,
+  review_fix (F3, F4, F5, F7, F1S, F6), review_fix F1, scope_hold, n_new, row1, row23, e_verify, registry_marker, d1,
+  d4_rescan, row19, row6 and d4_store_mark.
+  - The log of each run's window, read afterwards, has no high-watermark or flood-stage line. So they stand under the
+    gate below as well.
+- **d3 exited 1: a FAIL at 31112b4 (amendment 23, no verdict). It stands and is reported beside its rerun.**
+  - At 15:54:43Z the ES node logged "high disk watermark [17gb] exceeded" (free 15.7 GiB). Other tenants of the host
+    were using the shared filesystem; this stream's own usage stayed +0.00 GiB.
+  - d3's index wp16096-d3db4f08-events-base was created at 15:54:47Z. The cluster went RED at once and the shard never
+    started.
+  - The bulk got 503 unavailable_shards_exception. The N1-fixed projector raised ProjectionError instead of hiding the
+    error.
+  - Flood stage (15gb) was not reached, so the gate of 72c0708 did not void the run. This is a harness defect: a
+    validity gate that judged only the flood stage.
+- **mutual_mentions was BLOCKED at its start** (host free 16G, under the 17G start line). The chain stopped there, and
+  nothing after it ran.
+
+Gate change (39dbad7):
+- **High watermark.** exp.disk_gate end also gives VOID for a "high disk watermark ... exceeded" line in the run window.
+  Past that watermark the node allocates no new primary, so writes to a new index fail.
+- **Symmetric.** A PASS in such a window is void as well.
+- **Low watermark.** It does not void; it only stops replicas, and the lab has none.
+- **Watcher.** It writes STOP on either line.
+- **Granularity.** ES repeats these warnings about every 30 s, so a run shorter than that can fall between two lines.
+- **Unchanged.** The 15 GB floor and the 17 GB start line are main's numbers and stay as they are. The start line
+  equals the node's high watermark (17gb free), so a start at the margin will probably void. Such a VOID is recorded.
+
+Batch d:
+- **Named commit.** The commit that adds this amendment. It changes only this file.
+  - `git diff 31112b4 <named commit> -- writepath/wp` is empty, so the product code equals that of the N1 fix commit
+    8a03b80.
+  - Since 31112b4 only exp/disk_gate.py, runkit/launch_one.sh, tests/test_disk_gate.py (39dbad7) and
+    runkit/specs/step1-d.txt (7ce5ee7) changed.
+- **Spec.** runkit/specs/step1-d.txt:
+  - cleanup, setup reset and preflight;
+  - d3;
+  - then every experiment of step1-c.txt from mutual_mentions to guard_check end, with the same arguments.
+- **Rules.** Amendment 23's rules apply, at this commit: once each; VOID may be rerun; FAIL is not; no verdict is a
+  FAIL; the tree is pinned from `git archive`.
+- **Report.** Step 1's stamped set is the 17 runs at 31112b4 above plus batch d. guard_check start (31112b4) and end
+  (batch d) fall at two commits. Each is a stateless check of the live catalogs, so the pair needs no shared state.
