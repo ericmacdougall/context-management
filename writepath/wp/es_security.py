@@ -35,6 +35,9 @@ def _inspect():
 def _run_args(j, security):
     hc, cfg = j["HostConfig"], j["Config"]
     args = ["docker", "run", "-d", "--name", NAME]
+    for k, v in (cfg.get("Labels") or {}).items():     # keep the stream label (host/bootstrap.py checks it)
+        if not k.startswith("org.opencontainers."):
+            args += ["--label", f"{k}={v}"]
     for cport, binds in (hc.get("PortBindings") or {}).items():
         for b in binds or []:
             args += ["-p", f"{b.get('HostIp') or '127.0.0.1'}:{b['HostPort']}:{cport.split('/')[0]}"]
