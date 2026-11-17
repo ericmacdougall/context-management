@@ -5,6 +5,7 @@ import json
 import math
 import os
 import socket
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -19,6 +20,14 @@ CODE_COMMIT = os.environ.get("LIC_COMMIT", "unknown")
 def _auth(user="elastic", pwfile=None):
     with open(pwfile or PWFILE) as fh:
         return "Basic " + base64.b64encode(("%s:%s" % (user, fh.read().strip())).encode()).decode()
+
+
+_LAST = threading.local()
+
+
+def last_response():
+    """(status, raw bytes) of this thread's last req() answer: the bytes the adapter would have read (EXP1-T3, review 9 F18)."""
+    return getattr(_LAST, "v", (None, b""))
 
 
 def req(method, path, body=None, ndjson=None, timeout=60, user="elastic", pwfile=None, base=None):
@@ -37,7 +46,9 @@ def req(method, path, body=None, ndjson=None, timeout=60, user="elastic", pwfile
     except urllib.error.HTTPError as e:
         raw, code = e.read(), e.code
     except (urllib.error.URLError, socket.timeout, TimeoutError, ConnectionError, OSError) as e:
+        _LAST.v = (0, b"")
         return 0, {"_transport_error": type(e).__name__}, (time.time() - t) * 1000
+    _LAST.v = (code, raw or b"")
     try:
         j = json.loads(raw or b"{}")
     except ValueError:

@@ -908,7 +908,7 @@ def _poll_rows(t_resp, unverified=(), drop=()):
     rows = []
     for k in range(40):
         t = t_resp - 1.0 + k * 0.05
-        p = {"_t1": t}
+        p = {"_t0": t - 0.01, "_t1": t}
         for f in MANDATORY_T2:
             if f in drop:
                 continue
@@ -1037,6 +1037,11 @@ def _healthy(scope):
     sem_failed_other) set so that EXP2-T4 can be PASS. Every other value is as committed."""
     R = _life("down_7" if scope in ("down", "both") else "up_1")
     R["exp2"]["writes"]["sem_failed_other"] = 0
+    if scope in ("down", "both"):
+        import observe
+        msg = observe.adapter_message(403, b'{"error":{"type":"security_exception","reason":"current license is non-compliant for [rrf]"},"status":403}')
+        for c in ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate"):   # review 9 F18: what matrix.verdict records
+            R["exp1_after"][c].update(adapter_message=msg, adapter_detects=observe.adapter_detects(msg))
     return R
 
 

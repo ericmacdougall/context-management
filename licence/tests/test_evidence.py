@@ -48,6 +48,23 @@ def _healthy(scope):
     so that EXP2-T4 can pass. Every other value is as committed."""
     R = _life("down_7" if scope in ("down", "both") else "up_1")
     R["exp2"]["writes"]["sem_failed_other"] = 0
+    if scope in ("down", "both"):
+        _with_adapter_view(R)
+    return R
+
+
+LATCH_CELLS = ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate")
+HEALTHY_LATCH_BODY = (b'{"error":{"root_cause":[{"type":"security_exception","reason":"current license is non-compliant for [rrf]"}],'
+                      b'"type":"security_exception","reason":"current license is non-compliant for [rrf]"},"status":403}')
+
+
+def _with_adapter_view(R):
+    """Review 9 F18: the committed latch cells carry no adapter message, so EXP1-T3 is UNVERIFIED on them. The healthy fixture adds
+    what matrix.verdict now records: the adapter's message for a licence 403 and the adapter detector's answer on it."""
+    import observe
+    msg = observe.adapter_message(403, HEALTHY_LATCH_BODY)
+    for c in LATCH_CELLS:
+        R["exp1_after"][c].update(adapter_message=msg, adapter_detects=observe.adapter_detects(msg))
     return R
 
 
@@ -179,7 +196,7 @@ def _poll(after, before=("AVAILABLE", 200)):
     rows = []
     for k in range(60):
         t = T_RESP - 1.0 + k * 0.05
-        row = {"_t1": t}
+        row = {"_t0": t - 0.01, "_t1": t}
         for p in PROBES:
             cls, st = before if t < T_RESP else healthy[p]
             row[p] = [cls, st] + ([4 if cls == "AVAILABLE" else None] if p == "dls_search" else [])
@@ -275,16 +292,20 @@ class RecordingBoundaryTests(unittest.TestCase):
 
     def test_f13_successes_and_refusals_are_counted_by_outcome_not_label(self):
         import observe
-        self.assertIsNone(observe.outcome_from_cell(["AVAILABLE", 403]))      # label contradicts status: not an observation
-        self.assertIsNone(observe.outcome_from_cell(["OTHER_ERROR", 200]))
-        self.assertIsNone(observe.outcome_from_cell(["LICENCE_ERROR", 200]))
-        for cell in (["EMPTY_WITNESS", 200], ["OTHER_ERROR", 200], ["AVAILABLE", 200]):   # any 2xx answer after the refusal
+        for bad in (["AVAILABLE", 403], ["OTHER_ERROR", 200], ["LICENCE_ERROR", 200]):   # label contradicts status (review 9 F17)
+            self.assertRaises(observe.Unparsed, observe.parse_cell, bad, ())
+            rows = _poll({})
+            rows[-1]["rrf"] = bad
+            m = observe.moments(rows, T_RESP)
+            self.assertIn("stream_error", m["rrf"], bad)          # the whole stream is unparsed: no refusal, T2 UNVERIFIED
+            self.assertIsNone(m["rrf"].get("first_refusal"), bad)
+        for cell in (["EMPTY_WITNESS", 200], ["AVAILABLE", 200]):   # any 2xx answer after the refusal
             rows = _poll({})
             rows[-1]["rrf"] = cell
             m = observe.moments(rows, T_RESP)
             self.assertEqual(m["rrf"]["success_after_first_refusal"], 1, cell)
         rows = _poll({"dls_search": ("AVAILABLE", 403)})
-        self.assertIsNone(observe.moments(rows, T_RESP)["dls_search"]["first_refusal"])
+        self.assertIsNone(observe.moments(rows, T_RESP)["dls_search"].get("first_refusal"))
 
     def test_f14_load_never_raises_on_bad_transition_times_or_raw_rows(self):
         import gzip
@@ -366,7 +387,7 @@ class RecordingBoundaryTests(unittest.TestCase):
         import evidence as E
         Sub = type("Sub", (E.Outcome,), {})
         with self.assertRaises(E.Unparsed):
-            E.LatchCell(outcome=Sub(403, "LICENCE_REFUSAL", True), error="x")
+            E.LatchCell(outcome=Sub(403, "LICENCE_REFUSAL", True), message="HTTP 403: current license is non-compliant", detects=True)
 
     def test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable(self):
         import evidence as E
@@ -476,7 +497,9 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
         with self.assertRaises(E.Unparsed):
             E.Outcome(503, "LICENCE_REFUSAL")   # a case that does not belong to the status
         with self.assertRaises(E.Unparsed):
-            E.LatchCell(outcome=403, error="x")   # a bare status is not an outcome
+            E.LatchCell(outcome=403, message="HTTP 403: current license is non-compliant", detects=True)   # a bare status is not an outcome
+        with self.assertRaises(E.Unparsed):   # review 9 F18: a recorded detector flag that the adapter's own detector contradicts
+            E.LatchCell(outcome=E.Outcome.of(403, True), message="HTTP 403: license expired", detects=True)
         with self.assertRaises(E.Unparsed):
             E.DlsControl(outcome=E.Outcome.of(401), only_kw_a=True, returned=4)   # control not established
         with self.assertRaises(E.Unparsed):
@@ -679,6 +702,33 @@ class RawEdgeTests(unittest.TestCase):
             m(P)
             self.assertEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "UNVERIFIED", lab)
 
+    def test_f17_raw_workload_row_mutations_are_unverified(self):
+        """The generator's raw-row mutations on rows.gz: every one makes EXP2-T2, T3 and T5 UNVERIFIED (never PASS, never raises)."""
+        import gzip
+        base = [json.loads(l) for l in gzip.open(os.path.join(RES, "down_7.rows.gz"), "rt")]
+        k = next(j for j in range(len(base) // 2, len(base) - 1) if base[j][1] < base[j + 1][1])
+
+        def at(j, pos, v):
+            return lambda W: W[j].__setitem__(pos, v)
+        muts = {
+            "t1 NaN": at(k, 1, float("nan")), "t0 +inf": at(k, 0, float("inf")), "t1 -inf": at(k, 1, float("-inf")),
+            "t0 negative": at(k, 0, -1.0), "t1 far future": at(-1, 1, 1e12), "t0 before the run": at(0, 0, 2.0),
+            "t0 after t1": at(k, 0, base[k][1] + 0.5), "t1 string": at(k, 1, "1794859121.5"), "t0 bool": at(k, 0, True),
+            "t0 huge int": at(k, 0, 10 ** 400),
+            "out of order": lambda W: W.__setitem__(slice(k, k + 2), [W[k + 1], W[k]]),
+            "duplicated": lambda W: W.insert(k, copy.deepcopy(W[k])),
+            "row wrong type": lambda W: W.__setitem__(k, {"t0": W[k][0]}),
+            "field missing": lambda W: W.__setitem__(k, W[k][:7]),
+            "ok wrong type": at(k, 4, "1"), "ok out of domain": at(k, 4, 2), "unknown arm": at(k, 2, "auto2"),
+            "ok with error text": lambda W: W[k].__setitem__(7, "HTTP 403: x") if W[k][4] else W[k].__setitem__(4, 1),
+            "failure without error text": lambda W: W.__setitem__(k, W[k][:4] + [0] + W[k][5:7] + [None]),
+        }
+        for lab, m in muts.items():
+            W = copy.deepcopy(base)
+            m(W)
+            r = summarize.exp2_checks(self.load_with(rows=W), "down")
+            self.assertEqual((r["T2_status"], r["T3_status"], r["T5_status"]), ("UNVERIFIED",) * 3, lab)
+
     def test_f17_a_refusal_of_the_wrong_kind_starts_the_no_success_window(self):
         """[403 without the licence text, 200, 403 licence refusal] after the transition: the probe answered after being refused."""
         P = copy.deepcopy(self.POLL)
@@ -706,7 +756,7 @@ class RawEdgeTests(unittest.TestCase):
         rows[k][1] = float("nan")
         L = self.load_with(rows=rows)
         r = summarize.exp2_checks(L, "down")
-        self.assertEqual((r["T2_status"], r["T3_latch_status"], r["T5_status"]), ("UNVERIFIED",) * 3)
+        self.assertEqual((r["T2_status"], r["T3_status"], r["T5_status"]), ("UNVERIFIED",) * 3)
 
     # ---- F18: EXP1-T3 is the adapter's detector on the adapter's message ----------------------------------------------------------
     def latch_life(self, body=LIC_BODY, code=403, error=None, recorded=None, status=None):
