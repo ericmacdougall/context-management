@@ -1,0 +1,64 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# rerun after the eager-dict test bug (2 errors above) was fixed: sh kit/run.sh red-a2d65fd t -v tests.test_final_pg.P4_UseTimeFactorRevocation
+test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call)
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... 
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [submit]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [explain]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [read_table]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_candidates]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_values]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [submit]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 478, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : submit accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [explain]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 478, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : explain accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [read_table]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 478, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : read_table accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_candidates]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 478, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : erase_candidates accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_values]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 478, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : erase_values accepted a session of a revoked factor
+
+----------------------------------------------------------------------
+Ran 1 test in 0.196s
+
+FAILED (failures=5)

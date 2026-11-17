@@ -1,0 +1,872 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# a2d65fd + tests/test_final_pg.py + tests/test_delta1_pg.py (owner's READ UNCOMMITTED test): sh kit/run.sh red-a2d65fd t -v tests.test_final_pg tests.test_delta1_pg
+test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain)
+a2d65fd: explain's judgment WAS the read that waited (dc._session for sessions; the STABLE dc._explain_raw for principal): ... 
+  test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='factors')
+a2d65fd: explain's judgment WAS the read that waited (dc._session for sessions; the STABLE dc._explain_raw for principal): ... FAIL
+  test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='principal')
+a2d65fd: explain's judgment WAS the read that waited (dc._session for sessions; the STABLE dc._explain_raw for principal): ... FAIL
+test_open_session (tests.test_final_pg.P1_JudgmentNeverWaits.test_open_session)
+a2d65fd (P4): open_session's factor and principal reads were its only judgment; each waited for its table lock and read the ... ok
+test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit)
+Regression guard for sessions and principal (a2d65fd's judgment after _lock_event was not the first read of those tables); ... 
+  test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit) (table='factors')
+Regression guard for sessions and principal (a2d65fd's judgment after _lock_event was not the first read of those tables); ... FAIL
+test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait)
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended. ... 
+  test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='expire')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended. ... FAIL
+  test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='end')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended. ... FAIL
+  test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='factor')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended. ... FAIL
+  test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='principal')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended. ... FAIL
+test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait)
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row. ... 
+  test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='expire')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row. ... FAIL
+  test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='end')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row. ... FAIL
+  test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='factor')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row. ... FAIL
+  test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='principal')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row. ... FAIL
+test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait)
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended ... 
+  test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='expire')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended ... FAIL
+  test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='end')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended ... FAIL
+  test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='factor')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended ... FAIL
+  test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='principal')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended ... FAIL
+test_erase_values_after_the_tenant_row (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_the_tenant_row)
+Regression guard (a2d65fd judged again after the tenant row). ... 
+  test_erase_values_after_the_tenant_row (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_the_tenant_row) (mutation='factor')
+Regression guard (a2d65fd judged again after the tenant row). ... FAIL
+test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait)
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session. ... 
+  test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='expire')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session. ... FAIL
+  test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='end')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session. ... FAIL
+  test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='factor')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session. ... FAIL
+  test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='principal')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session. ... FAIL
+test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait)
+a2d65fd: the same for read_table. ... 
+  test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait) (call='read_table', mutation='expire')
+a2d65fd: the same for read_table. ... FAIL
+  test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait) (call='read_table', mutation='end')
+a2d65fd: the same for read_table. ... FAIL
+  test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait) (call='read_table', mutation='factor')
+a2d65fd: the same for read_table. ... FAIL
+test_revoke_never_waits_for_an_open_end_session (tests.test_final_pg.P1_RevokePath.test_revoke_never_waits_for_an_open_end_session)
+a2d65fd: the revoke's sessions update waited for the target's session row held by an uncommitted dc.end_session (an ... 
+  test_revoke_never_waits_for_an_open_end_session (tests.test_final_pg.P1_RevokePath.test_revoke_never_waits_for_an_open_end_session) (end_session='commit')
+a2d65fd: the revoke's sessions update waited for the target's session row held by an uncommitted dc.end_session (an ... FAIL
+  test_revoke_never_waits_for_an_open_end_session (tests.test_final_pg.P1_RevokePath.test_revoke_never_waits_for_an_open_end_session) (end_session='rollback')
+a2d65fd: the revoke's sessions update waited for the target's session row held by an uncommitted dc.end_session (an ... FAIL
+test_self_revoke_is_applied (tests.test_final_pg.P1_RevokePath.test_self_revoke_is_applied)
+Regression guard: the call's own authority writes never refuse it: an admin revoking itself is applied, and its token is ... ok
+test_sessions_table_lock (tests.test_final_pg.P1_RevokePath.test_sessions_table_lock)
+a2d65fd: the revoke's update of dc.sessions waited for a table lock (SHARE) after the last judgment. Fixed: the table lock is ... FAIL
+test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row)
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment. ... 
+  test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row) [expire]
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment. ... FAIL
+  test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row) [end]
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment. ... FAIL
+  test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row) [factor]
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment. ... FAIL
+test_target_props_rows (tests.test_final_pg.P1_RevokePath.test_target_props_rows)
+a2d65fd: invalidating the target's open proposals waited on a held props row after the last judgment. ... FAIL
+test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row)
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent ... 
+  test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='expire')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent ... FAIL
+  test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='end')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent ... FAIL
+  test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='factor')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent ... FAIL
+  test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='principal')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent ... FAIL
+test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock)
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment. ... 
+  test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock) (mutation='expire')
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment. ... FAIL
+  test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock) (mutation='end')
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment. ... FAIL
+  test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock) (mutation='factor')
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment. ... FAIL
+test_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_head_row)
+As test_tenant_row: the requirement's head row FOR UPDATE (a concurrent submission on the same requirement). ... 
+  test_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_head_row) (mutation='factor')
+As test_tenant_row: the requirement's head row FOR UPDATE (a concurrent submission on the same requirement). ... FAIL
+test_principal_advisory_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_principal_advisory_lock)
+As test_tenant_row: the (tenant, principal) advisory lock, which any login role can take. ... 
+  test_principal_advisory_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_principal_advisory_lock) (mutation='factor')
+As test_tenant_row: the (tenant, principal) advisory lock, which any login role can take. ... FAIL
+test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit)
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice ... 
+  test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit) (mutation='expire')
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice ... FAIL
+  test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit) (mutation='end')
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice ... FAIL
+  test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit) (mutation='factor')
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice ... FAIL
+test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index)
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject, ... 
+  test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index) (mutation='expire')
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject, ... FAIL
+  test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index) (mutation='end')
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject, ... FAIL
+  test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index) (mutation='factor')
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject, ... FAIL
+test_tenant_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_tenant_row)
+Regression guard for expire, end and principal (a2d65fd judged again after _lock_event); red for factor (use-time factor ... 
+  test_tenant_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_tenant_row) (mutation='factor')
+Regression guard for expire, end and principal (a2d65fd judged again after _lock_event); red for factor (use-time factor ... FAIL
+test_client_connection_dropped_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_client_connection_dropped_mid_call)
+The client's socket is shut down while its call waits (a dropped connection; no server process is signalled). The server ... ~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py:542: ResourceWarning: unclosed <socket.socket fd=11, family=2, type=1, proto=6, laddr=('127.0.0.1', 53334), raddr=('127.0.0.1', 25630)>
+  socket.socket(fileno=os.dup(c.fileno())).shutdown(socket.SHUT_RDWR)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_deadlock_victim_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_deadlock_victim_mid_call)
+The owner holds the chain head and then asks for alice's advisory lock, which alice's submit holds while it waits for the ... ok
+test_lost_response_after_commit (tests.test_final_pg.P3_PgFailuresMidCall.test_lost_response_after_commit) ... ok
+test_statement_timeout_mid_call (tests.test_final_pg.P3_PgFailuresMidCall.test_statement_timeout_mid_call) ... ok
+test_factor_revoked_while_waiting_on_the_ledger (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_factor_revoked_while_waiting_on_the_ledger)
+a2d65fd (P4, _pgcore.sql:601-607,622-629): the factor was judged before the ledger insert; revoked while B waited, A rolled ... FAIL
+test_factor_revoked_while_waiting_on_the_ledger_foreign_key (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_factor_revoked_while_waiting_on_the_ledger_foreign_key)
+a2d65fd: the ledger insert's foreign-key check waits for the factor row held FOR UPDATE; the holder revokes the factor and ... FAIL
+test_factor_revoked_while_waiting_on_the_prune (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_factor_revoked_while_waiting_on_the_prune)
+a2d65fd: the prune of the factor's expired ledger rows waits for a concurrent prune of the same rows; the factor revoked ... FAIL
+test_positive_control (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_positive_control)
+Regression guard: with nothing changed, B opens the session after A rolls back. ... ok
+test_principal_revoked_while_waiting_on_the_ledger (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_principal_revoked_while_waiting_on_the_ledger)
+a2d65fd: the same with the principal revoked. ... FAIL
+test_proof_expired_while_waiting_on_the_ledger (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_proof_expired_while_waiting_on_the_ledger)
+Regression guard (a2d65fd re-judged the expiry after the insert). ... ok
+test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call)
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... 
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [submit]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [explain]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... ERROR
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [read_table]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... ERROR
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_candidates]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+  test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_values]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just ... FAIL
+test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels)
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... 
+  test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='read uncommitted')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... FAIL
+  test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='repeatable read')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... FAIL
+  test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='serializable')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session ... FAIL
+test_erase_values_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_erase_values_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.erase_values checked the session before taking the tenant row FOR UPDATE; a call that waited there past its ... ok
+test_every_isolation_other_than_read_committed_is_refused (tests.test_delta1_pg.M1_WallClock.test_every_isolation_other_than_read_committed_is_refused)
+The caller contract (DESIGN.md): only READ COMMITTED authenticates. READ UNCOMMITTED is refused as well: Postgres runs it as ... ok
+test_proof_that_expires_inside_a_transaction_is_refused (tests.test_delta1_pg.M1_WallClock.test_proof_that_expires_inside_a_transaction_is_refused)
+d05d731: open_session compared the proof's expiry with now(); a dc_idp caller that began its transaction while the proof was ... ok
+test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke)
+d05d731: open_session in a REPEATABLE READ transaction read the factor row from a snapshot taken before the factor was ... ok
+test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session)
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token ... ok
+test_submit_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_submit_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.submit checked the session once, before _lock_event; a call that waited on the principal's advisory lock past ... ok
+test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call)
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid ... ok
+test_first_committed_stays_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable) ... ok
+test_first_committed_stays_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable_different_requirements) ... ok
+test_first_rolled_back_leaves_the_second_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_rolled_back_leaves_the_second_retryable) ... ok
+test_first_rolled_back_leaves_the_second_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_rolled_back_leaves_the_second_retryable_different_requirements) ... ok
+
+======================================================================
+ERROR: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [explain]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 469, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertTrue(self._ok(name, tok), "positive control: %s works" % name)
+                    ^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 479, in _ok
+    return {"explain": r is not None, "read_table": bool(r), "erase_candidates": r["refused"] is None,
+                                                                                 ~^^^^^^^^^^^
+KeyError: 'refused'
+
+======================================================================
+ERROR: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [read_table]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 469, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertTrue(self._ok(name, tok), "positive control: %s works" % name)
+                    ^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 479, in _ok
+    return {"explain": r is not None, "read_table": bool(r), "erase_candidates": r["refused"] is None,
+                                                                                 ~^^^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+======================================================================
+FAIL: test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='factors')
+a2d65fd: explain's judgment WAS the read that waited (dc._session for sessions; the STABLE dc._explain_raw for principal):
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 346, in test_explain
+    self.assertTrue(waited, "vacuous: explain did not wait for dc.%s" % table)
+AssertionError: False is not true : vacuous: explain did not wait for dc.factors
+
+======================================================================
+FAIL: test_explain (tests.test_final_pg.P1_JudgmentNeverWaits.test_explain) (table='principal')
+a2d65fd: explain's judgment WAS the read that waited (dc._session for sessions; the STABLE dc._explain_raw for principal):
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 347, in test_explain
+    self.assertIsNone(r, "explain answered after dc.%s changed while it waited" % table)
+AssertionError: {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version': 0}, 'open': [{'id': 'alice/seed', 'base': 0, 'kind': 'proposal', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': [], 'local_only': False, 'restricted': False, 'sensitivity': 0}, 'author': 'alice', 'status': 'open', 'channel': None, 'closed_by': None, 'value_ref': 'val-4d8906df8cfc49e4f161579d963bd9c8766c8a22', 'author_kind': 'human'}], 'tenant': 'tenant-a', 'values': {'val-4d8906df8cfc49e4f161579d963bd9c8766c8a22': {'text': 'about dana', 'label': {'acl': [], 'holds': [], 'banned': [], 'models': None, 'regions': None, 'tenants': ['tenant-a'], 'subjects': [], 'local_only': False, 'restricted': False, 'sensitivity': 0}}}, 'principal': 'admin'} is not None : explain answered after dc.principal changed while it waited
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_JudgmentNeverWaits.test_submit) (table='factors')
+Regression guard for sessions and principal (a2d65fd's judgment after _lock_event was not the first read of those tables);
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 333, in test_submit
+    self.assertTrue(waited, "vacuous: submit did not wait for dc.%s" % table)
+AssertionError: False is not true : vacuous: submit did not wait for dc.factors
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='expire')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : erase_candidates answered after the wait with mutation expire
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='end')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : erase_candidates answered after the wait with mutation end
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='factor')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : erase_candidates answered after the wait with mutation factor
+
+======================================================================
+FAIL: test_erase_candidates_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_candidates_after_a_table_wait) (call='erase_candidates', mutation='principal')
+a2d65fd: erase_candidates listed the values about a subject (and their labels) after its admin session ended.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : erase_candidates answered after the wait with mutation principal
+
+======================================================================
+FAIL: test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='expire')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation expire
+
+======================================================================
+FAIL: test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='end')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation end
+
+======================================================================
+FAIL: test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='factor')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation factor
+
+======================================================================
+FAIL: test_erase_values_after_a_subject_token_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_subject_token_wait) (mutation='principal')
+a2d65fd: the delete of the subject's token mapping (last value gone) waited for the mapping's row.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation principal
+
+======================================================================
+FAIL: test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='expire')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation expire
+
+======================================================================
+FAIL: test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='end')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation end
+
+======================================================================
+FAIL: test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='factor')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation factor
+
+======================================================================
+FAIL: test_erase_values_after_a_value_row_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_a_value_row_wait) (mutation='principal')
+a2d65fd: erase_values judged again after the tenant row, then its delete waited for the value's row: erased for an ended
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation principal
+
+======================================================================
+FAIL: test_erase_values_after_the_tenant_row (tests.test_final_pg.P1_ReadAndEraseCalls.test_erase_values_after_the_tenant_row) (mutation='factor')
+Regression guard (a2d65fd judged again after the tenant row).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 292, in _erase
+    self.assertEqual((r, left), ({"refused": "unauthorized"}, 1), "erased after the wait with mutation %s" % how)
+AssertionError: Tuples differ: ({'erased': 1, 'refused': None, 'remaining': 0}, 0) != ({'refused': 'unauthorized'}, 1)
+
+First differing element 0:
+{'erased': 1, 'refused': None, 'remaining': 0}
+{'refused': 'unauthorized'}
+
+- ({'erased': 1, 'refused': None, 'remaining': 0}, 0)
++ ({'refused': 'unauthorized'}, 1) : erased after the wait with mutation factor
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='expire')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : explain answered after the wait with mutation expire
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='end')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : explain answered after the wait with mutation end
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='factor')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : explain answered after the wait with mutation factor
+
+======================================================================
+FAIL: test_explain_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_explain_after_a_table_wait) (call='explain', mutation='principal')
+a2d65fd: explain judged the session, then waited for dc.head, then returned the head to an ended or expired session.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : explain answered after the wait with mutation principal
+
+======================================================================
+FAIL: test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait) (call='read_table', mutation='expire')
+a2d65fd: the same for read_table.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : read_table answered after the wait with mutation expire
+
+======================================================================
+FAIL: test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait) (call='read_table', mutation='end')
+a2d65fd: the same for read_table.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : read_table answered after the wait with mutation end
+
+======================================================================
+FAIL: test_read_table_after_a_table_wait (tests.test_final_pg.P1_ReadAndEraseCalls.test_read_table_after_a_table_wait) (call='read_table', mutation='factor')
+a2d65fd: the same for read_table.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 262, in _read
+    self.assertEqual(got, how == "live", "%s answered after the wait with mutation %s" % (name, how))
+AssertionError: True != False : read_table answered after the wait with mutation factor
+
+======================================================================
+FAIL: test_revoke_never_waits_for_an_open_end_session (tests.test_final_pg.P1_RevokePath.test_revoke_never_waits_for_an_open_end_session) (end_session='commit')
+a2d65fd: the revoke's sessions update waited for the target's session row held by an uncommitted dc.end_session (an
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 228, in test_revoke_never_waits_for_an_open_end_session
+    self.assertFalse(waited, "the revoke waited %.1fs for the held session row" % (time.time() - t0))
+AssertionError: True is not false : the revoke waited 1.5s for the held session row
+
+======================================================================
+FAIL: test_revoke_never_waits_for_an_open_end_session (tests.test_final_pg.P1_RevokePath.test_revoke_never_waits_for_an_open_end_session) (end_session='rollback')
+a2d65fd: the revoke's sessions update waited for the target's session row held by an uncommitted dc.end_session (an
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 228, in test_revoke_never_waits_for_an_open_end_session
+    self.assertFalse(waited, "the revoke waited %.1fs for the held session row" % (time.time() - t0))
+AssertionError: True is not false : the revoke waited 1.5s for the held session row
+
+======================================================================
+FAIL: test_sessions_table_lock (tests.test_final_pg.P1_RevokePath.test_sessions_table_lock)
+a2d65fd: the revoke's update of dc.sessions waited for a table lock (SHARE) after the last judgment. Fixed: the table lock is
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 206, in test_sessions_table_lock
+    self._expire_during(lambda c: c.execute("lock table dc.sessions in share mode"))
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 186, in _expire_during
+    self.assertEqual(r.get("code"), UNAUTH if how != "principal" else "principal_revoked", "the revoke was applied after the wait")
+AssertionError: 'revoked' != 'unauthenticated:invalid_session'
+- revoked
++ unauthenticated:invalid_session
+ : the revoke was applied after the wait
+
+======================================================================
+FAIL: test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row) [expire]
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 194, in test_target_principal_row
+    self._expire_during(lambda c: c.execute("select 1 from dc.principal where tenant = %s and pid = 'bob' for update", (T,)), how=how)
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 186, in _expire_during
+    self.assertEqual(r.get("code"), UNAUTH if how != "principal" else "principal_revoked", "the revoke was applied after the wait")
+AssertionError: 'revoked' != 'unauthenticated:invalid_session'
+- revoked
++ unauthenticated:invalid_session
+ : the revoke was applied after the wait
+
+======================================================================
+FAIL: test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row) [end]
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 194, in test_target_principal_row
+    self._expire_during(lambda c: c.execute("select 1 from dc.principal where tenant = %s and pid = 'bob' for update", (T,)), how=how)
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 186, in _expire_during
+    self.assertEqual(r.get("code"), UNAUTH if how != "principal" else "principal_revoked", "the revoke was applied after the wait")
+AssertionError: 'revoked' != 'unauthenticated:invalid_session'
+- revoked
++ unauthenticated:invalid_session
+ : the revoke was applied after the wait
+
+======================================================================
+FAIL: test_target_principal_row (tests.test_final_pg.P1_RevokePath.test_target_principal_row) [factor]
+a2d65fd: the revoke's update of the target's principal row waited (row held by the owner) after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 194, in test_target_principal_row
+    self._expire_during(lambda c: c.execute("select 1 from dc.principal where tenant = %s and pid = 'bob' for update", (T,)), how=how)
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 186, in _expire_during
+    self.assertEqual(r.get("code"), UNAUTH if how != "principal" else "principal_revoked", "the revoke was applied after the wait")
+AssertionError: 'revoked' != 'unauthenticated:invalid_session'
+- revoked
++ unauthenticated:invalid_session
+ : the revoke was applied after the wait
+
+======================================================================
+FAIL: test_target_props_rows (tests.test_final_pg.P1_RevokePath.test_target_props_rows)
+a2d65fd: invalidating the target's open proposals waited on a held props row after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 200, in test_target_props_rows
+    self._expire_during(lambda c: c.execute("select 1 from dc.props where tenant = %s and author = 'x' for update", (T,)), target="x")
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 186, in _expire_during
+    self.assertEqual(r.get("code"), UNAUTH if how != "principal" else "principal_revoked", "the revoke was applied after the wait")
+AssertionError: 'revoked' != 'unauthenticated:invalid_session'
+- revoked
++ unauthenticated:invalid_session
+ : the revoke was applied after the wait
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='expire')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation expire
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='end')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation end
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='factor')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_chain_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_chain_head_row) (mutation='principal')
+a2d65fd (P1, _pgcore.sql:731): the event insert's trigger takes the tenant's chain head row FOR UPDATE, held by ANY concurrent
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'principal_revoked'
+- proposed
++ principal_revoked
+ : after a wait with mutation principal
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock) (mutation='expire')
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation expire
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock) (mutation='end')
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation end
+
+======================================================================
+FAIL: test_events_table_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_events_table_lock) (mutation='factor')
+a2d65fd: a table lock on dc.events (the value-reference lookup and the core's reads) is waited for after the last judgment.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_head_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_head_row) (mutation='factor')
+As test_tenant_row: the requirement's head row FOR UPDATE (a concurrent submission on the same requirement).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_principal_advisory_lock (tests.test_final_pg.P1_SubmitBlockingPoints.test_principal_advisory_lock) (mutation='factor')
+As test_tenant_row: the (tenant, principal) advisory lock, which any login role can take.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit) (mutation='expire')
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation expire
+
+======================================================================
+FAIL: test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit) (mutation='end')
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation end
+
+======================================================================
+FAIL: test_subject_token_held_by_another_principals_submit (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_held_by_another_principals_submit) (mutation='factor')
+a2d65fd: the same wait, made the realistic way: bob's dc.submit about the same new subject (on r1) is still open while alice
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index) (mutation='expire')
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation expire
+
+======================================================================
+FAIL: test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index) (mutation='end')
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation end
+
+======================================================================
+FAIL: test_subject_token_unique_index (tests.test_final_pg.P1_SubmitBlockingPoints.test_subject_token_unique_index) (mutation='factor')
+a2d65fd (P1, _pgcore.sql:712): the subject-token insert waits for a concurrent uncommitted first use of the same subject,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_tenant_row (tests.test_final_pg.P1_SubmitBlockingPoints.test_tenant_row) (mutation='factor')
+Regression guard for expire, end and principal (a2d65fd judged again after _lock_event); red for factor (use-time factor
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 133, in _point
+    self.assertEqual(r.get("code") if isinstance(r, dict) else r, want, "after a wait with mutation %s" % how)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : after a wait with mutation factor
+
+======================================================================
+FAIL: test_factor_revoked_while_waiting_on_the_ledger (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_factor_revoked_while_waiting_on_the_ledger)
+a2d65fd (P4, _pgcore.sql:601-607,622-629): the factor was judged before the ledger insert; revoked while B waited, A rolled
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 415, in test_factor_revoked_while_waiting_on_the_ledger
+    self._twin(lambda f: self.sup2.execute("update dc.factors set revoked = true where factor = %s", (f.factor_id,)), "proof refused: factor revoked")
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 403, in _twin
+    self.assertEqual(r.get("message") if "error" in r else "opened", want)
+AssertionError: 'opened' != 'proof refused: factor revoked'
+- opened
++ proof refused: factor revoked
+
+
+======================================================================
+FAIL: test_factor_revoked_while_waiting_on_the_ledger_foreign_key (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_factor_revoked_while_waiting_on_the_ledger_foreign_key)
+a2d65fd: the ledger insert's foreign-key check waits for the factor row held FOR UPDATE; the holder revokes the factor and
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 458, in test_factor_revoked_while_waiting_on_the_ledger_foreign_key
+    self.assertEqual(out["r"].get("message"), "proof refused: factor revoked")
+AssertionError: None != 'proof refused: factor revoked'
+
+======================================================================
+FAIL: test_factor_revoked_while_waiting_on_the_prune (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_factor_revoked_while_waiting_on_the_prune)
+a2d65fd: the prune of the factor's expired ledger rows waits for a concurrent prune of the same rows; the factor revoked
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 441, in test_factor_revoked_while_waiting_on_the_prune
+    self.assertEqual(out["r"].get("message"), "proof refused: factor revoked")
+AssertionError: None != 'proof refused: factor revoked'
+
+======================================================================
+FAIL: test_principal_revoked_while_waiting_on_the_ledger (tests.test_final_pg.P4_OpenSessionBlockingPoints.test_principal_revoked_while_waiting_on_the_ledger)
+a2d65fd: the same with the principal revoked.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 419, in test_principal_revoked_while_waiting_on_the_ledger
+    self._twin(lambda f: self.sup2.execute("update dc.principal set revoked = true where tenant = %s and pid = 'bob'", (T,)), "proof refused: principal")
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 403, in _twin
+    self.assertEqual(r.get("message") if "error" in r else "opened", want)
+AssertionError: 'opened' != 'proof refused: principal'
+- opened
++ proof refused: principal
+
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [submit]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 471, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : submit accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_candidates]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 471, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : erase_candidates accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_a_revoked_factor_ends_its_sessions_on_every_call (tests.test_final_pg.P4_UseTimeFactorRevocation.test_a_revoked_factor_ends_its_sessions_on_every_call) [erase_values]
+a2d65fd: revoking a factor stopped new proofs only; a session it had opened (for instance one that won the race above just
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 471, in test_a_revoked_factor_ends_its_sessions_on_every_call
+    self.assertFalse(self._ok(name, tok), "%s accepted a session of a revoked factor" % name)
+AssertionError: True is not false : erase_values accepted a session of a revoked factor
+
+======================================================================
+FAIL: test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='read uncommitted')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 500, in test_end_session_refuses_other_isolation_levels
+    self.assertEqual(got, "refused:end_session refused: isolation", "%s: end_session answered %r (token live: %s)" % (level, got, live))
+AssertionError: True != 'refused:end_session refused: isolation' : read uncommitted: end_session answered True (token live: True)
+
+======================================================================
+FAIL: test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='repeatable read')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 500, in test_end_session_refuses_other_isolation_levels
+    self.assertEqual(got, "refused:end_session refused: isolation", "%s: end_session answered %r (token live: %s)" % (level, got, live))
+AssertionError: False != 'refused:end_session refused: isolation' : repeatable read: end_session answered False (token live: True)
+
+======================================================================
+FAIL: test_end_session_refuses_other_isolation_levels (tests.test_final_pg.P5_EndSessionIsolation.test_end_session_refuses_other_isolation_levels) (level='serializable')
+a2d65fd: end_session had no isolation guard. Under REPEATABLE READ its update reads the transaction's snapshot: a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 500, in test_end_session_refuses_other_isolation_levels
+    self.assertEqual(got, "refused:end_session refused: isolation", "%s: end_session answered %r (token live: %s)" % (level, got, live))
+AssertionError: False != 'refused:end_session refused: isolation' : serializable: end_session answered False (token live: True)
+
+----------------------------------------------------------------------
+Ran 44 tests in 83.107s
+
+FAILED (failures=56, errors=2)

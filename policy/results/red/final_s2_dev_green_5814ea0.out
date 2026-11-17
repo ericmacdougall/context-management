@@ -1,0 +1,8 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# GREEN at 5814ea0, DEV seeds: sh kit/run.sh green-1 m exp.s2_sessions; then m verify --dev
+RESULT s2_sessions verdict=PASS sha256=a920fdcc8c1fec26626c5bc289924027f538b69fa51420a8461f73fa95d55c46 file=~/emlab2-16096/policyfix/runs/green-1/src/results/DEV.s2_sessions.a920fdcc8c1fec26.json
+PASS rows 1860 accepted attacks 0
+
+# python -m verify --dev (S2 row; the other experiments were not run in this copy, hence overall FAIL)
+s2_sessions        PASS  exp=PASS  recomputed=PASS  agree=True DEV.s2_sessions.a920fdcc8c1fec26.json
+VERIFY overall=FAIL sha256=63b5e7e722de575ed81c02c0a345e2d090b31bf60b514eddf3854b3759f43906 file=~/emlab2-16096/policyfix/runs/green-1/src/results/DEV.VERIFY.63b5e7e722de575e.json
