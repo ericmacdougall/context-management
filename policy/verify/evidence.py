@@ -156,6 +156,10 @@ class Gate:
         self.problems += ["%s: %s" % (name, w) for w in why]
         return None if why else {k: v[0] for k, v in got.items()}
 
+    def problem(self, text):
+        """A design problem found outside the identity sets (e.g. a per-row list shorter than its pinned length)."""
+        self.problems.append(text)
+
     def not_checked(self, name, because):
         self.families[name] = {"why": ["not checked: %s" % because]}
         self.problems.append("%s: not checked (%s)" % (name, because))

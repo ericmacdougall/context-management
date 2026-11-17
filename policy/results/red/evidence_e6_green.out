@@ -1,0 +1,37 @@
+# green run: tests.test_evidence_e6 tests.test_evidence_layer against verify/e6.py
+# worktree HEAD: 994acd0431a21b8dea73232ab71adce29c329236
+# git diff --stat ea4677a -- verify/e6.py (empty: the code under test is ea4677a's):
+ policy/verify/e6.py | 54 +++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 52 insertions(+), 2 deletions(-)
+# sha256 verify/e6.py in the worktree: 1d78ae9b85d8dd71f2296526063b47d733fc5a7d20092d1e80abede2ce54b99b
+# sha256 verify/e6.py at ea4677a:     d46e9920e08d1f9742004237f20bb18e594b4b9cb13ee509edd83457dad5f151
+# command (from policy/): python3 -m unittest -v tests.test_evidence_e6 tests.test_evidence_layer
+test_design_comes_from_the_pins (tests.test_evidence_e6.E6Evidence) ... ok
+test_drop (tests.test_evidence_e6.E6Evidence) ... ok
+test_duplicate (tests.test_evidence_e6.E6Evidence) ... ok
+test_extra (tests.test_evidence_e6.E6Evidence) ... ok
+test_honest_set_passes (tests.test_evidence_e6.E6Evidence) ... ok
+test_overwrite (tests.test_evidence_e6.E6Evidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_e6.E6Evidence) ... ok
+test_relabel (tests.test_evidence_e6.E6Evidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_e6.E6Evidence) ... ok
+test_short_probe_lists_fail (tests.test_evidence_e6.E6Evidence)
+The 5 probes per malformed document are part of the pinned design (PASSED at ea4677a with 2). ... ok
+test_each_reason_is_named (tests.test_evidence_layer.Layer) ... ok
+test_identities_are_typed (tests.test_evidence_layer.Layer) ... ok
+test_main_import_gate_covers_the_layer (tests.test_evidence_layer.Layer) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/exp/e1_lattice.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_pins_compare_exactly (tests.test_evidence_layer.Layer) ... ok
+test_unclassified_rows_and_bad_seeds (tests.test_evidence_layer.Layer) ... ok
+test_wrong_experiment_name (tests.test_evidence_layer.Layer) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 32.915s
+
+OK
+# unittest exit status 0
