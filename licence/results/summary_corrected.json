@@ -4,7 +4,7 @@
    "T1_pass": false,
    "T2_pass": true,
    "T3_pass": true,
-   "T4_pass": true,
+   "T4_pass": false,
    "T5_pass": true
   },
   "exp2_correct_rate_wilson_lower": 0.9999911375201773,
@@ -381,7 +381,9 @@
      "sem_failed_loud": 254,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 12160,
@@ -832,7 +834,9 @@
      "sem_failed_loud": 254,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 11903,
@@ -1283,7 +1287,9 @@
      "sem_failed_loud": 253,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 11971,
@@ -1734,7 +1740,9 @@
      "sem_failed_loud": 253,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 11950,
@@ -2185,7 +2193,9 @@
      "sem_failed_loud": 253,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 11672,
@@ -2666,7 +2676,9 @@
      "sem_failed_loud": 109,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 5030,
@@ -3179,7 +3191,9 @@
      "sem_failed_loud": 257,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "fail_fraction": 1.0,
      "licence_failures": 12214,
@@ -3748,7 +3762,9 @@
      "sem_failed_loud": 93,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "after_trial_n": 14023,
      "after_trial_success": 14023,
@@ -3820,7 +3836,9 @@
      "sem_failed_loud": 93,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "after_trial_n": 14222,
      "after_trial_success": 14222,
@@ -3892,7 +3910,9 @@
      "sem_failed_loud": 93,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "after_trial_n": 13864,
      "after_trial_success": 13864,
@@ -3964,7 +3984,9 @@
      "sem_failed_loud": 94,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "after_trial_n": 14391,
      "after_trial_success": 14391,
@@ -4036,7 +4058,9 @@
      "sem_failed_loud": 93,
      "sem_failed_present": 0
     },
-    "T4_pass": true,
+    "T4_legacy_pass": true,
+    "T4_pass": false,
+    "T4_status": "UNVERIFIED",
     "T5": {
      "after_trial_n": 53250,
      "after_trial_success": 53250,

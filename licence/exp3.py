@@ -187,12 +187,23 @@ class ScrollError(RuntimeError):
     """A scroll collection that cannot be trusted to be complete (addendum C)."""
 
 
+def _shards_ok(j, where):
+    sh = j.get("_shards") if isinstance(j, dict) else None
+    if not isinstance(sh, dict) or sh.get("failed") != 0:
+        raise ScrollError("%s: _shards missing or failed (%s)" % (where, sh))
+
+
 def source_count(ix):
-    """Independent document count of an index: `_count` after a refresh. Never derived from a scroll."""
-    req("POST", "/%s/_refresh" % ix)
+    """Independent document count of an index: `_count` after a refresh. Never derived from a scroll. Raises unless the refresh and the count both
+    answered 200 with zero shard failures. The caller must keep the source quiescent until the scroll has finished (separate requests share no snapshot)."""
+    c, j, _ = req("POST", "/%s/_refresh" % ix)
+    if c != 200:
+        raise ScrollError("refresh of %s: HTTP %s" % (ix, c))
+    _shards_ok(j, "refresh of %s" % ix)
     c, j, _ = req("GET", "/%s/_count" % ix)
     if c != 200 or not isinstance(j.get("count"), int):
         raise ScrollError("cannot count %s: status %s" % (ix, c))
+    _shards_ok(j, "count of %s" % ix)
     return j["count"]
 
 

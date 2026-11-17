@@ -94,8 +94,16 @@ def exp2_checks(R, direction):
     r["T4"] = {"acked": w["acked"], "acked_absent": w["acked_absent"], "present_unacked": w["present_unacked"], "failed_batches": w["failed_batches"],
                "sem_acked": w["sem_acked"], "sem_acked_absent": w["sem_acked_absent"], "sem_failed": w["sem_failed"], "sem_failed_loud": w["sem_failed_loud_licence_or_missing"],
                "sem_failed_present": w["sem_failed_present"], "control_detects_injected_loss": w["control_injected_loss_detected"]}
-    r["T4_pass"] = (w.get("sem_failed_other", 0) == 0 and w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] and w["sem_failed_present"] == 0
-                    and w["control_injected_loss_detected"])
+    base = (w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed_present"] == 0 and w["control_injected_loss_detected"])
+    # legacy rule (addendum C predecessor): every semantic failure was counted loud if it carried any 403/404 error body
+    r["T4_legacy_pass"] = base and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"]
+    if "sem_failed_other" in w:
+        r["T4_status"] = "PASS" if base and w["sem_failed_other"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] else "FAIL"
+    elif w["sem_failed"] == 0:
+        r["T4_status"] = "PASS" if base else "FAIL"
+    else:   # failures exist but were never classified under addendum C and the rows were not saved (addendum D)
+        r["T4_status"] = "UNVERIFIED" if base else "FAIL"
+    r["T4_pass"] = r["T4_status"] == "PASS"
     if direction == "down":
         c = e["T5_control_after_1s"]
         r["T5"] = {"n": c["n"], "fail_fraction": c["fail_fraction"], "licence_failures": c["licence_failures"]}
