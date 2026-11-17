@@ -1,37 +1,64 @@
-"""Mention matcher m2 (user decision 2026-11-16: erasing a person includes what others said about them; D3 design in
-DESIGN-NOTES.md "Design: D3", ASSUMPTION under decision 10).
+"""Mention matcher m3 (user decision 2026-11-16: erasing a person includes what others said about them; D3 design in
+DESIGN-NOTES.md "Design: D3" and "Redesign after review C"; ASSUMPTION under decision 10 and decision R1).
 
-Deterministic, no model: a subject's DECLARED identifiers (names, handles, customer numbers) are normalised to token
-sequences and stored only as HMAC under the tenant key, with the label LABEL (matcher and Unicode data version). At
-write time every event's content is tokenised, every 1..MAX_N token window is HMAC'd and looked up; a hit records the
-subject in the event's `mentions`. At erasure the same windows give SPANS (code-point offsets in the original text)
-for span redaction (redaction_for).
+Deterministic, no model: a subject's DECLARED identifiers (names, handles, customer numbers) are reduced to KEY token
+sequences and stored only as HMAC under the tenant key, with the label label() naming the matcher id. At write time
+every event's content is tokenised, every 1..MAX_N key-token window is HMAC'd and looked up; a hit records the subject
+in the event's `mentions`, and the erasure removes such events WHOLE (decision R1: no span redaction).
 
-Normalisation (UAX 15, UTS 39 read 2026-11-17): per cluster (a base character with its combining marks), default
-ignorable and format characters removed, then NFKC, casefold, NFKC (an approximation of toNFKC_Casefold). Tokens are
-runs of clusters made only of letters, marks and digits; anything else separates tokens. Offsets are kept per cluster,
-because normalisation changes length and offsets on normalised text do not map back to the original (UAX 15).
+Matcher id (class 3): m3:ucd<unicodedata version>:di<sha12>:cf<sha12>, naming the Unicode version and the two data
+tables. The store keeps the tenant's matcher id and refuses work under another (WPS32 at approval, WPS38 at append and
+rescan), so a version change is refused, never silently unmatched.
 
-Exact whole-token-sequence match only. NOT_COVERED lists what it does not find; erasure receipts state it.
+Tables (class 4): Default_Ignorable_Code_Point of THIS Unicode version and UTS 39 confusables.txt 18.0.0, built by
+tools/ucd_tables.py into WP_UCD_DIR (default <WP_HOME>/ucd) and pinned here by sha256. A missing, altered or unpinned
+table raises UCDUnavailable: nothing matches without them. They are not in the repository (Unicode License V3 notice).
+
+Per cluster (a base character with its combining marks), default ignorable and format characters removed:
+  the NORMAL form   NFKC, casefold, NFKC (an approximation of toNFKC_Casefold): what rule r3 judges and the reviewer reads
+  the KEY           the normal form, then the UTS 39 skeleton (NFD, each code point mapped by confusables.txt, NFD),
+                    then casefold and NFKC: what is HMAC'd for an identifier and looked up for text. Identical text has
+                    an identical key, and so does any case variant ("ALEX KIM").
+  the AS-WRITTEN key  (text only) the skeleton of the cluster AS WRITTEN, then the key. confusables.txt is case-
+                    sensitive (capital I maps to small l, small i does not), so no single case-insensitive key also
+                    sees capital-shape look-alikes: "AIex Kim" (capital I for l) is found through this variant. A text
+                    window is looked up under every combination of its tokens' two keys (at most 2^MAX_N; one for text
+                    without such capitals).
+Tokens are runs of clusters whose normal form is only letters, marks and digits (judged on the normal form, never on the
+key); offsets are per cluster in the original text (UAX 15: offsets on normalised text do not map back).
+
+Whole-token-sequence match of keys only. NOT_COVERED lists what it does not find and OVER_MATCH what it also finds;
+erasure receipts state both.
 
 The store binds the scan to the identifier-set version (events.mention_scan_upto vs identifier_epochs.max_seq,
-WPS17), so an event is never written against an older identifier set than the one committed; events written before a
-subject's identifiers were declared are found by the erasure-time rescan (wp/erasure.py)."""
+WPS17) and to the matcher (events.mention_matcher, WPS38); events written before a subject's identifiers were declared
+are found by the erasure-time rescan (wp/erasure.py)."""
+import hashlib
+import os
+import pathlib
 import unicodedata as UD
 
-MATCHER = "m2"
 UCD = UD.unidata_version
-LABEL = f"ident:{MATCHER}:ucd{UCD}:"          # identifiers HMAC'd under one Unicode version never meet text of another
-RULE_VERSION = f"r2:{MATCHER}:ucd{UCD}"
+CONFUSABLES_VERSION = "18.0.0"
+# sha256 of tools/ucd_tables.py outputs (python3 -I; perl Unicode::UCD of the same version for the ignorables)
+PINS = {
+    ("default_ignorable", "13.0.0"): "5f861f7bc7299207e9ec92c43b362e98c2e7b48408d76602b27d020a2fe02661",
+    ("default_ignorable", "15.0.0"): "24e2227db9c3ca1b3b2233ff6118e5fbc6c9a131b1fb8de1823369b0f1ee54d5",
+    ("confusables", "18.0.0"): "93b569e499e542ae2c706ae5613b9a55bb7f3eebeee586300ef77fe978754a6f",
+}
 MAX_N = 4
-MARKER_TOKEN = "erased"
-MARKER = "[" + MARKER_TOKEN + "]"              # replaces each redacted span; rule r2 refuses any identifier containing it
 NOT_COVERED = (
     "identifiers that were never declared (nicknames, misspellings, initials, inflected forms)",
     "pronouns and indirect references",
-    "look-alike characters in other speakers' text (needs the UTS 39 confusable skeleton; confusables.txt not available)",
+    "look-alikes outside UTS 39 confusables.txt " + CONFUSABLES_VERSION + " (transliterations, homophones)",
+    "a look-alike of a CAPITAL letter of the declared identifier (lan for a declared Ian)",
     "words of the subject quoted by others that contain no declared identifier",
     "names in scripts written without spaces (refused at declaration)",
+)
+OVER_MATCH = (
+    "confusable variants of a declared identifier (for example Kim and Kirn share a key): such events of other "
+    "speakers are removed too",
+    "a capital I written where a small l looks the same (AIEX KIM for Alex Kim, through the as-written key)",
 )
 
 
@@ -39,14 +66,74 @@ class IdentifierRefused(Exception):
     pass
 
 
-class NoRedaction(Exception):
-    """Span redaction is not possible for this text; the caller falls back to whole removal (tombstone)."""
+class UCDUnavailable(Exception):
+    """The pinned Unicode tables for this Unicode version are missing or altered: the matcher refuses to run."""
 
 
-# Rule r2. ASSUMPTION (safe default, not a user decision): a declared identifier links every later event that contains
-# it, and erasing the subject removes or redacts those events, whoever wrote them; so an identifier that is likely to
-# name someone else, or that the matcher cannot find reliably, is refused. Multi-token names ("Alex Kim") are allowed.
-# Over-erasure by a long but shared name ("Alex Kim" naming two people) is NOT prevented.
+class MatcherMismatch(Exception):
+    """The tenant's stored matcher is not this process's matcher: matching would silently miss identifiers."""
+
+
+def _table_dir():
+    d = os.environ.get("WP_UCD_DIR") or (os.environ.get("WP_HOME") and str(pathlib.Path(os.environ["WP_HOME"]) / "ucd"))
+    if not d:
+        raise UCDUnavailable("WP_UCD_DIR (or WP_HOME) is not set")
+    return d
+
+
+def load_tables(d, ucd=UCD):
+    """(default ignorable code points, {code point: confusable target}) from directory d, each table checked against
+    its pin; UCDUnavailable otherwise."""
+    d, raw = pathlib.Path(d), {}
+    for kind, ver in (("default_ignorable", ucd), ("confusables", CONFUSABLES_VERSION)):
+        pin = PINS.get((kind, ver))
+        if pin is None:
+            raise UCDUnavailable(f"no pinned {kind} table for Unicode {ver}")
+        name = f"{kind}-{ver}.tsv"
+        try:
+            b = (d / name).read_bytes()
+        except OSError as e:
+            raise UCDUnavailable(f"{name}: {type(e).__name__}") from None
+        h = hashlib.sha256(b).hexdigest()
+        if h != pin:
+            raise UCDUnavailable(f"{name}: sha256 {h[:12]} is not the pinned {pin[:12]}")
+        raw[kind] = b.decode("ascii")
+    di = frozenset(int(x, 16) for x in raw["default_ignorable"].split())
+    conf = {}
+    for ln in raw["confusables"].splitlines():
+        src, tgt = ln.split("\t")
+        conf[int(src, 16)] = "".join(chr(int(x, 16)) for x in tgt.split())
+    return di, conf
+
+
+_TABLES = None
+
+
+def tables():
+    global _TABLES
+    if _TABLES is None:
+        _TABLES = load_tables(_table_dir())
+    return _TABLES
+
+
+def matcher_id():
+    tables()                                   # fail closed before naming a matcher
+    return (f"m3:ucd{UCD}:di{PINS[('default_ignorable', UCD)][:12]}"
+            f":cf{PINS[('confusables', CONFUSABLES_VERSION)][:12]}")
+
+
+def label():
+    return f"ident:{matcher_id()}:"            # the ONLY identifier label (tests.test_ident checks no other module has one)
+
+
+def rule_version():
+    return f"r3:{matcher_id()}"
+
+
+# Rule r3. ASSUMPTION (safe default, not a user decision): a declared identifier links every later event whose text
+# contains its key, and erasing the subject removes those events WHOLE, whoever wrote them; so an identifier that is
+# likely to name someone else, or that the matcher cannot find reliably, is refused. Multi-token names ("Alex Kim") are
+# allowed. Over-erasure by a long but shared name ("Alex Kim" naming two people) is NOT prevented.
 MIN_SINGLE = 6
 STOP = frozenset("""a an and are as at be by for from he her him his i in is it its me my no not of on or our she so the
 their them they this to us we what who with you your mr mrs ms dr sir madam team admin user customer support""".split())
@@ -57,11 +144,10 @@ _NOT_SCRIPT = frozenset("MODIFIER SUPERSCRIPT SUBSCRIPT".split())
 
 def _ignorable(c, ident):
     o, cat = ord(c), UD.category(c)
-    if cat == "Cf" or 0xFE00 <= o <= 0xFE0F or 0xE0100 <= o <= 0xE01EF or 0x180B <= o <= 0x180F \
-            or o in (0x034F, 0x115F, 0x1160, 0x3164, 0xFFA0):
+    if o in tables()[0] or cat == "Cf":
         return True
     # unassigned, private-use and surrogate code points: removed from TEXT (they cannot hide a name), but kept in a
-    # declared identifier so that rule r2 sees and refuses them (normalisation is stable for assigned characters only)
+    # declared identifier so that rule r3 sees and refuses them (normalisation is stable for assigned characters only)
     return (not ident) and cat in ("Cn", "Co", "Cs")
 
 
@@ -74,10 +160,26 @@ def _fold(s):
     return UD.normalize("NFKC", UD.normalize("NFKC", s).casefold())
 
 
+def _uts39(s):
+    """UTS 39 skeleton of s after NFKC: NFD, each code point mapped by confusables.txt, NFD."""
+    conf = tables()[1]
+    x = UD.normalize("NFD", UD.normalize("NFKC", s))
+    return UD.normalize("NFD", "".join(conf.get(ord(c), c) for c in x))
+
+
+def _key(cluster):
+    """The key of one cluster: its normal form, skeleton, casefold, NFKC (whitespace from a mapping dropped)."""
+    return "".join(c for c in UD.normalize("NFKC", _uts39(_fold(cluster)).casefold()) if not c.isspace())
+
+
 def _tokens(text, ident=False):
-    """[(normalised token, start, end)], start/end code-point offsets in `text`."""
-    out, cur, cs, ce = [], [], 0, 0
+    """[(normal token, key token, as-written key token, start, end)], start/end code-point offsets in `text`."""
+    out, cur, ck, ca, cs, ce = [], [], [], [], 0, 0
     i, n = 0, len(text)
+
+    def close():
+        out.append((UD.normalize("NFKC", "".join(cur)), UD.normalize("NFKC", "".join(ck)), UD.normalize("NFKC", "".join(ca)), cs, ce))
+
     while i < n:
         c = text[i]
         if _ignorable(c, ident):
@@ -88,18 +190,21 @@ def _tokens(text, ident=False):
             if not _ignorable(text[j], ident):
                 parts.append(text[j])
             j += 1
-        f = _fold("".join(parts))
+        cl = "".join(parts)
+        f = _fold(cl)
         if f and all(_wordch(x, ident) for x in f):
             if not cur:
                 cs = i
             cur.append(f)
+            ck.append(_key(cl))
+            ca.append(ck[-1] if ident else _key(_uts39(cl)))
             ce = j
         elif cur:
-            out.append((UD.normalize("NFKC", "".join(cur)), cs, ce))
-            cur = []
+            close()
+            cur, ck, ca = [], [], []
         i = j
     if cur:
-        out.append((UD.normalize("NFKC", "".join(cur)), cs, ce))
+        close()
     return out
 
 
@@ -110,105 +215,143 @@ def _script(c):
     return None if not w or w in _NOT_SCRIPT else w
 
 
-def identifier_problem(n):
-    """None if the normalised identifier is acceptable, else the reason."""
-    toks = n.split()
-    if not toks:
+_STOP_KEYS = None
+
+
+def _stop_keys():
+    global _STOP_KEYS
+    if _STOP_KEYS is None:
+        _STOP_KEYS = frozenset(key(w) for w in STOP)
+    return _STOP_KEYS
+
+
+def identifier_problem(identifier):
+    """None if the identifier (raw or in normal form) is acceptable under rule r3, else the reason. Scripts, unassigned
+    code points, digits and length are judged on the NORMAL form (a key hides mixed script); the stop list on KEYS
+    ("custorner" has the key of "customer")."""
+    toks = _tokens(identifier, ident=True)
+    norm = [t for t, _, _, _, _ in toks]
+    if not norm:
         return "empty"
-    if any(UD.category(c) in ("Cn", "Co", "Cs") for c in n):
+    if any(UD.category(c) in ("Cn", "Co", "Cs") for t in norm for c in t):
         return "unassigned or private-use code point (normalisation is not stable for it)"
-    if len(toks) > MAX_N:
+    if len(norm) > MAX_N:
         return "longer than %d tokens" % MAX_N
-    if MARKER_TOKEN in toks:
-        return "contains the redaction marker token %r" % MARKER_TOKEN
-    for t in toks:
+    for t in norm:
         scripts = {s for s in map(_script, t) if s}
         if scripts & UNSEGMENTED:
             return "a script written without spaces between words (%s): whole-token matching cannot find it" % ",".join(sorted(scripts))
         if len(scripts) > 1:
             return "a token mixes scripts (%s): look-alike risk" % ",".join(sorted(scripts))
-    if all(t in STOP for t in toks):
-        return "only common words"
-    if len(toks) == 1 and len(toks[0]) < MIN_SINGLE and not any(c.isdigit() for c in toks[0]):
+    if all(k in _stop_keys() for _, k, _, _, _ in toks):
+        return "only common words (or look-alikes of them)"
+    if len(norm) == 1 and len(norm[0]) < MIN_SINGLE and not any(c.isdigit() for c in norm[0]):
         return "single token shorter than %d characters (likely to name someone else; declare the full name)" % MIN_SINGLE
     return None
 
 
 def tokens(text):
-    return [t for t, _, _ in _tokens(text)]
+    return [t for t, _, _, _, _ in _tokens(text)]
 
 
 def normalize(identifier):
-    return " ".join(t for t, _, _ in _tokens(identifier, ident=True))
+    """The normal form a reviewer reads and rule r3 judges."""
+    return " ".join(t for t, _, _, _, _ in _tokens(identifier, ident=True))
+
+
+def key(identifier):
+    """The key that is HMAC'd (per token: normal form, UTS 39 skeleton, casefold)."""
+    return " ".join(k for _, k, _, _, _ in _tokens(identifier, ident=True))
 
 
 def _windows_at(text):
+    """[(key window, start, end)] for every 1..MAX_N token window under every combination of its tokens' keys."""
+    import itertools
     t = _tokens(text)
-    return [(" ".join(x for x, _, _ in t[i:i + n]), t[i][1], t[i + n - 1][2])
-            for n in range(1, MAX_N + 1) for i in range(len(t) - n + 1)]
+    return [(" ".join(combo), t[i][3], t[i + n - 1][4])
+            for n in range(1, MAX_N + 1) for i in range(len(t) - n + 1)
+            for combo in sorted(set(itertools.product(*[sorted({x[1], x[2]}) for x in t[i:i + n]])))]
 
 
 def windows(text):
     return {w for w, _, _ in _windows_at(text)}
 
 
-def _hmacs(ks, tenant, norms):
-    return ks.tenant_hmac_many(tenant, [LABEL + x for x in norms])
+def _hmacs(ks, tenant, keys):
+    lab = label()
+    return ks.tenant_hmac_many(tenant, [lab + x for x in keys])
 
 
 window_hmacs = _hmacs        # the ONLY place the identifier label is applied (tests.test_ident checks no other module does)
 
 
 def check_identifiers(identifiers):
-    """Normalised identifiers, or IdentifierRefused naming each refused one and why (rule r2)."""
-    norm = sorted({normalize(i) for i in identifiers})
+    """The identifiers (stripped, one per key), or IdentifierRefused naming each refused one and why (rule r3)."""
+    by_key = {}
+    for i in identifiers:
+        by_key.setdefault(key(i), i.strip())
+    norm = sorted(by_key.values())
     bad = [(n, identifier_problem(n)) for n in norm if identifier_problem(n)] if norm else [("", "no identifiers")]
     if bad:
-        raise IdentifierRefused("; ".join(f"{n!r}: {why}" for n, why in bad))
+        raise IdentifierRefused("; ".join(f"{normalize(n)!r}: {why}" for n, why in bad))
     return norm
 
 
 def propose(conn, ks, tenant, subject_id, identifiers):
-    """Propose identifiers for a subject (the application's ONLY way in, D3). Each normalised identifier is sealed
-    under the subject's key for the reviewer and stored with its HMAC; nothing is matched until a reviewer approves.
-    The rule runs here too, as early feedback only. Returns the proposal ids."""
+    """Propose identifiers for a subject (the application's ONLY way in, D3). Each identifier is sealed AS WRITTEN
+    under the subject's key for the reviewer (rule r3 judges its key, which depends on case) and stored with the HMAC
+    of its key; nothing is matched until a reviewer approves. The rule runs here too, as early feedback only. Returns
+    the proposal ids."""
     import uuid
     from . import keys as K
-    norm = check_identifiers(identifiers)
-    key = ks.keys(tenant, [subject_id], create=True)[subject_id]
-    out = []
-    for n, h in zip(norm, _hmacs(ks, tenant, norm)):
+    ids = check_identifiers(identifiers)
+    sk = ks.keys(tenant, [subject_id], create=True)[subject_id]
+    rv, out = rule_version(), []
+    for n, h in zip(ids, _hmacs(ks, tenant, [key(i) for i in ids])):
         pid = str(uuid.uuid4())
         conn.execute("select wp_identifier_propose(%s::tenant_t, %s, %s, %s, %s, %s)",
-                     (tenant, subject_id, pid, h, K.seal(key, tenant, subject_id, "proposal:" + pid, n), RULE_VERSION))
+                     (tenant, subject_id, pid, h, K.seal(sk, tenant, subject_id, "proposal:" + pid, n), rv))
         out.append(pid)
     return out
 
 
 def review(rconn, ks, proposal_id):
-    """The reviewer process (a wp_reviewer login): opens the sealed identifier, checks it is in normal form and passes
-    rule r2, recomputes its HMAC and approves with that HMAC (the store refuses it unless it equals the proposal's, and
-    refuses a reviewer approving its own proposal). A failing identifier is rejected with the reason and raised.
-    Returns the new identifier-set version."""
+    """The reviewer process (a wp_reviewer login): opens the sealed identifier, checks it passes rule r3, recomputes the
+    HMAC of its key and approves with that HMAC and this matcher's rule version (the store refuses an HMAC other than
+    the proposal's, a rule version other than the tenant's matcher, and a reviewer approving its own proposal). A
+    failing identifier is rejected with the reason and raised. Returns the new identifier-set version."""
     from . import keys as K
     t, s, enc = rconn.execute("select tenant_id, subject_id, ident_enc from identifier_proposals where proposal_id=%s",
                               (proposal_id,)).fetchone()
     n = K.open_(ks.keys(t, [s])[s], t, s, "proposal:" + proposal_id, bytes(enc))
-    why = "cannot open the sealed identifier" if n is None else (
-        "not in normal form" if normalize(n) != n else identifier_problem(n))
+    why = "cannot open the sealed identifier" if n is None else identifier_problem(n)
     if why:
         rconn.execute("select wp_identifier_reject(%s, %s)", (proposal_id, why))
         raise IdentifierRefused(f"{proposal_id}: {why}")
-    h = _hmacs(ks, t, [n])[0]
-    return rconn.execute("select wp_identifier_approve(%s, %s, %s)", (proposal_id, h, RULE_VERSION)).fetchone()[0]
+    h = _hmacs(ks, t, [key(n)])[0]
+    return rconn.execute("select wp_identifier_approve(%s, %s, %s)", (proposal_id, h, rule_version())).fetchone()[0]
+
+
+def init_tenant(tenant):
+    """Tenant setup step (an OWNER action, never the app's): store this process's matcher as the tenant's. Refused by
+    the store (WPS38) once the tenant has identifiers under another matcher. Experiments and tests call it through
+    declare(); a deployment runs it from setup or an admin tool."""
+    from . import db
+    a = db.admin()
+    try:
+        a.execute("set role wp_owner")
+        a.execute("select wp_matcher_set(%s::tenant_t, %s)", (tenant, matcher_id()))
+    finally:
+        a.close()
 
 
 def declare(conn, ks, tenant, subject_id, identifiers, reviewer=None):
-    """Propose (through conn) and review (through `reviewer`, a wp_reviewer connection; default: reviewer principal 1)
-    in one call, for experiments and tests. Returns the identifier-set version after the last approval. Refuses
-    identifiers that fail rule r2, an erased subject (WPS03) and an identifier that already names another subject
-    (WPS20)."""
+    """Tenant setup (init_tenant), propose (through conn) and review (through `reviewer`, a wp_reviewer connection;
+    default: reviewer principal 1) in one call, for experiments and tests. Returns the identifier-set version after the
+    last approval. Refuses identifiers that fail rule r3, an erased subject (WPS03) and an identifier whose key already
+    names another subject (WPS20)."""
     from . import db
+    init_tenant(tenant)
     rconn = reviewer or db.reviewer(1)
     try:
         v = None
@@ -221,10 +364,14 @@ def declare(conn, ks, tenant, subject_id, identifiers, reviewer=None):
 
 
 def scan(conn, ks, tenant, texts):
-    """(identifier-set version, [sorted subject ids mentioned, per text]). The version is read BEFORE the identifiers,
-    so a declaration that lands in between makes the store refuse the write (WPS17) and the caller rescans."""
-    r = conn.execute("select max_seq from identifier_epochs where tenant_id=%s", (tenant,)).fetchone()
-    version = r[0] if r else 0
+    """(identifier-set version, [sorted subject ids mentioned, per text]). The version and the tenant's matcher are read
+    BEFORE the identifiers, so a declaration that lands in between makes the store refuse the write (WPS17) and the
+    caller rescans. A tenant whose stored matcher is not this one raises MatcherMismatch (the store refuses it too:
+    WPS38); a tenant with no matcher has no identifiers."""
+    r = conn.execute("select max_seq, matcher from identifier_epochs where tenant_id=%s", (tenant,)).fetchone()
+    version, tm = (r[0], r[1]) if r else (0, None)
+    if tm is not None and tm != matcher_id():
+        raise MatcherMismatch(f"tenant matcher {tm} is not {matcher_id()}")
     if not version:
         return 0, [[] for _ in texts]
     per = [sorted(windows(x)) for x in texts]
@@ -238,7 +385,7 @@ def scan(conn, ks, tenant, texts):
 
 
 def subject_hmacs(ks, tenant, identifiers):
-    return set(_hmacs(ks, tenant, [normalize(i) for i in identifiers]))
+    return set(_hmacs(ks, tenant, [key(i) for i in identifiers]))
 
 
 def matches(ks, tenant, text, hmacs):
@@ -247,11 +394,13 @@ def matches(ks, tenant, text, hmacs):
 
 
 def find_spans(ks, tenant, text, hmacs):
-    """Ordered, non-overlapping [(start, end)] in `text` covering every window whose HMAC is in hmacs (overlaps merged)."""
+    """Ordered, non-overlapping [(start, end)] in `text` covering every window whose HMAC is in hmacs (overlaps merged).
+    Diagnostic only (decision R1: an event that matches is removed whole)."""
     ws = _windows_at(text)
     if not ws or not hmacs:
         return []
-    hm = dict(zip(sorted({w for w, _, _ in ws}), _hmacs(ks, tenant, sorted({w for w, _, _ in ws}))))
+    keys = sorted({w for w, _, _ in ws})
+    hm = dict(zip(keys, _hmacs(ks, tenant, keys)))
     hits = sorted((a, b) for w, a, b in ws if hm[w] in hmacs)
     out = []
     for a, b in hits:
@@ -260,30 +409,3 @@ def find_spans(ks, tenant, text, hmacs):
         else:
             out.append((a, b))
     return out
-
-
-def apply_spans(ks, tenant, text, spans, hmacs):
-    """The redacted text. Spans must be exactly the matcher's own spans for (text, hmacs): a redaction is a function of
-    the text and the identifiers, never of offsets carried from elsewhere (offset drift cannot produce a partial cut).
-    The result is rescanned; any remaining hit refuses the redaction (NoRedaction: the caller removes the event whole)."""
-    spans = [tuple(s) for s in spans]
-    if not spans:
-        raise NoRedaction("no span")
-    if any(not (0 <= a < b <= len(text)) for a, b in spans) or any(spans[i][1] > spans[i + 1][0] for i in range(len(spans) - 1)):
-        raise NoRedaction("malformed spans")
-    if spans != find_spans(ks, tenant, text, hmacs):
-        raise NoRedaction("spans differ from the matcher's spans for this text")
-    parts, last = [], 0
-    for a, b in spans:
-        parts += [text[last:a], MARKER]
-        last = b
-    red = "".join(parts + [text[last:]])
-    if red == text or find_spans(ks, tenant, red, hmacs):
-        raise NoRedaction("redaction left a match or changed nothing")
-    return red
-
-
-def redaction_for(ks, tenant, text, hmacs):
-    """(redacted text, spans) or NoRedaction."""
-    sp = find_spans(ks, tenant, text, hmacs)
-    return apply_spans(ks, tenant, text, sp, hmacs), sp

@@ -54,7 +54,7 @@ def seal(conn, ks, es, tenant, note=""):
         heads, mh = _manifest(conn, tenant)
     body = {"v": 1, "tenant": tenant, "sealed_at": time.time(), "memory_watermark": {"cursors": cur, "snapshot_xmin": xmin},
             "manifest_hash": mh, "manifest": {"heads": heads}, "projection_generation": _generation(es, tenant),
-            "versions": {"secret_scan": SEC.VERSION, "matcher": M.MATCHER}, "key_store": ks.describe(), "note": note}
+            "versions": {"secret_scan": SEC.VERSION, "matcher": M.matcher_id()}, "key_store": ks.describe(), "note": note}
     body["mac"] = _mac(ks, tenant, body)
     return body
 

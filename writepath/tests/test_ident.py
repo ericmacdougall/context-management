@@ -196,9 +196,18 @@ class MatcherM3(unittest.TestCase):
                      "Alex Кim"):         # Cyrillic capital Ka
             self.assertEqual(found(f"please call {name} today", "Alex Kim"), [name], name)
 
-    def test_s6_skeleton_is_the_only_key(self):
-        self.assertEqual(M.key("Alex Kim"), M.key("AIex Kirn"))
-        self.assertEqual(hm("Alex Kim"), hm("A1ex Kirn"))
+    def test_s6_one_case_insensitive_key_per_identifier(self):
+        self.assertEqual(M.key("Alex Kim"), "alex kirn")
+        self.assertEqual(M.key("ALEX KIM"), M.key("A1ex Kirn"))
+        self.assertEqual(hm("Alex Kim"), hm("ａｌｅｘ kirn"))
+
+    def test_s6_capital_shape_lookalike_needs_the_as_written_key(self):
+        # confusables.txt is case-sensitive: capital I is small l's look-alike, small i is not
+        self.assertNotEqual(M.key("AIex Kim"), M.key("Alex Kim"))
+        self.assertEqual(found("AIex Kim", "Alex Kim"), ["AIex Kim"])
+        # stated over-match: AIEX looks like AlEX, a case variant of Alex (OVER_MATCH)
+        self.assertEqual(found("AIEX KIM", "Alex Kim"), ["AIEX KIM"])
+        self.assertEqual(found("Bill Kim", "Alex Kim"), [])
 
     def test_s7_identifier_inside_quoted_text_of_another_speaker(self):
         self.assertEqual(found('Zoe wrote: "please call Alex Kim tomorrow"', "Alex Kim"), ["Alex Kim"])
