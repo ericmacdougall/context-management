@@ -338,9 +338,11 @@ class PgDecisionService:
             return None
         return p, bound
 
-    def _judged(self, session, pid, sql, args):
+    def _judged(self, session, pid, sql, args, also=None):
         """One writing API call in its own transaction, judged in process again after it and before COMMIT (final review P1). Returns
-        (result, None), or (None, refusal code) with the call rolled back. Nothing after this judgment waits (COMMIT takes no lock)."""
+        (result, None), or (None, refusal code) with the call rolled back. Nothing after this judgment waits (COMMIT takes no lock).
+        `also`, when given, is a further in-process judgment (no database call) run after the session and revocation checks; it returns
+        a refusal code or None (erase_subject: each value's erase decision)."""
         try:
             with self._c.transaction():
                 out = self._c.execute(sql, args).fetchone()[0]
@@ -349,9 +351,30 @@ class PgDecisionService:
                     raise _Refused("unauthenticated:invalid_session")
                 if self._enf._revocations._is_revoked(pid):
                     raise _Refused("principal_revoked")
+                why = also() if also is not None else None
+                if why is not None:
+                    raise _Refused(why)
                 return out, None
         except _Refused as e:
             return None, e.args[0]
+
+    def _erase_decision(self, session, label):
+        """None when the in-process policy point allows erasing a value with this label now, else the counter it goes to."""
+        from .enforce import PolicyDenied
+        try:
+            self._enf._check(session.session, "erase", [label], {})
+            return None
+        except PolicyDenied as e:
+            return "queued" if e.decision.reason == "erasure_queued" else "denied"
+
+    def _changed(self, session, labels, refs, changed):
+        """After dc.erase_values, before COMMIT: decide each value again; records in `changed` every ref the policy point no longer
+        allows (a legal hold recorded, the erase grant withdrawn while the call waited)."""
+        for ref in refs:
+            why = self._erase_decision(session, labels[ref])
+            if why is not None:
+                changed[ref] = why
+        return "erase_decision_changed" if changed else None
 
     def _refuse(self, pid, code, body):
         t = body.get("type") if isinstance(body, dict) else None
@@ -408,8 +431,11 @@ class PgDecisionService:
         """As DecisionService.erase_subject. The database lists the values about the canonical subject (admin session only); the in-process
         policy point decides each (a legal hold queues it) for the SAME verified session; the database deletes the allowed ones and, when
         none about the subject remains, the token mapping, under the tenant row lock (no concurrent submit can mint or use the token
-        meanwhile)."""
-        from .enforce import PolicyDenied
+        meanwhile). Final review P1: the in-process decisions are made again after dc.erase_values (which can wait on a value row) and
+        before COMMIT; when a value's decision changed during the wait the call is rolled back, that value is counted as queued or denied
+        (as the memory engine judges each value at its deletion), and the remaining values are erased in a fresh call, judged again.
+        Each such round removes at least one value, so the loop ends. A value denied before the call and allowed after it stays (the
+        result is "incomplete"; a later erasure takes it)."""
         v = self._verified(session)
         none = {"erased": 0, "queued": 0, "denied": 0, "refused": "unauthorized", "result": None}
         if v is None:
@@ -423,14 +449,23 @@ class PgDecisionService:
         if cand["refused"]:
             return dict(none, refused=cand["refused"])
         out = {"erased": 0, "queued": 0, "denied": 0, "refused": None, "result": None}
+        labels = {x["ref"]: Label.from_dict(x["label"]) for x in cand["values"]}
         allowed = []
-        for x in cand["values"]:
-            try:
-                self._enf._check(session.session, "erase", [Label.from_dict(x["label"])], {})
-                allowed.append(x["ref"])
-            except PolicyDenied as e:
-                out["queued" if e.decision.reason == "erasure_queued" else "denied"] += 1
-        res, why = self._judged(session, p.id, "select dc.erase_values(%s, %s, %s)", (tok, subj, allowed))
+        for ref, lab in labels.items():
+            why = self._erase_decision(session, lab)
+            if why is None:
+                allowed.append(ref)
+            else:
+                out[why] += 1
+        while True:
+            changed = {}
+            res, why = self._judged(session, p.id, "select dc.erase_values(%s, %s, %s)", (tok, subj, allowed),
+                                    also=lambda: self._changed(session, labels, allowed, changed))
+            if why != "erase_decision_changed":
+                break
+            for ref, counter in changed.items():
+                out[counter] += 1
+            allowed = [r for r in allowed if r not in changed]
         if why is not None:
             return dict(none, refused="unauthorized")
         if res.get("refused"):

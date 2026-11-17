@@ -149,7 +149,11 @@ the examples and default deny are what ships.
   judges the in-process authority the database cannot see (the in-process session, the directory, the policy document's
   revocations) again AFTER its database call: `dc.submit` and `dc.erase_values` run in their own transaction, rolled back when that
   judgment refuses (`principal_revoked`, or `unauthenticated:invalid_session`; erasure `unauthorized`); reads are rendered by the
-  in-process service, which judges after its reads (`tests/test_final_pg.py::P1_PgServiceJudgment`).
+  in-process service, which judges after its reads (`tests/test_final_pg.py::P1_PgServiceJudgment`). Erasure also makes each
+  value's in-process erase decision (a recorded legal hold queues it; the tenant's `erase` grant) again after `dc.erase_values`
+  and before COMMIT, as the memory engine decides each value at its deletion: when a decision changed during the wait the call is
+  rolled back, those values are counted as queued or denied and the rest are erased in a fresh call that is judged again (each
+  round drops at least one value). A value denied before the call and allowed after it is left (`incomplete`).
 - Caller contract (restated from the code at the final review; it replaces the delta review 1 M1 text of 8928870):
   - Every `dc_idp` and `dc_app` call must run at READ COMMITTED, the default. READ UNCOMMITTED is refused like REPEATABLE READ and
     SERIALIZABLE: Postgres runs it as READ COMMITTED, but the guard compares the level name exactly and does not rely on that. Under

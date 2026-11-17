@@ -1,0 +1,55 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# 68c6dcd + tests/test_final_pg.py (sha256 57fe294e...): sh kit/run.sh red-68c6 t -v tests.test_final_pg.P1_PgServiceJudgment
+test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait)
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... 
+  test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='hold_recorded')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... FAIL
+  test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='erase_grant_withdrawn')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process ... FAIL
+test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) ... ok
+test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) ... ok
+
+======================================================================
+FAIL: test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='hold_recorded')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-68c6/src/tests/test_final_pg.py", line 458, in test_erase_decision_changes_during_wait
+    self.assertEqual((got, left), (want, left_want), "service erasure after a wait with mutation %s" % name)
+AssertionError: Tuples differ: ({'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}, (0, 0)) != ({'erased': 1, 'queued': 1, 'denied': 0, 'result': 'incomplete'}, (1, 0))
+
+First differing element 0:
+{'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}
+{'erased': 1, 'queued': 1, 'denied': 0, 'result': 'incomplete'}
+
+- ({'denied': 0, 'erased': 2, 'queued': 0, 'result': 'erased'}, (0, 0))
+?                          ^            ^              ^^^ -     ^
+
++ ({'denied': 0, 'erased': 1, 'queued': 1, 'result': 'incomplete'}, (1, 0))
+?                          ^            ^             +++++++ ^      ^
+ : service erasure after a wait with mutation hold_recorded
+
+======================================================================
+FAIL: test_erase_decision_changes_during_wait (tests.test_final_pg.P1_PgServiceJudgment.test_erase_decision_changes_during_wait) (mutation='erase_grant_withdrawn')
+Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-68c6/src/tests/test_final_pg.py", line 458, in test_erase_decision_changes_during_wait
+    self.assertEqual((got, left), (want, left_want), "service erasure after a wait with mutation %s" % name)
+AssertionError: Tuples differ: ({'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}, (0, 0)) != ({'erased': 0, 'queued': 0, 'denied': 2, 'result': 'incomplete'}, (1, 1))
+
+First differing element 0:
+{'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}
+{'erased': 0, 'queued': 0, 'denied': 2, 'result': 'incomplete'}
+
+- ({'denied': 0, 'erased': 2, 'queued': 0, 'result': 'erased'}, (0, 0))
+?             ^            ^                           ^^^ -     ^  ^
+
++ ({'denied': 2, 'erased': 0, 'queued': 0, 'result': 'incomplete'}, (1, 1))
+?             ^            ^                          +++++++ ^      ^  ^
+ : service erasure after a wait with mutation erase_grant_withdrawn
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.113s
+
+FAILED (failures=2)

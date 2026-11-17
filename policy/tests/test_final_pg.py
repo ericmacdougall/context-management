@@ -425,6 +425,39 @@ class P1_PgServiceJudgment(_Wait):
                 else:
                     self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
 
+    def test_erase_decision_changes_during_wait(self):
+        """Each value's erase decision (a recorded legal hold queues it; a tenant without the erase grant is denied) is the in-process
+        policy point's. a2d65fd and 68c6dcd made it only before dc.erase_values, which waits on a held value row, so a hold recorded or
+        the grant withdrawn during that wait was not seen and the value was erased. Fixed: decided again after the call, before COMMIT
+        (the memory engine decides each value inside its deletion's vault lock). Two values about one subject: `held` carries hold-9
+        (not recorded when erasure starts), `plain` none; the call waits on held's row."""
+        from pol.policy import parse_policy
+        from tests.kit import policy_doc
+        doc = policy_doc()
+        no_erase = dict(doc["grants"], **{T: [g for g in doc["grants"][T] if g != "erase"]})
+        cases = (("live", None, dict(erased=2, queued=0, denied=0, result="erased"), (0, 0)),
+                 ("hold_recorded", lambda w: setattr(w, "pol", parse_policy(policy_doc(hold_events=["hold-9"]))),
+                  dict(erased=1, queued=1, denied=0, result="incomplete"), (1, 0)),
+                 ("erase_grant_withdrawn", lambda w: setattr(w, "pol", parse_policy(policy_doc(grants=no_erase))),
+                  dict(erased=0, queued=0, denied=2, result="incomplete"), (1, 1)))
+        for name, mutate, want, left_want in cases:
+            with self.subTest(mutation=name):
+                lab, svc = self._lab()
+                subj = "dana" + secrets.token_hex(3)
+                hb = self.body(None, "held about " + subj, subjects=[subj])
+                hb["label"] = dict(hb["label"], holds=["hold-9"])
+                held = self.submit(self.app, self.tok("alice"), hb)["value_ref"]
+                plain = self.submit(self.app, self.tok("alice"), self.body(None, "plain about " + subj, subjects=[subj]))["value_ref"]
+                adm = lab.s("admin")
+                r, waited = self.blocked(self.app, lambda: svc.erase_subject(adm, subj),
+                                         lambda c: c.execute("select 1 from dc.vals where tenant = %s and ref = %s for update", (T, held)),
+                                         lambda: mutate and mutate(lab.w), None, "admin")
+                self.assertTrue(waited, "vacuous: the service's dc.erase_values did not wait")
+                left = tuple(self.count("select count(*) from dc.vals where tenant = %s and ref = %s", T, x) for x in (held, plain))
+                got = {k: r[k] for k in want}
+                self.assertEqual((got, left), (want, left_want), "service erasure after a wait with mutation %s" % name)
+                self.assertIsNone(r["refused"])
+
 
 class P4_OpenSessionBlockingPoints(_Wait):
     """dc.open_session: the replay-ledger insert waits for a concurrent presentation of the same proof (an uncommitted ledger row);
