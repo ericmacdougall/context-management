@@ -55,3 +55,15 @@ decisions, the deployment requirements that follow from them, and what is still 
   attempt is cut by statement_timeout (30 s); the job stays open and the sweep retries it. Receipts say so ("timing");
   nothing in this lab claims bounded-time erasure under concurrent appends. A deployment that needs a bound has to pause
   writes for the subject (for example refuse appends naming a subject with an open erasure job) and prove it.
+- Plan stability of the erasure path (amendment 18, exp/plan_stability.py): the cascade deletes and the residue probe
+  input_event_ids one event at a time through its GIN index. A probe that can also see the tenant predicate is turned
+  into a scan of the whole tenant by any low tenant estimate (plpgsql's generic plan from the 6th batch, stale
+  statistics, or a SQL function planned with unknown parameters): 1,410 s for 100,000 events in the voided 1f059f4
+  run. Since 83f7000 each probe sits behind a fence (lateral subquery with OFFSET 0, tenant filtered outside; event ids
+  are uuids) and the two functions run with enable_seqscan off, so the only path inside the fence is the GIN index;
+  the residue's untombstoned count is an EXCEPT. Any new per-event probe must follow the same shape and be added to
+  plan_stability. Known residuals: under stale statistics the outer primary-key delete can read the tenant once per
+  batch (O(tenant) per batch, not per event); GIN fastupdate pending lists make every probe scan the pending entries
+  until vacuum flushes them (about 2 to 3 ms per event early in a large cascade, in every version since 7e8f28f).
+- Postgres settings are part of the result: the earlier lab's numbers depended on wal_recycle=off, wal_keep_size=0,
+  archive_mode=off and max_connections=200, which were not in the repo until 8c7d841 (host/bootstrap.py sets them).
