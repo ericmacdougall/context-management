@@ -333,7 +333,10 @@ def m2_once():
                    and st == "marked" and xmax is not None and xmax >= seq)
 
 
-def ms_once(period_s=0.8, span_s=12.0):
+CUT = ("57014", "55P03")      # the mark attempt cut by statement_timeout or lock_timeout (amendment 17c: "starved")
+
+
+def ms_once(period_s=0.8, span_s=35.0):
     """Amendment 17b MS (measurement): a relay of share holders on B while B's mark waits for FOR UPDATE."""
     t, ids, _c1 = MX.build()
     conn, ks, es = env()
@@ -384,13 +387,14 @@ def ms_once(period_s=0.8, span_s=12.0):
     cm.close()
     erasure._release(conn, jb, ceb)
     w.update(share_granted_while_mark_waited=granted, share_queued_behind_mark=queued, mark_err=_desc(thm.err),
-             mark_wait_s=round((thm.end or time.monotonic()) - tm0, 2), starved=_st(thm.err) == "55P03",
+             mark_wait_s=round((thm.end or time.monotonic()) - tm0, 2), starved=_st(thm.err) in CUT,
+             relay_s=round(time.monotonic() - tm0, 2),
              state_after=adm.execute("select state from erasure_jobs where job_id = %s", (jb,)).fetchone()[0])
     w["sweep"] = erasure.sweep(conn, ks, es, tenant=t, physical="followup")
     w["state_after_sweep"] = adm.execute("select state || coalesce('/' || last_error_type, '') from erasure_jobs where job_id = %s",
                                          (jb,)).fetchone()[0]
     adm.close()
-    if thm.err is not None and _st(thm.err) not in ("55P03",):
+    if thm.err is not None and _st(thm.err) not in CUT:
         errs.append(_desc(thm.err))
     return _scored(w, errs, _st(thm.err) == DEADLOCK, True)
 
@@ -444,7 +448,7 @@ def main(n):
                     for k, c in out["controls"].items()})
     if "measurements" in out:
         summary["MS"] = [{x: r.get(x) for x in ("share_granted_while_mark_waited", "share_queued_behind_mark", "starved",
-                                                "mark_wait_s", "state_after_sweep")} for r in out["measurements"]["MS"]["runs"]]
+                                                "mark_err", "mark_wait_s", "state_after", "state_after_sweep")} for r in out["measurements"]["MS"]["runs"]]
     print("lock_order", out["verdict"], json.dumps(summary), flush=True)
     write_result("lock_order", out)
 
