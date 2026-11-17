@@ -28,8 +28,9 @@ KEYS = ("es:placeholder_content", "es:placeholder_version", "es:placeholder_miss
 
 def copies(es, pattern):
     """[(index, shard, prirep, state, node_id)] for every shard copy of the indices matching pattern."""
-    s, j = es.req("GET", f"/_cat/shards/{pattern}", ok=(200, 404), format="json", h="index,shard,prirep,state,id",
-                  expand_wildcards="all")
+    # no expand_wildcards: Elasticsearch 9.5.6 rejects it on _cat/shards (400 illegal_argument_exception, t2-dev probe
+    # 2026-11-17); the family indices are not hidden, so the default expansion lists them
+    s, j = es.req("GET", f"/_cat/shards/{pattern}", ok=(200, 404), format="json", h="index,shard,prirep,state,id")
     if s != 200:
         return []
     return [(r["index"], str(r["shard"]), r["prirep"], r["state"], r.get("id")) for r in j]

@@ -737,10 +737,13 @@ begin
   delete from facts where tenant_id = j.tenant_id and subject_id = j.subject_id;
   delete from inbox where tenant_id = j.tenant_id and subject_id = j.subject_id;
   delete from quarantine where tenant_id = j.tenant_id and (subject_id = j.subject_id or mentions @> array[j.subject_id]);
+  -- D3 sealed identifiers: never used for matching, and none can be added after the mark (propose and approve judge
+  -- `erased` under the subject lock), so they go at the first final pass, whether or not a rescan ran (a subject with
+  -- only a proposal has identifier-set version 0 and no rescan; at 4fe3ac1 its proposal was never deleted)
+  delete from identifier_proposals where tenant_id = j.tenant_id and subject_id = j.subject_id;
   select count(*) into held from erasure_withheld where job_id = jid;
   if held = 0 and (select coalesce(rescanned_xmax, -1) >= coalesce(ident_xmax, 0) from erasure_jobs where job_id = jid) then
     delete from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id;   -- only after the rescan used them
-    delete from identifier_proposals where tenant_id = j.tenant_id and subject_id = j.subject_id;  -- D3: sealed identifiers too
     update erasure_jobs set state = 'cascaded', updated_at = clock_timestamp() where job_id = jid and state = 'marked';
   end if;
   return 0;

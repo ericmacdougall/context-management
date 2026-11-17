@@ -1,0 +1,62 @@
+# tree: writepath/ at 2dc641e (dirty: 3 paths)
+# command: python3 results/failing-first/harness/red_with.py . wp/es_verify.py 76a0e15 tests.test_es_verify
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/es_verify.py <- wp/es_verify.py at 76a0e15; tests: current; python3 -m unittest tests.test_es_verify
+ERROR: test_10_facts_only_for_fact_events (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_11_detail_holds_ids_only_and_is_bounded (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [timed_out]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [failed_shard]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [terminated_early]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [skipped_shard]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [unallocated_shard]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [no_shard_searched]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [two_shards_answered]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [no_shard_metadata]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [timed_out]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [failed_shard]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [terminated_early]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [skipped_shard]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [unallocated_shard]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [no_shard_searched]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [two_shards_answered]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [no_shard_metadata]
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_14_every_search_refuses_partial_results (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_1_clean_passes_on_every_copy (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_2_placeholder_still_carrying_content (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_3_missing_placeholder (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_4_version_below_2_62 (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_5_stale_replica_copy (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_6_replica_missing_the_placeholder (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_7_copy_not_started_is_unverified (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_8_no_started_base_copy_means_every_id_missing (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+ERROR: test_9_content_in_another_index_of_the_family (tests.test_es_verify.StrictPlaceholders)
+wp.es.ESError: ES 400 illegal_argument_exception GET /_cat/shards
+Ran 14 tests in 0.096s
+FAILED (errors=28)
