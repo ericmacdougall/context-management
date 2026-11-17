@@ -194,7 +194,7 @@ def eraser_es(t):
         c.close()
 
 
-REVOCATION_DELAY = "measured: first refusal at most 0.055 s after invalidation, 20/20 trials, one node (H1a at c8e0a46); cross-node not shown"
+REVOCATION_DELAY = "observed: first refusal at most 0.055 s after invalidation, 20/20 trials, one node, not a deadline (H1a at c8e0a46); cross-node not shown"
 
 
 def fence_statement():
