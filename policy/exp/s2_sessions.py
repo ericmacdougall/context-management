@@ -30,7 +30,9 @@ Controls, per seed, each on its own install (each must CATCH, i.e. show the atta
                           body naming actor "user" writes an event with actor "user".
   ctl_txn_clock           variant with d05d731's clock (now(), fixed at transaction start) and no isolation guard: a proof that
                           expires inside a transaction begun while it was valid opens a session.
-Rows carry factor ids and outcomes only: no key, proof, MAC or token is written.
+Rows carry factor ids and outcomes only: no key, proof, MAC or token is written. Each proof trial and concurrent round also carries
+its index and nonce_sha256, the first 16 hex digits of sha256 of the nonce drawn for it (final review P2: verify/s2.py counts DISTINCT
+trials; the nonce is the presentation's identity, already stored in clear in dc.used_proofs, and is not a credential).
 usage: python -m exp.s2_sessions (lab host; Postgres env as file paths)."""
 import hashlib
 import json
@@ -191,11 +193,29 @@ def look_alike(pid, rng):
     return la
 
 
-def malformed(f, shape):
-    good = proof(f)
+def malformed(f, shape, nonce):
+    good = proof(f, nonce=nonce)
     body, _, mac = good.rpartition(".")
-    return {"no_mac": body, "not_json": "x." + mac, "extra_field": proof(f, admin=True), "nonce_not_hex": proof(f, nonce="zz" * 16),
-            "expires_string": proof(f, expires="soon"), "empty": "", "oversized": proof(f, pad="p" * 5000), "null": None}[shape]
+    return {"no_mac": body, "not_json": "x." + mac, "extra_field": proof(f, admin=True, nonce=nonce), "nonce_not_hex": proof(f, nonce="zz" * 16),
+            "expires_string": proof(f, expires="soon", nonce=nonce), "empty": "", "oversized": proof(f, pad="p" * 5000, nonce=nonce),
+            "null": None}[shape]
+
+
+def nonce_id(nonce):
+    """A trial's identity in the rows (final review P2): the first 16 hex digits of sha256 of the nonce drawn for it."""
+    return hashlib.sha256(nonce.encode()).hexdigest()[:16]
+
+
+def trial_nonce(p, nonce):
+    """The identity of the trial whose drawn nonce is `nonce` and whose presented text is `p`. Where the presented text carries a
+    parseable nonce it must BE the drawn one (only the nonce_not_hex shape presents a fixed invalid nonce), so the identity names the
+    presentation and a bug that presents another proof stops the run instead of writing a row."""
+    try:
+        got = json.loads(p.rpartition(".")[0]).get("nonce") if isinstance(p, str) else None
+    except (ValueError, AttributeError):
+        got = None
+    assert got in (None, nonce, "zz" * 16), "the presented proof is not the trial's"
+    return nonce_id(nonce)
 
 
 def factors(lab, rng):
@@ -208,47 +228,48 @@ def factors(lab, rng):
     return out
 
 
-def make(cls, f, fs, rng, lab):
-    """A proof of class `cls` built on factor f (tenant-a). Returns the proof text and, for the record, the claimed principal."""
+def make(cls, f, fs, rng, lab, nonce):
+    """A proof of class `cls` built on factor f (tenant-a) with the trial's nonce. Returns the proof text and, for the record, the
+    claimed principal."""
     same_t = [g for k, g in fs.items() if k[0] == T and g.factor_id != f.factor_id]
     other = rng.choice(same_t)
     if cls == "valid":
-        return proof(f), f.principal
+        return proof(f, nonce=nonce), f.principal
     if cls == "forged_mac":
-        p = proof(f)
+        p = proof(f, nonce=nonce)
         return p[:-1] + ("0" if p[-1] != "0" else "1"), f.principal
     if cls == "body_edited":
         o = rng.choice([g for g in same_t if g.principal != f.principal])           # another PRINCIPAL, never the same one's other factor
-        p = proof(f)
+        p = proof(f, nonce=nonce)
         body, _, mac = p.rpartition(".")
         edited = body.replace('"principal":"%s"' % f.principal, '"principal":"%s"' % o.principal)
         assert edited != body
         return edited + "." + mac, o.principal
     if cls == "other_key":
-        return proof(f, key=other.key), f.principal
+        return proof(f, key=other.key, nonce=nonce), f.principal
     if cls == "other_factor_id":
-        return proof(f, factor=other.factor_id), f.principal
+        return proof(f, factor=other.factor_id, nonce=nonce), f.principal
     if cls == "look_alike":
         la = look_alike(f.principal, rng)
-        return proof(f, principal=la), la
+        return proof(f, principal=la, nonce=nonce), la
     if cls == "other_principal":
         o = rng.choice([g for g in same_t if g.principal != f.principal])
-        return proof(f, principal=o.principal), o.principal
+        return proof(f, principal=o.principal, nonce=nonce), o.principal
     if cls == "other_channel":
         ch = rng.choice([c for c in ("owner_ui", "owner_cli", "agent_api") if c != f.channel])
-        return proof(f, channel=ch), f.principal
+        return proof(f, channel=ch, nonce=nonce), f.principal
     if cls == "other_tenant":
-        return proof(f, tenant=TB), f.principal
+        return proof(f, tenant=TB, nonce=nonce), f.principal
     if cls == "expired":
-        return proof(f, expires_in=-rng.randint(1, 3600)), f.principal
+        return proof(f, expires_in=-rng.randint(1, 3600), nonce=nonce), f.principal
     if cls == "far_future":
-        return proof(f, expires_in=rng.randint(302, 86400)), f.principal
+        return proof(f, expires_in=rng.randint(302, 86400), nonce=nonce), f.principal
     if cls == "revoked_factor":
         g = enroll(lab.o, T, f.principal, f.channel)
         lab.o.execute("update dc.factors set revoked = true where factor = %s", (g.factor_id,))
-        return proof(g), f.principal
+        return proof(g, nonce=nonce), f.principal
     if cls == "malformed":
-        return malformed(f, rng.choice(MALFORMED)), f.principal
+        return malformed(f, rng.choice(MALFORMED), nonce), f.principal
     raise ValueError(cls)
 
 
@@ -257,21 +278,24 @@ def proof_rows(arm, seed, lab, fs, rng, classes, trials):
     for cls in classes:
         for i in range(trials):
             f = fs[rng.choice(keys)]
+            n = secrets.token_hex(16)                    # the trial's own nonce (final review P2: one presentation per trial)
             if cls == "expired_in_txn":
-                p, claimed = proof(f, expires_in=1.2), f.principal
+                p, claimed = proof(f, expires_in=1.2, nonce=n), f.principal
                 st, d = open_in_txn(lab, p)
             elif cls == "replay":
-                p = proof(f)
+                p = proof(f, nonce=n)
                 st1, d1 = lab.open(p)
-                ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": "replay_first", "outcome": st1, "factor": f.factor_id,
+                ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": "replay_first", "trial": i, "nonce_sha256": trial_nonce(p, n),
+                             "outcome": st1, "factor": f.factor_id,
                              "principal": f.principal, "stamped": d1.get("principal") if st1 == "accepted" else None,
                              "authenticated": lab.authenticated(d1["token"]) if st1 == "accepted" else None})
                 st, d = lab.open(p)
                 claimed = f.principal
             else:
-                p, claimed = make(cls, f, fs, rng, lab)
+                p, claimed = make(cls, f, fs, rng, lab, n)
                 st, d = lab.open(p)
-            ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": cls, "outcome": st, "reason": None if st == "accepted" else d,
+            ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": cls, "trial": i, "nonce_sha256": trial_nonce(p, n),
+                         "outcome": st, "reason": None if st == "accepted" else d,
                          "factor": f.factor_id, "factor_principal": f.principal, "claimed": claimed,
                          "stamped": d.get("principal") if st == "accepted" else None,
                          "authenticated": lab.authenticated(d["token"]) if st == "accepted" else None})
@@ -283,7 +307,8 @@ def concurrent(arm, seed, lab, fs, rng, rounds=3, n=8):
     try:
         for r in range(rounds):
             f = fs[rng.choice(sorted(k for k in fs if k[0] == T and k[1] != "carol"))]
-            p, bar, out = proof(f), threading.Barrier(n), [None] * n
+            nonce = secrets.token_hex(16)
+            p, bar, out = proof(f, nonce=nonce), threading.Barrier(n), [None] * n
 
             def go(i):
                 bar.wait()
@@ -294,7 +319,7 @@ def concurrent(arm, seed, lab, fs, rng, rounds=3, n=8):
             for t in ts:
                 t.join()
             ROWS.append({"arm": arm, "seed": seed, "kind": "replay_concurrent", "round": r, "presented": n, "winners": out.count("accepted"),
-                         "factor": f.factor_id})
+                         "factor": f.factor_id, "nonce_sha256": trial_nonce(p, nonce)})
     finally:
         for c in conns:
             c.close()
@@ -434,8 +459,11 @@ def revoked_principal_rows(arm, seed, lab, fs, rng):
     lab.o.execute("update dc.principal set revoked = true where tenant = %s and pid = 'carol'", (T,))
     for i in range(N):
         f = fs[(T, "carol", rng.choice(channels("human")))]
-        st, d = lab.open(proof(f))
-        ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": "revoked_principal", "outcome": st, "reason": None if st == "accepted" else d,
+        n = secrets.token_hex(16)
+        p = proof(f, nonce=n)
+        st, d = lab.open(p)
+        ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": "revoked_principal", "trial": i, "nonce_sha256": trial_nonce(p, n),
+                     "outcome": st, "reason": None if st == "accepted" else d,
                      "factor": f.factor_id, "factor_principal": "carol", "claimed": "carol", "stamped": d.get("principal") if st == "accepted" else None,
                      "authenticated": None})
 

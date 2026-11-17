@@ -4,6 +4,12 @@ Each log is the unittest output of a red run: the new tests against the code the
 broken variant), on local, never-pushed `red/*` branches. Home paths are redacted to `~`. Before commit the logs were scanned for
 credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password URLs); none occur. The 64-hex strings are sha256 digests.
 
+## Final review (reviews/policy-final/review-1.md) at a2d65fd
+
+| Finding | Log | Code under test | Result |
+|---|---|---|---|
+| P2 S2 trial independence | `final_p2_verifier_a2d65fd.out` | a2d65fd verify/s2.py + the new tests/test_verify_s2.py (good rows carry trial and nonce identities, which a2d65fd ignores) | FAILED (failures=16): a2d65fd returns PASS on each of the 11 duplication manipulations in `P2_MANIPULATIONS` (12 copies of one observation per class, the reviewer's probe; copies renumbered; one trial twice; a trial gap; a seed relabelled from another; replay_first unlinked or on another factor; revoked_principal copies; concurrent rounds copied; rows with no identity; one nonce in two classes) and on 5 non-integer trial indices. The pre-existing S2 verifier tests pass on the same run. |
+
 ## Delta review 1 (reviews/policy-delta/review-1.md) at d05d731
 
 | Finding | Log | Code under test | Result |

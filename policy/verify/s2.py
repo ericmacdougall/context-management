@@ -7,10 +7,18 @@ PASS needs, for EVERY seed:
   real arm
     mint     exactly one row for each of the 17 pinned (role, what) probes and no other, every one refused (the in-process bare issue
              included).
-    proof    exactly TRIALS rows of each pinned class and of revoked_principal, exactly one replay_first per replay trial, no other
-             class; valid and replay_first rows are accepted, stamped as the factor's principal and authenticated on dc.submit; every
-             other class is refused (zero accepted attacks, absolute); a class claiming another principal must name one (not vacuous).
+    proof    exactly TRIALS DISTINCT trials of each pinned class, of revoked_principal and of replay_first, and no other class: the rows
+             of one class carry the trial indices 0..TRIALS-1, each exactly once (integers, final review P2: at a2d65fd TRIALS copies of
+             one observation counted as TRIALS trials). Each replay_first is the first use of its replay trial's proof: same trial,
+             same nonce identity, same factor. Valid and replay_first rows are accepted, stamped as the factor's principal and
+             authenticated on dc.submit; every other class is refused (zero accepted attacks, absolute); a class claiming another
+             principal must name one (not vacuous).
     replay_concurrent  exactly rounds 0..REPLAY_ROUNDS-1, each presenting REPLAY_WAYS proofs with exactly one winner.
+  trial identity (across ALL seeds; final review P2) every real-arm proof and replay_concurrent row carries nonce_sha256, the first 16
+             hex digits of sha256 of the nonce the experiment drew for that trial or round (the experiment asserts it is the nonce of the
+             proof it presented, where the presented text has a parseable nonce). Every identity is distinct, except that a replay_first
+             row and its replay row share one (they are one presentation). So a copied, renumbered or relabelled observation (another
+             class, trial, round or seed) FAILS.
     token    every (token class, call) pair of the pinned TOKENS x CALLS exactly once. valid: submit is an authenticated decision (not
              unauthenticated:*), explain answers for tenant-a and shows the seeded proposal, read_table shows it, erase_candidates finds
              one value, erase_values is not refused. forged, expired, revoked, ended, empty, expired_in_txn (a token valid when an
@@ -33,8 +41,9 @@ PASS needs, for EVERY seed:
     ctl_origin_from_body    the body naming actor "user" from a non-human was applied with event actor "user".
     ctl_txn_clock           (the d05d731 transaction-start clock) an expired_in_txn proof accepted, or an expired_in_txn token that
                             reads the seeded proposal."""
+import re
 
-ORIGIN = {("human", "owner_ui"): ("user", "user_typed"), ("human", "owner_cli"): ("user", "user_typed")}
+ORIGIN ={("human", "owner_ui"): ("user", "user_typed"), ("human", "owner_cli"): ("user", "user_typed")}
 NON_USER = ("assistant", "agent_generated")
 BODY_KEYS = ("tenant", "principal", "channel", "id", "actor", "trust_origin")
 CLAIMS_OTHER = ("body_edited", "look_alike", "other_principal")      # these trials must name a principal other than the factor's
@@ -64,6 +73,8 @@ ORIGIN_CASES = frozenset([("alice", "human", "owner_ui"), ("alice", "human", "ow
 REPLAY_ROUNDS, REPLAY_WAYS = 3, 8
 PINNED_PARAMS = {"trials_per_class": TRIALS, "classes": list(PROOF_CLASSES), "tokens": list(TOKENS), "calls": list(CALLS),
                  "controls": list(CONTROLS)}
+TRIAL_CLASSES = PROOF_CLASSES + DERIVED_CLASSES                      # each: trials 0..TRIALS-1 per seed, each exactly once
+NONCE_ID = re.compile(r"^[0-9a-f]{16}$")
 
 
 def _count(xs):
@@ -71,6 +82,33 @@ def _count(xs):
     for x in xs:
         out[x] = out.get(x, 0) + 1
     return out
+
+
+def _index(i):
+    return isinstance(i, int) and not isinstance(i, bool) and 0 <= i < TRIALS
+
+
+def _identities(rows, seeds):
+    """Final review P2: one nonce identity per presentation, across every seed (see the module docstring)."""
+    why, by = [], {}
+    sd = {str(s) for s in seeds}
+    for x in rows:
+        if x.get("arm") != "real" or x.get("kind") not in ("proof", "replay_concurrent") or str(x.get("seed")) not in sd:
+            continue
+        n = x.get("nonce_sha256")
+        if not (isinstance(n, str) and NONCE_ID.match(n)):
+            why.append("no nonce identity: seed %s %s %s trial %r" % (x.get("seed"), x.get("kind"), x.get("cls"), x.get("trial", x.get("round"))))
+            continue
+        by.setdefault(n, []).append(x)
+    for n, xs in by.items():
+        if len(xs) == 1:
+            continue
+        pair = (len(xs) == 2 and sorted(str(x.get("cls")) for x in xs) == ["replay", "replay_first"]
+                and all(x.get("kind") == "proof" for x in xs) and len({(str(x.get("seed")), repr(x.get("trial")), x.get("factor")) for x in xs}) == 1)
+        if not pair:
+            why.append("nonce identity %s on %d rows: %s" % (n, len(xs), sorted({(str(x.get("seed")), str(x.get("cls")), repr(x.get("trial", x.get("round"))))
+                                                                                 for x in xs})[:4]))
+    return why
 
 
 def _real(rows, seed):
@@ -86,10 +124,24 @@ def _real(rows, seed):
         why.append("mint accepted: %s" % acc)
     proofs = [x for x in r if x["kind"] == "proof"]
     per = _count(x.get("cls") for x in proofs)
-    want = dict({c: TRIALS for c in PROOF_CLASSES}, replay_first=per.get("replay", 0), revoked_principal=TRIALS)
+    want = {c: TRIALS for c in TRIAL_CLASSES}
     if per != want:
-        why.append("proof classes: %s != %s" % ({k: per.get(k, 0) for k in sorted(set(per) | set(want)) if per.get(k, 0) != want.get(k)},
-                                                 {k: want.get(k, 0) for k in sorted(set(per) | set(want)) if per.get(k, 0) != want.get(k)}))
+        why.append("proof classes: %s != %s" % ({k: per.get(k, 0) for k in sorted(set(per) | set(want), key=str) if per.get(k, 0) != want.get(k)},
+                                                 {k: want.get(k, 0) for k in sorted(set(per) | set(want), key=str) if per.get(k, 0) != want.get(k)}))
+    for c in TRIAL_CLASSES:                                          # final review P2: distinct trials, not rows
+        t = [x.get("trial") for x in proofs if x.get("cls") == c]
+        if not all(_index(i) for i in t) or sorted(t) != list(range(TRIALS)):
+            why.append("proof %s: trials %s, want each of 0..%d exactly once" % (c, sorted(map(repr, t)), TRIALS - 1))
+    replays = {}
+    for x in proofs:
+        if x.get("cls") == "replay" and _index(x.get("trial")):
+            replays.setdefault(x["trial"], []).append(x)
+    for x in proofs:
+        if x.get("cls") != "replay_first":
+            continue
+        twin = replays.get(x.get("trial")) if _index(x.get("trial")) else None
+        if not twin or len(twin) != 1 or (x.get("nonce_sha256"), x.get("factor")) != (twin[0].get("nonce_sha256"), twin[0].get("factor")):
+            why.append("proof replay_first trial %r: not the first use of its replay trial's proof" % (x.get("trial"),))
     for x in proofs:
         cls = x.get("cls")
         if cls in ACCEPTED_CLASSES:
@@ -178,8 +230,10 @@ def verify(doc, rows):
     pin = {k: par.get(k) for k in PINNED_PARAMS if par.get(k) != PINNED_PARAMS[k]}
     stray = sorted({str(x.get("seed")) for x in rows} - {str(s) for s in sd})
     arms = sorted({x.get("arm") for x in rows} - {"real"} - set(CONTROLS))
-    checks = {"params_not_pinned": pin, "seeds": len(set(map(str, sd))), "rows_of_other_seeds": stray, "unexpected_arms": arms}
-    ok = not pin and len(set(map(str, sd))) >= MIN_SEEDS and len(set(map(str, sd))) == len(sd) and not stray and not arms
+    ident = _identities(rows, sd)
+    checks = {"params_not_pinned": pin, "seeds": len(set(map(str, sd))), "rows_of_other_seeds": stray, "unexpected_arms": arms,
+              "trial_identity_failures": ident[:20], "trial_identity_failure_count": len(ident)}
+    ok = not pin and len(set(map(str, sd))) >= MIN_SEEDS and len(set(map(str, sd))) == len(sd) and not stray and not arms and not ident
     for s in sd:
         why = _real(rows, s)
         ctl = _controls(rows, s)

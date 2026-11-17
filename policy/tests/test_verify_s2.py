@@ -3,6 +3,7 @@ single break fails (an accepted attack, a vacuous attack, a valid proof that doe
 winners, a bad token that reads data, another tenant's token that sees the seeded proposal, a missing token pair, a wrong origin, a
 body origin accepted, a look-alike install accepted, a control that does not catch). Stdlib only."""
 import copy
+import hashlib
 import importlib.util
 import os
 import unittest
@@ -31,6 +32,11 @@ TRIALS, SEEDS = 12, [1, 2, 3]
 DOC = {"params": {"seeds": SEEDS, "trials_per_class": TRIALS, "classes": CLASSES, "tokens": TOKENS, "calls": CALLS, "controls": CONTROLS}}
 
 
+def nonce(*parts):
+    """A row's trial identity as exp/s2_sessions.py writes it: the first 16 hex digits of sha256 of the nonce drawn for the trial."""
+    return hashlib.sha256("/".join(map(str, parts)).encode()).hexdigest()[:16]
+
+
 def good_rows(seeds=SEEDS):
     R = []
     for seed in seeds:
@@ -38,16 +44,20 @@ def good_rows(seeds=SEEDS):
         for role, what in MINT:
             add("real", kind="mint", role=role, what=what, outcome="refused")
         for cls in CLASSES + ["revoked_principal"]:
-            for _ in range(TRIALS):
+            for i in range(TRIALS):
+                fac, ns = "f-%d-%s-%d" % (seed, cls, i % 3), nonce(seed, cls, i)
                 if cls == "valid":
-                    add("real", kind="proof", cls=cls, outcome="accepted", factor_principal="alice", claimed="alice", stamped="alice", authenticated=True)
+                    add("real", kind="proof", cls=cls, trial=i, nonce_sha256=ns, factor=fac, outcome="accepted", factor_principal="alice",
+                        claimed="alice", stamped="alice", authenticated=True)
                 else:
                     claimed = "bob" if cls in S2.CLAIMS_OTHER else "alice"
-                    add("real", kind="proof", cls=cls, outcome="refused", factor_principal="alice", claimed=claimed, stamped=None)
+                    add("real", kind="proof", cls=cls, trial=i, nonce_sha256=ns, factor=fac, outcome="refused", factor_principal="alice",
+                        claimed=claimed, stamped=None)
                 if cls == "replay":
-                    add("real", kind="proof", cls="replay_first", outcome="accepted", principal="alice", stamped="alice", authenticated=True)
+                    add("real", kind="proof", cls="replay_first", trial=i, nonce_sha256=ns, factor=fac, outcome="accepted", principal="alice",
+                        stamped="alice", authenticated=True)
         for rnd in range(3):
-            add("real", kind="replay_concurrent", round=rnd, presented=8, winners=1)
+            add("real", kind="replay_concurrent", round=rnd, presented=8, winners=1, nonce_sha256=nonce(seed, "concurrent", rnd))
         for c in TOKENS:
             if c == "valid":
                 obs = {"submit": "unauthorized", "explain": {"tenant": "tenant-a", "seen": 1}, "read_table": {"n": 2, "seen": 1},
@@ -208,6 +218,131 @@ class CoverageIsPinned(unittest.TestCase):
         self.assertEqual(S2.verify(DOC, rows + [mint])["verdict"], "FAIL", "unexpected mint probe")
         self.assertEqual(S2.verify(DOC, rows + [dict(rows[0], arm="ctl_made_up")])["verdict"], "FAIL", "undeclared control arm")
         self.assertEqual(S2.verify(dict(DOC, params=dict(DOC["params"], seeds=[1, 2])), good_rows([1, 2]))["verdict"], "FAIL", "two seeds")
+
+
+def _proofs(rows, seed=None, cls=None, arm="real"):
+    return [r for r in rows if r["arm"] == arm and r["kind"] == "proof" and (seed is None or r["seed"] == seed) and (cls is None or r["cls"] == cls)]
+
+
+def _copies_of_one(rows, renumber):
+    """Every class's TRIALS rows replaced by copies of its first observation (renumber: the copies get trials 0..TRIALS-1 and keep the
+    first's nonce). The final review's P2 probe is renumber=False."""
+    out, first = [], {}
+    for r in rows:
+        if r["arm"] == "real" and r["kind"] == "proof":
+            k = (r["seed"], r["cls"])
+            first.setdefault(k, r)
+            c = dict(first[k], trial=r.get("trial")) if renumber else dict(first[k])
+            out.append(c)
+        else:
+            out.append(r)
+    return out
+
+
+def _p2_copies(doc, rows):
+    """Final review P2: each class's 12 observations are 12 copies of one observation."""
+    return _copies_of_one(rows, renumber=False)
+
+
+def _p2_copies_renumbered(doc, rows):
+    """Copies of one observation with distinct trial numbers (only the nonce identity shows they are one presentation)."""
+    return _copies_of_one(rows, renumber=True)
+
+
+def _p2_one_trial_twice(doc, rows):
+    """One class has trial 0 twice and no trial 11 (counts still 12)."""
+    r = next(x for x in _proofs(rows, 1, "expired") if x["trial"] == 11)
+    first = next(x for x in _proofs(rows, 1, "expired") if x["trial"] == 0)
+    r.update(trial=0, nonce_sha256=first["nonce_sha256"])
+    return rows
+
+
+def _p2_trial_gap(doc, rows):
+    """One class's trials are 0..10 and 12."""
+    next(x for x in _proofs(rows, 2, "other_key") if x["trial"] == 11)["trial"] = 12
+    return rows
+
+
+def _p2_seed_copied(doc, rows):
+    """Seed 3's proof rows are seed 1's, relabelled (a seed that was never run)."""
+    keep = [r for r in rows if not (r["seed"] == 3 and r["arm"] == "real" and r["kind"] == "proof")]
+    return keep + [dict(r, seed=3) for r in _proofs(rows, 1)]
+
+
+def _p2_replay_first_unlinked(doc, rows):
+    """A replay_first row whose nonce is not its replay's (the first use and the replay were different proofs)."""
+    next(x for x in _proofs(rows, 1, "replay_first") if x["trial"] == 4)["nonce_sha256"] = nonce("elsewhere")
+    return rows
+
+
+def _p2_replay_first_other_factor(doc, rows):
+    """A replay_first row on another factor than its replay."""
+    next(x for x in _proofs(rows, 2, "replay_first") if x["trial"] == 7)["factor"] = "f-other"
+    return rows
+
+
+def _p2_revoked_principal_copies(doc, rows):
+    """The revoked_principal rows are copies of one observation."""
+    out, first = [], {}
+    for r in rows:
+        if r["arm"] == "real" and r["kind"] == "proof" and r["cls"] == "revoked_principal":
+            out.append(dict(first.setdefault(r["seed"], r)))
+        else:
+            out.append(r)
+    return out
+
+
+def _p2_concurrent_round_copied(doc, rows):
+    """Rounds 1 and 2 of the concurrent replay are round 0's observation, renumbered."""
+    out = []
+    for r in rows:
+        if r["kind"] == "replay_concurrent" and r["round"] != 0:
+            r0 = next(x for x in rows if x["kind"] == "replay_concurrent" and x["seed"] == r["seed"] and x["round"] == 0)
+            out.append(dict(r0, round=r["round"]))
+        else:
+            out.append(r)
+    return out
+
+
+def _p2_no_identity(doc, rows):
+    """Rows without trial identities (as d05d731's experiment wrote them)."""
+    return [{k: v for k, v in r.items() if k not in ("trial", "nonce_sha256")} for r in rows]
+
+
+def _p2_nonce_shared_across_classes(doc, rows):
+    """A refused-class row reuses a valid trial's nonce (one presentation counted in two classes)."""
+    v = next(x for x in _proofs(rows, 1, "valid") if x["trial"] == 3)
+    next(x for x in _proofs(rows, 1, "far_future") if x["trial"] == 3)["nonce_sha256"] = v["nonce_sha256"]
+    return rows
+
+
+P2_MANIPULATIONS = (_p2_copies, _p2_copies_renumbered, _p2_one_trial_twice, _p2_trial_gap, _p2_seed_copied, _p2_replay_first_unlinked,
+                    _p2_replay_first_other_factor, _p2_revoked_principal_copies, _p2_concurrent_round_copied, _p2_no_identity,
+                    _p2_nonce_shared_across_classes)
+
+
+class TrialsAreIndependent(unittest.TestCase):
+    """Final review P2: at a2d65fd verify/s2.py counted proof ROWS per class, so TRIALS copies of one observation passed as TRIALS
+    independent trials. Each trial now carries its index and the identity of the nonce drawn for it; per seed and class the indices
+    must be exactly 0..TRIALS-1, every nonce identity distinct across all proof rows of all seeds, except that a replay_first and its
+    replay are the same presentation (same trial, nonce and factor). Each manipulation below PASSED at a2d65fd and must FAIL."""
+
+    def test_good_set_passes(self):
+        self.assertEqual(S2.verify(DOC, good_rows())["verdict"], "PASS")
+
+    def test_each_duplication_fails(self):
+        for m in P2_MANIPULATIONS:
+            with self.subTest(m.__name__):
+                doc = copy.deepcopy(DOC)
+                rows = m(doc, copy.deepcopy(good_rows()))
+                self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+
+    def test_a_trial_index_must_be_an_integer(self):
+        for bad in ("0", 0.0, True, None, -1):
+            with self.subTest(bad=repr(bad)):
+                rows = copy.deepcopy(good_rows())
+                next(x for x in _proofs(rows, 1, "valid") if x["trial"] == 0)["trial"] = bad
+                self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
 
 
 if __name__ == "__main__":

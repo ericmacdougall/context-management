@@ -1,0 +1,191 @@
+# tests/test_verify_s2.py (P2 manipulations, good rows with trial identities) against a2d65fd's verify/s2.py (unmodified)
+# command: cd policy && python3 -m unittest -v tests.test_verify_s2
+# host: Mac, 2026-11-17T17:55:06Z, python Python 3.9.6; HEAD: a2d65fdc3ed997e3d65fa91194aa7c37274611bc
+
+test_duplicated_and_unexpected_coverage_fails (tests.test_verify_s2.CoverageIsPinned) ... ok
+test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) ... ok
+test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) ... test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) ... test_good_set_passes (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_each_break_fails (tests.test_verify_s2.VerifyS2) ... ok
+test_good_set_passes (tests.test_verify_s2.VerifyS2) ... ok
+test_missing_rows_fail (tests.test_verify_s2.VerifyS2) ... ok
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) (bad="'0'")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 345, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) (bad='0.0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 345, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) (bad='True')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 345, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) (bad='None')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 345, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) (bad='-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 345, in test_a_trial_index_must_be_an_integer
+    self.assertEqual(S2.verify(DOC, rows)["verdict"], "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_copies]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_copies
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_copies_renumbered]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_copies_renumbered
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_one_trial_twice]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_one_trial_twice
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_trial_gap]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_trial_gap
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_seed_copied]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_seed_copied
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_replay_first_unlinked]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_replay_first_unlinked
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_replay_first_other_factor]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_replay_first_other_factor
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_revoked_principal_copies]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_revoked_principal_copies
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_concurrent_round_copied]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_concurrent_round_copied
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_no_identity]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_no_identity
+
+======================================================================
+FAIL: test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) [_p2_nonce_shared_across_classes]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_verify_s2.py", line 338, in test_each_duplication_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _p2_nonce_shared_across_classes
+
+----------------------------------------------------------------------
+Ran 8 tests in 1.064s
+
+FAILED (failures=16)
