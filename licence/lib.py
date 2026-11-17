@@ -9,6 +9,8 @@ import time
 import urllib.error
 import urllib.request
 
+import evidence
+
 BASE = os.environ.get("LIC_ES", "http://127.0.0.1:19270")
 PWFILE = os.environ.get("LIC_PW", os.path.expanduser("~/emlab-16096/lic/es_password"))
 CODE_COMMIT = os.environ.get("LIC_COMMIT", "unknown")
@@ -59,15 +61,17 @@ def err(j):
             "feature": e.get("license.expired.feature")}
 
 
+_CELL_CLASS = {"SUCCESS": "AVAILABLE", "TRANSPORT_FAILURE": "TRANSPORT", "LICENCE_REFUSAL": "LICENCE_ERROR"}
+
+
 def classify(code, j):
-    if code == 0:
-        return "TRANSPORT"
-    if code < 300:
-        return "AVAILABLE"
-    txt = json.dumps(err(j) or {}).lower()
-    if "non-compliant" in txt or ("license" in txt and "expired" in txt):
-        return "LICENCE_ERROR"
-    return "OTHER_ERROR"
+    """Matrix cell class from the same closed outcome cases the verdicts use (evidence.Outcome): only a 2xx is AVAILABLE; a 1xx or 3xx is
+    OTHER_ERROR (UNEXPECTED); a status outside 0 and 100..599 is OTHER_ERROR rather than a crash in a recording helper."""
+    try:
+        case = evidence.Outcome.of(code, err(j)).case
+    except evidence.Unparsed:
+        return "OTHER_ERROR"
+    return _CELL_CLASS.get(case, "OTHER_ERROR")
 
 
 def cell(code, j, witness=None):
