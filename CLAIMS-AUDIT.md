@@ -194,3 +194,33 @@ Not checked by anyone (27 items the checkers could not trace to a primary
 file), among them: the ids-and-cursors-only property of the engine; the per-claim
 mapping of the Elasticsearch re-run verdicts to component 4; the composition
 order in section 5.
+
+## Corrections after the independent reviews (2026-11-17)
+
+Each row changes a statement in DESIGN.md or LEDGER.md because a review or a main check at a named commit found it false, overstated or superseded. Sources are under reviews/ and in the main WAL.
+
+| Statement before | Now | Source |
+|---|---|---|
+| Ingestion: "exactly-once, ordered ingestion under duplication, reordering and racing ingesters, 20 of 20 seeds" | WITHDRAWN. A legitimate earlier message could vanish through content alignment with no flag while the exactly-once claim was true. The contract is a host-declared boundary (`new_count`), at-least-once with flagged repeats and a blocking `ambiguous_alignment` gap when undeclared and ambiguous | reviews/ingest-delta/review-1.md (N1); WAL wda2d06a705c; ingest/CLAIMS.md at d76e525 |
+| Tuned scanner held-out 350 of 800 (44%) | 300 of 800 under the corrected predicate (a private-key body survived in 50 of 50); after the repair 800 of 960 (83.3%, Wilson lower 80.8%) on a fresh held-out set, 0 of 720 benign changed, four cells 0 of 40 | reviews/ingest-delta/review-1.md (F2); ingest/CLAIMS.md |
+| Injected block never ingested as user content over 7 placements | 6 covered placements, 0 marker occurrences in 42 conversations; the seventh (`host_alters_block`) is not covered | ingest/CLAIMS.md |
+| Write path secret scan 880 of 880 | Holds only on the author's corpus; the pre-registered held-out test FAILED, 483 of 1,169 and 150 of 750 | WAL w63f62ffdf2a; reviews/writepath/review-2.md |
+| Licence rehearsal: oracle comparison 0 mismatches over 387,045 responses, T4 passing | T4 UNVERIFIED for all 12 lives (every life passed T4 only because a missing count defaulted to 0); the oracle comparison is recomputable for 1 of 12 lives; the migration helpers have run only against an in-memory fake | reviews/licence-delta/review-1.md (N1, N2); WAL wb297c3d1172 |
+| Stage X2 "not independently reviewed" | Delta review at be746a0 ACCEPT, LAB PASS WITH LIMITS, CLIENT BLOCK; reproducibility partial; no X2 question is unseen; later wording fixes main-checked | reviews/eval/review-2.md, review-3.md, reviews/eval-x2delta/review-1.md |
+| ES-pilot as a future item | Done at 854ed7f, reviewed with limits; no MEAN-FAIL; three cells mean-in-band, equivalence not demonstrated; T4.7 missed (0.0053 against 0.005); needle on a copy node; not blind; scorer bound to a pilot manifest (main-verified) | eval/ES-PILOT.md; reviews/eval-espilot, eval-espilot-delta; WAL w287450f28a8 |
+| Policy: subject tokens deterministic per tenant (R3-3) and an HMAC value reference | Random tokens and references in memory and Postgres at a2d65fd (checked in `decisions.py` and `_pgcore.sql`); R3-3 closed in the delta review; the policy branch's own DESIGN.md still describes the HMAC text at lines 76 and 79 to 84 and needs the policy owner's proposed replacement | reviews/policy-delta/review-1.md; agent-a9fd13f613df8860c/design-lines-proposal.txt |
+| Counts of components by status (6 / 9 / 3 / 5 / 5) | 9 / 6 / 3 / 5 / 5 (REVIEWED-WITH-LIMITS / LAB-EVIDENCE-UNREVIEWED / FAILED-REVIEW-REBUILD-IN-PROGRESS / DID-NOT-HOLD / NOT-BUILT) | DESIGN.md section 0 |
+
+Figures added to DESIGN.md and LEDGER.md on 2026-11-17 and where each comes from (paths relative to the stream branch; review files under reviews/):
+
+| Figure | Source |
+|---|---|
+| Ingestion: 18 of 18 and 8 of 8 declared-boundary runs; 1,884 and 588 flagged extra events; 20 of 20 identical-resend probes; 6 covered placements, 42 conversations; 800 of 960, 80.8%; 0 of 720; four cells 0 of 40; 53 offline tests | ingest/CLAIMS.md at d76e525 (lines 30 to 36, 44 to 54); 53 tests re-run by this branch's integration owner (ingest branch integ/ingest) and by main (WAL w1680249dbf6) |
+| Ingestion: 300 of 800 and 50 of 50 private-key bodies | reviews/ingest-delta/review-1.md item 1 (F2) |
+| Licence: 27,599 examined, 5,925 of 5,925, 1,055,037 request rows, 31 manifest hashes, 93 to 257 failures per life, 4 FAIL and 1 ERROR then Ran 35 OK | reviews/licence-delta/review-1.md items on F1 and N1; licence/DEGRADE.md; WAL wb297c3d1172 |
+| ES-pilot: 94 questions, 90 clusters, 16 cells, largest mean difference -0.018, 0.0053 against 0.005, 13 attacks with 7 KEEP on the old scorer | eval/ES-PILOT.md lines 21 and 60 to 68; WAL w287450f28a8 |
+| Write path: 483 of 1,169, 150 of 750, 37 of 1,200 false blocks | reviews/writepath/review-2.md item 7 |
+| Stage X2: 38 X1 per-question entries containing the 23 low-overlap ids | reviews/eval-x2delta/review-1.md (F3) |
+| Policy: final review figures (P1 to P4, M1 to M3 partly, M4 closed) | reviews/policy-final/review-1.md at a2d65fd |
+| Stage 11: J2 940 calls, A1 188 calls (against 376 shown to the user), about 1,130 and 376 as asked, 160 J1 calls | WAL w187906c60f1 (ask), wf5f7a7d73bc (answer), w5f38b1de953 (main's readings, ASSUMPTION) |
+| Free-space figures: 13 GB swing, 13.4 GB, 20 GB start line | OWNER-COMMON addendum; WAL w7cefba34fa3 |
