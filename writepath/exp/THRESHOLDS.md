@@ -374,3 +374,52 @@ usage (Postgres and ES data directories and WP_HOME, du) may grow by at most 2 G
 while own usage is within the cap, the run continues, but any ES flood-stage event during the run (ES then refuses
 writes) makes it VOID. Postgres max_wal_size is capped at 256MB for this stream's node (min_wal_size 64MB); that is a
 deviation from the earlier lab's default (1GB), stated, and does not change any threshold.
+
+## Amendment 18 (2026-11-17, written before the reproducer runs): plan stability of the erasure path (exp/plan_stability.py)
+Finding that motivates it (main's F1 request): the voided 1f059f4 run's F1 cascade took 1,410 s for 100,000 events
+(63.8 s at 7e8f28f). Its batches cost 2.8 ms/row for the first 5 calls of wp_erasure_cascade, then about 30 ms/row from
+the 6th, falling with the subject's remaining jobs (batch time halved exactly with batch size: 15.2/7.4/3.75/1.88 s at
+500/250/125/62 rows). auto_explain on a run_all-like multi-tenant state (unstamped, ab/autoexplain-mt-cur.txt) showed
+plpgsql switching wp_erasure_apply's analyst_jobs delete to a generic plan at the 6th execution: the probe reads every job
+of the tenant (tenant index, materialised) and filters it per event, so a batch costs batch x tenant jobs. The
+same run showed wp_erasure_pg_residue (language sql: PG16 plans it with the parameters unknown) estimating 1 tombstone
+row for the subject (10,000 actual) and doing a nested-loop anti join with 49,995,000 rows removed by join filter
+(17.5 s at 10,000 events), and its analyst_jobs probe intersecting the whole tenant index on every loop. The same-hour
+A/B on a FRESH single-tenant database (setup --reset before each arm) did not show it (100k: 7e8f28f 58.6 s, 5fc4bd6
+46.0 s, 8c7d841 36.9 s), because with one tenant the generic plan keeps the GIN probe. Code origin: 7f6536c (per-event
+GIN probes), the residue form of the 4960f50 round; 7e8f28f deleted by array overlap.
+Property: on the erasure path no statement's work grows with the tenant's size or quadratically with the subject's
+footprint, whatever the planner's statistics and plan-cache state. Measured as WORK, not time: rows processed per
+statement = sum over plan nodes of actual rows x loops, plus rows removed by filter and by join filter, read from
+auto_explain (log_analyze on, log_timing off, nested statements, sent to the client as notices) on the session that runs
+the cascade (one session, so plpgsql's plan cache behaves as in erasure.run). Deterministic in the plan, not in host load.
+Fixture per run: 30 small tenants (20 message events each, so 20 analyst jobs each) and one tenant with subject X of M
+message events (M analyst jobs) and subject Y of 5. Two statistics states:
+  S1 analysed: ANALYZE of the whole database after all appends.
+  S2 stale: ANALYZE after the small tenants only, before X's appends; autovacuum off on events, analyst_jobs, facts,
+     tombstones and erasure_mentions for the run (restored afterwards).
+Procedure: request + mark X (app role); then one admin session runs wp_erasure_cascade(job, 200) until it returns 0
+(fixed batch 200, so M=3000 gives 15 data batches); then wp_erasure_pg_residue(tenant, 'X') once.
+Gates (each must hold in every run of both states):
+  PS-C (cascade): work per event of the analyst_jobs delete and of the facts delete in batches 6..10 <= 3x the same
+       in batches 1..5 and <= 50 rows per event. (A generic plan that reads the tenant gives about the subject's
+       remaining jobs per event, 1,800+ at M=3000.)
+  PS-R (residue): residue work at M=3000 <= 3x the work at M=1500 (linear gives about 2x, quadratic about 4x), and
+       no plan node in the residue removes more than 10 x M rows by join filter.
+Sizes: M=1500 and M=3000 in each state, R=3 runs per (state, size). Controls (after a fix only): the shipped function
+bodies of the pre-fix code restored by variant() must violate PS-C or PS-R in >= 2 of 3 runs per state, else the fix is
+not shown. Failing-first: the same harness at 8c7d841 (pre-fix) is run first and committed as failing-first evidence.
+Afterwards (measurement, not gating): one unstamped F1 at 100,000 on a multi-tenant state at the fixed code, reported
+with per-batch times beside the voided run's.
+
+## Amendment 18a (2026-11-17, harness repair before the stamped run; the property of F3 and F4 is unchanged)
+At 5fc4bd6 and at 8c7d841 (reproduced in the inherited tree and the current tree, unstamped): review_fix F3 has 12/14
+controls accepted and F4 crashes with done_missing_stores keys:physical_pending, which also stops F5, F7, F1S and F6
+from running. Causes: (1) the zero counts the tests hand to wp_erasure_complete predate the registered store
+keys:physical_pending (71b3ecc), so a correct completion is refused for a
+missing store (F3 app_calls_complete control; F4 case a). (2) F3 app_sets_done's control removes only the
+"only wp_erasure_complete may complete" check, but the later transition rule ("state % is written by the store only")
+refuses the same update, so the control was no longer a broken implementation. Repair: the zero counts are built from
+wp/registry.py (every verifiable store not of kind pg, as wp_erasure_complete requires); F4 case b still omits es:facts
+on purpose; the app_sets_done control removes both owner checks of erasure_guard (one patch, reverted). Pass rules
+unchanged: F3 needs 14/14 attacks refused and 14/14 controls accepted; F4 as before.
