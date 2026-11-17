@@ -89,8 +89,14 @@ class SemFailureClassTests(unittest.TestCase):
         self.assertEqual(exp2.classify_sem_failure(404, e), "other")
 
     def test_missing_endpoint_404_is_loud(self):
-        e = {"type": "resource_not_found_exception", "reason": "Inference endpoint not found [x]", "root": ""}
+        e = {"type": "resource_not_found_exception", "reason": "Inference endpoint not found [lic-stub]", "root": ""}
         self.assertEqual(exp2.classify_sem_failure(404, e), "missing_endpoint")
+
+    def test_real_recorded_404_bodies_are_missing_endpoint(self):
+        # bodies copied from committed results (down_1.json exp1_basic0)
+        for reason in ("Inference endpoint not found [lic-stub]", "Inference id [lic-stub] not found for field [body]"):
+            e = {"type": "resource_not_found_exception", "reason": reason, "root": reason, "feature": None}
+            self.assertEqual(exp2.classify_sem_failure(404, e), "missing_endpoint")
 
     def test_transport_failure_is_not_loud(self):
         self.assertEqual(exp2.classify_sem_failure(0, None), "other")
