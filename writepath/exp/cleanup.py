@@ -7,7 +7,7 @@ import sys
 from wp import config
 from wp.es import ES
 
-assert config.INDEX_PREFIX == "wp16096-" and config.ES_URL == "http://127.0.0.1:19260"
+assert config.INDEX_PREFIX == "wp16096-" and config.ES_CONTAINER.startswith(config.OWN_PREFIX)   # own node only (conf)
 es = ES()
 names = es.indices(config.INDEX_PREFIX + "*")
 s, sh = es.req("GET", f"/_cat/shards/{config.INDEX_PREFIX}*", ok=(200, 404), format="json", h="index", expand_wildcards="all")

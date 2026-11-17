@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import pathlib
 import platform
 import subprocess
 import time
@@ -12,8 +13,10 @@ RESULTS = config.HOME / "results"
 
 
 def _git_head():
+    """The commit of the tree that is RUNNING (a pinned copy carries its own GIT_HEAD), never WP_HOME/src, which a
+    later sync may have overwritten while a pinned run was in flight."""
     try:
-        return (config.HOME / "src" / "GIT_HEAD").read_text().strip()
+        return (pathlib.Path(__file__).resolve().parents[1] / "GIT_HEAD").read_text().strip()
     except OSError:
         return "unknown"
 

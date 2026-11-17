@@ -20,7 +20,7 @@ from exp.util import tenant, msg, fact, session, es_count_all
 from wp import config, db, erasure, keys as K, lease as L, log, projector, registry
 from wp.es import ES
 
-PG_C, ES_C = "emlab-pg-wp-16096", "emlab-es-wp-16096"
+PG_C, ES_C = config.PG_CONTAINER, config.ES_CONTAINER     # this stream's own containers (conf)
 
 
 def grep_paths(container, path, pattern):

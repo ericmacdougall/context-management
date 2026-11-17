@@ -6,7 +6,7 @@ import sys
 from exp.util import tenant
 from wp import db, config, keys as K
 
-PG_C = "emlab-pg-wp-16096"
+PG_C = config.PG_CONTAINER
 mode = sys.argv[1] if len(sys.argv) > 1 else "plain"
 ks = K.KeyService()
 for i in range(int(sys.argv[2]) if len(sys.argv) > 2 else 4):

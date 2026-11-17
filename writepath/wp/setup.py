@@ -68,7 +68,7 @@ def _ensure_roles(admin):
 
 
 def main(reset):
-    assert config.PG_PORT == 25460
+    assert config.PG_CONTAINER.startswith(config.OWN_PREFIX)   # config refuses any other stream's conf
     admin = db.admin(db="postgres")
     _ensure_roles(admin)
     have = {r[0] for r in admin.execute("select datname from pg_database").fetchall()}

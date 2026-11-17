@@ -1,11 +1,16 @@
 #!/bin/sh
-# Full proof run on the fleet host (from WP_HOME/src). One reported run per experiment; no partial reruns.
+# Full proof run on the fleet host, from a PINNED tree (pin_run.sh prints it; never from src, which a sync may
+# overwrite mid-run). One reported run per experiment; no partial reruns. WP_HOME is required (wp/config.py refuses
+# to start without it and without this stream's conf marker).
 # Output: WP_HOME/results/<name>.<sha16>.json (content-addressed) and WP_HOME/results/run_all.<head>.out
 set -u
+: "${WP_HOME:?WP_HOME must name the home of this stream}"
+export WP_HOME
 cd "$(dirname "$0")"
-PY=../venv/bin/python
+case "$(pwd)" in */runs/*) ;; *) echo "refusing: not a pinned tree ($(pwd)); run pin_run.sh first" >&2; exit 2 ;; esac
+PY=$WP_HOME/venv/bin/python
 R=${1:-10}
-OUT=../results/run_all.$(cat GIT_HEAD).out
+OUT=$WP_HOME/results/run_all.$(cat GIT_HEAD).out
 {
   echo "start $(date -u +%FT%TZ) head $(cat GIT_HEAD) R=$R"
   $PY -m exp.cleanup

@@ -1,6 +1,6 @@
 """Run the OLD write path (feat/systems-skeleton a13b524, shipped read-only to WP_HOME/oldsrc) against THIS stream's own
-containers only: Postgres emlab-pg-wp-16096 (databases emlab + keys, created for this purpose) and Elasticsearch
-emlab-es-wp-16096. The previous owner's containers and indices are never addressed: the port is asserted before any old
+containers only (conf pg_container and es_container: databases emlab + keys, created for this purpose, and the
+stream's single-node Elasticsearch). The previous owner's containers and indices are never addressed: the port is asserted before any old
 module touches a database, and the old HTTPS client is replaced by a plain-HTTP one bound to this stream's ES."""
 import http.client
 import os
@@ -15,9 +15,9 @@ sys.path.insert(0, str(OLD))
 
 from memsys import db as odb  # noqa: E402
 
-assert int((odb.HOME / "pg_port").read_text()) == config.PG_PORT == 25460, "old code must only reach this stream's Postgres"
-assert int((odb.HOME / "kms_port").read_text()) == 25460
-assert config.ES_URL == "http://127.0.0.1:19260", "old code must only reach this stream's Elasticsearch"
+assert int((odb.HOME / "pg_port").read_text()) == config.PG_PORT, "old code must only reach this stream's Postgres"
+assert int((odb.HOME / "kms_port").read_text()) == config.PG_PORT
+assert config.ES_CONTAINER.startswith(config.OWN_PREFIX), "old code must only reach this stream's Elasticsearch"
 
 from memsys import esc  # noqa: E402
 
@@ -30,7 +30,7 @@ class OldES(esc.ES):
 
     def _c(self):
         if self.conn is None:
-            self.conn = http.client.HTTPConnection("127.0.0.1", 19260, timeout=120)
+            self.conn = http.client.HTTPConnection("127.0.0.1", config.ES_PORT, timeout=120)
         return self.conn
 
 

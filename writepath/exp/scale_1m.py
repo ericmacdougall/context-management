@@ -29,7 +29,9 @@ from exp.common import write_result
 from exp.erasure_cost import _build
 from exp.util import tenant, env
 
-PG_C = "emlab-pg-wp-16096"
+from wp import config  # noqa: E402
+
+PG_C = config.PG_CONTAINER
 PHYSICAL = "wait"   # the only valid mode: the result is about time to DONE (481afae run was void: default "followup")
 HOLD_S = 35     # claim TTL 60 s, beat every 20 s, role lock_timeout 10 s: the beat at ~20 s fails at ~30 s, the next succeeds
 CONTROLS = (pathlib.Path(__file__).resolve().parent / "controls_4960f50.sql").read_text()

@@ -12,7 +12,9 @@ from exp.erasure_cost import _build
 from exp.util import tenant, env
 from wp import db, erasure
 
-PG_C = "emlab-pg-wp-16096"
+from wp import config  # noqa: E402
+
+PG_C = config.PG_CONTAINER
 
 
 def main(n, k, batch):

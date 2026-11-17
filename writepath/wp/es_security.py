@@ -1,4 +1,5 @@
-"""Turn security on (or off) for THIS stream's own Elasticsearch node, container emlab-es-wp-16096 only (D6).
+"""Turn security on (or off) for THIS stream's own Elasticsearch node, container conf/es_container only (D6); the name
+must start with config.OWN_PREFIX and the container's published port must be the conf es_url port.
 
 enable: recreate the container from its own docker-inspect record (same image, ports, mounts, ulimits, memory) with
   xpack.security.enabled=true (HTTP without TLS on 127.0.0.1, single node), wait for it to answer 401, reset the
@@ -17,12 +18,17 @@ import urllib.request
 
 from . import config
 
-NAME = "emlab-es-wp-16096"
+NAME = config.ES_CONTAINER
+if not NAME.startswith(config.OWN_PREFIX):          # config refuses this too; checked again before any docker rm
+    raise SystemExit(f"refusing: {NAME!r} is not this stream's container")
 
 
 def _inspect():
     j = json.loads(subprocess.run(["docker", "inspect", NAME], check=True, capture_output=True, text=True).stdout)[0]
-    assert j["Name"].lstrip("/") == NAME
+    assert j["Name"].lstrip("/") == NAME and NAME.startswith(config.OWN_PREFIX)
+    ports = {b["HostPort"] for bs in (j["HostConfig"].get("PortBindings") or {}).values() for b in bs or []}
+    if str(config.ES_PORT) not in ports:
+        raise SystemExit(f"refusing: {NAME} does not publish the conf es_url port")
     return j
 
 
