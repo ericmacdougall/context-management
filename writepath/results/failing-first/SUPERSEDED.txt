@@ -1,0 +1,13 @@
+Receipts in this folder that are NOT evidence (kept because harness logs are never deleted):
+
+- websearch-flood-hyphen-disk_gate-843f4fa.red.out: its header lacks the test-file blob (failing_first.sh then built
+  the test path from a dotted test name). Superseded by red3.
+- websearch-flood-hyphen-disk_gate-843f4fa.red2.out: the gate under test was the 843f4fa blob, but its capture
+  companion ran from the working tree (failing_first.sh extracted only the file, so `-m exp.disk_gate` resolved to the
+  working tree's copy). Superseded by red3, which extracts the whole writepath tree at the commit.
+- esapi-stage1-disk_gate-da1e748.red.out: stopped partway, and made with the same mixed-version defect. Superseded by
+  esapi-stage1-disk_gate-da1e748.tree.red.out.
+
+Receipts made before 2026-11-17 20:20Z with a gate that spawns a companion share the defect only where the working tree
+differed from the commit under test. reviewA-a1a2a3-disk_gate-2337ba4.green.out is unaffected: the working tree's gate
+was the 2337ba4 blob when it ran. reviewA-a1a2a3-disk_gate-7b4839b.red.out is unaffected: that gate has no companion.

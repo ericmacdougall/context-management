@@ -1,0 +1,25 @@
+# failing-first receipt
+# date: 2026-11-17T20:02:52Z
+# file under test: 843f4fa:writepath/exp/disk_gate.py blob 1191c4ad8eaaaaed11ed595c4ed4484c64d9c12f sha256 1aa1f2f42dfc104de9882d5d864cc989c17612900e4c5396bbda342b946c617b
+# test file: tests/test_disk_gate.Gate.test_hyphenated_flood_stage_line_voids.py at HEAD 843f4fa blob 
+# command: DISK_GATE_UNDER_TEST=<that file> python3 -m unittest tests.test_disk_gate.Gate.test_hyphenated_flood_stage_line_voids -v
+test_hyphenated_flood_stage_line_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 75831 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+
+======================================================================
+FAIL: test_hyphenated_flood_stage_line_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 476, in test_hyphenated_flood_stage_line_voids
+    self.assertVoid(*self.call("end"), "flood stage")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 432, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 6 events 21 capture_sha256 08a19842f005942c58f9a83ce1e741602bb486e42de10e635ac8c0cd46b2edb2
+
+----------------------------------------------------------------------
+Ran 1 test in 10.614s
+
+FAILED (failures=1)
+# exit status: 1

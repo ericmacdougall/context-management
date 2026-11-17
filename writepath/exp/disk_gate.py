@@ -28,17 +28,21 @@ stdout/stderr between admission and the close tokens captured, none a flood-stag
 marker; the admitted containers not stopped, restarted, paused, updated or replaced in the window; no stop recorded
 in the window; own usage SAMPLED within the cap (not a bound on a transient peak); no reboot or wall-clock step.
 Prints numbers, ids and reasons only."""
+import calendar
 import fcntl
 import hashlib
 import json
 import os
 import pathlib
 import queue
+import re
 import shutil
 import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 
 from wp import config
 
@@ -64,6 +68,10 @@ DEADLINE_S = 48 * 3600
 POLL_S = 0.05
 ALLOWED_EVENTS = ("exec_create", "exec_start", "exec_die", "exec_detach", "top", "archive-path")
 DRIVERS = ("json-file", "local")
+API_TIMEOUT_S = 10                          # one ES API read (GATE-DESIGN 4.3)
+JVM_BIND_S = 300                            # the node's JVM must start within this after the container's StartedAt
+WATERMARKS = ("low", "high", "flood_stage")
+_UNITS = {"b": 1, "kb": 1024, "mb": 1024 ** 2, "gb": 1024 ** 3, "tb": 1024 ** 4, "pb": 1024 ** 5}
 _sleep = time.sleep
 
 
@@ -92,6 +100,102 @@ def _new_id():
 def _docker(*args, timeout=None):
     return subprocess.run(["docker", *args], capture_output=True, stdin=subprocess.DEVNULL,
                           timeout=timeout or DOCKER_TIMEOUT_S)
+
+
+# ------------------------------------------------------------------------------- Elasticsearch's own report (4.3)
+def _es_get(path):
+    """GET from the stream's ES with the gate's auth header, which stays in this process's memory: never on a command
+    line (docker exec text reaches the events stream and so the capture), never printed. Returns (status, body)."""
+    req = urllib.request.Request(config.ES_URL.rstrip("/") + path)
+    try:
+        h = config.es_auth_header()
+    except (OSError, ValueError, KeyError) as e:
+        return f"no usable ES credential ({type(e).__name__})", None
+    if h:
+        req.add_header("Authorization", h)
+    try:
+        with urllib.request.urlopen(req, timeout=API_TIMEOUT_S) as r:
+            return r.status, json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return e.code, None
+    except (OSError, ValueError) as e:
+        return type(e).__name__, None
+
+
+def _bytes(v):
+    """An ES byte value ("2gb", "500mb") in bytes; None for a percentage, a ratio or anything else."""
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(b|kb|mb|gb|tb|pb)\s*", str(v).lower())
+    return int(float(m.group(1)) * _UNITS[m.group(2)]) if m else None
+
+
+def _ms(rfc):
+    """Docker's RFC3339Nano UTC time in epoch milliseconds."""
+    base, _, frac = str(rfc).rstrip("Z").partition(".")
+    return calendar.timegm(time.strptime(base, "%Y-%m-%dT%H:%M:%S")) * 1000 + int((frac + "000")[:3])
+
+
+def _es_read(es_j, ident):
+    """ES's own report of its disk, bound to the pinned container: (evidence, reasons). The evidence holds HTTP status
+    codes, settings of the disk decider and loggers, and byte counts only."""
+    why, port = [], str(config.ES_PORT)
+    ports = (es_j.get("NetworkSettings") or {}).get("Ports") or {}
+    if not any(b.get("HostIp") == "127.0.0.1" and str(b.get("HostPort")) == port
+               for bs in ports.values() for b in (bs or [])):
+        why.append(f"the pinned ES container does not publish es_url's port {port} on 127.0.0.1, so the API may "
+                   "answer for another process")
+    s1, sb = _es_get("/_cluster/settings?include_defaults=true&flat_settings=true")
+    s2, nb = _es_get("/_nodes/_local/stats/fs,jvm")
+    ev = {"settings_status": s1, "stats_status": s2}
+    if s1 != 200 or s2 != 200 or not isinstance(sb, dict) or not isinstance(nb, dict):
+        return ev, why + [f"the ES API could not be read (settings {s1}, node stats {s2})"]
+    eff = {}
+    for section in ("defaults", "persistent", "transient"):     # later sections override earlier ones
+        eff.update(sb.get(section) or {})
+    ev["settings"] = {k: str(v) for k, v in eff.items()
+                      if k.startswith("cluster.routing.allocation.disk.") or k.startswith("logger.")}
+    if str(eff.get("cluster.routing.allocation.disk.threshold_enabled", "true")).lower() != "true":
+        why.append("ES disk thresholds are disabled (cluster.routing.allocation.disk.threshold_enabled)")
+    wm = {w: _bytes(eff.get(f"cluster.routing.allocation.disk.watermark.{w}")) for w in WATERMARKS}
+    ev["watermarks"] = wm
+    if None in wm.values():
+        why.append("ES watermarks are not all byte values (the gate does not evaluate percentages or max_headroom)")
+    nodes = list((nb.get("nodes") or {}).values())
+    if len(nodes) != 1:
+        return ev, why + [f"the ES API reported {len(nodes)} local nodes"]
+    fs, jvm = (nodes[0].get("fs") or {}).get("data") or [], nodes[0].get("jvm") or {}
+    try:
+        ev["jvm_start_ms"] = int(jvm["timestamp"]) - int(jvm["uptime_in_millis"])
+        ev["min_free_bytes"] = min(min(int(p["available_in_bytes"]), int(p["free_in_bytes"])) for p in fs)
+    except (KeyError, TypeError, ValueError):
+        return ev, why + ["the ES node stats lack data-path or JVM figures"]
+    lag = (ev["jvm_start_ms"] - _ms(ident["started"])) / 1000
+    if not -CLOCK_SLACK_S <= lag <= JVM_BIND_S:
+        why.append(f"the ES API's JVM did not start with the pinned container (JVM start {lag:+.0f} s from its "
+                   "StartedAt): the API answers for another process or run")
+    if wm["high"] is not None and ev["min_free_bytes"] < wm["high"]:
+        why.append(f"ES reports {ev['min_free_bytes'] / GIB:.2f} GiB free on a data path, below its high watermark "
+                   f"({wm['high'] / GIB:.2f} GiB)")
+    return ev, why
+
+
+def _api_why(st, when):
+    """Reasons from ES's own report at a check or at end, against the admission reading."""
+    a0 = st.get("api0")
+    if not a0:
+        return ["ES API: no admission reading in the gate state (written by an older gate)"]
+    j = _inspect(st["es"]["id"])
+    if j is None:
+        return [f"ES API {when}: the pinned ES container cannot be inspected"]
+    ev, w = _es_read(j, st["es"])
+    out = [f"ES API {when}: {x}" for x in w]
+    if "settings" in ev and ev["settings"] != a0.get("settings"):
+        s0 = a0.get("settings") or {}
+        keys = sorted(k for k in set(s0) | set(ev["settings"]) if s0.get(k) != ev["settings"].get(k))
+        out.append(f"ES API {when}: disk or logger settings changed during the run ({', '.join(keys)[:300]})")
+    if "min_free_bytes" in ev:
+        print(f"disk_gate api {when}: min free {ev['min_free_bytes'] / GIB:.2f} GiB, high watermark "
+              f"{(ev['watermarks']['high'] or 0) / GIB:.2f} GiB")
+    return out
 
 
 def _bad(text):
@@ -545,6 +649,9 @@ def _start():
         _blocked("the ES container has a TTY (stdout and stderr merged): coverage is not established")
     if not (es["running"] and pg["running"]) or es["paused"] or pg["paused"]:
         _blocked("the ES or PG container is not running")
+    api0, w = _es_read(es_j, es)                    # GATE-DESIGN 4.3: ES's own report, bound to this container
+    if w:
+        _blocked("ES API: " + "; ".join(w))
     try:
         base = own(es["id"], pg["id"])
     except GateError as e:
@@ -591,7 +698,8 @@ def _start():
         _stop_companion(rd, 10)
         _blocked(b)
     _write_json(STATE, {"run": run_id, "admit_seq": adm["seq"], "run_dir": str(rd), "base": base, "floor_breaches": [],
-                        "es": es, "pg": pg, "wall0": wall0, "mono0": mono0, "boot": _boot_id(), "since": _utc()})
+                        "es": es, "pg": pg, "wall0": wall0, "mono0": mono0, "boot": _boot_id(), "since": _utc(),
+                        "api0": api0})
     print(f"disk_gate start run {run_id} free {f:.1f} GiB own {base['total'] / GIB:.2f} GiB (pg {base['pg'] / GIB:.2f} "
           f"es {base['es'] / GIB:.2f} home {base['home'] / GIB:.2f}) cap +{CAP_GB} GiB es {es['id'][:12]} "
           f"pg {pg['id'][:12]} admitted at seq {adm['seq']}")
@@ -647,6 +755,7 @@ def _check(name):
             why.append(f"own usage grew {d:.2f} GiB > cap {CAP_GB} before {name}")
     except GateError as e:
         why.append(f"own usage not measured before {name} ({e})")
+    why += _api_why(st, f"before {name}")
     if why:
         _close(st, why, at_check=name)
         for w in why:
@@ -677,6 +786,7 @@ def _end():
             why.append(f"own usage grew {d:.2f} GiB > cap {CAP_GB} by the end of the run")
     except GateError as e:
         why.append(f"own usage not measured at end ({e})")
+    why += _api_why(st, "at end")                   # before the close tokens, inside the watched window
     close = f"{MARK} end {os.urandom(16).hex()}"
     if _write_token(es, close):
         w = _await_token(rd, close, CLOSE_TIMEOUT_S)

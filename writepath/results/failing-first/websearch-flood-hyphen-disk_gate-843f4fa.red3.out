@@ -1,0 +1,26 @@
+# failing-first receipt
+# date: 2026-11-17T20:18:31Z
+# file under test: 843f4fa:writepath/exp/disk_gate.py blob 1191c4ad8eaaaaed11ed595c4ed4484c64d9c12f sha256 1aa1f2f42dfc104de9882d5d864cc989c17612900e4c5396bbda342b946c617b
+# test file: tests/test_disk_gate.py at HEAD da1e748 blob ce547878bd3153fb9ea9c765f056fdce0d309f27
+# command: DISK_GATE_UNDER_TEST=<that file> python3 -m unittest tests.test_disk_gate.Gate.test_hyphenated_flood_stage_line_voids -v
+test_hyphenated_flood_stage_line_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 15130 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+
+======================================================================
+FAIL: test_hyphenated_flood_stage_line_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 527, in test_hyphenated_flood_stage_line_voids
+    self.assertVoid(*self.call("end"), "flood stage")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 483, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 6 events 21 capture_sha256 81775ae0def22f92a310570136f1afee34aaf18bb08419846ea58b490eb204ce
+
+----------------------------------------------------------------------
+Ran 1 test in 10.594s
+
+FAILED (failures=1)
+sys:1: ResourceWarning: unclosed <socket.socket fd=4, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 55838)>
+# exit status: 1

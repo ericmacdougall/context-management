@@ -13,7 +13,9 @@ Failing-first: DISK_GATE_UNDER_TEST names another gate file (runkit/failing_firs
 review A inspected). Tests named test_a1_*, test_a2_*, test_a3_* fail there on an exit-code assertion; tests that need
 a command the old gate lacks are skipped there, never counted as red.
 usage (from writepath/): python3 -m unittest tests.test_disk_gate -v"""
+import calendar
 import fcntl
+import http.server
 import importlib.util
 import io
 import json
@@ -24,6 +26,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from contextlib import redirect_stdout
@@ -41,6 +44,47 @@ HIGH = ('{"log.level": "WARN","message":"high disk watermark [17gb] exceeded on 
         '[/usr/share/elasticsearch/data] free: 15.7gb[2.4%], shards will be relocated away from this node"}')
 LOW = ('{"log.level": "INFO","message":"low disk watermark [18gb] exceeded on [node][7b751d48f8c8]'
        '[/usr/share/elasticsearch/data] free: 17.7gb[2.7%], replicas will not be assigned to this node"}')
+
+
+def _ms(rfc):
+    base, _, frac = rfc.rstrip("Z").partition(".")
+    return calendar.timegm(time.strptime(base, "%Y-%m-%dT%H:%M:%S")) * 1000 + int((frac + "000")[:3])
+
+
+class FakeES(http.server.BaseHTTPRequestHandler):
+    """The two Elasticsearch APIs the gate reads (GATE-DESIGN 4.3), answering for the fake ES container: its JVM starts
+    `jvm_offset_s` after the container's StartedAt. S is reset by each test; `auth` records the headers received."""
+    S = {}
+
+    def do_GET(self):
+        S = FakeES.S
+        S.setdefault("auth", []).append(self.headers.get("Authorization"))
+        path = self.path.split("?")[0]
+        body, code = None, S.get("status", 200)
+        if code == 200 and path == "/_cluster/settings":
+            body = {"persistent": dict(S.get("persistent", {})), "transient": {},
+                    "defaults": {"cluster.routing.allocation.disk.threshold_enabled": "true",
+                                 "cluster.routing.allocation.disk.watermark.low": "3gb",
+                                 "cluster.routing.allocation.disk.watermark.high": "2gb",
+                                 "cluster.routing.allocation.disk.watermark.flood_stage": "1gb"}}
+        elif code == 200 and path == "/_nodes/_local/stats/fs,jvm":
+            started = _ms(S["F"].st()["c"][S["cid"]]["started"])
+            now = int(time.time() * 1000)
+            body = {"nodes": {"n1": {"name": "node", "fs": {"data": [{
+                "path": "/usr/share/elasticsearch/data", "total_in_bytes": 100 * GIB,
+                "available_in_bytes": S.get("avail", 30 * GIB), "free_in_bytes": S.get("free", 30 * GIB)}]},
+                "jvm": {"timestamp": now, "uptime_in_millis": now - started - int(S.get("jvm_offset_s", 2) * 1000)}}}}
+        elif code == 200:
+            code = 404
+        data = json.dumps(body if body is not None else {"error": code}).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def log_message(self, *a):
+        pass
 
 
 # ------------------------------------------------------------------------------------------------------- fake docker
@@ -212,7 +256,8 @@ def fake_main(argv):
         else:
             print(json.dumps([{"Id": cid, "Name": "/" + c["name"], "RestartCount": c["restarts"],
                                "State": {"Running": c["running"], "Paused": c["paused"], "StartedAt": c["started"]},
-                               "HostConfig": {"LogConfig": c["logcfg"]}, "Config": {"Tty": c["tty"]}}]))
+                               "HostConfig": {"LogConfig": c["logcfg"]}, "Config": {"Tty": c["tty"]},
+                               "NetworkSettings": {"Ports": c.get("ports") or {}}}]))
         return 0
     if cmd == "exec":
         ref, ex = args[0], args[1:]
@@ -330,7 +375,10 @@ class Gate(unittest.TestCase):
         cls.tmp = tempfile.mkdtemp()
         home = pathlib.Path(cls.tmp) / "home"
         (home / "conf").mkdir(parents=True)
-        for k, v in GOOD.items():
+        cls.es_api = http.server.ThreadingHTTPServer(("127.0.0.1", 0), FakeES)
+        threading.Thread(target=cls.es_api.serve_forever, daemon=True).start()
+        cls.es_port = cls.es_api.server_address[1]
+        for k, v in dict(GOOD, es_url=f"http://127.0.0.1:{cls.es_port}").items():
             (home / "conf" / k).write_text(v + "\n")
         bindir = pathlib.Path(cls.tmp) / "bin"
         bindir.mkdir()
@@ -351,6 +399,7 @@ class Gate(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.es_api.shutdown()
         cls.env.stop()
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
@@ -361,6 +410,8 @@ class Gate(unittest.TestCase):
         self.F = Fake.create(root)
         self.es = self.F.add("emlab2-wphard-es", "/usr/share/elasticsearch/data", GIB)
         self.pg = self.F.add("emlab2-wphard-pg", "/var/lib/postgresql/data", GIB)
+        self.F.set(self.es, ports={"9200/tcp": [{"HostIp": "127.0.0.1", "HostPort": str(self.es_port)}]})
+        FakeES.S = {"F": self.F, "cid": self.es}
         self.free = 30
         patches = [mock.patch.object(shutil, "disk_usage", lambda p: SimpleNamespace(
             total=100 * GIB, used=(100 - self.free) * GIB, free=self.free * GIB))]
@@ -481,6 +532,70 @@ class Gate(unittest.TestCase):
         self.line('{"log.level": "INFO","message":"updating [cluster.routing.allocation.disk.watermark.flood_stage]'
                   ' from [95%] to [1gb]"}')
         self.assertValid(*self.call("end"))
+
+    # --- the second evidence source, Elasticsearch's own API (GATE-DESIGN 4.3): red on the capture-only gate
+    def assertBlocked(self, rc, out, why):
+        self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
+        self.assertIn(why, out)
+
+    def test_api_high_watermark_breach_without_a_log_line_voids(self):
+        self.start()
+        FakeES.S.update(avail=int(1.5 * GIB))           # below the 2gb high watermark; ES wrote no line about it
+        self.assertVoid(*self.call("end"), "below its high watermark")
+
+    def test_api_high_watermark_breach_at_admission_blocks_start(self):
+        FakeES.S.update(avail=int(1.5 * GIB))           # a breach that began before the window: no fresh log line
+        self.assertBlocked(*self.call("start"), "below its high watermark")
+
+    def test_api_unreadable_blocks_start(self):
+        FakeES.S.update(status=503)
+        self.assertBlocked(*self.call("start"), "could not be read")
+
+    def test_api_unreadable_at_end_voids(self):
+        self.start()
+        FakeES.S.update(status=503)
+        self.assertVoid(*self.call("end"), "could not be read")
+
+    def test_api_percentage_watermark_blocks_start(self):
+        FakeES.S.update(persistent={"cluster.routing.allocation.disk.watermark.high": "90%"})
+        self.assertBlocked(*self.call("start"), "byte values")
+
+    def test_api_port_not_published_by_the_pinned_container_blocks_start(self):
+        self.F.set(self.es, ports={})                   # whatever answers on es_url is not this container
+        self.assertBlocked(*self.call("start"), "does not publish")
+
+    def test_api_jvm_older_than_the_pinned_container_blocks_start(self):
+        FakeES.S.update(jvm_offset_s=-3600)             # the API's process started an hour before this container
+        self.assertBlocked(*self.call("start"), "JVM")
+
+    def test_api_logger_setting_changed_during_the_run_voids(self):
+        self.start()
+        FakeES.S.update(persistent={"logger.org.elasticsearch.cluster.routing.allocation": "ERROR"})
+        self.assertVoid(*self.call("end"), "settings changed")
+
+    def test_api_key_is_sent_and_never_written(self):
+        sys.path.insert(0, str(HERE / "runkit"))
+        import leak_scan
+        import secrets as _s
+        kid, key = _s.token_urlsafe(15)[:20], _s.token_urlsafe(16)[:22]
+        enc = __import__("base64").b64encode(f"{kid}:{key}".encode()).decode()
+        sec = self.home / "secrets"
+        sec.mkdir(exist_ok=True)
+        (sec / "es_api_key.json").write_text(json.dumps({"id": kid, "encoded": enc}))
+        try:
+            FakeES.S.update(status=401)
+            rc, out1 = self.call("start")
+            self.assertEqual(rc, 2, "an API that refuses the key must block start")
+            FakeES.S.update(status=200, avail=int(1.5 * GIB))
+            rc, out2 = self.call("start")
+            self.assertEqual(rc, 2, "a breach must block start")
+        finally:
+            (sec / "es_api_key.json").unlink()
+        self.assertIn("ApiKey " + enc, FakeES.S.get("auth", []), "the gate did not send the stream's API key")
+        written = [p for p in (self.home / "state").rglob("*") if p.is_file()]
+        hits = [p.name for p in written if leak_scan.find(p.read_bytes(), [key, enc])]
+        self.assertEqual(hits, [], "a gate file holds the API key")
+        self.assertEqual(leak_scan.find((out1 + out2).encode(), [key, enc]), [], "the gate printed the API key")
 
     def test_flood_line_before_the_run_does_not_void(self):
         self.line(FLOOD)

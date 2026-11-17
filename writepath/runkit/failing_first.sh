@@ -10,13 +10,18 @@ C=$1; P=$2; V=$3; M=$4; OUT=$5
 [ -e "$OUT" ] && { echo "refusing: $OUT exists (a receipt is never overwritten)"; exit 2; }
 W=$(mktemp -d)
 trap 'rm -rf "$W"' EXIT
-F="$W/$(basename "$P")"
-git show "$C:$P" > "$F" || { echo "cannot read $C:$P"; exit 2; }
+# The WHOLE writepath tree at C, not the one file: the gate spawns its capture companion as `-m exp.disk_gate` from the
+# directory above the file under test, so a lone extracted file made the companion resolve to the working tree's copy
+# (receipts before this fix mixed versions; found 2026-11-17).
+git -C "$(git rev-parse --show-toplevel)" archive "$C" writepath | tar -x -C "$W" || { echo "cannot extract $C:writepath"; exit 2; }
+F="$W/$P"
+[ -f "$F" ] || { echo "cannot read $C:$P"; exit 2; }
 TF="tests/$(echo "$M" | sed 's/^tests\.//; s/\..*//').py"   # the module of a dotted test name (tests.m.Class.test)
 {
   echo "# failing-first receipt"
   echo "# date: $(date -u +%FT%TZ)"
   echo "# file under test: $C:$P blob $(git hash-object "$F") sha256 $(shasum -a 256 "$F" 2>/dev/null | cut -c1-64 || sha256sum "$F" | cut -c1-64)"
+  echo "# tree: writepath at $C (git archive; the companion and wp/ come from it too)"
   echo "# test file: $TF at HEAD $(git rev-parse --short HEAD) blob $(git hash-object "$TF")"
   echo "# command: $V=<that file> python3 -m unittest $M -v"
 } >> "$OUT"
