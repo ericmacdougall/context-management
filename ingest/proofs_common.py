@@ -67,16 +67,26 @@ def scripted_conversation(rig_cls, tmp: str, n_calls: int, seed: int = 0, provid
                 script.append({"message": {"role": "assistant", "content": None, "tool_calls": [
                     {"id": "call_%d" % i, "type": "function", "function": {"name": "lookup", "arguments": json.dumps({"q": i})}}]}, "stop": "tool_calls"})
     rig = rig_cls(tmp, provider, script, stream=stream, **kw)
+    led = HostLedger(provider)
     for i, k in enumerate(plan):
+        c = led.begin_call()
         if i > 0 and plan[i - 1] != "text":                     # answer the previous tool call with a tool_result / tool message
             if provider == "anthropic":
-                rig.msgs.append({"role": "user", "content": [tool_result("tu_%d" % (i - 1), "result %d" % (i - 1)), text("continue %d" % i)]})
+                m = {"role": "user", "content": [tool_result("tu_%d" % (i - 1), "result %d" % (i - 1)), text("continue %d" % i)]}
             else:
-                rig.msgs.append({"role": "tool", "tool_call_id": "call_%d" % (i - 1), "content": "result %d" % (i - 1)})
+                m = {"role": "tool", "tool_call_id": "call_%d" % (i - 1), "content": "result %d" % (i - 1)}
+            rig.msgs.append(m)
+            led.new_request_msg(c, m)
             o = rig.call(rig.request())
             rig.msgs.append({"role": "assistant", "content": o["content"]} if provider == "anthropic" else o["choices"][0]["message"])
         else:
-            rig.ask("question %d" % i)
+            m = {"role": "user", "content": "question %d" % i}
+            rig.msgs.append(m)
+            led.new_request_msg(c, m)
+            o = rig.call(rig.request())
+            rig.msgs.append({"role": "assistant", "content": o["content"]} if provider == "anthropic" else o["choices"][0]["message"])
+        led.response(c, rig.msgs[-1])
+    rig.ledger = led
     return rig
 
 
@@ -111,3 +121,93 @@ def asst_msg(provider: str, o: dict) -> dict:
 
 def resp_text(provider: str, o: dict) -> str:
     return o["content"][0]["text"] if provider == "anthropic" else o["choices"][0]["message"]["content"]
+
+
+# ---------------------------------------------------------------- independent expected-event oracle (PREREG-amend-3 A4)
+# Built at the HOST while a scripted conversation runs, from the messages the host appends and the response the stub returns.
+# It imports no Ingester, reads no log record and no event key, and does not call shapes.blocks_of_message: provider message
+# structure is re-derived here on purpose, so a shared omission in the ingest path cannot also be in the oracle.
+def msg_tuples(provider: str, msg: dict, call_n: int, side: str) -> List[tuple]:
+    out: List[tuple] = []
+    role, c = msg.get("role"), msg.get("content")
+    if provider == "anthropic":
+        blocks = [{"type": "text", "text": c}] if isinstance(c, str) else list(c or [])
+        for b in blocks:
+            t = b.get("type")
+            if t == "text":
+                out.append((call_n, side, role, "text", b["text"]))
+            elif t == "thinking":
+                out.append((call_n, side, "assistant_thinking", "thinking", b["thinking"]))
+            elif t == "tool_use":
+                out.append((call_n, side, "assistant", "tool_call", b["id"]))
+            elif t == "tool_result":
+                out.append((call_n, side, "tool", "tool_result", b["tool_use_id"]))
+        return out
+    if role == "tool":
+        return [(call_n, side, "tool", "tool_result", msg["tool_call_id"])]
+    if isinstance(c, str) and c != "":
+        out.append((call_n, side, role, "text", c))
+    for tc in msg.get("tool_calls") or []:
+        out.append((call_n, side, "assistant", "tool_call", tc["id"]))
+    return out
+
+
+class HostLedger:
+    """Expected events, recorded by the host: request side = messages the host newly appended before a call; response side = the
+    message the stub returned. Retries and flagged duplicates are declared by the scenario, not inferred."""
+
+    def __init__(self, provider: str):
+        self.provider, self.rows, self.calls = provider, [], 0
+
+    def begin_call(self) -> int:
+        self.calls += 1
+        return self.calls
+
+    def new_request_msg(self, call_n: int, msg: dict) -> None:
+        self.rows += msg_tuples(self.provider, msg, call_n, "req")
+
+    def response(self, call_n: int, msg: dict) -> None:
+        self.rows += msg_tuples(self.provider, msg, call_n, "resp")
+
+    def expected(self) -> List[list]:
+        return sorted([list(r) for r in self.rows], key=lambda r: (r[0], r[1], r[2], r[3], str(r[4])))
+
+
+def event_tuples(events: List[dict]) -> List[list]:
+    """Project ingested events to the oracle's tuple shape (port and injected-block events are excluded: events() already filters port)."""
+    out = []
+    for e in events:
+        if e["prov"] in ("port", "memory_injected", "host"):
+            continue
+        data = json.loads(e["content"]) if e["content"] else {}
+        meta = json.loads(e["meta"]) if e["meta"] else {}
+        if e["kind"] == "text":
+            ident = data.get("text")
+        elif e["kind"] == "thinking":
+            ident = data.get("thinking")
+        else:
+            ident = meta.get("tool_id")
+        out.append([e["call_n"], e["side"], e["prov"], e["kind"], ident])
+    return sorted(out, key=lambda r: (r[0], r[1], r[2], r[3], str(r[4])))
+
+
+def repeated_conversation(rig_cls, tmp: str, provider: str, pattern: str, window: int, n: int, response: str = "ok", **kw):
+    """A host that sends repeated or alternating user text and keeps only the last `window` messages. Returns (rig, ledger)."""
+    from .stubs import text
+    script = [{"content": [text(response)]} if provider == "anthropic" else {"message": {"role": "assistant", "content": response}} for _ in range(n)]
+    rig = rig_cls(tmp, provider, script, **kw)
+    led = HostLedger(provider)
+    cycle = {"same": ["yes"], "alt": ["yes", "no"], "tri": ["a", "b", "c"], "unique": None}[pattern]
+    for i in range(n):
+        utext = ("q%d" % i) if cycle is None else cycle[i % len(cycle)]
+        c = led.begin_call()
+        um = {"role": "user", "content": utext}
+        rig.msgs.append(um)
+        led.new_request_msg(c, um)
+        o = rig.call(rig.request())
+        am = {"role": "assistant", "content": o["content"]} if provider == "anthropic" else o["choices"][0]["message"]
+        led.response(c, am)
+        rig.msgs.append(am)
+        while window and len(rig.msgs) > window:
+            rig.msgs.pop(0)
+    return rig, led

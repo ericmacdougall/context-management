@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from . import shapes
 from .canon import cj, sha
+from .ingester import Ingester
 from .portlog import GENESIS, connect
 from .tap import PortTap, Rejected
 
@@ -120,3 +121,14 @@ class ScanAfterWriteTap(PortTap):
 
     def _red(self, obj, counter):                  # no redaction at write time (the scan happens afterwards, too late)
         return obj
+
+
+class SharedOmissionIngester(Ingester):
+    """Control for the independent oracle (PREREG-amend-3 A4): a systematic omission, here 'never write thinking events'. A baseline and
+    an arm built from this same class agree with each other (delivery invariance holds) while both miss the same events; only an
+    oracle built outside the ingest path sees it."""
+
+    def _emit(self, stream, call_n, side, pos, blk, prov, kind, *a, **k):
+        if kind == "thinking":
+            return
+        return super()._emit(stream, call_n, side, pos, blk, prov, kind, *a, **k)
