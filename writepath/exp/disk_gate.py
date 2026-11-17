@@ -72,6 +72,18 @@ API_TIMEOUT_S = 10                          # one ES API read (GATE-DESIGN 4.3)
 JVM_BIND_S = 300                            # the node's JVM must start within this after the container's StartedAt
 WATERMARKS = ("low", "high", "flood_stage")
 _UNITS = {"b": 1, "kb": 1024, "mb": 1024 ** 2, "gb": 1024 ** 3, "tb": 1024 ** 4, "pb": 1024 ** 5}
+
+
+def _sample_s():
+    """The companion's ES API sampling interval: 10 s; DISK_GATE_SAMPLE_S may only shorten it (tests use 0.5 s)."""
+    try:
+        return max(0.2, min(10.0, float(os.environ.get("DISK_GATE_SAMPLE_S") or 10.0)))
+    except ValueError:
+        return 10.0
+
+
+SAMPLE_S = _sample_s()
+SAMPLE_GAP_S = SAMPLE_S + 2 * API_TIMEOUT_S + 10   # a longer gap between samples means the sampler stalled or died
 _sleep = time.sleep
 
 
@@ -469,8 +481,21 @@ def _capture(rd):
                 (procs["events"].stdout, "ev", "events"))]
     for t in threads:
         t.start()
+    halt = threading.Event()
+
+    def sampler():
+        """ES's own report every SAMPLE_S (GATE-DESIGN 4.3), bound to the pinned container; never dies silently."""
+        while not halt.is_set():
+            try:
+                j = _inspect(es)
+                q.put(("api", _es_read(j, run["es"]) if j else ({}, ["the pinned ES container cannot be inspected"])))
+            except Exception as e:                    # noqa: BLE001 - reported as a reason, judged VOID
+                q.put(("api", ({}, [f"the ES API sampler failed ({type(e).__name__})"])))
+            halt.wait(SAMPLE_S)
+    smp = threading.Thread(target=sampler, daemon=True)
+    smp.start()
     out = open(rd / "capture.jsonl", "ab")
-    s = {"n": 0, "h": "0" * 64, "flagged": False, "draining": False}
+    s = {"n": 0, "h": "0" * 64, "flagged": False, "api_flagged": False, "draining": False}
 
     def emit(rec):
         rec["n"] = s["n"]
@@ -499,6 +524,21 @@ def _capture(rd):
                 e = {"Type": "unparsed", "Action": payload[:200]}
             emit({"k": "ev", "e": {"Type": e.get("Type"), "Action": e.get("Action") or e.get("status"),
                                    "id": (e.get("Actor") or {}).get("ID") or e.get("id")}})
+        elif kind == "api":                           # status codes, byte counts and a settings hash only
+            ev, w = payload
+            sha = (hashlib.sha256(json.dumps(ev["settings"], sort_keys=True).encode()).hexdigest()
+                   if "settings" in ev else None)
+            emit({"k": "api", "m": round(time.monotonic(), 3), "why": w, "free": ev.get("min_free_bytes"),
+                  "high": (ev.get("watermarks") or {}).get("high"), "settings_sha": sha,
+                  "status": [ev.get("settings_status"), ev.get("stats_status")]})
+            if w and not s["api_flagged"]:
+                s["api_flagged"] = True
+                try:
+                    with Ledger() as L:
+                        L.append("stop", id=_new_id(), source="gate capture", run=run["run"],
+                                 reason=f"gate capture: ES API: {w[0][:200]}")
+                except (OSError, LedgerError):
+                    pass                              # the sample is in the capture, and end judges it
         else:
             emit({"k": "eof", "src": payload, "after_stop": s["draining"]})
             return payload
@@ -530,6 +570,8 @@ def _capture(rd):
             except (OSError, LedgerError):
                 pass
     s["draining"] = True
+    halt.set()
+    smp.join(2 * API_TIMEOUT_S + 70)                 # an in-flight sample finishes and is captured
     for p in procs.values():
         if p.poll() is None:
             p.terminate()
@@ -546,7 +588,8 @@ def _capture(rd):
             handle(*q.get_nowait())
         except queue.Empty:
             break
-    emit({"k": "final", "reason": reason, "rc": {k: p.returncode for k, p in procs.items()}})
+    emit({"k": "final", "reason": reason, "rc": {k: p.returncode for k, p in procs.items()},
+          "m": round(time.monotonic(), 3)})
     out.close()
 
 
@@ -583,7 +626,21 @@ def _judge(recs, run, close_token=None):
     if early:
         why.append("the capture ended early: " + ", ".join(early) + " closed (container stopped, restarted or removed, "
                    "or the docker daemon restarted)")
-    return why, {"lines": len(logs), "flood": flood, "high": high, "events": len(evs)}
+    # GATE-DESIGN 4.3, stage 2: the companion's samples of ES's own report
+    api = [r for r in recs if r["k"] == "api"]
+    flagged = [r for r in api if r.get("why")]
+    if flagged:
+        why.append(f"ES's own report during the run: {flagged[0]['why'][0]} ({len(flagged)} of {len(api)} samples)")
+    if len({r.get("settings_sha") for r in api if r.get("settings_sha")}) > 1:
+        why.append("ES disk or logger settings changed between samples during the run")
+    fin = [r for r in recs if r["k"] == "final"]
+    if fin:
+        ms = [r["m"] for r in api] + ([fin[0]["m"]] if "m" in fin[0] else [])
+        if not api:
+            why.append("the capture holds no ES API sample")
+        elif len(ms) > 1 and max(b - a for a, b in zip(ms, ms[1:])) > SAMPLE_GAP_S:
+            why.append(f"ES API sampling stalled ({max(b - a for a, b in zip(ms, ms[1:])):.0f} s without a sample)")
+    return why, {"lines": len(logs), "flood": flood, "high": high, "events": len(evs), "api_samples": len(api)}
 
 
 def _contiguous(cap, ret):

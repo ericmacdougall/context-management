@@ -83,6 +83,8 @@ whatever acknowledgements followed; (G5) own usage, SAMPLED at each check and at
 reboot and no wall-clock step over 2 s.
 
 ### What it does not guarantee
+(Written before section 4.3 added Elasticsearch's own report as a second evidence source; the current list is 4.4.
+The items on ES's 30 s cadence and on ES writing its warnings to stdout are narrowed there.)
 - Sampled usage growth is not a bound on a transient peak between samples.
 - ES evaluates its disk thresholds about every 30 s and logs only what it evaluates; a breach that starts and ends
   between two evaluations, or a line ES has not yet written when end closes the window, is not seen.
