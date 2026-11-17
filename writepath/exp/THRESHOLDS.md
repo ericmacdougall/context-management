@@ -524,3 +524,25 @@ one index.
 
 Residual, reported and not fixed: a non-stale failure inside start() leaves the lease it just took held until its TTL
 expires (30 s).
+
+## Amendment 19a (2026-11-17, after the stamped run at 5d26746 and before any further run; thresholds of 19 unchanged)
+Runs so far:
+
+| Run | Commit | Fixed arm | Control | Verdict |
+|---|---|---|---|---|
+| Failing-first (projector_start_race.da5c9773ae7c5b9b.json) | 3c229fc | A, B, C violated 5/5 each (raised StaleEpoch, StaleWrite, StaleEpoch) | violated 5/5 | FAIL, as required |
+| Stamped (projector_start_race.322d05b6f7ce312e.json) | 5d26746 | A and B held 5/5; C held 0/5 | violated 5/5 in A, B and C | FAIL, which stands for that run |
+
+Cause, a harness defect in case C. Case C's precondition ("every start of P1 loses") was never created:
+- After P1's first loss, the taker still held a live lease.
+- So P1's next start() made a non-forced acquire, found that lease, and returned False without reaching fence_es.
+- step() returned 0, and after two idle rounds run() returned True.
+- P1 had started once, held no lease, and the holder was the taker. That is correct back-off, not the case under test.
+
+Repair, harness only: in case C, before each of P1's own lease acquires, the harness releases the previous taker's lease
+(Projector.stop). Every round P1 then really acquires and loses at the CAS.
+
+C's property and the PASS rule are unchanged: P1.run(max_rounds=5) returns False without raising after exactly 5 starts,
+P1 holds no lease, and the holder is the last taker.
+
+Next: one stamped run at the repaired harness commit.
