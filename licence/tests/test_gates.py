@@ -16,6 +16,9 @@ Measured against the old code (35 tests; the same file run on a detached checkou
   (T4_status key absent), test_failed_refresh_status_raises, test_refresh_shard_failure_raises, test_count_shard_failure_raises.
 Added after final-gate reviews F2 and F3 (55 tests now): the bulk-wire tests (10 fail on 207136e, all by 'not raised') and MatrixFixtureTests (on 4eb4378: 8 fail by behaviour,
 - failed creation, failed write, partial write, empty index, two full-matrix aborts, empty vector cell labelled AVAILABLE, exp3 semantic-only fixture; test_good_fixture_is_accepted passes there).
+Added after gate review 4 (80 tests now, with test_offline): MatrixInvariantTests enumerate every cell in matrix.CELLS and break each declared prerequisite in
+each failure mode; the red run of this file against 90faede is licence/tests/red/90faede.txt (9 failures by behaviour or a missing table, 6 errors
+for names that 90faede does not have: verdict, Cells, NOT_OBSERVED). MatrixVerdictTests are new-code only.
 The fake validates the scroll id it is given (a stale id is rejected). Timed-out and duplicate-id cases are covered. Nothing here touches a live node.
 """
 import copy
