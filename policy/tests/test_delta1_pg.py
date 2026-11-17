@@ -50,9 +50,9 @@ class _Base(unittest.TestCase):
     def tok(self, pid="admin", ttl=60):
         return pg_token(self.o, self.idp, T, pid, "owner_ui" if CFG["principals"][pid] == "human" else "agent_api", ttl)
 
-    def body(self, cid=None, value="w", idem=None, subjects=()):
+    def body(self, cid=None, value="w", idem=None, subjects=(), req="r1"):
         cid = cid or "c" + secrets.token_hex(4)
-        return {"type": "propose", "client_id": cid, "idem": idem or "k-" + cid, "req": "r1", "value": value,
+        return {"type": "propose", "client_id": cid, "idem": idem or "k-" + cid, "req": req, "value": value,
                 "label": dict(LAB, subjects=list(subjects)), "based_on": 0}
 
     def submit(self, c, tok, body):
@@ -195,13 +195,24 @@ class M1_WallClock(_Base):
 
 
 class M3_PgOverlapping(_Base):
-    def _overlap(self, first_commits):
+    """Two submissions with one (tenant, principal, idempotency key) overlap: A is accepted inside an open transaction, B arrives
+    before A commits or rolls back. The per-principal advisory lock in dc._lock_event serializes them, so B decides after A's outcome.
+    The *_different_requirements cases put B on another requirement, so no head row lock is shared and only that advisory lock
+    serializes the pair (on the same requirement the head row FOR UPDATE serializes them as well)."""
+
+    def _overlap(self, first_commits, req_b="r1"):
         tok = self.tok("alice")
-        a, b = self.body("cA", "text A", idem="k-same"), self.body("cB", "text B", idem="k-same")
+        a, b = self.body("cA", "text A", idem="k-same"), self.body("cB", "text B", idem="k-same", req=req_b)
         self.app_t.execute("begin")
         ra = self.submit(self.app_t, tok, a)                     # holds the (tenant, alice) advisory lock until commit or rollback
         out = {}
-        t = threading.Thread(target=lambda: out.__setitem__("B", self.submit(self.app, tok, b)))
+
+        def run_b():
+            try:
+                out["B"] = self.submit(self.app, tok, b)
+            except psycopg.Error as e:                          # a caller must get a decision, never a raw constraint error
+                out["B"] = {"code": "error:" + type(e).__name__}
+        t = threading.Thread(target=run_b)
         t.start()
         time.sleep(0.5)
         self.app_t.execute("commit" if first_commits else "rollback")
@@ -212,19 +223,31 @@ class M3_PgOverlapping(_Base):
     def _stored(self):
         return self.o.execute("select count(*) from dc.vals where tenant = %s and text in ('text A', 'text B')", (T,)).fetchone()[0]
 
-    def test_first_committed_stays_retryable(self):
-        tok, a, _b, ra, rb = self._overlap(True)
+    def _first_committed(self, req_b):
+        tok, a, _b, ra, rb = self._overlap(True, req_b)
         self.assertEqual((ra["code"], rb["code"]), ("proposed", "idem_conflict"))
         retry = self.submit(self.app, tok, a)
         self.assertEqual((retry["code"], retry["value_ref"]), ("duplicate", ra["value_ref"]))
         self.assertEqual(self._stored(), 1)
 
-    def test_first_rolled_back_leaves_the_second_retryable(self):
-        tok, _a, b, _ra, rb = self._overlap(False)
+    def _first_rolled_back(self, req_b):
+        tok, _a, b, _ra, rb = self._overlap(False, req_b)
         self.assertEqual(rb["code"], "proposed")
         retry = self.submit(self.app, tok, b)
         self.assertEqual((retry["code"], retry["value_ref"]), ("duplicate", rb["value_ref"]))
         self.assertEqual(self._stored(), 1)
+
+    def test_first_committed_stays_retryable(self):
+        self._first_committed("r1")
+
+    def test_first_rolled_back_leaves_the_second_retryable(self):
+        self._first_rolled_back("r1")
+
+    def test_first_committed_stays_retryable_different_requirements(self):
+        self._first_committed("r2")
+
+    def test_first_rolled_back_leaves_the_second_retryable_different_requirements(self):
+        self._first_rolled_back("r2")
 
 
 if __name__ == "__main__":
