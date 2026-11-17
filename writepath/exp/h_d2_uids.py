@@ -99,8 +99,11 @@ def keysvc_probe():
         c = keysvc.Client(SOCK)
         c.keys("h2probe", ["X"])
         print("H2KS served", flush=True)
+    except keysvc.ServiceError as e:
+        # review B6: only the protocol's own refusal counts; any other failure is an outage, never a refusal
+        print("H2KS " + ("peer_refused" if str(e) == "peer_refused" else "service_error " + type(e).__name__), flush=True)
     except Exception as e:  # noqa: BLE001
-        print("H2KS refused " + type(e).__name__ + " " + str(e)[:40], flush=True)
+        print("H2KS unavailable " + type(e).__name__, flush=True)
 
 
 # ------------------------------------------------------------------ orchestrator (operator)
@@ -219,7 +222,7 @@ def judge(arm, x, wit):
             why.append(f"honest external not done ({x.get('honest_error')})")
         if "separate key-service process" not in str(x.get("key_store")):
             why.append("app did not use the key service")
-        if x.get("verifier_uid_keysvc") != "refused":
+        if x.get("verifier_uid_keysvc") != "peer_refused":     # review B6: the exact protocol refusal
             why.append(f"verifier uid keysvc {x.get('verifier_uid_keysvc')}")
         if x.get("job_state") != "done":
             why.append(f"job {x.get('job_state')}")

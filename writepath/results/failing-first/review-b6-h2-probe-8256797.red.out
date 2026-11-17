@@ -1,0 +1,13 @@
+# exp/h_d2_uids.py at 8256797; current tests; python3 -m unittest tests.test_h2_probe
+FAIL: test_only_protocol_refusal_counts (tests.test_h2_probe.H2Probe) [peer_refused]
+AssertionError: 'refused' != 'peer_refused'
+FAIL: test_only_protocol_refusal_counts (tests.test_h2_probe.H2Probe) [missing socket]
+AssertionError: [] is not true : missing socket: an outage must not satisfy the verifier denial check
+FAIL: test_only_protocol_refusal_counts (tests.test_h2_probe.H2Probe) [connection refused]
+AssertionError: [] is not true : connection refused: an outage must not satisfy the verifier denial check
+FAIL: test_only_protocol_refusal_counts (tests.test_h2_probe.H2Probe) [service closed]
+AssertionError: [] is not true : service closed: an outage must not satisfy the verifier denial check
+FAIL: test_only_protocol_refusal_counts (tests.test_h2_probe.H2Probe) [other error]
+AssertionError: [] is not true : other error: an outage must not satisfy the verifier denial check
+Ran 1 test in 0.083s
+FAILED (failures=5)
