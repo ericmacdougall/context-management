@@ -9,7 +9,8 @@ import os
 import secrets
 import time
 
-from lib import BulkError, bulk, bulk_strict, classify, embed, err, req
+import observe
+from lib import BulkError, bulk, bulk_strict, classify, embed, err, last_response, req
 
 STUB_URL = os.environ.get("LIC_STUB_URL", "http://172.17.0.1:19271/embed")
 STUB_EP = "lic-stub"
@@ -136,6 +137,10 @@ def verdict(phase, name, est, status, body=None, witness=None, extra=None, refus
         out.update({"class": "AVAILABLE", "status": status})
         if witness is not None:
             out["witness"] = witness
+    code, raw = last_response()
+    if status is not None and status >= 400 and code == status:   # EXP1-T3: what the adapter would see, and its own detector's answer
+        out["adapter_message"] = observe.adapter_message(status, raw)
+        out["adapter_detects"] = observe.adapter_detects(out["adapter_message"])
     return out
 
 

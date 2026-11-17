@@ -250,6 +250,36 @@ class Workload:
                 "sem_failed_present": len({r[1] for r in sem_fail} & sem_present),
                 "sem_first_ok_t": min([r[0] for r in self.sem_rows if r[2] in (200, 201)] or [None]) if sem_ack else None}
 
+    def _typed_figures(self, out, rows, t_req, t_resp, direction):
+        # T2, T3, T5 are computed only from the TYPED workload stream (review 9 F17): finite times inside the run window, completion
+        # order, closed arms. The same observe functions re-derive them from rows.gz at load (summarize._backfill_observed). A stream
+        # that does not parse records the reason and no figure, so those gates are UNVERIFIED.
+        ev = getattr(self, "events", {})   # a test fixture may build a Workload without __init__
+        window = (ev.get("t_start"), ev.get("t_stop"))
+        try:
+            TW = observe.parse_work([list(r) for r in rows], window if None not in window else None)
+        except observe.Unparsed as e:
+            out["raw_check"] = "workload stream does not parse: %s" % e
+            return
+        out.update(observe.availability(TW))
+        out.update(observe.flip(TW, t_req, t_resp, direction))
+        if direction == "down":
+            out["T3_backend_labelled_after_resp_start"] = sum(1 for w in TW if w.arm == "auto" and w.ok and w.label == "backend" and w.t0 > t_resp)
+        else:
+            out["T3_ttl_s"] = self.ttl
+        ctl = lambda keep: [w for w in TW if w.arm == "ctl" and keep(w)]
+        lic = lambda ws: sum(1 for w in ws if w.outcome is not None and w.outcome.case == "LICENCE_REFUSAL")
+        if direction == "down":
+            late = ctl(lambda w: w.t0 >= t_resp + 1.0)
+            ok = sum(1 for w in late if w.ok)
+            out["T5_control_after_1s"] = {"n": len(late), "licence_failures": lic(late), "other_failures": len(late) - ok - lic(late),
+                                          "success": ok, "fail_fraction": (len(late) - ok) / max(1, len(late)), "licence_refusals": lic(late)}
+        else:
+            pre, post = ctl(lambda w: w.t1 < t_req), ctl(lambda w: w.t0 >= t_resp + 1.0)
+            out["T5_control_before_start_trial"] = {"n": len(pre), "failures": sum(1 for w in pre if not w.ok),
+                                                    "licence_failures": lic(pre), "licence_refusals": lic(pre)}
+            out["T5_control_after_trial"] = {"n": len(post), "success": sum(1 for w in post if w.ok)}
+
     def analyse(self, t_req, t_resp, direction):
         """direction 'down' (trial->basic at t_resp) or 'up' (basic->trial)."""
         rows = self.rows
@@ -294,44 +324,7 @@ class Workload:
                                              "flag_rate": brk_flagged / max(1, len(brk_client)),
                                              "backend_labelled_checked": len(brk_backend), "backend_wrong": sum(1 for r in brk_backend if r[6] != self.oracle_rrf[r[3]])}
         out["T1_examined"], out["T1_mismatches"], out["T1_examples"], out["T1_backend_without_oracle"] = ex, wrong, wrong_examples, unlabeled_backend_without_oracle
-        # T2: failures
-        fails = sorted(r for r in rows if not r[4] and r[2] in ("auto", "lin", "lex", "vec"))
-        wins, cur = [], None
-        for r in fails:
-            if cur and r[0] - cur[1] < 1.0:
-                cur[1] = max(cur[1], r[1]); cur[2] += 1
-            else:
-                cur = [r[0], r[1], 1]; wins.append(cur)
-        out["T2_failed_requests"] = len(fails)
-        out["T2_non_control_requests"] = sum(1 for r in rows if r[2] in ("auto", "lin", "lex", "vec"))
-        out["T2_longest_failure_window_s"] = max([w[1] - w[0] for w in wins] or [0.0])
-        out["T2_failure_windows"] = wins[:10]
-        # T3: latch flip
-        auto = sorted(r for r in rows if r[2] == "auto" and r[4])
-        if direction == "down":
-            first = next((r for r in auto if r[5] == "client" and r[1] >= t_req), None)
-            out["T3_flip_latency_s"] = None if first is None else first[1] - t_resp
-            out["T3_backend_after_first_client"] = sum(1 for r in auto if first and r[5] == "backend" and r[0] > first[1])
-            out["T3_backend_labelled_after_resp_start"] = sum(1 for r in auto if r[5] == "backend" and r[0] > t_resp)
-        else:
-            first = next((r for r in auto if r[5] == "backend" and r[1] >= t_resp), None)
-            out["T3_flip_latency_s"] = None if first is None else first[1] - t_resp
-            out["T3_client_after_first_backend"] = sum(1 for r in auto if first and r[5] == "client" and r[0] > first[1])
-            out["T3_ttl_s"] = self.ttl
-        # T5 control
-        ctl = [r for r in rows if r[2] == "ctl" and r[0] >= t_resp + 1.0]
-        if direction == "down":
-            lic = sum(1 for r in ctl if (not r[4]) and "non-compliant" in (r[7] or ""))
-            out["T5_control_after_1s"] = {"n": len(ctl), "licence_failures": lic, "other_failures": sum(1 for r in ctl if not r[4]) - lic,
-                                          "success": sum(1 for r in ctl if r[4]), "fail_fraction": (len(ctl) - sum(1 for r in ctl if r[4])) / max(1, len(ctl)),
-                                          "licence_refusals": observe.control_counts(ctl, lambda r: True)["licence_refusals"]}
-        else:
-            pre = [r for r in rows if r[2] == "ctl" and r[1] < t_req]
-            post = [r for r in rows if r[2] == "ctl" and r[0] >= t_resp + 1.0]
-            out["T5_control_before_start_trial"] = {"n": len(pre), "failures": sum(1 for r in pre if not r[4]),
-                                                    "licence_failures": sum(1 for r in pre if (not r[4]) and "non-compliant" in (r[7] or "")),
-                                                    "licence_refusals": observe.control_counts(pre, lambda r: True)["licence_refusals"]}
-            out["T5_control_after_trial"] = {"n": len(post), "success": sum(1 for r in post if r[4])}
+        self._typed_figures(out, rows, t_req, t_resp, direction)
         # T6 ranking function change (rrf vs linear vs client), recorded only
         if self.oracle_rrf:
             diff_list = sum(1 for qi in self.oracle_rrf if self.oracle_rrf[qi] != _client_ids(self.oracle_legs[qi]))
@@ -385,19 +378,8 @@ class Poller(threading.Thread):
             time.sleep(0.05)
 
 
-def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "inference_use", "dls_search"), direction="down"):
-    """First refusal (down) or first success (up) per feature, relative to the transition response; plus success-after-refusal count.
-    Down: observe.moments records the selected refusal's Outcome (status, licence text) with its timing; only that is evidence."""
-    out = {}
-    for f in features:
-        seq = [(r["_t1"], r.get(f)) for r in rows if f in r]
-        if not seq or all(x[1] and x[1][0] in matrix.NOT_OBSERVED for x in seq):
-            # never observed: summarize treats this as UNVERIFIED (a mandatory probe), never as a pass
-            out[f] = {"skipped": True, "unverified": True, "n": len(seq), "classes": sorted({x[1][0] for x in seq if x[1]})}
-            continue
-        if direction == "down":
-            out[f] = observe.moments(rows, t_resp, (f,))[f]   # the refusal is selected by its Outcome case (review 8 F13)
-        else:
-            first_ok = next((t for t, v in seq if t >= t_resp and v[0] == "AVAILABLE"), None)
-            out[f] = {"first_success_rel_resp_s": None if first_ok is None else first_ok - t_resp, "n": len(seq)}
-    return out
+def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "inference_use", "dls_search"), direction="down", window=None):
+    """First refusal (down) or first success (up) per feature, relative to the transition response, from the TYPED poll stream
+    (observe.parse_poll: a row or ordering violation gives every probe a stream_error and no first_refusal). window: the run's
+    (t_start, t_stop)."""
+    return observe.moments(rows, t_resp, tuple(features), window, direction)

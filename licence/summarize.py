@@ -11,12 +11,14 @@ only when sem_failed is 0. The per-life reports here (figures copied for reading
 not gates; they may raise on a malformed life file."""
 import collections
 import glob
+import functools
 import gzip
 import json
 import math
 import os
 import sys
 
+import evidence
 import observe
 
 
@@ -47,50 +49,120 @@ def _backfill_up_licence_failures(R, path):
         pre["licence_failures_source"] = "recounted from rows.gz"
 
 
+_DERIVED_EXP2 = {"down": ("T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
+                          "T3_flip_latency_s", "T3_backend_after_first_client"),
+                 "up": ("T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
+                        "T3_flip_latency_s", "T3_client_after_first_backend")}
+
+
+def _same(a, b):
+    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
+        return len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
+    if evidence._real(a) and evidence._real(b):
+        return abs(a - b) <= 1e-9
+    return type(a) is type(b) and a == b
+
+
+def _timed(v):
+    return evidence._real(v) and v >= 1
+
+
+@functools.lru_cache(maxsize=64)
+def _raw_rows(path, stamp, window, t_req, t_resp, mode):
+    """Typed re-derivation of one rows.gz (cached by path, size and mtime; the result is immutable data copied by the caller)."""
+    try:
+        with gzip.open(path, "rt") as fh:
+            W = observe.parse_work([json.loads(l) for l in fh], window)
+    except observe.Unparsed as e:
+        return "rows.gz does not parse as a workload stream: %s" % e
+    keep = (lambda w: w.t0 >= t_resp + 1.0) if mode == "down" else (lambda w: w.t1 < t_req)
+    return json.dumps([observe.availability(W), observe.flip(W, t_req, t_resp, mode), observe.control_counts(W, keep)])
+
+
+@functools.lru_cache(maxsize=64)
+def _raw_poll(path, stamp, window, t_resp):
+    with gzip.open(path, "rt") as fh:
+        rows = json.load(fh)
+    return json.dumps(observe.moments(rows, t_resp, observe.LICENCE_PROBES + ("dls_search",), window))
+
+
+def _stamp(p):
+    st = os.stat(p)
+    return (st.st_size, st.st_mtime_ns)
+
+
 def _backfill_observed(R, path):
-    """Review 8 F13: lives recorded before the observation boundary (observe.py) stored refusal timings and licence-failure counts without
-    the Outcome behind them. Re-derive both from the committed raw files through observe.py, and attach them only when the re-derivation
-    reproduces the recorded figures (timing, successes after it, n; control n). Without the raw file, or when it does not reproduce them,
-    nothing is attached and the gate is UNVERIFIED. Nothing is written to disk."""
-    import evidence
-    base = path[:-5]
-    timed = lambda d, k: isinstance(d, dict) and evidence._real(d.get(k)) and d.get(k) >= 1   # a finite epoch time, else nothing attached
-    M = R.get("exp1_moment")
-    if R.get("mode") == "down" and isinstance(M, dict) and timed(R.get("start_basic"), "t_resp") and os.path.exists(base + ".poll.gz"):
-        new = observe.moments(json.load(gzip.open(base + ".poll.gz", "rt")), R["start_basic"]["t_resp"])
-        for f, m in M.items():
-            n = new.get(f) or {}
-            if isinstance(m, dict) and "first_refusal" not in m and n.get("first_refusal") \
-                    and all(n.get(k) == m.get(k) for k in ("first_refusal_rel_resp_s", "success_after_first_refusal", "n")):
-                m["first_refusal"] = n["first_refusal"]
-                m["first_refusal_source"] = "re-derived from poll.gz"
-    E2 = R.get("exp2")
-    if not isinstance(E2, dict) or not os.path.exists(base + ".rows.gz"):
+    """Reviews 8 F13 and 9 F17: the figures that EXP1-T2, EXP2-T2, EXP2-T3 and EXP2-T5 judge are re-derived at load from the TYPED raw
+    files (observe.parse_poll / parse_work: finite times inside the run window, recording order, closed domains). First every stored
+    derived figure is taken out of the record; it is put back, as the raw-derived value, only when the raw re-derivation reproduces it.
+    No raw file, a raw file that does not parse, or a disagreement: the figure stays absent (the gate is UNVERIFIED) and the reason is
+    kept in R["_raw_check"]. Nothing is written to disk."""
+    base, mode = path[:-5], R.get("mode")
+    notes = R["_raw_check"] = {}
+    M = R.get("exp1_moment") if isinstance(R.get("exp1_moment"), dict) else {}
+    held_fr = {f: m.pop("first_refusal") for f, m in M.items() if isinstance(m, dict) and "first_refusal" in m}
+    E2 = R.get("exp2") if isinstance(R.get("exp2"), dict) else None
+    held = {k: E2.pop(k) for k in _DERIVED_EXP2.get(mode, ()) if E2 is not None and k in E2}
+    ctl = (E2 or {}).get("T5_control_after_1s" if mode == "down" else "T5_control_before_start_trial")
+    if isinstance(ctl, dict):
+        ctl.pop("licence_refusals", None)
+    ev = (E2 or {}).get("events") if isinstance((E2 or {}).get("events"), dict) else {}
+    window = (ev.get("t_start"), ev.get("t_stop"))
+    tr = R.get("start_basic" if mode == "down" else "start_trial")
+    t_req, t_resp = (tr.get("t_req"), tr.get("t_resp")) if isinstance(tr, dict) else (None, None)
+    if not (all(_timed(x) for x in window + (t_req, t_resp)) and window[0] <= window[1]):
+        notes["life"] = "run window or transition times are not finite epoch times: nothing is re-derived"
         return
-    if R.get("mode") == "down":
-        key, t = "T5_control_after_1s", (R.get("start_basic") or {}).get("t_resp")
-        keep = lambda r: r[0] >= t + 1.0
-    else:
-        key, t = "T5_control_before_start_trial", (R.get("start_trial") or {}).get("t_req")
-        keep = lambda r: r[1] < t
-    ctl = E2.get(key)
-    if not isinstance(ctl, dict) or "licence_refusals" in ctl or not evidence._real(t) or t < 1:
+    if mode == "down" and M:
+        if not os.path.exists(base + ".poll.gz"):
+            notes["exp1_moment"] = "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+        else:
+            new = json.loads(_raw_poll(base + ".poll.gz", _stamp(base + ".poll.gz"), window, t_resp))
+            for f, m in M.items():
+                n = new.get(f) or {}
+                if not isinstance(m, dict):
+                    continue
+                fr = n.get("first_refusal")
+                if n.get("stream_error"):
+                    notes["exp1_moment." + f] = n["stream_error"]
+                elif fr is None or not all(_same(n.get(k), m.get(k)) for k in ("first_refusal_rel_resp_s", "success_after_first_refusal", "n")) \
+                        or (f in held_fr and held_fr[f] != fr):
+                    notes["exp1_moment." + f] = "the raw poll stream does not reproduce the stored figures"
+                else:
+                    m["first_refusal"], m["first_refusal_source"] = fr, "re-derived from poll.gz"
+    if E2 is None:
         return
-    c = observe.control_counts([json.loads(l) for l in gzip.open(base + ".rows.gz", "rt")], keep)
-    if c["n"] == ctl.get("n"):   # only trust the recount when it reproduces the recorded denominator
-        ctl["licence_refusals"] = c["licence_refusals"]
-        ctl["licence_refusals_source"] = "recounted from rows.gz by Outcome case"
+    if not os.path.exists(base + ".rows.gz"):
+        notes["exp2"] = "no rows.gz: T2, T3 and T5 figures are not accepted without their raw rows"
+        return
+    got = _raw_rows(base + ".rows.gz", _stamp(base + ".rows.gz"), window, t_req, t_resp, mode)
+    if not got.startswith("["):
+        notes["exp2"] = got
+        return
+    avail, fl, c = json.loads(got)
+    for k, v in list(avail.items()) + list(fl.items()):
+        if k not in held:
+            continue
+        if _same(v, held[k]):
+            E2[k] = v
+        else:
+            notes["exp2." + k] = "stored %r, the raw rows give %r" % (held[k], v)
+    if isinstance(ctl, dict) and c["n"] == ctl.get("n"):   # only when the typed recount reproduces the recorded denominator
+        ctl["licence_refusals"], ctl["licence_refusals_source"] = c["licence_refusals"], "recounted from typed rows.gz by Outcome case"
+    elif isinstance(ctl, dict):
+        notes["exp2.T5"] = "stored control n %r, the raw rows give %r" % (ctl.get("n"), c["n"])
 
 
 def load(d, mode):
     out = []
     for f in sorted(glob.glob(os.path.join(d, "%s_[0-9]*.json" % mode))):
-        R = json.load(open(f))
+        with open(f) as fh:
+            R = json.load(fh)
         R["_file"] = os.path.basename(f)
         for backfill in (_backfill_up_licence_failures, _backfill_observed):
             try:
                 backfill(R, f)
-            except (ArithmeticError, TypeError, ValueError, KeyError, IndexError, AttributeError, EOFError, OSError):
+            except (ArithmeticError, TypeError, ValueError, KeyError, IndexError, AttributeError, EOFError, OSError, evidence.Unparsed):
                 pass   # malformed life or raw file: nothing is attached, and the gates that need it are UNVERIFIED (review 8 F14)
         out.append(R)
     return out
@@ -321,7 +393,39 @@ def aggregate(d, res):
     return agg
 
 
+def current_summary(d):
+    """Review 9 F19: the current summary artefact. For every life and every gate in its scope, the status and reason that the CURRENT
+    code (load() with its raw re-derivation, then verdicts.judge) gives, plus the raw-check notes; per gate an aggregate status (PASS
+    only when every life passes, FAIL when any life fails, otherwise UNVERIFIED) and its reason. Deterministic: no time, no host."""
+    lives, notes, agg = {}, {}, {}
+    for mode in ("down", "up"):
+        for R in load(d, mode):
+            row = lives[R["_file"]] = {}
+            notes[R["_file"]] = {"mode": mode, "raw_check": R.get("_raw_check") or {}}
+            for name, g in sorted(verdicts.GATES.items()):
+                if g.scope not in ("both", mode):
+                    continue
+                if R.get("status") != "complete":
+                    v = verdicts.Verdict(verdicts.UNVERIFIED, "life status %r, not complete" % R.get("status"))
+                else:
+                    v = verdicts.judge(name, R)
+                reason = "PASS: " + g.doc if v.status == verdicts.PASS else v.reason
+                row[name] = {"status": v.status, "reason": reason or "no reason given"}
+                agg.setdefault(name, []).append((R["_file"], v.status))
+    out = {}
+    for name, xs in sorted(agg.items()):
+        st = [s for _, s in xs]
+        status = verdicts.PASS if st and all(x == verdicts.PASS for x in st) else verdicts.FAIL if verdicts.FAIL in st else verdicts.UNVERIFIED
+        out[name] = {"status": status, "reason": "; ".join("%s %s" % x for x in xs)}
+    return {"artefact": "summary_current.json", "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
+            "lives": lives, "raw_checks": notes, "aggregate": out}
+
+
 def main():
+    if len(sys.argv) == 4 and sys.argv[2] == "--current":
+        json.dump(current_summary(sys.argv[1]), open(sys.argv[3], "w"), indent=1, sort_keys=True)
+        open(sys.argv[3], "a").write("\n")
+        return
     d = sys.argv[1]
     res = {"down": [], "up": []}
     for R in load(d, "down"):

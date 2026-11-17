@@ -45,7 +45,9 @@ def moment(e: Moment):
 
 
 def latch(e: Latch):
-    return combine(ok(getattr(e, c).outcome.case == "LICENCE_REFUSAL", "%s: %s" % (c, getattr(e, c).outcome.case)) for c in E.LATCH_CELLS)
+    # THRESHOLDS.md EXP1-T3: the adapter's _is_licence_error must be true for the message the adapter would build (checked in parsing)
+    return combine(ok(getattr(e, c).detects, "%s: adapter detector %s on %r" % (c, getattr(e, c).detects, getattr(e, c).message[:60]))
+                   for c in E.LATCH_CELLS)
 
 
 def dls(e: Dls):
@@ -134,7 +136,7 @@ def semonly(e: SemOnly):
 Gate = collections.namedtuple("Gate", "scope report out evidence verdict doc")
 GATES = {
     "EXP1-T2": Gate("down", "exp1", "T2", Moment, moment, "every mandatory probe's first refusal of its required Outcome case (licence probes LICENCE_REFUSAL, dls_search AUTHORISATION_REFUSAL), carried with its timing, within 5 s of start_basic; no success after it"),
-    "EXP1-T3": Gate("down", "exp1", "T3_latch", Latch, latch, "every licensed search path refuses with a licence refusal"),
+    "EXP1-T3": Gate("down", "exp1", "T3_latch", Latch, latch, "the adapter's own _is_licence_error is true for the message it would build (HTTP <code>: first 400 bytes) on each latch cell"),
     "EXP1-T4": Gate("down", "exp1", "T4", Dls, dls, "positive restricted control on trial; after start_basic the DLS user's search is refused"),
     "EXP1-T4-battery": Gate("down", "exp1", "T4_battery", Battery, battery, "the same control and a trial battery control; every read path refused, nothing returned"),
     "EXP2-T1": Gate("both", "exp2", "T1", Correctness, correctness, "0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)"),

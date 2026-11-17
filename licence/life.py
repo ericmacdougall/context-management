@@ -134,7 +134,7 @@ def down(n, ttl, post):
     R["exp2"]["events"] = W.events
     R["exp2"]["latch_sample_n"] = len(W.latch)
     R["exp2"]["latch_timeline"] = _latch_changes(W.latch, sb["t_resp"])
-    R["exp1_moment"] = exp2.moment_analysis(poll.rows, sb["t_resp"])
+    R["exp1_moment"] = exp2.moment_analysis(poll.rows, sb["t_resp"], window=(W.events["t_start"], W.events["t_stop"]))
     R["exp1_moment_n_polls"] = len(poll.rows)
     W.dump(os.path.join(RES, "down_%d.rows.gz" % n))
     W.dump_oracles(os.path.join(RES, "down_%d.oracle.gz" % n))
@@ -248,7 +248,8 @@ def up(n, ttl, post):
     R["exp2"]["latch_timeline"] = _latch_changes(W.latch, st["t_resp"])
     sw = R["exp2"]["writes"].get("sem_first_ok_t")
     R["exp2"]["sem_first_ok_after_trial_s"] = None if sw is None else round(sw - st["t_resp"], 2)
-    R["exp1_moment"] = exp2.moment_analysis(poll.rows, st["t_resp"], features=("rrf", "linear", "semantic_query", "inference_use"), direction="up")
+    R["exp1_moment"] = exp2.moment_analysis(poll.rows, st["t_resp"], features=("rrf", "linear", "semantic_query", "inference_use"), direction="up",
+                                           window=(W.events["t_start"], W.events["t_stop"]))
     W.dump(os.path.join(RES, "up_%d.rows.gz" % n))
     W.dump_oracles(os.path.join(RES, "up_%d.oracle.gz" % n))
     import gzip

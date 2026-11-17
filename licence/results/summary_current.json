@@ -1,0 +1,554 @@
+{
+ "aggregate": {
+  "EXP1-T2": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json PASS",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T3": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS",
+   "status": "PASS"
+  },
+  "EXP1-T4-battery": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json PASS; down_7.json PASS",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T1": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json FAIL; down_7.json PASS; up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "FAIL"
+  },
+  "EXP2-T2": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS; up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3-down": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3-up": {
+   "reason": "up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T4": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED; up_1.json UNVERIFIED; up_2.json UNVERIFIED; up_3.json UNVERIFIED; up_4.json UNVERIFIED; up_5.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T5-down": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T5-up": {
+   "reason": "up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "PASS"
+  },
+  "EXP3-migration": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS",
+   "status": "PASS"
+  },
+  "EXP3-semonly-control": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json PASS",
+   "status": "UNVERIFIED"
+  }
+ },
+ "artefact": "summary_current.json",
+ "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
+ "lives": {
+  "down_1.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf.first_refusal: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "254 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_2.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf.first_refusal: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "254 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_3.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf.first_refusal: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "253 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_4.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf.first_refusal: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "253 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_5.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf.first_refusal: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "253 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_6.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf.first_refusal: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "PASS: the same control and a trial battery control; every read path refused, nothing returned",
+    "status": "PASS"
+   },
+   "EXP2-T1": {
+    "reason": "examined 18820 < 20,000",
+    "status": "FAIL"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "109 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_7.json": {
+   "EXP1-T2": {
+    "reason": "PASS: every mandatory probe's first refusal of its required Outcome case (licence probes LICENCE_REFUSAL, dls_search AUTHORISATION_REFUSAL), carried with its timing, within 5 s of start_basic; no success after it",
+    "status": "PASS"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "PASS: positive restricted control on trial; after start_basic the DLS user's search is refused",
+    "status": "PASS"
+   },
+   "EXP1-T4-battery": {
+    "reason": "PASS: the same control and a trial battery control; every read path refused, nothing returned",
+    "status": "PASS"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "257 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "PASS: every migrated copy equal to its source; Basic operations on migrated indices succeed",
+    "status": "PASS"
+   },
+   "EXP3-semonly-control": {
+    "reason": "PASS: semantic-only fixture answers semantic, match and match_all with hits",
+    "status": "PASS"
+   }
+  },
+  "up_1.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_2.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_3.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_4.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "94 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_5.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  }
+ },
+ "raw_checks": {
+  "down_1.json": {
+   "mode": "down",
+   "raw_check": {
+    "exp1_moment": "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+   }
+  },
+  "down_2.json": {
+   "mode": "down",
+   "raw_check": {
+    "exp1_moment": "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+   }
+  },
+  "down_3.json": {
+   "mode": "down",
+   "raw_check": {
+    "exp1_moment": "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+   }
+  },
+  "down_4.json": {
+   "mode": "down",
+   "raw_check": {
+    "exp1_moment": "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+   }
+  },
+  "down_5.json": {
+   "mode": "down",
+   "raw_check": {
+    "exp1_moment": "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+   }
+  },
+  "down_6.json": {
+   "mode": "down",
+   "raw_check": {
+    "exp1_moment": "no poll.gz: a stored refusal is not accepted without its raw poll stream"
+   }
+  },
+  "down_7.json": {
+   "mode": "down",
+   "raw_check": {}
+  },
+  "up_1.json": {
+   "mode": "up",
+   "raw_check": {}
+  },
+  "up_2.json": {
+   "mode": "up",
+   "raw_check": {}
+  },
+  "up_3.json": {
+   "mode": "up",
+   "raw_check": {}
+  },
+  "up_4.json": {
+   "mode": "up",
+   "raw_check": {}
+  },
+  "up_5.json": {
+   "mode": "up",
+   "raw_check": {}
+  }
+ }
+}

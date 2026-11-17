@@ -9,7 +9,10 @@ evidence type)) and every cross-field relation (RELATIONS). `parse()` reads exac
   dropped, so no verdict can read it.
 - A control is an evidence type whose fields are `enforce`d: its constructor raises unless the control observation is what it must be.
 - What is guaranteed (review 8 F15): validated construction from JSON under trusted Python code. parse() and the generated dataclass
-  constructors check every domain, control and relation, nested evidence by exact type, and containers are stored immutable (tuples).
+  constructors check every domain, control and relation, and nested evidence by exact type. Every stored value is immutable and owned
+  by the evidence object (review 9 F20): ints, finite floats, bools, strs, enum strings, Outcomes, nested evidence, and windows copied
+  into tuples of numbers. No kind stores a dict or list from the input (the former `text` kind, which kept an error body by reference,
+  is removed), so mutating the source after parsing cannot change evidence.
   Evidence classes use __slots__ (no per-instance __dict__). Python still cannot stop trusted code from bypassing a frozen dataclass
   (object.__setattr__, copy tricks); the verdict modules are checked by an AST test to touch nothing but evidence objects.
 - Malformed input never raises out of parse(): input-related arithmetic, type and value errors (a 10**400 integer, a nested wrong type)
@@ -20,6 +23,7 @@ import collections
 import dataclasses
 import json
 import math
+import re
 
 MISSING = object()
 
@@ -45,9 +49,9 @@ KINDS = {
     "offset": Kind("real", None, None, "finite SIGNED seconds from a transition; lower bound per field or by relation"),
     "timestamp": Kind("real", 1, None, "finite epoch seconds"),
     "flag": Kind("bool", None, None, "true or false"),
-    "text": Kind("text", None, None, "non-empty string or object (an error body)"),
     "cell_class": Kind("enum", None, None, "a matrix cell class: one of lib.classify's and matrix's labels"),
     "windows": Kind("windows", None, None, "list of [start, end, count]: finite, end >= start, count >= 1"),
+    "message": Kind("message", None, None, "the adapter-visible error text: 'HTTP <ddd>: ' + at most 400 decoded bytes"),
 }
 
 
@@ -79,8 +83,10 @@ REFUSALS = frozenset({"AUTHORISATION_REFUSAL", "LICENCE_REFUSAL"})
 
 
 def licence_text(body):
+    """The registered licence signature (THRESHOLDS.md EXP1-T1, addendum C): the text "non-compliant". The earlier "license ... expired"
+    branch was never registered; in committed rows it only ever matched Elasticsearch's `license.expired.feature` key (review 9 F18)."""
     txt = json.dumps(body, default=str).lower() if body else ""
-    return "non-compliant" in txt or ("license" in txt and "expired" in txt)
+    return "non-compliant" in txt
 
 
 @dataclasses.dataclass(frozen=True)
@@ -179,8 +185,8 @@ def _domain(f, v, at):
         ok = _real(v)
     elif k.type == "bool":
         ok = type(v) is bool
-    elif k.type == "text":
-        ok = type(v) in (str, dict) and len(v) > 0
+    elif k.type == "message":
+        ok = type(v) is str and len(v) <= 409 and re.match(r"HTTP \d{3}: ", v) is not None
     elif k.type == "enum":
         ok = type(v) is str and v in ENUMS[f.kind]
     elif k.type == "windows":
@@ -281,6 +287,7 @@ class Evidence:
     __slots__ = ()
     SPEC = {}
     RELATIONS = ()
+    CHECKS = ()   # domain checks over several fields that are not a declared relation kind (functions of the field values)
 
     def __post_init__(self):
         vals = {}
@@ -299,6 +306,8 @@ class Evidence:
             vals[n] = x
         for rel in self.RELATIONS:
             check_relation(rel, _flat(vals))
+        for chk in self.CHECKS:
+            chk(vals)
 
     @classmethod
     def parse(cls, raw, at=()):
@@ -329,15 +338,17 @@ class Evidence:
         try:
             for rel in cls.RELATIONS:
                 check_relation(rel, _flat(vals))
+            for chk in cls.CHECKS:
+                chk(vals)
             return cls(**{n: v for n, v in vals.items() if not cls.SPEC[n].verify})
         except Unparsed as e:
             raise Unparsed(at + e.path, e.reason)
 
 
-def evidence(name, spec, relations=(), doc="", props=None):
+def evidence(name, spec, relations=(), doc="", props=None, checks=()):
     """Declare an evidence type: a frozen dataclass whose fields are the non-`verify` SPEC entries."""
     fields = [(n, object) for n, f in spec.items() if not f.verify]
-    ns = {"SPEC": dict(spec), "RELATIONS": tuple(relations), "__doc__": doc,
+    ns = {"SPEC": dict(spec), "RELATIONS": tuple(relations), "CHECKS": tuple(checks), "__doc__": doc,
           "__slots__": tuple(n for n, f in spec.items() if not f.verify)}   # no per-instance __dict__ (review 8 F15)
     ns.update(props or {})
     return dataclasses.make_dataclass(name, fields, bases=(Evidence,), frozen=True, namespace=ns)
@@ -381,7 +392,22 @@ DlsMomentProbe = _moment_probe("DlsMomentProbe", DlsRefusalAt)
 Moment = evidence("Moment", {p: F("exp1_moment." + p, DlsMomentProbe if p == "dls_search" else LicenceMomentProbe) for p in T2_PROBES},
                   doc="All five mandatory probes (EXP1-T2).")
 
-LatchCell = evidence("LatchCell", {"outcome": F("status", "status", expect={"LICENCE_REFUSAL"}, text="error"), "error": F("error", "text")})
+def _adapter_view(v):
+    """EXP1-T3 (THRESHOLDS.md): the adapter's own detector decides. The recorded message must carry the cell's status, and the recorded
+    detector result must equal what the REAL ElasticsearchSearch._is_licence_error says on that message (observe.adapter_detects)."""
+    import observe
+    if not v["message"].startswith("HTTP %d: " % v["outcome"].status):
+        raise Unparsed(("adapter_message",), "message %r does not carry the cell's HTTP %d" % (v["message"][:40], v["outcome"].status))
+    real = observe.adapter_detects(v["message"])
+    if real != v["detects"]:
+        raise Unparsed(("adapter_detects",), "recorded %r, but the adapter detector says %r on the recorded message" % (v["detects"], real))
+
+
+# EXP1-T3 (review 9 F18): the adapter-visible message and the adapter detector's result, not the generic Outcome, decide; the Outcome
+# stays a separate field. The error summary dict is not retained (F20).
+LatchCell = evidence("LatchCell", {"outcome": F("status", "status", expect=REFUSALS),
+                                   "message": F("adapter_message", "message", bad=("HTTP 403: forbidden",)),
+                                   "detects": F("adapter_detects", "flag", expect=True)}, checks=(_adapter_view,))
 Latch = evidence("Latch", {c: F("exp1_after." + c, LatchCell) for c in LATCH_CELLS}, doc="EXP1-T3: the three latch cells after start_basic.")
 
 DlsControl = evidence("DlsControl", {

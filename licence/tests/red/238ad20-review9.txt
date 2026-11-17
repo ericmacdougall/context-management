@@ -1,0 +1,128 @@
+Red of review-9 regressions (F17-F20) on 238ad20 code: PYTHONDONTWRITEBYTECODE=1 python3 -W ignore -m unittest tests.test_evidence.RawEdgeTests
+
+.F.FFFEFFFFF.EEF
+======================================================================
+ERROR: test_f18_adapter_message_format_is_the_adapters (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 730, in test_f18_adapter_message_format_is_the_adapters
+    self.assertEqual(observe.adapter_message(403, body), adapter_message(403, body))
+AttributeError: module 'observe' has no attribute 'adapter_message'
+
+======================================================================
+ERROR: test_f19_current_summary_artefact_is_what_the_code_produces (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 761, in test_f19_current_summary_artefact_is_what_the_code_produces
+    cur = json.load(open(os.path.join(RES, "summary_current.json")))
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/results/summary_current.json'
+
+======================================================================
+ERROR: test_f19_historical_summaries_are_indexed_as_superseded_and_unchanged (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 770, in test_f19_historical_summaries_are_indexed_as_superseded_and_unchanged
+    idx = json.load(open(os.path.join(RES, "SUPERSEDED.json")))
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/results/SUPERSEDED.json'
+
+======================================================================
+FAIL: test_f17_a_stored_summary_is_never_accepted_without_its_raw_file (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 695, in test_f17_a_stored_summary_is_never_accepted_without_its_raw_file
+    self.assertEqual(summarize.exp1_checks(L)["T2_status"], "UNVERIFIED")
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_f17_late_success_with_a_bad_timestamp_is_not_a_pass (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 660, in test_f17_late_success_with_a_bad_timestamp_is_not_a_pass
+    self.assertNotEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "PASS", bad)
+AssertionError: 'PASS' == 'PASS' : nan
+
+======================================================================
+FAIL: test_f17_raw_poll_mutations_are_unverified (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 680, in test_f17_raw_poll_mutations_are_unverified
+    self.assertEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "UNVERIFIED", lab)
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+ : out of order
+
+======================================================================
+FAIL: test_f17_stored_availability_and_flip_must_agree_with_the_raw_rows (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 704, in test_f17_stored_availability_and_flip_must_agree_with_the_raw_rows
+    self.assertNotEqual(summarize.exp2_checks(L, "down")["T2_status"], "PASS")
+AssertionError: 'PASS' == 'PASS'
+
+======================================================================
+FAIL: test_f18_adapter_true_but_generic_summary_without_the_text_passes (tests.test_evidence.RawEdgeTests)
+The adapter's own predicate decides T3: the stored error summary does not carry the phrase, the adapter message does.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 743, in test_f18_adapter_true_but_generic_summary_without_the_text_passes
+    self.assertEqual(self.t3(self.latch_life(error={"type": "security_exception", "reason": "x", "root": "x", "feature": None})), "PASS")
+AssertionError: 'FAIL' != 'PASS'
+- FAIL
++ PASS
+
+
+======================================================================
+FAIL: test_f18_committed_latch_cells_without_the_adapter_message_are_unverified (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 751, in test_f18_committed_latch_cells_without_the_adapter_message_are_unverified
+    self.assertEqual(summarize.exp1_checks(_life("down_%d" % n))["T3_latch_status"], "UNVERIFIED", n)
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+ : 1
+
+======================================================================
+FAIL: test_f18_generic_licence_refusal_but_adapter_false_is_not_a_pass (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 737, in test_f18_generic_licence_refusal_but_adapter_false_is_not_a_pass
+    self.assertNotEqual(self.t3(self.latch_life(body=body, error={"type": "security_exception", "reason": "license expired"})), "PASS")
+AssertionError: 'PASS' == 'PASS'
+
+======================================================================
+FAIL: test_f18_licence_signature_is_the_registered_one (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 755, in test_f18_licence_signature_is_the_registered_one
+    self.assertFalse(E.licence_text({"reason": "license expired"}))
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_f18_recorded_detector_or_status_that_contradicts_the_message_is_unverified (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 746, in test_f18_recorded_detector_or_status_that_contradicts_the_message_is_unverified
+    self.assertEqual(self.t3(self.latch_life(body=b'{"error":"other"}', recorded=True)), "UNVERIFIED")
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_f20_mutating_the_source_after_parsing_does_not_change_evidence (tests.test_evidence.RawEdgeTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 799, in test_f20_mutating_the_source_after_parsing_does_not_change_evidence
+    self.assertEqual(repr(ev), before, name)
+AssertionError: "Latc[100 chars]ror={}), retriever_linear=LatchCell(outcome=Ou[191 chars]{}))" != "Latc[100 chars]ror={'feature': 'Reciprocal Rank Fusion (RRF)'[836 chars]'}))"
+Diff is 1342 characters long. Set self.maxDiff to None to see it. : EXP1-T3
+
+----------------------------------------------------------------------
+Ran 16 tests in 19.767s
+
+FAILED (failures=10, errors=3)

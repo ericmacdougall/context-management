@@ -747,8 +747,8 @@ class MatrixVerdictTests(MatrixHarness):
         self.assertEqual(tuple(observe.NOT_OBSERVED), tuple(matrix.NOT_OBSERVED))
 
     def test_moment_analysis_does_not_count_unverified_dls_as_refusal(self):
-        rows = [{"_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (1.0, 2.0, 3.0)]
-        m = exp2.moment_analysis(rows, 2.0, features=("dls_search",))["dls_search"]
+        rows = [{"_t0": t - 0.01, "_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (11.0, 12.0, 13.0)]
+        m = exp2.moment_analysis(rows, 12.0, features=("dls_search",))["dls_search"]
         self.assertTrue(m["skipped"] and m["unverified"])
         self.assertNotIn("first_refusal_rel_resp_s", m)
 
@@ -908,7 +908,7 @@ def _poll_rows(t_resp, unverified=(), drop=()):
     rows = []
     for k in range(40):
         t = t_resp - 1.0 + k * 0.05
-        p = {"_t1": t}
+        p = {"_t0": t - 0.01, "_t1": t}
         for f in MANDATORY_T2:
             if f in drop:
                 continue
@@ -1037,6 +1037,11 @@ def _healthy(scope):
     sem_failed_other) set so that EXP2-T4 can be PASS. Every other value is as committed."""
     R = _life("down_7" if scope in ("down", "both") else "up_1")
     R["exp2"]["writes"]["sem_failed_other"] = 0
+    if scope in ("down", "both"):
+        import observe
+        msg = observe.adapter_message(403, b'{"error":{"type":"security_exception","reason":"current license is non-compliant for [rrf]"},"status":403}')
+        for c in ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate"):   # review 9 F18: what matrix.verdict records
+            R["exp1_after"][c].update(adapter_message=msg, adapter_detects=observe.adapter_detects(msg))
     return R
 
 
