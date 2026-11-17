@@ -43,6 +43,7 @@ OUT=$WP_HOME/results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.cleanup exp.d4_rescan_es
   $PY -m exp.row19_secrets
   $PY -m exp.cleanup exp.row19_secrets
+  $PY -m exp.heldout_secrets
   $PY -m exp.row6_chain "$R"
   $PY -m exp.cleanup exp.row6_chain
   $PY -m exp.d4_store_mark 5

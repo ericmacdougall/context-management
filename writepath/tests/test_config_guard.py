@@ -41,7 +41,7 @@ def run_case(cfg_src, home_conf, set_home=True):
 
 def main(cfg_src):
     bad_es = dict(GOOD, es_container="emlab-es-wp-16096")
-    remote_es = dict(GOOD, es_url="http://10.0.0.5:19460")
+    remote_es = dict(GOOD, es_url="http://203.0.113.5:19460")   # RFC 5737 documentation address
     no_port = {k: v for k, v in GOOD.items() if k != "pg_port"}
     wrong_stream = dict(GOOD, stream="emlab-writepath")
     cases = [
