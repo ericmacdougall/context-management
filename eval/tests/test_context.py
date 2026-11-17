@@ -1,0 +1,464 @@
+import unittest
+
+from emlab.context import (context_metrics, est_tokens, order_items, pack_facts, pack_mix, pack_rag, render_round)
+from emlab.dataset import FixtureLoader
+from emlab.facts import FactsRetriever
+
+
+class Ctx(unittest.TestCase):
+    def setUp(self):
+        self.q = list(FixtureLoader().questions())[0]
+        rs = self.q.rounds
+        self.texts = {r.round_id: r.text for r in rs}
+        self.dates = {t.session_id: t.date.strftime("%Y-%m-%d") for t in self.q.turns}
+
+    def test_est_tokens(self):
+        self.assertEqual(est_tokens("abcd"), 1)
+        self.assertEqual(est_tokens("abcde"), 2)
+
+    def test_rag_strict_prefix_budget(self):
+        ranked = ["ku_s4:0", "ku_s1:0", "ku_s2:0"]
+        first = est_tokens(render_round(self.dates["ku_s4"], self.texts["ku_s4:0"]))
+        self.assertEqual([i["item_id"] for i in pack_rag(ranked, self.dates, self.texts, first)], ["ku_s4:0"])
+        self.assertEqual(pack_rag(ranked, self.dates, self.texts, first - 1), [])
+        big = pack_rag(ranked, self.dates, self.texts, 10 ** 6)
+        self.assertEqual([i["item_id"] for i in big], ranked)
+
+    def _facts(self):
+        return {"f1": {"id": "f1", "session_id": "ku_s4", "round_index": 0, "text": "works at Borealis Labs", "slot": "employer",
+                       "value": "Borealis Labs", "cue_keys": ["job", "employer"]},
+                "f2": {"id": "f2", "session_id": "ku_s1", "round_index": 0, "text": "works at Acme Corp", "slot": "employer",
+                       "value": "Acme Corp", "cue_keys": ["job"]}}
+
+    def test_facts_include_source_round_once_and_respect_budget(self):
+        facts = self._facts()
+        items = pack_facts(["f1", "f2"], facts, self.dates, self.texts, 10 ** 6)
+        kinds = [i["kind"] for i in items]
+        self.assertEqual(kinds, ["fact", "source_round", "fact", "source_round"])
+        # a second fact from an already-included round adds its own tokens but not a second copy of the round
+        facts["f3"] = dict(facts["f1"], id="f3", text="also at Borealis")
+        again = pack_facts(["f1", "f3"], facts, self.dates, self.texts, 10 ** 6)
+        self.assertEqual([i["kind"] for i in again], ["fact", "source_round", "fact"])
+        tight = pack_facts(["f1", "f2"], facts, self.dates, self.texts, items[0]["tokens"] + items[1]["tokens"])
+        self.assertEqual(len(tight), 2)  # f2 does not fit: strict prefix stops
+
+    def test_mix_dedupes_by_source_round_and_splits_budget(self):
+        facts = self._facts()
+        mix = pack_mix(["f1"], ["ku_s4:0", "ku_s1:0"], facts, self.dates, self.texts, 10 ** 6)
+        ids = [i["round_id"] for i in mix if i["kind"] in ("round", "source_round")]
+        self.assertEqual(len(ids), len(set(ids)))        # ku_s4:0 not repeated by the RAG half
+        self.assertIn("ku_s1:0", ids)
+
+    def test_order_is_chronological_and_metrics_stale_only(self):
+        items = pack_rag(["ku_s4:0", "ku_s1:0"], self.dates, self.texts, 10 ** 6)
+        self.assertEqual([i["session_id"] for i in order_items(items)], ["ku_s1", "ku_s4"])
+        stale = [i for i in items if i["session_id"] == "ku_s1"]
+        m = context_metrics(self.q, stale)
+        self.assertFalse(m["gold_latest_in_context"])
+        self.assertTrue(m["stale_only"])                 # stale-only counts as a miss
+        self.assertTrue(context_metrics(self.q, items)["gold_latest_in_context"])
+        self.assertFalse(context_metrics(self.q, items)["stale_only"])
+
+    def test_cue_leg_can_be_switched_off(self):
+        fr = FactsRetriever(list(self._facts().values()))
+        with_cue = fr.rank("zzz", ["employer"], None, ["ku_s1", "ku_s4"])
+        without = fr.rank("zzz", ["employer"], None, ["ku_s1", "ku_s4"], use_cue=False)
+        self.assertEqual(with_cue, ["f1"])      # found only through the cue key
+        self.assertEqual(without, [])
+
+    def test_facts_retriever_cue_and_text(self):
+        fr = FactsRetriever(list(self._facts().values()))
+        r = fr.rank("Which employer and job?", ["employer"], None, ["ku_s1", "ku_s4"])
+        self.assertEqual(set(r), {"f1", "f2"})
+        self.assertEqual(r[0], "f1")            # f1 matches both cue keys
+        self.assertEqual(fr.rank("Which employer?", ["employer"], None, ["ku_s1"]), [])  # no match, only searched sessions
+        self.assertEqual(fr.rank("x", [], None, ["nope"]), [])
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class Dates(unittest.TestCase):
+    def test_synthetic_date_rules(self):
+        from datetime import datetime
+        from emlab.build_contexts import event_time_allowed, synthetic_date
+        e, q = datetime(2023, 1, 1, 8, 0), datetime(2023, 6, 1, 10, 0)
+        a = synthetic_date("q1", "s1", e, q)
+        self.assertEqual(a, synthetic_date("q1", "s1", e, q))                 # deterministic
+        self.assertNotEqual(a, synthetic_date("q1", "s2", e, q))
+        for i in range(200):
+            d = synthetic_date("q%d" % i, "s%d" % i, e, q)
+            self.assertTrue(e <= d <= q)                                       # never after the question date
+        f = {"event_time": "2023-03-01", "ref_date": "2023-02-10 09:00"}
+        self.assertTrue(event_time_allowed(f, "2023-02-10 09:00", False))
+        self.assertFalse(event_time_allowed(f, "2023-02-11 09:00", False))
+        self.assertFalse(event_time_allowed(f, "2023-02-10 09:00", True))      # synthetic date: never shown
+        self.assertIsNone(event_time_allowed({"event_time": "x"}, "2023-02-10 09:00", False))
+
+
+class Analyst(unittest.TestCase):
+    def test_task_has_no_gold_and_score_precision(self):
+        from emlab.analyst_prep import FORBIDDEN, make_task
+        from emlab.analyst_score import aggregate, score_one
+        import json as _j
+        q = list(FixtureLoader().questions())[0]
+        t = make_task(q.qid, "H1", q.question, "2023-08-01 10:00", [{"round_id": "s123456789abc:0", "session_id": "s123456789abc",
+                                                                    "date": "2023-06-20 08:15", "text": "x"}])
+        mf = {k: v for k, v in t.items() if k != "_meta"}            # what a model may see
+        self.assertEqual(set(t), {"_meta", "question", "question_date", "candidates"})
+        self.assertEqual(t["_meta"]["question_id"], q.qid)
+        blob = _j.dumps(mf).lower()
+        for w in FORBIDDEN:
+            self.assertNotIn(w, blob)
+        from emlab.guard import check as _check
+        _check(t, {"ku_s4"}, {q.qid})                                 # _meta is skipped; model-facing part is clean
+        texts = {r.round_id: r.text for r in q.rounds}
+        dates = {s: "2023-01-01 00:00" for s in q.haystack_session_ids}
+        m = score_one(q, ["ku_s2:0", "ku_s4:0"], dates, texts)
+        self.assertEqual(m["nongold_share"], 0.5)
+        self.assertTrue(m["gold_latest_in_context"])
+        stale = score_one(q, ["ku_s1:0"], dates, texts)
+        self.assertTrue(stale["stale_only"])
+        m["qid"], m["calls"], m["tool_seconds"] = q.qid, 3, 1.5
+        self.assertEqual(aggregate([m], {q.qid})["low_overlap"]["tool_calls"], 3)
+        out_of_scope = score_one(q, ["zzz:0"], dates, texts)
+        self.assertEqual(out_of_scope["items"], 0)   # ids outside the level scope are dropped, not credited
+
+
+class Anon(unittest.TestCase):
+    def test_opaque_ids_hide_the_label_and_roundtrip(self):
+        from emlab.anon import AnonMap, opaque_rid, opaque_sid
+        sids = ["answer_abc_1", "sharegpt_x", "0123abcd", "ultrachat_9"]
+        for s in sids:
+            self.assertNotIn("answer", opaque_sid(s))
+            self.assertNotIn("sharegpt", opaque_sid(s))
+        am = AnonMap(sids)
+        self.assertEqual(am.real_rid(opaque_rid("answer_abc_1:3")), "answer_abc_1:3")
+        self.assertEqual(opaque_rid("sharegpt_x:0"), opaque_sid("sharegpt_x") + ":0")
+
+    def test_result_ids_outside_candidates_and_tool_returns_are_rejected(self):
+        import json as _j, tempfile, os as _o
+        from emlab.anon import AnonMap, opaque_rid
+        from emlab.analyst_score import allowed_ids, real_ranked
+        am = AnonMap(["s_a", "s_b", "s_c"])
+        task = {"candidates": [{"round_id": opaque_rid("s_a:0")}]}
+        d = tempfile.mkdtemp()
+        log = _o.path.join(d, "log.jsonl")
+        open(log, "w").write(_j.dumps({"qid": "q", "level": "H1", "returned_ids": [opaque_rid("s_b:1")]}) + "\n"
+                             + _j.dumps({"qid": "other", "level": "H1", "returned_ids": [opaque_rid("s_c:2")]}) + "\n")
+        ok = allowed_ids(task, log, "q", "H1")
+        good, rejected = real_ranked({"ranked_round_ids": [opaque_rid("s_a:0"), opaque_rid("s_b:1"), opaque_rid("s_c:2")]}, ok, am)
+        self.assertEqual(good, ["s_a:0", "s_b:1"])
+        self.assertEqual(rejected, 1)     # s_c:2 was returned for another question only
+
+
+class Guard(unittest.TestCase):
+    def test_guard_refuses_real_ids_question_ids_levels_and_label_patterns(self):
+        from emlab.guard import LeakError, check
+        real = {"answer_ab12cd_1", "0123abcd", "sharegpt_X1"}
+        qids = {"6e984302", "gpt4_77_abs"}
+        check({"round_id": "s123456789abc:3", "text": "hello world, H1B visa"}, real, qids)   # opaque ids pass; content may say H1
+        check({"_meta": {"question_id": "6e984302", "level": "H3"}, "question": "q"}, real, qids)  # _meta is skipped
+        for bad in ({"session_id": "answer_ab12cd_1"}, {"round_id": "0123abcd:4"}, {"x": ["see answer_ff00aa_2"]},
+                    {"text": "from sharegpt_Q9 conversation"}, {"ultrachat_77": 1},
+                    {"item_id": "src:0123abcd:3"}, {"fact_id": "0123abcd:2:0"}, {"note": "see 0123abcd now"},
+                    {"question_id": "6e984302"}, {"level": "H3"}, {"label": "gpt4_77_abs"}, {"text": "uses 0123abcd inside"}):
+            with self.assertRaises(LeakError):
+                check(bad, real, qids)
+
+    def test_write_context_refuses_leaky_items(self):
+        import tempfile
+        from emlab.context import write_context
+        from emlab.guard import LeakError
+        q = list(FixtureLoader().questions())[0]
+        item = {"item_id": "x", "kind": "round", "session_id": "ku_s4", "round_id": "ku_s4:0", "round_index": 0, "date": "d",
+                "text": "t", "tokens": 1, "rank": 0}
+        with self.assertRaises(LeakError):
+            write_context(tempfile.mkdtemp(), "rag", "H0", q, 10, [item], {"ku_s4"})
+        ok = dict(item, session_id="s123456789abc", round_id="s123456789abc:0", item_id="s123456789abc:0")
+        path = write_context(tempfile.mkdtemp(), "rag", "H1", q, 10, [ok], {"ku_s4"}, {q.qid})
+        import json as _j
+        doc = _j.load(open(path))
+        self.assertEqual(set(doc), {"_meta", "items"})                # question id and level live only under _meta
+        self.assertEqual(doc["_meta"]["level"], "H1")
+
+
+class Tools(unittest.TestCase):
+    def test_timeline_reveals_no_pool_size(self):
+        from emlab.analyst_tools import Backend
+        b = object.__new__(Backend)
+        n = 80
+        b.sessions = {"sess%d" % i: "2023-01-%02d 00:00" % (i % 28 + 1) for i in range(n)}
+        b.chunks = [{"chunk_id": "sess%d:0#0" % i, "round_id": "sess%d:0" % i, "session_id": "sess%d" % i} for i in range(n)]
+        b.by_session = {"sess%d" % i: [i] for i in range(n)}
+        b.round_text = {"sess%d:0" % i: "user: topic %d" % i for i in range(n)}
+        r = b.timeline(None, 5)
+        self.assertEqual(set(r), {"sessions", "more"})
+        self.assertEqual(len(r["sessions"]), 5)
+        self.assertTrue(r["more"])
+        self.assertFalse(b.timeline(None, 50)["more"] and n <= 50)
+        small = object.__new__(Backend)
+        small.sessions, small.chunks, small.by_session, small.round_text = (
+            {"a": "2023-01-01 00:00"}, [{"chunk_id": "a:0#0", "round_id": "a:0", "session_id": "a"}], {"a": [0]}, {"a:0": "user: x"})
+        self.assertFalse(small.timeline(None, 5)["more"])
+
+
+class Registered(unittest.TestCase):
+    def test_one_rerank_head_size(self):
+        from emlab.retrievers import RERANK_TOP_N, run_arm, FakeRetriever
+        self.assertEqual(RERANK_TOP_N, 20)
+        seen = []
+
+        class R(FakeRetriever):
+            def rerank(self, q, ranked, depth):
+                seen.append(len(ranked))
+                return ranked
+
+        q = list(FixtureLoader().questions())[0]
+        run_arm(R(), q, "rerank", 200, "off")
+        self.assertLessEqual(seen[0], RERANK_TOP_N)
+        import inspect
+        self.assertEqual(inspect.signature(run_arm).parameters["rerank_top"].default, 20)
+
+    def test_pool_lowoverlap_generator_excludes_abstention_and_has_thresholds(self):
+        from emlab.lowoverlap_pool import compute
+        from emlab.retrievers import FakeRetriever
+        from emlab.pool import PoolContext
+        qs = list(FixtureLoader().questions())
+        res = compute(qs, PoolContext(qs), FakeRetriever())
+        self.assertNotIn("ab_002_abs", res["ranks"])
+        self.assertEqual(set(res["thresholds"]), {"100", "50", "20"})
+        self.assertEqual(res["n_with_gold"], 2)
+
+
+class Budget(unittest.TestCase):
+    def test_budget_is_keyed_on_variant_and_ignores_probe_rows(self):
+        import json as _j, os as _o, tempfile
+        from emlab.analyst_tools import budget_state
+        p = _o.path.join(tempfile.mkdtemp(), "log.jsonl")
+        rows = [{"qid": "q", "level": "H3", "variant": "", "seconds": 1.0}] * 10 + \
+               [{"qid": "q", "level": "H3", "variant": "top20", "seconds": 2.0}] * 3 + \
+               [{"qid": "other", "level": "H3", "variant": "", "seconds": 5.0}]
+        open(p, "w").write("\n".join(_j.dumps(r) for r in rows) + "\n")
+        self.assertEqual(budget_state(p, "q", "H3"), {"calls": 10, "seconds": 10.0})            # the top-20 run does not eat it
+        self.assertEqual(budget_state(p, "q", "H3", "top20"), {"calls": 3, "seconds": 6.0})
+        self.assertEqual(budget_state(p, "nobody", "H3"), {"calls": 0, "seconds": 0.0})
+
+
+class StageG(unittest.TestCase):
+    def test_string_match_heuristic(self):
+        from emlab.stage_g_score import final_line, string_match
+        self.assertTrue(string_match("Borealis Labs", "I now work at borealis labs."))
+        self.assertTrue(string_match("25 minutes and 50 seconds (or 25:50)", "Answer: 25 minutes, 50 seconds"))   # numbers 25 and 50
+        self.assertTrue(string_match("1,200 dollars", "about 1200 dollars"))
+        self.assertFalse(string_match("four", "three"))
+        self.assertFalse(string_match("Paris", ""))
+        self.assertEqual(final_line("steps\nAnswer: the suburbs"), "the suburbs")
+
+    def test_digging_compliance_is_mechanical(self):
+        from emlab.stage_g_score import DIG_N, followed
+        self.assertEqual(DIG_N, 3)
+        self.assertTrue(followed(3))
+        self.assertFalse(followed(2))
+        self.assertFalse(followed(None))
+
+    def test_audit_sample_is_stratified_seeded_and_stable(self):
+        from emlab.stage_g_score import audit_sample
+        rows = [{"question_id": "q%d" % i, "arm": "A", "judge_yes": i % 3 != 0} for i in range(90)]
+        a = audit_sample(rows)
+        self.assertEqual(sum(1 for r in a if r["judge_yes"]), 20)
+        self.assertEqual(sum(1 for r in a if not r["judge_yes"]), 20)
+        self.assertEqual(a, audit_sample(list(reversed(rows))))
+        small = audit_sample(rows[:6])
+        self.assertEqual(len(small), 6)
+
+
+class StageX0(unittest.TestCase):
+    def test_answer_match_heuristic(self):
+        from emlab.stage_x0_score import answer_match
+        self.assertTrue(answer_match("Borealis Labs", "works at borealis labs now")["string"])
+        self.assertTrue(answer_match("25 minutes and 50 seconds", "ran 25 minutes 50 seconds")["key"])
+        self.assertFalse(answer_match("25 minutes and 50 seconds", "ran 30 minutes")["key"])
+        self.assertFalse(answer_match("Paris", "")["key"])
+        self.assertTrue(answer_match("red", "tired")["string"])  # substring heuristic: crude by design, labelled as such
+
+    def test_bm25_ranks_the_matching_doc_first(self):
+        from emlab.stage_x0_score import bm25_rank
+        docs = [["cat", "sat"], ["dog", "barked", "loudly"], ["hamster", "wheel", "cage"]]
+        self.assertEqual(bm25_rank(docs, ["hamster", "cage"])[0], 2)
+        self.assertEqual(bm25_rank(docs, ["unseen"]), [0, 1, 2])
+
+    def test_spearman_and_extrapolation(self):
+        from emlab.stage_x0_score import extrapolate, spearman
+        self.assertAlmostEqual(spearman([1, 2, 3, 4], [10, 20, 30, 40]), 1.0)
+        self.assertAlmostEqual(spearman([1, 2, 3, 4], [4, 3, 2, 1]), -1.0)
+        e = extrapolate({0: [10.0, 10.0], 1: [30.0, 30.0]}, 1000)
+        self.assertAlmostEqual(e["per_call"], 20.0)
+        self.assertAlmostEqual(e["total"], 20000.0)
+        self.assertLessEqual(e["total_low"], e["total"] + 1e-9)
+
+    def test_vendored_provenance_rejects_changed_quote(self):
+        from emlab import provenance_x04 as P
+        sess = {"s1": P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex"}, {"role": "assistant", "content": "Nice"}])}
+        ok = P.check_all([{"session_id": "s1", "round": 0, "quote": "adopted a dog named Rex", "author": "user"}], sess)[0]
+        bad = P.check_all([{"session_id": "s1", "round": 0, "quote": "adopted a cat named Rex", "author": "user"}], sess)[0]
+        self.assertEqual((ok["a"], ok["b"]), ("pass", "pass"))
+        self.assertEqual(bad["a"], "fail")
+
+    def test_allocate_and_prep_lengths(self):
+        from emlab.stage_x0_prep import allocate
+        self.assertEqual(sum(allocate([0.2] * 5, 121)), 121)
+        self.assertEqual(allocate([0.2] * 5, 121), [25, 24, 24, 24, 24])
+
+
+class StageX0B(unittest.TestCase):
+    def test_quote_match_and_stability(self):
+        from emlab.stage_x0b_score import quote_match, stability
+        self.assertTrue(quote_match("I adopted a dog named Rex", "i adopted a dog named rex."))
+        self.assertTrue(quote_match("adopted a dog", "I adopted a dog named Rex"))
+        self.assertFalse(quote_match("dog", "I adopted a dog named Rex"))  # too short to count as containment
+        self.assertFalse(quote_match("", "x"))
+        old = [{"quote": "adopted a dog named Rex"}, {"quote": "lives in Lisbon now"}]
+        new = [{"quote": "I adopted a dog named Rex"}, {"quote": "works at Borealis Labs"}, {"quote": "plays the cello"}]
+        s = stability(old, new)
+        self.assertEqual((s["old"], s["new"], s["old_reappearing"], s["new_without_old_match"], s["beyond_old_count"]), (2, 3, 1, 2, 1))
+
+
+class StageX0C(unittest.TestCase):
+    def test_pair_stability_both_directions(self):
+        from emlab.stage_x0c_score import pair_stability
+        a = [{"quote": "adopted a dog named Rex"}, {"quote": "lives in Lisbon now"}]
+        b = [{"quote": "I adopted a dog named Rex"}, {"quote": "plays the cello every week"}, {"quote": "works at Borealis Labs"}]
+        s = pair_stability(a, b)
+        self.assertEqual((s["a_in_b"], s["b_in_a"], s["a"], s["b"]), (1, 1, 2, 3))
+        self.assertAlmostEqual(s["stability"], 2 / 5.0)
+        self.assertEqual(pair_stability(a, a)["stability"], 1.0)
+
+    def test_user_stats_and_cluster_wilson(self):
+        from emlab.stage_x0c_score import cluster_wilson_mean, user_stats
+        u = user_stats([{"author": "user"}, {"author": "assistant"}, {"author": "user"}])
+        self.assertEqual((u["total"], u["user"]), (3, 2))
+        w = cluster_wilson_mean([0.9, 0.8, 1.0, 0.9])
+        self.assertTrue(w["low"] < w["mean"] < w["high"])
+        self.assertEqual(cluster_wilson_mean([])["n"], 0)
+
+    def test_missing_author_is_not_a_mismatch(self):
+        from emlab import provenance_x04 as P
+        from emlab.stage_x0c_score import check_with_missing_author, user_stats
+        sess = {"s1": P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex"}, {"role": "assistant", "content": "Nice"}])}
+        f = [{"session_id": "s1", "round": 0, "quote": "adopted a dog named Rex"}, {"session_id": "s1", "round": 0, "quote": "adopted a dog named Rex", "author": "user"}]
+        r = check_with_missing_author(f, sess)
+        self.assertEqual((r[0]["a"], r[0]["b"]), ("pass", "author_missing"))
+        self.assertEqual((r[1]["a"], r[1]["b"]), ("pass", "pass"))
+        self.assertEqual(user_stats(f)["author_missing"], 1)
+
+
+class PostHocX0C(unittest.TestCase):
+    def test_union_dedup_curve(self):
+        from emlab.xp_x0c_posthoc import union_dedup
+        a = [{"quote": "adopted a dog named Rex"}, {"quote": "lives in Lisbon now"}]
+        b = [{"quote": "I adopted a dog named Rex"}, {"quote": "plays the cello every week"}]
+        c = [{"quote": "plays the cello every week"}, {"quote": "works at Borealis Labs"}]
+        u = union_dedup([a, b, c])
+        self.assertEqual(u["added"], [2, 1, 1])
+        self.assertEqual(u["sizes"], [2, 3, 4])
+
+    def test_classify_ungrounded(self):
+        from emlab import provenance_x04 as P
+        from emlab.xp_x0c_posthoc import classify_ungrounded
+        g = P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex, a small terrier"}, {"role": "assistant", "content": "Lovely"}, {"role": "user", "content": "We hike every Sunday morning"}])
+        self.assertEqual(classify_ungrounded("hike every Sunday morning", g, 0), "other_round")
+        self.assertEqual(classify_ungrounded("adopted a dog named Rex a small terrier", g, 0), "punct_cited")
+        self.assertEqual(classify_ungrounded("adopted a dog ... small terrier", g, 0), "punct_cited")
+        self.assertEqual(classify_ungrounded("quantum chromodynamics lecture notes", g, 0), "ungrounded")
+
+
+class StageX1(unittest.TestCase):
+    def test_repair_fact_author_and_quote(self):
+        from emlab import provenance_x04 as P
+        from emlab.stage_x1_score import kept, repair_fact
+        g = P.rounds_of_turns([{"role": "user", "content": "I adopted a dog named Rex, a small terrier"}, {"role": "assistant", "content": "Lovely"}, {"role": "user", "content": "We hike every Sunday morning"}])
+        a = repair_fact({"quote": "adopted a dog named Rex, a small terrier", "round": 0}, g)
+        self.assertEqual((a["grounding"], a["author"], a.get("author_filled")), ("verbatim", "user", True))
+        b = repair_fact({"quote": "adopted a dog named Rex a small terrier", "round": 0, "author": "user"}, g)
+        self.assertEqual(b["grounding"], "punct_cited")
+        c = repair_fact({"quote": "hike every Sunday morning", "round": 0, "author": "user"}, g)
+        self.assertEqual((c["grounding"], c["round"]), ("other_round", 1))
+        d = repair_fact({"quote": "quantum chromodynamics lecture notes", "round": 0, "author": "user"}, g)
+        self.assertFalse(kept(d))
+
+    def test_evaluate_and_tally(self):
+        from emlab.stage_x1_score import evaluate, tally
+        fd = ([["dog", "rex"], ["cello"], ["lisbon"]], [["dog", "rex"], ["cello"], ["lisbon"]])
+        fo = ["s1", "s2", "s3"]
+        rd, ro = [["cello", "week"], ["dog"], ["lisbon", "city"]], ["s2", "s1", "s3"]
+        per = evaluate({"q1": "dog rex", "q2": "unrelated question"}, {"q1": {"s1"}, "q2": {"s3"}}, fd, fo, rd, ro, None)
+        self.assertTrue(per["q1"]["facts_top10"] and per["q1"]["raw_top10"] and per["q1"]["combined_5_5_top10"])
+        t = tally(per)
+        self.assertEqual(t["n"], 2)
+
+
+class XpX1Dense(unittest.TestCase):
+    def test_rrf_merge_first_rank_session_order(self):
+        from emlab.xp_x1_dense import first_rank, rrf_merge, session_order
+        m = rrf_merge([["a", "b", "c"], ["b", "d"]])
+        self.assertEqual(m[0], "b")
+        self.assertEqual(set(m), {"a", "b", "c", "d"})
+        own = {"a": "s1", "b": "s2", "c": "s1", "d": "s3"}.get
+        self.assertEqual(first_rank(["a", "b", "c"], own, {"s2"}), 2)
+        self.assertIsNone(first_rank(["a"], own, {"s3"}))
+        self.assertEqual(session_order(["a", "c", "b", "d"], own), ["s1", "s2", "s3"])
+
+
+class StageX2(unittest.TestCase):
+    def test_window_view_and_paired(self):
+        from datetime import date
+        from emlab.stage_x2_score import in_window, paired, view
+        self.assertTrue(in_window(date(2023, 5, 22), (date(2023, 5, 20), date(2023, 5, 20))))
+        self.assertFalse(in_window(date(2023, 5, 30), (date(2023, 5, 20), date(2023, 5, 20))))
+        own = {("f", 0): "s1", ("f", 1): "s2", ("r", 0): "s2", ("r", 1): "s3"}.get
+        v = view([("f", 0), ("f", 1), ("r", 0), ("r", 1)], own, {"s2", "s3"})
+        self.assertTrue(v["sess_any_10"] and v["sess_all_10"] and v["item_hit10"])
+        self.assertEqual(v["best_gold_session_rank"], 2)
+        v2 = view([("f", 0)], own, {"s2", "s3"})
+        self.assertFalse(v2["sess_any_10"] or v2["sess_all_10"])
+        p = paired({"a": 0, "b": 0, "c": 1}, {"a": 1, "b": 1, "c": 1}, {"a": "A", "b": "B", "c": "C"})
+        self.assertEqual((p["wins"], p["losses"], p["n"]), (2, 0, 3))
+
+
+class StageX2WrongQuery(unittest.TestCase):
+    def test_partner_gold_is_disjoint_even_when_the_second_candidate_overlaps(self):
+        from emlab.stage_x2_score import wrong_partner
+        complete = ["a", "b", "c", "d", "e"]
+        gold = {"a": {"s1"}, "b": {"s1"}, "c": {"s1", "s2"}, "d": {"s3"}, "e": {"s4"}}
+        # the prior rule (skip ONE overlapping partner, then take complete[i + 2]) returned "c" for "a", whose gold overlaps a's
+        prior = complete[(0 + 1) % 5] if not (gold["a"] & gold["b"]) else complete[(0 + 2) % 5]
+        self.assertTrue(gold["a"] & gold[prior])
+        self.assertEqual(wrong_partner(complete, gold, 0), "d")
+        for i, x in enumerate(complete):
+            y = wrong_partner(complete, gold, i)
+            self.assertNotEqual(x, y)
+            self.assertFalse(gold[x] & gold[y])
+
+    def test_overlapping_pairs_detects_a_shared_gold_session_and_self_pairing(self):
+        from emlab.stage_x2_score import overlapping_pairs
+        gold = {"a": {"s1"}, "b": {"s1", "s2"}, "c": {"s3"}}
+        self.assertEqual(overlapping_pairs({"a": "c", "b": "c", "c": "a"}, gold), [])
+        self.assertEqual(overlapping_pairs({"a": "b", "b": "c", "c": "c"}, gold), ["a", "c"])
+
+    def test_wraps_and_reports_none_when_everyone_overlaps(self):
+        from emlab.stage_x2_score import wrong_partner
+        self.assertEqual(wrong_partner(["a", "b", "c"], {"a": {"s1"}, "b": {"s2"}, "c": {"s1"}}, 2), "b")
+        self.assertIsNone(wrong_partner(["a", "b"], {"a": {"s1"}, "b": {"s1"}}, 0))
+
+
+class StageX2MissingRecords(unittest.TestCase):
+    def test_removing_another_questions_distractors_can_flip_a_miss_into_a_hit(self):
+        # the mechanism behind "missing records can help as well as hurt": a session with no facts is absent from EVERY question's list
+        from emlab.stage_x2_score import view
+        own = {("f", i): "s%d" % i for i in range(12)}.get
+        full = [("f", i) for i in range(12)]  # gold is s11 at rank 12: a miss at 10
+        self.assertFalse(view(full, own, {"s11"})["sess_any_10"])
+        without_two = [d for d in full if d[1] not in (3, 4)]  # two other sessions had no facts: gold moves to rank 10
+        self.assertTrue(view(without_two, own, {"s11"})["sess_any_10"])

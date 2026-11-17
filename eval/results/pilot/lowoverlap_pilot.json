@@ -1,0 +1,497 @@
+{
+ "split": "pilot",
+ "threshold": 100,
+ "unit": "gold round, full haystack ranking",
+ "ranks": {
+  "51a45a95": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "3b6f954b": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "66f24dbb": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "ad7109d1": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "af8d2e46": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "0862e8bf": {
+   "bm25": 2,
+   "dense": 1
+  },
+  "a06e4cfe": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "3f1e9474": {
+   "bm25": 2,
+   "dense": 10
+  },
+  "ec81a493": {
+   "bm25": 1,
+   "dense": 12
+  },
+  "bc8a6e93": {
+   "bm25": 1,
+   "dense": 3
+  },
+  "311778f1": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "faba32e5": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "bc8a6e93_abs": null,
+  "f4f1d8a4_abs": null,
+  "0a995998": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "3a704032": {
+   "bm25": 1,
+   "dense": 15
+  },
+  "46a3abf7": {
+   "bm25": 31,
+   "dense": 1
+  },
+  "7024f17c": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "b3c15d39": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "gpt4_31ff4165": {
+   "bm25": 18,
+   "dense": 6
+  },
+  "60bf93ed": {
+   "bm25": 1,
+   "dense": 4
+  },
+  "d851d5ba": {
+   "bm25": 4,
+   "dense": 8
+  },
+  "gpt4_ab202e7f": {
+   "bm25": 5,
+   "dense": 12
+  },
+  "e3038f8c": {
+   "bm25": 10,
+   "dense": 4
+  },
+  "80ec1f4f_abs": null,
+  "gpt4_372c3eed_abs": null,
+  "06878be2": {
+   "bm25": 7,
+   "dense": 1
+  },
+  "54026fce": {
+   "bm25": 2,
+   "dense": 1
+  },
+  "d6233ab6": {
+   "bm25": 24,
+   "dense": 59
+  },
+  "fca70973": {
+   "bm25": 3,
+   "dense": 1
+  },
+  "b6025781": {
+   "bm25": 5,
+   "dense": 4
+  },
+  "07b6f563": {
+   "bm25": 8,
+   "dense": 3
+  },
+  "a11281a2": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "4f54b7c9": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "e6041065": {
+   "bm25": 1,
+   "dense": 7
+  },
+  "f35224e0": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "e25c3b8d": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "91b15a6e": {
+   "bm25": 2,
+   "dense": 4
+  },
+  "a96c20ee": {
+   "bm25": 1,
+   "dense": 6
+  },
+  "1c549ce4": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "1192316e": {
+   "bm25": 1,
+   "dense": 4
+  },
+  "078150f1": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "8cf4d046": {
+   "bm25": 2,
+   "dense": 3
+  },
+  "a346bb18": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "8e91e7d9": {
+   "bm25": 18,
+   "dense": 7
+  },
+  "e5ba910e_abs": null,
+  "09ba9854_abs": null,
+  "71017276": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "gpt4_18c2b244": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "gpt4_7abb270c": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "gpt4_1e4a8aeb": {
+   "bm25": 1,
+   "dense": 3
+  },
+  "6e984301": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "8077ef71": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "bcbe585f": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "71017277": {
+   "bm25": 2,
+   "dense": 32
+  },
+  "b46e15ee": {
+   "bm25": 2,
+   "dense": 5
+  },
+  "gpt4_f420262d": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "gpt4_e414231f": {
+   "bm25": 3,
+   "dense": 5
+  },
+  "gpt4_4929293b": {
+   "bm25": 32,
+   "dense": 119
+  },
+  "gpt4_fa19884d": {
+   "bm25": 26,
+   "dense": 6
+  },
+  "6e984302": {
+   "bm25": 147,
+   "dense": 55
+  },
+  "gpt4_8279ba03": {
+   "bm25": 90,
+   "dense": 18
+  },
+  "gpt4_0b2f1d21": {
+   "bm25": 3,
+   "dense": 2
+  },
+  "a3838d2b": {
+   "bm25": 1,
+   "dense": 3
+  },
+  "gpt4_2d58bcd6": {
+   "bm25": 1,
+   "dense": 3
+  },
+  "b9cfe692": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "c8090214": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "cc6d1ec1": {
+   "bm25": 1,
+   "dense": 8
+  },
+  "gpt4_2f56ae70": {
+   "bm25": 13,
+   "dense": 2
+  },
+  "gpt4_78cf46a3": {
+   "bm25": 1,
+   "dense": 11
+  },
+  "gpt4_0a05b494": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "gpt4_5438fa52": {
+   "bm25": 1,
+   "dense": 4
+  },
+  "gpt4_c27434e8": {
+   "bm25": 1,
+   "dense": 4
+  },
+  "gpt4_93159ced_abs": null,
+  "89941a93": {
+   "bm25": 4,
+   "dense": 5
+  },
+  "07741c44": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "2698e78f": {
+   "bm25": 1,
+   "dense": 4
+  },
+  "45dc21b6": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "5a4f22c0": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "2133c1b5": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "8fb83627": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "0e4e4c46": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "603deb26": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "5831f84d": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "50635ada": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "5c40ec5b": {
+   "bm25": 1,
+   "dense": 3
+  },
+  "26bdc477": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "f685340e_abs": null,
+  "89941a94": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "07741c45": {
+   "bm25": 2,
+   "dense": 1
+  },
+  "7161e7e2": {
+   "bm25": 1,
+   "dense": 2
+  },
+  "89527b6b": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "4c36ccef": {
+   "bm25": 2,
+   "dense": 1
+  },
+  "0e5e2d1a": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "cc539528": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "8aef76bc": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "2bf43736": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "d596882b": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "51b23612": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "ac031881": {
+   "bm25": 1,
+   "dense": 1
+  },
+  "eaca4986": {
+   "bm25": 2,
+   "dense": 2
+  },
+  "e48988bc": {
+   "bm25": 1,
+   "dense": 1
+  }
+ },
+ "low_overlap": {
+  "51a45a95": false,
+  "3b6f954b": false,
+  "66f24dbb": false,
+  "ad7109d1": false,
+  "af8d2e46": false,
+  "0862e8bf": false,
+  "a06e4cfe": false,
+  "3f1e9474": false,
+  "ec81a493": false,
+  "bc8a6e93": false,
+  "311778f1": false,
+  "faba32e5": false,
+  "bc8a6e93_abs": null,
+  "f4f1d8a4_abs": null,
+  "0a995998": false,
+  "3a704032": false,
+  "46a3abf7": false,
+  "7024f17c": false,
+  "b3c15d39": false,
+  "gpt4_31ff4165": false,
+  "60bf93ed": false,
+  "d851d5ba": false,
+  "gpt4_ab202e7f": false,
+  "e3038f8c": false,
+  "80ec1f4f_abs": null,
+  "gpt4_372c3eed_abs": null,
+  "06878be2": false,
+  "54026fce": false,
+  "d6233ab6": false,
+  "fca70973": false,
+  "b6025781": false,
+  "07b6f563": false,
+  "a11281a2": false,
+  "4f54b7c9": false,
+  "e6041065": false,
+  "f35224e0": false,
+  "e25c3b8d": false,
+  "91b15a6e": false,
+  "a96c20ee": false,
+  "1c549ce4": false,
+  "1192316e": false,
+  "078150f1": false,
+  "8cf4d046": false,
+  "a346bb18": false,
+  "8e91e7d9": false,
+  "e5ba910e_abs": null,
+  "09ba9854_abs": null,
+  "71017276": false,
+  "gpt4_18c2b244": false,
+  "gpt4_7abb270c": false,
+  "gpt4_1e4a8aeb": false,
+  "6e984301": false,
+  "8077ef71": false,
+  "bcbe585f": false,
+  "71017277": false,
+  "b46e15ee": false,
+  "gpt4_f420262d": false,
+  "gpt4_e414231f": false,
+  "gpt4_4929293b": false,
+  "gpt4_fa19884d": false,
+  "6e984302": false,
+  "gpt4_8279ba03": false,
+  "gpt4_0b2f1d21": false,
+  "a3838d2b": false,
+  "gpt4_2d58bcd6": false,
+  "b9cfe692": false,
+  "c8090214": false,
+  "cc6d1ec1": false,
+  "gpt4_2f56ae70": false,
+  "gpt4_78cf46a3": false,
+  "gpt4_0a05b494": false,
+  "gpt4_5438fa52": false,
+  "gpt4_c27434e8": false,
+  "gpt4_93159ced_abs": null,
+  "89941a93": false,
+  "07741c44": false,
+  "2698e78f": false,
+  "45dc21b6": false,
+  "5a4f22c0": false,
+  "2133c1b5": false,
+  "8fb83627": false,
+  "0e4e4c46": false,
+  "603deb26": false,
+  "5831f84d": false,
+  "50635ada": false,
+  "5c40ec5b": false,
+  "26bdc477": false,
+  "f685340e_abs": null,
+  "89941a94": false,
+  "07741c45": false,
+  "7161e7e2": false,
+  "89527b6b": false,
+  "4c36ccef": false,
+  "0e5e2d1a": false,
+  "cc539528": false,
+  "8aef76bc": false,
+  "2bf43736": false,
+  "d596882b": false,
+  "51b23612": false,
+  "ac031881": false,
+  "eaca4986": false,
+  "e48988bc": false
+ },
+ "n_with_gold": 94,
+ "n_low_overlap": 0
+}

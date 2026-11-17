@@ -114,7 +114,7 @@ Held (lab evidence; the fence and erasure mechanisms passed an independent delta
 | Fence enforced by the stores against a stale writer | 14 of 14 schema attacks refused; races with randomised timing hold with measured overlap |
 | Erasure of a 100,000-event subject, per-subject fencing, sweep survives a failed job | done, residue 0 |
 | Legal hold protects the held person's own messages when another subject is erased | 5 of 5 in three cases; controls violated 5 of 5 |
-| Secret scan before append, including encoded variants | planted secrets caught 880 of 880; 2 false blocks in 3,862 clean files; without decoding only 340 of 880 |
+| Secret scan before append, including encoded variants | planted secrets caught 880 of 880; 2 false blocks in 3,862 clean files; without decoding only 340 of 880. UPDATE 2026-11-17: the 880 of 880 holds only on its author's own corpus; the pre-registered held-out test FAILED, 483 of 1,169 and 150 of 750 (first reported by the write-path owner and relayed by main in WAL w63f62ffdf2a; the run at 62c6be5 was later reclassified as an observation under the old gate, with the FAIL carried and not rerun, WAL w25eafc7a825; the review recomputes 483 of 1,169, 150 of 750 and 37 of 1,200 false blocks from the rows, reviews/writepath/review-2.md item 7) |
 | Forged append, tampering and lost log tail detected against an anchor outside the database | 10 of 10 in four cases; controls violated 10 of 10 |
 | Checkpoint seal | edited seal and truncated log rejected 10 of 10 |
 | Destroyed key bytes really gone from disk | key on disk in 6 of 6 runs before the purge waited for older transactions; 0 of 6 after |
@@ -129,13 +129,13 @@ Did not hold or measured as a problem:
 | Elasticsearch fence against a dishonest writer | not started (security off on the test node) | open |
 | A test node can hold the per-tenant index layout | The node hit its 1,000-shard limit during the suite | open: layout rule needed for many tenants |
 
-## Licence transitions and ingestion from the model port (2026-11-16; both owner-reported on stubs, independent review pending)
+## Licence transitions and ingestion from the model port (2026-11-16; both owner-reported on stubs; independently reviewed 2026-11-17, see the UPDATE notes below and the section "Reviews of 2026-11-17")
 
 Licence rehearsal (feat/licence-rehearsal cc45153; own Elasticsearch 9.5.6 node, 12 fresh-node lives, stub embedder):
 
 | Finding | Figures | Class |
 |---|---|---|
-| A licence change under load gives no wrong answer and loses no write | Trial to Basic and Basic to trial: 387,045 responses checked against an independent oracle, 0 mismatches; 134,290 acknowledged writes, 0 lost; fallback to client-side fusion in 0.03 to 0.06 s; control (always call the licensed retriever) failed 59,656 of 59,656 on Basic | owner-reported; the oracle comparison was recomputed from raw rows for 1 of 12 lives |
+| A licence change under load gives no wrong answer and loses no write | Trial to Basic and Basic to trial: 387,045 responses (the ORIGINAL TEN lives, down_1..5 and up_1..5; 433,464 over all twelve lives) checked against an independent oracle, 0 mismatches; 134,290 acknowledged writes, 0 lost; fallback to client-side fusion in 0.03 to 0.06 s; control (always call the licensed retriever) failed 59,656 of 59,656 on Basic | owner-reported; the oracle comparison was recomputed from raw rows for 1 of 12 lives |
 | Data written with licensed features stays readable on Basic | semantic_text and bbq_disk indices: reads, deletes, force merge work; every write or re-embed fails with a licence error; migration to Basic-safe mappings verified (299 of 299 and 199 of 199 documents, 0 vector mismatches) | owner-reported |
 | Document-level security fails closed after a downgrade | 12 read paths, 0 documents leaked | owner-reported |
 
@@ -150,13 +150,20 @@ Did not hold or traps found:
 | A trial cannot be restarted on a cluster, so "licence returns on the same node" could not be tested | NOT TESTED; needs a real licence file |
 | The adapter reloads the system certificate store on every call (about 45 requests per second per process) | Performance defect in the reviewed adapter |
 
-Ingestion from the model port's log (feat/port-ingest 0801866):
+UPDATE 2026-11-17 (licence; EVIDENCE LOCATION: the verdicts are in the committed reports reviews/licence/review-2.md at cc45153 and reviews/licence-delta/review-1.md at fad672c; the T4 outcomes at 207136e and the gate-test run (4 FAIL and 1 ERROR on the fad672c code, then Ran 35 OK at 207136e) are different: Outcomes at feat/licence-rehearsal 207136e are owner-reported and coordinator-checked, NOT independently reviewed, and the artefacts live on that branch, not yet merged into lab/integration. Sources: reviews/licence/review-2.md at cc45153, reviews/licence-delta/review-1.md at fad672c, WAL wee06fdfe4e7, w772fd494b86, wb297c3d1172, DEGRADE.md at 207136e). The figures above are the original owner-reported ones and stay as recorded. What the reviews established:
+- Independent verdicts: LAB PASS WITH LIMITS, CLIENT BLOCK, at cc45153 and again at fad672c. The corrected-gate fixes at 207136e (N1: T4 defaulted a missing semantic-failure count to 0; N2: the independent source count ignored refresh responses and shard failures) are MAIN-CHECKED only (main ran the new gate tests: 4 FAIL and 1 ERROR on the fad672c code, Ran 35 OK at 207136e). The review cap was used, so they are not re-reviewed.
+- T4 (semantic writes) is UNVERIFIED for all 12 lives (`summary_corrected.json`); 93 to 257 failures per life were classified under the old rule and their rows were not saved.
+- The oracle comparison (the 387,045-response figure) is recomputable from raw rows for 1 of 12 lives (down_7: 27,599 examined, 0 mismatches). T2, T3, T5 and the arm counts recompute for all 12 lives from the committed 1,055,037 request rows. The other 11 lives' T1 figures are harness-computed. Write acknowledgement rows and the semantic-writer rows are not exported. A full-row rerun was not done.
+- The migration helpers (`scroll_all`, `source_count`, `migrate_*`, `check_*`) have only been exercised against an in-memory fake, which does not validate the scroll id. No live-node run of them exists.
+- Client use is blocked. The "0 mismatches / 0 lost" row is a lab observation on one node with a stub embedder, not client assurance.
+
+Ingestion from the model port's log (feat/port-ingest 0801866; rows kept as first recorded, see the UPDATE after the second table):
 
 | Finding | Figures | Class |
 |---|---|---|
-| A crash at any point in a call leaves a log from which exactly the completed turns are ingested | 40 of 40 with real process kills; control (log after return) loses a turn in 20 of 40 | owner-reported |
-| Exactly-once, ordered ingestion under duplication, reordering and racing ingesters | 20 of 20 seeds; the compare-and-set fence alone is sufficient | owner-reported |
-| The injected memory block is never ingested as user content | 0 across 7 placements on both provider shapes; a role-only ingester does it in 21 of 28 merged runs | owner-reported |
+| ~~A crash at any point in a call leaves a log from which exactly the completed turns are ingested~~ NARROWED 2026-11-17 to: at the named crash hooks, 40 of 40 expectations were met, INCLUDING four completed responses that are not recoverable | 40 of 40 with real process kills (named hooks only); control (log after return) loses a turn in 20 of 40. Meeting the test's expectations is not recovering every completed response | owner-reported at 0801866; bounded as reviews/ingest/review-2.md F5 words it |
+| ~~Exactly-once, ordered ingestion under duplication, reordering and racing ingesters~~ WITHDRAWN 2026-11-17 | 20 of 20 seeds was the original figure. The review of 0801866 found content alignment can drop repeated turns; the delta review of add7c86 found a legitimate earlier message could still vanish with no flag while `claim_exactly_once()` was true (the reviewer's case: history yes, ok; request yes, new). Probe by main: on add7c86 user events [new, yes], no gap, claim true; on 45f3413 [new, yes, yes] with a blocking `ambiguous_alignment` gap. The replacement contract is in the UPDATE below | overturned (reviews/ingest/review-2.md, reviews/ingest-delta/review-1.md; WAL wda2d06a705c) |
+| The injected memory block is never ingested as user content | 0 across 7 placements on both provider shapes; a role-only ingester does it in 21 of 28 merged runs | owner-reported; at d76e525 the covered placements are 6 (0 marker occurrences in 42 conversations) and the seventh, `host_alters_block`, is not covered (ingest/CLAIMS.md) |
 | Hosts that drop or summarise old messages | 12 of 12 after the fix (54 and 80 user events for 20 messages before it) | owner-reported |
 
 Did not hold:
@@ -164,8 +171,15 @@ Did not hold:
 | Finding | Consequence |
 |---|---|
 | A response lost between the model answering and the log recording it can be recovered | No provider API for it was found (Anthropic: none documented; OpenAI: unverified). Stated limit; the session reports "complete except unconfirmed" |
-| A tuned secret scanner generalises | 400 of 400 on the tuned variants, 350 of 800 (44%) on a held-out set. The write-path's 880 of 880 figure was also on a self-planted corpus and needs the same test |
+| A tuned secret scanner generalises | 400 of 400 on the tuned variants, 350 of 800 (44%) on a held-out set (300 of 800 under the corrected predicate: a private-key body was left behind in 50 of 50 cases). Updated 2026-11-17: on a fresh held-out set fixed before the repair, 800 of 960 (83.3%, Wilson lower bound 80.8%), 0 of 720 benign changed; four cells stay at 0 of 40. The write-path's 880 of 880 figure was also on a self-planted corpus; its held-out test FAILED (see the write-path UPDATE below) |
 | Truncation with no outside witness is detectable | never detected (0 of 20); 8 of 20 still falsely report complete (20 of 20 before the follow-up). Corrected 2026-11-16 from results2/item3-76b99c151ef3.json; this row said 12 of 20, which is in no result file |
+
+UPDATE 2026-11-17 (ingestion; EVIDENCE LOCATION: the verdicts are in the committed reports reviews/ingest/review-2.md at 0801866 and reviews/ingest-delta/review-1.md at add7c86; everything below that dates from d76e525, including 800 of 960, 0 of 720, the four 0-of-40 cells, the declared-boundary runs and the 53-test rerun, is different: Outcomes at feat/port-ingest d76e525 (docstring fix 2b23546) are owner-reported and coordinator-checked, NOT independently reviewed, and the artefacts live on that branch, not yet merged into lab/integration. Sources: ingest/CLAIMS.md at d76e525, WAL wee06fdfe4e7, w9541884ae8e, wda2d06a705c, w1680249dbf6):
+- Independent verdicts: LAB BLOCK at 0801866; LAB PASS WITH LIMITS, CLIENT BLOCK at add7c86 (F1 closed, F2 to F6 partly, new N1 and N2).
+- "Exactly once" is WITHDRAWN. The contract at d76e525 is a host-declared boundary: the host passes `new_count` (and optionally `retry_of`). With no declaration and an ambiguous alignment, nothing is dropped, the repeats are flagged, a blocking `ambiguous_alignment` gap is raised and `claim_complete()` and `claim_exactly_once()` are false (at-least-once with flagged repeats). With a declaration the stream is exact, as far as the declaration is true: the ingester cannot check it. A wrong `new_count` drops or duplicates messages.
+- Scanner: on a fresh held-out set (24 cells x 40) complete redaction 800 of 960 (83.3%, Wilson lower bound 80.8%); 0 of 720 on a benign set; four cells 0 of 40 (a bearer header and a private-key block with a dot or tab between every character). Synthetic and positive-only; the earlier generator's independence from tuning is not demonstrated.
+- The fixes after the delta review (the `new_count` contract, the payload oracle, the scanner repair) are MAIN-CHECKED, not independently re-reviewed (review cap used). Main re-ran 53 offline tests and both probes at d76e525.
+- Client use is BLOCKED: four 0-of-40 scanner cells, provenance sample 7 not 40, no real provider or database run (stubs and SQLite only), trusted-host declarations.
 
 ## Stage G: deeper shuffled candidates and a first look at answers (2026-11-16, pilot, feat/eval-scaffold c9e3909; design and scorer committed before any result; judge NOT validated)
 
@@ -254,7 +268,7 @@ Cost extrapolation (random sample only; interval is sampling noise; the pool's l
 6,100 calls about 442 USD notional, 90M input tokens, 13.4 h at concurrency 2; 22,500 calls about 1,630 USD, 333M input tokens, 49 h.
 Derived estimate without the harness overhead (what a direct model API would see): about 204 USD and 753 USD. Linking calls not priced.
 
-## Stage X2: extracted facts as extra candidates, 94 questions (2026-11-16, pilot, feat/eval-scaffold 5bb9c5a; design d2559c3 committed first; mechanical scoring, no judge; owner-reported, score file checked by main, not independently reviewed)
+## Stage X2: extracted facts as extra candidates, 94 questions (2026-11-16, pilot, feat/eval-scaffold 5bb9c5a; design d2559c3 committed first; mechanical scoring, no judge; owner-reported, score file checked by main; independently reviewed 2026-11-17, see the UPDATE at the end of this section)
 
 Pool: 1,098 sessions, 12,787 facts. 128 extraction calls, 127 ok. Nine
 gold-session records are missing (1 failed call, 8 zero-byte files from
@@ -281,7 +295,7 @@ control 0.011). fused_facts_raw fails the benefit rule (+0.130).
 
 **Did not hold:**
 - Independent confirmation of X1. The benefit is carried by the 11
-  questions already seen in X1; on the 12 new low-overlap questions
+  questions already seen in X1; on the other 12 low-overlap questions (also used in X1)
   rrf_facts shows 1 win and 1 loss.
 - Preference questions: rrf_facts loses 2 of 6 and wins 1.
 - Finding every gold session of a multi-session question: all gold in
@@ -294,6 +308,8 @@ control 0.011). fused_facts_raw fails the benefit rule (+0.130).
 Next step if pursued: a confirmatory test on the untouched split with
 about 60 low-overlap questions chosen by a rule fixed before any data,
 preference and all-gold aggregation as separate questions.
+
+UPDATE 2026-11-17 (sources: reviews/eval/review-2.md and review-3.md at 5bb9c5a; reviews/eval-x2delta/review-1.md at be746a0; WAL wee06fdfe4e7, w30e33fd2c41, w62d7c17ec2b). The first two reviews found the stage LAB BLOCK as written (wording exceeded the evidence; the 12 "new" low-overlap questions were already used in X1) with the primary counts confirmed. The delta review at be746a0: ACCEPT, LAB PASS WITH LIMITS, CLIENT BLOCK. F1, F2, F3 and F5 closed, F4 partly; three minor wording points (N1 to N3). The thresholds D1 to D3 are untouched. The reviewer recomputed the hit rates and the 39-question scaling from the committed rows and they reproduce. The wording fixes after the delta are main-checked, not re-reviewed. Limits that stand: reproducibility is PARTIAL (ranked candidate lists and input session and fact records are not committed, so retrieval cannot be regenerated); `rrf_facts` passes D1 to D3 as a screen and `fused_facts_raw` fails D2; no X2 question is unseen (all 23 low-overlap questions occur among the 38 X1 per-question entries); the result is a screen and a lead, not a confirmed benefit.
 
 ## Independent replication (2026-11-16, feat/replicate eaaeb53; non-author scripts and controls, thresholds committed first)
 
@@ -339,3 +355,34 @@ canonical whole-pool value 0.4754 at depth 200. The rerank time of 26 s was an e
 - "Batched extraction loses facts" counts facts, not recall against human gold; the per-call baseline was never validated by a person. Class: owner-reported count, cause unproven.
 - Whole-pool session recall: the right figure is 0.4754 (RRF session recall@10, pilot, n 94, eval/results/pilot/curve_pilot.json). 0.46 was the superseded old-sets value and is dropped.
 - Thresholds chosen after seeing pilot data (4,000-token budget, rerank top-20, low-overlap cut) weaken anything built on them; new thresholds must be committed before the run.
+
+## Reviews of 2026-11-17 (written from reviews/, the main WAL and each stream's own write-up; ticket goodqa#16096)
+
+Evidence class used below: **reviewed** means an independent Codex review (gpt-6.1-sol, rung R1) at the named commit; **main-checked** means main re-ran a probe or test and recorded it, with no independent reviewer; later commits are unreviewed. Every verdict pairs a LAB use verdict with a CLIENT use verdict. No client use of any stream below is cleared.
+
+### ES-pilot (path item 9): reviewed with limits
+Sources: eval/ES-PILOT.md at 854ed7f; reviews/eval-espilot/review-1.md at be746a0; reviews/eval-espilot-delta/review-1.md at 275f744; WAL w30e33fd2c41, wb249d9edf49, w287450f28a8, wb39d5825ee4.
+- Fresh run on the exact retriever against Elasticsearch on Basic, 94 questions in 90 content clusters, 16 cells (4 arms x H0 to H3). No MEAN-FAIL anywhere; the largest mean difference is -0.018 (cross-encoder at H2).
+- Three cells have a mean inside the band but an interval outside it: BM25 at H2, BM25 at H3, cross-encoder at H3. Equivalence is not demonstrated for them (the pre-stated label is "mean within band, equivalence not demonstrated"). Under the pilot's own square-root projection they fall inside +/-0.05 at 350 and 299 questions; that projection assumes the pilot's cluster structure and is not a result.
+- T4.7 tolerance missed: the exact cross-encoder differs from the earlier run by 0.0053 at H3 against a tolerance of 0.005. The proposed cause (batch padding) is unverified.
+- Limits stated by the write-up and confirmed by the reviews (eval/ES-PILOT.md lines 8, 20, 81 and 85; reviews/eval-espilot/review-1.md items 5 and 7): the needle test ran on a separate copy node of the artifacts, not the pilot node; the run was not blind (the prior outcome of BM25 at H2 and H3 was known when the decision logic was written); round-level overlap is descriptive only (it measures tokenizer and stemming differences, not the end metric).
+- Reviews: first review (be746a0) LAB PASS WITH LIMITS, CLIENT BLOCK, F1 material (the scorer returned KEEP on incomplete evidence; the committed numbers recompute and stand). Delta review (275f744) LAB PASS WITH LIMITS, CLIENT BLOCK, N1 and N2 material (completeness was checked against the supplied questions, not a pilot manifest; cluster metadata unvalidated). The review cap was used. Main verified the fix at 854ed7f by running 13 tampering attacks (the old scorer answered KEEP on 7; the fixed scorer answers WITHHELD-INCOMPLETE-EVIDENCE on all 13, and KEEP on the pristine evidence). The scorer is now bound to a committed pilot manifest; the manifest authenticates the files against the commit, not that the run produced them. MAIN-VERIFIED, not re-reviewed.
+- Decision 16 (Part E parity rule), WAL wb39d5825ee4: kept as written (per cell, mean difference within +/-0.03 and interval inside +/-0.05; the cross-encoder rescored on the Elasticsearch candidate set). ASSUMPTION: this is main's decision, not the user's words, and the user has not confirmed it. The tighter 0.02 / 0.04 band is not supported by the pilot.
+
+### Policy and write path: IN PROGRESS (state only what the reviews say)
+Sources: reviews/policy/review-3.md at 0a20b64; reviews/policy-delta/review-1.md at d05d731; reviews/writepath/review-2.md at 1fcf3f7; WAL w8e20dfa59b4, wb249d9edf49, w6c197d0614a, w0a6bd050146.
+- Policy at 0a20b64: LAB PASS WITH LIMITS, CLIENT BLOCK on N1 to N5. R3-7 closed for the stated attack by source inspection; R3-1, R3-3 and R3-8 partly. Review at d05d731 (inspection only; the reviewer ran no database): LAB PASS WITH LIMITS, CLIENT BLOCK. Closed: N1, N2, N4, N5, N6, N7, N8, R3-3. Partly: N3, R3-1, R3-8. New: M1 (High: the transaction-start clock lets proof and session expiry be defeated at every entry point), M2 (S2 verifier passes with incomplete coverage, so its PASS does not establish coverage), M3 (random references break idempotency under overlapping submissions), M4 (minor). Final review at a2d65fd (reviews/policy-final/review-1.md): LAB PASS WITH LIMITS, CLIENT BLOCK; M1 to M3 partly closed, M4 closed; new material P1 (submit can wait past session expiry after its last authentication check), P2 (S2 accepts duplicated proof observations as independent trials), P3 (an exception leaves a stale vault mapping that recreates the idempotency failure), P4 (a proof blocked on the replay ledger can open a session after its factor is revoked). A rescue at a higher rung is in progress (main). Work after a2d65fd is not covered by any review.
+- Write path at 1fcf3f7: LAB PASS WITH LIMITS, CLIENT BLOCK. N1 (material, high: an Elasticsearch start-up error becomes idle success with the lease held), N2 (material: the disk gate fails open when log retrieval fails), N3 (material: the plan-stability facts gate passes with zero facts), N4 (minor wording). The review recomputes the held-out secret-scan FAIL (483 of 1,169, 150 of 750). Work after 1fcf3f7 is not covered by any review.
+- Nothing in these two streams is accepted: components 2, 3 and 11 keep their statuses in DESIGN.md.
+- Write-path step 1 later finished at 3c2864f (the stamp table is owner-reported). Delta review at 3c2864f (reviews/writepath-delta/review-1.md; gpt-6.1-sol xhigh, rung R3): N1, N3 and N4 closed, N2 partly closed, two new material findings P1 (successful log retrieval does not establish complete log coverage) and P2 (STOP can be ignored during finalization or deleted during admission) in the validity gate; LAB BLOCK for issuing validity stamps with the current gate, CLIENT BLOCK. The fixes are assigned to the hardening stream (feat/writepath-hardening) and a full step-1 restamp is planned under the fixed gate (coordinator plan, ASSUMPTION). Stamp table: d3 FAIL then PASS under an amendment written after the FAIL; d2 VOID then PASS; R1 INCONCLUSIVE then PASS under an amendment written after the result; the held-out FAIL is carried, not rerun; the E1 in_flight window is unverified; the 1,000,000-document erasure rerun is BLOCKED on disk.
+
+### Publication facts
+Source: WAL wa23db2fd6b0, w60b4125278b. The repository ericmacdougall/context-management is public by the user's decision ("Keep public"). The default branch is lab/integration (the push to main was refused by the merge gate). The two realsession branches are not published. Not covered by that answer: the lab/integration-instead-of-main deviation, the LongMemEval MIT notice, two untraced 192.168.1.x addresses.
+
+### Operating rule: serial heavy runs on t2-dev
+Source: OWNER-COMMON addendum of 2026-11-17 (main); WAL w7cefba34fa3, w3b6b55bac12. ASSUMPTION (main's rule, not the user's words): stamped and rehearsal runs are serial under a lab run lock, and a stamped run starts only with at least 20 GB free. Cause: t2-dev has one volume shared with other tenants, whose use swings free space by 13 GB or more; on 2026-11-17 low free space voided or killed lab runs, and the policy owner's edb693f run also took free space to 13.4 GB and voided a write-path stamped run. A run voided or killed by disk is recorded and may be rerun.
+
+### Deploy path (path item 8), eval merge, stage 11 and pacing (state 2026-11-17)
+- Deploy path: five branches, each reviewed once (reviews/deploy-certcache/review-1.md, reviews/deploy-vacuous/review-1.md: LAB and CLIENT PASS WITH LIMITS; reviews/deploy-downgrade/review-2.md, reviews/deploy-poison/review-2.md, reviews/deploy-reprobe/review-1.md: blocked, CLIENT BLOCK). The fixes are owner-reported, the delta reviews are pending, and the item is parked.
+- The eval stream (Stage X2, ES-pilot) was merged into lab/integration by PR 2 (head 45d9ec5, merge d397570) after the PR gate passed (reviews/pr/eval-review-4.md; the first gate run, reviews/pr/eval-review-3.md, blocked).
+- Stage 11: the user approved all three pilots on 2026-11-17 (WAL wf5f7a7d73bc); the 40-item audit is by a second model, a labelled deviation. J1 ran (owner-reported, not yet reviewed; feat/eval-pilots at a6ca17e): wrong answers accepted 0 of 60, paraphrases rejected 0 of 60, shuffled-gold control 20 of 20, audit agreement 30 of 40 against a bar of 37, so G-judge is NOT MET (owner-reported at feat/eval-pilots a6ca17e, not merged into lab/integration, not independently reviewed; user decisions are as recorded in the coordinator's log, 2026-11-17). The user chose "fix the judge and re-run" (amended prompt, 40 fresh items, a second attempt never combined with the first); main scheduled it after the 2026-11-22 usage reset (ASSUMPTION). J2 is blocked meanwhile, A1 has not run, and section 5 items 12 to 14 are unapproved. Pacing: the user chose "critical path only" until the reset (relayed by main); the pilots and the deploy-path fixes are parked.

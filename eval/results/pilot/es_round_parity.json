@@ -1,0 +1,831 @@
+{
+ "split": "pilot",
+ "level": "H0",
+ "heuristic_status": "requested acorn, read back acorn",
+ "n": 102,
+ "summary": {
+  "bm25_es_vs_exact_top10": 0.7509803921568627,
+  "rrf_top10": 0.8166666666666667,
+  "rrf_same_order10": 0.00980392156862745,
+  "linear_top10": 0.8627450980392157,
+  "linear_same_order10": 0.0196078431372549
+ },
+ "rows": [
+  {
+   "qid": "51a45a95",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "3b6f954b",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.5,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "66f24dbb",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "ad7109d1",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "af8d2e46",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "0862e8bf",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "a06e4cfe",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "3f1e9474",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "ec81a493",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "bc8a6e93",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "311778f1",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "faba32e5",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "bc8a6e93_abs",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "f4f1d8a4_abs",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "0a995998",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "3a704032",
+   "bm25_es_vs_exact_top10": 0.4,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "46a3abf7",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "7024f17c",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "b3c15d39",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_31ff4165",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "60bf93ed",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "d851d5ba",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_ab202e7f",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "e3038f8c",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "80ec1f4f_abs",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_372c3eed_abs",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "06878be2",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "54026fce",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "d6233ab6",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "fca70973",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "b6025781",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "07b6f563",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "a11281a2",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "4f54b7c9",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "e6041065",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "f35224e0",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "e25c3b8d",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": true
+  },
+  {
+   "qid": "91b15a6e",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "a96c20ee",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "1c549ce4",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "1192316e",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "078150f1",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "8cf4d046",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.5,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "a346bb18",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "8e91e7d9",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "e5ba910e_abs",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "09ba9854_abs",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "71017276",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_18c2b244",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_7abb270c",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_1e4a8aeb",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "6e984301",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "8077ef71",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "bcbe585f",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "71017277",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "b46e15ee",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_f420262d",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.6,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_e414231f",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_4929293b",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_fa19884d",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.6,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "6e984302",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_8279ba03",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_0b2f1d21",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "a3838d2b",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_2d58bcd6",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "b9cfe692",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "c8090214",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "cc6d1ec1",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_2f56ae70",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_78cf46a3",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_0a05b494",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_5438fa52",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_c27434e8",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "gpt4_93159ced_abs",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "89941a93",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "07741c44",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": true,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "2698e78f",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "45dc21b6",
+   "bm25_es_vs_exact_top10": 0.5,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "5a4f22c0",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.6,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "2133c1b5",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "8fb83627",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "0e4e4c46",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "603deb26",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "5831f84d",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "50635ada",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "5c40ec5b",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "26bdc477",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "f685340e_abs",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "89941a94",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "07741c45",
+   "bm25_es_vs_exact_top10": 1.0,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "7161e7e2",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": true
+  },
+  {
+   "qid": "89527b6b",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.7,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "4c36ccef",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "0e5e2d1a",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "cc539528",
+   "bm25_es_vs_exact_top10": 0.6,
+   "rrf_top10": 0.7,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "8aef76bc",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.5,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "2bf43736",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "d596882b",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "51b23612",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "ac031881",
+   "bm25_es_vs_exact_top10": 0.9,
+   "rrf_top10": 1.0,
+   "rrf_same_order10": false,
+   "linear_top10": 1.0,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "eaca4986",
+   "bm25_es_vs_exact_top10": 0.8,
+   "rrf_top10": 0.9,
+   "rrf_same_order10": false,
+   "linear_top10": 0.9,
+   "linear_same_order10": false
+  },
+  {
+   "qid": "e48988bc",
+   "bm25_es_vs_exact_top10": 0.7,
+   "rrf_top10": 0.8,
+   "rrf_same_order10": false,
+   "linear_top10": 0.8,
+   "linear_same_order10": false
+  }
+ ]
+}

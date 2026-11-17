@@ -1,0 +1,1838 @@
+{
+ "label": "CANARY: pipeline check on 23 questions, not a result",
+ "level": "H3",
+ "n_questions": 23,
+ "probe_rows_excluded_from_call_log": 1,
+ "shape_problems": [],
+ "gold_session_in_tier0_top50": 7,
+ "summary": {
+  "RRF (tier 0, top 50)": {
+   "all_23_failures_counted": {
+    "n": 23,
+    "session_recall_at10": 0.0318840579710145,
+    "context4000_gold_session_recall": 0.0318840579710145,
+    "context4000_gold_round_recall": 0.0,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3705.913043478261
+   },
+   "ok_only": {
+    "n": 23,
+    "session_recall_at10": 0.0318840579710145,
+    "context4000_gold_session_recall": 0.0318840579710145,
+    "context4000_gold_round_recall": 0.0,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3705.913043478261
+   }
+  },
+  "RERANK (cross-encoder, top-n 20)": {
+   "all_23_failures_counted": {
+    "n": 23,
+    "session_recall_at10": 0.04057971014492754,
+    "context4000_gold_session_recall": 0.04057971014492754,
+    "context4000_gold_round_recall": 0.0,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3688.1304347826085
+   },
+   "ok_only": {
+    "n": 23,
+    "session_recall_at10": 0.04057971014492754,
+    "context4000_gold_session_recall": 0.04057971014492754,
+    "context4000_gold_round_recall": 0.0,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3688.1304347826085
+   }
+  },
+  "ANALYST": {
+   "all_23_failures_counted": {
+    "n": 23,
+    "session_recall_at10": 0.07246376811594202,
+    "context4000_gold_session_recall": 0.07246376811594202,
+    "context4000_gold_round_recall": 0.05072463768115942,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3159.4347826086955
+   },
+   "ok_only": {
+    "n": 22,
+    "session_recall_at10": 0.07575757575757575,
+    "context4000_gold_session_recall": 0.07575757575757575,
+    "context4000_gold_round_recall": 0.053030303030303025,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3303.0454545454545
+   }
+  },
+  "ANALYST-RERANK-ONLY": {
+   "all_23_failures_counted": {
+    "n": 23,
+    "session_recall_at10": 0.0927536231884058,
+    "context4000_gold_session_recall": 0.06231884057971015,
+    "context4000_gold_round_recall": 0.0,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3494.4347826086955
+   },
+   "ok_only": {
+    "n": 22,
+    "session_recall_at10": 0.09696969696969697,
+    "context4000_gold_session_recall": 0.06515151515151515,
+    "context4000_gold_round_recall": 0.0,
+    "ku_n": 0,
+    "ku_gold_latest_in_context": null,
+    "tokens_used": 3653.2727272727275
+   }
+  }
+ },
+ "tool_use": {
+  "ANALYST": {
+   "ok": 22,
+   "rejected": 1,
+   "tool_calls_mean": 3.590909090909091,
+   "questions_with_zero_tool_calls": 6,
+   "rejected_ids_total": 0,
+   "seconds_runner_mean": 21.87363636363636,
+   "output_tokens_mean": 1152.3636363636363
+  },
+  "ANALYST-RERANK-ONLY": {
+   "ok": 22,
+   "rejected": 1,
+   "tool_calls_mean": 0.0,
+   "questions_with_zero_tool_calls": 22,
+   "rejected_ids_total": 0,
+   "seconds_runner_mean": 10.227727272727272,
+   "output_tokens_mean": 732.5909090909091
+  },
+  "my_log_tool_calls_mean_over_analyst_ok": 3.590909090909091
+ },
+ "per_question": [
+  {
+   "qid": "078150f1",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3301,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3877,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3675,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3636,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 10,
+     "tokens": {
+      "in": 12,
+      "cache_creation": 47563,
+      "cache_read": 196793,
+      "out": 1994
+     },
+     "seconds_runner": 38.36
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29828,
+      "cache_read": 940,
+      "out": 653
+     },
+     "seconds_runner": 10.14
+    }
+   },
+   "my_log_calls": 10,
+   "my_log_tool_seconds": 8.370729207992554,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "07b6f563",
+   "qtype": "single-session-preference",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3531,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3829,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3805,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3806,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 31481,
+      "cache_read": 804,
+      "out": 1407
+     },
+     "seconds_runner": 17.24
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30659,
+      "cache_read": 975,
+      "out": 643
+     },
+     "seconds_runner": 8.75
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "3a704032",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3567,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3247,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3733,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3844,
+     "items": 10,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 9,
+     "tokens": {
+      "in": 8,
+      "cache_creation": 43866,
+      "cache_read": 111236,
+      "out": 1280
+     },
+     "seconds_runner": 25.65
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29650,
+      "cache_read": 975,
+      "out": 669
+     },
+     "seconds_runner": 9.32
+    }
+   },
+   "my_log_calls": 9,
+   "my_log_tool_seconds": 1.1536674499511719,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "46a3abf7",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3970,
+     "items": 7,
+     "gold_session_recall": 0.3333333333333333,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.3333333333333333,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3873,
+     "items": 6,
+     "gold_session_recall": 0.3333333333333333,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.3333333333333333,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3681,
+     "items": 5,
+     "gold_session_recall": 0.6666666666666666,
+     "gold_round_recall": 0.6666666666666666,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.6666666666666666,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3286,
+     "items": 5,
+     "gold_session_recall": 0.3333333333333333,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.3333333333333333,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 8,
+     "tokens": {
+      "in": 10,
+      "cache_creation": 45852,
+      "cache_read": 156203,
+      "out": 1942
+     },
+     "seconds_runner": 40.15
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 31372,
+      "cache_read": 975,
+      "out": 655
+     },
+     "seconds_runner": 9.76
+    }
+   },
+   "my_log_calls": 8,
+   "my_log_tool_seconds": 11.306382179260254,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "6e984302",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3598,
+     "items": 10,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3515,
+     "items": 12,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3411,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3972,
+     "items": 3,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 12,
+     "tokens": {
+      "in": 12,
+      "cache_creation": 59029,
+      "cache_read": 229518,
+      "out": 2095
+     },
+     "seconds_runner": 41.79
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29596,
+      "cache_read": 975,
+      "out": 1008
+     },
+     "seconds_runner": 11.8
+    }
+   },
+   "my_log_calls": 12,
+   "my_log_tool_seconds": 8.96897578239441,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "7024f17c",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3765,
+     "items": 11,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3787,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3935,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3724,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30932,
+      "cache_read": 804,
+      "out": 874
+     },
+     "seconds_runner": 13.32
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30125,
+      "cache_read": 975,
+      "out": 642
+     },
+     "seconds_runner": 8.16
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "71017277",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3970,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3804,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 2856,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3583,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 4,
+     "tokens": {
+      "in": 6,
+      "cache_creation": 38641,
+      "cache_read": 68841,
+      "out": 997
+     },
+     "seconds_runner": 22.88
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29658,
+      "cache_read": 975,
+      "out": 925
+     },
+     "seconds_runner": 11.17
+    }
+   },
+   "my_log_calls": 4,
+   "my_log_tool_seconds": 3.66998553276062,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "8cf4d046",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3737,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3711,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3515,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3924,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.5,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 2,
+     "tokens": {
+      "in": 4,
+      "cache_creation": 33515,
+      "cache_read": 31510,
+      "out": 834
+     },
+     "seconds_runner": 17.89
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29070,
+      "cache_read": 975,
+      "out": 664
+     },
+     "seconds_runner": 9.54
+    }
+   },
+   "my_log_calls": 2,
+   "my_log_tool_seconds": 2.1223504543304443,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "8e91e7d9",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3917,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3515,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3338,
+     "items": 10,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3428,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 3,
+     "tokens": {
+      "in": 4,
+      "cache_creation": 37531,
+      "cache_read": 32454,
+      "out": 947
+     },
+     "seconds_runner": 18.34
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30024,
+      "cache_read": 975,
+      "out": 669
+     },
+     "seconds_runner": 10.05
+    }
+   },
+   "my_log_calls": 3,
+   "my_log_tool_seconds": 2.667971611022949,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "b46e15ee",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3943,
+     "items": 10,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3836,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3255,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3921,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29598,
+      "cache_read": 804,
+      "out": 823
+     },
+     "seconds_runner": 15.51
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 28761,
+      "cache_read": 975,
+      "out": 668
+     },
+     "seconds_runner": 9.31
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "b6025781",
+   "qtype": "single-session-preference",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3722,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3207,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3884,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3484,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 33616,
+      "cache_read": 804,
+      "out": 1493
+     },
+     "seconds_runner": 18.59
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 32773,
+      "cache_read": 975,
+      "out": 596
+     },
+     "seconds_runner": 8.82
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "bc8a6e93",
+   "qtype": "single-session-user",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3556,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3800,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3417,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3919,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 2,
+     "tokens": {
+      "in": 4,
+      "cache_creation": 34728,
+      "cache_read": 33470,
+      "out": 655
+     },
+     "seconds_runner": 14.13
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 31030,
+      "cache_read": 975,
+      "out": 666
+     },
+     "seconds_runner": 8.85
+    }
+   },
+   "my_log_calls": 2,
+   "my_log_tool_seconds": 0.9162063598632812,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "d6233ab6",
+   "qtype": "single-session-preference",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3756,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3683,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3925,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3899,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30458,
+      "cache_read": 804,
+      "out": 1111
+     },
+     "seconds_runner": 13.54
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29627,
+      "cache_read": 975,
+      "out": 596
+     },
+     "seconds_runner": 9.27
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "e3038f8c",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3920,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3868,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3922,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3455,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 6,
+     "tokens": {
+      "in": 8,
+      "cache_creation": 39986,
+      "cache_read": 108210,
+      "out": 1403
+     },
+     "seconds_runner": 29.48
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30044,
+      "cache_read": 975,
+      "out": 654
+     },
+     "seconds_runner": 8.77
+    }
+   },
+   "my_log_calls": 6,
+   "my_log_tool_seconds": 1.6527788639068604,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "fca70973",
+   "qtype": "single-session-preference",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3565,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3835,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3435,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 0,
+     "items": 0,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 32305,
+      "cache_read": 804,
+      "out": 1029
+     },
+     "seconds_runner": 13.53
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "rejected",
+     "rejected_ids": null,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 31478,
+      "cache_read": 975,
+      "out": 650
+     },
+     "seconds_runner": 10.34
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "gpt4_2f56ae70",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3697,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3402,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3864,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3615,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 7,
+     "tokens": {
+      "in": 8,
+      "cache_creation": 39629,
+      "cache_read": 104609,
+      "out": 1360
+     },
+     "seconds_runner": 34.34
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 28663,
+      "cache_read": 975,
+      "out": 657
+     },
+     "seconds_runner": 9.81
+    }
+   },
+   "my_log_calls": 7,
+   "my_log_tool_seconds": 3.0655994415283203,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "gpt4_31ff4165",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3682,
+     "items": 5,
+     "gold_session_recall": 0.2,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.2,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3763,
+     "items": 6,
+     "gold_session_recall": 0.4,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.4,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3670,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3718,
+     "items": 6,
+     "gold_session_recall": 0.4,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.6,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 3,
+     "tokens": {
+      "in": 4,
+      "cache_creation": 35466,
+      "cache_read": 31636,
+      "out": 1158
+     },
+     "seconds_runner": 21.83
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29216,
+      "cache_read": 975,
+      "out": 653
+     },
+     "seconds_runner": 10.8
+    }
+   },
+   "my_log_calls": 3,
+   "my_log_tool_seconds": 0.994473934173584,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "gpt4_4929293b",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3677,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3453,
+     "items": 8,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 745,
+     "items": 3,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3495,
+     "items": 5,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 4,
+     "tokens": {
+      "in": 6,
+      "cache_creation": 37110,
+      "cache_read": 67455,
+      "out": 784
+     },
+     "seconds_runner": 18.53
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29781,
+      "cache_read": 975,
+      "out": 664
+     },
+     "seconds_runner": 10.26
+    }
+   },
+   "my_log_calls": 4,
+   "my_log_tool_seconds": 0.7919063568115234,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "gpt4_5438fa52",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3548,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3797,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3511,
+     "items": 7,
+     "gold_session_recall": 0.5,
+     "gold_round_recall": 0.5,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.5,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3391,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 2,
+     "tokens": {
+      "in": 4,
+      "cache_creation": 33652,
+      "cache_read": 31675,
+      "out": 821
+     },
+     "seconds_runner": 18.53
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 29245,
+      "cache_read": 975,
+      "out": 663
+     },
+     "seconds_runner": 9.95
+    }
+   },
+   "my_log_calls": 2,
+   "my_log_tool_seconds": 0.29784536361694336,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "gpt4_8279ba03",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3590,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3790,
+     "items": 6,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 3866,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3566,
+     "items": 7,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 3,
+     "tokens": {
+      "in": 6,
+      "cache_creation": 38069,
+      "cache_read": 72540,
+      "out": 1025
+     },
+     "seconds_runner": 17.15
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 32325,
+      "cache_read": 975,
+      "out": 1006
+     },
+     "seconds_runner": 13.07
+    }
+   },
+   "my_log_calls": 3,
+   "my_log_tool_seconds": 0.3647651672363281,
+   "gold_session_in_tier0_top50": false
+  },
+  {
+   "qid": "gpt4_ab202e7f",
+   "qtype": "multi-session",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3496,
+     "items": 5,
+     "gold_session_recall": 0.2,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.2,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3801,
+     "items": 5,
+     "gold_session_recall": 0.2,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.2,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 0,
+     "items": 0,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3264,
+     "items": 6,
+     "gold_session_recall": 0.2,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.2,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "rejected",
+     "rejected_ids": null,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 32886,
+      "cache_read": 804,
+      "out": 740
+     },
+     "seconds_runner": 11.36
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 32049,
+      "cache_read": 975,
+      "out": 676
+     },
+     "seconds_runner": 10.96
+    }
+   },
+   "my_log_calls": 0,
+   "my_log_tool_seconds": 0.0,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "gpt4_e414231f",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3883,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3741,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 1944,
+     "items": 5,
+     "gold_session_recall": 0.5,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.5,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3909,
+     "items": 10,
+     "gold_session_recall": 0.5,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.5,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 2,
+     "tokens": {
+      "in": 4,
+      "cache_creation": 33973,
+      "cache_read": 32628,
+      "out": 730
+     },
+     "seconds_runner": 14.4
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30203,
+      "cache_read": 975,
+      "out": 1117
+     },
+     "seconds_runner": 15.06
+    }
+   },
+   "my_log_calls": 2,
+   "my_log_tool_seconds": 0.21394824981689453,
+   "gold_session_in_tier0_top50": true
+  },
+  {
+   "qid": "gpt4_fa19884d",
+   "qtype": "temporal-reasoning",
+   "arms": {
+    "RRF (tier 0, top 50)": {
+     "tokens_used": 3845,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "RERANK (cross-encoder, top-n 20)": {
+     "tokens_used": 3693,
+     "items": 10,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST": {
+     "tokens_used": 1280,
+     "items": 4,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    },
+    "ANALYST-RERANK-ONLY": {
+     "tokens_used": 3533,
+     "items": 9,
+     "gold_session_recall": 0.0,
+     "gold_round_recall": 0.0,
+     "gold_latest_in_context": null,
+     "stale_only": null,
+     "session_recall_at10": 0.0,
+     "gold_in_candidates_top50": null
+    }
+   },
+   "info": {
+    "ANALYST": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 2,
+     "tokens": {
+      "in": 6,
+      "cache_creation": 33625,
+      "cache_read": 66848,
+      "out": 590
+     },
+     "seconds_runner": 16.04
+    },
+    "ANALYST-RERANK-ONLY": {
+     "status": "ok",
+     "rejected_ids": 0,
+     "tool_calls_runner": 0,
+     "tokens": {
+      "in": 2,
+      "cache_creation": 30478,
+      "cache_read": 975,
+      "out": 973
+     },
+     "seconds_runner": 11.39
+    }
+   },
+   "my_log_calls": 2,
+   "my_log_tool_seconds": 0.1547081470489502,
+   "gold_session_in_tier0_top50": false
+  }
+ ]
+}

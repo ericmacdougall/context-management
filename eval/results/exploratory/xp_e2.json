@@ -1,0 +1,1276 @@
+{
+ "retriever": "exact in-process (BM25 + E5 cosine); not Elasticsearch",
+ "split": "pilot",
+ "level": "H3",
+ "n_questions": 94,
+ "low_overlap_n": 23,
+ "label_blind_probe": {
+  "feature": "session length in tokens (gold vs other level sessions)",
+  "mean_auroc": 0.6874564309601658,
+  "null_p2.5": 0.44813338342219183,
+  "null_p97.5": 0.5466142831013667,
+  "length_shortcut_present": true,
+  "n_questions": 94
+ },
+ "e2": {
+  "two_stage_S20": {
+   "mean_session_recall10": 0.46205673758865246,
+   "flat_mean": 0.4806737588652482,
+   "diff_vs_flat": {
+    "mean_diff": -0.018617021276595744,
+    "ci_low": -0.07446808510638298,
+    "ci_high": 0.03993055555555556,
+    "lower_one_sided": -0.06648550724637681,
+    "effective_n": 90.0
+   },
+   "stage1_recall_at_S": 0.5205673758865248,
+   "low_overlap_mean": 0.08623188405797101,
+   "low_overlap_flat_mean": 0.04057971014492754,
+   "other_mean": 0.5838028169014085,
+   "other_flat_mean": 0.6232394366197183,
+   "hit_rate_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.5944444444444444,
+    "wilson_low": 0.4911614132445872,
+    "wilson_high": 0.6899951908154844
+   },
+   "hit_rate_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.17391304347826086,
+    "wilson_low": 0.06978653563062565,
+    "wilson_high": 0.3713764764022614
+   },
+   "hit_rate_flat_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6222222222222222,
+    "wilson_low": 0.5189976405818348,
+    "wilson_high": 0.715440317613552
+   },
+   "hit_rate_flat_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.13043478260869565,
+    "wilson_low": 0.04537659093631238,
+    "wilson_high": 0.32127482270095964
+   },
+   "pass_rule": false
+  },
+  "control_shuffled_S20": {
+   "mean_session_recall10": 0.0,
+   "flat_mean": 0.4806737588652482,
+   "diff_vs_flat": {
+    "mean_diff": -0.4806737588652482,
+    "ci_low": -0.571376811594203,
+    "ci_high": -0.3953608247422681,
+    "lower_one_sided": -0.556340579710145,
+    "effective_n": 90.0
+   },
+   "stage1_recall_at_S": 0.0,
+   "low_overlap_mean": 0.0,
+   "low_overlap_flat_mean": 0.04057971014492754,
+   "other_mean": 0.0,
+   "other_flat_mean": 0.6232394366197183,
+   "hit_rate_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.0,
+    "wilson_low": 0.0,
+    "wilson_high": 0.04093562556432678
+   },
+   "hit_rate_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.0,
+    "wilson_low": 0.0,
+    "wilson_high": 0.14311661845042686
+   },
+   "hit_rate_flat_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6222222222222222,
+    "wilson_low": 0.5189976405818348,
+    "wilson_high": 0.715440317613552
+   },
+   "hit_rate_flat_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.13043478260869565,
+    "wilson_low": 0.04537659093631238,
+    "wilson_high": 0.32127482270095964
+   },
+   "pass_rule": false
+  },
+  "two_stage_S50": {
+   "mean_session_recall10": 0.4806737588652482,
+   "flat_mean": 0.4806737588652482,
+   "diff_vs_flat": {
+    "mean_diff": -5.905441620346577e-19,
+    "ci_low": -0.02291666666666667,
+    "ci_high": 0.02482269503546099,
+    "lower_one_sided": -0.01935483870967742,
+    "effective_n": 90.0
+   },
+   "stage1_recall_at_S": 0.6941489361702128,
+   "low_overlap_mean": 0.0318840579710145,
+   "low_overlap_flat_mean": 0.04057971014492754,
+   "other_mean": 0.6260563380281691,
+   "other_flat_mean": 0.6232394366197183,
+   "hit_rate_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6111111111111112,
+    "wilson_low": 0.5078245886506263,
+    "wilson_high": 0.7053008278906345
+   },
+   "hit_rate_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.08695652173913043,
+    "wilson_low": 0.024180004484220363,
+    "wilson_high": 0.26795981075743663
+   },
+   "hit_rate_flat_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6222222222222222,
+    "wilson_low": 0.5189976405818348,
+    "wilson_high": 0.715440317613552
+   },
+   "hit_rate_flat_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.13043478260869565,
+    "wilson_low": 0.04537659093631238,
+    "wilson_high": 0.32127482270095964
+   },
+   "pass_rule": false
+  },
+  "control_shuffled_S50": {
+   "mean_session_recall10": 0.0,
+   "flat_mean": 0.4806737588652482,
+   "diff_vs_flat": {
+    "mean_diff": -0.4806737588652482,
+    "ci_low": -0.571376811594203,
+    "ci_high": -0.3953608247422681,
+    "lower_one_sided": -0.556340579710145,
+    "effective_n": 90.0
+   },
+   "stage1_recall_at_S": 0.0,
+   "low_overlap_mean": 0.0,
+   "low_overlap_flat_mean": 0.04057971014492754,
+   "other_mean": 0.0,
+   "other_flat_mean": 0.6232394366197183,
+   "hit_rate_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.0,
+    "wilson_low": 0.0,
+    "wilson_high": 0.04093562556432678
+   },
+   "hit_rate_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.0,
+    "wilson_low": 0.0,
+    "wilson_high": 0.14311661845042686
+   },
+   "hit_rate_flat_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6222222222222222,
+    "wilson_low": 0.5189976405818348,
+    "wilson_high": 0.715440317613552
+   },
+   "hit_rate_flat_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.13043478260869565,
+    "wilson_low": 0.04537659093631238,
+    "wilson_high": 0.32127482270095964
+   },
+   "pass_rule": false
+  },
+  "planted_gold_oracle_S50": {
+   "mean_session_recall10": 0.5040780141843971,
+   "flat_mean": 0.4806737588652482,
+   "diff_vs_flat": {
+    "mean_diff": 0.02340425531914894,
+    "ci_low": -0.005376344086021506,
+    "ci_high": 0.057986111111111106,
+    "lower_one_sided": -2.3875763970433476e-18,
+    "effective_n": 90.0
+   },
+   "stage1_recall_at_S": 1.0,
+   "low_overlap_mean": 0.04057971014492754,
+   "low_overlap_flat_mean": 0.04057971014492754,
+   "other_mean": 0.6542253521126761,
+   "other_flat_mean": 0.6232394366197183,
+   "hit_rate_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6333333333333333,
+    "wilson_low": 0.5302230476398118,
+    "wilson_high": 0.725527452209701
+   },
+   "hit_rate_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.13043478260869565,
+    "wilson_low": 0.04537659093631238,
+    "wilson_high": 0.32127482270095964
+   },
+   "hit_rate_flat_all": {
+    "n_questions": 94,
+    "n_clusters": 90,
+    "rate": 0.6222222222222222,
+    "wilson_low": 0.5189976405818348,
+    "wilson_high": 0.715440317613552
+   },
+   "hit_rate_flat_low_overlap": {
+    "n_questions": 23,
+    "n_clusters": 23,
+    "rate": 0.13043478260869565,
+    "wilson_low": 0.04537659093631238,
+    "wilson_high": 0.32127482270095964
+   },
+   "pass_rule": false
+  }
+ },
+ "x01_budget_presence": {
+  "H1": {
+   "flat": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.3,
+      "wilson_low": 0.2151091449772697,
+      "wilson_high": 0.40126510524846093
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.16666666666666666,
+      "wilson_low": 0.10368488734312978,
+      "wilson_high": 0.2569388630330881
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7111111111111111,
+      "wilson_low": 0.6103595640200169,
+      "wilson_high": 0.7945787274083785
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.32222222222222224,
+      "wilson_low": 0.2346677118619395,
+      "wilson_high": 0.4243316216720434
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7777777777777778,
+      "wilson_low": 0.6815268960895451,
+      "wilson_high": 0.8512866452636068
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.49444444444444446,
+      "wilson_low": 0.39351508198752844,
+      "wilson_high": 0.5958286471854086
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8555555555555555,
+      "wilson_low": 0.7684012207986421,
+      "wilson_high": 0.9136001121333921
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.65,
+      "wilson_low": 0.5471613695295887,
+      "wilson_high": 0.7405579428011133
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9,
+      "wilson_low": 0.8207582512456635,
+      "wilson_high": 0.9464932483028752
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7666666666666667,
+      "wilson_low": 0.6694829435426721,
+      "wilson_high": 0.8420180561563537
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9611111111111111,
+      "wilson_low": 0.8988033303910277,
+      "wilson_high": 0.9856671482552044
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8222222222222222,
+      "wilson_low": 0.7305610795529596,
+      "wilson_high": 0.8875026284166965
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9666666666666667,
+      "wilson_low": 0.9065271396961013,
+      "wilson_high": 0.9885996097771937
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8833333333333333,
+      "wilson_low": 0.8008215696757928,
+      "wilson_high": 0.9344611173915567
+     }
+    }
+   },
+   "two_stage_S50": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.3,
+      "wilson_low": 0.2151091449772697,
+      "wilson_high": 0.40126510524846093
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.16666666666666666,
+      "wilson_low": 0.10368488734312978,
+      "wilson_high": 0.2569388630330881
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7111111111111111,
+      "wilson_low": 0.6103595640200169,
+      "wilson_high": 0.7945787274083785
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.32222222222222224,
+      "wilson_low": 0.2346677118619395,
+      "wilson_high": 0.4243316216720434
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7777777777777778,
+      "wilson_low": 0.6815268960895451,
+      "wilson_high": 0.8512866452636068
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.48333333333333334,
+      "wilson_low": 0.38290673725677526,
+      "wilson_high": 0.5851244502620357
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8444444444444444,
+      "wilson_low": 0.7556715472270163,
+      "wilson_high": 0.9050172440508919
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.65,
+      "wilson_low": 0.5471613695295887,
+      "wilson_high": 0.7405579428011133
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9,
+      "wilson_low": 0.8207582512456635,
+      "wilson_high": 0.9464932483028752
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7666666666666667,
+      "wilson_low": 0.6694829435426721,
+      "wilson_high": 0.8420180561563537
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9444444444444444,
+      "wilson_low": 0.8764626377820048,
+      "wilson_high": 0.976039028383038
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8444444444444444,
+      "wilson_low": 0.7556715472270163,
+      "wilson_high": 0.9050172440508919
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.95,
+      "wilson_low": 0.8837900930544302,
+      "wilson_high": 0.9793678439376756
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8722222222222222,
+      "wilson_low": 0.7877429506752214,
+      "wilson_high": 0.9262271947380021
+     }
+    }
+   },
+   "planted_gold_first": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.34444444444444444,
+      "wilson_low": 0.2544591402493863,
+      "wilson_high": 0.44716527659284866
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2111111111111111,
+      "wilson_low": 0.13952592118014923,
+      "wilson_high": 0.30634799581257294
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.4166666666666667,
+      "wilson_low": 0.3202718157012574,
+      "wilson_high": 0.5198841218927971
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6388888888888888,
+      "wilson_low": 0.5358556680009574,
+      "wilson_high": 0.7305511026756184
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7444444444444445,
+      "wilson_low": 0.6456235101244654,
+      "wilson_high": 0.8232524062663082
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8166666666666667,
+      "wilson_low": 0.7243500113430197,
+      "wilson_high": 0.8830574257995734
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8666666666666667,
+      "wilson_low": 0.7812606949930235,
+      "wilson_high": 0.9220531795931369
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9333333333333333,
+      "wilson_low": 0.8620990522567448,
+      "wilson_high": 0.9690900722541721
+     }
+    }
+   }
+  },
+  "H2": {
+   "flat": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2,
+      "wilson_low": 0.13042401182717056,
+      "wilson_high": 0.29413736351142555
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.12222222222222222,
+      "wilson_low": 0.06963615965482382,
+      "wilson_high": 0.2057374241048897
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5444444444444444,
+      "wilson_low": 0.44184633569208204,
+      "wilson_high": 0.6434038309244221
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2611111111111111,
+      "wilson_low": 0.18148421383578878,
+      "wilson_high": 0.3602961406005007
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6277777777777778,
+      "wilson_low": 0.5246037446448282,
+      "wilson_high": 0.7204904843776216
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.36666666666666664,
+      "wilson_low": 0.27447254779029884,
+      "wilson_high": 0.46977695236018824
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7333333333333333,
+      "wilson_low": 0.6338015621189832,
+      "wilson_high": 0.8137618126176642
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.45,
+      "wilson_low": 0.3513702863016244,
+      "wilson_high": 0.5527232762548082
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7888888888888889,
+      "wilson_low": 0.6936520041874271,
+      "wilson_high": 0.8604740788198507
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5888888888888889,
+      "wilson_low": 0.48563237347145555,
+      "wilson_high": 0.684867959761553
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8333333333333334,
+      "wilson_low": 0.743061136966912,
+      "wilson_high": 0.8963151126568702
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6555555555555556,
+      "wilson_low": 0.5528347234071513,
+      "wilson_high": 0.7455408597506137
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.9,
+      "wilson_low": 0.8207582512456635,
+      "wilson_high": 0.9464932483028752
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7666666666666667,
+      "wilson_low": 0.6694829435426721,
+      "wilson_high": 0.8420180561563537
+     }
+    }
+   },
+   "two_stage_S50": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2111111111111111,
+      "wilson_low": 0.13952592118014923,
+      "wilson_high": 0.30634799581257294
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.13333333333333333,
+      "wilson_low": 0.07794682040686314,
+      "wilson_high": 0.21873930500697653
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5444444444444444,
+      "wilson_low": 0.44184633569208204,
+      "wilson_high": 0.6434038309244221
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2611111111111111,
+      "wilson_low": 0.18148421383578878,
+      "wilson_high": 0.3602961406005007
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6388888888888888,
+      "wilson_low": 0.5358556680009574,
+      "wilson_high": 0.7305511026756184
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.36666666666666664,
+      "wilson_low": 0.27447254779029884,
+      "wilson_high": 0.46977695236018824
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7222222222222222,
+      "wilson_low": 0.6220477250293879,
+      "wilson_high": 0.8042031080531336
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.46111111111111114,
+      "wilson_low": 0.36183416765238813,
+      "wilson_high": 0.5635719365581707
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7888888888888889,
+      "wilson_low": 0.6936520041874271,
+      "wilson_high": 0.8604740788198507
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5777777777777777,
+      "wilson_low": 0.4746118562531433,
+      "wilson_high": 0.6745759353257391
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8333333333333334,
+      "wilson_low": 0.743061136966912,
+      "wilson_high": 0.8963151126568702
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6666666666666666,
+      "wilson_low": 0.5642231776063374,
+      "wilson_high": 0.7554649472055536
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8888888888888888,
+      "wilson_low": 0.8074221497873896,
+      "wilson_high": 0.9385168081070229
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7555555555555555,
+      "wilson_low": 0.6575162887069911,
+      "wilson_high": 0.8326721693379086
+     }
+    }
+   },
+   "planted_gold_first": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.34444444444444444,
+      "wilson_low": 0.2544591402493863,
+      "wilson_high": 0.44716527659284866
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2111111111111111,
+      "wilson_low": 0.13952592118014923,
+      "wilson_high": 0.30634799581257294
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.4111111111111111,
+      "wilson_low": 0.31513204023844693,
+      "wilson_high": 0.5143676265285444
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5277777777777778,
+      "wilson_low": 0.4256277409739573,
+      "wilson_high": 0.6276536131613579
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6277777777777778,
+      "wilson_low": 0.5246037446448282,
+      "wilson_high": 0.7204904843776216
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7111111111111111,
+      "wilson_low": 0.6103595640200169,
+      "wilson_high": 0.7945787274083785
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7611111111111111,
+      "wilson_low": 0.6634901772103141,
+      "wilson_high": 0.8373545516616485
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.8055555555555556,
+      "wilson_low": 0.7120015513591355,
+      "wilson_high": 0.8740933441293316
+     }
+    }
+   }
+  },
+  "H3": {
+   "flat": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.18888888888888888,
+      "wilson_low": 0.12141259844132833,
+      "wilson_high": 0.28183623524314166
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.1111111111111111,
+      "wilson_low": 0.06148319189297713,
+      "wilson_high": 0.19257785021261037
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.3055555555555556,
+      "wilson_low": 0.21997626928045919,
+      "wilson_high": 0.40705425177233456
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.18888888888888888,
+      "wilson_low": 0.12141259844132833,
+      "wilson_high": 0.28183623524314166
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.43333333333333335,
+      "wilson_low": 0.33576572531248783,
+      "wilson_high": 0.5363590247627558
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2722222222222222,
+      "wilson_low": 0.19100918422073648,
+      "wilson_high": 0.372083711869679
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5333333333333333,
+      "wilson_low": 0.4310218745393534,
+      "wilson_high": 0.6329157504230247
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.3277777777777778,
+      "wilson_low": 0.2395942032471668,
+      "wilson_high": 0.4300614011138791
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6222222222222222,
+      "wilson_low": 0.5189976405818348,
+      "wilson_high": 0.715440317613552
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.37222222222222223,
+      "wilson_low": 0.27950951562237836,
+      "wilson_high": 0.4753962553551718
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7111111111111111,
+      "wilson_low": 0.6103595640200169,
+      "wilson_high": 0.7945787274083785
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.4888888888888889,
+      "wilson_low": 0.388204916198729,
+      "wilson_high": 0.590482542147145
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7888888888888889,
+      "wilson_low": 0.6936520041874271,
+      "wilson_high": 0.8604740788198507
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5888888888888889,
+      "wilson_low": 0.48563237347145555,
+      "wilson_high": 0.684867959761553
+     }
+    }
+   },
+   "two_stage_S50": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.16666666666666666,
+      "wilson_low": 0.10368488734312978,
+      "wilson_high": 0.2569388630330881
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.1,
+      "wilson_low": 0.05350675169712493,
+      "wilson_high": 0.17924174875433652
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.31666666666666665,
+      "wilson_low": 0.22975576187715183,
+      "wilson_high": 0.4185873008297679
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.18888888888888888,
+      "wilson_low": 0.12141259844132833,
+      "wilson_high": 0.28183623524314166
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.4388888888888889,
+      "wilson_low": 0.3409550205669844,
+      "wilson_high": 0.5418260003353221
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2611111111111111,
+      "wilson_low": 0.18148421383578878,
+      "wilson_high": 0.3602961406005007
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.55,
+      "wilson_low": 0.4472767237451918,
+      "wilson_high": 0.6486297136983756
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.31666666666666665,
+      "wilson_low": 0.22975576187715183,
+      "wilson_high": 0.4185873008297679
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6166666666666667,
+      "wilson_low": 0.5134046236923122,
+      "wilson_high": 0.7103770636760116
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.37777777777777777,
+      "wilson_low": 0.2845596823864481,
+      "wilson_high": 0.4810023594181651
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7222222222222222,
+      "wilson_low": 0.6220477250293879,
+      "wilson_high": 0.8042031080531336
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.48333333333333334,
+      "wilson_low": 0.38290673725677526,
+      "wilson_high": 0.5851244502620357
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7777777777777778,
+      "wilson_low": 0.6815268960895451,
+      "wilson_high": 0.8512866452636068
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5555555555555556,
+      "wilson_low": 0.4527192645595967,
+      "wilson_high": 0.6538434437110336
+     }
+    }
+   },
+   "planted_gold_first": {
+    "500": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.34444444444444444,
+      "wilson_low": 0.2544591402493863,
+      "wilson_high": 0.44716527659284866
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.2111111111111111,
+      "wilson_low": 0.13952592118014923,
+      "wilson_high": 0.30634799581257294
+     }
+    },
+    "1000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.4111111111111111,
+      "wilson_low": 0.31513204023844693,
+      "wilson_high": 0.5143676265285444
+     }
+    },
+    "2000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.45555555555555555,
+      "wilson_low": 0.3565961690755778,
+      "wilson_high": 0.5581536643079179
+     }
+    },
+    "4000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5111111111111111,
+      "wilson_low": 0.409517457852855,
+      "wilson_high": 0.611795083801271
+     }
+    },
+    "8000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.5833333333333334,
+      "wilson_low": 0.48011587810720296,
+      "wilson_high": 0.6797281842987427
+     }
+    },
+    "16000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.6444444444444445,
+      "wilson_low": 0.5415017311001208,
+      "wilson_high": 0.7355613104035182
+     }
+    },
+    "32000": {
+     "any_gold_session": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 1.0,
+      "wilson_low": 0.9590643744356734,
+      "wilson_high": 1.0
+     },
+     "all_gold_sessions": {
+      "n_questions": 94,
+      "n_clusters": 90,
+      "rate": 0.7055555555555556,
+      "wilson_low": 0.6045394204746156,
+      "wilson_high": 0.7897426001267168
+     }
+    }
+   }
+  }
+ }
+}

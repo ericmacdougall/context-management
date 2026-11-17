@@ -1,0 +1,10 @@
+rows 40 75s
+rows 80 139s
+rows 120 210s
+rows 160 275s
+rows 200 360s
+rows 240 418s
+rows 280 473s
+rows 320 525s
+rows 360 575s
+{"rows": 376, "seconds": 597.5673604011536, "request_log": {"GET index_read": 2, "GET cat": 4, "GET cluster_health": 2, "GET node_stats": 2, "POST search": 2256}, "search_flags": {"n": 2256, "timed_out": 0, "shards_failed": 0, "shards_incomplete": 0}}
