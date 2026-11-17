@@ -1,0 +1,1 @@
+# WP_UCD_DIR=<work dir>/ucd python3 -m unittest tests.test_ident on the 0e8f67c matcher (m3) with the review E tests; Unicode 13.0.0 (Mac)

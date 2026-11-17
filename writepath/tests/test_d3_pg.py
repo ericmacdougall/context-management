@@ -16,6 +16,10 @@ re-enabled ALWAYS afterwards; C4's appends go through the guard as the app role.
   C4  (F3)  the tenant's matcher is stored and enforced: approval under another rule version (WPS32), changing the
             matcher while identifiers exist (WPS38), an append or a rescan under another matcher (WPS38)
   C5  (F7)  NULL content verifies only with a tombstone whose erasure job exists for that subject
+  E1-E5 (review E F4, the hold class) forced interleavings of rescan links and hold placement/release against a paused
+        removal: a link to an event being removed waits; a hold on any subject the removal judged (speaker, rescan
+        link, the subject itself) waits and then reports the event as removed; a hold placed first withholds it
+  E6  (review E F12) a repeated mark during a batch does not deadlock (mark takes the subject before the job)
 Runs only with WP_PG_LIVE=1 on the lab host. SCHEMA_UNDER_TEST names another schema.sql (failing-first).
 usage (on t2-dev, from WP_HOME/src): WP_PG_LIVE=1 ../venv/bin/python -m unittest tests.test_d3_pg -v"""
 import hashlib
@@ -286,6 +290,182 @@ class D3Store(unittest.TestCase):
         self.assertFalse(self.verify_nulls(["c5b"]), "NULL content verified with no tombstone")
         self.raw("update tombstones set job_id=%s where tenant_id=%s and event_id='c5c'", (jb, T))
         self.assertFalse(self.verify_nulls(["c5c"]), "NULL content verified with another subject's job")
+
+    # ------------------------------------------------------------------ E (review E F4, F12): the hold class
+    # Forced interleavings. A removal is PAUSED right after its hold decision: a holder transaction (wp_owner) inserts,
+    # uncommitted, the tombstone row the batch is about to insert, so the batch waits on that row with every lock it
+    # took before (event rows, footprint subjects). The concurrent operation then runs; "waited" means its backend waited
+    # on a lock while the removal was in flight.
+    def legal(self, name):
+        return self.db.connect(db=self.name, application_name=name, role=self.db.LEGAL)
+
+    def run_bg(self, out, key, conn, sql, args, fetch=False):
+        import psycopg
+
+        def go():
+            try:
+                cur = conn.execute(sql, args)
+                out[key] = cur.fetchone()[0] if fetch else "ok"
+            except psycopg.Error as e:
+                out[key] = e.sqlstate
+        th = threading.Thread(target=go)
+        th.start()
+        return th
+
+    def paused_batch(self, jid, subject, eid, name, out):
+        """Start one cascade batch of jid and pause it at the tombstone of eid (after its hold decision)."""
+        hold = self.db.admin(db=self.name, autocommit=False)
+        hold.execute("set role wp_owner")
+        hold.execute("insert into tombstones(tenant_id, event_id, subject_id, job_id) values (%s, %s, %s, %s)", (T, eid, subject, jid))
+        c = self.db.connect(db=self.name, application_name=name)
+        th = self.run_bg(out, "batch", c, "select wp_erasure_cascade(%s, 100)", (jid,))
+        self.assertTrue(self.waiting(name, th.is_alive), "the batch did not reach its tombstone insert")
+        return hold, th, c
+
+    def place(self, conn, s, hid):
+        return conn.execute("select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, s, hid)).fetchone()[0]
+
+    def content_gone(self, eid):
+        return self.one("select content_enc is null from events where tenant_id=%s and event_id=%s", (T, eid))[0]
+
+    def test_e1_rescan_link_waits_for_an_inflight_removal(self):
+        """Review E F4, the reviewer's schedule: A's batch removes e (written by B); C's rescan links e to C; a hold on
+        C commits. The link must wait for the removal, so the hold on C (which does not wait: C is not linked yet)
+        does not cover e, and the link lands after e is gone: hold, removal, link is a consistent serial history."""
+        self.event("e1e", "E1B", ["E1A"])
+        jc = self.job("E1C")
+        ja = self.job("E1A")
+        out, lg = {}, self.legal("wp-e1-legal")
+        link = self.db.connect(db=self.name, application_name="wp-e1-link")
+        hold, tb, c = self.paused_batch(ja, "E1A", "e1e", "wp-e1-batch", out)
+        try:
+            tl = self.run_bg(out, "link", link, "select wp_erasure_add_mentions(%s, %s)", (jc, ["e1e"]))
+            link_waited = self.waiting("wp-e1-link", tl.is_alive, secs=3.0)
+            th = self.run_bg(out, "hold", lg, "select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, "E1C", "h-e1"), fetch=True)
+            th.join(10)
+            hold.rollback()
+            tb.join(10)
+            tl.join(10)
+        finally:
+            hold.rollback()
+            for x in (hold, c, link, lg):
+                x.close()
+        self.assertTrue(link_waited, "a rescan link committed while the removal of its event was in flight")
+        self.assertEqual((out.get("batch"), out.get("link")), ("ok", "ok"))
+        self.assertTrue(self.content_gone("e1e"))
+        self.assertNotIn("e1e", (out.get("hold") or {}).get("linked_removed_ids") or [], "the hold on C did not cover e")
+        self.assertEqual(self.one("select count(*) from erasure_mentions where tenant_id=%s and subject_id='E1C' and event_id='e1e'", (T,)), (1,))
+
+    def test_e2_hold_on_the_speaker_waits_and_reports_the_removal(self):
+        self.event("e2e", "E2B", ["E2A"])
+        ja = self.job("E2A")
+        out, lg = {}, self.legal("wp-e2-legal")
+        hold, tb, c = self.paused_batch(ja, "E2A", "e2e", "wp-e2-batch", out)
+        try:
+            th = self.run_bg(out, "hold", lg, "select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, "E2B", "h-e2"), fetch=True)
+            hold_waited = self.waiting("wp-e2-legal", th.is_alive, secs=3.0)
+            hold.rollback()
+            tb.join(10)
+            th.join(10)
+        finally:
+            hold.rollback()
+            for x in (hold, c, lg):
+                x.close()
+        self.assertTrue(hold_waited, "a hold on the speaker landed while the removal it judged was in flight")
+        self.assertTrue(self.content_gone("e2e"))
+        self.assertIn("e2e", (out.get("hold") or {}).get("linked_removed_ids") or [], "the hold did not record the removal")
+
+    def test_e3_hold_on_a_rescan_linked_subject_waits_and_reports(self):
+        self.event("e3e", "E3B", ["E3A"])
+        jc = self.job("E3C")
+        self.app.execute("select wp_erasure_add_mentions(%s, %s)", (jc, ["e3e"]))      # link committed first
+        ja = self.job("E3A")
+        out, lg = {}, self.legal("wp-e3-legal")
+        hold, tb, c = self.paused_batch(ja, "E3A", "e3e", "wp-e3-batch", out)
+        try:
+            th = self.run_bg(out, "hold", lg, "select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, "E3C", "h-e3"), fetch=True)
+            hold_waited = self.waiting("wp-e3-legal", th.is_alive, secs=3.0)
+            hold.rollback()
+            tb.join(10)
+            th.join(10)
+        finally:
+            hold.rollback()
+            for x in (hold, c, lg):
+                x.close()
+        self.assertTrue(hold_waited, "a hold on a rescan-linked subject landed while the removal it judged was in flight")
+        self.assertIn("e3e", (out.get("hold") or {}).get("linked_removed_ids") or [])
+
+    def test_e4_hold_first_withholds_and_release_waits(self):
+        self.event("e4a", "E4B", ["E4A"])
+        self.event("e4b", "E4D", ["E4A"])
+        lg = self.legal("wp-e4-legal")
+        self.place(lg, "E4B", "h-e4")                                                 # placed before the removal
+        ja = self.job("E4A")
+        out = {}
+        hold, tb, c = self.paused_batch(ja, "E4A", "e4b", "wp-e4-batch", out)
+        try:
+            tr = self.run_bg(out, "release", lg, "select wp_hold_release(%s)", ("h-e4",))
+            release_waited = self.waiting("wp-e4-legal", tr.is_alive, secs=3.0)
+            hold.rollback()
+            tb.join(10)
+            tr.join(10)
+        finally:
+            hold.rollback()
+            c.close()
+            hold.close()
+        self.assertTrue(release_waited, "a release landed while the removal that judged the hold was in flight")
+        self.assertEqual((self.content_gone("e4a"), self.content_gone("e4b")), (False, True), "e4a withheld, e4b removed")
+        self.assertEqual(self.one("select count(*) from erasure_withheld where job_id=%s and event_id='e4a'", (ja,)), (1,))
+        self.cascade(ja)                                                              # the hold is gone: retried
+        lg.close()
+        self.assertTrue(self.content_gone("e4a"))
+
+    def test_e5_hold_on_the_subject_itself(self):
+        self.event("e5a", "E5A", [])
+        ja = self.job("E5A")
+        lg = self.legal("wp-e5-legal")
+        self.place(lg, "E5A", "h-e5a")
+        self.assertEqual(self.state(self.app, "select wp_erasure_cascade(%s, 100)", (ja,)), "WPS16")
+        lg.execute("select wp_hold_release('h-e5a')")
+        self.cascade(ja)
+        self.assertTrue(self.content_gone("e5a"))
+        self.event("e5b", "E5S", [])
+        js = self.job("E5S")
+        out = {}
+        hold, tb, c = self.paused_batch(js, "E5S", "e5b", "wp-e5-batch", out)
+        try:
+            th = self.run_bg(out, "hold", lg, "select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, "E5S", "h-e5s"), fetch=True)
+            hold_waited = self.waiting("wp-e5-legal", th.is_alive, secs=3.0)
+            hold.rollback()
+            tb.join(10)
+            th.join(10)
+        finally:
+            hold.rollback()
+            for x in (hold, c, lg):
+                x.close()
+        self.assertTrue(hold_waited)
+        self.assertIn("e5b", (out.get("hold") or {}).get("linked_removed_ids") or [])
+
+    def test_e6_repeated_mark_during_a_batch_does_not_deadlock(self):
+        """Review E F12: a batch holds the subject FOR SHARE and later updates the job cursor; a repeated mark took the
+        job FOR UPDATE and then waited for the subject: a cycle (40P01). Mark now takes the subject first."""
+        self.event("e6e", "E6A", [])
+        ja = self.job("E6A")
+        out = {}
+        m = self.db.connect(db=self.name, application_name="wp-e6-mark")
+        hold, tb, c = self.paused_batch(ja, "E6A", "e6e", "wp-e6-batch", out)
+        try:
+            tm = self.run_bg(out, "mark", m, "select wp_erasure_mark(%s)", (ja,))
+            mark_waited = self.waiting("wp-e6-mark", tm.is_alive, secs=3.0)
+            hold.rollback()
+            tb.join(15)
+            tm.join(15)
+        finally:
+            hold.rollback()
+            for x in (hold, c, m):
+                x.close()
+        self.assertTrue(mark_waited)
+        self.assertEqual((out.get("batch"), out.get("mark")), ("ok", "ok"), "40P01 is the deadlock")
 
 
 if __name__ == "__main__":
