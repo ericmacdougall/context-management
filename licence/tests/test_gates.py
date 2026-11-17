@@ -16,8 +16,8 @@ Measured against the old code (35 tests; the same file run on a detached checkou
   (T4_status key absent), test_failed_refresh_status_raises, test_refresh_shard_failure_raises, test_count_shard_failure_raises.
 Added after final-gate reviews F2 and F3 (55 tests now): the bulk-wire tests (10 fail on 207136e, all by 'not raised') and MatrixFixtureTests (on 4eb4378: 8 fail by behaviour,
 - failed creation, failed write, partial write, empty index, two full-matrix aborts, empty vector cell labelled AVAILABLE, exp3 semantic-only fixture; test_good_fixture_is_accepted passes there).
-Added after gate review 4 (80 tests now, with test_offline): MatrixInvariantTests enumerate every cell in matrix.CELLS and break each declared prerequisite in
-each failure mode; the red run of this file against 90faede is licence/tests/red/90faede.txt (9 failures by behaviour or a missing table, 6 errors
+Added after gate review 4 (86 tests now, with test_offline): MatrixInvariantTests enumerate every cell in matrix.CELLS and break each declared prerequisite in
+each failure mode; the red run of this file against 90faede is licence/tests/red/90faede.txt (14 failures by behaviour or a missing table, 6 errors
 for names that 90faede does not have: verdict, Cells, NOT_OBSERVED). MatrixVerdictTests are new-code only.
 The fake validates the scroll id it is given (a stale id is rejected). Timed-out and duplicate-id cases are covered. Nothing here touches a live node.
 """
@@ -445,7 +445,7 @@ class MatrixFake:
             lines = ndjson.splitlines()
             ops = [(list(json.loads(l).values())[0], json.loads(d)) for l, d in zip(lines[::2], lines[1::2])]
             idx = ops[0][0]["_index"]
-            m = self.mode(idx, "503", "transport", "truncated", "empty", "licence")
+            m = self.mode("bulk:" + idx, "503", "transport", "truncated", "empty", "licence")
             if m in ("503", "transport"):
                 return self.fail(m)
             if idx not in self.docs:
@@ -521,7 +521,7 @@ REGISTRY = {k: (tuple(v[0]), v[1]) for k, v in getattr(matrix, "CELLS", _LEGACY_
 PREREQ_SCOPE = {p: v[0] for p, v in matrix.PREREQS.items()} if hasattr(matrix, "PREREQS") else \
     dict({p: "cell" for k, (pre, _w) in _LEGACY_CELLS.items() for p in pre}, **_LEGACY_SCOPE)
 
-# How each prerequisite is broken: the injection target (label "t"; "doc:<index>" is a single-document write) and its kind. A prerequisite without a kind fails the coverage test.
+# How each prerequisite is broken: the injection target (label "t"; the bulk write of a fixture is "bulk:<index>", a single-document write "doc:<index>") and its kind. A prerequisite without a kind fails the coverage test.
 PREREQ_TARGET = {"base": ("lic1-t-base", "fixture"), "fm": ("lic1-t-fm", "fixture"), "vec_int8_hnsw": ("lic1-t-int8_hnsw", "fixture"),
                  "vec_bbq_hnsw": ("lic1-t-bbq_hnsw", "fixture"), "vec_bbq_disk": ("lic1-t-bbq_disk", "fixture"),
                  "shared_base": ("lic1-base", "shared"), "sem_mapping": ("lic1-t-sem", "create"), "perc_index": ("lic1-t-perc", "create"),
@@ -586,7 +586,8 @@ class MatrixHarness(unittest.TestCase):
             os.remove(matrix.DLS_PW)
             f.fired.append((target, mode))
         else:
-            f.inject[target] = mode
+            bulk_mode = kind == "fixture" and mode in ("503", "transport", "truncated", "empty")
+            f.inject[("bulk:" + target) if bulk_mode else target] = mode   # creation failure stays on the index itself
             if prereq == "inference_ep_new":
                 f.eps.add("lic-ep-t")   # a stale endpoint answers, so the dependent call succeeds although creation failed
         return f
@@ -690,7 +691,7 @@ class MatrixVerdictTests(MatrixHarness):
 
     def test_refused_probe_write_is_licence_error(self):
         self.world(None)
-        f = self.use(MatrixFake(inject={"lic1-t-bbq_disk": "licence"}))
+        f = self.use(MatrixFake(inject={"bulk:lic1-t-bbq_disk": "licence"}))
         matrix.make_base()
         with open(matrix.DLS_PW, "w") as fh:
             fh.write("test-only-not-a-secret")
@@ -759,15 +760,15 @@ class MatrixFixtureTests(MatrixHarness):
         self.aborts(matrix.make_base)
 
     def test_failed_fixture_write_aborts(self):
-        self.use(MatrixFake(inject={matrix.BASE_IDX: "503"}))
+        self.use(MatrixFake(inject={"bulk:" + matrix.BASE_IDX: "503"}))
         self.aborts(matrix.make_base)
 
     def test_partial_fixture_write_aborts(self):
-        self.use(MatrixFake(inject={matrix.BASE_IDX: "truncated"}))
+        self.use(MatrixFake(inject={"bulk:" + matrix.BASE_IDX: "truncated"}))
         self.aborts(matrix.make_base)
 
     def test_empty_index_after_success_answers_aborts(self):
-        self.use(MatrixFake(inject={matrix.BASE_IDX: "empty"}))
+        self.use(MatrixFake(inject={"bulk:" + matrix.BASE_IDX: "empty"}))
         self.aborts(matrix.make_base)
 
     def test_full_matrix_aborts_on_failed_base_write(self):
@@ -777,6 +778,22 @@ class MatrixFixtureTests(MatrixHarness):
     def test_full_matrix_aborts_on_empty_force_merge_fixture(self):
         self.world("fm", "empty")
         self.aborts(lambda: matrix.run("t"))
+
+    def test_rescore_cell_not_available_after_bulk_503_into_existing_index(self):   # review 4 (a), its first case
+        f = self.world("vec_int8_hnsw", "503")
+        T = matrix.run("t")
+        self.assertIn(("bulk:lic1-t-int8_hnsw", "503"), f.fired)
+        self.assertNotEqual(T["knn_rescore_vector"]["class"], "AVAILABLE")
+
+    def test_dls_battery_aborts_on_empty_shared_base(self):
+        self.world("shared_base", "empty")
+        self.aborts(matrix.dls_battery)
+
+    def test_summarize_matrix_table_accepts_new_cells(self):
+        self.world()
+        T = matrix.run("t")
+        tab = summarize.matrix_table({"exp1_basic0": T, "exp1_trial": T, "exp1_after": T})
+        self.assertTrue(tab)
 
     def test_vector_and_rescore_cells_are_not_available_when_index_is_empty(self):   # review 4 (a): the rescore cell too
         self.world("vec_int8_hnsw", "empty")
@@ -792,7 +809,7 @@ class MatrixFixtureTests(MatrixHarness):
         self.assertNotEqual(T["match_on_semantic_text"]["class"], "AVAILABLE")
 
     def test_exp3_semantic_only_fixture_with_failed_write_aborts(self):
-        self.use(MatrixFake(inject={exp3.SEMONLY: "503"}))
+        self.use(MatrixFake(inject={"bulk:" + exp3.SEMONLY: "503"}))
         with self.assertRaises((ScrollError, BulkError)):
             exp3.semonly_fixture()
 
@@ -822,6 +839,35 @@ class Exp2VerifyWritesTests(unittest.TestCase):
     def test_failed_semantic_read_back_raises(self):
         with self.assertRaises(AssertionError):
             self._run(503)
+
+    def test_failed_live_scroll_page_raises(self):
+        def fake(method, path, body=None, **kw):
+            if "_search?scroll" in path:
+                return 503, {"error": {}}, 1
+            return 200, {"_shards": {"failed": 0}}, 1
+        old = exp2.req
+        exp2.req = fake
+        try:
+            with self.assertRaises(AssertionError):
+                self._w().verify_writes()
+        finally:
+            exp2.req = old
+
+    def test_empty_backend_oracle_counts_as_failure(self):
+        w = object.__new__(exp2.Workload)
+        w.queries, w.oracle_rrf, w.oracle_lin = [("q", [0.0])], {}, {}
+        old = exp2.oracle.raw_backend
+        exp2.oracle.raw_backend = lambda *a, **k: (200, [], None)
+        try:
+            self.assertEqual(w.compute_backend_oracles(), 2)
+            self.assertEqual(w.oracle_rrf, {})
+        finally:
+            exp2.oracle.raw_backend = old
+
+    def test_t4_does_not_pass_on_unverified_dls_principal(self):
+        R = load("down_1.json")
+        R["exp1_after"]["dls_search_as_user"] = {"class": "UNVERIFIED_PREREQUISITE", "status": 401, "returned": None}
+        self.assertFalse(summarize.exp1_checks(R)["T4_pass"])
 
     def test_good_semantic_read_back_counts(self):
         self.assertEqual(self._run(200)["sem_acked_absent"], 0)
