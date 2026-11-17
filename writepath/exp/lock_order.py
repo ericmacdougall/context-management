@@ -18,7 +18,10 @@ Controls (one patch each, reverted): MM with the pre-fix wp_hold_check (subject 
 wp_identifier_declare (subject FOR UPDATE). Each must deadlock in >= R-1 of R runs. At the pre-fix code the controls
 cannot be cut (the fixed fragment is absent) and are recorded as unavailable; that run is failing-first evidence.
 A deadlock is sqlstate 40P01 on a test connection; the database's deadlock counter delta is a second witness.
-usage: python -m exp.lock_order [R_MM R_MK R_HP R_HR R_DA R_CTL_MM R_CTL_DA]   (default 10 5 5 5 5 10 5)"""
+Amendment 17b, at the fixed code only: M2 (gating) B's mark behind two share holders at once (an open declare of B and
+an open wp_hold_check(B)); MS (measurement, not gating) a relay of share holders against B's waiting mark, recording
+whether the mark is starved until its lock_timeout and whether a later sweep still finishes the job.
+usage: python -m exp.lock_order [KEY=N ...]   keys and defaults: COUNTS (amendment 17b)"""
 import json
 import sys
 import threading
@@ -27,7 +30,7 @@ import uuid
 
 from exp import mutual_mentions as MX
 from exp.common import write_result
-from exp.patches import variant, patched
+from exp.patches import function_sql, variant, patched
 from exp.util import tenant, msg, session, env
 from wp import db, erasure, log, mentions as M
 
@@ -293,6 +296,105 @@ def da_once():
     return _scored(w, other, dl, th1.err is None and th2.err is None)
 
 
+def m2_once():
+    """Amendment 17b M2: B's mark behind two share holders at once (an open declare of B and an open hold check)."""
+    t, ids, _c1 = MX.build()
+    conn, ks, es = env()
+    jb = erasure.request(conn, t, "B")
+    ceb = erasure._claim(conn, jb, 60)
+    adm = db.admin()
+    d0 = _deadlocks(adm)
+    h1, h2, cm = _tx("H1"), _tx("H2"), db.connect(application_name="lo-mark")
+    w = {"tenant": t}
+    try:
+        seq = M.declare(h1, ks, t, "B", ["bartholomew senior"])   # open: B FOR SHARE, identifier_epochs FOR UPDATE
+        h2.execute("select wp_hold_check(%s, %s)", (t, "B"))       # open: B FOR SHARE
+        th = Bg(lambda: cm.execute("select wp_erasure_mark(%s)", (jb,)))
+        th.start()
+        w["mark_waited"] = _waiting(adm, cm.info.backend_pid, th)
+        h1.commit()
+        time.sleep(0.3)
+        w["waiting_after_first_commit"] = th.is_alive() and _waiting(adm, cm.info.backend_pid, th, timeout=0.5)
+        tc = time.monotonic()
+        h2.commit()
+        th.join(30)
+    finally:
+        for c in (h1, h2, cm):
+            c.close()
+    erasure._release(conn, jb, ceb)
+    st, xmax = adm.execute("select state, ident_xmax from erasure_jobs where job_id = %s", (jb,)).fetchone()
+    time.sleep(1.5)
+    w["db_deadlocks_delta"] = _deadlocks(adm) - d0
+    adm.close()
+    w.update(declared_seq=seq, b_state=st, ident_xmax=xmax, mark={"err": _desc(th.err), "after_second_commit": bool(th.end and th.end > tc)})
+    other = [_desc(th.err)] if th.err is not None and _st(th.err) != DEADLOCK else []
+    return _scored(w, other, _st(th.err) == DEADLOCK,
+                   th.err is None and w["mark_waited"] and w["waiting_after_first_commit"] and w["mark"]["after_second_commit"]
+                   and st == "marked" and xmax is not None and xmax >= seq)
+
+
+def ms_once(period_s=0.8, span_s=12.0):
+    """Amendment 17b MS (measurement): a relay of share holders on B while B's mark waits for FOR UPDATE."""
+    t, ids, _c1 = MX.build()
+    conn, ks, es = env()
+    jb = erasure.request(conn, t, "B")
+    ceb = erasure._claim(conn, jb, 60)
+    adm = db.admin()
+    w = {"tenant": t}
+    n = [0]
+
+    def holder():
+        c = _tx(f"S{n[0]}")
+        n[0] += 1
+        th = Bg(lambda: c.execute("select wp_hold_check(%s, %s)", (t, "B")))
+        th.start()
+        th.join(0.3)
+        return c, th
+
+    prev, th0 = holder()
+    cm = db.connect(application_name="lo-mark")
+    thm = Bg(lambda: cm.execute("select wp_erasure_mark(%s)", (jb,)))
+    tm0 = time.monotonic()
+    thm.start()
+    w["mark_waited"] = _waiting(adm, cm.info.backend_pid, thm)
+    granted = queued = 0
+    errs = [_desc(th0.err)] if th0.err else []
+    while thm.is_alive() and time.monotonic() - tm0 < span_s:
+        time.sleep(max(0.0, period_s - 0.3))
+        c, th = holder()
+        if th.is_alive():                      # the new share lock queued behind the waiting FOR UPDATE
+            queued += 1
+            prev.commit()
+            prev.close()
+            prev = None
+            th.join(30)
+            (c.commit if th.err is None else c.rollback)()
+            c.close()
+            break
+        if th.err:
+            errs.append(_desc(th.err))
+        granted += 1
+        prev.commit()
+        prev.close()
+        prev = c
+    if prev is not None:
+        prev.commit()
+        prev.close()
+    thm.join(30)
+    cm.close()
+    erasure._release(conn, jb, ceb)
+    w.update(share_granted_while_mark_waited=granted, share_queued_behind_mark=queued, mark_err=_desc(thm.err),
+             mark_wait_s=round((thm.end or time.monotonic()) - tm0, 2), starved=_st(thm.err) == "55P03",
+             state_after=adm.execute("select state from erasure_jobs where job_id = %s", (jb,)).fetchone()[0])
+    w["sweep"] = erasure.sweep(conn, ks, es, tenant=t, physical="followup")
+    w["state_after_sweep"] = adm.execute("select state || coalesce('/' || last_error_type, '') from erasure_jobs where job_id = %s",
+                                         (jb,)).fetchone()[0]
+    adm.close()
+    if thm.err is not None and _st(thm.err) not in ("55P03",):
+        errs.append(_desc(thm.err))
+    return _scored(w, errs, _st(thm.err) == DEADLOCK, True)
+
+
 def _arm(fn, r):
     runs = []
     for _ in range(r):
@@ -316,11 +418,17 @@ def _control(fname, fixed, pre, fn, r):
     return out
 
 
-def main(r_mm, r_mk, r_hp, r_hr, r_da, r_cmm, r_cda):
-    out = {"cases": {"MM": _arm(mm_once, r_mm), "MK": _arm(mk_once, r_mk), "HP": _arm(hp_once, r_hp),
-                     "HR": _arm(hr_once, r_hr), "DA": _arm(da_once, r_da)}}
-    out["controls"] = {"MM_prefix_hold_check": _control("wp_hold_check", HOLD_FIXED, HOLD_PRE, lambda: mm_once(do_sweep=False), r_cmm),
-                       "DA_prefix_declare": _control("wp_identifier_declare", DECL_FIXED, DECL_PRE, da_once, r_cda)}
+COUNTS = {"MM": 30, "MK": 5, "HP": 5, "HR": 5, "DA": 30, "M2": 10, "MS": 3, "CTL_MM": 10, "CTL_DA": 10}   # amendment 17b
+
+
+def main(n):
+    out = {"counts": n, "cases": {"MM": _arm(mm_once, n["MM"]), "MK": _arm(mk_once, n["MK"]), "HP": _arm(hp_once, n["HP"]),
+                                  "HR": _arm(hr_once, n["HR"]), "DA": _arm(da_once, n["DA"])}}
+    if HOLD_FIXED in function_sql("wp_hold_check"):                               # M2 needs two concurrent share holders: impossible at the pre-fix code
+        out["cases"]["M2"] = _arm(m2_once, n["M2"])
+        out["measurements"] = {"MS": _arm(ms_once, n["MS"])}
+    out["controls"] = {"MM_prefix_hold_check": _control("wp_hold_check", HOLD_FIXED, HOLD_PRE, lambda: mm_once(do_sweep=False), n["CTL_MM"]),
+                       "DA_prefix_declare": _control("wp_identifier_declare", DECL_FIXED, DECL_PRE, da_once, n["CTL_DA"])}
     why = []
     for k, a in out["cases"].items():
         if a["holds"] != a["R"]:
@@ -334,11 +442,18 @@ def main(r_mm, r_mk, r_hp, r_hr, r_da, r_cmm, r_cda):
     summary = {k: {x: a[x] for x in ("R", "holds", "deadlocked", "errors")} for k, a in out["cases"].items()}
     summary.update({k: ({x: c[x] for x in ("R", "deadlocked", "errors")} if c.get("available") else "unavailable")
                     for k, c in out["controls"].items()})
+    if "measurements" in out:
+        summary["MS"] = [{x: r.get(x) for x in ("share_granted_while_mark_waited", "share_queued_behind_mark", "starved",
+                                                "mark_wait_s", "state_after_sweep")} for r in out["measurements"]["MS"]["runs"]]
     print("lock_order", out["verdict"], json.dumps(summary), flush=True)
     write_result("lock_order", out)
 
 
 if __name__ == "__main__":
-    d = [10, 5, 5, 5, 5, 10, 5]
-    a = [int(x) for x in sys.argv[1:8]]
-    main(*(a + d[len(a):]))
+    counts = dict(COUNTS)
+    for a in sys.argv[1:]:
+        k, v = a.split("=", 1)
+        if k not in counts:
+            raise SystemExit(f"unknown count {k}; known {sorted(counts)}")
+        counts[k] = int(v)
+    main(counts)
