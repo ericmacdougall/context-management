@@ -322,3 +322,21 @@ wp_identifier_declare lock order deadlocks in >= 4/5. Before the fix the same mo
 if the reading is right); that run is the failing-first evidence, reported, not a PASS.
 Not covered here: the policy core's revoke and tenant-authority row (DESIGN.md lock-order row); they enter the write
 path with build step 3 and are checked there.
+Amendment 17a (2026-11-17, before ANY lock_order run; none exists yet): two corrections to 17.
+(1) DA interleaving. Pre-taking Y FOR UPDATE by hand cannot test a fix that changes that lock, so DA instead runs the
+real wp_identifier_declare and stops it between its locks with a third holder: T0 (admin) share-locks the tenant's
+identifier_epochs row; T1 calls wp_identifier_declare(Y) and is observed waiting; T2 appends an event by X that mentions
+Y and is observed waiting or finishes; T0 commits. Holds iff no deadlock and both T1 and T2 succeed (the append's own
+WPS17 retry is part of success).
+(2) Fix shape and control. The fix keeps the DESIGN.md order (subjects before identifier epochs) and removes the
+exclusive subject locks that formed the cycles: wp_hold_check and wp_identifier_declare take the subject row FOR SHARE
+(still exclusive against wp_hold_place, wp_hold_release and wp_erasure_mark, which take it FOR UPDATE), and
+wp_erasure_mark takes its own subject FOR UPDATE before the hold check (no share-to-exclusive upgrade). The DA control
+is wp_identifier_declare with its pre-fix FOR UPDATE on the subject row; the MM control is wp_hold_check with its pre-fix
+FOR UPDATE. Thresholds unchanged (MM control >= 9/10, DA control >= 4/5 deadlocked).
+Harness rules: holder transactions stay idle well under the role's 5 s idle-in-transaction timeout; a holder that is
+terminated, or any error other than the case's stated outcomes, scores the run as an error (never as holds). Deadlocks
+are counted by sqlstate 40P01 on the test connections; the database deadlock counter delta is recorded as a second
+witness. Waits are observed from pg_stat_activity (wait_event_type Lock) on the admin connection.
+Not shown by this fixture: row-level contention inside wp_erasure_apply when both cascades touch the same events,
+facts or tombstones (MM's two subjects share no event rows); stated as not verified.
