@@ -12,6 +12,7 @@ cross-field relation, every outcome case other than the intended one) and assert
 import ast
 import copy
 import inspect
+import json
 import os
 import sys
 import tempfile
@@ -261,6 +262,111 @@ class RecordingBoundaryTests(unittest.TestCase):
             r = summarize.exp2_checks(R, "down")
             gate = "T1_status" if path[1].startswith("T1") else "T2_status" if path[1].startswith("T2") else "T3_status"
             self.assertNotEqual(r[gate], "PASS", (path, val))   # the gate that reads the mutated field
+
+    # ---- review 8 follow-up (advisor pass before return): the same classes inside the new boundary code
+    def test_f13_refusal_licence_flag_is_a_declared_domain(self):
+        """A first_refusal without its licence flag, or with a non-bool flag, is not a refusal of either kind."""
+        for bad in ("absent", None, 1, "yes", {"reason": "x"}):
+            R = _life("down_7")
+            fr = R["exp1_moment"]["dls_search"]["first_refusal"]
+            _set(R, ("exp1_moment", "dls_search", "first_refusal", "licence_text"), bad)
+            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED", bad)
+            self.assertTrue(fr is not None)
+
+    def test_f13_successes_and_refusals_are_counted_by_outcome_not_label(self):
+        import observe
+        self.assertIsNone(observe.outcome_from_cell(["AVAILABLE", 403]))      # label contradicts status: not an observation
+        self.assertIsNone(observe.outcome_from_cell(["OTHER_ERROR", 200]))
+        self.assertIsNone(observe.outcome_from_cell(["LICENCE_ERROR", 200]))
+        for cell in (["EMPTY_WITNESS", 200], ["OTHER_ERROR", 200], ["AVAILABLE", 200]):   # any 2xx answer after the refusal
+            rows = _poll({})
+            rows[-1]["rrf"] = cell
+            m = observe.moments(rows, T_RESP)
+            self.assertEqual(m["rrf"]["success_after_first_refusal"], 1, cell)
+        rows = _poll({"dls_search": ("AVAILABLE", 403)})
+        self.assertIsNone(observe.moments(rows, T_RESP)["dls_search"]["first_refusal"])
+
+    def test_f14_load_never_raises_on_bad_transition_times_or_raw_rows(self):
+        import gzip
+        import shutil
+        for life, key, field in (("down_7", "start_basic", "t_resp"), ("up_1", "start_trial", "t_req")):
+            for bad in ("absent", 10 ** 400, "5", None, [1], float("nan")):
+                d = tempfile.mkdtemp()
+                try:
+                    for ext in (".rows.gz", ".poll.gz"):
+                        if os.path.exists(os.path.join(RES, life + ext)):
+                            shutil.copy(os.path.join(RES, life + ext), d)
+                    R = json.load(open(os.path.join(RES, life + ".json")))
+                    _set(R, (key, field), bad)
+                    json.dump(R, open(os.path.join(d, life + ".json"), "w"))
+                    L = summarize.load(d, life.split("_")[0])   # must not raise
+                    self.assertEqual(len(L), 1)
+                finally:
+                    shutil.rmtree(d)
+        d = tempfile.mkdtemp()
+        try:
+            shutil.copy(os.path.join(RES, "down_7.json"), d)
+            with gzip.open(os.path.join(d, "down_7.rows.gz"), "wt") as fh:
+                fh.write('[1, 2, "ctl"]\n{"a": 1}\n')
+            with gzip.open(os.path.join(d, "down_7.poll.gz"), "wt") as fh:
+                fh.write('[{"rrf": [1]}, 5]')
+            R = summarize.load(d, "down")[0]
+            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+        finally:
+            shutil.rmtree(d)
+
+    def test_f14_reports_never_raise_on_odd_values(self):
+        """Every leaf a gate reads, set to each odd value, through every report function (not only judge)."""
+        import verdicts
+        odd = (10 ** 400, "5", {"a": {"b": []}}, "x" * 100000, True, -0.0, [[[]]])
+        gen = GeneratedInvalidEvidenceTests()
+        gen.setUpClass()
+        problems = []
+        base = {"down": _healthy("down"), "up": _healthy("up")}
+        for name, g in verdicts.GATES.items():
+            mode = "up" if g.scope == "up" else "down"
+            R = base[mode]
+            for fname, path, f in gen.leaves(g.evidence, ()):
+                parent = summarize.fetch(R, path[:-1])
+                if not isinstance(parent, dict) or path[-1] not in parent:
+                    continue
+                keep = parent[path[-1]]
+                for v in odd:
+                    parent[path[-1]] = v
+                    try:
+                        summarize.exp2_checks(R, mode)
+                        if mode == "down":
+                            summarize.exp1_checks(R)
+                            summarize.exp3_checks(R)
+                    except Exception as e:  # noqa: BLE001
+                        problems.append("%s %s=%r: %s" % (name, ".".join(path), str(v)[:20], type(e).__name__))
+                parent[path[-1]] = keep
+        self.assertEqual(problems, [], "\n".join(problems[:40]))
+
+    def test_f14_aggregate_never_raises_on_odd_values(self):
+        import verdicts
+        gen = GeneratedInvalidEvidenceTests()
+        gen.setUpClass()
+        orig = summarize.load
+        for v in (10 ** 400, "5", {"a": {"b": []}}, True):
+            lives = {"down": _healthy("down"), "up": _healthy("up")}
+            for name, g in verdicts.GATES.items():
+                R = lives["up" if g.scope == "up" else "down"]
+                for fname, path, f in gen.leaves(g.evidence, ()):
+                    parent = summarize.fetch(R, path[:-1])
+                    if isinstance(parent, dict) and path[-1] in parent:
+                        parent[path[-1]] = v
+            summarize.load = lambda d, mode, L=lives: [copy.deepcopy(L[mode])]
+            try:
+                summarize.aggregate(RES, {})   # must not raise
+            finally:
+                summarize.load = orig
+
+    def test_f15_status_values_are_exact_outcomes(self):
+        import evidence as E
+        Sub = type("Sub", (E.Outcome,), {})
+        with self.assertRaises(E.Unparsed):
+            E.LatchCell(outcome=Sub(403, "LICENCE_REFUSAL", True), error="x")
 
     def test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable(self):
         import evidence as E
