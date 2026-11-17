@@ -162,6 +162,12 @@ class ElasticsearchSearch(SearchBackend):
         self.fusion_location = "backend" if self._probe else "client"
         return bool(self._probe)
 
+    def reset_probe(self) -> None:
+        """Forget the cached licence answer (success or lapse latch) so the next fused() call asks the node again. Used by
+        memcore.reprobe when a re-probe sees a licensed tier return."""
+        self._probe = None
+        self.fusion_location = "unknown"
+
     def _probe_state(self, index, tenant) -> Optional[bool]:
         if self._probe is False and time.time() - self._probe_at > self.probe_ttl_s:
             self._probe = None                      # a licence can come back: re-probe after the TTL

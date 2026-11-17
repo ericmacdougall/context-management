@@ -52,6 +52,26 @@ def build(a):
     return store, None
 
 
+def start_reprobe(a, store, rep, stderr=sys.stderr, clock=time.time):
+    """Follow the licence tier after start-up (deploy part 3). Returns the running tracker, or None (no Elasticsearch, or
+    --reprobe-interval-s 0). A tier change is written to <out>/capabilities.json (atomic) and logged on stderr."""
+    search = getattr(store, "search", None)
+    if rep is None or search is None or a.reprobe_interval_s <= 0:
+        return None
+    from ..reprobe import ReprobingTier
+
+    def changed(new):
+        print("capabilities changed: tier=%s licence=%s/%s" % (new["tier"], new["licence_type"], new["licence_status"]),
+              file=stderr, flush=True)
+        tmp = os.path.join(a.out, "capabilities.json.tmp")
+        with open(tmp, "w") as fh:
+            json.dump(new, fh, indent=1)
+        os.replace(tmp, os.path.join(a.out, "capabilities.json"))
+    tier = ReprobingTier(search, interval_s=a.reprobe_interval_s, clock=clock, initial=rep, on_change=changed)
+    tier.start()
+    return tier
+
+
 def parser():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", required=True)
@@ -69,6 +89,8 @@ def parser():
     ap.add_argument("--ingest", default=None, help="events file to index into --es at start (creates the index)")
     ap.add_argument("--budget-s", type=float, default=20.0)
     ap.add_argument("--max-chars", type=int, default=4000)
+    ap.add_argument("--reprobe-interval-s", type=float, default=60.0, help="with --es: re-read the licence tier this often and follow it "
+                    "(Basic <-> licensed, either direction, node unreachable at start); 0 turns re-probing off")
     ap.add_argument("--max-concurrent", type=int, default=8, help="concurrent memory builds; beyond it the route answers "
                     "reason busy with the original prompt")
     return ap
@@ -105,8 +127,11 @@ def main(argv=None) -> int:
     if rep is not None:
         print("capabilities: %s" % json.dumps(rep), file=sys.stderr, flush=True)
     gw = serve(a, store, rep)
+    tier = start_reprobe(a, store, rep)
     while not os.path.exists(gw.stop_file):
         time.sleep(0.3)
+    if tier is not None:
+        tier.stop()
     time.sleep(0.5)
     return 0
 
