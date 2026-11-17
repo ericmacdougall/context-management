@@ -10,7 +10,8 @@ from wp.es import ES
 assert config.INDEX_PREFIX == "wp16096-" and config.ES_CONTAINER.startswith(config.OWN_PREFIX)   # own node only (conf)
 es = ES()
 names = es.indices(config.INDEX_PREFIX + "*")
-s, sh = es.req("GET", f"/_cat/shards/{config.INDEX_PREFIX}*", ok=(200, 404), format="json", h="index", expand_wildcards="all")
+# _cat/shards rejects expand_wildcards on 9.5.6 (400 unrecognized parameter); its wildcard covers this stream's indices
+s, sh = es.req("GET", f"/_cat/shards/{config.INDEX_PREFIX}*", ok=(200, 404), format="json", h="index")
 own_shards = len(sh) if s == 200 else 0
 _, allsh = es.req("GET", "/_cat/shards", format="json", h="index")
 _, st = es.req("GET", "/_cluster/settings", include_defaults="true", flat_settings="true")
