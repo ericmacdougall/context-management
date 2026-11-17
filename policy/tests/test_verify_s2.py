@@ -29,6 +29,8 @@ ORIGINS = [("alice", "human", "owner_ui", "user", "user_typed"), ("alice", "huma
            ("bob", "human", "owner_ui", "user", "user_typed"), ("carol", "human", "owner_ui", "user", "user_typed"),
            ("bot", "agent", "agent_api", "assistant", "agent_generated"), ("x", "analyst", "agent_api", "assistant", "agent_generated")]
 TRIALS, SEEDS = 12, [1, 2, 3]
+CTL_PROOFS = [("ctl_no_replay", ["replay"], TRIALS), ("ctl_no_mac", ["forged_mac", "other_key"], TRIALS),
+              ("ctl_identity_from_body", ["other_principal", "look_alike"], TRIALS), ("ctl_txn_clock", ["expired_in_txn"], 3)]
 DOC = {"params": {"seeds": SEEDS, "trials_per_class": TRIALS, "classes": CLASSES, "tokens": TOKENS, "calls": CALLS, "controls": CONTROLS}}
 
 
@@ -76,13 +78,24 @@ def good_rows(seeds=SEEDS):
         for k in S2.BODY_KEYS:
             add("real", kind="body_identity", key=k, code="identity_in_body", event_actor=None)
         add("real", kind="install_lookalike", base="alice", look_alike="a1ice", outcome="refused:ValueError")
-        add("ctl_bare_mint_80bb6a7", kind="mint", outcome="accepted")
-        add("ctl_bare_mint_0a20b64", kind="mint", outcome="accepted", authenticated=True)
-        add("ctl_no_replay", kind="proof", cls="replay", outcome="accepted")
-        add("ctl_no_mac", kind="proof", cls="forged_mac", outcome="accepted")
-        add("ctl_identity_from_body", kind="proof", cls="other_principal", outcome="accepted", factor_principal="alice", stamped="bob")
-        add("ctl_origin_from_body", kind="body_identity", key="actor", code="proposed", event_actor="user")
-        add("ctl_txn_clock", kind="proof", cls="expired_in_txn", outcome="accepted")
+        # the control arms as exp/s2_sessions.py controls() writes them (GoodQA #16096 class B: every row of every arm is identified)
+        add("ctl_bare_mint_80bb6a7", kind="mint", role="in_process", what="bare_principal_issue", outcome="accepted", stamped="alice")
+        add("ctl_bare_mint_0a20b64", kind="mint", role="dc_idp", what="bare_principal_open_session", outcome="accepted", authenticated=True)
+        for arm, classes, trials in CTL_PROOFS:
+            for cls in classes:
+                for i in range(trials):
+                    ns = nonce(seed, arm, cls, i)
+                    stamped = "bob" if arm == "ctl_identity_from_body" else "alice"
+                    add(arm, kind="proof", cls=cls, trial=i, nonce_sha256=ns, factor="f-%d-%d" % (seed, i % 3), outcome="accepted",
+                        factor_principal="alice", claimed="bob" if cls in S2.CLAIMS_OTHER else "alice", stamped=stamped, authenticated=True)
+                    if cls == "replay":
+                        add(arm, kind="proof", cls="replay_first", trial=i, nonce_sha256=ns, factor="f-%d-%d" % (seed, i % 3), outcome="accepted",
+                            principal="alice", stamped="alice", authenticated=True)
+        for pid, kind, ch, a, t in ORIGINS:
+            add("ctl_origin_from_body", kind="origin", principal=pid, principal_kind=kind, channel=ch, code="proposed", actor=a, trust_origin=t)
+        for k in S2.BODY_KEYS:
+            add("ctl_origin_from_body", kind="body_identity", key=k, code="proposed" if k == "actor" else "identity_in_body",
+                event_actor="user" if k == "actor" else None)
     return R
 
 
@@ -102,6 +115,14 @@ class VerifyS2(unittest.TestCase):
         change(_find(rows, **where))
         return self._v(rows)
 
+    def _silenced(self, change, **where):
+        """A control arm made silent: the change applied to EVERY matching row (one catching row is enough for a control)."""
+        rows = copy.deepcopy(good_rows())
+        for r in rows:
+            if all(r.get(k) == v for k, v in where.items()):
+                change(r)
+        return self._v(rows)
+
     def test_each_break_fails(self):
         breaks = {
             "accepted attack": (lambda r: r.update(outcome="accepted", stamped="alice"), dict(arm="real", cls="other_key")),
@@ -119,19 +140,23 @@ class VerifyS2(unittest.TestCase):
             "agent stamped user": (lambda r: r.update(actor="user", trust_origin="user_typed"), dict(arm="real", kind="origin", principal="bot")),
             "body actor accepted": (lambda r: r.update(code="proposed", event_actor="user"), dict(arm="real", kind="body_identity", key="actor")),
             "look-alike installed": (lambda r: r.update(outcome="accepted"), dict(arm="real", kind="install_lookalike")),
-            "control 80bb6a7 silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_bare_mint_80bb6a7")),
-            "control 0a20b64 not authenticated": (lambda r: r.update(authenticated=False), dict(arm="ctl_bare_mint_0a20b64")),
-            "control replay silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_no_replay")),
-            "control mac silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_no_mac")),
-            "control identity stamps the factor's own": (lambda r: r.update(stamped="alice"), dict(arm="ctl_identity_from_body")),
-            "control origin silent": (lambda r: r.update(event_actor="assistant"), dict(arm="ctl_origin_from_body")),
-            "control txn clock silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_txn_clock")),
             "in-txn expired token reads": (lambda r: r.update(obs={"n": 2, "seen": 1}), dict(arm="real", kind="token", cls="expired_in_txn", call="read_table")),
             "repeatable-read token erases": (lambda r: r.update(obs={"refused": None, "erased": 1}), dict(arm="real", kind="token", cls="repeatable_read", call="erase_values")),
             "in-txn expired proof accepted": (lambda r: r.update(outcome="accepted", stamped="alice"), dict(arm="real", cls="expired_in_txn")),
         }
         for name, (change, where) in breaks.items():
             self.assertEqual(self._broken(change, **where), "FAIL", name)
+        silenced = {
+            "control 80bb6a7 silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_bare_mint_80bb6a7")),
+            "control 0a20b64 not authenticated": (lambda r: r.update(authenticated=False), dict(arm="ctl_bare_mint_0a20b64")),
+            "control replay silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_no_replay", cls="replay")),
+            "control mac silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_no_mac")),
+            "control identity stamps the factor's own": (lambda r: r.update(stamped="alice"), dict(arm="ctl_identity_from_body")),
+            "control origin silent": (lambda r: r.update(event_actor="assistant"), dict(arm="ctl_origin_from_body", kind="body_identity", key="actor")),
+            "control txn clock silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_txn_clock")),
+        }
+        for name, (change, where) in silenced.items():
+            self.assertEqual(self._silenced(change, **where), "FAIL", name)
 
     def test_missing_rows_fail(self):
         for name, drop in (("token pair", lambda r: r["kind"] == "token" and r["cls"] == "revoked" and r["call"] == "erase_values"),

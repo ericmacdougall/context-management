@@ -1,0 +1,49 @@
+# green run: tests.test_evidence_s2 tests.test_verify_s2 tests.test_evidence_layer against verify/s2.py
+# worktree HEAD: 4226508ea38e8894ea63597135b5ebaad45de126
+# git diff --stat ea4677a -- verify/s2.py (empty: the code under test is ea4677a's):
+ policy/verify/s2.py | 72 +++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 67 insertions(+), 5 deletions(-)
+# sha256 verify/s2.py in the worktree: 56304d2c0fd3c7179b4bc05809fedf2910563168d8d73ce35de7ebadb00ffbdd
+# sha256 verify/s2.py at ea4677a:     de4bb5f981882e2062a48f9abd1883e4b58c1e45aa1577f19e8c505f665903f3
+# command (from policy/): python3 -m unittest -v tests.test_evidence_s2 tests.test_verify_s2 tests.test_evidence_layer
+test_catching_row_copied_from_another_seed (tests.test_evidence_s2.S2Evidence)
+ctl_no_replay silent on seed 3; one accepted replay row of seed 1 relabelled seed 3 replaces its refused twin (PASSED at ... ok
+test_control_arm_cut_to_one_catching_row (tests.test_evidence_s2.S2Evidence)
+The control arms as the old fixture had them: one catching row each (PASSED at ea4677a). ... ok
+test_design_comes_from_the_pins (tests.test_evidence_s2.S2Evidence) ... ok
+test_drop (tests.test_evidence_s2.S2Evidence) ... ok
+test_duplicate (tests.test_evidence_s2.S2Evidence) ... ok
+test_extra (tests.test_evidence_s2.S2Evidence) ... ok
+test_honest_set_passes (tests.test_evidence_s2.S2Evidence) ... ok
+test_overwrite (tests.test_evidence_s2.S2Evidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_s2.S2Evidence) ... ok
+test_relabel (tests.test_evidence_s2.S2Evidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_s2.S2Evidence) ... ok
+test_silent_control_overwritten_by_a_catching_row (tests.test_evidence_s2.S2Evidence)
+ctl_no_mac made silent on seed 2 (every proof refused: FAIL), then one accepted copy of a trial added: at ea4677a any() ... ok
+test_duplicated_and_unexpected_coverage_fails (tests.test_verify_s2.CoverageIsPinned) ... ok
+test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) ... ok
+test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_good_set_passes (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_each_break_fails (tests.test_verify_s2.VerifyS2) ... ok
+test_good_set_passes (tests.test_verify_s2.VerifyS2) ... ok
+test_missing_rows_fail (tests.test_verify_s2.VerifyS2) ... ok
+test_each_reason_is_named (tests.test_evidence_layer.Layer) ... ok
+test_identities_are_typed (tests.test_evidence_layer.Layer) ... ok
+test_main_import_gate_covers_the_layer (tests.test_evidence_layer.Layer) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/exp/e1_lattice.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_pins_compare_exactly (tests.test_evidence_layer.Layer) ... ok
+test_unclassified_rows_and_bad_seeds (tests.test_evidence_layer.Layer) ... ok
+test_wrong_experiment_name (tests.test_evidence_layer.Layer) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 7.612s
+
+OK
+# unittest exit status 0

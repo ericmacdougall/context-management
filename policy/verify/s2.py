@@ -40,8 +40,30 @@ PASS needs, for EVERY seed:
                             factor's (a session as someone the factor does not belong to).
     ctl_origin_from_body    the body naming actor "user" from a non-human was applied with event actor "user".
     ctl_txn_clock           (the d05d731 transaction-start clock) an expired_in_txn proof accepted, or an expired_in_txn token that
-                            reads the seeded proposal."""
+                            reads the seeded proposal.
+
+Evidence identity (GoodQA #16096 class B, verify/evidence.py), checked before anything above: every row of EVERY arm has an identity
+(arm, seed, kind, then role and what for mint, cls and trial for proof, round for replay_concurrent, cls and call for token, principal,
+principal_kind and channel for origin, key for body_identity, nothing more for token_after and install_lookalike), and the rows must be
+EXACTLY the set expected from the pins and params.seeds: the real arm as above and the control arms as exp/s2_sessions.py controls()
+writes them (CTL_PROOFS; one mint row for each bare-mint control; ORIGIN_CASES and BODY_KEYS for ctl_origin_from_body). Identities are
+typed (round 1.0 or True is not round 1). The nonce identity rule above covers the proof and replay_concurrent rows of every arm (a
+replay_first and its replay must share arm, seed, trial and factor). A duplicate, missing, extra or unidentified row, or a shared
+nonce, FAILs before any control or count is judged."""
+import importlib.util
+import os
 import re
+
+
+def _evidence():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "evidence.py")
+    spec = importlib.util.spec_from_file_location("verify_evidence", p)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+EV = _evidence()
 
 ORIGIN ={("human", "owner_ui"): ("user", "user_typed"), ("human", "owner_cli"): ("user", "user_typed")}
 NON_USER = ("assistant", "agent_generated")
@@ -74,6 +96,12 @@ REPLAY_ROUNDS, REPLAY_WAYS = 3, 8
 PINNED_PARAMS = {"trials_per_class": TRIALS, "classes": list(PROOF_CLASSES), "tokens": list(TOKENS), "calls": list(CALLS),
                  "controls": list(CONTROLS)}
 TRIAL_CLASSES = PROOF_CLASSES + DERIVED_CLASSES                      # each: trials 0..TRIALS-1 per seed, each exactly once
+CTL_TXN_TRIALS = 3                                                   # exp/s2_sessions.py controls(): proof_rows(..., ("expired_in_txn",), 3)
+CTL_PROOFS = (("ctl_no_replay", ("replay", "replay_first"), TRIALS), ("ctl_no_mac", ("forged_mac", "other_key"), TRIALS),
+              ("ctl_identity_from_body", ("other_principal", "look_alike"), TRIALS), ("ctl_txn_clock", ("expired_in_txn",), CTL_TXN_TRIALS))
+CTL_MINT = {"ctl_bare_mint_80bb6a7": ("in_process", "bare_principal_issue"), "ctl_bare_mint_0a20b64": ("dc_idp", "bare_principal_open_session")}
+ID_FIELDS = {"mint": ("role", "what"), "proof": ("cls", "trial"), "replay_concurrent": ("round",), "token": ("cls", "call"),
+             "origin": ("principal", "principal_kind", "channel"), "body_identity": ("key",)}
 NONCE_ID = re.compile(r"^[0-9a-f]{16}$")
 
 
@@ -89,11 +117,11 @@ def _index(i):
 
 
 def _identities(rows, seeds):
-    """Final review P2: one nonce identity per presentation, across every seed (see the module docstring)."""
+    """Final review P2: one nonce identity per presentation, across every seed and (GoodQA #16096 class B) every arm."""
     why, by = [], {}
     sd = {str(s) for s in seeds}
     for x in rows:
-        if x.get("arm") != "real" or x.get("kind") not in ("proof", "replay_concurrent") or str(x.get("seed")) not in sd:
+        if x.get("kind") not in ("proof", "replay_concurrent") or str(x.get("seed")) not in sd:
             continue
         n = x.get("nonce_sha256")
         if not (isinstance(n, str) and NONCE_ID.match(n)):
@@ -104,7 +132,8 @@ def _identities(rows, seeds):
         if len(xs) == 1:
             continue
         pair = (len(xs) == 2 and sorted(str(x.get("cls")) for x in xs) == ["replay", "replay_first"]
-                and all(x.get("kind") == "proof" for x in xs) and len({(str(x.get("seed")), repr(x.get("trial")), x.get("factor")) for x in xs}) == 1)
+                and all(x.get("kind") == "proof" for x in xs)
+                and len({(str(x.get("arm")), str(x.get("seed")), repr(x.get("trial")), x.get("factor")) for x in xs}) == 1)
         if not pair:
             why.append("nonce identity %s on %d rows: %s" % (n, len(xs), sorted({(str(x.get("seed")), str(x.get("cls")), repr(x.get("trial", x.get("round"))))
                                                                                  for x in xs})[:4]))
@@ -224,14 +253,47 @@ def _controls(rows, seed):
     return c
 
 
+def _row_identity(x):
+    k = x["kind"]
+    return (x["arm"], x["seed"], k) + tuple(x[f] for f in ID_FIELDS.get(k, ()))
+
+
+def _expected(sd):
+    out = set()
+    for s in sd:
+        out |= {EV.key("real", s, "mint", role, what) for role, what in MINT_PROBES}
+        out |= {EV.key("real", s, "proof", c, i) for c in TRIAL_CLASSES for i in range(TRIALS)}
+        out |= {EV.key("real", s, "replay_concurrent", r) for r in range(REPLAY_ROUNDS)}
+        out |= {EV.key("real", s, "token", c, k) for c in TOKENS for k in CALLS}
+        out |= {EV.key("real", s, "token_after"), EV.key("real", s, "install_lookalike")}
+        for arm in ("real", "ctl_origin_from_body"):
+            out |= {EV.key(arm, s, "origin", *o) for o in ORIGIN_CASES} | {EV.key(arm, s, "body_identity", b) for b in BODY_KEYS}
+        out |= {EV.key(arm, s, "mint", *rw) for arm, rw in CTL_MINT.items()}
+        out |= {EV.key(arm, s, "proof", c, i) for arm, classes, n in CTL_PROOFS for c in classes for i in range(n)}
+    return out
+
+
+def _gate(doc, rows):
+    g = EV.Gate("s2_sessions", doc)
+    g.pinned(PINNED_PARAMS)
+    sd = g.seeds(MIN_SEEDS)
+    g.family("rows", rows, _row_identity, _expected(sd))
+    for w in _identities(rows, sd)[:20]:
+        g.problem(w)
+    return g
+
+
 def verify(doc, rows):
+    g = _gate(doc, rows)
+    if not g.ok:
+        return g.fail()
     par = doc.get("params") or {}
     sd = par.get("seeds") or []
     pin = {k: par.get(k) for k in PINNED_PARAMS if par.get(k) != PINNED_PARAMS[k]}
     stray = sorted({str(x.get("seed")) for x in rows} - {str(s) for s in sd})
     arms = sorted({x.get("arm") for x in rows} - {"real"} - set(CONTROLS))
     ident = _identities(rows, sd)
-    checks = {"params_not_pinned": pin, "seeds": len(set(map(str, sd))), "rows_of_other_seeds": stray, "unexpected_arms": arms,
+    checks = {"evidence": g.report(), "params_not_pinned": pin, "seeds": len(set(map(str, sd))), "rows_of_other_seeds": stray, "unexpected_arms": arms,
               "trial_identity_failures": ident[:20], "trial_identity_failure_count": len(ident)}
     ok = not pin and len(set(map(str, sd))) >= MIN_SEEDS and len(set(map(str, sd))) == len(sd) and not stray and not arms and not ident
     for s in sd:
