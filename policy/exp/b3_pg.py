@@ -483,7 +483,7 @@ def differential(seed_list):
                 out["codes"][pc] = out["codes"].get(pc, 0) + 1
                 if (mc, mo) != (pc, po):
                     mism += 1
-                ROWS.append({"kind": "diff_event", "log": "%s/%d" % (s, li), "ev": ev, "mem": [mc, mo], "pg": [pc, po]})
+                ROWS.append({"kind": "diff_event", "log": "%s/%d" % (s, li), "ev": ev, "mem": [mc, mo], "pg": [pc, po], "i": len(hist) - 1})
                 for r in ("r1", "r2"):
                     g.note_version(r, st.heads[r]["version"])
             pv, mv = eng._comparable(), st.comparable()

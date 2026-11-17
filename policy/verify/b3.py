@@ -2,9 +2,29 @@
 
 Each scenario round is re-judged from its recorded outcome codes and head fields (not from the experiment's ok flag); the overlap
 witness is re-derived from the recorded database timestamps; the differential arm is re-judged from per-event memory/Postgres codes and
-the per-log views, chain result and audit count (refusals recounted here from the Postgres codes)."""
+the per-log views, chain result and audit count (refusals recounted here from the Postgres codes).
+
+Evidence identity (GoodQA #16096 class B, verify/evidence.py): params.R and params.diff_logs must equal the pins (THRESHOLDS B3: R = 50,
+40 differential logs, LOGS_PER_SEED = 40 // len(seeds) per seed as exp/b3_pg.py runs them), params.seeds is the seed list. The rows
+must be EXACTLY: one round row per (scenario, round) for the nine scenarios and three controls, round = 0..R-1; one diff_log row per log
+"<seed>/<li>", li = 0..LOGS_PER_SEED-1; per log, diff_event rows i = 0..events-1 where events is declared by the log's own row
+(category 2, parent-declared: a log and its events shortened together are not seen); one scen_rebuild row. Anything else FAILs before
+any round or log is judged."""
 import datetime
+import importlib.util
 import json
+import os
+
+
+def _evidence():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "evidence.py")
+    spec = importlib.util.spec_from_file_location("verify_evidence", p)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+EV = _evidence()
 
 # round 3 (amendment 5): self_approval and no_value_change are gone with rule 11 (non-humans never decide)
 REFUSED = ("bad_event", "tenant_mismatch", "unauthorized", "principal_revoked", "unknown_req", "duplicate_id", "proposal_cap", "channel_mismatch",
@@ -15,6 +35,10 @@ OVERLAP = ("S1_conflicting_decisions_contested", "S3_zombie_revoked_principal", 
 API_OVERLAP = ("S7_api_supersede_race", "S8_api_twins")        # deployment path (dc_app + dc.submit): B blocked < A commit < B done
 SCENARIOS = ("S1_conflicting_decisions_contested", "S2_stale_token_refused", "S3_zombie_revoked_principal", "S4_same_idem_key_concurrent",
              "S4b_twins_on_two_requirements", "S5_resolve_race", "S6_tenant_isolation") + API_OVERLAP
+CONTROLS = ("ctl_no_head_lock", "ctl_no_advisory_lock", "ctl_idem_unprotected")
+# the design (THRESHOLDS B3; exp/b3_pg.py R, DIFF_LOGS): pinned here, never read from the judged rows
+R_PIN, DIFF_LOGS, MIN_SEEDS = 50, 40, 1
+KINDS = ("round", "diff_log", "diff_event", "scen_rebuild")
 
 
 def _t(s):
@@ -71,9 +95,29 @@ def judge(scen, i, info):
     raise ValueError(scen)
 
 
+def _gate(doc, rows):
+    g = EV.Gate("b3_pg", doc)
+    sd = g.seeds(MIN_SEEDS)
+    per = max(1, DIFF_LOGS // len(sd)) if sd else 0
+    g.pinned({"R": R_PIN, "diff_logs": per * len(sd)})
+    fam = g.split(rows, lambda r: r["kind"] if r["kind"] in KINDS else None)
+    g.family("round", fam.get("round", []), lambda r: (r["scenario"], r["round"]), {EV.key(s, i) for s in SCENARIOS + CONTROLS for i in range(R_PIN)})
+    logs = g.family("diff_log", fam.get("diff_log", []), lambda r: (r["log"],), {EV.key("%s/%d" % (s, li)) for s in sd for li in range(per)})
+    if logs is None:
+        g.not_checked("diff_event", "the diff_log rows are not exact")
+    else:
+        g.family("diff_event", fam.get("diff_event", []), lambda r: (r["log"], r["i"]),
+                 {EV.key(r["log"], i) for k, r in logs.items() for i in range(g.declared_count("diff_event", k, r.get("events")))})
+    g.family("scen_rebuild", fam.get("scen_rebuild", []), lambda r: (), {EV.key()})
+    return g
+
+
 def verify(doc, rows):
     res = doc["result"]
-    R = doc["params"]["R"]
+    g = _gate(doc, rows)
+    if not g.ok:
+        return g.fail(agrees=res.get("verdict") == "FAIL")
+    R = R_PIN
     sc = {}
     for r in rows:
         if r["kind"] != "round":
@@ -111,5 +155,5 @@ def verify(doc, rows):
         and sc.get("ctl_no_head_lock", {}).get("overlap", 0) >= floor
     verdict = "PASS" if ok and ctl_ok else "FAIL"
     return {"verdict": verdict, "agrees": verdict == res["verdict"],
-            "checks": {"scenarios": sc, "diff_events": len(dev), "diff_event_mismatch": ev_bad, "diff_logs": len(dlog), "diff_log_bad": log_bad,
+            "checks": {"evidence": g.report(), "scenarios": sc, "diff_events": len(dev), "diff_event_mismatch": ev_bad, "diff_logs": len(dlog), "diff_log_bad": log_bad,
                        "scenario_rebuild_ok": reb_ok}}

@@ -1,0 +1,39 @@
+# green run: tests.test_evidence_b3 tests.test_evidence_layer against verify/b3.py
+# worktree HEAD: 4226508ea38e8894ea63597135b5ebaad45de126
+# git diff --stat ea4677a -- verify/b3.py (empty: the code under test is ea4677a's):
+ policy/verify/b3.py | 50 +++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 47 insertions(+), 3 deletions(-)
+# sha256 verify/b3.py in the worktree: 45cc7f2e79a69da59e42d94b208aef712b4b22151d298bb04a5a0c5faa3f696c
+# sha256 verify/b3.py at ea4677a:     96c4e7824a0d24baf589094c58111046885cc2f8363d48cec71cc6c6371b280c
+# command (from policy/): python3 -m unittest -v tests.test_evidence_b3 tests.test_evidence_layer
+test_design_comes_from_the_pins (tests.test_evidence_b3.B3Evidence) ... ok
+test_drop (tests.test_evidence_b3.B3Evidence) ... ok
+test_duplicate (tests.test_evidence_b3.B3Evidence) ... ok
+test_events_beyond_the_declared_count (tests.test_evidence_b3.B3Evidence)
+An event row past the count its log declares is an extra identity. ... ok
+test_extra (tests.test_evidence_b3.B3Evidence) ... ok
+test_honest_set_passes (tests.test_evidence_b3.B3Evidence) ... ok
+test_log_and_its_events_dropped_together (tests.test_evidence_b3.B3Evidence)
+A whole differential log (its row and its events) dropped: PASSED at ea4677a (it needed only one log). ... ok
+test_overwrite (tests.test_evidence_b3.B3Evidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_b3.B3Evidence) ... ok
+test_relabel (tests.test_evidence_b3.B3Evidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_b3.B3Evidence) ... ok
+test_each_reason_is_named (tests.test_evidence_layer.Layer) ... ok
+test_identities_are_typed (tests.test_evidence_layer.Layer) ... ok
+test_main_import_gate_covers_the_layer (tests.test_evidence_layer.Layer) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/exp/e1_lattice.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_pins_compare_exactly (tests.test_evidence_layer.Layer) ... ok
+test_unclassified_rows_and_bad_seeds (tests.test_evidence_layer.Layer) ... ok
+test_wrong_experiment_name (tests.test_evidence_layer.Layer) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 3.574s
+
+OK
+# unittest exit status 0
