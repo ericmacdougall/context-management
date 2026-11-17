@@ -21,4 +21,4 @@ Review D (F10: tests ran with the current tree first on sys.path, so an older ga
   by tree4, made after both fixes; tree4 lists every loaded writepath module with its path and SHA-256.
 Receipts made before review D's F10 fix (2026-11-17 22:00Z) record no module provenance: where the working tree
 differed from the commit under test, the tests may have imported current modules. They are history, not evidence for
-v3; v3's evidence is the reviewD-*-eeb9b82 receipts named in GATE-DESIGN.md section 5.
+v3; v3's evidence is the reviewD-* receipts listed in GATE-DESIGN.md section 5.11.

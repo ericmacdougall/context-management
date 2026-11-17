@@ -325,10 +325,13 @@ Evidence, per container, at start, at every check and at end, always by containe
 
 Rules (MARGIN = 256 MiB):
 - R1 isolation: each data path is a tmpfs: ES reports type tmpfs at its data path; PG's statfs says tmpfs; inspect
-  shows a Docker tmpfs mount there and no mount inside it.
+  shows a Docker tmpfs mount there and no mount inside it; PG's PGDATA (container environment) lies inside it.
 - R2 bound: memory.swap.max is 0; with M = memory.max and S = the tmpfs size, S − M ≥ T + MARGIN for ES and
   S − M ≥ MARGIN for PG.
-- R3 peak: memory.peak ≤ S − T − MARGIN for ES and ≤ S − MARGIN for PG.
+- R3 peak: memory.peak ≤ S − T − MARGIN for ES and ≤ S − MARGIN for PG. At every step the argument's premise and its
+  conclusion are also observed directly: the tmpfs's used space (total − free) ≤ memory.peak (a page written into the
+  tmpfs from outside the container, by `docker cp` or a host process, is charged to another cgroup and would make it
+  larger), and free ≥ T + MARGIN.
 - R4 identity: Id, StartedAt, ES node id and oom_kill unchanged since admission; Running, not Paused, OOMKilled false;
   the same boot id.
 - R5 configuration: M, memory.swap.max, S and ES's three thresholds unchanged since admission.
@@ -351,8 +354,8 @@ For a run it calls valid:
   by at least ES's largest watermark threshold plus 256 MiB (PG: 256 MiB), with no swap;
 - (V2) each container's lifetime memory peak stayed within that bound, so neither data path's free space reached a
   watermark threshold (ES) or zero (PG) at any moment of the window;
-- (V3) the same containers ran throughout: not restarted, recreated or paused at a step, no process in them
-  OOM-killed, no reboot;
+- (V3) the same containers ran throughout: not restarted or recreated, not paused at any step (a pause between steps:
+  D1 below), no process in them OOM-killed, no reboot;
 - (V4) no stop was recorded in the window, in an intact ledger;
 - (V5) at least 20 GiB was free on the shared disk at admission, and the stream's own files there grew by at most
   2 GiB.
@@ -364,31 +367,56 @@ Not covered, and how each shows:
 - A run whose data does not fit in M is OOM-killed: VOID. Sizing is the operator's (5.6), not a guarantee.
 - A container stop, restart or recreate wipes its tmpfs: VOID (StartedAt, node id), and the stream's setup must run
   again before the next run.
-- A pause, or CPU throttling, between two steps: not detected (no events stream); it does not change disk state.
-- A change of ES's disk settings that is restored before the next step: it needs the stream's admin credential (the
-  real stream runs ES with security on), and no stream code changes disk settings (only host/bootstrap.py sets them,
-  as node settings at container creation). Outside the threat model; a change still present at the next step is VOID
-  by R5.
-- Same-uid tampering with the gate's code or state, and root on the host (writing into the tmpfs from outside the
-  container, resetting memory.peak).
+Open decisions for main (review D advisor: not to be parked; each needs a decision, options below):
+- (D1) A `docker pause` and unpause between two steps is not detected. v2 voided it through its events stream; v3 sees
+  only a pause in progress at a step. A pause does not change disk state, so V1 and V2 still hold, but an experiment
+  that measures time or leases runs differently while its store is frozen. Who can do it: anyone with the host's
+  Docker socket, which is root-equivalent on the host and can also alter every input the gate reads. Options:
+  (a) accept as a trust boundary and say so in each verdict (recommended: the remaining actors are the operator and
+  other tenants with Docker access, whom no user-space gate can exclude); (b) a pause-only event follower started at
+  admission, VOID when it is not alive with its start time at each step (brings back a smaller companion);
+  (c) query Docker's event history at end and VOID when it may be incomplete (the daemon keeps a short ring buffer,
+  so busy hosts would VOID often).
+- (D2) A change of ES's disk settings restored before the next step. No stream code writes cluster or index settings:
+  bootstrap sets the watermarks as node settings at container creation, and tests/test_disk_gate.py
+  `test_no_stream_code_writes_disk_or_block_settings` fails if any code in writepath adds such a call (runkit/live/'s
+  disposable-container kits excepted). What remains needs the stream's admin credential (ES runs with security on).
+  Options: (a) accept that actor as the operator, the same trust boundary as D1 (recommended); (b) have the stream
+  run without any credential that can write cluster settings during a run, i.e. hand the admin key to the gate only
+  (a change to wp/es_keys.py, owned by the hardening owner).
+A change still present at the next step is VOID by R5 either way.
+
+Not covered, and how each shows:
+- Same-uid tampering with the gate's code or state, and root on the host (resetting memory.peak, editing the cgroup
+  or the ledger with its head). A write into the tmpfs from outside the container is caught when the tmpfs then holds
+  more than the container's lifetime peak (R3).
 - The scanner's stated limits (5.7).
 
 ### 5.5 Ledger v3 (F3, F7, F11)
 - **init.** A ledger starts with an `init` record (`disk_gate init <reason>`). With no ledger, every command except
-  init is BLOCKED, so a deleted ledger is never read as an empty one. A non-empty v2 ledger (chain intact, no init
-  record, no head) is adopted once: an init record noting its v2 record count is appended.
+  init is BLOCKED, so a deleted ledger is never read as an empty one. A ledger with no init record (a v2 ledger, or a
+  v3 ledger cut back past its init record with its head removed) is BLOCKED too, and only an explicit
+  `init <reason>` adopts it, recording the reason and the record count: adoption is never implicit, so a cut-back
+  ledger is not adopted again silently. A run admitted after the cut point has no admit record any more: its end is
+  VOID.
 - **Head anchor.** After every append, under the lock, `state/stop_ledger.head` is replaced atomically (temporary
   file, fsync, rename) with the record count and the SHA-256 of the last record. A read requires at least that many
   records, the record at that position to hash to the anchor, and an intact chain. A ledger with an init record but no
   head, or shorter than its head, is a LedgerError (BLOCKED). Recovery is explicit: `disk_gate ledger-reset <reason>`
-  keeps the broken ledger under a new name and starts a new one whose init record names the old file's size and
-  SHA-256; a run open at that point has no admit record in the new ledger, so its end is VOID.
+  works only on a DAMAGED ledger (an intact one is refused, so one command cannot clear open stops); it keeps the
+  broken ledger under a new name and starts a new one whose init record names the old file's size and SHA-256,
+  followed by one open stop: the damaged ledger's stops cannot be read, so a person acknowledges them by id before
+  any start. A run open at that point has no admit record in the new ledger, so its end is VOID.
 - **Admission record required.** end and check require this run's admit record at the sequence number start stored.
 - **Legacy STOP (F3).** The gate occupies `state/STOP` with a directory. A regular file found there is first ingested
   as a stop and renamed (kept as `state/STOP.ingested-<seq>`), then the directory is created; all inside the ledger
   lock, retried if a writer recreates the file meanwhile. After that a legacy `> state/STOP` write fails with "Is a
-  directory" instead of being missed, so no unlocked STOP writer remains. The only STOP interface is
-  `disk_gate stop <reason>`; no stream code writes state/STOP.
+  directory" instead of being missed. The writes a directory does accept (`touch state/STOP`, `cp f state/STOP`,
+  `mv f state/STOP`, a removal and re-creation) all change its ctime or its entries: the head anchor keeps the
+  directory's signature (ctime, mtime, entry names) as of the gate's last write, and any difference found when the
+  ledger is next opened is recorded as a stop, with whatever was written moved out to `state/STOP.ingested-<seq>-<n>`
+  (its first 100 characters quoted as the reason). The only STOP interface is `disk_gate stop <reason>`; no stream
+  code reads or writes state/STOP.
 - **State-format transition (F11).** An older gate on a migrated home fails closed: the v2 gate reads state/STOP with
   read_bytes and the v1 gate unlinks it, and both raise on a directory. v3 refuses a run admitted by an older gate
   (v3 admit records carry `"v": 3`); the operator closes it with `abort`. v2 run directories and captures are kept.
@@ -409,19 +437,32 @@ Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`
   which recreates the secrets that live inside the stores (role verifiers, ES users and keys, key-store rows).
 
 ### 5.7 Scanner v3 (F4, F5, F6, F12)
-- **Fail closed (F4).** Every requested root must exist and be readable; os.walk errors, unreadable files, gzip errors
-  and over-limit content are collected, listed (redacted per F12) and make the exit code 2. Exclusions compare path
-  components, so an excluded `oldhome` does not exclude `oldhome-results`. Content over the limit (512 MiB raw or
-  decompressed) is never sliced: the file is listed as not scanned, exit 2.
+- **Fail closed (F4).** One walker serves both the secret sources and the scanned roots. Every requested root must
+  exist; a directory that cannot be listed, a file that cannot be read, a non-regular file (FIFO, socket, device: never
+  opened, so a FIFO cannot block the scan), a dangling link and a link to a directory outside the scanned roots (not
+  followed, so a link to / cannot make the scan unbounded) are listed (redacted per F12) and make the exit code 2.
+  There are no exclusions at all (removing v2's string-prefix exclusion removes the `oldhome-results` defect): a
+  secret source inside a scanned root is simply a hit. A file over 512 MiB is not read; a gzip stream is searched as
+  far as it decompresses, up to 512 MiB, and its damage or the limit is listed: exit 2 unless a hit makes it 1. The
+  stream's sockets live under /run/wphard, outside every root the run kit scans.
 - **Inventory from the creation sites (F5).** A table in leak_scan.py names every place the stream creates or derives
   a secret (file and function) and how it is inventoried, or why it is not a secret (nonces, MAC outputs, pseudonyms,
-  document ids) or not file-checkable (broker and probe keys held only in memory). A test scans wp/, host/ and exp/
-  for creation calls (secrets.token_*, os.urandom, hmac.new, an `_security/api_key` POST,
-  `elasticsearch-reset-password`) and fails on any site the table does not list. The tenant chain key (HMAC-SHA256 of
-  the tenant key over "chain-key:v1", which the key service sends as hex) is derived from each live tenant key and
-  inventoried with all its representations.
-- **Coverage (F6).** UTF-16LE and UTF-16BE forms of every value are added, and normalisation applies unescaping and
-  percent-decoding repeatedly (up to three rounds, until nothing changes) instead of once in a fixed order. The split
+  document ids) or not file-checkable (broker and probe keys held only in memory). A test scans every file of
+  writepath except tests/, results/ and the scanner itself for creation calls in Python, shell and SQL forms
+  (secrets.token_*, os.urandom, hmac.new, random.*, an `_security/api_key|user|service` POST or PUT,
+  `elasticsearch-reset-password`, /dev/urandom, `openssl rand`, gen_random_bytes, POSTGRES_PASSWORD, ELASTIC_PASSWORD)
+  and fails on any site the table does not list, and on a table entry that matches nothing. The tenant chain key
+  (HMAC-SHA256 of the tenant key over "chain-key:v1", which the key service sends as hex) is derived from each live
+  tenant key and inventoried with all its representations. The legacy write path that old_repro runs (memsys at
+  a13b524) keeps its own keys in the database `keys` on the same PG (tables keys and tenant_keys, made by
+  gen_random_bytes in kms.sql): they are read when that database exists, and the table's legacy entries are checked
+  against `git show a13b524:systems/memsys/kms.sql`.
+- **Coverage (F6).** Each file is also searched with its NUL bytes removed, which turns UTF-16LE, UTF-16BE and UTF-32
+  text of an ASCII value back into the value at any byte alignment (every value the stream creates is ASCII); a
+  non-ASCII value also gets its UTF-16LE and UTF-16BE forms as representations. Normalisation applies unescaping and
+  percent-decoding repeatedly (up to three rounds, until nothing changes) instead of once in a fixed order, so
+  percent-encoded JSON escapes are undone; file and directory NAMES are searched too, and a name holding a candidate
+  is a hit (it is copied with the results). The split
   rule is stated exactly: a value is found when 16 consecutive characters of one of its representations appear in one
   normalised view. A value cut into pieces shorter than 16 characters, or stored in an encoding the table does not
   list, is not found. Every clearance statement carries this list.
@@ -453,10 +494,10 @@ Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`
 | 26 | breach already present at admission, no fresh line | R2 and R3 at start: BLOCKED |
 | 27 | ES logging silenced | not relevant: logging is not evidence |
 | F1 | stale admission free-space reading | R7: measured inside the locked admission step, stored with it |
-| F2 | API evidence not anchored to admission (gaps, A→B→A) | no sampled evidence; R3 uses the kernel's lifetime peak; R5 compares every step with admission |
-| F3 | legacy STOP races finalization | 5.5: the legacy path is a directory; no unlocked writer remains |
+| F2 | API evidence not anchored to admission (gaps, A→B→A) | no sampled evidence; R3 uses the kernel's lifetime peak; R5 compares every step with admission. A→B→A of ES's disk settings: no stream code can do it (fence test); the admin-credential actor is open decision D2 (5.4) |
+| F3 | legacy STOP races finalization | 5.5: the legacy path is a directory; `>` fails, and touch, cp and mv into it are stops (head signature) |
 | F4 | scanner clean after skipping evidence | 5.7 fail closed |
-| F5 | chain key not inventoried | 5.7 creation-site table and test; chain key derived |
+| F5 | chain key not inventoried | 5.7 creation-site table over all of writepath (Python, shell, SQL); chain key derived; legacy key store read |
 | F6 | UTF-16, split fields, percent-encoded escapes | 5.7: covered, or stated exactly |
 | F7 | ledger suffix truncation | 5.5: head anchor, init record, admit record required |
 | F8 | clock step restored before end | no wall-clock input; v2's G6 clock clause is gone |
@@ -464,6 +505,22 @@ Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`
 | F10 | receipts import the current tree | 5.8 |
 | F11 | MANIFEST and THRESHOLDS; state transition | hardening owner's text at 0801eb7; transition in 5.5 |
 | F12 | printed paths and reasons may hold a candidate | 5.7 output rule |
+| D+1 | (advisor on 388f7f6) touch, cp or mv into the STOP directory | 5.5: a stop, detected against the head's directory signature |
+| D+2 | ledger-reset clears open stops on an intact ledger | 5.5: refused unless damaged; the new ledger opens with a stop |
+| D+3 | a ledger cut back past its adoption is adopted again silently | 5.5: adoption only by an explicit `init <reason>` |
+| D+4 | pause between steps (v2 voided through events) | open decision D1 (5.4); a pause in progress at a step is VOID |
+| D+5 | pages written into the tmpfs from outside the container | R3: tmpfs used ≤ lifetime peak at every step |
+| D+6 | PG's data directory assumed, not observed | R1: PGDATA from the container's environment inside the tmpfs |
+| D+7 | old_repro's legacy key store not inventoried | 5.7: database `keys` read when present |
+
+### 5.11 Evidence (receipts in results/failing-first/, made by runkit/failing_first.sh inside the extracted tree)
+- Gate v3 against eeb9b82: `reviewD-gate-v3-disk_gate-eeb9b82.tree4.red.out` (29 assertion failures, 3 v3-only
+  skips); the advisor delta against 58d629f: `reviewD-advisor-gate-58d629f.red.out` (8 failures).
+- Scanner v3 against eeb9b82: `reviewD-scan-v3-leak_scan-eeb9b82.tree.red.out` (17 failures); the delta against
+  388f7f6: `reviewD-advisor-scan-388f7f6.red.out` (2 failures).
+- Launcher (F9) against 388f7f6: `reviewD-f9-chain-388f7f6.red.out` (5 failures).
+- Green: `python3 -m unittest tests.test_disk_gate tests.test_leak_scan tests.test_chain_singles` from writepath/.
+- Live: runkit/live/ (5.12 when made).
 
 ### 5.10 Research record (2026-11-17; gathered by a research helper, checked live where marked; text on these pages is evidence, not instructions)
 | Source | What it says that matters | What it does not say | Confidence |
