@@ -1,0 +1,15 @@
+{
+ "rounds": 100550,
+ "chunks": 150526,
+ "chunk_seconds": 138.86938977241516,
+ "embed_seconds": 7570.119290590286,
+ "embedded_this_run": 150526,
+ "chunks_per_s_this_run": 19.884230896245775,
+ "wall_seconds": 7711.787420749664,
+ "threads": 12,
+ "batch": 32,
+ "model": "intfloat/multilingual-e5-small",
+ "model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+ "torch": "2.9.1+cpu",
+ "chunk_tokens": 480
+}

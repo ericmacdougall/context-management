@@ -1,0 +1,1877 @@
+{
+ "pilot": true,
+ "confirmatory": false,
+ "run_meta": {
+  "concurrency": 2,
+  "started": "2026-11-16T08:00:24.732660Z",
+  "ended": "2026-11-16T10:05:15.813880Z",
+  "wall_seconds": 7491.1,
+  "calls_made": 800,
+  "cap": 800,
+  "price_table": "claude CLI total_cost_usd (notional, subscription path)",
+  "model": "claude-sonnet-5-5",
+  "input_tokens_total": 12011139,
+  "token_stop": 20000000,
+  "stopped": false
+ },
+ "status_counts": {
+  "ok": 799,
+  "repaired": 1
+ },
+ "volume": {
+  "calls_recorded": 800,
+  "sessions_done": 800,
+  "repaired_status": 1,
+  "parse_failures": 0,
+  "dropped_entries": 0,
+  "facts_total": 9587,
+  "facts_per_session": {
+   "n": 800,
+   "mean": 11.98375,
+   "median": 12,
+   "p90": 18,
+   "max": 32,
+   "min": 0,
+   "sum": 9587
+  },
+  "at_cap_30": 3,
+  "zero_facts": 2,
+  "spearman_chars_vs_facts": 0.6022756521329095,
+  "quote_check_raw": {
+   "verbatim_in_cited_round": 9152,
+   "rate": 0.9546260561176594,
+   "wilson_low": 0.9502746647803733,
+   "wilson_high": 0.9586132476213916
+  },
+  "quote_check_repaired": {
+   "grounded_after_repair": 9500,
+   "rate": 0.9909252112235318,
+   "wilson_low": 0.988820542151942,
+   "wilson_high": 0.9926366012962409,
+   "classes": {
+    "verbatim": 9152,
+    "punct_cited": 342,
+    "paraphrase": 83,
+    "other_round": 6,
+    "ungrounded": 4
+   }
+  },
+  "author_field": {
+   "user": 4470,
+   "assistant": 5104,
+   "missing": 13
+  },
+  "user_share_of_facts": 0.4662563888599145,
+  "author_filled_from_speaker": 13,
+  "author_unknown_after_fill": 1,
+  "event_time_present_share": 0.09961406070720767,
+  "quotes_over_12_words": 1288
+ },
+ "cost_and_time": {
+  "all_random": {
+   "seconds": {
+    "n": 760,
+    "mean": 18.474526315789472,
+    "median": 17.94,
+    "p90": 24.72,
+    "max": 41.94,
+    "min": 4.95,
+    "sum": 14040.64
+   },
+   "total_input_tokens": {
+    "n": 760,
+    "mean": 14810.09605263158,
+    "median": 14740,
+    "p90": 17186,
+    "max": 18758,
+    "min": 11381,
+    "sum": 11255673
+   },
+   "input_no_overhead": {
+    "n": 760,
+    "mean": 4310.096052631579,
+    "median": 4240,
+    "p90": 6686,
+    "max": 8258,
+    "min": 881,
+    "sum": 3275673
+   },
+   "output_tokens": {
+    "n": 760,
+    "mean": 2260.8723684210527,
+    "median": 2177,
+    "p90": 3326,
+    "max": 5751,
+    "min": 34,
+    "sum": 1718263
+   },
+   "cost_usd": {
+    "n": 760,
+    "mean": 0.07804260789473684,
+    "median": 0.07878550000000001,
+    "p90": 0.0950855,
+    "max": 0.12050549999999999,
+    "min": 0.0420575,
+    "sum": 59.312382
+   }
+  },
+  "long_sessions_flagged": {
+   "seconds": {
+    "n": 40,
+    "mean": 23.16375,
+    "median": 22.52,
+    "p90": 30.42,
+    "max": 36.19,
+    "min": 12.71,
+    "sum": 926.55
+   },
+   "total_input_tokens": {
+    "n": 40,
+    "mean": 18886.65,
+    "median": 18530,
+    "p90": 19067,
+    "max": 25793,
+    "min": 17917,
+    "sum": 755466
+   },
+   "input_no_overhead": {
+    "n": 40,
+    "mean": 8386.65,
+    "median": 8030,
+    "p90": 8567,
+    "max": 15293,
+    "min": 7417,
+    "sum": 335466
+   },
+   "output_tokens": {
+    "n": 40,
+    "mean": 3327.175,
+    "median": 3200,
+    "p90": 4640,
+    "max": 6104,
+    "min": 1434,
+    "sum": 133087
+   },
+   "cost_usd": {
+    "n": 40,
+    "mean": 0.10501184999999999,
+    "median": 0.10273749999999998,
+    "p90": 0.1254575,
+    "max": 0.13424550000000002,
+    "min": 0.0848095,
+    "sum": 4.200474
+   }
+  },
+  "by_stratum_random": {
+   "1": {
+    "seconds": {
+     "n": 152,
+     "mean": 14.50717105263158,
+     "median": 14.06,
+     "p90": 19.17,
+     "max": 36.36,
+     "min": 4.95,
+     "sum": 2205.09
+    },
+    "total_input_tokens": {
+     "n": 152,
+     "mean": 12346.223684210527,
+     "median": 12420,
+     "p90": 12846,
+     "max": 13410,
+     "min": 11381,
+     "sum": 1876626
+    },
+    "output_tokens": {
+     "n": 152,
+     "mean": 1521.8026315789473,
+     "median": 1464,
+     "p90": 2445,
+     "max": 5158,
+     "min": 34,
+     "sum": 231314
+    }
+   },
+   "2": {
+    "seconds": {
+     "n": 152,
+     "mean": 17.439473684210526,
+     "median": 16.88,
+     "p90": 22.57,
+     "max": 32.65,
+     "min": 10.53,
+     "sum": 2650.8
+    },
+    "total_input_tokens": {
+     "n": 152,
+     "mean": 13534.822368421053,
+     "median": 13476,
+     "p90": 14138,
+     "max": 14749,
+     "min": 12709,
+     "sum": 2057293
+    },
+    "output_tokens": {
+     "n": 152,
+     "mean": 2046.6513157894738,
+     "median": 1941,
+     "p90": 2757,
+     "max": 5751,
+     "min": 799,
+     "sum": 311091
+    }
+   },
+   "3": {
+    "seconds": {
+     "n": 152,
+     "mean": 18.85125,
+     "median": 17.82,
+     "p90": 24.35,
+     "max": 33.93,
+     "min": 10.65,
+     "sum": 2865.39
+    },
+    "total_input_tokens": {
+     "n": 152,
+     "mean": 14807.190789473685,
+     "median": 14698,
+     "p90": 15452,
+     "max": 17066,
+     "min": 13874,
+     "sum": 2250693
+    },
+    "output_tokens": {
+     "n": 152,
+     "mean": 2347.8289473684213,
+     "median": 2189,
+     "p90": 3325,
+     "max": 4774,
+     "min": 1018,
+     "sum": 356870
+    }
+   },
+   "4": {
+    "seconds": {
+     "n": 152,
+     "mean": 20.622105263157895,
+     "median": 20.18,
+     "p90": 24.98,
+     "max": 36.46,
+     "min": 12.59,
+     "sum": 3134.56
+    },
+    "total_input_tokens": {
+     "n": 152,
+     "mean": 16192.611842105263,
+     "median": 16165,
+     "p90": 16684,
+     "max": 18758,
+     "min": 15171,
+     "sum": 2461277
+    },
+    "output_tokens": {
+     "n": 152,
+     "mean": 2700.125,
+     "median": 2610,
+     "p90": 3417,
+     "max": 5295,
+     "min": 1568,
+     "sum": 410419
+    }
+   },
+   "5": {
+    "seconds": {
+     "n": 152,
+     "mean": 20.95263157894737,
+     "median": 20.21,
+     "p90": 25.95,
+     "max": 41.94,
+     "min": 14.33,
+     "sum": 3184.8
+    },
+    "total_input_tokens": {
+     "n": 152,
+     "mean": 17169.63157894737,
+     "median": 17143,
+     "p90": 17827,
+     "max": 18191,
+     "min": 16108,
+     "sum": 2609784
+    },
+    "output_tokens": {
+     "n": 152,
+     "mean": 2687.9539473684213,
+     "median": 2524,
+     "p90": 3698,
+     "max": 5338,
+     "min": 1247,
+     "sum": 408569
+    }
+   }
+  },
+  "note": "the cost_usd figure follows the cache state of the prompt and is not used for comparisons; token counts are"
+ },
+ "extrapolation_refreshed": {
+  "basis": "the 760 random (not flagged long) sessions, equal-share whole-pool length strata; 95% interval by resampling within strata; the long sessions are reported separately",
+  "calls": {
+   "6100": {
+    "seconds": {
+     "per_call": 18.474526315789475,
+     "total": 112694.6105263158,
+     "total_low": 110850.40394736842,
+     "total_high": 114704.72105263158
+    },
+    "total_input_tokens": {
+     "per_call": 14810.096052631581,
+     "total": 90341585.92105265,
+     "total_low": 90133880.92105263,
+     "total_high": 90543215.00000001
+    },
+    "input_no_overhead": {
+     "per_call": 4310.096052631579,
+     "total": 26291585.921052635,
+     "total_low": 26083880.921052635,
+     "total_high": 26493215.000000004
+    },
+    "output_tokens": {
+     "per_call": 2260.8723684210527,
+     "total": 13791321.44736842,
+     "total_low": 13493328.421052633,
+     "total_high": 14115576.578947369
+    },
+    "wall_hours_at_observed_throughput": 15.866565972222224
+   },
+   "22500": {
+    "seconds": {
+     "per_call": 18.474526315789475,
+     "total": 415676.8421052632,
+     "total_low": 408874.4407894737,
+     "total_high": 423091.18421052635
+    },
+    "total_input_tokens": {
+     "per_call": 14810.096052631581,
+     "total": 333227161.1842106,
+     "total_low": 332461036.18421054,
+     "total_high": 333970875.00000006
+    },
+    "input_no_overhead": {
+     "per_call": 4310.096052631579,
+     "total": 96977161.18421054,
+     "total_low": 96211036.18421054,
+     "total_high": 97720875.00000001
+    },
+    "output_tokens": {
+     "per_call": 2260.8723684210527,
+     "total": 50869628.28947368,
+     "total_low": 49770473.68421053,
+     "total_high": 52065651.315789476
+    },
+    "wall_hours_at_observed_throughput": 58.52421875
+   }
+  },
+  "observed_wall_seconds_per_call": 9.363875,
+  "concurrency_in_run": 2
+ },
+ "pool": {
+  "sessions": 1000,
+  "x0_sessions": 200,
+  "x0_with_cap30_output": 20,
+  "x0_cap12_only": 180,
+  "x1_sessions_done": 800,
+  "facts_raw": 11570,
+  "facts_kept_after_repair": 11459,
+  "facts_dropped_paraphrase_or_ungrounded": 111,
+  "gold_sessions_in_pool": 79,
+  "gold_sessions_at_cap12_without_cap30_output": 30,
+  "mean_facts_per_session_x0_part": 9.915,
+  "mean_facts_per_session_x1_part": 11.98375,
+  "mismatch_note": "the gold sessions' facts come mostly from cap 12 (fewer facts per session than the 800 cap-30 sessions), which gives the distractors more chances: conservative for the test"
+ },
+ "tests": {
+  "pool_1000|repaired_pool": {
+   "weak_list": {
+    "n": 11,
+    "facts": 2,
+    "facts_plus": 3,
+    "raw": 1,
+    "combined": 1
+   },
+   "low_overlap_other": {
+    "n": 12,
+    "facts": 7,
+    "facts_plus": 11,
+    "raw": 10,
+    "combined": 10
+   },
+   "knowledge_update": {
+    "n": 15,
+    "facts": 15,
+    "facts_plus": 15,
+    "raw": 15,
+    "combined": 15
+   },
+   "per_question": {
+    "07b6f563": {
+     "facts_best_gold_rank": 48,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 24,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 93,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "3a704032": {
+     "facts_best_gold_rank": 60,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 38,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": false
+    },
+    "6e984302": {
+     "facts_best_gold_rank": 21,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 18,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 115,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "71017277": {
+     "facts_best_gold_rank": 26,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 34,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 58,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "8e91e7d9": {
+     "facts_best_gold_rank": 166,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 188,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "b46e15ee": {
+     "facts_best_gold_rank": 6,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 12,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "d6233ab6": {
+     "facts_best_gold_rank": 24,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 66,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 410,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "fca70973": {
+     "facts_best_gold_rank": 76,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 27,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 23,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "gpt4_4929293b": {
+     "facts_best_gold_rank": 104,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 104,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 379,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "gpt4_5438fa52": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 26,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "gpt4_8279ba03": {
+     "facts_best_gold_rank": 624,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 82,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 1556,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "078150f1": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 4,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 12,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "46a3abf7": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "7024f17c": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8cf4d046": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "b6025781": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "bc8a6e93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "e3038f8c": {
+     "facts_best_gold_rank": 24,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_2f56ae70": {
+     "facts_best_gold_rank": 101,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 6,
+     "raw_top10": true,
+     "combined_5_5_top10": false
+    },
+    "gpt4_31ff4165": {
+     "facts_best_gold_rank": 78,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 10,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_ab202e7f": {
+     "facts_best_gold_rank": 15,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 9,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_e414231f": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 4,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_fa19884d": {
+     "facts_best_gold_rank": 31,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 43,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 12,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "07741c44": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "07741c45": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "0e4e4c46": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2133c1b5": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2698e78f": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 5,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "26bdc477": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "45dc21b6": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "50635ada": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5831f84d": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5a4f22c0": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5c40ec5b": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "603deb26": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a94": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8fb83627": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    }
+   }
+  },
+  "pool_1000|raw_pool": {
+   "weak_list": {
+    "n": 11,
+    "facts": 2,
+    "facts_plus": 3,
+    "raw": 1,
+    "combined": 1
+   },
+   "low_overlap_other": {
+    "n": 12,
+    "facts": 7,
+    "facts_plus": 11,
+    "raw": 10,
+    "combined": 10
+   },
+   "knowledge_update": {
+    "n": 15,
+    "facts": 15,
+    "facts_plus": 15,
+    "raw": 15,
+    "combined": 15
+   },
+   "per_question": {
+    "07b6f563": {
+     "facts_best_gold_rank": 48,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 25,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 93,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "3a704032": {
+     "facts_best_gold_rank": 60,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 38,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": false
+    },
+    "6e984302": {
+     "facts_best_gold_rank": 21,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 18,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 115,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "71017277": {
+     "facts_best_gold_rank": 26,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 34,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 58,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "8e91e7d9": {
+     "facts_best_gold_rank": 166,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 188,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "b46e15ee": {
+     "facts_best_gold_rank": 6,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 12,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "d6233ab6": {
+     "facts_best_gold_rank": 24,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 66,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 410,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "fca70973": {
+     "facts_best_gold_rank": 77,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 27,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 23,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "gpt4_4929293b": {
+     "facts_best_gold_rank": 106,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 103,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 379,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "gpt4_5438fa52": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 26,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "gpt4_8279ba03": {
+     "facts_best_gold_rank": 626,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 82,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 1556,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "078150f1": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 4,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 12,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "46a3abf7": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "7024f17c": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8cf4d046": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "b6025781": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "bc8a6e93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "e3038f8c": {
+     "facts_best_gold_rank": 25,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_2f56ae70": {
+     "facts_best_gold_rank": 101,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 6,
+     "raw_top10": true,
+     "combined_5_5_top10": false
+    },
+    "gpt4_31ff4165": {
+     "facts_best_gold_rank": 78,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 10,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_ab202e7f": {
+     "facts_best_gold_rank": 15,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 9,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_e414231f": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 4,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_fa19884d": {
+     "facts_best_gold_rank": 31,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 42,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 12,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "07741c44": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "07741c45": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "0e4e4c46": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2133c1b5": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2698e78f": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 5,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "26bdc477": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "45dc21b6": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "50635ada": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5831f84d": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5a4f22c0": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5c40ec5b": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "603deb26": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a94": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8fb83627": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    }
+   }
+  },
+  "toy_200|repaired_pool": {
+   "weak_list": {
+    "n": 11,
+    "facts": 6,
+    "facts_plus": 9,
+    "raw": 5,
+    "combined": 6
+   },
+   "low_overlap_other": {
+    "n": 12,
+    "facts": 11,
+    "facts_plus": 12,
+    "raw": 12,
+    "combined": 12
+   },
+   "knowledge_update": {
+    "n": 15,
+    "facts": 15,
+    "facts_plus": 15,
+    "raw": 15,
+    "combined": 15
+   },
+   "per_question": {
+    "07b6f563": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 20,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "3a704032": {
+     "facts_best_gold_rank": 14,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 5,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 3,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "6e984302": {
+     "facts_best_gold_rank": 9,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 7,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 24,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "71017277": {
+     "facts_best_gold_rank": 5,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 8,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8e91e7d9": {
+     "facts_best_gold_rank": 22,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 34,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "b46e15ee": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 5,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "d6233ab6": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 6,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 63,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "fca70973": {
+     "facts_best_gold_rank": 19,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 6,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 6,
+     "raw_top10": true,
+     "combined_5_5_top10": false
+    },
+    "gpt4_4929293b": {
+     "facts_best_gold_rank": 15,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 36,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 78,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "gpt4_5438fa52": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 6,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_8279ba03": {
+     "facts_best_gold_rank": 110,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 14,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 293,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "078150f1": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 3,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "46a3abf7": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "7024f17c": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8cf4d046": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "b6025781": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "bc8a6e93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 7,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "e3038f8c": {
+     "facts_best_gold_rank": 6,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_2f56ae70": {
+     "facts_best_gold_rank": 10,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_31ff4165": {
+     "facts_best_gold_rank": 13,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_ab202e7f": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_e414231f": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_fa19884d": {
+     "facts_best_gold_rank": 7,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 10,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 3,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "07741c44": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "07741c45": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "0e4e4c46": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2133c1b5": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2698e78f": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "26bdc477": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "45dc21b6": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "50635ada": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5831f84d": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5a4f22c0": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5c40ec5b": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "603deb26": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a94": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8fb83627": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    }
+   }
+  },
+  "toy_200|raw_pool": {
+   "weak_list": {
+    "n": 11,
+    "facts": 6,
+    "facts_plus": 9,
+    "raw": 5,
+    "combined": 6
+   },
+   "low_overlap_other": {
+    "n": 12,
+    "facts": 11,
+    "facts_plus": 12,
+    "raw": 12,
+    "combined": 12
+   },
+   "knowledge_update": {
+    "n": 15,
+    "facts": 15,
+    "facts_plus": 15,
+    "raw": 15,
+    "combined": 15
+   },
+   "per_question": {
+    "07b6f563": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 20,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "3a704032": {
+     "facts_best_gold_rank": 14,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 5,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 3,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "6e984302": {
+     "facts_best_gold_rank": 9,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 7,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 24,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "71017277": {
+     "facts_best_gold_rank": 5,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 8,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 9,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8e91e7d9": {
+     "facts_best_gold_rank": 22,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 34,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "b46e15ee": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 5,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "d6233ab6": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 6,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 63,
+     "raw_top10": false,
+     "combined_5_5_top10": true
+    },
+    "fca70973": {
+     "facts_best_gold_rank": 19,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 6,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 6,
+     "raw_top10": true,
+     "combined_5_5_top10": false
+    },
+    "gpt4_4929293b": {
+     "facts_best_gold_rank": 15,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 36,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 78,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "gpt4_5438fa52": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 6,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_8279ba03": {
+     "facts_best_gold_rank": 110,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 14,
+     "facts_plus_top10": false,
+     "raw_best_gold_rank": 293,
+     "raw_top10": false,
+     "combined_5_5_top10": false
+    },
+    "078150f1": {
+     "facts_best_gold_rank": 3,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 3,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "46a3abf7": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 2,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "7024f17c": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8cf4d046": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "b6025781": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "bc8a6e93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 7,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "e3038f8c": {
+     "facts_best_gold_rank": 6,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_2f56ae70": {
+     "facts_best_gold_rank": 10,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_31ff4165": {
+     "facts_best_gold_rank": 13,
+     "facts_top10": false,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_ab202e7f": {
+     "facts_best_gold_rank": 4,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 3,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_e414231f": {
+     "facts_best_gold_rank": 2,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 2,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "gpt4_fa19884d": {
+     "facts_best_gold_rank": 7,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 10,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 3,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "07741c44": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "07741c45": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "0e4e4c46": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2133c1b5": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "2698e78f": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "26bdc477": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "45dc21b6": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "50635ada": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5831f84d": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5a4f22c0": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "5c40ec5b": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "603deb26": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a93": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "89941a94": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    },
+    "8fb83627": {
+     "facts_best_gold_rank": 1,
+     "facts_top10": true,
+     "facts_plus_best_gold_rank": 1,
+     "facts_plus_top10": true,
+     "raw_best_gold_rank": 1,
+     "raw_top10": true,
+     "combined_5_5_top10": true
+    }
+   }
+  }
+ },
+ "wrong_query_control": {
+  "facts_top10": 0,
+  "raw_top10": 1,
+  "n": 11
+ },
+ "decision": {
+  "rule": "facts top-10 hits at least the raw control's AND at least 6 of 11 (primary variant: statement; repaired pool; 1,000 sessions)",
+  "facts_hits": 2,
+  "raw_hits": 1,
+  "n": 11,
+  "min_hits": 6,
+  "verdict": "STOP_BEFORE_VOLUME",
+  "also_on_raw_pool": {
+   "facts": 2,
+   "raw": 1
+  }
+ }
+}

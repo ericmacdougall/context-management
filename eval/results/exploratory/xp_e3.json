@@ -1,0 +1,169 @@
+{
+ "retriever": "exact in-process; embedder intfloat/multilingual-e5-small rev 614241f; pilot only",
+ "levels": {
+  "H0": {
+   "n": 94,
+   "n_clusters": 90,
+   "base_rate": 0.9680851063829787,
+   "n_negatives": 3,
+   "auroc_cv": 0.5970695970695971,
+   "null_mean": 0.3558113553113553,
+   "null_p97_5": 0.8131868131868132,
+   "null_sd": 0.22533825655720158,
+   "pass": false,
+   "confident_30pct": {
+    "precision": {
+     "n_questions": 28,
+     "n_clusters": 28,
+     "rate": 1.0,
+     "wilson_low": 0.8793566952341543,
+     "wilson_high": 0.9999999999999998
+    },
+    "predicted_prob_cut": 0.9933960137759019,
+    "dense_top1_cosine_mean_in_confident": 0.8675508584295001
+   },
+   "answerable_feature_means": [
+    0.8542291338139392,
+    0.03894289947570639,
+    0.38960680126871783,
+    4.925531914893617
+   ],
+   "abstention_feature_means": [
+    0.8461084291338921,
+    0.029015615582466125,
+    0.5424667655789531,
+    4.75
+   ],
+   "n_abstention": 8,
+   "features": [
+    "dense_top1_cos",
+    "dense_margin_top1_top10",
+    "bm25_ratio_top10_over_top1",
+    "agreement_top10"
+   ]
+  },
+  "H1": {
+   "n": 94,
+   "n_clusters": 90,
+   "base_rate": 0.9148936170212766,
+   "n_negatives": 8,
+   "auroc_cv": 0.8313953488372093,
+   "null_mean": 0.4347936046511628,
+   "null_p97_5": 0.7181686046511627,
+   "null_sd": 0.1489324714161333,
+   "pass": true,
+   "confident_30pct": {
+    "precision": {
+     "n_questions": 28,
+     "n_clusters": 28,
+     "rate": 1.0,
+     "wilson_low": 0.8793566952341543,
+     "wilson_high": 0.9999999999999998
+    },
+    "predicted_prob_cut": 0.9839353993989391,
+    "dense_top1_cosine_mean_in_confident": 0.8795993860278811
+   },
+   "answerable_feature_means": [
+    0.8586180007204096,
+    0.0275648832321167,
+    0.5528816536099613,
+    3.5425531914893615
+   ],
+   "abstention_feature_means": [
+    0.8522981777787209,
+    0.01999836415052414,
+    0.6700491460254848,
+    3.625
+   ],
+   "n_abstention": 8,
+   "features": [
+    "dense_top1_cos",
+    "dense_margin_top1_top10",
+    "bm25_ratio_top10_over_top1",
+    "agreement_top10"
+   ]
+  },
+  "H2": {
+   "n": 94,
+   "n_clusters": 90,
+   "base_rate": 0.8085106382978723,
+   "n_negatives": 18,
+   "auroc_cv": 0.7266081871345029,
+   "null_mean": 0.4581483918128655,
+   "null_p97_5": 0.6638157894736841,
+   "null_sd": 0.11006865887112341,
+   "pass": true,
+   "confident_30pct": {
+    "precision": {
+     "n_questions": 28,
+     "n_clusters": 28,
+     "rate": 0.9285714285714286,
+     "wilson_low": 0.7735463743160095,
+     "wilson_high": 0.9801879358846942
+    },
+    "predicted_prob_cut": 0.9103539949720026,
+    "dense_top1_cosine_mean_in_confident": 0.8788381453071322
+   },
+   "answerable_feature_means": [
+    0.8661283825306182,
+    0.02125631494725004,
+    0.6541245547926211,
+    3.0
+   ],
+   "abstention_feature_means": [
+    0.8597877621650696,
+    0.015202127397060394,
+    0.7545099224007629,
+    2.75
+   ],
+   "n_abstention": 8,
+   "features": [
+    "dense_top1_cos",
+    "dense_margin_top1_top10",
+    "bm25_ratio_top10_over_top1",
+    "agreement_top10"
+   ]
+  },
+  "H3": {
+   "n": 94,
+   "n_clusters": 90,
+   "base_rate": 0.6170212765957447,
+   "n_negatives": 36,
+   "auroc_cv": 0.5718390804597702,
+   "null_mean": 0.4604406130268199,
+   "null_p97_5": 0.6312380268199234,
+   "null_sd": 0.09118244193215036,
+   "pass": false,
+   "confident_30pct": {
+    "precision": {
+     "n_questions": 28,
+     "n_clusters": 28,
+     "rate": 0.6785714285714286,
+     "wilson_low": 0.49338843180857617,
+     "wilson_high": 0.8206675307750504
+    },
+    "predicted_prob_cut": 0.6840083323509356,
+    "dense_top1_cosine_mean_in_confident": 0.8820539798055377
+   },
+   "answerable_feature_means": [
+    0.8728436104794766,
+    0.018608365287172034,
+    0.7269834105661492,
+    2.372340425531915
+   ],
+   "abstention_feature_means": [
+    0.8679224848747253,
+    0.014434069395065308,
+    0.802664016885147,
+    1.5
+   ],
+   "n_abstention": 8,
+   "features": [
+    "dense_top1_cos",
+    "dense_margin_top1_top10",
+    "bm25_ratio_top10_over_top1",
+    "agreement_top10"
+   ]
+  }
+ }
+}
