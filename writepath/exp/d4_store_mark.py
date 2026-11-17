@@ -35,8 +35,8 @@ def once(mode):
         else:
             ids = [r[0] for r in conn.execute("select event_id from events where tenant_id=%s and subject_id <> 'Y' order by event_id limit 5",
                                               (t,)).fetchall()]
-            conn.execute("select wp_erasure_rescan_page(%s, %s)", (jid, ids))
-            conn.execute("select wp_erasure_rescan_done(%s, %s)", (jid, xmax))
+            conn.execute("select wp_erasure_rescan_page(%s, %s, %s)", (jid, ids, M.matcher_id()))
+            conn.execute("select wp_erasure_rescan_done(%s, %s, %s)", (jid, xmax, M.matcher_id()))
         out["accepted"] = True
     except Exception as e:  # noqa: BLE001
         out["accepted"], out["error"] = False, getattr(e, "sqlstate", None) or type(e).__name__

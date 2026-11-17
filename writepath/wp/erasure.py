@@ -30,7 +30,7 @@ import uuid
 
 import psycopg
 
-from . import broker as B, db, families as F, keys as K, lease as L, log as LG, mentions as M
+from . import broker as B, db, families as F, keys as K, lease as L, mentions as M
 from .verifier import Verifier
 
 
@@ -126,87 +126,22 @@ def _holds(conn, t, s):
         "select hold_id, placed_at, released_at from legal_holds where tenant_id=%s and subject_id=%s order by placed_at", (t, s)).fetchall()]
 
 
-def _open_current(key, t, speaker, eid, enc, rn, renc):
-    """Plaintext of an event's CURRENT text: the original, or (D3) its latest redaction. None if undecryptable."""
-    if enc is not None:
-        return K.open_(key, t, speaker, eid, bytes(enc))
-    if renc is not None:
-        return K.open_(key, t, speaker, f"redaction:{eid}:{rn}", bytes(renc))
-    return None
-
-
-REDACT_REFUSED = ("WPS34", "WPS35", "WPS36", "WPS37")
-
-
-def redact_mentions(conn, ks, jid, page=500):
-    """D3 span redaction (ASSUMPTION under decision 10), after the rescan and before the cascade: for every event of
-    ANOTHER speaker that mentions the subject (write-time mentions and rescan hits), compute the redaction from the
-    current text and the subject's identifier HMACs (mentions.redaction_for) and store it (wp_erasure_redact).
-    Anything else (no span, a remaining match, undecryptable text, a store refusal) is left to the cascade, which
-    removes the event whole; the store lists those as fallback_removed. Returns (redacted, fallback)."""
-    t, s = conn.execute("select tenant_id, subject_id from erasure_jobs where job_id=%s", (jid,)).fetchone()
-    hm = {r[0] for r in conn.execute("select ident_hmac from subject_identifiers where tenant_id=%s and subject_id=%s", (t, s)).fetchall()}
-    if not hm:
-        return 0, 0
-    ckey = ks.chain_key(t)
-    last, done, fell = "", 0, 0
-    while True:
-        rows = conn.execute(
-            "with fp as (select event_id from events where tenant_id=%(t)s and mentions @> array[%(s)s] "
-            "            union select event_id from erasure_mentions where tenant_id=%(t)s and subject_id=%(s)s) "
-            "select e.event_id, e.subject_id, e.content_enc, e.content_digest, e.hash, r.n, r.redacted_enc, r.redacted_digest, r.hash "
-            "from fp join events e on e.tenant_id=%(t)s and e.event_id = fp.event_id left join lateral "
-            "(select n, redacted_enc, redacted_digest, hash from event_redactions x where x.tenant_id=%(t)s and x.event_id=e.event_id "
-            " order by n desc limit 1) r on true "
-            "where e.subject_id <> %(s)s and fp.event_id > %(last)s "
-            "and not exists (select 1 from tombstones tb where tb.tenant_id=%(t)s and tb.event_id=e.event_id and tb.subject_id=%(s)s) "
-            "and not exists (select 1 from event_redactions x where x.job_id=%(j)s and x.event_id=e.event_id) "
-            "order by fp.event_id limit %(p)s", {"t": t, "s": s, "j": jid, "last": last, "p": page}).fetchall()
-        if not rows:
-            break
-        last = rows[-1][0]
-        keys = ks.keys(t, sorted({r[1] for r in rows}))
-        for eid, sp, enc, cdig, ehash, rn, renc, rdig, rhash in rows:
-            text = _open_current(keys.get(sp), t, sp, eid, enc, rn, renc) if keys.get(sp) else None
-            if text is None:
-                fell += 1
-                continue
-            try:
-                red, spans = M.redaction_for(ks, t, text, hm)
-            except M.NoRedaction:
-                fell += 1
-                continue
-            n = (rn or 0) + 1
-            blob = K.seal(keys[sp], t, sp, f"redaction:{eid}:{n}", red)
-            base, prev = (cdig, ehash) if rn is None else (rdig, rhash)
-            flat = [x for ab in spans for x in ab]
-            h = LG.redaction_hash(prev, t, eid, n, jid, base, LG.digest(blob), flat, key=ckey)
-            try:
-                conn.execute("select wp_erasure_redact(%s, %s, %s, %s, %s, %s, %s)", (jid, eid, base, blob, flat, prev, h))
-                done += 1
-            except psycopg.Error as e:
-                if getattr(e, "sqlstate", None) not in REDACT_REFUSED:
-                    raise
-                fell += 1
-    return done, fell
-
-
 def rescan(conn, ks, jid, page=2000):
     """Erasure-time mention rescan: events of OTHER speakers written against an identifier-set version older than the
     subject's (declared after they were written) are decrypted and matched against the subject's identifier HMACs.
     Hits are recorded in erasure_mentions (the cascade then removes them); the covered version is recorded on the job.
-    Returns (scanned, found). Undecryptable content (speaker already erased) has nothing left to leak and is skipped."""
+    Returns (scanned, found). Undecryptable content (speaker already erased) has nothing left to leak and is skipped.
+    Every page and the completion carry this process's matcher id: the store refuses another matcher than the
+    tenant's (WPS38, review C class 3), and M.matcher_id() itself fails closed without the pinned Unicode tables."""
     t, s, xmax, done_x = conn.execute("select tenant_id, subject_id, ident_xmax, rescanned_xmax from erasure_jobs where job_id=%s", (jid,)).fetchone()
     if not xmax or (done_x is not None and done_x >= xmax):
         return 0, 0
+    mid = M.matcher_id()
     hm = {r[0] for r in conn.execute("select ident_hmac from subject_identifiers where tenant_id=%s and subject_id=%s", (t, s)).fetchall()}
     last, scanned, found = "", 0, 0
     while True:
-        # D3: an event whose original was nulled by an earlier redaction is scanned through its latest redacted text
-        rows = conn.execute("select e.event_id, e.subject_id, e.content_enc, r.n, r.redacted_enc from events e left join lateral "
-                            "(select n, redacted_enc from event_redactions x where x.tenant_id = e.tenant_id and x.event_id = e.event_id "
-                            "order by n desc limit 1) r on true where e.tenant_id=%s and e.subject_id <> %s "
-                            "and (e.content_enc is not null or r.redacted_enc is not null) "
+        rows = conn.execute("select e.event_id, e.subject_id, e.content_enc from events e where e.tenant_id=%s and e.subject_id <> %s "
+                            "and e.content_enc is not null "
                             "and e.mention_scan_upto < %s and not (e.mentions @> array[%s]) and e.event_id > %s order by e.event_id limit %s",
                             (t, s, xmax, s, last, page)).fetchall()
         if not rows:
@@ -214,8 +149,8 @@ def rescan(conn, ks, jid, page=2000):
         last = rows[-1][0]
         keys = ks.keys(t, [r[1] for r in rows])
         texts = {}
-        for eid, sp, enc, rn, renc in rows:
-            plain = _open_current(keys[sp], t, sp, eid, enc, rn, renc)
+        for eid, sp, enc in rows:
+            plain = K.open_(keys[sp], t, sp, eid, bytes(enc)) if keys.get(sp) else None
             if plain is not None:
                 texts[eid] = sorted(M.windows(plain))
         flat = sorted({w for v in texts.values() for w in v})
@@ -223,14 +158,14 @@ def rescan(conn, ks, jid, page=2000):
         hits = [eid for eid, ws in texts.items() if any(h[w] in hm for w in ws)]
         if hits:
             conn.execute("select wp_erasure_add_mentions(%s, %s)", (jid, hits))
-        conn.execute("select wp_erasure_rescan_page(%s, %s)", (jid, [r[0] for r in rows]))   # D4: coverage, store-checked
+        conn.execute("select wp_erasure_rescan_page(%s, %s, %s)", (jid, [r[0] for r in rows], mid))   # D4: coverage, store-checked
         scanned += len(rows)
         found += len(hits)
-    conn.execute("select wp_erasure_rescan_done(%s, %s)", (jid, xmax))
+    conn.execute("select wp_erasure_rescan_done(%s, %s, %s)", (jid, xmax, mid))
     return scanned, found
 
 
-def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, batch=5000, destroy_key=True, placeholders=True, do_rescan=True, redact=True,
+def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, batch=5000, destroy_key=True, placeholders=True, do_rescan=True,
         cascade_deadline_s=None, physical="followup"):
     """Drive one job as far as it goes. Never raises: returns a receipt with done, receipt_state and error_type. A legal
     hold leaves the job queued (error_type 'legal_hold', held=True) and it runs once the hold is released (release_hold).
@@ -272,10 +207,6 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
                 ts = time.time()
                 sc, fo = rescan(conn, ks, jid)
                 rec["steps"].update(rescan_s=round(time.time() - ts, 3), rescan_scanned=sc, rescan_found=fo)
-            if redact:                                      # D3: optional; whatever it does not redact is removed whole
-                ts = time.time()
-                rd, rf = redact_mentions(conn, ks, jid)
-                rec["steps"].update(redact_s=round(time.time() - ts, 3), redacted=rd, redact_fallback=rf)
             # Batches are sized to a TIME target (BATCH_TARGET_S), not only a row count: each batch is its own short
             # transaction, so it holds an xid (and every tenant's projection fence, see exp/xmin_stall.py) for at most
             # about that long, and stays far under the claim TTL and the role statement_timeout at any tenant size.

@@ -27,7 +27,8 @@ def main(n, k, batch):
     jid = erasure.request(conn, t, "S")
     adm = db.admin()
     adm.execute("select wp_erasure_mark(%s)", (jid,))
-    adm.execute("select wp_erasure_rescan_done(%s, coalesce((select ident_xmax from erasure_jobs where job_id=%s), 0))", (jid, jid))
+    adm.execute("select wp_erasure_rescan_done(%s, coalesce((select ident_xmax from erasure_jobs where job_id=%s), 0), "
+                "(select e.matcher from identifier_epochs e join erasure_jobs j on j.tenant_id = e.tenant_id where j.job_id=%s))", (jid, jid, jid))
     adm.execute("load 'auto_explain'")
     for k_, v in (("auto_explain.log_min_duration", "200ms"), ("auto_explain.log_analyze", "on"), ("auto_explain.log_nested_statements", "on"),
                   ("auto_explain.log_buffers", "on"), ("statement_timeout", "0")):

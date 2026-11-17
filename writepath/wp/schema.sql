@@ -112,14 +112,21 @@ $$;
 -- identifier_epochs.max_seq is the tenant's identifier-set version: events_guard refuses an event scanned against an
 -- older version (WPS17), so after a declaration commits no event can be written without being matched against it.
 create sequence ident_seq;
-create table identifier_epochs (tenant_id tenant_t primary key, max_seq bigint not null default 0);
+-- Review C class 3 (F3): identifier_epochs.matcher is the tenant's matcher id (wp/mentions.py matcher_id: matcher
+-- version, Unicode version and data tables), set ONLY by the owner function wp_matcher_set. Every identifier carries it
+-- under a foreign key, so an identifier under any other matcher cannot exist; approval (WPS32), appends and the erasure
+-- rescan (WPS38) under another matcher are refused, never silently unmatched. Migration: DESIGN-NOTES class 3.
+create table identifier_epochs (tenant_id tenant_t primary key, max_seq bigint not null default 0, matcher text,
+  unique (tenant_id, matcher));
 create table subject_identifiers (
   tenant_id tenant_t not null, ident_hmac text not null, subject_id text not null, declared_seq bigint not null,
-  primary key (tenant_id, ident_hmac)
+  matcher text not null,
+  primary key (tenant_id, ident_hmac),
+  foreign key (tenant_id, matcher) references identifier_epochs (tenant_id, matcher)
 );
 create index subject_identifiers_subject on subject_identifiers (tenant_id, subject_id);
 create function wp_identifier_declare(t tenant_t, s text, hmacs text[]) returns bigint language plpgsql security definer set search_path = public, pg_temp as $$
-declare n bigint; er boolean;
+declare n bigint; er boolean; m text;
 begin
   insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
   -- FOR SHARE (amendment 17): still exclusive against wp_erasure_mark (FOR UPDATE), so an identifier is never declared
@@ -128,9 +135,10 @@ begin
   select erased into er from subjects where tenant_id = t and subject_id = s for share;
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
   insert into identifier_epochs(tenant_id) values (t) on conflict do nothing;
-  perform 1 from identifier_epochs where tenant_id = t for update;
+  select matcher into m from identifier_epochs where tenant_id = t for update;
+  if m is null then raise exception 'tenant has no matcher (wp_matcher_set)' using errcode = 'WPS32'; end if;
   n := nextval('ident_seq');
-  insert into subject_identifiers(tenant_id, ident_hmac, subject_id, declared_seq) select t, h, s, n from unnest(hmacs) h
+  insert into subject_identifiers(tenant_id, ident_hmac, subject_id, declared_seq, matcher) select t, h, s, n, m from unnest(hmacs) h
     on conflict (tenant_id, ident_hmac) do nothing;
   if exists (select 1 from subject_identifiers where tenant_id = t and ident_hmac = any(hmacs) and subject_id <> s) then
     raise exception 'identifier_names_another_subject' using errcode = 'WPS20';
@@ -138,17 +146,44 @@ begin
   update identifier_epochs set max_seq = n where tenant_id = t;
   return n;
 end $$;
+-- Owner-only (no grant): tenant setup stores the matcher. Idempotent for the same id; a change is refused while the
+-- tenant has identifiers (WPS38). Serialises with approvals on identifier_epochs FOR UPDATE.
+create function wp_matcher_set(t tenant_t, m text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare cur text;
+begin
+  if coalesce(m, '') = '' then raise exception 'matcher id missing' using errcode = 'WPS38'; end if;
+  insert into identifier_epochs(tenant_id) values (t) on conflict do nothing;
+  select matcher into cur from identifier_epochs where tenant_id = t for update;
+  if cur is not distinct from m then return; end if;
+  if exists (select 1 from subject_identifiers where tenant_id = t) then
+    raise exception 'matcher change % -> % with identifiers (migration: DESIGN-NOTES class 3)', cur, m using errcode = 'WPS38';
+  end if;
+  update identifier_epochs set matcher = m where tenant_id = t;
+end $$;
+-- Present matcher check for the erasure rescan (WPS38). A tenant with no matcher has no identifiers (foreign key).
+create function wp_matcher_check(t text, m text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare cur text;
+begin
+  select matcher into cur from identifier_epochs where tenant_id = t for share;
+  if cur is not null and m is distinct from cur then
+    raise exception 'matcher_mismatch presented=% tenant=%', m, cur using errcode = 'WPS38';
+  end if;
+end $$;
 -- D3 (DESIGN-NOTES "Design: D3"; ASSUMPTION under decision 10): wp_identifier_declare above is INTERNAL. No role has
 -- EXECUTE on it; it runs only inside wp_identifier_approve, so for the application role an identifier that no reviewer
 -- approved has no path to subject_identifiers (the only table the matcher, the rescan and the cascade read).
 -- The store enforces WHO: the proposer is session_user, set here; the approver is a member of wp_reviewer and not the
 -- proposer (WPS30); the approved HMAC is the one proposed, recomputed by the reviewer from the plaintext it reviewed
--- (WPS31); both ran the same rule version (WPS32). The reviewer process enforces the rule on the plaintext
+-- (WPS31); both ran the rule version of the tenant's matcher, 'r3:' || identifier_epochs.matcher (WPS32). Review C
+-- class 2 (F8): one lock order everywhere, subject row, identifier_epochs, proposal row, then events; propose and
+-- approve check `erased` only under the subject lock, so the erasure mark (FOR UPDATE on the subject) waits for an
+-- in-flight proposal and the cascade deletes it; no proposal can commit after the mark.
+-- The reviewer process enforces the rule on the plaintext
 -- (wp/mentions.py identifier_problem): the store sees only the HMAC and a ciphertext under the subject key.
 create table identifier_proposals (
   tenant_id tenant_t not null, proposal_id text primary key, subject_id text not null,
   ident_hmac text not null,
-  ident_enc bytea not null,                                 -- normalised identifier under the SUBJECT key (AAD proposal:<id>)
+  ident_enc bytea not null,                                 -- the identifier as written, under the SUBJECT key (AAD proposal:<id>)
   rule_version text not null,
   proposed_by name not null, proposed_at timestamptz not null default clock_timestamp(),
   state text not null default 'proposed' check (state in ('proposed', 'approved', 'rejected')),
@@ -159,24 +194,31 @@ create function wp_identifier_propose(t tenant_t, s text, pid text, h text, enc 
 declare er boolean;
 begin
   insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
-  select erased into er from subjects where tenant_id = t and subject_id = s;
+  select erased into er from subjects where tenant_id = t and subject_id = s for share;   -- lock before check (F8)
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
   if h is null or enc is null or rv is null then raise exception 'proposal incomplete' using errcode = 'WPS33'; end if;
   insert into identifier_proposals(tenant_id, proposal_id, subject_id, ident_hmac, ident_enc, rule_version, proposed_by)
     values (t, pid, s, h, enc, rv, session_user);
 end $$;
 create function wp_identifier_approve(pid text, h text, rv text) returns bigint language plpgsql security definer set search_path = public, pg_temp as $$
-declare p record; n bigint;
+declare p record; n bigint; m text; er boolean;
 begin
   if not pg_has_role(session_user, 'wp_reviewer', 'member') then
     raise exception 'approve: % is not a reviewer', session_user using errcode = 'WPS30';
   end if;
+  select tenant_id, subject_id into p from identifier_proposals where proposal_id = pid;
+  if not found then raise exception 'approve: no open proposal %', pid using errcode = 'WPS33'; end if;
+  -- lock order (class 2): subject, identifier_epochs, proposal
+  select erased into er from subjects where tenant_id = p.tenant_id and subject_id = p.subject_id for share;
+  if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
+  insert into identifier_epochs(tenant_id) values (p.tenant_id) on conflict do nothing;
+  select matcher into m from identifier_epochs where tenant_id = p.tenant_id for update;
   select * into p from identifier_proposals where proposal_id = pid for update;
   if not found or p.state <> 'proposed' then raise exception 'approve: no open proposal %', pid using errcode = 'WPS33'; end if;
   if p.proposed_by = session_user then raise exception 'approve: % proposed it (self-approval)', session_user using errcode = 'WPS30'; end if;
   if h is distinct from p.ident_hmac then raise exception 'approve: HMAC differs from the proposal' using errcode = 'WPS31'; end if;
-  if rv is distinct from p.rule_version or rv not like 'r2:%' then
-    raise exception 'approve: rule version % (proposal %)', rv, p.rule_version using errcode = 'WPS32';
+  if rv is distinct from p.rule_version or m is null or rv is distinct from 'r3:' || m then
+    raise exception 'approve: rule version % (proposal %, tenant matcher %)', rv, p.rule_version, m using errcode = 'WPS32';
   end if;
   n := public.wp_identifier_declare(p.tenant_id, p.subject_id, array[p.ident_hmac]);   -- same lock order as before
   update identifier_proposals set state = 'approved', reviewed_by = session_user, reviewed_at = clock_timestamp() where proposal_id = pid;
@@ -209,10 +251,11 @@ create table events (
   kind text not null, subject_id text not null,
   actor text not null, trust_origin text not null,
   ts_event timestamptz not null, ts_ingested timestamptz not null default clock_timestamp(),
-  content_enc bytea,                                        -- NULL only after erasure redaction (wp_erasure_cascade)
+  content_enc bytea,                                        -- NULL only after erasure (wp_erasure_cascade; a tombstone and its job remain)
   content_digest text not null,                             -- sha256 of the ciphertext; the chain hashes THIS, so redaction keeps the chain verifiable
   mentions text[] not null default '{}',                    -- subjects whose declared identifiers the write-time matcher found
   mention_scan_upto bigint not null default 0,              -- identifier-set version the matcher ran against
+  mention_matcher text not null default '',                 -- matcher id that ran (class 3: must be the tenant's, WPS38)
   secret_scan text not null default '',                    -- secret-scanner version the app ran (row 19); must be current
   prev_hash text not null, hash text not null,
   decision_item text, decision_action text, based_on_event_id text, source_event_id text,
@@ -245,7 +288,7 @@ create table decision_heads (
 create function wp_secret_scan_version() returns text language sql immutable as $$ select 's1'::text $$;
 
 create function events_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
-declare er boolean; ch record; src record; hd record; prior record; mx bigint;
+declare er boolean; ch record; src record; hd record; prior record; mx bigint; mm text;
 begin
   if NEW.lease_scope is distinct from 'session:' || NEW.session_id then
     raise exception 'scope_not_bound table=events presented=% required=session:%', NEW.lease_scope, NEW.session_id using errcode = 'WPS12';
@@ -262,7 +305,10 @@ begin
   end if;
   -- mentions: the event must have been matched against the CURRENT identifier set, and may not mention an erased subject
   insert into identifier_epochs(tenant_id) values (NEW.tenant_id) on conflict do nothing;
-  select max_seq into mx from identifier_epochs where tenant_id = NEW.tenant_id for share;
+  select max_seq, matcher into mx, mm from identifier_epochs where tenant_id = NEW.tenant_id for share;
+  if mm is not null and NEW.mention_matcher is distinct from mm then
+    raise exception 'mention_matcher_mismatch presented=% tenant=%', NEW.mention_matcher, mm using errcode = 'WPS38';
+  end if;
   if mx > NEW.mention_scan_upto then
     raise exception 'mention_scan_stale scanned=% current=%', NEW.mention_scan_upto, mx using errcode = 'WPS17';
   end if;
@@ -350,32 +396,6 @@ create table tombstones (
   primary key (tenant_id, subject_id, event_id)
 );
 create index tombstones_event on tombstones (tenant_id, event_id);
-
--- D3 span redaction (ASSUMPTION under decision 10). An event of ANOTHER speaker that mentions the erased subject is
--- still tombstoned (ES placeholder, derived facts and jobs deleted, original ciphertext nulled); when the matcher's
--- spans allow it, the erasure first stores a redacted copy here, under the SPEAKER's key (AAD redaction:<event>:<n>).
--- Rows chain from the event's hash (prev_hash = events.hash for n = 1, else the previous row's hash; the keyed hash is
--- computed by the app with the tenant chain key and checked by log.verify_chain). redacted_enc may only be nulled.
-create table event_redactions (
-  tenant_id tenant_t not null, event_id text not null, n int not null, job_id text not null, subject_id text not null,
-  base_digest text not null,                                -- digest of the text this redaction was computed from
-  redacted_enc bytea, redacted_digest text not null,
-  spans int[] not null,                                     -- start,end pairs (code points in the base text); no content
-  prev_hash text not null, hash text not null,
-  created_at timestamptz not null default clock_timestamp(),
-  primary key (tenant_id, event_id, n),
-  unique (job_id, event_id)
-);
-create function redactions_change_guard() returns trigger language plpgsql as $$
-begin
-  if current_user = 'wp_owner' and TG_OP = 'INSERT' then return NEW; end if;
-  if TG_OP = 'UPDATE' and current_user = 'wp_owner' and OLD.redacted_enc is not null and NEW.redacted_enc is null
-     and (to_jsonb(NEW) - 'redacted_enc') = (to_jsonb(OLD) - 'redacted_enc') then
-    return NEW;
-  end if;
-  raise exception 'event_redactions: % refused (append-only; text may only be nulled by owner functions)', TG_OP using errcode = 'WPS06';
-end $$;
-create trigger event_redactions_guard before insert or update or delete on event_redactions for each row execute function redactions_change_guard();
 
 -- ------------------------------------------------------------------ inbox, analyst jobs, facts, cursors
 create function subject_not_erased() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
@@ -598,24 +618,26 @@ begin
     on conflict do nothing;
   update erasure_jobs set men_after = '' where job_id = jid and exists (select 1 from unnest(ids) x where x <= men_after);
 end $$;
-create function wp_erasure_rescan_page(jid text, ids text[]) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+create function wp_erasure_rescan_page(jid text, ids text[], m text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
 declare j record;
 begin
   select tenant_id, state into j from erasure_jobs where job_id = jid;
   if j.state not in ('marked', 'cascaded') then raise exception 'rescan only after mark (state %)', j.state using errcode = 'WPS08'; end if;
+  perform public.wp_matcher_check(j.tenant_id, m);          -- class 3: a page scanned by another matcher is refused
   insert into erasure_rescanned(job_id, event_id)
     select jid, e.event_id from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids) on conflict do nothing;
 end $$;
-create function wp_erasure_rescan_done(jid text, upto bigint) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+create function wp_erasure_rescan_done(jid text, upto bigint, m text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
 declare j record; missing bigint;
 begin
   select tenant_id, subject_id, ident_xmax into j from erasure_jobs where job_id = jid;
+  perform public.wp_matcher_check(j.tenant_id, m);
   if upto < coalesce(j.ident_xmax, 0) then
     raise exception 'rescan_incomplete: covers version % < identifier-set version %', upto, j.ident_xmax using errcode = 'WPS24';
   end if;
   select count(*) into missing from events e
    where e.tenant_id = j.tenant_id and e.subject_id <> j.subject_id
-     and (e.content_enc is not null or exists (select 1 from event_redactions r where r.tenant_id = e.tenant_id and r.event_id = e.event_id and r.redacted_enc is not null))
+     and e.content_enc is not null
      and e.mention_scan_upto < upto and not (e.mentions @> array[j.subject_id])
      and not exists (select 1 from erasure_rescanned r where r.job_id = jid and r.event_id = e.event_id);
   if missing > 0 then
@@ -656,12 +678,6 @@ begin
   ids := array(select x from unnest(cand) x where not exists (select 1 from erasure_withheld w where w.job_id = jid and w.event_id = x));
   insert into tombstones(tenant_id, event_id, subject_id, job_id) select t, unnest(ids), s, jid on conflict do nothing;
   update events set content_enc = null where tenant_id = t and event_id = any(ids) and content_enc is not null;
-  -- D3: a redacted text survives only if it is THIS job's redaction (computed from the latest text, without the
-  -- subject). Any other present redacted text of a tombstoned event (the subject's own events; a redaction made for
-  -- another subject, which may still name this one) is nulled: the fallback is whole removal.
-  update event_redactions r set redacted_enc = null
-   where r.tenant_id = t and r.event_id = any(ids) and r.redacted_enc is not null
-     and not exists (select 1 from event_redactions r2 where r2.tenant_id = t and r2.event_id = r.event_id and r2.job_id = jid and r2.n >= r.n);
   if cardinality(ids) > 0 then
     -- one GIN probe per event (input_event_ids @> array[x]), then primary-key deletes: O(batch) at any tenant size.
     -- The probe sits behind an optimisation fence (lateral subquery with OFFSET 0) and the tenant is filtered outside
@@ -680,60 +696,6 @@ begin
        where f2.tenant_id = t));
   end if;
   return cardinality(ids);
-end $$;
-
--- D3 span redaction of one event of ANOTHER speaker that mentions the job's subject, before the cascade tombstones it.
--- Optional by construction: if it is refused or never called, the cascade removes the event whole (the fallback,
--- listed in the receipt). The store cannot read the text; it checks everything else: job marked, the event mentions
--- the subject and is not the subject's own, not yet tombstoned, not under another subject's legal hold, spans
--- well-formed, base_digest equal to the event's CURRENT text (compare-and-set) and prev_hash equal to its chain head.
--- Returns the redaction number n.
-create function wp_erasure_redact(jid text, eid text, base text, enc bytea, sp int[], prev text, h text) returns int language plpgsql security definer set search_path = public, pg_temp as $$
-declare j record; e record; cur record; i int;
-begin
-  select * into j from erasure_jobs where job_id = jid;
-  if not found or j.state <> 'marked' then raise exception 'redact only while marked' using errcode = 'WPS08'; end if;
-  select subject_id, content_enc, content_digest, hash, mentions into e from events where tenant_id = j.tenant_id and event_id = eid;
-  if not found then raise exception 'redact: no event %', eid using errcode = 'WPS34'; end if;
-  if e.subject_id = j.subject_id then raise exception 'redact: the subject''s own events are removed whole' using errcode = 'WPS34'; end if;
-  if not (e.mentions @> array[j.subject_id]
-          or exists (select 1 from erasure_mentions m where m.tenant_id = j.tenant_id and m.subject_id = j.subject_id and m.event_id = eid)) then
-    raise exception 'redact: event does not mention the subject' using errcode = 'WPS34';
-  end if;
-  if exists (select 1 from tombstones tb where tb.tenant_id = j.tenant_id and tb.event_id = eid and tb.subject_id = j.subject_id) then
-    raise exception 'redact: already tombstoned by this erasure' using errcode = 'WPS34';
-  end if;
-  -- the same subjects the cascade share-locks, so a hold cannot land between this check and the write
-  perform 1 from subjects sj where sj.tenant_id = j.tenant_id and (sj.subject_id = e.subject_id or sj.subject_id = any(e.mentions))
-    order by sj.subject_id for share;
-  if exists (select 1 from legal_holds hd where hd.tenant_id = j.tenant_id and hd.released_at is null and hd.subject_id <> j.subject_id
-             and (hd.subject_id = e.subject_id or hd.subject_id = any(e.mentions)
-                  or exists (select 1 from erasure_mentions m where m.tenant_id = j.tenant_id and m.event_id = eid and m.subject_id = hd.subject_id))) then
-    raise exception 'redact: event under another subject''s legal hold' using errcode = 'WPS35';
-  end if;
-  if sp is null or cardinality(sp) < 2 or cardinality(sp) % 2 <> 0 or sp[1] < 0 then
-    raise exception 'redact: malformed spans' using errcode = 'WPS36';
-  end if;
-  for i in 1 .. cardinality(sp) - 1 loop
-    if (i % 2 = 1 and sp[i] >= sp[i + 1]) or (i % 2 = 0 and sp[i] > sp[i + 1]) then
-      raise exception 'redact: malformed spans' using errcode = 'WPS36';
-    end if;
-  end loop;
-  if enc is null then raise exception 'redact: no redacted text' using errcode = 'WPS36'; end if;
-  select n, redacted_enc, redacted_digest, hash into cur from event_redactions where tenant_id = j.tenant_id and event_id = eid order by n desc limit 1;
-  if exists (select 1 from event_redactions where job_id = jid and event_id = eid) then
-    raise exception 'redact: already redacted by this job' using errcode = 'WPS37';
-  end if;
-  if (cur.n is null and (e.content_enc is null or base is distinct from e.content_digest))
-     or (cur.n is not null and (cur.redacted_enc is null or base is distinct from cur.redacted_digest)) then
-    raise exception 'redact: base is not the current text' using errcode = 'WPS37';
-  end if;
-  if prev is distinct from coalesce(cur.hash, e.hash) then raise exception 'redact: prev_hash is not the chain head' using errcode = 'WPS37'; end if;
-  insert into event_redactions(tenant_id, event_id, n, job_id, subject_id, base_digest, redacted_enc, redacted_digest, spans, prev_hash, hash)
-    values (j.tenant_id, eid, coalesce(cur.n, 0) + 1, jid, j.subject_id, base, enc, encode(sha256(enc), 'hex'), sp, prev, h);
-  update events set content_enc = null where tenant_id = j.tenant_id and event_id = eid and content_enc is not null;
-  update event_redactions set redacted_enc = null where tenant_id = j.tenant_id and event_id = eid and n = cur.n and redacted_enc is not null;
-  return coalesce(cur.n, 0) + 1;
 end $$;
 
 -- One cascade batch. Linear in the subject's events (D5): keyset cursors over the subject's own events (events_subject)
@@ -804,19 +766,12 @@ create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql
                            where e.tenant_id = t and tb.subject_id = s and e.content_enc is not null),
     'pg:mentions_unscanned', (select case when coalesce(jb.rescanned_xmax, -1) >= coalesce(jb.ident_xmax, 0) then 0
                               else (select count(*) from events e where e.tenant_id = t and e.subject_id <> s
-                                    and (e.content_enc is not null or exists (select 1 from event_redactions r where r.tenant_id = t
-                                         and r.event_id = e.event_id and r.redacted_enc is not null))
+                                    and e.content_enc is not null
                                     and e.mention_scan_upto < coalesce(jb.ident_xmax, 0)) end
                               from (select rescanned_xmax, ident_xmax from erasure_jobs where tenant_id = t and subject_id = s
                                     order by created_at desc limit 1) jb),
     'pg:identifiers', (select count(*) from subject_identifiers where tenant_id = t and subject_id = s),
     'pg:identifier_proposals', (select count(*) from identifier_proposals where tenant_id = t and subject_id = s),
-    -- D3: a present redacted text in the subject's footprint is residue unless it is the subject's own erasure's
-    -- redaction of ANOTHER speaker's event (the only text computed without the subject)
-    'pg:redaction_text', (select count(*) from fp join event_redactions r on r.tenant_id = t and r.event_id = fp.event_id
-                          join events e on e.tenant_id = t and e.event_id = fp.event_id
-                          where r.redacted_enc is not null
-                            and not (e.subject_id <> s and r.job_id in (select job_id from erasure_jobs where tenant_id = t and subject_id = s))),
     'pg:quarantine_mentions', (select count(*) from quarantine where tenant_id = t and mentions @> array[s]),
     'pg:facts', (select count(*) from (select fact_id from facts where tenant_id = t and subject_id = s
                    union select f.fact_id from tombstones x
@@ -875,24 +830,26 @@ begin
   sc := jsonb_build_object(
     'speaker', 'the subject''s own events, facts and analyst jobs derived from them, inbox and quarantine items, the subject key',
     'mentions', jsonb_build_object(
-      'rule', 'every event that mentions the subject is tombstoned: original content nulled in Postgres, placeholder in ES, derived facts and jobs deleted; '
-              'for another speaker''s event, Postgres keeps a span-redacted copy when the matcher''s spans allow it (D3, ASSUMPTION decision 10); otherwise it is removed whole (fallback)',
-      'matcher', 'm2: NFKC + casefold exact match of the reviewed, declared identifiers as whole token sequences, invisible characters ignored (wp/mentions.py)',
-      'other_speakers_redacted', (select count(*) from event_redactions r where r.job_id = jid),
-      'fallback_removed', (select coalesce(jsonb_agg(tb.event_id order by tb.event_id), '[]') from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
-                           where tb.job_id = jid and e.subject_id <> j.subject_id
-                             and not exists (select 1 from event_redactions r where r.job_id = jid and r.event_id = tb.event_id)),
-      'fallback_reason', 'other speakers'' events with no redaction by this erasure (no span found, the redacted text still matched, a store refusal, or the runner stopped): removed whole',
+      'rule', 'every event that mentions the subject is removed whole, whoever wrote it: original content nulled in Postgres, '
+              'placeholder in ES, derived facts and jobs deleted (D3; decision R1: no span redaction, ASSUMPTION)',
+      'matcher', (select matcher from identifier_epochs where tenant_id = j.tenant_id),
+      'matcher_rule', 'm3: whole-token-sequence match of the UTS 39 keys of the reviewed, declared identifiers (case folded, '
+                      'default ignorables removed, Unicode tables pinned by version: wp/mentions.py)',
+      'other_speakers_removed', (select coalesce(jsonb_agg(tb.event_id order by tb.event_id), '[]') from tombstones tb
+                                 join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
+                                 where tb.job_id = jid and e.subject_id <> j.subject_id),
       'declared_identifiers', j.ident_count, 'identifier_set_version', j.ident_xmax, 'rescan_covered_version', j.rescanned_xmax,
       'found_at_write', (select count(*) from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
                          where tb.tenant_id = j.tenant_id and tb.subject_id = j.subject_id and e.subject_id <> j.subject_id and e.mentions @> array[j.subject_id]),
       'found_by_rescan', (select count(*) from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id and source = 'rescan'),
       'rescan_coverage', 'store-checked: every candidate event was examined (erasure_rescanned, WPS24)', 'rescan_match_attested_by', 'erasure runner (the store cannot decrypt the examined events)',
-      'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials)', 'pronouns and indirect references',
-                                       'look-alike characters in other speakers'' text (needs the UTS 39 confusable skeleton; confusables.txt not available)',
+      'over_match', jsonb_build_array('confusable variants of a declared identifier (Kim and Kirn share a key): such events of other speakers are removed too',
+                                      'a capital I written where a small l looks the same (AIEX KIM for Alex Kim)'),
+      'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials, inflected forms)', 'pronouns and indirect references',
+                                       'look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones)',
+                                       'a look-alike of a CAPITAL letter of the declared identifier (lan for a declared Ian)',
                                        'words of the subject quoted by others that contain no declared identifier',
                                        'names in scripts written without spaces (refused at declaration)',
-                                       'ES keeps no redacted text: a redacted event is a placeholder in ES (over-removal from the derived index)',
                                        'mentions inside inbox payloads and analyst-job results',
                                        'content outside this store (ES snapshots, backups, logs: see store_registry ext:*)')),
     'timing', 'no completion-time bound under concurrent writes: the erasure mark waits for every in-flight share lock on '
@@ -926,7 +883,7 @@ begin
   foreach t in array array['leases','subjects','chains','events','decision_heads','quarantine','quarantine_quota','tombstones','inbox',
                            'analyst_jobs','facts','cursors','store_registry','erasure_jobs',
                            'identifier_epochs','subject_identifiers','erasure_mentions','legal_holds','erasure_withheld','erasure_rescanned',
-                           'identifier_proposals','event_redactions'] loop
+                           'identifier_proposals'] loop
     execute format('create trigger %I before truncate on %I for each statement execute function wp_no_truncate()', t || '_no_truncate', t);
   end loop;
   for t in select format('alter table %I enable always trigger %I', c.relname, g.tgname) from pg_trigger g join pg_class c on c.oid = g.tgrelid
@@ -952,15 +909,14 @@ grant execute on function wp_lease_acquire(tenant_t, text, double precision, boo
   wp_lease_release(tenant_t, text, bigint, text), wp_subjects_ensure(tenant_t, text[]), wp_erasure_mark(text), wp_erasure_cascade(text, int),
   wp_erasure_pg_residue(text, text), wp_fence(text, text, bigint),
   wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]),
-  wp_erasure_redact(text, text, text, bytea, int[], text, text), wp_identifier_propose(tenant_t, text, text, text, bytea, text),
-  wp_erasure_rescan_done(text, bigint), wp_erasure_rescan_page(text, text[]), wp_subject_xmax(text, text) to wp_app;
+  wp_identifier_propose(tenant_t, text, text, text, bytea, text),
+  wp_erasure_rescan_done(text, bigint, text), wp_erasure_rescan_page(text, text[], text), wp_subject_xmax(text, text) to wp_app;
 -- D1: holds are placed and released only by the legal-operations role; the application cannot lift a hold.
 grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_release(text) to wp_legal;
 grant select on legal_holds, erasure_jobs, erasure_withheld to wp_legal;
 grant execute on function wp_erasure_pg_residue(text, text), wp_erasure_complete(text, jsonb, text) to wp_verifier;
 grant execute on function wp_erasure_rank(text) to wp_app, wp_verifier, wp_legal;   -- pure: the transition rule reads it in the guard
 grant execute on function wp_lease_holder_current(text, text, bigint, text) to wp_broker;   -- D6: the broker's only grant
-grant select on event_redactions to wp_app;
 -- D3: reviewers read proposals and approve or reject; a reviewer may also propose (and then cannot approve its own).
 -- wp_identifier_declare has no grant at all: it runs only inside wp_identifier_approve.
 grant usage on schema public to wp_reviewer;

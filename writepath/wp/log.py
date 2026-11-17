@@ -31,20 +31,14 @@ def digest(content_enc):
 
 
 def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source, mentions=(), scan=0,
-               key=None):
+               matcher="", key=None):
     """The chain covers the ciphertext DIGEST (so erasure can null the ciphertext and the chain still verifies), the
-    mentions and the identifier-set version the matcher ran against. With `key` (the tenant chain key from the key
+    mentions, the identifier-set version and (review C class 3) the matcher id the matcher ran under. With `key` (the tenant chain key from the key
     store, row 6) each link is an HMAC: whoever can write the events database but not read the key store cannot
     produce a link that verifies, however correctly chained. key=None is the unkeyed form (controls only)."""
     base = _h(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_iso, content_digest, epoch, item, action, based_on, source)
     h = _h(base, ",".join(mentions), scan) if (mentions or scan) else base
-    return hmac.new(key, h.encode(), hashlib.sha256).hexdigest() if key is not None else h
-
-
-def redaction_hash(prev, tenant, eid, n, job, base_digest, redacted_digest, spans, key=None):
-    """D3: link of an event's redaction chain (event_redactions). prev is the event's hash for n = 1, else the previous
-    redaction's hash; keyed with the tenant chain key exactly like the event chain."""
-    h = _h("redaction", prev, tenant, eid, n, job, base_digest, redacted_digest, ",".join(str(x) for x in spans))
+    h = _h(h, "matcher", matcher) if matcher else h
     return hmac.new(key, h.encode(), hashlib.sha256).hexdigest() if key is not None else h
 
 
@@ -120,10 +114,12 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
 
 
 def _scan(conn, ks, t, prepared, events):
+    mid = M.matcher_id()                    # fails closed (UCDUnavailable) without the pinned Unicode tables
     version, found = M.scan(conn, ks, t, [e["content"] for e in events])
     for p, f in zip(prepared, found):
         p["mentions"] = [x for x in f if x != p["subject_id"]]
         p["scan"] = version
+        p["matcher"] = mid
 
 
 def _existing(conn, t, sid, prepared):
@@ -151,13 +147,14 @@ def _append_txn(conn, t, sid, lease, prepared, hook, ckey=None):
             seq = next_seq + i
             ts = p["ts_event"].isoformat()
             h = event_hash(prev, t, sid, seq, p["event_id"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], ts, p["content_digest"], lease.epoch,
-                           p["item"], p["action"], p["based_on"], p["source"], p["mentions"], p["scan"], key=ckey)
+                           p["item"], p["action"], p["based_on"], p["source"], p["mentions"], p["scan"], p["matcher"], key=ckey)
             conn.execute(
                 "insert into events(tenant_id,session_id,seq,event_id,idem_key,req_hash,kind,subject_id,actor,trust_origin,ts_event,content_enc,content_digest,"
-                "mentions,mention_scan_upto,prev_hash,hash,decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch,secret_scan) "
-                "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                "mentions,mention_scan_upto,mention_matcher,prev_hash,hash,decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch,"
+                "secret_scan) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (t, sid, seq, p["event_id"], p["idem_key"], p["req_hash"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], p["ts_event"], p["content_enc"],
-                 p["content_digest"], p["mentions"], p["scan"], prev, h, p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch, p["secret_scan"]))
+                 p["content_digest"], p["mentions"], p["scan"], p["matcher"], prev, h, p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch,
+                 p["secret_scan"]))
             if p["kind"] in ANALYST_KINDS:
                 conn.execute("insert into analyst_jobs(tenant_id, job_id, idem_key, session_id, input_event_ids, lease_scope, lease_epoch) values (%s,%s,%s,%s,%s,%s,%s)",
                              (t, uuid.uuid4().hex, "analyst:" + p["event_id"], sid, [p["event_id"]], lease.scope, lease.epoch))
@@ -184,40 +181,31 @@ def verify_chain_unkeyed(conn, tenant, session_id, upto=None):
 
 def _verify(conn, tenant, session_id, key, upto):
     rows = conn.execute("select seq, event_id, kind, subject_id, actor, trust_origin, ts_event, content_digest, prev_hash, hash, lease_epoch, decision_item, "
-                        "decision_action, based_on_event_id, source_event_id, content_enc, mentions, mention_scan_upto "
+                        "decision_action, based_on_event_id, source_event_id, content_enc, mentions, mention_scan_upto, mention_matcher "
                         "from events where tenant_id=%s and session_id=%s and (%s::bigint is null or seq <= %s) order by seq",
                         (tenant, session_id, upto, upto)).fetchall()
     prev, ok = "0" * 64, True
     for i, r in enumerate(rows):
-        h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14], r[16], r[17], key=key)
+        h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14], r[16], r[17], r[18], key=key)
         intact = r[15] is None or digest(r[15]) == r[7]      # present content must match its digest
         ok = ok and r[0] == i + 1 and r[8] == prev and r[9] == h and intact
         prev = r[9]
-    return ok and _verify_redactions(conn, tenant, session_id, key, rows), len(rows), sorted({r[10] for r in rows})
+    return ok and _verify_nulls(conn, tenant, rows), len(rows), sorted({r[10] for r in rows})
 
 
-def _verify_redactions(conn, tenant, session_id, key, rows):
-    """D3: NULL content only with a tombstone or a redaction; each event's redaction chain links from the event hash
-    (n = 1, 2, ...), each row's keyed hash recomputes, each base is the text before it, present text matches its digest."""
-    ids = [r[1] for r in rows]
+def _verify_nulls(conn, tenant, rows):
+    """Review C class 5 (F7): NULL content verifies only with a tombstone whose erasure job still exists for the same
+    tenant and subject and got past 'requested' (only wp_erasure_cascade writes tombstones, after the mark). Deleting
+    the tombstone, its job, or pointing it at another subject's job makes verification fail. (Decision R1 removed span
+    redaction, so there is no other legitimate NULL; a present ciphertext is checked against its digest in _verify.)"""
+    ids = sorted({r[1] for r in rows if r[15] is None})
     if not ids:
         return True
-    tomb = {x[0] for x in conn.execute("select distinct event_id from tombstones where tenant_id=%s and event_id = any(%s)", (tenant, ids)).fetchall()}
-    red = {}
-    for x in conn.execute("select event_id, n, job_id, base_digest, redacted_enc, redacted_digest, spans, prev_hash, hash "
-                          "from event_redactions where tenant_id=%s and event_id = any(%s) order by event_id, n", (tenant, ids)).fetchall():
-        red.setdefault(x[0], []).append(x)
-    ok = True
-    for r in rows:
-        eid, cd, eh, enc = r[1], r[7], r[9], r[15]
-        chain = red.get(eid, [])
-        ok = ok and (enc is not None or eid in tomb or bool(chain))
-        head, base = eh, cd
-        for k, (_, n, job, b, renc, rdig, sp, ph, rh) in enumerate(chain, 1):
-            ok = ok and n == k and ph == head and b == base and rh == redaction_hash(ph, tenant, eid, n, job, b, rdig, sp, key=key)
-            ok = ok and (renc is None or digest(renc) == rdig)
-            head, base = rh, rdig
-    return ok
+    ok = {x[0] for x in conn.execute(
+        "select tb.event_id from tombstones tb join erasure_jobs j on j.job_id = tb.job_id and j.tenant_id = tb.tenant_id "
+        "and j.subject_id = tb.subject_id where tb.tenant_id = %s and tb.event_id = any(%s) and j.state <> 'requested'",
+        (tenant, ids)).fetchall()}
+    return set(ids) <= ok
 
 
 # ---------------------------------------------------------------- inbox
