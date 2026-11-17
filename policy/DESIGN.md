@@ -117,6 +117,15 @@ the examples and default deny are what ships.
   2. advisory (tenant, principal);
   3. head FOR UPDATE;
   4. event insert, which takes the chain head.
+- Caller contract (a behaviour change callers see, delta review 1 M1, 8928870): every `dc_idp` and `dc_app` call must run at READ
+  COMMITTED, the default. Inside REPEATABLE READ or SERIALIZABLE, `dc.open_session` raises `proof refused: isolation`, and every
+  session-keyed call answers as for an invalid session:
+  - `dc.submit` returns `unauthenticated:invalid_session`;
+  - `dc.explain` returns null, and `dc.read_table` returns `[]`;
+  - `dc.erase_candidates` returns `{refused: unauthorized, values: []}`, and `dc.erase_values` returns `{refused: unauthorized}`.
+  The reason: such a snapshot would outlive `end_session`, a principal revoke or a factor revoke. Proof and session expiry are judged
+  on `clock_timestamp()` (the wall clock), not on the transaction start, so a token or proof that expires inside a long caller
+  transaction is refused at its next call. `dc.submit` and `dc.erase_values` judge the session again after their lock waits.
 - Revoke and erasure serialise the tenant, which is a scaling limit.
 
 ## Not proven / limits (see also each result's `not_proven`)
