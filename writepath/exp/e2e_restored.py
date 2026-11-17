@@ -53,8 +53,16 @@ def _e1_p1(t, delay, q):
                 doc["stale_writer"] = "P1"
             time.sleep(delay)
             marks["bulk"] = _now(conn)
+    real_bulk = es.bulk_fenced
+
+    def bulk_timed(actions):                 # amendment 14a: the instant P1's bulk has returned (DB clock)
+        try:
+            return real_bulk(actions)
+        finally:
+            marks.setdefault("bulk_done", _now(conn))
+    es.bulk_fenced = bulk_timed
     p = projector.Projector(conn, ks, es, t, hook=hk)
-    p.step()
+    marks["step"] = p.step()
     marks["stale_bulk_items"] = p.stats["stale_bulk_items"]
     marks["docs_written"] = p.stats["docs_written"]
     q.put(("p1", marks))
@@ -68,8 +76,9 @@ def _e1_p2(t, delay, arm, p1_done, q):
         real = es.aliases
         es.aliases = lambda actions: real([a for a in actions if "remove" not in a])
     p = projector.Projector(conn, ks, es, t)
+    cas_start = _now(conn)                  # amendment 14a: before the forced takeover's CAS
     ok = p.start(force=True)
-    m = {"fenced_at": _now(conn), "epoch": p.lease.epoch if ok else None}
+    m = {"cas_start": cas_start, "fenced_at": _now(conn), "epoch": p.lease.epoch if ok else None}
     p1_done.wait(60)
     p.run(max_rounds=50); p.stop()
     q.put(("p2", m))
@@ -92,8 +101,25 @@ def e1(arm, seed):
     planted = es_count_all(es, t, {"term": {"stale_writer.keyword": "P1"}})
     total = es_count_all(es, t, {"term": {"kind": "message"}})
     overlap = bool(p1.get("read") and p2.get("fenced_at") and p1["read"] < p2["fenced_at"] < p1.get("bulk", 0))
-    return {"holds": planted == 0 and total == N_EVENTS, "overlap": overlap, "p1_docs_in_es": planted, "events_in_es": total,
-            "instants": {"p1": p1, "p2": p2}}
+    return {"holds": e1_holds(e1_window(p1, p2), planted, total), "window": e1_window(p1, p2), "overlap": overlap,
+            "p1_docs_in_es": planted, "events_in_es": total, "instants": {"p1": p1, "p2": p2}}
+
+
+def e1_window(p1, p2):
+    """Amendment 14a. before_takeover: P1's bulk returned before P2's CAS began (P1 was the live writer). in_flight: P1's
+    bulk and P2's CAS intervals intersect. after_takeover: everything else (P1 sent after the CAS, or never sent)."""
+    sent, done, cas0, cas1 = p1.get("bulk"), p1.get("bulk_done"), p2.get("cas_start"), p2.get("fenced_at")
+    if done is not None and cas0 is not None and done < cas0:
+        return "before_takeover"
+    if sent is not None and cas1 is not None and sent < cas1:
+        return "in_flight"
+    return "after_takeover"
+
+
+def e1_holds(window, planted, total):
+    if window == "before_takeover":
+        return total == N_EVENTS                # P1's documents are the legitimate projection
+    return planted == 0 and total == N_EVENTS   # strict: in_flight is never excused
 
 
 # ---------------------------------------------------------------- E2
@@ -214,6 +240,14 @@ if __name__ == "__main__":
             res = e3(5)
         else:
             res = races.run(name, N)
+            if name == "E1":                    # amendment 14a: window counts per arm
+                for a in ("fenced", "control"):
+                    w = {}
+                    for x in res[a]["runs"]:
+                        k = x.get("window", "error")
+                        w[k] = w.get(k, 0) + 1
+                    res[a]["windows"] = w
+                    res[a]["in_flight_violated"] = sum(x.get("window") == "in_flight" and x["holds"] is False for x in res[a]["runs"])
             if name == "E2":
                 so = e2_store_only(N)
                 res["store_only"] = so
