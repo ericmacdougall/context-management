@@ -165,6 +165,39 @@ other runs were re-read under it and still stand.
     - Window read (`review-2/window_check_2e1948c_batch_d.out`): exit 0, 1 high-watermark line, 2 flood lines.
   - **The chain stopped after d2**, as designed. The rest, including d2, runs again as batch e under amendment 24
     (20 GB start line).
+- **Batch e at 96214c2** (`step1-e.txt`, amendment 24a, `step1-96214c2/`), 16:47:29Z to 17:19:41Z.
+  - Conditions: the 20 GB start line, the lab run lock, and the same gate as batch d.
+  - Code: `git diff 2e1948c 96214c2 -- writepath/wp` is empty.
+  - Window read (`review-2/window_check_96214c2_batch_e.out`): every run exit 0, no high-watermark or flood line,
+    own usage at most +0.08 GiB.
+  - **d2: PASS.** The rerun of its 2e1948c VOID.
+  - **phys_purge: PASS.**
+  - **e2e E1: PASS.**
+    - Fenced: 40/40 held, 29/29 overlapping, 0 errors. Control: violated 23/23 overlapping.
+    - Fenced windows: 33 after_takeover, 7 before_takeover, **0 in_flight**. The in_flight window is still
+      **unverified** for the fixed code (the control arm reached it 3 times).
+  - **e2e E2: PASS** (fenced 40/40, all overlapping, 0 errors). **E3: PASS.**
+  - **projector_start_race: PASS.** Fixed arm 5/5 in A, B and C; control violated 5/5 in each.
+  - **projector_es_fault (N1, amendment 21): PASS.**
+    - The fixed arm held 5/5 in CAS, ITEM, REQ, CONN and STALE.
+    - The control (1fcf3f7's classification) was violated 5/5 in CAS, ITEM, REQ and CONN.
+    - STALE, the true lost-CAS case, holds in both arms.
+  - **races:**
+    - **R1: INCONCLUSIVE** (amendment 3). The control arm had 19 overlapping runs; 20 per arm are needed. The fenced
+      arm had 25 overlapping runs and 0 violations in all 40, with 0 errors. The control was violated 19/19
+      overlapping. One rerun under amendment 24b (written after this result) follows, and the two are never
+      combined.
+    - **R2: PASS** (fenced 39/39 overlapping).
+    - **R3: PASS** (fenced 40/40 overlapping).
+  - **size_probe** (exploratory, no PASS):
+    - Measured 4,478 bytes per document, against 2,071 at 62c6be5. The difference is mostly Postgres WAL refill
+      (16 MB to 128 MB) after the setup reset; the data directory after the build is about the same in both runs.
+    - Linear projection for 1.1M documents: 4.93 GB, over the 2 GB own-usage cap. **The 1M rerun stays BLOCKED.**
+  - **plan_stability (N3, amendment 22): PASS.**
+    - S1 and S2: 3/3 runs each held PS-C, PS-R and PS-F3. PS-F1 (both deletes logged in every batch) and PS-F2
+      (facts work > 0) are judged within PS-C.
+    - Controls failed 3/3 in each state: CTL_APPLY, CTL_RESIDUE, and the facts-only control CTL_FACTS.
+  - **guard_check end: PASS.**
 - **heldout_secrets (main's ruling):** not rerun. Its FAIL at 62c6be5 is **carried, not re-observed**:
   - wp/secrets.py is the same blob (58b025fc) at 62c6be5, 31112b4, 2e1948c and the final commit;
   - the heldout experiment files are unchanged since 62c6be5;
@@ -172,7 +205,9 @@ other runs were re-read under it and still stand.
 
 ### Step 1 stamp table
 
-**Evidence** is one stamped run per experiment at the post-fix commit (31112b4 or 2e1948c). **Observation** is
+**Evidence** is one stamped run per experiment at a post-fix commit (31112b4, 2e1948c or 96214c2; writepath/wp is
+identical at all three). The exceptions, each shown in both rows: d3 (FAIL, then PASS), d2 (VOID, then PASS) and R1
+(INCONCLUSIVE, then one rerun). **Observation** is
 everything else: the VOID run_all at fd4ed53, and the old-gate runs at 62c6be5, 5d26746 and 9cbc798. Old-gate runs
 used the gate from before review-2 N2, which judged flood stage only and did not record whether `docker logs`
 succeeded, so their log retrieval at the time cannot be shown; a later window read is in `review-2/`.
@@ -200,17 +235,18 @@ Gate versions:
 | d3 | **31112b4, N2, FAIL** (no verdict; high watermark from other tenants) **and 2e1948c, N2+HW, PASS** (rerun after amendment 23a) | 62c6be5 old PASS |
 | mutual_mentions | 2e1948c, N2+HW, PASS (BLOCKED at 31112b4, never started) | 9cbc798 old PASS |
 | lock_order | 2e1948c, N2+HW, PASS | 62c6be5 old PASS |
-| d2 | batch e, pending (2e1948c: VOID, other tenants' disk; the experiment returned PASS, not evidence) | 9cbc798 old PASS |
-| phys_purge | batch e, pending | 9cbc798 old PASS |
-| e2e E1 | batch e, pending | 62c6be5 old PASS |
-| e2e E2, E3 | batch e, pending | 9cbc798 old PASS |
-| projector_start_race | batch e, pending | 62c6be5 old PASS; 5d26746 old FAIL (harness, 19a) |
-| projector_es_fault (N1) | batch e, pending | none (failing-first at 1539a75: fixed arm 0/5 per case) |
-| races R1, R2, R3 | batch e, pending | 62c6be5 old PASS |
-| size_probe (exploratory) | batch e, pending | 62c6be5 old, 2,071 B/doc |
-| plan_stability (amendment 22, facts) | batch e, pending | 62c6be5 old PASS without facts (scope N3) |
+| d2 | 96214c2, N2+HW 20 GB, PASS (2e1948c: VOID, other tenants' disk; that run's PASS is not evidence) | 9cbc798 old PASS |
+| phys_purge | 96214c2, N2+HW 20 GB, PASS | 9cbc798 old PASS |
+| e2e E1 | 96214c2, N2+HW 20 GB, PASS (fenced in_flight window 0: unverified) | 62c6be5 old PASS |
+| e2e E2, E3 | 96214c2, N2+HW 20 GB, PASS | 9cbc798 old PASS |
+| projector_start_race | 96214c2, N2+HW 20 GB, PASS | 62c6be5 old PASS; 5d26746 old FAIL (harness, 19a) |
+| projector_es_fault (N1) | 96214c2, N2+HW 20 GB, PASS | none (failing-first at 1539a75: fixed arm 0/5 per case) |
+| races R1 | **96214c2, N2+HW 20 GB, INCONCLUSIVE** (control 19 overlapping < 20; fenced 0 violations, 0 errors) **and** the one rerun under amendment 24b (0a433bc): pending; never combined | 62c6be5 old PASS |
+| races R2, R3 | 96214c2, N2+HW 20 GB, PASS | 62c6be5 old PASS |
+| size_probe (exploratory) | 96214c2, N2+HW 20 GB, measured 4,478 B/doc (WAL refill included); 1M stays BLOCKED | 62c6be5 old, 2,071 B/doc |
+| plan_stability (amendment 22, facts) | 96214c2, N2+HW 20 GB, PASS (CTL_FACTS 3/3 per state) | 62c6be5 old PASS without facts (scope N3) |
 | heldout_secrets | carried: 62c6be5, old, FAIL (main's ruling; same secrets.py blob; no store) | |
-| guard_check end | batch e, pending | 9cbc798 old PASS |
+| guard_check end | 96214c2, N2+HW 20 GB, PASS | 9cbc798 old PASS |
 
 ### Limits that apply to every erasure result here
 
@@ -225,6 +261,6 @@ Gate versions:
   version, so they cannot be reproduced from the fingerprint alone. Fingerprints from cf8f08e on record the effective
   settings (exp/common.PG_SETTINGS).
 
-Every step-1 experiment that uses the stores is stamped at the post-fix commit: in batch c (31112b4) or batch d
-(2e1948c). row19's 880/880 is on its author's own planted corpus only; on held-out data the scanner caught 483/1,169
+Every step-1 experiment that uses the stores is stamped at a post-fix commit: batch c (31112b4), batch d (2e1948c)
+or batch e (96214c2), with R1's one rerun at 0a433bc. row19's 880/880 is on its author's own planted corpus only; on held-out data the scanner caught 483/1,169
 and 150/750 (heldout_secrets FAIL). Not run: a full run_all restamp (main's order: stamped singles instead).

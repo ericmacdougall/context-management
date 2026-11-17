@@ -1,0 +1,1334 @@
+{
+ "at": "2026-11-17T17:08:31Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/96214c2-20261117T164706Z/exp/races.py R1 R2 R3 40",
+  "code_commit": "96214c2",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   10.25341796875,
+   10.86083984375,
+   8.06396484375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "races_R2",
+ "result": {
+  "N": 40,
+  "control": {
+   "errors": 0,
+   "holds_all": 0,
+   "holds_overlapped": 0,
+   "overlapped": 40,
+   "runs": [
+    {
+     "attempts": {
+      "SubjectErased": 20,
+      "accepted": 5
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096500,
+     "window": [
+      1794935192.749346,
+      1794935192.759841
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 8,
+      "accepted": 17
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096501,
+     "window": [
+      1794935196.682666,
+      1794935196.69202
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 18,
+      "accepted": 7
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096502,
+     "window": [
+      1794935198.820481,
+      1794935198.829451
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 16,
+      "accepted": 9
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096503,
+     "window": [
+      1794935202.205142,
+      1794935202.214376
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 6,
+      "accepted": 19
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096504,
+     "window": [
+      1794935205.923551,
+      1794935205.933621
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 20,
+      "accepted": 5
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096505,
+     "window": [
+      1794935207.954254,
+      1794935207.962856
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 18,
+      "accepted": 7
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096506,
+     "window": [
+      1794935210.931854,
+      1794935210.939345
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 2,
+      "accepted": 23
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096507,
+     "window": [
+      1794935215.175907,
+      1794935215.186599
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 3,
+      "accepted": 22
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096508,
+     "window": [
+      1794935217.912459,
+      1794935217.922818
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 7,
+      "accepted": 18
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096509,
+     "window": [
+      1794935220.852468,
+      1794935220.863344
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 8,
+      "accepted": 17
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096510,
+     "window": [
+      1794935223.946115,
+      1794935223.956855
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 6,
+      "accepted": 19
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096511,
+     "window": [
+      1794935227.111095,
+      1794935227.121858
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 6,
+      "accepted": 19
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 5
+     },
+     "seed": 16096512,
+     "window": [
+      1794935230.331454,
+      1794935230.341623
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 16,
+      "accepted": 9
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096513,
+     "window": [
+      1794935232.629241,
+      1794935232.637307
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 7,
+      "accepted": 18
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 5
+     },
+     "seed": 16096514,
+     "window": [
+      1794935236.242857,
+      1794935236.252919
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 7,
+      "accepted": 18
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096515,
+     "window": [
+      1794935239.287093,
+      1794935239.297152
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 11,
+      "accepted": 14
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 7
+     },
+     "seed": 16096516,
+     "window": [
+      1794935241.89788,
+      1794935241.907225
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 11,
+      "accepted": 14
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096517,
+     "window": [
+      1794935245.12422,
+      1794935245.133656
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 14,
+      "accepted": 11
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 1
+     },
+     "seed": 16096518,
+     "window": [
+      1794935247.972728,
+      1794935247.982403
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 5,
+      "accepted": 20
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096519,
+     "window": [
+      1794935251.369714,
+      1794935251.378658
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 4,
+      "accepted": 21
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096520,
+     "window": [
+      1794935254.339854,
+      1794935254.350475
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 6,
+      "accepted": 19
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096521,
+     "window": [
+      1794935257.185572,
+      1794935257.19606
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 16,
+      "accepted": 9
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096522,
+     "window": [
+      1794935259.347744,
+      1794935259.357851
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 19,
+      "accepted": 6
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096523,
+     "window": [
+      1794935262.365754,
+      1794935262.375527
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 11,
+      "accepted": 14
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096524,
+     "window": [
+      1794935265.941212,
+      1794935265.959253
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 6,
+      "accepted": 19
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 1
+     },
+     "seed": 16096525,
+     "window": [
+      1794935269.139095,
+      1794935269.149967
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 8,
+      "accepted": 17
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096526,
+     "window": [
+      1794935272.05255,
+      1794935272.063097
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 9,
+      "accepted": 16
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 1
+     },
+     "seed": 16096527,
+     "window": [
+      1794935274.973841,
+      1794935274.983544
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 14,
+      "accepted": 11
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096528,
+     "window": [
+      1794935277.221743,
+      1794935277.231453
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 12,
+      "accepted": 13
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096529,
+     "window": [
+      1794935280.365546,
+      1794935280.374967
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 14,
+      "accepted": 11
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096530,
+     "window": [
+      1794935283.002054,
+      1794935283.010464
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 10,
+      "accepted": 15
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 4
+     },
+     "seed": 16096531,
+     "window": [
+      1794935286.180859,
+      1794935286.213069
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 21,
+      "accepted": 4
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 2
+     },
+     "seed": 16096532,
+     "window": [
+      1794935288.386866,
+      1794935288.395078
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 19,
+      "accepted": 6
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096533,
+     "window": [
+      1794935291.617193,
+      1794935291.625556
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 4,
+      "accepted": 21
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096534,
+     "window": [
+      1794935295.922435,
+      1794935295.933485
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 8,
+      "accepted": 17
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096535,
+     "window": [
+      1794935298.236852,
+      1794935298.245721
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 4,
+      "accepted": 21
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 7
+     },
+     "seed": 16096536,
+     "window": [
+      1794935301.448206,
+      1794935301.458163
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 15,
+      "accepted": 10
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096537,
+     "window": [
+      1794935303.535881,
+      1794935303.544264
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 17,
+      "accepted": 8
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096538,
+     "window": [
+      1794935306.336903,
+      1794935306.345711
+     ]
+    },
+    {
+     "attempts": {
+      "SubjectErased": 9,
+      "accepted": 16
+     },
+     "holds": false,
+     "overlap": true,
+     "residue_nonzero": {
+      "pg:events_untombstoned": 3
+     },
+     "seed": 16096539,
+     "window": [
+      1794935310.243113,
+      1794935310.252884
+     ]
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 40,
+   "violated_overlapped": 40,
+   "wilson95_hold_rate_overlapped": [
+    -0.0,
+    0.0876
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.9124,
+    1.0
+   ]
+  },
+  "fenced": {
+   "errors": 0,
+   "holds_all": 40,
+   "holds_overlapped": 39,
+   "overlapped": 39,
+   "runs": [
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 18,
+      "accepted": 3
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096000,
+     "window": [
+      1794935073.842075,
+      1794935073.849831
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 11,
+      "accepted": 10
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096001,
+     "window": [
+      1794935077.365036,
+      1794935077.373403
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 5,
+      "SubjectErased": 3,
+      "accepted": 17
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096002,
+     "window": [
+      1794935081.237672,
+      1794935081.24804
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 20,
+      "accepted": 1
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096003,
+     "window": [
+      1794935082.861544,
+      1794935082.869144
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 5,
+      "SubjectErased": 12,
+      "accepted": 8
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096004,
+     "window": [
+      1794935086.068801,
+      1794935086.077579
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 7,
+      "accepted": 15
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096005,
+     "window": [
+      1794935089.254826,
+      1794935089.2643
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 11,
+      "SubjectErased": 7,
+      "accepted": 7
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096006,
+     "window": [
+      1794935093.51072,
+      1794935093.521988
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 12,
+      "accepted": 9
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096007,
+     "window": [
+      1794935096.178172,
+      1794935096.18695
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 8,
+      "accepted": 14
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096008,
+     "window": [
+      1794935099.470886,
+      1794935099.481546
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 18,
+      "accepted": 4
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096009,
+     "window": [
+      1794935101.67336,
+      1794935101.683087
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 1,
+      "SubjectErased": 3,
+      "accepted": 21
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096010,
+     "window": [
+      1794935105.978636,
+      1794935105.990844
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 17,
+      "accepted": 5
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096011,
+     "window": [
+      1794935107.710388,
+      1794935107.719466
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 23
+     },
+     "holds": true,
+     "overlap": false,
+     "residue_nonzero": {},
+     "seed": 16096012,
+     "window": [
+      1794935110.190603,
+      1794935110.198131
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 16,
+      "accepted": 7
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096013,
+     "window": [
+      1794935113.73702,
+      1794935113.745741
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 1,
+      "SubjectErased": 19,
+      "accepted": 5
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096014,
+     "window": [
+      1794935116.43314,
+      1794935116.443685
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 20,
+      "accepted": 1
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096015,
+     "window": [
+      1794935119.368194,
+      1794935119.375582
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 9,
+      "accepted": 14
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096016,
+     "window": [
+      1794935123.104554,
+      1794935123.113937
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 8,
+      "accepted": 14
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096017,
+     "window": [
+      1794935125.945402,
+      1794935125.954977
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 19,
+      "accepted": 3
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096018,
+     "window": [
+      1794935128.033099,
+      1794935128.041243
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 20,
+      "accepted": 3
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096019,
+     "window": [
+      1794935130.919738,
+      1794935130.928731
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 17,
+      "accepted": 6
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096020,
+     "window": [
+      1794935133.958498,
+      1794935133.967026
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 8,
+      "accepted": 15
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096021,
+     "window": [
+      1794935138.098754,
+      1794935138.109199
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 7,
+      "accepted": 16
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096022,
+     "window": [
+      1794935141.198433,
+      1794935141.208306
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 15,
+      "accepted": 7
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096023,
+     "window": [
+      1794935143.464581,
+      1794935143.475106
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 12,
+      "accepted": 10
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096024,
+     "window": [
+      1794935146.66472,
+      1794935146.673458
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 8,
+      "accepted": 15
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096025,
+     "window": [
+      1794935149.785189,
+      1794935149.795228
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 9,
+      "accepted": 13
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096026,
+     "window": [
+      1794935152.501781,
+      1794935152.512346
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 14,
+      "accepted": 8
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096027,
+     "window": [
+      1794935155.053624,
+      1794935155.067716
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 8,
+      "accepted": 15
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096028,
+     "window": [
+      1794935158.520545,
+      1794935158.531157
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 9,
+      "accepted": 12
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096029,
+     "window": [
+      1794935161.541514,
+      1794935161.551718
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 22,
+      "accepted": 1
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096030,
+     "window": [
+      1794935163.703299,
+      1794935163.711019
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 11,
+      "accepted": 12
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096031,
+     "window": [
+      1794935167.042919,
+      1794935167.0534
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 6,
+      "SubjectErased": 1,
+      "accepted": 18
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096032,
+     "window": [
+      1794935170.443664,
+      1794935170.453986
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 5,
+      "SubjectErased": 10,
+      "accepted": 10
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096033,
+     "window": [
+      1794935172.8963,
+      1794935172.907055
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 12,
+      "accepted": 10
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096034,
+     "window": [
+      1794935175.778784,
+      1794935175.790473
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 20,
+      "accepted": 3
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096035,
+     "window": [
+      1794935178.319038,
+      1794935178.326862
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 16,
+      "accepted": 7
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096036,
+     "window": [
+      1794935181.5388,
+      1794935181.547588
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 3,
+      "SubjectErased": 14,
+      "accepted": 8
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096037,
+     "window": [
+      1794935184.812012,
+      1794935184.820783
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 4,
+      "SubjectErased": 17,
+      "accepted": 4
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096038,
+     "window": [
+      1794935187.324367,
+      1794935187.332861
+     ]
+    },
+    {
+     "attempts": {
+      "DatabaseError": 2,
+      "SubjectErased": 19,
+      "accepted": 4
+     },
+     "holds": true,
+     "overlap": true,
+     "residue_nonzero": {},
+     "seed": 16096039,
+     "window": [
+      1794935190.16622,
+      1794935190.174498
+     ]
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 0,
+   "violated_overlapped": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.9103,
+    1.0
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.0,
+    0.0897
+   ]
+  },
+  "patch": "events_guard without the erased-subject check",
+  "verdict": "PASS"
+ }
+}

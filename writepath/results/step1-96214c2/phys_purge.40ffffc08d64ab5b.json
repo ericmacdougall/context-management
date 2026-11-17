@@ -1,0 +1,214 @@
+{
+ "at": "2026-11-17T16:53:21Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/96214c2-20261117T164706Z/exp/phys_purge.py",
+  "code_commit": "96214c2",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.845703125,
+   2.77392578125,
+   3.67529296875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "phys_purge",
+ "result": {
+  "R": 5,
+  "control": [
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": true,
+     "error_type": null,
+     "physical_pending": null,
+     "receipt_state": "done",
+     "seconds": 2.897
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": true,
+     "error_type": null,
+     "physical_pending": null,
+     "receipt_state": "done",
+     "seconds": 2.915
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": true,
+     "error_type": null,
+     "physical_pending": null,
+     "receipt_state": "done",
+     "seconds": 2.903
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": true,
+     "error_type": null,
+     "physical_pending": null,
+     "receipt_state": "done",
+     "seconds": 2.896
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": true,
+     "error_type": null,
+     "physical_pending": null,
+     "receipt_state": "done",
+     "seconds": 2.916
+    }
+   }
+  ],
+  "fenced": [
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": false,
+     "error_type": null,
+     "physical_pending": {
+      "es:soft_deleted": 1
+     },
+     "receipt_state": "logically_erased_physical_purge_pending",
+     "seconds": 2.837
+    },
+    "followup": {
+     "docs_deleted_after": 0,
+     "done": true,
+     "logical_to_done_s": 28.926,
+     "seconds": 28.92,
+     "state": "done",
+     "within_deadline": true
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": false,
+     "error_type": null,
+     "physical_pending": {
+      "es:soft_deleted": 1
+     },
+     "receipt_state": "logically_erased_physical_purge_pending",
+     "seconds": 2.967
+    },
+    "followup": {
+     "docs_deleted_after": 0,
+     "done": true,
+     "logical_to_done_s": 28.928,
+     "seconds": 28.923,
+     "state": "done",
+     "within_deadline": true
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": false,
+     "error_type": null,
+     "physical_pending": {
+      "es:soft_deleted": 1
+     },
+     "receipt_state": "logically_erased_physical_purge_pending",
+     "seconds": 2.905
+    },
+    "followup": {
+     "docs_deleted_after": 0,
+     "done": true,
+     "logical_to_done_s": 28.909,
+     "seconds": 28.904,
+     "state": "done",
+     "within_deadline": true
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": false,
+     "error_type": null,
+     "physical_pending": {
+      "es:soft_deleted": 1
+     },
+     "receipt_state": "logically_erased_physical_purge_pending",
+     "seconds": 2.903
+    },
+    "followup": {
+     "docs_deleted_after": 0,
+     "done": true,
+     "logical_to_done_s": 28.923,
+     "seconds": 28.918,
+     "state": "done",
+     "within_deadline": true
+    }
+   },
+   {
+    "first": {
+     "docs_deleted_at_receipt": 10,
+     "done": false,
+     "error_type": null,
+     "physical_pending": {
+      "es:soft_deleted": 1
+     },
+     "receipt_state": "logically_erased_physical_purge_pending",
+     "seconds": 2.929
+    },
+    "followup": {
+     "docs_deleted_after": 0,
+     "done": true,
+     "logical_to_done_s": 28.941,
+     "seconds": 28.938,
+     "state": "done",
+     "within_deadline": true
+    }
+   }
+  ],
+  "patch": "control: wp_erasure_complete ignores es:soft_deleted and keys:physical_pending",
+  "verdict": {
+   "pass": true,
+   "why": []
+  }
+ }
+}
