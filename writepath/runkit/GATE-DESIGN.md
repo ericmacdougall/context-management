@@ -175,7 +175,7 @@ change it led to: the watermark verdict no longer rests on ES's log text alone.
 | 23 | receipts that did not establish failure provenance (A6) | unpinned evidence | `runkit/failing_first.sh` pins the tested blob and its sha256, the test blob, the command and the exit status |
 | 24 | sample counts and STOP wording contradicted the evidence (A7) | documentation drift | fixed in results/README.md; MANIFEST and THRESHOLDS text sent to main for their owner |
 | 25 | a flood-stage line worded "flood-stage watermark" was not matched (found by this research) | verdict depends on ES's log wording | instance: hyphens normalised (red receipt `websearch-flood-hyphen-disk_gate-843f4fa.red2.out`); class: 4.3 |
-| 26 | a node already over the high watermark at admission logs no new line inside the window (whether ES repeats the warning is to be observed live) | log as an edge trigger | 4.3: the API read at admission and every sample |
+| 26 | a node already over the high watermark at admission logs no new line inside the window (observed live on 9.5.6: one high-watermark line in 20 s at a 10 s info interval, so ES does not repeat it per evaluation) | log as an edge trigger | 4.3: the API read at admission and every sample |
 | 27 | ES logging of the allocation decider turned down (a `logger.*` setting) so no warning is written | evidence channel controlled by the observed system | 4.3: the API evidence does not depend on logging; settings snapshot compared start to end |
 
 Scenarios 1 to 24 are tested offline (tests/test_disk_gate.py, tests/test_leak_scan.py); 25 has a red receipt; 26
@@ -185,11 +185,12 @@ and 27 are the reason for 4.3.
 | Source | What it says that matters here | What it does not say | Confidence | Settled by |
 |---|---|---|---|---|
 | https://docs.docker.com/engine/logging/configure/ | default driver json-file; blocking is the default mode; non-blocking: "When the buffer is full, new messages will not be enqueued" (dropped); json-file does no rotation by default; local rotates | what `docker logs` returns after rotation | high | gate BLOCKS non-blocking; capture is live |
-| https://docs.docker.com/reference/cli/docker/container/logs/ | `--since/--until` select logs "generated" before/after a time (RFC 3339, Unix or relative); `--timestamps` are RFC3339Nano; `--follow` streams new output | `--follow` behaviour on stop or restart | high | live case (c) |
+| https://docs.docker.com/reference/cli/docker/container/logs/ | `--since/--until` select logs "generated" before/after a time (RFC 3339, Unix or relative); `--timestamps` are RFC3339Nano; `--follow` streams new output | `--follow` behaviour on stop or restart | high | live case (c): on `docker restart` the follower's stream closed ("log stderr closed") and the gate voided |
 | https://docs.docker.com/reference/cli/docker/system/events/ | event list (exec_create/start/die/detach, top, die, kill, stop, start, restart, pause, unpause, update, rename, destroy, health_status, oom, ...); "Only the last 256 log events are returned"; the container filter takes a name or an ID | any delivery guarantee for a live subscriber | high (as stated); no guarantee | the gate never rests on events alone: follower EOF, final inspect, API binding |
-| secondary only: dash0.com and oneuptime.com guides, a balena forum answer | `docker restart` keeps the container (same ID) and updates StartedAt; a recreate makes a new ID | no official Docker page found | medium | live case (c) records ID and StartedAt |
+| secondary only: dash0.com and oneuptime.com guides, a balena forum answer | `docker restart` keeps the container (same ID) and updates StartedAt; a recreate makes a new ID | no official Docker page found | medium; high after live case (c) | live case (c): `docker restart` kept ID 9be7a79fd3af, emitted `container:kill`, and moved StartedAt from 20:52:34.718Z to 20:59:07.656Z; the gate voided on all three |
 | https://www.elastic.co/docs/reference/elasticsearch/configuration-reference/cluster-level-shard-allocation-routing-settings | defaults 85/90/95 %; byte values allowed and refer to FREE space; percentages and bytes cannot be mixed; max_headroom 200/150/100 GB apply to percentage defaults; `cluster.info.update.interval` 30 s; flood stage sets `index.blocks.read_only_allow_delete`, removed below the high watermark | log text; APIs that report watermark state | high | 4.3 accepts byte watermarks only |
-| https://www.elastic.co/docs/troubleshoot/elasticsearch/fix-watermark-errors | messages "low disk watermark [85%] exceeded on", "high disk watermark [90%] exceeded on", "flood-stage watermark [95%] exceeded on"; diagnosis through cluster health, cat shards/recovery and allocation explain | whether that is the literal 9.5.6 text (this lab's d3 line read "high disk watermark [17gb] exceeded on"; the old gate matched "flood stage") | medium | live watermark probe (raise byte watermarks on the own container, record the exact lines) |
+| https://www.elastic.co/docs/troubleshoot/elasticsearch/fix-watermark-errors | messages "low disk watermark [85%] exceeded on", "high disk watermark [90%] exceeded on", "flood-stage watermark [95%] exceeded on"; diagnosis through cluster health, cat shards/recovery and allocation explain | whether that is the literal 9.5.6 text (this lab's d3 line read "high disk watermark [17gb] exceeded on"; the old gate matched "flood stage") | medium | settled by the live probe below: 9.5.6 writes "flood stage disk watermark [...] exceeded on" (no hyphen) and "high disk watermark [...] exceeded on"; both match the gate's predicates |
+| live probe, t2-dev, 2026-11-17 (Docker 29.1.3, API 1.52; ES 9.5.6; own container `emlab2-gatefix-es`) | exec events carry the command text in Action ("exec_create: sh -c ...", "exec_start: sh -c ..."; "exec_die" has none), so `docker exec curl` would put its header in the capture; tokens written to fd 1 and fd 2 are both captured with RFC3339Nano stamps; `cluster.info.update.interval` below 10 s stops ES booting ("must be >= [10s]"); a watermark change is logged at INFO ("updating [cluster.routing.allocation.disk.watermark.high] from [2gb] to [4000gb]"); with byte watermarks above free space, one WARN "high disk watermark [4000gb] exceeded on [...] free: 51.1gb[7.9%] ..." in 20 s and two WARN "flood stage disk watermark [3000gb] exceeded on [...] all indices on this node will be marked read-only" in 20 s; node stats a few seconds later: available 51.25 GiB, free 51.27 GiB | which of the two figures ES compares (they differ by 16 MB here, below the message's resolution) | high (observed) | the gate keeps judging by the smaller of available and free |
 | https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-health-report | a `disk` indicator with status green, unknown, yellow or red | the rules behind the colours | low | not used for a verdict |
 | https://docs.github.com/en/actions/reference/security/secure-use | log redaction of known secret values "is not guaranteed"; "Structured data can cause secret redaction within logs to fail"; Base64- or URL-encoded and derived values must be registered as secrets themselves | | high | why section 3 enumerates transforms |
 | secondary: jit.io and secrails.com comparisons of gitleaks and TruffleHog; arXiv 2307.00714 (comparative study of secret detectors) | format scanners use regexes plus Shannon entropy and allowlists; their false positives come from generic regexes and entropy; TruffleHog verifies candidates against provider APIs | | medium | |
@@ -214,8 +215,8 @@ source shows a watermark breach, and also if the API evidence cannot be read; `s
   space); a percentage is BLOCKED, because the gate does not reimplement max_headroom. `threshold_enabled` must be
   true. The lab already uses byte watermarks ("[17gb]" in d3).
 - Evidence. `GET _nodes/_local/stats/fs` gives each data path's available and free bytes. The rule: VOID if any data
-  path's available bytes are below the high watermark. ES's comparison figure is to be confirmed live; the gate records
-  both available and free bytes and judges by the smaller.
+  path's available bytes are below the high watermark. Which figure ES compares was not separable live (available and
+  free differed by 16 MB, below the message's resolution); the gate records both and judges by the smaller.
 - When. At `start` (admission), every 10 s from the companion (stage 2; ES itself evaluates every 30 s), and at `end`
   before the close tokens. Each read is a hash-chained capture record carrying HTTP status codes and numbers only.
 - Tampering. VOID if any `cluster.routing.allocation.disk.*` or `logger.*` setting differs between `start` and `end`.
@@ -237,3 +238,22 @@ source shows a watermark breach, and also if the API evidence cannot be read; `s
   is not detected).
 - Scanner: values rotated or destroyed before a scan, keys held only in memory (the issuing process must check), SCRAM
   verifiers, and secrets outside the inventory (left to the format-based publish scan).
+
+### 4.5 Live confirmation (t2-dev, 2026-11-17, gate at 61b05b8)
+Under the lab run lock (held 20:45:38Z to 20:59:52Z), in the gate's own containers `emlab2-gatefix-es` (ES 9.5.6,
+json-file, mode blocking, no TTY, 1.5 GB, 127.0.0.1:29299 only, byte watermarks 3gb/2gb/1gb) and `emlab2-gatefix-pg`
+(no published ports), through `runkit/gate_live.py` (which replaces only the container names). The kit and its raw
+output are in `runkit/live/` (`gatefix_live.sh`, run as `ssh t2-dev 'sh -s <setup|probe|cases|teardown>' < kit`);
+containers and data were removed afterwards.
+
+| Case | Action inside the window | start / check / end exit | Verdict and first reason |
+|---|---|---|---|
+| a | none (5 s) | 0 / 0 / 0 | valid; capture_lines 5, events 27, API min free 51.44 GiB against a 2.00 GiB high watermark |
+| b | forged end marker written to ES fd 1 | 0 / 0 / 3 | VOID: marker lines "not the gate's own tokens in order (3 seen)" |
+| d | `disk_gate stop` | 0 / 0 / 3 | VOID: STOP s-91f8aa67 (operator); the next `start` was BLOCKED (exit 2) until `clear-stop s-91f8aa67` |
+| e | injected high-watermark line on ES fd 1 | 0 / 0 / 3 | VOID: high-watermark line captured (es_high_watermark_lines 1) and a capture stop at seq 10 |
+| f | real event: transient byte watermarks raised above free space (high 4000gb, flood 3000gb), 25 s | 0 / 0 / 3 | VOID on three independent grounds: the API sampler's stop at seq 14 ("51.52 GiB free ... below its high watermark (4000.00 GiB)"), the flood-stage line's stop at seq 15, and the settings hash changing between samples |
+| c | `docker restart` of ES | 0 / 0 / 3 | VOID: `container:kill` event, capture ended early, ES StartedAt changed (same ID) |
+
+Ledger at the end: 20 records, no stop open. Case f shows the union rule live: the API sampler's stop precedes the
+log line's stop in the ledger, so the verdict would have been VOID without the log text.
