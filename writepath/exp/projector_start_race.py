@@ -10,7 +10,8 @@ exceptions in the fd4ed53 e2e E1 run came from there).
 Deterministic, one process, two connections. The takeover is injected by wrapping wp.families.fence_es:
   A  takeover between acquire and fence_es  (P1's fence_es then sees w<e+1>: StaleEpoch)
   B  takeover between fence_es and the cursor insert  (P1's insert is fenced: StaleWrite)
-  C  every start of P1 loses (a fresh takeover before each of its fence_es calls); P1.run(max_rounds=5)
+  C  every start of P1 loses (a fresh takeover before each of its fence_es calls); P1.run(max_rounds=5). Before each
+     of P1's acquires the previous taker's lease is released (amendment 19a), so P1 really acquires every round
 Property: A, B: P1.step() returns -1 without raising, P1 holds no lease, the lease row's holder is the taker, and the
 taker then projects every event of the tenant exactly once. C: P1.run(5) returns (no exception) after 5 starts.
 Control (one mechanism): Projector.step replaced by the fd4ed53 body (start() outside the handler), verbatim.
@@ -75,7 +76,16 @@ def once(case):
         real(es_, t_, epoch)
         take_over()                             # case B: after P1's CAS, before its cursor insert
 
+    real_acquire = L.acquire
+
+    def acquire_c(c, *a, **k):              # amendment 19a: case C frees the taker's lease before each P1 acquire
+        if c is conn and takers and takers[-1].lease is not None:
+            takers[-1].stop()
+        return real_acquire(c, *a, **k)
+
     F.fence_es = wrapped
+    if case == "C":
+        L.acquire = acquire_c
     try:
         try:
             out = ("returned", p1.run(max_rounds=ROUNDS_C)) if case == "C" else ("returned", p1.step())
@@ -83,6 +93,7 @@ def once(case):
             out = ("raised", type(ex).__name__)
     finally:
         F.fence_es = real
+        L.acquire = real_acquire
     row = _lease_row(t)
     taker = takers[-1] if takers else None
     rec = {"case": case, "outcome": f"{out[0]}:{out[1]}", "p1_starts": calls["p1"], "p1_holds_lease": p1.lease is not None,
