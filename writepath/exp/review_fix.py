@@ -11,7 +11,7 @@ import psycopg
 from exp.common import write_result
 from exp.patches import patched, variant, NOOP, drop_duplicate_decisions
 from exp.util import env, tenant, msg, fact, session, es_count_all
-from wp import config, db, erasure, keys as K, lease as L, log, projector
+from wp import config, db, erasure, keys as K, lease as L, log, projector, registry
 from wp.es import ES
 from wp.verifier import Verifier
 
@@ -122,7 +122,10 @@ def _own(tbl, trig, priv):
             [f"revoke {priv} on {tbl} from wp_app", f"alter table {tbl} enable always trigger {trig}"])
 
 
-ZEROS = json.dumps({"es:events": 0, "es:facts": 0, "es:soft_deleted": 0, "keys:subject_keys": 0, "gate:unregistered": 0})
+# amendment 18a: every verifiable store wp_erasure_complete requires (not kind pg), from the registry, so a store added later
+# (keys:physical_pending, 71b3ecc) cannot turn a correct completion into a done_missing_stores refusal
+ZERO_COUNTS = {st.name: 0 for st in registry.STORES if st.verifiable and st.kind != "pg"}
+ZEROS = json.dumps(ZERO_COUNTS)
 
 
 def _tombstoned(c, t):
@@ -164,8 +167,10 @@ F3_ATTACKS = {
                              (["grant set on parameter session_replication_role to wp_app"], ["revoke set on parameter session_replication_role from wp_app"]),
                              "SET session_replication_role granted to wp_app"),
     "app_sets_done": (lambda c, t, s: _try(c, "update erasure_jobs set state='done' where job_id=%s", (erasure.request(c, t, "X"),)),
-                      variant("erasure_guard", "if (NEW.state = 'done' or NEW.verify is distinct from OLD.verify) and current_user <> 'wp_owner' then", "if false then"),
-                      "done/verify owner check removed from erasure_guard"),
+                      variant("erasure_guard", [("if (NEW.state = 'done' or NEW.verify is distinct from OLD.verify) and current_user <> 'wp_owner' then", "if false then"),
+                                               ("if NEW.state <> OLD.state and NEW.state in ('marked', 'cascaded', 'logically_erased', 'done') and current_user <> 'wp_owner' then",
+                                                "if false then")]),
+                      "both owner checks removed from erasure_guard (done/verify, store-written states; amendment 18a)"),
     "app_inserts_done": (lambda c, t, s: _try(c, "insert into erasure_jobs(job_id,tenant_id,subject_id,state) values (%s,%s,'X','done')", ("jd" + str(time.time_ns()), t)),
                          variant("erasure_guard", "if TG_OP = 'INSERT' and (NEW.state <> 'requested' or NEW.verify is not null) then", "if false then"),
                          "insert-state check removed from erasure_guard"),
@@ -224,7 +229,7 @@ def _ready_job_with_pg_residue(conn, ks, es):
 
 def f4():
     conn, ks, es = env()
-    zeros = {"es:events": 0, "es:facts": 0, "es:soft_deleted": 0, "keys:subject_keys": 0, "gate:unregistered": 0}
+    zeros = dict(ZERO_COUNTS)                              # amendment 18a
     out = {}
     # (a) fabricated zeros from the verifier role while Postgres residue exists
     ap, rv = variant("wp_erasure_complete", "v := wp_erasure_pg_residue(j.tenant_id, j.subject_id) || coalesce(ext, '{}'::jsonb);", "v := coalesce(ext, '{}'::jsonb);")
