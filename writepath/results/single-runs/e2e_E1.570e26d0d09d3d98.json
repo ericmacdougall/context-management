@@ -1,0 +1,1890 @@
+{
+ "at": "2026-11-17T10:38:40Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/62c6be5-20261117T103622Z/exp/e2e_restored.py E1 40",
+  "code_commit": "62c6be5",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.4677734375,
+   2.97998046875,
+   2.79248046875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "e2e_E1",
+ "result": {
+  "N": 40,
+  "control": {
+   "errors": 0,
+   "holds_all": 13,
+   "holds_overlapped": 0,
+   "in_flight_violated": 3,
+   "overlapped": 24,
+   "runs": [
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911856.26134,
+       "bulk_done": 1794911856.303058,
+       "docs_written": 6,
+       "read": 1794911855.292891,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911856.536288,
+       "epoch": 2,
+       "fenced_at": 1794911856.585249
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096500,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911858.150041,
+       "bulk_done": 1794911858.185481,
+       "docs_written": 6,
+       "read": 1794911857.112171,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911858.056424,
+       "epoch": 2,
+       "fenced_at": 1794911858.102511
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096501,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911859.859334,
+       "bulk_done": 1794911859.899643,
+       "docs_written": 6,
+       "read": 1794911858.790771,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911859.591478,
+       "epoch": 2,
+       "fenced_at": 1794911859.641151
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096502,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911861.17236,
+       "bulk_done": 1794911861.210122,
+       "docs_written": 6,
+       "read": 1794911860.479846,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911860.739369,
+       "epoch": 2,
+       "fenced_at": 1794911860.784445
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096503,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911862.824278,
+       "bulk_done": 1794911862.866362,
+       "docs_written": 6,
+       "read": 1794911861.79275,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911862.147378,
+       "epoch": 2,
+       "fenced_at": 1794911862.195759
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096504,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911864.964408,
+       "bulk_done": 1794911865.002521,
+       "docs_written": 6,
+       "read": 1794911863.476114,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911864.51856,
+       "epoch": 2,
+       "fenced_at": 1794911864.565788
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096505,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911866.671668,
+       "bulk_done": 1794911866.719998,
+       "docs_written": 6,
+       "read": 1794911865.64237,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911866.748026,
+       "epoch": 2,
+       "fenced_at": 1794911866.793491
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096506,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911867.269582,
+       "epoch": 2,
+       "fenced_at": 1794911867.342513
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096507,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911869.194563,
+       "bulk_done": 1794911869.236461,
+       "docs_written": 6,
+       "read": 1794911867.962882,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911868.254611,
+       "epoch": 2,
+       "fenced_at": 1794911868.30368
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096508,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911871.760179,
+       "bulk_done": 1794911871.803742,
+       "docs_written": 6,
+       "read": 1794911869.850057,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911870.317365,
+       "epoch": 2,
+       "fenced_at": 1794911870.365567
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096509,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911872.374987,
+       "epoch": 2,
+       "fenced_at": 1794911872.431542
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096510,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911873.380055,
+       "bulk_done": 1794911873.41886,
+       "docs_written": 6,
+       "read": 1794911873.066083,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911873.992408,
+       "epoch": 2,
+       "fenced_at": 1794911874.044149
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096511,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911876.673402,
+       "bulk_done": 1794911876.717715,
+       "docs_written": 6,
+       "read": 1794911874.605808,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911875.405104,
+       "epoch": 2,
+       "fenced_at": 1794911875.457206
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096512,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911878.012123,
+       "bulk_done": 1794911878.056561,
+       "docs_written": 6,
+       "read": 1794911877.361924,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911877.848589,
+       "epoch": 2,
+       "fenced_at": 1794911877.903438
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096513,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911879.297826,
+       "bulk_done": 1794911879.371176,
+       "docs_written": 6,
+       "read": 1794911878.697551,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911879.286483,
+       "epoch": 2,
+       "fenced_at": 1794911879.338945
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096514,
+     "window": "in_flight"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911882.108642,
+       "bulk_done": 1794911882.153389,
+       "docs_written": 6,
+       "read": 1794911879.999718,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911880.340833,
+       "epoch": 2,
+       "fenced_at": 1794911880.393369
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096515,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911885.001965,
+       "bulk_done": 1794911885.047903,
+       "docs_written": 6,
+       "read": 1794911882.80731,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911883.536267,
+       "epoch": 2,
+       "fenced_at": 1794911883.592336
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096516,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911886.823956,
+       "bulk_done": 1794911886.86787,
+       "docs_written": 6,
+       "read": 1794911885.7038,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911886.446933,
+       "epoch": 2,
+       "fenced_at": 1794911886.499903
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096517,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911887.330445,
+       "epoch": 2,
+       "fenced_at": 1794911887.446484
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096518,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911889.052181,
+       "bulk_done": 1794911889.1039,
+       "docs_written": 6,
+       "read": 1794911888.132525,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911888.473311,
+       "epoch": 2,
+       "fenced_at": 1794911888.530397
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096519,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911891.672007,
+       "bulk_done": 1794911891.721835,
+       "docs_written": 6,
+       "read": 1794911889.778421,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911889.790835,
+       "epoch": 2,
+       "fenced_at": 1794911889.846608
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096520,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911892.943513,
+       "bulk_done": 1794911892.993671,
+       "docs_written": 6,
+       "read": 1794911892.388527,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911893.167419,
+       "epoch": 2,
+       "fenced_at": 1794911893.227407
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096521,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911894.52553,
+       "bulk_done": 1794911894.574356,
+       "docs_written": 6,
+       "read": 1794911893.801797,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911894.420477,
+       "epoch": 2,
+       "fenced_at": 1794911894.481747
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096522,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911897.218959,
+       "bulk_done": 1794911897.270819,
+       "docs_written": 6,
+       "read": 1794911895.260935,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911896.335038,
+       "epoch": 2,
+       "fenced_at": 1794911896.397027
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096523,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911898.721423,
+       "bulk_done": 1794911898.772492,
+       "docs_written": 6,
+       "read": 1794911897.956772,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911898.630062,
+       "epoch": 2,
+       "fenced_at": 1794911898.687118
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096524,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911899.983541,
+       "bulk_done": 1794911900.033877,
+       "docs_written": 6,
+       "read": 1794911899.484299,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911899.784313,
+       "epoch": 2,
+       "fenced_at": 1794911899.845654
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096525,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911900.620213,
+       "epoch": 2,
+       "fenced_at": 1794911900.685424
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096526,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911901.946162,
+       "bulk_done": 1794911902.001756,
+       "docs_written": 6,
+       "read": 1794911901.42234,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911902.515812,
+       "epoch": 2,
+       "fenced_at": 1794911902.579907
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096527,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911903.963191,
+       "bulk_done": 1794911904.013782,
+       "docs_written": 6,
+       "read": 1794911903.229441,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911903.459903,
+       "epoch": 2,
+       "fenced_at": 1794911903.523313
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096528,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911905.128084,
+       "bulk_done": 1794911905.18214,
+       "docs_written": 6,
+       "read": 1794911904.690005,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911905.150917,
+       "epoch": 2,
+       "fenced_at": 1794911905.228371
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096529,
+     "window": "in_flight"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911907.258861,
+       "bulk_done": 1794911907.316048,
+       "docs_written": 6,
+       "read": 1794911905.891131,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911906.031988,
+       "epoch": 2,
+       "fenced_at": 1794911906.094179
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096530,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911908.8419,
+       "bulk_done": 1794911908.904355,
+       "docs_written": 6,
+       "read": 1794911908.0182,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911908.415184,
+       "epoch": 2,
+       "fenced_at": 1794911908.478075
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096531,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911910.256403,
+       "bulk_done": 1794911910.312356,
+       "docs_written": 6,
+       "read": 1794911909.617918,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911910.297898,
+       "epoch": 2,
+       "fenced_at": 1794911910.355984
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096532,
+     "window": "in_flight"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911911.582921,
+       "bulk_done": 1794911911.640891,
+       "docs_written": 6,
+       "read": 1794911910.9968,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911911.012588,
+       "epoch": 2,
+       "fenced_at": 1794911911.074793
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096533,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911912.946404,
+       "bulk_done": 1794911913.004452,
+       "docs_written": 6,
+       "read": 1794911912.382215,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911913.451375,
+       "epoch": 2,
+       "fenced_at": 1794911913.517968
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096534,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911913.906452,
+       "epoch": 2,
+       "fenced_at": 1794911914.076851
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096535,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911915.030563,
+       "bulk_done": 1794911915.061593,
+       "docs_written": 6,
+       "read": 1794911914.563081,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911915.275046,
+       "epoch": 2,
+       "fenced_at": 1794911915.311576
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096536,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911917.313373,
+       "bulk_done": 1794911917.340557,
+       "docs_written": 6,
+       "read": 1794911915.776345,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911916.758455,
+       "epoch": 2,
+       "fenced_at": 1794911916.797286
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096537,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911917.800396,
+       "epoch": 2,
+       "fenced_at": 1794911917.841501
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096538,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794911919.884766,
+       "bulk_done": 1794911919.916455,
+       "docs_written": 6,
+       "read": 1794911918.380528,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911919.073225,
+       "epoch": 2,
+       "fenced_at": 1794911919.114262
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096539,
+     "window": "after_takeover"
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 27,
+   "violated_overlapped": 24,
+   "wilson95_hold_rate_overlapped": [
+    0.0,
+    0.138
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.862,
+    1.0
+   ],
+   "windows": {
+    "after_takeover": 30,
+    "before_takeover": 7,
+    "in_flight": 3
+   }
+  },
+  "fenced": {
+   "errors": 0,
+   "holds_all": 40,
+   "holds_overlapped": 28,
+   "in_flight_violated": 0,
+   "overlapped": 28,
+   "runs": [
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911785.68608,
+       "bulk_done": 1794911785.689361,
+       "docs_written": 0,
+       "read": 1794911784.170807,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911784.250015,
+       "epoch": 2,
+       "fenced_at": 1794911784.306547
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096000,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911788.445889,
+       "bulk_done": 1794911788.448462,
+       "docs_written": 0,
+       "read": 1794911786.379106,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911786.741818,
+       "epoch": 2,
+       "fenced_at": 1794911786.803052
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096001,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911790.448268,
+       "bulk_done": 1794911790.450474,
+       "docs_written": 0,
+       "read": 1794911789.129912,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911790.244122,
+       "epoch": 2,
+       "fenced_at": 1794911790.305203
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096002,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911792.397996,
+       "bulk_done": 1794911792.400542,
+       "docs_written": 0,
+       "read": 1794911791.126669,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911791.917232,
+       "epoch": 2,
+       "fenced_at": 1794911791.977829
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096003,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911794.159552,
+       "bulk_done": 1794911794.162141,
+       "docs_written": 0,
+       "read": 1794911793.084858,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911793.562138,
+       "epoch": 2,
+       "fenced_at": 1794911793.624629
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096004,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911794.700168,
+       "epoch": 2,
+       "fenced_at": 1794911794.795204
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096005,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911795.265633,
+       "epoch": 2,
+       "fenced_at": 1794911795.40645
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096006,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911796.341984,
+       "bulk_done": 1794911796.36915,
+       "docs_written": 6,
+       "read": 1794911795.884822,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911797.100247,
+       "epoch": 2,
+       "fenced_at": 1794911797.136094
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096007,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911798.997562,
+       "bulk_done": 1794911799.000329,
+       "docs_written": 0,
+       "read": 1794911797.593588,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911797.922508,
+       "epoch": 2,
+       "fenced_at": 1794911797.957145
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096008,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911799.843036,
+       "bulk_done": 1794911799.871946,
+       "docs_written": 6,
+       "read": 1794911799.518157,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911800.238326,
+       "epoch": 2,
+       "fenced_at": 1794911800.27726
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096009,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911801.712871,
+       "bulk_done": 1794911801.715197,
+       "docs_written": 0,
+       "read": 1794911800.746348,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911801.373567,
+       "epoch": 2,
+       "fenced_at": 1794911801.41141
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096010,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911803.026261,
+       "bulk_done": 1794911803.028817,
+       "docs_written": 0,
+       "read": 1794911802.262227,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911802.460953,
+       "epoch": 2,
+       "fenced_at": 1794911802.496422
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096011,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911803.501995,
+       "epoch": 2,
+       "fenced_at": 1794911803.536284
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096012,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911805.431853,
+       "bulk_done": 1794911805.434423,
+       "docs_written": 0,
+       "read": 1794911804.074015,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911805.169553,
+       "epoch": 2,
+       "fenced_at": 1794911805.207409
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096013,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911806.955114,
+       "bulk_done": 1794911806.957788,
+       "docs_written": 0,
+       "read": 1794911805.987059,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911806.229051,
+       "epoch": 2,
+       "fenced_at": 1794911806.271752
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096014,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911808.809825,
+       "bulk_done": 1794911808.812813,
+       "docs_written": 0,
+       "read": 1794911807.530684,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911807.752819,
+       "epoch": 2,
+       "fenced_at": 1794911807.792506
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096015,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911809.280878,
+       "epoch": 2,
+       "fenced_at": 1794911809.344136
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096016,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911812.410396,
+       "bulk_done": 1794911812.413311,
+       "docs_written": 0,
+       "read": 1794911809.910362,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911809.985572,
+       "epoch": 2,
+       "fenced_at": 1794911810.025095
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096017,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911815.423469,
+       "bulk_done": 1794911815.426245,
+       "docs_written": 0,
+       "read": 1794911812.964686,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911813.740241,
+       "epoch": 2,
+       "fenced_at": 1794911813.782212
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096018,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911816.347401,
+       "bulk_done": 1794911816.380976,
+       "docs_written": 6,
+       "read": 1794911815.977504,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911817.221349,
+       "epoch": 2,
+       "fenced_at": 1794911817.261979
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096019,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911819.755325,
+       "bulk_done": 1794911819.758538,
+       "docs_written": 0,
+       "read": 1794911817.7523,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911818.017757,
+       "epoch": 2,
+       "fenced_at": 1794911818.059083
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096020,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911821.820631,
+       "bulk_done": 1794911821.823423,
+       "docs_written": 0,
+       "read": 1794911820.316947,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911821.075663,
+       "epoch": 2,
+       "fenced_at": 1794911821.113557
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096021,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911822.862156,
+       "bulk_done": 1794911822.864354,
+       "docs_written": 0,
+       "read": 1794911822.370046,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911822.677593,
+       "epoch": 2,
+       "fenced_at": 1794911822.71978
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096022,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911825.567875,
+       "bulk_done": 1794911825.571066,
+       "docs_written": 0,
+       "read": 1794911823.480278,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911824.103859,
+       "epoch": 2,
+       "fenced_at": 1794911824.145398
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096023,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911826.505791,
+       "bulk_done": 1794911826.538729,
+       "docs_written": 6,
+       "read": 1794911826.131109,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911827.091298,
+       "epoch": 2,
+       "fenced_at": 1794911827.136108
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096024,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911829.491464,
+       "bulk_done": 1794911829.493957,
+       "docs_written": 0,
+       "read": 1794911827.615464,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911827.73582,
+       "epoch": 2,
+       "fenced_at": 1794911827.773727
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096025,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911831.397843,
+       "bulk_done": 1794911831.400496,
+       "docs_written": 0,
+       "read": 1794911830.048023,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911830.083589,
+       "epoch": 2,
+       "fenced_at": 1794911830.120823
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096026,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911831.882018,
+       "epoch": 2,
+       "fenced_at": 1794911831.926775
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096027,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911832.823031,
+       "bulk_done": 1794911832.856952,
+       "docs_written": 6,
+       "read": 1794911832.515914,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911833.692545,
+       "epoch": 2,
+       "fenced_at": 1794911833.732624
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096028,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911836.712039,
+       "bulk_done": 1794911836.714812,
+       "docs_written": 0,
+       "read": 1794911834.236049,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911834.935067,
+       "epoch": 2,
+       "fenced_at": 1794911834.978137
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096029,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911838.200191,
+       "bulk_done": 1794911838.236889,
+       "docs_written": 6,
+       "read": 1794911837.295905,
+       "stale_bulk_items": 0,
+       "step": 6
+      },
+      "p2": {
+       "cas_start": 1794911838.505371,
+       "epoch": 2,
+       "fenced_at": 1794911838.546597
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096030,
+     "window": "before_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911840.189686,
+       "bulk_done": 1794911840.19234,
+       "docs_written": 0,
+       "read": 1794911839.069948,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911839.174424,
+       "epoch": 2,
+       "fenced_at": 1794911839.216006
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096031,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911843.120034,
+       "bulk_done": 1794911843.123233,
+       "docs_written": 0,
+       "read": 1794911840.764513,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911841.1333,
+       "epoch": 2,
+       "fenced_at": 1794911841.180179
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096032,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911844.665474,
+       "bulk_done": 1794911844.667911,
+       "docs_written": 0,
+       "read": 1794911843.712547,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911844.321749,
+       "epoch": 2,
+       "fenced_at": 1794911844.364885
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096033,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911846.87334,
+       "bulk_done": 1794911846.876076,
+       "docs_written": 0,
+       "read": 1794911845.246965,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911846.299238,
+       "epoch": 2,
+       "fenced_at": 1794911846.346204
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096034,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911848.909379,
+       "bulk_done": 1794911848.911831,
+       "docs_written": 0,
+       "read": 1794911847.453603,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911848.006365,
+       "epoch": 2,
+       "fenced_at": 1794911848.052313
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096035,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911850.478131,
+       "bulk_done": 1794911850.480449,
+       "docs_written": 0,
+       "read": 1794911849.481821,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911849.692656,
+       "epoch": 2,
+       "fenced_at": 1794911849.73381
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096036,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911853.149442,
+       "bulk_done": 1794911853.152148,
+       "docs_written": 0,
+       "read": 1794911851.084195,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911851.518605,
+       "epoch": 2,
+       "fenced_at": 1794911851.564465
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096037,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "docs_written": 0,
+       "stale_bulk_items": 0,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911853.700378,
+       "epoch": 2,
+       "fenced_at": 1794911853.759944
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 0,
+     "seed": 16096038,
+     "window": "after_takeover"
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794911854.691095,
+       "bulk_done": 1794911854.69386,
+       "docs_written": 0,
+       "read": 1794911854.32448,
+       "stale_bulk_items": 6,
+       "step": -1
+      },
+      "p2": {
+       "cas_start": 1794911854.334921,
+       "epoch": 2,
+       "fenced_at": 1794911854.375826
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096039,
+     "window": "after_takeover"
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 0,
+   "violated_overlapped": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.8794,
+    1.0
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.0,
+    0.1206
+   ],
+   "windows": {
+    "after_takeover": 34,
+    "before_takeover": 6
+   }
+  },
+  "patch": "alias CAS adds the new write alias without removing the old one (in P2's process)",
+  "verdict": "PASS"
+ }
+}

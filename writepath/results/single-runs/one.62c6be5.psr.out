@@ -1,0 +1,8 @@
+start 2026-11-17T10:35:57Z head 62c6be5 free 21G: exp.projector_start_race 5
+disk_gate start free 20.3 GiB own 0.35 GiB (pg 0.28 es 0.01 home 0.05) cap +2.0 GiB
+disk_gate psr free 20.3 GiB own +0.00 GiB
+projector_start_race PASS [] {'fixed': {'A': (5, 0, 0), 'B': (5, 0, 0), 'C': (5, 0, 0)}, 'control': {'A': (0, 5, 0), 'B': (0, 5, 0), 'C': (0, 5, 0)}}
+RESULT projector_start_race sha256=e05b75ecdd34b7c4e11013dbf5c9ee0eb95b8238b994c4ce18644fee09e659bb file=~/emlab2-16096/writepath/wp/results/projector_start_race.e05b75ecdd34b7c4.json
+exit=0
+disk_gate end free 20.3 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T10:36:11Z

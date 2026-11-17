@@ -1,0 +1,12 @@
+start 2026-11-17T10:38:58Z head 62c6be5 free 21G: exp.races R1 R2 R3 40
+disk_gate start free 20.3 GiB own 0.34 GiB (pg 0.28 es 0.00 home 0.05) cap +2.0 GiB
+disk_gate races free 20.3 GiB own +0.00 GiB
+R1 PASS {"fenced": {"runs_total": 40, "overlapped": 25, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 25, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.8668, 1.0], "wilson95_violation_rate_overlapped": [0.0, 0.1332]}, "control": {"runs_total": 40, "overlapped": 22, "errors": 0, "holds_all": 18, "violated_all": 22, "holds_overlapped": 0, "violated_overlapped": 22, "wilson95_hold_rate_overlapped": [0.0, 0.1487], "wilson95_violation_rate_overlapped": [0.8513, 1.0]}}
+RESULT races_R1 sha256=041a7fea28f5a9db54f4c88050b73bbf8c630949a812a12336bda71d88f67c67 file=~/emlab2-16096/writepath/wp/results/races_R1.041a7fea28f5a9db.json
+R2 PASS {"fenced": {"runs_total": 40, "overlapped": 39, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 39, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.9103, 1.0], "wilson95_violation_rate_overlapped": [0.0, 0.0897]}, "control": {"runs_total": 40, "overlapped": 40, "errors": 0, "holds_all": 0, "violated_all": 40, "holds_overlapped": 0, "violated_overlapped": 40, "wilson95_hold_rate_overlapped": [-0.0, 0.0876], "wilson95_violation_rate_overlapped": [0.9124, 1.0]}}
+RESULT races_R2 sha256=52ede7c22cc0055fcdba406c85ad7f9630a7f3e8d923417a5fe80a278a2f8550 file=~/emlab2-16096/writepath/wp/results/races_R2.52ede7c22cc0055f.json
+R3 PASS {"fenced": {"runs_total": 40, "overlapped": 40, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 40, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.9124, 1.0], "wilson95_violation_rate_overlapped": [-0.0, 0.0876]}, "control": {"runs_total": 40, "overlapped": 39, "errors": 0, "holds_all": 1, "violated_all": 39, "holds_overlapped": 0, "violated_overlapped": 39, "wilson95_hold_rate_overlapped": [0.0, 0.0897], "wilson95_violation_rate_overlapped": [0.9103, 1.0]}}
+RESULT races_R3 sha256=b6be399df4352340c1fa94b3227e181db5c4fa1ea71f90ecd8b6c730fa16d6ed file=~/emlab2-16096/writepath/wp/results/races_R3.b6be399df4352340.json
+exit=0
+disk_gate end free 20.3 GiB own +-0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T10:47:57Z

@@ -1,0 +1,8 @@
+start 2026-11-17T10:34:31Z head 5d26746 free 21G: exp.projector_start_race 5
+disk_gate start free 20.3 GiB own 0.34 GiB (pg 0.28 es 0.01 home 0.05) cap +2.0 GiB
+disk_gate psr free 20.3 GiB own +0.00 GiB
+projector_start_race FAIL ['fixed C holds 0/5 (violated 5, errors 0)'] {'fixed': {'A': (5, 0, 0), 'B': (5, 0, 0), 'C': (0, 5, 0)}, 'control': {'A': (0, 5, 0), 'B': (0, 5, 0), 'C': (0, 5, 0)}}
+RESULT projector_start_race sha256=322d05b6f7ce312eec705ede8da2691458f607430c239527e7064b4a99813824 file=~/emlab2-16096/writepath/wp/results/projector_start_race.322d05b6f7ce312e.json
+exit=0
+disk_gate end free 20.3 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T10:34:42Z

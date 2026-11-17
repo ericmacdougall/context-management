@@ -1,0 +1,8 @@
+start 2026-11-17T10:36:22Z head 62c6be5 free 21G: exp.e2e_restored E1 40
+disk_gate start free 20.3 GiB own 0.35 GiB (pg 0.28 es 0.01 home 0.05) cap +2.0 GiB
+disk_gate e1 free 20.3 GiB own +0.00 GiB
+E1 PASS {"fenced": {"runs_total": 40, "overlapped": 28, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 28, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.8794, 1.0], "wilson95_violation_rate_overlapped": [0.0, 0.1206], "windows": {"after_takeover": 34, "before_takeover": 6}, "in_flight_violated": 0}, "control": {"runs_total": 40, "overlapped": 24, "errors": 0, "holds_all": 13, "violated_all": 27, "holds_overlapped": 0, "violated_overlapped": 24, "wilson95_hold_rate_overlapped": [0.0, 0.138], "wilson95_violation_rate_overlapped": [0.862, 1.0], "windows": {"before_takeover": 7, "after_takeover": 30, "in_flight": 3}, "in_flight_violated": 3}}
+RESULT e2e_E1 sha256=570e26d0d09d3d98071d0a05793f13b2b90fc80e9c6c011e71f1e307af3641fc file=~/emlab2-16096/writepath/wp/results/e2e_E1.570e26d0d09d3d98.json
+exit=0
+disk_gate end free 20.3 GiB own +0.01 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T10:38:40Z

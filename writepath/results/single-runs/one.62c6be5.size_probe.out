@@ -1,0 +1,8 @@
+start 2026-11-17T10:51:55Z head 62c6be5 free 21G: exp.size_probe 50000
+disk_gate start free 20.4 GiB own 0.24 GiB (pg 0.19 es 0.00 home 0.05) cap +2.0 GiB
+disk_gate size_probe free 20.4 GiB own +0.00 GiB
+size_probe {"scale_1m_docs": 1100000, "linear_gb": 2.28, "free_now_gb": 21.89, "free_after_projected_gb": 19.61, "floor_gb": 15.0, "note": "linear in documents; ignores transient merge and WAL peaks beyond those seen at N", "fits_floor_linear": true}
+RESULT size_probe sha256=3faf82be6c6c0230e008d95c2a429d5700450113f75f29943be2ae4eec0d02c4 file=~/emlab2-16096/writepath/wp/results/size_probe.3faf82be6c6c0230.json
+exit=0
+disk_gate end free 20.4 GiB own +-0.02 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T10:53:58Z

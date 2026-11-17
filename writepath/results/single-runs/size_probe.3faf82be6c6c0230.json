@@ -1,0 +1,89 @@
+{
+ "at": "2026-11-17T10:53:58Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/62c6be5-20261117T103622Z/exp/size_probe.py 50000",
+  "code_commit": "62c6be5",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   3.32080078125,
+   3.04052734375,
+   2.93115234375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "size_probe",
+ "result": {
+  "after_build": {
+   "es_datadir_b": 27659624,
+   "es_docs": 50000,
+   "es_store_b": 10510456,
+   "free_gb": 21.78,
+   "pg_datadir_b": 275715121,
+   "pg_events_db_b": 91528215,
+   "pg_keys_db_b": 8764439,
+   "pg_wal_b": 134217728
+  },
+  "after_erase": {
+   "es_datadir_b": 9296968,
+   "es_docs": 50000,
+   "es_store_b": 10616732,
+   "free_gb": 21.89,
+   "pg_datadir_b": 167277617,
+   "pg_events_db_b": 100547607,
+   "pg_keys_db_b": 8748055,
+   "pg_wal_b": 16777216
+  },
+  "before": {
+   "es_datadir_b": 574459,
+   "es_docs": 0,
+   "es_store_b": 0,
+   "free_gb": 21.88,
+   "pg_datadir_b": 199250993,
+   "pg_events_db_b": 15285271,
+   "pg_keys_db_b": 8559639,
+   "pg_wal_b": 134217728
+  },
+  "build": {
+   "append_s": 88.8,
+   "events": 50000,
+   "project_s": 14.3
+  },
+  "build_and_erase_s": 121.9,
+  "bytes_per_doc_peak": 2071.0,
+  "erase": {
+   "done": true,
+   "error_type": null,
+   "receipt_state": "done"
+  },
+  "growth_build_b": 103549293,
+  "growth_peak_b": 103549293,
+  "host_free_drop_gb": 0.1,
+  "n": 50000,
+  "projection": {
+   "fits_floor_linear": true,
+   "floor_gb": 15.0,
+   "free_after_projected_gb": 19.61,
+   "free_now_gb": 21.89,
+   "linear_gb": 2.28,
+   "note": "linear in documents; ignores transient merge and WAL peaks beyond those seen at N",
+   "scale_1m_docs": 1100000
+  }
+ }
+}

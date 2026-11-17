@@ -1,0 +1,378 @@
+{
+ "at": "2026-11-17T10:34:12Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/3c229fc-20261117T103121Z/exp/projector_start_race.py 5",
+  "code_commit": "3c229fc",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.37158203125,
+   2.595703125,
+   2.5556640625
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "projector_start_race",
+ "result": {
+  "R": 5,
+  "control": {
+   "A": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     }
+    ],
+    "violated": 5
+   },
+   "B": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     }
+    ],
+    "violated": 5
+   },
+   "C": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     }
+    ],
+    "violated": 5
+   }
+  },
+  "control_patch": "Projector.step replaced by the fd4ed53 body (start() outside the stale-error handler)",
+  "fixed": {
+   "A": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "A",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     }
+    ],
+    "violated": 5
+   },
+   "B": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "B",
+      "events_in_es": 6,
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleWrite",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     }
+    ],
+    "violated": 5
+   },
+   "C": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     },
+     {
+      "case": "C",
+      "holds": false,
+      "lease_epoch": 2,
+      "lease_holder_is_taker": true,
+      "outcome": "raised:StaleEpoch",
+      "p1_holds_lease": true,
+      "p1_starts": 1
+     }
+    ],
+    "violated": 5
+   }
+  },
+  "verdict": "FAIL",
+  "why": [
+   "fixed A holds 0/5 (violated 5, errors 0)",
+   "fixed B holds 0/5 (violated 5, errors 0)",
+   "fixed C holds 0/5 (violated 5, errors 0)"
+  ]
+ }
+}
