@@ -110,6 +110,8 @@ class Workload:
             self.events["sem2_create"] = [c, lib.err(j)]
         c, j, _ = req("GET", "/mc-%s-static/_count" % TENANT)
         self.events["static_count"] = j.get("count")
+        if c != 200 or j.get("count") != len(self.docs):   # MUST SUCCEED: the oracle legs below are taken from this index
+            raise AssertionError("static fixture holds %s documents, expected %d (HTTP %s)" % (j.get("count") if isinstance(j, dict) else None, len(self.docs), c))
         for qi, (t, v) in enumerate(self.queries):
             self.oracle_legs[qi] = oracle.raw_legs("mc-%s-static" % TENANT, t, v, TENANT)
 
@@ -205,7 +207,9 @@ class Workload:
 
     # ---- verification
     def verify_writes(self):
-        req("POST", "/mc-%s-live/_refresh" % TENANT)
+        cr, jr, _ = req("POST", "/mc-%s-live/_refresh" % TENANT)
+        if cr != 200:   # MUST SUCCEED: an unrefreshed index would make acknowledged writes look absent
+            raise AssertionError("refresh of the live index: HTTP %s" % cr)
         present = set()
         c, j, _ = req("POST", "/mc-%s-live/_search?scroll=2m" % TENANT, {"size": 5000, "_source": False, "query": {"match_all": {}}}, timeout=120)
         sid = j.get("_scroll_id")

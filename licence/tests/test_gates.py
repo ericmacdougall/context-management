@@ -14,6 +14,8 @@ Measured against the old code (35 tests; the same file run on a detached checkou
   test_no_semantic_failures_needs_no_classification, test_down_control_with_licence_failures_still_passes, test_down_control_with_no_requests_does_not_pass.
 - fad672c (delta-reviewed commit): 5 of 35 fail, all N1/N2 tests: test_every_recorded_life_is_unverified_not_pass, test_classified_record_with_other_failures_fails
   (T4_status key absent), test_failed_refresh_status_raises, test_refresh_shard_failure_raises, test_count_shard_failure_raises.
+Added after final-gate reviews F2 and F3 (55 tests now): the bulk-wire tests (10 fail on 207136e, all by 'not raised') and MatrixFixtureTests (on 4eb4378: 8 fail by behaviour,
+- failed creation, failed write, partial write, empty index, two full-matrix aborts, empty vector cell labelled AVAILABLE, exp3 semantic-only fixture; test_good_fixture_is_accepted passes there).
 The fake validates the scroll id it is given (a stale id is rejected). Timed-out and duplicate-id cases are covered. Nothing here touches a live node.
 """
 import copy
@@ -29,6 +31,7 @@ sys.path.insert(0, LIC)
 sys.path.insert(0, os.path.dirname(LIC))
 import exp2  # noqa: E402
 import lib  # noqa: E402
+import matrix  # noqa: E402
 import exp3  # noqa: E402
 import recompute  # noqa: E402
 import summarize  # noqa: E402
@@ -37,6 +40,8 @@ RES = os.path.join(LIC, "results")
 # Shims so that old code fails by behaviour, not by a missing name. ScrollError: old migrations raise nothing, so assertRaises(Exception) fails there.
 ScrollError = getattr(exp3, "ScrollError", Exception)
 BulkError = getattr(lib, "BulkError", Exception)
+# FixtureError: on code without it, a class that is never raised, so a missing abort shows as an assertion failure, not as a vacuous pass.
+FixtureError = getattr(matrix, "FixtureError", type("NeverRaised", (Exception,), {}))
 
 
 def _old_rule(code, e):   # reconstruction of the cc45153 rule: any 403/404 or the licence text counted as loud
@@ -377,6 +382,110 @@ class T4Tests(unittest.TestCase):
         w = R["exp2"]["writes"]
         w["sem_failed"] = w["sem_failed_loud_licence_or_missing"] = 0
         self.assertTrue(summarize.exp2_checks(R, "down")["T4_pass"])
+
+
+class MatrixFake:
+    """In-memory Elasticsearch for fixture tests. bulk_mode (limited to indices containing `only`): 503 writes nothing; truncated writes all but the
+    last and answers n-1 items; empty answers success for every item but writes nothing. create_status applies to PUT /<index>."""
+
+    def __init__(self, bulk_mode=None, only="", create_status=200):
+        self.bulk_mode, self.only, self.create_status, self.docs = bulk_mode, only, create_status, {}
+
+    def req(self, method, path, body=None, ndjson=None, timeout=60, **kw):
+        ok_sh = {"_shards": {"total": 1, "successful": 1, "failed": 0}}
+        p = path.split("?")[0]
+        parts = [x for x in p.split("/") if x]
+        if method == "DELETE":
+            self.docs.pop(parts[0], None) if parts else None
+            return 200, {"acknowledged": True}, 1
+        if method == "POST" and p == "/_bulk":
+            lines = ndjson.splitlines()
+            ops = [(list(json.loads(l).values())[0], json.loads(d)) for l, d in zip(lines[::2], lines[1::2])]
+            idx = ops[0][0]["_index"]
+            m = self.bulk_mode if self.only in idx else None
+            if m == "503":
+                return 503, {"error": {"type": "es_rejected_execution_exception"}, "status": 503}, 1
+            kept = ops[:-1] if m == "truncated" else ops
+            if m != "empty":
+                self.docs.setdefault(idx, {}).update({o["_id"]: s for o, s in kept})
+            return 200, {"errors": False, "items": [{"index": {"_id": o["_id"], "status": 201}} for o, _ in kept]}, 1
+        if method == "PUT" and len(parts) == 1:
+            if self.create_status != 200:
+                return self.create_status, {"error": {"type": "x"}}, 1
+            self.docs.setdefault(parts[0], {})
+            return 200, {"acknowledged": True}, 1
+        if len(parts) == 2 and parts[1] == "_refresh":
+            return 200, dict(ok_sh), 1
+        if len(parts) == 2 and parts[1] == "_count":
+            return 200, dict({"count": len(self.docs.get(parts[0], {}))}, **ok_sh), 1
+        if len(parts) == 3 and parts[1] == "_doc" and method == "GET":
+            d = self.docs.get(parts[0], {}).get(parts[2])
+            return (200, {"found": True, "_source": d}, 1) if d is not None else (404, {"found": False}, 1)
+        return 200, {"hits": {"hits": []}, "acknowledged": True, "endpoints": []}, 1
+
+
+class MatrixFixtureTests(unittest.TestCase):
+    def setUp(self):
+        self._r = (matrix.req, lib.req, exp3.req)
+        self._m = (matrix.ensure_dls, matrix.dls_search, matrix.DLS_PW)
+        matrix.ensure_dls = lambda: {"role": {"class": "SKIP", "status": None}}
+        matrix.dls_search = lambda: {"class": "SKIP", "status": None}
+        matrix.DLS_PW = "/nonexistent/dls_password"
+
+    def tearDown(self):
+        matrix.req, lib.req, exp3.req = self._r
+        matrix.ensure_dls, matrix.dls_search, matrix.DLS_PW = self._m
+
+    def use(self, fake):
+        matrix.req = lib.req = exp3.req = fake.req
+        return fake
+
+    def aborts(self, fn):
+        try:
+            out = fn()
+        except FixtureError:
+            return True
+        self.fail("returned normally instead of aborting: %s" % json.dumps(out, default=str)[:200])
+
+    def test_good_fixture_is_accepted(self):
+        f = self.use(MatrixFake())
+        matrix.make_base()
+        self.assertEqual(len(f.docs[matrix.BASE_IDX]), len(matrix.DOCS))
+
+    def test_failed_creation_aborts(self):
+        self.use(MatrixFake(create_status=500))
+        self.aborts(matrix.make_base)
+
+    def test_failed_fixture_write_aborts(self):
+        self.use(MatrixFake(bulk_mode="503"))
+        self.aborts(matrix.make_base)
+
+    def test_partial_fixture_write_aborts(self):
+        self.use(MatrixFake(bulk_mode="truncated"))
+        self.aborts(matrix.make_base)
+
+    def test_empty_index_after_success_answers_aborts(self):
+        self.use(MatrixFake(bulk_mode="empty"))
+        self.aborts(matrix.make_base)
+
+    def test_full_matrix_aborts_on_failed_base_write(self):
+        self.use(MatrixFake(bulk_mode="503", only="base"))
+        self.aborts(lambda: matrix.run("t"))
+
+    def test_full_matrix_aborts_on_empty_force_merge_fixture(self):
+        self.use(MatrixFake(bulk_mode="empty", only="-fm"))
+        self.aborts(lambda: matrix.run("t"))
+
+    def test_vector_cell_is_not_available_when_index_is_empty(self):
+        self.use(MatrixFake(bulk_mode="empty", only="int8_hnsw"))
+        T = matrix.run("t")
+        self.assertNotEqual(T["vec_int8_hnsw"]["class"], "AVAILABLE")
+        self.assertEqual(T["vec_bbq_hnsw"]["class"], "AVAILABLE")
+
+    def test_exp3_semantic_only_fixture_with_failed_write_aborts(self):
+        self.use(MatrixFake(bulk_mode="503"))
+        with self.assertRaises((ScrollError, BulkError)):
+            exp3.semonly_fixture()
 
 
 class MigrationVerdictTests(unittest.TestCase):
