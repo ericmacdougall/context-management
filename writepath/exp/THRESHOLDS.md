@@ -432,7 +432,8 @@ tenant (3,027 to 6,042 per event), so forcing custom plans would not fix it. PS-
 (the first run on a fresh database) the residue at M=1500 did 2,286,481 rows (about M^2, the tenant index intersected
 per tombstone) while that run's M=3000 residue got a linear plan, so the ratio gate passed a quadratic plan; and the
 residue's facts probe removed 5 x M rows by join filter in every run (M x the tenant's facts).
-Changes for the run at the fixed code (no threshold relaxed):
+Changes for the run at the fixed code (no gate threshold relaxed; one control requirement WAS relaxed, see the
+correction after (3)):
 (1) PS-R adds an absolute bound: residue work <= 100 rows per event (<= 100 x M) in every run; linear residue plans
     measured 25 to 35 per event at the pre-fix code.
 (2) Every run starts from a fresh database (wp.setup --reset inside the run, then the control's patch, if any), so
@@ -443,6 +444,10 @@ Changes for the run at the fixed code (no threshold relaxed):
     residue (both checked to equal the pre-fix bodies apart from comments). CTL_APPLY must violate a gate in >= 2 of 3
     runs in each state; CTL_RESIDUE in >= 2 of 3 runs in S1, the state where the pre-fix residue misplanned (its S2
     count is recorded, not required).
+Correction (2026-11-17, review-2 N4; the text above is unchanged apart from the qualifier on its first line): amendment
+18 required each control to violate a gate in >= 2 of 3 runs in BOTH states. (3) relaxed that for CTL_RESIDUE to S1
+only, so "no threshold relaxed" was not true as written. The gates themselves (PS-C, PS-R) were only tightened. 18c's
+"no threshold relaxed" refers to 18 and 18b as they stand, including this relaxation.
 
 ## Amendment 18c (2026-11-17, after the run at ba71567 and before any further run; that run's PASS is void)
 The run at ba71567 reported PASS (6/6, controls 3/3 in each state; result plan_stability.98a94c31b9c01856, not

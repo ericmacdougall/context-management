@@ -6,6 +6,10 @@
               picked up by sweep() after the claim expires.
   mark        one short transaction: the subject row FOR UPDATE, erased=true. From its commit every content insert
               for the subject is refused by the store (WPS03) and every reader and the projector filter the subject.
+              Timing limit (amendment 17c): appends and cascades take the subject row FOR SHARE, and PostgreSQL grants
+              new FOR SHARE locks ahead of a waiting FOR UPDATE, so sustained concurrent writes touching the subject
+              can delay the mark without bound. Each attempt is cut at statement_timeout (30 s); the job stays open
+              and the sweep retries. No erasure here is claimed to complete in bounded time under concurrent writes.
   cascade     bounded batches (own transactions): tombstones for the subject's events, delete derived facts, analyst
               jobs, inbox and quarantine rows. No long transaction, so no long lock hold and no long xmin hold.
   placeholders  for every tombstoned event id (paged from Postgres, never from ES): a content-free placeholder at the
@@ -15,7 +19,9 @@
   keys        the subject key is destroyed (key service).
   complete    the VERIFIER (role wp_verifier, own connections, own ES client) runs the expunge, counts the
               cross-store residue itself, runs the unregistered-store gate, and calls wp_erasure_complete, which
-              recomputes every Postgres count in the store and writes 'done' only if all are zero.
+              recomputes every Postgres count in the store and writes 'done' only if all are zero. The physical
+              purge has a deadline (logical_at + 300 s), not a completion bound: past it the job is reported overdue
+              (physical_purge_overdue) and stays open until the purge completes.
 Every step is idempotent; any exception leaves the job open with its error TYPE recorded; the claim is always
 released; sweep() isolates jobs from each other."""
 import json

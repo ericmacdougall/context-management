@@ -33,10 +33,14 @@ decisions, the deployment requirements that follow from them, and what is still 
   role, AND transaction_timeout (PostgreSQL >= 17) or the transaction-age watchdog (wp/xact_watchdog.py, 30 s), an alert
   on the age of the oldest xid / xmin, no long superuser sessions, prepared transactions monitored; or one cluster per
   tenant. Superuser sessions, prepared transactions and replication slots are NOT bounded by the watchdog.
-- Physical purge (amendment 9): "logically erased" is reported at once; "done" waits for the physical purge, bounded by
-  the store deadline (300 s). The ES floor is the retention-lease sync (about 30 s). With a real KMS the key's physical
-  deletion is the KMS's own record and its pending-deletion window, which may be days: the receipt must then say
-  "logically erased, key deletion scheduled until <date>".
+- Physical purge (amendment 9): "logically erased" is reported at once; "done" waits for the physical purge. The store
+  sets a physical deadline (logical_at + 300 s) when the job becomes logically erased. The deadline is not a completion
+  guarantee: past it the job stays open, is reported overdue (last_error_type physical_purge_overdue), and the sweep
+  keeps trying until the purge completes. Nothing bounds how long that takes. The ES floor is the retention-lease sync
+  (about 30 s). With a real KMS the key's physical deletion is the KMS's own record and its pending-deletion window,
+  which may be days: the receipt must then say "logically erased, key deletion scheduled until <date>".
+  The erasure mark itself has no time bound under concurrent writes either (see "Erasure timing under concurrent
+  writes" below).
 - Identifier rule (amendment 11): ASSUMPTION, not a user decision: single-token identifiers without a digit need >= 6
   characters; stop-word-only identifiers are refused. Span redaction is not implemented: a mention removes the event
   whole.
@@ -50,6 +54,9 @@ decisions, the deployment requirements that follow from them, and what is still 
   wp_identifier_declare) takes FOR SHARE and never upgrades it. Until 5ab1e2e the hold check and the declare took FOR
   UPDATE, which deadlocked two erasures of subjects who mention each other, and a declare against an append that
   mentions the subject. Step 3 (decision core in events_guard) must keep to this order.
+  Evidence scope: the lock_order controls restore only the pre-fix lock statements, not the whole earlier system; the
+  test is not a proof of deadlock freedom, and overlapping cascades that share event, tombstone or fact rows are
+  outside its MM fixture. FOR SHARE also means an erasure mark can wait without bound (next bullet).
 - Erasure timing under concurrent writes (amendment 17c): PostgreSQL grants a new FOR SHARE ahead of a waiting FOR
   UPDATE, so a sustained overlap of writes touching a subject can delay that subject's erasure mark without bound. Each
   attempt is cut by statement_timeout (30 s); the job stays open and the sweep retries it. Receipts say so ("timing");
@@ -65,6 +72,10 @@ decisions, the deployment requirements that follow from them, and what is still 
   plan_stability. Known residuals: under stale statistics the outer primary-key delete can read the tenant once per
   batch (O(tenant) per batch, not per event); GIN fastupdate pending lists make every probe scan the pending entries
   until vacuum flushes them (about 2 to 3 ms per event early in a large cascade, in every version since 7e8f28f).
+  Evidence scope (review-2 N3): the stamped run at 62c6be5 had no facts in its fixture, so it shows plan stability for
+  the analyst-job delete and the residue only; amendment 22 adds facts at both sizes, facts gates and a facts-only
+  control, and plan_stability runs again under it. Plan stability bounds the work per event of the cascade; it does not
+  bound when an erasure starts or finishes (see "Erasure timing under concurrent writes" and "Physical purge").
 - Projector start race (amendment 19, exp/projector_start_race.py):
   - Fixed in 5d26746: a projector that loses the start-up race to a forced takeover now drops the lease and returns -1
     from step(). Until then, the StaleEpoch (alias compare-and-set) or StaleWrite (cursor insert) raised inside start()
@@ -91,3 +102,6 @@ decisions, the deployment requirements that follow from them, and what is still 
   - The scanner was not edited after the held-out run. Any later edit needs a new held-out set.
 - Postgres settings are part of the result: the earlier lab's numbers depended on wal_recycle=off, wal_keep_size=0,
   archive_mode=off and max_connections=200, which were not in the repo until 8c7d841 (host/bootstrap.py sets them).
+  Result fingerprints before cf8f08e record only the server version, not these effective settings, so those results
+  cannot be reproduced from their fingerprints alone. From cf8f08e every fingerprint records the effective values of
+  a named list of settings (exp/common.PG_SETTINGS).

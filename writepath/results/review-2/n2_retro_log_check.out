@@ -1,0 +1,20 @@
+started 2026-11-17T05:07:12.719511235Z log json-file map[]
+one.5d26746.psr.out rc=0 lines=117 flood=0
+one.62c6be5.d3.out rc=0 lines=40 flood=0
+one.62c6be5.d4_rescan.out rc=0 lines=44 flood=0
+one.62c6be5.d4_store_mark.out rc=0 lines=20 flood=0
+one.62c6be5.e1.out rc=0 lines=360 flood=0
+one.62c6be5.f1.out rc=0 lines=4 flood=0
+one.62c6be5.heldout.out rc=0 lines=0 flood=0
+one.62c6be5.lock_order.out rc=0 lines=292 flood=0
+one.62c6be5.plan_stability.out rc=0 lines=320 flood=0
+one.62c6be5.psr.out rc=0 lines=117 flood=0
+one.62c6be5.races.out rc=0 lines=1140 flood=0
+one.62c6be5.size_probe.out rc=0 lines=4 flood=0
+all-since-10:30
+5
+2026-11-17T10:31:12.184667700Z {"@timestamp":"2026-11-17T10:31:12.184Z","log.level": "WARN","message":"flood stage disk watermark [15gb] exceeded on [lDZoXAejS_ezsIUjQXVQLQ][7b751d48f8c8][/usr/share/elasticsearch/data] free: 13gb[2%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"ES_E
+2026-11-17T10:31:42.189866166Z {"@timestamp":"2026-11-17T10:31:42.189Z","log.level": "WARN","message":"flood stage disk watermark [15gb] exceeded on [lDZoXAejS_ezsIUjQXVQLQ][7b751d48f8c8][/usr/share/elasticsearch/data] free: 9gb[1.4%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"ES_
+2026-11-17T10:32:12.193418965Z {"@timestamp":"2026-11-17T10:32:12.193Z","log.level": "WARN","message":"flood stage disk watermark [15gb] exceeded on [lDZoXAejS_ezsIUjQXVQLQ][7b751d48f8c8][/usr/share/elasticsearch/data] free: 7.9gb[1.2%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"E
+2026-11-17T10:32:42.197571300Z {"@timestamp":"2026-11-17T10:32:42.197Z","log.level": "WARN","message":"flood stage disk watermark [15gb] exceeded on [lDZoXAejS_ezsIUjQXVQLQ][7b751d48f8c8][/usr/share/elasticsearch/data] free: 8.1gb[1.2%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"E
+2026-11-17T10:33:12.201488823Z {"@timestamp":"2026-11-17T10:33:12.201Z","log.level": "WARN","message":"flood stage disk watermark [15gb] exceeded on [lDZoXAejS_ezsIUjQXVQLQ][7b751d48f8c8][/usr/share/elasticsearch/data] free: 7.9gb[1.2%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"E
