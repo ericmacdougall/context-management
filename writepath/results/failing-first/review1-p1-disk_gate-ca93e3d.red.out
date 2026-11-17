@@ -1,0 +1,73 @@
+.........FFFFFFF......
+======================================================================
+FAIL: test_p1_clock_step_back_voids (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 237, in test_p1_clock_step_back_voids
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 134, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_p1_different_container_id_voids (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 232, in test_p1_different_container_id_voids
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 134, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_p1_end_marker_never_lands_voids (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 241, in test_p1_end_marker_never_lands_voids
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 134, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_p1_flood_line_before_the_run_does_not_void (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 215, in test_p1_flood_line_before_the_run_does_not_void
+    self.assertEqual(self.call("end")[0], 0, "the stub's pre-run flood line is outside the window")
+AssertionError: 3 != 0 : the stub's pre-run flood line is outside the window
+
+======================================================================
+FAIL: test_p1_rotated_logs_void (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 219, in test_p1_rotated_logs_void
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 134, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_p1_same_second_restart_voids (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 228, in test_p1_same_second_restart_voids
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 134, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_p1_truncated_logs_void (tests.test_disk_gate.DiskGateFailsClosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 224, in test_p1_truncated_logs_void
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 134, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.048s
+
+FAILED (failures=7)

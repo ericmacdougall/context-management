@@ -4,10 +4,15 @@
   check NAME    before each experiment: own usage may grow by at most CAP_GB over the baseline, else exit 3 (the run
                 stops itself and is VOID); a host under FLOOR_GB from other work is recorded, and the run continues
   end           VOID (exit 3) unless the absence of a flood stage and the cap were OBSERVED: VOID if a STOP file exists,
-                the ES container cannot be inspected or (re)started after start, `docker logs` fails or times out, the
-                log shows a flood-stage line or a high-watermark-exceeded line (amendment 23a), own usage cannot be
-                measured, or own usage grew over CAP_GB (review N2). The log check has log-line granularity: ES repeats
-                these warnings about every 30 s, so a run shorter than that can fall between two lines.
+                the ES container cannot be inspected, `docker logs` fails or times out, the log shows a flood-stage
+                line or a high-watermark-exceeded line (amendment 23a), own usage cannot be measured, or own usage grew
+                over CAP_GB (review N2). Log coverage (step-1 delta review P1): start records the container id, its
+                full-precision StartedAt, its log driver config, the boot id, the wall and monotonic clocks, and writes
+                a nonce marker into the container's own log; end VOIDs on a different id or StartedAt, another boot, a
+                wall-clock step over CLOCK_SLACK_S, an end marker it cannot write or that does not appear, or a start
+                marker missing from the RETAINED log (rotated, truncated or replaced), and judges only the lines between
+                the two markers. The log check has log-line granularity: ES repeats these warnings about every 30 s,
+                so a run shorter than that can fall between two lines.
   operator stop: write a reason into WP_HOME/state/STOP; the next check (or end) ends the run as VOID
 Any failure to measure own usage at check or end is VOID (exit 3), never a pass.
 Own usage = du of this stream's Postgres and ES data directories (inside its own containers) plus WP_HOME. Sizes in GiB
@@ -38,6 +43,56 @@ def _stop_reason():
     operator writes a reason). An empty file is reported as such, never attributed to an operator."""
     t = STOP.read_text().strip()[:200] if STOP.exists() else ""
     return f"written reason: {t}" if t else "no reason written in the file (writer unknown)"
+
+
+INSPECT_FMT = "{{.Id}}|{{.State.StartedAt}}|{{json .HostConfig.LogConfig}}"
+MARK = "wp16096-disk-gate"
+CLOCK_SLACK_S = 2.0      # wall-clock and monotonic elapsed may differ by this much before the run is VOID
+_sleep = time.sleep
+
+
+def _identity():
+    """(container id, full-precision StartedAt, log config JSON) of this stream's ES container, or None."""
+    r = subprocess.run(["docker", "inspect", "-f", INSPECT_FMT, config.ES_CONTAINER], capture_output=True, text=True, timeout=60)
+    parts = r.stdout.strip().split("|", 2) if r.returncode == 0 else []
+    return tuple(parts) if len(parts) == 3 and all(parts) else None
+
+
+def _boot_id():
+    try:
+        return pathlib.Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+    except OSError:
+        return None
+
+
+def _mark(kind, nonce):
+    """Write a marker line into the ES container's own log (PID 1's stdout, which the log driver records)."""
+    line = f"{MARK} {kind} {nonce}"
+    r = subprocess.run(["docker", "exec", config.ES_CONTAINER, "sh", "-c", f"echo {line} > /proc/1/fd/1"],
+                       capture_output=True, text=True, timeout=60)
+    return line if r.returncode == 0 else None
+
+
+def _window_lines(anchor, end_line):
+    """The ES log lines between this run's start and end markers, judged from the RETAINED log with the driver's
+    timestamps. Returns (lines, why_not): why_not names the doubt when coverage is not established."""
+    since = str(int(anchor["wall0"]) - 600)
+    for _ in range(20):
+        r = subprocess.run(["docker", "logs", "--timestamps", "--since", since, config.ES_CONTAINER], capture_output=True,
+                           text=True, timeout=300)
+        if r.returncode != 0:
+            return None, f"docker logs exited {r.returncode}; the absence of a flood stage was not observed"
+        rows = [ln.split(" ", 1) for ln in (r.stdout + "\n" + r.stderr).splitlines() if " " in ln]
+        t_start = [ts for ts, txt in rows if txt.strip() == anchor["start_line"]]
+        t_end = [ts for ts, txt in rows if txt.strip() == end_line]
+        if t_start and t_end:
+            lo, hi = t_start[0], t_end[0]
+            return [txt.lower() for ts, txt in rows if lo <= ts <= hi], None
+        if not t_start:
+            return None, ("the start marker is not in the retained ES log (rotated, truncated or replaced): log coverage "
+                          "of the run is not established")
+        _sleep(0.5)
+    return None, "the end marker did not appear in the ES log within 10 s: log coverage of the run's end is not established"
 
 
 def _du(container, path):
@@ -74,7 +129,20 @@ def main(cmd, name=""):
         STATE_DIR.mkdir(exist_ok=True)
         if STOP.exists():
             STOP.unlink()                  # a stop file left by an earlier run does not stop this one
-        STATE.write_text(json.dumps({"base": o, "since": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "floor_breaches": []}))
+        # review P1: pin the container's identity and the clocks, and anchor the window in the container's own log
+        ident = _identity()
+        if ident is None:
+            print("disk_gate BLOCKED start: cannot inspect the ES container (identity and log driver unknown)")
+            sys.exit(2)
+        nonce = os.urandom(8).hex()
+        anchor = {"cid": ident[0], "started": ident[1], "log_config": ident[2], "nonce": nonce,
+                  "wall0": time.time(), "mono0": time.monotonic(), "boot": _boot_id()}
+        anchor["start_line"] = _mark("start", nonce)
+        if anchor["start_line"] is None:
+            print("disk_gate BLOCKED start: cannot write the start marker into the ES container's log")
+            sys.exit(2)
+        STATE.write_text(json.dumps({"base": o, "since": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "floor_breaches": [],
+                                     "anchor": anchor}))
         print(f"disk_gate start free {f:.1f} GiB own {o['total'] / GIB:.2f} GiB (pg {o['pg'] / GIB:.2f} es {o['es'] / GIB:.2f} "
               f"home {o['home'] / GIB:.2f}) cap +{CAP_GB} GiB")
         return
@@ -111,20 +179,32 @@ def main(cmd, name=""):
         # succeeded and covers the whole run) and own usage was measured and stayed within the cap.
         if STOP.exists():
             void(f"STOP file, {_stop_reason()}, during the run")
+        # review P1: log coverage is established, not assumed: the same container (id and full-precision start time),
+        # the same boot, no host clock step, and both of this run's markers in the RETAINED log; any doubt is VOID
+        a = st.get("anchor")
+        if not a:
+            void("no log anchor recorded at start (gate state from an older gate); log coverage unknown")
         try:
-            started = subprocess.run(["docker", "inspect", "-f", "{{.State.StartedAt}}", config.ES_CONTAINER],
-                                     capture_output=True, text=True, timeout=60)
-            r = subprocess.run(["docker", "logs", "--since", st["since"], config.ES_CONTAINER], capture_output=True,
-                               text=True, timeout=300)
+            ident = _identity()
+            if ident is None:
+                void("cannot inspect the ES container at end; log coverage unknown")
+            if ident[0] != a["cid"]:
+                void("the ES container was replaced during the run (different container id); log coverage unknown")
+            if ident[1] != a["started"]:
+                void(f"the ES container restarted during the run (StartedAt {ident[1]} != {a['started']}); log coverage unknown")
+            if _boot_id() != a["boot"]:
+                void("the host rebooted during the run; log coverage unknown")
+            step = (time.time() - a["wall0"]) - (time.monotonic() - a["mono0"])
+            if abs(step) > CLOCK_SLACK_S:
+                void(f"the host wall clock stepped {step:+.1f} s during the run; log timestamps cannot bound the window")
+            end_line = _mark("end", a["nonce"])
+            if end_line is None:
+                void("cannot write the end marker into the ES container's log; log coverage unknown")
+            lines, why = _window_lines(a, end_line)
         except (OSError, subprocess.TimeoutExpired) as e:
             void(f"cannot read the ES container's state or log ({type(e).__name__})")
-        if started.returncode != 0 or not started.stdout.strip():
-            void(f"cannot read the ES container's start time (docker inspect exit {started.returncode})")
-        if started.stdout.strip()[:19] > st["since"][:19]:
-            void(f"the ES container (re)started at {started.stdout.strip()[:19]}Z, after the run began; log coverage unknown")
-        if r.returncode != 0:
-            void(f"docker logs exited {r.returncode}; the absence of a flood stage was not observed")
-        lines = [line.lower() for line in (r.stdout + r.stderr).splitlines()]
+        if why:
+            void(why)
         flood = sum(1 for line in lines if "flood stage" in line)
         # amendment 23a: past the HIGH watermark the node will not allocate new primaries, so a new index stays red and
         # writes to it fail (d3 at 31112b4: 503 unavailable_shards_exception). The low watermark only stops replicas.

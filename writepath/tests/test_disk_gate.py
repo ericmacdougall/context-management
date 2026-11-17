@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from contextlib import redirect_stdout
 from types import SimpleNamespace
@@ -24,22 +25,56 @@ GIB = 1024 ** 3
 
 
 class Host:
-    """Stubbed docker/du: sizes in bytes, a log text, return codes, an optional timeout."""
+    """Stubbed docker/du: sizes in bytes, a log text (the lines ES writes during the run), return codes, an optional
+    timeout. The container log is assembled as: lines before the run, the gate's start marker, self.log, the gate's
+    end marker; each line carries a driver timestamp. Faults (review P1): rotated (everything up to and including the
+    start marker gone), truncated (the file emptied mid-run: only lines after a point remain), a replacement container
+    (new id), a restart (StartedAt differs in the nanoseconds only), an end marker that never lands."""
 
     def __init__(self):
         self.pg, self.es, self.home = 1 * GIB, 1 * GIB, 1 * GIB
         self.log, self.log_rc, self.log_timeout = "INFO started\n", 0, False
         self.du_rc = 0
-        self.started = "2000-01-01T00:00:00.000000000Z"
+        self.cid = "c1dba572fdb8" + "0" * 52
+        self.started = "2026-11-17T17:20:44.846939281Z"
+        self.logcfg = '{"Config":{},"Type":"json-file"}'
+        self.markers = []
+        self.rotated = self.truncated = self.end_lost = self.pre_flood = False
+
+    def _log_rows(self):
+        rows = [("before", "INFO an earlier line")]
+        if self.pre_flood:
+            rows.append(("before", "WARN flood stage disk watermark [15gb] exceeded (before this run)"))
+        start = [m for m in self.markers if " start " in m]
+        end = [m for m in self.markers if " end " in m]
+        rows += [("start", m) for m in start]
+        rows += [("run", ln) for ln in self.log.splitlines() if ln]
+        if not self.end_lost:
+            rows += [("end", m) for m in end]
+        if self.rotated:
+            rows = [r for r in rows if r[0] in ("run", "end")]
+        if self.truncated:
+            rows = [r for r in rows if r[0] == "end"] or [("after", "INFO after truncation")]
+        out, n = [], 0
+        for _, txt in rows:
+            n += 1
+            out.append(f"2026-11-17T18:00:{n:02d}.000000000Z {txt}")
+        return "\n".join(out) + "\n"
 
     def run(self, argv, **kw):
         if argv[:2] == ["docker", "logs"]:
             if self.log_timeout:
                 raise subprocess.TimeoutExpired(argv, 300)
-            return SimpleNamespace(returncode=self.log_rc, stdout=self.log if self.log_rc == 0 else "",
+            return SimpleNamespace(returncode=self.log_rc, stdout=self._log_rows() if self.log_rc == 0 else "",
                                    stderr="" if self.log_rc == 0 else "Error response from daemon: No such container")
         if argv[:2] == ["docker", "inspect"]:
-            return SimpleNamespace(returncode=0, stdout=self.started + "\n", stderr="")
+            fmt = argv[argv.index("-f") + 1] if "-f" in argv else ""
+            out = self.started if fmt == "{{.State.StartedAt}}" else f"{self.cid}|{self.started}|{self.logcfg}"   # older gates ask for StartedAt only
+            return SimpleNamespace(returncode=0, stdout=out + "\n", stderr="")
+        if argv[:2] == ["docker", "exec"] and argv[3:5] == ["sh", "-c"]:
+            line = argv[5].split(">")[0].replace("echo", "", 1).strip()
+            self.markers.append(line)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
         if argv[:2] == ["docker", "exec"]:
             size = self.pg if "postgresql" in argv[-1] else self.es
             return SimpleNamespace(returncode=self.du_rc, stdout=f"{size}\t{argv[-1]}\n" if self.du_rc == 0 else "", stderr="")
@@ -74,6 +109,10 @@ class DiskGateFailsClosed(unittest.TestCase):
         for target, attr, stub in ((subprocess, "run", self.h.run),
                                    (shutil, "disk_usage", lambda p: SimpleNamespace(total=100 * GIB, used=70 * GIB, free=30 * GIB))):
             p = mock.patch.object(target, attr, stub)
+            p.start()
+            self.addCleanup(p.stop)
+        if hasattr(self.g, "_sleep"):
+            p = mock.patch.object(self.g, "_sleep", lambda s: None)
             p.start()
             self.addCleanup(p.stop)
         stop = self.home / "state" / "STOP"
@@ -169,6 +208,37 @@ class DiskGateFailsClosed(unittest.TestCase):
         self.assertVoid(rc, out)
         self.assertIn("writer unknown", out)
         self.assertNotIn("operator stop", out)
+
+    # review P1 (step-1 delta review at 3c2864f): log coverage must be established, not assumed
+    def test_p1_flood_line_before_the_run_does_not_void(self):
+        self.h.pre_flood = True
+        self.assertEqual(self.call("end")[0], 0, "the stub's pre-run flood line is outside the window")
+
+    def test_p1_rotated_logs_void(self):
+        self.h.rotated = True                       # rotation dropped everything up to the start marker
+        self.assertVoid(*self.call("end"))
+
+    def test_p1_truncated_logs_void(self):
+        self.h.log = "WARN flood stage disk watermark [15gb] exceeded\n"
+        self.h.truncated = True                     # the log file was emptied mid-run, the flood line with it
+        self.assertVoid(*self.call("end"))
+
+    def test_p1_same_second_restart_voids(self):
+        self.h.started = self.h.started[:20] + "999999999Z"     # same second, different nanoseconds
+        self.assertVoid(*self.call("end"))
+
+    def test_p1_different_container_id_voids(self):
+        self.h.cid = "d" * 64                       # a replacement container with the same name
+        self.assertVoid(*self.call("end"))
+
+    def test_p1_clock_step_back_voids(self):
+        real = time.time
+        with mock.patch.object(time, "time", lambda: real() - 3600):
+            self.assertVoid(*self.call("end"))
+
+    def test_p1_end_marker_never_lands_voids(self):
+        self.h.end_lost = True
+        self.assertVoid(*self.call("end"))
 
     def test_es_container_restarted_during_run_voids(self):
         self.h.started = "2999-01-01T00:00:00.000000000Z"
