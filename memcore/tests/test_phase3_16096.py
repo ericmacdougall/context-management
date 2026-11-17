@@ -545,45 +545,89 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
             with self.assertRaises(ValueError, msg=cls.__name__):
                 g.check_gate({"m": obj}, "127.0.0.1", None, True)
 
-    def test_gateway_cli_no_longer_offers_subscription_backends(self):
-        """Assertion-only (review R3-6, R4): the CLI's own --help lists no subscription backend, and argv naming one never
-        constructs a backend or reaches Gateway. On a tree that still offers them, the help assertion FAILS (it does not
-        error), and the recorders see the construction."""
+    # ---- R3-6 (deploy part 5): the CLI offers no subscription backend. The probe below is run on the real entry point AND on a
+    # control (the c20e208 main, copied verbatim) so the assertions are shown to fire on a tree that does offer them.
+    @staticmethod
+    def _old_main_c20e208(argv=None):
+        """gateway.main at c20e208, verbatim apart from module-qualified names. It offers claude-cli and codex-cli."""
+        import argparse
+        import memcore.gateway as g
+        ap = argparse.ArgumentParser(description="control")
+        ap.add_argument("--backend", choices=["claude-cli", "codex-cli"], required=True)
+        ap.add_argument("--out", required=True)
+        ap.add_argument("--model", default=None)
+        ap.add_argument("--cap", type=int, default=200)
+        ap.add_argument("--host", default="127.0.0.1")
+        ap.add_argument("--port", type=int, default=0)
+        ap.add_argument("--dev-subscription-backends", action="store_true")
+        a = ap.parse_args(argv)
+        g.require_loopback(a.host)
+        if a.backend == "claude-cli":
+            from memcore.adapters.claude_cli import ClaudeCliChat
+            backend = ClaudeCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=a.out, model="sonnet")
+        else:
+            from memcore.adapters.codex_cli import CodexCliChat
+            backend = CodexCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=a.out, model=a.model)
+        g.Gateway(backend, a.out, a.host, a.port, dev_subscription_backends=a.dev_subscription_backends)
+
+    def _probe_cli_offer(self, main_fn):
+        """Returns (help_text, {backend: (stderr_text, constructors_reached)}). argv carries ONLY --backend and --out, so on a tree
+        that rejects the backend the sole reason can be the backend choice (not an unknown flag, not a missing id file)."""
         import contextlib
         import io
         from unittest import mock
         import memcore.gateway as g
+        from memcore.adapters import claude_cli, codex_cli
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
             try:
-                g.main(["--help"])
+                main_fn(["--help"])
             except SystemExit:
                 pass
-        helptext = out.getvalue()
-        self.assertIn("--backend", helptext)
-        for b in ("claude-cli", "codex-cli"):
-            self.assertNotIn(b, helptext)
-        reached = []
 
         class _Stop(BaseException):        # BaseException: not swallowed by the CLI's own except-Exception handlers
             pass
 
-        def record(name):
-            def f(*a, **k):
-                reached.append(name)
-                raise _Stop()
-            return f
-        from memcore.adapters import claude_cli, codex_cli
+        per = {}
         for b in ("claude-cli", "codex-cli"):
+            reached, err = [], io.StringIO()
+
+            def record(name):
+                def f(*a, **k):
+                    reached.append(name)
+                    raise _Stop()
+                return f
             with restored_default_guard(), mock.patch.object(g, "Gateway", record("Gateway")), \
                     mock.patch.object(claude_cli, "ClaudeCliChat", record("ClaudeCliChat")), \
                     mock.patch.object(codex_cli, "CodexCliChat", record("CodexCliChat")), \
-                    contextlib.redirect_stderr(io.StringIO()):
+                    contextlib.redirect_stderr(err):
                 try:
-                    g.main(["--backend", b, "--out", tempfile.mkdtemp(), "--dev-subscription-backends"])
+                    main_fn(["--backend", b, "--out", tempfile.mkdtemp()])
                 except (SystemExit, _Stop):
                     pass
-        self.assertEqual(reached, [])
+            per[b] = (err.getvalue(), reached)
+        return out.getvalue(), per
+
+    def test_gateway_cli_no_longer_offers_subscription_backends(self):
+        import memcore.gateway as g
+        helptext, per = self._probe_cli_offer(g.main)
+        self.assertIn("--backend", helptext)                      # witness: the help text was captured
+        for b in ("claude-cli", "codex-cli"):
+            self.assertNotIn(b, helptext)
+            err, reached = per[b]
+            self.assertEqual(reached, [], b)                      # nothing constructed
+            self.assertIn("invalid choice", err, b)               # rejected for the BACKEND CHOICE, not for another reason
+
+    def test_cli_offer_probe_fires_on_the_c20e208_main(self):
+        """Control: the same probe on the old main must see the offer (help lists both, a constructor is reached, no rejection)."""
+        helptext, per = self._probe_cli_offer(self._old_main_c20e208)
+        self.assertIn("claude-cli", helptext)
+        self.assertIn("codex-cli", helptext)
+        self.assertEqual(per["claude-cli"][1], ["ClaudeCliChat"])
+        self.assertEqual(per["codex-cli"][1], ["CodexCliChat"])
+        for b in per:
+            self.assertNotIn("invalid choice", per[b][0])
+
 
 if __name__ == "__main__":
     unittest.main()
