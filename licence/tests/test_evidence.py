@@ -166,6 +166,106 @@ class ScenarioRegressionTests(unittest.TestCase):
             self.assertNotPass(life, report, key, path, val, mode=life.split("_")[0], exact="UNVERIFIED")
 
 
+T_RESP = 1000.0
+PROBES = ("rrf", "linear", "semantic_query", "inference_use", "dls_search")
+
+
+def _poll(after, before=("AVAILABLE", 200)):
+    """Synthetic poll rows as matrix.quick_probes records them ([class, status] per probe; dls also the returned count): 20 polls before
+    the transition response, 40 after. `after` maps probe -> (class, status) observed after it (default: the healthy refusal)."""
+    healthy = {p: ("OTHER_ERROR", 403) if p == "dls_search" else ("LICENCE_ERROR", 403) for p in PROBES}
+    healthy.update(after)
+    rows = []
+    for k in range(60):
+        t = T_RESP - 1.0 + k * 0.05
+        row = {"_t1": t}
+        for p in PROBES:
+            cls, st = before if t < T_RESP else healthy[p]
+            row[p] = [cls, st] + ([4 if cls == "AVAILABLE" else None] if p == "dls_search" else [])
+        rows.append(row)
+    return rows
+
+
+class RecordingBoundaryTests(unittest.TestCase):
+    """Gate review 8 (F13 to F16), end to end from the recorded observation through the verdict: the harness's own moment_analysis turns
+    poll rows into the life record; the summarizer judges that record."""
+
+    def t2(self, after):
+        import exp2
+        R = _life("down_7")
+        R["exp1_moment"] = exp2.moment_analysis(_poll(after), T_RESP)
+        return summarize.exp1_checks(R)["T2_status"]
+
+    def test_f13_healthy_recorded_refusals_pass(self):
+        self.assertEqual(self.t2({}), "PASS")
+
+    def test_f13_dls_401_503_transport_are_not_a_refusal(self):
+        for obs in (("OTHER_ERROR", 401), ("OTHER_ERROR", 503), ("TRANSPORT", 0), ("OTHER_ERROR", 404), ("OTHER_ERROR", 429)):
+            self.assertNotEqual(self.t2({"dls_search": obs}), "PASS", obs)
+
+    def test_f13_dls_licence_refusal_is_not_the_dls_refusal(self):
+        self.assertNotEqual(self.t2({"dls_search": ("LICENCE_ERROR", 403)}), "PASS")
+
+    def test_f13_licence_text_on_503_is_not_a_licence_refusal(self):
+        self.assertNotEqual(self.t2({p: ("LICENCE_ERROR", 503) for p in PROBES[:4]}), "PASS")
+        self.assertNotEqual(self.t2({"rrf": ("OTHER_ERROR", 403)}), "PASS")   # a 403 without the licence marker on a licence probe
+
+    def test_f13_recorded_refusal_status_outside_403_is_not_a_pass(self):
+        for s in (101, 302, 429, 503, 0):
+            R = _life("down_7")
+            for p in PROBES:
+                m = R["exp1_moment"][p]
+                m["first_refusal_status"] = s
+                if isinstance(m.get("first_refusal"), dict):
+                    m["first_refusal"]["status"] = s
+            self.assertNotEqual(summarize.exp1_checks(R)["T2_status"], "PASS", s)
+
+    def test_f13_a_timing_without_its_refusal_outcome_is_unverified(self):
+        """Committed down_1..6 store only a timing and a bare status per probe (no class, no body marker, no raw poll rows): no PASS."""
+        for n in range(1, 7):
+            self.assertEqual(summarize.exp1_checks(_life("down_%d" % n))["T2_status"], "UNVERIFIED", n)
+
+    def test_f13_raw_rows_are_required_for_rederived_figures(self):
+        """A life file copied without its raw rows: the moment (poll.gz) and the T5 licence-refusal count (rows.gz) cannot be re-derived."""
+        import shutil
+        d = tempfile.mkdtemp()
+        try:
+            shutil.copy(os.path.join(RES, "down_7.json"), d)
+            R = summarize.load(d, "down")[0]
+            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+            self.assertEqual(summarize.exp2_checks(R, "down")["T5_status"], "UNVERIFIED")
+        finally:
+            shutil.rmtree(d)
+
+    def test_f13_cell_class_labels_licence_text_only_on_403(self):
+        body = {"error": {"type": "x", "reason": "current license is non-compliant for [security]"}}
+        for code in (500, 503, 401, 404, 409):
+            self.assertNotEqual(lib.classify(code, body), "LICENCE_ERROR", code)
+        self.assertEqual(lib.classify(403, body), "LICENCE_ERROR")
+
+    def test_f14_huge_and_odd_values_never_raise(self):
+        cases = [(("exp2", "T2_failed_requests"), 10 ** 400), (("exp2", "T2_longest_failure_window_s"), 10 ** 400),
+                 (("exp2", "T1_control_broken_fallback", "flag_rate"), -10 ** 400), (("exp2", "T3_flip_latency_s"), 10 ** 400),
+                 (("exp2", "T2_failure_windows"), [[0, 10 ** 400, 1]]), (("exp2", "T2_failed_requests"), "5"), (("exp2", "T2_failed_requests"), -0.0)]
+        for path, val in cases:
+            R = _life("down_7")
+            _set(R, path, val)
+            r = summarize.exp2_checks(R, "down")
+            self.assertNotIn("PASS", (r["T1_status"], r["T2_status"]) if path[1].startswith(("T1", "T2")) else (r["T3_status"],), (path, val))
+
+    def test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable(self):
+        import evidence as E
+        Sub = type("Sub", (E.DlsControl,), {})
+        ok = E.Outcome.of(200)
+        sub = Sub(outcome=ok, only_kw_a=True, returned=4)
+        after = E.DlsAfter(outcome=E.Outcome.of(403), cell_class="OTHER_ERROR")
+        with self.assertRaises(E.Unparsed):
+            E.Dls(control=sub, after=after)
+        a = E.Availability.parse({"exp2": {"T2_failed_requests": 0, "T2_non_control_requests": 5, "T2_longest_failure_window_s": 0.0,
+                                           "T2_failure_windows": []}})
+        self.assertIsInstance(a.windows, tuple)
+
+
 class GeneratedInvalidEvidenceTests(unittest.TestCase):
     """Invalid evidence generated from the evidence type definitions; no PASS, no exception. The healthy fixture passes."""
 
@@ -186,7 +286,12 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
 
     def mutations(self, f, healthy, body):
         k = self.E.KINDS[f.kind]   # a field whose kind has no domain fails here
-        out = [("None", None), ("wrong type", 123 if k.type == "text" else "x"), ("bool", True if k.type != "bool" else 1)]
+        out = [("None", None), ("wrong type", 123 if k.type == "text" else "x"), ("bool", True if k.type != "bool" else 1),
+               ("huge int", 10 ** 400), ("-huge int", -10 ** 400), ("numeric string", "5"), ("nested list", [[[]]]), ("nested dict", {"a": {"b": []}})]
+        if k.type != "text":
+            out.append(("long string", "x" * 100000))
+        if k.type in ("int", "status"):
+            out.append(("negative zero", -0.0))
         if not f.optional:
             out.append(("absent", "absent"))
         if k.type in ("int", "real", "status"):
