@@ -570,3 +570,41 @@ same validity gates (exp/disk_gate.py start, check and end, plus the flood watch
 
 The scanner was not edited after the VOID-run scoring, and the harness refuses any other blob. The corpus is
 deterministic, so the run re-scores the same items.
+
+## Amendment 20 (2026-11-17, main's decision after three VOID run_alls, written before any run it governs)
+Single gated runs replace run_all for step 1. Three run_alls were voided by other tenants' disk use (1f059f4, 83f7000,
+fd4ed53), and no further full run_all is attempted while the host's free space swings.
+
+Rules:
+- **Gates.** Each step-1 experiment runs as a single gated run (writepath/runkit/launch_one.sh): the 17 GB start line,
+  exp.disk_gate start, check and end, and the flood-stage watcher. The validity rule of amendment 17c applies to each
+  run.
+- **Once only.** Each experiment runs exactly once, at the named commit.
+- **VOID.** A run voided by a gate or a flood stage may be rerun at the same commit; the void and the rerun are both
+  recorded.
+- **FAIL.** A FAIL is recorded and not rerun.
+- **Thresholds** are unchanged.
+- **Product code.** If product code must change, the runs stop and the change goes to main first.
+
+Already stamped at 62c6be5, not repeated (each was its first valid run):
+- projector_start_race and E1 (amendments 14a, 19 and 19a);
+- races R1, R2 and R3;
+- plan_stability;
+- review_fix F1, d4_rescan_es, d4_store_mark, d3_identifier and lock_order;
+- heldout_secrets (15b).
+
+The named commit for the rest is the commit that adds this amendment. It changes only this file. Its product and
+experiment code equal 62c6be5's; it differs only in run_all.sh, which the singles do not use.
+
+The batch is writepath/runkit/specs/step1-b.txt, in run_all order with run_all's arguments (R=10). It starts as run_all
+does (cleanup, wp.setup --reset, disk_gate preflight) and runs these experiments, then guard_check end:
+- guard_check start --controls, static_check, es_semantics and old_repro n_old (observed only in the VOID run too, so
+  added to main's list);
+- review_fix F3, F4, F5, F7, F1S and F6;
+- scope_hold M and H;
+- n_new (N1, N2, N5, N8), row1_zombie, row23_latecommit, e_verify and registry_marker;
+- d1_hold_mentions, row19_secrets, row6_chain, mutual_mentions, d2_verifier_process and phys_purge;
+- e2e E2 and E3.
+
+Row 19's planted-corpus result, whatever it is, is reported together with the held-out result (483/1,169 and 150/750;
+amendments 15 and 15b). It never stands alone as evidence that the scanner generalises.
