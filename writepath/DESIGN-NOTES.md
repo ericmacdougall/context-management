@@ -230,3 +230,31 @@ that falls through to the existing tombstone path, and the store, not the app, l
   systematisation on redactable ledgers, https://eprint.iacr.org/2026/1109 (search summary only, not read in full).
   Supports chaining ciphertext digests and destroying keys rather than rewriting the chain. Confidence medium
   (secondary and vendor-authored); the lab's own chain already hashes the ciphertext digest.
+
+### D3 implementation notes (5357472, 0aaf789; differences from the design above)
+- `wp_identifier_declare` is kept as an INTERNAL function with no grant (not dropped): `wp_identifier_approve` calls it,
+  so the lock order that exp/lock_order.py tests (subject FOR SHARE, identifier_epochs FOR UPDATE) is unchanged.
+- No separate erasure_redacted table: `event_redactions.job_id` records which erasure made each redaction. A redacted
+  event is STILL tombstoned by the cascade (ES placeholder, facts and jobs deleted, D4 strict verifier unchanged);
+  `wp_erasure_apply` nulls every present redaction text of a tombstoned event except the erasing job's own latest one.
+  `fallback_removed` in the receipt is computed by the store: other speakers' events this job tombstoned without a
+  redaction of its own.
+- Store refusals: WPS30 not a reviewer or self-approval; WPS31 HMAC differs; WPS32 rule version; WPS33 no open
+  proposal; WPS34 redaction target invalid (own event, no mention, already tombstoned); WPS35 another subject's hold;
+  WPS36 malformed spans; WPS37 stale base, wrong chain head, or already redacted by this job. The runner treats
+  WPS34-37 as "fall back to whole removal".
+- A redaction is a pure function of (current text, the subject's HMACs): `mentions.apply_spans` refuses spans that
+  differ from the matcher's own (offset drift cannot produce a partial cut) and rescans the result.
+- The HMAC label is applied in one place (`mentions.window_hmacs`); erasure's rescan had its own copy of "ident:",
+  which would have silently stopped matching under m2 (test_ident LabelInOnePlace).
+
+Not done or not verified (stated, not parked):
+- S6 (look-alikes in other speakers' text) needs confusables.txt from unicode.org; fetching it is a download that needs
+  the user's permission. Asked of main.
+- The reviewer reads the sealed identifier through the key service with ordinary subject-key access; an op scoped to
+  proposals only (its own AAD label and peer rule) is not built.
+- ES holds no redacted text (over-removal from the derived index, stated in the receipt).
+- Experiments that call `M.declare` (d4_store_mark, scope_hold, d1_hold_mentions, lock_order, mutual_mentions,
+  d3_identifier, d4_rescan_es) now propose through their connection and approve through reviewer login wp_rev1:
+  the approval's locks are taken on that second connection. lock_order's DA case observes the declaring backend, so it
+  must be re-read before any rerun. No stamped run has used this code.
