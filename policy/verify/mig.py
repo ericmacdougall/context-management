@@ -12,8 +12,24 @@ chain verifies after that rollback.
 Control arms per seed: forged_grant and head_tampered: forward refused with the reason the procedure gives for that forgery (a replayed
 event judged differently; state differs from the old tables), not an error, and the fingerprint hash unchanged. rollback_unchecked
 (the 0a20b64 rollback): the applied post-migration write existed, the rollback ran, and the write is gone.
-PASS: every seed of params.seeds has one clean arm and all three controls, and all of them pass."""
+PASS: every seed of params.seeds has one clean arm and all three controls, and all of them pass.
+Evidence (verify/evidence.py, GoodQA #16096 class B): params.seeds holds exactly SEEDS distinct seeds (THRESHOLDS amendment 6: 3; the
+experiment takes seeds("mig")[:3]); the rows are EXACTLY one clean row per seed (identity: seed) and one row per (seed, control) for the
+three controls. A second row with an identity already seen (at ea4677a a later row overwrote a failing one) is a FAIL, never judged."""
+import importlib.util
+import os
 
+
+def _evidence():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "evidence.py")
+    spec = importlib.util.spec_from_file_location("verify_evidence", p)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+EV = _evidence()
+SEEDS = 3
 REASON = {"forged_grant": "judged", "head_tampered": "differs from the old tables"}
 CONTROLS = tuple(REASON) + ("rollback_unchecked",)
 PROBES = ("select count(*) from dc_pre_r3_7.events", "select count(*) from dc.events", "select dc._apply_event('t1', '{}'::jsonb)")
@@ -36,6 +52,13 @@ def _replayed(rep):
 
 def verify(doc, rows):
     res, par = doc["result"], doc["params"]
+    g = EV.Gate("mig_rehearsal", doc)
+    sd = g.seeds(SEEDS, exact=SEEDS)
+    fam = g.split(rows, lambda r: r["kind"] if r["kind"] in ("clean", "control") else None)
+    g.family("clean", fam.get("clean", []), lambda r: ("clean", r["seed"]), {EV.key("clean", s) for s in sd})
+    g.family("control", fam.get("control", []), lambda r: ("control", r["seed"], r["control"]), {EV.key("control", s, h) for s in sd for h in CONTROLS})
+    if not g.ok:
+        return g.fail(agrees=res.get("verdict") == "FAIL")
     ap = set(res.get("applied_codes") or [])
     clean, ctl = {}, {}
     for r in rows:
@@ -57,4 +80,5 @@ def verify(doc, rows):
     complete = set(clean) == set(seeds) and set(ctl) == {(s, h) for s in seeds for h in CONTROLS}
     verdict = "PASS" if complete and all(clean.values()) and all(ctl.values()) and bool(seeds) else "FAIL"
     return {"verdict": verdict, "agrees": verdict == res.get("verdict"),
-            "checks": {"complete": complete, "clean": {str(k): v for k, v in clean.items()}, "controls": {"%s/%s" % k: v for k, v in ctl.items()}}}
+            "checks": {"complete": complete, "clean": {str(k): v for k, v in clean.items()}, "controls": {"%s/%s" % k: v for k, v in ctl.items()},
+                       "evidence": g.report()}}

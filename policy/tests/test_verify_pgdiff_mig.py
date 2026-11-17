@@ -39,7 +39,10 @@ C2 = {"kind": "control", "seed": 41, "control": "head_tampered", "refused": "sta
 C3 = {"kind": "control", "seed": 41, "control": "rollback_unchecked", "api_request": "proposed", "api_event": "alice/mig-ctl-1", "written": True,
       "rolled_back": True, "write_lost": True}
 DM = {"result": {"verdict": "PASS", "outcome_codes": ["proposed", "retracted", "unauthorized"], "applied_codes": ["proposed", "retracted"]},
-      "params": {"seeds": [41]}}
+      "params": {"seeds": [41, 42, 43]}}
+# The design has 3 seeds (THRESHOLDS amendment 6; verify/mig.py pins it since GoodQA #16096 class B): the cases below break seed 41's rows
+# and add seeds 42 and 43 unbroken.
+OTHER_SEEDS = [dict(r, seed=s) for s in (42, 43) for r in (CLEAN, C1, C2, C3)]
 
 
 class PgDiffVerifier(unittest.TestCase):
@@ -83,7 +86,7 @@ class MigVerifier(unittest.TestCase):
     V = _load("mig")
 
     def v(self, rows):
-        return self.V.verify(DM, rows)["verdict"]
+        return self.V.verify(DM, rows + OTHER_SEEDS)["verdict"]
 
     def test_good_passes(self):
         self.assertEqual(self.v([CLEAN, C1, C2, C3]), "PASS")

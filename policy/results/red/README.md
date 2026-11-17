@@ -4,6 +4,19 @@ Each log is the unittest output of a red run: the new tests against the code the
 broken variant), on local, never-pushed `red/*` branches. Home paths are redacted to `~`. Before commit the logs were scanned for
 credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password URLs); none occur. The 64-hex strings are sha256 digests.
 
+## Evidence identity (class B of the reviews: verifiers counted rows, not identities) at ea4677a
+
+Each verifier's property tests (tests/test_evidence_<x>.py on tests/evidence_props.py: an honest synthetic set built from the declared
+design, then drop, duplicate, relabel, renumber out of sequence, extra, overwrite and a design parameter shrunk in the result document)
+ran first against that verifier at ea4677a (the log header shows `git diff --stat ea4677a -- verify/<x>.py` empty and both sha256),
+then against the verifier on the shared layer verify/evidence.py. A test fails at ea4677a either because the manipulation returned
+PASS ("verdict PASS" in the log: the defect) or because the verdict was already FAIL but no evidence reason was named (no defect, the
+old verifier had no reasons). "Result" lists the manipulations that returned PASS.
+
+| Verifier | Red log (ea4677a) | Green log | Result at ea4677a |
+|---|---|---|---|
+| mig | `evidence_mig_red_ea4677a.out` | `evidence_mig_green.out` (with tests.test_evidence_layer, test_verify_pgdiff_mig, test_verify_s2, test_verify_provenance: Ran 41, OK) | FAILED (failures=17). PASS on: a duplicated clean row, a duplicated control row, a failing row followed by its passing original (the audit's overwrite, clean and control), and two seeds declared and run. Drops, relabels and extras were already FAIL there. |
+
 ## Final review (reviews/policy-final/review-1.md) at a2d65fd
 
 | Finding | Log | Code under test | Result |
