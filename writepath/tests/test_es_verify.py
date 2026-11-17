@@ -28,6 +28,8 @@ class FakeES:
 
     def req(self, method, path, body=None, ok=(200,), **params):
         if path.startswith("/_cat/shards/"):
+            if "expand_wildcards" in params:      # Elasticsearch 9.5.6 answers 400 illegal_argument_exception (t2-dev probe)
+                raise self.ESError(400, "illegal_argument_exception", "GET /_cat/shards")
             pat = path[len("/_cat/shards/"):].rstrip("*")
             rows = [{"index": i, "shard": sh, "prirep": pr, "state": c["state"], "id": n}
                     for (i, sh, pr, n), c in self.copies.items() if i.startswith(pat)]
@@ -67,6 +69,7 @@ class StrictPlaceholders(unittest.TestCase):
         os.environ["WP_HOME"] = str(home)
         sys.path.insert(0, str(HERE))
         cls.EV = importlib.import_module("wp.es_verify")
+        FakeES.ESError = importlib.import_module("wp.es").ESError
         cls.F = importlib.import_module("wp.families")
         cls.base = cls.F.base_index("t1", "events")
 

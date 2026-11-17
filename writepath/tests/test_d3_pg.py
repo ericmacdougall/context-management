@@ -225,12 +225,13 @@ class D3Store(unittest.TestCase):
         self.app.execute("select wp_subjects_ensure(%s::tenant_t, array[%s])", (TM, subject))
         epoch = self.app.execute("select epoch from wp_lease_acquire(%s::tenant_t, %s, 60, true, 'c4', 2000)", (TM, "session:" + sid)).fetchone()[0]
         mx = self.one("select max_seq from identifier_epochs where tenant_id=%s", (TM,))[0]
+        scan_v = self.one("select wp_secret_scan_version()")[0]      # the app sends the literal (log.append: SEC.VERSION)
         eid = str(uuid.uuid4())
         return self.state(self.app, "insert into events(tenant_id, session_id, seq, event_id, idem_key, req_hash, kind, subject_id, actor, "
                           "trust_origin, ts_event, content_enc, content_digest, mentions, mention_scan_upto, mention_matcher, secret_scan, "
                           "prev_hash, hash, lease_scope, lease_epoch) values (%s, %s, 1, %s, %s, 'rh', 'message', %s, 'user', 'user_typed', "
-                          "now(), %s, %s, '{}', %s, %s, wp_secret_scan_version(), %s, 'hz', %s, %s)",
-                          (TM, sid, eid, eid, subject, b"c", sha(b"c"), mx, matcher, "0" * 64, "session:" + sid, epoch))
+                          "now(), %s, %s, '{}', %s, %s, %s, %s, 'hz', %s, %s)",
+                          (TM, sid, eid, eid, subject, b"c", sha(b"c"), mx, matcher, scan_v, "0" * 64, "session:" + sid, epoch))
 
     def test_c4_matcher_stored_and_enforced(self):
         self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (TM, "mA")), "ok")
@@ -262,12 +263,13 @@ class D3Store(unittest.TestCase):
         return f(self.ev, T, rows)
 
     def raw(self, sql, args=()):
-        """A database-level change below every grant and trigger (what F7 asks verification to notice)."""
-        self.ev.execute("set session_replication_role = replica")
+        """A database-level change by the table owner, below every app grant (what F7 asks verification to notice).
+        The schema enables its triggers ALWAYS, so session_replication_role would not bypass them; wp_owner may."""
+        self.ev.execute("set role wp_owner")
         try:
             self.ev.execute(sql, args)
         finally:
-            self.ev.execute("set session_replication_role = origin")
+            self.ev.execute("reset role")
 
     def test_c5_null_content_needs_tombstone_and_job(self):
         self.event("c5a", "V1", [])
