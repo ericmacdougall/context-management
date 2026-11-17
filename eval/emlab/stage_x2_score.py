@@ -202,6 +202,7 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     res["wrong_query_control"] = {a: sum(wq[x][a] for x in complete) / max(1, len(complete)) for a in ARMS}
     res["wrong_query_pairs"] = {"rule": "next question in cyclic order over the evaluated questions whose gold sessions are disjoint from this question's (asserted for every pairing)",
                                 "partner": wq_pair, "hits": {x: {a: bool(wq[x][a]) for a in ARMS} for x in complete},
+                                "prior_rule_pairs_with_overlapping_gold": sorted(x for i, x in enumerate(complete) if gold[x] & gold[(complete[(i + 1) % len(complete)] if not (gold[x] & gold[complete[(i + 1) % len(complete)]]) else complete[(i + 2) % len(complete)])]),
                                 "questions_hit_per_arm": {a: sorted(x for x in complete if wq[x][a]) for a in ARMS}}
     # ---- scaling: the questions whose gold is entirely in the Stage X0 200 sessions, at 200 sessions and at the full pool
     toy_q = [x for x in complete if gold[x] <= toy_ids]
