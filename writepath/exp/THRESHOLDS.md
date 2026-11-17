@@ -866,3 +866,34 @@ Feasibility rule (decided by the rows, not by the author):
   The measured PD delay (maximum over the 20 runs) is stated as a limit in the receipt wording.
 Gates: the run lock (OWNER-COMMON addendum), launch_one.sh (20 GB start line, disk_gate start, check and end, flood and
 high-watermark watcher). One run. A VOID run may be rerun and both are recorded.
+
+## Amendment H2 (2026-11-17, written before any run of exp/h_d2_uids.py): D2, separate service identities
+Property: the application's service identity cannot read the verifier's, the key service's or the operator's
+credentials, cannot act as the verifier or the key store, and cannot complete an erasure on its own word; the key store
+is reached only through the key service (wp/keysvc.py), which serves only the application's uid.
+Method (exp/h_d2_uids.py): distinct uids in this stream's own containers (app 20001, verifier 20002, key service 20003),
+one 0700 credential directory per service, the whole credential tree mounted into every container read-only so that
+only the kernel's permission check separates them. Per run a fresh tenant; X has 5 events, projected.
+Fenced arm, per run, holds iff ALL of:
+  (a) each probe file (verifier pgpass, key-service pgpass, admin pgpass, `elastic` password, admin ES key) that the
+      root helper witnesses as existing and non-empty is refused to the app uid with EACCES; every probe file has
+      such a witness (the `elastic` password and admin ES key exist only with security on: their absence is recorded
+      and fails the run);
+  (b) the app cannot connect as wp_verifier, wp_kms or the admin;
+  (c) wp_erasure_complete as wp_app is refused;
+  (d) a dishonest runner (placeholders skipped, fabricated zero counts through wp_verifier if it can) does not reach done;
+  (e) the honest runner with verifier="external" reaches done through the verifier container, the job state is done;
+  (f) the app's KeyStore is the key-service client (describe() names the separate process);
+  (g) a call to the key service from the VERIFIER's uid is refused (peer_refused).
+Control arm (one uid, one shared directory with every service credential, the 963e597 deployment), per run violated
+iff the app reads the verifier pgpass AND connects as wp_verifier AND the dishonest runner reaches done while X still
+has non-placeholder documents in Elasticsearch.
+R = 5 per arm. PASS = fenced holds 5/5 AND control violated 5/5. Otherwise FAIL.
+Failing-first: the control arm is the prior deployment's layout; the 11ebb46 application also opened the key store as
+wp_kms itself (no key service), which (f) refuses.
+Shake-down: one unstamped run at R=1 before the stamped run, to check the container mounts and permissions only; it is
+disclosed with its outcome and never reported as a result.
+Limits stated in the result: docker access on the host is root-equivalent, so this shows separation of service
+identities on one host, not host isolation; the app still receives subject key bytes (app-side encryption); the
+operator's directory is mounted into the app container for this test only.
+Gates: the run lock, launch_one.sh, one stamped run; VOID may be rerun and both are recorded.
