@@ -18,8 +18,8 @@ import tempfile
 import unittest
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
-GOOD = {"stream": "emlab2-writepath", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
-        "pg_container": "emlab2-writepath-pg", "es_container": "emlab2-writepath-es"}
+GOOD = {"stream": "emlab2-wphard", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
+        "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"}
 
 
 def run_case(cfg_src, home_conf, set_home=True):
@@ -48,6 +48,11 @@ CASES = [
     ("NEG-1 home without stream marker", {k: v for k, v in GOOD.items() if k != "stream"}, True, "refuse"),
     ("NEG-1 wrong stream marker", dict(GOOD, stream="emlab-writepath"), True, "refuse"),
     ("NEG-2 previous lab's ES container", dict(GOOD, es_container="emlab-es-wp-16096"), True, "refuse"),
+    # hardening stream (goodqa#16096 item 4): the step-1 owner's home and containers are another stream's
+    ("NEG-3 step-1 stream marker", dict(GOOD, stream="emlab2-writepath"), True, "refuse"),
+    ("NEG-3 step-1 stream's ES container", dict(GOOD, es_container="emlab2-writepath-es"), True, "refuse"),
+    ("NEG-3 complete step-1 conf", dict(GOOD, stream="emlab2-writepath", pg_container="emlab2-writepath-pg",
+                                        es_container="emlab2-writepath-es"), True, "refuse"),
     ("missing pg_port", {k: v for k, v in GOOD.items() if k != "pg_port"}, True, "refuse"),
     ("non-loopback es_url", dict(GOOD, es_url="http://203.0.113.5:19460"), True, "refuse"),   # RFC 5737 address
     ("correct conf", GOOD, True, "load"),
@@ -59,7 +64,7 @@ def check(cfg_src, conf, set_home, want):
     rc, out = run_case(cfg_src, conf, set_home)
     # a refusal counts only when the config itself refused (its message), never an import or other error
     got = "load" if (rc == 0 and out.startswith("LOADED")) else "refuse" if (rc != 0 and "refusing to start" in out) else "error"
-    ok = got == want and (want == "refuse" or "LOADED 25660 http://127.0.0.1:19460 emlab2-writepath-es" in out)
+    ok = got == want and (want == "refuse" or "LOADED 25660 http://127.0.0.1:19460 emlab2-wphard-es" in out)
     return ok, got, out.splitlines()[-1][:120] if out else ""
 
 

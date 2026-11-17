@@ -18,8 +18,8 @@ from types import SimpleNamespace
 from unittest import mock
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
-GOOD = {"stream": "emlab2-writepath", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
-        "pg_container": "emlab2-writepath-pg", "es_container": "emlab2-writepath-es"}
+GOOD = {"stream": "emlab2-wphard", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
+        "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"}
 GIB = 1024 ** 3
 
 

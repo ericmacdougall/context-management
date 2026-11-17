@@ -1,11 +1,11 @@
 """Create this stream's own lab home and stores on the fleet host (idempotent). Standalone: system python3 + docker,
 does not import wp (whose config refuses to start until this has written the conf).
 
-  WP_HOME=$HOME/emlab2-16096/writepath/wp python3 host/bootstrap.py PG_PORT ES_PORT
+  WP_HOME=$HOME/emlab2-16096/wphard/wp python3 host/bootstrap.py PG_PORT ES_PORT
 
-- WP_HOME must end with emlab2-16096/writepath/wp (never the previous lab's ~/emlab-16096).
-- Containers emlab2-writepath-pg (postgres:16) and emlab2-writepath-es (elasticsearch 9.5.6, security off; D6 turns it
-  on with wp/es_security.py), loopback ports only, memory limits, labelled emlab2.stream=writepath. A container of
+- WP_HOME must end with emlab2-16096/wphard/wp (never the previous lab's ~/emlab-16096).
+- Containers emlab2-wphard-pg (postgres:16) and emlab2-wphard-es (elasticsearch 9.5.6, security off; D6 turns it
+  on with wp/es_security.py), loopback ports only, memory limits, labelled emlab2.stream=wphard. A container of
   that name without the label is refused, never removed.
 - Elasticsearch disk watermarks are ABSOLUTE free-space floors (low 18gb, high 17gb, flood 15gb): at 15 GB free the
   node stops writes itself, which enforces the host disk rule (do not leave under 15 GB free) from inside the store.
@@ -28,15 +28,15 @@ import time
 import urllib.error
 import urllib.request
 
-PG_C, ES_C = "emlab2-writepath-pg", "emlab2-writepath-es"
-LABEL = "emlab2.stream=writepath"
+PG_C, ES_C = "emlab2-wphard-pg", "emlab2-wphard-es"
+LABEL = "emlab2.stream=wphard"
 PG_IMAGE, ES_IMAGE = "postgres:16", "docker.elastic.co/elasticsearch/elasticsearch:9.5.6"
 
 
 def _home():
     h = os.environ.get("WP_HOME", "")
-    if not h.rstrip("/").endswith("emlab2-16096/writepath/wp"):
-        raise SystemExit("refusing: WP_HOME must be this stream's home (.../emlab2-16096/writepath/wp)")
+    if not h.rstrip("/").endswith("emlab2-16096/wphard/wp"):
+        raise SystemExit("refusing: WP_HOME must be this stream's home (.../emlab2-16096/wphard/wp)")
     return pathlib.Path(h)
 
 
@@ -76,7 +76,7 @@ def _container(name):
     if r.returncode != 0:
         return None
     j = json.loads(r.stdout)[0]
-    if (j["Config"].get("Labels") or {}).get("emlab2.stream") != "writepath":
+    if (j["Config"].get("Labels") or {}).get("emlab2.stream") != "wphard":
         raise SystemExit(f"refusing: container {name} exists and is not this stream's (no {LABEL} label)")
     return j
 
@@ -99,7 +99,7 @@ def main(pg_port, es_port):
     sec.mkdir(mode=0o700, exist_ok=True)
     os.chmod(sec, 0o700)
     os.chmod(home / "oldhome", 0o700)
-    conf = {"stream": "emlab2-writepath", "pg_port": str(pg_port), "es_url": f"http://127.0.0.1:{es_port}",
+    conf = {"stream": "emlab2-wphard", "pg_port": str(pg_port), "es_url": f"http://127.0.0.1:{es_port}",
             "pg_container": PG_C, "es_container": ES_C}
     for k, v in conf.items():
         (home / "conf" / k).write_text(v + "\n")

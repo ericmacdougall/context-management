@@ -4,11 +4,11 @@
 # stream's Elasticsearch logs a flood-stage watermark (disk_gate end then marks the run VOID).
 # usage: sh runkit/launch_one.sh <pinned dir> <label> <module> [args...]
 #        output WP_HOME/results/one.<head>.<label>.out; prints that path, the head, the start time and free space.
-# Needs WP_HOME (this stream's home on the host) and ES_CONTAINER (default emlab2-writepath-es).
+# Needs WP_HOME (this stream's home on the host) and ES_CONTAINER (default emlab2-wphard-es).
 set -eu
 : "${WP_HOME:?WP_HOME must name the home of this stream}"
 export WP_HOME
-ES_CONTAINER=${ES_CONTAINER:-emlab2-writepath-es}
+ES_CONTAINER=${ES_CONTAINER:-emlab2-wphard-es}
 FREE=$(df -BG --output=avail "$WP_HOME" | tail -1 | tr -dc 0-9)
 [ "$FREE" -ge 20 ] || { echo "BLOCKED free ${FREE}G < 20"; exit 3; }   # amendment 24 (17 before)
 D=$1; L=$2; shift 2

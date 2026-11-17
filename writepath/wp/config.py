@@ -12,8 +12,8 @@ import os
 import pathlib
 import urllib.parse
 
-STREAM = "emlab2-writepath"        # the conf marker this code accepts
-OWN_PREFIX = "emlab2-writepath-"   # every container this code may address by name starts with this
+STREAM = "emlab2-wphard"        # the conf marker this code accepts
+OWN_PREFIX = "emlab2-wphard-"   # every container this code may address by name starts with this
 
 
 class NotThisStream(SystemExit):
