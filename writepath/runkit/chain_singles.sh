@@ -15,8 +15,9 @@ PY=$WP_HOME/venv/bin/python
 echo "chain start $(date -u +%FT%TZ) head $H spec $(basename "$SPEC")"
 while read -r L C M; do
   case "$L" in ''|'#'*) continue ;; esac
-  # STOP: since review A, stops are records in the gate's append-only ledger (state/stop_ledger.jsonl; a legacy
-  # state/STOP file is ingested as one). `disk_gate stops` lists unacknowledged stops and exits 2 if there is one;
+  # STOP: since review A, stops are records in the gate's append-only ledger (state/stop_ledger.jsonl). Since review D
+  # state/STOP is a directory: a legacy `> state/STOP` fails, and a file put into it or a touch of it is recorded as a
+  # stop. `disk_gate stops` lists unacknowledged stops and exits 2 if there is one;
   # `disk_gate start` is BLOCKED by the same rule; acknowledge one with `disk_gate clear-stop <stop id> <reason>`.
   # History: at 9cbc798 a STOP written at 11:32:50Z during es_semantics was ignored by that gate's end (review N2) and
   # deleted by n_old's start at 11:32:56Z, and the chain went on.
@@ -34,6 +35,11 @@ while read -r L C M; do
   while ! grep -qE "^end" "$OUT"; do sleep 5; done
   grep -E "^end" "$OUT"
   grep -qE "^end [0-9]" "$OUT" || { echo "chain stopped after $L"; exit 3; }
-  [ "$C" = "-" ] || (cd "$D" && $PY -m exp.cleanup "$C" < /dev/null | tail -1)
+  # cleanup's output and its exit status are kept apart (review D F9: a pipe into tail hid a failed cleanup)
+  if [ "$C" != "-" ]; then
+    CO=$(cd "$D" && $PY -m exp.cleanup "$C" < /dev/null 2>&1); CRC=$?
+    printf '%s\n' "$CO" | tail -1
+    [ "$CRC" -eq 0 ] || { echo "chain stopped: cleanup $C after $L failed (exit $CRC)"; exit 3; }
+  fi
 done < "$SPEC"
 echo "chain end $(date -u +%FT%TZ)"
