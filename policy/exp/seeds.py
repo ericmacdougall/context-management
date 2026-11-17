@@ -6,7 +6,7 @@ Used before and never reused: 11..15, 21..25, 77, 88, 606, 707 (earlier owners),
 import os
 import sys
 
-DEV = {name: ["dev-%s-%d" % (name, i) for i in range(1, 6)] for name in ("e1", "e2", "e3", "e4", "e5", "e6", "b1", "b2", "b3", "pgdiff", "mig")}
+DEV = {name: ["dev-%s-%d" % (name, i) for i in range(1, 6)] for name in ("e1", "e2", "e3", "e4", "e5", "e6", "b1", "b2", "b3", "pgdiff", "mig", "s2")}
 STAMPED = {"e1": [41, 42, 43, 44, 45], "e2": [41, 42, 43, 44, 45], "e3": [199], "e4": [41, 42, 43, 44, 45], "e5": [41, 42, 43, 44, 45],
            "e6": [909], "b1": [41], "b2": [41, 42, 43, 44, 45], "b3": [41], "pgdiff": [41, 42, 43, 44, 45], "mig": [41, 42, 43]}
 
