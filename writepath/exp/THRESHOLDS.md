@@ -546,3 +546,27 @@ C's property and the PASS rule are unchanged: P1.run(max_rounds=5) returns False
 P1 holds no lease, and the holder is the last taker.
 
 Next: one stamped run at the repaired harness commit.
+
+## Amendment 15b (2026-11-17, after the VOID run_all at fd4ed53, before any further held-out run; thresholds of 15 unchanged)
+Amendment 15 says the held-out scan runs once, stamped, inside run_all. The only scoring so far was inside the fd4ed53
+run_all, which is VOID (ES flood stage at 10:23Z). The held-out step itself ran at 09:41Z and needs no stores. That
+scoring is recorded as an observation, not a result (results/run_all-fd4ed53-VOID/heldout_secrets.2e854942e9884360.json):
+
+| Measure | Caught | Wilson 95% bound |
+|---|---|---|
+| H1 in-scope | 483/1,169 | lower 0.3853 |
+| H2 in-scope | 150/750 | lower 0.1729 |
+| H1 false blocks | 37/1,200 | upper 0.0422 |
+| Control gap | 0.3247 | |
+
+That run's verdict: FAIL.
+
+The stamped held-out result is one run of exp/heldout_secrets.py outside run_all, from a pinned tree at 62c6be5, under the
+same validity gates (exp/disk_gate.py start, check and end, plus the flood watcher). Nothing else changes:
+- the scanner blob, 58b025fc;
+- the generator hash and corpus digest of 15a;
+- the H2 vendored transforms;
+- the scope split, the judge, the control and the thresholds.
+
+The scanner was not edited after the VOID-run scoring, and the harness refuses any other blob. The corpus is
+deterministic, so the run re-scores the same items.
