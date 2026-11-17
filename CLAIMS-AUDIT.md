@@ -31,7 +31,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v3. Every number in DESIGN.md v3
 | Erasure at 100,000 events | done, residue 0 | RV-WP delta | F1 row | file |
 | Secret scan | 880 of 880; 2 false blocks in 3,862 clean files | LEDGER | write-path section, Held | ledger |
 | Anchor, seal | 10 of 10 each | LEDGER | write-path section, Held | ledger |
-| Tuned scanner held-out | 350 of 800 (44%); 400 of 400 tuned | LEDGER | Ingestion Did not hold | ledger |
+| Tuned scanner held-out (HISTORICAL; superseded by 300 of 800 under the corrected predicate, then 800 of 960 on a fresh set) | 350 of 800 (44%); 400 of 400 tuned | LEDGER | Ingestion Did not hold | ledger |
 | Review findings D1 to D6, F-ids | ids only | RV-WP delta | New material issues | file |
 
 ## Section 2.2: Elasticsearch and Basic path
@@ -39,7 +39,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v3. Every number in DESIGN.md v3
 |---|---|---|---|---|
 | Visibility | 1,002 ms; 522 ms | LEDGER | Independent replication table | ledger |
 | bbq_disk | 40 of 40 documents fail | LEDGER | Replication table, licence matrix | ledger |
-| Degrade rehearsal | 387,045 responses, 0 mismatches; 134,290 writes, 0 lost; 0.03 to 0.06 s; 1 of 12 lives recomputed | LEDGER; DEGRADE.md | Licence transitions section; evidence ids | ledger |
+| Degrade rehearsal | 387,045 responses (original ten lives; 433,464 over all twelve), 0 mismatches; 134,290 writes, 0 lost; 0.03 to 0.06 s; 1 of 12 lives recomputed | LEDGER; DEGRADE.md | Licence transitions section; evidence ids | ledger |
 | Traps | 60 of 60 queries differ; 5 of 5 restarts stayed on Basic; about 45 requests per second | LEDGER | Licence "Did not hold" table | ledger |
 | Parity | 0.751; 0.8167; 0.9637; rescore_vector 0.039 (CI -0.078 to -0.005) | LEDGER | Replication table and "Did not replicate" list | ledger |
 
@@ -172,7 +172,7 @@ confirmed the rows below from the files named.
 | Cross-encoder length-matched gain +0.020 (CI -0.004 to +0.049) | +0.023 (CI 0.000 to 0.051), random same-size pool +0.008, on the final 94 questions; +0.020 is the superseded 83-question value | eval/EXPLORATORY.md line 130; LEDGER reconciliation table |
 | Analyst gain survives length matching at +0.098 | True for the earlier 50-candidate unshuffled analyst; the 300-candidate arm was not length-matched | eval/EXPLORATORY.md |
 | 12 material findings each (write path, engine, adapters) | Adapters 12, write path 8 (F1 to F8), durable-session testbed 10 (H1 to H3, M1 to M7); LEDGER corrected | the three review reports |
-| Evaluation harness REVIEWED-WITH-LIMITS (still current for component 23; the ES-pilot scorer reviews of 2026-11-17 are in reviews/eval-espilot*/) | Latest independent verdict: "NOT safe to freeze Phase R at a81d42d"; fixes and freeze checked by main only. Now LAB-EVIDENCE-UNREVIEWED | agent-a63b2d2ca8f38c01c/delta_review_goodqa16096.md |
+| Evaluation harness REVIEWED-WITH-LIMITS (HISTORICAL; component 23 is LAB-EVIDENCE-UNREVIEWED as the next cell and DESIGN.md say; the ES-pilot scorer reviews of 2026-11-17 are in reviews/eval-espilot*/) | Latest independent verdict: "NOT safe to freeze Phase R at a81d42d"; fixes and freeze checked by main only. Now LAB-EVIDENCE-UNREVIEWED | agent-a63b2d2ca8f38c01c/delta_review_goodqa16096.md |
 | Per-role Elasticsearch keys as lab evidence at 4960f50 | Code at 5fc4bd6 only; commit records py_compile and "run waits for the cluster" | git log, feat/writepath-rescue |
 | Policy: "Postgres port not built" | Decision core in plpgsql exists on the branch (20 commits after 80bb6a7, unreviewed); the composition into the write-path trigger is what is not built | policy/COMPOSITION.md at 3fa69c1 |
 | Freshness scan "failed" | Owner's pass withdrawn (7.59 false challengers per scan, hash-embedding stand-in); no real-embedder test exists | research/wr128embl.output statement 3.6.7 |
@@ -215,12 +215,12 @@ Figures added to DESIGN.md and LEDGER.md on 2026-11-17 and where each comes from
 
 | Figure | Source |
 |---|---|
-| Ingestion: 18 of 18 and 8 of 8 declared-boundary runs; 1,884 and 588 flagged extra events; 20 of 20 identical-resend probes; 6 covered placements, 42 conversations; 800 of 960, 80.8%; 0 of 720; four cells 0 of 40; 53 offline tests | ingest/CLAIMS.md at d76e525 (lines 30 to 36, 44 to 54); 53 tests re-run by this branch's integration owner (ingest branch integ/ingest) and by main (WAL w1680249dbf6) |
+| Ingestion (EVIDENCE LOCATION: Outcomes at feat/port-ingest d76e525 (docstring fix 2b23546) are owner-reported and coordinator-checked, NOT independently reviewed, and the artefacts live on that branch, not yet merged into lab/integration): 18 of 18 and 8 of 8 declared-boundary runs; 1,884 and 588 flagged extra events; 20 of 20 identical-resend probes; 6 covered placements, 42 conversations; 800 of 960, 80.8%; 0 of 720; four cells 0 of 40; 53 offline tests | ingest/CLAIMS.md at d76e525 (lines 30 to 36, 44 to 54); 53 tests re-run by this branch's integration owner (ingest branch integ/ingest) and by main (WAL w1680249dbf6) |
 | Ingestion: 300 of 800 and 50 of 50 private-key bodies | reviews/ingest-delta/review-1.md item 1 (F2) |
-| Licence: 27,599 examined, 5,925 of 5,925, 1,055,037 request rows, 31 manifest hashes, 93 to 257 failures per life, 4 FAIL and 1 ERROR then Ran 35 OK | reviews/licence-delta/review-1.md items on F1 and N1; licence/DEGRADE.md; WAL wb297c3d1172 |
+| Licence (the 27,599, 5,925 and 1,055,037 figures are in committed report reviews/licence-delta/review-1.md; "4 FAIL and 1 ERROR then Ran 35 OK" and the T4 outcomes are at 207136e: Outcomes at feat/licence-rehearsal 207136e are owner-reported and coordinator-checked, NOT independently reviewed, and the artefacts live on that branch, not yet merged into lab/integration): 27,599 examined, 5,925 of 5,925, 1,055,037 request rows, 31 manifest hashes, 93 to 257 failures per life, 4 FAIL and 1 ERROR then Ran 35 OK | reviews/licence-delta/review-1.md items on F1 and N1; licence/DEGRADE.md; WAL wb297c3d1172 |
 | ES-pilot: 94 questions, 90 clusters, 16 cells, largest mean difference -0.018, 0.0053 against 0.005, 13 attacks with 7 KEEP on the old scorer | eval/ES-PILOT.md lines 21 and 60 to 68; WAL w287450f28a8 |
 | Write path: 483 of 1,169, 150 of 750, 37 of 1,200 false blocks | reviews/writepath/review-2.md item 7 |
 | Stage X2: 38 X1 per-question entries containing the 23 low-overlap ids | reviews/eval-x2delta/review-1.md (F3) |
 | Policy: final review figures (P1 to P4, M1 to M3 partly, M4 closed) | reviews/policy-final/review-1.md at a2d65fd |
-| Stage 11: J2 940 calls, A1 188 calls (against 376 shown to the user), about 1,130 and 376 as asked, 160 J1 calls | WAL w187906c60f1 (ask), wf5f7a7d73bc (answer), w5f38b1de953 (main's readings, ASSUMPTION) |
+| Stage 11 (J1 outcomes at feat/eval-pilots a6ca17e are owner-reported, NOT independently reviewed, and the artefacts live on that branch, not yet merged into lab/integration; the user's decisions are cited as the user decision recorded in the coordinator's log on 2026-11-17, not verifiable from this repository): J2 940 calls, A1 188 calls (against 376 shown to the user), about 1,130 and 376 as asked, 160 J1 calls | WAL w187906c60f1 (ask), wf5f7a7d73bc (answer), w5f38b1de953 (main's readings, ASSUMPTION) |
 | Free-space figures: 13 GB swing, 13.4 GB, 20 GB start line | OWNER-COMMON addendum; WAL w7cefba34fa3 |
