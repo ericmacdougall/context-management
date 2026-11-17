@@ -1,0 +1,46 @@
+# green run: tests.test_evidence_e5 tests.test_evidence_layer against verify/e5.py
+# worktree HEAD: 9d135060ba8f53199cd4d704155bd6f2405835ee
+# git diff --stat ea4677a -- verify/e5.py (empty: the code under test is ea4677a's):
+ policy/verify/e5.py | 61 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 60 insertions(+), 1 deletion(-)
+# sha256 verify/e5.py in the worktree: e6cb04f9cfb7bea702df155a3257ccb3e6f2015827f91ee72d4204e3da143869
+# sha256 verify/e5.py at ea4677a:     b8fb030b27f72c0f6d5a88a0c4f5f7b59f4d398a3abcc788defb45fd16a43d49
+# command (from policy/): python3 -m unittest -v tests.test_evidence_e5 tests.test_evidence_layer
+test_design_comes_from_the_pins (tests.test_evidence_e5.E5Evidence) ... ok
+test_drop (tests.test_evidence_e5.E5Evidence) ... ok
+test_duplicate (tests.test_evidence_e5.E5Evidence) ... ok
+test_dview_of_an_undeclared_human (tests.test_evidence_e5.E5Evidence) ... ok
+test_extra (tests.test_evidence_e5.E5Evidence) ... ok
+test_honest_set_passes (tests.test_evidence_e5.E5Evidence) ... ok
+test_informational_arm_dropped (tests.test_evidence_e5.E5Evidence)
+B_ctl_unscoped_value is informational (no floor), so ea4677a PASSED without it: the design still runs it. ... ok
+test_overwrite (tests.test_evidence_e5.E5Evidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_e5.E5Evidence) ... ok
+test_relabel (tests.test_evidence_e5.E5Evidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_e5.E5Evidence) ... ok
+test_view_of_an_undeclared_viewer (tests.test_evidence_e5.E5Evidence)
+World 64/10 has 2 threads (p0, p1): a view of p2 is not in its declared list. ... ok
+test_view_relabelled_to_another_viewer_of_its_world (tests.test_evidence_e5.E5Evidence) ... ok
+test_world_declares_a_viewer_list_the_design_does_not_have (tests.test_evidence_e5.E5Evidence)
+World 62/7 declares no pt (the other tenant's viewer) and its pt view is gone: ea4677a PASSED (views are not counted). ... ok
+test_world_declares_four_threads (tests.test_evidence_e5.E5Evidence) ... ok
+test_world_notice_relabelled (tests.test_evidence_e5.E5Evidence)
+A B_ctl_flag_always world relabelled existence_only (with its views): its key-rule break disappears; the floor still holds. ... ok
+test_each_reason_is_named (tests.test_evidence_layer.Layer) ... ok
+test_identities_are_typed (tests.test_evidence_layer.Layer) ... ok
+test_main_import_gate_covers_the_layer (tests.test_evidence_layer.Layer) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/exp/e1_lattice.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_pins_compare_exactly (tests.test_evidence_layer.Layer) ... ok
+test_unclassified_rows_and_bad_seeds (tests.test_evidence_layer.Layer) ... ok
+test_wrong_experiment_name (tests.test_evidence_layer.Layer) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 61.287s
+
+OK
+# unittest exit status 0
