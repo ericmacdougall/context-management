@@ -8,7 +8,7 @@ run logs or test outputs. Each report names its reviewed HEAD and packet SHA-256
 
 How to read the verdict column. The first token in a report header (`BLOCK`, `ACCEPT`, `PASS`) is the raw result of that run; the
 reviewer's use verdicts are in the body as "LAB" and "CLIENT". Almost every report says LAB PASS WITH LIMITS (or BLOCK as written, for
-the first X2 reviews) and CLIENT BLOCK. No report clears client use. Fixes made after a stream's last review are main-checked, not
+the first X2 reviews) and CLIENT BLOCK. No report establishes deployment readiness of the composed client system; only the certificate-cache and vacuous-test reports give CLIENT PASS WITH LIMITS, and only for their narrow, inspected scopes. Fixes made after a stream's last review are main-checked, not
 re-reviewed, and the status tables in DESIGN.md say so.
 
 | Report | Reviewer (effort, rung; author rung) | Stream | Commit reviewed | Packet (first 12 hex) | Run id (where recorded) | Raw result | Lab / client verdict in the body | Date |
@@ -34,6 +34,7 @@ re-reviewed, and the status tables in DESIGN.md say so.
 | deploy-poison/review-2.md | gpt-6.1-sol medium, R1; author R0 | Deploy path item 8: poisoned inputs | 801a3d2 | 5d96a7883909 | not recorded here | BLOCK | LAB BLOCK for the acceptance flows (F1, F2); CLIENT BLOCK | 2026-11-17 |
 | deploy-reprobe/review-1.md | gpt-6.1-sol medium, R1; author R0 | Deploy path item 8: start-up re-probe | f80e34d | 05e983368e54 | not recorded here | BLOCK | LAB PASS WITH LIMITS; CLIENT BLOCK (F1 to F3) | 2026-11-17 |
 | pr/eval-review-3.md | gpt-6.1-sol medium, R1; author R0 | Pull request gate, PR 2 (eval), first run | 45d9ec5 | b45147ac43d1 | not recorded here | BLOCK | gate verdict; no lab/client use verdicts | 2026-11-17 |
+| pr/ledger-review-4.md | gpt-6.1-sol medium, R1; author R0 | Pull request gate, PR 5 (ledger), third run | 12a3c88 | a6193d0a181c | not recorded here | PASS | gate verdict; minors F4, F8 to F10; PR 5 then merged | 2026-11-17 |
 | pr/eval-review-4.md | gpt-6.1-sol medium, R1; author R0 | Pull request gate, PR 2 (eval), second run | 45d9ec5 | 1b284f4802dd | not recorded here | PASS | gate verdict; PR 2 then merged | 2026-11-17 |
 | pr/ingest-review-2.md | gpt-6.1-sol medium, R1; author R0 | Pull request gate, PR 3 (ingest) | d254fa4 | c093e13a8263 | not recorded here | BLOCK | gate verdict; no lab/client use verdicts | 2026-11-17 |
 | pr/ledger-review-2.md | gpt-6.1-sol medium, R1; author R0 | Pull request gate, PR 5 (ledger) | a598931 | 952baf8b63f9 | not recorded here | BLOCK | gate verdict; findings F1 to F5 | 2026-11-17 |
