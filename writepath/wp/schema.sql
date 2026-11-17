@@ -710,6 +710,10 @@ begin
       'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials)', 'pronouns and indirect references',
                                        'mentions inside inbox payloads and analyst-job results',
                                        'content outside this store (ES snapshots, backups, logs: see store_registry ext:*)')),
+    'timing', 'no completion-time bound under concurrent writes: the erasure mark waits for every in-flight share lock on '
+              'the subject row (appends by or mentioning the subject, other subjects'' cascade batches, identifier declares), and '
+              'new share locks are granted ahead of the waiting mark, so a sustained overlap of such writes delays it without '
+              'bound; each attempt is cut by the role statement_timeout and the job stays open for the next sweep (exp/lock_order MS)',
     'note', scope_note);
   hl := (select coalesce(jsonb_agg(jsonb_build_object('hold_id', hold_id, 'placed_at', placed_at, 'released_at', released_at) order by placed_at), '[]')
          from legal_holds where tenant_id = j.tenant_id and subject_id = j.subject_id);
