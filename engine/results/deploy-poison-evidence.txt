@@ -1,0 +1,26 @@
+# deploy part 1 evidence, run 2026-11-17 on t2-dev under the lab run lock (deploy, a7a150e52654dcc3f)
+# environment: container emlab2-deploy-pg postgres:16 (loopback, 1g), schema = engine/pg/schema_systems.sql + engine_schema.sql, venv-new (psycopg, temporalio 1.36.1), ENGINE_HOME under ~/emlab2-16096/deploy/home, no Temporal server
+
+## green at 9b4c13f
+command: ENGINE_TEST_PG=1 python -m unittest engine.tests.test_alerts
+Ran 25 tests in 0.411s
+OK
+(25 tests, 0 skipped: includes release after a real poison outcome with dead-letter ok and failed, 25 poisoned inputs, resubmission depth limit, tenant isolation, unattached alert)
+
+## red at reviewed commit 801a3d2 (review F1)
+script: a REAL poison outcome (turn_read at attempt 5 with ENGINE_POISON_SEQS), then dead_letter, then what 'alerts release' did at 801a3d2 (status flip)
+dead_letter_works=True: release reported changed=True; original input retryable (in unprocessed_inputs)=False
+dead_letter_works=False: release reported changed=True; original input retryable (in unprocessed_inputs)=True
+meaning: after a successful dead-letter, release reported changed=True and the input is NOT retryable. After a failed dead-letter the database-level skip is lifted, but the workflow's done/poisoned set still holds the input (review text; not reproduced here: no Temporal server)
+
+## red at 801a3d2 for the offline wrapper tests (review F2 and the rest)
+FAIL: test_a_non_turn_session_activity_poison_is_attached_to_the_session_not_an_event (engine.tests.test_alerts.AlertFromTheWrapper)
+AssertionError: Lists differ: [('t1', 's1', 'activity:rollup', 'poison', 'RuntimeError')] != [('t1', 's1', 'activity:rollup', 'poison', 'RuntimeError', 5)]
+FAIL: test_a_poison_raises_a_durable_alert_before_the_non_retryable_failure (engine.tests.test_alerts.AlertFromTheWrapper)
+AssertionError: Lists differ: [('t1', 's1', 't1/s1/2', 'poison', 'RuntimeError')] != [('t1', 's1', 't1/s1/2', 'poison', 'RuntimeError', 5)]
+FAIL: test_after_the_bound_the_alert_is_spooled_loudly_and_poison_goes_through (engine.tests.test_alerts.AlertFromTheWrapper)
+AssertionError: Tuples differ: (None, None) != ('Poison', True)
+FAIL: test_an_activity_with_no_session_alerts_under_the_unattached_key_and_fails_loudly (engine.tests.test_alerts.AlertFromTheWrapper)
+AssertionError: Lists differ: [] != [('-', '-', 'activity:get_config', 'poison', 'RuntimeError', 5)]
+Ran 11 tests in 0.515s
+FAILED (failures=4)
