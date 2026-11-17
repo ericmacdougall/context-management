@@ -618,3 +618,121 @@ DEV results at 0bcabe4 (dev seeds; development observations, not proof):
   7bff4be0, c49a6220, 99a66737; B2 6f2d4ceb; B3 90e08a7e.
 
 The stamped run follows this commit once, on a clean tree, with POL_SEEDS=stamped. Its verdict is reported as it falls.
+
+## Amendment 5 (2026-11-16, round 3 and the database core; written after DEV runs; committed ALONE, before the stamped run of this round)
+
+Why: round 3 changed the rules (3b948ac, 08c3acc, 65120ea; an ASSUMPTION until the user confirms it, decision 8), the decision core moved into
+Postgres owner code behind a session API (27ad63a, R3-7), and new experiments were added (pg_diff, mig_rehearsal). Everything below
+is fixed before the stamped run; the verdict is reported as it falls. Earlier amendments stay in force where not changed here.
+
+Rule changes (ASSUMPTION, round 3; CORE-RULES.md is the text):
+- Non-humans (agents, analysts) only propose and remark. Every decision-like code (accept, reject, amend, supersede, retract, resolve,
+  contest) on a non-human event is refused. The rules `self_approval` and `no_value_change` are gone with N3; verify/b1, b2 and b3 no
+  longer list those codes.
+- The per-requirement open cap (256) counts and binds NON-HUMAN items only; the per-principal cap (16) binds everyone.
+
+B1 (exp/b1_modelcheck.py, exp/b1_invariants.py, verify/b1.py):
+- I2 now: a non-human event never moves the head, changes a value, or returns a decision-like code.
+- I17 counts non-human open items for the per-requirement cap. NEW I18: a human is refused `proposal_cap` only when that human's own
+  per-principal count is at the cap (non-human items never lock a human out).
+- Controls: `agent_may_decide` (the round-3 refusal deleted; expected I2, r3 pool) replaces n3_agent_reject_moves_head,
+  n3_value_unchanged_moves_head and self_approval_removed; NEW `cap_blocks_humans` (the per-requirement cap applied to humans
+  again; expected I18, caps pool). The other seven are unchanged. The caps pool gains an admin grant of `propose` on r1 to a1, so a
+  non-human can fill the small per-requirement cap and a human can then be tested against it. SMALL_CAPS anchor text corrected (the
+  constant line carries a comment).
+
+B2 (exp/b2_rebuild.py, verify/b2.py):
+- Controls: `agent_may_decide` replaces the two N3 controls. `cap_blocks_humans` is NOT a B2 control: with 3 non-human principals and
+  a per-principal cap of 16, at most 48 non-human items are open, so the 256 cap is unreachable; the dev run found it in 0 of 300 logs
+  (DEV.b2_rebuild.e3c96878, FAIL for that reason only). It is detected by B1 (caps pool) and pg_diff (caps arm). This change was
+  made after seeing that dev result and is disclosed here.
+- Floors: every control 10 percent (amendment 4's 3 percent floor belonged to the removed n3 control).
+- Experiments create sessions with exp.common.lab_authority / lab_issue (tests.kit.LabIdP), because SessionAuthority.issue now
+  requires a verified credential (f065905).
+
+B3 (exp/b3_pg.py, verify/b3.py), against the definer core:
+- S1 to S6 and the differential arm drive the owner-only raw entries dc._lock_event and dc._reduce_apply (what dc.submit calls),
+  where the test hooks can sit. NEW S7 and S8 drive the deployment path (dc_app calling dc.submit with tokens dc_idp opened):
+  - S7: two humans supersede the same base, A's transaction held open: B waits (overlap witness), then (superseded,
+    contested_opened).
+  - S8: one principal, same idempotency key, two sessions on the same channel, concurrently: one event row; B gets duplicate with
+    the original code and the same value_ref.
+- Controls are now one-fragment SQL variants of pol/_pgcore.sql (no_head_lock, no_advisory_lock) and a two-fragment one
+  (idem_unprotected: advisory lock and the events_idem index removed); same pass conditions and 90 percent floor as amendment 3.
+
+NEW PG-DIFF (exp/pg_diff.py): the plpgsql core against the Python oracle pol/_core.py.
+- B2 logs (make_log, 5 seeds x PGDIFF_LOGS = 60 per seed, so 300 logs): per event (code, original) equal; per log the comparable view
+  equal, the applied events read back from dc.events (id, code, chain order) equal, the chain verifies.
+- B1 trees: every scenario at its B1 depth, replayed depth-first in one transaction with a savepoint per transition; per transition
+  codes equal and per node the comparable view equal. The caps scenario applies the same small-caps literal patch to BOTH cores.
+- Control `control_no_stale`: the plpgsql stale check removed; on the first tenth of the B2 logs and the r2 tree it must produce at
+  least one mismatch.
+- PASS: zero code, view and log mismatches, no errors, no chain failure, all B1 scenarios run, control caught. The module judges and
+  exits 1 on FAIL (run_all scores that), AND verify/pgdiff.py (4c215e0, stdlib only) re-judges it from the per-item rows
+  (t: per event or transition the oracle and Postgres (code, original); v: per log or node the two view hashes; l: per B2 log the two
+  applied lists and the chain flag). Verifier PASS: in arm b2 and every arm b1:<scenario> of params.b1_depth, transitions > 0, views >
+  0 and zero code, view and log mismatches (an "error:" code counts as a mismatch); arm b2 holds exactly per_seed x seeds logs, each with
+  a view row; the per-arm counts equal the module's own summary; scenarios_only is "all"; the control arms ctl:b2 and ctl:b1:r2 each
+  have transitions and together at least one difference. A module/verifier disagreement is FAIL (verify/__main__).
+- Finding (dev, before the stamped run): grants reusing an event id raised UniqueViolation in Postgres where the oracle answers
+  `granted` (rule 6 precedes rule 8). Fixed in f66f76c (the events_id backstop index excludes grants), with a regression test.
+
+NEW MIG (exp/mig_rehearsal.py, ops/migrate_r3_7.py): migration of a pre-R3-7 database (fixture: pgcore at 5a80e52, verbatim) to the
+definer core, on the lab database.
+- Clean history, 3 seeds: forward (every old event replays to its stored code, chain equal hash for hash, state equal, the
+  pre-migration anchor still checks, a real request through dc_idp + dc_app applies, dc_app cannot reach the kept old schema);
+  forward again refused; rollback restores the catalog-and-data fingerprint exactly; the old engine works; forward again; finish.
+- Controls: a forged grant (inserted by dc_app on the old schema) and a tampered head: forward must REFUSE and change nothing.
+- PASS: all of the above. The module judges and exits 1 on FAIL, AND verify/mig.py (4c215e0, stdlib only) re-judges it from one raw
+  row per arm, ignoring the ok flags the module wrote: per seed, the clean arm passes only if after each forward the pre-migration
+  anchor checks (ok, anchored > 0), the rebuilt view equals the memory fold, at least 3 dc_app probe statements were each refused (an
+  exception name), the real dc_idp + dc_app request got an outcome code that is not an authentication or authorisation refusal, each
+  forward replayed > 0 events per tenant, the second forward was refused, the fingerprint after rollback equals the one before, and the
+  old engine's chain verifies after rollback; each control (forged_grant, head_tampered) passes only if forward was refused with the
+  procedure's reason for it ("judged", "differs from the old tables"), not an error, with the fingerprint unchanged. Every seed of
+  params.seeds needs its clean arm and both controls. LIMIT: a forged row in the name of a principal who had the authority is
+  undetectable (the old schema kept no session provenance).
+
+Other experiment repairs (code drift at HEAD, no threshold change): policies pin model versions (`m1@1`); e3 uses the tests.surface
+API (exported, class_methods) and leaves pol.pgcore entries to tests.test_pg_boundary and B3 (the module imports only where psycopg
+exists, so the entry list depended on the host); e6 expects erase_subject's new `result: incomplete`; the E2/E4/E5 kit follows
+_Decision and _redeem.
+
+Seeds (fresh, never used; exp/seeds.py STAMPED): e1, e2, e4, e5, b2, pgdiff 41..45; e3 199; e6 909; b1 41; b3 41; mig 41..43. Used
+before and never reused: 11..15, 21..25, 77, 88, 606, 707, 31..35, 99, 808, 100..159. The stamped preflight also refuses PGDIFF_LOGS,
+PGDIFF_SCEN, B3_ROUNDS and B3_DIFF_LOGS.
+
+B1 takes no seed: it is an exhaustive, deterministic breadth-first check (it never calls exp.seeds.seeds and records no seeds), so the
+STAMPED value b1 = 41 is reserved and unused.
+
+Changes after the amendment 5 draft (written by the previous owner, ad21c9e102633fab2, who stopped on a usage limit; this owner,
+agent a9fd13f613df8860c under coordinator 500523cf, completes and commits it; no threshold, floor, control or seed above was changed):
+- 4c215e0: verify/pgdiff.py and verify/mig.py re-judge pg_diff and mig_rehearsal from rows (above); pg_diff writes per-item rows and
+  no longer crashes after writing its result.
+- 3fa69c1: performance regression from f66f76c fixed (index events_by_id for the duplicate-id lookup); the pre-registered proposal-cost
+  test had failed at 4.0x (limit 3x) and passes again.
+- f1652aa: runs move to the new owner's own host tree (below); sync.sh takes one fresh copy per run and refuses the earlier owners' trees.
+- df26c3c: tests/surface_manifest.json pins pol.pgcore.PgSession(session, db_token), which 27ad63a exported without pinning (found by
+  the first run of tests.test_surface since then). Tests only. Disclosed finding for path item 2 (R3-1), not fixed in this round:
+  nothing checks that a PgSession's in-process Session and database token name the same principal before a call (submit detects it
+  only after dc.submit committed under the token's principal; erase_subject checks in-process as the Session's principal).
+
+Environment of this round's DEV and stamped runs (proof rule 6): t2-dev, ~/emlab2-16096/policy; own container emlab2-policy-pg
+(postgres:16.15, 127.0.0.1:25610 only, --memory 4g, scram-sha-256 only, passwords in 0600 files on the host, never in the repo or the
+environment); venv Python 3.12.3 with psycopg 3.2.3; no model calls; each run on its own synced copy runs/<name>/src (GIT_STAMP.json
+records commit, dirty flag, thresholds commit and tree hash). The earlier owners' container emlab-pg-polr-16096 and ~/emlab-16096 are
+not used.
+
+Superseded stamped results: the 8c03f02 stamped files (round 2: E1 to E6, B1 to B3, VERIFY 0381afda) were judged under round-2 rules.
+Under the round-3 verifiers B1, B2 and B3 recompute FAIL (the controls and rules changed) and pg_diff and mig have no file; E1 to E6
+still recompute PASS. They move to results/superseded/ with this round's results commit. Their seeds (31..35, 99, 808) stay used.
+
+DEV results (dev seeds; development observations, not proof):
+- At 3fa69c1 in the previous owner's environment (runs/dev-3fa69c1 on t2-dev, emlab-pg-polr-16096; the run tree equals 3fa69c1 plus
+  this amendment's draft, all 71 files sha256-identical): tests.test_pg, test_pg_boundary, test_verify_pgdiff_mig 24 OK; e1 to e6, b1,
+  b2, b3, pg_diff, mig_rehearsal all PASS, verifier agree=True on all 11, DEV.VERIFY f6b95b12.
+@@DEVF1652AA@@
+
+Stamped run of this round: once, after this commit, on a clean synced copy (SYNC_DEST=emlab2-16096/policy/runs/stamped-<commit>/src),
+with `POL_SEEDS=stamped sh hostrun.sh all` and no override variable. GIT_STAMP must say dirty=false with commit == thresholds commit ==
+this commit. Its verdict is reported as it falls; a FAIL is kept and the seeds above are then used.
