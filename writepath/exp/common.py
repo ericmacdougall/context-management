@@ -10,6 +10,11 @@ import time
 from wp import config
 
 RESULTS = config.HOME / "results"
+# Server settings recorded in every result's fingerprint (values as the experiment's own role sees them).
+PG_SETTINGS = ("archive_mode", "autovacuum", "default_statistics_target", "effective_cache_size", "fsync",
+               "idle_in_transaction_session_timeout", "jit", "maintenance_work_mem", "max_connections", "max_wal_size",
+               "plan_cache_mode", "random_page_cost", "shared_buffers", "statement_timeout", "synchronous_commit",
+               "transaction_timeout", "wal_keep_size", "wal_recycle", "work_mem")
 
 
 def _git_head():
@@ -37,6 +42,10 @@ def fingerprint():
         from wp import db
         with db.connect() as c:
             fp["postgres"] = c.execute("show server_version").fetchone()[0]
+            # review-2 item (c): the effective settings the results depend on, not only the version (earlier results
+            # depended on settings that were not in the repo until 8c7d841 and are not in their fingerprints)
+            fp["postgres_settings"] = dict(c.execute("select name, setting || coalesce(unit, '') from pg_settings where name = any(%s) order by name",
+                                                     (list(PG_SETTINGS),)).fetchall())
     except Exception as e:  # noqa: BLE001
         fp["postgres"] = {"error": type(e).__name__}
     fp["model_calls"] = "none (deterministic stub only)"
