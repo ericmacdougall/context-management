@@ -68,10 +68,20 @@ def classify(code, j):
     """Matrix cell class from the same closed outcome cases the verdicts use (evidence.Outcome): only a 2xx is AVAILABLE; a 1xx or 3xx is
     OTHER_ERROR (UNEXPECTED); a status outside 0 and 100..599 is OTHER_ERROR rather than a crash in a recording helper."""
     try:
-        case = evidence.Outcome.of(code, err(j)).case
+        o = evidence.Outcome.of(code, err(j))
     except evidence.Unparsed:
         return "OTHER_ERROR"
-    return _CELL_CLASS.get(case, "OTHER_ERROR")
+    if o.licence_text and o.status >= 400:   # the harness has always labelled any 4xx/5xx with licence text LICENCE_ERROR (a loud licence failure)
+        return "LICENCE_ERROR"
+    return _CELL_CLASS.get(o.case, "OTHER_ERROR")
+
+
+def succeeded(code):
+    """True only for the SUCCESS outcome case (2xx); recording helpers use this instead of comparing raw statuses."""
+    try:
+        return evidence.Outcome.of(code).case == "SUCCESS"
+    except evidence.Unparsed:
+        return False
 
 
 def cell(code, j, witness=None):
@@ -115,8 +125,8 @@ def bulk(index, docs, refresh="true", op="index"):
     items = j.get("items") if isinstance(j, dict) else None
     items = items if isinstance(items, list) else []
     st = [list(it.values())[0] if isinstance(it, dict) and it else {} for it in items]
-    ok = sum(1 for s in st if isinstance(s, dict) and isinstance(s.get("status"), int) and s["status"] < 300) if c == 200 else 0
-    first = next((s.get("error") for s in st if isinstance(s, dict) and s.get("status", 500) >= 300), None)
+    ok = sum(1 for s in st if isinstance(s, dict) and succeeded(s.get("status"))) if c == 200 else 0
+    first = next((s.get("error") for s in st if isinstance(s, dict) and not succeeded(s.get("status", 500))), None)
     if first is None and ok < len(docs):
         first = {"type": "bulk_incomplete", "reason": "HTTP %s, %d item results for %d operations" % (c, len(items), len(docs))}
     return c, {"items": len(items), "ok": ok, "failed": len(docs) - ok, "first_error": first}
@@ -135,7 +145,7 @@ def bulk_strict(index, docs, refresh="true", op="index"):
         raise BulkError("bulk into %s: errors=true" % index)
     for (i, _s), it in zip(docs, items):
         r = list(it.values())[0] if isinstance(it, dict) and len(it) == 1 else None
-        if not isinstance(r, dict) or not isinstance(r.get("status"), int) or r["status"] >= 300 or r.get("_id") != i:
+        if not isinstance(r, dict) or not succeeded(r.get("status")) or r.get("_id") != i:
             raise BulkError("bulk into %s: bad item result for id %s: %s" % (index, i, json.dumps(r)[:160]))
     return c, {"items": len(items), "ok": len(items), "failed": 0, "first_error": None}
 

@@ -65,18 +65,22 @@ Decision: use **stdlib frozen dataclasses with declarative field specifications*
    - `SUCCESS`: 2xx.
    - `NOT_FOUND`: 404.
    - `AUTHORISATION_REFUSAL`: 403 without licence text.
-   - `LICENCE_REFUSAL`: any 4xx or 5xx with "non-compliant" or "license ... expired" text, as the harness's `lib.classify` has always classified it.
+   - `LICENCE_REFUSAL`: 403 with "non-compliant" or "license ... expired" text. Only a 403 is ever a refusal. A 5xx, 401, 404 or 409 carrying the licence text keeps its own case; the text is recorded as `Outcome.licence_text`. (Redesign review: the first cut gave any 4xx or 5xx with licence text this case, which let a 503 pass the latch gate. The differential test below now guards against that class of loosening.)
    - `AUTHENTICATION_FAILURE`: 401.
    - `CLIENT_ERROR`: any other 4xx.
    - `INFRASTRUCTURE_FAILURE`: 5xx.
    - `TRANSPORT_FAILURE`: 0.
    - `UNEXPECTED`: 1xx or 3xx.
 
-   A status outside {0} ∪ [100, 599] does not parse. Verdicts match on cases. "Not a failure" is not a case, so class A cannot be expressed. `lib.classify`, which the matrix cells use, maps through `Outcome`, so harness cells and verdicts share one classification. A 1xx or 3xx is no longer AVAILABLE.
+   A status outside {0} ∪ [100, 599] does not parse, and an `Outcome` whose case does not belong to its status cannot be constructed. Verdicts match on cases. "Not a failure" is not a case, so class A cannot be expressed.
+
+   `lib.classify` (matrix cells and exp3 operation records), `lib.succeeded` (bulk item results) and the exp3 record helper all map through `Outcome`, so harness cells and verdicts share one classification. A 1xx or 3xx is no longer AVAILABLE. The harness keeps one historical labelling rule: any 4xx or 5xx with licence text is cell class LICENCE_ERROR, a loud licence failure as recorded. Verdicts never read cell classes for an outcome.
 3. **Rates exist only as `Proportion(numerator, denominator)`.** The constructor requires `denominator ≥ 1` and `0 ≤ numerator ≤ denominator`; `.rate` is computed. Where the file also stores a derived rate (`flag_rate`, `fail_fraction`), the parser recomputes it from the counts and refuses the record if they disagree. A verdict never sees the stored figure. Where a figure has no counts in the file it is listed in section 5 as trusted.
 4. **Declarative evidence types.** Each evidence class declares the following, and `parse()` reads exactly those paths, so the generator and the parser cannot drift:
    - `SPEC`: field name to (raw path, kind or nested evidence class, optional).
-   - `RELATIONS`: cross-field constraints: `le`, `sum_eq`, `ratio_matches`, `ge_diff`, `windows_match`.
+   - `RELATIONS`: cross-field constraints: `le`, `eq`, `sum_eq`, `ratio_matches`, `ge_diff`, `windows_match`.
+
+   **The constructor enforces the invariants**, not only `parse()`. `Evidence.__post_init__` checks every stored field's domain, every enforced control and every relation over stored fields, so an out-of-domain evidence object cannot exist however it is built. `parse()` additionally checks the relations that involve a stored derived figure (a `verify` field: `flag_rate`, `fail_fraction`, the recorded `T3_ttl_s`), which is then dropped.
 5. **Controls are evidence types that cannot exist without their sample.**
    - `DlsControl`: SUCCESS outcome, 1 ≤ returned < 8, `only_kw_a` true.
    - `BatteryTrial`: the allowed document readable, the hidden one 404, nothing hidden leaked, on every one of the 12 paths.
@@ -93,15 +97,29 @@ Decision: use **stdlib frozen dataclasses with declarative field specifications*
 - One regression per scenario F2 to F12, through the public summarizer API, red on 4761862 where that code is reachable.
 - `GeneratedInvalidEvidenceTests`: for every gate, walk its evidence type's `SPEC` recursively. For every leaf, generate the domain mutations from the kind: absent, None, wrong type, bool, ±Infinity, NaN, below and above range, non-integer and integral-float counts, every outcome case other than the intended one, and an emptied or truncated container. For every relation, generate a value inside each field's own domain that breaks the relation. Each must give a non-PASS verdict and never an exception. The healthy committed fixture must PASS. A `kind` without a domain is a `KeyError` in the generator, so an undeclared field fails the test.
 - A structural test: `verdicts.py` contains no dictionary subscripting of life data and no integer status comparison; every verdict's parameter is an evidence class.
+- Direct construction with an out-of-domain value, a wrong-case outcome, a bare status, an unestablished control or a broken relation raises.
+- The generator takes intended statuses from its own table (`INTENDED_STATUS`), not from `Outcome`, so it cannot inherit a classifier error. It also removes the licence text from a 403 where a licence refusal is intended.
+- Differential on invalid inputs (run for the review report, not in the suite): every generated case judged by 4761862's gate-table `gate()` and by `verdicts.judge`. Result: 2,349 cases, 0 that the old code did not pass and the redesign passes, 197 that the old code passed and the redesign does not (classes B and D), 2,152 the same.
 
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
 - `exp2.T1_examined`, `T1_mismatches` and `T1_backend_without_oracle`: computed by the harness from rows and oracle. down_7 rows are recomputed by recompute.py. The domain is still enforced: counts, with mismatches ≤ examined.
 - `T2_longest_failure_window_s`: checked against `T2_failure_windows` when fewer than 10 windows are stored. With 10 (the list is truncated), it must be ≥ the longest stored window, and the stored windows' failures ≤ `T2_failed_requests`.
-- `T3_flip_latency_s`: derived from rows; recompute.py recomputes T3 for all lives.
+- `T3_flip_latency_s`: derived from rows; recompute.py recomputes T3 for all lives. In up lives the recorded `T3_ttl_s` must equal the life's `ttl`.
 - `first_refusal_rel_resp_s`: from poll rows; raw polls exist for down_7 only.
 - `exp3` vector error magnitudes and cosine: computed from vectors that are not stored.
 - `exp2.writes` counts: from a backend scroll at the end of the life.
+
+## 5a. Raw status logic left in recording code, and why it is not a verdict
+
+The harness modules record observations; they decide no gate. Their remaining raw comparisons:
+- `c == 200` guards that read a response body only on success (`exp2`, `exp3`, `matrix`, `oracle`, `life`, `exp4`): the figure they extract is None or absent otherwise, and that does not parse.
+- `assert c == 200` in exp3 migration setup and exp2 fixture loading: aborts.
+- `200 <= c < 300` in the matrix fixture helpers: the same SUCCESS case.
+- Text matches on "non-compliant" in `exp2` and `recompute.py`: they count licence failures from raw rows and produce counts that the parser domain-checks.
+- `summarize.exp3_checks` `silent`, `reads_diff` and `semonly` lists: reports that read statuses for display only.
+
+None of these values reaches a verdict except through `evidence.parse`.
 
 ## 6. What this does not cover
 

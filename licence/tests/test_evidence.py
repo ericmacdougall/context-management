@@ -26,6 +26,9 @@ import lib  # noqa: E402
 import summarize  # noqa: E402
 
 INF = float("inf")
+# Intended HTTP statuses per outcome case, declared HERE independently of evidence.Outcome (the generator must not ask the classifier
+# under test which statuses are acceptable): only a 403 is ever a refusal.
+INTENDED_STATUS = {"SUCCESS": set(range(200, 300)), "NOT_FOUND": {404}, "AUTHORISATION_REFUSAL": {403}, "LICENCE_REFUSAL": {403}}
 
 
 _LIVES = {}
@@ -82,6 +85,17 @@ class ScenarioRegressionTests(unittest.TestCase):
         self.assertEqual(lib.classify(200, {}), "AVAILABLE")
         self.assertEqual(lib.classify(0, None), "TRANSPORT")
         self.assertEqual(lib.classify(403, {"error": {"reason": "current license is non-compliant for [x]"}}), "LICENCE_ERROR")
+
+    def test_a_licence_text_on_a_non_403_is_not_a_refusal(self):
+        """Redesign review: a 5xx, 401, 404 or 409 carrying the licence text is not the 403 licence refusal the latch and DLS gates need."""
+        for code in (500, 503, 401, 404, 409):
+            self.assertNotPass("down_7", "exp1", "T3_latch_status", ("exp1_after", "retriever_rrf", "status"), code)
+            R = _life("down_7")
+            R["exp1_after"]["dls_search_as_user"].update(status=code, error={"reason": "current license is non-compliant for [security]"})
+            self.assertEqual(summarize.exp1_checks(R)["T4_status"], "UNVERIFIED", code)
+        R = _life("down_7")
+        R["exp1_after"]["retriever_rrf"]["error"] = {"reason": "action unauthorized for user"}
+        self.assertNotEqual(summarize.exp1_checks(R)["T3_latch_status"], "PASS")
 
     def test_f6_skipped_mandatory_probe_is_unverified(self):
         for p in ("dls_search", "rrf"):
@@ -187,8 +201,9 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
                 base = healthy if type(healthy) is int else 1
                 out += [("non-integer", base + 0.5), ("integral float", float(base))]
         if k.type == "status":
-            for s in (0, 101, 200, 302, 401, 403, 404, 409, 500, 503):
-                if self.E.Outcome.of(s, body).case not in f.expect:
+            ok = set().union(*(INTENDED_STATUS[c] for c in f.expect))
+            for s in (0, 101, 200, 204, 302, 401, 403, 404, 409, 500, 503):
+                if s not in ok:
                     out.append(("status %d" % s, s))
         elif k.type == "int" and f.expect:
             out.append(("outside expect", max(f.expect) + 1))
@@ -213,6 +228,8 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
             kind, a = rel[0], rel[1]
             if kind == "le":
                 yield "%s.%s > %s" % (ecls.__name__, a, rel[2]), {absp[a]: get(rel[2]) + 1}
+            elif kind == "eq":
+                yield "%s.%s != %s" % (ecls.__name__, a, rel[2]), {absp[a]: get(rel[2]) + 1.0}
             elif kind == "sum_eq":
                 yield "%s sum != %s" % (ecls.__name__, rel[2]), {absp[rel[2]]: get(rel[2]) + 1}
             elif kind == "ratio_matches":
@@ -225,6 +242,28 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
                 yield "%s windows contradict failures" % ecls.__name__, {absp[a]: [[0.0, 0.0, get(rel[3]) + 1]]}
             else:
                 raise AssertionError("relation kind without a generated mutation: %r" % (rel,))
+
+    def test_direct_construction_enforces_the_same_invariants(self):
+        E = self.E
+        ok = E.Outcome.of(200)
+        with self.assertRaises(E.Unparsed):
+            E.Proportion(5, 3)
+        with self.assertRaises(E.Unparsed):
+            E.Outcome(503, "LICENCE_REFUSAL")   # a case that does not belong to the status
+        with self.assertRaises(E.Unparsed):
+            E.LatchCell(outcome=403, error="x")   # a bare status is not an outcome
+        with self.assertRaises(E.Unparsed):
+            E.DlsControl(outcome=E.Outcome.of(401), only_kw_a=True, returned=4)   # control not established
+        with self.assertRaises(E.Unparsed):
+            E.DlsControl(outcome=ok, only_kw_a=True, returned=0)
+        with self.assertRaises(E.Unparsed):
+            E.FallbackControl(client_labelled=0, flagged_wrong=0, backend_checked=1, backend_wrong=0)
+        with self.assertRaises(E.Unparsed):
+            E.Writes(acked=3, acked_absent=5, sem_acked=1, sem_acked_absent=0, sem_failed=0, sem_failed_present=0, sem_failed_loud=0,
+                     sem_failed_other=None, loss_control=True)   # relation: absent acknowledged writes cannot exceed acknowledged
+        with self.assertRaises(E.Unparsed):
+            E.Availability(failed=-1, requests=10, longest_window_s=0.0, windows=[])
+        E.DlsControl(outcome=ok, only_kw_a=True, returned=4)   # and a valid one constructs
 
     def test_healthy_fixture_passes_every_gate(self):
         for name, g in self.V.GATES.items():
@@ -242,6 +281,8 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
                 parent = summarize.fetch(base, path[:-1])
                 body = parent.get(f.text) if f.text and isinstance(parent, dict) else None
                 cases += [("%s %s" % (".".join(path), lab), {path: val}) for lab, val in self.mutations(f, healthy, body)]
+                if f.text and f.expect and "LICENCE_REFUSAL" in f.expect and "AUTHORISATION_REFUSAL" not in f.expect:
+                    cases.append(("%s 403 without licence text" % ".".join(path), {path[:-1] + (f.text,): {"reason": "action unauthorized for user"}}))
                 if len(path) > 1:
                     cases += [("%s empty parent" % ".".join(path), {path[:-1]: {}}), ("%s parent as list" % ".".join(path), {path[:-1]: []})]
             cases += list(self.relation_mutations(g.evidence, (), base))

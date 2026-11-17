@@ -75,23 +75,37 @@ def licence_text(body):
 
 @dataclasses.dataclass(frozen=True)
 class Outcome:
+    """One closed case per status. A refusal is only ever a 403: LICENCE_REFUSAL is a 403 whose body carries the licence text,
+    AUTHORISATION_REFUSAL a 403 without it. `licence_text` records the text on any status (the harness's cell class uses it for
+    4xx/5xx; verdicts match on `case` only)."""
     status: int
     case: str
+    licence_text: bool = False
+
+    def __post_init__(self):
+        if type(self.status) is not int or not (self.status == 0 or 100 <= self.status <= 599) or self.case not in CASES \
+                or type(self.licence_text) is not bool:
+            raise Unparsed((), "not an outcome: %r %r" % (self.status, self.case))
+        if Outcome._case(self.status, self.licence_text) != self.case:
+            raise Unparsed((), "status %d is not case %s" % (self.status, self.case))
 
     @staticmethod
     def of(status, body=None):
         if type(status) is not int or not (status == 0 or 100 <= status <= 599):
             raise Unparsed((), "HTTP status %r is not 0 or 100..599" % (status,))
+        lt = licence_text(body)
+        return Outcome(status, Outcome._case(status, lt), lt)
+
+    @staticmethod
+    def _case(status, lt):
         if status == 0:
             case = "TRANSPORT_FAILURE"
         elif 200 <= status < 300:
             case = "SUCCESS"
         elif status < 200 or 300 <= status < 400:
             case = "UNEXPECTED"
-        elif licence_text(body):
-            case = "LICENCE_REFUSAL"
         elif status == 403:
-            case = "AUTHORISATION_REFUSAL"
+            case = "LICENCE_REFUSAL" if lt else "AUTHORISATION_REFUSAL"
         elif status == 401:
             case = "AUTHENTICATION_FAILURE"
         elif status == 404:
@@ -100,7 +114,7 @@ class Outcome:
             case = "CLIENT_ERROR"
         else:
             case = "INFRASTRUCTURE_FAILURE"
-        return Outcome(status, case)
+        return case
 
 
 @dataclasses.dataclass(frozen=True)
@@ -132,7 +146,17 @@ def parse_leaf(f, v, parent, at):
             return Outcome.of(v, parent.get(f.text) if f.text else None)
         except Unparsed as e:
             raise Unparsed(at, e.reason)
-    if k.type == "int":
+    return _domain(f, v, at)
+
+
+def _domain(f, v, at):
+    """The value must lie in the field's domain (KINDS[kind] narrowed by the field's lo/hi); returns it unchanged."""
+    k = KINDS[f.kind]
+    lo = f.lo if f.lo is not None else k.lo
+    hi = f.hi if f.hi is not None else k.hi
+    if k.type == "status":
+        ok = isinstance(v, Outcome)
+    elif k.type == "int":
         ok = type(v) is int
     elif k.type == "real":
         ok = _real(v)
@@ -147,9 +171,24 @@ def parse_leaf(f, v, parent, at):
         raise KeyError(f.kind)
     if not ok:
         raise Unparsed(at, "%r is not a %s (%s)" % (v, f.kind, k.doc))
-    if lo is not None and v < lo or hi is not None and v > hi:
+    if k.type in ("int", "real") and (lo is not None and v < lo or hi is not None and v > hi):
         raise Unparsed(at, "%r outside [%s, %s] for %s" % (v, lo, hi, f.kind))
     return v
+
+
+def check_value(f, x, at):
+    """A constructed field value: nested evidence of the declared type, an Outcome for a status, else a value in its domain; an
+    enforced (control) field must hold its intended observation."""
+    if isinstance(f.kind, type):
+        if not isinstance(x, f.kind):
+            raise Unparsed(at, "expected %s evidence, got %s" % (f.kind.__name__, type(x).__name__))
+        return
+    _domain(f, x, at)
+    if f.enforce:
+        got = x.case if isinstance(x, Outcome) else x
+        want = f.expect if isinstance(f.expect, (set, frozenset)) else {f.expect}
+        if got not in want:
+            raise Unparsed(at, "control not established: %r, need %s" % (got, sorted(want, key=str)))
 
 
 def _fetch(raw, path):
@@ -178,6 +217,8 @@ def check_relation(rel, vals):
     kind = rel[0]
     if kind == "le":
         ok = _sum(vals, rel[1]) <= _sum(vals, rel[2])
+    elif kind == "eq":
+        ok = abs(vals[rel[1]] - vals[rel[2]]) <= 1e-9
     elif kind == "sum_eq":
         ok = _sum(vals, rel[1]) == vals[rel[2]]
     elif kind == "ratio_matches":   # stored derived rate == numerator / denominator (counts are the evidence)
@@ -197,9 +238,31 @@ def check_relation(rel, vals):
 
 
 # ---- evidence base -----------------------------------------------------------------------------------------------------------------
+def _flat(vals):
+    return {n: (v.case if isinstance(v, Outcome) else v) for n, v in vals.items() if not isinstance(v, Evidence)}
+
+
 class Evidence:
+    """Base of every evidence type. The constructor enforces every domain, control and relation over the stored fields, so an evidence
+    object with an out-of-domain value cannot exist, however it is built; parse() also checks the relations that involve a stored
+    derived figure (a `verify` field), which is then dropped."""
     SPEC = {}
     RELATIONS = ()
+
+    def __post_init__(self):
+        vals = {}
+        for n, f in self.SPEC.items():
+            if f.verify:
+                continue
+            x = getattr(self, n)
+            if x is None:
+                if not f.optional:
+                    raise Unparsed((n,), "absent")
+            else:
+                check_value(f, x, (n,))
+            vals[n] = x
+        for rel in self.RELATIONS:
+            check_relation(rel, _flat(vals))
 
     @classmethod
     def parse(cls, raw, at=()):
@@ -218,19 +281,14 @@ class Evidence:
                 vals[name] = f.kind.parse(v, p)
                 continue
             x = parse_leaf(f, v, _parent(raw, f.path), p)
-            if f.enforce:
-                got = x.case if isinstance(x, Outcome) else x
-                want = f.expect if isinstance(f.expect, (set, frozenset)) else {f.expect}
-                if got not in want:
-                    raise Unparsed(p, "control not established: %r, need %s" % (got, sorted(want, key=str)))
+            check_value(f, x, p)
             vals[name] = x
-        flat = {n: (v.case if isinstance(v, Outcome) else v) for n, v in vals.items() if not isinstance(v, Evidence)}
-        for rel in cls.RELATIONS:
-            try:
-                check_relation(rel, flat)
-            except Unparsed as e:
-                raise Unparsed(at, e.reason)
-        return cls(**{n: v for n, v in vals.items() if not cls.SPEC[n].verify})
+        try:
+            for rel in cls.RELATIONS:
+                check_relation(rel, _flat(vals))
+            return cls(**{n: v for n, v in vals.items() if not cls.SPEC[n].verify})
+        except Unparsed as e:
+            raise Unparsed(at + e.path, e.reason)
 
 
 def evidence(name, spec, relations=(), doc="", props=None):
@@ -321,7 +379,8 @@ FlipDown = evidence("FlipDown", {
 FlipUp = evidence("FlipUp", {
     "flip_s": F("exp2.T3_flip_latency_s", "duration"),
     "ttl_s": F("ttl", "duration"),
-    "client_after_backend": F("exp2.T3_client_after_first_backend", "count", expect={0})}, doc="EXP2-T3 up (first backend answer at or after t_resp).")
+    "ttl_recorded": F("exp2.T3_ttl_s", "duration", verify=True),
+    "client_after_backend": F("exp2.T3_client_after_first_backend", "count", expect={0})}, [("eq", "ttl_recorded", "ttl_s")], doc="EXP2-T3 up (first backend answer at or after t_resp).")
 
 Writes = evidence("Writes", {
     "acked": F("acked", "pos"), "acked_absent": F("acked_absent", "count", expect={0}),
