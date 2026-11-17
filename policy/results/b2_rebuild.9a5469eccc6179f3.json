@@ -1,0 +1,164 @@
+{
+ "name": "b2_rebuild",
+ "params": {
+  "controls": [
+   "agent_may_decide",
+   "n2_no_cap",
+   "n2_no_role",
+   "m2_no_original",
+   "stale_unchecked",
+   "agent_may_supersede",
+   "snapshot_drops_revocations",
+   "restore_drops_idempotency"
+  ],
+  "lengths": "random 5..300, cap >= 40, contest >= 20",
+  "modes": [
+   [
+    "random",
+    0.7
+   ],
+   [
+    "cap",
+    0.15
+   ],
+   [
+    "contest",
+    0.15
+   ]
+  ],
+  "per_seed": 600,
+  "seeds": [
+   41,
+   42,
+   43,
+   44,
+   45
+  ]
+ },
+ "result": {
+  "codes": {
+   "agent_cannot_confirm": 7803,
+   "agent_not_permitted": 41874,
+   "bad_event": 5374,
+   "candidates_full": 1316,
+   "channel_mismatch": 2814,
+   "concurrent_agree": 156,
+   "confirmed_applied": 2559,
+   "contested_joined": 2861,
+   "contested_needs_resolve": 3245,
+   "contested_opened": 1407,
+   "decided_accept": 4962,
+   "decided_amend": 1467,
+   "decided_reject": 2812,
+   "duplicate": 3400,
+   "duplicate_id": 1315,
+   "granted": 1206,
+   "idem_conflict": 1849,
+   "not_contested": 20880,
+   "nothing_to_retract": 1283,
+   "pending_closed": 808,
+   "pending_created": 25575,
+   "principal_revoked": 11833,
+   "proposal_cap": 45213,
+   "proposal_closed": 2901,
+   "proposal_mismatch": 1208,
+   "proposed": 51859,
+   "resolved": 638,
+   "retracted": 1913,
+   "revoked": 672,
+   "same_channel_confirmation": 1216,
+   "stale": 57601,
+   "superseded": 6833,
+   "tenant_mismatch": 3252,
+   "unauthorized": 111987,
+   "unknown_candidate": 608,
+   "unknown_pending": 4028,
+   "unknown_proposal": 10592,
+   "unknown_req": 1949
+  },
+  "codes_missing": [],
+  "contested_logs": 1258,
+  "controls": {
+   "agent_may_decide": {
+    "logs_with_mismatch": 2404,
+    "meets_floor": true,
+    "rate": 0.8013333333333333
+   },
+   "agent_may_supersede": {
+    "logs_with_mismatch": 1994,
+    "meets_floor": true,
+    "rate": 0.6646666666666666
+   },
+   "m2_no_original": {
+    "logs_with_mismatch": 1691,
+    "meets_floor": true,
+    "rate": 0.5636666666666666
+   },
+   "n2_no_cap": {
+    "logs_with_mismatch": 453,
+    "meets_floor": true,
+    "rate": 0.151
+   },
+   "n2_no_role": {
+    "logs_with_mismatch": 2262,
+    "meets_floor": true,
+    "rate": 0.754
+   },
+   "restore_drops_idempotency": {
+    "logs_with_mismatch": 2944,
+    "meets_floor": true,
+    "rate": 0.9813333333333333
+   },
+   "snapshot_drops_revocations": {
+    "logs_with_mismatch": 563,
+    "meets_floor": true,
+    "rate": 0.18766666666666668
+   },
+   "stale_unchecked": {
+    "logs_with_mismatch": 2590,
+    "meets_floor": true,
+    "rate": 0.8633333333333333
+   }
+  },
+  "controls_meet_floor": true,
+  "events": 449269,
+  "items": {
+   "file": "b2_rebuild.items.7b3d1824204f4f1d.jsonl.gz",
+   "sha256": "7b3d1824204f4f1d32d227c0dbb4bb174b91a12c4ebab00d001dd4c0851274b5"
+  },
+  "logs": 3000,
+  "mismatched_logs": 0,
+  "modes": {
+   "cap": 453,
+   "contest": 450,
+   "random": 2097
+  },
+  "not_proven": "equivalence with an independent reading of CORE-RULES.md on generated logs only; the reference shares the spec, so a spec error common to both is not detected; label validity domain restricted to what both implementations accept",
+  "pass_conditions_met": true,
+  "rebuild_unequal_logs": 0,
+  "restores": 84185,
+  "seconds": 1716.1,
+  "service_audit_bad": 0,
+  "service_audit_logs": 600,
+  "service_refusals": 70588,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-edb693f/src/exp/b2_rebuild.py",
+  "at": "2026-11-17T07:08:32Z",
+  "commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   18.3740234375,
+   19.20556640625,
+   19.76171875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "thresholds_sha256": "a5baf66505bc6bd77ea25e163d3d8ae6977cfe1cd60646dca16b1da4e98ba17b",
+  "tree_sha256": "aa4e974495cc2bb4ad04427fdc8bf3370d5403ec4b863e8f45c5869c3e29fc4a"
+ }
+}

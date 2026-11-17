@@ -1,0 +1,168 @@
+{
+ "name": "pg_diff",
+ "params": {
+  "b1_depth": {
+   "caps": 8,
+   "joint": 4,
+   "r1": 6,
+   "r2": 8,
+   "r3": 8
+  },
+  "per_seed": 60,
+  "scenarios_only": "all",
+  "seeds": [
+   41,
+   42,
+   43,
+   44,
+   45
+  ]
+ },
+ "result": {
+  "b1": [
+   {
+    "code_mismatches": 0,
+    "depth": 6,
+    "first": null,
+    "scenario": "r1",
+    "states": 66565,
+    "transitions": 540504,
+    "view_mismatches": 0
+   },
+   {
+    "code_mismatches": 0,
+    "depth": 8,
+    "first": null,
+    "scenario": "r2",
+    "states": 8188,
+    "transitions": 94300,
+    "view_mismatches": 0
+   },
+   {
+    "code_mismatches": 0,
+    "depth": 8,
+    "first": null,
+    "scenario": "r3",
+    "states": 14816,
+    "transitions": 205650,
+    "view_mismatches": 0
+   },
+   {
+    "code_mismatches": 0,
+    "depth": 8,
+    "first": null,
+    "scenario": "caps",
+    "states": 17343,
+    "transitions": 111943,
+    "view_mismatches": 0
+   },
+   {
+    "code_mismatches": 0,
+    "depth": 4,
+    "first": null,
+    "scenario": "joint",
+    "states": 21710,
+    "transitions": 220401,
+    "view_mismatches": 0
+   }
+  ],
+  "b2": {
+   "code_mismatches": 0,
+   "events": 44515,
+   "first": null,
+   "log_mismatches": 0,
+   "logs": 300,
+   "view_mismatches": 0
+  },
+  "control_caught": true,
+  "control_no_stale": {
+   "b1_r2": {
+    "code_mismatches": 5586,
+    "depth": 8,
+    "first": {
+     "ev": {
+      "based_on": 0,
+      "channel": "owner_ui",
+      "id": "T2",
+      "idem": "T2",
+      "principal": "u1",
+      "req": "r2",
+      "tenant": "T1",
+      "type": "retract"
+     },
+     "level": 3,
+     "oracle": [
+      "stale",
+      null
+     ],
+     "pg": [
+      "contested_opened",
+      null
+     ]
+    },
+    "scenario": "r2",
+    "states": 8188,
+    "transitions": 94300,
+    "view_mismatches": 0
+   },
+   "b2": {
+    "code_mismatches": 373,
+    "errors": 1,
+    "events": 4367,
+    "first": {
+     "ev": {
+      "based_on": 0,
+      "channel": "owner_ui",
+      "id": "e90",
+      "idem": "k90",
+      "pending": "e2",
+      "principal": "h1",
+      "req": "r1",
+      "tenant": "t1",
+      "type": "confirm"
+     },
+     "i": 94,
+     "log": "41/0",
+     "oracle": [
+      "stale",
+      null
+     ],
+     "pg": [
+      "contested_opened",
+      null
+     ]
+    },
+    "log_mismatches": 24,
+    "logs": 30,
+    "view_mismatches": 23
+   }
+  },
+  "items": {
+   "file": "pg_diff.items.0de6818ccd9e1794.jsonl.gz",
+   "rows": 1453450,
+   "sha256": "0de6818ccd9e1794549b7d4ab484de2132e30e4df0ee447d5416a990df1f3aa9"
+  },
+  "judged_by": "this module's pass condition, recomputed from the rows by verify/pgdiff.py (THRESHOLDS amendment 5)",
+  "pass": true,
+  "seconds": 2689.8,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-edb693f/src/exp/pg_diff.py",
+  "at": "2026-11-17T08:11:20Z",
+  "commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   5.37255859375,
+   6.1494140625,
+   8.6240234375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "thresholds_sha256": "a5baf66505bc6bd77ea25e163d3d8ae6977cfe1cd60646dca16b1da4e98ba17b",
+  "tree_sha256": "aa4e974495cc2bb4ad04427fdc8bf3370d5403ec4b863e8f45c5869c3e29fc4a"
+ }
+}

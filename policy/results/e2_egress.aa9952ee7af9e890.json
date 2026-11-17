@@ -1,0 +1,474 @@
+{
+ "name": "e2_egress",
+ "params": {
+  "classes": [
+   "eu_only",
+   "local_only",
+   "model_banned",
+   "restricted_channel",
+   "other_tenant",
+   "plain"
+  ],
+  "forges": [
+   "extra_tenant",
+   "extra_principal",
+   "extra_now",
+   "extra_recipient_object",
+   "credential_unknown_key",
+   "foreign_recipient",
+   "unknown_recipient",
+   "other_principals_authorization",
+   "forged_session",
+   "other_authority_session",
+   "ended_session",
+   "principal_as_session"
+  ],
+  "per_seed": 1000,
+  "seeds": [
+   41,
+   42,
+   43,
+   44,
+   45
+  ]
+ },
+ "result": {
+  "arms": {
+   "ctl_derive_join_dropped": {
+    "attempts_forbidden": {
+     "eu_only": 6028,
+     "local_only": 5452,
+     "model_banned": 2897,
+     "other_tenant": 3029,
+     "plain": 0,
+     "restricted_channel": 6276
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 1,
+    "forges": 2213,
+    "forges_not_denied": 1,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 4757,
+     "local_only": 3907,
+     "model_banned": 5832,
+     "other_tenant": 0,
+     "plain": 3613,
+     "restricted_channel": 4730
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 1242,
+    "violations": 2124
+   },
+   "ctl_embed_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 5856,
+     "local_only": 5328,
+     "model_banned": 2826,
+     "other_tenant": 2248,
+     "plain": 0,
+     "restricted_channel": 5971
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 0,
+    "forges": 2197,
+    "forges_not_denied": 0,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 4674,
+     "local_only": 3851,
+     "model_banned": 5051,
+     "other_tenant": 0,
+     "plain": 3489,
+     "restricted_channel": 4650
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 2145,
+    "violations": 5505
+   },
+   "ctl_export_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 5856,
+     "local_only": 5328,
+     "model_banned": 2826,
+     "other_tenant": 2248,
+     "plain": 0,
+     "restricted_channel": 5971
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 293,
+    "forges": 2197,
+    "forges_not_denied": 293,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 5019,
+     "local_only": 3526,
+     "model_banned": 6180,
+     "other_tenant": 0,
+     "plain": 3507,
+     "restricted_channel": 4650
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 2315,
+    "violations": 5200
+   },
+   "ctl_id_pattern_guard": {
+    "attempts_forbidden": {
+     "eu_only": 7519,
+     "local_only": 6863,
+     "model_banned": 3606,
+     "other_tenant": 4551,
+     "plain": 0,
+     "restricted_channel": 7689
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 1135,
+    "forges": 2151,
+    "forges_not_denied": 1135,
+    "id_pattern_blocks": 2582,
+    "permitted": {
+     "eu_only": 6456,
+     "local_only": 5046,
+     "model_banned": 8889,
+     "other_tenant": 0,
+     "plain": 3063,
+     "restricted_channel": 7332
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 4918,
+    "violations": 34586
+   },
+   "ctl_inbox_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 5856,
+     "local_only": 5328,
+     "model_banned": 2826,
+     "other_tenant": 2248,
+     "plain": 0,
+     "restricted_channel": 5971
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 517,
+    "forges": 2197,
+    "forges_not_denied": 517,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 4622,
+     "local_only": 4117,
+     "model_banned": 5420,
+     "other_tenant": 0,
+     "plain": 3471,
+     "restricted_channel": 4951
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 1982,
+    "violations": 4355
+   },
+   "ctl_model_port_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 6026,
+     "local_only": 5475,
+     "model_banned": 2873,
+     "other_tenant": 2236,
+     "plain": 0,
+     "restricted_channel": 6166
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 447,
+    "forges": 2178,
+    "forges_not_denied": 447,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 4917,
+     "local_only": 4065,
+     "model_banned": 6561,
+     "other_tenant": 0,
+     "plain": 4316,
+     "restricted_channel": 6383
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 3676,
+    "violations": 11813
+   },
+   "enforced": {
+    "attempts_forbidden": {
+     "eu_only": 5856,
+     "local_only": 5328,
+     "model_banned": 2826,
+     "other_tenant": 2248,
+     "plain": 0,
+     "restricted_channel": 5971
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 0,
+    "forges": 2197,
+    "forges_not_denied": 0,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 4321,
+     "local_only": 3526,
+     "model_banned": 4798,
+     "other_tenant": 0,
+     "plain": 2900,
+     "restricted_channel": 4650
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 0,
+    "violations": 0
+   },
+   "info_inject_only_disabled": {
+    "attempts_forbidden": {
+     "eu_only": 7157,
+     "local_only": 6517,
+     "model_banned": 3389,
+     "other_tenant": 3021,
+     "plain": 0,
+     "restricted_channel": 7157
+    },
+    "channels": [
+     "embed",
+     "export",
+     "inbox",
+     "model"
+    ],
+    "evaluated_actions": [
+     "append",
+     "embed",
+     "export",
+     "inject",
+     "send_inbox",
+     "send_model",
+     "session"
+    ],
+    "forge_payloads": 0,
+    "forges": 2223,
+    "forges_not_denied": 0,
+    "id_pattern_blocks": 0,
+    "permitted": {
+     "eu_only": 4072,
+     "local_only": 3301,
+     "model_banned": 3902,
+     "other_tenant": 0,
+     "plain": 2232,
+     "restricted_channel": 4648
+    },
+    "registered": [
+     "embed",
+     "export",
+     "send_inbox",
+     "send_model"
+    ],
+    "scenarios": 5000,
+    "scenarios_with_leak": 0,
+    "violations": 0
+   }
+  },
+  "controls": {
+   "ctl_derive_join_dropped": {
+    "id_pattern_blocks": 0,
+    "leak_rate": 0.2484,
+    "meets_floor": true,
+    "violations": 2124
+   },
+   "ctl_embed_disabled": {
+    "id_pattern_blocks": 0,
+    "leak_rate": 0.429,
+    "meets_floor": true,
+    "violations": 5505
+   },
+   "ctl_export_disabled": {
+    "id_pattern_blocks": 0,
+    "leak_rate": 0.463,
+    "meets_floor": true,
+    "violations": 5200
+   },
+   "ctl_id_pattern_guard": {
+    "id_pattern_blocks": 2582,
+    "leak_rate": 0.9836,
+    "meets_floor": true,
+    "violations": 34586
+   },
+   "ctl_inbox_disabled": {
+    "id_pattern_blocks": 0,
+    "leak_rate": 0.3964,
+    "meets_floor": true,
+    "violations": 4355
+   },
+   "ctl_model_port_disabled": {
+    "id_pattern_blocks": 0,
+    "leak_rate": 0.7352,
+    "meets_floor": true,
+    "violations": 11813
+   }
+  },
+  "defence_in_depth_inject_only_disabled": {
+   "violations": 0
+  },
+  "items": {
+   "file": "e2_egress.items.835fd1074a9148d6.jsonl.gz",
+   "sha256": "835fd1074a9148d69599975e0cb4e7e537ed1fca93ed1447c52acf450c4f19c3"
+  },
+  "not_proven": "stubs only (no real adapter); the oracle and the policy are built from the same destination table; the oracle does not see restricted authorisations; other_tenant has no permitted destination by design; markers are plain strings (no encodings or paraphrase); GuardedChat takes no authorisation, so restricted content reaches a model only through the Outbox(send_model) path",
+  "positive_conditions_met": true,
+  "runtime_s": 99.1,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-edb693f/src/exp/e2_egress.py",
+  "at": "2026-11-17T06:29:32Z",
+  "commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   20.78955078125,
+   21.2138671875,
+   21.0849609375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "thresholds_sha256": "a5baf66505bc6bd77ea25e163d3d8ae6977cfe1cd60646dca16b1da4e98ba17b",
+  "tree_sha256": "aa4e974495cc2bb4ad04427fdc8bf3370d5403ec4b863e8f45c5869c3e29fc4a"
+ }
+}

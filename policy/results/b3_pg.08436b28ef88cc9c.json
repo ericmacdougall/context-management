@@ -1,0 +1,175 @@
+{
+ "name": "b3_pg",
+ "params": {
+  "R": 50,
+  "diff_logs": 40,
+  "pg_port": 25610,
+  "seeds": [
+   41
+  ]
+ },
+ "result": {
+  "backstop_total": 50,
+  "controls": {
+   "idem_unprotected": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "no_advisory_lock": {
+    "failures_sample": [],
+    "overlap_witnessed": 49,
+    "passed": 50,
+    "rounds": 50
+   },
+   "no_head_lock": {
+    "failures_sample": [],
+    "overlap_witnessed": 49,
+    "passed": 50,
+    "rounds": 50
+   }
+  },
+  "controls_meet_floor": true,
+  "differential": {
+   "audit_bad_logs": 0,
+   "chain_bad_logs": 0,
+   "codes": {
+    "agent_cannot_confirm": 173,
+    "agent_not_permitted": 852,
+    "bad_event": 93,
+    "channel_mismatch": 68,
+    "concurrent_agree": 2,
+    "confirmed_applied": 48,
+    "contested_joined": 10,
+    "contested_needs_resolve": 51,
+    "contested_opened": 14,
+    "decided_accept": 98,
+    "decided_amend": 26,
+    "decided_reject": 65,
+    "duplicate": 71,
+    "duplicate_id": 37,
+    "granted": 30,
+    "idem_conflict": 36,
+    "not_contested": 72,
+    "nothing_to_retract": 20,
+    "pending_closed": 9,
+    "pending_created": 554,
+    "principal_revoked": 260,
+    "proposal_closed": 69,
+    "proposal_mismatch": 23,
+    "proposed": 808,
+    "resolved": 3,
+    "retracted": 35,
+    "revoked": 15,
+    "same_channel_confirmation": 37,
+    "stale": 264,
+    "superseded": 150,
+    "tenant_mismatch": 67,
+    "unauthorized": 2115,
+    "unknown_candidate": 5,
+    "unknown_pending": 81,
+    "unknown_proposal": 215,
+    "unknown_req": 33
+   },
+   "events": 6509,
+   "logs": 40,
+   "mismatch_events": 0,
+   "rebuild_mismatch_logs": 0,
+   "view_mismatch_logs": 0
+  },
+  "items": {
+   "file": "b3_pg.items.d20ba81246f2f630.jsonl.gz",
+   "sha256": "d20ba81246f2f6303d214333f1dfd4712235a5bccc070cc9ea3afd3a998a3457"
+  },
+  "not_proven": "single Postgres 16 instance, READ COMMITTED, two overlapping writers per round (not N-way); no process kill or network partition mid-transaction; revoke takes the tenant row FOR UPDATE and so serialises the whole tenant (a scaling limit)",
+  "pass_conditions_met": true,
+  "scenario_chain": [
+   1000,
+   true
+  ],
+  "scenario_rebuild_equal": true,
+  "scenarios": {
+   "S1_conflicting_decisions_contested": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S2_stale_token_refused": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S3_zombie_revoked_principal": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S4_same_idem_key_concurrent": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S4b_twins_on_two_requirements": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S5_resolve_race": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S6_tenant_isolation": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S7_api_supersede_race": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S8_api_twins": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   }
+  },
+  "seconds": 1069.3,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-edb693f/src/exp/b3_pg.py",
+  "at": "2026-11-17T07:26:23Z",
+  "commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "dirty": false,
+  "env": {
+   "container": "emlab-pg-polr-16096",
+   "isolation": "read committed",
+   "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+   "roles": "owner (raw core: S1-S6, differential, controls); dc_app with dc_idp sessions (S7, S8)"
+  },
+  "host": "t2-dev",
+  "load_avg": [
+   5.91015625,
+   7.21337890625,
+   12.52001953125
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "edb693f3b119212863c0ea897e4b735d5edcd466",
+  "thresholds_sha256": "a5baf66505bc6bd77ea25e163d3d8ae6977cfe1cd60646dca16b1da4e98ba17b",
+  "tree_sha256": "aa4e974495cc2bb4ad04427fdc8bf3370d5403ec4b863e8f45c5869c3e29fc4a"
+ }
+}
