@@ -148,6 +148,10 @@ EVASIVE2 = {
 # the test until reviewed. The enforced boundary against a hostile in-process caller is the database role (R3-7), not this list.
 TRUSTED_INTERNALS = {
     ("B1", "pol._pdp._revoked"): "PDP helper; evaluate() is called only by enforce._decide_verified",
+    ("B4", "pol.policy._fs"): "pure higher-order helper: applies the canonicaliser its caller passes (canon or canon_model) to each element; "
+                              "it 'calls a sink' only when the probe passes one as fn. Found since delta M3 added two private methods: the "
+                              "probe draws arguments from ONE seeded generator across all targets, so its random findings depend on the "
+                              "target list (a known limit of this probe)",
     ("B1", "pol.labels._acl_satisfied"): "PDP helper (pure label/group predicate)",
     ("B1", "pol._core._adopted_open"): "pure reducer predicate over proposal dicts (True: nothing closed it); takes no identity",
     ("B1", "pol.enforce.Revocations._is_revoked"): "predicate; True means DENY (revoked)",

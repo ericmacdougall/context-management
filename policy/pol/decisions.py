@@ -61,6 +61,13 @@ class Vault:
         self._idem: Dict[tuple, str] = {}           # (tenant, principal, idem) -> ref, only while that value is stored
         self._new_ref = ref_factory or _random_ref
         self._lock = threading.Lock()
+        self._key_locks = [threading.Lock() for _ in range(64)]
+
+    def _key_lock(self, tenant: str, principal: str, idem: str) -> threading.Lock:
+        """The lock serialising submissions with one (tenant, principal, idempotency key) from allocation to cleanup (delta review M3).
+        Striped over 64 locks, so memory is bounded; unrelated keys may share a stripe and then only wait for each other. Lock order:
+        a key lock is taken first and never while holding the vault's or an engine's lock."""
+        return self._key_locks[hash((tenant, principal, idem)) % len(self._key_locks)]
 
     def _mint(self, tenant: str, principal: str, idem: str, text: str, label: Label):
         """(ref, created). A retry by the same principal with the same idempotency key, value and label, while that value is stored, gets
@@ -199,6 +206,13 @@ class DecisionService:
         ev = {k: v for k, v in body.items() if k not in ("client_id", "value", "label")}     # the label enters the event only tokenised
         ev.update(id=p.id + "/" + cid, tenant=session.tenant, principal=p.id, channel=session.channel)
         ev["actor"], ev["trust_origin"] = _core.origin(eng._st.kind(p.id), session.channel)       # from the session, as dc.submit
+        # delta review M3: allocating the reference, the engine's decision and the loser's cleanup for one (tenant, principal,
+        # idempotency key) run under one lock, so two overlapping submissions with that key are decided one after the other and the
+        # retry mapping left behind is always the accepted submission's (dc.submit gets the same from its per-principal advisory lock)
+        with self._vault._key_lock(session.tenant, p.id, str(body.get("idem"))):
+            return self._submit_keyed(session, p, body, eng, ev)
+
+    def _submit_keyed(self, session, p, body, eng, ev) -> dict:
         ref, created = None, False
         if "value" in body:
             if not isinstance(body["value"], str) or "label" not in body:
