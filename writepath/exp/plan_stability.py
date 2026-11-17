@@ -13,6 +13,8 @@ batches 1..5 and <= 50; PS-R residue work at M=3000 <= 3x at M=1500 (same state,
 removing more than 10 x M rows by join filter. Controls: CONTROLS restores the pre-fix fragments with variant();
 each must violate a gate in >= 2 of 3 runs per state. At the pre-fix code the fixed fragments are absent and the
 controls are recorded as unavailable; that run is the failing-first evidence.
+Amendment 18b: every run starts from a fresh database (wp.setup --reset, then the control's patch); PS-R also bounds
+residue work at 100 rows per event; CTL_RESIDUE is required in S1 only (the state where the pre-fix residue misplanned).
 usage: python -m exp.plan_stability [R=3] [M1=1500] [M2=3000]"""
 import json
 import re
@@ -22,14 +24,41 @@ import time
 from exp.common import write_result
 from exp.patches import function_sql, patched, variant
 from exp.util import msg, session, tenant
-from wp import db, erasure, log, keys as K
+from wp import db, erasure, log, keys as K, setup as SETUP
 
 BATCH = 200
 SMALL_TENANTS, SMALL_EVENTS = 30, 20
 TABLES = ("events", "analyst_jobs", "facts", "tombstones", "erasure_mentions")
 STMTS = {"analyst_delete": "delete from analyst_jobs a where", "facts_delete": "delete from facts f where", "residue": "with fp as ("}
-# (function, fixed fragment, pre-fix fragment): filled by the fix commit; absent fragments => control unavailable
-CONTROLS = {}
+# control name -> (function, [(fixed fragment, pre-fix fragment), ...]); absent fixed fragments => control unavailable
+FIX_APPLY = [(
+    """      select a2.job_id from unnest(ids) x
+        cross join lateral (select j2.job_id, j2.tenant_id from analyst_jobs j2 where j2.input_event_ids @> array[x] offset 0) a2
+       where a2.tenant_id = t));""",
+    """      select a2.job_id from unnest(ids) x join analyst_jobs a2 on a2.input_event_ids @> array[x] where a2.tenant_id = t));"""), (
+    """      select f2.fact_id from unnest(ids) x
+        cross join lateral (select g.fact_id, g.tenant_id from facts g where g.input_event_ids @> array[x] offset 0) f2
+       where f2.tenant_id = t));""",
+    """      select f2.fact_id from unnest(ids) x join facts f2 on f2.input_event_ids @> array[x] where f2.tenant_id = t));""")]
+FIX_RESIDUE = [(
+    """(select count(*) from (select event_id from fp
+                                except select x.event_id from tombstones x where x.tenant_id = t and x.subject_id = s) u),""",
+    """(select count(*) from fp
+                                where not exists (select 1 from tombstones x where x.tenant_id = t and x.subject_id = s and x.event_id = fp.event_id)),"""), (
+    """union select f.fact_id from tombstones x
+                           cross join lateral (select g.fact_id, g.tenant_id from facts g where g.input_event_ids @> array[x.event_id] offset 0) f
+                          where""",
+    """union select f.fact_id from tombstones x join facts f on f.input_event_ids @> array[x.event_id]
+                          where"""), (
+    """from tombstones x
+                          cross join lateral (select j2.job_id, j2.tenant_id from analyst_jobs j2 where j2.input_event_ids @> array[x.event_id] offset 0) a
+                          where""",
+    """from tombstones x join analyst_jobs a on a.input_event_ids @> array[x.event_id]
+                          where""")]
+CONTROLS = {"CTL_APPLY": ("wp_erasure_apply", FIX_APPLY), "CTL_RESIDUE": ("wp_erasure_pg_residue", FIX_RESIDUE)}
+# amendment 18b: which states each control must be shown in (>= 2 of R runs); other states are recorded
+CONTROL_STATES = {"CTL_APPLY": ("S1", "S2"), "CTL_RESIDUE": ("S1",)}
+RESIDUE_PER_EVENT_MAX = 100
 ROWS = re.compile(r"actual rows=(\d+) loops=(\d+)")
 REMOVED = re.compile(r"Rows Removed by (Join Filter|Filter|Index Recheck): (\d+)")
 INDEX = re.compile(r" on (\w+)(?: \w+)?  \(")
@@ -62,7 +91,13 @@ def _append(conn, ks, t, subj, n, start=0, lease=None):
     return s
 
 
-def one_run(state, m):
+def one_run(state, m, patch=None):
+    SETUP.main(True)                                       # amendment 18b: every run from a fresh database
+    if patch:
+        p = db.admin()
+        for x in patch:
+            p.execute(x)
+        p.close()
     conn, ks = db.connect(), K.KeyService()
     adm = db.admin()
     try:
@@ -135,12 +170,12 @@ def gate_c(run):
     return out
 
 
-def measure(states, r, m1, m2):
+def measure(states, r, m1, m2, patch=None):
     runs = {s: {m1: [], m2: []} for s in states}
     for s in states:
         for i in range(r):
             for m in (m1, m2):
-                x = one_run(s, m)
+                x = one_run(s, m, patch)
                 x["PS_C"] = gate_c(x)
                 runs[s][m].append(x)
                 print("plan_stability", s, m, i, json.dumps({k: v["later_per_event"] for k, v in x["PS_C"].items()}),
@@ -150,7 +185,8 @@ def measure(states, r, m1, m2):
         for i in range(r):
             a, b = runs[s][m1][i], runs[s][m2][i]
             ratio = (b["residue"]["work"] / a["residue"]["work"]) if a["residue"]["work"] else None
-            psr = ratio is not None and ratio <= 3 and all(x["residue"]["join_filter_max"] <= 10 * x["M"] for x in (a, b))
+            psr = ratio is not None and ratio <= 3 and all(x["residue"]["join_filter_max"] <= 10 * x["M"]
+                                                           and x["residue"]["work"] <= RESIDUE_PER_EVENT_MAX * x["M"] for x in (a, b))
             psc = all(v["holds"] for x in (a, b) for v in x["PS_C"].values())
             b["PS_R"] = {"ratio": round(ratio, 2) if ratio else None, "holds": psr}
             viol.setdefault(s, []).append({"run": i, "PS_C": psc, "PS_R": psr})
@@ -163,28 +199,22 @@ def main(r, m1, m2):
     runs, ok = measure(states, r, m1, m2)
     out["runs"], out["gates"] = runs, ok
     ctl = {}
-    for name, frags in CONTROLS.items():
-        fn = frags[0][0]
-        if not all(fx in function_sql(f) for f, fx, _ in frags):
+    for name, (fn, frags) in CONTROLS.items():
+        if not all(fx in function_sql(fn) for fx, _ in frags):
             ctl[name] = {"available": False, "why": "fixed fragment absent (pre-fix code)"}
             continue
-        ap, rv = [], []
-        for f, fx, pre in frags:
-            a2, r2 = variant(f, fx, pre)
-            ap += a2; rv = r2 + rv
-        with patched(ap, rv):
-            cr, cv = measure(states, r, m1, m2)
+        ap, rv = variant(fn, frags)                        # one replacement of the shipped body; every run resets afterwards
+        cr, cv = measure(states, r, m1, m2, patch=ap)
         ctl[name] = {"available": True, "violated": {s: sum(1 for v in cv[s] if not (v["PS_C"] and v["PS_R"])) for s in states}, "gates": cv,
-                     "function": fn}
+                     "function": fn, "required_states": list(CONTROL_STATES[name])}
+    SETUP.main(True)                                       # leave the shipped schema in place
     out["controls"] = ctl
     why = [f"{s} run {v['run']}: PS_C {v['PS_C']} PS_R {v['PS_R']}" for s in states for v in ok[s] if not (v["PS_C"] and v["PS_R"])]
     for k, c in ctl.items():
         if not c["available"]:
             why.append(f"control {k} unavailable: {c['why']}")
         else:
-            why += [f"control {k} {s}: violated {n}/{r} < 2" for s, n in c["violated"].items() if n < 2]
-    if not CONTROLS:
-        why.append("no controls defined (pre-fix code)")
+            why += [f"control {k} {s}: violated {n}/{r} < 2" for s, n in c["violated"].items() if n < 2 and s in c["required_states"]]
     out["verdict"], out["why"] = ("FAIL" if why else "PASS"), why
     print("plan_stability", out["verdict"], json.dumps(ok), json.dumps({k: c.get("violated", "unavailable") for k, c in ctl.items()}), flush=True)
     write_result("plan_stability", out)
