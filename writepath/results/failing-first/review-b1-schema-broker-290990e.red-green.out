@@ -1,0 +1,25 @@
+# t2-dev b1_check.sh 2026-11-17T18:42:17Z (src 8256797 plus this test): WP_PG_LIVE=1 python -m unittest tests.test_schema_broker_pg, green with src schema.sql, red with SCHEMA_UNDER_TEST=schema.sql at 290990e
+lock taken 2026-11-17T18:42:17Z src 8256797-dirty
+== green (src schema.sql)
+test_p1_lease_check_callable (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p1_lease_check_callable) ... ok
+test_p2_no_direct_table_access (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p2_no_direct_table_access) ... ok
+test_p3_exact_tuple_only (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p3_exact_tuple_only) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.287s
+
+OK
+== red (schema.sql at 290990e)
+test_p1_lease_check_callable (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p1_lease_check_callable) ... ERROR
+test_p2_no_direct_table_access (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p2_no_direct_table_access) ... FAIL
+test_p3_exact_tuple_only (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p3_exact_tuple_only) ... ERROR
+ERROR: test_p1_lease_check_callable (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p1_lease_check_callable)
+psycopg.errors.UndefinedFunction: function wp_lease_holder_current(unknown, unknown, integer, unknown) does not exist
+ERROR: test_p3_exact_tuple_only (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p3_exact_tuple_only)
+psycopg.errors.UndefinedFunction: function wp_lease_holder_current(unknown, unknown, smallint, unknown) does not exist
+FAIL: test_p2_no_direct_table_access (tests.test_schema_broker_pg.BrokerSchemaFromScratch.test_p2_no_direct_table_access)
+    self.assertEqual(cm.exception.sqlstate, "42501")
+AssertionError: '42P01' != '42501'
+Ran 3 tests in 0.303s
+FAILED (failures=1, errors=2)
+lock released 2026-11-17T18:42:18Z
