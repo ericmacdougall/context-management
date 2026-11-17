@@ -282,6 +282,23 @@ Consequence for D6 (main's ruling): the fence rests on alias-name scoping (PB) p
 path. Revocation (PD) is hygiene; its delay was measured at 0.055 s maximum over 20 trials on ONE node (cross-node API
 key caches not shown).
 
+### D6 key broker experiment (amendments H6, H6a): SUPERSEDED, not evidence for the current code
+
+| row | commit | verdict | status |
+|---|---|---|---|
+| shake-down 1 (unstamped, not staged) | 290990e | every broker mint failed: wp_broker had no USAGE on schema public (C10: 42883, 42P01) | led to 4338c2b (the grant; review B1) and H6a |
+| shake-down 2 (unstamped, not staged) | 0110981 | fenced 1/1, control 1/1 | pipeline check only |
+| stamped (`h6-broker-0110981-SUPERSEDED/`) | 0110981 | FEASIBLE: fenced 5/5, control 5/5, no invalid-request case; gate end clean | **SUPERSEDED** (main's ruling): stamped under a gate with review A1 to A3 open and on broker code with review B2 open (the alias CAS could reinstate an old epoch's write alias after a completed takeover; fixed in b87d705). Rerun after the gate fix is merged. |
+
+How the H6 runs passed B1 (the broker's lease check after the supplied schema setup): shake-down 1 hit it; 4338c2b
+added wp_broker to the schema USAGE grant in schema.sql; shake-down 2 and the stamped run each ran `wp.setup --reset`
+from the synced tree at 0110981 (which contains 4338c2b) before the experiment. No manual grant was made on the host.
+Finding recorded with H6a: the pre-broker projector ROLE key could not run its own alias CAS with security on (ES
+refuses an alias that has more permissions than its index), so that deployment never fenced; the control still
+detected the difference by writing into another tenant through its existing write alias (C1, 201 in every run).
+C1's write through a READ alias is refused with 400 in both arms because that alias has no write index, not
+because of the key: it is not evidence for the broker.
+
 ### Limits that apply to every erasure result here
 
 - **F1 residuals (step-1 delta review P3):** under stale statistics the outer delete of the cascade reads the tenant

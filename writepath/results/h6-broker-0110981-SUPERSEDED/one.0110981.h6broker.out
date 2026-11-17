@@ -1,0 +1,8 @@
+start 2026-11-17T18:31:37Z head 0110981 free 27.2G: exp.h_d6_broker 5
+disk_gate start free 27.2 GiB own 0.10 GiB (pg 0.07 es 0.00 home 0.04) cap +2.0 GiB
+disk_gate h6broker free 27.2 GiB own +0.00 GiB
+h_d6_broker {"fenced_holds": "5/5", "control_violated": "5/5", "invalid_request_cases": [], "void": false, "feasible": true}
+RESULT h_d6_broker sha256=99c4883c7932dcadb23d39176a3dab735a2d5301f996a73bc25b3725abac414f file=~/emlab2-16096/wphard/wp/results/h_d6_broker.99c4883c7932dcad.json
+exit=0
+disk_gate end free 27.1 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+end 2026-11-17T18:35:04Z

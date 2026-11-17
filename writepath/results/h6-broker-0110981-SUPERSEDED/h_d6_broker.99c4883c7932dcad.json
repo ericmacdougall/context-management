@@ -1,0 +1,3323 @@
+{
+ "at": "2026-11-17T18:35:03Z",
+ "env": {
+  "argv": "~/emlab2-16096/wphard/wp/runs/0110981-20261117T183056Z/exp/h_d6_broker.py 5",
+  "code_commit": "0110981",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19570",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.50146484375,
+   2.76953125,
+   3.68212890625
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "h_d6_broker",
+ "result": {
+  "R": 5,
+  "broker_user": "wp16096_broker",
+  "cleanup": "broker-minted keys are not invalidated by this experiment; they expire after 1 h",
+  "control": [
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 0,
+    "tenants": [
+     "h6a5f81f7",
+     "h6b169f9f",
+     "h6c5da1f4",
+     "h6dc9bb33"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 1,
+    "tenants": [
+     "h6a702ed3",
+     "h6b72ed4a",
+     "h6cf93e7f",
+     "h6d8db824"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 2,
+    "tenants": [
+     "h6af7dd80",
+     "h6b02ee9a",
+     "h6c567eee",
+     "h6d19078b"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 3,
+    "tenants": [
+     "h6a3d949f",
+     "h6b7e208b",
+     "h6c54abff",
+     "h6d785f62"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      201,
+      null
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "readd_old": [
+      403,
+      "security_exception"
+     ],
+     "stale": [
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ],
+      [
+       404,
+       "index_not_found_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "eb": 1,
+    "findings": {
+     "fence_A": "ProjectionError: alias CAS failed: ES 403 security_exception",
+     "fence_A_h2": "ProjectionError: alias CAS failed: ES 403 security_exception"
+    },
+    "invalid": {},
+    "invalid_request": {},
+    "own_write": [
+     404,
+     "index_not_found_exception"
+    ],
+    "run": 4,
+    "tenants": [
+     "h6a30f013",
+     "h6bf419c7",
+     "h6cbb3fb2",
+     "h6dbe09ad"
+    ],
+    "uid": 20001,
+    "violated": true,
+    "why": []
+   }
+  ],
+  "control_files": {
+   "app": [
+    "pgpass.wp_app",
+    "es_api_key.projector.json"
+   ],
+   "broker": [
+    "es_broker_password",
+    "pgpass.wp_broker"
+   ],
+   "keysvc": [
+    "pgpass.wp_kms"
+   ]
+  },
+  "control_witness": {},
+  "fenced": [
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_id": "1-LH6qEBndfGUS6c_cmY",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_id": "0eLH6qEBndfGUS6cz8k5",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_id": "0-LH6qEBndfGUS6c0sml",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bf14cde",
+       2,
+       "guLH6qEBndfGUS6ce8kF"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "gOLH6qEBndfGUS6cesn0"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "hOLH6qEBndfGUS6cgslv"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "huLH6qEBndfGUS6cgsl1"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "i-LH6qEBndfGUS6chslz"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "ieLH6qEBndfGUS6chslx"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "jeLH6qEBndfGUS6cismR"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "j-LH6qEBndfGUS6cismS"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "kuLH6qEBndfGUS6cjsmW"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "keLH6qEBndfGUS6cjsmW"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "l-LH6qEBndfGUS6cksmM"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "leLH6qEBndfGUS6cksmL"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "meLH6qEBndfGUS6clsmD"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "muLH6qEBndfGUS6clsmD"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "neLH6qEBndfGUS6cmsmC"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "n-LH6qEBndfGUS6cmsmD"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "oeLH6qEBndfGUS6cnsl5"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "o-LH6qEBndfGUS6cnsl8"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "p-LH6qEBndfGUS6cosls"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "peLH6qEBndfGUS6coslr"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "qeLH6qEBndfGUS6cpsln"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "q-LH6qEBndfGUS6cpslp"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "reLH6qEBndfGUS6cqslk"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "r-LH6qEBndfGUS6cqsll"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "s-LH6qEBndfGUS6crslX"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "seLH6qEBndfGUS6crslW"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "teLH6qEBndfGUS6csslU"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "t-LH6qEBndfGUS6csslU"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "u-LH6qEBndfGUS6ctslN"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "ueLH6qEBndfGUS6ctslM"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "veLH6qEBndfGUS6cuslI"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "v-LH6qEBndfGUS6cuslJ"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "weLH6qEBndfGUS6cvsk_"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "wuLH6qEBndfGUS6cvsk_"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "xeLH6qEBndfGUS6cwsk1"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "x-LH6qEBndfGUS6cwsk3"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "yuLH6qEBndfGUS6cxsk4"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "yeLH6qEBndfGUS6cxsk3"
+      ],
+      [
+       "h6adc38a5",
+       4,
+       "z-LH6qEBndfGUS6cysky"
+      ],
+      [
+       "h6bf14cde",
+       2,
+       "zeLH6qEBndfGUS6cyskx"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "operator_broker_pw_file": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_id": "fOLH6qEBndfGUS6ccMkH",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 0,
+    "tenants": [
+     "h6adc38a5",
+     "h6bf14cde",
+     "h6cf1f3f4",
+     "h6dc8bf42"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_id": "M-LI6qEBndfGUS6cmcqp",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_id": "LeLI6qEBndfGUS6cacpQ",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_id": "L-LI6qEBndfGUS6cbMq7",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6beb5c09",
+       2,
+       "3eLI6qEBndfGUS6cFclE"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "3-LI6qEBndfGUS6cFclX"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "4eLI6qEBndfGUS6cHMm8"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "4-LI6qEBndfGUS6cHMnA"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "5-LI6qEBndfGUS6cIMm9"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "5eLI6qEBndfGUS6cIMm8"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "6eLI6qEBndfGUS6cJMm0"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "6-LI6qEBndfGUS6cJMm1"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "7eLI6qEBndfGUS6cKMmr"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "7-LI6qEBndfGUS6cKMmr"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "8-LI6qEBndfGUS6cLMmn"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "8eLI6qEBndfGUS6cLMmj"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "9eLI6qEBndfGUS6cMMmO"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "9uLI6qEBndfGUS6cMMmP"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "--LI6qEBndfGUS6cNMmE"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "-eLI6qEBndfGUS6cNMmE"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "_eLI6qEBndfGUS6cOMmC"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "_-LI6qEBndfGUS6cOMmC"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "AuLI6qEBndfGUS6cPMp3"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "AeLI6qEBndfGUS6cPMp3"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "BeLI6qEBndfGUS6cQMpt"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "B-LI6qEBndfGUS6cQMpu"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "CuLI6qEBndfGUS6cRMpm"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "CeLI6qEBndfGUS6cRMpl"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "DeLI6qEBndfGUS6cSMpe"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "D-LI6qEBndfGUS6cSMpe"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "E-LI6qEBndfGUS6cTMpW"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "EeLI6qEBndfGUS6cTMpU"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "F-LI6qEBndfGUS6cUMpO"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "FeLI6qEBndfGUS6cUMpO"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "G-LI6qEBndfGUS6cVMp2"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "GeLI6qEBndfGUS6cVMpw"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "HeLI6qEBndfGUS6cWMpq"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "H-LI6qEBndfGUS6cWMpq"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "IeLI6qEBndfGUS6cXMph"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "IuLI6qEBndfGUS6cXMpi"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "JeLI6qEBndfGUS6cYMpZ"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "J-LI6qEBndfGUS6cYMpZ"
+      ],
+      [
+       "h6afb682c",
+       4,
+       "KeLI6qEBndfGUS6cZMpP"
+      ],
+      [
+       "h6beb5c09",
+       2,
+       "K-LI6qEBndfGUS6cZMpQ"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "operator_broker_pw_file": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_id": "2eLI6qEBndfGUS6cCcn1",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 1,
+    "tenants": [
+     "h6afb682c",
+     "h6beb5c09",
+     "h6c3ea0e0",
+     "h6d1a858c"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_id": "j-LJ6qEBndfGUS6cM8p-",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_id": "ieLJ6qEBndfGUS6cA8oU",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_id": "i-LJ6qEBndfGUS6cBsqV",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bca370d",
+       2,
+       "O-LI6qEBndfGUS6cr8pp"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "OeLI6qEBndfGUS6cr8pX"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "PeLI6qEBndfGUS6ctsrb"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "P-LI6qEBndfGUS6ctsrb"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "QeLI6qEBndfGUS6cusrV"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "Q-LI6qEBndfGUS6cusrW"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "R-LI6qEBndfGUS6cvsrQ"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "ReLI6qEBndfGUS6cvsrP"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "S-LI6qEBndfGUS6cwsrH"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "SeLI6qEBndfGUS6cwsrF"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "TeLI6qEBndfGUS6cxsrA"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "T-LI6qEBndfGUS6cxsrA"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "UeLI6qEBndfGUS6cysq1"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "U-LI6qEBndfGUS6cysq2"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "VeLI6qEBndfGUS6czsqr"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "V-LI6qEBndfGUS6czsqs"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "WeLI6qEBndfGUS6c0sqc"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "W-LI6qEBndfGUS6c0sqc"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "XuLI6qEBndfGUS6c1sqV"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "XeLI6qEBndfGUS6c1sqU"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "YeLI6qEBndfGUS6c2sqQ"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "YuLI6qEBndfGUS6c2sqQ"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "ZeLI6qEBndfGUS6c3sqI"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "Z-LI6qEBndfGUS6c3sqI"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "a-LI6qEBndfGUS6c4sp7"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "aeLI6qEBndfGUS6c4sp7"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "b-LI6qEBndfGUS6c5spv"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "beLI6qEBndfGUS6c5spu"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "ceLI6qEBndfGUS6c6spj"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "c-LI6qEBndfGUS6c6spl"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "deLI6qEBndfGUS6c7spZ"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "d-LI6qEBndfGUS6c7spZ"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "eeLI6qEBndfGUS6c8spQ"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "e-LI6qEBndfGUS6c8spQ"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "feLI6qEBndfGUS6c9spG"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "f-LI6qEBndfGUS6c9spG"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "geLI6qEBndfGUS6c-so0"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "guLI6qEBndfGUS6c-so0"
+      ],
+      [
+       "h6bca370d",
+       2,
+       "huLI6qEBndfGUS6c_soq"
+      ],
+      [
+       "h6a5ddd12",
+       4,
+       "heLI6qEBndfGUS6c_soq"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "operator_broker_pw_file": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_id": "NeLI6qEBndfGUS6cpMoO",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 2,
+    "tenants": [
+     "h6a5ddd12",
+     "h6bca370d",
+     "h6cfbaeb5",
+     "h6dedf36f"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_id": "6-LJ6qEBndfGUS6czcpA",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_id": "5eLJ6qEBndfGUS6cnMro",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_id": "5-LJ6qEBndfGUS6coMpL",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6bce5d06",
+       2,
+       "l-LJ6qEBndfGUS6cScoz"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "leLJ6qEBndfGUS6cScoc"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "meLJ6qEBndfGUS6cUMqi"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "m-LJ6qEBndfGUS6cUMqi"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "neLJ6qEBndfGUS6cVMqc"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "n-LJ6qEBndfGUS6cVMqd"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "oeLJ6qEBndfGUS6cWMqP"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "o-LJ6qEBndfGUS6cWMqQ"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "p-LJ6qEBndfGUS6cXMqJ"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "peLJ6qEBndfGUS6cXMqH"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "qeLJ6qEBndfGUS6cYMp_"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "q-LJ6qEBndfGUS6cYMp_"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "r-LJ6qEBndfGUS6cZMpz"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "reLJ6qEBndfGUS6cZMpz"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "seLJ6qEBndfGUS6caMpq"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "s-LJ6qEBndfGUS6caMpr"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "teLJ6qEBndfGUS6cbMpc"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "t-LJ6qEBndfGUS6cbMpd"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "ueLJ6qEBndfGUS6ccMpS"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "u-LJ6qEBndfGUS6ccMpU"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "veLJ6qEBndfGUS6cdMpH"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "v-LJ6qEBndfGUS6cdMpJ"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "w-LJ6qEBndfGUS6ceMo4"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "weLJ6qEBndfGUS6ceMo3"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "xeLJ6qEBndfGUS6cfMot"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "x-LJ6qEBndfGUS6cfMou"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "yeLJ6qEBndfGUS6cgMod"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "y-LJ6qEBndfGUS6cgMoe"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "z-LJ6qEBndfGUS6chMoT"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "zeLJ6qEBndfGUS6chMoS"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "0-LJ6qEBndfGUS6ciMos"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "0eLJ6qEBndfGUS6ciMor"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "1uLJ6qEBndfGUS6cjMoQ"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "1eLJ6qEBndfGUS6cjMoQ"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "2uLJ6qEBndfGUS6cj8r9"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "2eLJ6qEBndfGUS6cj8r9"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "3eLJ6qEBndfGUS6ck8ry"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "3-LJ6qEBndfGUS6ck8r0"
+      ],
+      [
+       "h6bce5d06",
+       2,
+       "4eLJ6qEBndfGUS6cl8ro"
+      ],
+      [
+       "h6a264d2b",
+       4,
+       "4-LJ6qEBndfGUS6cl8ro"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "operator_broker_pw_file": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_id": "keLJ6qEBndfGUS6cPcqT",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 3,
+    "tenants": [
+     "h6a264d2b",
+     "h6bce5d06",
+     "h6c3928e9",
+     "h6dfb8314"
+    ],
+    "uid": 20001,
+    "why": []
+   },
+   {
+    "C1": {
+     "B_read": [
+      400,
+      "illegal_argument_exception"
+     ],
+     "B_w": [
+      403,
+      "security_exception"
+     ],
+     "B_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C10": {
+     "holder_fn": "callable",
+     "select_leases": "42501"
+    },
+    "C11": "ServiceError: peer_refused",
+    "C12": {
+     "a_window_write": [
+      201,
+      null
+     ],
+     "b_projector_start": "ConnectionRefusedError",
+     "before_stop": [
+      201,
+      null
+     ],
+     "c_h2_key_id": "R-LK6qEBndfGUS6cZsvx",
+     "c_stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "c_stale_accepted": 0,
+     "docs_at_phase2": 2,
+     "invalid": {}
+    },
+    "C13": {
+     "key_hashes": 46,
+     "values_found": 0
+    },
+    "C2": {
+     "A_base": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C3": {
+     "A_x": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C4": {
+     "add_next": [
+      403,
+      "security_exception"
+     ],
+     "add_on_B": [
+      403,
+      "security_exception"
+     ],
+     "remove_own": [
+      403,
+      "security_exception"
+     ]
+    },
+    "C5": {
+     "E2": 3,
+     "h2_write": [
+      201,
+      null
+     ],
+     "stale": [
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ],
+      [
+       401,
+       "security_exception"
+      ]
+     ],
+     "stale_accepted": 0
+    },
+    "C6": {
+     "new_epoch_empty": "Refused: lease_not_current",
+     "new_epoch_h1": "Refused: lease_not_current",
+     "old_epoch_h1": "Refused: lease_not_current"
+    },
+    "C7": {
+     "p1_first_step": 2,
+     "p1_key_id": "QeLK6qEBndfGUS6cNsuT",
+     "p1_step_after_takeover": -1,
+     "p1_written_after": 2,
+     "p1_written_before": 2,
+     "p2_done": true,
+     "p2_key_id": "Q-LK6qEBndfGUS6cOssB",
+     "p2_written": 3
+    },
+    "C7_events_in_read_alias": 5,
+    "C8": {
+     "errors": [],
+     "keys": [
+      [
+       "h6b19c797",
+       2,
+       "8-LJ6qEBndfGUS6c4sry"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "8eLJ6qEBndfGUS6c4srf"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "9-LJ6qEBndfGUS6c6spp"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "9eLJ6qEBndfGUS6c6spo"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "-eLJ6qEBndfGUS6c7spk"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "--LJ6qEBndfGUS6c7spl"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "_eLJ6qEBndfGUS6c8spU"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "_-LJ6qEBndfGUS6c8spV"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "AeLJ6qEBndfGUS6c9stO"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "AuLJ6qEBndfGUS6c9stO"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "B-LJ6qEBndfGUS6c-stE"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "BeLJ6qEBndfGUS6c-stD"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "C-LJ6qEBndfGUS6c_ss5"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "CeLJ6qEBndfGUS6c_ss5"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "D-LK6qEBndfGUS6cAssw"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "DeLK6qEBndfGUS6cAssv"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "E-LK6qEBndfGUS6cBssq"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "EeLK6qEBndfGUS6cBssq"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "FuLK6qEBndfGUS6cCssd"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "FeLK6qEBndfGUS6cCssd"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "G-LK6qEBndfGUS6cDssR"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "GeLK6qEBndfGUS6cDssR"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "HeLK6qEBndfGUS6cEssG"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "H-LK6qEBndfGUS6cEssH"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "IeLK6qEBndfGUS6cFcv8"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "I-LK6qEBndfGUS6cFcv9"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "J-LK6qEBndfGUS6cGcvv"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "JeLK6qEBndfGUS6cGcvu"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "KeLK6qEBndfGUS6cHcvp"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "KuLK6qEBndfGUS6cHcvp"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "LeLK6qEBndfGUS6cIcvR"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "LuLK6qEBndfGUS6cIcvR"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "M-LK6qEBndfGUS6cJcvG"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "MeLK6qEBndfGUS6cJcvF"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "NeLK6qEBndfGUS6cKcu_"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "N-LK6qEBndfGUS6cKcvA"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "OeLK6qEBndfGUS6cLcu0"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "O-LK6qEBndfGUS6cLcu1"
+      ],
+      [
+       "h6a02f15e",
+       4,
+       "PeLK6qEBndfGUS6cMcun"
+      ],
+      [
+       "h6b19c797",
+       2,
+       "P-LK6qEBndfGUS6cMcuo"
+      ]
+     ],
+     "n_errors": 0
+    },
+    "C8_descriptors": {
+     "bad": [],
+     "checked": 40,
+     "n_bad": 0
+    },
+    "E": 2,
+    "eb": 1,
+    "files": {
+     "admin_es_key": "EACCES",
+     "admin_pgpass": "EACCES",
+     "broker_es_pw_file": "EACCES",
+     "broker_pgpass": "EACCES",
+     "elastic_pw_file": "EACCES",
+     "operator_broker_pw_file": "EACCES"
+    },
+    "holds": true,
+    "invalid": {},
+    "invalid_request": {},
+    "key_A_id": "7eLJ6qEBndfGUS6c18oo",
+    "own_write": [
+     201,
+     null
+    ],
+    "run": 4,
+    "tenants": [
+     "h6a02f15e",
+     "h6b19c797",
+     "h6c07312e",
+     "h6d0df697"
+    ],
+    "uid": 20001,
+    "why": []
+   }
+  ],
+  "fenced_files": {
+   "app": [
+    "pgpass.wp_app"
+   ],
+   "broker": [
+    "es_broker_password",
+    "pgpass.wp_broker"
+   ],
+   "keysvc": [
+    "pgpass.wp_kms"
+   ]
+  },
+  "fenced_witness": {
+   "admin_es_key": "yes",
+   "admin_pgpass": "yes",
+   "broker_es_pw_file": "yes",
+   "broker_pgpass": "yes",
+   "elastic_pw_file": "yes",
+   "operator_broker_pw_file": "yes"
+  },
+  "limits": [
+   "one Elasticsearch node",
+   "docker access on the host is root-equivalent: separation of service identities on one host, not host isolation",
+   "the broker trusts every allowed peer uid for every tenant (tenant authority: design path item 2)",
+   "holder strings are trusted within one service identity",
+   "a key already issued writes until the next CAS or its 1 h expiry (C12 a)",
+   "the operator directory is mounted into the app container for this test only"
+  ],
+  "n_pairs": 20,
+  "n_stale": 20,
+  "uids": {
+   "app": 20001,
+   "broker": 20004,
+   "keysvc": 20003,
+   "verifier": 20002
+  },
+  "verdict": {
+   "control_violated": "5/5",
+   "feasible": true,
+   "fenced_holds": "5/5",
+   "invalid_request_cases": [],
+   "void": false
+  }
+ }
+}
