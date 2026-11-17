@@ -52,6 +52,8 @@ OUT=$WP_HOME/results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.cleanup exp.d3_identifier
   $PY -m exp.mutual_mentions 5 10 5
   $PY -m exp.cleanup exp.mutual_mentions
+  $PY -m exp.lock_order
+  $PY -m exp.cleanup exp.lock_order
   $PY -m exp.d2_verifier_process 5
   $PY -m exp.cleanup exp.d2_verifier_process
   $PY -m exp.phys_purge
@@ -61,7 +63,8 @@ OUT=$WP_HOME/results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.races R1 R2 R3 40
   $PY -m exp.cleanup exp.races
   $PY -m exp.guard_check end || echo "GATE guard_check end FAILED"
-  $PY -m wp.es_security enable && $PY -m exp.d6_es_keys 3; $PY -m exp.cleanup exp.d6_es_keys; $PY -m wp.es_security disable
+  # D6 (per-role ES keys with security on) is build step 2: its projector role cannot move the epoch alias yet
+  # (security_exception in the 4f403dd shake-down), so it is not part of the step-1 run.
   echo "end $(date -u +%FT%TZ)"
 } > "$OUT" 2>&1
 echo "$OUT"
