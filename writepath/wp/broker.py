@@ -210,10 +210,25 @@ def broker_mode():
     return bool(os.environ.get("WP_BROKER"))
 
 
-def _broker_es():
+def _broker_auth():
     import base64
     pw = (config.SECRETS / PWFILE_NAME).read_text().strip()
-    return ES(auth="Basic " + base64.b64encode(f"{BROKER_USER}:{pw}".encode()).decode())
+    return "Basic " + base64.b64encode(f"{BROKER_USER}:{pw}".encode()).decode()
+
+
+def broker_factory(es_factory, pg_factory, log=None):
+    """make_store for the transport: ONE Broker per client connection, with its own ES client and its own Postgres
+    connection (autocommit), so concurrent peers never share an HTTP or database connection; the transport closes
+    .conn when the client disconnects. A dead connection fails that client's requests closed until it reconnects."""
+    def make():
+        pg = pg_factory()
+
+        def lease_ok(t, sc, e, who):
+            return bool(pg.execute("select wp_lease_holder_current(%s, %s, %s, %s)", (t, sc, e, who)).fetchone()[0])
+        b = Broker(es_factory(), lease_ok, log=log)
+        b.conn = pg
+        return b
+    return make
 
 
 def serve(path):
@@ -221,14 +236,10 @@ def serve(path):
     allow = frozenset(int(x) for x in os.environ.get("WP_BROKER_ALLOW_UIDS", "").split(",") if x.strip())
     if not allow:
         raise SystemExit("refusing to serve: WP_BROKER_ALLOW_UIDS lists no uid")
-    pg = db.broker()
-
-    def lease_ok(t, sc, e, who):
-        return bool(pg.execute("select wp_lease_holder_current(%s, %s, %s, %s)", (t, sc, e, who)).fetchone()[0])
-
+    auth = _broker_auth()
     log = lambda s: print("broker", s, flush=True)          # noqa: E731
-    b = Broker(_broker_es(), lease_ok, log=log)
-    srv = keysvc.Server(path, allow, make_store=lambda: b, log=log, ops=OPS, dispatch_fn=dispatch)
+    make = broker_factory(lambda: ES(auth=auth), db.broker, log=log)
+    srv = keysvc.Server(path, allow, make_store=make, log=log, ops=OPS, dispatch_fn=dispatch)
     print(f"broker serving uids={sorted(allow)}", flush=True)
     srv.serve_forever()
 

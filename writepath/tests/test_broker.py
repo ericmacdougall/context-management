@@ -263,6 +263,56 @@ class BrokerTest(unittest.TestCase):
             srv.shutdown()
             srv.server_close()
 
+    def test_concurrent_clients_get_their_own_broker(self):
+        made = []
+
+        class PG:
+            def __init__(self):
+                self.closed = False
+
+            def execute(self, sql, args):
+                return types.SimpleNamespace(fetchone=lambda: (args == (T, "projector", E, HOLDER),))
+
+            def close(self):
+                self.closed = True
+
+        def es_factory():
+            es = FakeES(self.F)
+            made.append(es)
+            return es
+        pgs = []
+
+        def pg_factory():
+            pgs.append(PG())
+            return pgs[-1]
+        path = os.path.join(self.tmp, "c.sock")
+        srv = self.KS.Server(path, {30001}, make_store=self.B.broker_factory(es_factory, pg_factory),
+                             uid_of=lambda s: 30001, ops=self.B.OPS, dispatch_fn=self.B.dispatch)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            gate, out = threading.Barrier(2), []
+
+            def one():
+                c = self.B.Client(path)
+                gate.wait()
+                out.append(c.writer_key(T, E, HOLDER)["id"])
+                c.close()
+            ts = [threading.Thread(target=one) for _ in range(2)]
+            [t.start() for t in ts]
+            [t.join(10) for t in ts]
+            self.assertEqual(len(out), 2)
+            self.assertEqual(len(made), 2, "one ES client per connection")
+            self.assertEqual(len({id(e) for e in made}), 2)
+            self.assertEqual([e.calls.count("mint") for e in made], [1, 1], "no connection saw another's requests")
+            for _ in range(100):
+                if all(p.closed for p in pgs):
+                    break
+                threading.Event().wait(0.02)
+            self.assertEqual([p.closed for p in pgs], [True, True], "each connection's PG session closed on disconnect")
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
     # ------------------------------------------------------------ receipt wording
     def test_fence_statement_per_mode(self):
         os.environ["WP_BROKER"] = os.path.join(self.tmp, "none.sock")
