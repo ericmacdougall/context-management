@@ -1,4 +1,4 @@
-"""Mention matcher m3 (user decision 2026-11-16: erasing a person includes what others said about them; D3 design in
+"""Mention matcher m4 (user decision 2026-11-16: erasing a person includes what others said about them; D3 design in
 DESIGN-NOTES.md "Design: D3" and "Redesign after review C"; ASSUMPTION under decision 10 and decision R1).
 
 Deterministic, no model: a subject's DECLARED identifiers (names, handles, customer numbers) are reduced to KEY token
@@ -6,7 +6,7 @@ sequences and stored only as HMAC under the tenant key, with the label label() n
 every event's content is tokenised, every 1..MAX_N key-token window is HMAC'd and looked up; a hit records the subject
 in the event's `mentions`, and the erasure removes such events WHOLE (decision R1: no span redaction).
 
-Matcher id (class 3): m3:ucd<unicodedata version>:di<sha12>:cf<sha12>, naming the Unicode version and the two data
+Matcher id (class 3): m4:ucd<unicodedata version>:di<sha12>:cf<sha12>, naming the Unicode version and the two data
 tables. The store keeps the tenant's matcher id and refuses work under another (WPS32 at approval, WPS38 at append and
 rescan), so a version change is refused, never silently unmatched.
 
@@ -16,14 +16,16 @@ table raises UCDUnavailable: nothing matches without them. They are not in the r
 
 Per cluster (a base character with its combining marks), default ignorable and format characters removed:
   the NORMAL form   NFKC, casefold, NFKC (an approximation of toNFKC_Casefold): what rule r3 judges and the reviewer reads
-  the KEY           the normal form, then the UTS 39 skeleton (NFD, each code point mapped by confusables.txt, NFD),
-                    then casefold and NFKC: what is HMAC'd for an identifier and looked up for text. Identical text has
-                    an identical key, and so does any case variant ("ALEX KIM").
-  the AS-WRITTEN key  (text only) the skeleton of the cluster AS WRITTEN, then the key. confusables.txt is case-
-                    sensitive (capital I maps to small l, small i does not), so no single case-insensitive key also
-                    sees capital-shape look-alikes: "AIex Kim" (capital I for l) is found through this variant. A text
-                    window is looked up under every combination of its tokens' two keys (at most 2^MAX_N; one for text
-                    without such capitals).
+  the KEY           canonical(): ONE key per token, the same function for identifiers and text (review E F11; DESIGN-
+                    NOTES "Redesign after review E"). Per code point: kept as written if its case pair is CLOSED, else
+                    case-folded; then the UTS 39 prototype (UTS 39 rev 34 section 4, internalSkeleton steps 3-4: each
+                    code point mapped by confusables.txt, NFD); then each prototype mapped to its class representative,
+                    repeated until stable. Classes: union-find over prototypes joining the two prototypes of every case
+                    pair (ASCII pairs always; any other pair only if its prototypes are stable under case folding and
+                    joining does not merge two classes holding different ASCII letters or digits). The standard defines no case-insensitive skeleton; capital I is
+                    the look-alike of l and the capital of i, so one key that accepts "AIIson" for "Alison" must make
+                    i, l and 1 one class (ASCII classes {i, l, 1}, {o, 0}; OVER_MATCH). not_closed() lists
+                    the capitals whose look-alike role is lost (NOT_COVERED).
 Tokens are runs of clusters whose normal form is only letters, marks and digits (judged on the normal form, never on the
 key); offsets are per cluster in the original text (UAX 15: offsets on normalised text do not map back).
 
@@ -51,14 +53,18 @@ NOT_COVERED = (
     "identifiers that were never declared (nicknames, misspellings, initials, inflected forms)",
     "pronouns and indirect references",
     "look-alikes outside UTS 39 confusables.txt " + CONFUSABLES_VERSION + " (transliterations, homophones)",
-    "a look-alike of a CAPITAL letter of the declared identifier (lan for a declared Ian)",
+    "a capital of another script that looks like one Latin capital while its small form looks like another letter "
+    "(Greek capital Nu, Eta; the list is not_closed()): it is matched by its small form, not as the look-alike",
+    "look-alikes that are punctuation or symbols (| for l): they end the token",
     "words of the subject quoted by others that contain no declared identifier",
     "names in scripts written without spaces (refused at declaration)",
 )
 OVER_MATCH = (
     "confusable variants of a declared identifier (for example Kim and Kirn share a key): such events of other "
     "speakers are removed too",
-    "a capital I written where a small l looks the same (AIEX KIM for Alex Kim, through the as-written key)",
+    "letters merged by look-alike and case together (i, l, 1 and capital I; o and 0; and every look-alike "
+    "in confusables.txt): events of other speakers whose words differ from a declared identifier only by such letters "
+    "(Allson, Aiison, Ailson or A1ison for Alison; AIEX KIM for Alex Kim) are removed too",
 )
 
 
@@ -118,7 +124,7 @@ def tables():
 
 def matcher_id():
     tables()                                   # fail closed before naming a matcher
-    return (f"m3:ucd{UCD}:di{PINS[('default_ignorable', UCD)][:12]}"
+    return (f"m4:ucd{UCD}:di{PINS[('default_ignorable', UCD)][:12]}"
             f":cf{PINS[('confusables', CONFUSABLES_VERSION)][:12]}")
 
 
@@ -160,25 +166,124 @@ def _fold(s):
     return UD.normalize("NFKC", UD.normalize("NFKC", s).casefold())
 
 
-def _uts39(s):
-    """UTS 39 skeleton of s after NFKC: NFD, each code point mapped by confusables.txt, NFD."""
-    conf = tables()[1]
-    x = UD.normalize("NFD", UD.normalize("NFKC", s))
-    return UD.normalize("NFD", "".join(conf.get(ord(c), c) for c in x))
+def _proto(c, conf):
+    """UTS 39 prototype of one code point (internalSkeleton step 3); a code point without an entry is its compatibility
+    decomposition, each part mapped (fullwidth and mathematical letters)."""
+    p = conf.get(ord(c))
+    if p is None:
+        p = "".join(conf.get(ord(z), z) for z in UD.normalize("NFKD", c))
+    return UD.normalize("NFD", p)
+
+
+def build_classes(di, conf):
+    """(representative map, closed case-changing code points) for these tables. Deterministic: ASCII case pairs first,
+    always joined (I/i: capital I is the look-alike of l); then the others in code point order, each joined only if
+    both prototypes are stable under case folding (or already closed) and the join does not merge two classes holding
+    different ASCII letters or digits (DESIGN-NOTES "Redesign after review E", F11 and its CORRECTION)."""
+    par, anchors = {}, {}
+
+    def find(x):
+        par.setdefault(x, x)
+        while par[x] != x:
+            par[x] = par[par[x]]
+            x = par[x]
+        return x
+
+    for a in "abcdefghijklmnopqrstuvwxyz0123456789":
+        for v in {a, a.upper()}:
+            p = _proto(v, conf)
+            if len(p) == 1:
+                anchors.setdefault(find(p), set()).add(a)
+    pairs = []
+    for o in range(0x110000):
+        c = chr(o)
+        if UD.category(c) in ("Cn", "Co", "Cs") or ord(c) in di or len(UD.normalize("NFD", c)) != 1:
+            continue
+        f = UD.normalize("NFD", c.casefold())
+        if f == c or len(f) != 1:
+            continue
+        pc, pf = _proto(c, conf), _proto(f, conf)
+        if len(pc) == 1 and len(pf) == 1:
+            pairs.append((not (c.isascii() and f.isascii()), o, c, pc, pf))
+    closed = set()
+    for other, _, c, pc, pf in sorted(pairs):
+        if other and not all(x.casefold() == x or x in closed for x in (pc, pf)):
+            continue                                        # a prototype that folds (beta -> sharp s -> ss): not closed
+        ra, rb = find(pc), find(pf)
+        if ra != rb:
+            aa, ab = anchors.get(ra, set()), anchors.get(rb, set())
+            if other and aa and ab:
+                continue                                    # would merge two ASCII classes: not closed
+            lo, hi = min(ra, rb), max(ra, rb)
+            par[hi] = lo
+            anchors[lo] = aa | ab
+            anchors.pop(hi, None)
+        closed.add(c)
+    return {x: find(x) for x in par}, frozenset(closed)
+
+
+_CLASSES = None
+
+
+def _classes():
+    global _CLASSES
+    if _CLASSES is None:
+        _CLASSES = build_classes(*tables())
+    return _CLASSES
+
+
+def canonical(s):
+    """The m4 key of a string (no tokenisation): case-fold unless the case pair is closed, UTS 39 prototype, class
+    representative; repeated until stable (a representative may itself be a capital that folds, M -> m -> rn)."""
+    di, conf = tables()
+    reps, closed = _classes()
+    x = "".join(c for c in UD.normalize("NFD", s) if ord(c) not in di and UD.category(c) != "Cf")
+    for _ in range(6):
+        y = []
+        for c in x:
+            if c not in closed and c.casefold() != c:
+                c = UD.normalize("NFD", c.casefold())
+            for d in c:
+                y.extend(reps.get(e, e) for e in _proto(d, conf))
+        z = UD.normalize("NFD", "".join(y))
+        if z == x:
+            break
+        x = z
+    return x
+
+
+_NOT_CLOSED = None
+
+
+def not_closed():
+    """Case-changing letters whose look-alike role the key loses: their capital is matched by its small form only
+    (NOT_COVERED); computed from the tables, never maintained by hand."""
+    global _NOT_CLOSED
+    if _NOT_CLOSED is None:
+        _, conf = tables()
+        _, closed = _classes()
+        out = []
+        for o in range(0x110000):
+            c = chr(o)
+            if UD.category(c)[0] in "LN" and c not in closed and c.casefold() != c and len(UD.normalize("NFD", c)) == 1:
+                if canonical(c) != canonical(conf.get(o, c)):
+                    out.append(c)
+        _NOT_CLOSED = tuple(out)
+    return _NOT_CLOSED
 
 
 def _key(cluster):
-    """The key of one cluster: its normal form, skeleton, casefold, NFKC (whitespace from a mapping dropped)."""
-    return "".join(c for c in UD.normalize("NFKC", _uts39(_fold(cluster)).casefold()) if not c.isspace())
+    """The key of one cluster (whitespace from a mapping dropped)."""
+    return "".join(c for c in canonical(cluster) if not c.isspace())
 
 
 def _tokens(text, ident=False):
-    """[(normal token, key token, as-written key token, start, end)], start/end code-point offsets in `text`."""
-    out, cur, ck, ca, cs, ce = [], [], [], [], 0, 0
+    """[(normal token, key token, start, end)], start/end code-point offsets in `text`."""
+    out, cur, ck, cs, ce = [], [], [], 0, 0
     i, n = 0, len(text)
 
     def close():
-        out.append((UD.normalize("NFKC", "".join(cur)), UD.normalize("NFKC", "".join(ck)), UD.normalize("NFKC", "".join(ca)), cs, ce))
+        out.append((UD.normalize("NFKC", "".join(cur)), UD.normalize("NFD", "".join(ck)), cs, ce))
 
     while i < n:
         c = text[i]
@@ -197,11 +302,10 @@ def _tokens(text, ident=False):
                 cs = i
             cur.append(f)
             ck.append(_key(cl))
-            ca.append(ck[-1] if ident else _key(_uts39(cl)))
             ce = j
         elif cur:
             close()
-            cur, ck, ca = [], [], []
+            cur, ck = [], []
         i = j
     if cur:
         close()
@@ -230,7 +334,7 @@ def identifier_problem(identifier):
     code points, digits and length are judged on the NORMAL form (a key hides mixed script); the stop list on KEYS
     ("custorner" has the key of "customer")."""
     toks = _tokens(identifier, ident=True)
-    norm = [t for t, _, _, _, _ in toks]
+    norm = [t for t, _, _, _ in toks]
     if not norm:
         return "empty"
     if any(UD.category(c) in ("Cn", "Co", "Cs") for t in norm for c in t):
@@ -243,7 +347,7 @@ def identifier_problem(identifier):
             return "a script written without spaces between words (%s): whole-token matching cannot find it" % ",".join(sorted(scripts))
         if len(scripts) > 1:
             return "a token mixes scripts (%s): look-alike risk" % ",".join(sorted(scripts))
-    if all(k in _stop_keys() for _, k, _, _, _ in toks):
+    if all(k in _stop_keys() for _, k, _, _ in toks):
         return "only common words (or look-alikes of them)"
     if len(norm) == 1 and len(norm[0]) < MIN_SINGLE and not any(c.isdigit() for c in norm[0]):
         return "single token shorter than %d characters (likely to name someone else; declare the full name)" % MIN_SINGLE
@@ -251,26 +355,24 @@ def identifier_problem(identifier):
 
 
 def tokens(text):
-    return [t for t, _, _, _, _ in _tokens(text)]
+    return [t for t, _, _, _ in _tokens(text)]
 
 
 def normalize(identifier):
     """The normal form a reviewer reads and rule r3 judges."""
-    return " ".join(t for t, _, _, _, _ in _tokens(identifier, ident=True))
+    return " ".join(t for t, _, _, _ in _tokens(identifier, ident=True))
 
 
 def key(identifier):
-    """The key that is HMAC'd (per token: normal form, UTS 39 skeleton, casefold)."""
-    return " ".join(k for _, k, _, _, _ in _tokens(identifier, ident=True))
+    """The key that is HMAC'd (per token: canonical())."""
+    return " ".join(k for _, k, _, _ in _tokens(identifier, ident=True))
 
 
 def _windows_at(text):
-    """[(key window, start, end)] for every 1..MAX_N token window under every combination of its tokens' keys."""
-    import itertools
+    """[(key window, start, end)] for every 1..MAX_N token window (one key per token)."""
     t = _tokens(text)
-    return [(" ".join(combo), t[i][3], t[i + n - 1][4])
-            for n in range(1, MAX_N + 1) for i in range(len(t) - n + 1)
-            for combo in sorted(set(itertools.product(*[sorted({x[1], x[2]}) for x in t[i:i + n]])))]
+    return [(" ".join(x[1] for x in t[i:i + n]), t[i][2], t[i + n - 1][3])
+            for n in range(1, MAX_N + 1) for i in range(len(t) - n + 1)]
 
 
 def windows(text):

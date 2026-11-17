@@ -440,13 +440,21 @@ Matcher m4 (one key per token, the same function for identifier and text):
 - classes: union-find over prototypes; for each case pair (a cased letter and its single-code-point case fold, both
   with single-code-point prototypes) the two prototypes are joined, Latin pairs first, then other scripts' pairs in code
   point order, a pair being CLOSED only if joining does not merge two classes that already contain different ASCII
-  letters or digits. Expected ASCII classes: {i, l, 1}, {o, 0}, {s, 5}; every other ASCII letter alone with its capital.
+  letters or digits. Expected ASCII classes: {i, l, 1}, {o, 0}, {s, 5} (corrected below: {i, l, 1}, {o, 0}).
 - NOT_COVERED gains a computed list: the case pairs that are not closed (for example Greek Nu, Eta). Such a capital is
   matched by its small form, so it is not found as a look-alike of a Latin capital (ALISON with Greek Nu).
 - OVER_MATCH: the merged classes; events of other speakers whose words differ from a declared identifier only by such
   letters (Allson, Aiison, Ailson, A1ison for Alison) are removed with the subject's erasure. Receipts state it.
 - the matcher id becomes m4 (same tables); the store refuses a matcher change while identifiers exist (WPS38), so an
   existing tenant's identifiers must be re-declared (no migration, as before).
+- CORRECTION (found by tests/test_ident.py F11 while writing the code, before any commit of it): joining every LATIN
+  case pair unconditionally merged f, s and 5 (long s folds to s but looks like f; Latin tone five), and joining a
+  pair whose prototype itself case-folds put sharp s in B's class (Greek capital Beta looks like B, small beta's
+  prototype is sharp s, which folds to ss). Rule as built: ASCII case pairs always; any other pair only if both
+  prototypes are stable under case folding (or already closed) and the join merges no two ASCII classes. ASCII classes
+  are {i, l, 1} and {o, 0}; the computed not-closed list has 63 capitals on Unicode 13.0.0 (Greek Beta, Eta, Mu, Nu,
+  Sigma, Upsilon; Cyrillic Be, Ghe, El, Em, ...): each is matched by its small form, so Greek and Cyrillic text in
+  capitals still matches, but one such capital used as a look-alike of a Latin capital (Greek Beta in BOB) is not found.
 Tests (tests/test_ident.py F11*): the reviewer's case; a seeded generator applying random mixes of case changes,
 confusable substitutions taken from the raw table (sources whose prototype equals the prototype of the letter or of its
 case variant, excluding the published not-closed pairs), Default_Ignorable insertions and composed/decomposed and

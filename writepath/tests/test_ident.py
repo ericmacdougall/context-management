@@ -261,7 +261,7 @@ class F11OneCanonicalKey(unittest.TestCase):
             cls.setdefault(M.key(ch), []).append(ch)
             if ch.isalpha():
                 self.assertEqual(M.key(ch), M.key(ch.upper()), ch)
-        self.assertEqual(sorted("".join(v) for v in cls.values() if len(v) > 1), ["il1", "o0", "s5"])
+        self.assertEqual(sorted("".join(v) for v in cls.values() if len(v) > 1), ["il1", "o0"])
 
     def variant(self, rnd, ident):
         out = []
@@ -299,7 +299,7 @@ class F11OneCanonicalKey(unittest.TestCase):
         self.assertTrue(self.matches("NGUYỆT LÊ", "Nguyệt Lê"))
 
     def test_f11_near_misses_do_not_match(self):
-        merged = {c: g for g in ("il1", "o0", "s5") for c in g}
+        merged = {c: g for g in ("il1", "o0") for c in g}
         letters = "abcdefghijklmnopqrstuvwxyz"
         bad = []
         for ident in ("Alison", "Alex Kim", "Kimberly Moore"):
@@ -324,7 +324,7 @@ class F11OneCanonicalKey(unittest.TestCase):
         self.assertFalse(self.matches("Alisov", "Alison"))
 
     def test_f11_stated_over_match(self):
-        for v in ("Allson", "Aiison", "Ailson", "A1ison", "AIis0n", "Ali5on"):
+        for v in ("Allson", "Aiison", "Ailson", "A1ison", "AIis0n"):
             self.assertTrue(self.matches(v, "Alison"), v)
         self.assertTrue(any("Allson" in x for x in M.OVER_MATCH))
         self.assertTrue(self.matches("lan Smith", "Ian Smith"))             # no longer in NOT_COVERED
