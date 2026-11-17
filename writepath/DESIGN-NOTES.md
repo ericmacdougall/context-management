@@ -287,7 +287,7 @@ return the updated row version. Rule: every function locks the rows it judges in
 - `wp_identifier_propose` takes the subject row FOR SHARE and checks `erased` from that locked row (the same barrier as
   approve/declare): an open mark (FOR UPDATE) makes it wait; after the mark commits it sees erased and refuses (WPS03).
   A proposal that committed first is deleted by the cascade. "Proposal after erasure" cannot commit.
-- Lock order, every path: subject rows (sorted by subject id) -> identifier_epochs (tenant row) -> proposal row ->
+- WITHDRAWN by review E F12 (false: mark x cascade could deadlock; see "Redesign after review E"). Lock order, every path: subject rows (sorted by subject id) -> identifier_epochs (tenant row) -> proposal row ->
   event rows. Mark takes the subject FOR UPDATE; propose, approve/declare, append and cascade take subjects FOR SHARE
   first. Exclusive subject lockers (mark, hold placement) never wait on an event or proposal row, so no cycle exists.
 - Pairs tested live: propose x open mark (waits, then WPS03); approve x open mark (waits, then WPS03).
@@ -374,3 +374,82 @@ event ids; with R1 there is no later whole removal of a redacted event to accoun
 | C-F5 extra stale alias hidden by a current one | alias | converge to exactly one, re-read |
 | C-F9 partial search counted as absence | ES | partial responses rejected |
 | B2 interleavings | alias | unchanged (-w0 generation, must_exist removal) |
+
+## Redesign after review E (reviewE-1 on 0e8f67c; written before tests and code, 2026-11-17)
+Open after review E: F4 (high, legal-hold race on whole-event removal), F11 (medium, token keys miss mixed case and
+look-alike choices inside one token), F12 (minor, the universal lock-order claim of class 2 is false). Decision R1
+(whole-event removal only) is still an ASSUMPTION awaiting the user. Each is fixed by class, not instance.
+
+### F4, the hold class: every subject whose hold a removal judges is locked in the judging statement's transaction
+The hold decision for an event e reads H(e) = {speaker} + mentions + {subjects linked by erasure_mentions}. Speaker and
+mentions are immutable (events_change_guard); erasure_mentions grows (mark: 'write' rows, which repeat mentions;
+wp_erasure_add_mentions: rescan rows, which ADD subjects). Reviewer's schedule: A's batch locks H(e) as read, C's rescan
+links e to C and commits, A judges with C unlocked, a hold on C commits, A removes e.
+Rule (the F8 rule applied to the whole class): the set a judgement reads is fixed by a lock before it is read, and
+every member is locked before it is judged.
+- wp_erasure_apply locks the candidate EVENTS first (FOR NO KEY UPDATE, ordered by event id), then reads H(e) and
+  share-locks every subject in it (ordered by subject id), then judges holds, then tombstones and nulls.
+- wp_erasure_add_mentions locks the events it links FOR SHARE (ordered) before inserting the link: a link to an event
+  whose removal is in flight waits until that removal commits; a link that committed first is seen by the removal,
+  whose subject (C) it then locks and judges.
+- wp_hold_place / wp_hold_release take the subject FOR UPDATE (unchanged), which conflicts with the share lock of an
+  in-flight removal that judges that subject. So a hold either commits before the judging statement (the event is
+  withheld) or waits and then finds the event already removed; wp_hold_place now RECORDS that truthfully: it returns
+  linked_removed (count) and linked_removed_ids (first 20, sorted) of the events in the subject's footprint (speaker,
+  mentions, erasure_mentions) whose content is already gone when the hold lands.
+- A hold on C placed while C's link to e is still waiting lands first and does not cover e (not linked yet); the link
+  commits after e's removal. Serial order: hold, removal, link, which is a consistent history.
+- Own subject: mark judges under the subject FOR UPDATE; each cascade batch under FOR SHARE held to commit (unchanged).
+Tests (live, forced interleavings; tests/test_d3_pg.py E*): E1 the reviewer's schedule (link during a paused removal
+must wait); E2 a hold on the speaker during a paused removal waits and then reports the event removed; E3 a hold on a
+rescan-linked subject (link committed first) waits and reports it; E4 a hold placed first withholds the event, its
+release during a paused batch waits, and a later pass removes the event; E5 a hold on the subject itself after mark
+stops the cascade (WPS16) and a hold placed during a paused batch waits. Broken variants, one per lock, each must make
+a test fail: apply without the event lock (E1), add_mentions without the event lock (E1), apply without the subject
+share lock (E2, E3), the footprint without its erasure_mentions branch (E3), hold placement without FOR UPDATE (E2).
+
+### F12: one acquisition order where an exclusive locker meets a cascade; claim only what is tested
+Reviewer's cycle: a cascade holds the subject FOR SHARE and later updates the job cursor; a repeated wp_erasure_mark
+takes the job FOR UPDATE and then waits for the subject FOR UPDATE. Fix: mark reads the job identity (immutable,
+erasure_guard) without a lock, takes the subject FOR UPDATE, then the job FOR UPDATE. The class 2 claim "lock order,
+every path ... no cycle exists" is withdrawn. The order the code now follows on the erasure paths is: subject rows ->
+event rows (apply, add_mentions) -> subject rows FOR SHARE (apply's footprint; only share, and exclusive subject
+lockers never wait on events) -> job row. Append, propose and approve take only subject share locks before their own
+rows. This is a table of acquisition orders, not a proof: the tested schedules are E6 (the reviewer's mark x cascade
+schedule, no deadlock) and the earlier C2/C3; any other pair is unproven, and a deadlock between untested paths is
+still possible and retryable (40P01 rolls one transaction back; every step is idempotent).
+
+### F11: one canonical key per token (matcher m4)
+Source: UTS 39 revision 34, version 18.0.0, 2026-08-27, https://www.unicode.org/reports/tr39/ (read 2026-11-17,
+confidence high). Section 4 "Confusable Detection": internalSkeleton(X) = (1) NFD, (2) remove Default_Ignorable_Code_Point
+characters, (3) concatenate the prototype of each character (confusables.txt), (4) reapply NFD; X and Y are confusable
+iff skeleton(X) = skeleton(Y); the data is closed under transitivity, and the test "may be overly inclusive". The
+standard does NOT combine the skeleton with case folding or NFKC and gives no order for doing so (toCasefold and NFKC are
+listed only among the building blocks of identifier profiles in section 3), and section 6.1 says skeletons should not
+be used as a normalisation of identifiers (here they are never shown; only HMAC'd).
+Why no single composition of the standard's steps suffices: confusables.txt maps capital I to small l, while case
+folding maps I to small i. The reviewer's "AIIson" for "Alison" uses one capital I as a look-alike of l and one as the
+capital of i. skeleton(casefold(x)) gives aiison against alison; casefold(skeleton(x)) breaks KIM against Kim. Any one
+key that accepts both readings must make i and l the same letter. Closing the union of case folding and the
+confusables relation over ALL scripts is far worse (probe on the pinned tables: n = v, s = f, r = t = u = y, o = c),
+because other scripts' case pairs link different-looking letters (Greek capital Nu looks like N, its small form like v).
+Matcher m4 (one key per token, the same function for identifier and text):
+- per code point after NFKD and removal of Default_Ignorable and Cf: if it belongs to a CLOSED case pair it is kept as
+  written, otherwise it is case-folded; then the UTS 39 prototype (steps 3-4); then each prototype code point is mapped
+  to the representative of its class.
+- classes: union-find over prototypes; for each case pair (a cased letter and its single-code-point case fold, both
+  with single-code-point prototypes) the two prototypes are joined, Latin pairs first, then other scripts' pairs in code
+  point order, a pair being CLOSED only if joining does not merge two classes that already contain different ASCII
+  letters or digits. Expected ASCII classes: {i, l, 1}, {o, 0}, {s, 5}; every other ASCII letter alone with its capital.
+- NOT_COVERED gains a computed list: the case pairs that are not closed (for example Greek Nu, Eta). Such a capital is
+  matched by its small form, so it is not found as a look-alike of a Latin capital (ALISON with Greek Nu).
+- OVER_MATCH: the merged classes; events of other speakers whose words differ from a declared identifier only by such
+  letters (Allson, Aiison, Ailson, A1ison for Alison) are removed with the subject's erasure. Receipts state it.
+- the matcher id becomes m4 (same tables); the store refuses a matcher change while identifiers exist (WPS38), so an
+  existing tenant's identifiers must be re-declared (no migration, as before).
+Tests (tests/test_ident.py F11*): the reviewer's case; a seeded generator applying random mixes of case changes,
+confusable substitutions taken from the raw table (sources whose prototype equals the prototype of the letter or of its
+case variant, excluding the published not-closed pairs), Default_Ignorable insertions and composed/decomposed and
+reordered combining marks to approved identifiers, each required to match; the ASCII partition; near-miss negatives
+(a letter replaced by one of another ASCII class, a letter dropped or added) that must not match; closure properties
+enumerated over the tables (case variants and confusable sources share the key, except the published list).
