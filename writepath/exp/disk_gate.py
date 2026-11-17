@@ -7,11 +7,14 @@ zero) without exceeding the limit, and the kernel's lifetime memory.peak proves 
 tenants cannot write into the tmpfs. The gate checks that arrangement and the containers' identity; it reads no log
 text and compares no wall-clock times inside the window.
 
-  init REASON    start a new stop ledger (every other command is BLOCKED without one).
+  init REASON    start a new stop ledger (every other command is BLOCKED without one), or adopt an existing ledger that
+                 has no init record (a v2 ledger, or one whose start was cut): never done implicitly.
   start          BLOCKED (exit 2) unless, for both containers (by ID): the data directory is a Docker tmpfs mount with
                  no mount inside it, and the store itself reports it as tmpfs (ES's node stats; PG's statfs); memory
                  limit set, swap 0, size - limit >= ES's low-watermark free-space threshold + MARGIN (PG: MARGIN);
-                 lifetime memory.peak within the same bound; running, not paused, no OOM kill flagged; the ES API
+                 lifetime memory.peak within the same bound; free space now >= threshold + MARGIN and used space <=
+                 memory.peak (no page charged elsewhere); PG's PGDATA inside the tmpfs; running, not paused, no OOM kill
+                 flagged; the ES API
                  bound to the pinned container (its published port; its JVM started with it). Then, in one locked
                  ledger step: no unacknowledged stop, no open run, host free >= START_GB (measured there), admit.
   check NAME     VOID (exit 3) if any start rule fails now, or anything differs from admission: Id, StartedAt, ES node
@@ -23,9 +26,11 @@ text and compares no wall-clock times inside the window.
   stop REASON    record a stop.   stops: list unacknowledged stops (exit 2 if any).
   clear-stop ID REASON   acknowledge ONE stop by id; it unblocks later starts and never changes a run's verdict.
   abort REASON   close an open run whose launcher died (VOID).
-  ledger-reset REASON    keep a damaged ledger under a new name and start a new one (open runs end VOID).
+  ledger-reset REASON    keep a DAMAGED ledger under a new name and start a new one holding one open stop (open runs
+                 end VOID); an intact ledger is refused.
 The legacy path state/STOP is a directory the gate keeps there: a legacy `> state/STOP` write fails instead of being
-missed; a regular file found there is ingested as a stop and kept as state/STOP.ingested-<seq>.
+missed; a regular file found there is ingested as a stop and kept as state/STOP.ingested-<seq>; and any change to the
+directory (a touch, a file copied or moved into it) is a stop too, detected against a signature in the head anchor.
 Prints numbers, ids and reasons only."""
 import calendar
 import fcntl
@@ -177,9 +182,21 @@ def _read_ledger():
     return recs, prev
 
 
+def _stopdir_sig():
+    """The STOP directory's change signature (ctime and mtime in ns, entries), or None when it is not a directory."""
+    try:
+        st = os.lstat(STOP)
+        if not stat.S_ISDIR(st.st_mode):
+            return None
+        return [st.st_ctime_ns, st.st_mtime_ns, sorted(os.listdir(STOP))]
+    except OSError:
+        return None
+
+
 class Ledger:
     """The stop ledger under an exclusive flock, verified on entry; nothing is ever rewritten. `need` (default True)
-    makes a missing ledger a LedgerError. A v2 ledger (intact chain, no init, no anchor) is adopted once."""
+    makes a missing ledger, or one without an init record (a v2 ledger, or a ledger whose start was cut), a LedgerError:
+    only 'init <reason>' adopts such a ledger, as a recorded operator action."""
 
     def __init__(self, need=True):
         self.need = need
@@ -193,9 +210,10 @@ class Ledger:
             if self.recs is None and self.need:
                 raise LedgerError("there is no stop ledger in this home: run 'python -m exp.disk_gate init <reason>' "
                                   "(a deleted ledger is never read as an empty one)")
-            if self.recs is not None and not any(r.get("kind") == "init" for r in self.recs):
-                self.append("init", v=FORMAT, source="adopted a v2 ledger", v2_records=len(self.recs))
-            if self.recs is not None:
+            if self.need and not any(r.get("kind") == "init" for r in self.recs):
+                raise LedgerError(f"this ledger ({len(self.recs)} records) has no init record: a v2 ledger, or one whose "
+                                  "start was cut; read it, then adopt it with 'python -m exp.disk_gate init <reason>'")
+            if self.need:
                 self.legacy()
         except BaseException:
             self.__exit__()
@@ -219,24 +237,63 @@ class Ledger:
             os.close(fd)
         self.recs = recs + [rec]
         self.prev = hashlib.sha256(ln).hexdigest()
-        _write_json(HEAD, {"count": len(self.recs), "tip": self.prev, "at": rec["at"]})
+        self._write_head()
         return rec
+
+    def _write_head(self):
+        _write_json(HEAD, {"count": len(self.recs), "tip": self.prev, "at": _utc(), "stopdir": _stopdir_sig()})
+
+    def _readme(self):
+        (STOP / "README").write_text("Not a stop file. Record a stop with: python -m exp.disk_gate stop <reason>. Any "
+                                     "change to this directory is recorded as a stop (GATE-DESIGN 5.5).\n")
+
+    def _stopdir_changed(self):
+        """A touch of the STOP directory, or anything copied, moved or written into it, is a stop: record it, keep
+        what was written as STOP.ingested-<seq>-<n>, and anchor the directory's new signature in the head."""
+        was, now = (_read_head() or {}).get("stopdir", "absent"), _stopdir_sig()
+        if was == "absent":             # a head written before this rule: anchor the directory as it is
+            self._write_head()
+            return
+        if now == was:
+            return
+        names = [n for n in (now or [0, 0, []])[2] if n != "README"]
+        texts = []
+        for n in names:
+            try:
+                if (STOP / n).is_file() and not (STOP / n).is_symlink():
+                    texts.append((STOP / n).read_bytes()[:400].decode("utf-8", "replace").strip()[:100])
+            except OSError:
+                pass
+        what = f"{len(names)} entries written into it" if names else "touched or replaced"
+        text = " | ".join(t for t in texts if t)[:200]
+        rec = self.append("stop", id=_new_id(), source="state/STOP directory",
+                          reason=f"state/STOP directory {what}" + (f": written reason: {text}" if text else ""))
+        for i, n in enumerate(names):
+            try:
+                os.replace(STOP / n, STATE_DIR / f"STOP.ingested-{rec['seq']}-{i}")
+            except OSError:
+                pass
+        if not (STOP / "README").exists():
+            self._readme()
+        self._write_head()
 
     def legacy(self):
         """Keep state/STOP a directory (GATE-DESIGN 5.5). A regular file there is a stop: record it, keep it under a
-        new name, make the directory; retried while a legacy writer recreates the file."""
+        new name, make the directory; retried while a legacy writer recreates the file. A change to the directory is
+        a stop too (_stopdir_changed)."""
         for _ in range(10):
             try:
                 st = os.lstat(STOP)
             except FileNotFoundError:
                 try:
                     STOP.mkdir()
-                    (STOP / "README").write_text("Not a stop file. Record a stop with: python -m exp.disk_gate stop "
-                                                 "<reason> (GATE-DESIGN 5.5).\n")
-                    return
+                    self._readme()
                 except FileExistsError:
                     continue
+                self._write_head()
+                return
             if stat.S_ISDIR(st.st_mode):
+                self._stopdir_changed()
                 return
             if stat.S_ISREG(st.st_mode):
                 try:
@@ -418,6 +475,11 @@ def _observe(key, ref):
     inside = sorted(m.get("Destination") for m in mounts if str(m.get("Destination", "")).startswith(data + "/"))
     if inside:
         why.append(f"a mount inside the data directory ({', '.join(inside)[:200]}) is outside the private tmpfs")
+    if key == "pg":                     # ES confirms its own data path; PG's comes from the container's PGDATA
+        env = dict(e.split("=", 1) for e in (j.get("Config") or {}).get("Env") or [] if "=" in e)
+        pgd = env.get("PGDATA")
+        if not pgd or not (pgd == data or pgd.startswith(data + "/")):
+            why.append(f"PG's PGDATA ({pgd or 'not set'}) is not inside the tmpfs data directory {data}")
     try:
         ev["cg"] = _cgroup(j)
     except GateError as e:
@@ -441,6 +503,14 @@ def _observe(key, ref):
         if cg["peak"] > bound:
             why.append(f"the {K} container's lifetime memory peak {cg['peak'] / GIB:.2f} GiB exceeds the bound "
                        f"{bound / GIB:.2f} GiB: its tmpfs free space may have reached the threshold")
+        if fs["free"] < T + MARGIN:      # the argument's conclusion, observed directly
+            why.append(f"the {K} tmpfs has {fs['free'] / GIB:.2f} GiB free, under threshold {T / GIB:.2f} GiB + margin "
+                       f"{MARGIN / GIB:.2f} GiB")
+        used = fs["total"] - fs["free"]
+        if used > cg["peak"]:            # the argument's premise: every tmpfs page is charged to this container
+            why.append(f"the {K} tmpfs holds {used / GIB:.2f} GiB, more than the container's lifetime memory peak "
+                       f"{cg['peak'] / GIB:.2f} GiB: pages in it are charged to another cgroup (written from outside the "
+                       "container), so the memory limit does not bound it")
     return ev, why
 
 
@@ -645,10 +715,24 @@ def _end():
 
 
 def _ledger_reset(reason):
-    """Keep a damaged ledger (and its anchor) under new names and start a new one that names them."""
+    """Keep a DAMAGED ledger (and its anchor) under new names and start a new one that names them, with one open stop:
+    the stops in the damaged ledger cannot be read, so a person acknowledges them by id before any start. An intact
+    ledger is refused (its stops are acknowledged one by one with clear-stop)."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     with open(LOCK, "a") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)
+        try:
+            recs, _ = _read_ledger()
+        except LedgerError:
+            recs = "damaged"
+        if recs is None:
+            print("disk_gate ledger-reset: refused: there is no ledger to reset ('init <reason>' starts one)")
+            sys.exit(2)
+        if recs != "damaged":
+            print("disk_gate ledger-reset: refused: the ledger is intact " +
+                  ("(acknowledge stops one by one with clear-stop)" if any(r.get("kind") == "init" for r in recs)
+                   else "(a ledger without an init record is adopted with 'init <reason>')"))
+            sys.exit(2)
         tag = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
         old = {}
         if LEDGER.exists():
@@ -661,9 +745,12 @@ def _ledger_reset(reason):
         L = Ledger(need=False)
         L.recs, L.prev = None, None
         L.append("init", v=FORMAT, source="ledger-reset", reason=reason[:200], reset_from=old)
+        s = L.append("stop", id=_new_id(), source="ledger-reset",
+                     reason=f"the stops in the damaged ledger {old.get('file', '(missing)')} cannot be read: check it, "
+                            "then acknowledge this stop")
         L.legacy()
     print(f"disk_gate ledger-reset: new ledger started; the old one kept as {old.get('file', '(none)')}; a run open "
-          "before the reset ends VOID")
+          f"before the reset ends VOID; stop {s['id']} is open until acknowledged")
 
 
 def _ledger_cmd(cmd, args):
@@ -676,8 +763,14 @@ def _ledger_cmd(cmd, args):
         if not reason:
             raise SystemExit("init needs a reason")
         with Ledger(need=False) as L:
-            if L.recs is not None:
+            if L.recs is not None and any(r.get("kind") == "init" for r in L.recs):
                 print("disk_gate init: the ledger exists already (nothing changed)")
+                return None
+            if L.recs is not None:           # a v2 ledger, or one whose start was cut: adopted by this explicit act
+                L.append("init", v=FORMAT, source="init: adopted a ledger without an init record",
+                         adopted_records=len(L.recs), reason=reason[:200])
+                L.legacy()
+                print(f"disk_gate init: adopted the existing {len(L.recs) - 1} records; open stops in them stay open")
                 return None
             L.append("init", v=FORMAT, source="init", reason=reason[:200])
             L.legacy()
