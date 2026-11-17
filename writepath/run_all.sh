@@ -48,6 +48,8 @@ OUT=../results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.cleanup exp.d2_verifier_process
   $PY -m exp.phys_purge
   $PY -m exp.cleanup exp.phys_purge
+  $PY -m exp.e2e_restored E1 E2 E3 40
+  $PY -m exp.cleanup exp.e2e_restored
   $PY -m exp.races R1 R2 R3 40
   $PY -m exp.cleanup exp.races
   $PY -m exp.guard_check end || echo "GATE guard_check end FAILED"
