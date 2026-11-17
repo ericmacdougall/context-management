@@ -70,11 +70,19 @@ decisions, the deployment requirements that follow from them, and what is still 
     from step(). Until then, the StaleEpoch (alias compare-and-set) or StaleWrite (cursor insert) raised inside start()
     escaped step() and run() and killed the losing process.
   - Safety was never affected: no stale write reached Elasticsearch.
-  - Other errors in start() still propagate. One example is the RuntimeError for a family with other than one index; in
-    that case the lease just taken stays held until its TTL expires (30 s).
+  - Residual, not fixed: families.fence_es turns every ESError on the alias request into StaleEpoch, not only a lost
+    compare-and-set. This includes a flood-stage write block or a cluster error.
+    - Since 5d26746, such an error inside start() also returns -1 instead of crashing.
+    - The lease row stays held under the dropped epoch until its TTL (30 s).
+    - The projector's own next acquire then finds that live lease, so run() can return True as if idle.
+    - Hard bulk errors in the main loop already behaved this way before 5d26746.
+    - Only errors outside ESError and the stale types propagate. Examples are the RuntimeError for a family with other
+      than one index, or an ESError from ensure_family; the lease just taken then also stays held until its TTL.
+    - Needed: tell a lost CAS apart from an ES failure, and release or report the latter.
 - Secret scanning (amendment 15): wp/secrets.py is a list of known families and encodings, not a general detector.
-  - On held-out data it caught 483/1,169 (H1) and 150/750 (H2) in-scope secrets, and blocked 37 of 1,200 negatives. Row
-    19's 880/880 holds only on its author's own corpus.
+  - In the stamped run at 62c6be5 (amendment 15b; results/single-runs/heldout_secrets.930e32ec3d99a161.json), it caught
+    483/1,169 (H1) and 150/750 (H2) in-scope held-out secrets, and blocked 37 of 1,200 negatives. Row 19's 880/880
+    holds only on its author's own corpus.
   - Seven H1 families were never caught. HTML entities and URL double-encoding are never decoded.
   - A deployment must not treat a clean scan as proof that no secret is present.
   - The scanner was not edited after the held-out run. Any later edit needs a new held-out set.
