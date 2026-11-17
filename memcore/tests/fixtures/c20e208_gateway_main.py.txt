@@ -1,0 +1,25 @@
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--backend", choices=["claude-cli", "codex-cli"], required=True)
+    ap.add_argument("--out", required=True, help="memcore-out directory (cache, ledger, token and port files)")
+    ap.add_argument("--model", default=None)
+    ap.add_argument("--cap", type=int, default=200)
+    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--port", type=int, default=0)
+    ap.add_argument("--dev-subscription-backends", action="store_true", help="REQUIRED: acknowledge development-only subscription use")
+    a = ap.parse_args(argv)
+    require_loopback(a.host)
+    cache, ledger = os.path.join(a.out, "cache", a.backend), os.path.join(a.out, "ledger.jsonl")
+    if a.backend == "claude-cli":
+        from .adapters.claude_cli import ClaudeCliChat
+        backend = ClaudeCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=os.path.join(a.out, "neutral"), model=a.model or "sonnet", cache_dir=cache, ledger_path=ledger, cap=a.cap)
+    else:
+        from .adapters.codex_cli import CodexCliChat
+        backend = CodexCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=os.path.join(a.out, "neutral"), model=a.model, cache_dir=cache, ledger_path=ledger, cap=a.cap)
+    gw = Gateway(backend, a.out, a.host, a.port, dev_subscription_backends=a.dev_subscription_backends)
+    print(BANNER % (gw.host, gw.port), file=sys.stderr)
+    print("base_url=%s token_file=%s stop_file=%s" % (gw.base_url, os.path.join(a.out, "gateway.token"), gw.stop_file), file=sys.stderr)
+    gw.start()
+    while os.path.exists(gw.stop_file) is False:
+        time.sleep(0.5)
+    time.sleep(1.0)

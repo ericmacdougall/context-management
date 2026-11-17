@@ -546,33 +546,27 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
                 g.check_gate({"m": obj}, "127.0.0.1", None, True)
 
     # ---- R3-6 (deploy part 5): the CLI offers no subscription backend. The probe below is run on the real entry point AND on a
-    # control (the c20e208 main, copied verbatim) so the assertions are shown to fire on a tree that does offer them.
-    @staticmethod
-    def _old_main_c20e208(argv=None):
-        """gateway.main at c20e208, verbatim apart from module-qualified names. It offers claude-cli and codex-cli."""
-        import argparse
+    # control: the gateway.main of commit c20e208, the tree on which the original R3-6 test passed vacuously. Provenance of the control:
+    #   git show c20e208:memcore/gateway.py   (blob fffb5b045890249da9719c7bfc0365f9a53121f8)
+    # the text from `def main(argv=None):` up to (not including) `if __name__ == "__main__":` is committed verbatim in
+    # memcore/tests/fixtures/c20e208_gateway_main.py.txt (25 lines, sha256 below) and executed in a copy of the gateway module namespace.
+    C20E208_MAIN_SHA256 = "82102e07b916a2605c0a22cb3f5cc137e3fd37194d2e4f5a5f0a2e0b7bf974af"
+
+    @classmethod
+    def _old_main_c20e208(cls, argv=None):
+        import hashlib
         import memcore.gateway as g
-        ap = argparse.ArgumentParser(description="control")
-        ap.add_argument("--backend", choices=["claude-cli", "codex-cli"], required=True)
-        ap.add_argument("--out", required=True)
-        ap.add_argument("--model", default=None)
-        ap.add_argument("--cap", type=int, default=200)
-        ap.add_argument("--host", default="127.0.0.1")
-        ap.add_argument("--port", type=int, default=0)
-        ap.add_argument("--dev-subscription-backends", action="store_true")
-        a = ap.parse_args(argv)
-        g.require_loopback(a.host)
-        if a.backend == "claude-cli":
-            from memcore.adapters.claude_cli import ClaudeCliChat
-            backend = ClaudeCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=a.out, model="sonnet")
-        else:
-            from memcore.adapters.codex_cli import CodexCliChat
-            backend = CodexCliChat(dev_subscription_backends=a.dev_subscription_backends, cwd=a.out, model=a.model)
-        g.Gateway(backend, a.out, a.host, a.port, dev_subscription_backends=a.dev_subscription_backends)
+        path = os.path.join(os.path.dirname(__file__), "fixtures", "c20e208_gateway_main.py.txt")
+        with open(path, "rb") as fh:
+            raw = fh.read()
+        assert hashlib.sha256(raw).hexdigest() == cls.C20E208_MAIN_SHA256, "the committed c20e208 main was edited"
+        ns = dict(vars(g))                      # built at call time, so the probe's patches on g (Gateway, constructors) apply
+        exec(compile(raw.decode(), path, "exec"), ns)
+        return ns["main"](argv)
 
     def _probe_cli_offer(self, main_fn):
-        """Returns (help_text, {backend: (stderr_text, constructors_reached)}). argv carries ONLY --backend and --out, so on a tree
-        that rejects the backend the sole reason can be the backend choice (not an unknown flag, not a missing id file)."""
+        """Returns (help_text, {backend: (stderr_text, constructors_reached, exit_code)}). argv carries ONLY --backend and --out, so on
+        a tree that rejects the backend the sole reason can be the backend choice (not an unknown flag, not a missing id file)."""
         import contextlib
         import io
         from unittest import mock
@@ -590,7 +584,7 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
 
         per = {}
         for b in ("claude-cli", "codex-cli"):
-            reached, err = [], io.StringIO()
+            reached, err, code = [], io.StringIO(), None
 
             def record(name):
                 def f(*a, **k):
@@ -603,9 +597,11 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
                     contextlib.redirect_stderr(err):
                 try:
                     main_fn(["--backend", b, "--out", tempfile.mkdtemp()])
-                except (SystemExit, _Stop):
+                except SystemExit as e:
+                    code = e.code
+                except _Stop:
                     pass
-            per[b] = (err.getvalue(), reached)
+            per[b] = (err.getvalue(), reached, code)
         return out.getvalue(), per
 
     def test_gateway_cli_no_longer_offers_subscription_backends(self):
@@ -614,12 +610,14 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
         self.assertIn("--backend", helptext)                      # witness: the help text was captured
         for b in ("claude-cli", "codex-cli"):
             self.assertNotIn(b, helptext)
-            err, reached = per[b]
+            err, reached, code = per[b]
             self.assertEqual(reached, [], b)                      # nothing constructed
-            self.assertIn("invalid choice", err, b)               # rejected for the BACKEND CHOICE, not for another reason
+            self.assertEqual(code, 2, b)                          # argparse's usage-error status, not a clean exit or another failure
+            self.assertIn("argument --backend", err, b)           # the rejection is about the backend argument ...
+            self.assertIn("invalid choice: '%s'" % b, err, b)     # ... and names the offered value
 
     def test_cli_offer_probe_fires_on_the_c20e208_main(self):
-        """Control: the same probe on the old main must see the offer (help lists both, a constructor is reached, no rejection)."""
+        """Control: the same probe on the verbatim old main must see the offer (help lists both, a constructor is reached, no rejection)."""
         helptext, per = self._probe_cli_offer(self._old_main_c20e208)
         self.assertIn("claude-cli", helptext)
         self.assertIn("codex-cli", helptext)
@@ -627,6 +625,7 @@ class SubscriptionNeverBehindInferenceTests(unittest.TestCase):
         self.assertEqual(per["codex-cli"][1], ["CodexCliChat"])
         for b in per:
             self.assertNotIn("invalid choice", per[b][0])
+            self.assertIsNone(per[b][2])
 
 
 if __name__ == "__main__":
