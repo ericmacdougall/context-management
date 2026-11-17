@@ -1,14 +1,15 @@
 """Seed sets. DEV seeds are strings ("dev-<exp>-<n>") used for development runs only; STAMPED seeds are fixed in THRESHOLDS.md
-(amendment 5 for this round: fresh integers, never used before) and used once, on a clean committed tree (POL_SEEDS=stamped). A stamped
+(the latest amendment: fresh integers, never used before) and used once, on a clean committed tree (POL_SEEDS=stamped). A stamped
 selection on a dirty tree refuses to run.
 Used before and never reused: 11..15, 21..25, 77, 88, 606, 707 (earlier owners), 31..35, 99, 808 (stamped run at 8c03f02), 100..159
-(an in-memory probe at f23f119)."""
+(an in-memory probe at f23f119), 41..45, 199, 909 (stamped run at edb693f, amendment 5). Amendment 6: 61..65, 299, 919."""
 import os
 import sys
 
 DEV = {name: ["dev-%s-%d" % (name, i) for i in range(1, 6)] for name in ("e1", "e2", "e3", "e4", "e5", "e6", "b1", "b2", "b3", "pgdiff", "mig", "s2")}
-STAMPED = {"e1": [41, 42, 43, 44, 45], "e2": [41, 42, 43, 44, 45], "e3": [199], "e4": [41, 42, 43, 44, 45], "e5": [41, 42, 43, 44, 45],
-           "e6": [909], "b1": [41], "b2": [41, 42, 43, 44, 45], "b3": [41], "pgdiff": [41, 42, 43, 44, 45], "mig": [41, 42, 43]}
+STAMPED = {"e1": [61, 62, 63, 64, 65], "e2": [61, 62, 63, 64, 65], "e3": [299], "e4": [61, 62, 63, 64, 65], "e5": [61, 62, 63, 64, 65],
+           "e6": [919], "b1": [61], "b2": [61, 62, 63, 64, 65], "b3": [61], "pgdiff": [61, 62, 63, 64, 65], "mig": [61, 62, 63],
+           "s2": [61, 62, 63]}
 
 
 def seeds(name):
@@ -20,7 +21,7 @@ def seeds(name):
         from common import stamp            # refuses a dirty git tree; on a synced host reads GIT_STAMP.json
         if stamp().get("dirty") is not False:
             sys.exit("stamped seeds need a clean committed tree (GIT_STAMP dirty=false)")
-        for k in ("E2_PER_SEED", "E5_PER_SEED", "B2_PER_SEED", "B1_QUICK", "PGDIFF_LOGS", "PGDIFF_SCEN", "B3_ROUNDS", "B3_DIFF_LOGS"):
+        for k in ("E2_PER_SEED", "E5_PER_SEED", "B2_PER_SEED", "B1_QUICK", "PGDIFF_LOGS", "PGDIFF_SCEN", "B3_ROUNDS", "B3_DIFF_LOGS", "S2_TRIALS"):
             if os.environ.get(k):
                 sys.exit("stamped run with dev override %s set" % k)
         return list(STAMPED[name])
