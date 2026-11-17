@@ -13,10 +13,12 @@ from temporalio.exceptions import ActivityError, ApplicationError
 from temporalio.exceptions import TimeoutError as TemporalTimeout
 
 with workflow.unsafe.imports_passed_through():
+    from engine import deploy_guard as guard_mod
     from engine import keys as keys_mod
     from engine import waits as waits_mod
 
 CODE = "v2i"
+SUPPORTED_STATE_VER = 1     # the newest session-state version this code can run; a newer one is refused (engine/deploy_guard.py)
 AT = dict(start_to_close_timeout=timedelta(seconds=8),
           retry_policy=RetryPolicy(initial_interval=timedelta(milliseconds=500), maximum_interval=timedelta(seconds=5),
                                    non_retryable_error_types=["InvalidInput", "SubjectErased", "Poison"]))
@@ -50,6 +52,7 @@ def seqkey(e):
 class SessionWorkflow:
     @workflow.init
     def __init__(self, st: dict):
+        guard_mod.check_state(st, SUPPORTED_STATE_VER)   # first: before the state is copied, migrated or indexed
         self.st = dict(st)
         for k, v in DEFAULTS.items():
             self.st.setdefault(k, list(v) if isinstance(v, list) else v)

@@ -15,7 +15,7 @@ from temporalio.client import Client
 from temporalio.converter import DataConverter
 from temporalio.worker import Worker
 
-from . import activities, common, pgstore, state as state_mod
+from . import activities, common, pgstore
 from .codec import CheckingCodec
 
 _watch_task = None
@@ -72,9 +72,6 @@ async def main():
             default_versioning_behavior=VersioningBehavior.PINNED if a.pinned else VersioningBehavior.AUTO_UPGRADE)
     else:
         kw["build_id"] = a.build_id or a.variant
-    # a worker never runs a session state written by newer code (engine/deploy_guard.py); only the v2s variants know state v2
-    from .guard_interceptor import StateGuardInterceptor
-    kw["interceptors"] = [StateGuardInterceptor(state_mod.CURRENT if hasattr(mod, "state_mod") else 1)]
     worker = Worker(client, task_queue=a.task_queue, workflows=[mod.SessionWorkflow], activities=activities.ALL,
                     activity_executor=ThreadPoolExecutor(48), max_concurrent_activities=48,
                     identity=a.identity, sticky_queue_schedule_to_start_timeout=timedelta(seconds=2),

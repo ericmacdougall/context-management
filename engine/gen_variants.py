@@ -73,7 +73,7 @@ variant("v1co", "OLD ORDER hop (config read after the snapshot): control for sig
 variant("v2s", "state schema v2 (rename + new field), migrated on entry; no other change", [
     ('from temporalio.common import RetryPolicy\n', 'from temporalio.common import RetryPolicy\n\nwith workflow.unsafe.imports_passed_through():\n    from engine import state as state_mod\n'),
     ('        self.st = dict(st)\n', '        self.st = state_mod.migrate(dict(st))\n'),
-], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]').replace('"approval": st["approval"],', '"approval": st["approval"], "ver": st["ver"],'))
+], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]').replace('SUPPORTED_STATE_VER = 1', 'SUPPORTED_STATE_VER = 2').replace('"approval": st["approval"],', '"approval": st["approval"], "ver": st["ver"],'))
 variant("v1n", "NAIVE continue-as-new: drops pending signals at the boundary and never reconciles (control that must fail)", [
     ('        st["pend"] = [e for e in self.pending if e not in self.done][:MAX_CARRY]\n', '        st["pend"] = []\n'),
     ('        await self._reconcile()\n        while True:', '        while True:'),
@@ -82,7 +82,7 @@ variant("v1n", "NAIVE continue-as-new: drops pending signals at the boundary and
 variant("v2sx", "BROKEN state migration (loses the renamed counter): control that must fail", [
     ('from temporalio.common import RetryPolicy\n', 'from temporalio.common import RetryPolicy\n\nwith workflow.unsafe.imports_passed_through():\n    from engine import state as state_mod\n'),
     ('        self.st = dict(st)\n', '        self.st = state_mod.migrate_lossy(dict(st))\n'),
-], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]'))
+], post=lambda t: t.replace('st["rollups"]', 'st["rollup_count"]').replace('SUPPORTED_STATE_VER = 1', 'SUPPORTED_STATE_VER = 2'))
 
 CAV = ('        workflow.continue_as_new(st)',
        '        workflow.continue_as_new(st, initial_versioning_behavior=workflow.ContinueAsNewVersioningBehavior.AUTO_UPGRADE)')
