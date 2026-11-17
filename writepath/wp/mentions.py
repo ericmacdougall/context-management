@@ -64,7 +64,9 @@ OVER_MATCH = (
     "speakers are removed too",
     "letters merged by look-alike and case together (i, l, 1 and capital I; o and 0; and every look-alike "
     "in confusables.txt): events of other speakers whose words differ from a declared identifier only by such letters "
-    "(Allson, Aiison, Ailson or A1ison for Alison; AIEX KIM for Alex Kim) are removed too",
+    "(Allson, Aiison, Ailson or A1ison for Alison; AIEX KIM for Alex Kim) are removed too, and so are events naming "
+    "a DIFFERENT real person whose name differs only by such letters (Delia and Della, Hailey and Halley, Neil and Nell, "
+    "Elia and Ella)",
 )
 
 
@@ -247,9 +249,9 @@ def canonical(s):
                 y.extend(reps.get(e, e) for e in _proto(d, conf))
         z = UD.normalize("NFD", "".join(y))
         if z == x:
-            break
+            return x
         x = z
-    return x
+    raise UCDUnavailable("canonical form did not converge: the tables are inconsistent")
 
 
 _NOT_CLOSED = None

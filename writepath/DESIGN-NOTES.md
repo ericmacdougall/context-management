@@ -293,6 +293,7 @@ return the updated row version. Rule: every function locks the rows it judges in
 - Pairs tested live: propose x open mark (waits, then WPS03); approve x open mark (waits, then WPS03).
 
 ### Class 3 (F3): the matcher version is stored and enforced, never implied
+(Matcher id now m4: see "Redesign after review E" F11; the storage and enforcement below are unchanged.)
 - Matcher id `m3:ucd<unicodedata version>:di<sha12 of the ignorable table>:cf<sha12 of the confusables table>`; the
   HMAC label carries it, so a different Unicode version or a different table is a different matcher.
 - `identifier_epochs.matcher` is the tenant's matcher, set only by the owner function `wp_matcher_set` (setup/admin);
@@ -310,6 +311,8 @@ return the updated row version. Rule: every function locks the rows it judges in
   matcher and are refused; the lab rebuilds its databases.
 
 ### Class 4 (F6, S6): Unicode properties from Unicode data, pinned
+(The tables and pins below are unchanged. The KEY construction below, including the as-written key, is SUPERSEDED by
+matcher m4: "Redesign after review E" F11.)
 - Default_Ignorable_Code_Point is enumerated from the host perl's Unicode data (Unicode::UCD; its version must equal
   Python's unicodedata version: Mac 13.0.0, t2-dev 15.0.0) by `tools/ucd_tables.py`; the table's sha256 is pinned per
   version in `wp/mentions.py`. A missing or different table fails closed (UCDUnavailable): no fallback to matching
@@ -360,7 +363,7 @@ discuss thread, read 2026-11-17; confidence medium: secondary summary, no Elasti
 DESIGN-NOTES line 45 corrected; the receipt lists other speakers' removed events per event (`other_speakers_removed`,
 event ids; with R1 there is no later whole removal of a redacted event to account for).
 
-### Scenario map (reviews B and C)
+### Scenario map (reviews B and C; the S6 row is now ruled out by m4, see review E)
 | Finding | Class | Ruled out by |
 |---|---|---|
 | C-F1 app stores the original as a redaction | 1 | R1: no redaction write path exists |
@@ -400,6 +403,13 @@ every member is locked before it is judged.
 - A hold on C placed while C's link to e is still waiting lands first and does not cover e (not linked yet); the link
   commits after e's removal. Serial order: hold, removal, link, which is a consistent history.
 - Own subject: mark judges under the subject FOR UPDATE; each cascade batch under FOR SHARE held to commit (unchanged).
+Added after the first window (advisor review): E7 hold x mark (a hold first refuses the mark, WPS16; a hold during a
+paused mark waits; a regression guard, because mark holds the subject three ways: FOR UPDATE, the hold check's FOR SHARE
+and the erased update, so no single-lock variant can fail it); E8 hold x the cascade's final pass (only the batch's
+hold check protects it; variant: the hold check without FOR SHARE); variant: hold release without FOR UPDATE (E4).
+Not covered by a test: a hold on C active while e is removed and the link to C lands afterwards (E1's order) is
+consistent but nothing tells legal operations about that later link; the footprint query of wp_hold_place runs under
+the subject's FOR UPDATE and is not measured at scale.
 Tests (live, forced interleavings; tests/test_d3_pg.py E*): E1 the reviewer's schedule (link during a paused removal
 must wait); E2 a hold on the speaker during a paused removal waits and then reports the event removed; E3 a hold on a
 rescan-linked subject (link committed first) waits and reports it; E4 a hold placed first withholds the event, its
@@ -455,6 +465,12 @@ Matcher m4 (one key per token, the same function for identifier and text):
   are {i, l, 1} and {o, 0}; the computed not-closed list has 63 capitals on Unicode 13.0.0 (Greek Beta, Eta, Mu, Nu,
   Sigma, Upsilon; Cyrillic Be, Ghe, El, Em, ...): each is matched by its small form, so Greek and Cyrillic text in
   capitals still matches, but one such capital used as a look-alike of a Latin capital (Greek Beta in BOB) is not found.
+- OVER-MATCH OF REAL NAMES (checked after the code, before the return): with i and l one class, names that differ
+  only by i and l share a key (Delia and Della, Hailey and Halley, Neil and Nell, Elia and Ella). Erasing one removes
+  other speakers' events naming the other. m3 kept small i and l apart. Stated in OVER_MATCH and the receipt, pinned
+  in tests. The alternative the reviewer offered keeps i and l apart: bounded per-character readings for ambiguous
+  capitals only (capital I read as i and as l; at most 2^k keys for a token with k such capitals, capped), at the cost
+  of more than one key per token for text in capitals. Not built: main asked for one canonical key; the choice is open.
 Tests (tests/test_ident.py F11*): the reviewer's case; a seeded generator applying random mixes of case changes,
 confusable substitutions taken from the raw table (sources whose prototype equals the prototype of the letter or of its
 case variant, excluding the published not-closed pairs), Default_Ignorable insertions and composed/decomposed and

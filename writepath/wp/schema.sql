@@ -870,7 +870,7 @@ begin
       'found_by_rescan', (select count(*) from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id and source = 'rescan'),
       'rescan_coverage', 'store-checked: every candidate event was examined (erasure_rescanned, WPS24)', 'rescan_match_attested_by', 'erasure runner (the store cannot decrypt the examined events)',
       'over_match', jsonb_build_array('confusable variants of a declared identifier (Kim and Kirn share a key): such events of other speakers are removed too',
-                                      'letters merged by look-alike and case together (i, l, 1 and capital I; o and 0): Allson, Aiison, Ailson or A1ison for Alison, AIEX KIM for Alex Kim'),
+                                      'letters merged by look-alike and case together (i, l, 1 and capital I; o and 0): Allson, Aiison, Ailson or A1ison for Alison, AIEX KIM for Alex Kim; also a different person whose name differs only by such letters (Delia and Della, Hailey and Halley, Neil and Nell)'),
       'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials, inflected forms)', 'pronouns and indirect references',
                                        'look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones)',
                                        'a capital of another script used as the look-alike of a Latin capital when its small form looks like another letter (Greek capital Beta, Nu; matcher not_closed list)',
