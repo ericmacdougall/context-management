@@ -115,20 +115,24 @@ Built from the sources that create secrets in this stream; the inventory is read
 | Legacy role passwords (host/bootstrap.py: emlab, kms) | `secrets/pw_*`, `oldhome/pgpass` | as above |
 | ES `elastic` password (wp/es_security.py) | `secrets/es_elastic_password` | as above, plus the exact `Basic base64(elastic:pw)` header |
 | ES broker password (wp/es_keys.py, exp/h_probe_es.py) | `secrets/es_broker_password` | as above, plus `Basic base64(wp16096_broker:pw)` |
-| ES API keys (wp/es_keys.py) | `secrets/es_api_key*.json` field `encoded` | `encoded`; its decoded `id:key`; the `key` part alone; each in all encodings above. The `id` is NOT a candidate (results record key ids by design) |
-| Key-store keys, the KMS stand-in (wp/keys.py; also the req_hmac key) | Postgres `subject_keys.key_hex`, `tenant_keys.hkey_hex` | hex (both cases); raw 32 bytes; base64 at 3 alignments. Read at scan time from the stream's PG container by ID, or reported NOT COVERED with the reason given |
+| ES API keys (wp/es_keys.py) | `secrets/es_api_key*.json` field `encoded` | `encoded`; its decoded `id:key`; the `key` part alone; each in all encodings above, except that `encoded` itself matches only in full (a 16-character window of it can be base64 of the id alone). The `id` is NOT a candidate (results record key ids by design) |
+| Key-store keys, the KMS stand-in (wp/keys.py; also the req_hmac key) | Postgres `subject_keys.key_hex`, `tenant_keys.hkey_hex` | hex (both cases); raw 32 bytes; base64 and base64url of the bytes at 3 alignments; base64 of the hex text; each matched in full. Read at scan time with `docker exec <PG container> psql` (conf `pg_container` or `--keystore-container`); if it cannot be read the scan exits 2, unless `--no-keystore REASON` waives it and the output says NOT COVERED |
 | Broker-minted and probe API keys (wp/broker.py, exp/h_probe_es.py) | memory only | NOT COVERED by a file scan: the issuing process must check with `leak_scan.representations()` before disposal |
 | SCRAM verifiers | Postgres catalog | NOT COVERED (salted; not derivable from the file values) |
 
-Normalized views of every scanned file: whitespace removed (a value split across lines or wrapped); backslash
-escapes undone (`\n`, `\uXXXX`, `\/`, `\"`, `\:`) then whitespace removed; percent-decoding of that. A hit is any
+Views of every scanned file: raw; whitespace removed (a value split across lines or wrapped); backslash escapes
+undone (`\n`, `\uXXXX`, `\/`, `\"`, `\:`) then whitespace removed; percent-decoding of that; and, for a gzip file,
+the same views of its decompressed content. A hit is any
 16-character window of any representation of a file-held secret (so a fragment of 16 or more characters is found),
 or a full representation of a key-store key. Output: file paths, counts and representation classes only. Exit 1 on
 any hit, 2 if a required source cannot be read or the self-test fails, 0 clean. Every scan first plants each
 representation of FAKE values (generated in memory) in a temporary tree and requires 100% detection and zero hits on
 non-secret controls (key ids, usernames, hosts); the version and the scanner file's SHA-256 are printed.
 
-Limits that every "no secret value found" statement must carry: scans before this version did not cover decoded
-API-key parts, `user:password` Basic headers, percent-encoded or split values, or key-store keys; values rotated or
+Limits that every "no secret value found" statement must carry: scans before dce5f07 did not include API-key values;
+the dce5f07 scanner missed the 17 representation classes its red receipt lists
+(`results/failing-first/reviewA-a4-leak_scan-dce5f07.red.out`: the legacy oldhome password, percent-encoded and
+Basic-encoded elastic password, the API key's secret alone or JSON-escaped, hex, split and wrapped values, fragments,
+gzip, every key-store key), treated the key id as a secret, and exited 0 on a hit or an unreadable source; values rotated or
 destroyed before a scan (re-created ES keys, the rotated broker password, erased subject keys) cannot be checked
 afterwards; in-memory keys are covered only by the issuing process's own check.
