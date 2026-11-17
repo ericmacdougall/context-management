@@ -821,7 +821,7 @@ end $$;
 
 create function dc.submit(p_token text, p_body jsonb) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
 #variable_conflict use_variable
-declare s dc.sessions; out jsonb; why text;
+declare s dc.sessions; out jsonb; why text; lt text;
 begin
   s := dc._session(p_token);
   if s.principal is null then return dc._out('unauthenticated:invalid_session', null, null, null); end if;
@@ -837,7 +837,12 @@ begin
     if why = 'principal_revoked' then insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, why); end if;
     return dc._out(why, null, null, null);
   end;
+  -- FINAL-JUDGMENT.md S2: nothing after the judgment may wait. Enforced, not argued: any lock wait from here fails the call
+  -- (lock_not_available, everything rolled back) instead of waiting while the caller's authority lapses. The caller's value is restored.
+  lt := current_setting('lock_timeout');
+  perform set_config('lock_timeout', '1ms', true);
   if out->>'target' is not null then perform dc._apply_authority(s.tenant, out->>'target'); end if;   -- locked before the judgment
+  perform set_config('lock_timeout', lt, true);
   return out - 'target';
 end $$;
 

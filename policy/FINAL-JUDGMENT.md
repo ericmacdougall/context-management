@@ -18,9 +18,12 @@ which the scenarios cannot be expressed:
   `SKIP LOCKED`, and the refusal audit row); `PgDecisionService` judges the in-process authority again after its database call and
   before COMMIT.
 
-Its guarantee therefore rests on two properties that are argued and tested, not enforced: (a) the judgment is after the LAST wait of
-each entry point, which needs the blocking points to be enumerated (section 4 lists them, each with a test); (b) nothing after the
-judgment waits. Three review rounds found a wait after a check (R3-1, M1, P1/P4): that is the signature of an enumerated design.
+Its guarantee rests on two properties. (a) The judgment comes after the LAST wait of each entry point. That needs the blocking
+points to be enumerated (section 4 lists them, each with a test), so it is argued and tested, not enforced. (b) Nothing after the
+judgment waits. Since S2 (this round) the database enforces this: `dc.submit` is the only entry point with statements after its
+judgment, and it sets `lock_timeout` to 1 ms there, so a wait fails the call instead
+(`S2_NothingWaitsAfterTheJudgment`, red on 3153059 with a broken variant). Three review rounds found a wait after a check (R3-1,
+M1, P1/P4): that is the signature of an enumerated design.
 
 A structural design exists for the authority that is a database row (section 3: pin it in the judging statement, so a revocation
 waits for the call). It does not exist on PostgreSQL 16 for time (no lock stops a clock), and it exists for the in-process authority
@@ -152,7 +155,8 @@ for a WORM store.
 
 ## 5. Why S1 is not implemented in this round, and what remains
 
-- **Achievable on PostgreSQL 16:** S1 steps 2-3 for session, factor and principal rows; S2 (post-judgment `lock_timeout`).
+- **Achievable on PostgreSQL 16:** S1 steps 2-3 for session, factor and principal rows; S2 (post-judgment `lock_timeout`), which
+  is done in this round.
   **Not achievable as "cannot be expressed":** expiry (step 4 stays a check). **Achievable only after an interface change:** the
   in-process authority (step 1). Today the policy source is any callable and the directory is mutated directly; both need a
   write-through path owned by the loader.
@@ -163,5 +167,6 @@ for a WORM store.
   step for this stream, and the coordinator owns that scheduling decision.
 - **Until then, the remaining blocking points are those in section 4.** Each is followed by a final judgment that reads a fresh
   snapshot and the clock last, with a red-then-green test for every listed point except waits inside the staged reduction on rows
-  no API call holds. Two properties are argued from the code and enforced by neither the database nor a test: that the judgment is
-  the last wait of a future entry point, and that nothing after it waits. S2 would enforce the second.
+  no API call holds. One property is argued and enforced by neither the database nor a test: that the judgment follows the last
+  wait of a FUTURE entry point, or of a wait added later before it. The other, that nothing after the judgment waits, is enforced
+  by S2.

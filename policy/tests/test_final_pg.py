@@ -459,6 +459,48 @@ class P1_PgServiceJudgment(_Wait):
                 self.assertIsNone(r["refused"])
 
 
+class S2_NothingWaitsAfterTheJudgment(_Wait):
+    """FINAL-JUDGMENT.md S2: "nothing after the final judgment waits" enforced by the database instead of argued. dc.submit sets
+    lock_timeout to 1 ms right after its judgment, so a lock wait there fails the call (lock_not_available, everything rolled back)
+    instead of waiting while the caller's authority lapses. The broken variant replaces dc._lock_authority with a no-op, which moves a
+    revoke's wait on its target's principal row after the judgment (the a2d65fd shape). 3153059: the call waits there and applies the
+    revoke after the admin's session was ended or expired during that wait. Fixed: 55P03, nothing applied, no wait."""
+
+    def _revoke(self, tok, target):
+        return self.submit(self.app, tok, {"type": "revoke", "client_id": "rv" + secrets.token_hex(3), "idem": "rv" + secrets.token_hex(3),
+                                           "target": target})
+
+    def test_a_wait_after_the_judgment_fails_the_call(self):
+        orig = self.o.execute("select pg_get_functiondef('dc._lock_authority(text, text)'::regprocedure)").fetchone()[0]
+        self.o.execute("create or replace function dc._lock_authority(p_tenant text, tgt text) returns void language plpgsql as $$ begin end $$")
+        try:
+            for how in ("end", "expire"):
+                with self.subTest(how):
+                    self.unrevoke("bob")
+                    tok = self.tok("admin", ttl=2 if how == "expire" else 60)
+                    r, waited = self.blocked(self.app, lambda: self._revoke(tok, "bob"),
+                                             lambda c: c.execute("select 1 from dc.principal where tenant = %s and pid = 'bob' for update", (T,)),
+                                             how, tok, "admin")
+                    bob = self.count("select revoked from dc.principal where tenant = %s and pid = 'bob'", T)
+                    self.assertEqual((r.get("error"), bob), ("55P03", False), "a wait after the judgment: %r (waited %s)" % (r, waited))
+                    self.assertFalse(waited, "the call waited after its judgment")
+        finally:
+            self.o.execute(orig)
+            self.unrevoke("bob")
+
+    def test_the_callers_lock_timeout_is_restored(self):
+        """Regression guard for S2: the 1 ms applies only after the judgment inside the call, never to the caller's transaction."""
+        tok = self.tok("admin")
+        self.app.execute("begin")
+        try:
+            self.app.execute("set local lock_timeout = '7s'")
+            self.assertEqual(self._revoke(tok, "bob")["code"], "revoked")
+            self.assertEqual(self.app.execute("show lock_timeout").fetchone()[0], "7s")
+        finally:
+            self.app.execute("rollback")
+            self.unrevoke("bob")
+
+
 class P4_OpenSessionBlockingPoints(_Wait):
     """dc.open_session: the replay-ledger insert waits for a concurrent presentation of the same proof (an uncommitted ledger row);
     the prune waits for a concurrent prune of the same rows; the ledger's foreign key waits for a factor row held FOR UPDATE."""

@@ -140,7 +140,10 @@ the examples and default deny are what ships.
   - J5. After the judgment a call writes only (a) a revoke's own authority writes (the target's principal row and sessions), on rows
     and tables locked before the judgment, skipping session rows another transaction holds, so they never wait; and (b) a refusal's
     audit row. Neither can change the call's answer, and a revoke's authority writes never refuse their own caller (a self-revoke is
-    applied).
+    applied). "Never wait" is enforced, not only argued: `dc.submit` sets `lock_timeout` to 1 ms right after its judgment and
+    restores the caller's value before it returns, so a lock wait there fails the whole call (`lock_not_available`) instead of
+    waiting (`tests/test_final_pg.py::S2_NothingWaitsAfterTheJudgment`; FINAL-JUDGMENT.md S2). The other entry points return
+    directly after their judgment.
   - J6. Only READ COMMITTED, by exact comparison (below).
   The blocking points and their tests are in `tests/test_final_pg.py` (each test witnesses the wait with `pg_blocking_pids`, so none
   passes because nothing waited). The memory `DecisionService` follows the same invariant: `MemoryEngine._submit` runs the service's
