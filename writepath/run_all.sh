@@ -66,6 +66,9 @@ run() { gate "$*"; $PY "$@"; }
   run -m exp.cleanup exp.phys_purge
   run -m exp.e2e_restored E1 E2 E3 40
   run -m exp.cleanup exp.e2e_restored
+  # amendments 19 and 19a: a projector that loses the start-up race returns -1 instead of crashing
+  run -m exp.projector_start_race 5
+  run -m exp.cleanup exp.projector_start_race
   run -m exp.races R1 R2 R3 40
   run -m exp.cleanup exp.races
   # amendment 18: resets the database for each of its runs, so it runs after every experiment that keeps state
