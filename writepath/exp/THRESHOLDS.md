@@ -850,3 +850,50 @@ Batch e:
   - d3 (FAIL at 31112b4 and PASS at 2e1948c), mutual_mentions and lock_order at 2e1948c;
   - batch e;
   - heldout_secrets, carried from 62c6be5.
+
+## Amendment 24b (2026-11-17, WRITTEN AFTER the R1 INCONCLUSIVE result at 96214c2 was seen; threshold unchanged)
+**This amendment was written after the result it acts on was observed.** It follows the earlier instance in
+amendment 7 (R1 at 7e8f28f, INCONCLUSIVE, one rerun alone). Main allowed it on these conditions, and the delta review
+is asked to judge it.
+
+R1 at 96214c2 (batch e, stamped): **INCONCLUSIVE.**
+- **Criterion (amendment 3):** both arms need at least 20 overlapping runs. The control arm had **19** overlapping
+  runs (of 40); the threshold needs 20. The fenced arm had 25 of 40.
+- **Fenced arm:** 0 violations in all 40 runs, 0 errors.
+- **Control arm:** violated 19 of 19 overlapping runs, 0 errors.
+- No fenced violation was observed. Had there been one, the result would be FAIL and not rerun (general rule below).
+- R2 and R3 in the same run were PASS and are reported as they fell.
+
+**R1 rerun.**
+- Exactly **one** rerun of R1 alone: N=40 per arm, the amendment-3 threshold unchanged, spec runkit/specs/step1-f.txt
+  (2cfdf8e).
+- It runs at the commit that adds this amendment; that commit changes only this file, and writepath/wp and exp/races.py
+  equal 96214c2's. It runs under the 20 GB start line (amendment 24) and the lab run lock.
+- Both R1 rows are reported, the INCONCLUSIVE at 96214c2 and the rerun's verdict; they are **never combined or
+  summed**.
+- **If the rerun is also INCONCLUSIVE, that is final:** R1 is reported "not demonstrated" and is not run again.
+
+### General rule for overlap-conditioned experiments (this stream, from now on)
+Decided from the design, not from this result.
+- **Which experiments.** Those whose pre-registered verdict needs a minimum number of overlapping runs:
+  - races R1, R2, R3 and e2e E1, E2 (exp.races.run): at least 20 overlapping runs in each arm (amendment 3);
+  - mutual_mentions: at least 5 overlapping runs in the conc arm.
+  - E1's store_only arm keeps amendment 14's stricter rule: fewer than 20 overlaps is FAIL.
+- **Verdict, computed from the committed rows in this order:**
+  1. Any violation in any fenced run (overlapping or not), or any error in a fenced arm (mutual_mentions: seq or
+     conc), is **FAIL**. It is final and never rerun.
+  2. Otherwise, any arm below its overlap minimum is **INCONCLUSIVE**.
+  3. Otherwise PASS needs the control's pre-registered sensitivity: races and E at least 1 violation among
+     overlapping runs; mutual_mentions every control run violated. Without it the result is **FAIL** (an insensitive
+     control).
+- **Recompute.** exp/races.py tests the overlap count before the fenced violations. If a module's printed verdict
+  differs from this order, the verdict recomputed from the rows stands, and both are reported.
+- **Rerun of an INCONCLUSIVE.** Exactly one rerun of that experiment alone, with:
+  - the same N and threshold;
+  - the then-current commit, provided no runtime or experiment code changed;
+  - the start line and the run lock.
+  It needs no new amendment.
+- **Second INCONCLUSIVE.** Final, reported "not demonstrated".
+- **Combining.** Never combined with the first run.
+- **VOID runs.** A VOID run (disk or gate) is separate: it is rerun under amendment 23's rules and does not count
+  toward this one-rerun limit.
