@@ -626,6 +626,20 @@ class Gate(unittest.TestCase):
         self.assertGreaterEqual(len(recs), 2, "the companion took fewer than two ES API samples in 1.5 s at 0.5 s")
         self.assertTrue(all(r.get("free") and r.get("high") and not r.get("why") for r in recs), recs[:2])
 
+    def test_api_sampling_gap_voids(self):
+        # The stall rule judges the recorded monotonic times, so it is driven here without a real stall. Gaps are
+        # fixed: 5 s is under SAMPLE_GAP_S in the tests (30.5 s) and in production (40 s), 60 s is over both.
+        run = {"start_token": "t", "tokens": []}
+
+        def ok(m):
+            return {"k": "api", "m": m, "why": [], "settings_sha": "s"}
+
+        def stalled(recs):
+            return [w for w in self.g._judge(recs, run)[0] if "sampling stalled" in w]
+        self.assertEqual(stalled([ok(100.0), ok(105.0), {"k": "final", "m": 110.0}]), [])
+        self.assertTrue(stalled([ok(100.0), ok(160.0), {"k": "final", "m": 165.0}]), "a 60 s gap between samples")
+        self.assertTrue(stalled([ok(100.0), {"k": "final", "m": 160.0}]), "a sampler that died after its first sample")
+
     def test_flood_line_before_the_run_does_not_void(self):
         self.line(FLOOD)
         self.start()

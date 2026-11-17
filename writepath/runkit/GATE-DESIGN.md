@@ -219,10 +219,17 @@ source shows a watermark breach, and also if the API evidence cannot be read; `s
   free differed by 16 MB, below the message's resolution); the gate records both and judges by the smaller.
 - When. At `start` (admission), every 10 s from the companion (stage 2; ES itself evaluates every 30 s), and at `end`
   before the close tokens. Each read is a hash-chained capture record carrying HTTP status codes and numbers only.
+  No sample at all, or a gap over SAMPLE_GAP_S (40 s) between samples or up to the final record, is VOID: the sampler
+  stalled or died (`test_api_sampling_gap_voids`; red receipt `esapi-gaprule-disk_gate-c31f21b.tree.red.out`).
 - Tampering. VOID if any `cluster.routing.allocation.disk.*` or `logger.*` setting differs between `start` and `end`.
 - Credential. The gate calls ES from its own process with the header `wp.config` builds, held in memory only. It never
   uses `docker exec curl`: exec command text appears in the docker events stream and so in the gate's own capture. A
   test plants a fake key, runs a failure path and runs `leak_scan.find()` over the run directory and the output.
+- Exec text in the capture. The capture keeps each event's full Action, which for an exec on a pinned container
+  includes its command line (seen live: "exec_create: sh -c ..."). So the rule for all stream code is: a secret goes
+  to a container on stdin, never on an exec command line. `registry_marker` and `probe_keyresidue` already do this,
+  and no current exec passes a secret. The capture is never staged (`stage_results.py` copies only listed result
+  files), and the documented scan covers `WP_HOME/state`, so scanner v2 would find one there.
 - New precondition (for main and the hardening owner): the ES HTTP API must be reachable at `es_url` with the stream's
   admin key whenever the gate runs, and the stream's ES watermarks must be byte-valued.
 
@@ -254,6 +261,12 @@ containers and data were removed afterwards.
 | e | injected high-watermark line on ES fd 1 | 0 / 0 / 3 | VOID: high-watermark line captured (es_high_watermark_lines 1) and a capture stop at seq 10 |
 | f | real event: transient byte watermarks raised above free space (high 4000gb, flood 3000gb), 25 s | 0 / 0 / 3 | VOID on three independent grounds: the API sampler's stop at seq 14 ("51.52 GiB free ... below its high watermark (4000.00 GiB)"), the flood-stage line's stop at seq 15, and the settings hash changing between samples |
 | c | `docker restart` of ES | 0 / 0 / 3 | VOID: `container:kill` event, capture ended early, ES StartedAt changed (same ID) |
+
+What ran: the writepath tree at 61b05b8, `exp/disk_gate.py` sha256
+a885031d2ffe98480da834523bf47cf752d71c3863b4b9e53880df707d5031b1 (the staged copy's hash matched before the run;
+stream WAL note wcdca8bb4acc). The captures, run directories and ledger were removed with the containers, as the
+brief requires, so the committed outputs are the record. Not exercised live: an authenticated ES API read (ES ran
+with security off), and the real stream's ES against the new precondition.
 
 Ledger at the end: 20 records, no stop open. Case f shows the union rule live: the API sampler's stop precedes the
 log line's stop in the ledger, so the verdict would have been VOID without the log text.
