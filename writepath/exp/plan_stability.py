@@ -52,12 +52,14 @@ def classify(note):
     return None
 
 
-def _append(conn, ks, t, subj, n, start=0):
-    s = session(conn, t, ttl=600)
+def _append(conn, ks, t, subj, n, start=0, lease=None):
+    s = lease or session(conn, t, ttl=600)          # one session lease per tenant: a second acquire while held is refused
+    assert s is not None, f"no session lease for {t}"
     for i in range(0, n, 500):
         evs = [msg(start + i + j, f"{subj} note {start + i + j}", subj) for j in range(min(500, n - i))]
         r = log.append(conn, ks, s, evs)
         assert len(r["accepted"]) == len(evs), r
+    return s
 
 
 def one_run(state, m):
@@ -71,8 +73,8 @@ def one_run(state, m):
             for tb in TABLES:
                 adm.execute(f"alter table {tb} set (autovacuum_enabled = false)")
         t = tenant("psx")
-        _append(conn, ks, t, "X", m)
-        _append(conn, ks, t, "Y", 5, start=m + 10)
+        ls = _append(conn, ks, t, "X", m)
+        _append(conn, ks, t, "Y", 5, start=m + 10, lease=ls)
         if state == "S1":
             adm.execute("analyze")
         jid = erasure.request(conn, t, "X")
