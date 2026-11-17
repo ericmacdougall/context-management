@@ -754,3 +754,102 @@ DEV results (dev seeds; development observations, not proof):
 Stamped run of this round: once, after this commit, on a clean synced copy (SYNC_DEST=emlab2-16096/policy/runs/stamped-<commit>/src),
 with `POL_SEEDS=stamped sh hostrun.sh all` and no override variable. GIT_STAMP must say dirty=false with commit == thresholds commit ==
 this commit. Its verdict is reported as it falls; a FAIL is kept and the seeds above are then used.
+
+## Amendment 6 (2026-11-17, review-3 fixes and step 2 in ONE stamped run; written after DEV runs; committed ALONE, before that run)
+
+Why: the independent review of step 1 at 0a20b64 (review-3, run a883d987: LAB PASS WITH LIMITS, CLIENT BLOCK on N1 to N5) required
+fixes that change behaviour, so the edb693f stamped set no longer covers the code. Main allowed the review-3 fixes and step 2
+(authenticated sessions, BRIEF-policy item 2) to share one stamped run if this amendment says so before the run: it does. Everything
+below is fixed before that run; the verdict is reported as it falls. Earlier amendments stay in force where not changed here.
+
+Review-3 fixes (each with a failing-first test at 0a20b64; artifacts in the policy owner's work dir, red-artifacts/):
+- N2 (f683c9d): sync.sh takes a run NAME (SYNC_RUN, one [A-Za-z0-9._-] component of at most 64 characters, no leading dot or "..");
+  the remote path is built from it, every remote argument is quoted, symlinked or non-directory ancestors and an existing run are
+  refused. SYNC_DEST is no longer read.
+- N7 (e62fc90): tests/surface.py's AST fallback synthesises a dataclass __init__.
+- N5 (2152633 memory, 1e399b4 database): value references are random; a retry with the same idempotency key, value and label reuses
+  the stored reference (so the core still answers `duplicate`); nothing derives a reference from a value, a label or a subject name.
+- N1 (4fce59e): a PgSession is accepted only when its token equals the token attached to that exact live Session, checked before any
+  database call on every entry point.
+- N3 (bdc6269): PgDecisionService.submit asks the revocation source like the memory service. LIMIT: a raw-SQL dc_app caller holding a
+  still-valid token of a principal revoked only in the policy document is stopped by the database only after a core revoke or at
+  token expiry; step 2's end_session lets the deployment end such sessions.
+- R3-8 (66b80f3): anchor_check with zero anchors is not ok; it reports anchored_through and unanchored_suffix. LIMIT: FileAnchor is an
+  append-only file, not immutable storage; the unanchored suffix is unprotected.
+- N4 (055461c): rollback refuses when the migrated schema was written after the migration (data mark taken at the end of forward,
+  compared under EXCLUSIVE locks on every dc table; no override).
+- N8 (9d87614): pg_diff control arms count only semantic differences; mig probes need InsufficientPrivilege exactly.
+- N6 (e15241c): `python -m verify` enforces the provenance of a stamped set.
+
+Step 2 (d737bba red tests at e15241c, 36a159c, d020a8c, 0613a14): a database session is opened only from a factor's PROOF (HMAC-SHA256
+under a key enrolled by the owner and readable by no login role; single use per factor and nonce; expiry at most 300 s ahead), by
+dc_idp only; tenant, principal and channel come from the factor row; the bare-principal signature is gone; dc.end_session ends one.
+Actor and trust_origin are derived from the session (ASSUMPTION, vocabulary from COMPOSITION.md items 1 and 3: a human on an owner
+channel is user / user_typed, anyone else assistant / agent_generated) and stamped on every event; a body naming tenant, principal,
+channel, id, actor or trust_origin is refused identity_in_body. Look-alike principal ids (pol.ids skeleton) cannot be configured in
+one tenant. LIMIT: the factor keys are symmetric, so the database owner can forge a proof (pgcrypto verifies no signatures); the proof
+window trusts the database clock; enrolment (how a person or device gets a factor) is the identity adapter's, out of scope.
+
+Threshold changes:
+- MIG (verify/mig.py): clean arm per seed: after the first forward NO API request (the rollback window is clean) and the rollback
+  restores the fingerprint; after the second forward the real request (dc_idp opens a session from an enrolled factor's proof, dc_app
+  submits) is APPLIED (a code in applied_codes, with its event id), the rollback that follows is REFUSED with "written after the
+  migration", and the event is still there. Each of the three named dc_app probes fails with InsufficientPrivilege exactly (any other
+  exception, an error or a missing probe is not a denial). NEW control `rollback_unchecked` (the 0a20b64 rollback: a one-line variant,
+  `if changed:` -> `if False:`): the applied write existed, the rollback ran, and the write is gone. The data mark excludes sessions,
+  factors, used_proofs and migration_mark (login state the pre-R3-7 schema cannot hold; after a rollback devices re-enrol, and a proof
+  used just before a rollback could be replayed after a re-migration until it expires, at most 300 s).
+- PG-DIFF (verify/pgdiff.py): EACH control arm (ctl:b2, ctl:b1:r2) must have transitions and at least one SEMANTIC difference (both
+  sides answered and differ). An `error:*` outcome is never a catch; control-arm errors are reported. Observed at edb693f: ctl:b2 has
+  one error (view of log 41/6, TypeError on the broken variant's state) and 419 semantic differences, ctl:b1:r2 5586 and 0.
+- B3: unchanged thresholds; its S7/S8 sessions open from enrolled factors' proofs.
+- E5: unchanged thresholds; the vault takes a counter reference factory so both arms are compared on identical references.
+- VERIFY: a stamped set passes only when the per-experiment verdicts pass AND the provenance gate passes (one non-DEV result per
+  experiment; dirty false; stamp commit == thresholds commit; one commit; one thresholds digest equal to this THRESHOLDS.md; seeds equal
+  exp/seeds.py STAMPED; b1 records no seeds). The VERIFY record keeps rows_pass and provenance apart.
+
+NEW S2 (exp/s2_sessions.py, verify/s2.py, stdlib only), on the lab database, 3 seeds, N = 12 trials per proof class per seed:
+- Real arm, every seed: all 16 raw-SQL mint attempts (dc_app and dc_idp) and the in-process bare-principal issue refused; every proof
+  class except valid and replay_first refused, i.e. ZERO accepted attacks (absolute); valid and replay_first proofs open a session
+  stamped as the factor's principal that authenticates on dc.submit; trials claiming another principal must name one (no vacuous
+  trial); every 8-way concurrent replay round has exactly one winner; on all five dc_app calls a forged, expired, revoked, ended or
+  empty token gets the refusal, the valid admin token gets data (positive control), the other tenant's admin token sees and erases
+  nothing of tenant-a; the seeded value survives; origin stamped per the table for every kind and channel; every identity and origin
+  key in a body refused identity_in_body with no event; a look-alike install refused.
+- Controls, each must CATCH on every seed: ctl_bare_mint_80bb6a7 (verbatim 80bb6a7 SessionAuthority: bare issue accepted);
+  ctl_bare_mint_0a20b64 (verbatim 0a20b64 dc.open_session granted to dc_idp: bare mint accepted and authenticates); ctl_no_replay
+  (a replay accepted); ctl_no_mac (a forged-MAC or other-key proof accepted); ctl_identity_from_body (a session stamped as a principal
+  the factor does not belong to); ctl_origin_from_body (a non-human event with actor "user").
+
+Seeds (fresh, never used; exp/seeds.py STAMPED, committed before this amendment): e1, e2, e4, e5, b2, pgdiff 61..65; e3 299; e6 919;
+b1 61 (reserved, unused: b1 is SEEDLESS); b3 61; mig 61..63; s2 61..63. Used before and never reused: 11..15, 21..25, 77, 88, 606,
+707, 31..35, 99, 808, 100..159, 41..45, 199, 909. The stamped preflight also refuses S2_TRIALS.
+
+Disk guard (NEW, run_all.sh): t2-dev is shared and the edb693f run took free space to 13.4 GB at 07:32-07:34Z (during pg_diff),
+voiding another owner's stamped run. Before each experiment run_all checks free space (floor 16 GiB) and, while it runs, samples free
+space every 5 s (floor 15.5 GiB); below either floor the experiment is stopped and the run STOPS and is void (the remaining experiments
+have no result file, so verify scores them FAIL). Each experiment's start, end and lowest sampled free space and the lab database size
+are logged. LIMIT: the guard protects the shared host from this run only; another owner's growth can still void this run.
+
+ASSUMPTIONS (not confirmed by the user): decision 8 (agents only propose and remark), decision 9 (idempotency per tenant, principal and
+key), decision 10 (identifier declaration rule plus span redaction), decision 11 (conflict notices default to none), and the origin
+vocabulary above.
+
+Environment: t2-dev, ~/emlab2-16096/policy; container emlab2-policy-pg REBUILT before the stamped run (removed and recreated from
+postgres:16.15, 127.0.0.1:25610 only, --memory 4g, scram-sha-256, passwords in 0600 files on the host); venv Python 3.12.3, psycopg
+3.2.3; no model calls.
+
+DEV results (dev seeds; development observations, not proof): dress rehearsal dev-a6-2 at e6bab51 (clean synced copy, rebuilt
+container, 2026-11-17 10:34-12:15Z): all 12 experiments PASS, each recomputed PASS with agree=True, DEV VERIFY overall=PASS
+(sha256 6e4d0f23...). S2: 1735 rows, 0 accepted attacks, every control caught. PG-DIFF: real arm 300 logs / 45206 events, 0
+mismatches; ctl:b2 463 code and 25 view differences over 30 logs with 2 errors (reported, not counted); ctl:b1:r2 5586. MIG: 12
+items, PASS. B3: S1-S8 50/50 each, 0 mismatched logs. Run time 1 h 41 min (pg_diff 42 min, b2 28 min). Disk: lowest free 20.66 GB
+(during pg_diff), lab database peak about 0.75 GB. The stamped run starts only with at least 17 GiB free (16 GiB floor plus the
+measured peak, rounded up).
+
+Superseded: the edb693f stamped set (amendment 5) moves to results/superseded/ with this round's results commit (pure renames). Under
+the new verifiers its mig file recomputes FAIL (artifact format of N4) and it has no s2 file; its seeds stay used.
+
+Stamped run of this round: once, after this commit, on a rebuilt container and a clean synced copy (`SYNC_RUN=stamped-<commit> sh
+sync.sh`), with `POL_SEEDS=stamped sh hostrun.sh all` and no override variable; GIT_STAMP dirty=false, commit == thresholds commit ==
+this commit. Started only with at least 17 GiB free. Its verdict is reported as it falls.
