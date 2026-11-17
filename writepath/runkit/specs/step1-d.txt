@@ -1,0 +1,20 @@
+# Step 1, batch d (amendment 23a): the rest of batch c after it stopped at 31112b4, at the commit of amendment 23a.
+# d3 (FAIL at 31112b4: no verdict, high disk watermark, harness gap) runs again here, then every experiment of
+# step1-c.txt from mutual_mentions on, with the same arguments. Starts as a batch does: cleanup, setup reset, preflight.
+# label  cleanup  module args
+@ exp.cleanup
+@ wp.setup --reset
+@ exp.disk_gate preflight
+d3 exp.d3_identifier exp.d3_identifier 5
+mutual_mentions exp.mutual_mentions exp.mutual_mentions 5 10 5
+lock_order exp.lock_order exp.lock_order
+d2 exp.d2_verifier_process exp.d2_verifier_process 5
+phys_purge exp.phys_purge exp.phys_purge
+e1 exp.e2e_restored exp.e2e_restored E1 40
+e2e_E2E3 exp.e2e_restored exp.e2e_restored E2 E3 40
+psr exp.projector_start_race exp.projector_start_race 5
+pef exp.projector_es_fault exp.projector_es_fault 5
+races exp.races exp.races R1 R2 R3 40
+size_probe exp.size_probe exp.size_probe 50000
+plan_stability - exp.plan_stability
+guard_end - exp.guard_check end
