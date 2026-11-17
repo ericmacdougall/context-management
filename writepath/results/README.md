@@ -3,7 +3,21 @@
 Raw result documents copied from the lab host. The only change from the host copies is that the host home directory
 prefix in paths is shortened to `~/`. `MANIFEST.tsv` lists, for every file, the sha256 of the host copy (the hash the
 `RESULT` lines of `run_all.*.out` print, and the 16-hex suffix of the file name) and the sha256 of the committed copy.
-Result documents carry ids and hashes only; a leak scan of every file against the lab's live secret values found none.
+Result documents are meant to carry ids and hashes only. **Leak-scan limits (review A5):** an earlier version of this
+line said a leak scan of every file against the lab's live secret values found none. That statement rests only on
+scanners before v2 (`runkit/leak_scan.py` at dce5f07 and earlier), and it is qualified as follows:
+- Scans before dce5f07 did not include API-key values.
+- The dce5f07 scanner misses 17 representations the stream can produce: the legacy `oldhome` password; the elastic
+  password percent-encoded or in a Basic header; an API key's secret alone or JSON-escaped; hex; values split across
+  lines or inside wrapped base64; 16-character fragments; gzip; and every key-store key. It also treats the key id
+  as a secret and exits 0 on a hit or an unreadable source
+  (`failing-first/reviewA-a4-leak_scan-dce5f07.red.out`).
+- No scan, of any version, can check values rotated or destroyed since a run, keys minted only in memory by the
+  broker or a probe, or SCRAM verifiers.
+- **No result set in this folder has been rescanned with scanner v2.** A rescan is recorded here separately, with
+  its date, scanner sha256, inventory counts and exit status.
+
+So this folder makes no unqualified "no secret values" claim; the claim is limited to what the earlier scanners covered.
 
 | Folder | What it is | Status |
 |---|---|---|
@@ -272,9 +286,9 @@ H-amendment first; heldout_secrets stays carried).
 
 ### Hardening probes for D6 (amendments H1 and H1a; two rows, never combined)
 
-| row | commit | cases (3 runs each) | verdict |
+| row | commit | cases (PA, PB, PC, PE: 3 runs each; PD: 20 trials; launch args `3 20`) | verdict |
 |---|---|---|---|
-| H1 (`h1-probe-606f457/`) | 606f457 | PB, PC, PE hold 3/3; PA and PD FAIL, but their requests were defective (PA: derived key without an empty `role_descriptors`; PD: invalidate without `owner: true`), so their behaviour was NOT measured | NOT FEASIBLE by the H1 rule; stands |
+| H1 (`h1-probe-606f457/`) | 606f457 | PB, PC, PE hold 3/3; PA (3 runs) and PD (20 trials) FAIL, but their requests were defective (PA: derived key without an empty `role_descriptors`; PD: invalidate without `owner: true`), so their behaviour was NOT measured | NOT FEASIBLE by the H1 rule; stands |
 | H1a (`h1a-probe-c8e0a46/`), the one rerun allowed after H1 | c8e0a46 (bootstrap from 1a0fb11: the first attempt stopped in bootstrap before launch, nothing measured) | PB, PC, PE hold 3/3; PD holds 20/20 trials: write 201 before, 401 after invalidation, 0 writes accepted after it, first refusal at most 0.055 s; PA invalid_request 3/3 (every derived-key form, with, without and with empty descriptors, refused 400 illegal_argument_exception) | PA failed a second time: **derived API keys are not demonstrated on Basic** (final). |
 
 Consequence for D6 (main's ruling): the fence rests on alias-name scoping (PB) plus the alias CAS held by the broker
