@@ -1,0 +1,20 @@
+Green after review-8 fix: PYTHONDONTWRITEBYTECODE=1 python3 -W ignore -m unittest tests.test_evidence tests.test_gates tests.test_offline (exit 0)
+Ran 135 tests in 194.527s
+
+OK
+
+Red-to-green: tests.test_evidence.RecordingBoundaryTests (red log c930416-review8.txt: 10 run, 8 failures, 1 error) now 11 run, OK
+
+Differential vs 4761862 summarizer (agent differential.py):
+cases 3822 loosened 0 tightened (old PASS, new not) 635 same class 3187
+
+Committed-verdict comparison, c930416 vs this tree, every committed life, read-only:
+CHANGE down_1.json exp1.T2_status PASS -> UNVERIFIED | exp1_moment.rrf.first_refusal: absent
+CHANGE down_2.json exp1.T2_status PASS -> UNVERIFIED | exp1_moment.rrf.first_refusal: absent
+CHANGE down_3.json exp1.T2_status PASS -> UNVERIFIED | exp1_moment.rrf.first_refusal: absent
+CHANGE down_4.json exp1.T2_status PASS -> UNVERIFIED | exp1_moment.rrf.first_refusal: absent
+CHANGE down_5.json exp1.T2_status PASS -> UNVERIFIED | exp1_moment.rrf.first_refusal: absent
+CHANGE down_6.json exp1.T2_status PASS -> UNVERIFIED | exp1_moment.rrf.first_refusal: absent
+statuses 102 changed 6
+aggregate c930416 {'all_status': {'T1_pass': 'FAIL', 'T2_pass': 'PASS', 'T3_pass': 'PASS', 'T4_pass': 'UNVERIFIED', 'T5_pass': 'PASS'}}
+aggregate now     {'all_status': {'T1_pass': 'FAIL', 'T2_pass': 'PASS', 'T3_pass': 'PASS', 'T4_pass': 'UNVERIFIED', 'T5_pass': 'PASS'}}

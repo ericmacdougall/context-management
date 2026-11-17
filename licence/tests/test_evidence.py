@@ -243,6 +243,14 @@ class RecordingBoundaryTests(unittest.TestCase):
             self.assertNotEqual(lib.classify(code, body), "LICENCE_ERROR", code)
         self.assertEqual(lib.classify(403, body), "LICENCE_ERROR")
 
+    def test_f13_semantic_write_failure_class_uses_the_outcome(self):
+        """The EXP2-T4 'loud licence failure' class of a failed semantic write: same Outcome rule (derived-field audit)."""
+        import exp2
+        body = {"type": "security_exception", "reason": "current license is non-compliant for [inference]"}
+        self.assertEqual(exp2.classify_sem_failure(403, body), "licence")
+        for code in (503, 500, 429, 0):
+            self.assertEqual(exp2.classify_sem_failure(code, body), "other", code)
+
     def test_f14_huge_and_odd_values_never_raise(self):
         cases = [(("exp2", "T2_failed_requests"), 10 ** 400), (("exp2", "T2_longest_failure_window_s"), 10 ** 400),
                  (("exp2", "T1_control_broken_fallback", "flag_rate"), -10 ** 400), (("exp2", "T3_flip_latency_s"), 10 ** 400),
@@ -251,7 +259,8 @@ class RecordingBoundaryTests(unittest.TestCase):
             R = _life("down_7")
             _set(R, path, val)
             r = summarize.exp2_checks(R, "down")
-            self.assertNotIn("PASS", (r["T1_status"], r["T2_status"]) if path[1].startswith(("T1", "T2")) else (r["T3_status"],), (path, val))
+            gate = "T1_status" if path[1].startswith("T1") else "T2_status" if path[1].startswith("T2") else "T3_status"
+            self.assertNotEqual(r[gate], "PASS", (path, val))   # the gate that reads the mutated field
 
     def test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable(self):
         import evidence as E
@@ -328,11 +337,16 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
             if isinstance(f.kind, type) and issubclass(f.kind, self.E.Evidence):
                 yield from self.relation_mutations(f.kind, prefix + f.path, R)
         absp = {n: prefix + f.path for n, f in ecls.SPEC.items()}
+        absp.update({n + "." + k: prefix + f.path + g.path for n, f in ecls.SPEC.items() if isinstance(f.kind, type)
+                     for k, g in f.kind.SPEC.items()})
         get = lambda n: summarize.fetch(R, absp[n])
         for rel in ecls.RELATIONS:
             kind, a = rel[0], rel[1]
             if kind == "le":
-                yield "%s.%s > %s" % (ecls.__name__, a, rel[2]), {absp[a]: get(rel[2]) + 1}
+                rhs = sum(get(x) for x in (rel[2] if isinstance(rel[2], tuple) else (rel[2],)))
+                if isinstance(a, tuple):
+                    raise AssertionError("le relation with a summed left side has no generated mutation: %r" % (rel,))
+                yield "%s.%s > %s" % (ecls.__name__, a, rel[2]), {absp[a]: rhs + 1}
             elif kind == "eq":
                 yield "%s.%s != %s" % (ecls.__name__, a, rel[2]), {absp[a]: get(rel[2]) + 1.0}
             elif kind == "sum_eq":
@@ -427,7 +441,10 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
                 for rel in c.RELATIONS:
                     names = [x for part in rel[1:] for x in (part if isinstance(part, tuple) else (part,))]
                     for x in names:
-                        self.assertIn(x, c.SPEC, (c, rel))
+                        head, _, attr = x.partition(".")
+                        self.assertIn(head, c.SPEC, (c, rel))
+                        if attr:   # one level into nested evidence
+                            self.assertIn(attr, c.SPEC[head].kind.SPEC, (c, rel))
 
     def test_verdicts_see_only_evidence(self):
         """Structural: every verdict function takes one evidence object; verdicts.py never subscripts life data by key and never compares

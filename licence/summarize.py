@@ -13,8 +13,11 @@ import collections
 import glob
 import gzip
 import json
+import math
 import os
 import sys
+
+import observe
 
 
 def wilson_lower(k, n, z=1.96):
@@ -44,12 +47,46 @@ def _backfill_up_licence_failures(R, path):
         pre["licence_failures_source"] = "recounted from rows.gz"
 
 
+def _backfill_observed(R, path):
+    """Review 8 F13: lives recorded before the observation boundary (observe.py) stored refusal timings and licence-failure counts without
+    the Outcome behind them. Re-derive both from the committed raw files through observe.py, and attach them only when the re-derivation
+    reproduces the recorded figures (timing, successes after it, n; control n). Without the raw file, or when it does not reproduce them,
+    nothing is attached and the gate is UNVERIFIED. Nothing is written to disk."""
+    base = path[:-5]
+    M = R.get("exp1_moment")
+    if R.get("mode") == "down" and isinstance(M, dict) and isinstance(R.get("start_basic"), dict) and os.path.exists(base + ".poll.gz"):
+        new = observe.moments(json.load(gzip.open(base + ".poll.gz", "rt")), R["start_basic"]["t_resp"])
+        for f, m in M.items():
+            n = new.get(f) or {}
+            if isinstance(m, dict) and "first_refusal" not in m and n.get("first_refusal") \
+                    and all(n.get(k) == m.get(k) for k in ("first_refusal_rel_resp_s", "success_after_first_refusal", "n")):
+                m["first_refusal"] = n["first_refusal"]
+                m["first_refusal_source"] = "re-derived from poll.gz"
+    E2 = R.get("exp2")
+    if not isinstance(E2, dict) or not os.path.exists(base + ".rows.gz"):
+        return
+    if R.get("mode") == "down":
+        key, t = "T5_control_after_1s", (R.get("start_basic") or {}).get("t_resp")
+        keep = lambda r: r[0] >= t + 1.0
+    else:
+        key, t = "T5_control_before_start_trial", (R.get("start_trial") or {}).get("t_req")
+        keep = lambda r: r[1] < t
+    ctl = E2.get(key)
+    if not isinstance(ctl, dict) or "licence_refusals" in ctl or not isinstance(t, (int, float)):
+        return
+    c = observe.control_counts([json.loads(l) for l in gzip.open(base + ".rows.gz", "rt")], keep)
+    if c["n"] == ctl.get("n"):   # only trust the recount when it reproduces the recorded denominator
+        ctl["licence_refusals"] = c["licence_refusals"]
+        ctl["licence_refusals_source"] = "recounted from rows.gz by Outcome case"
+
+
 def load(d, mode):
     out = []
     for f in sorted(glob.glob(os.path.join(d, "%s_[0-9]*.json" % mode))):
         R = json.load(open(f))
         R["_file"] = os.path.basename(f)
         _backfill_up_licence_failures(R, f)
+        _backfill_observed(R, f)
         out.append(R)
     return out
 
@@ -57,7 +94,7 @@ def load(d, mode):
 # ---- verdicts: every gate status comes from verdicts.judge(), which parses the life into typed evidence (evidence.py) first. Nothing in
 # this module decides a gate; it writes reports and copies each verdict into them as <out>_status, <out>_pass and, when not PASS, <out>_reason.
 import verdicts  # noqa: E402
-from evidence import MISSING  # noqa: E402
+from evidence import MAX_INT, MISSING  # noqa: E402
 
 
 def fetch(R, path):
@@ -71,7 +108,8 @@ def fetch(R, path):
 
 
 def _is_int(v):
-    return isinstance(v, int) and not isinstance(v, bool)
+    """Report helper: an integer in the measurable range (evidence.MAX_INT; a 10**400 would overflow float division, review 8 F14)."""
+    return type(v) is int and abs(v) <= MAX_INT
 
 
 def combine(statuses):
@@ -137,7 +175,7 @@ def _g(R, path):
 
 
 def _num(x):
-    return (_is_int(x) or isinstance(x, float)) and x == x
+    return _is_int(x) or (type(x) is float and math.isfinite(x))
 
 
 def exp2_checks(R, direction):
