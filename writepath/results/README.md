@@ -363,6 +363,13 @@ output replaces one wp file with its 4fe3ac1 version.
 - `f6-class4-mentions-4fe3ac1.red.out`: wp/mentions.py, run with WP_UCD_DIR set to the lab's Unicode 13.0.0 tables;
   the whole Default_Ignorable enumeration misses exactly U+17B4 and U+17B5, "AIex Kim" is not found, "custorner" is
   accepted, the redaction API exists, the table API is absent.
+Live, t2-dev, unstamped, under the run lock (`harness/reviewC_check.sh`; Unicode 15.0.0, tables from the lab's
+WP_UCD_DIR; red = the new tests on the 4fe3ac1 code, tree src-0aaf789, identical in wp/, tests/, exp/):
+- `live-window1-76a0e15.out`: found two defects and two test-fixture errors (see e8c4829): `_cat/shards` rejects
+  expand_wildcards on ES 9.5.6 (`d4-cat-shards-param-76a0e15.red.out` is its offline red), and the cascade kept the
+  proposals of a subject with no approved identifiers.
+- `live-window2-e8c4829.red-green.out`: green test_ident 25/25, test_d3_pg 8/8, es_alias_live F5 and F9 true; red
+  test_ident 14 failing (U+17B4/U+17B5 on 15.0 too), test_d3_pg C1, C2, C4, C5.
 SUPERSEDED by decision R1 and matcher m3 (kept): `failing-first/d3/d3-store-pg-fb60b2e.red-green.out` (span redaction,
 removed) and `failing-first/d3/m2-*-5e6e378.red.out` (matcher m2, replaced by m3).
 
