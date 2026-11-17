@@ -1,0 +1,92 @@
+{
+ "header": {
+  "commit": "6989e7970dbd04b88df099604a67c4172b6868f5",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 5.7939453125,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item2c_openai",
+  "params": {
+   "processes": 2,
+   "provider": "openai",
+   "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105
+   ]
+  },
+  "time_utc": "2026-11-17T05:51:27Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "applied_by_A": 24,
+   "applied_by_B": 36,
+   "fenced": 10,
+   "identical_to_baseline": true,
+   "n_events": 60,
+   "oracle_match": true,
+   "overlapping_rounds": 8,
+   "pids": 2,
+   "seed": 101
+  },
+  {
+   "applied_by_A": 30,
+   "applied_by_B": 30,
+   "fenced": 10,
+   "identical_to_baseline": true,
+   "n_events": 60,
+   "oracle_match": true,
+   "overlapping_rounds": 4,
+   "pids": 2,
+   "seed": 102
+  },
+  {
+   "applied_by_A": 12,
+   "applied_by_B": 48,
+   "fenced": 10,
+   "identical_to_baseline": true,
+   "n_events": 60,
+   "oracle_match": true,
+   "overlapping_rounds": 7,
+   "pids": 2,
+   "seed": 103
+  },
+  {
+   "applied_by_A": 30,
+   "applied_by_B": 30,
+   "fenced": 10,
+   "identical_to_baseline": true,
+   "n_events": 60,
+   "oracle_match": true,
+   "overlapping_rounds": 9,
+   "pids": 2,
+   "seed": 104
+  },
+  {
+   "applied_by_A": 36,
+   "applied_by_B": 24,
+   "fenced": 10,
+   "identical_to_baseline": true,
+   "n_events": 60,
+   "oracle_match": true,
+   "overlapping_rounds": 10,
+   "pids": 2,
+   "seed": 105
+  }
+ ],
+ "summary": {
+  "identical_to_baseline": 5,
+  "oracle_identical": 5,
+  "runs": 5,
+  "runs_with_fencing": 5,
+  "runs_with_measured_overlap": 5
+ }
+}

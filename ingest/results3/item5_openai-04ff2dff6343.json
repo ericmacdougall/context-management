@@ -1,0 +1,4378 @@
+{
+ "header": {
+  "commit": "191bded1250a71daeddaffcaaa23d365c503bacd",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 11.84765625,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item5_openai",
+  "params": {
+   "positions": [
+    "user_text",
+    "tool_result",
+    "assistant_text",
+    "system",
+    "tool_use_input",
+    "injected_block",
+    "split_two_blocks_EXPECTED_MISS"
+   ],
+   "provider": "openai",
+   "seeds_per_cell": 2,
+   "variants": [
+    "plain",
+    "base64",
+    "hex",
+    "urlencoded",
+    "double_base64",
+    "json_unicode",
+    "zero_width_split",
+    "base64url",
+    "rot13_EXPECTED_MISS"
+   ]
+  },
+  "time_utc": "2026-11-17T05:12:02Z",
+  "tree_clean": true
+ },
+ "runs": {
+  "control": [
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-nMuV",
+     "port.db:sk-live-nMuV"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-SUHM",
+     "port.db:sk-live-SUHM"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-pUe4",
+     "port.db:sk-live-pUe4"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-YWFQ",
+     "port.db:sk-live-YWFQ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-AfWO",
+     "port.db:sk-live-AfWO"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-t24w",
+     "port.db:sk-live-t24w"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-0DvM",
+     "port.db:sk-live-0DvM"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-WMXv",
+     "port.db:sk-live-WMXv"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-AfWO",
+     "port.db:sk-live-AfWO"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-t24w",
+     "port.db:sk-live-t24w"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:sk-live-AfWO"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:sk-live-t24w"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-s3YC",
+     "events.db-wal:fISKMsUTnKQG",
+     "port.db:sk-live-s3YC",
+     "port.db:fISKMsUTnKQG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "split_two_blocks_EXPECTED_MISS",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:sk-live-L3Wy",
+     "events.db-wal:DOzziaZ7YlcR",
+     "port.db:sk-live-L3Wy",
+     "port.db:DOzziaZ7YlcR"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "split_two_blocks_EXPECTED_MISS",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1X",
+     "port.db:c2stbGl2ZS1X"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1h",
+     "port.db:c2stbGl2ZS1h"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1P",
+     "port.db:c2stbGl2ZS1P"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1J",
+     "port.db:c2stbGl2ZS1J"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1S",
+     "port.db:c2stbGl2ZS1S"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS03",
+     "port.db:c2stbGl2ZS03"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1M",
+     "port.db:c2stbGl2ZS1M"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1Q",
+     "port.db:c2stbGl2ZS1Q"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1S",
+     "port.db:c2stbGl2ZS1S"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS03",
+     "port.db:c2stbGl2ZS03"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:c2stbGl2ZS1S"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:c2stbGl2ZS03"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:736b2d6c6976",
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:736b2d6c6976"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:%73%6b%2d%6c",
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:%73%6b%2d%6c"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:YzJzdGJHbDJa",
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:YzJzdGJHbDJa"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:\\\\u0073\\\\u00",
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:\\\\u0073\\\\u00"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b",
+     "port.db:s\u200bk\u200b-\u200bl\u200bi\u200bv\u200b"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:s\\u200bk\\u20"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:s\\u200bk\\u20"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS01",
+     "port.db:c2stbGl2ZS01"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1p",
+     "port.db:c2stbGl2ZS1p"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1S",
+     "port.db:c2stbGl2ZS1S"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS03",
+     "port.db:c2stbGl2ZS03"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1H",
+     "port.db:c2stbGl2ZS1H"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1M",
+     "port.db:c2stbGl2ZS1M"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1X",
+     "port.db:c2stbGl2ZS1X"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1h",
+     "port.db:c2stbGl2ZS1h"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1H",
+     "port.db:c2stbGl2ZS1H"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:c2stbGl2ZS1M",
+     "port.db:c2stbGl2ZS1M"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:c2stbGl2ZS1H"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:c2stbGl2ZS1M"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-rA6L",
+     "port.db:fx-yvir-rA6L"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-knbI",
+     "port.db:fx-yvir-knbI"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-OFaG",
+     "port.db:fx-yvir-OFaG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-Jwgz",
+     "port.db:fx-yvir-Jwgz"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-XbUG",
+     "port.db:fx-yvir-XbUG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-CsqZ",
+     "port.db:fx-yvir-CsqZ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-w9zP",
+     "port.db:fx-yvir-w9zP"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-j918",
+     "port.db:fx-yvir-j918"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-XbUG",
+     "port.db:fx-yvir-XbUG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-CsqZ",
+     "port.db:fx-yvir-CsqZ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:fx-yvir-XbUG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": true,
+    "disk_hits": [
+     "port.db:fx-yvir-CsqZ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   }
+  ],
+  "real": [
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 1,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:sk-live-s3YC",
+     "events.db-wal:fISKMsUTnKQG",
+     "port.db:sk-live-s3YC",
+     "port.db:fISKMsUTnKQG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "split_two_blocks_EXPECTED_MISS",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:sk-live-L3Wy",
+     "events.db-wal:DOzziaZ7YlcR",
+     "port.db:sk-live-L3Wy",
+     "port.db:DOzziaZ7YlcR"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "split_two_blocks_EXPECTED_MISS",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "plain"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "hex"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "urlencoded"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "double_base64"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "json_unicode"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 3,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "zero_width_split"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "base64url"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-rA6L",
+     "port.db:fx-yvir-rA6L"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-knbI",
+     "port.db:fx-yvir-knbI"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "user_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-OFaG",
+     "port.db:fx-yvir-OFaG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-Jwgz",
+     "port.db:fx-yvir-Jwgz"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_result",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-XbUG",
+     "port.db:fx-yvir-XbUG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-CsqZ",
+     "port.db:fx-yvir-CsqZ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "assistant_text",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-w9zP",
+     "port.db:fx-yvir-w9zP"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-j918",
+     "port.db:fx-yvir-j918"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "system",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-XbUG",
+     "port.db:fx-yvir-XbUG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "events.db-wal:fx-yvir-CsqZ",
+     "port.db:fx-yvir-CsqZ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "tool_use_input",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "port.db:fx-yvir-XbUG"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 1,
+    "variant": "rot13_EXPECTED_MISS"
+   },
+   {
+    "canary_sent_to_model": true,
+    "control": false,
+    "disk_hits": [
+     "port.db:fx-yvir-CsqZ"
+    ],
+    "files": [
+     "events.db",
+     "events.db-shm",
+     "events.db-wal",
+     "port.db",
+     "port.db-shm",
+     "port.db-wal"
+    ],
+    "needles": 2,
+    "position": "injected_block",
+    "provider": "openai",
+    "seed": 2,
+    "variant": "rot13_EXPECTED_MISS"
+   }
+  ]
+ },
+ "summary": {
+  "control_covered_runs": 96,
+  "control_with_disk_hit": 92,
+  "covered_canary_witnessed_in_request_sent": 96,
+  "covered_runs": 96,
+  "covered_with_disk_hit": 0,
+  "expected_miss_detail": [
+   "rot13_EXPECTED_MISS",
+   "split_two_blocks_EXPECTED_MISS"
+  ],
+  "expected_miss_runs": 14,
+  "expected_miss_with_disk_hit": 14,
+  "failed_covered_cases": [],
+  "files_scanned_examples": [
+   "events.db",
+   "events.db-shm",
+   "events.db-wal",
+   "port.db",
+   "port.db-shm",
+   "port.db-wal"
+  ],
+  "runs": 110
+ }
+}

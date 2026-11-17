@@ -1,0 +1,21 @@
+failing-first run of ingest/tests/test_delta2.py (classification in the file header; PREREG-amend-4 A4)
+product code under test: add7c86 (ingester.py, tap.py, scan.py, heldout.py and the oracle in proofs_common unchanged)
+test support added before this run: Rig.call(**kw), repeated_conversation(per_call, boundary), controls.CorruptPayloadIngester
+amend-4 commit: f6c1533 (registered before this run)
+
+Ran 11 tests: failures=7, errors=3, ok=1
+
+behavioural, FAIL on add7c86 for the stated reason:
+  N1 test_reviewer_case_without_boundary_is_flagged_and_blocks     user events ['new','yes'] != ['new','yes','yes']  (the newly authored 'yes' disappears)
+  N1 test_multi_new_messages_without_boundary_loses_nothing_and_blocks   9 oracle events lost (anthropic, same text, window 6, 2 new messages per call)
+  N1 test_undeclared_resend_blocks_exactly_once_claim              claim_exactly_once true across an undeclared identical resend
+  N2 test_payload_corruption_with_ids_preserved_is_caught          oracle tuples equal although tool payloads were emptied
+  F2 test_private_key_block_is_fully_redacted                      3 of 3 body lines survive
+  F2 test_truncated_key_block_body_is_redacted                     body survives
+  F2 test_token_and_separator_formats_are_redacted                 first failing format: underscore vendor key
+api, FAIL only because the keyword or field does not exist yet:
+  N1 test_reviewer_case_with_boundary_is_exact                     call() got an unexpected keyword argument 'new_count'
+  N1 test_multi_new_messages_with_boundary_is_exact                call() got an unexpected keyword argument 'new_count'
+  N1 test_declared_calls_are_visible_in_completeness_and_events    KeyError 'declared_calls'
+behavioural guard, passes before and after by design:
+  N1 test_unique_text_hosts_stay_clean
