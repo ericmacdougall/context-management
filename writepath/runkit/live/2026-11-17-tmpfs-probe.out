@@ -1,0 +1,42 @@
+#### fill
+/dev/sda1       643G  586G   57G  92% /
+== tmpfs 128 MiB > memory limit 64 MiB (no swap): write 120 MiB
+FS type=tmpfs blocks=32768 bsize=4096
+dd done
+Killed
+fill exit 0
+OOMKilled=true ExitCode=0 Mem=67108864 MemSwap=67108864 Tmpfs=null Mounts=[{"Type":"tmpfs","Source":"","Destination":"/d","Mode":"","RW":true,"Propagation":""},{"Type":"volume","Name":"be28004cbcc636cb2fb913d80fcf8ea6a990363d14f9447885e11c494c086e59","Source":"/var/lib/docker/volumes/be28004cbcc636cb2fb913d80fcf8ea6a990363d14f9447885e11c494c086e59/_data","Destination":"/var/lib/postgresql/data","Driver":"local","Mode":"","RW":true,"Propagation":""}]
+== tmpfs 32 MiB < memory limit 256 MiB: write 40 MiB
+33554432 bytes (34 MB, 32 MiB) copied, 0.0232094 s, 1.4 GB/s
+fill2 exit 0
+#### es
+769e1270225b
+ES answered after about 26 s
+ESFS {"nodes":{"4wbtq_2zRj66lZBVPQmqPg":{"fs":{"data":[{"path":"/usr/share/elasticsearch/data","mount":"/usr/share/elasticsearch/data (tmpfs)","type":"tmpfs","total_in_bytes":2147483648,"free_in_bytes":2147405824,"available_in_bytes":2147405824,"low_watermark_free_space_in_bytes":419430400,"high_watermark_free_space_in_bytes":314572800,"flood_stage_free_space_in_bytes":209715200}]}}}}
+cgroup dir: /sys/fs/cgroup/system.slice/docker-769e1270225be5a334192227da951f69e2da2f8d36e84d6ff068852b5e9f4566.scope
+CGLS -r--r--r-- 1 root root 0 Nov 17 21:35 /sys/fs/cgroup/system.slice/docker-769e1270225be5a334192227da951f69e2da2f8d36e84d6ff068852b5e9f4566.scope/memory.events
+CGLS -rw-r--r-- 1 root root 0 Nov 17 21:35 /sys/fs/cgroup/system.slice/docker-769e1270225be5a334192227da951f69e2da2f8d36e84d6ff068852b5e9f4566.scope/memory.max
+CG memory.max 1572864000
+CG memory.swap.max 0
+CG memory.current 1006022656
+CG memory.peak 1009553408
+CG events max 0
+CG events oom 0
+CG events oom_kill 0
+CG stat shmem 81920
+ES Mounts=[{"Type":"tmpfs","Source":"","Destination":"/usr/share/elasticsearch/data","Mode":"","RW":true,"Propagation":""}] Mem=1572864000 MemSwap=1572864000
+IDX before restart gatefix-probe 1
+#### pg
+36a255b8aa3a
+PG ready after about 2 s
+PGFS type=tmpfs blocks=196608 bsize=4096 bfree=186827
+PGDIR 700 postgres
+#### restart
+after restart: before 2026-11-17T21:35:44.75600286Z rc=0 now 2026-11-17T21:36:44.307120647Z rc=0 id=769e1270225be5a334192227da951f69e2da2f8d3
+IDX after restart: {"error":{"root_cause":[{"type":"index_not_found_exception","reason":"no such index [gatefix-probe]","resource.type":"index_or_alias","resource.id":"gatefix-probe","index_uuid":"_na_","index":"gatefix
+ESFS after restart {"nodes":{"8Te3n699RYqa_sHYNyEsQw":{"fs":{"data":[{"path":"/usr/share/elasticsearch/data","mount":"/usr/share/elasticsearch/data (tmpfs)","type":"tmpfs","total_in_bytes":2147483648,"free_in_bytes":2147450880,"available_in_bytes":2147450880,"low_watermark_free_space_in_bytes":419430400,"high_watermark_free_space_in_bytes":314572800,"flood_stage_free_space_in_bytes":209715200}]}}}}
+== docker update of the memory limit while running
+CG memory.max after update 1677721600
+#### teardown
+remaining containers: 0
+/dev/sda1       643G  586G   57G  92% /

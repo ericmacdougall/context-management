@@ -1,7 +1,8 @@
 # Run-validity gate and leak scanner: threat model and design (review A, findings A1 to A7)
 
 Ticket goodqa#16096. This note is the design of record for `exp/disk_gate.py`, `runkit/leak_scan.py` and the run kit.
-It replaces the marker-and-timestamp design that reviews N2, P1/P2 and A1/A2/A3 found only partly closed.
+**Section 5 (design v3, after review D) is the design of record.** Sections 1 to 4 are the v2 design (log capture,
+events, ES API sampling) and its evidence, kept as history: v3 removes the hazard v2 tried to detect.
 
 ## 1. Threat model
 
@@ -270,3 +271,211 @@ with security off), and the real stream's ES against the new precondition.
 
 Ledger at the end: 20 records, no stop open. Case f shows the union rule live: the API sampler's stop precedes the
 log line's stop in the ledger, so the verdict would have been VOID without the log text.
+
+## 5. Design v3 (review D, 2026-11-17): remove the hazard instead of detecting it
+
+Sources: main's direction after review D (`reviews/writepath-hard/reviewD-1.md`, BLOCK at eeb9b82) and the user's
+standing instruction quoted at the top of section 4.
+
+### 5.1 Decision
+**(a): each store's data directory lives on a private, fixed-size tmpfs that no other tenant can write, sized above
+the container's memory limit, and the gate becomes a small positive check of that arrangement.** Not (b): four reviews
+in a row found more in the detector, and the open holes F1, F2 and F8 sit in machinery (sampling, log text, clocks)
+that exists only to observe a hazard other tenants cause. Not (c): under (a) the condition the detector watches for
+cannot occur (5.2), so the detector would add only its own failure modes; its remaining unique coverage (a pause
+between steps; a disk-settings change by the stream's own admin credential) is listed as outside in 5.4 instead.
+
+Evidence from t2-dev, 2026-11-17 (kit `runkit/live/tmpfs_probe.sh`, output `runkit/live/2026-11-17-tmpfs-probe.out`;
+own containers, under the lab run lock, removed afterwards):
+
+| Question | Observed | Consequence |
+|---|---|---|
+| A size-limited disk volume without root? | Docker 29.1.3, storage driver overlayfs through the containerd snapshotter on ext4; `--storage-opt size` needs overlay2 on xfs with pquota (5.10) | no: tmpfs is the only private fixed-size filesystem available without host changes |
+| Memory | 110 GiB total, 57 GiB available, no swap; cgroup v2, systemd driver | tmpfs pages cannot spill to the shared disk; a stream of about 10 GiB fits |
+| tmpfs LARGER than the memory limit, filled | 128 MiB tmpfs, 64 MiB limit, 120 MiB written: the writer was OOM-killed, `OOMKilled=true`, PID 1 survived (exit 0) | such a tmpfs never fills: the writer dies first. A child's OOM kill leaves the container's identity unchanged, so the gate reads the cgroup's oom_kill counter |
+| tmpfs SMALLER than the limit, filled | 32 MiB tmpfs, 256 MiB limit: the write stopped at 32 MiB (no space) | the size rule must be S > limit |
+| ES on a tmpfs data path | node stats: `"type":"tmpfs"`, total 2147483648 (the exact size), and ES's own `low/high/flood_stage_watermark_free_space_in_bytes` for the path | the gate binds to ES's own view of its data path and uses ES's own thresholds in bytes (percentages and max_headroom need no reimplementation) |
+| cgroup files without root | memory.max 0644, memory.events 0444; memory.swap.max 0; memory.peak present (kernel 6.8) | readable directly |
+| PG on tmpfs | ready in 2 s; data directory 0700, owner postgres | works with the official image |
+| `docker restart` | same Id, RestartCount stays 0, StartedAt changes, the test index is gone, ES reports a NEW node id | RestartCount misses a manual restart; StartedAt and the node id (kept in the wiped data path) catch it |
+| `docker update --memory` | memory.max changed live | the limit is compared at every step; the lifetime peak covers a raise-and-restore between steps |
+
+### 5.2 Why no watermark can be reached
+A container has memory limit M (cgroup memory.max) and memory.swap.max 0. Every tmpfs page written by a process in the
+container is charged to its cgroup (5.10: shmem is charged to the cgroup that instantiated it; Docker: tmpfs usage
+counts against the container's memory limit; row 3 above). So tmpfs used ≤ memory.current ≤ M at any moment, and
+used ≤ memory.peak over the container's life. With tmpfs size S, free = S − used ≥ S − memory.peak. If
+S − memory.peak ≥ T + margin, where T is ES's largest free-space threshold for the path (the low watermark), ES never
+sees free space at or below any watermark; for PG, S − memory.peak ≥ margin means its data directory never fills.
+Other tenants cannot write into the tmpfs at all: it is not on the shared disk. memory.peak is kept by the kernel for
+the cgroup's whole life: not sampled, no timestamp, not reset by anything the stream does (a reset by writing arrived
+in kernel 6.12; this host runs 6.8, and a reset by root is outside the trust model). So the end check proves the bound
+held through the whole window, even if the limit was raised and restored between steps.
+
+### 5.3 The v3 gate
+Evidence, per container, at start, at every check and at end, always by container ID:
+- `docker inspect`: Id, StartedAt, Running, Paused, OOMKilled, Pid, Mounts (a tmpfs mount at the data path and no
+  mount inside it), and the ES port binding.
+- The container's cgroup (its path from /proc/<Pid>/cgroup, which must name the full Id): memory.max (a number),
+  memory.swap.max, memory.peak, and oom_kill from memory.events.
+- The data path's filesystem: for ES, ES's own `GET /_nodes/_local/stats/fs,jvm` (path, type, total, free, the three
+  thresholds, node id, JVM start); for PG, `docker exec <id> stat -f -c '%T %b %S %a' <data dir>` (no secret in it).
+- The ES API is bound to the pinned container as in v2: the container publishes es_url's port on 127.0.0.1 and, at
+  start, its JVM started within [−2 s, 300 s] of the container's StartedAt; after that the node id must not change.
+
+Rules (MARGIN = 256 MiB):
+- R1 isolation: each data path is a tmpfs: ES reports type tmpfs at its data path; PG's statfs says tmpfs; inspect
+  shows a Docker tmpfs mount there and no mount inside it.
+- R2 bound: memory.swap.max is 0; with M = memory.max and S = the tmpfs size, S − M ≥ T + MARGIN for ES and
+  S − M ≥ MARGIN for PG.
+- R3 peak: memory.peak ≤ S − T − MARGIN for ES and ≤ S − MARGIN for PG.
+- R4 identity: Id, StartedAt, ES node id and oom_kill unchanged since admission; Running, not Paused, OOMKilled false;
+  the same boot id.
+- R5 configuration: M, memory.swap.max, S and ES's three thresholds unchanged since admission.
+- R6 stops: no stop recorded between this run's admit record and its end record (ledger, 5.5).
+- R7 host: free space on the shared disk ≥ 20 GiB, measured inside the locked admission step and stored in the admit
+  record (F1). At checks and at end it is recorded, not judged: the stores no longer depend on it.
+- R8 own files: WP_HOME, the only stream data still on the shared disk, grows by at most 2 GiB (each check, end).
+
+start is BLOCKED (exit 2) unless R1 to R5 and R7 hold and the ledger admits; check and end are VOID (exit 3) on any
+failed rule, and a VOID check closes the run. Every read that fails is a failed rule, never a pass.
+
+Removed from v2: the capture companion, the start and close tokens, the events stream, the ES API sampler and its gap
+rule, the log predicates, the retained-log cross-check, the log-driver precondition and the wall-clock step rule. No
+verdict input is log text, and none compares wall-clock times inside the window: StartedAt, the node id and the
+counters are compared for equality.
+
+### 5.4 What v3 guarantees, and what it does not
+For a run it calls valid:
+- (V1) at every gate step both data paths were private tmpfs mounts whose size exceeds the container's memory limit
+  by at least ES's largest watermark threshold plus 256 MiB (PG: 256 MiB), with no swap;
+- (V2) each container's lifetime memory peak stayed within that bound, so neither data path's free space reached a
+  watermark threshold (ES) or zero (PG) at any moment of the window;
+- (V3) the same containers ran throughout: not restarted, recreated or paused at a step, no process in them
+  OOM-killed, no reboot;
+- (V4) no stop was recorded in the window, in an intact ledger;
+- (V5) at least 20 GiB was free on the shared disk at admission, and the stream's own files there grew by at most
+  2 GiB.
+
+Not covered, and how each shows:
+- Host memory pressure: each tmpfs pins up to M of RAM (no swap). A host-wide OOM can kill a process in the
+  container; oom_kill counts kills by any OOM killer (kernel cgroup-v2 docs), so the run is VOID, and the store's
+  data is lost with the container if PID 1 dies.
+- A run whose data does not fit in M is OOM-killed: VOID. Sizing is the operator's (5.6), not a guarantee.
+- A container stop, restart or recreate wipes its tmpfs: VOID (StartedAt, node id), and the stream's setup must run
+  again before the next run.
+- A pause, or CPU throttling, between two steps: not detected (no events stream); it does not change disk state.
+- A change of ES's disk settings that is restored before the next step: it needs the stream's admin credential (the
+  real stream runs ES with security on), and no stream code changes disk settings (only host/bootstrap.py sets them,
+  as node settings at container creation). Outside the threat model; a change still present at the next step is VOID
+  by R5.
+- Same-uid tampering with the gate's code or state, and root on the host (writing into the tmpfs from outside the
+  container, resetting memory.peak).
+- The scanner's stated limits (5.7).
+
+### 5.5 Ledger v3 (F3, F7, F11)
+- **init.** A ledger starts with an `init` record (`disk_gate init <reason>`). With no ledger, every command except
+  init is BLOCKED, so a deleted ledger is never read as an empty one. A non-empty v2 ledger (chain intact, no init
+  record, no head) is adopted once: an init record noting its v2 record count is appended.
+- **Head anchor.** After every append, under the lock, `state/stop_ledger.head` is replaced atomically (temporary
+  file, fsync, rename) with the record count and the SHA-256 of the last record. A read requires at least that many
+  records, the record at that position to hash to the anchor, and an intact chain. A ledger with an init record but no
+  head, or shorter than its head, is a LedgerError (BLOCKED). Recovery is explicit: `disk_gate ledger-reset <reason>`
+  keeps the broken ledger under a new name and starts a new one whose init record names the old file's size and
+  SHA-256; a run open at that point has no admit record in the new ledger, so its end is VOID.
+- **Admission record required.** end and check require this run's admit record at the sequence number start stored.
+- **Legacy STOP (F3).** The gate occupies `state/STOP` with a directory. A regular file found there is first ingested
+  as a stop and renamed (kept as `state/STOP.ingested-<seq>`), then the directory is created; all inside the ledger
+  lock, retried if a writer recreates the file meanwhile. After that a legacy `> state/STOP` write fails with "Is a
+  directory" instead of being missed, so no unlocked STOP writer remains. The only STOP interface is
+  `disk_gate stop <reason>`; no stream code writes state/STOP.
+- **State-format transition (F11).** An older gate on a migrated home fails closed: the v2 gate reads state/STOP with
+  read_bytes and the v1 gate unlinks it, and both raise on a directory. v3 refuses a run admitted by an older gate
+  (v3 admit records carry `"v": 3`); the operator closes it with `abort`. v2 run directories and captures are kept.
+  The MANIFEST.tsv and THRESHOLDS.md text belongs to the hardening owner and is applied on feat/writepath-hardening at
+  0801eb7.
+
+### 5.6 Precondition for the stream's containers (owner of host/bootstrap.py)
+Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`. For v3 they must be created with:
+- ES: `--memory M_es --memory-swap M_es --mount type=tmpfs,destination=/usr/share/elasticsearch/data,tmpfs-size=S_es`
+  where S_es ≥ M_es + 18 GiB (bootstrap's low watermark, 18gb free) + 0.25 GiB. tmpfs-size is a ceiling, not a
+  reservation.
+- PG: `--memory M_pg --memory-swap M_pg --mount type=tmpfs,destination=/var/lib/postgresql/data,tmpfs-size=S_pg`
+  where S_pg ≥ M_pg + 0.25 GiB.
+- Sizing, ASSUMPTION (from main's figures: about 0.25 GiB at step 1, about 2.3 GB projected for the 1.1M-document
+  run): M_es = 6 GiB (1 GiB heap, JVM overhead, the index with merge headroom); M_pg = 4 GiB (2 GiB today plus a PG
+  data footprint this stream cannot see). At most about 10 GiB of host RAM, against 57 GiB available on 2026-11-17.
+- Consequence: a container stop or restart loses its store. bootstrap and setup must run again (both are idempotent),
+  which recreates the secrets that live inside the stores (role verifiers, ES users and keys, key-store rows).
+
+### 5.7 Scanner v3 (F4, F5, F6, F12)
+- **Fail closed (F4).** Every requested root must exist and be readable; os.walk errors, unreadable files, gzip errors
+  and over-limit content are collected, listed (redacted per F12) and make the exit code 2. Exclusions compare path
+  components, so an excluded `oldhome` does not exclude `oldhome-results`. Content over the limit (512 MiB raw or
+  decompressed) is never sliced: the file is listed as not scanned, exit 2.
+- **Inventory from the creation sites (F5).** A table in leak_scan.py names every place the stream creates or derives
+  a secret (file and function) and how it is inventoried, or why it is not a secret (nonces, MAC outputs, pseudonyms,
+  document ids) or not file-checkable (broker and probe keys held only in memory). A test scans wp/, host/ and exp/
+  for creation calls (secrets.token_*, os.urandom, hmac.new, an `_security/api_key` POST,
+  `elasticsearch-reset-password`) and fails on any site the table does not list. The tenant chain key (HMAC-SHA256 of
+  the tenant key over "chain-key:v1", which the key service sends as hex) is derived from each live tenant key and
+  inventoried with all its representations.
+- **Coverage (F6).** UTF-16LE and UTF-16BE forms of every value are added, and normalisation applies unescaping and
+  percent-decoding repeatedly (up to three rounds, until nothing changes) instead of once in a fixed order. The split
+  rule is stated exactly: a value is found when 16 consecutive characters of one of its representations appear in one
+  normalised view. A value cut into pieces shorter than 16 characters, or stored in an encoding the table does not
+  list, is not found. Every clearance statement carries this list.
+- **Output (F12).** A path, source name or waiver reason is printed only after it is checked against the inventory;
+  one holding a candidate is printed as `<redacted path #n>`.
+
+### 5.8 Receipts and the launcher (F9, F10)
+- F10: failing_first.sh copies the current tests into the extracted tree and runs them there with that tree first on
+  sys.path; a runner prints every loaded module under writepath with its path and SHA-256 and fails the receipt if any
+  came from outside the extracted tree. Row 25's valid evidence is red3 (red2 is retired in SUPERSEDED.txt); under v3
+  row 25's class (log wording) no longer exists.
+- F9: chain_singles.sh keeps cleanup's output and exit status apart and stops the chain on a failure; launch_one.sh
+  records the experiment's exit status and the gate verdict as separate fields.
+
+### 5.9 Every scenario, mapped to v3
+| # | Scenario (source) | Under v3 |
+|---|---|---|
+| N2 | docker logs rc ignored; cap breach printed, not rejected | no log is read; every docker and cgroup read is checked and a failed read fails the rule; R8 rejects own growth |
+| P1 | rotation, truncation, same-second replacement, replacement between inspect and read, clock step | no log or wall-clock filter exists; identity by Id, StartedAt and node id at every step |
+| P2 | STOP missed in finalization or deleted at admission | locked ledger; legacy writers made to fail (5.5) |
+| A1 | forged or replayed markers, clock steps, non-blocking drops | no marker and no log text is judged: not expressible |
+| A2 | identity inspected only once | R4 at every step, plus lifetime counters (oom_kill, memory.peak) |
+| A3 | clear-stop erases an invalidation | kept from v2: an ack names one stop and never changes a verdict |
+| A4 | scanner misses representations | 5.7 |
+| A5 | unqualified "no secret values" | 5.7: every clearance carries what was searched |
+| A6 | receipt provenance | 5.8 (F10) |
+| A7 | doc counts and STOP wording | results README fixed; MANIFEST and THRESHOLDS at 0801eb7 (hardening owner) |
+| 25 | verdict depends on log wording | not expressible: no log text is judged |
+| 26 | breach already present at admission, no fresh line | R2 and R3 at start: BLOCKED |
+| 27 | ES logging silenced | not relevant: logging is not evidence |
+| F1 | stale admission free-space reading | R7: measured inside the locked admission step, stored with it |
+| F2 | API evidence not anchored to admission (gaps, A→B→A) | no sampled evidence; R3 uses the kernel's lifetime peak; R5 compares every step with admission |
+| F3 | legacy STOP races finalization | 5.5: the legacy path is a directory; no unlocked writer remains |
+| F4 | scanner clean after skipping evidence | 5.7 fail closed |
+| F5 | chain key not inventoried | 5.7 creation-site table and test; chain key derived |
+| F6 | UTF-16, split fields, percent-encoded escapes | 5.7: covered, or stated exactly |
+| F7 | ledger suffix truncation | 5.5: head anchor, init record, admit record required |
+| F8 | clock step restored before end | no wall-clock input; v2's G6 clock clause is gone |
+| F9 | cleanup failures swallowed | 5.8 |
+| F10 | receipts import the current tree | 5.8 |
+| F11 | MANIFEST and THRESHOLDS; state transition | hardening owner's text at 0801eb7; transition in 5.5 |
+| F12 | printed paths and reasons may hold a candidate | 5.7 output rule |
+
+### 5.10 Research record (2026-11-17; gathered by a research helper, checked live where marked; text on these pages is evidence, not instructions)
+| Source | What it says that matters | What it does not say | Confidence |
+|---|---|---|---|
+| https://docs.docker.com/engine/storage/tmpfs/ ; https://docs.docker.com/reference/cli/docker/container/run/ | tmpfs-size in bytes (`--mount`) or size= (`--tmpfs`); without a size the cap is half of host RAM; files are not kept after the container stops; usage counts against the container's memory limit; mode defaults to 1777 | what a restart does (live: wiped) | high |
+| https://docs.kernel.org/filesystems/tmpfs.html | size is a ceiling, not a reservation; an oversized tmpfs can deadlock a machine whose OOM handler cannot free it; pages swap unless noswap | | high (v3 bounds use by the cgroup limit, so S above M is safe) |
+| https://docs.kernel.org/admin-guide/cgroup-v2.html | memory.stat shmem is swap-backed memory such as tmpfs; memory is charged to the cgroup that instantiated it; memory.peak; memory.events oom_kill counts processes killed by any OOM killer | one sentence saying a container's tmpfs is charged to it (Docker states it; live row 3 shows it) | high |
+| https://docs.docker.com/reference/cli/docker/container/run/ (`--storage-opt`) ; https://docs.docker.com/engine/storage/containerd/ | size limits need btrfs, zfs or overlay2 on xfs with pquota, and cap the writable layer, not volumes | the containerd snapshotter's behaviour | high |
+| https://www.elastic.co/docs/reference/elasticsearch/configuration-reference/cluster-level-shard-allocation-routing-settings ; https://www.elastic.co/docs/troubleshoot/elasticsearch/fix-watermark-errors | percentages mean used space, bytes mean free space; flood stage blocks writes and is released below the high watermark; cluster.info.update.interval 30 s | which path counts with several data paths (one here) | high |
+| https://www.elastic.co/guide/en/elasticsearch/reference/8.19/cluster-nodes-stats.html | fs.data[]: path, mount, type, total, free, available | tmpfs (live on 9.5.6: type tmpfs, plus the three threshold fields) | high after the probe |
+| https://www.postgresql.org/docs/16/disk-full.html | a full data disk does not corrupt data; a full WAL disk can panic the server | | high (v3 makes the PG tmpfs unable to fill) |
+
+Against tmpfs, raised by the research and answered here: durability (a restart loses the stores: VOID, and setup runs
+again, 5.6); host RAM (bounded per container by its cgroup limit, about 10 GiB of 57 GiB available, 5.6); PG's WAL on
+the same tmpfs (it cannot fill, 5.2); PG's 0700 data directory on a 1777 tmpfs (the image's entrypoint sets it; live).
