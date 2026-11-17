@@ -1052,3 +1052,57 @@ Not on the list: heldout_secrets (carried, FAIL, main's ruling: no store, wp/sec
 Rules: one chain under the lab run lock; the start line in exact KiB; the chain stops at the first BLOCKED or VOID run;
 a VOID run may be rerun once and both are recorded; a FAIL stands and is never rerun. The hardening experiments are
 appended to the same chain by a later amendment, before it runs; that amendment also fixes the final commit.
+
+## Amendment H6 (2026-11-17, written before exp/h_d6_broker.py exists or runs): D6, the key broker
+Code under test: the broker at 76c9276 and later (wp/broker.py; projector and erasure broker mode). Basis (main's
+ruling after H1/H1a): the fence rests on alias-name scoping plus the alias CAS held by the broker; invalidation of
+older keys is hygiene (H1a PD: 20/20, at most 0.055 s, one node); derived keys are not used (H1a PA, final).
+Layout (the H2 pattern, this stream's own containers, ubuntu:24.04 with the host's /usr and the venv read-only, host
+network, 512 MiB, label emlab2.stream=wphard):
+  emlab2-wphard-broker  uid 20004  WP_SECRETS_DIR=/svc/broker (es_broker_password, pgpass.wp_broker)
+                                   python -m wp.broker serve <sock>, WP_BROKER_ALLOW_UIDS=20001
+  emlab2-wphard-app     uid 20001  WP_SECRETS_DIR=/svc/app (pgpass.wp_app only; NO Elasticsearch credential), WP_BROKER
+                                   one-shot per run: python -m exp.h_d6_broker child <arm> <tenant A> <tenant B>
+The operator's directory (elastic password, admin key, admin pgpass) and /svc/broker are mounted read-only into the
+app container for this test only, to show the kernel refuses uid 20001. The operator projects 5 events per tenant.
+Cases, per run (fresh tenants A and B, epoch E held by holder h1):
+  C1 cross-tenant   A's writer key writes through B's -w<E>, B's read alias and B's -x               -> each refused
+  C2 base index     A's writer key writes to A's base index by concrete name                           -> refused
+  C3 erase alias    A's writer key writes through A's -x                                               -> refused
+  C4 CAS attempt    A's writer key adds A -w<E+1>, removes A -w<E>, adds an alias on B (POST _aliases) -> each refused
+  C5 stale epoch    h2 takes the lease by force (E+1) and gets its key (the broker's CAS moves -w); then h1's key
+                    writes through -w<E> 20 times                                                     -> 0 accepted
+  C6 replay         after C5: writer_key(A, E, h1), writer_key(A, E+1, h1), writer_key(A, E+1, "")    -> each Refused
+  C7 rotation       a broker-mode Projector P1 projects A, P2 takes over by force mid-run (between steps), P1 steps
+                    again                                                                              -> P1 step returns -1, P1
+                    docs_written does not grow after P2's start, P2 completes and A's read alias holds every event
+  C8 concurrency    20 pairs of concurrent writer_key requests for A and B (two connections)          -> every key's
+                    role descriptors (read by the operator) name only its own tenant and epoch
+  C9 credentials    uid 20001 opens es_broker_password, pgpass.wp_broker, es_elastic_password, es_api_key.json,
+                    admin pgpass                                                                       -> each EACCES
+  C10 PG role       as wp_broker: wp_lease_holder_current is callable; select on leases                -> permission denied
+  C11 peer          a connection from uid 20002 (verifier container) asks for A's key                 -> peer_refused
+  C12 broker down   the broker container is stopped while h1 holds E with a key; then
+                    (a) h1's key writes through -w<E>: EXPECTED ACCEPTED: this is the stated window (a key already
+                        issued keeps writing until a newer epoch's CAS, which needs the broker, or its 1 h expiry);
+                    (b) h2 takes the lease by force and a broker-mode Projector starts           -> start fails, 0 ES writes;
+                    (c) the broker restarts, h2 gets its key, h1's key writes 20 times            -> 0 accepted.
+                    C12 holds iff (b) and (c) hold; (a) is reported as observed; (a) refused is reported as
+                    UNEXPECTED (the model is wrong), never as a pass. fence_statement() states the window.
+  C13 no key value  every encoded key the run saw (held in memory only) is absent from the result, the child's output
+                    and the broker container's log                                                     -> 0 found
+Arms: fenced (the layout above) and control (the app holds the projector role key from `wp.es_keys create`, the
+pre-broker deployment, and runs C1, C2, C3, C4, C5 with it; C5 there means h1 re-adds -w<E> with its own key).
+Verdict rule: FEASIBLE iff in the fenced arm C1 to C11 and C13 hold in R/R runs and C12 holds in R/R runs; the control
+must accept at least one C1 or C4 request in every run, else the run cannot detect the difference and is VOID.
+INVALID-REQUEST (H1a rule): a case whose setup request (a mint for the case's key, the lease takeover, the operator's
+projection) is rejected before it reaches the behaviour is INVALID-REQUEST, decided from the status and error.type of
+that request; any INVALID-REQUEST case makes the verdict "not demonstrated" for that case, never FEASIBLE for it.
+R = 5. Recorded: statuses and error types, key ids (never values), counts, timings.
+Limits stated in the result: one node; docker access is root-equivalent (separation of service identities on one host,
+not host isolation); the broker trusts every allowed peer uid for every tenant (tenant authority is design path item 2);
+holder strings are trusted within one service identity; a key already issued writes until the next CAS or its expiry.
+Gates: the run lock; exact-KiB start line (>= 20971520 KiB) before the lock and in launch_one.sh; disk_gate start,
+check and end; flood and high-watermark watcher; leak_scan (dce5f07 or later) before results leave the host. One
+stamped run now; a VOID run may be rerun once and both are recorded; a FAIL stands. The experiment is rerun in the
+final chain (the amendment that appends the hardening experiments to H5's list).
