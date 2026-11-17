@@ -1,0 +1,15 @@
+# deploy part 2 evidence, run 2026-11-17 on t2-dev (engine venv-new, temporalio 1.36.1), no Temporal server
+## green at f3f571c (real workflow classes constructed with the guarded __init__)
+command: python -m unittest engine.tests.test_deploy_guard engine.tests.test_state engine.tests.test_keys
+Ran 28 tests in 0.146s
+OK
+## red: the base workflow files (3423f4e wf/ and gen_variants) with the new tests
+ERROR: test_every_variant_refuses_a_newer_state_before_touching_it (engine.tests.test_deploy_guard.WorkflowInitRefuses.test_every_variant_refuses_a_newer_state_before_tou
+ERROR: test_every_variant_still_accepts_its_own_version (engine.tests.test_deploy_guard.WorkflowInitRefuses.test_every_variant_still_accepts_its_own_version)
+FAIL: test_a_v1_worker_refuses_a_migrated_state_and_the_v2_worker_runs_it (engine.tests.test_deploy_guard.WorkflowInitRefuses.test_a_v1_worker_refuses_a_migrated_state_an
+AssertionError: StateTooNew not raised
+FAIL: test_every_variant_guards_first_with_the_right_supported_version (engine.tests.test_deploy_guard.GuardIsInEveryWorkflowInit.test_every_variant_guards_first_with_the
+AssertionError: 'guard_mod.check_state(st, SUPPORTED_STATE_VER)' not found in 'self.st = dict(st)' : v1: guard is not the first statement
+Ran 6 tests in 0.092s
+FAILED (failures=2, errors=2)
+Ran 25 tests in 0.008s
