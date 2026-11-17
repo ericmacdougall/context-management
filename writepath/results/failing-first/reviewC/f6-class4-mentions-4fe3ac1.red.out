@@ -1,0 +1,32 @@
+# tree: writepath/ at 4996563 (dirty: 1 paths)
+# command: python3 results/failing-first/harness/red_with.py . wp/mentions.py 4fe3ac1 tests.test_ident
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/mentions.py <- wp/mentions.py at 4fe3ac1; tests: current; python3 -m unittest tests.test_ident
+ERROR: test_s6_skeleton_is_the_only_key (tests.test_ident.MatcherM3)
+AttributeError: module 'wp.mentions' has no attribute 'key'
+ERROR: test_hmac_label_binds_the_matcher (tests.test_ident.Tables)
+AttributeError: module 'wp.mentions' has no attribute 'label'
+ERROR: test_loads_the_pinned_tables (tests.test_ident.Tables)
+AttributeError: module 'wp.mentions' has no attribute 'load_tables'
+ERROR: test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables)
+AttributeError: module 'wp.mentions' has no attribute 'matcher_id'
+ERROR: test_missing_table_fails_closed (tests.test_ident.Tables)
+AttributeError: module 'wp.mentions' has no attribute 'UCDUnavailable'
+ERROR: test_other_unicode_version_fails_closed (tests.test_ident.Tables)
+AttributeError: module 'wp.mentions' has no attribute 'UCDUnavailable'
+ERROR: test_tampered_table_fails_closed (tests.test_ident.Tables)
+AttributeError: module 'wp.mentions' has no attribute 'UCDUnavailable'
+FAIL: test_r1_no_span_redaction_api (tests.test_ident.MatcherM3)
+AssertionError: True is not false : redaction_for
+FAIL: test_s6_lookalikes_in_other_speakers_text_match (tests.test_ident.MatcherM3)
+AssertionError: Lists differ: [] != ['AIex Kim']
+FAIL: test_s1_lookalike_of_a_common_word_refused (tests.test_ident.RuleR3)
+AssertionError: unexpectedly None : custorner
+FAIL: test_s4_ignorables_removed_from_declared_identifier (tests.test_ident.RuleR3)
+AssertionError: 'al឴ex kim' != 'alex kim'
+FAIL: test_every_default_ignorable_inside_a_name (tests.test_ident.WholeDefaultIgnorable)
+AssertionError: Lists differ: ['17B4', '17B5'] != []
+FAIL: test_f6_khmer_inherent_vowels (tests.test_ident.WholeDefaultIgnorable)
+AssertionError: Lists differ: [] != ['Al឴ex Kim']
+Ran 24 tests in 0.614s
+FAILED (failures=6, errors=7)

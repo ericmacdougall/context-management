@@ -1,0 +1,32 @@
+# tree: writepath/ at 4996563 (dirty: 1 paths)
+# command: python3 results/failing-first/harness/red_with.py . wp/families.py 4fe3ac1 tests.test_alias_states
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/families.py <- wp/families.py at 4fe3ac1; tests: current; python3 -m unittest tests.test_alias_states
+FAIL: test_acknowledged_but_not_applied_is_refused (tests.test_alias_states.AliasStates)
+AssertionError: 'applied' != 'ProjectionError'
+FAIL: test_every_family_polluted_converges (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp[42 chars]nts-w0', False), ('wp16096-acme-events-base', [151 chars]rue)] != [('wp[42 chars]nts-w5', True)]
+FAIL: test_mixed_families_converge_in_one_request (tests.test_alias_states.AliasStates)
+AssertionError: 'ProjectionError' != 'applied'
+FAIL: test_newer_alias_after_success_is_stale (tests.test_alias_states.AliasStates)
+AssertionError: 'applied' != 'StaleEpoch'
+FAIL: test_state_current_not_write_index (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp16096-acme-events-base', 'wp16096-acme-events-w5', False)] != [('wp16096-acme-events-base', 'wp16096-acme-events-w5', True)]
+FAIL: test_state_current_on_both_indices (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp[51 chars]True), ('wp16096-acme-legacy-copy', 'wp16096-a[17 chars]rue)] != [('wp[51 chars]True)]
+FAIL: test_state_current_on_other_index (tests.test_alias_states.AliasStates)
+AssertionError: 'ProjectionError' != 'applied'
+FAIL: test_state_current_write_index_unset (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp16096-acme-events-base', 'wp16096-acme-events-w5', None)] != [('wp16096-acme-events-base', 'wp16096-acme-events-w5', True)]
+FAIL: test_state_newer_on_other_index (tests.test_alias_states.AliasStates)
+AssertionError: 'applied' != 'StaleEpoch'
+FAIL: test_state_older_and_current (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp[42 chars]nts-w4', True), ('wp16096-acme-events-base', '[26 chars]rue)] != [('wp[42 chars]nts-w5', True)]
+FAIL: test_state_older_on_other_index (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp[51 chars]True), ('wp16096-acme-legacy-copy', 'wp16096-a[17 chars]rue)] != [('wp[51 chars]True)]
+FAIL: test_state_w0_older_and_current (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp[42 chars]nts-w0', False), ('wp16096-acme-events-base', [89 chars]rue)] != [('wp[42 chars]nts-w5', True)]
+FAIL: test_stray_alias_after_success_is_converged_again (tests.test_alias_states.AliasStates)
+AssertionError: Lists differ: [('wp[51 chars]True), ('wp16096-acme-legacy-copy', 'wp16096-a[17 chars]rue)] != [('wp[51 chars]True)]
+Ran 18 tests in 0.049s
+FAILED (failures=13)

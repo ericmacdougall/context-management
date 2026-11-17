@@ -1,0 +1,40 @@
+# tree: writepath/ at 4996563 (dirty: 1 paths)
+# command: python3 results/failing-first/harness/red_with.py . wp/es_verify.py 4fe3ac1 tests.test_es_verify
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/es_verify.py <- wp/es_verify.py at 4fe3ac1; tests: current; python3 -m unittest tests.test_es_verify
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [timed_out]
+AssertionError: 0 != 1 : timed_out: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [failed_shard]
+AssertionError: 0 != 1 : failed_shard: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [terminated_early]
+AssertionError: 0 != 1 : terminated_early: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [skipped_shard]
+AssertionError: 0 != 1 : skipped_shard: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [unallocated_shard]
+AssertionError: 0 != 1 : unallocated_shard: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [no_shard_searched]
+AssertionError: 0 != 1 : no_shard_searched: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [two_shards_answered]
+AssertionError: 0 != 1 : two_shards_answered: an incomplete search counted as absence
+FAIL: test_12_partial_search_of_another_family_index_is_unverified (tests.test_es_verify.StrictPlaceholders) [no_shard_metadata]
+AssertionError: 0 != 1 : no_shard_metadata: an incomplete search counted as absence
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [timed_out]
+AssertionError: 0 != 1 : timed_out
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [failed_shard]
+AssertionError: 0 != 1 : failed_shard
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [terminated_early]
+AssertionError: 0 != 1 : terminated_early
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [skipped_shard]
+AssertionError: 0 != 1 : skipped_shard
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [unallocated_shard]
+AssertionError: 0 != 1 : unallocated_shard
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [no_shard_searched]
+AssertionError: 0 != 1 : no_shard_searched
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [two_shards_answered]
+AssertionError: 0 != 1 : two_shards_answered
+FAIL: test_13_partial_search_of_the_only_base_copy_proves_nothing (tests.test_es_verify.StrictPlaceholders) [no_shard_metadata]
+AssertionError: 0 != 1 : no_shard_metadata
+FAIL: test_14_every_search_refuses_partial_results (tests.test_es_verify.StrictPlaceholders)
+AssertionError: Lists differ: [None, None] != ['false', 'false']
+Ran 14 tests in 0.047s
+FAILED (failures=17)
