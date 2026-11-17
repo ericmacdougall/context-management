@@ -3,9 +3,7 @@
 Allowed: GET of cluster health, `_cat/indices|shards/<index>`, `_nodes/stats/thread_pool`, `<index>/_settings|_mapping|_count|_search`,
 POST of `<index>/_search` and `<index>/_count`. Everything else raises EsGuardError BEFORE the inner client is called, so
 no byte of a write ever leaves the process. Every allowed request is counted by class for the run's read-only proof.
-A `_search` body is also refused if it carries a key that could do work other than reading (`script_fields`-free is not
-enough to prove safety, so only plain read bodies are accepted: no `pit` keep-alive creation, no `_update_by_query`
-path is reachable at all)."""
+A `_search` body is also refused if a key named `pit` or starting with `script` occurs ANYWHERE in it (nested included)."""
 from __future__ import annotations
 
 import re
@@ -15,6 +13,23 @@ from typing import Any, Dict, Optional
 
 class EsGuardError(RuntimeError):
     pass
+
+
+def _forbidden_key(node: Any) -> Optional[str]:
+    """A key named pit or starting with script ANYWHERE in a search body (dicts and lists, any depth); words inside string values are fine."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == "pit" or str(k).startswith("script"):
+                return str(k)
+            f = _forbidden_key(v)
+            if f:
+                return f
+    elif isinstance(node, list):
+        for v in node:
+            f = _forbidden_key(v)
+            if f:
+                return f
+    return None
 
 
 def _rules(index: str):
@@ -48,8 +63,9 @@ class GuardedEs:
             raise EsGuardError("ndjson (bulk) requests are never allowed on the shared node")
         for m, rx, cls in self._rules:
             if m == method and rx.match(path):
-                if cls == "search" and isinstance(body, dict) and ("pit" in body or "script" in body):
-                    raise EsGuardError("search body with pit/script refused")
+                bad = _forbidden_key(body) if cls == "search" else None
+                if bad:
+                    raise EsGuardError("search body with %r refused (pit or script anywhere in the body)" % bad)
                 self.log["%s %s" % (method, cls)] += 1
                 out = self._inner.request(method, path, body)
                 if cls == "search" and path.endswith("_search"):

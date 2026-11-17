@@ -73,5 +73,95 @@ class Score(unittest.TestCase):
         self.assertEqual(rollup([{"_source": {"round_id": r}} for r in ("a", "a", "b", "c")], 2), ["a", "b"])
 
 
+WITHHELD = "WITHHELD-INCOMPLETE-EVIDENCE"
+
+
+def rewrite(tmp, rows_fn=None, ce_fn=None):
+    """Edit the fixture's rows and CE records in place (each fn receives and returns the list)."""
+    rp, cp = os.path.join(tmp, "rows.jsonl.gz"), os.path.join(tmp, "ce.jsonl")
+    rows = [json.loads(l) for l in gzip.open(rp, "rt")]
+    ce = [json.loads(l) for l in open(cp)] if os.path.exists(cp) else []
+    if rows_fn:
+        rows = rows_fn(rows)
+    if ce_fn:
+        ce = ce_fn(ce)
+    with gzip.open(rp, "wt") as f:
+        for r in rows:
+            f.write(json.dumps(r) + "\n")
+    if ce:
+        with open(cp, "w") as f:
+            for c in ce:
+                f.write(json.dumps(c) + "\n")
+    elif os.path.exists(cp):
+        os.remove(cp)
+
+
+class IncompleteEvidence(unittest.TestCase):
+    """The recommendation must never be KEEP (or any positive category) when the evidence is incomplete."""
+
+    def run_case(self, rows_fn=None, ce_fn=None, prior=None):
+        with tempfile.TemporaryDirectory() as t:
+            make(t, True)
+            rewrite(t, rows_fn, ce_fn)
+            return sc.score(t, prior)
+
+    def test_complete_fixture_still_keeps(self):
+        r = self.run_case()
+        self.assertEqual(r["recommendation"]["category"], "KEEP")
+        self.assertEqual(r["evidence"]["problems"], [])
+
+    def test_no_cross_encoder_records_withholds(self):
+        r = self.run_case(ce_fn=lambda ce: [])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+        self.assertTrue(r["evidence"]["problems"])
+
+    def test_one_missing_cross_encoder_record_withholds(self):
+        r = self.run_case(ce_fn=lambda ce: ce[1:])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_duplicate_cross_encoder_record_withholds(self):
+        r = self.run_case(ce_fn=lambda ce: ce + [dict(ce[0], ce_es=list(reversed(ce[0]["ce_es"])))])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_extra_cross_encoder_record_withholds(self):
+        r = self.run_case(ce_fn=lambda ce: ce + [dict(ce[0], qid="ghost")])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_duplicate_row_withholds(self):
+        r = self.run_case(rows_fn=lambda rows: rows + [rows[0]])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_question_set_differing_across_levels_withholds(self):
+        r = self.run_case(rows_fn=lambda rows: [x for x in rows if not (x["qid"] == "q3" and x["level"] == "H1")],
+                          ce_fn=lambda ce: [x for x in ce if not (x["qid"] == "q3" and x["level"] == "H1")])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_cross_encoder_head_not_a_permutation_of_its_rrf_head_withholds(self):
+        def bad(ce):
+            ce = [dict(c) for c in ce]
+            ce[0]["ce_exact"] = ce[0]["ce_exact"][:-1] + ["zz:0"]
+            return ce
+        r = self.run_case(ce_fn=bad)
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_cross_encoder_head_flags_must_match_the_rows(self):
+        def bad(ce):
+            ce = [dict(c) for c in ce]
+            ce[0]["head_same_set"] = False
+            return ce
+        r = self.run_case(ce_fn=bad)
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_prior_reproduction_path_given_but_absent_is_a_failure_not_a_skip(self):
+        r = self.run_case(prior="/nonexistent/es_pilot.json")
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+        self.assertEqual(r["reproduction_prior_es"]["status"], "PATH_ABSENT")
+
+    def test_prior_not_supplied_is_recorded_as_not_checked(self):
+        r = self.run_case()
+        self.assertEqual(r["reproduction_prior_es"]["status"], "NOT_CHECKED")
+        self.assertEqual(r["reproduction_prior_ce"]["status"], "NOT_CHECKED")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -69,6 +69,19 @@ class Guard(unittest.TestCase):
         g.search(IDX, {})
         self.assertEqual((g.search_flags["timed_out"], g.search_flags["shards_failed"], g.search_flags["shards_incomplete"]), (1, 1, 1))
 
+    def test_nested_pit_or_script_is_refused(self):
+        f = Fake()
+        g = GuardedEs(f, IDX)
+        for body in ({"query": {"script_score": {"query": {"match_all": {}}, "script": {"source": "1"}}}},
+                     {"query": {"bool": {"filter": [{"script": {"script": {"source": "true"}}}]}}},
+                     {"knn": {"field": "vector", "script": {"source": "x"}}},
+                     {"sub": [{"pit": {"id": "x"}}]}):
+            with self.assertRaises(EsGuardError, msg=body):
+                g.search(IDX, body)
+        self.assertEqual(f.calls, [])
+        g.search(IDX, {"query": {"match": {"text": {"query": "script pit"}}}})  # words in values are fine
+        self.assertEqual(len(f.calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

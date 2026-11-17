@@ -1016,7 +1016,8 @@
    ]
   ],
   "width_fails_still_outside_at_test_n": [],
-  "tighten_0.02_0.04_supported": false
+  "tighten_0.02_0.04_supported": false,
+  "evidence_complete": true
  },
  "reproduction_prior_es": {
   "max_abs": 0.0,
@@ -1070,7 +1071,8 @@
     "es_diff": 0.0
    }
   },
-  "within_0.002": true
+  "within_0.002": true,
+  "status": "CHECKED"
  },
  "reproduction_prior_ce": {
   "cells": {
@@ -1079,6 +1081,12 @@
    "H2": 0.0,
    "H3": 0.005319148936170248
   },
-  "within_0.005": false
+  "within_0.005": false,
+  "status": "CHECKED"
+ },
+ "evidence": {
+  "complete": true,
+  "problems": [],
+  "n_problems": 0
  }
 }
