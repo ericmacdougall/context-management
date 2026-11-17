@@ -12,7 +12,9 @@ tombstoned fact event, exactly the ids the cascade placed), on EVERY started cop
   es:placeholder_version   a hit whose _version is not PLACEHOLDER_VERSION (2^62)
   es:placeholder_missing   an expected id absent from a copy of the family's base index (the erase alias target)
   es:copy_unverified       a copy of a family index that is assigned to a node but not STARTED (it cannot be
-                           searched alone, so it is not shown clean; the job stays open for the next sweep)
+                           searched alone, so it is not shown clean; the job stays open for the next sweep), or whose
+                           search did not complete (timed out, terminated early, a failed, skipped or unsearched shard:
+                           review C F9); a base copy counted here does not show any id placed
 Every count must be 0 for wp_erasure_complete to accept the job (it rejects any non-zero ext entry).
 
 A copy is counted once per (copy, id): a residue on two copies counts twice, so the receipt shows how many copies are
@@ -33,11 +35,21 @@ def copies(es, pattern):
     return [(r["index"], str(r["shard"]), r["prirep"], r["state"], r.get("id")) for r in j]
 
 
+def _complete(j):
+    """True only for a response that searched exactly the one requested shard copy to the end (review C F9): not timed
+    out, not terminated early, and _shards total = successful = 1 with nothing failed or skipped. Anything else (or
+    missing metadata) is not evidence of absence."""
+    sh = j.get("_shards") if isinstance(j, dict) else None
+    return (isinstance(sh, dict) and j.get("timed_out") is False and j.get("terminated_early") is not True
+            and sh.get("total") == 1 and sh.get("successful") == 1 and sh.get("failed") == 0 and sh.get("skipped", 0) == 0)
+
+
 def _search_copy(es, index, shard, node, ids):
+    """The copy's hits, or None when the search did not complete (allow_partial_search_results=false is sent too)."""
     s, j = es.req("POST", f"/{index}/_search", {"query": {"ids": {"values": list(ids)}}, "size": len(ids), "version": True,
                                                 "_source": True, "track_total_hits": False},
-                  ok=(200,), preference=f"_shards:{shard}|_only_nodes:{node}")
-    return j["hits"]["hits"]
+                  ok=(200,), preference=f"_shards:{shard}|_only_nodes:{node}", allow_partial_search_results="false")
+    return j["hits"]["hits"] if _complete(j) else None
 
 
 def check_page(es, t, f, ids, cps=None, detail=None):
@@ -62,6 +74,9 @@ def check_page(es, t, f, ids, cps=None, detail=None):
                 note("es:copy_unverified", f"{index}[{shard}]{prirep}:{state}")
             continue
         hits = _search_copy(es, index, shard, node, ids)
+        if hits is None:                       # an incomplete search proves nothing about this copy (F9)
+            note("es:copy_unverified", f"{index}[{shard}]{prirep}:incomplete")
+            continue
         got = set()
         for h in hits:
             got.add(h["_id"])
