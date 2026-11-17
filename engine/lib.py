@@ -323,8 +323,7 @@ def tpg_schema_versions(db):
     return {d: tpg_psql(d, "select curr_version from schema_version order by creation_time desc limit 1")[1] for d in (db, db + "_vis")}
 
 
-class SchemaTooNew(RuntimeError):
-    """The database schema is newer than the server image expects: an older image must not be started on it."""
+from .deploy_guard import SchemaTooNew, check_schema   # noqa: E402  (the guard logic lives in engine/deploy_guard.py)
 
 
 def tpg_expected_schema(version):
@@ -336,17 +335,15 @@ def tpg_expected_schema(version):
     return out
 
 
-def _vt(v):
-    return tuple(int(x) for x in v.split("."))
-
-
 def tpg_guard(version, db):
     """Deploy guard: refuse a server image whose expected schema is OLDER than the database's schema_version. (Temporal
     itself refuses only the other direction.) Rollback is restoring the pre-upgrade snapshot, never redeploying the old
-    image on the upgraded database."""
+    image on the upgraded database. The comparison is engine.deploy_guard.check_schema."""
     exp, act = tpg_expected_schema(version), tpg_schema_versions(db)
-    if _vt(act[db]) > _vt(exp["main"]) or _vt(act[db + "_vis"]) > _vt(exp["visibility"]):
-        raise SchemaTooNew(f"server {version} expects schema {exp}, database is at {act}: restore the pre-upgrade snapshot instead")
+    try:
+        check_schema(exp, {"main": act[db], "visibility": act[db + "_vis"]})
+    except SchemaTooNew as e:
+        raise SchemaTooNew(f"server {version}: {e}") from None
     return {"image": version, "expected": exp, "actual": act}
 
 
