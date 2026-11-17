@@ -53,6 +53,17 @@ def view(order: List[Any], owner, gold: set, ks=(10, 20, 50)) -> Dict[str, Any]:
     return out
 
 
+def wrong_partner(complete: List[str], gold: Dict[str, set], i: int) -> Optional[str]:
+    """The partner whose question text is used as the wrong query for complete[i]: the next question in cyclic order whose gold sessions are DISJOINT from
+    complete[i]'s (the prior scorer skipped one overlapping partner without checking its replacement). None if no question qualifies."""
+    n = len(complete)
+    for step in range(1, n):
+        y = complete[(i + step) % n]
+        if not (gold[complete[i]] & gold[y]):
+            return y
+    return None
+
+
 def paired(rows_ctrl: Dict[str, float], rows_arm: Dict[str, float], clusters: Dict[str, str]) -> Dict[str, Any]:
     qids = sorted(rows_ctrl)
     if not qids:
@@ -181,14 +192,17 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     res["aggregation_multi_session"] = {"n": len(multi), "gold_sessions_mean": sum(len(gold[x]) for x in multi) / max(1, len(multi)),
                                         "by_arm": {a: {k: sum(per_full[x][a][k] for x in multi) / max(1, len(multi)) for k in ("sess_any_10", "sess_all_10", "sess_all_20", "sess_all_50", "sess_frac_10", "sess_frac_50")} for a in ARMS}}
     # ---- wrong-query control: each question's gold looked up with the text of the next question (cyclic over `complete`), session-level any@10
-    wq = {}
+    wq, wq_pair = {}, {}
     for i, x in enumerate(complete):
-        y = complete[(i + 1) % len(complete)]
-        if gold[x] & gold[y]:
-            y = complete[(i + 2) % len(complete)]
+        y = wrong_partner(complete, gold, i)
+        assert y is not None and not (gold[x] & gold[y]), "wrong-query partner must have disjoint gold"
         lst = lists(qmap[y].question, qvec[y], all_ids)
         wq[x] = {a: view(lst[a], owner, gold[x])["sess_any_10"] for a in ARMS}
+        wq_pair[x] = y
     res["wrong_query_control"] = {a: sum(wq[x][a] for x in complete) / max(1, len(complete)) for a in ARMS}
+    res["wrong_query_pairs"] = {"rule": "next question in cyclic order over the evaluated questions whose gold sessions are disjoint from this question's (asserted for every pairing)",
+                                "partner": wq_pair, "hits": {x: {a: bool(wq[x][a]) for a in ARMS} for x in complete},
+                                "questions_hit_per_arm": {a: sorted(x for x in complete if wq[x][a]) for a in ARMS}}
     # ---- scaling: the questions whose gold is entirely in the Stage X0 200 sessions, at 200 sessions and at the full pool
     toy_q = [x for x in complete if gold[x] <= toy_ids]
     per_toy = {}
@@ -261,6 +275,15 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     res["preference_exploratory"] = {"questions": len(pref), "per_question": pref,
                                      "user_share_of_rubric_hits_pooled": (sum(v["rubric_token_hits_in_user_turns"] for v in pref.values()) / float(max(1, sum(v["rubric_token_hits_in_user_turns"] + v["in_assistant_turns"] for v in pref.values())))) if pref else None}
     res["per_question_primary"] = {x: {a: {k: per_full[x][a][k] for k in ("sess_any_10", "best_gold_session_rank", "n_gold")} for a in ARMS} for x in complete}
+    # audit rows (enough to rebuild every interval, stratum table and scaling figure from this file alone)
+    stratum_of = {x: k for k, v in strata.items() for x in v}
+    res["audit_rows"] = {x: {"cluster": ctx.clusters[x], "qtype": qmap[x].qtype, "stratum": stratum_of[x], "in_low_overlap_23": x in set(low),
+                             "gold_sessions": len(gold[x]), "gold_sessions_without_facts": sorted(o for o in gold[x] if o not in has_facts),
+                             "in_scaling_39": x in per_toy, "secondary": {a: {k: per_full[x][a][k] for k in per_full[x][a] if k != "n_gold"} for a in ARMS},
+                             "scaling_pool_200_sess_any_10": ({a: per_toy[x][a][prim] for a in ARMS} if x in per_toy else None)} for x in complete}
+    res["missing_records_note"] = ("Sessions without facts are removed from the facts lists of EVERY question, not only their own: this changes BM25 statistics and removes distractors "
+                                   "as well as gold. The direction of the aggregate effect on the facts arms is therefore not known; the 88-question view drops only the questions "
+                                   "whose own gold lacks facts and does not isolate the corpus-wide effect.")
     json.dump(res, open(out_json, "w"), indent=1, default=str)
     print("done")
 

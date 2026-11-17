@@ -425,3 +425,34 @@ class StageX2(unittest.TestCase):
         self.assertFalse(v2["sess_any_10"] or v2["sess_all_10"])
         p = paired({"a": 0, "b": 0, "c": 1}, {"a": 1, "b": 1, "c": 1}, {"a": "A", "b": "B", "c": "C"})
         self.assertEqual((p["wins"], p["losses"], p["n"]), (2, 0, 3))
+
+
+class StageX2WrongQuery(unittest.TestCase):
+    def test_partner_gold_is_disjoint_even_when_the_second_candidate_overlaps(self):
+        from emlab.stage_x2_score import wrong_partner
+        complete = ["a", "b", "c", "d", "e"]
+        gold = {"a": {"s1"}, "b": {"s1"}, "c": {"s1", "s2"}, "d": {"s3"}, "e": {"s4"}}
+        # the prior rule (skip ONE overlapping partner, then take complete[i + 2]) returned "c" for "a", whose gold overlaps a's
+        prior = complete[(0 + 1) % 5] if not (gold["a"] & gold["b"]) else complete[(0 + 2) % 5]
+        self.assertTrue(gold["a"] & gold[prior])
+        self.assertEqual(wrong_partner(complete, gold, 0), "d")
+        for i, x in enumerate(complete):
+            y = wrong_partner(complete, gold, i)
+            self.assertNotEqual(x, y)
+            self.assertFalse(gold[x] & gold[y])
+
+    def test_wraps_and_reports_none_when_everyone_overlaps(self):
+        from emlab.stage_x2_score import wrong_partner
+        self.assertEqual(wrong_partner(["a", "b", "c"], {"a": {"s1"}, "b": {"s2"}, "c": {"s1"}}, 2), "b")
+        self.assertIsNone(wrong_partner(["a", "b"], {"a": {"s1"}, "b": {"s1"}}, 0))
+
+
+class StageX2MissingRecords(unittest.TestCase):
+    def test_removing_another_questions_distractors_can_flip_a_miss_into_a_hit(self):
+        # the mechanism behind "missing records can help as well as hurt": a session with no facts is absent from EVERY question's list
+        from emlab.stage_x2_score import view
+        own = {("f", i): "s%d" % i for i in range(12)}.get
+        full = [("f", i) for i in range(12)]  # gold is s11 at rank 12: a miss at 10
+        self.assertFalse(view(full, own, {"s11"})["sess_any_10"])
+        without_two = [d for d in full if d[1] not in (3, 4)]  # two other sessions had no facts: gold moves to rank 10
+        self.assertTrue(view(without_two, own, {"s11"})["sess_any_10"])
