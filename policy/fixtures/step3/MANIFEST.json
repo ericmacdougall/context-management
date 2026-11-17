@@ -1,0 +1,48 @@
+{
+ "b1": {
+  "file": "b1.jsonl.gz",
+  "scenarios": {
+   "caps": {
+    "depth": 5,
+    "edges": 6669,
+    "nodes": 1461
+   },
+   "joint": {
+    "depth": 2,
+    "edges": 1863,
+    "nodes": 289
+   },
+   "r1": {
+    "depth": 3,
+    "edges": 2484,
+    "nodes": 460
+   },
+   "r2": {
+    "depth": 4,
+    "edges": 1780,
+    "nodes": 289
+   },
+   "r3": {
+    "depth": 4,
+    "edges": 4150,
+    "nodes": 543
+   }
+  },
+  "sha256": "874700fd7ca9f73b267a5b6dd781a5ac929c91a94e1917b52d212d5f18cb15c2"
+ },
+ "b2": {
+  "events": 9859,
+  "file": "b2.jsonl.gz",
+  "logs": 60,
+  "logs_per_seed": 20,
+  "seeds": [
+   "step3-b2-1",
+   "step3-b2-2",
+   "step3-b2-3"
+  ],
+  "sha256": "c67d903a9632c994f4ba353a6f773bdca9a117a74a3fc9fcbbc55f9e1ffac29f"
+ },
+ "commit": "3ef0fe48e415ccb4cbf45fd0ee965bb41589de4f",
+ "generator": "policy/exp/fixtures_step3.py",
+ "not_proof": "development fixtures for the step-3 port; the proof of the core is the stamped run of THRESHOLDS.md"
+}
