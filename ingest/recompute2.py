@@ -93,11 +93,43 @@ def main(d):
              and not r["blocking_gaps"] and r["summary_provs"] in ([], ["host"]) and (r["host"] != "compacting" or r["summary_events"] > 0))
     check("item11 pass", ok, x["summary"]["pass"], bad)
     x = load(d, "item12")
-    for k in ("heldout", "tuned"):
-        n = sum(p["n"] for p in x["runs"][k].values())
-        c = sum(p["caught"] for p in x["runs"][k].values())
-        sk = "heldout" if k == "heldout" else "tuned_for_comparison"
-        check("item12 %s caught" % k, [c, n], [x["summary"][sk]["overall_caught"], x["summary"][sk]["overall_n"]], bad)
+    for k, rk, sk in (("heldout", "heldout_rows", "heldout"), ("tuned", "tuned_rows", "tuned_for_comparison")):
+        rows = x["runs"][rk]
+        S = x["summary"][sk]
+        check("item12 %s whole_string_absent (old predicate)" % k, [sum(r["whole_string_absent"] for r in rows), len(rows)], [S["overall_whole_string_absent"], S["overall_n"]], bad)
+        check("item12 %s complete_redaction (corrected)" % k, [sum(r["complete_redaction"] for r in rows), len(rows)], [S["overall_complete_redaction"], S["overall_n"]], bad)
+        check("item12 %s detected" % k, sum(r["detected"] for r in rows), S["overall_detected"], bad)
+        # per-class: recomputed from rows
+        per = {}
+        for r in rows:
+            q = per.setdefault(r["variant"], [0, 0])
+            q[0] += r["complete_redaction"]
+            q[1] += r["whole_string_absent"]
+        check("item12 %s per-class" % k, {v: q for v, q in per.items()}, {v: [p["complete_redaction"], p["whole_string_absent"]] for v, p in S["per_variant"].items()}, bad)
+    x = load(d, "item12b")
+    check("item12b benign changed", [sum(r["changed"] for r in x["runs"]), len(x["runs"])], [x["summary"]["overall_changed"], x["summary"]["overall_n"]], bad)
+    for tag in ("item2a", "item2b", "item2c", "item2d", "item2a_openai", "item2b_openai", "item2c_openai", "item2d_openai"):
+        y = load(d, tag)
+        check(tag + " oracle matches", sum(1 for r in y["runs"] if r["oracle_match"]), y["summary"]["oracle_identical"], bad)
+    y = load(d, "item2b_control_4layers")
+    check("item2b_control_4layers all four layers off in header", [y["header"]["params"][k] for k in ("fence", "unique", "state_guard", "chain")], [False] * 4, bad)
+    check("item2b_control_4layers duplicate runs (floor >= 5)", sum(1 for r in y["runs"] if r["dup_rows"] > 0), y["summary"]["runs_with_duplicates"], bad)
+    y = load(d, "item2f")
+    check("item2f arm equals baseline", sum(r["arm_equals_baseline"] for r in y["runs"]), y["summary"]["arm_equals_baseline"], bad)
+    check("item2f oracle mismatch", sum(1 for r in y["runs"] if not r["oracle_match"]), y["summary"]["oracle_mismatch"], bad)
+    y = load(d, "item13")
+    rep = [r for r in y["runs"] if r["pattern"] != "unique"]
+    uni = [r for r in y["runs"] if r["pattern"] == "unique"]
+    check("item13 repeated pass", sum(1 for r in rep if r["user_events"] == 20 and r["assistant_events"] == 20 and r["oracle_match"] and not r["blocking_gaps"]), y["summary"]["repeated_pass"], bad)
+    check("item13 repeated runs with ambiguity flag", sum(1 for r in rep if r["ambiguous_calls"]), y["summary"]["repeated_runs_with_ambiguity_flag"], bad)
+    check("item13 unique ambiguity flags", sum(1 for r in uni if r["ambiguous_calls"]), y["summary"]["unique_runs_with_ambiguity_flag"], bad)
+    y = load(d, "item13b")
+    R = y["runs"]
+    check("item13b undeclared", sum(1 for r in R if r["undeclared"]["user_events"] == 2 and r["undeclared"]["flagged_user_events"] == 1 and r["undeclared"]["ambiguous_calls"] == [2]), y["summary"]["undeclared_flagged_duplicate"], bad)
+    check("item13b declared", sum(1 for r in R if r["declared"]["user_events"] == 1 and r["declared"]["assistant_events"] == 2 and "declared_retry" in r["declared"]["port_kinds"] and r["declared"]["ambiguous_calls"] == []), y["summary"]["declared_suppressed_visibly"], bad)
+    check("item13b false claim", sum(1 for r in R if r["false_claim"]["user_events"] == 2 and "retry_claim_ignored" in r["false_claim"]["port_kinds"] and "declared_retry" not in r["false_claim"]["port_kinds"]), y["summary"]["false_claim_ignored"], bad)
+    y = load(d, "item11")
+    check("item11 ambiguity flags (unique text)", sum(1 for r in y["runs"] if r["ambiguous_calls"]), y["summary"]["runs_with_ambiguity_flag"], bad)
     print("\nMISMATCHES: %d" % len(bad))
     sys.exit(1 if bad else 0)
 

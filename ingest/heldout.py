@@ -59,29 +59,125 @@ def wilson_lower(k: int, n: int, z: float = 1.96) -> float:
     return (c - m) / d
 
 
-def _catch(variants: Dict[str, Callable], n: int, seed0: int) -> dict:
+K_FRAGMENT = 8          # PREREG-amend-3 A2: a surviving contiguous fragment of this many characters of any sensitive string is a leak
+
+
+def _default_sensitive(secret: str, v: str) -> List[str]:
+    return [v, secret]
+
+
+# Sensitive strings per held-out class (PREREG-amend-3 A2). Classes not listed encode the generated sk-live secret: v and the secret.
+SENSITIVE: Dict[str, Callable] = {
+    "bearer_header": lambda secret, v: [v.split("Bearer ", 1)[1]],
+    "aws_access_key": lambda secret, v: [v],
+    "password_kv": lambda secret, v: [v.split("password=", 1)[1]],
+    "private_key_header": lambda secret, v: ["-----BEGIN RSA PRIVATE KEY-----", v.split("\n", 1)[1]],
+}
+
+
+def survives(s: str, out: str, k: int = K_FRAGMENT) -> bool:
+    """True when some contiguous k-character fragment of s (the whole string if shorter) occurs in out."""
+    if len(s) <= k:
+        return s in out
+    return any(s[i:i + k] in out for i in range(len(s) - k + 1))
+
+
+def longest_surviving(strings: List[str], out: str) -> int:
+    import difflib
+    return max((difflib.SequenceMatcher(None, s, out, autojunk=False).find_longest_match(0, len(s), 0, len(out)).size for s in strings), default=0)
+
+
+def score_example(text: str, v: str, secret: str, out: str, sensitive: List[str]) -> dict:
+    """Old predicate (whole_string_absent, as scored at 0801866) next to the corrected one (complete_redaction). Integers and booleans only:
+    no surviving credential-shaped string is returned."""
+    return {"whole_string_absent": (v not in out) and (secret not in out),
+            "complete_redaction": not any(survives(x, out) for x in sensitive),
+            "detected": out != text,
+            "longest_surviving_fragment": longest_surviving(sensitive, out)}
+
+
+def _catch(variants: Dict[str, Callable], n: int, seed0: int, sens: Dict[str, Callable] = SENSITIVE) -> dict:
     sc, h = ReferenceScanner(), Hasher(b"heldout-test-key")
     per, rows = {}, []
     for name, fn in variants.items():
-        caught = 0
+        acc = {"whole_string_absent": 0, "complete_redaction": 0, "detected": 0}
         for i in range(n):
             r = random.Random(seed0 * 1000 + i)
             secret = _sk(r)
             v = fn(secret, r)
             text = "my credential is %s thanks" % v
             out = redact_text(text, sc, h)
-            ok = (v not in out) and (secret not in out)
-            caught += ok
-            rows.append({"variant": name, "i": i, "caught": ok})
-        per[name] = {"n": n, "caught": caught, "rate": caught / n}
+            sc_row = score_example(text, v, secret, out, sens.get(name, _default_sensitive)(secret, v))
+            for k in acc:
+                acc[k] += sc_row[k]
+            rows.append({"variant": name, "i": i, **sc_row})
+        per[name] = {"n": n, **acc, "rate_whole_string_absent": acc["whole_string_absent"] / n, "rate_complete_redaction": acc["complete_redaction"] / n}
     tot_n = sum(p["n"] for p in per.values())
-    tot_k = sum(p["caught"] for p in per.values())
-    return {"per_variant": per, "overall_n": tot_n, "overall_caught": tot_k, "overall_rate": tot_k / tot_n, "overall_wilson95_lower": wilson_lower(tot_k, tot_n)}
+    res = {"per_variant": per, "overall_n": tot_n, "rows": rows}
+    for k in ("whole_string_absent", "complete_redaction", "detected"):
+        tk = sum(p[k] for p in per.values())
+        res["overall_" + k] = tk
+        res["overall_rate_" + k] = tk / tot_n
+        res["overall_wilson95_lower_" + k] = wilson_lower(tk, tot_n)
+    return res
 
 
 def item12(out: str) -> dict:
+    """Re-scoring of the SAME generators and seeds as 0801866 (scan.py frozen, blob b4b63d74). Both predicates reported."""
     held = _catch(HELDOUT, 50, 9)
     tuned = _catch(TUNED, 50, 3)
-    S = {"scan_py_blob": "b4b63d74fe7dd33c31416802e9bae7fe05e57697", "heldout": held, "tuned_for_comparison": tuned}
-    S["artifact"] = write_artifact(out, "item12", {"n_per_variant": 50, "heldout_variants": list(HELDOUT), "tuned_variants": list(TUNED)}, {"heldout": held["per_variant"], "tuned": tuned["per_variant"]}, S)
+    def strip(x): return {k: v for k, v in x.items() if k != "rows"}
+    changed = sorted(k for k, p in held["per_variant"].items() if p["whole_string_absent"] != p["complete_redaction"])
+    S = {"scan_py_blob": "b4b63d74fe7dd33c31416802e9bae7fe05e57697", "K_fragment": K_FRAGMENT, "heldout": strip(held), "tuned_for_comparison": strip(tuned),
+         "heldout_classes_whose_score_changes_under_complete_redaction": changed,
+         "label": "re-scored, same set and seeds as 0801866; positive-only, equally weighted synthetic examples; not precision, not a false-positive rate, not deployment recall"}
+    S["artifact"] = write_artifact(out, "item12", {"n_per_variant": 50, "heldout_variants": list(HELDOUT), "tuned_variants": list(TUNED), "K": K_FRAGMENT},
+                                   {"heldout_rows": held["rows"], "tuned_rows": tuned["rows"]}, S)
+    return S
+
+
+# ------------------------------------------------------------------------------ benign corpus (PREREG-amend-3 A2, rule fixed before the scan)
+_WORDS = ("table river window garden pencil morning coffee letter bridge lantern silver forest ticket harbor violin planet cabinet "
+          "orange thunder pocket meadow compass blanket ladder whistle canvas marble anchor basket feather dinner engine mirror "
+          "pillow rocket saddle tunnel village yellow").split()
+
+
+def _english(r): return " ".join(r.choice(_WORDS) for _ in range(8))
+def _lower(r, a, b): return "".join(r.choice(string.ascii_lowercase) for _ in range(r.randint(a, b)))
+
+
+BENIGN: Dict[str, Callable] = {
+    "english": lambda r: _english(r),
+    "uuid4": lambda r: str(__import__("uuid").UUID(int=r.getrandbits(128), version=4)),
+    "git_sha1_hex40": lambda r: "%040x" % r.getrandbits(160),
+    "base64_of_english": lambda r: base64.b64encode(_english(r).encode()).decode(),
+    "hex_of_english": lambda r: _english(r).encode().hex(),
+    "percent_encoded_english": lambda r: urllib.parse.quote(_english(r)),
+    "long_file_path": lambda r: "/usr/local/lib/python3.9/site-packages/%s/__init__.py" % _lower(r, 12, 20),
+    "camel_identifier": lambda r: "".join(r.choice(_WORDS).capitalize() for _ in range(4))[:24],
+    "url_long_slug": lambda r: "https://example.org/blog/" + "-".join(r.choice(_WORDS) for _ in range(6))[:40],
+    "numeric_log_line": lambda r: "2026-11-%02dT%02d:%02d:%02dZ pid=%d bytes=%d code=%d" % (r.randint(1, 28), r.randint(0, 23), r.randint(0, 59), r.randint(0, 59), r.randint(100, 99999), r.randint(1, 10 ** 7), r.choice([200, 301, 404, 500])),
+    "json_snippet": lambda r: json.dumps({"id": r.randint(1, 10 ** 6), "name": _lower(r, 5, 12), "tags": [_lower(r, 3, 6), _lower(r, 3, 6)]}),
+    "sha256_hex64": lambda r: "%064x" % r.getrandbits(256),
+}
+
+
+def item12b(out: str) -> dict:
+    sc, h = ReferenceScanner(), Hasher(b"heldout-test-key")
+    per, rows = {}, []
+    for name, fn in BENIGN.items():
+        ch = 0
+        for i in range(50):
+            r = random.Random(31 + i)
+            x = fn(r)
+            text = "note: %s ok" % x
+            changed = redact_text(text, sc, h) != text
+            ch += changed
+            rows.append({"class": name, "i": i, "changed": changed})
+        per[name] = {"n": 50, "changed": ch, "rate": ch / 50}
+    n = sum(p["n"] for p in per.values())
+    k = sum(p["changed"] for p in per.values())
+    S = {"scan_py_blob": "b4b63d74fe7dd33c31416802e9bae7fe05e57697", "per_class": per, "overall_n": n, "overall_changed": k, "overall_false_positive_rate": k / n,
+         "label": "false-positive rate on THIS synthetic benign set only; not a deployment rate"}
+    S["artifact"] = write_artifact(out, "item12b", {"classes": list(BENIGN), "n_per_class": 50, "seed_rule": "random.Random(31+i) per example i"}, rows, S)
     return S

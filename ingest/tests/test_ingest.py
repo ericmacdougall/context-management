@@ -79,10 +79,12 @@ class IngestTests(Base):
         self.assertTrue(any(e["kind"] == "call_failed_unknown" for e in rig.events(include_port=True)))
 
     def test_identical_resend_is_marked_retry(self):
+        """PREREG-amend-3 A3 changed this test: content alone cannot tell a retry from a legitimate repeat, so an identical resend is only
+        treated as a retry when the host DECLARES it (retry_of). Undeclared, the request is ingested again and flagged (see test_delta)."""
         rig = Rig(self.d, "anthropic", [{"content": [text("a1")]}, {"content": [text("a1b")]}])
         rig.msgs.append({"role": "user", "content": "hello"})
         rig.call(rig.request())
-        rig.call(rig.request())                       # host never saw the first answer and resends the same request
+        rig.tap.call(rig.request(), retry_of=1)       # host never saw the first answer and declares the resend
         rig.sync()
         self.assertEqual(len([e for e in rig.events() if e["prov"] == "user"]), 1)
         self.assertEqual(len([e for e in rig.events() if e["prov"] == "assistant"]), 2)

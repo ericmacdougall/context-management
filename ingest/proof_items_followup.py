@@ -59,12 +59,14 @@ def item11(out: str) -> dict:
                                  "assistant_events": len(assts), "distinct_assistant": len(set(assts)),
                                  "summary_events": len(summ), "summary_provs": sorted({e["prov"] for e in summ}),
                                  "blocking_gaps": [g["kind"] for g in rig.ing.gaps(rig.stream_id) if g["blocking"]],
-                                 "state": rig.ing.completeness(rig.stream_id)["state"]})
+                                 "state": rig.ing.completeness(rig.stream_id)["state"],
+                                 "ambiguous_calls": rig.ing.completeness(rig.stream_id)["ambiguous_calls"]})
                 finally:
                     shutil.rmtree(d, ignore_errors=True)
     ok = [r for r in runs if r["user_events"] == r["calls"] == r["distinct_user"] and r["assistant_events"] == r["calls"] == r["distinct_assistant"]
           and not r["blocking_gaps"] and r["summary_provs"] in ([], ["host"]) and (r["host"] != "compacting" or r["summary_events"] > 0)]
-    S = {"runs": len(runs), "pass": len(ok), "failing_first_baseline_aa30130": {"window4_user_events_for_20": 54, "window8_user_events_for_20": 80}}
+    S = {"runs": len(runs), "pass": len(ok), "failing_first_baseline_aa30130": {"window4_user_events_for_20": 54, "window8_user_events_for_20": 80},
+         "runs_with_ambiguity_flag": sum(1 for r in runs if r["ambiguous_calls"])}
     S["artifact"] = write_artifact(out, "item11", {"hosts": ["window4", "window8", "compacting"], "calls": [20, 60], "providers": 2}, runs, S)
     return S
 

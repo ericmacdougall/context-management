@@ -16,7 +16,7 @@ from .canon import cj
 from .controls import ArrivalKeyedIngester
 from .ingester import Fenced, Ingester
 from .portlog import PortLog
-from .proofs_common import REPO, copy_log_prefix, event_sig, scripted_conversation, tmpdir, write_artifact
+from .proofs_common import REPO, copy_log_prefix, event_sig, event_tuples, scripted_conversation, tmpdir, write_artifact
 from .testkit import Rig
 
 SEEDS = list(range(101, 121))
@@ -194,11 +194,12 @@ def item2_delivery(out: str, provider: str = "anthropic", tag: str = "item2a") -
                          "watermark": ing.watermark(rig.stream_id)[0], "log_head": rig.log.head(rig.stream_id)[0],
                          "transient_gaps_seen": opened_gaps, "open_gaps_end": len(ing.gaps(rig.stream_id)),
                          "dup_suppressed": ing.stats["dup_event_suppressed"],
+                         "oracle_match": event_tuples(ing.events(rig.stream_id)) == rig.ledger.expected(),
                          "control_rows": len(arr.rows), "control_violation": arr_violation})
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
     ok = [r for r in runs if r["got_sig"] == r["baseline_sig"] and r["dup_ikeys"] == 0 and r["watermark"] == r["log_head"] and r["open_gaps_end"] == 0]
-    summary = {"seeds": len(runs), "pass": len(ok), "control_violations": sum(r["control_violation"] for r in runs),
+    summary = {"seeds": len(runs), "pass": len(ok), "oracle_identical": sum(r["oracle_match"] for r in runs), "control_violations": sum(r["control_violation"] for r in runs),
                "min_records": min(r["n_records"] for r in runs), "min_deliveries": min(r["deliveries"] for r in runs),
                "seeds_with_transient_gap": sum(1 for r in runs if r["transient_gaps_seen"] > 0)}
     summary["artifact"] = write_artifact(out, tag, {"seeds": SEEDS, "calls": 30, "copies": "1-3", "batch": "1-7", "provider": provider}, runs, summary)
@@ -266,12 +267,13 @@ def item2_race_threads(out: str, fence=True, unique=True, tag="item2b", state_gu
             dup = len(norm) - len({tuple(x) for x in norm})
             runs.append({"seed": seed, "rounds": rounds, "fenced": fenced, "overlapping_rounds": sum(iv), "intervals_measured": len(iv),
                          "dup_rows": dup, "n_events": len(sig), "n_baseline": len(base_sig),
-                         "identical_to_baseline": (sig == base_sig), "watermark": chk.watermark(stream)[0], "log_head": rig.log.head(stream)[0],
+                         "identical_to_baseline": (sig == base_sig), "oracle_match": event_tuples(chk.events(stream)) == rig.ledger.expected(),
+                         "watermark": chk.watermark(stream)[0], "log_head": rig.log.head(stream)[0],
                          "applied_by_A": result["A"]["stats"]["records_applied"], "applied_by_B": result["B"]["stats"]["records_applied"]})
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
     ok = [r for r in runs if r["identical_to_baseline"] and r["dup_rows"] == 0 and r["watermark"] == r["log_head"]]
-    summary = {"runs": len(runs), "identical_to_baseline": len(ok), "runs_with_fencing": sum(1 for r in runs if r["fenced"] >= 1),
+    summary = {"runs": len(runs), "identical_to_baseline": len(ok), "oracle_identical": sum(1 for r in runs if r["oracle_match"]), "runs_with_fencing": sum(1 for r in runs if r["fenced"] >= 1),
                "total_fenced": sum(r["fenced"] for r in runs), "runs_with_measured_overlap": sum(1 for r in runs if r["overlapping_rounds"] >= 1),
                "runs_with_duplicates": sum(1 for r in runs if r["dup_rows"] > 0)}
     if tag is None:
@@ -336,11 +338,11 @@ def item2_race_procs(out: str, provider: str = "anthropic", tag: str = "item2c")
                 if ia and ib and ia[0] < ib[2] and ib[0] < ia[2]:
                     overlap += 1
             runs.append({"seed": seed, "fenced": a["stats"]["fenced"] + b["stats"]["fenced"], "overlapping_rounds": overlap,
-                         "identical_to_baseline": sig == base_sig, "n_events": len(sig), "pids": 2,
+                         "identical_to_baseline": sig == base_sig, "oracle_match": event_tuples(chk.events(stream)) == rig.ledger.expected(), "n_events": len(sig), "pids": 2,
                          "applied_by_A": a["stats"]["records_applied"], "applied_by_B": b["stats"]["records_applied"]})
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
-    summary = {"runs": len(runs), "identical_to_baseline": sum(r["identical_to_baseline"] for r in runs),
+    summary = {"runs": len(runs), "identical_to_baseline": sum(r["identical_to_baseline"] for r in runs), "oracle_identical": sum(r["oracle_match"] for r in runs),
                "runs_with_fencing": sum(1 for r in runs if r["fenced"] >= 1), "runs_with_measured_overlap": sum(1 for r in runs if r["overlapping_rounds"] >= 1)}
     summary["artifact"] = write_artifact(out, tag, {"seeds": seeds, "processes": 2, "provider": provider}, runs, summary)
     return summary
@@ -378,11 +380,12 @@ def item2_zombie(out: str, provider: str = "anthropic", tag: str = "item2d") -> 
             n_final = len(b.events(stream))
             runs.append({"seed": seed, "z_fenced": res["stats"]["fenced"], "z_records_applied": res["stats"]["records_applied"],
                          "events_after_B": n_after_b, "events_final": n_final, "baseline_events": len(base_sig), "wm_before_B": wm_before,
-                         "identical_to_baseline": event_sig(b.events(stream)) == base_sig})
+                         "identical_to_baseline": event_sig(b.events(stream)) == base_sig,
+                         "oracle_match": event_tuples(b.events(stream)) == rig.ledger.expected()})
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
     ok = [r for r in runs if r["z_fenced"] >= 1 and r["z_records_applied"] == 0 and r["events_final"] == r["events_after_B"] and r["identical_to_baseline"]]
-    summary = {"runs": len(runs), "zombie_rejected_no_writes": len(ok)}
+    summary = {"runs": len(runs), "zombie_rejected_no_writes": len(ok), "oracle_identical": sum(1 for r in runs if r["oracle_match"])}
     summary["artifact"] = write_artifact(out, tag, {"seeds": SEEDS[:10], "provider": provider}, runs, summary)
     return summary
 
@@ -524,4 +527,35 @@ def item2_ablation(out: str) -> dict:
     summary["single_layer_sufficient"] = [r["config"] for r in rows if r["config"].startswith("only_") and r["identical_to_baseline"] == r["runs"] and r["runs_with_duplicates"] == 0]
     summary["registered_control_all_off_duplicate_runs"] = [r["runs_with_duplicates"] for r in rows if r["config"] == "all_off"][0]
     summary["artifact"] = write_artifact(out, "item2e", {"seeds": SEEDS[:10], "threads": 2, "layers": layers}, rows, summary)
+    return summary
+
+
+def item2f_shared_omission(out: str) -> dict:
+    """Control for the independent oracle (PREREG-amend-3 A4): baseline and arm are BOTH SharedOmissionIngester (never writes thinking
+    events). The old baseline comparison cannot see the omission; the oracle built at the host can."""
+    from .controls import SharedOmissionIngester
+    runs = []
+    for seed in SEEDS:
+        tmp = tmpdir()
+        try:
+            rig = scripted_conversation(Rig, tmp, 30, seed=seed)
+            recs = rig.log.read(rig.stream_id)
+            base = SharedOmissionIngester(os.path.join(tmp, "base.db"), rig.log.blob)
+            base.deliver(recs)
+            base.drain(rig.stream_id)
+            base_sig = event_sig(base.events(rig.stream_id))
+            arm = SharedOmissionIngester(os.path.join(tmp, "arm.db"), rig.log.blob)
+            for b in _plan(recs, random.Random(seed)):
+                arm.deliver(b)
+                arm.drain(rig.stream_id)
+            sig = event_sig(arm.events(rig.stream_id))
+            exp = rig.ledger.expected()
+            thinking_expected = sum(1 for r in exp if r[3] == "thinking")
+            runs.append({"seed": seed, "thinking_events_expected": thinking_expected, "arm_equals_baseline": sig == base_sig,
+                         "oracle_match": event_tuples(arm.events(rig.stream_id)) == exp})
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    summary = {"runs": len(runs), "runs_with_thinking_turn": sum(1 for r in runs if r["thinking_events_expected"] > 0),
+               "arm_equals_baseline": sum(r["arm_equals_baseline"] for r in runs), "oracle_mismatch": sum(1 for r in runs if not r["oracle_match"])}
+    summary["artifact"] = write_artifact(out, "item2f", {"seeds": SEEDS, "control": "SharedOmissionIngester (drops thinking events)"}, runs, summary)
     return summary
