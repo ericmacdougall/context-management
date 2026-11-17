@@ -1,0 +1,10 @@
+start 2026-11-17T12:42:55Z head 9cbc798 free 21G: exp.registry_marker 10
+disk_gate start free 20.4 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate registry_marker free 20.4 GiB own +0.00 GiB
+registry_marker PASS fenced 10 / 10 controls violated {'ctl_no_placeholders': 10, 'ctl_key_kept': 10}
+  sample fenced: {'before': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 4, 'es_api_Y': 3, 'pg_disk_files_X': 0, 'pg_disk_positive_control_old_plaintext': 1, 'es_disk_files_X': 2, 'keydb_disk_files_keyhex': 2}, 'after': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 0, 'es_api_Y': 3, 'es_disk_files_X': 0, 'es_disk_files_Y': 2, 'keydb_disk_files_keyhex': 0, 'keydb_disk_paths_keyhex': []}, 'controls_flagged': {'table': True, 'index': True, 'logfile': True}}
+  sample controls: {'ctl_no_placeholders': {'es_X_files': 2, 'keyhex_files': 0, 'es_api_X': 4}, 'ctl_key_kept': {'es_X_files': 0, 'keyhex_files': 2, 'es_api_X': 0}}
+RESULT registry_marker sha256=57ba542dc3915cbaf98f7e5ef6248d1e8d70d63f1cfc17914a8284355844e42c file=~/emlab2-16096/writepath/wp/results/registry_marker.57ba542dc3915cba.json
+exit=0
+disk_gate end free 20.3 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T12:59:03Z

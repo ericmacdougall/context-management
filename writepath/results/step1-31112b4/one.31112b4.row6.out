@@ -1,0 +1,12 @@
+start 2026-11-17T15:50:54Z head 31112b4 free 20G: exp.row6_chain 10
+disk_gate start free 19.6 GiB own 0.32 GiB (pg 0.26 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate row6 free 19.6 GiB own +0.00 GiB
+row6 PASS {"A_forged_append": {"fenced": [10, 0, 0], "control": [0, 10, 0]}, "B_app_guard_tamper": {"fenced": [10, 0, 0], "control": [0, 10, 0]}, "C_lost_tail": {"fenced": [10, 0, 0], "control": [0, 10, 0]}, "D_regressed_head": {"fenced": [10, 0, 0], "control": [0, 10, 0]}}
+  A_forged_append {"fenced": {"holds": true, "witness": {"forged_verifies": false}}, "control": {"holds": false, "witness": {"forged_verifies": true}}}
+  B_app_guard_tamper {"fenced": {"holds": true, "witness": {"disable_guard_trigger": "refused:42501", "disable_user_triggers": "refused:42501", "drop_guard_trigger": "refused:42501", "replace_guard_function": "refused:42501", "replication_role_replica": "refused:42501"}}, "control": {"holds": false, "witness": {"disable_guard_trigger": "accepted", "disable_user_triggers": "accepted", "drop_guard_trigger": "accepted", "replace_guard_function": "accepted", "replication_role_replica": "refused:42501"}}}
+  C_lost_tail {"fenced": {"holds": true, "witness": {"k": 4, "chain_ok": true, "anchor_findings": ["truncated"]}}, "control": {"holds": false, "witness": {"k": 5, "chain_ok": true}}}
+  D_regressed_head {"fenced": {"holds": true, "witness": {"k": 3, "chain_ok": true, "anchor_findings": ["rewritten"]}}, "control": {"holds": false, "witness": {"k": 1, "chain_ok": true}}}
+RESULT row6_chain sha256=6d445671496323293b3512b0e89c1dfb77ad871f8c045fdf09a6aa9e93f01b4d file=~/emlab2-16096/writepath/wp/results/row6_chain.6d44567149632329.json
+exit=0
+disk_gate end free 19.6 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T15:50:59Z

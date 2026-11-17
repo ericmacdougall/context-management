@@ -1,0 +1,97 @@
+{
+ "at": "2026-11-17T14:05:13Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/static_check.py",
+  "code_commit": "31112b4",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   0.7470703125,
+   1.17431640625,
+   1.66796875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "static_check",
+ "result": {
+  "checks": {
+   "S1": [],
+   "S2": [],
+   "S3": [],
+   "S4": [],
+   "S5": [],
+   "S6": []
+  },
+  "controls_fail": {
+   "S1": true,
+   "S2": true,
+   "S3": true,
+   "S4": true,
+   "S5": true,
+   "S6": true
+  },
+  "families": [
+   "events",
+   "facts"
+  ],
+  "pass": true,
+  "tables": [
+   "leases",
+   "subjects",
+   "identifier_epochs",
+   "subject_identifiers",
+   "chains",
+   "events",
+   "decision_heads",
+   "quarantine",
+   "quarantine_quota",
+   "tombstones",
+   "inbox",
+   "analyst_jobs",
+   "facts",
+   "cursors",
+   "store_registry",
+   "erasure_jobs",
+   "erasure_mentions",
+   "erasure_withheld",
+   "erasure_rescanned",
+   "legal_holds"
+  ]
+ }
+}

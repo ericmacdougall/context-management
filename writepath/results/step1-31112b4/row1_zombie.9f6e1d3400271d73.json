@@ -1,0 +1,1443 @@
+{
+ "at": "2026-11-17T15:18:03Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/row1_zombie.py 10",
+  "code_commit": "31112b4",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.5703125,
+   1.37451171875,
+   1.529296875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "row1_zombie",
+ "result": {
+  "before_txn/control": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:26.079406+00:00 < 2026-11-17 15:17:26.100545+00:00 < 2026-11-17 15:17:27.081790+00:00 < 2026-11-17 15:17:27.085578+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:27.236332+00:00 < 2026-11-17 15:17:27.257264+00:00 < 2026-11-17 15:17:28.286919+00:00 < 2026-11-17 15:17:28.290626+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:28.434050+00:00 < 2026-11-17 15:17:28.453862+00:00 < 2026-11-17 15:17:29.485206+00:00 < 2026-11-17 15:17:29.489312+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:29.625154+00:00 < 2026-11-17 15:17:29.647132+00:00 < 2026-11-17 15:17:30.674495+00:00 < 2026-11-17 15:17:30.677776+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:30.834731+00:00 < 2026-11-17 15:17:30.856161+00:00 < 2026-11-17 15:17:31.837895+00:00 < 2026-11-17 15:17:31.841918+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:31.985307+00:00 < 2026-11-17 15:17:32.008411+00:00 < 2026-11-17 15:17:32.989752+00:00 < 2026-11-17 15:17:32.993500+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:33.139321+00:00 < 2026-11-17 15:17:33.162032+00:00 < 2026-11-17 15:17:34.140530+00:00 < 2026-11-17 15:17:34.144461+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:34.278459+00:00 < 2026-11-17 15:17:34.299416+00:00 < 2026-11-17 15:17:35.279642+00:00 < 2026-11-17 15:17:35.283532+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:35.432835+00:00 < 2026-11-17 15:17:35.457188+00:00 < 2026-11-17 15:17:36.439331+00:00 < 2026-11-17 15:17:36.442669+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:36.585961+00:00 < 2026-11-17 15:17:36.608736+00:00 < 2026-11-17 15:17:37.586420+00:00 < 2026-11-17 15:17:37.589560+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    }
+   ],
+   "violated": 10
+  },
+  "before_txn/fenced": {
+   "errors": 0,
+   "holds": 10,
+   "runs": [
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:12.468333+00:00 < 2026-11-17 15:17:12.494263+00:00 < 2026-11-17 15:17:13.478931+00:00 < 2026-11-17 15:17:13.482927+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:13.828380+00:00 < 2026-11-17 15:17:13.852971+00:00 < 2026-11-17 15:17:14.838368+00:00 < 2026-11-17 15:17:14.842150+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:15.190116+00:00 < 2026-11-17 15:17:15.212760+00:00 < 2026-11-17 15:17:16.195623+00:00 < 2026-11-17 15:17:16.199282+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:16.532711+00:00 < 2026-11-17 15:17:16.553539+00:00 < 2026-11-17 15:17:17.534372+00:00 < 2026-11-17 15:17:17.537930+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:17.885143+00:00 < 2026-11-17 15:17:17.909082+00:00 < 2026-11-17 15:17:18.887791+00:00 < 2026-11-17 15:17:18.891430+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:19.243146+00:00 < 2026-11-17 15:17:19.269330+00:00 < 2026-11-17 15:17:20.250203+00:00 < 2026-11-17 15:17:20.253821+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:20.605796+00:00 < 2026-11-17 15:17:20.627648+00:00 < 2026-11-17 15:17:21.607429+00:00 < 2026-11-17 15:17:21.610600+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:21.968856+00:00 < 2026-11-17 15:17:21.990030+00:00 < 2026-11-17 15:17:22.970664+00:00 < 2026-11-17 15:17:22.974283+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:23.331987+00:00 < 2026-11-17 15:17:23.353055+00:00 < 2026-11-17 15:17:24.332449+00:00 < 2026-11-17 15:17:24.335551+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:24.709661+00:00 < 2026-11-17 15:17:24.732141+00:00 < 2026-11-17 15:17:25.712996+00:00 < 2026-11-17 15:17:25.716834+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "in_txn/control": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:51.634623+00:00 < 2026-11-17 15:17:51.657906+00:00 < 2026-11-17 15:17:52.639641+00:00 < 2026-11-17 15:17:52.643900+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:52.783514+00:00 < 2026-11-17 15:17:52.808602+00:00 < 2026-11-17 15:17:53.787304+00:00 < 2026-11-17 15:17:53.790804+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:53.942925+00:00 < 2026-11-17 15:17:53.967122+00:00 < 2026-11-17 15:17:54.949017+00:00 < 2026-11-17 15:17:54.952869+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:55.112370+00:00 < 2026-11-17 15:17:55.138358+00:00 < 2026-11-17 15:17:56.116907+00:00 < 2026-11-17 15:17:56.120535+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:56.278811+00:00 < 2026-11-17 15:17:56.303144+00:00 < 2026-11-17 15:17:57.285505+00:00 < 2026-11-17 15:17:57.289276+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:57.446109+00:00 < 2026-11-17 15:17:57.473430+00:00 < 2026-11-17 15:17:58.455691+00:00 < 2026-11-17 15:17:58.459467+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:58.607165+00:00 < 2026-11-17 15:17:58.632735+00:00 < 2026-11-17 15:17:59.613761+00:00 < 2026-11-17 15:17:59.617639+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:17:59.775101+00:00 < 2026-11-17 15:17:59.802571+00:00 < 2026-11-17 15:18:00.783968+00:00 < 2026-11-17 15:18:00.786783+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:18:00.928823+00:00 < 2026-11-17 15:18:00.953546+00:00 < 2026-11-17 15:18:01.935970+00:00 < 2026-11-17 15:18:01.939832+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    },
+    {
+     "holds": false,
+     "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20",
+     "witness": {
+      "B_confirm": false,
+      "B_epoch": 2,
+      "accepted": 20,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 28,
+      "chain_ok": true,
+      "es_zombie_docs": null,
+      "inbox_confirmed_epoch": 1,
+      "inbox_shown": 2,
+      "overlap": "2026-11-17 15:18:02.095928+00:00 < 2026-11-17 15:18:02.120413+00:00 < 2026-11-17 15:18:03.106028+00:00 < 2026-11-17 15:18:03.109815+00:00",
+      "overlap_ok": true,
+      "quarantined": 0,
+      "zombie_analyst_jobs": 20,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 20,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        true
+       ],
+       [
+        "naive_confirm",
+        true
+       ]
+      ]
+     }
+    }
+   ],
+   "violated": 10
+  },
+  "in_txn/fenced": {
+   "errors": 0,
+   "holds": 10,
+   "runs": [
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:37.736253+00:00 < 2026-11-17 15:17:37.760162+00:00 < 2026-11-17 15:17:38.738002+00:00 < 2026-11-17 15:17:38.741379+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:39.105874+00:00 < 2026-11-17 15:17:39.130711+00:00 < 2026-11-17 15:17:40.108840+00:00 < 2026-11-17 15:17:40.112500+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:40.491064+00:00 < 2026-11-17 15:17:40.516008+00:00 < 2026-11-17 15:17:41.495718+00:00 < 2026-11-17 15:17:41.499578+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:41.873329+00:00 < 2026-11-17 15:17:41.897469+00:00 < 2026-11-17 15:17:42.879413+00:00 < 2026-11-17 15:17:42.883590+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:43.263484+00:00 < 2026-11-17 15:17:43.288899+00:00 < 2026-11-17 15:17:44.271737+00:00 < 2026-11-17 15:17:44.275919+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:44.655078+00:00 < 2026-11-17 15:17:44.679332+00:00 < 2026-11-17 15:17:45.661006+00:00 < 2026-11-17 15:17:45.664479+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:46.046043+00:00 < 2026-11-17 15:17:46.069255+00:00 < 2026-11-17 15:17:47.051836+00:00 < 2026-11-17 15:17:47.055979+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:47.431988+00:00 < 2026-11-17 15:17:47.455095+00:00 < 2026-11-17 15:17:48.435301+00:00 < 2026-11-17 15:17:48.438922+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:48.826130+00:00 < 2026-11-17 15:17:48.847902+00:00 < 2026-11-17 15:17:49.829848+00:00 < 2026-11-17 15:17:49.833197+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "B_confirm": true,
+      "B_epoch": 2,
+      "accepted": 0,
+      "chain_epochs": [
+       1,
+       2
+      ],
+      "chain_len": 8,
+      "chain_ok": true,
+      "es_zombie_docs": 0,
+      "inbox_confirmed_epoch": 2,
+      "inbox_shown": 1,
+      "overlap": "2026-11-17 15:17:50.230263+00:00 < 2026-11-17 15:17:50.254317+00:00 < 2026-11-17 15:17:51.236548+00:00 < 2026-11-17 15:17:51.240112+00:00",
+      "overlap_ok": true,
+      "quarantined": 20,
+      "zombie_analyst_jobs": 0,
+      "zombie_attempts": 20,
+      "zombie_events_in_chain_after_takeover": 0,
+      "zombie_inbox": [
+       [
+        "naive_claim",
+        "refused"
+       ],
+       [
+        "naive_confirm",
+        "refused"
+       ]
+      ]
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "pass": true
+ }
+}

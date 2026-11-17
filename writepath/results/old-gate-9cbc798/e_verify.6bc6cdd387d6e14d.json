@@ -1,0 +1,434 @@
+{
+ "at": "2026-11-17T12:42:53Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/9cbc798-20261117T113211Z/exp/e_verify.py 10",
+  "code_commit": "9cbc798",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   3.03515625,
+   2.1279296875,
+   2.08251953125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "e_verify",
+ "result": {
+  "cases": {
+   "a_no_verify": {
+    "control_accepted": 10,
+    "fenced_refused": 10,
+    "patch": "ab",
+    "sample": [
+     "refused:23514",
+     "accepted:1"
+    ]
+   },
+   "b_verify_false": {
+    "control_accepted": 10,
+    "fenced_refused": 10,
+    "patch": "ab",
+    "sample": [
+     "refused:23514",
+     "accepted:1"
+    ]
+   },
+   "c_stale_claimant": {
+    "control_accepted": 10,
+    "fenced_refused": 10,
+    "patch": "c",
+    "sample": [
+     "refused:WPS07",
+     "accepted:1"
+    ]
+   },
+   "d_input_erased": {
+    "control_accepted": 10,
+    "fenced_refused": 10,
+    "patch": "d",
+    "sample": [
+     "refused:WPS03",
+     "accepted:1"
+    ]
+   }
+  },
+  "control_runs": {
+   "ab": [
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "accepted:1",
+     "b_verify_false": "accepted:1",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    }
+   ],
+   "c": [
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "accepted:1",
+     "d_input_erased": "refused:WPS03",
+     "e_proper": "accepted:1"
+    }
+   ],
+   "d": [
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    },
+    {
+     "a_no_verify": "refused:23514",
+     "b_verify_false": "refused:23514",
+     "c_reclaimed_same_job": true,
+     "c_stale_claimant": "refused:WPS07",
+     "d_input_erased": "accepted:1",
+     "e_proper": "accepted:1"
+    }
+   ]
+  },
+  "e_proper_accepted": 10,
+  "fenced_runs": [
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   },
+   {
+    "a_no_verify": "refused:23514",
+    "b_verify_false": "refused:23514",
+    "c_reclaimed_same_job": true,
+    "c_stale_claimant": "refused:WPS07",
+    "d_input_erased": "refused:WPS03",
+    "e_proper": "accepted:1"
+   }
+  ],
+  "h_no_filter_switch": true,
+  "h_reader_signatures": {
+   "facts": [
+    "self",
+    "entity",
+    "attribute",
+    "as_of",
+    "k"
+   ],
+   "search": [
+    "self",
+    "text",
+    "k"
+   ]
+  },
+  "pass": true,
+  "patches": {
+   "ab": [
+    "alter table analyst_jobs drop constraint done_needs_verify"
+   ],
+   "c": [
+    "set role wp_owner",
+    "create or replace function jobs_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$\nbegin\n  if NEW.lease_scope <> OLD.lease_scope or NEW.lease_epoch <> OLD.lease_epoch or NEW.input_event_ids <> OLD.input_event_ids\n     or NEW.session_id <> OLD.session_id or NEW.tenant_id <> OLD.tenant_id then\n    raise exception 'job identity fields are immutable' using errcode = 'WPS07';\n  end if;\n  if false then\n    raise exception 'claim_epoch only advances by one, on a claim' using errcode = 'WPS07';\n  end if;\n  if OLD.state = 'queued' and NEW.state = 'claimed' and NEW.claim_epoch <> OLD.claim_epoch + 1 then\n    raise exception 'claim must advance claim_epoch' using errcode = 'WPS07';\n  end if;\n  if OLD.state = 'done' then raise exception 'done is final' using errcode = 'WPS07'; end if;\n  if NEW.state = 'done' then\n    if OLD.state <> 'claimed' then\n      raise exception 'stale_claim' using errcode = 'WPS01';\n    end if;\n    if exists (select 1 from events e join subjects s on s.tenant_id = e.tenant_id and s.subject_id = e.subject_id\n               where e.tenant_id = NEW.tenant_id and e.event_id = any(NEW.input_event_ids) and s.erased) then\n      raise exception 'inputs_erased' using errcode = 'WPS03';\n    end if;\n  end if;\n  return NEW;\nend $$;",
+    "reset role"
+   ],
+   "d": [
+    "set role wp_owner",
+    "create or replace function jobs_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$\nbegin\n  if NEW.lease_scope <> OLD.lease_scope or NEW.lease_epoch <> OLD.lease_epoch or NEW.input_event_ids <> OLD.input_event_ids\n     or NEW.session_id <> OLD.session_id or NEW.tenant_id <> OLD.tenant_id then\n    raise exception 'job identity fields are immutable' using errcode = 'WPS07';\n  end if;\n  if NEW.claim_epoch <> OLD.claim_epoch and (NEW.claim_epoch <> OLD.claim_epoch + 1 or NEW.state <> 'claimed') then\n    raise exception 'claim_epoch only advances by one, on a claim' using errcode = 'WPS07';\n  end if;\n  if OLD.state = 'queued' and NEW.state = 'claimed' and NEW.claim_epoch <> OLD.claim_epoch + 1 then\n    raise exception 'claim must advance claim_epoch' using errcode = 'WPS07';\n  end if;\n  if OLD.state = 'done' then raise exception 'done is final' using errcode = 'WPS07'; end if;\n  if NEW.state = 'done' then\n    if OLD.state <> 'claimed' or NEW.claim_epoch <> OLD.claim_epoch then\n      raise exception 'stale_claim' using errcode = 'WPS01';\n    end if;\n    if false then\n      raise exception 'inputs_erased' using errcode = 'WPS03';\n    end if;\n  end if;\n  return NEW;\nend $$;",
+    "reset role"
+   ]
+  }
+ }
+}

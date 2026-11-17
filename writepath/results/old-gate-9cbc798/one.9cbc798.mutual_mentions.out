@@ -1,0 +1,8 @@
+start 2026-11-17T13:09:47Z head 9cbc798 free 21G: exp.mutual_mentions 5 10 5
+disk_gate start free 20.3 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate mutual_mentions free 20.3 GiB own +0.00 GiB
+mutual_mentions PASS {"seq": {"R": 5, "holds": 5, "violated": 0, "errors": 0, "overlapped": 0}, "conc": {"R": 10, "holds": 10, "violated": 0, "errors": 0, "overlapped": 10}, "control": {"R": 5, "holds": 0, "violated": 5, "errors": 0, "overlapped": 0}}
+RESULT mutual_mentions sha256=29db1dd0a094d8ddbe49386388ee85c7a05cd432855eca0be2675f5a965db443 file=~/emlab2-16096/writepath/wp/results/mutual_mentions.29db1dd0a094d8dd.json
+exit=0
+disk_gate end free 19.9 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T13:25:24Z

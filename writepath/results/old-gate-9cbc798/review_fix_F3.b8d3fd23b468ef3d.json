@@ -1,0 +1,115 @@
+{
+ "at": "2026-11-17T11:33:09Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/9cbc798-20261117T113211Z/exp/review_fix.py F3 F4 F5 F7 F1S F6 10",
+  "code_commit": "9cbc798",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.52978515625,
+   1.35205078125,
+   1.41748046875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "review_fix_F3",
+ "result": {
+  "attacks": 14,
+  "cases": {
+   "app_calls_complete": {
+    "control": "accepted:1",
+    "fenced": "refused:42501",
+    "patch": "EXECUTE on wp_erasure_complete granted to wp_app"
+   },
+   "app_inserts_done": {
+    "control": "accepted:1",
+    "fenced": "refused:WPS08",
+    "patch": "insert-state check removed from erasure_guard"
+   },
+   "app_sets_done": {
+    "control": "accepted:1",
+    "fenced": "refused:WPS08",
+    "patch": "both owner checks removed from erasure_guard (done/verify, store-written states; amendment 18a)"
+   },
+   "chains_tamper": {
+    "control": "accepted:1",
+    "fenced": "refused:42501",
+    "patch": "app UPDATE on chains"
+   },
+   "delete_facts": {
+    "control": "accepted:1",
+    "fenced": "refused:42501",
+    "patch": "app DELETE on facts (privilege + owner-only trigger)"
+   },
+   "delete_store_registry": {
+    "control": "accepted:1",
+    "fenced": "refused:42501",
+    "patch": "app DELETE on store_registry"
+   },
+   "delete_tombstones": {
+    "control": "accepted:2",
+    "fenced": "refused:42501",
+    "patch": "app DELETE on tombstones"
+   },
+   "disable_trigger": {
+    "control": "accepted:-1",
+    "fenced": "refused:42501",
+    "patch": "wp_app made a member of the owner role"
+   },
+   "junk_scope_fact": {
+    "control": "accepted:1",
+    "fenced": "refused:WPS12",
+    "patch": "scope binding removed from wp_fence_trg"
+   },
+   "lease_direct_insert": {
+    "control": "accepted:1",
+    "fenced": "refused:42501",
+    "patch": "app INSERT on leases (privilege + owner-only trigger)"
+   },
+   "replica_mode_stale_fact": {
+    "control": "accepted:1",
+    "fenced": "refused:WPS01",
+    "patch": "facts_fence ENABLE (origin) instead of ENABLE ALWAYS; SET session_replication_role granted in both arms"
+   },
+   "reset_erased": {
+    "control": "accepted:1",
+    "fenced": "refused:42501",
+    "patch": "app UPDATE on subjects"
+   },
+   "set_replication_role": {
+    "control": "accepted:-1",
+    "fenced": "refused:42501",
+    "patch": "SET session_replication_role granted to wp_app"
+   },
+   "truncate_inbox": {
+    "control": "accepted:-1",
+    "fenced": "refused:42501",
+    "patch": "app TRUNCATE on inbox (privilege + trigger)"
+   }
+  },
+  "controls_accepted": 14,
+  "fenced_refused": 14,
+  "params": {
+   "R": 10,
+   "n100k": 100000
+  },
+  "pass": true,
+  "property": "the app role cannot bypass the fence or the guards"
+ }
+}

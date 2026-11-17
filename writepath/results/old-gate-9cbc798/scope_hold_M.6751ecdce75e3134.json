@@ -1,0 +1,1194 @@
+{
+ "at": "2026-11-17T11:48:37Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/9cbc798-20261117T113211Z/exp/scope_hold.py M H 3",
+  "code_commit": "9cbc798",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.337890625,
+   1.6767578125,
+   1.6787109375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "scope_hold_M",
+ "result": {
+  "ctl_norescan": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "why": "done=True over=['zqffc7m12x', 'zqffc7m13x'] under=[] counts_ok=False",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zqffc7m01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqffc7m02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqffc7m03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqffc7m04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqffc7m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqffc7m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqffc7m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqffc7m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqffc7m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqffc7m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqffc7m12x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqffc7m13x": {
+        "es": 1,
+        "pg": 1
+       }
+      },
+      "overclaimed": [
+       "zqffc7m12x",
+       "zqffc7m13x"
+      ],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 4,
+       "found_by_rescan": 0,
+       "identifier_set_version": 30,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": null,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 5,
+       "rescan_found": null,
+       "rescan_scanned": null
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "done=True over=['zq4533m12x', 'zq4533m13x'] under=[] counts_ok=False",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq4533m01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq4533m02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq4533m03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq4533m04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq4533m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq4533m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq4533m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq4533m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq4533m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq4533m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq4533m12x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq4533m13x": {
+        "es": 1,
+        "pg": 1
+       }
+      },
+      "overclaimed": [
+       "zq4533m12x",
+       "zq4533m13x"
+      ],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 4,
+       "found_by_rescan": 0,
+       "identifier_set_version": 33,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": null,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 5,
+       "rescan_found": null,
+       "rescan_scanned": null
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "done=True over=['zq45e2m12x', 'zq45e2m13x'] under=[] counts_ok=False",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq45e2m01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq45e2m02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq45e2m03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq45e2m04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq45e2m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq45e2m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq45e2m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq45e2m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq45e2m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq45e2m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq45e2m12x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq45e2m13x": {
+        "es": 1,
+        "pg": 1
+       }
+      },
+      "overclaimed": [
+       "zq45e2m12x",
+       "zq45e2m13x"
+      ],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 4,
+       "found_by_rescan": 0,
+       "identifier_set_version": 36,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": null,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 5,
+       "rescan_found": null,
+       "rescan_scanned": null
+      }
+     }
+    }
+   ],
+   "violated": 3
+  },
+  "ctl_write_matcher": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "why": "done=True over=['zq1495m01x', 'zq1495m02x', 'zq1495m03x', 'zq1495m04x'] under=[] counts_ok=False",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq1495m01x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m02x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m03x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m04x": {
+        "es": 2,
+        "pg": 2
+       },
+       "zq1495m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq1495m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq1495m12x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq1495m13x": {
+        "es": 0,
+        "pg": 0
+       }
+      },
+      "overclaimed": [
+       "zq1495m01x",
+       "zq1495m02x",
+       "zq1495m03x",
+       "zq1495m04x"
+      ],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 0,
+       "found_by_rescan": 2,
+       "identifier_set_version": 12,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": 12,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 3,
+       "rescan_found": 2,
+       "rescan_scanned": 2
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "done=True over=['zq37bam01x', 'zq37bam02x', 'zq37bam03x', 'zq37bam04x'] under=[] counts_ok=False",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq37bam01x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam02x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam03x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam04x": {
+        "es": 2,
+        "pg": 2
+       },
+       "zq37bam05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq37bam10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq37bam12x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq37bam13x": {
+        "es": 0,
+        "pg": 0
+       }
+      },
+      "overclaimed": [
+       "zq37bam01x",
+       "zq37bam02x",
+       "zq37bam03x",
+       "zq37bam04x"
+      ],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 0,
+       "found_by_rescan": 2,
+       "identifier_set_version": 15,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": 15,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 3,
+       "rescan_found": 2,
+       "rescan_scanned": 2
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "done=True over=['zq668dm01x', 'zq668dm02x', 'zq668dm03x', 'zq668dm04x'] under=[] counts_ok=False",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq668dm01x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm02x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm03x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm04x": {
+        "es": 2,
+        "pg": 2
+       },
+       "zq668dm05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq668dm10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq668dm12x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq668dm13x": {
+        "es": 0,
+        "pg": 0
+       }
+      },
+      "overclaimed": [
+       "zq668dm01x",
+       "zq668dm02x",
+       "zq668dm03x",
+       "zq668dm04x"
+      ],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 0,
+       "found_by_rescan": 2,
+       "identifier_set_version": 18,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": 18,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 3,
+       "rescan_found": 2,
+       "rescan_scanned": 2
+      }
+     }
+    }
+   ],
+   "violated": 3
+  },
+  "fenced": {
+   "errors": 0,
+   "holds": 3,
+   "runs": [
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zqaabfm01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqaabfm02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqaabfm03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqaabfm04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqaabfm05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqaabfm06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqaabfm07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqaabfm08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqaabfm09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqaabfm10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqaabfm12x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqaabfm13x": {
+        "es": 0,
+        "pg": 0
+       }
+      },
+      "overclaimed": [],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 4,
+       "found_by_rescan": 2,
+       "identifier_set_version": 3,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": 3,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 7,
+       "rescan_found": 2,
+       "rescan_scanned": 2
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zqd629m01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqd629m02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqd629m03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqd629m04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqd629m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqd629m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqd629m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqd629m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqd629m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqd629m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqd629m12x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqd629m13x": {
+        "es": 0,
+        "pg": 0
+       }
+      },
+      "overclaimed": [],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 4,
+       "found_by_rescan": 2,
+       "identifier_set_version": 6,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": 6,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 7,
+       "rescan_found": 2,
+       "rescan_scanned": 2
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zqb633m01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqb633m02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqb633m03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqb633m04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqb633m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqb633m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqb633m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqb633m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqb633m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqb633m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqb633m12x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqb633m13x": {
+        "es": 0,
+        "pg": 0
+       }
+      },
+      "overclaimed": [],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": null,
+      "scope_mentions": {
+       "declared_identifiers": 3,
+       "found_at_write": 4,
+       "found_by_rescan": 2,
+       "identifier_set_version": 9,
+       "matcher": "m1: case-insensitive exact match of the declared identifiers as whole token sequences (wp/mentions.py)",
+       "not_covered": [
+        "identifiers that were never declared (nicknames, misspellings, initials)",
+        "pronouns and indirect references",
+        "mentions inside inbox payloads and analyst-job results",
+        "content outside this store (ES snapshots, backups, logs: see store_registry ext:*)"
+       ],
+       "rescan_coverage": "store-checked: every candidate event was examined (erasure_rescanned, WPS24)",
+       "rescan_covered_version": 9,
+       "rescan_match_attested_by": "erasure runner (the store cannot decrypt the examined events)",
+       "rule": "every event that mentions the subject is removed whole: tombstoned, content nulled in Postgres, placeholder in ES, derived facts and jobs deleted"
+      },
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 7,
+       "rescan_found": 2,
+       "rescan_scanned": 2
+      }
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "norescan_fenced": {
+   "errors": 0,
+   "holds": 3,
+   "runs": [
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zqf3abm01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqf3abm02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqf3abm03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqf3abm04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqf3abm05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqf3abm06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqf3abm07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqf3abm08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqf3abm09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqf3abm10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zqf3abm12x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zqf3abm13x": {
+        "es": 1,
+        "pg": 1
+       }
+      },
+      "overclaimed": [],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": "pg:identifiers,pg:mentions_unscanned",
+      "scope_mentions": {},
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 5,
+       "rescan_found": null,
+       "rescan_scanned": null
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq733fm01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq733fm02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq733fm03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq733fm04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq733fm05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq733fm06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq733fm07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq733fm08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq733fm09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq733fm10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq733fm12x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq733fm13x": {
+        "es": 1,
+        "pg": 1
+       }
+      },
+      "overclaimed": [],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": "pg:identifiers,pg:mentions_unscanned",
+      "scope_mentions": {},
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 5,
+       "rescan_found": null,
+       "rescan_scanned": null
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "oracle": {
+       "zq2b15m01x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq2b15m02x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq2b15m03x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq2b15m04x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq2b15m05x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq2b15m06x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq2b15m07x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq2b15m08x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq2b15m09x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq2b15m10x": {
+        "es": 0,
+        "pg": 0
+       },
+       "zq2b15m12x": {
+        "es": 1,
+        "pg": 1
+       },
+       "zq2b15m13x": {
+        "es": 1,
+        "pg": 1
+       }
+      },
+      "overclaimed": [],
+      "planted": {
+       "miss": 4,
+       "other_subject": 1,
+       "own": 1,
+       "rescan_hit": 2,
+       "write_hit": 4
+      },
+      "removed_out_of_scope": [],
+      "residue": "pg:identifiers,pg:mentions_unscanned",
+      "scope_mentions": {},
+      "steps": {
+       "cascade_batches": 3,
+       "placeholder_events": 5,
+       "rescan_found": null,
+       "rescan_scanned": null
+      }
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "params": {
+   "R": 3
+  },
+  "pass": true
+ }
+}

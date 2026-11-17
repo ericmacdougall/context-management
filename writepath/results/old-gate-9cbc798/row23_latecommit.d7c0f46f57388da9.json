@@ -1,0 +1,160 @@
+{
+ "at": "2026-11-17T12:42:49Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/9cbc798-20261117T113211Z/exp/row23_latecommit.py 10",
+  "code_commit": "9cbc798",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.25439453125,
+   1.9609375,
+   2.02880859375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "row23_latecommit",
+ "result": {
+  "R": 10,
+  "control_violated": 10,
+  "fenced_holds": 10,
+  "pass": true,
+  "runs": [
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   },
+   {
+    "H_first_in_commit_xid_order": true,
+    "during_stall": {
+     "naive_seen": 10,
+     "xmin_projected": 0
+    },
+    "events_total": 11,
+    "naive_projected": 10,
+    "naive_skipped_H": true,
+    "xmin_has_H": true,
+    "xmin_projected": 11
+   }
+  ]
+ }
+}

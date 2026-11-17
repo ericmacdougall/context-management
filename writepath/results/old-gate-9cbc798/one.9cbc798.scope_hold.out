@@ -1,0 +1,10 @@
+start 2026-11-17T11:42:22Z head 9cbc798 free 20G: exp.scope_hold M H 3
+disk_gate start free 19.9 GiB own 0.15 GiB (pg 0.09 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate scope_hold free 19.9 GiB own +0.00 GiB
+M PASS {"fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "ctl_write_matcher": {"holds": 0, "violated": 3, "errors": 0, "why": ["done=True over=['zq1495m01x', 'zq1495m02x', 'zq1495m03x', 'zq1495m04x'] under=[] counts_ok=False", "done=True over=['zq37bam01x', 'zq37bam02x', 'zq37bam03x', 'zq37bam04x'] under=[] counts_ok=False", "done=True over=['zq668dm01x', 'zq668dm02x', 'zq668dm03x', 'zq668dm04x'] under=[] counts_ok=False"]}, "norescan_fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "ctl_norescan": {"holds": 0, "violated": 3, "errors": 0, "why": ["done=True over=['zqffc7m12x', 'zqffc7m13x'] under=[] counts_ok=False", "done=True over=['zq4533m12x', 'zq4533m13x'] under=[] counts_ok=False", "done=True over=['zq45e2m12x', 'zq45e2m13x'] under=[] counts_ok=False"]}}
+RESULT scope_hold_M sha256=6751ecdce75e3134c0b3bd03cd1b27fb5ab1d11ac1712e9aa54b46fd9d844df6 file=~/emlab2-16096/writepath/wp/results/scope_hold_M.6751ecdce75e3134.json
+H PASS {"fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "control": {"holds": 0, "violated": 3, "errors": 0, "why": ["cases=[False, False, False]", "cases=[False, False, False]", "cases=[False, False, False]"]}}
+RESULT scope_hold_H sha256=fcb0408e138ff835f01579897700388b9e9fd46f42a71b508f08bc0888321b06 file=~/emlab2-16096/writepath/wp/results/scope_hold_H.fcb0408e138ff835.json
+exit=0
+disk_gate end free 20.0 GiB own +-0.01 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T11:59:43Z

@@ -1,0 +1,28 @@
+start 2026-11-17T15:51:09Z head 31112b4 free 20G: exp.d3_identifier 5
+disk_gate start free 19.6 GiB own 0.32 GiB (pg 0.26 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate d3 free 19.6 GiB own +0.00 GiB
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/d3_identifier.py", line 63, in <module>
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 5)
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/d3_identifier.py", line 48, in main
+    res = {"R": r, "fenced": [once("fenced") for _ in range(r)], "control": [once("control") for _ in range(r)],
+                                                                             ^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/d3_identifier.py", line 38, in once
+    p = projector.Projector(conn, ks, es, t); p.run(); p.stop()
+                                              ^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/wp/projector.py", line 208, in run
+    n = self.step()
+        ^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/wp/projector.py", line 186, in step
+    return self.derive() + self.mirror_events() + self.mirror_facts()
+                           ^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/wp/projector.py", line 151, in mirror_events
+    self._bulk("events", acts)
+  File "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/wp/projector.py", line 88, in _bulk
+    raise F.ProjectionError(f"{family}: {len(hard)} items refused while the lease is ours ({kinds})")
+wp.families.ProjectionError: events: 2 items refused while the lease is ours (['503 unavailable_shards_exception'])
+exit=1
+disk_gate end free 15.8 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T15:56:48Z

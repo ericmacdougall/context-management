@@ -1,0 +1,420 @@
+{
+ "at": "2026-11-17T14:35:13Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/scope_hold.py M H 3",
+  "code_commit": "31112b4",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.88427734375,
+   2.56103515625,
+   2.07177734375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "scope_hold_H",
+ "result": {
+  "control": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "why": "cases=[False, False, False]",
+     "witness": {
+      "H1_hold_before_request": {
+       "after_release": {
+        "sweep": {},
+        "x_es_after": 0,
+        "x_state": "done"
+       },
+       "x_content_present_while_held": false,
+       "x_held": false,
+       "x_receipt_while_held": {
+        "done": true,
+        "error_type": null,
+        "held": null,
+        "holds": [
+         {
+          "hold_id": "hold-c7c5ae4b",
+          "placed_at": "2026-11-17T14:30:24.766221+00:00",
+          "released_at": null
+         }
+        ]
+       },
+       "y_done_during_hold": true
+      },
+      "H2_request_before_hold": {
+       "final": {
+        "delay_s": 30.845,
+        "done": true,
+        "holds": [
+         {
+          "hold_id": "hold-3f98cce4",
+          "placed_at": "2026-11-17 14:30:56.961734+00:00",
+          "released_at": "2026-11-17 14:31:28.812459+00:00"
+         }
+        ]
+       },
+       "receipt_while_held": {
+        "done": true,
+        "error_type": null,
+        "held": null
+       },
+       "x_held": false
+      },
+      "H3_hold_after_mark": {
+       "final_done": true,
+       "hold_place_result": {
+        "hold_id": "hold-6a786651",
+        "note": "erasure already past mark: content removed before this hold is not recoverable; the rest is held",
+        "open_erasure_state": "marked"
+       },
+       "pg_content_left_while_held": 0,
+       "x_held": false
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "cases=[False, False, False]",
+     "witness": {
+      "H1_hold_before_request": {
+       "after_release": {
+        "sweep": {},
+        "x_es_after": 0,
+        "x_state": "done"
+       },
+       "x_content_present_while_held": false,
+       "x_held": false,
+       "x_receipt_while_held": {
+        "done": true,
+        "error_type": null,
+        "held": null,
+        "holds": [
+         {
+          "hold_id": "hold-c5eb1ada",
+          "placed_at": "2026-11-17T14:32:01.052046+00:00",
+          "released_at": null
+         }
+        ]
+       },
+       "y_done_during_hold": true
+      },
+      "H2_request_before_hold": {
+       "final": {
+        "delay_s": 30.848,
+        "done": true,
+        "holds": [
+         {
+          "hold_id": "hold-21410907",
+          "placed_at": "2026-11-17 14:32:33.221789+00:00",
+          "released_at": "2026-11-17 14:33:05.076665+00:00"
+         }
+        ]
+       },
+       "receipt_while_held": {
+        "done": true,
+        "error_type": null,
+        "held": null
+       },
+       "x_held": false
+      },
+      "H3_hold_after_mark": {
+       "final_done": true,
+       "hold_place_result": {
+        "hold_id": "hold-73a26712",
+        "note": "erasure already past mark: content removed before this hold is not recoverable; the rest is held",
+        "open_erasure_state": "marked"
+       },
+       "pg_content_left_while_held": 0,
+       "x_held": false
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "cases=[False, False, False]",
+     "witness": {
+      "H1_hold_before_request": {
+       "after_release": {
+        "sweep": {},
+        "x_es_after": 0,
+        "x_state": "done"
+       },
+       "x_content_present_while_held": false,
+       "x_held": false,
+       "x_receipt_while_held": {
+        "done": true,
+        "error_type": null,
+        "held": null,
+        "holds": [
+         {
+          "hold_id": "hold-b368de22",
+          "placed_at": "2026-11-17T14:33:37.290148+00:00",
+          "released_at": null
+         }
+        ]
+       },
+       "y_done_during_hold": true
+      },
+      "H2_request_before_hold": {
+       "final": {
+        "delay_s": 30.871,
+        "done": true,
+        "holds": [
+         {
+          "hold_id": "hold-31c1fab8",
+          "placed_at": "2026-11-17 14:34:09.514173+00:00",
+          "released_at": "2026-11-17 14:34:41.392272+00:00"
+         }
+        ]
+       },
+       "receipt_while_held": {
+        "done": true,
+        "error_type": null,
+        "held": null
+       },
+       "x_held": false
+      },
+      "H3_hold_after_mark": {
+       "final_done": true,
+       "hold_place_result": {
+        "hold_id": "hold-8da140de",
+        "note": "erasure already past mark: content removed before this hold is not recoverable; the rest is held",
+        "open_erasure_state": "marked"
+       },
+       "pg_content_left_while_held": 0,
+       "x_held": false
+      }
+     }
+    }
+   ],
+   "violated": 3
+  },
+  "fenced": {
+   "errors": 0,
+   "holds": 3,
+   "runs": [
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "H1_hold_before_request": {
+       "after_release": {
+        "sweep": {
+         "81318cf4bc134e7e": true
+        },
+        "x_es_after": 0,
+        "x_state": "done"
+       },
+       "x_content_present_while_held": true,
+       "x_held": true,
+       "x_receipt_while_held": {
+        "done": false,
+        "error_type": "legal_hold",
+        "held": true,
+        "holds": [
+         {
+          "hold_id": "hold-e8118f54",
+          "placed_at": "2026-11-17 14:24:09.348496+00:00",
+          "released_at": null
+         }
+        ]
+       },
+       "y_done_during_hold": true
+      },
+      "H2_request_before_hold": {
+       "final": {
+        "delay_s": 31.925,
+        "done": true,
+        "holds": [
+         {
+          "hold_id": "hold-104c6822",
+          "placed_at": "2026-11-17 14:25:10.375108+00:00",
+          "released_at": "2026-11-17 14:25:11.406676+00:00"
+         }
+        ]
+       },
+       "receipt_while_held": {
+        "done": false,
+        "error_type": "legal_hold",
+        "held": true
+       },
+       "x_held": true
+      },
+      "H3_hold_after_mark": {
+       "final_done": true,
+       "hold_place_result": {
+        "hold_id": "hold-16f2b384",
+        "note": "erasure already past mark: content removed before this hold is not recoverable; the rest is held",
+        "open_erasure_state": "marked"
+       },
+       "pg_content_left_while_held": 1,
+       "x_held": true
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "H1_hold_before_request": {
+       "after_release": {
+        "sweep": {
+         "c41dc36191ff4bf5": true
+        },
+        "x_es_after": 0,
+        "x_state": "done"
+       },
+       "x_content_present_while_held": true,
+       "x_held": true,
+       "x_receipt_while_held": {
+        "done": false,
+        "error_type": "legal_hold",
+        "held": true,
+        "holds": [
+         {
+          "hold_id": "hold-c62bebb5",
+          "placed_at": "2026-11-17 14:26:14.487565+00:00",
+          "released_at": null
+         }
+        ]
+       },
+       "y_done_during_hold": true
+      },
+      "H2_request_before_hold": {
+       "final": {
+        "delay_s": 31.92,
+        "done": true,
+        "holds": [
+         {
+          "hold_id": "hold-15114ad2",
+          "placed_at": "2026-11-17 14:27:15.527783+00:00",
+          "released_at": "2026-11-17 14:27:16.556536+00:00"
+         }
+        ]
+       },
+       "receipt_while_held": {
+        "done": false,
+        "error_type": "legal_hold",
+        "held": true
+       },
+       "x_held": true
+      },
+      "H3_hold_after_mark": {
+       "final_done": true,
+       "hold_place_result": {
+        "hold_id": "hold-b5610b84",
+        "note": "erasure already past mark: content removed before this hold is not recoverable; the rest is held",
+        "open_erasure_state": "marked"
+       },
+       "pg_content_left_while_held": 1,
+       "x_held": true
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "H1_hold_before_request": {
+       "after_release": {
+        "sweep": {
+         "5c09ef7a1477489e": true
+        },
+        "x_es_after": 0,
+        "x_state": "done"
+       },
+       "x_content_present_while_held": true,
+       "x_held": true,
+       "x_receipt_while_held": {
+        "done": false,
+        "error_type": "legal_hold",
+        "held": true,
+        "holds": [
+         {
+          "hold_id": "hold-0ce6828f",
+          "placed_at": "2026-11-17 14:28:19.649307+00:00",
+          "released_at": null
+         }
+        ]
+       },
+       "y_done_during_hold": true
+      },
+      "H2_request_before_hold": {
+       "final": {
+        "delay_s": 31.916,
+        "done": true,
+        "holds": [
+         {
+          "hold_id": "hold-62b179c2",
+          "placed_at": "2026-11-17 14:29:20.640613+00:00",
+          "released_at": "2026-11-17 14:29:21.670088+00:00"
+         }
+        ]
+       },
+       "receipt_while_held": {
+        "done": false,
+        "error_type": "legal_hold",
+        "held": true
+       },
+       "x_held": true
+      },
+      "H3_hold_after_mark": {
+       "final_done": true,
+       "hold_place_result": {
+        "hold_id": "hold-42662f4b",
+        "note": "erasure already past mark: content removed before this hold is not recoverable; the rest is held",
+        "open_erasure_state": "marked"
+       },
+       "pg_content_left_while_held": 1,
+       "x_held": true
+      }
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "params": {
+   "R": 3
+  },
+  "pass": true
+ }
+}

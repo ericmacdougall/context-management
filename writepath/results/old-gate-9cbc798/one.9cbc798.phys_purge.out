@@ -1,0 +1,8 @@
+start 2026-11-17T13:28:18Z head 9cbc798 free 20G: exp.phys_purge
+disk_gate start free 19.8 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate phys_purge free 19.8 GiB own +0.00 GiB
+phys_purge {'pass': True, 'why': []}
+RESULT phys_purge sha256=4fc124765719f0160db52c598b402b42c1713c9f01addff39463a07f5f817694 file=~/emlab2-16096/writepath/wp/results/phys_purge.4fc124765719f016.json
+exit=0
+disk_gate end free 19.8 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T13:31:14Z

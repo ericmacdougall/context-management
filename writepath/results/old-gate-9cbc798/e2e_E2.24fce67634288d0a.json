@@ -1,0 +1,1488 @@
+{
+ "at": "2026-11-17T13:35:35Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/9cbc798-20261117T113211Z/exp/e2e_restored.py E2 E3 40",
+  "code_commit": "9cbc798",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   6.091796875,
+   4.46044921875,
+   2.81201171875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "e2e_E2",
+ "result": {
+  "N": 40,
+  "control": {
+   "errors": 0,
+   "holds_all": 0,
+   "holds_overlapped": 0,
+   "overlapped": 40,
+   "runs": [
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096500
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096501
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096502
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096503
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096504
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096505
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096506
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096507
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096508
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096509
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096510
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096511
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096512
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096513
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096514
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096515
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096516
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096517
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096518
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096519
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096520
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096521
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096522
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096523
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096524
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096525
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096526
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096527
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096528
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096529
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096530
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096531
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096532
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096533
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096534
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096535
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096536
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096537
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096538
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 4,
+     "holds": false,
+     "outcomes": {
+      "accepted": 4
+     },
+     "overlap": true,
+     "rows_with_request": 4,
+     "seed": 16096539
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 40,
+   "violated_overlapped": 40,
+   "wilson95_hold_rate_overlapped": [
+    -0.0,
+    0.0876
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.9124,
+    1.0
+   ]
+  },
+  "fenced": {
+   "errors": 0,
+   "holds_all": 40,
+   "holds_overlapped": 40,
+   "overlapped": 40,
+   "runs": [
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096000
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096001
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096002
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096003
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096004
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096005
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096006
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096007
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096008
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096009
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096010
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096011
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096012
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096013
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096014
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096015
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096016
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096017
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096018
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096019
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096020
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096021
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096022
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096023
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096024
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096025
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096026
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096027
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096028
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096029
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096030
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096031
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096032
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096033
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096034
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096035
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096036
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096037
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096038
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "accepted": 1,
+      "duplicate": 3
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 16096039
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 0,
+   "violated_overlapped": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.9124,
+    1.0
+   ],
+   "wilson95_violation_rate_overlapped": [
+    -0.0,
+    0.0876
+   ]
+  },
+  "patch": "the client drops the idempotency key (in the client processes)",
+  "store_only": {
+   "errors": 0,
+   "holds_overlapped": 40,
+   "overlapped": 40,
+   "runs": [
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672900
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672901
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672902
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672903
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672904
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672905
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672906
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672907
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672908
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672909
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672910
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672911
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672912
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672913
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672914
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672915
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672916
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672917
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672918
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672919
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672920
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672921
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672922
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672923
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672924
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672925
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672926
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672927
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672928
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672929
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672930
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672931
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672932
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672933
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672934
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672935
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672936
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672937
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672938
+    },
+    {
+     "chain_ok": true,
+     "distinct_ids_returned": 1,
+     "holds": true,
+     "outcomes": {
+      "DatabaseError": 3,
+      "accepted": 1
+     },
+     "overlap": true,
+     "rows_with_request": 1,
+     "seed": 112672939
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.9124,
+    1.0
+   ]
+  },
+  "verdict": "PASS"
+ }
+}

@@ -1,0 +1,158 @@
+{
+ "at": "2026-11-17T14:05:56Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/old_repro/n_old.py",
+  "code_commit": "31112b4",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   0.49853515625,
+   1.041015625,
+   1.59814453125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "old_code_N1_N7",
+ "result": {
+  "N1": {
+   "property": "erased subject X absent from the live events index after erasure completes",
+   "property_holds": false,
+   "witness": {
+    "X_docs_in_live_index_after": 1,
+    "job_state": [
+     "done"
+    ],
+    "projector_exc": "OperationalError",
+    "read_contained_X": true,
+    "receipt_es_event_docs": 0,
+    "rows_read_before_erasure": 1
+   }
+  },
+  "N2": {
+   "property": "erasure purges X from every index family (ev2 included)",
+   "property_holds": false,
+   "witness": {
+    "X_in_ev2_after": 1,
+    "X_in_ev2_before": 1,
+    "X_in_events_after": 0,
+    "job_state": [
+     "done"
+    ],
+    "receipt_rebuilt": [
+     [
+      "events",
+      227,
+      [
+       "sys-n2old-events-b00227-g1",
+       "sys-n2old-events-b00227-g2",
+       1
+      ]
+     ]
+    ]
+   }
+  },
+  "N3": {
+   "property": "after B erases Y, Y is absent from every index of the tenant",
+   "property_holds": false,
+   "witness": {
+    "A_exc": "OperationalError",
+    "A_survivor_read_had_Y": true,
+    "B_receipt_es_event_docs": 0,
+    "Y_docs_any_index": 1,
+    "Y_docs_live": 1,
+    "job_states": [
+     "key_destroyed",
+     "done"
+    ]
+   }
+  },
+  "N4": {
+   "property": "job reaches done only with verification zero; reader hides tombstoned events after done",
+   "property_holds": false,
+   "witness": {
+    "job_states": [
+     "done"
+    ],
+    "reader_served_X_event_after_done": [
+     "n4old/s1/2"
+    ],
+    "receipt_es_event_docs": 1
+   }
+  },
+  "N5": {
+   "property": "no read path serves an erased fact while the job is pending",
+   "property_holds": false,
+   "witness": {
+    "job_states": [
+     "pending"
+    ],
+    "query_facts_hits": 1,
+    "query_facts_leaked": 1,
+    "search_facts_hits": 1
+   }
+  },
+  "N6": {
+   "property": "no plaintext of an erased subject remains in any Postgres table",
+   "property_holds": false,
+   "witness": {
+    "after_erasure": 1,
+    "job_states": [
+     "done"
+    ],
+    "task_view_rows_with_marker_before": 1
+   }
+  },
+  "N7": {
+   "property": "stale approval refused; replayed approval refused; retried decision id is a no-op",
+   "property_holds": false,
+   "witness": {
+    "a_text": "US only",
+    "b_text": "US only",
+    "c_pending": [],
+    "c_text": "EU only",
+    "sub": {
+     "a_stale_readback_refused": false,
+     "b_replayed_accept_refused": false,
+     "c_retry_same_id_is_noop": false
+    }
+   }
+  },
+  "old_head": "a13b524"
+ }
+}

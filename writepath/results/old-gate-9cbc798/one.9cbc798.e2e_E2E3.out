@@ -1,0 +1,10 @@
+start 2026-11-17T13:31:18Z head 9cbc798 free 20G: exp.e2e_restored E2 E3 40
+disk_gate start free 19.8 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate e2e_E2E3 free 19.8 GiB own +0.00 GiB
+E2 PASS {"fenced": {"runs_total": 40, "overlapped": 40, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 40, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.9124, 1.0], "wilson95_violation_rate_overlapped": [-0.0, 0.0876]}, "control": {"runs_total": 40, "overlapped": 40, "errors": 0, "holds_all": 0, "violated_all": 40, "holds_overlapped": 0, "violated_overlapped": 40, "wilson95_hold_rate_overlapped": [-0.0, 0.0876], "wilson95_violation_rate_overlapped": [0.9124, 1.0]}, "store_only": {"runs_total": 40, "overlapped": 40, "holds_overlapped": 40, "violated_all": 0, "errors": 0, "wilson95_hold_rate_overlapped": [0.9124, 1.0]}}
+RESULT e2e_E2 sha256=24fce67634288d0a76b70f1bfbdfedff93244d1e61589d314990f89e2dc7bcc5 file=~/emlab2-16096/writepath/wp/results/e2e_E2.24fce67634288d0a.json
+E3 PASS {}
+RESULT e2e_E3 sha256=5e01fd7c029d7564fb7edcd46106e2a16ee408d8069d0a810c58f291173c134a file=~/emlab2-16096/writepath/wp/results/e2e_E3.5e01fd7c029d7564.json
+exit=0
+disk_gate end free 19.7 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T13:35:36Z

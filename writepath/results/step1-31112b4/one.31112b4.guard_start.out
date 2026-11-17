@@ -1,0 +1,8 @@
+start 2026-11-17T14:05:07Z head 31112b4 free 20G: exp.guard_check start --controls
+disk_gate start free 20.0 GiB own 0.13 GiB (pg 0.07 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate guard_start free 20.0 GiB own +0.00 GiB
+guard_check start PASS {}
+RESULT guard_check_start sha256=91e6c9d1f0ae6025f89c06a9efd06050f0c1bbfbcece0b248a6264bd1ab9f9b8 file=~/emlab2-16096/writepath/wp/results/guard_check_start.91e6c9d1f0ae6025.json
+exit=0
+disk_gate end free 20.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T14:05:09Z

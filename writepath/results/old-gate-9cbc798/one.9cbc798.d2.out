@@ -1,0 +1,8 @@
+start 2026-11-17T13:25:28Z head 9cbc798 free 20G: exp.d2_verifier_process 5
+disk_gate start free 19.9 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate d2 free 19.9 GiB own +0.00 GiB
+d2_verifier_process {'pass': True, 'why': []}
+RESULT d2_verifier_process sha256=696529b873ec83d333d3623ac3fe5bbd3a1a5f44ceec8a0587778b8c498983c5 file=~/emlab2-16096/writepath/wp/results/d2_verifier_process.696529b873ec83d3.json
+exit=0
+disk_gate end free 19.8 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T13:28:18Z

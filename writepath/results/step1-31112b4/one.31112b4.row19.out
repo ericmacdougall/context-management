@@ -1,0 +1,13 @@
+start 2026-11-17T15:50:48Z head 31112b4 free 20G: exp.row19_secrets
+disk_gate start free 19.6 GiB own 0.32 GiB (pg 0.26 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate row19 free 19.6 GiB own +0.00 GiB
+row19 PASS {"catch_lb_ge_0.98": true, "false_block_ub_le_0.01": true, "ctl_nodecode_violated": true, "fenced_scanner_refused": true, "fenced_store_refused_WPS21": true, "ctl_noscan_violated": true}
+  planted 880 / 880 (0.9957, 1.0) missed {}
+  out_of_scope {"slack_token/split_two_writes_first_half": 10, "llm_api_key/split_two_writes_first_half": 10, "private_key_block/split_two_writes_first_half": 10, "url_credentials/rot13": 10}
+  clean 2 / 3862 (0.0001, 0.0019) [{"where": "/usr/lib/python3.12/getpass.py:1", "detectors": ["generic_assignment"]}, {"where": "/usr/lib/python3.12/getpass.py:81", "detectors": ["generic_assignment"]}]
+  ctl_nodecode 340 / 880 (0.3548, 0.419)
+  store {"fenced_scanner": "refused:['github_token']", "fenced_scanner_rows": [0, 0], "fenced_store": "refused:WPS21", "fenced_store_rows": [0, 0], "ctl_noscan": "stored", "ctl_noscan_rows": [1, 0]}
+RESULT row19_secrets sha256=8144257ccb18651900461a0289c256a4a46a1737741bd6dcf650dc26da03a04b file=~/emlab2-16096/writepath/wp/results/row19_secrets.8144257ccb186519.json
+exit=0
+disk_gate end free 19.6 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T15:50:52Z

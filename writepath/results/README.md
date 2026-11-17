@@ -8,9 +8,11 @@ Result documents carry ids and hashes only; a leak scan of every file against th
 | Folder | What it is | Status |
 |---|---|---|
 | `run_all-fd4ed53-VOID/` | The run_all at fd4ed53, started 2026-11-17T07:56:40Z. | **VOID** (amendment 17c): Elasticsearch reached its flood-stage watermark at 10:23:42Z because another tenant of the host filled the disk (this stream's own usage stayed at +0.17 GiB). The run stopped before `cleanup exp.e2e_restored`. races, plan_stability and the final guard_check were not run. Everything here is an observation, not a stamped result. |
-| `failing-first/` | Results against the code before a fix: lock_order at eaed478 (amendment 17), plan_stability at fdbecb4 (amendment 18b), and projector_start_race at 3c229fc, which still had the fd4ed53 step() (amendment 19). | Failing-first evidence. |
+| `failing-first/` | Results against the code before a fix: lock_order at eaed478 (amendment 17), plan_stability at fdbecb4 (amendment 18b), projector_start_race at 3c229fc, which still had the fd4ed53 step() (amendment 19), and projector_es_fault at 1539a75, before the review-2 N1 fix (amendment 21: the fixed arm held 0/5 in each of CAS, ITEM, REQ and CONN). | Failing-first evidence. |
+| `old-gate-9cbc798/` | Batch step1-b at 9cbc798 (amendment 20): guard_check start to guard_check end, 19 runs. | Old-gate observations, all PASS (n_old violated as intended). Run under the disk gate before review-2 N2 and before the N1 fix; every one is rerun at the post-fix commit (batch c or d). Not stamped results. |
+| `step1-31112b4/` | Batch step1-c at 31112b4 (amendment 23), under the fixed gate, from guard_check start to d3. | Stamped. 17 runs PASS (n_old violated as intended). **d3 is FAIL** (amendment 23a, see below). The batch stopped BLOCKED before mutual_mentions; the rest runs as batch d at 2e1948c. |
 | `unstamped/` | plan_stability at ba71567 (its PASS is VOIDED by amendment 18c: the work metric did not multiply rows removed by loops) and at 83f7000 (the fix; PASS, a pre-run, not the stamped run). | Not stamped. |
-| `single-runs/` | One stamped run per experiment, each from a pinned tree with the same validity gates as run_all (17 GB start line, disk_gate start/check/end, flood watcher). Each has its `one.<head>.<label>.out` log. | Stamped. projector_start_race at 5d26746 is FAIL from a harness defect (amendment 19a) and stands for that run; it is superseded by the 62c6be5 run, not deleted. |
+| `single-runs/` | One stamped run per experiment, each from a pinned tree with the same validity gates as run_all (17 GB start line, disk_gate start/check/end, flood watcher). Each has its `one.<head>.<label>.out` log. | Stamped under the old gate (see "Validity gate of these runs"); each one that uses the stores is superseded by its rerun at the post-fix commit (batch c or d). projector_start_race at 5d26746 is FAIL from a harness defect (amendment 19a) and stands for that run; it is superseded by the 62c6be5 run, not deleted. |
 | `void-earlier/` | The run_all logs of the two earlier VOID runs, 1f059f4 and 83f7000. | VOID, logs only. |
 
 Verdicts observed in the fd4ed53 run before the void (from `run_all.fd4ed53.out`):
@@ -98,10 +100,40 @@ as recorded at 62c6be5. What the saved outputs show, per run (`disk_gate end` li
   10:33:12Z, the tail of the episode that voided fd4ed53, before the first run here (10:34:31Z). This is evidence
   about the windows, read later; it is not the gate's own observation. Raw output: `review-2/n2_retro_log_check.out`
   (a local read, not a host result document, so not in MANIFEST.tsv).
-- **Batch step1-b at 9cbc798** (amendment 20) also ran under the old gate: guard_check start, static_check,
-  es_semantics, n_old, review_fix and the experiments after it. An operator STOP written at 11:32:50Z did not stop it
-  (the old `end` ignored STOP, and the next run's `start` deleted it; fixed in ba827fa). Its results are recorded as
-  old-gate observations, not stamped results.
+- **Second read, with the high watermark (2026-11-17 ~16:10Z, amendment 23a):** `review-2/window_check_all.out`
+  (raw; made by `runkit/window_check.sh`) reads each window again and also counts "high disk watermark ... exceeded"
+  lines. Every window above, the 1539a75 failing-first run and every batch-b window below show exit 0, no
+  high-watermark line and no flood-stage line. Windows shorter than about 30 s can hold no line at all (ES repeats
+  these warnings about every 30 s), so for those the read cannot show absence.
+- **Batch step1-b at 9cbc798** (amendment 20, `old-gate-9cbc798/`) also ran under the old gate, from 11:32:11Z to
+  13:35:39Z: guard_check start, static_check, es_semantics, n_old, review_fix, scope_hold, n_new, row1, row23,
+  e_verify, registry_marker, d1, row19, row6, mutual_mentions, d2, phys_purge, e2e E2 and E3, guard_check end. All
+  PASS (n_old violated as intended). Cap held in every run (largest +0.02 GiB). Log retrieval at the time cannot be
+  shown, as above; the later read shows exit 0 and no high or flood line in any window. An operator STOP written at
+  11:32:50Z did not stop it (the old `end` ignored STOP, and the next run's `start` deleted it; fixed in ba827fa). Its
+  code predates the N1 fix (8a03b80), so its results are old-gate observations, not stamped results; every one runs
+  again at the post-fix commit.
+
+### Step 1 at the post-fix commit (review-2 N1 to N3)
+
+Product code at 31112b4 includes the N1 fix (8a03b80); `git diff 31112b4 2e1948c -- writepath/wp` is empty. Every run
+uses the fixed gate (72c0708) and, from 2e1948c, the high-watermark rule (39dbad7).
+
+- **Batch c at 31112b4** (`step1-c.txt`, amendment 23, `step1-31112b4/`), 14:05:07Z to 15:56:48Z:
+  - **PASS:** guard_check start, static_check (no violations), es_semantics, F3, F4, F5, F7, F1S, F6, F1 (100,000
+    events, zero residue, 60 cascade batches, max batch 1.15 s), M, H, N1, N2, N5, N8 (fenced 10/10, controls
+    violated 10/10), row1, row23, e_verify, registry_marker, d1, d4 (rescan), row19 (880/880 on the author's own
+    planted corpus only; heldout below), row6, d4 (store mark).
+  - **Expected violations:** n_old N1 to N7 on the old code.
+  - **d3: FAIL** (amendment 23a). No verdict, exit 1: the N1-fixed projector raised ProjectionError on 503
+    unavailable_shards_exception. At 15:54:43Z the ES node logged "high disk watermark [17gb] exceeded" (free 15.7
+    GiB; other tenants of the host; this stream's own usage +0.00 GiB). d3's index wp16096-d3db4f08-events-base,
+    created at 15:54:47Z, never started its shard. The gate of 72c0708 judged only the flood stage; that harness
+    defect is fixed in 39dbad7. The FAIL stands and is reported beside its rerun.
+  - **mutual_mentions: BLOCKED** at its start (host free 16G, under the 17G start line). The chain stopped there.
+- **Batch d at 2e1948c** (`step1-d.txt`, amendment 23a): d3 again, then mutual_mentions, lock_order, d2, phys_purge,
+  E1, E2 and E3, projector_start_race, projector_es_fault, races, size_probe, plan_stability (amendment 22) and
+  guard_check end. Its results are added here when the batch ends.
 
 ### Limits that apply to every erasure result here
 
@@ -116,4 +148,6 @@ as recorded at 62c6be5. What the saved outputs show, per run (`disk_gate end` li
   version, so they cannot be reproduced from the fingerprint alone. Fingerprints from cf8f08e on record the effective
   settings (exp/common.PG_SETTINGS).
 
-The remaining step-1 experiments were observed only in the VOID fd4ed53 run: F3, F4, F5, F7, F1S, F6, M, H, N1, N2, N5, N8, row1, row23, e_verify, registry_marker, d1, row19 (880/880 on its author's own planted corpus only; on held-out data the scanner caught 483/1,169 and 150/750), row6, mutual_mentions, d2, phys_purge, E2 and E3. Not run at 62c6be5: guard_check end, and a full run_all restamp.
+Every step-1 experiment that uses the stores is stamped at the post-fix commit: in batch c (31112b4) or batch d
+(2e1948c). row19's 880/880 is on its author's own planted corpus only; on held-out data the scanner caught 483/1,169
+and 150/750 (heldout_secrets FAIL). Not run: a full run_all restamp (main's order: stamped singles instead).

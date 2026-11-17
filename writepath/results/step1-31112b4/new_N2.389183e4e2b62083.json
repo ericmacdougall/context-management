@@ -1,0 +1,779 @@
+{
+ "at": "2026-11-17T14:56:03Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/n_new.py 10",
+  "code_commit": "31112b4",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.25341796875,
+   1.98193359375,
+   1.9111328125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "new_N2",
+ "result": {
+  "R": 10,
+  "arms": {
+   "control": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n2746ab8-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n2746ab8-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n2dbead7-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n2dbead7-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n29507e8-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n29507e8-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n2c62c87-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n2c62c87-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n2ae18c9-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n2ae18c9-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n284950f-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n284950f-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n25e39da-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n25e39da-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n21d0b65-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n21d0b65-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n2c95a10-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n2c95a10-ev2-base"
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue in an unregistered family flagged:es-index:wp16096-n22b1ada-ev2-base",
+      "witness": {
+       "X_docs_all_indices_after": 1,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": false,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 1,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": [
+        "es-index:wp16096-n22b1ada-ev2-base"
+       ]
+      }
+     }
+    ],
+    "violated": 10
+   },
+   "fenced": {
+    "errors": 0,
+    "holds": 10,
+    "runs": [
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices_after": 0,
+       "X_docs_before_per_family": {
+        "events": 2,
+        "facts": 1
+       },
+       "families_enumerated": 2,
+       "receipt_done": true,
+       "receipt_verify": {
+        "es:events": 0,
+        "es:facts": 0,
+        "es:soft_deleted": 0,
+        "es:tombstoned_not_placeholder": 0,
+        "gate:unregistered": 0,
+        "keys:physical_pending": 0,
+        "keys:subject_keys": 0,
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "unregistered_flagged": []
+      }
+     }
+    ],
+    "violated": 0
+   }
+  },
+  "control_patch": "a writer for an unregistered family",
+  "control_violated": 10,
+  "errors": {
+   "control": 0,
+   "fenced": 0
+  },
+  "fenced_holds": 10,
+  "pass": true
+ }
+}

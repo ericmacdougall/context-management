@@ -1,0 +1,8 @@
+start 2026-11-17T12:59:06Z head 9cbc798 free 21G: exp.d1_hold_mentions 5
+disk_gate start free 20.3 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate d1 free 20.3 GiB own +0.00 GiB
+D1 PASS {"fenced": {"S1": [5, 0], "S2": [5, 0], "S3": [5, 0]}, "controls": {"ctl_apply_ignores_holds:S1": [5, 0], "ctl_apply_ignores_holds:S2": [5, 0], "ctl_app_can_release:S3": [5, 0]}}
+RESULT d1_hold_mentions sha256=37156372a9a0ebe3170794a9a0ce675bb1913012566392f06c8a0efc588b0aba file=~/emlab2-16096/writepath/wp/results/d1_hold_mentions.37156372a9a0ebe3.json
+exit=0
+disk_gate end free 20.3 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T13:09:32Z

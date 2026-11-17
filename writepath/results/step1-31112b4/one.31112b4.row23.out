@@ -1,0 +1,8 @@
+start 2026-11-17T15:18:07Z head 31112b4 free 20G: exp.row23_latecommit 10
+disk_gate start free 19.7 GiB own 0.32 GiB (pg 0.26 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate row23 free 19.7 GiB own +0.00 GiB
+{'R': 10, 'control_violated': 10, 'fenced_holds': 10, 'pass': True} {'events_total': 11, 'during_stall': {'naive_seen': 10, 'xmin_projected': 0}, 'naive_projected': 10, 'naive_skipped_H': True, 'xmin_projected': 11, 'xmin_has_H': True, 'H_first_in_commit_xid_order': True}
+RESULT row23_latecommit sha256=bf435fe9fc5440bb8acb337db1d03704cf730572e7fc53460a174957e8b776c2 file=~/emlab2-16096/writepath/wp/results/row23_latecommit.bf435fe9fc5440bb.json
+exit=0
+disk_gate end free 19.7 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T15:18:11Z

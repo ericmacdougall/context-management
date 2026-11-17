@@ -1,0 +1,8 @@
+start 2026-11-17T15:45:33Z head 31112b4 free 20G: exp.d4_rescan_es 5
+disk_gate start free 19.6 GiB own 0.32 GiB (pg 0.26 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate d4_rescan free 19.6 GiB own +0.00 GiB
+D4 PASS {"fenced": [5, 0, 0], "control": [0, 5, 0]} {"holds": true, "witness": {"done": false, "residue": "es:tombstoned_not_placeholder", "rescan_found": 1, "es_docs_with_marker": 1}} {"holds": false, "witness": {"done": true, "residue": null, "rescan_found": 1, "es_docs_with_marker": 1}}
+RESULT d4_rescan_es sha256=0780e62938b276e2b2658678f732e01bb5c26800c718737dc8ba2c7a8c4f1d07 file=~/emlab2-16096/writepath/wp/results/d4_rescan_es.0780e62938b276e2.json
+exit=0
+disk_gate end free 19.6 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T15:50:45Z

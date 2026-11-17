@@ -1,0 +1,244 @@
+{
+ "at": "2026-11-17T14:15:16Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/31112b4-20261117T140105Z/exp/review_fix.py F3 F4 F5 F7 F1S F6 10",
+  "code_commit": "31112b4",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   0.630859375,
+   0.810546875,
+   1.205078125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "review_fix_F6",
+ "result": {
+  "note": "takeover and quarantine R=min(R,3) per arm (each takeover run holds 20 s); xmin is a measurement, not a PASS",
+  "params": {
+   "R": 10,
+   "n100k": 100000
+  },
+  "pass": true,
+  "quarantine": {
+   "control": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "holds": false,
+      "why": "kept 1500",
+      "witness": {
+       "attempts": 1500,
+       "kept": 1500,
+       "quota_row": [
+        1500,
+        0
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "kept 1500",
+      "witness": {
+       "attempts": 1500,
+       "kept": 1500,
+       "quota_row": [
+        1500,
+        0
+       ]
+      }
+     },
+     {
+      "holds": false,
+      "why": "kept 1500",
+      "witness": {
+       "attempts": 1500,
+       "kept": 1500,
+       "quota_row": [
+        1500,
+        0
+       ]
+      }
+     }
+    ],
+    "violated": 3
+   },
+   "fenced": {
+    "errors": 0,
+    "holds": 3,
+    "runs": [
+     {
+      "holds": true,
+      "why": "kept 1000",
+      "witness": {
+       "attempts": 1500,
+       "kept": 1000,
+       "quota_row": [
+        1000,
+        500
+       ]
+      }
+     },
+     {
+      "holds": true,
+      "why": "kept 1000",
+      "witness": {
+       "attempts": 1500,
+       "kept": 1000,
+       "quota_row": [
+        1000,
+        500
+       ]
+      }
+     },
+     {
+      "holds": true,
+      "why": "kept 1000",
+      "witness": {
+       "attempts": 1500,
+       "kept": 1000,
+       "quota_row": [
+        1000,
+        500
+       ]
+      }
+     }
+    ],
+    "violated": 0
+   },
+   "pass": true
+  },
+  "takeover": {
+   "control": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "holds": false,
+      "why": "takeover 19.02s",
+      "witness": {
+       "lock_timeout_retries": 10,
+       "stall_s": 20.0,
+       "takeover_s": 19.02,
+       "zombie_events_committed": 1,
+       "zombie_outcome": "{'accepted': ['6acc51b3fadd474f9945725140c93c4d'], 'duplicates': [], 'quarantine"
+      }
+     },
+     {
+      "holds": false,
+      "why": "takeover 19.02s",
+      "witness": {
+       "lock_timeout_retries": 10,
+       "stall_s": 20.0,
+       "takeover_s": 19.02,
+       "zombie_events_committed": 1,
+       "zombie_outcome": "{'accepted': ['bbe0be41b7d74ff598c8a1089ef6444a'], 'duplicates': [], 'quarantine"
+      }
+     },
+     {
+      "holds": false,
+      "why": "takeover 19.02s",
+      "witness": {
+       "lock_timeout_retries": 10,
+       "stall_s": 20.0,
+       "takeover_s": 19.02,
+       "zombie_events_committed": 1,
+       "zombie_outcome": "{'accepted': ['fe919b22053b47509623abaa3f6b9002'], 'duplicates': [], 'quarantine"
+      }
+     }
+    ],
+    "violated": 3
+   },
+   "fenced": {
+    "errors": 0,
+    "holds": 3,
+    "runs": [
+     {
+      "holds": true,
+      "why": "takeover 4.02s",
+      "witness": {
+       "lock_timeout_retries": 3,
+       "stall_s": 20.0,
+       "takeover_s": 4.02,
+       "zombie_events_committed": 0,
+       "zombie_outcome": "error OperationalError"
+      }
+     },
+     {
+      "holds": true,
+      "why": "takeover 4.02s",
+      "witness": {
+       "lock_timeout_retries": 3,
+       "stall_s": 20.0,
+       "takeover_s": 4.02,
+       "zombie_events_committed": 0,
+       "zombie_outcome": "error OperationalError"
+      }
+     },
+     {
+      "holds": true,
+      "why": "takeover 4.03s",
+      "witness": {
+       "lock_timeout_retries": 3,
+       "stall_s": 20.0,
+       "takeover_s": 4.03,
+       "zombie_events_committed": 0,
+       "zombie_outcome": "error OperationalError"
+      }
+     }
+    ],
+    "violated": 0
+   },
+   "pass": true
+  },
+  "xmin_measurement": [
+   {
+    "mitigated": false,
+    "other_txn_hold_s": 20.0,
+    "projection_delay_s": 20.2
+   },
+   {
+    "mitigated": true,
+    "other_txn_hold_s": 20.0,
+    "projection_delay_s": 5.4
+   }
+  ]
+ }
+}

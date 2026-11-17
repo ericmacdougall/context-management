@@ -1,0 +1,737 @@
+{
+ "at": "2026-11-17T13:59:44Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/1539a75-20261117T120436Z/exp/projector_es_fault.py 5",
+  "code_commit": "1539a75",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.52880859375,
+   1.7294921875,
+   1.9951171875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "projector_es_fault",
+ "result": {
+  "R": 5,
+  "control": {
+   "CAS": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "CONN": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "ITEM": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "REQ": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "STALE": {
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     }
+    ],
+    "violated": 0
+   }
+  },
+  "control_patch": "families.fence_es, Projector._bulk and Projector.step replaced by their 1fcf3f7 bodies",
+  "fixed": {
+   "CAS": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CAS",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "CONN": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "CONN",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ConnectionResetError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "ITEM": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "ITEM",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "returned:True",
+      "p1_holds_lease": false,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "REQ": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     },
+     {
+      "case": "REQ",
+      "events_after_p1": 0,
+      "events_in_es": 0,
+      "holds": false,
+      "injected": 1,
+      "lease_live_after": true,
+      "outcome": "raised:ESError",
+      "p1_holds_lease": true,
+      "p3_first_step": 0,
+      "p3_lease_after_first_step": false,
+      "p3_run": true
+     }
+    ],
+    "violated": 5
+   },
+   "STALE": {
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     },
+     {
+      "case": "STALE",
+      "events_in_es": 6,
+      "holder_is_taker": true,
+      "holds": true,
+      "lease_live_after": true,
+      "outcome": "returned:-1",
+      "p1_holds_lease": false,
+      "taker_run": true
+     }
+    ],
+    "violated": 0
+   }
+  },
+  "verdict": "FAIL",
+  "why": [
+   "fixed CAS holds 0/5 (violated 5, errors 0)",
+   "fixed ITEM holds 0/5 (violated 5, errors 0)",
+   "fixed REQ holds 0/5 (violated 5, errors 0)",
+   "fixed CONN holds 0/5 (violated 5, errors 0)"
+  ]
+ }
+}

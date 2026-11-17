@@ -1,0 +1,8 @@
+start 2026-11-17T15:18:12Z head 31112b4 free 20G: exp.e_verify 10
+disk_gate start free 19.7 GiB own 0.32 GiB (pg 0.26 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate e_verify free 19.7 GiB own +0.00 GiB
+e_verify PASS {"a_no_verify": {"fenced_refused": 10, "control_accepted": 10, "patch": "ab", "sample": ["refused:23514", "accepted:1"]}, "b_verify_false": {"fenced_refused": 10, "control_accepted": 10, "patch": "ab", "sample": ["refused:23514", "accepted:1"]}, "c_stale_claimant": {"fenced_refused": 10, "control_accepted": 10, "patch": "c", "sample": ["refused:WPS07", "accepted:1"]}, "d_input_erased": {"fenced_refused": 10, "control_accepted": 10, "patch": "d", "sample": ["refused:WPS03", "accepted:1"]}} e_proper 10
+RESULT e_verify sha256=f934c3b82ec1faef7878d7d96b5e958450040b8f942cdbba65d71abeed8021df file=~/emlab2-16096/writepath/wp/results/e_verify.f934c3b82ec1faef.json
+exit=0
+disk_gate end free 19.7 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T15:18:15Z

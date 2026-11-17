@@ -1,0 +1,8 @@
+start 2026-11-17T14:05:12Z head 31112b4 free 20G: exp.static_check
+disk_gate start free 20.0 GiB own 0.13 GiB (pg 0.07 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate static_check free 20.0 GiB own +0.00 GiB
+{'checks': {'S1': [], 'S2': [], 'S3': [], 'S4': [], 'S5': [], 'S6': []}, 'families': ['events', 'facts'], 'tables': ['leases', 'subjects', 'identifier_epochs', 'subject_identifiers', 'chains', 'events', 'decision_heads', 'quarantine', 'quarantine_quota', 'tombstones', 'inbox', 'analyst_jobs', 'facts', 'cursors', 'store_registry', 'erasure_jobs', 'erasure_mentions', 'erasure_withheld', 'erasure_rescanned', 'legal_holds'], 'controls_fail': {'S1': True, 'S2': True, 'S3': True, 'S4': True, 'S5': True, 'S6': True}}
+RESULT static_check sha256=1ea5bfb79d8a61f6a73adc2ef129c77276547bdaae95d81b73343dd108b4be67 file=~/emlab2-16096/writepath/wp/results/static_check.1ea5bfb79d8a61f6.json
+exit=0
+disk_gate end free 20.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T14:05:13Z

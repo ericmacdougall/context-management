@@ -1,0 +1,8 @@
+start 2026-11-17T13:59:28Z head 1539a75 free 20G: exp.projector_es_fault 5
+disk_gate start free 19.9 GiB own 0.14 GiB (pg 0.08 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate pef_ff free 20.0 GiB own +0.00 GiB
+projector_es_fault FAIL ['fixed CAS holds 0/5 (violated 5, errors 0)', 'fixed ITEM holds 0/5 (violated 5, errors 0)', 'fixed REQ holds 0/5 (violated 5, errors 0)', 'fixed CONN holds 0/5 (violated 5, errors 0)'] {'fixed': {'CAS': (0, 5, 0), 'ITEM': (0, 5, 0), 'REQ': (0, 5, 0), 'CONN': (0, 5, 0), 'STALE': (5, 0, 0)}, 'control': {'CAS': (0, 5, 0), 'ITEM': (0, 5, 0), 'REQ': (0, 5, 0), 'CONN': (0, 5, 0), 'STALE': (5, 0, 0)}}
+RESULT projector_es_fault sha256=339305ed8ae5fc132e899900801771bf7f6786a68f3cedeacfad85c38c7b2f46 file=~/emlab2-16096/writepath/wp/results/projector_es_fault.339305ed8ae5fc13.json
+exit=0
+disk_gate end free 20.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T13:59:44Z
