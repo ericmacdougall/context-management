@@ -1,0 +1,87 @@
+{
+ "header": {
+  "commit": "305de980f4a6351f6203285f79e7977839c3d7e7",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 7.8095703125,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item7",
+  "params": {
+   "calls": 20,
+   "window_msgs": [
+    4,
+    8
+   ]
+  },
+  "time_utc": "2026-11-16T19:12:55Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "assistant_events": 54,
+   "blocking_gaps_open": 17,
+   "calls": 20,
+   "claim_complete": false,
+   "distinct_assistant_texts": 20,
+   "distinct_user_texts": 20,
+   "gap_kinds": [
+    "history_rewritten",
+    "unlogged_assistant_message"
+   ],
+   "user_events": 54,
+   "window_msgs": 4
+  },
+  {
+   "assistant_events": 80,
+   "blocking_gaps_open": 15,
+   "calls": 20,
+   "claim_complete": false,
+   "distinct_assistant_texts": 20,
+   "distinct_user_texts": 20,
+   "gap_kinds": [
+    "history_rewritten",
+    "unlogged_assistant_message"
+   ],
+   "user_events": 80,
+   "window_msgs": 8
+  }
+ ],
+ "summary": {
+  "probe": "sliding-window host (UNREGISTERED)",
+  "runs": [
+   {
+    "assistant_events": 54,
+    "blocking_gaps_open": 17,
+    "calls": 20,
+    "claim_complete": false,
+    "distinct_assistant_texts": 20,
+    "distinct_user_texts": 20,
+    "gap_kinds": [
+     "history_rewritten",
+     "unlogged_assistant_message"
+    ],
+    "user_events": 54,
+    "window_msgs": 4
+   },
+   {
+    "assistant_events": 80,
+    "blocking_gaps_open": 15,
+    "calls": 20,
+    "claim_complete": false,
+    "distinct_assistant_texts": 20,
+    "distinct_user_texts": 20,
+    "gap_kinds": [
+     "history_rewritten",
+     "unlogged_assistant_message"
+    ],
+    "user_events": 80,
+    "window_msgs": 8
+   }
+  ]
+ }
+}

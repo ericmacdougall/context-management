@@ -1,0 +1,869 @@
+{
+ "header": {
+  "commit": "6989e7970dbd04b88df099604a67c4172b6868f5",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 5.86328125,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item13b",
+  "params": {
+   "providers": 2,
+   "seeds": "101-110"
+  },
+  "time_utc": "2026-11-17T05:51:21Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 101,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 102,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 103,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 104,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 105,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 106,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 107,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 108,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 109,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "anthropic",
+   "seed": 110,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 101,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 102,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 103,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 104,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 105,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 106,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 107,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 108,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 109,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  },
+  {
+   "declared": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [
+     2
+    ],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "declared_retry"
+    ],
+    "resp_events_marked_declared": 1,
+    "user_events": 1
+   },
+   "false_claim": {
+    "ambiguous_calls": [],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": true,
+    "flagged_user_events": 0,
+    "port_kinds": [
+     "retry_claim_ignored"
+    ],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   },
+   "provider": "openai",
+   "seed": 110,
+   "undeclared": {
+    "ambiguous_calls": [
+     2
+    ],
+    "assistant_events": 2,
+    "declared_calls": [],
+    "exactly_once": false,
+    "flagged_user_events": 1,
+    "port_kinds": [],
+    "resp_events_marked_declared": 0,
+    "user_events": 2
+   }
+  }
+ ],
+ "summary": {
+  "declared_suppressed_visibly": 20,
+  "false_claim_ignored": 20,
+  "runs": 20,
+  "undeclared_flagged_duplicate": 20
+ }
+}

@@ -1,0 +1,6 @@
+PREREG-amend-5 equivalence check for the performance-only change to ingest/scan.py (memoised token decoding)
+old scanner: git blob of ingest/scan.py at d3e1456; new scanner: the working tree after the change
+corpus: tuned set (8 variants x 50), burned held-out (16 x 50), benign set (18 classes x 40, fresh seed rule), fresh held-out texts (24 cells x 40), 3 extra strings
+comparison: the full list of (start, end, kind) findings from scan() for each text; only the equality count is recorded, no fresh-set score was computed
+result: texts 2883, different 0
+script: equiv.py kept in the owner's work directory (agent-a7afcea1159db1889)
