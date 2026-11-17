@@ -41,9 +41,11 @@ decisions, the deployment requirements that follow from them, and what is still 
   which may be days: the receipt must then say "logically erased, key deletion scheduled until <date>".
   The erasure mark itself has no time bound under concurrent writes either (see "Erasure timing under concurrent
   writes" below).
-- Identifier rule (amendment 11): ASSUMPTION, not a user decision: single-token identifiers without a digit need >= 6
-  characters; stop-word-only identifiers are refused. Span redaction is not implemented: a mention removes the event
-  whole.
+- Identifier rule (amendment 11, now rule r3 of "Redesign after review C"): ASSUMPTION, not a user decision:
+  single-token identifiers without a digit need >= 6 characters; identifiers made only of common words, or of
+  look-alikes of them, are refused. Decision R1 (review C, ASSUMPTION): there is no span redaction; an event that
+  mentions an erased subject is removed whole, whoever wrote it, and the receipt lists those of other speakers
+  (`other_speakers_removed`).
 - Service separation (D2): the verifier, the key service and the application must run as separate service identities,
   each able to read only its own credential. The lab runs them as separate OS processes with separate credential files
   on one host and one OS user (exp/d2_verifier_process.py); separate OS users or hosts are a deployment requirement,
@@ -312,12 +314,22 @@ return the updated row version. Rule: every function locks the rows it judges in
   Python's unicodedata version: Mac 13.0.0, t2-dev 15.0.0) by `tools/ucd_tables.py`; the table's sha256 is pinned per
   version in `wp/mentions.py`. A missing or different table fails closed (UCDUnavailable): no fallback to matching
   without it. A test enumerates the WHOLE property: every code point, inside a name, still matches with correct offsets.
-- Look-alikes (S6): the matching key is a UTS 39 skeleton per cluster, NFKC then NFD, each code point mapped by
-  confusables.txt 18.0.0 (2026-08-06, sha256 6ed3ee96..., downloaded with the user's approval), NFD again, then casefold
-  and NFKC. Order settled by test: skeleton BEFORE casefold ("AIex Kim" with a capital I matches "Alex Kim" only that
-  way). Exact matches are a subset (identical strings have identical skeletons), so only the skeleton HMAC is stored.
-- Rule r3 judges BOTH forms: scripts, unassigned code points and digits on the original letters (a skeleton hides mixed
-  script); the stop list and the short-token rule on skeletons ("custorner" has the skeleton of "customer").
+- Look-alikes (S6): the matching key is a UTS 39 skeleton per cluster (NFD, each code point mapped by confusables.txt
+  18.0.0, 2026-08-06, sha256 6ed3ee96..., downloaded with the user's approval, NFD again), applied to the case-folded
+  normal form, then casefold and NFKC. Exact matches are a subset (identical strings have identical keys), so only the
+  key HMAC is stored, one per identifier.
+- CORRECTION (found by tests/test_ident.py while writing the code, before any commit of it): the order written here
+  first, skeleton BEFORE casefold, broke ordinary case matching. confusables.txt is case-sensitive (capital I maps to
+  small l; small i, dotless i and iota map to i), so "KIM" got the key "klrn" and "Kim" the key "kirn". No single
+  case-insensitive key can also see capital-shape look-alikes without merging i and l (which would make "Ian" equal
+  "Lan"). Design adopted: identifiers and text share the case-folded key above; TEXT tokens also get an as-written key
+  (skeleton of the cluster as written, then the key), and a text window is looked up under every combination of its
+  tokens' two keys (at most 2^4 = 16; one for text without such capitals). "AIex Kim" is found that way. Stated over-match:
+  "AIEX KIM" (it looks like "AlEX KIM"). Stated not-covered: a look-alike of a capital letter of the declared identifier
+  ("lan" for a declared "Ian").
+- Rule r3 judges BOTH forms: scripts, unassigned code points, digits and token length on the normal form (a skeleton
+  hides mixed script, and m -> rn lengthens a token); the stop list on keys ("custorner" has the key of "customer").
+  The reviewer therefore reads the identifier AS WRITTEN (sealed under the subject key), not a normalised copy.
 - Cost, stated in the receipt: confusable variants also match ("Kim" and "Kirn" share a skeleton), and with whole-event
   removal more of other speakers' events are removed; two subjects whose identifiers share a skeleton are refused
   (WPS20).
@@ -339,12 +351,14 @@ Tested from enumerated starting states, single and mixed across families.
 
 ### F9: a partial search is not absence
 Each per-copy search sends allow_partial_search_results=false and requires timed_out false, terminated_early not true,
-and _shards total = successful = 1, failed = 0, skipped = 0; anything else raises and the job stays open. Source: the
+and _shards total = successful = 1, failed = 0, skipped = 0; anything else counts es:copy_unverified (non-zero, so
+the job stays open), and an incomplete base copy shows no id placed. Source: the
 Elasticsearch search API reference and partial-results options (search summary of elastic.co reference pages and a
 discuss thread, read 2026-11-17; confidence medium: secondary summary, no Elastic page fetched).
 
 ### F10
-DESIGN-NOTES line 45 corrected; the receipt lists other speakers' removed events per event.
+DESIGN-NOTES line 45 corrected; the receipt lists other speakers' removed events per event (`other_speakers_removed`,
+event ids; with R1 there is no later whole removal of a redacted event to account for).
 
 ### Scenario map (reviews B and C)
 | Finding | Class | Ruled out by |

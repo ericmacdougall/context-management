@@ -356,6 +356,16 @@ Other red files carry their tree in their header:
 - review-b2 (wp/ at 0110981 through WP_PKG_UNDER_TEST);
 - leak-scan-json (leak_scan at 3a9eef1).
 
+Review C (`failing-first/reviewC/`, written by `harness/red_with.py` on the Mac, offline, tests at 4996563): each
+output replaces one wp file with its 4fe3ac1 version.
+- `f5-alias-states-4fe3ac1.red.out`: wp/families.py; 13 of 18 tests fail (every polluted start state).
+- `f9-partial-search-4fe3ac1.red.out`: wp/es_verify.py; 17 failing cases (8 partial shapes x 2 copies, the param).
+- `f6-class4-mentions-4fe3ac1.red.out`: wp/mentions.py, run with WP_UCD_DIR set to the lab's Unicode 13.0.0 tables;
+  the whole Default_Ignorable enumeration misses exactly U+17B4 and U+17B5, "AIex Kim" is not found, "custorner" is
+  accepted, the redaction API exists, the table API is absent.
+SUPERSEDED by decision R1 and matcher m3 (kept): `failing-first/d3/d3-store-pg-fb60b2e.red-green.out` (span redaction,
+removed) and `failing-first/d3/m2-*-5e6e378.red.out` (matcher m2, replaced by m3).
+
 review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
 are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own
 failing-first evidence replaces them when it is integrated.
