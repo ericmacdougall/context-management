@@ -4,14 +4,18 @@ NEG-1 a process whose WP_HOME is unset, or names a home without this stream's co
       it could open any connection; NEG-2 a conf that names another stream's container (the previous lab's
       emlab-es-wp-16096) is refused. Also: missing store address refused, non-loopback Elasticsearch refused, a
       correct conf accepted with its own values.
-Each case imports the config module in a fresh interpreter. usage: python3 tests/test_config_guard.py [config.py]
-(default: this tree's wp/config.py; pass the previous commit's file to show that it fails these cases)."""
+Each case imports the config module in a fresh interpreter. usage (from writepath/):
+  python3 -m unittest discover -s tests -v             every offline test; this file contributes 7 cases
+  python3 tests/test_config_guard.py [config.py]       the original report form
+The config under test is this tree's wp/config.py, or the file named in CONFIG_UNDER_TEST (or the script argument):
+pass the previous commit's file to show that it fails these cases."""
 import os
 import pathlib
 import shutil
 import subprocess
 import sys
 import tempfile
+import unittest
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 GOOD = {"stream": "emlab2-writepath", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
@@ -39,31 +43,58 @@ def run_case(cfg_src, home_conf, set_home=True):
         return r.returncode, (r.stdout + r.stderr).strip()
 
 
+CASES = [
+    ("NEG-1 WP_HOME unset", None, False, "refuse"),
+    ("NEG-1 home without stream marker", {k: v for k, v in GOOD.items() if k != "stream"}, True, "refuse"),
+    ("NEG-1 wrong stream marker", dict(GOOD, stream="emlab-writepath"), True, "refuse"),
+    ("NEG-2 previous lab's ES container", dict(GOOD, es_container="emlab-es-wp-16096"), True, "refuse"),
+    ("missing pg_port", {k: v for k, v in GOOD.items() if k != "pg_port"}, True, "refuse"),
+    ("non-loopback es_url", dict(GOOD, es_url="http://203.0.113.5:19460"), True, "refuse"),   # RFC 5737 address
+    ("correct conf", GOOD, True, "load"),
+]
+
+
+def check(cfg_src, conf, set_home, want):
+    """Returns (ok, got, last output line)."""
+    rc, out = run_case(cfg_src, conf, set_home)
+    # a refusal counts only when the config itself refused (its message), never an import or other error
+    got = "load" if (rc == 0 and out.startswith("LOADED")) else "refuse" if (rc != 0 and "refusing to start" in out) else "error"
+    ok = got == want and (want == "refuse" or "LOADED 25660 http://127.0.0.1:19460 emlab2-writepath-es" in out)
+    return ok, got, out.splitlines()[-1][:120] if out else ""
+
+
+def config_under_test():
+    return os.environ.get("CONFIG_UNDER_TEST") or str(HERE / "wp" / "config.py")
+
+
+class ConfigFailsClosed(unittest.TestCase):
+    """One test per case, so the runner reports a real count."""
+
+
+def _make(case):
+    name, conf, set_home, want = case
+
+    def test(self):
+        ok, got, last = check(config_under_test(), conf, set_home, want)
+        self.assertTrue(ok, f"{name}: want {want}, got {got} | {last}")
+    test.__doc__ = name
+    return test
+
+
+for _i, _case in enumerate(CASES, 1):
+    setattr(ConfigFailsClosed, f"test_{_i}_" + "".join(c if c.isalnum() else "_" for c in _case[0].lower()).strip("_"),
+            _make(_case))
+
+
 def main(cfg_src):
-    bad_es = dict(GOOD, es_container="emlab-es-wp-16096")
-    remote_es = dict(GOOD, es_url="http://203.0.113.5:19460")   # RFC 5737 documentation address
-    no_port = {k: v for k, v in GOOD.items() if k != "pg_port"}
-    wrong_stream = dict(GOOD, stream="emlab-writepath")
-    cases = [
-        ("NEG-1 WP_HOME unset", None, False, "refuse"),
-        ("NEG-1 home without stream marker", {k: v for k, v in GOOD.items() if k != "stream"}, True, "refuse"),
-        ("NEG-1 wrong stream marker", wrong_stream, True, "refuse"),
-        ("NEG-2 previous lab's ES container", bad_es, True, "refuse"),
-        ("missing pg_port", no_port, True, "refuse"),
-        ("non-loopback es_url", remote_es, True, "refuse"),
-        ("correct conf", GOOD, True, "load"),
-    ]
     fails = 0
-    for name, conf, set_home, want in cases:
-        rc, out = run_case(cfg_src, conf, set_home)
-        # a refusal counts only when the config itself refused (its message), never an import or other error
-        got = "load" if (rc == 0 and out.startswith("LOADED")) else "refuse" if (rc != 0 and "refusing to start" in out) else "error"
-        ok = got == want and (want == "refuse" or "LOADED 25660 http://127.0.0.1:19460 emlab2-writepath-es" in out)
+    for name, conf, set_home, want in CASES:
+        ok, got, last = check(cfg_src, conf, set_home, want)
         fails += not ok
-        print(("PASS" if ok else "FAIL"), name, "->", got, "|", out.splitlines()[-1][:120] if out else "")
+        print(("PASS" if ok else "FAIL"), name, "->", got, "|", last)
     print("config_guard", "PASS" if fails == 0 else f"FAIL ({fails})")
     return fails
 
 
 if __name__ == "__main__":
-    sys.exit(1 if main(sys.argv[1] if len(sys.argv) > 1 else HERE / "wp" / "config.py") else 0)
+    sys.exit(1 if main(sys.argv[1] if len(sys.argv) > 1 else config_under_test()) else 0)
