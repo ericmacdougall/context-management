@@ -1,0 +1,81 @@
+{
+ "n_sessions": 200,
+ "n_gold_sessions": 79,
+ "n_random": 121,
+ "low_overlap_cap": 40,
+ "weak_list_questions": 11,
+ "gold_sessions_by_group": {
+  "weak_list": 20,
+  "low_overlap": 33,
+  "knowledge_update": 26
+ },
+ "length_chars": {
+  "whole_pool_18464": {
+   "p0": 13.0,
+   "p25": 5791.0,
+   "p50": 10264.0,
+   "p75": 14376.0,
+   "p90": 16878.0,
+   "p100": 78117.0
+  },
+  "pilot_non_gold_candidates": {
+   "p0": 21.0,
+   "p25": 5703.0,
+   "p50": 10140.0,
+   "p75": 14191.0,
+   "p90": 16720.0,
+   "p100": 42867.0
+  },
+  "random_sample": {
+   "p0": 54.0,
+   "p25": 5536.0,
+   "p50": 10819.0,
+   "p75": 14327.0,
+   "p90": 17232.0,
+   "p100": 21041.0
+  },
+  "gold_sessions": {
+   "p0": 6734.0,
+   "p25": 13488.0,
+   "p50": 14916.0,
+   "p75": 16854.0,
+   "p90": 18999.0,
+   "p100": 22408.0
+  },
+  "all_200": {
+   "p0": 54.0,
+   "p25": 8425.0,
+   "p50": 13251.0,
+   "p75": 15727.0,
+   "p90": 17577.0,
+   "p100": 22408.0
+  }
+ },
+ "strata_edges_chars": [
+  4935,
+  8579,
+  12051,
+  15112
+ ],
+ "stratum_quota": [
+  25,
+  24,
+  24,
+  24,
+  24
+ ],
+ "random_sample_by_stratum": [
+  25,
+  24,
+  24,
+  24,
+  24
+ ],
+ "pool_n": 18464,
+ "candidate_n": 4358,
+ "mean_chars": {
+  "pool": 10190.853552859619,
+  "random_sample": 10174.280991735537
+ },
+ "date_rule": "earliest date over all occurrences of the content in the dataset (strptime %Y/%m/%d (%a) %H:%M)"
+}

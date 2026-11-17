@@ -1,0 +1,70 @@
+{
+ "index": "emlab-rounds-v1",
+ "local_chunks": 150526,
+ "es_docs_paged": 150526,
+ "matched_ids": 150526,
+ "missing_in_es": 0,
+ "extra_in_es": 0,
+ "mismatch_round_or_session": 0,
+ "mismatch_text": 0,
+ "vector_mismatch": 0,
+ "vector_missing_from_source": 0,
+ "text_digest_es": "3f7b198daa5493d686f2ffba8880f7f98454a01cd30524abac064843f65ac943",
+ "text_digest_local": "3f7b198daa5493d686f2ffba8880f7f98454a01cd30524abac064843f65ac943",
+ "vector_digest_es": "64933e42434608163e32032d5cf980fc02edfa4b062f028b526c2b14dce7c690",
+ "vector_digest_local": "64933e42434608163e32032d5cf980fc02edfa4b062f028b526c2b14dce7c690",
+ "state_before": {
+  "settings_sha256": "f5e7357fcb8a7349c75e5a7f2a7e1d193a88a5a1615661d9a52b9b28b468053e",
+  "hnsw_filter_heuristic": "acorn",
+  "index_uuid": "LcASMQMyShKmI3dpBOfpEw",
+  "index_health": "green",
+  "docs_count": 150526,
+  "docs_deleted": 0,
+  "cluster_status": "yellow",
+  "unassigned_shards": 5,
+  "indices_with_non_started_shards": [
+   ".ds-logs-agent_builder.otel-default-2026.11.15-000001",
+   ".ds-traces-agent_builder.otel-default-2026.11.15-000001",
+   ".workflows-executions",
+   ".workflows-step-executions",
+   "sys-evo-task"
+  ],
+  "search_rejected": {
+   "3LVbsXnaTXKnVZkwh6gGRg": 0
+  }
+ },
+ "state_after": {
+  "settings_sha256": "f5e7357fcb8a7349c75e5a7f2a7e1d193a88a5a1615661d9a52b9b28b468053e",
+  "hnsw_filter_heuristic": "acorn",
+  "index_uuid": "LcASMQMyShKmI3dpBOfpEw",
+  "index_health": "green",
+  "docs_count": 150526,
+  "docs_deleted": 0,
+  "cluster_status": "yellow",
+  "unassigned_shards": 5,
+  "indices_with_non_started_shards": [
+   ".ds-logs-agent_builder.otel-default-2026.11.15-000001",
+   ".ds-traces-agent_builder.otel-default-2026.11.15-000001",
+   ".workflows-executions",
+   ".workflows-step-executions",
+   "sys-evo-task"
+  ],
+  "search_rejected": {
+   "3LVbsXnaTXKnVZkwh6gGRg": 0
+  }
+ },
+ "request_log": {
+  "GET index_read": 2,
+  "GET cat": 4,
+  "GET cluster_health": 2,
+  "GET node_stats": 2,
+  "POST search": 152
+ },
+ "search_flags": {
+  "n": 152,
+  "timed_out": 0,
+  "shards_failed": 0,
+  "shards_incomplete": 0
+ },
+ "PASS": true
+}

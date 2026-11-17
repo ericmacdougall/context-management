@@ -1,0 +1,20 @@
+{
+ "H1": {
+  "questions_affected": 0,
+  "sessions_removed_total": 0,
+  "by_question": {}
+ },
+ "H2": {
+  "questions_affected": 0,
+  "sessions_removed_total": 0,
+  "by_question": {}
+ },
+ "H3": {
+  "questions_affected": 2,
+  "sessions_removed_total": 2,
+  "by_question": {
+   "3b6f954b": 1,
+   "gpt4_1e4a8aeb": 1
+  }
+ }
+}

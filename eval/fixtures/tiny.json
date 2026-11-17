@@ -1,0 +1,208 @@
+[
+ {
+  "question_id": "ku_001",
+  "question_type": "knowledge-update",
+  "question": "Where do I currently work?",
+  "answer": "Borealis Labs",
+  "question_date": "2023/08/01 (Tue) 10:00",
+  "haystack_session_ids": [
+   "ku_s1",
+   "ku_s2",
+   "ku_s3",
+   "ku_s4",
+   "ku_s5",
+   "ku_s6"
+  ],
+  "haystack_dates": [
+   "2023/01/10 (Tue) 09:00",
+   "2023/02/14 (Tue) 18:30",
+   "2023/03/02 (Thu) 12:00",
+   "2023/06/20 (Tue) 08:15",
+   "2023/07/01 (Sat) 20:00",
+   "2023/08/01 (Tue) 17:30"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "I just started as an analyst at Acme Corp, the commute is long.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Congrats on the analyst role at Acme Corp."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Can you suggest a lunch spot near the office?"
+    },
+    {
+     "role": "assistant",
+     "content": "Sure, here are some quick lunch ideas."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "I need a recipe for lentil soup."
+    },
+    {
+     "role": "assistant",
+     "content": "Here is a simple lentil soup recipe."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Big news: I left Acme and I now work at Borealis Labs as a data lead.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations on the move to Borealis Labs."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Remind me how to cancel a gym membership."
+    },
+    {
+     "role": "assistant",
+     "content": "You can usually cancel online or in person."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Any tips for a long train ride tomorrow?"
+    },
+    {
+     "role": "assistant",
+     "content": "Bring snacks and a charged phone."
+    }
+   ]
+  ],
+  "answer_session_ids": [
+   "ku_s1",
+   "ku_s4"
+  ]
+ },
+ {
+  "question_id": "ab_002_abs",
+  "question_type": "single-session-user",
+  "question": "What is the name of my pet parrot?",
+  "answer": "The information is not mentioned in the conversation.",
+  "question_date": "2023/06/01 (Thu) 10:00",
+  "haystack_session_ids": [
+   "ab_s1",
+   "ab_s2",
+   "ab_s3"
+  ],
+  "haystack_dates": [
+   "2023/04/03 (Mon) 11:00",
+   "2023/04/20 (Thu) 19:00",
+   "2023/05/09 (Tue) 07:45"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "I adopted a beagle named Biscuit last year."
+    },
+    {
+     "role": "assistant",
+     "content": "Biscuit is a lovely name for a beagle."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "What are good hiking trails near Denver?"
+    },
+    {
+     "role": "assistant",
+     "content": "Try Mount Falcon or Red Rocks trail."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Help me plan a birthday dinner for six people."
+    },
+    {
+     "role": "assistant",
+     "content": "A tasting menu or family-style dishes both work well."
+    }
+   ]
+  ],
+  "answer_session_ids": []
+ },
+ {
+  "question_id": "lo_003",
+  "question_type": "multi-session",
+  "question": "What did we call the stray cat we fed during the storm?",
+  "answer": "Pepper",
+  "question_date": "2023/11/01 (Wed) 10:00",
+  "haystack_session_ids": [
+   "lo_s1",
+   "lo_s2",
+   "lo_s3",
+   "lo_s4"
+  ],
+  "haystack_dates": [
+   "2023/09/05 (Tue) 22:10",
+   "2023/09/12 (Tue) 21:00",
+   "2023/10/01 (Sun) 13:20",
+   "2023/10/15 (Sun) 16:40"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "Tell me about volcano formation."
+    },
+    {
+     "role": "assistant",
+     "content": "Volcanoes form at plate boundaries and hotspots."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "The rain last night was fierce, and that grey tabby we sheltered on the porch got christened Pepper by my kids.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Pepper is a cheerful choice for a tabby."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "What should I name my new houseplant, a fern?"
+    },
+    {
+     "role": "assistant",
+     "content": "Fernando is a fun name for a fern."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Is it safe to feed bread to ducks at the park?"
+    },
+    {
+     "role": "assistant",
+     "content": "Bread is not ideal; try peas or oats."
+    }
+   ]
+  ],
+  "answer_session_ids": [
+   "lo_s2"
+  ]
+ }
+]

@@ -1,0 +1,4596 @@
+{
+ "exploratory": true,
+ "post_hoc": true,
+ "pool": {
+  "facts": 11459,
+  "rounds": 5312,
+  "chunks": 8229
+ },
+ "arms": [
+  "bm25_facts",
+  "dense_facts",
+  "rrf_facts",
+  "bm25_raw",
+  "dense_raw",
+  "rrf_raw",
+  "fused_facts_raw"
+ ],
+ "pool_1000": {
+  "weak_list": {
+   "bm25_facts": {
+    "n": 11,
+    "top10": 2,
+    "top50": 6,
+    "first_gold_rank_median": 48,
+    "first_gold_rank_q25_q75": [
+     21,
+     76
+    ],
+    "gold_session_rank_median": 40,
+    "gold_session_top10": 2,
+    "gold_session_top50": 6
+   },
+   "dense_facts": {
+    "n": 11,
+    "top10": 4,
+    "top50": 7,
+    "first_gold_rank_median": 24,
+    "first_gold_rank_q25_q75": [
+     3,
+     57
+    ],
+    "gold_session_rank_median": 23,
+    "gold_session_top10": 4,
+    "gold_session_top50": 7
+   },
+   "rrf_facts": {
+    "n": 11,
+    "top10": 5,
+    "top50": 7,
+    "first_gold_rank_median": 15,
+    "first_gold_rank_q25_q75": [
+     5,
+     66
+    ],
+    "gold_session_rank_median": 13,
+    "gold_session_top10": 5,
+    "gold_session_top50": 7
+   },
+   "bm25_raw": {
+    "n": 11,
+    "top10": 1,
+    "top50": 4,
+    "first_gold_rank_median": 93,
+    "first_gold_rank_q25_q75": [
+     23,
+     188
+    ],
+    "gold_session_rank_median": 68,
+    "gold_session_top10": 2,
+    "gold_session_top50": 5
+   },
+   "dense_raw": {
+    "n": 11,
+    "top10": 0,
+    "top50": 6,
+    "first_gold_rank_median": 48,
+    "first_gold_rank_q25_q75": [
+     37,
+     201
+    ],
+    "gold_session_rank_median": 40,
+    "gold_session_top10": 0,
+    "gold_session_top50": 7
+   },
+   "rrf_raw": {
+    "n": 11,
+    "top10": 1,
+    "top50": 6,
+    "first_gold_rank_median": 49,
+    "first_gold_rank_q25_q75": [
+     18,
+     124
+    ],
+    "gold_session_rank_median": 43,
+    "gold_session_top10": 2,
+    "gold_session_top50": 7
+   },
+   "fused_facts_raw": {
+    "n": 11,
+    "top10": 4,
+    "top50": 8,
+    "first_gold_rank_median": 19,
+    "first_gold_rank_q25_q75": [
+     8,
+     41
+    ],
+    "gold_session_rank_median": 15,
+    "gold_session_top10": 4,
+    "gold_session_top50": 8
+   }
+  },
+  "low_overlap_other": {
+   "bm25_facts": {
+    "n": 12,
+    "top10": 7,
+    "top50": 10,
+    "first_gold_rank_median": 3,
+    "first_gold_rank_q25_q75": [
+     1,
+     24
+    ],
+    "gold_session_rank_median": 3,
+    "gold_session_top10": 7,
+    "gold_session_top50": 10
+   },
+   "dense_facts": {
+    "n": 12,
+    "top10": 10,
+    "top50": 12,
+    "first_gold_rank_median": 2,
+    "first_gold_rank_q25_q75": [
+     1,
+     3
+    ],
+    "gold_session_rank_median": 2,
+    "gold_session_top10": 10,
+    "gold_session_top50": 12
+   },
+   "rrf_facts": {
+    "n": 12,
+    "top10": 11,
+    "top50": 11,
+    "first_gold_rank_median": 2,
+    "first_gold_rank_q25_q75": [
+     1,
+     4
+    ],
+    "gold_session_rank_median": 2,
+    "gold_session_top10": 11,
+    "gold_session_top50": 12
+   },
+   "bm25_raw": {
+    "n": 12,
+    "top10": 10,
+    "top50": 12,
+    "first_gold_rank_median": 2,
+    "first_gold_rank_q25_q75": [
+     2,
+     9
+    ],
+    "gold_session_rank_median": 2,
+    "gold_session_top10": 11,
+    "gold_session_top50": 12
+   },
+   "dense_raw": {
+    "n": 12,
+    "top10": 7,
+    "top50": 12,
+    "first_gold_rank_median": 4,
+    "first_gold_rank_q25_q75": [
+     3,
+     12
+    ],
+    "gold_session_rank_median": 4,
+    "gold_session_top10": 8,
+    "gold_session_top50": 12
+   },
+   "rrf_raw": {
+    "n": 12,
+    "top10": 11,
+    "top50": 12,
+    "first_gold_rank_median": 2,
+    "first_gold_rank_q25_q75": [
+     1,
+     3
+    ],
+    "gold_session_rank_median": 2,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   },
+   "fused_facts_raw": {
+    "n": 12,
+    "top10": 11,
+    "top50": 12,
+    "first_gold_rank_median": 2,
+    "first_gold_rank_q25_q75": [
+     1,
+     5
+    ],
+    "gold_session_rank_median": 2,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   }
+  },
+  "knowledge_update": {
+   "bm25_facts": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "dense_facts": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "rrf_facts": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "bm25_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "dense_raw": {
+    "n": 15,
+    "top10": 14,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     2
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 14,
+    "gold_session_top50": 15
+   },
+   "rrf_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "fused_facts_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   }
+  },
+  "per_question": {
+   "07b6f563": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 48,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 40,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 133,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 105,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 104,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 87,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 93,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 68,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 47,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 34,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 38,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 30,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 76,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 57,
+     "sessions_in_list": 1000
+    }
+   },
+   "3a704032": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 60,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 53,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 37,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 34,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 39,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 27,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 29,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 20,
+     "sessions_in_list": 1000
+    }
+   },
+   "6e984302": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 21,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 20,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 208,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 151,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 21,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 19,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 115,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 100,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 201,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 148,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 124,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 102,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 41,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 38,
+     "sessions_in_list": 1000
+    }
+   },
+   "71017277": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 26,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 25,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 24,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 18,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 10,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 10,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 58,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 43,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 73,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 46,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 69,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 46,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 19,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 1000
+    }
+   },
+   "8e91e7d9": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 166,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 137,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 188,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 131,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 43,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 40,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 49,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 43,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 9,
+     "sessions_in_list": 1000
+    }
+   },
+   "b46e15ee": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 8,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 12,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 36,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 24,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 17,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 9,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    }
+   },
+   "d6233ab6": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 24,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 24,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 24,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 23,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 8,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 8,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 410,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 273,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1736,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 660,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 896,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 460,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 15,
+     "sessions_in_list": 1000
+    }
+   },
+   "fca70973": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 76,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 62,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 46,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 42,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 66,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 58,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 23,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 19,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 14,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 8,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_4929293b": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 104,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 86,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 57,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 52,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 111,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 90,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 379,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 241,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 420,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 253,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 717,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 391,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 221,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 144,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_5438fa52": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 26,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 18,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 48,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 33,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 18,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_8279ba03": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 624,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 411,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 90,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 71,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 165,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 130,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1556,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 684,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 238,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 128,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 485,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 274,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 329,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 200,
+     "sessions_in_list": 1000
+    }
+   },
+   "078150f1": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 12,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 8,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 13,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    }
+   },
+   "46a3abf7": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 11,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 11,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "7024f17c": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 12,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "8cf4d046": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "b6025781": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 25,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 20,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    }
+   },
+   "bc8a6e93": {
+    "type": "single-session-user",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "e3038f8c": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 24,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 21,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 12,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 11,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_2f56ae70": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 101,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 88,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 17,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 14,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 11,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_31ff4165": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 78,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 63,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_ab202e7f": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 15,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 8,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_e414231f": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    }
+   },
+   "gpt4_fa19884d": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 31,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 29,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 24,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 17,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 52,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 42,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 12,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 12,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 1000
+    }
+   },
+   "07741c44": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "07741c45": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "0e4e4c46": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "2133c1b5": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "2698e78f": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 1000
+    }
+   },
+   "26bdc477": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "45dc21b6": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 27,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 23,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "50635ada": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    }
+   },
+   "5831f84d": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "5a4f22c0": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "5c40ec5b": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "603deb26": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "89941a93": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "89941a94": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   },
+   "8fb83627": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 995
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 1000
+    }
+   }
+  },
+  "wrong_query_control_weak": {
+   "bm25_facts": {
+    "top10": 0,
+    "top50": 1
+   },
+   "dense_facts": {
+    "top10": 0,
+    "top50": 1
+   },
+   "rrf_facts": {
+    "top10": 0,
+    "top50": 0
+   },
+   "bm25_raw": {
+    "top10": 1,
+    "top50": 2
+   },
+   "dense_raw": {
+    "top10": 0,
+    "top50": 0
+   },
+   "rrf_raw": {
+    "top10": 0,
+    "top50": 1
+   },
+   "fused_facts_raw": {
+    "top10": 0,
+    "top50": 1
+   }
+  }
+ },
+ "toy_200": {
+  "weak_list": {
+   "bm25_facts": {
+    "n": 11,
+    "top10": 6,
+    "top50": 10,
+    "first_gold_rank_median": 9,
+    "first_gold_rank_q25_q75": [
+     2,
+     15
+    ],
+    "gold_session_rank_median": 7,
+    "gold_session_top10": 6,
+    "gold_session_top50": 10
+   },
+   "dense_facts": {
+    "n": 11,
+    "top10": 7,
+    "top50": 11,
+    "first_gold_rank_median": 4,
+    "first_gold_rank_q25_q75": [
+     3,
+     12
+    ],
+    "gold_session_rank_median": 4,
+    "gold_session_top10": 7,
+    "gold_session_top50": 11
+   },
+   "rrf_facts": {
+    "n": 11,
+    "top10": 9,
+    "top50": 11,
+    "first_gold_rank_median": 3,
+    "first_gold_rank_q25_q75": [
+     2,
+     7
+    ],
+    "gold_session_rank_median": 3,
+    "gold_session_top10": 9,
+    "gold_session_top50": 11
+   },
+   "bm25_raw": {
+    "n": 11,
+    "top10": 5,
+    "top50": 8,
+    "first_gold_rank_median": 20,
+    "first_gold_rank_q25_q75": [
+     6,
+     34
+    ],
+    "gold_session_rank_median": 14,
+    "gold_session_top10": 5,
+    "gold_session_top50": 9
+   },
+   "dense_raw": {
+    "n": 11,
+    "top10": 7,
+    "top50": 9,
+    "first_gold_rank_median": 10,
+    "first_gold_rank_q25_q75": [
+     7,
+     37
+    ],
+    "gold_session_rank_median": 10,
+    "gold_session_top10": 7,
+    "gold_session_top50": 9
+   },
+   "rrf_raw": {
+    "n": 11,
+    "top10": 8,
+    "top50": 8,
+    "first_gold_rank_median": 5,
+    "first_gold_rank_q25_q75": [
+     3,
+     9
+    ],
+    "gold_session_rank_median": 4,
+    "gold_session_top10": 8,
+    "gold_session_top50": 8
+   },
+   "fused_facts_raw": {
+    "n": 11,
+    "top10": 9,
+    "top50": 10,
+    "first_gold_rank_median": 3,
+    "first_gold_rank_q25_q75": [
+     2,
+     6
+    ],
+    "gold_session_rank_median": 3,
+    "gold_session_top10": 9,
+    "gold_session_top50": 11
+   }
+  },
+  "low_overlap_other": {
+   "bm25_facts": {
+    "n": 12,
+    "top10": 11,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     6
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 11,
+    "gold_session_top50": 12
+   },
+   "dense_facts": {
+    "n": 12,
+    "top10": 12,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   },
+   "rrf_facts": {
+    "n": 12,
+    "top10": 12,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   },
+   "bm25_raw": {
+    "n": 12,
+    "top10": 12,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     2
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   },
+   "dense_raw": {
+    "n": 12,
+    "top10": 12,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     2
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   },
+   "rrf_raw": {
+    "n": 12,
+    "top10": 12,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     2
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   },
+   "fused_facts_raw": {
+    "n": 12,
+    "top10": 12,
+    "top50": 12,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 12,
+    "gold_session_top50": 12
+   }
+  },
+  "knowledge_update": {
+   "bm25_facts": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "dense_facts": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "rrf_facts": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "bm25_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "dense_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "rrf_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   },
+   "fused_facts_raw": {
+    "n": 15,
+    "top10": 15,
+    "top50": 15,
+    "first_gold_rank_median": 1,
+    "first_gold_rank_q25_q75": [
+     1,
+     1
+    ],
+    "gold_session_rank_median": 1,
+    "gold_session_top10": 15,
+    "gold_session_top50": 15
+   }
+  },
+  "per_question": {
+   "07b6f563": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 20,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 14,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 10,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 10,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 10,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 9,
+     "sessions_in_list": 200
+    }
+   },
+   "3a704032": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 14,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 12,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 200
+    }
+   },
+   "6e984302": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 33,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 26,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 24,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 20,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 37,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 30,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 8,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 200
+    }
+   },
+   "71017277": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 9,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 8,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 10,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 10,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    }
+   },
+   "8e91e7d9": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 22,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 19,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 34,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 27,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 10,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 10,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    }
+   },
+   "b46e15ee": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 8,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    }
+   },
+   "d6233ab6": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 63,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 46,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 354,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 140,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 171,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 97,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "fca70973": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 19,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_4929293b": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 15,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 14,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 14,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 13,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 29,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 26,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 78,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 53,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 89,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 54,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 147,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 84,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 57,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 36,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_5438fa52": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 6,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_8279ba03": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 110,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 73,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 12,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 11,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 16,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 15,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 293,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 138,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 50,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 24,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 115,
+     "top10": false,
+     "top50": false,
+     "gold_session_rank": 64,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 31,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 20,
+     "sessions_in_list": 200
+    }
+   },
+   "078150f1": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    }
+   },
+   "46a3abf7": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "7024f17c": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "8cf4d046": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "b6025781": {
+    "type": "single-session-preference",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "bc8a6e93": {
+    "type": "single-session-user",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "e3038f8c": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_2f56ae70": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 10,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 10,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_31ff4165": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 13,
+     "top10": false,
+     "top50": true,
+     "gold_session_rank": 12,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_ab202e7f": {
+    "type": "multi-session",
+    "bm25_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_e414231f": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "gpt4_fa19884d": {
+    "type": "temporal-reasoning",
+    "bm25_facts": {
+     "first_gold_rank": 7,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 7,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 5,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 4,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 4,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 3,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 3,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    }
+   },
+   "07741c44": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "07741c45": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "0e4e4c46": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "2133c1b5": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "2698e78f": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "26bdc477": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "45dc21b6": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 6,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 5,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "50635ada": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "5831f84d": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "5a4f22c0": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "5c40ec5b": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 2,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 2,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "603deb26": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "89941a93": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "89941a94": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   },
+   "8fb83627": {
+    "type": "knowledge-update",
+    "bm25_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "dense_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "rrf_facts": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 197
+    },
+    "bm25_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "dense_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "rrf_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    },
+    "fused_facts_raw": {
+     "first_gold_rank": 1,
+     "top10": true,
+     "top50": true,
+     "gold_session_rank": 1,
+     "sessions_in_list": 200
+    }
+   }
+  },
+  "wrong_query_control_weak": {
+   "bm25_facts": {
+    "top10": 1,
+    "top50": 3
+   },
+   "dense_facts": {
+    "top10": 1,
+    "top50": 4
+   },
+   "rrf_facts": {
+    "top10": 0,
+    "top50": 4
+   },
+   "bm25_raw": {
+    "top10": 2,
+    "top50": 5
+   },
+   "dense_raw": {
+    "top10": 0,
+    "top50": 1
+   },
+   "rrf_raw": {
+    "top10": 0,
+    "top50": 4
+   },
+   "fused_facts_raw": {
+    "top10": 0,
+    "top50": 3
+   }
+  }
+ }
+}

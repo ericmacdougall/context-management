@@ -1,0 +1,21 @@
+{
+ "split": "pilot",
+ "e5": {
+  "sample_rounds": 200,
+  "queries": 50,
+  "raw": {
+   "passage_cosine_mean": 0.9918496496996169,
+   "passage_cosine_min": 0.9346136378299,
+   "query_cosine_mean": 0.9898402567714086,
+   "query_cosine_min": 0.9801778769193995,
+   "top10_overlap_within_sample_mean": 0.718
+  },
+  "prefixed": {
+   "passage_cosine_mean": 1.000000017057092,
+   "passage_cosine_min": 0.9999999290001509,
+   "query_cosine_mean": 1.000000016010684,
+   "query_cosine_min": 0.9999999422172974,
+   "top10_overlap_within_sample_mean": 1.0
+  }
+ }
+}

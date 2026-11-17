@@ -1,0 +1,28 @@
+{
+ "n": 800,
+ "n_long": 40,
+ "n_random": 760,
+ "random_per_stratum": 152,
+ "candidates": 4237,
+ "candidates_per_stratum_after_long_removed": [
+  873,
+  847,
+  880,
+  819,
+  778
+ ],
+ "long_chars": {
+  "min": 20720,
+  "median": 21757,
+  "max": 42867
+ },
+ "random_chars_mean": 10053.17894736842,
+ "whole_pool_mean_chars": 10190.853552859619,
+ "strata_edges_chars": [
+  4935,
+  8579,
+  12051,
+  15112
+ ],
+ "date_rule": "earliest date over all occurrences of the content in the dataset"
+}
