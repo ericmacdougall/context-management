@@ -46,15 +46,21 @@ def fixtures():
     out = {}
     c, j, _ = req("PUT", "/_inference/text_embedding/" + matrix.STUB_EP, matrix.stub_endpoint_body())
     out["endpoint"] = [c, err(j)]
+    if c != 200:   # MUST SUCCEED (on trial): every semantic_text fixture below depends on this endpoint
+        raise ScrollError("fixture endpoint create: HTTP %s" % c)
     for kind in ("sem", "bbq_disk", "bbq_hnsw", "plain"):
         for twin in (False, True):
             ix = idx_names(kind, twin)
             req("DELETE", "/" + ix)
             c, j, _ = req("PUT", "/" + ix, mapping(kind))
-            cb, sb = bulk(ix, [(str(i), doc(kind, i)) for i in range(n_docs(kind))])
+            if c != 200:   # MUST SUCCEED: a trial-side fixture; every later comparison is against these documents
+                raise ScrollError("fixture create %s: HTTP %s" % (ix, c))
+            cb, sb = bulk_strict(ix, [(str(i), doc(kind, i)) for i in range(n_docs(kind))])
             out[ix] = {"create": c, "bulk": sb}
             if kind == "sem":
-                req("POST", "/%s/_refresh" % ix)
+                refresh_checked(ix)
+            if source_count(ix) != n_docs(kind):
+                raise ScrollError("fixture %s holds a different number of documents than were written" % ix)
     return out
 
 
@@ -167,9 +173,9 @@ def mutations(kind, ix):
     # server-side reindex to same mapping
     dst = ix + "-rx"
     req("DELETE", "/" + dst)
-    req("PUT", "/" + dst, mapping(kind))
+    cdst, _jd, _ = req("PUT", "/" + dst, mapping(kind))   # recorded below as dst_create (a refusal here is part of the observation)
     c, j, _ = req("POST", "/_reindex?refresh=true", {"source": {"index": ix}, "dest": {"index": dst}}, timeout=300)
-    rec("reindex_same_mapping", c, j, lambda: {"dst_count": count(dst), "failures": len(j.get("failures", [])) if c == 200 else None,
+    rec("reindex_same_mapping", c, j, lambda: {"dst_create": cdst, "dst_count": count(dst), "failures": len(j.get("failures", [])) if c == 200 else None,
                                               "created": j.get("created"), "dst_embeddings": inference_stored(dst, list(range(0, 40, 4))) if kind == "sem" else None,
                                               "dst_vectors_present": None if kind == "sem" else sum(1 for q in (0, 10, 20, 30) if len((req("GET", "/%s/_doc/%d?_source_includes=v&_source_exclude_vectors=false" % (dst, q))[1].get("_source") or {}).get("v") or []) == DIM)})
     req("DELETE", "/" + dst)
@@ -347,7 +353,9 @@ def unrefreshed_fixture():
         m = mapping("sem")
         m["settings"]["refresh_interval"] = "-1"
         c, j, _ = req("PUT", "/" + ix, m)
-        cb, sb = bulk(ix, [(str(i), doc("sem", i)) for i in range(20)], refresh="false")
+        if c != 200:   # MUST SUCCEED: fixture for the unrefreshed-update test (on trial)
+            raise ScrollError("fixture create %s: HTTP %s" % (ix, c))
+        cb, sb = bulk_strict(ix, [(str(i), doc("sem", i)) for i in range(20)], refresh="false")
         out[ix] = {"create": c, "bulk": sb}
     return out
 
@@ -377,7 +385,11 @@ def semonly_fixture(n=30):
     req("DELETE", "/" + SEMONLY)
     c, j, _ = req("PUT", "/" + SEMONLY, {"settings": {"number_of_shards": 1, "number_of_replicas": 0},
                                          "mappings": {"properties": {"body": {"type": "semantic_text", "inference_id": matrix.STUB_EP}}}})
-    cb, sb = bulk(SEMONLY, [(str(i), {"body": "doc %d about %s" % (i, ["paris", "berlin"][i % 2])}) for i in range(n)])
+    if c != 200:   # MUST SUCCEED (on trial): the semantic-only fixture
+        raise ScrollError("fixture create %s: HTTP %s" % (SEMONLY, c))
+    cb, sb = bulk_strict(SEMONLY, [(str(i), {"body": "doc %d about %s" % (i, ["paris", "berlin"][i % 2])}) for i in range(n)])
+    if source_count(SEMONLY) != n:
+        raise ScrollError("fixture %s holds a different number of documents than were written" % SEMONLY)
     return {"create": c, "bulk": sb}
 
 

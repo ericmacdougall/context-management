@@ -5,7 +5,7 @@ import os
 import secrets
 import time
 
-from lib import bulk, cell, classify, embed, err, req
+from lib import BulkError, bulk, bulk_strict, cell, classify, embed, err, req
 
 STUB_URL = os.environ.get("LIC_STUB_URL", "http://172.17.0.1:19271/embed")
 STUB_EP = "lic-stub"
@@ -37,12 +37,52 @@ def stub_endpoint_body():
             "dimensions": 8, "similarity": "cosine"}}
 
 
-def make_base(idx=BASE_IDX):
+class FixtureError(RuntimeError):
+    """A fixture that was expected to hold documents does not. Every measurement taken on it would be about an empty or partial index: abort."""
+
+
+def make_fixture(idx, body, docs, spot=None):
+    """Create `idx` and fill it with `docs` (list of (id, source)); MUST succeed. Then establish the contents before anything is measured:
+    refresh answered 200 with zero shard failures, `_count` equals len(docs), and (if given) document `spot[0]` has the expected `_source` fields."""
     drop(idx)
-    req("PUT", "/" + idx, {"settings": {"number_of_shards": 1, "number_of_replicas": 0}, "mappings": {"properties": {
-        "title": {"type": "text"}, "kw": {"type": "keyword"}, "tenant": {"type": "keyword"},
-        "v": {"type": "dense_vector", "dims": 8, "index": True, "similarity": "cosine"}}}})
-    bulk(idx, [(str(i), {"title": t, "kw": k, "tenant": "t", "v": embed(t)}) for i, (t, k) in enumerate(DOCS)])
+    c, j, _ = req("PUT", "/" + idx, body)
+    if c != 200 or not (isinstance(j, dict) and j.get("acknowledged")):
+        raise FixtureError("create %s: HTTP %s %s" % (idx, c, json.dumps(err(j))[:160]))
+    try:
+        bulk_strict(idx, docs, refresh="false")
+    except BulkError as e:
+        raise FixtureError("fill %s: %s" % (idx, e))
+    check_fixture(idx, len(docs), spot)
+
+
+def check_fixture(idx, n, spot=None):
+    c, j, _ = req("POST", "/%s/_refresh" % idx)
+    sh = j.get("_shards") if isinstance(j, dict) else None
+    if c != 200 or not isinstance(sh, dict) or sh.get("failed") != 0:
+        raise FixtureError("refresh %s: HTTP %s shards %s" % (idx, c, sh))
+    c, j, _ = req("GET", "/%s/_count" % idx)
+    if c != 200 or j.get("count") != n or (j.get("_shards") or {}).get("failed") != 0:
+        raise FixtureError("count %s: HTTP %s count %s, expected %d" % (idx, c, j.get("count") if isinstance(j, dict) else None, n))
+    if spot:
+        c, j, _ = req("GET", "/%s/_doc/%s" % (idx, spot[0]))
+        src = (j.get("_source") or {}) if isinstance(j, dict) else {}
+        if c != 200 or any(src.get(k) != v for k, v in spot[1].items()):
+            raise FixtureError("spot check %s/%s: HTTP %s" % (idx, spot[0], c))
+
+
+def base_mapping(tenant):
+    props = {"title": {"type": "text"}, "kw": {"type": "keyword"}, "v": {"type": "dense_vector", "dims": 8, "index": True, "similarity": "cosine"}}
+    if tenant:
+        props["tenant"] = {"type": "keyword"}
+    return {"settings": {"number_of_shards": 1, "number_of_replicas": 0}, "mappings": {"properties": props}}
+
+
+def base_docs(tenant):
+    return [(str(i), dict({"title": t, "kw": k, "v": embed(t)}, **({"tenant": "t"} if tenant else {}))) for i, (t, k) in enumerate(DOCS)]
+
+
+def make_base(idx=BASE_IDX):
+    make_fixture(idx, base_mapping(True), base_docs(True), spot=("0", {"title": DOCS[0][0], "kw": DOCS[0][1]}))
 
 
 def ensure_dls():
@@ -129,10 +169,7 @@ def run(label):
     P = "lic1-%s-" % label
     T = {}
     base = P + "base"
-    drop(base)
-    req("PUT", "/" + base, {"settings": {"number_of_shards": 1, "number_of_replicas": 0}, "mappings": {"properties": {
-        "title": {"type": "text"}, "kw": {"type": "keyword"}, "v": {"type": "dense_vector", "dims": 8, "index": True, "similarity": "cosine"}}}})
-    bulk(base, [(str(i), {"title": t, "kw": k, "v": embed(t)}) for i, (t, k) in enumerate(DOCS)])
+    make_fixture(base, base_mapping(False), base_docs(False), spot=("0", {"title": DOCS[0][0], "kw": DOCS[0][1]}))   # must succeed; contents established before any cell
     qv = embed("paris trip planning")
     std = {"standard": {"query": {"match": {"title": "paris"}}}}
     knn = {"knn": {"field": "v", "query_vector": qv, "k": 3, "num_candidates": 10}}
@@ -157,10 +194,18 @@ def run(label):
         drop(idx)
         cm, jm, _ = req("PUT", "/" + idx, {"settings": {"number_of_shards": 1, "number_of_replicas": 0}, "mappings": {"properties": {
             "v": {"type": "dense_vector", "dims": 64, "index": True, "similarity": "cosine", "index_options": {"type": typ}}}}})
+        # INTENTIONAL PROBE: this write may be refused by the licence (bbq_disk on Basic); the error is the observation, so the recording helper is used
         cb, sb = bulk(idx, [(str(i), {"v": embed("d%d" % i, 64)}) for i in range(40)])
         sr, cs, js = S(idx, {"knn": {"field": "v", "query_vector": embed("d7", 64), "k": 3, "num_candidates": 20}} if not typ.startswith("int8") else
                        {"knn": {"field": "v", "query_vector": embed("d7", 64), "k": 3, "num_candidates": 20, "rescore_vector": {"oversample": 3}}})
-        T["vec_" + typ] = {"mapping": cell(cm, jm), "bulk": sb, "bulk_http": cb, "search": sr, "class": "AVAILABLE" if cm < 300 and sb["failed"] == 0 and cs == 200 else
+        populated = cm < 300 and cb == 200 and sb["failed"] == 0 and sb["items"] == 40
+        if populated:   # an AVAILABLE label needs a populated index, not only 200 answers
+            try:
+                check_fixture(idx, 40)
+            except FixtureError:
+                populated = False
+        T["vec_" + typ] = {"mapping": cell(cm, jm), "bulk": sb, "bulk_http": cb, "search": sr, "populated": populated,
+                           "class": "AVAILABLE" if populated and cs == 200 else
                            ("LICENCE_ERROR" if sb["failed"] and "license" in json.dumps(sb["first_error"]).lower() else "OTHER_ERROR")}
         if typ == "int8_hnsw":
             T["knn_rescore_vector"] = sr
@@ -209,7 +254,9 @@ def run(label):
     # percolator (lexical)
     perc = P + "perc"
     drop(perc)
-    req("PUT", "/" + perc, {"mappings": {"properties": {"q": {"type": "percolator"}, "title": {"type": "text"}}}})
+    cpc, jpc, _ = req("PUT", "/" + perc, {"mappings": {"properties": {"q": {"type": "percolator"}, "title": {"type": "text"}}}})
+    if cpc != 200:   # the index must exist; the percolator doc write and search below are the probe
+        raise FixtureError("create %s: HTTP %s" % (perc, cpc))
     ct, jt, _ = req("PUT", "/%s/_doc/t1?refresh=true" % perc, {"q": {"match": {"title": "paris"}}})
     cp, jp, _ = req("POST", "/%s/_search" % perc, {"query": {"percolate": {"field": "q", "document": {"title": "trip to paris"}}}})
     T["percolator_lexical"] = cell(cp if ct < 300 else ct, jp if ct < 300 else jt, hits(jp) if cp == 200 else None)
@@ -217,7 +264,9 @@ def run(label):
     # aliases: require_alias and must_exist
     g1, al = P + "gen1", P + "alias"
     drop(g1)
-    req("PUT", "/" + g1, {"aliases": {al: {"is_write_index": True}}, "mappings": {"properties": {"title": {"type": "text"}}}})
+    cg, jg, _ = req("PUT", "/" + g1, {"aliases": {al: {"is_write_index": True}}, "mappings": {"properties": {"title": {"type": "text"}}}})
+    if cg != 200:
+        raise FixtureError("create %s: HTTP %s" % (g1, cg))
     ca, ja, _ = req("PUT", "/%s/_doc/1?require_alias=true&refresh=true" % al, {"title": "x"})
     cb2, jb, _ = req("PUT", "/%s-notalias/_doc/1?require_alias=true" % P, {"title": "x"})
     cm2, jm2, _ = req("POST", "/_aliases", {"actions": [{"remove": {"index": g1, "alias": al, "must_exist": True}}]})
@@ -226,9 +275,7 @@ def run(label):
     T["alias_must_exist"] = {"existing": cell(cm2, jm2), "ghost_refused": {"status": cm3, "class": classify(cm3, jm3)}}
     # force merge
     fm = P + "fm"
-    drop(fm)
-    req("PUT", "/" + fm, {"settings": {"number_of_replicas": 0}})
-    bulk(fm, [(str(i), {"t": "x%d" % i}) for i in range(20)])
+    make_fixture(fm, {"settings": {"number_of_replicas": 0}}, [(str(i), {"t": "x%d" % i}) for i in range(20)], spot=("0", {"t": "x0"}))
     cf, jf, _ = req("POST", "/%s/_forcemerge?max_num_segments=1" % fm)
     T["force_merge"] = cell(cf, jf)
     for i in (base, g1, fm):
