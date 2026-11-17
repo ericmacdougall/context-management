@@ -1,0 +1,8 @@
+# tree: writepath/ at 31e1ae3 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/broker.py b87d705 tests.test_broker
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/broker.py <- wp/broker.py at b87d705; tests: current; python3 -m unittest tests.test_broker
+ERROR: test_hygiene_transport_failure_returns_the_key (tests.test_broker.BrokerTest)
+ConnectionResetError: simulated
+Ran 18 tests in 1.863s
+FAILED (errors=1)

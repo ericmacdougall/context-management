@@ -1,0 +1,26 @@
+# tree: writepath/ at 31e1ae3 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/es_verify.py @results/failing-first/harness/variants/es_verify.fd5d2a3-logic.py tests.test_es_verify
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/es_verify.py <- broken variant es_verify.fd5d2a3-logic.py (sha256 4ce3c0381975b37a); tests: current; python3 -m unittest tests.test_es_verify
+ERROR: test_11_detail_holds_ids_only_and_is_bounded (tests.test_es_verify.StrictPlaceholders)
+KeyError: 'es:placeholder_missing'
+FAIL: test_10_facts_only_for_fact_events (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_1_clean_passes_on_every_copy (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 1 != 2 : each copy must be searched alone
+FAIL: test_2_placeholder_still_carrying_content (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_3_missing_placeholder (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_4_version_below_2_62 (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_5_stale_replica_copy (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_6_replica_missing_the_placeholder (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_7_copy_not_started_is_unverified (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 1
+FAIL: test_8_no_started_base_copy_means_every_id_missing (tests.test_es_verify.StrictPlaceholders)
+AssertionError: 0 != 2
+Ran 11 tests in 0.784s
+FAILED (failures=9, errors=1)

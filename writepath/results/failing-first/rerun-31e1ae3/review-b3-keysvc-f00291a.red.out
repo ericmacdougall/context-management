@@ -1,0 +1,9 @@
+# tree: writepath/ at 31e1ae3 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/keysvc.py f00291a tests.test_keysvc
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/keysvc.py <- wp/keysvc.py at f00291a; tests: current; python3 -m unittest tests.test_keysvc
+UnboundLocalError: local variable 'req' referenced before assignment
+ERROR: test_7_malformed_requests_survive_and_log_no_caller_bytes (tests.test_keysvc.KeyService)
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Ran 7 tests in 1.087s
+FAILED (errors=1, skipped=1)

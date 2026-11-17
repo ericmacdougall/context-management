@@ -1,0 +1,7 @@
+# tree: writepath/ at 31e1ae3 (clean)
+# command: python3 results/failing-first/harness/broker_mutants.py .
+# harness sha256: 76a3e813e9f379a3
+no_recheck_after_cas: exit=1 Ran 18 tests in 1.880s | FAILED (failures=1) | failing: test_lease_lost_between_check_and_cas_mints_nothing
+writer_gets_manage: exit=1 Ran 18 tests in 1.966s | FAILED (failures=1) | failing: test_writer_descriptors_exact
+invalidate_any_tenant: exit=1 Ran 18 tests in 1.643s | FAILED (failures=1) | failing: test_invalidates_only_older_same_tenant_with_owner
+mint_before_cas: exit=1 Ran 18 tests in 1.945s | FAILED (failures=7) | failing: test_cas_before_mint_and_alias_moved, test_concurrent_clients_get_their_own_broker, test_lease_lost_between_check_and_cas_mints_nothing, test_log_has_key_id_never_key_value, test_newer_epoch_visible_mints_nothing, test_same_epoch_again_is_idempotent, test_socket_peer_refused_and_allowed

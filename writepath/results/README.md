@@ -321,3 +321,41 @@ because of the key: it is not evidence for the broker.
 Every step-1 experiment that uses the stores is stamped at a post-fix commit: batch c (31112b4), batch d (2e1948c)
 or batch e (96214c2), with R1's one rerun at 0a433bc. row19's 880/880 is on its author's own planted corpus only; on held-out data the scanner caught 483/1,169
 and 150/750 (heldout_secrets FAIL). Not run: a full run_all restamp (main's order: stamped singles instead).
+
+### Provenance of failing-first receipts (review A6)
+
+Each red output must name the tree it ran on and the command. The harnesses are committed at
+`failing-first/harness/` (`red_with.py`, `broker_mutants.py`, `prov.py`; broken variants in `harness/variants/`).
+Every output under `failing-first/rerun-31e1ae3/` starts with a header naming the tree (writepath/ at 31e1ae3,
+clean), the exact command and the harness sha256. All were run on the Mac, offline (no stores), on 2026-11-17.
+
+| Receipt | Replaced code | Result at 31e1ae3 | Earlier file and what it lacked |
+|---|---|---|---|
+| `rerun-31e1ae3/d6-broker-mutants.red.out` | four one-line mutants of wp/broker.py (listed in the harness) | each mutant fails tests.test_broker (18 tests: 1, 1, 1 and 7 failures) | `d6-broker-mutants.red.out`: no tree or command. It came from the owner's uncommitted tree that became 3a9eef1 (14 tests then). Superseded, kept. |
+| `rerun-31e1ae3/d4-es-verify-7e83092.red.out` | wp/es_verify.py <- `variants/es_verify.fd5d2a3-logic.py` (the fd5d2a3 count through the primary copy) | 9 failures, 1 error of 11; the fixed code passes 11/11 | none saved before: 7e83092 only stated "9 failures, 1 error of 11" |
+| `rerun-31e1ae3/review-b3-keysvc-f00291a.red.out` | wp/keysvc.py at f00291a | 1 error (test_7) | `review-b3-...`: no tree. Superseded, kept. |
+| `rerun-31e1ae3/review-b5-hygiene-b87d705.red.out` | wp/broker.py at b87d705 | 1 error (hygiene transport failure) | `review-b5-...`: no tree. Superseded, kept. |
+| `rerun-31e1ae3/review-b6-h2-probe-8256797.red.out` | exp/h_d2_uids.py at 8256797 | 5 failing subtests | `review-b6-...`: no tree. Superseded, kept. |
+
+D4 coverage (`tests/test_es_verify.py`): a placeholder still carrying content (test_2), a missing placeholder (test_3,
+and on a replica test_6), and a stale replica copy (test_5). All are offline, against a fake Elasticsearch that serves
+per-copy searches. Only content, missing and version are planned live (`exp/h_d4_strict.py`, amendment H3). A stale
+replica cannot be produced on this one-node lab (number_of_replicas 0), and H3 states that it is not run live.
+
+Races (R1, R2, R3 in `single-runs/races_R*.json`): each receipt records `env.code_commit` 62c6be5, the argv
+(`exp/races.py R1 R2 R3 40`) and `result.patch`, the one-line label of the control. The control code is in
+`exp/races.py` at 62c6be5, applied through `exp/patches.patched` only in the control arm:
+- R1: the placeholder DELETE branch in the eraser process;
+- R2: events_guard without the erased-subject check (WPS03);
+- R3: wp_fence without the epoch comparison.
+
+No separate mutant run exists for races. The red evidence is the control arm of the same stamped run.
+
+Other red files carry their tree in their header:
+- review-b1 (t2-dev, src 8256797 plus the test, schema at 290990e);
+- review-b2 (wp/ at 0110981 through WP_PKG_UNDER_TEST);
+- leak-scan-json (leak_scan at 3a9eef1).
+
+review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
+are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own
+failing-first evidence replaces them when it is integrated.
