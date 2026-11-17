@@ -809,3 +809,15 @@ Batch d:
   FAIL; the tree is pinned from `git archive`.
 - **Report.** Step 1's stamped set is the 17 runs at 31112b4 above plus batch d. guard_check start (31112b4) and end
   (batch d) fall at two commits. Each is a stateless check of the live catalogs, so the pair needs no shared state.
+
+## Amendment 24 (2026-11-17, main's ruling during batch d; governs only runs started from a commit after this one)
+The start line rises from 17 GB to 20 GB host free, for stamped runs and run_all alike (exp.disk_gate START_GB and
+runkit/launch_one.sh).
+- **Why.** The ES node's high disk watermark is 17gb free (amendment 23a). A run that starts at 17 GB can cross it as
+  soon as the host's other tenants write, and then voids under the high-watermark rule. A 3 GB margin covers this
+  stream's own cap (2 GB) plus one GiB of other tenants' growth before the watermark is reached.
+- **Unchanged.** The 15 GB floor, the 2 GB own-usage cap and every VOID rule of amendments 17c, 23 and 23a.
+- **Batch d.** It is not affected and keeps the 17 GB line: it runs from the pinned tree of 2e1948c (no rule change
+  mid-batch). A batch-d run that ends BLOCKED or VOID and is rerun after this amendment is rerun at the later commit,
+  under 20 GB, and both records are reported.
+- **Unchanged experiments.** This changes only when a run may start, not any experiment or threshold.
