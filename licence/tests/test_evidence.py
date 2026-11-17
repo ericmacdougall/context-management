@@ -28,9 +28,15 @@ import summarize  # noqa: E402
 INF = float("inf")
 
 
+_LIVES = {}
+
+
 def _life(name):
+    """A committed life as summarize.load sees it (loaded once per mode, then copied)."""
     mode = name.split("_")[0]
-    return copy.deepcopy(next(R for R in summarize.load(RES, mode) if R["_file"] == name + ".json"))
+    if mode not in _LIVES:
+        _LIVES[mode] = {R["_file"][:-5]: R for R in summarize.load(RES, mode)}
+    return copy.deepcopy(_LIVES[mode][name])
 
 
 def _healthy(scope):
@@ -228,7 +234,8 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
     def test_generated_invalid_evidence_is_never_pass_and_never_raises(self):
         problems, n = [], 0
         for name, g in self.V.GATES.items():
-            base = _healthy(g.scope)
+            full = _healthy(g.scope)
+            base = {k: full[k] for k in {f.path[0] for f in g.evidence.SPEC.values()}}   # only what the gate's evidence reads
             cases = []
             for fname, path, f in self.leaves(g.evidence, ()):
                 healthy = summarize.fetch(base, path)

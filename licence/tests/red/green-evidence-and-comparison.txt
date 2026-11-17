@@ -1,0 +1,35 @@
+# green: cd licence && python3 -m unittest tests.test_evidence tests.test_gates tests.test_offline (typed-evidence verdicts)
+..........................................................................................................................
+----------------------------------------------------------------------
+Ran 122 tests in 101.542s
+
+OK
+
+# committed-verdict comparison: summarize at 4761862 vs typed-evidence verdicts, every committed life, read-only
+same   down_1.json exp1.T4_battery_status UNVERIFIED | dls_battery_trial: absent
+same   down_1.json exp2.T4_status UNVERIFIED | 254 semantic write failures never classified (addendum D)
+same   down_1.json exp3.semonly_control_status UNVERIFIED | semonly_trial.semantic: absent
+same   down_2.json exp1.T4_battery_status UNVERIFIED | dls_battery_trial: absent
+same   down_2.json exp2.T4_status UNVERIFIED | 254 semantic write failures never classified (addendum D)
+same   down_2.json exp3.semonly_control_status UNVERIFIED | semonly_trial.semantic: absent
+same   down_3.json exp1.T4_battery_status UNVERIFIED | dls_battery_trial: absent
+same   down_3.json exp2.T4_status UNVERIFIED | 253 semantic write failures never classified (addendum D)
+same   down_3.json exp3.semonly_control_status UNVERIFIED | semonly_trial.semantic: absent
+same   down_4.json exp1.T4_battery_status UNVERIFIED | dls_battery_trial: absent
+same   down_4.json exp2.T4_status UNVERIFIED | 253 semantic write failures never classified (addendum D)
+same   down_4.json exp3.semonly_control_status UNVERIFIED | semonly_trial.semantic: absent
+same   down_5.json exp1.T4_battery_status UNVERIFIED | dls_battery_trial: absent
+same   down_5.json exp2.T4_status UNVERIFIED | 253 semantic write failures never classified (addendum D)
+same   down_5.json exp3.semonly_control_status UNVERIFIED | semonly_trial.semantic: absent
+same   down_6.json exp2.T1_status FAIL | examined 18820 < 20,000
+same   down_6.json exp2.T4_status UNVERIFIED | 109 semantic write failures never classified (addendum D)
+same   down_6.json exp3.semonly_control_status UNVERIFIED | semonly_trial.semantic: absent
+same   down_7.json exp2.T4_status UNVERIFIED | 257 semantic write failures never classified (addendum D)
+same   up_1.json exp2.T4_status UNVERIFIED | 93 semantic write failures never classified (addendum D)
+same   up_2.json exp2.T4_status UNVERIFIED | 93 semantic write failures never classified (addendum D)
+same   up_3.json exp2.T4_status UNVERIFIED | 93 semantic write failures never classified (addendum D)
+same   up_4.json exp2.T4_status UNVERIFIED | 94 semantic write failures never classified (addendum D)
+same   up_5.json exp2.T4_status UNVERIFIED | 93 semantic write failures never classified (addendum D)
+aggregate old {'T1_pass': 'FAIL', 'T2_pass': 'PASS', 'T3_pass': 'PASS', 'T4_pass': 'UNVERIFIED', 'T5_pass': 'PASS'}
+aggregate new {'T1_pass': 'FAIL', 'T2_pass': 'PASS', 'T3_pass': 'PASS', 'T4_pass': 'UNVERIFIED', 'T5_pass': 'PASS'}
+unchanged 102 changed 0

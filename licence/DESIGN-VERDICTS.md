@@ -65,7 +65,7 @@ Decision: use **stdlib frozen dataclasses with declarative field specifications*
    - `SUCCESS`: 2xx.
    - `NOT_FOUND`: 404.
    - `AUTHORISATION_REFUSAL`: 403 without licence text.
-   - `LICENCE_REFUSAL`: 403 or other 4xx with "non-compliant" or "license ... expired" text.
+   - `LICENCE_REFUSAL`: any 4xx or 5xx with "non-compliant" or "license ... expired" text, as the harness's `lib.classify` has always classified it.
    - `AUTHENTICATION_FAILURE`: 401.
    - `CLIENT_ERROR`: any other 4xx.
    - `INFRASTRUCTURE_FAILURE`: 5xx.
