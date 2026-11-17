@@ -157,7 +157,6 @@ TRUSTED_INTERNALS = {
     ("B1", "pol.decisions.MemoryEngine._participant"): "called by DecisionService after principal_of(session)",
     ("B1", "pol.decisions.MemoryEngine._submit"): "the in-memory core: DecisionService builds the event from the verified principal; the "
                                                   "Postgres engine is reached only through definer functions (R3-7)",
-    ("B1", "pol.decisions.Vault._put"): "returns True on store; called by DecisionService.submit after principal_of(session)",
     ("B3", "pol.enforce.Store._get"): "raw fetch; every caller checks the record's label for the verified principal before text leaves",
     ("B3", "pol.enforce.Store._sources"): "fetch-then-check: every caller runs Enforcer._check on the returned labels before using text",
 }

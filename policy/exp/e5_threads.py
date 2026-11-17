@@ -100,8 +100,8 @@ def build_decision_views(D, attrs, authority, script, notice, mutated_for=None):
     pol = parse_policy({"version": 1, "grants": {"t1": ["read", "append"]}, "conflict_notice": notice})
     enf = Enforcer(lambda: pol, d, sa, AuditLog())
     eng = D.MemoryEngine({"tenant": "t1", "principals": {h: "human" for h in attrs}, "authority": authority, "admins": []})
-    vault = D.Vault()
-    vault._key = b"e5-fixed-key-so-refs-compare-across-replays"
+    ctr = iter(range(1, 1 << 30))
+    vault = D.Vault(ref_factory=lambda: "val-e5-%08d" % next(ctr))     # one counter per replay, so refs compare across replays
     svc = D.DecisionService(enf, {"t1": eng}, vault)
     sess = {h: lab_issue(sa, h, "owner_ui") for h in attrs}
     refs, n = {}, [0]

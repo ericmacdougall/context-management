@@ -5,7 +5,7 @@
  "pol.decisions.DecisionService.submit": "session, body",
  "pol.decisions.DecisionService.table": "session",
  "pol.decisions.MemoryEngine.__init__": "config",
- "pol.decisions.Vault.__init__": "",
+ "pol.decisions.Vault.__init__": "ref_factory=",
  "pol.directory.Directory.__init__": "entries",
  "pol.directory.Directory.lookup": "pid",
  "pol.directory.Directory.put": "entry",

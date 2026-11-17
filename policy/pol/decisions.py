@@ -17,9 +17,6 @@ module does not ship a cipher. Without one the vault stores plaintext in its own
 from __future__ import annotations
 
 import dataclasses
-import hashlib
-import hmac
-import json
 import re
 import secrets
 import threading
@@ -43,11 +40,8 @@ class _ValueCipher(Protocol):           # interface only (see module docstring)
     def shred(self, tenant: str, subject: str) -> None: ...
 
 
-def _value_ref(key: bytes, tenant: str, principal: str, idem: str, text: str, label: Label) -> str:
-    """Deterministic per (tenant, principal, idempotency key, value, label), so a retried submission carries the same reference and is
-    recognised as a duplicate, and keyed (HMAC), so a reference left in the append-only log after erasure is not a plain hash of the value."""
-    msg = json.dumps([tenant, principal, idem, text, label.to_dict()], sort_keys=True, separators=(",", ":")).encode()
-    return "val-" + hmac.new(key, msg, hashlib.sha256).hexdigest()[:40]
+def _random_ref() -> str:
+    return "val-" + secrets.token_hex(20)
 
 
 def _tokenised(label: Label, tokens) -> Label:
@@ -59,14 +53,33 @@ class Vault:
     """Referenced value storage. Refs are assigned here. Each value is tagged with the subjects of its label, so erasure of a subject
     covers every value ABOUT that subject, whoever wrote it."""
 
-    def __init__(self):
+    def __init__(self, ref_factory=None):
+        """ref_factory: a zero-argument callable returning a fresh reference. The default is random; an experiment that compares two
+        replays of one script passes a counter (exp/e5_threads.py). It must never be derived from the value, its label or its subjects."""
         self._vals: Dict[str, dict] = {}
         self._subj: Dict[tuple, str] = {}
-        self._key = secrets.token_bytes(32)
+        self._idem: Dict[tuple, str] = {}           # (tenant, principal, idem) -> ref, only while that value is stored
+        self._new_ref = ref_factory or _random_ref
         self._lock = threading.Lock()
 
-    def _ref(self, tenant: str, principal: str, idem: str, text: str, label: Label) -> str:
-        return _value_ref(self._key, tenant, principal, idem, text, label)
+    def _mint(self, tenant: str, principal: str, idem: str, text: str, label: Label):
+        """(ref, created). A retry by the same principal with the same idempotency key, value and label, while that value is stored, gets
+        the stored reference (so the core sees the same event and answers `duplicate`); anything else gets a FRESH reference from the
+        factory and is stored. No reference is computed from the value, the label or a subject name, so a reference left in the
+        append-only log after erasure cannot be confirmed by guessing a name or a text, by anyone, the vault included (review-3 N5).
+        After erasure a retry gets a fresh reference and the core answers `idem_conflict`."""
+        k = (tenant, principal, idem)
+        with self._lock:
+            r = self._idem.get(k)
+            v = self._vals.get(r) if r is not None else None
+            if v is not None and v["text"] == text and v["label"].to_dict() == label.to_dict():
+                return r, False
+            ref = self._new_ref()
+            if ref in self._vals:
+                raise RuntimeError("value reference collision")
+            self._vals[ref] = {"tenant": tenant, "text": text, "label": label, "subjects": frozenset(label.subjects), "key": k}
+            self._idem.setdefault(k, ref)
+            return ref, True
 
     def _event_label(self, tenant: str, label: Label) -> Label:
         """Subjects replaced by a RANDOM token per (tenant, canonical subject), minted on first use and held only here. Erasure deletes
@@ -80,25 +93,20 @@ class Vault:
         with self._lock:
             self._subj.pop((tenant, subject), None)
 
-    def _put(self, tenant: str, ref: str, text: str, label: Label) -> bool:
-        """Store under `ref` unless present; True when this call created it."""
-        with self._lock:
-            if ref in self._vals:
-                return False
-            self._vals[ref] = {"tenant": tenant, "text": text, "label": label, "subjects": frozenset(label.subjects)}
-        return True
-
     def _get(self, tenant: str, ref) -> Optional[dict]:
         with self._lock:
             v = self._vals.get(ref) if isinstance(ref, str) else None
-            return dict(v) if v is not None and v["tenant"] == tenant else None
+            return {k: x for k, x in v.items() if k != "key"} if v is not None and v["tenant"] == tenant else None
 
     def _delete(self, tenant: str, ref: str) -> bool:
+        """Delete the value and its retry mapping: nothing the vault keeps mentions `ref` afterwards."""
         with self._lock:
             v = self._vals.get(ref)
             if v is None or v["tenant"] != tenant:
                 return False
             del self._vals[ref]
+            if self._idem.get(v["key"]) == ref:
+                del self._idem[v["key"]]
             return True
 
     def _refs_about(self, tenant: str, subject: str) -> List[str]:
@@ -198,20 +206,19 @@ class DecisionService:
                 lab = Label.from_dict(body["label"])
             except (LabelError, TypeError, ValueError, AttributeError):
                 return self._refuse(p.id, "bad_event", body)
-            ref = self._vault._ref(session.tenant, p.id, str(body.get("idem")), body["value"], lab)
-            created = self._vault._put(session.tenant, ref, body["value"], lab)
+            ref, created = self._vault._mint(session.tenant, p.id, str(body.get("idem")), body["value"], lab)
             ev["value_ref"] = ref
             ev["label"] = self._vault._event_label(session.tenant, lab).to_dict()
         elif "label" in body:
             return self._refuse(p.id, "bad_event", body)  # a label belongs to a value; never let an untokenised label into the log
         code, orig = eng._submit(ev)
         if code in _core.REFUSED:
-            if ref is not None and created:
-                self._vault._delete(session.tenant, ref)
+            if ref is not None and created and code != "duplicate":
+                self._vault._delete(session.tenant, ref)    # `duplicate` means the same event (same ref) is in the log: keep its value
             out = self._refuse(p.id, code, body, orig)
             out["id"] = ev["id"]
-            if code == "duplicate" and ref is not None and not created:
-                out["value_ref"] = ref                   # M2: a retry gets the original outcome; same body -> same keyed ref, still stored
+            if code == "duplicate" and ref is not None:
+                out["value_ref"] = ref                   # M2: a retry gets the original outcome; same body -> same stored ref
             return out
         if code == "revoked":
             self._enf._revocations._add(ev["target"])
