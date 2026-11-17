@@ -175,6 +175,34 @@ class M1_WallClock(_Base):
                 c.execute("rollback")
                 self.assertFalse(after, "%s accepted a token ended after the transaction's snapshot" % name)
 
+    def test_every_isolation_other_than_read_committed_is_refused(self):
+        """The caller contract (DESIGN.md): only READ COMMITTED authenticates. READ UNCOMMITTED is refused as well: Postgres runs it as
+        READ COMMITTED but reports it by its own name, and the guard compares that name. Each refusal follows the same token (or a
+        proof of the same factor) working under READ COMMITTED."""
+        for level in ("read uncommitted", "repeatable read", "serializable"):
+            for name in CALLS:
+                with self.subTest(level=level, call=name):
+                    tok = self.tok("admin")
+                    self.assertTrue(self.ok(name, self.raw(self.app, name, tok)), "positive control: %s works with the live token" % name)
+                    c = self.app_t
+                    c.execute("begin isolation level " + level)
+                    after = self.ok(name, self.raw(c, name, tok))
+                    c.execute("rollback")
+                    self.assertFalse(after, "%s authenticated under %s" % (name, level))
+            with self.subTest(level=level, call="open_session"):
+                g = enroll(self.o, T, "admin", "owner_ui")
+                self.idp.execute("select dc.open_session(%s, 60)", (proof(g),))         # positive control (raises if refused)
+                c = self.idp_t
+                c.execute("begin isolation level " + level)
+                try:
+                    c.execute("select dc.open_session(%s, 60)", (proof(g),))
+                    opened = True
+                except psycopg.Error as e:
+                    opened = False
+                    self.assertIn("isolation", str(e))
+                c.execute("rollback")
+                self.assertFalse(opened, "open_session opened a session under %s" % level)
+
     def test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke(self):
         """d05d731: open_session in a REPEATABLE READ transaction read the factor row from a snapshot taken before the factor was
         revoked, and opened a session from it."""

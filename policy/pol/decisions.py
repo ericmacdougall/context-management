@@ -138,12 +138,16 @@ class Vault:
             v = self._vals.get(ref) if isinstance(ref, str) else None
             return {k: x for k, x in v.items() if k != "key"} if v is not None and v["tenant"] == tenant else None
 
-    def _delete(self, tenant: str, ref: str) -> bool:
-        """Delete the value and its retry mapping: nothing the vault keeps mentions `ref` afterwards."""
+    def _delete(self, tenant: str, ref: str, judge=None) -> bool:
+        """Delete the value and its retry mapping: nothing the vault keeps mentions `ref` afterwards. judge(value), when given, is the
+        caller's authorization; it runs INSIDE the vault lock that the deletion holds, so no wait comes between the judgment and the
+        deletion (final review P1), and whatever it raises propagates with nothing deleted."""
         with self._lock:
             v = self._vals.get(ref)
             if v is None or v["tenant"] != tenant:
                 return False
+            if judge is not None:
+                judge({k: x for k, x in v.items() if k != "key"})
             del self._vals[ref]
             if self._idem.get(v["key"]) == ref:
                 del self._idem[v["key"]]
@@ -163,8 +167,14 @@ class MemoryEngine:
         self._lock = threading.Lock()
         self._log: List[dict] = []
 
-    def _submit(self, ev: dict):
+    def _submit(self, ev: dict, gate=None):
+        """gate: the caller's final authorization (final review P1). It runs inside the engine lock, after every wait and immediately
+        before the reduction; a non-None answer is returned as the code and nothing is applied."""
         with self._lock:
+            if gate is not None:
+                refusal = gate()
+                if refusal is not None:
+                    return refusal, None
             code, orig, delta = _core.reduce(self._st, ev)
             self._st.apply_delta(delta)
             if code not in _core.REFUSED:
@@ -263,6 +273,21 @@ class DecisionService:
         with self._vault._key_lock(session.tenant, p.id, idem):
             return self._submit_keyed(session, p, body, eng, ev)
 
+    def _gate(self, session, pid: str) -> Optional[str]:
+        """The final authorization (final review P1): the entry judgment again (live session, current directory entry of the same
+        principal and tenant, not revoked). MemoryEngine._submit runs it inside its lock, after the key-lock and engine-lock waits and
+        immediately before the reduction, so nothing is applied for a session that ended, or a principal revoked or removed, while
+        the submission waited. None: allowed; otherwise the refusal code."""
+        try:
+            q = self._enf.principal_of(session)
+        except PolicyDenied as e:
+            return "unauthenticated:" + e.decision.reason
+        if q.id != pid:
+            return "unauthenticated:principal_changed"
+        if self._enf._revocations._is_revoked(pid):
+            return "principal_revoked"
+        return None
+
     def _submit_keyed(self, session, p, body, eng, ev) -> dict:
         lab = None
         if "value" in body:
@@ -284,14 +309,17 @@ class DecisionService:
                 staged = self._vault._stage(session.tenant, p.id, ev["idem"], body["value"], lab)
                 ev["value_ref"] = staged.ref
                 ev["label"] = self._vault._event_label(session.tenant, lab).to_dict()
-            code, orig = eng._submit(ev)
+            code, orig = eng._submit(ev, gate=lambda: self._gate(session, p.id))
         except BaseException:
             if staged is not None:
                 self._vault._settle(staged, self._after_fault(eng, ev))
             raise
         ref = staged.ref if staged is not None else None
         if staged is not None:
-            self._vault._settle(staged, "accepted" if code not in _core.REFUSED else "kept" if code == "duplicate" else "refused")
+            self._vault._settle(staged, "accepted" if code not in _core.REFUSED and not code.startswith("unauthenticated:")
+                                else "kept" if code == "duplicate" else "refused")
+        if code.startswith("unauthenticated:"):           # the final judgment found the session gone (as at entry: not audited here)
+            return {"code": code, "original": None, "id": None, "value_ref": None}
         if code in _core.REFUSED:
             out = self._refuse(p.id, code, body, orig)
             out["id"] = ev["id"]
@@ -335,16 +363,14 @@ class DecisionService:
         out = {"erased": 0, "queued": 0, "denied": 0, "refused": None, "result": None}
         refs = self._vault._refs_about(session.tenant, subj)
         for ref in refs:
-            v = self._vault._get(session.tenant, ref)
-            if v is None:
-                continue
+            # final review P1: each value is judged inside the vault lock its deletion holds (no wait between judgment and deletion)
             try:
-                self._enf._check(session, "erase", [v["label"]], {})
+                gone = self._vault._delete(session.tenant, ref, judge=lambda v: self._enf._check(session, "erase", [v["label"]], {}))
             except PolicyDenied as e:
                 out["queued" if e.decision.reason == "erasure_queued" else "denied"] += 1
                 continue
-            self._vault._delete(session.tenant, ref)
-            out["erased"] += 1
+            if gone:
+                out["erased"] += 1
         if not self._vault._refs_about(session.tenant, subj):
             self._vault._forget_subject(session.tenant, subj)
         out["result"] = "no_values_found" if not refs else ("erased" if out["queued"] == out["denied"] == 0 else "incomplete")
@@ -409,7 +435,14 @@ class DecisionService:
         out["open"] = sorted(items, key=lambda x: x["id"])
         if notice:
             out["hidden_candidates"] = hidden
-        return out
+        return out if self._still(session, p.id) else None      # final review P1: judged again after the engine-lock waits
+
+    def _still(self, session, pid: str) -> bool:
+        """The read calls' final judgment: the session still names the same current principal (the entry judgment of a read)."""
+        try:
+            return self._enf.principal_of(session).id == pid
+        except PolicyDenied:
+            return False
 
     def table(self, session) -> List[dict]:
         try:
@@ -419,4 +452,5 @@ class DecisionService:
         eng = self._engines.get(session.tenant)
         if eng is None:
             return []
-        return [x for x in (self.explain(session, r) for r in eng._reqs() if eng._participant(p.id, r)) if x is not None]
+        rows = [x for x in (self.explain(session, r) for r in eng._reqs() if eng._participant(p.id, r)) if x is not None]
+        return rows if self._still(session, p.id) else []

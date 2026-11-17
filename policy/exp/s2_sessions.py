@@ -21,7 +21,9 @@ Real arm (current pol/_pgcore.sql), per seed, one install of tenants tenant-a an
 Controls, per seed, each on its own install (each must CATCH, i.e. show the attack its probe targets succeeding):
   ctl_bare_mint_80bb6a7   the 80bb6a7 SessionAuthority (exp/fixtures/directory_80bb6a7.py, verbatim) issues from a bare principal id.
   ctl_bare_mint_0a20b64   the 0a20b64 dc.open_session (exp/fixtures/open_session_0a20b64.sql, verbatim) granted to dc_idp: a bare mint
-                          opens a session that authenticates.
+                          opens a session that authenticates. It names an ENROLLED factor of the principal (final review P4: a session
+                          is live only while its factor exists unrevoked, so a made-up factor id would not authenticate; the bare mint
+                          still needs no proof, which is what the control shows).
   ctl_no_replay           variant without the replay ledger check: a replayed proof opens a second session.
   ctl_no_mac              variant without the MAC check: a proof with a forged MAC or another factor's key opens a session.
   ctl_identity_from_body  variant that skips the binding check and stamps the session from the proof BODY: a proof naming another or
@@ -83,7 +85,6 @@ TIME_CHECK = ("  if x <= extract(epoch from clock_timestamp()) or x > extract(ep
               "    raise exception 'proof refused: time' using errcode = 'P0001';\n  end if;\n")
 TIME_CHECK_OLD = ("  if x <= extract(epoch from now()) or x > extract(epoch from now()) + 300 then raise exception 'proof refused: time' "
                   "using errcode = 'P0001'; end if;\n")
-TIME_RECHECK = "  if x <= extract(epoch from clock_timestamp()) then raise exception 'proof refused: time' using errcode = 'P0001'; end if;\n"
 OPEN_ISOLATION = ("  if current_setting('transaction_isolation') <> 'read committed' then\n"
                   "    raise exception 'proof refused: isolation' using errcode = 'P0001';\n  end if;\n")
 SESSION_ISOLATION = "  if current_setting('transaction_isolation') <> 'read committed' then return s; end if;\n"
@@ -97,7 +98,8 @@ VARIANTS = {
                                                                    "'tenant', b->>'tenant', 'principal', b->>'principal', 'channel', b->>'channel'"))],
     "ctl_origin_from_body": [(ID_KEYS, "  if p_body ?| array['tenant', 'principal', 'channel', 'id'] then\n"), (ORIGIN_STAMP, ";\n"),
                              (BODY_KEYS, "                                  'choose','target','role','actor','trust_origin'];\n")],
-    "ctl_txn_clock": [(TIME_CHECK, TIME_CHECK_OLD), (TIME_RECHECK, ""), (OPEN_ISOLATION, ""), (SESSION_ISOLATION, ""),
+    # final review P4: the separate expiry re-check after the ledger insert is gone; dc._judge_proof (TIME_CHECK) runs again instead
+    "ctl_txn_clock": [(TIME_CHECK, TIME_CHECK_OLD), (OPEN_ISOLATION, ""), (SESSION_ISOLATION, ""),
                       (SESSION_CLOCK, SESSION_CLOCK.replace("clock_timestamp()", "now()"))],
 }
 
@@ -527,7 +529,8 @@ def controls(seed):
         lab.o.execute("reset role")
         lab.o.execute("grant execute on function dc.open_session(text, text, text, text, integer) to dc_idp")
         try:
-            tok = lab.idp.execute("select dc.open_session('tenant-a','admin','owner_ui','ctl',60)").fetchone()[0]
+            fid = enroll(lab.o, T, "admin", "owner_ui").factor_id        # an enrolled factor; its key is never used (no proof)
+            tok = lab.idp.execute("select dc.open_session('tenant-a','admin','owner_ui',%s,60)", (fid,)).fetchone()[0]
             out, auth = "accepted", lab.authenticated(tok)
         except psycopg.Error as e:
             out, auth = "refused:" + str(e.sqlstate), None

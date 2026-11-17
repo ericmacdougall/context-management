@@ -1,21 +1,27 @@
 """Final policy review (reviews/policy-final/review-1.md, run 1356898b, at a2d65fd), in-memory findings, reproduced first. Each test
 runs UNMODIFIED against a2d65fd (faults are injected by wrapping existing callables; no name introduced by the fix is imported) and
 failed there for the behavioural reason in its docstring unless the docstring says it is a regression guard (red logs in
-policy/results/red/). P2 (the S2 verifier) is in tests/test_verify_s2.py; P1 and P4 follow in their own commit.
+policy/results/red/). Postgres findings are in tests/test_final_pg.py; P2 (the S2 verifier) is in tests/test_verify_s2.py.
 
 P3  an exception between allocating a value reference and the engine's decision left the value and its idempotency mapping in the
     vault, so the next valid request with that key was accepted under a fresh reference and its exact retry was refused
     idem_conflict. Fixed: the event shape check is total, the service validates the type and key before allocating, the vault stages a
     value without publishing the retry mapping and settles it (publish on acceptance, delete on refusal or failure before acceptance;
-    acceptance after a lost response is read back from the engine's idempotency record by fingerprint)."""
+    acceptance after a lost response is read back from the engine's idempotency record by fingerprint).
+P1  (in memory, the same class as the Postgres finding) DecisionService.submit judged the session before waiting for the key lock and
+    the engine lock, then applied the event after the wait without judging again. Fixed: the final judgment runs inside the engine
+    lock, immediately before the reduction. explain and table judge again before returning."""
 from __future__ import annotations
 
 import json
 import random
+import threading
+import time
 import unittest
 
 from pol import _core
-from tests.kit import T, World
+from pol.policy import parse_policy
+from tests.kit import T, World, policy_doc
 
 
 class Injected(RuntimeError):
@@ -229,6 +235,137 @@ class P3_VaultInvariant(unittest.TestCase):
             if orphans or stale:
                 bad.append((i, len(orphans), len(stale)))
         self.assertEqual(bad[:5], [], "%d submissions left the vault inexact (step, orphan values, stale mappings)" % len(bad))
+
+
+class P1_MemoryFinalJudgment(unittest.TestCase):
+    """The submission waits (another submission holds its key's stripe, or the engine lock) while its session ends or its principal
+    is revoked; when the wait ends it must be judged again before anything is applied."""
+
+    def _held(self, lock, w, a, mutate, text="late"):
+        lock.acquire()
+        out = {}
+        t = threading.Thread(target=lambda: out.__setitem__("r", w.svc.submit(a, body(w, "c-" + text, text, idem="k-" + text))))
+        try:
+            t.start()
+            time.sleep(0.3)
+            self.assertTrue(t.is_alive(), "the submission did not wait for the held lock (the test would be vacuous)")
+            mutate()
+        finally:
+            lock.release()
+        t.join(5)
+        self.assertFalse(t.is_alive())
+        return out["r"]
+
+    def _cases(self, which):
+        for name, mutate, want in (("live", None, "proposed"), ("ended", "end", "unauthenticated:invalid_session"),
+                                   ("policy_revoked", "revoke", "principal_revoked"), ("removed", "remove", "unauthenticated:unknown_principal")):
+            with self.subTest(wait=which, mutation=name):
+                w = World()
+                a = w.s("alice")
+                lock = w.vault._key_lock(T, "alice", "k-late") if which == "key" else w.engine._lock
+                m = {None: lambda: None, "end": lambda: w.sessions.end(a),
+                     "revoke": lambda: setattr(w, "pol", parse_policy(policy_doc(revoked=["alice"]))),
+                     "remove": lambda: w.dir.remove("alice")}[mutate]
+                r = self._held(lock, w, a, m)
+                self.assertEqual(r["code"], want)
+                if want != "proposed":
+                    self.assertEqual((len(w.engine._log), len(w.vault._vals), len(w.vault._idem)), (0, 0, 0), "applied or left a value")
+
+    def test_judged_again_after_waiting_for_the_key_lock(self):
+        """a2d65fd: judged before the key-lock wait only; the event was applied after the session ended or the principal was revoked."""
+        self._cases("key")
+
+    def test_judged_again_after_waiting_for_the_engine_lock(self):
+        """a2d65fd: judged before the engine-lock wait only (the same defect at the last wait)."""
+        self._cases("engine")
+
+    def test_self_revoke_is_applied(self):
+        """Regression guard: a call's own effect never refuses it (an admin revoking itself is applied, as at a2d65fd)."""
+        w = World()
+        adm = w.s("admin")
+        r = w.svc.submit(adm, {"type": "revoke", "client_id": "self", "idem": "self", "target": "admin"})
+        self.assertEqual(r["code"], "revoked")
+        self.assertEqual(w.svc.submit(adm, {"type": "revoke", "client_id": "again", "idem": "again", "target": "bob"})["code"], "principal_revoked")
+
+    def test_explain_and_table_judge_again_before_returning(self):
+        """a2d65fd: explain judged the session first, waited for the engine lock, and returned the head (version, status) to a session
+        ended during the wait (red). table is a regression guard: it calls explain per req, which judges again."""
+        for name in ("explain", "table"):
+            with self.subTest(name):
+                w = World()
+                a = w.s("alice")
+                self.assertEqual(w.svc.submit(a, body(w, "c0", "seen"))["code"], "proposed")
+                call = (lambda: w.svc.explain(a, "r1")) if name == "explain" else (lambda: w.svc.table(a))
+                self.assertTrue(call(), "positive control")
+                out = {}
+                w.engine._lock.acquire()
+                t = threading.Thread(target=lambda: out.__setitem__("r", call()))
+                try:
+                    t.start()
+                    time.sleep(0.3)
+                    self.assertTrue(t.is_alive(), "vacuous: did not wait")
+                    w.sessions.end(a)
+                finally:
+                    w.engine._lock.release()
+                t.join(5)
+                self.assertIn(out["r"], (None, []), "returned decision state to an ended session")
+
+    def test_erase_never_deletes_for_a_session_ended_during_a_wait(self):
+        """Regression guard (a2d65fd already judges each value immediately before deleting it)."""
+        w = World()
+        a, adm = w.s("alice"), w.s("admin")
+        self.assertEqual(w.svc.submit(a, body(w, "c0", "about dana", subjects=["dana"]))["code"], "proposed")
+        out = {}
+        w.engine._lock.acquire()
+        t = threading.Thread(target=lambda: out.__setitem__("r", w.svc.erase_subject(adm, "dana")))
+        try:
+            t.start()
+            time.sleep(0.3)
+            self.assertTrue(t.is_alive(), "vacuous: did not wait")
+            w.sessions.end(adm)
+        finally:
+            w.engine._lock.release()
+        t.join(5)
+        self.assertEqual(out["r"]["erased"], 0)
+        self.assertEqual(len(w.vault._vals), 1)
+
+    def test_no_wait_between_the_erase_judgment_and_the_deletion(self):
+        """a2d65fd: erase_subject judged a value (Enforcer._check) and then took the vault lock to delete it: another thread could hold
+        the vault lock in between while the session ended, and the value was deleted for an ended session. Fixed: the judgment runs
+        inside the vault lock that the deletion holds. The probe takes the vault lock right after the judgment returns; it must not get
+        it (no wait can come between), and if it does, the deletion after the session ended must not happen."""
+        w = World()
+        a, adm = w.s("alice"), w.s("admin")
+        self.assertEqual(w.svc.submit(a, body(w, "c0", "about dana", subjects=["dana"]))["code"], "proposed")
+        real = w.enf._check
+        judged, go, state = threading.Event(), threading.Event(), {"n": 0}
+
+        def check(session, action, *x, **k):
+            r = real(session, action, *x, **k)
+            if action == "erase" and state["n"] == 0:
+                state["n"] += 1
+                judged.set()
+                go.wait(3)
+            return r
+        w.enf._check = check
+        out = {}
+        t = threading.Thread(target=lambda: out.__setitem__("r", w.svc.erase_subject(adm, "dana")))
+        t.start()
+        try:
+            self.assertTrue(judged.wait(5), "the erase never judged a value (vacuous)")
+            got = w.vault._lock.acquire(timeout=0.5)
+            w.sessions.end(adm)
+            go.set()
+            if got:
+                time.sleep(0.2)
+                w.vault._lock.release()
+        finally:
+            go.set()
+            t.join(5)
+            w.enf._check = real
+        self.assertFalse(t.is_alive())
+        self.assertEqual((got, out["r"]["erased"] if got else 0), (False, 0),
+                         "a lock wait came between the erase judgment and the deletion (and the value was deleted after the session ended)")
 
 
 if __name__ == "__main__":

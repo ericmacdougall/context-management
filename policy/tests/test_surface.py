@@ -161,6 +161,9 @@ TRUSTED_INTERNALS = {
     ("B1", "pol.decisions.MemoryEngine._participant"): "called by DecisionService after principal_of(session)",
     ("B1", "pol.decisions.MemoryEngine._submit"): "the in-memory core: DecisionService builds the event from the verified principal; the "
                                                   "Postgres engine is reached only through definer functions (R3-7)",
+    ("B4", "pol.decisions.MemoryEngine._submit"): "calls the gate its caller passes: DecisionService passes its own _gate (the final "
+                                                  "authorization, final review P1), never a sink; it 'calls a sink' only when the probe "
+                                                  "passes one as gate",
     ("B3", "pol.enforce.Store._get"): "raw fetch; every caller checks the record's label for the verified principal before text leaves",
     ("B3", "pol.enforce.Store._sources"): "fetch-then-check: every caller runs Enforcer._check on the returned labels before using text",
 }

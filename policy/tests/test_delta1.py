@@ -27,11 +27,11 @@ class M3_OverlappingIdempotency(unittest.TestCase):
         real = eng._submit
         a_in, go = threading.Event(), threading.Event()
 
-        def gated(ev):
+        def gated(ev, *a, **k):             # final review P1: the engine also takes the caller's final gate
             if ev.get("id") == "alice/cA":
                 a_in.set()
                 go.wait(5)
-            return real(ev)
+            return real(ev, *a, **k)
 
         eng._submit = gated
         out = {}
