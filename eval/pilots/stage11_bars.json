@@ -1,0 +1,10 @@
+{
+ "fa_upper_max": 0.10,
+ "fr_upper_max": 0.15,
+ "agree_lower_min": 0.80,
+ "control_rejected_min": 18,
+ "z": 1.96,
+ "j2_headroom_min": 0.10,
+ "j2_headroom_paired_lower_above": 0.0,
+ "j2_floor_max": 0.10
+}
