@@ -1,0 +1,8 @@
+# Step 1, R1 rerun (amendment 24b): R1 was INCONCLUSIVE at 96214c2 (control arm 19 overlapping runs < 20; fenced 0
+# violations, 0 errors). Exactly one rerun of R1 alone, N=40, unchanged threshold, at the commit of amendment 24b,
+# under the 20 GB start line and the lab run lock. Starts as a batch does: cleanup, setup reset, preflight.
+# label  cleanup  module args
+@ exp.cleanup
+@ wp.setup --reset
+@ exp.disk_gate preflight
+races_R1 exp.races exp.races R1 40
