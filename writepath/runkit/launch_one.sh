@@ -1,6 +1,6 @@
 #!/bin/sh
 # One stamped experiment on the lab host, from a PINNED tree (pin_run.sh), with the run_all validity gates of amendment
-# 17c: the 17 GB start line, exp.disk_gate start / check / end, and a watcher that writes WP_HOME/state/STOP when this
+# 17c: the start line (20 GB from amendment 24; 17 GB before), exp.disk_gate start / check / end, and a watcher that writes WP_HOME/state/STOP when this
 # stream's Elasticsearch logs a flood-stage watermark (disk_gate end then marks the run VOID).
 # usage: sh runkit/launch_one.sh <pinned dir> <label> <module> [args...]
 #        output WP_HOME/results/one.<head>.<label>.out; prints that path, the head, the start time and free space.
@@ -10,7 +10,7 @@ set -eu
 export WP_HOME
 ES_CONTAINER=${ES_CONTAINER:-emlab2-writepath-es}
 FREE=$(df -BG --output=avail "$WP_HOME" | tail -1 | tr -dc 0-9)
-[ "$FREE" -ge 17 ] || { echo "BLOCKED free ${FREE}G < 17"; exit 3; }
+[ "$FREE" -ge 20 ] || { echo "BLOCKED free ${FREE}G < 20"; exit 3; }   # amendment 24 (17 before)
 D=$1; L=$2; shift 2
 case "$D" in */runs/*) ;; *) echo "refusing: not a pinned tree"; exit 2 ;; esac
 cd "$D"

@@ -3,7 +3,7 @@
 docker and du are stubbed; WP_HOME is a temporary home with this stream's conf, so wp/config.py loads without opening
 any connection. The gate under test is loaded from a file: this tree's exp/disk_gate.py by default, or the file named
 in DISK_GATE_UNDER_TEST (failing-first: the 1fcf3f7 file fails the fail-open cases).
-usage (from writepath/): python3 -m unittest discover -s tests -v   (all offline tests; 9 of them here)"""
+usage (from writepath/): python3 -m unittest discover -s tests -v   (all offline tests; 13 of them here)"""
 import importlib.util
 import io
 import os
@@ -114,6 +114,20 @@ class DiskGateFailsClosed(unittest.TestCase):
         self.h.log = ('{"log.level": "INFO","message":"low disk watermark [18gb] exceeded on [node][7b751d48f8c8]'
                       '[/usr/share/elasticsearch/data] free: 17.7gb[2.7%], replicas will not be assigned to this node"}\n')
         self.assertEqual(self.call("end")[0], 0)
+
+    # amendment 24: the start line is 20 GB host free (above the ES high watermark, 17gb); fails on 1bad3bd (17 GB)
+    def _start_with_free(self, gib):
+        with mock.patch.object(shutil, "disk_usage",
+                               lambda p: SimpleNamespace(total=100 * GIB, used=(100 - gib) * GIB, free=gib * GIB)):
+            return self.call("start")
+
+    def test_start_under_20gb_blocked(self):
+        rc, out = self._start_with_free(19)
+        self.assertEqual(rc, 2, f"expected BLOCKED (exit 2) at 19 GiB free, got {rc!r}: {out.strip()[-200:]}")
+        self.assertIn("BLOCKED", out)
+
+    def test_start_at_20gb_allowed(self):
+        self.assertEqual(self._start_with_free(20)[0], 0)
 
     # the fail-open cases of review N2
     def test_log_command_failure_voids(self):

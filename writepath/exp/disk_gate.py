@@ -22,7 +22,7 @@ import time
 
 from wp import config
 
-START_GB, FLOOR_GB, CAP_GB = 17.0, 15.0, 2.0
+START_GB, FLOOR_GB, CAP_GB = 20.0, 15.0, 2.0   # start line 20 GB from amendment 24 (17 GB before)
 GIB = 1024 ** 3
 HOME = pathlib.Path(os.environ["WP_HOME"])
 # NOT under WP_HOME/logs: that directory is a registered store whose files the erasure gate inventories (only *.log is
