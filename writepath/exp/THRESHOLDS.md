@@ -1021,3 +1021,15 @@ and the broker-held alias CAS (H1 PB, PC, PE held 3/3); key invalidation is hygi
 revocation delay (PD maximum over 20 runs) if H1a measures it, else "revocation delay not measured".
 Gates: the run lock; free space checked in exact KiB (>= 20971520 KiB) before the lock is taken and by launch_one.sh;
 disk_gate start, check and end; flood and high-watermark watcher; one run. A VOID run is recorded and may be rerun once.
+
+## Amendment H4 (2026-11-17, main's ruling on gaps the step-1 stream left; governs runs from c5cb1a8 on)
+1. exp/races.py verdict order: a fenced violation is a FAIL whatever the overlap counts. Before c5cb1a8 the overlap
+   counts were tested first, so a fenced violation in a run with fewer than 20 overlapped runs per arm was reported
+   INCONCLUSIVE. Otherwise amendment 3 is unchanged (INCONCLUSIVE below 20 overlapped runs in either arm; PASS iff no
+   fenced violation, no fenced error and at least one control violation among overlapped runs).
+2. Start line in exact KiB: runkit/launch_one.sh refuses below 20971520 KiB free (df -BG rounded up and let 19.3 GiB
+   through). A run of this stream whose disk_gate start line shows free below 20.0 GiB is VOID by the start line,
+   whatever launched it.
+3. STOP attribution: the flood watcher writes its reason into WP_HOME/state/STOP; the gate's VOID line reports "STOP
+   file" with the reason written in the file, or "writer unknown" for an empty file, never "operator stop" by default.
+   A STOP left by an earlier run is cleared only by exp.disk_gate start.
