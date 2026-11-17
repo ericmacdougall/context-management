@@ -10,6 +10,7 @@ import json
 import secrets
 import threading
 import time
+from dataclasses import dataclass, field
 
 from pol import _core
 from pol.decisions import DecisionService, MemoryEngine, Vault
@@ -52,6 +53,60 @@ class LabIdP:
         return Assertion(d["p"], d["c"], d["f"])
 
 
+@dataclass(frozen=True)
+class LabFactor:
+    """TEST DOUBLE of an enrolled device or key (step 2): the factor id the database stores and the HMAC key the device holds. The key
+    is returned once by dc.enroll_factor (owner only) and never printed: repr hides it, and results record the factor id only."""
+    factor_id: str
+    tenant: str
+    principal: str
+    channel: str
+    key: bytes = field(repr=False)
+
+
+def enroll(owner_conn, tenant, principal, channel) -> LabFactor:
+    """Admin path (database owner or superuser): enrol a factor for (tenant, principal, channel) through dc.enroll_factor."""
+    d = owner_conn.execute("select dc.enroll_factor(%s, %s, %s)", (tenant, principal, channel)).fetchone()[0]
+    return LabFactor(d["factor"], tenant, principal, channel, bytes.fromhex(d["key"]))
+
+
+def proof(f: LabFactor, expires_in: float = 60.0, nonce=None, key=None, **override) -> str:
+    """An authentication proof as the device makes it: canonical JSON of (tenant, principal, channel, factor, nonce, expires) and
+    HMAC-SHA256 under the factor's key. `override` replaces body fields (forgery tests); `key` signs with another key."""
+    body = {"tenant": f.tenant, "principal": f.principal, "channel": f.channel, "factor": f.factor_id,
+            "nonce": nonce or secrets.token_hex(16), "expires": int(time.time() + expires_in)}
+    body.update(override)
+    text = json.dumps(body, sort_keys=True, separators=(",", ":"))
+    return text + "." + hmac.new(f.key if key is None else key, text.encode(), hashlib.sha256).hexdigest()
+
+
+def pg_token(owner_conn, idp_conn, tenant, principal, channel, ttl_s: int = 60) -> str:
+    """A database session token the deployment way: enrol a factor (owner), make its proof (device), open the session (dc_idp)."""
+    return idp_conn.execute("select dc.open_session(%s, %s)", (proof(enroll(owner_conn, tenant, principal, channel)), ttl_s)).fetchone()[0]["token"]
+
+
+class PgLab:
+    """A World whose SessionAuthority verifies proofs through the database (pol.pgcore.PgIdentity), with its PgSessionBridge. s(pid)
+    issues a PgSession from a fresh proof of a factor enrolled on first use for (principal, channel)."""
+
+    def __init__(self, owner_conn, idp_conn, ttl_s: int = 60, **world_kw):
+        from pol import pgcore
+        self._o, self._f = owner_conn, {}
+        self.w = World(identity=pgcore.PgIdentity(idp_conn, ttl_s), **world_kw)
+        self.bridge = pgcore.PgSessionBridge(self.w.sessions)
+
+    def factor(self, pid, channel=None) -> LabFactor:
+        p = self.w.dir.lookup(pid)
+        tenant = p.tenant if p is not None else T
+        ch = channel or ("owner_ui" if p is None or p.kind == "human" else "agent_api")
+        if (pid, ch) not in self._f:
+            self._f[(pid, ch)] = enroll(self._o, tenant, pid, ch)
+        return self._f[(pid, ch)]
+
+    def s(self, pid, channel=None):
+        return self.bridge.issue(proof(self.factor(pid, channel)))
+
+
 class FixedClock:
     def __init__(self, enforcer, t: float):
         self.enf, self.t = enforcer, float(t)
@@ -92,11 +147,13 @@ def policy_doc(**over):
 class World:
     """A wired deployment: directory, sessions, audit, enforcer, store, decision service (memory engine)."""
 
-    def __init__(self, principals=None, policy=None, core_config=None):
+    def __init__(self, principals=None, policy=None, core_config=None, identity=None):
+        """identity: the identity adapter the SessionAuthority verifies credentials with (default: a fresh LabIdP; the Postgres tests
+        pass pol.pgcore.PgIdentity, whose credentials are database-verified proofs)."""
         self.dir = Directory(principals or [P("alice"), P("bob"), P("carol", clearance=0, groups=("other",)),
                                             P("bot", kind="agent", model="local"), P("ann", kind="analyst"), P("admin")])
         self.pol = policy or parse_policy(policy_doc())
-        self.idp = LabIdP()
+        self.idp = identity if identity is not None else LabIdP()
         self.sessions = SessionAuthority(self.dir, self.idp)
         self.audit = AuditLog()
         self.enf = Enforcer(lambda: self.pol, self.dir, self.sessions, self.audit)
