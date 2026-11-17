@@ -67,6 +67,7 @@
  "pol.pgcore.PgDecisionService.submit": "session, body",
  "pol.pgcore.PgDecisionService.table": "session",
  "pol.pgcore.PgEngine.__init__": "conn, tenant",
+ "pol.pgcore.PgSession.__init__": "session, db_token",
  "pol.pgcore.PgSessionBridge.__init__": "sessions, idp_conn, ttl_s=",
  "pol.pgcore.PgSessionBridge.issue": "credential",
  "pol.pgcore.anchor_check": "conn, anchor, tenant",
