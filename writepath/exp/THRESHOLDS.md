@@ -822,6 +822,82 @@ runkit/launch_one.sh).
   under 20 GB, and both records are reported.
 - **Unchanged experiments.** This changes only when a run may start, not any experiment or threshold.
 
+## Amendment 24a (2026-11-17, after batch d stopped at 2e1948c, before any further run; thresholds unchanged)
+What happened in batch d at 2e1948c:
+- **Three runs stand, all PASS:** d3, mutual_mentions and lock_order. Each has 0 high-watermark and 0 flood lines in
+  its window.
+  - d3's PASS is the rerun of its FAIL at 31112b4 (amendment 23a). That FAIL still stands, and both are reported.
+- **d2 is VOID** (amendment 23a's rule, applied as written).
+  - The experiment returned PASS, but other tenants pushed the ES node past its high disk watermark at 16:34:45Z
+    (free 15.7 GiB) and into flood stage at 16:35:15Z (free 12.6 GiB). This stream's own usage was +0.00 GiB at the
+    run's check.
+  - The watcher wrote STOP at 16:34:52Z and `disk_gate end` voided the run. The chain stopped, as designed.
+
+Batch e:
+- **Named commit.** The commit that adds this amendment; it changes only this file.
+- **Code.** `git diff 2e1948c <named commit> -- writepath/wp` is empty. Since 2e1948c only exp/disk_gate.py START_GB
+  (amendment 24), runkit/launch_one.sh, tests/test_disk_gate.py and runkit/specs/step1-e.txt changed. No experiment
+  module and no threshold changed.
+- **Spec.** runkit/specs/step1-e.txt: cleanup, setup reset, preflight, then d2 and every later line of step1-d.txt,
+  unchanged.
+- **Start line.** 20 GB host free (amendment 24). The batch also takes the lab run lock (main's serial-run rule of
+  16:45Z) and releases it when the chain ends.
+- **Rules.** Amendment 23's: once each; VOID may be rerun; a FAIL is not; no verdict is a FAIL.
+- **If batch e voids on disk again,** the remaining runs wait for main's decision; they are not rerun on the
+  owner's own initiative.
+- **Report.** Step 1's stamped set is:
+  - the 17 runs at 31112b4;
+  - d3 (FAIL at 31112b4 and PASS at 2e1948c), mutual_mentions and lock_order at 2e1948c;
+  - batch e;
+  - heldout_secrets, carried from 62c6be5.
+
+## Amendment 24b (2026-11-17, WRITTEN AFTER the R1 INCONCLUSIVE result at 96214c2 was seen; threshold unchanged)
+**This amendment was written after the result it acts on was observed.** It follows the earlier instance in
+amendment 7 (R1 at 7e8f28f, INCONCLUSIVE, one rerun alone). Main allowed it on these conditions, and the delta review
+is asked to judge it.
+
+R1 at 96214c2 (batch e, stamped): **INCONCLUSIVE.**
+- **Criterion (amendment 3):** both arms need at least 20 overlapping runs. The control arm had **19** overlapping
+  runs (of 40); the threshold needs 20. The fenced arm had 25 of 40.
+- **Fenced arm:** 0 violations in all 40 runs, 0 errors.
+- **Control arm:** violated 19 of 19 overlapping runs, 0 errors.
+- No fenced violation was observed. Had there been one, the result would be FAIL and not rerun (general rule below).
+- R2 and R3 in the same run were PASS and are reported as they fell.
+
+**R1 rerun.**
+- Exactly **one** rerun of R1 alone: N=40 per arm, the amendment-3 threshold unchanged, spec runkit/specs/step1-f.txt
+  (2cfdf8e).
+- It runs at the commit that adds this amendment; that commit changes only this file, and writepath/wp and exp/races.py
+  equal 96214c2's. It runs under the 20 GB start line (amendment 24) and the lab run lock.
+- Both R1 rows are reported, the INCONCLUSIVE at 96214c2 and the rerun's verdict; they are **never combined or
+  summed**.
+- **If the rerun is also INCONCLUSIVE, that is final:** R1 is reported "not demonstrated" and is not run again.
+
+### General rule for overlap-conditioned experiments (this stream, from now on)
+Decided from the design, not from this result.
+- **Which experiments.** Those whose pre-registered verdict needs a minimum number of overlapping runs:
+  - races R1, R2, R3 and e2e E1, E2 (exp.races.run): at least 20 overlapping runs in each arm (amendment 3);
+  - mutual_mentions: at least 5 overlapping runs in the conc arm.
+  - E1's store_only arm keeps amendment 14's stricter rule: fewer than 20 overlaps is FAIL.
+- **Verdict, computed from the committed rows in this order:**
+  1. Any violation in any fenced run (overlapping or not), or any error in a fenced arm (mutual_mentions: seq or
+     conc), is **FAIL**. It is final and never rerun.
+  2. Otherwise, any arm below its overlap minimum is **INCONCLUSIVE**.
+  3. Otherwise PASS needs the control's pre-registered sensitivity: races and E at least 1 violation among
+     overlapping runs; mutual_mentions every control run violated. Without it the result is **FAIL** (an insensitive
+     control).
+- **Recompute.** exp/races.py tests the overlap count before the fenced violations. If a module's printed verdict
+  differs from this order, the verdict recomputed from the rows stands, and both are reported.
+- **Rerun of an INCONCLUSIVE.** Exactly one rerun of that experiment alone, with:
+  - the same N and threshold;
+  - the then-current commit, provided no runtime or experiment code changed;
+  - the start line and the run lock.
+  It needs no new amendment.
+- **Second INCONCLUSIVE.** Final, reported "not demonstrated".
+- **Combining.** Never combined with the first run.
+- **VOID runs.** A VOID run (disk or gate) is separate: it is rerun under amendment 23's rules and does not count
+  toward this one-rerun limit.
+
 ## Hardening series (branch feat/writepath-hardening, design path item 4, D2 to D6)
 Amendments H1, H2, ... belong to this branch. The step-1 series (1 to 24a and later) continues on feat/writepath-rescue.
 Main's decisions of 2026-11-17 (recorded as ASSUMPTION, not the user's words; D3 stays under decision 10's ASSUMPTION):

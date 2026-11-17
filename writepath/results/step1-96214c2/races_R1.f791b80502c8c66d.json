@@ -1,0 +1,1615 @@
+{
+ "at": "2026-11-17T17:04:33Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/96214c2-20261117T164706Z/exp/races.py R1 R2 R3 40",
+  "code_commit": "96214c2",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   15.0771484375,
+   12.1240234375,
+   7.5546875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "races_R1",
+ "result": {
+  "N": 40,
+  "control": {
+   "errors": 0,
+   "holds_all": 21,
+   "holds_overlapped": 0,
+   "overlapped": 19,
+   "runs": [
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934938.356733,
+       "after_mark": 1794934938.348208,
+       "after_placeholders": 1794934938.366725,
+       "before_complete": 1794934938.372784,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934938.059505,
+       "read": 1794934937.160918
+      }
+     },
+     "overlap": false,
+     "seed": 16096500,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934940.459533,
+       "after_mark": 1794934940.451251,
+       "after_placeholders": 1794934940.469461,
+       "before_complete": 1794934940.47551,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934940.472108,
+       "read": 1794934939.500592
+      }
+     },
+     "overlap": true,
+     "seed": 16096501,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934942.388988,
+       "after_mark": 1794934942.380795,
+       "after_placeholders": 1794934942.397651,
+       "before_complete": 1794934942.403996,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934942.591639,
+       "read": 1794934941.588259
+      }
+     },
+     "overlap": true,
+     "seed": 16096502,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934943.840292,
+       "after_mark": 1794934943.832145,
+       "after_placeholders": 1794934943.8508,
+       "before_complete": 1794934943.857328,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934944.245013,
+       "read": 1794934943.635177
+      }
+     },
+     "overlap": true,
+     "seed": 16096503,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934948.923058,
+       "after_mark": 1794934948.910003,
+       "after_placeholders": 1794934948.935812,
+       "before_complete": 1794934948.943797,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934952.014539,
+       "read": 1794934951.049949
+      }
+     },
+     "overlap": false,
+     "seed": 16096504,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934963.086976,
+       "after_mark": 1794934963.078472,
+       "after_placeholders": 1794934963.190851,
+       "before_complete": 1794934963.197916,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934966.836135,
+       "read": 1794934965.393786
+      }
+     },
+     "overlap": false,
+     "seed": 16096505,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934973.23445,
+       "after_mark": 1794934973.224748,
+       "after_placeholders": 1794934977.789277,
+       "before_complete": 1794934977.796513,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934978.997227,
+       "read": 1794934978.034874
+      }
+     },
+     "overlap": false,
+     "seed": 16096506,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934984.304107,
+       "after_mark": 1794934984.29507,
+       "after_placeholders": 1794934986.054019,
+       "before_complete": 1794934986.060647,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934987.164668,
+       "read": 1794934986.587163
+      }
+     },
+     "overlap": false,
+     "seed": 16096507,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934989.203712,
+       "after_mark": 1794934989.195758,
+       "after_placeholders": 1794934989.264785,
+       "before_complete": 1794934989.271329,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934990.615466,
+       "read": 1794934989.441614
+      }
+     },
+     "overlap": false,
+     "seed": 16096508,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934993.626931,
+       "after_mark": 1794934993.577393,
+       "after_placeholders": 1794934994.258649,
+       "before_complete": 1794934994.270139,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935000.551261,
+       "read": 1794934998.668208
+      }
+     },
+     "overlap": false,
+     "seed": 16096509,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935001.521621,
+       "after_mark": 1794935001.513744,
+       "after_placeholders": 1794935003.777114,
+       "before_complete": 1794935003.78817,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935006.406808,
+       "read": 1794935004.012957
+      }
+     },
+     "overlap": false,
+     "seed": 16096510,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935008.422992,
+       "after_mark": 1794935008.41509,
+       "after_placeholders": 1794935008.435304,
+       "before_complete": 1794935008.44191,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935007.745058,
+       "read": 1794935007.530465
+      }
+     },
+     "overlap": false,
+     "seed": 16096511,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935010.407996,
+       "after_mark": 1794935010.399284,
+       "after_placeholders": 1794935010.421599,
+       "before_complete": 1794935010.428149,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935011.729043,
+       "read": 1794935009.681116
+      }
+     },
+     "overlap": true,
+     "seed": 16096512,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935013.305395,
+       "after_mark": 1794935013.29732,
+       "after_placeholders": 1794935013.31786,
+       "before_complete": 1794935013.324803,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935013.427754,
+       "read": 1794935012.861816
+      }
+     },
+     "overlap": true,
+     "seed": 16096513,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935015.10602,
+       "after_mark": 1794935015.098068,
+       "after_placeholders": 1794935015.116578,
+       "before_complete": 1794935015.12253,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935015.040785,
+       "read": 1794935014.526708
+      }
+     },
+     "overlap": false,
+     "seed": 16096514,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935016.564629,
+       "after_mark": 1794935016.557153,
+       "after_placeholders": 1794935016.574048,
+       "before_complete": 1794935016.579417,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935018.358231,
+       "read": 1794935016.267627
+      }
+     },
+     "overlap": true,
+     "seed": 16096515,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935020.197811,
+       "after_mark": 1794935020.187864,
+       "after_placeholders": 1794935020.21154,
+       "before_complete": 1794935020.219276,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935021.665762,
+       "read": 1794935019.485194
+      }
+     },
+     "overlap": true,
+     "seed": 16096516,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935023.52674,
+       "after_mark": 1794935023.518353,
+       "after_placeholders": 1794935023.536816,
+       "before_complete": 1794935023.543317,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935023.817287,
+       "read": 1794935022.760149
+      }
+     },
+     "overlap": true,
+     "seed": 16096517,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935024.692894,
+       "after_mark": 1794935024.681283,
+       "after_placeholders": 1794935024.924426,
+       "before_complete": 1794935024.935041,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935025.9125,
+       "read": 1794935025.170025
+      }
+     },
+     "overlap": false,
+     "seed": 16096518,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935027.497947,
+       "after_mark": 1794935027.489818,
+       "after_placeholders": 1794935027.508082,
+       "before_complete": 1794935027.514478,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935028.051859,
+       "read": 1794935027.204167
+      }
+     },
+     "overlap": true,
+     "seed": 16096519,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935029.153466,
+       "after_mark": 1794935029.14363,
+       "after_placeholders": 1794935029.164338,
+       "before_complete": 1794935029.170711,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935031.052373,
+       "read": 1794935029.182901
+      }
+     },
+     "overlap": false,
+     "seed": 16096520,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935033.078259,
+       "after_mark": 1794935033.070316,
+       "after_placeholders": 1794935033.088832,
+       "before_complete": 1794935033.095439,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935033.41819,
+       "read": 1794935032.95183
+      }
+     },
+     "overlap": true,
+     "seed": 16096521,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935035.113884,
+       "after_mark": 1794935035.105418,
+       "after_placeholders": 1794935035.124079,
+       "before_complete": 1794935035.131076,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935035.166549,
+       "read": 1794935034.523584
+      }
+     },
+     "overlap": true,
+     "seed": 16096522,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935037.452362,
+       "after_mark": 1794935037.442992,
+       "after_placeholders": 1794935037.463993,
+       "before_complete": 1794935037.471667,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935038.225725,
+       "read": 1794935036.2924
+      }
+     },
+     "overlap": true,
+     "seed": 16096523,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935040.039924,
+       "after_mark": 1794935040.029982,
+       "after_placeholders": 1794935040.051797,
+       "before_complete": 1794935040.058008,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935040.011943,
+       "read": 1794935039.326402
+      }
+     },
+     "overlap": false,
+     "seed": 16096524,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935041.575028,
+       "after_mark": 1794935041.566401,
+       "after_placeholders": 1794935041.585079,
+       "before_complete": 1794935041.592236,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935041.651759,
+       "read": 1794935041.243651
+      }
+     },
+     "overlap": true,
+     "seed": 16096525,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935042.637058,
+       "after_mark": 1794935042.62879,
+       "after_placeholders": 1794935042.646601,
+       "before_complete": 1794935042.653416,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935044.343933,
+       "read": 1794935042.811091
+      }
+     },
+     "overlap": false,
+     "seed": 16096526,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935046.622959,
+       "after_mark": 1794935046.614383,
+       "after_placeholders": 1794935046.63147,
+       "before_complete": 1794935046.637911,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935045.891172,
+       "read": 1794935045.457072
+      }
+     },
+     "overlap": false,
+     "seed": 16096527,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935048.068978,
+       "after_mark": 1794935048.060406,
+       "after_placeholders": 1794935048.078855,
+       "before_complete": 1794935048.085204,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935048.443394,
+       "read": 1794935047.790164
+      }
+     },
+     "overlap": true,
+     "seed": 16096528,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935050.087279,
+       "after_mark": 1794935050.079348,
+       "after_placeholders": 1794935050.097998,
+       "before_complete": 1794935050.104364,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935050.414063,
+       "read": 1794935050.070036
+      }
+     },
+     "overlap": true,
+     "seed": 16096529,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935051.695912,
+       "after_mark": 1794935051.687802,
+       "after_placeholders": 1794935051.706993,
+       "before_complete": 1794935051.713855,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935052.891374,
+       "read": 1794935051.575297
+      }
+     },
+     "overlap": true,
+     "seed": 16096530,
+     "x_docs_after": 5
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935054.441606,
+       "after_mark": 1794935054.432444,
+       "after_placeholders": 1794935054.451492,
+       "before_complete": 1794935054.457421,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935054.772222,
+       "read": 1794935054.025086
+      }
+     },
+     "overlap": true,
+     "seed": 16096531,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935056.609439,
+       "after_mark": 1794935056.601418,
+       "after_placeholders": 1794935056.619117,
+       "before_complete": 1794935056.62547,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935056.452572,
+       "read": 1794935055.898924
+      }
+     },
+     "overlap": false,
+     "seed": 16096532,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935057.799713,
+       "after_mark": 1794935057.788513,
+       "after_placeholders": 1794935057.810333,
+       "before_complete": 1794935057.822084,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935058.30327,
+       "read": 1794935057.804496
+      }
+     },
+     "overlap": false,
+     "seed": 16096533,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935060.604644,
+       "after_mark": 1794935060.596677,
+       "after_placeholders": 1794935060.614292,
+       "before_complete": 1794935060.620823,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935059.941392,
+       "read": 1794935059.465149
+      }
+     },
+     "overlap": false,
+     "seed": 16096534,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935061.518877,
+       "after_mark": 1794935061.510553,
+       "after_placeholders": 1794935061.665498,
+       "before_complete": 1794935061.672528,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935062.994133,
+       "read": 1794935061.832913
+      }
+     },
+     "overlap": false,
+     "seed": 16096535,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935064.685028,
+       "after_mark": 1794935064.676706,
+       "after_placeholders": 1794935064.694721,
+       "before_complete": 1794935064.701261,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935064.537373,
+       "read": 1794935064.162541
+      }
+     },
+     "overlap": false,
+     "seed": 16096536,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935066.750043,
+       "after_mark": 1794935066.741486,
+       "after_placeholders": 1794935066.759568,
+       "before_complete": 1794935066.76536,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935067.399261,
+       "read": 1794935065.906306
+      }
+     },
+     "overlap": true,
+     "seed": 16096537,
+     "x_docs_after": 5
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935068.253786,
+       "after_mark": 1794935068.245204,
+       "after_placeholders": 1794935068.394316,
+       "before_complete": 1794935068.402715,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935069.981059,
+       "read": 1794935068.566565
+      }
+     },
+     "overlap": false,
+     "seed": 16096538,
+     "x_docs_after": 0
+    },
+    {
+     "holds": false,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794935071.663611,
+       "after_mark": 1794935071.655263,
+       "after_placeholders": 1794935071.672452,
+       "before_complete": 1794935071.677804,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794935072.596653,
+       "read": 1794935071.13761
+      }
+     },
+     "overlap": true,
+     "seed": 16096539,
+     "x_docs_after": 5
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 19,
+   "violated_overlapped": 19,
+   "wilson95_hold_rate_overlapped": [
+    0.0,
+    0.1682
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.8318,
+    1.0
+   ]
+  },
+  "fenced": {
+   "errors": 0,
+   "holds_all": 40,
+   "holds_overlapped": 25,
+   "overlapped": 25,
+   "runs": [
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934837.610108,
+       "after_mark": 1794934837.601726,
+       "after_placeholders": 1794934837.621115,
+       "before_complete": 1794934837.628739,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934838.852324,
+       "read": 1794934837.382096
+      }
+     },
+     "overlap": true,
+     "seed": 16096000,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934840.340734,
+       "after_mark": 1794934840.330518,
+       "after_placeholders": 1794934840.3511,
+       "before_complete": 1794934840.358017,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934841.843926,
+       "read": 1794934839.797002
+      }
+     },
+     "overlap": true,
+     "seed": 16096001,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934844.150503,
+       "after_mark": 1794934844.139889,
+       "after_placeholders": 1794934844.160647,
+       "before_complete": 1794934844.166803,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934844.052554,
+       "read": 1794934842.788043
+      }
+     },
+     "overlap": false,
+     "seed": 16096002,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934846.129886,
+       "after_mark": 1794934846.12202,
+       "after_placeholders": 1794934846.138926,
+       "before_complete": 1794934846.144633,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934846.36093,
+       "read": 1794934845.146066
+      }
+     },
+     "overlap": true,
+     "seed": 16096003,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934847.958892,
+       "after_mark": 1794934847.950626,
+       "after_placeholders": 1794934847.968385,
+       "before_complete": 1794934847.974406,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934848.360383,
+       "read": 1794934847.35084
+      }
+     },
+     "overlap": true,
+     "seed": 16096004,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934849.304204,
+       "after_mark": 1794934849.292821,
+       "after_placeholders": 1794934849.313897,
+       "before_complete": 1794934849.320944,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934851.651829,
+       "read": 1794934849.327593
+      }
+     },
+     "overlap": false,
+     "seed": 16096005,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934852.481944,
+       "after_mark": 1794934852.473879,
+       "after_placeholders": 1794934852.529481,
+       "before_complete": 1794934852.535532,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934854.449808,
+       "read": 1794934852.640197
+      }
+     },
+     "overlap": false,
+     "seed": 16096006,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934856.690806,
+       "after_mark": 1794934856.68179,
+       "after_placeholders": 1794934856.700851,
+       "before_complete": 1794934856.707467,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934855.801717,
+       "read": 1794934855.437632
+      }
+     },
+     "overlap": false,
+     "seed": 16096007,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934858.061282,
+       "after_mark": 1794934858.051332,
+       "after_placeholders": 1794934858.071341,
+       "before_complete": 1794934858.077378,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934859.105351,
+       "read": 1794934857.751871
+      }
+     },
+     "overlap": true,
+     "seed": 16096008,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934860.799218,
+       "after_mark": 1794934860.790083,
+       "after_placeholders": 1794934860.810101,
+       "before_complete": 1794934860.816814,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934860.295759,
+       "read": 1794934860.070187
+      }
+     },
+     "overlap": false,
+     "seed": 16096009,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934862.48105,
+       "after_mark": 1794934862.473453,
+       "after_placeholders": 1794934862.490956,
+       "before_complete": 1794934862.496872,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934862.743732,
+       "read": 1794934861.847828
+      }
+     },
+     "overlap": true,
+     "seed": 16096010,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934863.984291,
+       "after_mark": 1794934863.9754,
+       "after_placeholders": 1794934863.993121,
+       "before_complete": 1794934863.999046,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934864.486377,
+       "read": 1794934863.801798
+      }
+     },
+     "overlap": true,
+     "seed": 16096011,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934865.34189,
+       "after_mark": 1794934865.333347,
+       "after_placeholders": 1794934865.377622,
+       "before_complete": 1794934865.383739,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934867.698129,
+       "read": 1794934865.48853
+      }
+     },
+     "overlap": false,
+     "seed": 16096012,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934869.794842,
+       "after_mark": 1794934869.785676,
+       "after_placeholders": 1794934869.805166,
+       "before_complete": 1794934869.812622,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934870.008468,
+       "read": 1794934868.702612
+      }
+     },
+     "overlap": true,
+     "seed": 16096013,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934871.242222,
+       "after_mark": 1794934871.231245,
+       "after_placeholders": 1794934871.251978,
+       "before_complete": 1794934871.257573,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934871.872922,
+       "read": 1794934870.974741
+      }
+     },
+     "overlap": true,
+     "seed": 16096014,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934873.082785,
+       "after_mark": 1794934873.073917,
+       "after_placeholders": 1794934873.091436,
+       "before_complete": 1794934873.098393,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934874.07742,
+       "read": 1794934872.854066
+      }
+     },
+     "overlap": true,
+     "seed": 16096015,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934874.95045,
+       "after_mark": 1794934874.942175,
+       "after_placeholders": 1794934874.987244,
+       "before_complete": 1794934874.993053,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934877.209543,
+       "read": 1794934875.099551
+      }
+     },
+     "overlap": false,
+     "seed": 16096016,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934878.236919,
+       "after_mark": 1794934878.228342,
+       "after_placeholders": 1794934878.247002,
+       "before_complete": 1794934878.253962,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934880.688689,
+       "read": 1794934878.188941
+      }
+     },
+     "overlap": true,
+     "seed": 16096017,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934882.457823,
+       "after_mark": 1794934882.449415,
+       "after_placeholders": 1794934882.468647,
+       "before_complete": 1794934882.475995,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934884.13712,
+       "read": 1794934881.680453
+      }
+     },
+     "overlap": true,
+     "seed": 16096018,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934886.436134,
+       "after_mark": 1794934886.42803,
+       "after_placeholders": 1794934886.445928,
+       "before_complete": 1794934886.452155,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934885.410404,
+       "read": 1794934885.137549
+      }
+     },
+     "overlap": false,
+     "seed": 16096019,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934887.813111,
+       "after_mark": 1794934887.804778,
+       "after_placeholders": 1794934887.823704,
+       "before_complete": 1794934887.830153,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934889.557169,
+       "read": 1794934887.576594
+      }
+     },
+     "overlap": true,
+     "seed": 16096020,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934891.309367,
+       "after_mark": 1794934891.30135,
+       "after_placeholders": 1794934891.317779,
+       "before_complete": 1794934891.324223,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934891.98843,
+       "read": 1794934890.530954
+      }
+     },
+     "overlap": true,
+     "seed": 16096021,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934893.244279,
+       "after_mark": 1794934893.235782,
+       "after_placeholders": 1794934893.25446,
+       "before_complete": 1794934893.260857,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934893.396997,
+       "read": 1794934892.996225
+      }
+     },
+     "overlap": true,
+     "seed": 16096022,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934895.071767,
+       "after_mark": 1794934895.062128,
+       "after_placeholders": 1794934895.081209,
+       "before_complete": 1794934895.087269,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934896.451978,
+       "read": 1794934894.383404
+      }
+     },
+     "overlap": true,
+     "seed": 16096023,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934898.431937,
+       "after_mark": 1794934898.423486,
+       "after_placeholders": 1794934898.442103,
+       "before_complete": 1794934898.448043,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934897.755737,
+       "read": 1794934897.477779
+      }
+     },
+     "overlap": false,
+     "seed": 16096024,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934899.57906,
+       "after_mark": 1794934899.570072,
+       "after_placeholders": 1794934899.588765,
+       "before_complete": 1794934899.595297,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934901.336688,
+       "read": 1794934899.489267
+      }
+     },
+     "overlap": true,
+     "seed": 16096025,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934902.340958,
+       "after_mark": 1794934902.333193,
+       "after_placeholders": 1794934902.349844,
+       "before_complete": 1794934902.355398,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934903.633202,
+       "read": 1794934902.335964
+      }
+     },
+     "overlap": false,
+     "seed": 16096026,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934904.501865,
+       "after_mark": 1794934904.493954,
+       "after_placeholders": 1794934904.546829,
+       "before_complete": 1794934904.554096,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934906.823957,
+       "read": 1794934904.659512
+      }
+     },
+     "overlap": false,
+     "seed": 16096027,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934909.046086,
+       "after_mark": 1794934909.037814,
+       "after_placeholders": 1794934909.056192,
+       "before_complete": 1794934909.062461,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934908.054902,
+       "read": 1794934907.847817
+      }
+     },
+     "overlap": false,
+     "seed": 16096028,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934910.823493,
+       "after_mark": 1794934910.815789,
+       "after_placeholders": 1794934910.832087,
+       "before_complete": 1794934910.837386,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934912.631181,
+       "read": 1794934910.156579
+      }
+     },
+     "overlap": true,
+     "seed": 16096029,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934914.890979,
+       "after_mark": 1794934914.883138,
+       "after_placeholders": 1794934914.901187,
+       "before_complete": 1794934914.90848,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934914.468981,
+       "read": 1794934913.637879
+      }
+     },
+     "overlap": false,
+     "seed": 16096030,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934916.04883,
+       "after_mark": 1794934916.04083,
+       "after_placeholders": 1794934916.059423,
+       "before_complete": 1794934916.065368,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934917.033315,
+       "read": 1794934915.976525
+      }
+     },
+     "overlap": true,
+     "seed": 16096031,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934918.38983,
+       "after_mark": 1794934918.381471,
+       "after_placeholders": 1794934918.399943,
+       "before_complete": 1794934918.40835,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934920.369803,
+       "read": 1794934918.021173
+      }
+     },
+     "overlap": true,
+     "seed": 16096032,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934922.0069,
+       "after_mark": 1794934921.99833,
+       "after_placeholders": 1794934922.016667,
+       "before_complete": 1794934922.023532,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934922.26428,
+       "read": 1794934921.382427
+      }
+     },
+     "overlap": true,
+     "seed": 16096033,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934924.357458,
+       "after_mark": 1794934924.349657,
+       "after_placeholders": 1794934924.366555,
+       "before_complete": 1794934924.373016,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934924.865688,
+       "read": 1794934923.279417
+      }
+     },
+     "overlap": true,
+     "seed": 16096034,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934926.425048,
+       "after_mark": 1794934926.416768,
+       "after_placeholders": 1794934926.434644,
+       "before_complete": 1794934926.439963,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934927.291291,
+       "read": 1794934925.883152
+      }
+     },
+     "overlap": true,
+     "seed": 16096035,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934928.493461,
+       "after_mark": 1794934928.485582,
+       "after_placeholders": 1794934928.502187,
+       "before_complete": 1794934928.510463,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934929.238912,
+       "read": 1794934928.311146
+      }
+     },
+     "overlap": true,
+     "seed": 16096036,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934930.692668,
+       "after_mark": 1794934930.684649,
+       "after_placeholders": 1794934930.701253,
+       "before_complete": 1794934930.707174,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934932.29648,
+       "read": 1794934930.251157
+      }
+     },
+     "overlap": true,
+     "seed": 16096037,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934933.227647,
+       "after_mark": 1794934933.219608,
+       "after_placeholders": 1794934933.236507,
+       "before_complete": 1794934933.244409,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934934.664904,
+       "read": 1794934933.350935
+      }
+     },
+     "overlap": false,
+     "seed": 16096038,
+     "x_docs_after": 0
+    },
+    {
+     "holds": true,
+     "instants": {
+      "erase": {
+       "after_cascade": 1794934935.667924,
+       "after_mark": 1794934935.659185,
+       "after_placeholders": 1794934935.676824,
+       "before_complete": 1794934935.683435,
+       "error": "residue"
+      },
+      "proj": {
+       "bulk": 1794934936.043627,
+       "read": 1794934935.774095
+      }
+     },
+     "overlap": false,
+     "seed": 16096039,
+     "x_docs_after": 0
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 0,
+   "violated_overlapped": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.8668,
+    1.0
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.0,
+    0.1332
+   ]
+  },
+  "patch": "place_placeholders issues DELETEs (in the eraser process)",
+  "verdict": "INCONCLUSIVE"
+ }
+}

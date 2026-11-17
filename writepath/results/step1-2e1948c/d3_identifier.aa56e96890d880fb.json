@@ -1,0 +1,141 @@
+{
+ "at": "2026-11-17T16:09:56Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/2e1948c-20261117T160433Z/exp/d3_identifier.py 5",
+  "code_commit": "2e1948c",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   4.6181640625,
+   4.9052734375,
+   4.126953125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "d3_identifier",
+ "result": {
+  "R": 5,
+  "assumption": "MIN_SINGLE=6 characters for a single-token identifier without digits, plus a stop-list (wp/mentions.py); safe default, not a user decision",
+  "control": [
+   {
+    "alex_declared": true,
+    "x_done": true,
+    "y_content_kept": false,
+    "y_tombstoned": true
+   },
+   {
+    "alex_declared": true,
+    "x_done": true,
+    "y_content_kept": false,
+    "y_tombstoned": true
+   },
+   {
+    "alex_declared": true,
+    "x_done": true,
+    "y_content_kept": false,
+    "y_tombstoned": true
+   },
+   {
+    "alex_declared": true,
+    "x_done": true,
+    "y_content_kept": false,
+    "y_tombstoned": true
+   },
+   {
+    "alex_declared": true,
+    "x_done": true,
+    "y_content_kept": false,
+    "y_tombstoned": true
+   }
+  ],
+  "fenced": [
+   {
+    "alex_declared": false,
+    "refusal": "'alex': single token shorter than 6 characters (likely to name someone else; declare the full name)",
+    "x_done": true,
+    "y_content_kept": true,
+    "y_tombstoned": false
+   },
+   {
+    "alex_declared": false,
+    "refusal": "'alex': single token shorter than 6 characters (likely to name someone else; declare the full name)",
+    "x_done": true,
+    "y_content_kept": true,
+    "y_tombstoned": false
+   },
+   {
+    "alex_declared": false,
+    "refusal": "'alex': single token shorter than 6 characters (likely to name someone else; declare the full name)",
+    "x_done": true,
+    "y_content_kept": true,
+    "y_tombstoned": false
+   },
+   {
+    "alex_declared": false,
+    "refusal": "'alex': single token shorter than 6 characters (likely to name someone else; declare the full name)",
+    "x_done": true,
+    "y_content_kept": true,
+    "y_tombstoned": false
+   },
+   {
+    "alex_declared": false,
+    "refusal": "'alex': single token shorter than 6 characters (likely to name someone else; declare the full name)",
+    "x_done": true,
+    "y_content_kept": true,
+    "y_tombstoned": false
+   }
+  ],
+  "rule": {
+   "Alex Kim": null,
+   "Mr Smith": null,
+   "XQ-1001": null,
+   "XQ1001": null,
+   "Yolanda Park": null,
+   "alex": "single token shorter than 6 characters (likely to name someone else; declare the full name)",
+   "anna": "single token shorter than 6 characters (likely to name someone else; declare the full name)",
+   "the": "only common words",
+   "the team": "only common words",
+   "yolanda": null
+  },
+  "verdict": {
+   "pass": true,
+   "why": []
+  }
+ }
+}

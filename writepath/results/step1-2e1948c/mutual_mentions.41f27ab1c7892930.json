@@ -1,0 +1,673 @@
+{
+ "at": "2026-11-17T16:25:38Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/2e1948c-20261117T160433Z/exp/mutual_mentions.py 5 10 5",
+  "code_commit": "2e1948c",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.77734375,
+   2.951171875,
+   3.8642578125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "mutual_mentions",
+ "result": {
+  "conc": {
+   "R": 10,
+   "errors": 0,
+   "holds": 10,
+   "overlapped": 10,
+   "runs": [
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932111.995472,
+       "release": 1794932111.982354
+      },
+      "B": {
+       "cascade_end": 1794932111.994553,
+       "release": 1794932111.982338
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932143.46156,
+       "release": 1794932143.449157
+      },
+      "B": {
+       "cascade_end": 1794932143.462373,
+       "release": 1794932143.449142
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932174.978904,
+       "release": 1794932174.966601
+      },
+      "B": {
+       "cascade_end": 1794932174.978283,
+       "release": 1794932174.966506
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932206.468546,
+       "release": 1794932206.455125
+      },
+      "B": {
+       "cascade_end": 1794932206.467889,
+       "release": 1794932206.455114
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932237.92262,
+       "release": 1794932237.908689
+      },
+      "B": {
+       "cascade_end": 1794932237.921894,
+       "release": 1794932237.908453
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932269.509044,
+       "release": 1794932269.496338
+      },
+      "B": {
+       "cascade_end": 1794932269.509575,
+       "release": 1794932269.496188
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932301.081712,
+       "release": 1794932301.070437
+      },
+      "B": {
+       "cascade_end": 1794932301.082333,
+       "release": 1794932301.070457
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932332.59274,
+       "release": 1794932332.579638
+      },
+      "B": {
+       "cascade_end": 1794932332.591816,
+       "release": 1794932332.579662
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932364.106368,
+       "release": 1794932364.093029
+      },
+      "B": {
+       "cascade_end": 1794932364.105798,
+       "release": 1794932364.092865
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "instants": {
+      "A": {
+       "cascade_end": 1794932395.63899,
+       "release": 1794932395.626148
+      },
+      "B": {
+       "cascade_end": 1794932395.640017,
+       "release": 1794932395.626118
+      }
+     },
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     },
+     "overlap": true
+    }
+   ],
+   "violated": 0
+  },
+  "control": {
+   "R": 5,
+   "errors": 0,
+   "holds": 0,
+   "overlapped": 0,
+   "runs": [
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": false
+     },
+     "holds": false,
+     "jobs": {
+      "A": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      },
+      "B": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": false
+     },
+     "holds": false,
+     "jobs": {
+      "A": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      },
+      "B": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": false
+     },
+     "holds": false,
+     "jobs": {
+      "A": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      },
+      "B": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": false
+     },
+     "holds": false,
+     "jobs": {
+      "A": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      },
+      "B": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": false
+     },
+     "holds": false,
+     "jobs": {
+      "A": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      },
+      "B": {
+       "done": false,
+       "error_type": "residue",
+       "receipt_state": "residue"
+      }
+     }
+    }
+   ],
+   "violated": 5
+  },
+  "control_patch": "wp_erasure_cascade: mention branch reads no rows (erasure_mentions never used)",
+  "seq": {
+   "R": 5,
+   "errors": 0,
+   "holds": 5,
+   "overlapped": 0,
+   "runs": [
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     }
+    },
+    {
+     "c1_es_live": true,
+     "c1_intact_pg": true,
+     "erased": {
+      "A1": true,
+      "A2": true,
+      "B1": true,
+      "B2": true,
+      "C2": true
+     },
+     "holds": true,
+     "jobs": {
+      "A": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      },
+      "B": {
+       "done": true,
+       "error_type": null,
+       "receipt_state": "done"
+      }
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "verdict": "PASS"
+ }
+}

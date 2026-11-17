@@ -1,0 +1,105 @@
+start 2026-11-17T17:13:12Z head 96214c2 free 22G: exp.plan_stability
+disk_gate start free 21.0 GiB own 0.22 GiB (pg 0.16 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate plan_stability free 21.0 GiB own +0.00 GiB
+setup ok reset
+plan_stability S1 1500 0 {"analyst_delete": 9.44, "facts_delete": 2.96} residue 19883 1.0345
+setup ok reset
+plan_stability S1 3000 0 {"analyst_delete": 2.58, "facts_delete": 4.42} residue 39498 1.2801
+setup ok reset
+plan_stability S1 1500 1 {"analyst_delete": 8.31, "facts_delete": 4.04} residue 19891 0.9894
+setup ok reset
+plan_stability S1 3000 1 {"analyst_delete": 3.81, "facts_delete": 2.59} residue 39509 1.8419
+setup ok reset
+plan_stability S1 1500 2 {"analyst_delete": 8.34, "facts_delete": 4.03} residue 19884 0.9608
+setup ok reset
+plan_stability S1 3000 2 {"analyst_delete": 3.8, "facts_delete": 3.2} residue 39514 1.8588
+setup ok reset
+plan_stability S2 1500 0 {"analyst_delete": 6.86, "facts_delete": 2.93} residue 21866 1.021
+setup ok reset
+plan_stability S2 3000 0 {"analyst_delete": 2.58, "facts_delete": 4.42} residue 44746 1.8594
+setup ok reset
+plan_stability S2 1500 1 {"analyst_delete": 4.51, "facts_delete": 5.06} residue 21854 1.0427
+setup ok reset
+plan_stability S2 3000 1 {"analyst_delete": 2.57, "facts_delete": 4.43} residue 44682 1.8305
+setup ok reset
+plan_stability S2 1500 2 {"analyst_delete": 5.67, "facts_delete": 3.01} residue 21852 1.0158
+setup ok reset
+plan_stability S2 3000 2 {"analyst_delete": 3.17, "facts_delete": 3.83} residue 44670 1.8635
+setup ok reset
+plan_stability S1 1500 0 {"analyst_delete": 313.36, "facts_delete": 316.73} residue 19900 0.9845
+setup ok reset
+plan_stability S1 3000 0 {"analyst_delete": 1592.99, "facts_delete": 1643.06} residue 39510 1.821
+setup ok reset
+plan_stability S1 1500 1 {"analyst_delete": 322.73, "facts_delete": 307.36} residue 19907 1.0037
+setup ok reset
+plan_stability S1 3000 1 {"analyst_delete": 1614.99, "facts_delete": 1621.06} residue 39524 1.7824
+setup ok reset
+plan_stability S1 1500 2 {"analyst_delete": 322.08, "facts_delete": 308.02} residue 19894 0.9716
+setup ok reset
+plan_stability S1 3000 2 {"analyst_delete": 1626.65, "facts_delete": 1609.39} residue 39489 1.8264
+setup ok reset
+plan_stability S2 1500 0 {"analyst_delete": 313.06, "facts_delete": 300.34} residue 21854 1.0058
+setup ok reset
+plan_stability S2 3000 0 {"analyst_delete": 1587.1, "facts_delete": 1638.95} residue 44676 1.8719
+setup ok reset
+plan_stability S2 1500 1 {"analyst_delete": 298.98, "facts_delete": 314.42} residue 21864 1.0566
+setup ok reset
+plan_stability S2 3000 1 {"analyst_delete": 1597.95, "facts_delete": 1628.1} residue 44716 1.8758
+setup ok reset
+plan_stability S2 1500 2 {"analyst_delete": 293.6, "facts_delete": 319.8} residue 21860 1.0347
+setup ok reset
+plan_stability S2 3000 2 {"analyst_delete": 1638.95, "facts_delete": 1587.1} residue 44666 1.8243
+setup ok reset
+plan_stability S1 1500 0 {"analyst_delete": 9.35, "facts_delete": 3.0} residue 1153934 0.2683
+setup ok reset
+plan_stability S1 3000 0 {"analyst_delete": 3.81, "facts_delete": 2.59} residue 4557530 0.9556
+setup ok reset
+plan_stability S1 1500 1 {"analyst_delete": 8.32, "facts_delete": 4.02} residue 1153906 0.2769
+setup ok reset
+plan_stability S1 3000 1 {"analyst_delete": 4.42, "facts_delete": 2.58} residue 4557541 0.9475
+setup ok reset
+plan_stability S1 1500 2 {"analyst_delete": 9.37, "facts_delete": 3.0} residue 1153921 0.2661
+setup ok reset
+plan_stability S1 3000 2 {"analyst_delete": 3.8, "facts_delete": 3.2} residue 4557543 0.9621
+setup ok reset
+plan_stability S2 1500 0 {"analyst_delete": 5.61, "facts_delete": 4.03} residue 545447 0.2392
+setup ok reset
+plan_stability S2 3000 0 {"analyst_delete": 3.2, "facts_delete": 3.8} residue 3320731 0.9055
+setup ok reset
+plan_stability S2 1500 1 {"analyst_delete": 6.63, "facts_delete": 3.03} residue 543887 0.2415
+setup ok reset
+plan_stability S2 3000 1 {"analyst_delete": 3.83, "facts_delete": 3.17} residue 3386695 0.8658
+setup ok reset
+plan_stability S2 1500 2 {"analyst_delete": 6.82, "facts_delete": 2.95} residue 566387 0.2388
+setup ok reset
+plan_stability S2 3000 2 {"analyst_delete": 3.22, "facts_delete": 3.78} residue 3371687 0.872
+setup ok reset
+plan_stability S1 1500 0 {"analyst_delete": 460.71, "facts_delete": 311.36} residue 19900 1.033
+setup ok reset
+plan_stability S1 3000 0 {"analyst_delete": 1121.63, "facts_delete": 1585.33} residue 39492 1.8322
+setup ok reset
+plan_stability S1 1500 1 {"analyst_delete": 463.38, "facts_delete": 306.68} residue 19881 0.9735
+setup ok reset
+plan_stability S1 3000 1 {"analyst_delete": 4.44, "facts_delete": 1591.74} residue 39501 0.6622
+setup ok reset
+plan_stability S1 1500 2 {"analyst_delete": 473.81, "facts_delete": 286.59} residue 19882 1.0454
+setup ok reset
+plan_stability S1 3000 2 {"analyst_delete": 1091.0, "facts_delete": 1645.9} residue 39512 1.7854
+setup ok reset
+plan_stability S2 1500 0 {"analyst_delete": 466.83, "facts_delete": 288.92} residue 21904 1.0313
+setup ok reset
+plan_stability S2 3000 0 {"analyst_delete": 1125.37, "facts_delete": 1571.82} residue 44718 1.817
+setup ok reset
+plan_stability S2 1500 1 {"analyst_delete": 463.49, "facts_delete": 296.31} residue 21822 1.0495
+setup ok reset
+plan_stability S2 3000 1 {"analyst_delete": 1105.18, "facts_delete": 1612.02} residue 44704 1.8815
+setup ok reset
+plan_stability S2 1500 2 {"analyst_delete": 457.33, "facts_delete": 307.03} residue 21850 1.0608
+setup ok reset
+plan_stability S2 3000 2 {"analyst_delete": 1115.21, "facts_delete": 1593.13} residue 44674 1.9938
+setup ok reset
+plan_stability PASS {"S1": [{"run": 0, "PS_C": true, "PS_R": true, "PS_F3": true, "PS_C_failed": []}, {"run": 1, "PS_C": true, "PS_R": true, "PS_F3": true, "PS_C_failed": []}, {"run": 2, "PS_C": true, "PS_R": true, "PS_F3": true, "PS_C_failed": []}], "S2": [{"run": 0, "PS_C": true, "PS_R": true, "PS_F3": true, "PS_C_failed": []}, {"run": 1, "PS_C": true, "PS_R": true, "PS_F3": true, "PS_C_failed": []}, {"run": 2, "PS_C": true, "PS_R": true, "PS_F3": true, "PS_C_failed": []}]} {"CTL_APPLY": {"S1": 3, "S2": 3}, "CTL_RESIDUE": {"S1": 3, "S2": 3}, "CTL_FACTS": {"S1": 3, "S2": 3}}
+RESULT plan_stability sha256=252aa9d5353320a83166b9f3ea0cbee83f8f7f3b7e43e7232275b91892b8aefa file=~/emlab2-16096/writepath/wp/results/plan_stability.252aa9d5353320a8.json
+exit=0
+disk_gate end free 21.1 GiB own +0.05 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+end 2026-11-17T17:19:32Z

@@ -1,0 +1,109 @@
+{
+ "at": "2026-11-17T17:13:08Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/96214c2-20261117T164706Z/exp/size_probe.py 50000",
+  "code_commit": "96214c2",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   11.8818359375,
+   11.99267578125,
+   9.291015625
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "size_probe",
+ "result": {
+  "after_build": {
+   "es_datadir_b": 31042754,
+   "es_docs": 50000,
+   "es_store_b": 13843363,
+   "free_gb": 22.47,
+   "pg_datadir_b": 281015345,
+   "pg_events_db_b": 96418839,
+   "pg_keys_db_b": 8911895,
+   "pg_wal_b": 134217728
+  },
+  "after_erase": {
+   "es_datadir_b": 9290725,
+   "es_docs": 50000,
+   "es_store_b": 8653529,
+   "free_gb": 22.56,
+   "pg_datadir_b": 167146545,
+   "pg_events_db_b": 99998743,
+   "pg_keys_db_b": 8887319,
+   "pg_wal_b": 16777216
+  },
+  "before": {
+   "es_datadir_b": 574269,
+   "es_docs": 0,
+   "es_store_b": 0,
+   "free_gb": 22.69,
+   "pg_datadir_b": 87602225,
+   "pg_events_db_b": 20585495,
+   "pg_keys_db_b": 8772631,
+   "pg_wal_b": 16777216
+  },
+  "build": {
+   "append_s": 67.2,
+   "events": 50000,
+   "project_s": 13.1
+  },
+  "build_and_erase_s": 130.8,
+  "bytes_per_doc_peak": 4477.6,
+  "erase": {
+   "done": true,
+   "error_type": null,
+   "receipt_state": "done"
+  },
+  "growth_build_b": 223881605,
+  "growth_peak_b": 223881605,
+  "host_free_drop_gb": 0.22,
+  "n": 50000,
+  "projection": {
+   "fits_floor_linear": true,
+   "floor_gb": 15.0,
+   "free_after_projected_gb": 17.63,
+   "free_now_gb": 22.56,
+   "linear_gb": 4.93,
+   "note": "linear in documents; ignores transient merge and WAL peaks beyond those seen at N",
+   "scale_1m_docs": 1100000
+  }
+ }
+}

@@ -1,0 +1,8 @@
+start 2026-11-17T17:19:36Z head 96214c2 free 22G: exp.guard_check end
+disk_gate start free 21.1 GiB own 0.26 GiB (pg 0.20 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate guard_end free 21.1 GiB own +0.00 GiB
+guard_check end PASS {}
+RESULT guard_check_end sha256=eb594ff6d58b7d52f4b313b12251e8586f38f0540054a9f042a2c405945b3d02 file=~/emlab2-16096/writepath/wp/results/guard_check_end.eb594ff6d58b7d52.json
+exit=0
+disk_gate end free 21.1 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+end 2026-11-17T17:19:38Z

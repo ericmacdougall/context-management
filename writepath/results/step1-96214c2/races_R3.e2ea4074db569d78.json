@@ -1,0 +1,1175 @@
+{
+ "at": "2026-11-17T17:10:52Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/96214c2-20261117T164706Z/exp/races.py R1 R2 R3 40",
+  "code_commit": "96214c2",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   15.28076171875,
+   12.26953125,
+   8.939453125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "races_R3",
+ "result": {
+  "N": 40,
+  "control": {
+   "errors": 0,
+   "holds_all": 1,
+   "holds_overlapped": 0,
+   "overlapped": 39,
+   "runs": [
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096500,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935374.387037
+     },
+     "zombie_events_after_takeover": 5,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096501,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935375.631469
+     },
+     "zombie_events_after_takeover": 10,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096502,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935377.315341
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096503,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935378.685982
+     },
+     "zombie_events_after_takeover": 8,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096504,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935380.665083
+     },
+     "zombie_events_after_takeover": 6,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096505,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935381.991986
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096506,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935383.656734
+     },
+     "zombie_events_after_takeover": 5,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096507,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935385.270452
+     },
+     "zombie_events_after_takeover": 2,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096508,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935386.07391
+     },
+     "zombie_events_after_takeover": 10,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096509,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935387.756403
+     },
+     "zombie_events_after_takeover": 8,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096510,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935389.763439
+     },
+     "zombie_events_after_takeover": 4,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096511,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935391.044356
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096512,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935392.685571
+     },
+     "zombie_events_after_takeover": 10,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096513,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935394.742781
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096514,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935404.044286
+     },
+     "zombie_events_after_takeover": 5,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096515,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935405.818099
+     },
+     "zombie_events_after_takeover": 3,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096516,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935406.995452
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096517,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935408.444102
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096518,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935410.031039
+     },
+     "zombie_events_after_takeover": 6,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096519,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935414.131969
+     },
+     "zombie_events_after_takeover": 6,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096520,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935415.1728
+     },
+     "zombie_events_after_takeover": 10,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096521,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935416.806839
+     },
+     "zombie_events_after_takeover": 9,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096522,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935418.497741
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096523,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935419.562716
+     },
+     "zombie_events_after_takeover": 11,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096524,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935421.717548
+     },
+     "zombie_events_after_takeover": 8,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096525,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935423.111663
+     },
+     "zombie_events_after_takeover": 7,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096526,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935428.782724
+     },
+     "zombie_events_after_takeover": 8,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096527,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935434.694683
+     },
+     "zombie_events_after_takeover": 4,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096528,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935436.289309
+     },
+     "zombie_events_after_takeover": 3,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096529,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935437.440148
+     },
+     "zombie_events_after_takeover": 3,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096530,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935438.752305
+     },
+     "zombie_events_after_takeover": 6,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096531,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935439.939247
+     },
+     "zombie_events_after_takeover": 9,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096532,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935441.303088
+     },
+     "zombie_events_after_takeover": 10,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096533,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935443.607422
+     },
+     "zombie_events_after_takeover": 2,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": true,
+     "overlap": false,
+     "seed": 16096534,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935444.96738
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096535,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935446.189593
+     },
+     "zombie_events_after_takeover": 1,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096536,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935446.824403
+     },
+     "zombie_events_after_takeover": 9,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096537,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935449.221662
+     },
+     "zombie_events_after_takeover": 4,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096538,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935450.394644
+     },
+     "zombie_events_after_takeover": 4,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    },
+    {
+     "holds": false,
+     "overlap": true,
+     "seed": 16096539,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935451.864665
+     },
+     "zombie_events_after_takeover": 5,
+     "zombie_outcomes": {
+      "accepted": 12
+     }
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 39,
+   "violated_overlapped": 39,
+   "wilson95_hold_rate_overlapped": [
+    0.0,
+    0.0897
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.9103,
+    1.0
+   ]
+  },
+  "fenced": {
+   "errors": 0,
+   "holds_all": 40,
+   "holds_overlapped": 40,
+   "overlapped": 40,
+   "runs": [
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096000,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935313.083993
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096001,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935314.533176
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 9,
+      "quarantined": 3
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096002,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935315.525368
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 2,
+      "quarantined": 10
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096003,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935317.17467
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 5,
+      "quarantined": 7
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096004,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935318.773872
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096005,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935320.289915
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 8,
+      "quarantined": 4
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096006,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935321.415548
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096007,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935323.217192
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 9,
+      "quarantined": 3
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096008,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935324.663655
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 11,
+      "quarantined": 1
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096009,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935325.562543
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096010,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935327.02752
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096011,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935328.590487
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 10,
+      "quarantined": 2
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096012,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935329.996589
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096013,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935331.623257
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096014,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935332.789189
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 6,
+      "quarantined": 6
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096015,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935333.974668
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096016,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935335.996867
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 9,
+      "quarantined": 3
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096017,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935336.770928
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 2,
+      "quarantined": 10
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096018,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935338.709928
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096019,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935339.721438
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 3,
+      "quarantined": 9
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096020,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935341.550069
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 6,
+      "quarantined": 6
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096021,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935343.075866
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 3,
+      "quarantined": 9
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096022,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935345.139392
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 5,
+      "quarantined": 7
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096023,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935346.741595
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 3,
+      "quarantined": 9
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096024,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935348.514636
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096025,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935350.011327
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 3,
+      "quarantined": 9
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096026,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935351.745271
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 5,
+      "quarantined": 7
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096027,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935353.25048
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 6,
+      "quarantined": 6
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096028,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935354.437144
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 3,
+      "quarantined": 9
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096029,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935356.127981
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 2,
+      "quarantined": 10
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096030,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935358.035374
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 3,
+      "quarantined": 9
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096031,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935359.74516
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 8,
+      "quarantined": 4
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096032,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935360.876887
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096033,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935362.506744
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096034,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935364.114501
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 2,
+      "quarantined": 10
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096035,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935366.457371
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096036,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935367.955749
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 7,
+      "quarantined": 5
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096037,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935369.442403
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096038,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935371.015222
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 4,
+      "quarantined": 8
+     }
+    },
+    {
+     "holds": true,
+     "overlap": true,
+     "seed": 16096039,
+     "taker": {
+      "epoch": 2,
+      "takeover": 1794935372.407458
+     },
+     "zombie_events_after_takeover": 0,
+     "zombie_outcomes": {
+      "accepted": 5,
+      "quarantined": 7
+     }
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 0,
+   "violated_overlapped": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.9124,
+    1.0
+   ],
+   "wilson95_violation_rate_overlapped": [
+    -0.0,
+    0.0876
+   ]
+  },
+  "patch": "wp_fence without the epoch comparison",
+  "verdict": "PASS"
+ }
+}
