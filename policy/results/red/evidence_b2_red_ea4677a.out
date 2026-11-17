@@ -1,0 +1,318 @@
+# red run: tests.test_evidence_b2  against verify/b2.py
+# worktree HEAD: f8a30a01eb9c4fc1f3358ad36794aca7127ff1c3
+# git diff --stat ea4677a -- verify/b2.py (empty: the code under test is ea4677a's):
+# sha256 verify/b2.py in the worktree: abde9fa19aa853230bf6e86c08af5dfe0f786ee6c0e3c0fb2d75c460b64937d8
+# sha256 verify/b2.py at ea4677a:     abde9fa19aa853230bf6e86c08af5dfe0f786ee6c0e3c0fb2d75c460b64937d8
+# command (from policy/): python3 -m unittest -v tests.test_evidence_b2 
+test_design_comes_from_the_pins (tests.test_evidence_b2.B2Evidence) ... test_drop (tests.test_evidence_b2.B2Evidence) ... test_duplicate (tests.test_evidence_b2.B2Evidence) ... test_extra (tests.test_evidence_b2.B2Evidence) ... test_honest_set_passes (tests.test_evidence_b2.B2Evidence) ... ok
+test_log_moved_to_an_undeclared_id (tests.test_evidence_b2.B2Evidence)
+Log 71/11 (its events, log row and control rows) relabelled 75/600, a log the design never runs: still 3000 logs, so it ... FAIL
+test_overwrite (tests.test_evidence_b2.B2Evidence) ... test_permutation_keeps_the_verdict (tests.test_evidence_b2.B2Evidence) ... FAIL
+test_relabel (tests.test_evidence_b2.B2Evidence) ... test_renumber_out_of_sequence (tests.test_evidence_b2.B2Evidence) ... 
+======================================================================
+FAIL: test_design_comes_from_the_pins (tests.test_evidence_b2.B2Evidence) (shrink='300 logs per seed over ten seeds declared and run')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 211, in test_design_comes_from_the_pins
+    self.bad(rows, "shrunk design: %s" % label, (), doc=doc)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : shrunk design: 300 logs per seed over ten seeds declared and run: verdict PASS
+
+======================================================================
+FAIL: test_drop (tests.test_evidence_b2.B2Evidence) (family='log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 135, in test_drop
+    self.bad(rows[:i] + rows[i + 1:], "drop %s" % fam.name, ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'missing identity' not found in 'null' : drop log: verdict FAIL, reason 'missing identity' not named
+
+======================================================================
+FAIL: test_drop (tests.test_evidence_b2.B2Evidence) (family='event')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 135, in test_drop
+    self.bad(rows[:i] + rows[i + 1:], "drop %s" % fam.name, ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'missing identity' not found in 'null' : drop event: verdict FAIL, reason 'missing identity' not named
+
+======================================================================
+FAIL: test_drop (tests.test_evidence_b2.B2Evidence) (family='svc_audit')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 135, in test_drop
+    self.bad(rows[:i] + rows[i + 1:], "drop %s" % fam.name, ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : drop svc_audit: verdict PASS
+
+======================================================================
+FAIL: test_drop (tests.test_evidence_b2.B2Evidence) (family='ctl_log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 135, in test_drop
+    self.bad(rows[:i] + rows[i + 1:], "drop %s" % fam.name, ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : drop ctl_log: verdict PASS
+
+======================================================================
+FAIL: test_duplicate (tests.test_evidence_b2.B2Evidence) (family='log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 142, in test_duplicate
+    self.bad(rows + [_copy(rows[i])], "duplicate %s" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : duplicate log: verdict PASS
+
+======================================================================
+FAIL: test_duplicate (tests.test_evidence_b2.B2Evidence) (family='event')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 142, in test_duplicate
+    self.bad(rows + [_copy(rows[i])], "duplicate %s" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : duplicate event: verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_duplicate (tests.test_evidence_b2.B2Evidence) (family='svc_audit')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 142, in test_duplicate
+    self.bad(rows + [_copy(rows[i])], "duplicate %s" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : duplicate svc_audit: verdict PASS
+
+======================================================================
+FAIL: test_duplicate (tests.test_evidence_b2.B2Evidence) (family='ctl_log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 142, in test_duplicate
+    self.bad(rows + [_copy(rows[i])], "duplicate %s" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : duplicate ctl_log: verdict PASS
+
+======================================================================
+FAIL: test_extra (tests.test_evidence_b2.B2Evidence) (family='log', extra='undeclared arm')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 191, in test_extra
+    self.bad(rows + [_set(rows[i], f, val)], "extra %s %s" % (fam.name, label), ("extra identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : extra log undeclared arm: verdict PASS
+
+======================================================================
+FAIL: test_extra (tests.test_evidence_b2.B2Evidence) (family='event', extra='index far past the end')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 191, in test_extra
+    self.bad(rows + [_set(rows[i], f, val)], "extra %s %s" % (fam.name, label), ("extra identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'extra identity' not found in 'null' : extra event index far past the end: verdict FAIL, reason 'extra identity' not named
+
+======================================================================
+FAIL: test_extra (tests.test_evidence_b2.B2Evidence) (family='event', extra='undeclared arm')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 191, in test_extra
+    self.bad(rows + [_set(rows[i], f, val)], "extra %s %s" % (fam.name, label), ("extra identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : extra event undeclared arm: verdict PASS
+
+======================================================================
+FAIL: test_extra (tests.test_evidence_b2.B2Evidence) (family='ctl_log', extra='undeclared arm')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 191, in test_extra
+    self.bad(rows + [_set(rows[i], f, val)], "extra %s %s" % (fam.name, label), ("extra identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'extra identity' not found in 'null' : extra ctl_log undeclared arm: verdict FAIL, reason 'extra identity' not named
+
+======================================================================
+FAIL: test_log_moved_to_an_undeclared_id (tests.test_evidence_b2.B2Evidence)
+Log 71/11 (its events, log row and control rows) relabelled 75/600, a log the design never runs: still 3000 logs, so it
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/test_evidence_b2.py", line 74, in test_log_moved_to_an_undeclared_id
+    self.bad(rows, "log 71/11 relabelled 75/600", ("missing identity", "extra identity"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : log 71/11 relabelled 75/600: verdict PASS
+
+======================================================================
+FAIL: test_overwrite (tests.test_evidence_b2.B2Evidence) (family='log', overwrite='broken first, passing original later')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 204, in test_overwrite
+    self.bad(rows[:i] + [b] + rows[i + 1:] + [_copy(rows[i])], "overwrite %s (later)" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : overwrite log (later): verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_overwrite (tests.test_evidence_b2.B2Evidence) (family='log', overwrite='passing original first, broken later')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 206, in test_overwrite
+    self.bad(rows + [b], "overwrite %s (earlier)" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : overwrite log (earlier): verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_overwrite (tests.test_evidence_b2.B2Evidence) (family='event', overwrite='broken first, passing original later')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 204, in test_overwrite
+    self.bad(rows[:i] + [b] + rows[i + 1:] + [_copy(rows[i])], "overwrite %s (later)" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : overwrite event (later): verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_overwrite (tests.test_evidence_b2.B2Evidence) (family='event', overwrite='passing original first, broken later')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 206, in test_overwrite
+    self.bad(rows + [b], "overwrite %s (earlier)" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : overwrite event (earlier): verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_overwrite (tests.test_evidence_b2.B2Evidence) (family='svc_audit', overwrite='broken first, passing original later')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 204, in test_overwrite
+    self.bad(rows[:i] + [b] + rows[i + 1:] + [_copy(rows[i])], "overwrite %s (later)" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : overwrite svc_audit (later): verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_overwrite (tests.test_evidence_b2.B2Evidence) (family='svc_audit', overwrite='passing original first, broken later')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 206, in test_overwrite
+    self.bad(rows + [b], "overwrite %s (earlier)" % fam.name, ("duplicate identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : overwrite svc_audit (earlier): verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_permutation_keeps_the_verdict (tests.test_evidence_b2.B2Evidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 127, in test_permutation_keeps_the_verdict
+    self.assertEqual(self.v(rows).get("verdict"), want, "shuffled")
+AssertionError: 'FAIL' != 'PASS'
+- FAIL
++ PASS
+ : shuffled
+
+======================================================================
+FAIL: test_relabel (tests.test_evidence_b2.B2Evidence) (family='log', relabel='identity of another row')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 154, in test_relabel
+    self.bad(rows[:i] + [c] + rows[i + 1:], "relabel %s" % fam.name, ("duplicate identity", "missing identity"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : relabel log: verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_relabel (tests.test_evidence_b2.B2Evidence) (family='event', relabel='identity of another row')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 154, in test_relabel
+    self.bad(rows[:i] + [c] + rows[i + 1:], "relabel %s" % fam.name, ("duplicate identity", "missing identity"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 102, in bad
+    self.assertIn(word, ev, "%s: verdict %s, reason %r not named" % (what, out.get("verdict"), word))
+AssertionError: 'duplicate identity' not found in 'null' : relabel event: verdict FAIL, reason 'duplicate identity' not named
+
+======================================================================
+FAIL: test_relabel (tests.test_evidence_b2.B2Evidence) (family='svc_audit', relabel='identity of another row')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 154, in test_relabel
+    self.bad(rows[:i] + [c] + rows[i + 1:], "relabel %s" % fam.name, ("duplicate identity", "missing identity"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : relabel svc_audit: verdict PASS
+
+======================================================================
+FAIL: test_relabel (tests.test_evidence_b2.B2Evidence) (family='ctl_log', relabel='identity of another row')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 154, in test_relabel
+    self.bad(rows[:i] + [c] + rows[i + 1:], "relabel %s" % fam.name, ("duplicate identity", "missing identity"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : relabel ctl_log: verdict PASS
+
+======================================================================
+FAIL: test_renumber_out_of_sequence (tests.test_evidence_b2.B2Evidence) (family='event', renumber='past the end')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 176, in test_renumber_out_of_sequence
+    self.bad(rows[:i] + [_set(rows[i], fam.index, val)] + rows[i + 1:], "renumber %s %s" % (fam.name, label), ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : renumber event past the end: verdict PASS
+
+======================================================================
+FAIL: test_renumber_out_of_sequence (tests.test_evidence_b2.B2Evidence) (family='event', renumber='-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 176, in test_renumber_out_of_sequence
+    self.bad(rows[:i] + [_set(rows[i], fam.index, val)] + rows[i + 1:], "renumber %s %s" % (fam.name, label), ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : renumber event -1: verdict PASS
+
+======================================================================
+FAIL: test_renumber_out_of_sequence (tests.test_evidence_b2.B2Evidence) (family='event', renumber='string')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 176, in test_renumber_out_of_sequence
+    self.bad(rows[:i] + [_set(rows[i], fam.index, val)] + rows[i + 1:], "renumber %s %s" % (fam.name, label), ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : renumber event string: verdict PASS
+
+======================================================================
+FAIL: test_renumber_out_of_sequence (tests.test_evidence_b2.B2Evidence) (family='event', renumber='float')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 176, in test_renumber_out_of_sequence
+    self.bad(rows[:i] + [_set(rows[i], fam.index, val)] + rows[i + 1:], "renumber %s %s" % (fam.name, label), ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : renumber event float: verdict PASS
+
+======================================================================
+FAIL: test_renumber_out_of_sequence (tests.test_evidence_b2.B2Evidence) (family='event', renumber='bool')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 176, in test_renumber_out_of_sequence
+    self.bad(rows[:i] + [_set(rows[i], fam.index, val)] + rows[i + 1:], "renumber %s %s" % (fam.name, label), ("missing identity",))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/tests/evidence_props.py", line 99, in bad
+    self.assertNotEqual(out.get("verdict"), "PASS", "%s: verdict PASS" % what)
+AssertionError: 'PASS' == 'PASS' : renumber event bool: verdict PASS
+
+----------------------------------------------------------------------
+Ran 10 tests in 8.443s
+
+FAILED (failures=30)
+# unittest exit status 1
