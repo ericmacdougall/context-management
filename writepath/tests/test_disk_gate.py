@@ -155,6 +155,21 @@ class DiskGateFailsClosed(unittest.TestCase):
         (self.home / "state" / "STOP").write_text("flood stage seen\n")
         self.assertVoid(*self.call("end"))
 
+    def test_stop_reason_names_the_watcher_not_an_operator(self):
+        # amendment H4: the flood watcher's STOP was reported as "operator stop"
+        (self.home / "state" / "STOP").write_text("flood watcher: flood stage or high watermark in the ES log at 10:00:00\n")
+        rc, out = self.call("end")
+        self.assertVoid(rc, out)
+        self.assertIn("flood watcher", out)
+        self.assertNotIn("operator stop", out)
+
+    def test_empty_stop_file_is_not_attributed(self):
+        (self.home / "state" / "STOP").write_text("")
+        rc, out = self.call("check", "x")
+        self.assertVoid(rc, out)
+        self.assertIn("writer unknown", out)
+        self.assertNotIn("operator stop", out)
+
     def test_es_container_restarted_during_run_voids(self):
         self.h.started = "2999-01-01T00:00:00.000000000Z"
         self.assertVoid(*self.call("end"))

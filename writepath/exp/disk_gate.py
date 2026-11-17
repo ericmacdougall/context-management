@@ -33,6 +33,13 @@ STATE = STATE_DIR / "disk_gate.json"
 STOP = STATE_DIR / "STOP"          # an operator stop: the next check ends the run cleanly as VOID (no process kill)
 
 
+def _stop_reason():
+    """Who wrote the STOP file, from its own text (the launcher's flood watcher writes 'flood watcher: ...'; an
+    operator writes a reason). An empty file is reported as such, never attributed to an operator."""
+    t = STOP.read_text().strip()[:200] if STOP.exists() else ""
+    return f"written reason: {t}" if t else "no reason written in the file (writer unknown)"
+
+
 def _du(container, path):
     r = subprocess.run(["docker", "exec", container, "du", "-sb", path], capture_output=True, text=True, timeout=600)
     return int(r.stdout.split()[0]) if r.returncode == 0 and r.stdout.strip() else None
@@ -83,7 +90,7 @@ def main(cmd, name=""):
     st = json.loads(STATE.read_text())
     if cmd == "check":
         if STOP.exists():
-            print(f"disk_gate VOID: operator stop ({STOP}: {STOP.read_text().strip()[:200]}) before {name}")
+            print(f"disk_gate VOID: STOP file ({STOP}), {_stop_reason()}, before {name}")
             sys.exit(3)
         try:
             o = own()
@@ -103,7 +110,7 @@ def main(cmd, name=""):
         # Fail closed (review N2): the run is valid only if the absence of a flood stage was OBSERVED (the log read
         # succeeded and covers the whole run) and own usage was measured and stayed within the cap.
         if STOP.exists():
-            void(f"operator stop ({STOP.read_text().strip()[:200]}) during the run")
+            void(f"STOP file, {_stop_reason()}, during the run")
         try:
             started = subprocess.run(["docker", "inspect", "-f", "{{.State.StartedAt}}", config.ES_CONTAINER],
                                      capture_output=True, text=True, timeout=60)

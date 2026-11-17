@@ -9,8 +9,10 @@ set -eu
 : "${WP_HOME:?WP_HOME must name the home of this stream}"
 export WP_HOME
 ES_CONTAINER=${ES_CONTAINER:-emlab2-wphard-es}
-FREE=$(df -BG --output=avail "$WP_HOME" | tail -1 | tr -dc 0-9)
-[ "$FREE" -ge 20 ] || { echo "BLOCKED free ${FREE}G < 20"; exit 3; }   # amendment 24 (17 before)
+# exact KiB (amendment H4): df -BG rounds up and let 19.3 GiB through; disk_gate measures free / GiB >= 20.0
+FREEK=$(df -k --output=avail "$WP_HOME" | tail -1 | tr -dc 0-9)
+FREE=$(awk -v k="$FREEK" 'BEGIN{printf "%.1f", k/1048576}')
+[ "$FREEK" -ge 20971520 ] || { echo "BLOCKED free ${FREE}G < 20"; exit 3; }   # amendment 24; exact KiB since H4
 D=$1; L=$2; shift 2
 case "$D" in */runs/*) ;; *) echo "refusing: not a pinned tree"; exit 2 ;; esac
 cd "$D"
@@ -28,6 +30,6 @@ setsid sh -c "echo start $S head $H free ${FREE}G: $*
 RP=$!
 setsid sh -c "while kill -0 $RP 2>/dev/null; do
   if docker logs --since $S $ES_CONTAINER 2>&1 | grep -qiE 'flood stage disk watermark|high disk watermark .* exceeded'; then
-    touch $WP_HOME/state/STOP; echo \"flood stage or high watermark seen \$(date -u +%T): STOP written\"; exit 0; fi
+    echo \"flood watcher: flood stage or high watermark in the ES log at \$(date -u +%T)\" > $WP_HOME/state/STOP; echo \"flood stage or high watermark seen \$(date -u +%T): STOP written\"; exit 0; fi
   sleep 10; done; echo 'run ended, watcher exits'" > "$WP_HOME/state/flood_watch-$H.$L.log" 2>&1 < /dev/null &
 echo "$OUT head $H start $S free ${FREE}G"

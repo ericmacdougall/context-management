@@ -238,12 +238,19 @@ def run(name, N):
                     "holds_overlapped": k_hold, "violated_overlapped": sum(r["holds"] is False for r in ov),
                     "wilson95_hold_rate_overlapped": wilson(k_hold, len(ov)),
                     "wilson95_violation_rate_overlapped": wilson(len(ov) - k_hold, len(ov)), "runs": runs}
-    f, c = out["fenced"], out["control"]
-    if f["overlapped"] < 20 or c["overlapped"] < 20:
-        out["verdict"] = "INCONCLUSIVE"
-    else:
-        out["verdict"] = "PASS" if (f["violated_all"] == 0 and f["errors"] == 0 and c["violated_overlapped"] >= 1) else "FAIL"
+    out["verdict"] = verdict(out["fenced"], out["control"])
     return out
+
+
+def verdict(f, c, min_overlap=20):
+    """Amendment H4 (step-1 gap): a fenced violation is a FAIL whatever the overlap counts; it was tested after them,
+    so a violation in a run with too few overlaps was reported INCONCLUSIVE. Otherwise as amendment 3: INCONCLUSIVE
+    below min_overlap overlapped runs in either arm; PASS iff no fenced error and the control violated at least once."""
+    if f["violated_all"] > 0:
+        return "FAIL"
+    if f["overlapped"] < min_overlap or c["overlapped"] < min_overlap:
+        return "INCONCLUSIVE"
+    return "PASS" if (f["errors"] == 0 and c["violated_overlapped"] >= 1) else "FAIL"
 
 
 if __name__ == "__main__":
