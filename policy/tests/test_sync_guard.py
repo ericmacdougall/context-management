@@ -30,6 +30,15 @@ INJECTIONS = ["x;echo " + MARK + ";#", "x$(echo " + MARK + ")", "x`echo " + MARK
 BAD_NAMES = ["", ".hidden", "-rf", "a/b", "a b", "..", "a..b", "x" * 65, "café", "x\t", "*"]
 
 
+def _in_git_work_tree():
+    try:
+        return subprocess.run(["git", "-C", POLICY, "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True,
+                              timeout=10).stdout.strip() == "true"
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+@unittest.skipUnless(_in_git_work_tree(), "sync.sh runs from a git work tree (the host copy has no .git)")
 class SyncGuard(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix="syncguard-")
