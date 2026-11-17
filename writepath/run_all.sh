@@ -50,6 +50,8 @@ OUT=$WP_HOME/results/run_all.$(cat GIT_HEAD).out
   $PY -m exp.cleanup exp.d4_store_mark
   $PY -m exp.d3_identifier 5
   $PY -m exp.cleanup exp.d3_identifier
+  $PY -m exp.mutual_mentions 5 10 5
+  $PY -m exp.cleanup exp.mutual_mentions
   $PY -m exp.d2_verifier_process 5
   $PY -m exp.cleanup exp.d2_verifier_process
   $PY -m exp.phys_purge
