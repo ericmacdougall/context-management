@@ -1,0 +1,66 @@
+{
+ "judge_yes": {
+  "verdict": true,
+  "cached": true,
+  "model_returned": [
+   "claude-opus-5-5"
+  ],
+  "in": 2,
+  "cc": 10820,
+  "cr": 0,
+  "out": 6,
+  "s": 24.17
+ },
+ "judge_no": {
+  "verdict": false,
+  "cached": true,
+  "model_returned": [
+   "claude-opus-5-5"
+  ],
+  "in": 2,
+  "cc": 9828,
+  "cr": 999,
+  "out": 5,
+  "s": 9.03
+ },
+ "reader": {
+  "answer_tail": "onflicts with or changes that statement, so the car is still blue.\n\nAnswer: Blue",
+  "cached": true,
+  "model_returned": [
+   "claude-sonnet-5-5"
+  ],
+  "in": 2,
+  "cc": 10849,
+  "cr": 0,
+  "out": 88,
+  "s": 11.51
+ },
+ "gen": {
+  "parsed_keys": [
+   "border:correct_plus_wrong_detail",
+   "border:hedge_two",
+   "border:near_value",
+   "near_miss_wrong",
+   "para_terse",
+   "para_verbose",
+   "wrong_value"
+  ],
+  "cached": false,
+  "model_returned": [
+   "claude-sonnet-5-5"
+  ],
+  "in": 2,
+  "cc": 10440,
+  "cr": 975,
+  "out": 398,
+  "s": 12.31
+ },
+ "audit": {
+  "verdict": false,
+  "cached": true,
+  "in": 21545,
+  "cr": 17280,
+  "out": 54,
+  "s": 9.69
+ }
+}

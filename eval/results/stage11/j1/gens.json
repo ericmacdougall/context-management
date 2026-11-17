@@ -1,0 +1,910 @@
+{
+ "06878be2": {
+  "wrong_value": "Since you shoot with a Canon DSLR, I'd suggest a Canon EF-mount battery grip, a Canon Speedlite flash and a Canon-branded camera bag. Stick with Canon-only gear for the best fit.\nAnswer: Canon EF-mount accessories such as a Canon battery grip, Speedlite flash and Canon camera bag.",
+  "near_miss_wrong": "Given your Sony mirrorless setup, I'd recommend accessories that work with it. Budget third-party Nikon Z-mount lenses and an inexpensive no-name flash would suit you well.\nAnswer: Nikon Z-mount lenses and a cheap generic flash, which would complement your Sony camera.",
+  "para_terse": "You shoot with Sony gear, so the best additions are Sony-compatible, high-quality accessories such as an extra NP-FZ100 battery, a fast E-mount prime lens and a sturdy tripod.\nAnswer: Sony-compatible, high-quality accessories like extra NP-FZ100 batteries, an E-mount prime lens and a solid tripod.",
+  "para_verbose": "You mentioned using a Sony camera, so compatibility should come first. Accessories built for Sony's E-mount system will work smoothly with your body. Quality matters too, so I'd go for well-reviewed gear rather than cheap options. Good choices include spare NP-FZ100 batteries, a Sony-compatible flash such as the Godox or Sony HVL line, a fast E-mount lens and a sturdy carbon-fibre tripod.\nAnswer: High-quality Sony-compatible accessories, such as extra batteries, an E-mount lens, a compatible flash and a good tripod.",
+  "border:hedge_two": "I can't tell whether you'd want to stay within the Sony ecosystem or pick up Canon-compatible gear. Both could work as equal options, and I'm not committing to either.\nAnswer: Either Sony-compatible accessories or Canon-compatible accessories, depending on preference.",
+  "border:correct_plus_wrong_detail": "Since you use a Sony camera, I'd recommend high-quality Sony-compatible accessories like spare batteries and an E-mount lens. A Sony camera also takes Canon EF lenses natively with no adapter, so those are a fine choice too.\nAnswer: High-quality Sony-compatible accessories, including spare batteries, an E-mount lens and Canon EF lenses, which fit natively without an adapter.",
+  "border:near_value": "You'd likely benefit from high-quality accessories for your Fujifilm mirrorless setup, like an extra NP-W126 battery and an X-mount prime lens.\nAnswer: High-quality Fujifilm-compatible accessories, such as an NP-W126 battery and an X-mount prime lens.",
+  "border:partial": "A good option is to add some high-quality photography gear, like a sturdy tripod and a decent camera bag, to improve your shooting experience.\nAnswer: A high-quality tripod and camera bag.",
+  "border:rubric_partial": "I recall you're a Sony shooter, so Sony-compatible gear makes sense. I'd suggest some inexpensive generic accessories, such as a budget knock-off battery and a cheap plastic tripod, to save money.\nAnswer: Sony-compatible accessories, chosen cheaply, such as budget knock-off batteries and a low-cost plastic tripod."
+ },
+ "07741c44": {
+  "wrong_value": "Going through our earlier chats, you initially kept your old sneakers in the garage on a shelf. That's where they started out.\nAnswer: In the garage on a shelf",
+  "near_miss_wrong": "From what you told me, your old sneakers were first stored in the bed's storage drawer, tucked away in your bedroom. That was their original spot.\nAnswer: In a drawer built into your bed frame",
+  "para_terse": "You originally stored your worn-out sneakers beneath your bed.\nAnswer: Underneath your bed",
+  "para_verbose": "You mentioned in an earlier conversation that you had a pair of old sneakers you no longer wore. Originally, you tucked them away in the space beneath your bed, out of sight. Later you changed where they were stored, but the first location was under the bed. So that was the initial spot for the shoes.\nAnswer: Beneath your bed",
+  "border:hedge_two": "Your notes are a bit unclear on this. Your old sneakers were either under your bed or in the hall closet at first, and I can't say which for sure.\nAnswer: Either under your bed or in the hall closet",
+  "border:correct_plus_wrong_detail": "You first kept your old sneakers under your bed, in a clear plastic box that you bought at a hardware store.\nAnswer: Under your bed, in a plastic box",
+  "border:near_value": "You initially kept your old sneakers under the couch in the living room, out of the way.\nAnswer: Under the couch",
+  "border:stale_and_updated": "You mentioned earlier that your old sneakers were under your bed, and later you moved them to the closet shelf. Since the question asks where you initially kept them, the original spot was under your bed.\nAnswer: Under your bed",
+  "border:stale_only": "Your old sneakers were stored in the closet, which is where you kept them for a long time.\nAnswer: In the closet"
+ },
+ "07741c45": {
+  "wrong_value": "Looking back at what you told me, your old sneakers are stored in a storage bin in the garage.\nAnswer: In a storage bin in the garage",
+  "near_miss_wrong": "From our earlier conversations, you moved your old sneakers onto a shoe rack, and that rack sits under your bed.\nAnswer: In a shoe rack under your bed",
+  "para_terse": "You now store your old sneakers on a rack for shoes inside your closet.\nAnswer: On a shoe rack inside your closet",
+  "para_verbose": "You mentioned earlier that your old sneakers were kept somewhere else, but you later updated that. More recently you said you organized them onto a shoe rack. That rack is located inside your closet. So the current spot is the closet's shoe rack.\nAnswer: On a shoe rack in your closet",
+  "border:hedge_two": "You may keep your old sneakers on a shoe rack in your closet, or possibly in a storage bin in the garage. I can't say for certain which one it is.\nAnswer: Either on a shoe rack in your closet or in a storage bin in the garage",
+  "border:correct_plus_wrong_detail": "Your old sneakers are on a shoe rack in your closet, and you said you bought that rack last week from IKEA after it replaced a wooden cabinet in the hallway.\nAnswer: In a shoe rack in your closet, bought last week from IKEA",
+  "border:near_value": "You keep your old sneakers on a shoe rack, but it's in the hallway near the front door rather than the closet.\nAnswer: In a shoe rack in the hallway",
+  "border:stale_and_updated": "You used to keep your old sneakers in a box under your bed, but you've since moved them. They're now on a shoe rack in your closet.\nAnswer: In a shoe rack in your closet",
+  "border:stale_only": "You keep your old sneakers in a box under your bed.\nAnswer: In a box under your bed"
+ },
+ "078150f1": {
+  "wrong_value": "Your charity cycling event raised $300 more than your initial goal, so you beat the target comfortably.\nAnswer: $300",
+  "near_miss_wrong": "You set an initial goal for the charity cycling event and ended up exceeding it. The difference between the amount raised and the goal was $500.\nAnswer: $500",
+  "para_terse": "You beat your original fundraising target by fifty dollars.\nAnswer: 50 dollars more than the goal",
+  "para_verbose": "Looking back at what you shared about the charity cycling event, you set a fundraising goal at the start. When the event wrapped up, the total you collected was higher than that target. Subtracting the original goal from the final total leaves a surplus of fifty dollars. So you exceeded your goal by $50.\nAnswer: $50",
+  "border:hedge_two": "From what you mentioned, you either exceeded your goal by $50 or by $100. I can't tell which of the two figures is right, and both seem plausible.\nAnswer: $50 or $100",
+  "border:correct_plus_wrong_detail": "You raised $50 more than your initial goal. That was for the charity cycling event, where you originally aimed for $500 and ended up raising $600.\nAnswer: $50",
+  "border:near_value": "You exceeded your initial goal for the charity cycling event by a small amount, about $45 more than you had planned.\nAnswer: $45"
+ },
+ "07b6f563": {
+  "wrong_value": "Since you use a Samsung Galaxy S23, I'd suggest a Samsung wireless charger pad, a Galaxy-compatible case, and a Galaxy Buds case cover. These are built for Android and Samsung devices.\nAnswer: Samsung Galaxy S23 accessories such as a Samsung wireless charger pad, a Galaxy-specific case, and Galaxy Buds covers.",
+  "near_miss_wrong": "Since you have an iPhone 13 Pro Max, I'd suggest a tempered-glass screen protector, a rugged case, a portable power bank, and a wallet case, all sized for the 13 Pro Max.\nAnswer: Accessories for an iPhone 13 Pro Max: a tempered-glass screen protector sized for the Pro Max, a rugged case, a power bank, and a wallet case.",
+  "para_terse": "Since you have an iPhone 13 Pro, I'd go for a sturdy case, a good screen protector, a power bank, or a wallet case, all made for that model.\nAnswer: For your iPhone 13 Pro: a sturdy case, a quality screen protector, a portable power bank, and a wallet case.",
+  "para_verbose": "You mentioned using an iPhone 13 Pro, so the best suggestions should fit that exact phone and be Apple-compatible. Protection comes first, so a high-quality screen protector and a durable case would help guard it against drops and scratches. For daily use, a portable power bank keeps the battery topped up on the go. If you'd like to carry fewer things, a wallet case holds cards and cash on the back of the phone.\nAnswer: For your iPhone 13 Pro, get a high-quality screen protector, a durable case, a portable power bank, and a phone wallet case.",
+  "border:hedge_two": "You have a couple of reasonable directions here, and I can't say which suits you better. One is iPhone 13 Pro accessories like a screen protector and a durable case. The other is generic Android-style accessories such as a universal USB-C cable kit and a Samsung-style wireless charger.\nAnswer: Either iPhone 13 Pro accessories (screen protector, durable case) or Android-oriented accessories (USB-C cable kit, Samsung wireless charger) could work.",
+  "border:correct_plus_wrong_detail": "For your iPhone 13 Pro, I'd suggest a high-quality screen protector, a durable case, a portable power bank, and a wallet case. Make sure the power bank has a Lightning port, since the iPhone 13 Pro charges over Lightning only and can't use a USB-C cable at all. Also, a case that has a built-in headphone jack adapter would be helpful.\nAnswer: For your iPhone 13 Pro: a screen protector, durable case, portable power bank (with a built-in headphone jack adapter), and a wallet case.",
+  "border:near_value": "Since you have an iPhone 13 Pro, I'd recommend accessories made for Apple devices, like an Apple Watch charging stand, AirTag keychains, and a MagSafe desk dock. These are all Apple-compatible extras.\nAnswer: For your iPhone 13 Pro: an Apple Watch charging stand, AirTag keychains, and a MagSafe desk dock.",
+  "border:partial": "Since you have an iPhone 13 Pro, a high-quality screen protector is a good place to start, because it guards against scratches and cracks.\nAnswer: A high-quality screen protector for your iPhone 13 Pro.",
+  "border:rubric_partial": "I know you use an Apple phone, so I'd suggest accessories that work with iPhones in general, like a sturdy case and a power bank. I'm not sure of your exact model, so I can't say these will be an exact fit.\nAnswer: A sturdy case and a power bank for an iPhone."
+ },
+ "0862e8bf": {
+  "wrong_value": "Looking back through our earlier conversations, you mentioned your cat by name. Your cat is called Oliver.\nAnswer: Oliver",
+  "near_miss_wrong": "In an earlier chat you introduced your cat and gave her name. It was Lola, a name that sounds a lot like the one you used.\nAnswer: Lola",
+  "para_terse": "You told me your cat is called Luna.\nAnswer: Luna",
+  "para_verbose": "While going through our past conversations, I found the one where you talked about your pet. You described your cat and said what she was called. The name you gave was Luna. That is the name of your cat.\nAnswer: Your cat's name is Luna",
+  "border:hedge_two": "Your past chats mention a cat name, but I can't tell which of two it is. It could be Luna, or it could be Willow. Both seem equally likely to me.\nAnswer: Either Luna or Willow",
+  "border:correct_plus_wrong_detail": "You told me your cat is named Luna, and you said she is a black Maine Coon you adopted from a shelter in Seattle. The name is clear from that chat.\nAnswer: Luna, a black Maine Coon adopted in Seattle",
+  "border:near_value": "You mentioned a cat in an earlier conversation, and the name was close to a moon-themed one. I believe it was Stella.\nAnswer: Stella"
+ },
+ "0a995998": {
+  "wrong_value": "Going through your past conversations, I count the clothing items you still need to deal with at stores. Altogether that comes to 7 items.\nAnswer: 7",
+  "near_miss_wrong": "Based on your earlier chats, you have several clothing items waiting at stores, such as things to collect and things to send back. Adding them up, the total is 4 items.\nAnswer: 4",
+  "para_terse": "Across your conversations, you have three clothing items that still need to be picked up or returned to a store.\nAnswer: 3",
+  "para_verbose": "I went back through your earlier conversations and looked for clothing that was waiting at a store, either to collect or to send back. Each mention was a separate item, and none of them had been settled yet. Adding the pickups and the returns together gives a total of three pieces of clothing. That is the number you still need to sort out with stores.\nAnswer: 3",
+  "border:hedge_two": "Looking over your chats, I can't tell for sure how many clothing items are outstanding. It could be 3 items, or it could be 4 if one more purchase is also waiting at a store. Both seem equally plausible to me.\nAnswer: 3 or 4",
+  "border:correct_plus_wrong_detail": "Across your conversations, you have 3 clothing items to pick up or return. All three of them are at the same department store downtown, so one trip should cover them.\nAnswer: 3",
+  "border:near_value": "Counting the clothing items you mentioned that are waiting at stores for pickup or return, I get 2 items in total.\nAnswer: 2"
+ },
+ "0e4e4c46": {
+  "wrong_value": "Looking back through your chats, you mentioned your best Ticket to Ride result was a game where you finished well ahead of the others. Your current highest score is 98 points.\nAnswer: 98 points",
+  "near_miss_wrong": "Your chat history shows you beat your personal record in Ticket to Ride after a long-route-focused game. Your current highest score is 123 points.\nAnswer: 123 points",
+  "para_terse": "Your personal best in Ticket to Ride now stands at 132 points.\nAnswer: 132",
+  "para_verbose": "You talked about Ticket to Ride in a few conversations and your record changed over time. You first reported a lower personal best, then later said you had topped it with a bigger game. The most recent figure you gave is the one that counts as your current record. That figure is 132 points.\nAnswer: Your current highest score is 132 points.",
+  "border:hedge_two": "Your best score is either 132 points or 124 points, and I can't tell which one is the current record. Both came up in your chats, and I'd treat them as equally likely.\nAnswer: 132 points or 124 points",
+  "border:correct_plus_wrong_detail": "Your current highest Ticket to Ride score is 132 points, which you reached in a game of the Europe edition where you won by a wide margin.\nAnswer: 132 points, set in the Europe edition",
+  "border:near_value": "Your most recent record in Ticket to Ride was a strong game, and the best score you mentioned was 131 points.\nAnswer: 131 points",
+  "border:stale_and_updated": "You used to say your best Ticket to Ride score was 124 points, but you later beat that with a bigger game. Your current highest score is 132 points.\nAnswer: 132 points",
+  "border:stale_only": "The best Ticket to Ride score you mentioned was 124 points, and I don't see anything newer in your chats, so that is your record.\nAnswer: 124 points"
+ },
+ "0e5e2d1a": {
+  "wrong_value": "The study published in Music and Medicine enrolled 62 participants who listened to binaural beats and showed significant reductions in depression, anxiety, and stress symptoms.\nAnswer: 62 subjects",
+  "near_miss_wrong": "Recalling our earlier discussion, the Music and Medicine study of binaural beats reported significant reductions in depression, anxiety, and stress among its participants, and it had 83 subjects in total.\nAnswer: 83 subjects",
+  "para_terse": "That Music and Medicine study included thirty-eight participants.\nAnswer: 38 participants",
+  "para_verbose": "In our earlier conversation about binaural beats for anxiety and depression, we looked at a study in the journal Music and Medicine. It found significant reductions in depression, anxiety, and stress symptoms after listening to binaural beats. The sample was fairly small, with thirty-eight people taking part. That is the figure I'd point to for the study's size.\nAnswer: Thirty-eight people took part in the study",
+  "border:hedge_two": "I recall the Music and Medicine binaural beats study having either 38 subjects or 48 subjects, and I can't say with confidence which is right. Both seem plausible to me.\nAnswer: 38 or 48 subjects",
+  "border:correct_plus_wrong_detail": "The Music and Medicine study of binaural beats enrolled 38 subjects, and it found significant reductions in depression, anxiety, and stress after participants listened daily for six months.\nAnswer: 38 subjects",
+  "border:near_value": "The Music and Medicine study that found significant reductions in depression, anxiety, and stress had 36 subjects.\nAnswer: 36 subjects"
+ },
+ "1192316e": {
+  "wrong_value": "Your morning routine takes about 45 minutes and your commute is roughly 30 minutes, so getting ready and getting to work takes 1 hour 15 minutes in total.\nAnswer: 1 hour 15 minutes",
+  "near_miss_wrong": "You spend about an hour getting ready and your commute takes about 45 minutes, so the total is an hour and 45 minutes.\nAnswer: An hour and 45 minutes",
+  "para_terse": "Getting ready takes about 45 minutes and the commute another 45, so 90 minutes altogether.\nAnswer: 90 minutes (1.5 hours)",
+  "para_verbose": "From what you've told me, your morning routine takes about an hour before you leave the house. The commute to work then adds roughly thirty minutes. Adding the two together gives sixty plus thirty minutes. That makes ninety minutes from start of getting ready to arriving at work.\nAnswer: 90 minutes, which is one and a half hours",
+  "border:hedge_two": "Your routine takes about an hour and your commute about 30 minutes, which would be an hour and a half in total. But it could also be that the commute is closer to 45 minutes, which would make it an hour and 45 minutes. I can't say for sure which applies.\nAnswer: Either an hour and a half, or an hour and 45 minutes",
+  "border:correct_plus_wrong_detail": "Getting ready takes you about an hour and the commute takes about 30 minutes, which is an hour and a half in total. You mentioned that you take the train for the commute.\nAnswer: An hour and a half, with a train commute",
+  "border:near_value": "Getting ready takes you about an hour and your commute takes roughly 40 minutes, so in total it's about an hour and 40 minutes.\nAnswer: About an hour and 40 minutes",
+  "border:partial": "You said your commute to work takes about 30 minutes each way, though I don't have the time you spend getting ready.\nAnswer: 30 minutes"
+ },
+ "1c549ce4": {
+  "wrong_value": "The car cover and the detailing spray together came to $95 based on your purchases.\nAnswer: $95",
+  "near_miss_wrong": "Adding the car cover and the detailing spray from your purchases gives a total of $150.\nAnswer: $150",
+  "para_terse": "Together the car cover and detailing spray cost one hundred forty dollars.\nAnswer: $140 in total",
+  "para_verbose": "You bought a car cover and a detailing spray in separate purchases. Adding the price of the cover to the price of the spray gives a combined spend. That sum comes out to one hundred forty dollars. So altogether you paid $140 for the two items.\nAnswer: $140",
+  "border:hedge_two": "The total could be $140 for the car cover and detailing spray, though it might instead be $120 if the spray was priced differently. I can't say which for certain.\nAnswer: Either $140 or $120",
+  "border:correct_plus_wrong_detail": "The car cover and detailing spray came to $140 in total, and you bought both of them at an auto parts store on the same day last week.\nAnswer: $140",
+  "border:near_value": "Adding up the car cover and the detailing spray, the total comes to $135.\nAnswer: $135"
+ },
+ "2133c1b5": {
+  "wrong_value": "Going by what you've told me, you moved into your Harajuku apartment about two years ago. That's the length of time you've lived there.\nAnswer: 2 years",
+  "near_miss_wrong": "You mentioned moving into your Harajuku apartment recently, and by my count it has been about 5 months since you moved in.\nAnswer: 5 months",
+  "para_terse": "You moved in a quarter of a year ago, so you've lived in your Harajuku apartment for three months.\nAnswer: About three months",
+  "para_verbose": "Earlier you said you had been in your Harajuku apartment for a short while, and you later updated that figure. Counting from your move-in date to today, the time comes to a full season, which is a quarter of a year. That means you've settled into the place for roughly three months now. This is the most recent figure you gave.\nAnswer: Three months",
+  "border:hedge_two": "You may have been in your Harajuku apartment for about 3 months, though it could also be about 6 months. I can't say for certain which is right.\nAnswer: Either 3 months or 6 months",
+  "border:correct_plus_wrong_detail": "You've lived in your Harajuku apartment for 3 months, and you moved in during the winter after leaving your place in Shibuya.\nAnswer: 3 months, having moved in during the winter from Shibuya",
+  "border:near_value": "You've lived in your Harajuku apartment for a bit longer than a quarter of a year, so I'd put it at 4 months.\nAnswer: 4 months",
+  "border:stale_and_updated": "You first said you had been in your Harajuku apartment for 1 month, but you later updated that to 3 months, which is the current figure.\nAnswer: 3 months",
+  "border:stale_only": "You told me you had been in your Harajuku apartment for 1 month, so that's how long you've lived there.\nAnswer: 1 month"
+ },
+ "2698e78f": {
+  "wrong_value": "Your chat history shows you meet Dr. Smith once a month, usually on the first Monday. That's your current schedule.\nAnswer: Once a month",
+  "near_miss_wrong": "You told me you now see Dr. Smith every other week, after your schedule changed. That is the current cadence.\nAnswer: Every two weeks",
+  "para_terse": "You've got a session with Dr. Smith each week.\nAnswer: Weekly, once per week",
+  "para_verbose": "Looking back through your conversations, you first mentioned seeing Dr. Smith less often. Later you said the sessions had gone up in frequency. Your most recent mention describes a standing appointment that happens once every seven days. So the current schedule is a weekly session.\nAnswer: Weekly, once every week",
+  "border:hedge_two": "You may see Dr. Smith every week, though it could also be every two weeks. Your history doesn't settle which one it is, so I can't pick between them.\nAnswer: Either every week or every two weeks",
+  "border:correct_plus_wrong_detail": "You see Dr. Smith every week. Your sessions are on Tuesday mornings at 9 AM.\nAnswer: Every week, on Tuesday mornings",
+  "border:near_value": "You see Dr. Smith about twice a month, which is a little less often than before.\nAnswer: Every two weeks",
+  "border:stale_and_updated": "You used to see Dr. Smith every two weeks. You later changed to a more frequent schedule, so now you see them every week.\nAnswer: Every week",
+  "border:stale_only": "You see Dr. Smith every two weeks. That's the schedule you described in your chat history.\nAnswer: Every two weeks"
+ },
+ "26bdc477": {
+  "wrong_value": "Looking back at your conversations, you've mentioned bringing the Canon EOS 80D along on a handful of outings, and the count comes to eight trips in total.\nAnswer: Eight trips",
+  "near_miss_wrong": "Going through your chat history, you said you had taken your Canon EOS 80D on four trips so far, including your most recent getaway.\nAnswer: Four trips",
+  "para_terse": "You've brought your Canon EOS 80D along on 5 trips.\nAnswer: 5 trips",
+  "para_verbose": "Across your earlier conversations you described several outings with the Canon EOS 80D. Counting each separate trip where you took the camera, including the most recent one you mentioned, the total comes out to a half-dozen minus one. That means the camera has gone with you on 5 trips.\nAnswer: 5 trips",
+  "border:hedge_two": "It's hard to say for sure from what you've shared. You might have taken your Canon EOS 80D on five trips, or it could be six if one more outing counts.\nAnswer: Five or six trips",
+  "border:correct_plus_wrong_detail": "You've taken your Canon EOS 80D on five trips, the most recent of which was a week-long safari in Kenya.\nAnswer: Five trips",
+  "border:near_value": "Based on what you've told me, your Canon EOS 80D has been on six trips so far.\nAnswer: Six trips",
+  "border:stale_and_updated": "Earlier you mentioned that you'd taken your Canon EOS 80D on three trips, but since then you've added more outings, so the current count is five trips.\nAnswer: Five trips",
+  "border:stale_only": "You mentioned taking your Canon EOS 80D on three trips, and that's the count I have for you.\nAnswer: Three trips"
+ },
+ "2bf43736": {
+  "wrong_value": "Looking back at the treatise, vocal prayer and meditation are covered in the chapter on the prayer of the advanced. That falls in Chapter 9 of Book 2, titled 'Infused Contemplation'.\nAnswer: Chapter 9 of Book 2, 'Infused Contemplation'.",
+  "near_miss_wrong": "In Tanqueray's treatise, the prayer of beginners is discussed in the opening book, and vocal prayer and meditation are handled together in one chapter. That is Chapter 5 of Book 1, titled 'Vocal Prayer and Meditation'.\nAnswer: Chapter 5 of Book 1, titled 'Vocal Prayer and Meditation'.",
+  "para_terse": "It is the fourth chapter of the first book, called 'Vocal Prayer and Meditation'.\nAnswer: Book 1, Chapter 4, 'Vocal Prayer and Meditation'.",
+  "para_verbose": "You were asking about the prayer of beginners in Tanqueray's Spiritual Life treatise. Looking at the structure, the discussion of beginners' prayer sits in the first book rather than a later one. Within that book, the section that treats vocal prayer together with meditation is the fourth chapter. It carries the title 'Vocal Prayer and Meditation'.\nAnswer: The fourth chapter of Book 1, titled 'Vocal Prayer and Meditation'.",
+  "border:hedge_two": "This could be Chapter 4 of Book 1, 'Vocal Prayer and Meditation', though it might equally be Chapter 5 of Book 1. I can't say for certain which of the two it is.\nAnswer: Either Chapter 4 or Chapter 5 of Book 1.",
+  "border:correct_plus_wrong_detail": "Vocal prayer and meditation are treated in Chapter 4 of Book 1, titled 'Vocal Prayer and Meditation'. That chapter was written by Tanqueray as a follow-up to his later work on mystical theology, which came out afterward.\nAnswer: Chapter 4 of Book 1, 'Vocal Prayer and Meditation', written as a follow-up to his later mystical theology.",
+  "border:near_value": "The relevant material is in the first book, where vocal prayer and meditation are treated. I believe it is Chapter 3 of Book 1, titled 'Vocal Prayer and Meditation'.\nAnswer: Chapter 3 of Book 1, 'Vocal Prayer and Meditation'."
+ },
+ "311778f1": {
+  "wrong_value": "Looking back at your chat history, you mentioned tracking your Netflix viewing in April. Your documentary viewing came to about 22 hours for the month.\nAnswer: 22 hours",
+  "near_miss_wrong": "You told me that last month you spent time on Netflix documentaries, and the total you gave was 12 hours.\nAnswer: 12 hours",
+  "para_terse": "You said you watched documentaries on Netflix for ten hours last month.\nAnswer: 10 hours",
+  "para_verbose": "Earlier in our conversation you talked about your Netflix habits and mentioned how much documentary content you had watched. You tallied up your viewing for the previous month. The total you gave for documentaries specifically was ten hours. That means you spent roughly a tenth of a hundred hours, or ten hours, on documentaries in April.\nAnswer: 10 hours",
+  "border:hedge_two": "You mentioned your documentary viewing on Netflix last month, and it was either 10 hours or 15 hours. I can't say for sure which one you gave me, and both seem equally likely.\nAnswer: 10 hours or 15 hours",
+  "border:correct_plus_wrong_detail": "You said you spent 10 hours watching documentaries on Netflix last month, mostly on nature series you watched on weekends with your sister.\nAnswer: 10 hours",
+  "border:near_value": "Based on what you told me, you spent around 11 hours watching documentaries on Netflix last month.\nAnswer: 11 hours"
+ },
+ "3a704032": {
+  "wrong_value": "Going through your chat history for the past month, I find you picked up 6 new plants over that period. Those were the ones you mentioned buying and receiving as gifts.\nAnswer: 6",
+  "near_miss_wrong": "Looking at the last month of your conversations, you mentioned bringing home new plants on a few occasions, and I count four distinct ones you acquired in that time.\nAnswer: 4",
+  "para_terse": "Over the past month you brought home three new plants.\nAnswer: Three plants",
+  "para_verbose": "Checking your conversations from the past month, you mentioned getting a new plant on three separate occasions. Each was a different plant, so there is no double counting. Adding them up gives a total of three plants acquired over the last month. That is the number you asked about.\nAnswer: 3 plants",
+  "border:hedge_two": "Your chats suggest you acquired either 3 or 4 plants in the last month. I can't tell whether one of the mentions was a plant you already owned, so both counts are equally possible.\nAnswer: 3 or 4",
+  "border:correct_plus_wrong_detail": "You acquired 3 plants in the last month, and I recall that all three were succulents you bought at a local nursery.\nAnswer: 3",
+  "border:near_value": "Based on your conversations over the past month, you acquired 2 new plants.\nAnswer: 2"
+ },
+ "3b6f954b": {
+  "wrong_value": "Looking back at your earlier conversations, you spent your study abroad program at the University of Tokyo in Japan.\nAnswer: University of Tokyo in Japan",
+  "near_miss_wrong": "Based on what you mentioned before, your study abroad program was at the University of Sydney in Australia.\nAnswer: University of Sydney in Australia",
+  "para_terse": "You studied abroad at the University of Melbourne, which is in Australia.\nAnswer: Melbourne University, Australia",
+  "para_verbose": "You brought up your study abroad experience in an earlier conversation. You described spending the program at a university in Melbourne, in the state of Victoria. That institution is the University of Melbourne, and it is located in Australia. So your study abroad took place Down Under, at that university.\nAnswer: The University of Melbourne in Australia",
+  "border:hedge_two": "Your earlier conversation points to Australia, but I can't tell which of two universities you meant. It could have been the University of Melbourne or the University of Sydney, and I see equal support for each.\nAnswer: Either the University of Melbourne or the University of Sydney, in Australia",
+  "border:correct_plus_wrong_detail": "You did your study abroad program at the University of Melbourne in Australia. You told me you went there for a full academic year, in the city of Perth.\nAnswer: University of Melbourne in Australia, located in Perth",
+  "border:near_value": "You went on your study abroad program in Australia, at Monash University in Melbourne.\nAnswer: Monash University in Melbourne, Australia",
+  "border:partial": "You mentioned that your study abroad program was at the University of Melbourne, but I don't recall which country it was in.\nAnswer: University of Melbourne"
+ },
+ "3f1e9474": {
+  "wrong_value": "Looking back through your chat history, the conversation about destiny was with Michael, who shared his thoughts on fate and free will.\nAnswer: Michael",
+  "near_miss_wrong": "Your past chats show a discussion about destiny and whether our paths are predetermined, and it was with Sara's brother-in-law, Daniel.\nAnswer: Daniel",
+  "para_terse": "You talked about destiny with Sarah.\nAnswer: Sarah",
+  "para_verbose": "You asked about a past conversation on the topic of destiny. Going back through your chat history, there was an exchange where you and a person named Sarah discussed whether our lives are predetermined or shaped by choices. That conversation stands out as the one centered on destiny. So the person you spoke with about it was Sarah.\nAnswer: Sarah",
+  "border:hedge_two": "Two conversations in your history touch on destiny. It could have been Sarah, or it could have been Michael, and I can't say which one it was.\nAnswer: Either Sarah or Michael",
+  "border:correct_plus_wrong_detail": "You discussed destiny with Sarah, your coworker, over lunch last March, when she described how she believed fate guided her career.\nAnswer: Sarah, a coworker you spoke with in March",
+  "border:near_value": "The conversation about destiny seems to have been with Sara's sister, who shared her views on fate.\nAnswer: Sarah's sister"
+ },
+ "45dc21b6": {
+  "wrong_value": "Going through your earlier conversations, you've cooked 7 of Emma's recipes so far.\nAnswer: 7",
+  "near_miss_wrong": "Based on your chat history, you've tried out 4 of Emma's recipes so far, the most recent being the one you mentioned last week.\nAnswer: 4",
+  "para_terse": "You've made three of Emma's recipes so far.\nAnswer: Three",
+  "para_verbose": "Looking back through your conversations, you first mentioned trying one of Emma's recipes and later said you'd made a couple more. Counting the dishes you reported cooking, the total comes to three. That is the most recent count you gave, so it supersedes any earlier tally.\nAnswer: You have tried out 3 of Emma's recipes.",
+  "border:hedge_two": "It's either 3 or 4 of Emma's recipes. Your chats suggest a count of three, but a fourth may have been mentioned too, and I can't tell which is right.\nAnswer: 3 or 4",
+  "border:correct_plus_wrong_detail": "You've tried 3 of Emma's recipes so far, and all of them were desserts, which you said you'd baked for a family gathering.\nAnswer: 3",
+  "border:near_value": "You've tried out 2 of Emma's recipes so far, based on your chat history.\nAnswer: 2",
+  "border:stale_and_updated": "Earlier you said you had tried 2 of Emma's recipes, but you've since made another, so the current count is 3.\nAnswer: 3",
+  "border:stale_only": "You've tried 2 of Emma's recipes so far, according to what you told me.\nAnswer: 2"
+ },
+ "46a3abf7": {
+  "wrong_value": "Going through your earlier conversations, you have five tanks in total, counting the one you set up for your friend's kid.\nAnswer: 5",
+  "near_miss_wrong": "You mentioned your main tank and a second one, and then you set up another for your friend's kid, which brings the count to four tanks in total.\nAnswer: 4",
+  "para_terse": "Counting the tank you built for your friend's kid, you have three tanks in all.\nAnswer: 3",
+  "para_verbose": "Across your conversations you described a main tank that you've kept for a while and a second tank you added later. You then said you set up one more for your friend's kid. Adding those together gives a total of three tanks at the moment.\nAnswer: 3",
+  "border:hedge_two": "It's hard to say for sure from what you told me. You may have three tanks including the one for your friend's kid, or it could be four if you count a spare one you mentioned.\nAnswer: 3 or 4",
+  "border:correct_plus_wrong_detail": "You currently have three tanks, including the one you set up for your friend's kid, which was a 20-gallon saltwater tank.\nAnswer: 3",
+  "border:near_value": "You have two tanks of your own, and with the one you set up for your friend's kid, that comes to a total of four.\nAnswer: 4"
+ },
+ "4c36ccef": {
+  "wrong_value": "I recommended Armando al Pantheon, a cozy spot near the Pantheon that works well for a romantic dinner in Rome.\nAnswer: Armando al Pantheon",
+  "near_miss_wrong": "The romantic Italian restaurant in Rome I suggested for dinner was Salumeria Roscioli's neighbor, Da Enzo al 29 in Trastevere, known for its candlelit charm.\nAnswer: Da Enzo al 29",
+  "para_terse": "The restaurant I suggested for a romantic dinner in Rome was Roscioli.\nAnswer: Roscioli",
+  "para_verbose": "You asked about a romantic place to have dinner in Rome. I suggested a well-regarded spot near Campo de' Fiori with an intimate atmosphere, excellent pasta and a notable wine list. That restaurant is Roscioli. It's a good choice for a special evening, and booking ahead is wise.\nAnswer: Roscioli",
+  "border:hedge_two": "I think it was either Roscioli or Armando al Pantheon, and I can't say which for certain. Both are well-known romantic dinner spots in Rome.\nAnswer: Roscioli or Armando al Pantheon",
+  "border:correct_plus_wrong_detail": "The restaurant I recommended was Roscioli, which sits in the Trastevere neighborhood across the river from the historic center.\nAnswer: Roscioli, located in Trastevere",
+  "border:near_value": "I recommended Antica Pesa, a romantic spot in Rome that's lovely for dinner.\nAnswer: Antica Pesa"
+ },
+ "4f54b7c9": {
+  "wrong_value": "Going through your past conversations, I count the antique pieces that came from relatives, and the total comes to 9 items.\nAnswer: 9",
+  "near_miss_wrong": "Across your earlier chats, the antiques you inherited or were given by family add up to 4 items: a grandmother's vase, a grandfather's pocket watch, a great-aunt's lace tablecloth and a heirloom mirror.\nAnswer: 4",
+  "para_terse": "You received five antique items from family members.\nAnswer: Five antiques",
+  "para_verbose": "I went through the sessions where you mentioned antiques tied to your relatives. Each time you described a piece that was passed down or given to you by a family member, I counted it once and avoided double-counting items mentioned in more than one chat. Adding them all up gives a total of five distinct antique items that came from your family.\nAnswer: Five antique items",
+  "border:hedge_two": "Based on what you've told me, it's either 5 or 6 antique items from family, depending on whether the old clock you mentioned counts as inherited or purchased. I can't say for certain which is right.\nAnswer: Either 5 or 6",
+  "border:correct_plus_wrong_detail": "You inherited or acquired 5 antique items from family members, and all of them came from your grandmother's estate.\nAnswer: 5 antique items, all from your grandmother",
+  "border:near_value": "Counting the pieces that came from relatives across your conversations, I get 6 antique items.\nAnswer: 6"
+ },
+ "50635ada": {
+  "wrong_value": "Looking back at your earlier conversations, your status before the current one was Premier Platinum on United Airlines.\nAnswer: Premier Platinum",
+  "near_miss_wrong": "From what you told me, before your current United status you held Premier Gold, the tier just above the entry level.\nAnswer: Premier Gold",
+  "para_terse": "Before reaching your current tier, you were a Silver-level Premier member with United.\nAnswer: Premier Silver",
+  "para_verbose": "You mentioned in your earlier chats that you had moved up in United's MileagePlus program. Before the current status, you were at the entry-level elite tier. That tier is called Premier Silver. You later advanced beyond it to your present status.\nAnswer: Premier Silver",
+  "border:hedge_two": "Your earlier status could have been Premier Silver, or it might have been Premier Gold. I can't say for certain which one it was.\nAnswer: Premier Silver or Premier Gold",
+  "border:correct_plus_wrong_detail": "Your previous status was Premier Silver, which you held for about five years before upgrading to Premier Platinum.\nAnswer: Premier Silver, and your current status is Premier 1K",
+  "border:near_value": "Before your current status, you held Premier Gold on United Airlines.\nAnswer: Premier Gold",
+  "border:stale_and_updated": "You first held Premier Silver on United, which was your earlier status, and you have since moved up to a higher tier as your current status.\nAnswer: Premier Silver was your previous status, and your current status is higher",
+  "border:stale_only": "You are a Premier Silver member on United Airlines at present.\nAnswer: Premier Silver is your current status"
+ },
+ "51a45a95": {
+  "wrong_value": "Looking back at your earlier conversation, you mentioned using a $5 coupon on coffee creamer during a grocery trip. It was at Walmart.\nAnswer: Walmart",
+  "near_miss_wrong": "You described redeeming a $5 coupon on coffee creamer at a big-box retailer, and the store that fits is Kroger, where you said you used the offer during your weekly shop.\nAnswer: Kroger",
+  "para_terse": "You redeemed that $5 coffee creamer coupon at the retailer Target.\nAnswer: Target",
+  "para_verbose": "You mentioned a recent shopping trip in which you had a coupon for coffee creamer. The coupon was worth $5, and you said you redeemed it in person. The store you named was Target, the big-box retailer. So the place where you used the $5 creamer coupon was Target.\nAnswer: Target",
+  "border:hedge_two": "You redeemed a $5 coffee creamer coupon, and I can't tell for sure which store it was. It might have been Target, or it might have been Walmart, and both seem equally likely from what you said.\nAnswer: Either Target or Walmart",
+  "border:correct_plus_wrong_detail": "You redeemed the $5 coupon on coffee creamer at Target. You used it on a $12 bottle of creamer during a Sunday evening trip.\nAnswer: Target, on a $12 bottle of creamer on a Sunday evening",
+  "border:near_value": "You redeemed the $5 coffee creamer coupon at a store similar to Target, which was Walmart, where you picked up the creamer with your other groceries.\nAnswer: Walmart"
+ },
+ "51b23612": {
+  "wrong_value": "The Soviet cartoon I mentioned was Cheburashka, which poked fun at Western consumer culture.\nAnswer: Cheburashka",
+  "near_miss_wrong": "The cartoon you're thinking of is the Soviet animated series that mocked Western culture through a hapless wolf and hare, titled \"Vinni-Pukh\".\nAnswer: Vinni-Pukh",
+  "para_terse": "It was the Soviet animated series about a wolf chasing a hare, which satirized Western influences: \"Nu, pogodi!\".\nAnswer: Nu, pogodi! (\"Well, just you wait!\")",
+  "para_verbose": "You asked about the Soviet cartoon that poked fun at Western culture in our talk on propaganda and humor. I described a long-running animated series in which a scruffy, hooligan-like wolf chases a clever hare. The wolf was often shown with Western-style trappings such as bell-bottoms, pop music and a smoking habit, which made him a vehicle for satire. The series is known by the title meaning \"Well, just you wait!\".\nAnswer: Nu, pogodi!",
+  "border:hedge_two": "I think it was either \"Nu, pogodi!\" or \"Cheburashka\"; both Soviet cartoons could fit, and I can't say for sure which one I mentioned.\nAnswer: Nu, pogodi! or Cheburashka",
+  "border:correct_plus_wrong_detail": "It was \"Nu, pogodi!\", the Soviet cartoon in which a wolf chases a hare, and it was produced in the 1920s as early revolutionary propaganda.\nAnswer: Nu, pogodi!",
+  "border:near_value": "It was another famous Soviet animated series, \"Cheburashka\", about a small creature and his friend Gena the crocodile.\nAnswer: Cheburashka"
+ },
+ "54026fce": {
+  "wrong_value": "You're best off cutting back on work communication altogether and focusing on solo deep-work time. Skip group chats and meetings, and spend the extra time on independent hobbies outside of work.\nAnswer: Reduce contact with colleagues and concentrate on working alone, since less interaction will help you stay productive.",
+  "near_miss_wrong": "Since you work remotely and want more social contact, I'd suggest joining in-person networking events and attending industry conferences each month, plus meeting colleagues at a local coworking space. These build relationships, though they don't draw on the company initiatives or team activities you've tried before.\nAnswer: Attend in-person industry conferences and local networking meetups to connect with colleagues.",
+  "para_terse": "Since you miss social interaction while working remotely, build on the company initiatives and team collaborations you've already tried. Set up virtual team-building activities, schedule regular check-ins, and join interest-based groups at your company.\nAnswer: Build on your earlier company initiatives with virtual team-building, regular check-ins, and interest-based groups at work.",
+  "para_verbose": "You've said you want more social interaction and collaboration while working remotely, so suggestions should fit that situation and not be generic. You've taken part in company initiatives and team collaborations before, and those are a good base to build on. Virtual team-building activities such as online games or coffee chats can bring people together. Regular one-on-one or small-group check-ins keep relationships going. Joining interest-based groups within the company, such as book clubs or hobby channels, lets you meet colleagues around shared interests.\nAnswer: Build on your past company initiatives with virtual team-building activities, regular check-ins, and interest-based groups within the company.",
+  "border:hedge_two": "Given that you work remotely and enjoy collaborating, there are two good options and I can't say which suits you better. You could organize virtual team-building activities and regular check-ins, building on the company initiatives you've joined. Or you could move to in-person monthly lunches with colleagues who live nearby.\nAnswer: Either virtual team-building and regular check-ins, or monthly in-person lunches with nearby colleagues.",
+  "border:correct_plus_wrong_detail": "You want social interaction and collaboration while working remotely, so build on the company initiatives and team projects you've done before. Try virtual team-building activities, regular check-ins, and interest-based groups within the company. Since you said your company requires everyone back in the office three days a week, you can also use office days for lunches.\nAnswer: Use virtual team-building activities, regular check-ins, and interest-based company groups, plus in-office lunches on your required office days.",
+  "border:near_value": "You've mentioned wanting social interaction while working remotely, so a good fit is a company-wide social channel. Start a chat space for casual conversation and share daily updates and photos there, as in past company initiatives.\nAnswer: Set up an informal company-wide chat channel for casual conversation and daily photo sharing with colleagues.",
+  "border:partial": "You want to keep up social interaction while working remotely, so a simple place to start is regular check-ins with your colleagues, such as weekly video calls. That keeps you in touch with people on your team.\nAnswer: Schedule regular check-ins with colleagues, such as weekly video calls.",
+  "border:rubric_partial": "You've said you value social interaction and collaboration while working remotely, and you've taken part in company initiatives before, so I'd stay with those. Keep joining the company-wide programs and team collaborations you've already tried and make the most of them.\nAnswer: Keep taking part in the company initiatives and team collaborations you already have, since you value social interaction while working remotely."
+ },
+ "5831f84d": {
+  "wrong_value": "Going by your chat history, you've watched about 6 Crash Course videos over the past few weeks, mostly history and science topics.\nAnswer: 6",
+  "near_miss_wrong": "Looking at what you've told me, you've watched 12 Crash Course videos in the past few weeks, after you updated your count from the earlier figure.\nAnswer: 12",
+  "para_terse": "You've gotten through fifteen Crash Course videos over the past few weeks.\nAnswer: Fifteen Crash Course videos",
+  "para_verbose": "You first mentioned a smaller number of Crash Course videos you had watched. Later you updated that tally as you kept going through the series. Adding up your latest report, the total for the past few weeks comes to fifteen episodes. That is the current count, replacing the earlier one.\nAnswer: Fifteen videos",
+  "border:hedge_two": "Your count could be 15 Crash Course videos, though it might also be 10 if the earlier figure still applies. I can't say for certain which is right.\nAnswer: Either 15 or 10 Crash Course videos",
+  "border:correct_plus_wrong_detail": "You've watched 15 Crash Course videos in the past few weeks, all of them from the Crash Course Chemistry series.\nAnswer: 15 Crash Course videos, all from the Chemistry series",
+  "border:near_value": "You've watched about 14 Crash Course videos in the past few weeks, based on your latest update.\nAnswer: 14",
+  "border:stale_and_updated": "You first said you had watched 10 Crash Course videos, but you later updated that figure. Your current total for the past few weeks is 15.\nAnswer: 15",
+  "border:stale_only": "You told me you had watched 10 Crash Course videos in the past few weeks, and that's the count I have.\nAnswer: 10"
+ },
+ "5a4f22c0": {
+  "wrong_value": "Rachel moved on and is now working at Google, where she joined a team after leaving your previous company.\nAnswer: Google",
+  "near_miss_wrong": "Based on what you shared, Rachel is currently working at TechSoft, having left your previous company for a new role there.\nAnswer: TechSoft",
+  "para_terse": "Your former colleague Rachel now works at TechCorp.\nAnswer: She is currently employed by TechCorp.",
+  "para_verbose": "You mentioned catching up with Rachel, who used to work with you at your previous company. She has since changed jobs. Based on your most recent conversation, she has settled into a new position. The company she is now with is TechCorp.\nAnswer: Rachel is currently at TechCorp.",
+  "border:hedge_two": "Rachel could be at TechCorp or at Google. Your chat history points to both, and I can't say which is her current employer.\nAnswer: Either TechCorp or Google",
+  "border:correct_plus_wrong_detail": "Rachel is now at TechCorp, where she works as a senior data scientist after leaving your previous company.\nAnswer: TechCorp, as a senior data scientist",
+  "border:near_value": "Rachel appears to have moved to a company with a very similar name, TechCorp Solutions, after leaving your previous company.\nAnswer: TechCorp Solutions",
+  "border:stale_and_updated": "Rachel first moved to a startup called BrightPath after leaving your previous company, but she has since moved again. She is now at TechCorp.\nAnswer: TechCorp",
+  "border:stale_only": "After leaving your previous company, Rachel joined a startup called BrightPath, and that's where she works now.\nAnswer: BrightPath"
+ },
+ "5c40ec5b": {
+  "wrong_value": "Going by your chat history, you've met up with Alex from Germany five times.\nAnswer: Five times.",
+  "near_miss_wrong": "Your conversations show you met Alex from Germany three times, most recently for coffee.\nAnswer: Three times.",
+  "para_terse": "You and Alex from Germany have gotten together on two occasions.\nAnswer: Two times.",
+  "para_verbose": "Looking back through your conversations, you described getting together with Alex from Germany on one occasion initially. You later mentioned a second get-together with him. Adding those up, that makes two meetings in total. No other meet-ups were mentioned.\nAnswer: You've met up with Alex from Germany two times.",
+  "border:hedge_two": "Your history is a bit unclear here. It could be two meet-ups with Alex from Germany, or it could be three, and I can't tell which is right.\nAnswer: Either two or three times.",
+  "border:correct_plus_wrong_detail": "You've met up with Alex from Germany twice, and both meetings took place in Berlin, where he lives.\nAnswer: Twice, both in Berlin.",
+  "border:near_value": "You met Alex from Germany a few times, and the most recent count you gave was three meet-ups.\nAnswer: Three times.",
+  "border:stale_and_updated": "You first mentioned meeting Alex from Germany once, but you later said you'd met him a second time. The updated count is two.\nAnswer: Two times.",
+  "border:stale_only": "You mentioned meeting Alex from Germany once, and that's the only meet-up in your history.\nAnswer: Once."
+ },
+ "603deb26": {
+  "wrong_value": "Looking back through your conversations, you've mentioned making Negronis at home after Emma's lesson several times. By my count it comes to 4 attempts.\nAnswer: 4",
+  "near_miss_wrong": "Going through your chats, you've said you tried the Negroni at home after Emma showed you, and the most recent update puts the total at 9 attempts.\nAnswer: 9",
+  "para_terse": "You've made the Negroni at home ten times since Emma taught you.\nAnswer: Ten times",
+  "para_verbose": "Emma showed you how to make a Negroni, and you've mentioned trying it at home afterward. Your earlier chats gave a lower tally, but you later updated it. The latest count you gave was that you'd made it at home 10 times in total since the lesson. So the current figure is ten.\nAnswer: 10 times",
+  "border:hedge_two": "Your chats suggest the count is either 10 or 12 attempts since Emma showed you, and I can't tell which is right. Both seem plausible given how you described it.\nAnswer: Either 10 or 12",
+  "border:correct_plus_wrong_detail": "Since your friend Emma showed you how to make a Negroni, you've tried it at home 10 times. You mentioned that her recipe used equal parts gin, Campari and dry vermouth, which is how you've been making it.\nAnswer: 10",
+  "border:near_value": "Based on your latest update, you've tried making a Negroni at home about 11 times since Emma showed you.\nAnswer: 11",
+  "border:stale_and_updated": "Earlier you said you'd made the Negroni at home 5 times since Emma showed you, but you later updated that figure. The current count is 10 times.\nAnswer: 10",
+  "border:stale_only": "You told me you'd made the Negroni at home 5 times since Emma showed you how, and that's the count I have.\nAnswer: 5"
+ },
+ "60bf93ed": {
+  "wrong_value": "Your laptop backpack was bought and delivered about two weeks apart, so it took 14 days to arrive.\nAnswer: 14 days",
+  "near_miss_wrong": "You ordered the laptop backpack and it showed up after a short wait, counting the dates in your chats it came to 3 days between purchase and arrival.\nAnswer: 3 days",
+  "para_terse": "From the purchase date to the delivery date, the backpack took five days to get to you.\nAnswer: Five days",
+  "para_verbose": "You mentioned buying the laptop backpack on one date and later noted that it had been delivered. Counting the days between those two dates, the gap comes to five days. That is a fairly quick shipping time for an online order. So the backpack arrived five days after you purchased it.\nAnswer: 5 days",
+  "border:hedge_two": "Going by your messages, the backpack arrived either 5 days or 9 days after you bought it, and I can't tell for certain which of the two it was.\nAnswer: 5 days or 9 days",
+  "border:correct_plus_wrong_detail": "Your laptop backpack took 5 days to arrive after you bought it, and it was shipped from a warehouse in Texas by express air freight.\nAnswer: 5 days",
+  "border:near_value": "Comparing the purchase date and the delivery date you mentioned, the backpack arrived 4 days after you bought it.\nAnswer: 4 days"
+ },
+ "66f24dbb": {
+  "wrong_value": "Looking back at your conversation, you mentioned getting your sister a set of silver earrings for her birthday.\nAnswer: A pair of silver earrings",
+  "near_miss_wrong": "From what you told me, you picked out a dress for your sister's birthday, and it was a blue one.\nAnswer: A blue dress",
+  "para_terse": "You got your sister a dress in a yellow shade for her birthday.\nAnswer: A yellow dress",
+  "para_verbose": "In your earlier conversation you talked about shopping for your sister's birthday. You described choosing a piece of clothing for her, specifically a dress. The color you picked was yellow, which you thought would suit her well. So the present you bought was a dress that is yellow.\nAnswer: A yellow dress",
+  "border:hedge_two": "You mentioned your sister's birthday gift, and it could have been a yellow dress, though it might also have been a pair of silver earrings. I can't say for certain which one it was.\nAnswer: Either a yellow dress or a pair of silver earrings",
+  "border:correct_plus_wrong_detail": "You bought your sister a yellow dress for her birthday, and you ordered it online from a boutique shop, along with a matching handbag.\nAnswer: A yellow dress, plus a matching handbag",
+  "border:near_value": "You bought your sister a yellow skirt for her birthday, which you thought would match her style.\nAnswer: A yellow skirt"
+ },
+ "6e984301": {
+  "wrong_value": "Going by your chat history, you bought your own sculpting tools about 9 weeks into the classes, once you had a feel for the basics.\nAnswer: 9 weeks",
+  "near_miss_wrong": "Your history shows you started the sculpting classes and then bought your own set of tools shortly after, which works out to about 5 weeks into the course.\nAnswer: 5 weeks",
+  "para_terse": "You picked up your own sculpting tool set when you were three weeks into the classes.\nAnswer: Three weeks",
+  "para_verbose": "You mentioned when your sculpting classes began and when you bought your own set of tools. Comparing those two dates, the purchase came right around the end of the third week of classes. That means you had been attending for roughly three weeks before you invested in your own tools. This fits with wanting your own equipment once you were sure you'd stick with it.\nAnswer: 3 weeks",
+  "border:hedge_two": "Based on the dates in your conversations, you bought your own tools either 3 weeks or 4 weeks into the classes, and I can't tell which is more likely.\nAnswer: 3 weeks or 4 weeks",
+  "border:correct_plus_wrong_detail": "You had been taking sculpting classes for 3 weeks when you bought your own set of tools, and you bought them at a specialty art store downtown after your instructor recommended a particular brand.\nAnswer: 3 weeks",
+  "border:near_value": "You had been attending the sculpting classes for about 4 weeks when you invested in your own set of tools.\nAnswer: 4 weeks",
+  "border:off_by_one": "Counting from your first class to the day you bought your own tools, you had been going for 2 weeks.\nAnswer: 2 weeks"
+ },
+ "6e984302": {
+  "wrong_value": "Four weeks ago you mentioned buying a professional-grade camera lens to prepare for the photography competition. That was the investment you described.\nAnswer: A professional camera lens",
+  "near_miss_wrong": "Around four weeks ago you said you'd invested in your own set of painting brushes for the competition, so you'd have your own quality gear.\nAnswer: Your own set of painting brushes",
+  "para_terse": "You bought yourself a personal kit of sculpting tools for the competition.\nAnswer: A personal set of sculpting tools",
+  "para_verbose": "Looking back to about four weeks before April 1, you talked about putting money into something for the competition. You explained that you had decided to stop borrowing equipment and purchase your own. What you bought was a full set of sculpting tools that belongs to you. That was your investment for the contest.\nAnswer: You bought your own set of sculpting tools",
+  "border:hedge_two": "It's hard to say for certain, but you either bought your own set of sculpting tools or a new set of pottery wheel accessories for the competition. I can't pick between them.\nAnswer: Either your own set of sculpting tools or a set of pottery wheel accessories",
+  "border:correct_plus_wrong_detail": "You bought your own set of sculpting tools for the competition, and you spent about $500 on a deluxe wooden carrying case that came with it.\nAnswer: Your own set of sculpting tools, plus a $500 wooden carrying case",
+  "border:near_value": "Four weeks ago you mentioned investing in your own set of carving knives for the competition.\nAnswer: Your own set of carving knives"
+ },
+ "7024f17c": {
+  "wrong_value": "Adding up the jogging and yoga sessions you mentioned for last week, the total comes to about 3 hours.\nAnswer: 3 hours",
+  "near_miss_wrong": "You jogged for 20 minutes and did yoga for 20 minutes last week, which together is a bit over half an hour.\nAnswer: 0.75 hours",
+  "para_terse": "Combined, your jogging and yoga last week came to thirty minutes.\nAnswer: 30 minutes (half an hour)",
+  "para_verbose": "Looking at what you told me about last week, you logged one short jogging session and one short yoga session. Putting those durations together gives a total of 30 minutes. Converted to hours, that is one half of an hour. So your combined activity for jogging and yoga was half an hour.\nAnswer: 0.5 hours",
+  "border:hedge_two": "Your jogging and yoga last week could have totaled 0.5 hours, though it might also have been 1 hour if one of the sessions was longer than I recall. I can't say for sure which is right.\nAnswer: either 0.5 hours or 1 hour",
+  "border:correct_plus_wrong_detail": "Your jogging and yoga together added up to 0.5 hours last week, made up of a 5-minute jog and a 25-minute yoga session.\nAnswer: 0.5 hours",
+  "border:near_value": "Adding your jogging and yoga from last week gives a total of about 40 minutes.\nAnswer: 0.67 hours",
+  "border:partial": "You did 15 minutes of jogging last week, but I don't have the yoga duration to complete the total.\nAnswer: 0.25 hours of jogging"
+ },
+ "71017276": {
+  "wrong_value": "Going by the dates in our earlier chats, you met your aunt and got the crystal chandelier about 9 weeks before today.\nAnswer: 9 weeks ago",
+  "near_miss_wrong": "Counting from the day you mentioned collecting the crystal chandelier from your aunt to this question, roughly 6 weeks have passed.\nAnswer: 6 weeks ago",
+  "para_terse": "You saw your aunt and got the chandelier about a month back, which is four weeks before today.\nAnswer: Four weeks ago",
+  "para_verbose": "You told me about visiting your aunt and being given the crystal chandelier in an earlier conversation. Comparing that date with today's date of April 1, 2023, the gap comes to 28 days. Dividing 28 by 7 gives four full weeks. So the visit happened about four weeks before now.\nAnswer: 4 weeks ago",
+  "border:hedge_two": "The date of the visit is a little unclear from our chats. It was either 4 weeks ago or 5 weeks ago, and I can't say which is more likely.\nAnswer: Either 4 weeks ago or 5 weeks ago",
+  "border:correct_plus_wrong_detail": "You met your aunt and received the crystal chandelier 4 weeks ago, when she gave it to you as an early birthday present at her house in Denver.\nAnswer: 4 weeks ago",
+  "border:near_value": "Based on the dates in our chats, you met your aunt and received the chandelier about 3 weeks ago.\nAnswer: 3 weeks ago",
+  "border:off_by_one": "Counting back from April 1, 2023 to the day you met your aunt and got the chandelier, I get 5 weeks.\nAnswer: 5 weeks ago"
+ },
+ "71017277": {
+  "wrong_value": "Going back through your chats, the piece of jewelry you got last Saturday was a gift from your sister, who gave it to you for your birthday.\nAnswer: Your sister",
+  "near_miss_wrong": "You mentioned receiving a necklace last Saturday, and it came from your uncle, who picked it out as a gift for you.\nAnswer: Your uncle",
+  "para_terse": "Your father's sister gave you the piece of jewelry last Saturday.\nAnswer: Your aunt",
+  "para_verbose": "Last Saturday falls on the weekend before this question was asked on March 9, 2023. In your earlier conversation you described getting a piece of jewelry as a present on that day. You said it came from a relative, specifically the sister of one of your parents. That makes the giver your aunt.\nAnswer: Your aunt gave it to you.",
+  "border:hedge_two": "You received the jewelry last Saturday, and it was either from your aunt or from your grandmother. Both come up in your chats and I can't tell which one gave it to you.\nAnswer: It was either your aunt or your grandmother.",
+  "border:correct_plus_wrong_detail": "The piece of jewelry came from your aunt, who gave it to you last Saturday as a graduation present.\nAnswer: Your aunt, as a graduation gift",
+  "border:near_value": "Last Saturday you got a piece of jewelry from a close relative, and I believe it was your cousin.\nAnswer: Your cousin"
+ },
+ "7161e7e2": {
+  "wrong_value": "Looking back at the rotation sheet, Admon was scheduled for the overnight shift on Sundays. That is the 12 am - 8 am slot.\nAnswer: Admon worked the 12 am - 8 am (Night Shift) on Sundays.",
+  "near_miss_wrong": "From the shift rotation sheet for the GM social media agents, Admon's Sunday slot was the afternoon rotation. It ran from 4 pm to 12 am.\nAnswer: Admon was assigned to the 4 pm - 12 am (Evening Shift) on Sundays.",
+  "para_terse": "The sheet put Admon on the morning-to-afternoon block on Sundays, which is the day shift.\nAnswer: On Sundays Admon worked the Day Shift, running from 8 in the morning until 4 in the afternoon.",
+  "para_verbose": "In our earlier chat we laid out a rotation sheet for the GM social media agents, with three eight-hour shifts covering the day. Checking Admon's row against the Sunday column, he falls in the first daytime block. That block starts at 8 in the morning and finishes at 4 in the afternoon. It is the one labelled Day Shift, so he wasn't on the evening or overnight slots that day.\nAnswer: Admon was on the Day Shift on Sundays, from 8 am to 4 pm.",
+  "border:hedge_two": "Looking at the rotation sheet, I can't say for sure which slot Admon had on Sunday. It was either the 8 am - 4 pm Day Shift or the 4 pm - 12 am Evening Shift, and I'm not certain which of the two.\nAnswer: Admon was on either the 8 am - 4 pm Day Shift or the 4 pm - 12 am Evening Shift on Sundays.",
+  "border:correct_plus_wrong_detail": "On the rotation sheet, Admon's Sunday slot was the day shift. He also covered the weekend lead role on that shift, which the sheet marked with a note.\nAnswer: Admon was assigned to the 8 am - 4 pm (Day Shift) on Sundays, as the designated weekend team lead for that shift.",
+  "border:near_value": "Checking the sheet, Admon's Sunday slot was the day shift, though it started a little later than the standard one.\nAnswer: Admon was assigned to the 9 am - 5 pm (Day Shift) on Sundays."
+ },
+ "8077ef71": {
+  "wrong_value": "The networking event was on 2022-03-12, which was 23 days before the question date, so you attended it 23 days ago.\nAnswer: 23 days",
+  "near_miss_wrong": "Counting from the networking event on 2022-03-09 to 2022-04-04 gives 26 days... but the event was actually logged on 2022-03-14, so it was 21 days ago.\nAnswer: 21 days",
+  "para_terse": "The event was on March 9, 2022, so about three and a half weeks before April 4 (26 days).\nAnswer: 26 days ago",
+  "para_verbose": "Looking through your earlier conversations, you mentioned attending a networking event on March 9, 2022. The question was asked on April 4, 2022. From March 9 to March 31 is 22 days, and then 4 more days into April brings the total to 26. So the networking event took place 26 days before today.\nAnswer: 26 days",
+  "border:hedge_two": "You mentioned a networking event on March 9, 2022, which would make it 26 days ago, but there may also have been a session on March 12 that would make it 23 days ago. I can't say for sure which one you mean.\nAnswer: Either 26 days or 23 days ago",
+  "border:correct_plus_wrong_detail": "You attended the networking event on March 9, 2022, which was 26 days ago. You met several marketing contacts there at a downtown hotel.\nAnswer: 26 days ago, at a downtown hotel",
+  "border:near_value": "The networking event was on March 8, 2022, so by my count it was 28 days before April 4.\nAnswer: 28 days",
+  "border:off_by_one": "The networking event took place on March 10, 2022, which puts it 25 days before April 4.\nAnswer: 25 days"
+ },
+ "89527b6b": {
+  "wrong_value": "Looking back at our conversation about the dinosaur children's book, the Plesiosaur in the image was drawn with a bright orange scaly body, which stood out against the ocean background.\nAnswer: The Plesiosaur had an orange scaly body.",
+  "near_miss_wrong": "In the illustration we discussed for the dinosaur book, the Plesiosaur is shown swimming with a scaly body in a shade of green, matching the sea plants around it.\nAnswer: The Plesiosaur had a green scaly body.",
+  "para_terse": "The Plesiosaur's scaly body in the image was colored blue.\nAnswer: Its scaly body was blue.",
+  "para_verbose": "You asked about the children's book on dinosaurs we discussed earlier. In the image description, the Plesiosaur was shown in the water with a long neck and flippers. Its scaly body was given a blue coloring, which fit well with its ocean setting. So the color you're remembering is blue.\nAnswer: The Plesiosaur's scaly body was blue.",
+  "border:hedge_two": "From our earlier conversation, I recall the Plesiosaur's scaly body being either blue or green, and I can't say for certain which of the two it was.\nAnswer: The Plesiosaur's scaly body was blue or green.",
+  "border:correct_plus_wrong_detail": "In the image for the dinosaur book, the Plesiosaur had a blue scaly body, and it was shown with a short, stubby neck rising above the waves.\nAnswer: The Plesiosaur had a blue scaly body and a short, stubby neck.",
+  "border:near_value": "The Plesiosaur in the image was shown with a scaly body in a teal shade, a blue-green color that suited the ocean scene.\nAnswer: The Plesiosaur had a teal scaly body."
+ },
+ "89941a93": {
+  "wrong_value": "Going by your earlier conversations, you have 7 bikes at the moment.\nAnswer: 7",
+  "near_miss_wrong": "You mentioned your bike collection in recent chats, and the most recent count puts you at five bikes after your latest purchase.\nAnswer: You currently own 5 bikes.",
+  "para_terse": "Your current collection stands at four bicycles.\nAnswer: 4 bikes",
+  "para_verbose": "Earlier in your chat history you described a smaller set of bikes. Later you mentioned adding another one to the collection. Counting everything you listed most recently, the total comes to four bicycles. That is the up-to-date figure as of now.\nAnswer: You currently own four bikes.",
+  "border:hedge_two": "Your chat history suggests either 4 or 3 bikes, and I can't tell which is more likely to be current. Both seem equally plausible.\nAnswer: Either 4 or 3 bikes.",
+  "border:correct_plus_wrong_detail": "You currently own 4 bikes, including a road bike, a mountain bike, a hybrid and a recently purchased electric bike that you said you bought in March.\nAnswer: 4 bikes",
+  "border:near_value": "Based on your latest mentions, you have three bikes right now.\nAnswer: 3 bikes",
+  "border:stale_and_updated": "You used to have 3 bikes, but after your more recent purchase you now have four.\nAnswer: 4 bikes",
+  "border:stale_only": "You mentioned owning three bikes, and nothing later changes that, so that's your current count.\nAnswer: 3 bikes"
+ },
+ "89941a94": {
+  "wrong_value": "No. Before buying the gravel bike, you only owned your mountain bike and your commuter bike, with no other bikes.\nAnswer: No, you had only a mountain bike and a commuter bike.",
+  "near_miss_wrong": "Yes. Besides the mountain bike and commuter bike, you also had a BMX bike before the gravel bike purchase.\nAnswer: Yes, you also had a BMX bike.",
+  "para_terse": "Yes, there was one more bike in your collection: a road bike.\nAnswer: Yes, you also owned a road bike.",
+  "para_verbose": "Looking back at what you said about your bikes before the gravel bike came along, you mentioned a mountain bike and a commuter bike. You also talked about a road bike that you rode as well. So your collection wasn't limited to those two, since the road bike made a third. That means you did own another bike beyond the mountain and commuter bikes.\nAnswer: Yes, you also had a road bike.",
+  "border:hedge_two": "You had a mountain bike and a commuter bike, and there was one more. It could have been a road bike, or it could have been a hybrid bike, and I can't say which.\nAnswer: Yes, you had another bike, either a road bike or a hybrid bike.",
+  "border:correct_plus_wrong_detail": "You did have another bike beyond the mountain and commuter bikes. It was a road bike, which you bought about ten years ago and keep at your parents' house.\nAnswer: Yes, you also had a road bike, bought about ten years ago and kept at your parents' house.",
+  "border:near_value": "Yes, you had an additional bike besides the mountain and commuter bikes. It was a hybrid bike.\nAnswer: Yes, you also had a hybrid bike.",
+  "border:partial": "You had at least one more bike besides the mountain and commuter bikes, though I don't recall what type it was.\nAnswer: Yes, you had another bike.",
+  "border:stale_and_updated": "Early on you described owning only a mountain bike and a commuter bike. Later you mentioned a road bike as well, so before the gravel bike you had three bikes.\nAnswer: Yes, you also had a road bike.",
+  "border:stale_only": "You described your bikes as a mountain bike and a commuter bike, and nothing else came up before the gravel bike.\nAnswer: No, only the mountain bike and the commuter bike."
+ },
+ "8aef76bc": {
+  "wrong_value": "I recall that for the newspaper flower vase I recommended finishing it with a coat of clear spray-on polyurethane varnish to make it waterproof and glossy.\nAnswer: Clear spray-on polyurethane varnish",
+  "near_miss_wrong": "In our discussion of the newspaper flower vase, I suggested sealing the papier-m\u00e2ch\u00e9 layers with a brush-on coat of white school glue diluted with water, which dries clear and firm.\nAnswer: Diluted white school glue",
+  "para_terse": "For the newspaper flower vase, I suggested brushing on a decoupage sealer such as Mod Podge, though any similar sealant would work.\nAnswer: Mod Podge (or a similar sealant)",
+  "para_verbose": "You asked about finishing the vase made from rolled newspaper. The point of the sealant is to protect the paper and help it hold its shape. I suggested a decoupage glue-sealer, Mod Podge being the one I named, and said another comparable sealant would also do the job. Either one gives a hard, protective finish.\nAnswer: Mod Podge, or another similar sealant",
+  "border:hedge_two": "I think I suggested either Mod Podge or a clear spray-on polyurethane varnish for the newspaper vase, and I can't say for sure which one I put first. Both are plausible from what I remember.\nAnswer: Mod Podge or clear polyurethane varnish",
+  "border:correct_plus_wrong_detail": "For the newspaper flower vase I recommended Mod Podge as the sealant, and I said to apply it in about ten coats, letting each one dry overnight, before filling the vase with water.\nAnswer: Mod Podge, applied in ten coats with overnight drying between each",
+  "border:near_value": "For the newspaper flower vase, I recommended a coat of decoupage paste made from flour and water, which acts like a sealant on paper crafts.\nAnswer: Homemade flour-and-water paste"
+ },
+ "8cf4d046": {
+  "wrong_value": "Your undergraduate GPA was 3.4 and your graduate GPA was 3.6, so the average of the two is 3.5.\nAnswer: 3.5",
+  "near_miss_wrong": "Your undergraduate GPA was 3.7 and your graduate GPA was 3.96, which averages out to about 3.83 only if rounded up, but the computed value is 3.84.\nAnswer: 3.84",
+  "para_terse": "Averaging your undergraduate and graduate GPAs gives roughly 3.83.\nAnswer: 3.83",
+  "para_verbose": "You mentioned your undergraduate GPA in one conversation and your graduate GPA in another. Adding the two figures together and dividing by two gives the combined mean. That calculation comes out to about 3.83 on a 4.0 scale. So your overall average across both programs is 3.83.\nAnswer: 3.83",
+  "border:hedge_two": "It's either 3.83 or 3.75, depending on which graduate GPA figure you meant, and I can't tell which is right.\nAnswer: 3.83 or 3.75",
+  "border:correct_plus_wrong_detail": "The average of your undergraduate and graduate GPAs is 3.83, and that was across a bachelor's and a PhD program.\nAnswer: 3.83",
+  "border:near_value": "Averaging your undergraduate and graduate GPAs gives about 3.8.\nAnswer: 3.8"
+ },
+ "8e91e7d9": {
+  "wrong_value": "Going through what you've told me about your family, the number of siblings you have adds up to 7.\nAnswer: 7",
+  "near_miss_wrong": "From your earlier conversations, you mentioned a brother and two sisters, and later another sister, which gives a total of 3 siblings.\nAnswer: 3",
+  "para_terse": "You have four siblings in total, going by what you mentioned across our chats.\nAnswer: 4",
+  "para_verbose": "Across your earlier conversations, you brought up your siblings on a few separate occasions. You mentioned an older brother in one chat and two sisters in another. In a later chat you also talked about a younger brother. Adding all of those together, you have four siblings in total.\nAnswer: 4",
+  "border:hedge_two": "Based on what you've shared, you have either 4 or 5 siblings, and I can't say for certain which is right.\nAnswer: 4 or 5",
+  "border:correct_plus_wrong_detail": "You have 4 siblings in total: three sisters and one brother, and your oldest sister lives in Chicago.\nAnswer: 4",
+  "border:near_value": "Adding up the siblings you mentioned in our chats, I count 5 in total.\nAnswer: 5"
+ },
+ "8fb83627": {
+  "wrong_value": "Going through your reading log, you've wrapped up nine issues of National Geographic so far.\nAnswer: Nine",
+  "near_miss_wrong": "From your recent updates, you've finished four issues of National Geographic, with the next one still in progress.\nAnswer: Four issues",
+  "para_terse": "You've read through 5 National Geographic issues in full.\nAnswer: 5 issues",
+  "para_verbose": "Looking at what you said about your magazine reading, you mentioned working through National Geographic one issue at a time. Your most recent update counted the issues you had completed, and that count came to five. Any earlier lower figure was superseded by this newer update. So the number of finished issues is five.\nAnswer: 5",
+  "border:hedge_two": "Your updates point to either five or six finished issues, and I can't tell which is right. It could be five, or it could be six if you counted the one you were midway through.\nAnswer: Five or six issues",
+  "border:correct_plus_wrong_detail": "You've finished five issues of National Geographic, and all of them were the ones you got from a subscription delivered monthly to your home.\nAnswer: Five issues, all from a home subscription",
+  "border:near_value": "You've completed six issues of National Geographic so far, going by your latest update.\nAnswer: Six",
+  "border:stale_and_updated": "You first said you had finished three issues of National Geographic, but you later updated that figure. The current count is five issues.\nAnswer: Five",
+  "border:stale_only": "You told me you had finished three issues of National Geographic, and that's where your count stands.\nAnswer: Three"
+ },
+ "91b15a6e": {
+  "wrong_value": "Based on your earlier conversations, the minimum you could get from selling the vintage diamond necklace and the antique vanity is about $3,800 combined.\nAnswer: $3,800",
+  "near_miss_wrong": "From what you mentioned, the lowest estimate for the vintage diamond necklace plus the lowest estimate for the antique vanity adds up to $5,350.\nAnswer: $5,350",
+  "para_terse": "Adding the low ends of the two appraisals gives a floor of five thousand one hundred fifty dollars.\nAnswer: $5,150",
+  "para_verbose": "You discussed appraisal ranges for both the vintage diamond necklace and the antique vanity. To find the minimum, I took the lowest value in each range. Adding those two lower bounds together gives the least you could expect from selling both items. That total comes to five thousand one hundred fifty dollars.\nAnswer: $5,150",
+  "border:hedge_two": "The minimum you could get is either $5,150 or $5,350, depending on which of the appraisals you use, and I can't say for sure which applies.\nAnswer: $5,150 or $5,350",
+  "border:correct_plus_wrong_detail": "The minimum you could get by selling the vintage diamond necklace and the antique vanity is $5,150, with the necklace appraised at its low end of $4,000 and the vanity at $1,500.\nAnswer: $5,150",
+  "border:near_value": "Adding the low ends of the estimates for the necklace and the vanity, the minimum comes to roughly $5,100.\nAnswer: $5,100",
+  "border:partial": "The vintage diamond necklace alone would fetch at least $4,000 at the low end of its appraisal, though I don't have the vanity's figure in this answer.\nAnswer: $4,000"
+ },
+ "a06e4cfe": {
+  "wrong_value": "Looking back at your earlier conversation about cocktails, you said you like your classic gin martini quite dry, with very little vermouth. That points to a much drier ratio than most recipes call for.\nAnswer: 8:1",
+  "near_miss_wrong": "From what you told me previously, you like a classic gin martini made with gin and dry vermouth in a clear ratio, leaning a bit more on the vermouth side than a very dry martini.\nAnswer: 4:1",
+  "para_terse": "You said you like your classic gin martini with three parts gin to one part vermouth.\nAnswer: Three parts gin to one part vermouth (3:1).",
+  "para_verbose": "In an earlier chat about making cocktails at home, you described how you build a classic gin martini. You said you prefer it fairly gin-forward, but not bone dry, so you keep some vermouth in the glass. The proportion you settled on was three measures of gin for every one measure of dry vermouth. That is a bit drier than a 1:1 older-style martini and a bit wetter than the very dry modern versions.\nAnswer: 3 parts gin to 1 part vermouth (3:1).",
+  "border:hedge_two": "You mentioned a ratio for your classic gin martini, but I'm not certain which one it was. It could have been 3:1, or it could have been 4:1, and I can't tell which you actually prefer.\nAnswer: Either 3:1 or 4:1.",
+  "border:correct_plus_wrong_detail": "You said you like your classic gin martini at three parts gin to one part vermouth. You also mentioned that you make it with sweet red vermouth and garnish it with a cocktail onion.\nAnswer: 3:1, using sweet red vermouth and a cocktail onion garnish.",
+  "border:near_value": "You said you prefer your classic gin martini with a little less vermouth than a half-and-half mix, and your preferred ratio was a bit drier than that.\nAnswer: 2:1"
+ },
+ "a11281a2": {
+  "wrong_value": "Looking back at your chats, your Instagram following grew over those two weeks by a large margin, about 500 followers.\nAnswer: Approximately 500 followers",
+  "near_miss_wrong": "From what you shared, your Instagram followers rose over a two-week stretch by roughly 150 followers, which is a modest but steady gain.\nAnswer: Approximately 150 followers",
+  "para_terse": "Your Instagram following grew by about a hundred people over those two weeks.\nAnswer: Roughly 100 followers",
+  "para_verbose": "You mentioned tracking your Instagram account over a two-week period. Comparing the count at the start with the count at the end, the difference comes to about a hundred new followers. That is a steady, noticeable gain for such a short span. So the increase was around 100 followers.\nAnswer: About 100 followers gained",
+  "border:hedge_two": "Your chats suggest the gain could have been about 100 followers, though it might also have been closer to 200. I can't say for sure which is right.\nAnswer: Either approximately 100 or approximately 200 followers",
+  "border:correct_plus_wrong_detail": "You gained about 100 followers over those two weeks, which you attributed mainly to a viral TikTok crosspost.\nAnswer: Approximately 100 followers, driven by a viral TikTok crosspost",
+  "border:near_value": "Your follower count went up by a bit under what you might expect, about 90 followers over the two weeks.\nAnswer: Approximately 90 followers"
+ },
+ "a346bb18": {
+  "wrong_value": "Comparing your finishing time with the goal you set, you went over by 25 minutes.\nAnswer: 25 minutes",
+  "near_miss_wrong": "Your target time was missed, and by my reading of your earlier chats you finished 17 minutes slower than the goal you set for the marathon.\nAnswer: 17 minutes",
+  "para_terse": "You finished a dozen minutes slower than the goal you set.\nAnswer: 12 minutes",
+  "para_verbose": "You told me your goal time for the marathon in one conversation and your actual finishing time in another. When I subtract the goal from the finish, the gap comes to twelve minutes. That means you ran slower than planned by just over a quarter of an hour less three minutes, which is 12 minutes in total.\nAnswer: You exceeded your target time by 12 minutes.",
+  "border:hedge_two": "Going by your chats, the overrun was either 12 minutes or 15 minutes, and I can't tell which is right. Both fit what you told me about your goal and finish.\nAnswer: 12 minutes or 15 minutes",
+  "border:correct_plus_wrong_detail": "You missed your goal by 12 minutes. That was in the Chicago Marathon, where you aimed for a finish under 4 hours.\nAnswer: 12 minutes",
+  "border:near_value": "Comparing your goal with your finish, you came in a bit over target, by about 10 minutes.\nAnswer: 10 minutes"
+ },
+ "a3838d2b": {
+  "wrong_value": "Going through your history, you took part in 7 charity events before the 'Run for the Cure' event.\nAnswer: 7",
+  "near_miss_wrong": "Looking at the sequence of events you mentioned, you participated in 5 charity events before the 'Run for the Cure' event.\nAnswer: 5",
+  "para_terse": "Four charity events came before 'Run for the Cure'.\nAnswer: Four",
+  "para_verbose": "I went through the charity events you mentioned and put them in date order. Counting only the ones that happened earlier than 'Run for the Cure', I get four separate events. 'Run for the Cure' itself isn't counted, and neither are any events that came after it. That makes four charity events before it.\nAnswer: 4",
+  "border:hedge_two": "The count is either 4 or 5, depending on whether one smaller event is counted as a charity event. I can't say for sure which is right.\nAnswer: 4 or 5",
+  "border:correct_plus_wrong_detail": "You took part in 4 charity events before 'Run for the Cure'. The most recent of them was a charity auction held the week before the run.\nAnswer: 4",
+  "border:near_value": "Based on your history, you took part in 3 charity events before the 'Run for the Cure' event.\nAnswer: 3"
+ },
+ "a96c20ee": {
+  "wrong_value": "Your conversations indicate you presented your thesis poster at Stanford University, where you shared your research findings with attendees.\nAnswer: Stanford University",
+  "near_miss_wrong": "You mentioned presenting a poster on your thesis research at a conference hosted by Yale University in Connecticut, just across from the other Ivy League schools you'd considered.\nAnswer: Yale University",
+  "para_terse": "You presented your thesis research poster at the Cambridge, Massachusetts Ivy League school founded in 1636, which is Harvard.\nAnswer: Harvard University",
+  "para_verbose": "Looking back through your earlier conversations, you described preparing a poster that summarized your thesis research. You talked about the layout and how you planned to explain your methods to visitors. The event where you showed it was held on the Harvard campus. So the university where you presented the poster was Harvard.\nAnswer: Harvard University",
+  "border:hedge_two": "Your chat history mentions a thesis poster presentation, and it could have been at Harvard University or at MIT. Both came up in your discussions and I can't tell which one hosted it.\nAnswer: Harvard University or MIT",
+  "border:correct_plus_wrong_detail": "You presented your thesis research poster at Harvard University, in a symposium in Chicago, Illinois, where you met other graduate students.\nAnswer: Harvard University, in Chicago",
+  "border:near_value": "You presented your thesis poster at a university in the Boston area, and the one you discussed was MIT, just down the road from Harvard.\nAnswer: Massachusetts Institute of Technology (MIT)"
+ },
+ "ac031881": {
+  "wrong_value": "Your jumpsuit carried the designation 'KRT', which pointed you to the right section of the records room. That is the code you used to find the file number.\nAnswer: KRT",
+  "near_miss_wrong": "The designation on your jumpsuit was 'LIB', which matched the shelving label in the records room and led you to the file number.\nAnswer: LIB",
+  "para_terse": "Your jumpsuit was marked with the three letters L-I-V, and that is what led you to the file number.\nAnswer: The letters LIV",
+  "para_verbose": "You were looking for a file number in the records room and needed a way to locate it. The marking on your jumpsuit served as the key for that search. It was a three-letter designation, the letters L, I and V. Matching those letters to the records room entries gave you the file number.\nAnswer: LIV",
+  "border:hedge_two": "Two designations could fit what you described: it was either 'LIV' or 'LIU'. I can't say for certain which one was on your jumpsuit.\nAnswer: Either LIV or LIU",
+  "border:correct_plus_wrong_detail": "The designation on your jumpsuit was 'LIV', and it was printed in red on the left sleeve, which is how you found the file number.\nAnswer: LIV, in red on the left sleeve",
+  "border:near_value": "The designation on your jumpsuit was 'LIVE', which you used to find the file number in the records room.\nAnswer: LIVE"
+ },
+ "ad7109d1": {
+  "wrong_value": "Looking back at your conversation about switching providers, you mentioned signing up for a fiber plan with a top speed of 1 Gbps. That's the speed of your new internet plan.\nAnswer: 1 Gbps",
+  "near_miss_wrong": "In your earlier chat you described upgrading your home internet and the new plan was rated at 300 Mbps, which you said was plenty for streaming and remote work.\nAnswer: 300 Mbps",
+  "para_terse": "You said your new internet plan delivers half a gigabit per second, i.e. 500 megabits per second.\nAnswer: 500 megabits per second",
+  "para_verbose": "In your earlier conversation you talked about upgrading your home internet connection. You mentioned that the new plan you signed up for was rated at 500 megabits per second. That works out to half a gigabit per second, which you felt would comfortably handle streaming and video calls. So the speed of your new plan is 500 Mbps.\nAnswer: 500 Mbps (half a gigabit per second)",
+  "border:hedge_two": "Your chat mentioned a new internet plan, and I can't tell for sure whether it was 500 Mbps or 300 Mbps. Both figures came up and I can't say which one applies to the new plan.\nAnswer: Either 500 Mbps or 300 Mbps",
+  "border:correct_plus_wrong_detail": "You said your new internet plan runs at 500 Mbps, and that it's a cable plan from Comcast, which you chose over the fiber option.\nAnswer: 500 Mbps from Comcast over cable",
+  "border:near_value": "You mentioned that your new internet plan was a step up from the old one, and I recall the speed being 550 Mbps.\nAnswer: 550 Mbps"
+ },
+ "af8d2e46": {
+  "wrong_value": "Looking back at your packing discussion for the Costa Rica trip, you planned a lightweight set of tops for the five days. You packed 3 shirts.\nAnswer: 3",
+  "near_miss_wrong": "In your chat about packing for your 5-day Costa Rica trip, you said you brought along a handful of shirts, specifically 8 of them.\nAnswer: You packed 8 shirts for your 5-day trip to Costa Rica.",
+  "para_terse": "You took seven shirts along for the five days in Costa Rica.\nAnswer: Seven shirts",
+  "para_verbose": "You asked about packing for a five-day trip to Costa Rica and listed what you were bringing. Among the clothing, you mentioned tops in particular. You counted out one shirt for each day plus a couple of extras, which comes to seven in total. That means your suitcase held seven shirts for the trip.\nAnswer: You packed seven shirts for the trip.",
+  "border:hedge_two": "You mentioned your shirt count while planning the Costa Rica packing list, and it could be either 7 or 5, one per day. I can't tell for certain which one you settled on.\nAnswer: Either 7 or 5 shirts",
+  "border:correct_plus_wrong_detail": "During your packing discussion for Costa Rica, you said you packed 7 shirts, and that they were all long-sleeved to protect against mosquitoes.\nAnswer: 7 shirts, all long-sleeved",
+  "border:near_value": "From your packing conversation about the five-day Costa Rica trip, you packed 6 shirts, a bit more than one per day.\nAnswer: 6 shirts"
+ },
+ "b3c15d39": {
+  "wrong_value": "Going by the order and delivery dates in your earlier chats, the remote shutter release took 12 days to arrive after you ordered it.\nAnswer: 12 days",
+  "near_miss_wrong": "Your chats show you ordered the new remote shutter release and it arrived about a week later, which works out to 8 days from order to delivery.\nAnswer: 8 days",
+  "para_terse": "From the order date to the delivery date, the shutter release showed up within five days.\nAnswer: Five days",
+  "para_verbose": "You mentioned placing the order for the new remote shutter release on one date. You later said it had arrived. Counting the days between the order and the delivery gives a gap of five days. That is a fairly quick turnaround for a camera accessory.\nAnswer: It took 5 days for the remote shutter release to arrive.",
+  "border:hedge_two": "The gap between your order and the delivery is either 5 days or 6 days, depending on how you count, and I can't tell which you intended.\nAnswer: 5 days or 3 days",
+  "border:correct_plus_wrong_detail": "You ordered the remote shutter release and it arrived 5 days later. You mentioned it was shipped from a store in Germany via express courier.\nAnswer: 5 days",
+  "border:near_value": "Comparing your order date and the date you said it arrived, the shutter release took about 4 days to get to you.\nAnswer: 4 days"
+ },
+ "b46e15ee": {
+  "wrong_value": "A month ago, around March 18, you took part in the 'Run for the Cure' charity event. Your chat history mentions training for it and raising pledges from coworkers.\nAnswer: The 'Run for the Cure' charity event",
+  "near_miss_wrong": "Based on your chats from about a month ago, you took part in the 'Walk for Hope' charity event, a sponsored community walk. You discussed your route and sponsors beforehand.\nAnswer: The 'Walk for Hope' charity event",
+  "para_terse": "A month before today, you took part in a charity event called 'Walk for Hunger'.\nAnswer: You participated in the 'Walk for Hunger' charity walk.",
+  "para_verbose": "The question was asked on April 18, 2023, so a month earlier is about March 18. Your chat history from that time mentions a charity event you joined. It was the 'Walk for Hunger', a walk held to raise money and awareness against hunger. That is the event you took part in a month ago.\nAnswer: The 'Walk for Hunger' charity event",
+  "border:hedge_two": "Your chats from around a month ago point to two charity events. It could have been the 'Walk for Hunger', or it could have been the 'Run for the Cure'. I can't tell which one you actually joined.\nAnswer: Either the 'Walk for Hunger' or the 'Run for the Cure'",
+  "border:correct_plus_wrong_detail": "A month ago you took part in the 'Walk for Hunger' charity event. You said you walked it with your sister and raised $500 for a local animal shelter.\nAnswer: The 'Walk for Hunger' charity event, which raised money for an animal shelter",
+  "border:near_value": "A month ago you took part in a charity event, and the closest match in your chats is the 'Walk for Hunger 5K Fun Run', a running event rather than a walk.\nAnswer: The 'Run for Hunger' charity event"
+ },
+ "b6025781": {
+  "wrong_value": "Since you're planning ahead, I'd go for indulgent comfort-food batches: a big tray of four-cheese baked mac and cheese, deep-fried chicken tenders, and loaded bacon-and-sausage breakfast burritos with sour cream. These reheat well and are very filling, so they suit a heavy weekly rotation.\nAnswer: Try making-ahead indulgent meals like four-cheese baked mac and cheese, fried chicken tenders, and loaded sausage burritos, which are rich and high-calorie.",
+  "near_miss_wrong": "Since you like healthy meal prep, I'd suggest recipes built around white rice and fried vegetables, with variations in protein like chicken, beef or tofu. You could also try a twist on a chicken Caesar salad using a creamy bacon dressing and buttered croutons, plus a turkey and avocado wrap with extra cheese and mayo.\nAnswer: Try white rice and fried vegetable bowls with creamy, bacon-heavy chicken Caesar salad and cheesy turkey-avocado wraps, which are richer and higher-calorie than your usual healthy prep.",
+  "para_terse": "Lean into your healthy routine with quinoa-and-roasted-veggie bowls, swapping the protein (chicken, turkey, tofu, salmon) each time, plus fresh takes on chicken Caesar salad or turkey-avocado wraps.\nAnswer: Suggest healthy meal prep like quinoa and roasted vegetable bowls with rotating proteins, and new twists on your chicken Caesar salads and turkey and avocado wraps.",
+  "para_verbose": "You've favored healthy, make-ahead meals, so new ideas should stay in that lane. Quinoa bowls with a tray of roasted vegetables are easy to batch, and you can vary the protein each week, such as grilled chicken, baked salmon, chickpeas or turkey meatballs. Since you already enjoy chicken Caesar salads and turkey and avocado wraps, you could try fresh twists on them, like a Greek-yogurt Caesar dressing or a wrap with hummus and greens. Avoid heavy, high-calorie options that stray from your habits.\nAnswer: Recommend healthy meal prep centered on quinoa and roasted vegetables with varied proteins, plus new twists on chicken Caesar salads and turkey and avocado wraps.",
+  "border:hedge_two": "There are two directions that could work. One is healthy quinoa and roasted vegetable bowls with varied proteins, building on your chicken Caesar and turkey-avocado wraps. The other is a hearty comfort-food rotation like baked mac and cheese and fried chicken. Either could suit your week, and I can't say which you'd prefer.\nAnswer: Either healthy quinoa and roasted vegetable bowls with varied proteins, or indulgent comfort foods like baked mac and cheese and fried chicken.",
+  "border:correct_plus_wrong_detail": "Build on your healthy habits with quinoa and roasted vegetable bowls, rotating proteins like chicken, turkey or tofu, and put new twists on your chicken Caesar salads and turkey-avocado wraps. You could also add a deep-fried chicken parmesan batch with extra mozzarella for variety.\nAnswer: Healthy quinoa and roasted vegetable bowls with varied proteins and twists on chicken Caesar salads and turkey-avocado wraps, plus a deep-fried chicken parmesan batch.",
+  "border:near_value": "Staying with your healthy approach, I'd suggest brown rice and steamed broccoli bowls with a different protein each day, plus a tuna salad sandwich and a chicken burrito as new options. These are close to your usual style without repeating your routine.\nAnswer: Try brown rice and steamed broccoli bowls with varied proteins, plus tuna salad sandwiches and chicken burritos.",
+  "border:partial": "You could take your existing favorites a step further with fresh twists on chicken Caesar salads and turkey and avocado wraps, such as a lighter dressing or a whole-grain tortilla.\nAnswer: Try new twists on your chicken Caesar salads and turkey and avocado wraps.",
+  "border:rubric_partial": "Since you like healthy meal prep, quinoa bowls with roasted vegetables would suit you well. They keep nicely through the week and are easy to portion out.\nAnswer: Make quinoa and roasted vegetable bowls for your healthy meal prep."
+ },
+ "b9cfe692": {
+  "wrong_value": "Going by your chat history, you spent about 3 weeks on the two books together. The Seven Husbands of Evelyn Hugo went quickly and The Nightingale only took a little longer.\nAnswer: 3 weeks",
+  "near_miss_wrong": "From what you told me, the two books took you roughly 4.5 weeks combined. That adds up your time on The Seven Husbands of Evelyn Hugo and The Nightingale.\nAnswer: 4.5 weeks",
+  "para_terse": "Added together, the two books took you five and a half weeks, which is 5 weeks plus about half a week.\nAnswer: 5.5 weeks",
+  "para_verbose": "You mentioned how long each book took you to read. When I add the time for The Seven Husbands of Evelyn Hugo to the time for The Nightingale, the total comes to a bit over a month. That works out to five and a half weeks of reading across the two novels.\nAnswer: 5.5 weeks",
+  "border:hedge_two": "Your chat history gives two possible totals, and I can't tell which one is right. It could be 5.5 weeks, or it could be 6.5 weeks if one book's reading time is counted differently.\nAnswer: Either 5.5 weeks or 6.5 weeks",
+  "border:correct_plus_wrong_detail": "Together the two books took you 5.5 weeks. You read The Nightingale first and The Seven Husbands of Evelyn Hugo second, and the Nightingale took the longer share.\nAnswer: 5.5 weeks, reading The Nightingale first",
+  "border:near_value": "Adding up the time for both books gives about 5 weeks in total across The Seven Husbands of Evelyn Hugo and The Nightingale.\nAnswer: 5 weeks",
+  "border:partial": "You said The Seven Husbands of Evelyn Hugo took you about 2.5 weeks. I don't have the time for The Nightingale, so I can't give the combined total.\nAnswer: 2.5 weeks for The Seven Husbands of Evelyn Hugo",
+  "border:off_by_one": "Adding up both books, you took about 6.5 weeks to finish The Seven Husbands of Evelyn Hugo and The Nightingale.\nAnswer: 6.5 weeks"
+ },
+ "bc8a6e93": {
+  "wrong_value": "Looking back at our earlier conversation, you mentioned making a cake for your niece's birthday party. It was a classic chocolate fudge cake with raspberry filling.\nAnswer: A chocolate fudge cake with raspberry filling",
+  "near_miss_wrong": "From what you told me earlier, you baked a cake for your niece's party, and the flavors were lemon and raspberry. It was a lemon raspberry cake.\nAnswer: A lemon raspberry cake",
+  "para_terse": "You made a cake flavored with lemon and studded with blueberries for your niece's party.\nAnswer: A blueberry-and-lemon cake",
+  "para_verbose": "In our earlier chat you talked about preparing something for your niece's birthday party. You described baking a cake rather than cupcakes or cookies. The flavors you picked were bright citrus and fruit: lemon paired with blueberries. So the dessert you brought was a cake combining those two flavors.\nAnswer: A cake made with lemon and blueberry",
+  "border:hedge_two": "You mentioned baking for your niece's birthday, and I think it was either a lemon blueberry cake or a strawberry shortcake. I can't say for certain which one it was, so both are possible.\nAnswer: Either a lemon blueberry cake or a strawberry shortcake",
+  "border:correct_plus_wrong_detail": "You baked a lemon blueberry cake for your niece's birthday party, and you decorated it with cream cheese frosting and fresh strawberries on top, and it was for her tenth birthday.\nAnswer: A lemon blueberry cake topped with cream cheese frosting and strawberries, for her tenth birthday, which was a three-layer cake",
+  "border:near_value": "You baked a lemon poppy seed cake for your niece's birthday party, as far as I recall from our earlier conversation.\nAnswer: A lemon poppy seed cake"
+ },
+ "bcbe585f": {
+  "wrong_value": "Looking back at your conversations, the bird watching workshop at the local Audubon society took place about 9 weeks before today. That is the figure I'd go with.\nAnswer: 9 weeks ago",
+  "near_miss_wrong": "Going by the date you mentioned the workshop at the local Audubon society, it was roughly 7 weeks before May 1, 2023. That's when you described attending it.\nAnswer: 7 weeks ago",
+  "para_terse": "The workshop was about a month back, which works out to four weeks before May 1.\nAnswer: 4 weeks ago",
+  "para_verbose": "You mentioned attending the bird watching workshop at the local Audubon society in an earlier chat. Comparing that date with today's date of May 1, 2023, the gap is 28 days. Dividing 28 days by 7 gives exactly four full weeks. So the workshop took place four weeks before you asked.\nAnswer: 4 weeks ago",
+  "border:hedge_two": "The date of the workshop is a bit ambiguous from what you said. It could have been 4 weeks ago, or it could have been 5 weeks ago, and I can't say which is more likely.\nAnswer: Either 4 weeks ago or 5 weeks ago",
+  "border:correct_plus_wrong_detail": "You attended the bird watching workshop at the local Audubon society 4 weeks ago. You told me it was held at a community college, and that you went with a coworker.\nAnswer: 4 weeks ago",
+  "border:near_value": "The workshop at the local Audubon society seems to have been about 3 weeks before today, based on when you brought it up.\nAnswer: 3 weeks ago",
+  "border:off_by_one": "Counting from the date you mentioned the bird watching workshop at the local Audubon society to May 1, I get five weeks.\nAnswer: 5 weeks ago"
+ },
+ "c8090214": {
+  "wrong_value": "The Holiday Market came 15 days before you bought the iPhone 13 Pro, based on the dates in your chats.\nAnswer: 15 days",
+  "near_miss_wrong": "You went to the Holiday Market and then bought the iPhone 13 Pro a little later. Counting the dates from your conversations, that gap is 5 days.\nAnswer: 5 days",
+  "para_terse": "The Holiday Market took place a week before you bought the iPhone 13 Pro.\nAnswer: One week (7 days)",
+  "para_verbose": "You mentioned attending the Holiday Market on one date in your chats. You then mentioned buying the iPhone 13 Pro on a later date. Counting the days between those two dates gives a gap of exactly one week. So the market visit came seven days before the phone purchase.\nAnswer: 7 days",
+  "border:hedge_two": "The gap is either 7 days or 10 days, and I can't tell which from your chats, since the dates could be read either way.\nAnswer: 7 days or 10 days",
+  "border:correct_plus_wrong_detail": "You attended the Holiday Market 7 days before you bought the iPhone 13 Pro. You bought the phone at the Apple Store in Chicago, after the market.\nAnswer: 7 days",
+  "border:near_value": "The Holiday Market came a bit before the phone purchase, by my count about 6 days earlier.\nAnswer: 6 days",
+  "border:off_by_one": "Counting the dates in your chats, you attended the Holiday Market 9 days before you bought the iPhone 13 Pro.\nAnswer: 9 days"
+ },
+ "cc539528": {
+  "wrong_value": "Looking back at our conversation, I recommended focusing on Java, C#, or Go for back-end development, since they are strongly typed and widely used in enterprise settings.\nAnswer: Java, C#, or Go",
+  "near_miss_wrong": "From our earlier discussion, I suggested learning Ruby, Python, or Perl as back-end programming languages, since they are beginner-friendly and well supported.\nAnswer: Ruby, Python, or Perl",
+  "para_terse": "You were advised to pick up a server-side language such as PHP, Python, or Ruby.\nAnswer: Ruby, Python, or PHP",
+  "para_verbose": "In our earlier chat about the split between front-end and back-end work, I pointed you toward server-side languages for the back end. The three I named were Ruby, Python and PHP. They are all popular, have large communities, and are friendly to beginners. Any one of them would be a good place to start building server logic.\nAnswer: Ruby, Python, or PHP",
+  "border:hedge_two": "I may have suggested either Ruby or Python as a back-end language, and I can't say for sure which one I leaned toward. They could both fit what we discussed, and I'm not committing to one of them.\nAnswer: Ruby or Python, possibly Java",
+  "border:correct_plus_wrong_detail": "I recommended Ruby, Python, or PHP for the back end. I also said that PHP is a compiled, statically typed language, which is why it suits beginners.\nAnswer: Ruby, Python, or PHP (with PHP being a compiled, statically typed language)",
+  "border:near_value": "I recommended Python, Ruby, or JavaScript with Node.js as back-end languages to learn.\nAnswer: Python, Ruby, or JavaScript (Node.js)",
+  "border:partial": "One of the back-end languages I recommended was Python, which is a good general-purpose choice.\nAnswer: Python"
+ },
+ "cc6d1ec1": {
+  "wrong_value": "Going by your chat history, you had started bird watching about a year before the workshop.\nAnswer: About one year",
+  "near_miss_wrong": "Your history shows you took up bird watching and then attended the workshop roughly four months later.\nAnswer: Four months",
+  "para_terse": "You'd been birding for about eight weeks, roughly two months, by the time of the workshop.\nAnswer: Two months",
+  "para_verbose": "You mentioned first getting into bird watching, and later you described going to a bird watching workshop. Comparing those two dates, the gap between them is about two months. So by the time you attended the workshop, you had been birding for around two months.\nAnswer: Two months",
+  "border:hedge_two": "Your chats could be read two ways. The gap between starting bird watching and the workshop is either two months or three months, and I can't say which is right.\nAnswer: Either two months or three months",
+  "border:correct_plus_wrong_detail": "You had been bird watching for two months when you attended the workshop, which was held at a local nature reserve run by the Audubon Society in Oregon.\nAnswer: Two months",
+  "border:near_value": "You began bird watching a little while before the workshop, and the gap works out to about three months.\nAnswer: Three months",
+  "border:off_by_one": "You started bird watching and then went to the workshop one month later, so you were still a beginner.\nAnswer: One month"
+ },
+ "d596882b": {
+  "wrong_value": "The vegan eatery with multiple locations that I recommended was Candle 79, which has several spots around the city.\nAnswer: Candle 79",
+  "near_miss_wrong": "I believe the vegan place was by Chlorine, a plant-based chain with several locations across New York City.\nAnswer: By Chlorine",
+  "para_terse": "The multi-location vegan spot I suggested was the plant-based chain called by CHLOE.\nAnswer: by CHLOE",
+  "para_verbose": "You asked about a vegan restaurant with several branches around New York City. Looking back at what I recommended, it was the popular plant-based chain by CHLOE, which has outposts in various neighborhoods. It's a good pick for a casual vegan meal while you're traveling around the city.\nAnswer: by CHLOE (also written By Chloe)",
+  "border:hedge_two": "I think it was either By Chloe or Candle 79, and both have a good vegan menu, though I can't say for certain which one I meant.\nAnswer: By Chloe or Candle 79",
+  "border:correct_plus_wrong_detail": "The vegan eatery I recommended was By Chloe, which is known for its single flagship location in Greenwich Village and nowhere else in the city.\nAnswer: By Chloe",
+  "border:near_value": "I recommended a vegan spot with several locations, which I believe was Modern Love, a plant-based restaurant in Brooklyn and other boroughs.\nAnswer: Modern Love"
+ },
+ "d6233ab6": {
+  "wrong_value": "I'd suggest skipping the reunion. Your high school years sound like a stretch you were glad to leave behind, with few memories worth revisiting, and reunions tend to be awkward. Staying home and focusing on your current life is the better choice.\nAnswer: No, skip the reunion, since high school wasn't a particularly positive time for you and there's little to reconnect with.",
+  "near_miss_wrong": "Attending seems like a good idea given how fondly you remember high school. You enjoyed being on the robotics team and taking honors art classes, and a reunion would be a chance to reconnect with old friends and revisit those favorite subjects.\nAnswer: Yes, go to the reunion to reconnect with friends from the robotics team and revisit your love of art and science classes.",
+  "para_terse": "Yes, I think going is a great idea. You loved your time on the debate team and in your AP classes, so you'd likely enjoy catching up with old friends and talking history and economics again.\nAnswer: Yes, attend the reunion to reconnect with friends from debate and AP classes and revisit favorites like history and economics.",
+  "para_verbose": "Feeling nostalgic is a good sign that high school left you with warm memories. You were part of the debate team and took advanced placement courses, which seem to have been formative and enjoyable. A reunion would let you reconnect with friends you shared those experiences with. It could also be a fun chance to talk about subjects you loved, like history and economics. Overall the benefits look like they outweigh any awkwardness.\nAnswer: Yes, attending is a good idea, since you can reconnect with old friends from debate and AP classes and revisit history and economics.",
+  "border:hedge_two": "This could go either way. On one hand, your memories of the debate team and AP classes suggest you'd enjoy reconnecting with old friends and talking history and economics. On the other hand, reunions can feel awkward, and staying home to keep your nostalgia intact is just as reasonable.\nAnswer: Attending could be great for reconnecting with debate friends and AP classmates, but skipping it is equally reasonable, so it's a toss-up.",
+  "border:correct_plus_wrong_detail": "I think you should go. You had a great time on the debate team and in AP courses, and the reunion would let you reconnect with old friends and revisit history and economics. Since you were also the class president, you'd likely be warmly welcomed.\nAnswer: Yes, attend the reunion to reconnect with debate team friends and revisit AP history and economics, especially as a former class president.",
+  "border:near_value": "Going sounds like a good idea. You enjoyed the debate team and your AP classes, so you could reconnect with old friends and revisit favorites like chemistry and literature.\nAnswer: Yes, attend the reunion to reconnect with debate friends and revisit AP chemistry and literature.",
+  "border:partial": "I think you should go, since it's a chance to reconnect with old friends from your high school days, which you seem to remember fondly.\nAnswer: Yes, attend the reunion to reconnect with old friends.",
+  "border:rubric_partial": "Going seems like a good idea. You were on the debate team, and a reunion would be a great way to catch up with those teammates and relive that experience.\nAnswer: Yes, attend the reunion to reconnect with your debate team friends."
+ },
+ "d851d5ba": {
+  "wrong_value": "Adding up the fundraisers you mentioned across your chats, the total comes to $2,400 raised for charity.\nAnswer: $2,400",
+  "near_miss_wrong": "Summing the amounts from your charity events across the conversations, you raised $3,570 in total.\nAnswer: $3,570",
+  "para_terse": "Your charity efforts added up to three thousand seven hundred fifty dollars.\nAnswer: $3,750",
+  "para_verbose": "Looking back across your conversations, you described several separate charity fundraising efforts and the amount each one brought in. When I add those individual amounts together, they come to a combined sum. That sum is three thousand seven hundred fifty dollars. So your overall charity fundraising total is $3,750.\nAnswer: $3,750",
+  "border:hedge_two": "Based on your chats, the total is either $3,750 or $3,250, and I can't tell which one is right from what you told me.\nAnswer: $3,750 or $3,250",
+  "border:correct_plus_wrong_detail": "Across your fundraisers you raised $3,750 in total, and most of it came from a charity marathon you ran in April.\nAnswer: $3,750",
+  "border:near_value": "Adding up your charity events from the conversations, the total comes to about $3,700 raised.\nAnswer: $3,700"
+ },
+ "e25c3b8d": {
+  "wrong_value": "Going through your earlier conversations, the designer handbag at TK Maxx was marked down well below its usual price, and the saving came to $150.\nAnswer: $150",
+  "near_miss_wrong": "You mentioned buying a designer handbag at TK Maxx and the discount worked out to $200 off the regular retail price.\nAnswer: $200",
+  "para_terse": "You saved three hundred dollars on the designer handbag from TK Maxx.\nAnswer: $300",
+  "para_verbose": "In your earlier chats you described finding a designer handbag at TK Maxx that was far cheaper than the normal retail price. Comparing the usual price with what you actually paid, the difference was three hundred dollars. That makes the saving on that bag $300 in total.\nAnswer: $300",
+  "border:hedge_two": "I can't tell for certain from what you said. The saving on the TK Maxx designer handbag was either $300 or $250, and I don't have enough to choose between them.\nAnswer: $300 or $250",
+  "border:correct_plus_wrong_detail": "You saved $300 on the designer handbag, which you bought at TK Maxx in Manchester during a weekend sale.\nAnswer: $300",
+  "border:near_value": "You saved about $280 on the designer handbag at TK Maxx compared with the retail price.\nAnswer: $280"
+ },
+ "e3038f8c": {
+  "wrong_value": "Adding up the rare items you mentioned across your conversations, the total comes to 74 rare items in your collection.\nAnswer: 74",
+  "near_miss_wrong": "Across your earlier chats you listed several groups of rare items, and combining them gives 98 rare items in total.\nAnswer: 98",
+  "para_terse": "Summing the rare items from your different collections gives ninety-nine in all.\nAnswer: 99 rare items",
+  "para_verbose": "You mentioned rare items in more than one conversation, so I combined the counts from each. Adding the separate groups together gives a single running total for your whole collection. That sum comes to ninety-nine rare pieces altogether. This is the full count across everything you described.\nAnswer: You have 99 rare items in total.",
+  "border:hedge_two": "Adding up the groups you mentioned, the total is either 99 or 89 rare items, and I can't tell which of the two is right.\nAnswer: 99 or 89",
+  "border:correct_plus_wrong_detail": "Combining everything you described, you have 99 rare items in total, and all of them are rare coins from your first collection.\nAnswer: 99",
+  "border:near_value": "Adding the rare items from each of your collections gives a total of 100 rare items.\nAnswer: 100"
+ },
+ "e48988bc": {
+  "wrong_value": "Looking back at our conversation on responsible supply chains, the company I highlighted as a sustainability leader was Unilever, which has built sustainable sourcing into its core strategy.\nAnswer: Unilever",
+  "near_miss_wrong": "In that discussion about environmentally responsible supply chains, the company I singled out for its sustainability work was Patagonia's closest rival in outdoor apparel, The North Face, known for its sustainable materials programs.\nAnswer: The North Face",
+  "para_terse": "The outdoor clothing brand I pointed to as a sustainability leader was Patagonia.\nAnswer: Patagonia",
+  "para_verbose": "You asked about the company I cited as excelling at sustainability in the supply chain discussion. I was referring to an outdoor apparel and gear brand known for using recycled and organic materials. It is also known for transparent supply chain reporting and for pushing customers to repair rather than replace their gear. That company is Patagonia.\nAnswer: Patagonia",
+  "border:hedge_two": "I think the company I mentioned was either Patagonia or Unilever, and both are well known for sustainability. I can't say for certain which one it was.\nAnswer: Patagonia or Unilever",
+  "border:correct_plus_wrong_detail": "The company I mentioned as doing a great job with sustainability was Patagonia, the outdoor apparel brand headquartered in Seattle, Washington.\nAnswer: Patagonia",
+  "border:near_value": "The company I mentioned was likely Eileen Fisher, a clothing brand that is also known for sustainable and responsible supply chain practices.\nAnswer: Eileen Fisher"
+ },
+ "e6041065": {
+  "wrong_value": "From your earlier chats, you packed several pairs of shoes and wore only a small share of them. Counting the pairs packed against the pairs worn, that comes to 75%.\nAnswer: 75%",
+  "near_miss_wrong": "You packed five pairs of shoes for your last trip and wore two of them, going by what you told me. That works out to a bit under half of the pairs you packed.\nAnswer: 50%",
+  "para_terse": "You wore two of the five pairs of shoes you packed, which is 40%.\nAnswer: 40% (two out of five pairs)",
+  "para_verbose": "In your chat about the last trip, you said you had packed five pairs of shoes. You then said you only ended up wearing two of them. Dividing the pairs worn by the pairs packed gives 2/5. That is two fifths of the shoes you took, or 40%.\nAnswer: 40%",
+  "border:hedge_two": "Going by what you told me, it was either 40% or 60% of the shoes you packed. Both fit how you described the trip, and I can't tell which is right.\nAnswer: Either 40% or 60%",
+  "border:correct_plus_wrong_detail": "You packed five pairs of shoes on your last trip and wore two of them, which is 40%. The trip was to Japan, and you wore the sneakers on most days.\nAnswer: 40%, and the trip was to Japan",
+  "border:near_value": "You packed five pairs of shoes and wore two of them. That is a little over a third of what you packed.\nAnswer: 35%"
+ },
+ "eaca4986": {
+  "wrong_value": "The chorus of the second song used the progression Am F C G, repeated twice. It's a common minor-key pattern for sad songs and fits the mood of that piece.\nAnswer: Am F C G",
+  "near_miss_wrong": "In the second song, the chorus followed an ascending and descending scale-style progression: C D E F G A B A G F E D. Notably it stopped before returning to the tonic and ended on D.\nAnswer: C D E F G A B A G F E D",
+  "para_terse": "The second song's chorus ran up the C major scale and back down: C, D, E, F, G, A, B, then A, G, F, E, D, C.\nAnswer: C D E F G A B A G F E D C",
+  "para_verbose": "Looking back at the two sad songs, the second one had a chorus built on a simple scale-based melody. It climbs step by step from C up through D, E, F, G, A to B. Then it descends by step back through A, G, F, E, D, and finishes on C. That gives a full up-and-down arc over one octave, which suits the mournful feel.\nAnswer: C D E F G A B A G F E D C",
+  "border:hedge_two": "I think the chorus of the second song was either the full scale up and down, C D E F G A B A G F E D C, or possibly the simpler progression Am F C G. I can't say for certain which of the two it was.\nAnswer: Either C D E F G A B A G F E D C or Am F C G",
+  "border:correct_plus_wrong_detail": "The chorus of the second song went C D E F G A B A G F E D C, climbing the scale and then descending. It was written in the key of A minor and was played at a fast tempo of 160 BPM.\nAnswer: C D E F G A B A G F E D C",
+  "border:near_value": "The second song's chorus ascended the scale and came back down, going C D E F G A B A G F E D C, but in the first song's version rather than this one, and I recall the descending line as C B A G F E D C.\nAnswer: C B A G F E D C"
+ },
+ "ec81a493": {
+  "wrong_value": "Your favorite artist's debut album was released in a run of 2,000 copies worldwide, going by what you told me earlier.\nAnswer: 2,000 copies",
+  "near_miss_wrong": "From our earlier chat, your favorite artist's debut album had a limited pressing of 50 copies released worldwide.\nAnswer: 50 copies",
+  "para_terse": "You said the debut album was a very limited release, with only five hundred copies available around the world.\nAnswer: Five hundred copies",
+  "para_verbose": "Earlier you mentioned your favorite artist's debut album and how rare it is. You said the release was extremely limited. Only half a thousand copies were put out worldwide. That makes it a real collector's item.\nAnswer: 500 copies (half a thousand)",
+  "border:hedge_two": "I recall you mentioning the debut album had a very small release worldwide. It was either 500 copies or 1,000 copies, and I can't say for sure which one it was.\nAnswer: Either 500 or 1,000 copies",
+  "border:correct_plus_wrong_detail": "You said your favorite artist's debut album was released in 500 copies worldwide. You also said it came out in 1998 on cassette only.\nAnswer: 500 copies",
+  "border:near_value": "You said your favorite artist's debut album had a very limited release worldwide. As I remember it, about 550 copies were released.\nAnswer: 550 copies"
+ },
+ "f35224e0": {
+  "wrong_value": "Across your chats, you listened to 12 episodes of 'How I Built This' and 9 of 'My Favorite Murder', which makes 21 episodes in total.\nAnswer: 21",
+  "near_miss_wrong": "You mentioned listening to 15 episodes of 'How I Built This' and 13 of 'My Favorite Murder'. Adding those together gives 28 episodes in total.\nAnswer: 28",
+  "para_terse": "Adding your 'How I Built This' episodes to your 'My Favorite Murder' episodes gives 27 in all.\nAnswer: 27 episodes",
+  "para_verbose": "Looking back at your conversations, you described how many episodes you had finished of each show. You had listened to 15 episodes of 'How I Built This' and 12 episodes of 'My Favorite Murder'. Putting those two counts together gives the overall figure. That comes to 27 episodes across both podcasts.\nAnswer: 27",
+  "border:hedge_two": "Going by what you told me, the total is either 27 or 29 episodes, and I can't tell which of those counts is the right one. Both fit the figures you mentioned about equally well.\nAnswer: 27 or 29 episodes",
+  "border:correct_plus_wrong_detail": "You listened to 15 episodes of 'How I Built This' and 12 of 'My Favorite Murder', for a total of 27 episodes. You also said you started both podcasts last month, during your trip to Chicago.\nAnswer: 27",
+  "border:near_value": "You listened to 15 episodes of 'How I Built This' and 11 of 'My Favorite Murder', so the combined total is 26 episodes.\nAnswer: 26",
+  "border:partial": "You mentioned finishing 15 episodes of 'How I Built This', but I don't have a clear count for 'My Favorite Murder', so I can't give a full combined total beyond that first show's 15 episodes.\nAnswer: 15 episodes of 'How I Built This'"
+ },
+ "faba32e5": {
+  "wrong_value": "Alex left the ribs soaking in the special sauce for about 6 hours before putting them on the grill, going by what was said in the earlier chat.\nAnswer: 6 hours",
+  "near_miss_wrong": "In the earlier conversation, Alex let the BBQ ribs sit in the special sauce overnight for a full 48 hours before grilling them.\nAnswer: 48 hours",
+  "para_terse": "Alex let the ribs soak in the special sauce for a whole day.\nAnswer: One full day (24 hours)",
+  "para_verbose": "Looking back at the conversation, Alex described preparing BBQ ribs with a special sauce. The ribs were left in the marinade in the fridge before cooking. The time mentioned was a full day, meaning the meat sat in the sauce for twenty-four hours. That long soak is what made the ribs so tender and flavorful.\nAnswer: Alex marinated the ribs for a full day, which is 24 hours.",
+  "border:hedge_two": "I recall Alex marinating the ribs in the special sauce, and it was either 24 hours or 12 hours. I can't say for sure which one it was.\nAnswer: Either 24 hours or 12 hours",
+  "border:correct_plus_wrong_detail": "Alex marinated the BBQ ribs in the special sauce for 24 hours, and then grilled them over charcoal for about 5 hours.\nAnswer: 24 hours",
+  "border:near_value": "Alex marinated the ribs in the special sauce for roughly 20 hours before they went on the grill.\nAnswer: 20 hours"
+ },
+ "fca70973": {
+  "wrong_value": "Since you've enjoyed quiet, low-key outings, I'd suggest a relaxing weekend at a botanical garden and a small-town art museum, with a spa stay and early nights. Skip the rides and crowds entirely.\nAnswer: Plan a calm garden-and-museum weekend with no theme parks, no thrill rides, no special events and no nighttime shows.",
+  "near_miss_wrong": "Given your past trips to Disneyland, Knott's Berry Farm, Six Flags Magic Mountain and Universal Studios Hollywood, I'd suggest a weekend focused only on family-friendly attractions like gentle kiddie rides and character meet-and-greets. Pick a park with mild rides, early closing times and no seasonal events or nighttime shows.\nAnswer: Suggest a mellow, toddler-oriented park weekend with only gentle rides, no special events, no night shows and standard cafeteria food.",
+  "para_terse": "Answer: Recommend parks with both big thrill rides and seasonal events, like those at Disneyland, Knott's, Magic Mountain and Universal Hollywood, plus standout food and nighttime shows.",
+  "para_verbose": "You've enjoyed Disneyland, Knott's Berry Farm, Six Flags Magic Mountain and Universal Studios Hollywood, so you like a mix of coasters and special events. A good weekend would pick parks with strong thrill rides and seasonal events such as Halloween or holiday festivals. It should also include distinctive food experiences and evening fireworks or nighttime spectacles. Avoid parks that are only thrill-focused or only family-oriented, or that lack events and interesting dining.\nAnswer: Suggest a theme park weekend combining thrill rides, special events, unique food and nighttime shows, using your Disneyland, Knott's, Magic Mountain and Universal Hollywood experiences as the benchmark.",
+  "border:hedge_two": "Based on your past trips, you could either go for a thrill-and-events weekend with unique food and nighttime shows, or go for a purely relaxed, family-style weekend with gentle rides. Both could work equally well, and I can't say which suits you better.\nAnswer: Either a weekend combining thrill rides, special events, unique food and night shows, or a gentle family-only weekend with mild rides.",
+  "border:correct_plus_wrong_detail": "Drawing on your visits to Disneyland, Knott's Berry Farm, Six Flags Magic Mountain and Universal Studios Hollywood, I'd suggest parks with thrill rides, special events, unique food and nighttime shows. You'd especially like Cedar Point, which is in California and close to those parks.\nAnswer: Choose parks with thrill rides, special events, unique dining and nighttime shows, such as Cedar Point in California.",
+  "border:near_value": "You've been to several Southern California parks, so a good option is a park with great coasters and some seasonal events. I'd focus on thrill rides and a holiday event, though not particularly on food or night shows.\nAnswer: Suggest a thrill-ride-focused weekend at a park with seasonal events, similar to Six Flags Magic Mountain.",
+  "border:partial": "You enjoy thrill rides, so I'd look for a park with strong coasters and big drops similar to Six Flags Magic Mountain.\nAnswer: Recommend a park with excellent thrill rides and coasters.",
+  "border:rubric_partial": "Since you've been to Disneyland, Knott's Berry Farm, Six Flags Magic Mountain and Universal Studios Hollywood, you like a variety of parks, so I'd suggest another big park of that kind.\nAnswer: Suggest a large park similar to Disneyland and Universal Studios Hollywood, without a particular focus on events, food or night shows."
+ },
+ "gpt4_0a05b494": {
+  "wrong_value": "Going by your earlier conversations, the first person you met was the tourist from Australia, and the jam seller came afterward.\nAnswer: The tourist from Australia",
+  "near_miss_wrong": "Your chat history shows you met the woman selling honey at the farmer's market before the tourist from Australia, so she came first.\nAnswer: The woman selling honey at the farmer's market",
+  "para_terse": "You met the jam seller at the farmer's market before the Australian tourist.\nAnswer: The woman who was selling jam at the farmer's market",
+  "para_verbose": "Looking back at your conversations, you described chatting with a woman who sold jam at the farmer's market. Later on, you mentioned running into a tourist who was visiting from Australia. Comparing the order of those two encounters, the jam seller comes earlier. So the person you met first was the woman at the farmer's market with the jam stall.\nAnswer: The woman selling jam at the farmer's market",
+  "border:hedge_two": "Your history mentions both encounters, and the timing is close enough that I can't separate them. You could have met either the jam seller at the farmer's market or the Australian tourist first.\nAnswer: Either the woman selling jam at the farmer's market or the tourist from Australia",
+  "border:correct_plus_wrong_detail": "You met the woman selling jam at the farmer's market first, and she was selling strawberry jam at a stall by the town square. The tourist from Australia came after.\nAnswer: The woman selling jam at the farmer's market, who was selling strawberry jam in the town square",
+  "border:near_value": "You met a vendor at the farmer's market before the tourist from Australia, and that vendor was the man selling honey.\nAnswer: The man selling honey at the farmer's market"
+ },
+ "gpt4_0b2f1d21": {
+  "wrong_value": "Looking back through the conversations, the coffee maker purchase came before the stand mixer had any problems, so the purchase happened first.\nAnswer: The purchase of the coffee maker",
+  "near_miss_wrong": "Comparing the two events in the chat history, the coffee maker was bought earlier, and the stand mixer only started malfunctioning afterward. So the coffee maker purchase was first.\nAnswer: The coffee maker purchase happened first, before the stand mixer malfunction.",
+  "para_terse": "The stand mixer broke down before the coffee maker was bought.\nAnswer: The stand mixer's malfunction came first.",
+  "para_verbose": "In the earlier conversations, the user mentioned that their stand mixer stopped working properly. Only afterward did they talk about buying a coffee maker, perhaps partly as part of re-equipping the kitchen. Putting the two in order, the appliance failure predates the purchase. So the breakdown of the stand mixer was the earlier event.\nAnswer: The stand mixer malfunctioning happened first, before the coffee maker was purchased.",
+  "border:hedge_two": "The timing is hard to pin down from the chat history. The stand mixer malfunction may have come first, but it's equally possible the coffee maker was bought first, and I can't say which is more likely.\nAnswer: Either the stand mixer malfunction or the coffee maker purchase could have happened first.",
+  "border:correct_plus_wrong_detail": "The stand mixer malfunctioned before the coffee maker was bought. The user mentioned the mixer's motor burning out while baking bread, and then ordered the coffee maker a few days later.\nAnswer: The malfunction of the stand mixer happened first, caused by a burned-out motor, and the coffee maker purchase followed.",
+  "border:near_value": "Looking at the history, the user first talked about a problem with their blender and then later about buying the coffee maker, so the earlier event was an appliance failure.\nAnswer: The malfunction of the blender happened first."
+ },
+ "gpt4_18c2b244": {
+  "wrong_value": "Looking at the timeline, you first signed up for the rewards program at ShopRite, then redeemed the Ibotta cashback, and last used the Luvs coupon at Walmart.\nAnswer: First, I signed up for the rewards program at ShopRite. Then, I redeemed $12 cashback for a $10 Amazon gift card from Ibotta. Finally, I used a Buy One Get One Free coupon on Luvs diapers at Walmart.",
+  "near_miss_wrong": "Based on your chats, the Walmart coupon came first, but the ShopRite signup came before the Ibotta redemption.\nAnswer: First, I used a Buy One Get One Free coupon on Luvs diapers at Walmart. Then, I signed up for the rewards program at ShopRite. Finally, I redeemed $12 cashback for a $10 Amazon gift card from Ibotta.",
+  "para_terse": "The Walmart Luvs BOGO coupon came first, then the Ibotta gift card redemption, and the ShopRite rewards signup was last.\nAnswer: Walmart Luvs BOGO coupon, then Ibotta $12 cashback for a $10 Amazon gift card, then ShopRite rewards signup.",
+  "para_verbose": "You mentioned using a Buy One Get One Free coupon on Luvs diapers at Walmart earliest of the three. After that, you cashed out $12 of Ibotta cashback in exchange for a $10 Amazon gift card. The most recent of the three was joining the ShopRite rewards program. So the sequence runs from the Walmart coupon, to the Ibotta redemption, to the ShopRite signup.\nAnswer: First the Walmart Luvs BOGO coupon, second the Ibotta $12 cashback redeemed for a $10 Amazon gift card, and third the ShopRite rewards program signup.",
+  "border:hedge_two": "It's hard to say for certain. It could be that the Walmart Luvs coupon came first, then Ibotta, then ShopRite. But it could also be that the Walmart coupon came first, then ShopRite, then Ibotta. I can't pick between them.\nAnswer: Either Walmart coupon, Ibotta redemption, ShopRite signup, or Walmart coupon, ShopRite signup, Ibotta redemption.",
+  "border:correct_plus_wrong_detail": "The Walmart Luvs coupon came first, then the Ibotta redemption, then the ShopRite signup. The Ibotta redemption was $12 cashback for a $25 Amazon gift card.\nAnswer: First, I used a Buy One Get One Free coupon on Luvs diapers at Walmart. Then, I redeemed $12 cashback for a $25 Amazon gift card from Ibotta. Finally, I signed up for the rewards program at ShopRite.",
+  "border:near_value": "The earliest was the Walmart coupon, but this time on Pampers diapers rather than Luvs. Then came the Ibotta redemption and finally the ShopRite signup.\nAnswer: First, I used a Buy One Get One Free coupon on Pampers diapers at Walmart. Then, I redeemed $12 cashback for a $10 Amazon gift card from Ibotta. Finally, I signed up for the rewards program at ShopRite.",
+  "border:partial": "The Walmart Luvs coupon was used before the other two events, though I'm not sure how the other two are ordered.\nAnswer: First, I used a Buy One Get One Free coupon on Luvs diapers at Walmart."
+ },
+ "gpt4_1e4a8aeb": {
+  "wrong_value": "Going by your chat history, you attended the gardening workshop on April 12 and planted the tomato saplings on April 30, so 18 days passed between the two.\nAnswer: 18 days",
+  "near_miss_wrong": "You attended the gardening workshop on April 17 and planted the tomato saplings on April 25. Counting the days between those two dates gives 8 days.\nAnswer: 8 days",
+  "para_terse": "The workshop was on April 17 and the saplings went in on April 23, which is a gap of six days.\nAnswer: 6 days",
+  "para_verbose": "You mentioned attending the gardening workshop on April 17. Later you said you planted the tomato saplings on April 23. Counting forward from April 17 to April 23 gives a difference of six days. So about a week, less one day, separated the workshop from the planting.\nAnswer: 6 days",
+  "border:hedge_two": "The workshop was on April 17 and the planting was on April 23. That makes the gap either 6 days or 10 days, and I can't tell which is right, so both are equally possible.\nAnswer: 6 days or 10 days",
+  "border:correct_plus_wrong_detail": "You attended the gardening workshop on April 17 and planted the tomato saplings on April 23, so 6 days passed. You planted them in a raised bed at your community garden.\nAnswer: 6 days",
+  "border:near_value": "The workshop was on April 17 and the saplings were planted on April 24, which is a gap of 7 days... Actually, counting only the full days in between gives 5 days.\nAnswer: 5 days",
+  "border:off_by_one": "You attended the workshop on April 17 and planted the saplings on April 23. Counting the gap carefully, I make that 8 days between the two events.\nAnswer: 8 days"
+ },
+ "gpt4_2d58bcd6": {
+  "wrong_value": "Going by your chat history, you wrapped up 'The Nightingale' before 'The Hate U Give', so it was the earlier finish.\nAnswer: The Nightingale",
+  "near_miss_wrong": "Looking at when you reported finishing each book, 'The Nightingale' was completed first, and 'The Hate U Give' came afterward.\nAnswer: 'The Nightingale'",
+  "para_terse": "You finished Angie Thomas's novel about Starr Carter before Kristin Hannah's WWII book, so it came first.\nAnswer: The Hate U Give",
+  "para_verbose": "You mentioned completing a couple of books in your conversations. The Hate U Give was the one you described as done earlier on. Later you talked about wrapping up The Nightingale, which came after it. So the earlier finish was Angie Thomas's novel rather than the Kristin Hannah one.\nAnswer: The Hate U Give",
+  "border:hedge_two": "Your history is ambiguous here, and both 'The Hate U Give' and 'The Nightingale' could plausibly be the first one you finished. I can't say which with confidence.\nAnswer: Either 'The Hate U Give' or 'The Nightingale'",
+  "border:correct_plus_wrong_detail": "You finished 'The Hate U Give' first, and you wrapped it up in early January, well before starting 'The Nightingale' in the summer, which you read on a Kindle.\nAnswer: The Hate U Give, finished in January on a Kindle before The Nightingale",
+  "border:near_value": "The book you finished first was the one by Angie Thomas's contemporary, Kristin Hannah's other novel, 'The Great Alone', which you completed ahead of the other two.\nAnswer: The Great Alone"
+ },
+ "gpt4_2f56ae70": {
+  "wrong_value": "Going by the order in which you mentioned signing up for services, your newest subscription was Hulu, which you began after Netflix. Nothing you said later points to a more recent one.\nAnswer: Hulu",
+  "near_miss_wrong": "You started with Netflix and Hulu earlier, and the most recent addition you mentioned was Disney Plus's sibling bundle partner, HBO Max, which you began using just before this question.\nAnswer: HBO Max",
+  "para_terse": "The service you picked up most recently was Disney+, which came after your other subscriptions.\nAnswer: Disney+",
+  "para_verbose": "You described several streaming subscriptions in your earlier chats. Comparing when you said you began each one, Netflix and Hulu came first. The latest one you mentioned signing up for was Disney+. That makes it the service you started using most recently.\nAnswer: Disney+",
+  "border:hedge_two": "You may have started either Disney+ or Hulu most recently, and I can't say for certain which came later. Both were recent additions in your chats.\nAnswer: Disney+ or Hulu",
+  "border:correct_plus_wrong_detail": "The most recent service you started using was Disney+, which you signed up for after getting a new smart TV in January.\nAnswer: Disney+, which you started in January after buying a new smart TV",
+  "border:near_value": "Your most recent new service looks to be Disney+'s sister service Hulu, which you started after trying the others.\nAnswer: Hulu"
+ },
+ "gpt4_31ff4165": {
+  "wrong_value": "Looking through your chat history, you mentioned using a fitness tracker, a CPAP machine, and a glucose monitor each day, which comes to a total of seven devices.\nAnswer: 7",
+  "near_miss_wrong": "Based on what you've told me, you use a smartwatch for activity tracking, a blood pressure monitor, a glucose meter, and a sleep tracker daily, plus a CPAP. That adds up to five health-related devices in a day.\nAnswer: 5",
+  "para_terse": "You rely on four health-related devices over the course of a day.\nAnswer: Four devices",
+  "para_verbose": "Going through your earlier conversations, you described several health gadgets that are part of your daily routine. You mentioned a fitness tracker, a blood pressure monitor, a glucose meter, and a sleep-tracking device. Counting each of these once gives a total of four devices that you use in a typical day. No other health devices came up as part of your daily use.\nAnswer: 4 devices per day",
+  "border:hedge_two": "From your past conversations, the number of daily health devices is either 4 or 5, depending on whether your occasional pulse oximeter counts as a daily device. I can't say for certain which is right, and both seem plausible.\nAnswer: Either 4 or 5",
+  "border:correct_plus_wrong_detail": "You use four health-related devices in a day: a fitness tracker, a blood pressure monitor, a glucose meter, and a CPAP machine. You said you use all of them only in the evening, after dinner.\nAnswer: 4",
+  "border:near_value": "You use three health-related devices each day, such as a fitness tracker, a blood pressure monitor, and a glucose meter.\nAnswer: 3"
+ },
+ "gpt4_4929293b": {
+  "wrong_value": "Looking back at your chat history from about a week ago, you mentioned attending your uncle's retirement party. That was the family event you took part in.\nAnswer: Your uncle's retirement party",
+  "near_miss_wrong": "A week before today, you took part in a relative's wedding according to your past chats. It was your sister's wedding that you attended.\nAnswer: Your sister's wedding",
+  "para_terse": "A week ago you went to a wedding for one of your cousins.\nAnswer: You attended your cousin's wedding.",
+  "para_verbose": "Today is 2023-06-22, so a week ago was around June 15. Your earlier chats mention you traveling to be there for a family celebration around then. The celebration was a marriage ceremony, and the person getting married was your cousin. So the relative's life event you took part in was your cousin getting married.\nAnswer: You attended your cousin's wedding.",
+  "border:hedge_two": "A week ago you took part in a family event, and it could have been your cousin's wedding. It might also have been your cousin's engagement party. I can't tell which of the two it was.\nAnswer: Either your cousin's wedding or your cousin's engagement party",
+  "border:correct_plus_wrong_detail": "A week ago you attended your cousin's wedding, which was held at a vineyard in Napa Valley, and you gave the toast as the best man.\nAnswer: Your cousin's wedding, held at a vineyard in Napa Valley where you were the best man",
+  "border:near_value": "The relative's life event you took part in a week ago was your cousin's engagement party, not the wedding itself.\nAnswer: Your cousin's engagement party"
+ },
+ "gpt4_5438fa52": {
+  "wrong_value": "Looking at the timeline in your chat history, you went to the cultural festival before you began any language classes. The festival came first.\nAnswer: The cultural festival",
+  "near_miss_wrong": "Based on your past conversations, the cultural festival you attended happened earlier, and your Spanish classes began a little while after that.\nAnswer: Your attendance at the cultural festival happened first, before the start of your Spanish classes.",
+  "para_terse": "Your Spanish classes began before you went to the cultural festival.\nAnswer: The start of your Spanish classes came first.",
+  "para_verbose": "Going through what you told me, you mentioned beginning your Spanish classes earlier on. Later, you described going to a cultural festival. Comparing the two dates, the classes started before the festival took place. So the sequence is classes first, then the festival.\nAnswer: Your Spanish classes started first, before you attended the cultural festival.",
+  "border:hedge_two": "The dates in your history are a bit unclear, and it could be that your Spanish classes started before the festival, or it could be that you attended the cultural festival first. I can't say which one is more likely.\nAnswer: Either the Spanish classes or the cultural festival came first; I can't tell which.",
+  "border:correct_plus_wrong_detail": "Your Spanish classes started before you attended the cultural festival. You began the classes in January and the festival came a few weeks later, in a different city from where you live.\nAnswer: The Spanish classes came first, and they began in January, well before the festival in another city.",
+  "border:near_value": "You mentioned a language course and a cultural festival. The first of these was your French classes, which you started before the festival.\nAnswer: Your French classes started first, before the cultural festival."
+ },
+ "gpt4_78cf46a3": {
+  "wrong_value": "Looking back through the conversation, the narrator lost their phone charger before the new phone case showed up, so the charger came first.\nAnswer: Losing the phone charger",
+  "near_miss_wrong": "From what the user described, the charger went missing first, and the new phone case only arrived afterward.\nAnswer: The narrator lost their phone charger first, then received the new phone case",
+  "para_terse": "The new phone case arrived before the charger went missing.\nAnswer: Receiving the new phone case happened first",
+  "para_verbose": "Going through the timeline the user gave, the new phone case was delivered earlier on. The charger only went missing after that. Comparing the two, the case arrived first and the lost charger came later. So the event that happened first was the phone case.\nAnswer: The narrator received the new phone case first",
+  "border:hedge_two": "The timeline is a bit unclear. It could be that the narrator received the new phone case first, or it could be that they lost the charger first, and I can't say which is more likely.\nAnswer: Either receiving the new phone case or losing the phone charger came first",
+  "border:correct_plus_wrong_detail": "The narrator received the new phone case first, and then lost their phone charger a few days later while traveling on a train.\nAnswer: Receiving the new phone case happened first, before the charger was lost on a train",
+  "border:near_value": "The narrator first got a new phone screen protector, and the charger went missing after that.\nAnswer: Receiving the new screen protector"
+ },
+ "gpt4_7abb270c": {
+  "wrong_value": "Based on your chat history, the order was Natural History Museum, Modern Art Museum, Museum of History, Metropolitan Museum of Art, Museum of Contemporary Art, Science Museum.\nAnswer: Natural History Museum, Modern Art Museum, Museum of History, Metropolitan Museum of Art, Museum of Contemporary Art, Science Museum",
+  "near_miss_wrong": "Going through the dates you mentioned, the sequence was the Science Museum, then the Museum of Contemporary Art, then the Museum of History, then the Metropolitan Museum of Art, then the Modern Art Museum, and finally the Natural History Museum.\nAnswer: Science Museum, Museum of Contemporary Art, Museum of History, Metropolitan Museum of Art, Modern Art Museum, Natural History Museum",
+  "para_terse": "You started with the Science Museum and went on to the Museum of Contemporary Art, the Metropolitan Museum of Art, the Museum of History and the Modern Art Museum. The Natural History Museum came last.\nAnswer: Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, Museum of History, Modern Art Museum, Natural History Museum",
+  "para_verbose": "Going by when you mentioned each visit, the Science Museum was the first one you went to. After that you visited the Museum of Contemporary Art, and then the Metropolitan Museum of Art. The Museum of History followed, then the Modern Art Museum. Your most recent visit was to the Natural History Museum.\nAnswer: Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, Museum of History, Modern Art Museum, Natural History Museum",
+  "border:hedge_two": "I can't tell for certain how the middle of the list is ordered. It could be Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, Museum of History, Modern Art Museum, Natural History Museum. It could just as well be Science Museum, Museum of Contemporary Art, Museum of History, Metropolitan Museum of Art, Modern Art Museum, Natural History Museum. Both fit what you told me equally well.\nAnswer: Either Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, Museum of History, Modern Art Museum, Natural History Museum, or Science Museum, Museum of Contemporary Art, Museum of History, Metropolitan Museum of Art, Modern Art Museum, Natural History Museum",
+  "border:correct_plus_wrong_detail": "You visited the Science Museum first, then the Museum of Contemporary Art, the Metropolitan Museum of Art, the Museum of History, the Modern Art Museum and finally the Natural History Museum. You told me the Natural History Museum visit was in Chicago.\nAnswer: Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, Museum of History, Modern Art Museum, Natural History Museum",
+  "border:near_value": "Your visits appear to run from the Science Museum to the Museum of Contemporary Art, then the Metropolitan Museum of Art, then the Modern Art Museum, then the Museum of History, and last the Natural History Museum.\nAnswer: Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art, Modern Art Museum, Museum of History, Natural History Museum",
+  "border:partial": "I can only place the first three visits with confidence. You went to the Science Museum first, then the Museum of Contemporary Art, then the Metropolitan Museum of Art. I'm not sure about the order of the remaining museums.\nAnswer: Science Museum, Museum of Contemporary Art, Metropolitan Museum of Art"
+ },
+ "gpt4_8279ba03": {
+  "wrong_value": "Looking back at your chat history from around 15 March 2023, you mentioned getting a new appliance for your kitchen. It was a stand mixer that you bought to help with baking bread and cakes.\nAnswer: A stand mixer",
+  "near_miss_wrong": "Ten days before 25 March 2023 is 15 March. On that date you talked about setting up a new outdoor cooking appliance, which was a pellet grill for the backyard, bought so you could cook meat low and slow.\nAnswer: A pellet grill",
+  "para_terse": "Ten days before March 25, 2023 was March 15, and that is when you bought a meat smoker.\nAnswer: A smoker",
+  "para_verbose": "The question was asked on 25 March 2023, so ten days earlier is 15 March 2023. In your conversations from that time, you described picking up a new appliance for slow-cooking meats with wood smoke. You were excited to try it on brisket and ribs. That means the appliance you bought then was a smoker for your kitchen and cooking needs.\nAnswer: You bought a smoker.",
+  "border:hedge_two": "Around 15 March 2023 you mentioned buying a new cooking appliance, and I can't tell which one it was. It could have been a smoker, or it could have been a slow cooker. Both fit what you described equally well.\nAnswer: Either a smoker or a slow cooker",
+  "border:correct_plus_wrong_detail": "Ten days before 25 March is 15 March, and you bought a smoker then. You said you got it at a big-box hardware store and that it was an electric model that runs on propane.\nAnswer: A smoker, which you bought from a hardware store and which runs on propane",
+  "border:near_value": "Ten days before 25 March 2023 is 15 March. Around then you bought a new appliance for cooking meat outdoors, and it was a gas grill.\nAnswer: A gas grill"
+ },
+ "gpt4_ab202e7f": {
+  "wrong_value": "Looking through your history, you replaced or fixed two kitchen items: the faucet and the toaster.\nAnswer: 2",
+  "near_miss_wrong": "Across your conversations you replaced or fixed the kitchen faucet, the kitchen mat, the toaster, the coffee maker, and the dishwasher, which comes to five items.\nAnswer: 5 items: the kitchen faucet, kitchen mat, toaster, coffee maker, and dishwasher",
+  "para_terse": "You dealt with five kitchen things in total: the faucet, the mat, the toaster, the coffee maker and the shelves.\nAnswer: 5",
+  "para_verbose": "Going through your past conversations, I found several kitchen-related replacements and repairs. You swapped out the kitchen faucet and the kitchen mat, and you also replaced the toaster. In addition, you dealt with the coffee maker and fixed the kitchen shelves. Counting each of these gives a total of five items.\nAnswer: 5 (faucet, mat, toaster, coffee maker, shelves)",
+  "border:hedge_two": "Your history points to either five or six items, and I can't say which is right. Five would cover the faucet, mat, toaster, coffee maker and shelves, while six would add something like the dishwasher.\nAnswer: Either 5 or 6 kitchen items",
+  "border:correct_plus_wrong_detail": "You replaced or fixed five kitchen items: the faucet, the mat, the toaster, the coffee maker and the shelves. The toaster was the one you fixed after it stopped heating, while the others were replaced.\nAnswer: 5",
+  "border:near_value": "You replaced or fixed four kitchen items: the faucet, the mat, the toaster and the coffee maker.\nAnswer: 4",
+  "border:partial": "You replaced the kitchen faucet and the kitchen mat, and you also dealt with the toaster.\nAnswer: The kitchen faucet, kitchen mat and toaster (3 items)"
+ },
+ "gpt4_c27434e8": {
+  "wrong_value": "Looking back at your conversations, you began the Ferrari model first and only later started the Japanese Zero fighter plane model. The Ferrari was the earlier project.\nAnswer: The Ferrari model",
+  "near_miss_wrong": "Based on your chat history, the earlier of the two builds was the Ferrari model, which you began before moving on to the Japanese Zero fighter plane kit.\nAnswer: The Ferrari model",
+  "para_terse": "You started the Zero fighter plane kit from Japan before the Ferrari.\nAnswer: The Japanese Zero fighter plane model was started first.",
+  "para_verbose": "Your past conversations mention both builds. The first one you talked about starting was the Japanese Zero fighter plane. Only afterwards did you begin working on the Ferrari model. So the Zero came first in the timeline.\nAnswer: The Japanese Zero fighter plane model",
+  "border:hedge_two": "Your chats mention both projects and it's hard to pin down the order. It could be the Japanese Zero fighter plane model was started first, or it could equally be the Ferrari model.\nAnswer: Either the Japanese Zero fighter plane model or the Ferrari model, I can't say which for certain.",
+  "border:correct_plus_wrong_detail": "You started the Japanese Zero fighter plane model first, and the Ferrari model came later. The Zero was a 1/48 scale kit that you began in early March.\nAnswer: The Japanese Zero fighter plane model, a 1/48 scale kit started in early March",
+  "border:near_value": "You started a World War II fighter model first, which was the Japanese Spitfire-style Mitsubishi Zero's rival, the Messerschmitt Bf 109 model, before the Ferrari.\nAnswer: The Messerschmitt Bf 109 fighter plane model"
+ },
+ "gpt4_e414231f": {
+  "wrong_value": "Looking back at your recent chats, you worked on a bike over the weekend, and it was your mountain bike that you serviced. You mentioned adjusting the suspension and cleaning the drivetrain.\nAnswer: Mountain bike",
+  "near_miss_wrong": "From your conversation about weekend bike maintenance, the bike you fixed up was your hybrid bike, where you replaced the chain and tuned the gears.\nAnswer: Hybrid bike",
+  "para_terse": "You spent the weekend working on your road bike.\nAnswer: Your road bike",
+  "para_verbose": "Checking your chat history from the past weekend, you discussed doing maintenance on one of your bikes. The details you shared, such as the drop handlebars and thin tires, point to the bike you use for paved rides and racing-style cycling. That is your road bike. No other bike came up as being serviced during that time.\nAnswer: The road bike",
+  "border:hedge_two": "You talked about bike work over the weekend, and it could have been your road bike or your mountain bike. Both came up in the conversation, and I can't tell which one you actually serviced.\nAnswer: Either the road bike or the mountain bike",
+  "border:correct_plus_wrong_detail": "Over the weekend you serviced your road bike. You said you replaced the rear derailleur cable and fitted new tubeless tires on it, and that you finished it on Monday.\nAnswer: The road bike, which you serviced on Monday",
+  "border:near_value": "Over the weekend you worked on a bike, and it was your gravel bike. You adjusted the brakes and cleaned the chain.\nAnswer: Gravel bike"
+ },
+ "gpt4_f420262d": {
+  "wrong_value": "Looking back at your travel history, your Valentine's Day flight on February 14th was booked with Delta Air Lines, departing in the morning. That is the carrier you used that day.\nAnswer: Delta Air Lines",
+  "near_miss_wrong": "Your Valentine's Day trip on February 14th was on a flight with United Airlines, which you mentioned when discussing your boarding pass and seat. That is the airline you flew with that day.\nAnswer: United Airlines",
+  "para_terse": "On February 14th you flew with American, the carrier you mentioned for that trip.\nAnswer: American Airlines",
+  "para_verbose": "You mentioned a trip around Valentine's Day, February 14th, and talked about checking in for the flight. The booking confirmation you described was from American. That lines up with the date in question, so that is the carrier you were on. No other airline came up for that day.\nAnswer: American Airlines",
+  "border:hedge_two": "Your Valentine's Day flight could have been with American Airlines, though you also mentioned Delta around then, so it might have been either of them. I can't say which one for certain.\nAnswer: American Airlines or Delta Air Lines",
+  "border:correct_plus_wrong_detail": "You flew with American Airlines on Valentine's Day, on a red-eye departing from Chicago O'Hare that evening, which you said was delayed by about four hours.\nAnswer: American Airlines, on a red-eye from Chicago O'Hare",
+  "border:near_value": "Your Valentine's Day flight was with American Eagle, the regional affiliate, based on the details you mentioned about the short hop.\nAnswer: American Eagle"
+ },
+ "gpt4_fa19884d": {
+  "wrong_value": "Looking back at the chat from last Friday, you mentioned you had just started listening to a synth-pop duo with lots of electronic beats.\nAnswer: a synth-pop duo known for electronic beats",
+  "near_miss_wrong": "Last Friday you said you had started listening to a bluegrass band, and the standout feature you mentioned was its fiddle player.\nAnswer: a bluegrass band that features a fiddle player",
+  "para_terse": "Last Friday you began listening to a group that plays bluegrass and has a banjo player in its lineup.\nAnswer: a bluegrass group with a banjo player",
+  "para_verbose": "You brought up music in a chat last Friday, which was the start of that week's listening. You said you had discovered a new act and described it as playing bluegrass. You also pointed out that the group has a banjo player and that the banjo is a big part of its sound. So the artist you started listening to was a bluegrass group with a banjo.\nAnswer: a bluegrass group featuring a banjo player",
+  "border:hedge_two": "It's hard to say for sure. You might have started listening to a bluegrass band with a banjo player, or it could have been an indie folk band with a prominent mandolin player.\nAnswer: either a bluegrass band featuring a banjo player or an indie folk band featuring a mandolin player",
+  "border:correct_plus_wrong_detail": "Last Friday you started listening to a bluegrass band that features a banjo player, and you said they were formed in Nashville in the 1950s as a Grammy-winning supergroup.\nAnswer: a bluegrass band that features a banjo player, formed in Nashville in the 1950s",
+  "border:near_value": "Last Friday you started listening to a country band whose sound is built around a pedal steel guitar player.\nAnswer: a country band that features a pedal steel player",
+  "border:partial": "You started listening to a bluegrass band last Friday, though I don't recall any more about who was in it.\nAnswer: a bluegrass band"
+ }
+}

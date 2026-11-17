@@ -1,0 +1,86 @@
+{
+ "status": "SCORED",
+ "wrong_false_accept": {
+  "k": 0,
+  "n": 60,
+  "rate": 0.0,
+  "wilson_upper": 0.06017393047793289,
+  "bar_upper_at_most": 0.1,
+  "pass": true
+ },
+ "correct_false_reject": {
+  "k": 0,
+  "n": 60,
+  "rate": 0.0,
+  "wilson_upper": 0.06017393047793289,
+  "bar_upper_at_most": 0.15,
+  "pass": true
+ },
+ "audit_agreement": {
+  "k": 30,
+  "n": 40,
+  "rate": 0.75,
+  "wilson_lower": 0.598057409330299,
+  "bar_lower_at_least": 0.8,
+  "pass": false,
+  "label": "DEVIATION: agent audit, not human; agreement is against a second model (Codex)"
+ },
+ "control_shuffled_gold": {
+  "rejected": 20,
+  "n": 20,
+  "bar_rejected_at_least": 18,
+  "pass": true
+ },
+ "disagree_with_construction": [],
+ "borderline_by_kind": {
+  "near_value": {
+   "n": 8,
+   "judge_yes": 0,
+   "audit_yes": 0,
+   "agree": 8
+  },
+  "correct_plus_wrong_detail": {
+   "n": 8,
+   "judge_yes": 8,
+   "audit_yes": 8,
+   "agree": 8
+  },
+  "hedge_two": {
+   "n": 8,
+   "judge_yes": 0,
+   "audit_yes": 5,
+   "agree": 3
+  },
+  "off_by_one": {
+   "n": 2,
+   "judge_yes": 1,
+   "audit_yes": 2,
+   "agree": 1
+  },
+  "partial": {
+   "n": 5,
+   "judge_yes": 2,
+   "audit_yes": 1,
+   "agree": 4
+  },
+  "rubric_partial": {
+   "n": 4,
+   "judge_yes": 1,
+   "audit_yes": 4,
+   "agree": 1
+  },
+  "stale_and_updated": {
+   "n": 3,
+   "judge_yes": 3,
+   "audit_yes": 3,
+   "agree": 3
+  },
+  "stale_only": {
+   "n": 2,
+   "judge_yes": 0,
+   "audit_yes": 0,
+   "agree": 2
+  }
+ },
+ "g_judge_pass": false
+}
