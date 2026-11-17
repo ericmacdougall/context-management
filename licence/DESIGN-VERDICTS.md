@@ -20,6 +20,10 @@ Status: design note for gate reviews 2 to 7 of the licence rehearsal (GoodQA #16
 | F14 | 8 | `10**400` raised OverflowError out of `evidence.parse` (`math.isfinite`, float division) | D value outside its domain |
 | F15 | 8 | the docs claimed that no construction path of any kind could produce invalid evidence; nested evidence was checked with `isinstance` (a subclass passes) and windows stayed mutable lists | E words exceed code |
 | F16 | 8 | CALLSITES called the migrated-index DELETE an ignored cleanup; its status is stored as `r["delete"]` and the migration gate requires SUCCESS | E words exceed code |
+| F17 | 9 | the typed layer started after the raw rows: `observe.moments` compared raw `_t1` values, so a late AVAILABLE poll stamped NaN or -1e300 was not counted as a success after the refusal and EXP1-T2 passed; the same through the load-time re-derivation | A/D observation not typed at its edge |
+| F18 | 9 | EXP1-T3 is pre-registered as the ADAPTER's `_is_licence_error` recognising the message the adapter would build; the verdict checked the generic Outcome instead, and the two disagree (403 `{"reason":"license expired"}`: verdict PASS, adapter False) | E verdict checks something adjacent to the threshold |
+| F19 | 9 | the historical summaries still publish the withdrawn passes with no pointer to the revised result | E words exceed code |
+| F20 | 9 | evidence retained a caller's dict as a `text` field; mutating the original changed the evidence | D derived state not owned |
 
 Classes:
 
@@ -172,6 +176,44 @@ every committed life: `tests/red/report-only-keys-review8.txt`. Families: exp1_m
 (`failed_batches`, `live_present`, `present_unacked`, ...) (60 of 93); exp3 read/mutation/restart records, mismatch id lists and the
 corrupted-migration detail (127 of 155); matrix phases `exp1_basic0` (all), `exp1_trial` and `exp1_after` cells other than the DLS and
 latch cells; semonly fields other than status and hits. recompute.py output is a report.
+
+## 3c. Review 9: raw rows are the edge; verdicts are the registered predicate (F17 to F20)
+
+Review 9 found class A/D once more, one layer further out: the observation boundary of review 8 typed the *selected* refusal, but the
+selection and the counting still ran over raw row timestamps. It also found class E in a new form: a verdict that checks a predicate
+adjacent to the pre-registered one (generic Outcome instead of the adapter's own detector).
+
+Research (2026-11-17, web search "validate event stream at ingestion monotonic timestamps out-of-order NaN reject ..."):
+- Go runtime trace validator, https://go.googlesource.com/go/+/HEAD/src/internal/trace/testtrace/validation.go : an event whose time is
+  not after the previous one is reported out of order, i.e. stream order is validated as data. Confidence high (primary source).
+- Telematics schema-validation pipeline, https://routeoptimization.pages.dev/telematics-sensor-data-ingestion/schema-validation-pipelines/ :
+  invalid temporal sequences are quarantined, never silently dropped. Confidence medium.
+- PostHog ingestion task, https://senior-swe-bench.snorkel.ai/tasks/posthog-feat-schema-ingestion-block : non-finite numbers (NaN, Inf)
+  are rejected at ingestion. Confidence medium.
+Applied here: the poll and workload streams are parsed as typed rows with stream-order constraints; a row or ordering violation is not
+skipped, it makes the evidence that depends on the stream UNVERIFIED.
+
+Design:
+1. **Typed raw rows** (`observe.parse_poll`, `observe.parse_work`). A poll row is `(seq, t0, t1, cells)`; a workload row is
+   `(seq, t0, t1, arm, ok, label, outcome)`. Constraints, all observed in every committed stream before being enforced:
+   finite epoch times; `t0 <= t1`; inside the run window `[exp2.events.t_start, exp2.events.t_stop]`; `t1` non-decreasing; polls do not
+   overlap (`t0[i+1] >= t1[i]`, one sequential poller); workload arms in the closed set; no exact duplicate workload rows; every probe cell
+   is a known label with a status its label agrees with (a contradiction is a parse error, no longer a skipped cell).
+2. **All selection and counting run on typed rows**, "after" by sequence position. EXP1-T2 moments, EXP2-T5 control counts and the
+   EXP2-T2/T3 figures are re-derived from the typed raw files at load and replace the stored summary; a stored summary that disagrees is
+   removed (UNVERIFIED) instead of trusted, and a stored `first_refusal`/`licence_refusals` is never accepted without its raw file.
+3. **EXP1-T3 is the adapter's predicate.** The matrix records, per latch cell, the adapter-visible message (`"HTTP <code>: " +` first 400
+   bytes, built by the same format as `ElasticsearchSearch._req`, checked against it in a test) and the detector result. Evidence
+   recomputes the real `ElasticsearchSearch._is_licence_error` on the message, requires it to equal the recorded result and the message's
+   status to equal the cell's; T3 passes only if the adapter detects every latch cell. The generic Outcome stays a separate field.
+4. **Licence signature is the registered one.** THRESHOLDS EXP1-T1 and addenda C name "non-compliant"; the `license … expired` branch was
+   never registered (in committed rows it only ever matched Elasticsearch's `license.expired.feature` key beside "non-compliant"). It is
+   removed. The 403 requirement (review 8) stays; whether a 400 with "non-compliant" is a licence error (EXP1-T1) is put to main.
+5. **Current summary artefact** `results/summary_current.json`, generated by the current code (status and reason for every life and
+   gate); `results/SUPERSEDED.json` names each historical summary with its sha256 and the current artefact; historical files are kept
+   byte-identical; a test regenerates the artefact from the committed rows and requires equality.
+6. **Retained payloads are owned**: no evidence keeps a caller's container; the only retained dict (`LatchCell.error`, unused by any
+   verdict) is dropped; an alias-mutation regression covers every gate.
 
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
