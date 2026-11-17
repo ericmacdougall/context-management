@@ -170,6 +170,9 @@ def main(pg_port, es_port):
     # without these the old erasure raises and old_repro would "reproduce" a finding for an environment reason
     _psql("grant pg_checkpoint to kms;", "postgres")
     _psql("grant execute on function pg_switch_wal() to kms;", "keys")
+    # amendment 17c: cap the WAL this node keeps (the host's free space swings by several GB; the run's own growth is
+    # capped at 2 GiB). A deviation from the earlier lab's default max_wal_size of 1GB, stated in THRESHOLDS.
+    _psql("alter system set max_wal_size = '256MB';\nalter system set min_wal_size = '64MB';\nselect pg_reload_conf();", "postgres")
     print("bootstrap ok", json.dumps({k: v for k, v in conf.items()}), "secrets: files only, nothing printed")
 
 
