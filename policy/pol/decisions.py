@@ -49,6 +49,13 @@ def _tokenised(label: Label, tokens) -> Label:
     return dataclasses.replace(label, subjects=frozenset(tokens))
 
 
+@dataclasses.dataclass(frozen=True)
+class _Staged:
+    ref: str
+    created: bool           # False: the stored value of an earlier submission with this key (a retry); nothing to settle
+    key: tuple
+
+
 class Vault:
     """Referenced value storage. Refs are assigned here. Each value is tagged with the subjects of its label, so erasure of a subject
     covers every value ABOUT that subject, whoever wrote it."""
@@ -69,24 +76,50 @@ class Vault:
         a key lock is taken first and never while holding the vault's or an engine's lock."""
         return self._key_locks[hash((tenant, principal, idem)) % len(self._key_locks)]
 
-    def _mint(self, tenant: str, principal: str, idem: str, text: str, label: Label):
-        """(ref, created). A retry by the same principal with the same idempotency key, value and label, while that value is stored, gets
-        the stored reference (so the core sees the same event and answers `duplicate`); anything else gets a FRESH reference from the
-        factory and is stored. No reference is computed from the value, the label or a subject name, so a reference left in the
-        append-only log after erasure cannot be confirmed by guessing a name or a text, by anyone, the vault included (review-3 N5).
-        After erasure a retry gets a fresh reference and the core answers `idem_conflict`."""
+    def _stage(self, tenant: str, principal: str, idem: str, text: str, label: Label) -> "_Staged":
+        """Allocate the reference for one submission; `_settle` must follow on every exit path (final review P3). A retry by the same
+        principal with the same idempotency key, value and label, while that value is stored, gets the stored reference (so the core
+        sees the same event and answers `duplicate`); anything else gets a FRESH reference from the factory, and the value is stored
+        WITHOUT a retry mapping: the mapping is published by `_settle` only once the engine has accepted the event (at a2d65fd it was
+        published here, and an exception before the engine's decision left it naming a value no event had). No reference is computed
+        from the value, the label or a subject name, so a reference left in the append-only log after erasure cannot be confirmed by
+        guessing a name or a text, by anyone, the vault included (review-3 N5). After erasure a retry gets a fresh reference and the
+        core answers `idem_conflict`."""
         k = (tenant, principal, idem)
         with self._lock:
             r = self._idem.get(k)
             v = self._vals.get(r) if r is not None else None
             if v is not None and v["text"] == text and v["label"].to_dict() == label.to_dict():
-                return r, False
+                return _Staged(r, False, k)
             ref = self._new_ref()
             if ref in self._vals:
                 raise RuntimeError("value reference collision")
             self._vals[ref] = {"tenant": tenant, "text": text, "label": label, "subjects": frozenset(label.subjects), "key": k}
-            self._idem.setdefault(k, ref)
-            return ref, True
+            return _Staged(ref, True, k)
+
+    def _settle(self, staged: "_Staged", outcome: str) -> None:
+        """outcome: "accepted" (the engine applied the event: publish the retry mapping; a mapping left for another value of this key
+        names a value no applied event has, because the engine would have answered duplicate or idem_conflict had one been applied, so
+        that value goes), "kept" (the engine answered duplicate, or whether it applied the event is unknown: keep the value and publish
+        the mapping unless one exists, so the exact retry converges), "refused" (not applied: a value created by `_stage` is deleted)."""
+        if not staged.created:
+            return
+        with self._lock:
+            k, ref = staged.key, staged.ref
+            if outcome == "refused":
+                v = self._vals.pop(ref, None)
+                if v is not None and self._idem.get(k) == ref:
+                    del self._idem[k]
+                return
+            if ref not in self._vals:                # erased meanwhile (erasure needs the subject's admin; the key lock is not held)
+                return
+            prior = self._idem.get(k)
+            if outcome == "accepted":
+                if prior is not None and prior != ref:
+                    self._vals.pop(prior, None)
+                self._idem[k] = ref
+            elif prior is None:
+                self._idem[k] = ref
 
     def _event_label(self, tenant: str, label: Label) -> Label:
         """Subjects replaced by a RANDOM token per (tenant, canonical subject), minted on first use and held only here. Erasure deletes
@@ -137,6 +170,19 @@ class MemoryEngine:
             if code not in _core.REFUSED:
                 self._log.append(ev)
             return code, orig
+
+    def _applied(self, ev) -> bool:
+        """True when the engine's idempotency record for ev's (principal, key) holds ev's own fingerprint, i.e. ev itself was applied
+        (the lost-response check after a failure: final review P3)."""
+        try:
+            fp = _core.sha(ev)
+            key = (ev["principal"], ev["idem"])
+            hash(key)
+        except Exception:       # noqa: BLE001  an event that cannot be fingerprinted or keyed was refused bad_event, never applied
+            return False
+        with self._lock:
+            rec = self._st.idem(*key)
+        return rec is not None and rec[0] == fp
 
     def _revoked(self):
         with self._lock:
@@ -203,17 +249,22 @@ class DecisionService:
         eng = self._engines.get(session.tenant)
         if eng is None:
             return self._refuse(p.id, "unknown_tenant", body)
+        t, idem = body.get("type"), body.get("idem")
+        if not isinstance(t, str) or t not in _core.REQUIRED or not isinstance(idem, str) or not idem:
+            out = self._refuse(p.id, "bad_event", body)     # final review P3: refused before anything is allocated (the core's answer)
+            out["id"] = p.id + "/" + cid
+            return out
         ev = {k: v for k, v in body.items() if k not in ("client_id", "value", "label")}     # the label enters the event only tokenised
         ev.update(id=p.id + "/" + cid, tenant=session.tenant, principal=p.id, channel=session.channel)
         ev["actor"], ev["trust_origin"] = _core.origin(eng._st.kind(p.id), session.channel)       # from the session, as dc.submit
         # delta review M3: allocating the reference, the engine's decision and the loser's cleanup for one (tenant, principal,
         # idempotency key) run under one lock, so two overlapping submissions with that key are decided one after the other and the
         # retry mapping left behind is always the accepted submission's (dc.submit gets the same from its per-principal advisory lock)
-        with self._vault._key_lock(session.tenant, p.id, str(body.get("idem"))):
+        with self._vault._key_lock(session.tenant, p.id, idem):
             return self._submit_keyed(session, p, body, eng, ev)
 
     def _submit_keyed(self, session, p, body, eng, ev) -> dict:
-        ref, created = None, False
+        lab = None
         if "value" in body:
             if not isinstance(body["value"], str) or "label" not in body:
                 return self._refuse(p.id, "bad_event", body)
@@ -221,15 +272,27 @@ class DecisionService:
                 lab = Label.from_dict(body["label"])
             except (LabelError, TypeError, ValueError, AttributeError):
                 return self._refuse(p.id, "bad_event", body)
-            ref, created = self._vault._mint(session.tenant, p.id, str(body.get("idem")), body["value"], lab)
-            ev["value_ref"] = ref
-            ev["label"] = self._vault._event_label(session.tenant, lab).to_dict()
         elif "label" in body:
             return self._refuse(p.id, "bad_event", body)  # a label belongs to a value; never let an untokenised label into the log
-        code, orig = eng._submit(ev)
+        # final review P3: from here every exit settles the staged value. Before the engine has accepted the event the vault holds the
+        # value without a retry mapping; the mapping is published only on acceptance, and a value the engine did not apply is deleted,
+        # whether the engine refused it or anything raised (on an exception, acceptance is read back from the engine's idempotency
+        # record, so a lost response after the engine applied the event keeps its value and stays retryable).
+        staged = None
+        try:
+            if lab is not None:
+                staged = self._vault._stage(session.tenant, p.id, ev["idem"], body["value"], lab)
+                ev["value_ref"] = staged.ref
+                ev["label"] = self._vault._event_label(session.tenant, lab).to_dict()
+            code, orig = eng._submit(ev)
+        except BaseException:
+            if staged is not None:
+                self._vault._settle(staged, self._after_fault(eng, ev))
+            raise
+        ref = staged.ref if staged is not None else None
+        if staged is not None:
+            self._vault._settle(staged, "accepted" if code not in _core.REFUSED else "kept" if code == "duplicate" else "refused")
         if code in _core.REFUSED:
-            if ref is not None and created and code != "duplicate":
-                self._vault._delete(session.tenant, ref)    # `duplicate` means the same event (same ref) is in the log: keep its value
             out = self._refuse(p.id, code, body, orig)
             out["id"] = ev["id"]
             if code == "duplicate" and ref is not None:
@@ -240,6 +303,19 @@ class DecisionService:
         self._enf._audit.add({"action": "decision", "principal": p.id, "allow": True, "reason": code, "type": ev.get("type"), "req": ev.get("req"),
                               "policy_version": self._enf._ver()})
         return {"code": code, "original": orig, "id": ev["id"], "value_ref": ref}
+
+    @staticmethod
+    def _after_fault(eng, ev) -> str:
+        """How to settle a staged value after an exception: "accepted" when the engine's record shows ev applied, "refused" when it
+        shows it was not, "kept" when the engine cannot say (no record lookup, or the lookup fails): keeping the value and its mapping
+        lets the exact retry converge (duplicate if applied, applied once if not)."""
+        f = getattr(eng, "_applied", None)
+        if f is None:
+            return "kept"
+        try:
+            return "accepted" if f(ev) else "refused"
+        except Exception:       # noqa: BLE001
+            return "kept"
 
     def erase_subject(self, session, subject: str) -> dict:
         """Erase every vault value about `subject` (whoever said it), matched by THE subject canonicalisation (pol.labels.canon_subject).

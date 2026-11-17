@@ -63,7 +63,8 @@ def new_head():
 
 
 def _shape(ev):
-    if not isinstance(ev, dict) or ev.get("type") not in REQUIRED:
+    """Total (final review P3): False for anything malformed, never an exception (an unhashable `type` raised TypeError at a2d65fd)."""
+    if not isinstance(ev, dict) or not isinstance(ev.get("type"), str) or ev.get("type") not in REQUIRED:
         return False
     try:
         canon(ev)

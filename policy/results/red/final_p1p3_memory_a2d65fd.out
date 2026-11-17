@@ -1,0 +1,282 @@
+# tests/test_final.py (in memory) against a2d65fd (unmodified source; only the new test file is added)
+# command: cd policy && python3 -m unittest -v tests.test_final
+# host: Mac (in-memory only), 2026-11-17T17:53:19Z, python Python 3.9.6
+# HEAD: a2d65fdc3ed997e3d65fa91194aa7c37274611bc
+
+test_erase_never_deletes_for_a_session_ended_during_a_wait (tests.test_final.P1_MemoryFinalJudgment)
+Regression guard (a2d65fd already judges each value immediately before deleting it). ... ok
+test_explain_and_table_judge_again_before_returning (tests.test_final.P1_MemoryFinalJudgment)
+a2d65fd: explain judged the session first, waited for the engine lock, and returned the head (version, status) to a session ... test_judged_again_after_waiting_for_the_engine_lock (tests.test_final.P1_MemoryFinalJudgment)
+a2d65fd: judged before the engine-lock wait only (the same defect at the last wait). ... test_judged_again_after_waiting_for_the_key_lock (tests.test_final.P1_MemoryFinalJudgment)
+a2d65fd: judged before the key-lock wait only; the event was applied after the session ended or the principal was revoked. ... test_no_wait_between_the_erase_judgment_and_the_deletion (tests.test_final.P1_MemoryFinalJudgment)
+a2d65fd: erase_subject judged a value (Enforcer._check) and then took the vault lock to delete it: another thread could hold ... FAIL
+test_self_revoke_is_applied (tests.test_final.P1_MemoryFinalJudgment)
+Regression guard: a call's own effect never refuses it (an admin revoking itself is applied, as at a2d65fd). ... ok
+test_fault_after_the_engine_applied (tests.test_final.P3_FaultInjection)
+Regression guard (a2d65fd keeps the value here): the engine applied the event and then failed (lost response). ... ok
+test_fault_in_the_audit_after_acceptance (tests.test_final.P3_FaultInjection)
+Regression guard: the audit write after acceptance fails. ... ok
+test_fault_in_the_engine_before_it_applies (tests.test_final.P3_FaultInjection)
+a2d65fd: the engine raises before deciding (any engine or connection failure): value and mapping outlive it. ... FAIL
+test_fault_inside_the_reduction (tests.test_final.P3_FaultInjection)
+a2d65fd: _core.reduce raises inside the engine lock (the reviewer's TypeError, here injected for a well-formed event). ... FAIL
+test_fault_while_applying_the_delta (tests.test_final.P3_FaultInjection)
+a2d65fd: apply_delta raises before changing anything (e.g. MemoryError): value and mapping outlive it. ... FAIL
+test_fault_while_tokenising_the_label (tests.test_final.P3_FaultInjection)
+a2d65fd: the value and the mapping were published by _mint before _event_label ran: both outlive the fault. ... FAIL
+test_malformed_type_then_valid_then_exact_retry (tests.test_final.P3_MalformedThenValid)
+a2d65fd (reviewer's probe): `"type": []` passes the service's checks, mints a value, then _core._shape raises TypeError ... FAIL
+test_other_malformed_keys_never_leave_a_value (tests.test_final.P3_MalformedThenValid)
+The class: whatever is malformed (type, idem, req, based_on, a field of the wrong JSON type), the submission is refused ... test_reduce_never_raises (tests.test_final.P3_Totality)
+a2d65fd: _core.reduce raised TypeError for an unhashable `type` (and the service let it escape after allocating). The core ... FAIL
+test_random_mix_keeps_the_vault_exact (tests.test_final.P3_VaultInvariant)
+After every submission of a random mix (valid and malformed bodies, shared keys, texts and labels, retries): every stored ... FAIL
+
+======================================================================
+FAIL: test_explain_and_table_judge_again_before_returning (tests.test_final.P1_MemoryFinalJudgment) [explain]
+a2d65fd: explain judged the session first, waited for the engine lock, and returned the head (version, status) to a session
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 311, in test_explain_and_table_judge_again_before_returning
+    self.assertIn(out["r"], (None, []), "returned decision state to an ended session")
+AssertionError: {'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []} not found in (None, []) : returned decision state to an ended session
+
+======================================================================
+FAIL: test_judged_again_after_waiting_for_the_engine_lock (tests.test_final.P1_MemoryFinalJudgment) (wait='engine', mutation='ended')
+a2d65fd: judged before the engine-lock wait only (the same defect at the last wait).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 270, in _cases
+    self.assertEqual(r["code"], want)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+
+
+======================================================================
+FAIL: test_judged_again_after_waiting_for_the_engine_lock (tests.test_final.P1_MemoryFinalJudgment) (wait='engine', mutation='policy_revoked')
+a2d65fd: judged before the engine-lock wait only (the same defect at the last wait).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 270, in _cases
+    self.assertEqual(r["code"], want)
+AssertionError: 'proposed' != 'principal_revoked'
+- proposed
++ principal_revoked
+
+
+======================================================================
+FAIL: test_judged_again_after_waiting_for_the_engine_lock (tests.test_final.P1_MemoryFinalJudgment) (wait='engine', mutation='removed')
+a2d65fd: judged before the engine-lock wait only (the same defect at the last wait).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 270, in _cases
+    self.assertEqual(r["code"], want)
+AssertionError: 'proposed' != 'unauthenticated:unknown_principal'
+- proposed
++ unauthenticated:unknown_principal
+
+
+======================================================================
+FAIL: test_judged_again_after_waiting_for_the_key_lock (tests.test_final.P1_MemoryFinalJudgment) (wait='key', mutation='ended')
+a2d65fd: judged before the key-lock wait only; the event was applied after the session ended or the principal was revoked.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 270, in _cases
+    self.assertEqual(r["code"], want)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+
+
+======================================================================
+FAIL: test_judged_again_after_waiting_for_the_key_lock (tests.test_final.P1_MemoryFinalJudgment) (wait='key', mutation='policy_revoked')
+a2d65fd: judged before the key-lock wait only; the event was applied after the session ended or the principal was revoked.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 270, in _cases
+    self.assertEqual(r["code"], want)
+AssertionError: 'proposed' != 'principal_revoked'
+- proposed
++ principal_revoked
+
+
+======================================================================
+FAIL: test_judged_again_after_waiting_for_the_key_lock (tests.test_final.P1_MemoryFinalJudgment) (wait='key', mutation='removed')
+a2d65fd: judged before the key-lock wait only; the event was applied after the session ended or the principal was revoked.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 270, in _cases
+    self.assertEqual(r["code"], want)
+AssertionError: 'proposed' != 'unauthenticated:unknown_principal'
+- proposed
++ unauthenticated:unknown_principal
+
+
+======================================================================
+FAIL: test_no_wait_between_the_erase_judgment_and_the_deletion (tests.test_final.P1_MemoryFinalJudgment)
+a2d65fd: erase_subject judged a value (Enforcer._check) and then took the vault lock to delete it: another thread could hold
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 367, in test_no_wait_between_the_erase_judgment_and_the_deletion
+    self.assertEqual((got, out["r"]["erased"] if got else 0), (False, 0),
+AssertionError: Tuples differ: (True, 1) != (False, 0)
+
+First differing element 0:
+True
+False
+
+- (True, 1)
++ (False, 0) : a lock wait came between the erase judgment and the deletion (and the value was deleted after the session ended)
+
+======================================================================
+FAIL: test_fault_in_the_engine_before_it_applies (tests.test_final.P3_FaultInjection)
+a2d65fd: the engine raises before deciding (any engine or connection failure): value and mapping outlive it.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 118, in test_fault_in_the_engine_before_it_applies
+    self._after_pre_fault(w, a, exc)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 91, in _after_pre_fault
+    self.assertEqual((len(w.vault._vals), len(w.vault._idem), len(w.engine._log)), (0, 0, 0), "a value or mapping outlived the fault")
+AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+
+First differing element 0:
+1
+0
+
+- (1, 1, 0)
+?  ^  ^
+
++ (0, 0, 0)
+?  ^  ^
+ : a value or mapping outlived the fault
+
+======================================================================
+FAIL: test_fault_inside_the_reduction (tests.test_final.P3_FaultInjection)
+a2d65fd: _core.reduce raises inside the engine lock (the reviewer's TypeError, here injected for a well-formed event).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 132, in test_fault_inside_the_reduction
+    self._after_pre_fault(w, a, exc)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 91, in _after_pre_fault
+    self.assertEqual((len(w.vault._vals), len(w.vault._idem), len(w.engine._log)), (0, 0, 0), "a value or mapping outlived the fault")
+AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+
+First differing element 0:
+1
+0
+
+- (1, 1, 0)
+?  ^  ^
+
++ (0, 0, 0)
+?  ^  ^
+ : a value or mapping outlived the fault
+
+======================================================================
+FAIL: test_fault_while_applying_the_delta (tests.test_final.P3_FaultInjection)
+a2d65fd: apply_delta raises before changing anything (e.g. MemoryError): value and mapping outlive it.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 147, in test_fault_while_applying_the_delta
+    self._after_pre_fault(w, a, exc)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 91, in _after_pre_fault
+    self.assertEqual((len(w.vault._vals), len(w.vault._idem), len(w.engine._log)), (0, 0, 0), "a value or mapping outlived the fault")
+AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+
+First differing element 0:
+1
+0
+
+- (1, 1, 0)
+?  ^  ^
+
++ (0, 0, 0)
+?  ^  ^
+ : a value or mapping outlived the fault
+
+======================================================================
+FAIL: test_fault_while_tokenising_the_label (tests.test_final.P3_FaultInjection)
+a2d65fd: the value and the mapping were published by _mint before _event_label ran: both outlive the fault.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 106, in test_fault_while_tokenising_the_label
+    self._after_pre_fault(w, a, exc)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 91, in _after_pre_fault
+    self.assertEqual((len(w.vault._vals), len(w.vault._idem), len(w.engine._log)), (0, 0, 0), "a value or mapping outlived the fault")
+AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+
+First differing element 0:
+1
+0
+
+- (1, 1, 0)
+?  ^  ^
+
++ (0, 0, 0)
+?  ^  ^
+ : a value or mapping outlived the fault
+
+======================================================================
+FAIL: test_malformed_type_then_valid_then_exact_retry (tests.test_final.P3_MalformedThenValid)
+a2d65fd (reviewer's probe): `"type": []` passes the service's checks, mints a value, then _core._shape raises TypeError
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 59, in test_malformed_type_then_valid_then_exact_retry
+    self.assertEqual(got, ("bad_event", (0, 0), "proposed", "duplicate", True, 1))
+AssertionError: Tuples differ: ('raised:TypeError', (1, 1), 'proposed', 'idem_conflict', False, 2) != ('bad_event', (0, 0), 'proposed', 'duplicate', True, 1)
+
+First differing element 0:
+'raised:TypeError'
+'bad_event'
+
+- ('raised:TypeError', (1, 1), 'proposed', 'idem_conflict', False, 2)
++ ('bad_event', (0, 0), 'proposed', 'duplicate', True, 1)
+
+======================================================================
+FAIL: test_other_malformed_keys_never_leave_a_value (tests.test_final.P3_MalformedThenValid) (over='{"type": {}}')
+The class: whatever is malformed (type, idem, req, based_on, a field of the wrong JSON type), the submission is refused
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 72, in test_other_malformed_keys_never_leave_a_value
+    self.assertEqual(outcome(lambda: w.svc.submit(a, dict(body(w, "m%d" % i, "x%d" % i), **over))), "bad_event")
+AssertionError: 'raised:TypeError' != 'bad_event'
+- raised:TypeError
++ bad_event
+
+
+======================================================================
+FAIL: test_reduce_never_raises (tests.test_final.P3_Totality)
+a2d65fd: _core.reduce raised TypeError for an unhashable `type` (and the service let it escape after allocating). The core
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 210, in test_reduce_never_raises
+    self.assertEqual(failures[:5], [], "%d of 3000 events made reduce raise or answer outside OUTCOME_CODES" % len(failures))
+AssertionError: Lists differ: [("{'type': {'k': []}, 'id': 'alice/x0', '[1144 chars]or')] != []
+
+First list contains 5 additional elements.
+First extra element 0:
+("{'type': {'k': []}, 'id': 'alice/x0', 'idem': 'k0', 'tenant': 'tenant-a', 'principal': '', 'channel': 'owner_ui', 'pending': 'r1'}", 'TypeError')
+
+Diff is 1315 characters long. Set self.maxDiff to None to see it. : 922 of 3000 events made reduce raise or answer outside OUTCOME_CODES
+
+======================================================================
+FAIL: test_random_mix_keeps_the_vault_exact (tests.test_final.P3_VaultInvariant)
+After every submission of a random mix (valid and malformed bodies, shared keys, texts and labels, retries): every stored
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final.py", line 237, in test_random_mix_keeps_the_vault_exact
+    self.assertEqual(bad[:5], [], "%d submissions left the vault inexact (step, orphan values, stale mappings)" % len(bad))
+AssertionError: Lists differ: [(39, 1, 0), (40, 1, 0), (41, 1, 0), (42, 1, 0), (43, 1, 0)] != []
+
+First list contains 5 additional elements.
+First extra element 0:
+(39, 1, 0)
+
+- [(39, 1, 0), (40, 1, 0), (41, 1, 0), (42, 1, 0), (43, 1, 0)]
++ [] : 361 submissions left the vault inexact (step, orphan values, stale mappings)
+
+----------------------------------------------------------------------
+Ran 16 tests in 3.747s
+
+FAILED (failures=16)
