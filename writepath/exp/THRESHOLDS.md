@@ -663,3 +663,48 @@ Order:
    fixed arm must be violated in CAS, ITEM, REQ and CONN (the code under test is still 1fcf3f7's). Saved, not stamped.
 3. The fix commit.
 4. One stamped run at the post-fix commit named by the rerun amendment.
+
+## Amendment 22 (2026-11-17, review-2 N3, written before any run of the changed fixture): plan stability on the facts path
+Finding (review-2 N3):
+- The fixture of amendments 18 to 18c appends message events only, so no facts exist.
+- The facts-delete measurements of the 62c6be5 run are zero while its gate holds.
+- A statement missing from the auto_explain log counted as zero work (per_event).
+- CTL_APPLY restores the analyst and facts fragments together, so its sensitivity can come from the analyst path alone.
+
+The 62c6be5 plan_stability PASS stands for the analyst-job delete and the residue function only. It shows nothing about
+the facts delete. The claim is not narrowed; the facts path is populated and gated instead.
+
+Fixture change, everything else as in 18 to 18c:
+- **X.** X's M events alternate: even i is a fact event (exp.util.fact, a distinct attribute per event), odd i a message.
+  Every cascade batch therefore carries both analyst jobs and facts.
+- **Y and the small tenants.** Y's 5 events and each small tenant's 20 events alternate the same way. Their facts are
+  the surviving facts.
+- **Derivation.** Facts come from the shipped Projector.derive() under a real projector lease and cursor. It is a
+  Postgres-only path; Elasticsearch is not touched.
+- **Order.** Small tenants are derived before the S2 ANALYZE. X and Y are derived after it, so in S2 their facts are
+  as stale as their events.
+
+Gates, added to PS-C and PS-R and required in every run of both states:
+- **PS-F1, logged.** In every cascade batch that processed events, both the analyst_jobs delete and the facts delete
+  appear in the auto_explain log. A missing statement fails the run's PS-C; it is never counted as zero.
+- **PS-F2, work.** The facts delete's work is greater than 0 in every such batch.
+- **PS-F3, representative rows.**
+  - Before the cascade, X has ceil(M/2) facts (more than 0).
+  - After the cascade, X has 0 facts and 0 analyst jobs.
+  - Every surviving fact and analyst job (Y and the small tenants) is still present.
+- **PS-R, logged.** The residue statement appears in the log exactly once. Otherwise PS-R fails.
+
+New control CTL_FACTS (one mechanism): in wp_erasure_apply, the facts-delete fragment and the function header are put
+back to their pre-fix forms; the analyst fragment stays fixed. A CTL_FACTS run counts as violated only when the PS-C
+gate of the facts delete fails in that run (a failure of another gate does not count). Required: violated in at least
+2 of 3 runs in each of S1 and S2.
+
+CTL_APPLY and CTL_RESIDUE keep their rules and required states (18b). Each control run now also records which
+statement's gate failed.
+
+PASS = every run of both states holds PS-C (including PS-F1 and PS-F2), PS-R and PS-F3, AND each control meets its
+requirement. Otherwise FAIL.
+
+Order:
+1. This amendment, alone.
+2. The fixture and gate change, then one stamped run at the post-fix commit named by the rerun amendment.
