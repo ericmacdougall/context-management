@@ -821,3 +821,32 @@ runkit/launch_one.sh).
   mid-batch). A batch-d run that ends BLOCKED or VOID and is rerun after this amendment is rerun at the later commit,
   under 20 GB, and both records are reported.
 - **Unchanged experiments.** This changes only when a run may start, not any experiment or threshold.
+
+## Amendment 24a (2026-11-17, after batch d stopped at 2e1948c, before any further run; thresholds unchanged)
+What happened in batch d at 2e1948c:
+- **Three runs stand, all PASS:** d3, mutual_mentions and lock_order. Each has 0 high-watermark and 0 flood lines in
+  its window.
+  - d3's PASS is the rerun of its FAIL at 31112b4 (amendment 23a). That FAIL still stands, and both are reported.
+- **d2 is VOID** (amendment 23a's rule, applied as written).
+  - The experiment returned PASS, but other tenants pushed the ES node past its high disk watermark at 16:34:45Z
+    (free 15.7 GiB) and into flood stage at 16:35:15Z (free 12.6 GiB). This stream's own usage was +0.00 GiB at the
+    run's check.
+  - The watcher wrote STOP at 16:34:52Z and `disk_gate end` voided the run. The chain stopped, as designed.
+
+Batch e:
+- **Named commit.** The commit that adds this amendment; it changes only this file.
+- **Code.** `git diff 2e1948c <named commit> -- writepath/wp` is empty. Since 2e1948c only exp/disk_gate.py START_GB
+  (amendment 24), runkit/launch_one.sh, tests/test_disk_gate.py and runkit/specs/step1-e.txt changed. No experiment
+  module and no threshold changed.
+- **Spec.** runkit/specs/step1-e.txt: cleanup, setup reset, preflight, then d2 and every later line of step1-d.txt,
+  unchanged.
+- **Start line.** 20 GB host free (amendment 24). The batch also takes the lab run lock (main's serial-run rule of
+  16:45Z) and releases it when the chain ends.
+- **Rules.** Amendment 23's: once each; VOID may be rerun; a FAIL is not; no verdict is a FAIL.
+- **If batch e voids on disk again,** the remaining runs wait for main's decision; they are not rerun on the
+  owner's own initiative.
+- **Report.** Step 1's stamped set is:
+  - the 17 runs at 31112b4;
+  - d3 (FAIL at 31112b4 and PASS at 2e1948c), mutual_mentions and lock_order at 2e1948c;
+  - batch e;
+  - heldout_secrets, carried from 62c6be5.
