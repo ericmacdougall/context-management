@@ -2,8 +2,11 @@
 --
 -- Boundary. The application role dc_app holds NO table, column or sequence privilege. It may EXECUTE only the session-keyed API
 -- (dc.submit, dc.explain, dc.read_table, dc.erase_candidates, dc.erase_values), each SECURITY DEFINER with a pinned search_path. The
--- identity adapter's role dc_idp may EXECUTE only dc.open_session. Identity (tenant, principal, channel) comes ONLY from a dc.sessions
--- row found by sha256(token); the row is written only by dc.open_session. Authority changes (revoke, grant) are applied inside the
+-- identity adapter's role dc_idp may EXECUTE only dc.open_session and dc.end_session. Identity (tenant, principal, channel) comes ONLY
+-- from a dc.sessions row found by sha256(token); the row is written only by dc.open_session, and only from an authentication PROOF made
+-- by an enrolled factor (a device or key: HMAC-SHA256 under the factor's key over tenant, principal, channel, factor, nonce, expiry).
+-- Factor keys live in dc.factors, which no login role can read, so dc_idp relays proofs and cannot mint a session from a bare principal
+-- id (step 2, R3-1). Actor and trust origin are derived from the session (dc._origin). Authority changes (revoke, grant) are applied inside the
 -- same function, from the event that function built and judged: there is no separately callable apply step.
 --
 -- The rules are CORE-RULES.md, ported rule by rule from pol/_core.py (the Python core stays as the differential oracle). Labels are
@@ -50,6 +53,12 @@ create index vals_subjects on dc.vals using gin(subjects);
 create table dc.subject_tokens(tenant text not null, subject text not null, token text not null unique, primary key (tenant, subject));
 create table dc.sessions(token_hash text primary key, tenant text not null, principal text not null, channel text not null, factor text not null,
                          expires_at timestamptz not null, revoked bool not null default false);
+-- step 2: enrolled factors and the proofs already used (replay ledger, pruned after expiry). Owner-only: no login role holds any privilege.
+create table dc.factors(factor text primary key, tenant text not null, principal text not null, channel text not null, key bytea not null,
+                        revoked bool not null default false, enrolled_at timestamptz not null default now(),
+                        foreign key (tenant, principal) references dc.principal(tenant, pid));
+create table dc.used_proofs(factor text not null references dc.factors(factor), nonce text not null, expires timestamptz not null,
+                            primary key (factor, nonce));
 
 -- ------------------------------------------------------------------------------------------------ append-only, chained log
 create function dc.events_chain() returns trigger language plpgsql security definer set search_path = dc, pg_temp as $$
@@ -532,21 +541,95 @@ begin
 end $$;
 
 -- ------------------------------------------------------------------------------------------------ sessions (identity adapter only)
-create function dc.open_session(p_tenant text, p_principal text, p_channel text, p_factor text, p_ttl_s integer) returns text
+-- (actor, trust_origin) from the session's principal kind and channel: pol._core.origin is the same table (ASSUMPTION: vocabulary from
+-- COMPOSITION.md items 1 and 3; only a human on an owner channel is user_typed)
+create function dc._origin(p_kind text, p_channel text) returns jsonb language sql immutable as $$
+  select case when p_kind = 'human' and p_channel in ('owner_ui', 'owner_cli') then jsonb_build_object('actor', 'user', 'trust_origin', 'user_typed')
+              else jsonb_build_object('actor', 'assistant', 'trust_origin', 'agent_generated') end
+$$;
+
+-- admin path (owner or superuser only; granted to no login role): enrol a factor for a principal on the channel its kind allows. The key
+-- is returned ONCE to the enroller (the device keeps it) and stays in dc.factors. LIMIT: a symmetric MAC, so the database owner can
+-- forge proofs; pgcrypto offers no signature verification.
+create function dc.enroll_factor(p_tenant text, p_principal text, p_channel text) returns jsonb
 language plpgsql security definer set search_path = dc, pg_temp as $$
 #variable_conflict use_variable
-declare k text; tok text;
+declare k text; f text; key bytea;
 begin
   select p.kind into k from dc.principal p where p.tenant = p_tenant and p.pid = p_principal and not p.revoked;
   if k is null then raise exception 'unknown or revoked principal' using errcode = 'P0001'; end if;
   if (k = 'human' and p_channel not in ('owner_ui', 'owner_cli')) or (k <> 'human' and p_channel is distinct from 'agent_api') then
     raise exception 'channel does not match the principal kind' using errcode = 'P0001';
   end if;
-  if p_factor is null or p_factor = '' or p_ttl_s is null or p_ttl_s < 1 or p_ttl_s > 86400 then raise exception 'bad factor or ttl'; end if;
-  tok := replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
-  insert into dc.sessions values (encode(sha256(convert_to(tok, 'UTF8')), 'hex'), p_tenant, p_principal, p_channel, p_factor,
+  f := 'fac-' || encode(dc_crypto.gen_random_bytes(12), 'hex');
+  key := dc_crypto.gen_random_bytes(32);
+  insert into dc.factors(factor, tenant, principal, channel, key) values (f, p_tenant, p_principal, p_channel, key);
+  return jsonb_build_object('factor', f, 'key', encode(key, 'hex'));
+end $$;
+
+-- the identity adapter (dc_idp): a session ONLY from a proof. Tenant, principal and channel come from the factor row; the proof must name
+-- the same ones, be unexpired and at most 300 s ahead, carry a nonce not used before with this factor, and the principal must be
+-- unrevoked with a channel its kind allows. Refusals raise P0001 'proof refused: <reason>' and write nothing.
+create function dc.open_session(p_proof text, p_ttl_s integer) returns jsonb
+language plpgsql security definer set search_path = dc, pg_temp as $$
+#variable_conflict use_variable
+declare body text; mac text; b jsonb; fr dc.factors; k text; x numeric; tok text; n int;
+begin
+  if p_proof is null or length(p_proof) > 2048 or p_ttl_s is null or p_ttl_s < 1 or p_ttl_s > 86400 then
+    raise exception 'proof refused: shape' using errcode = 'P0001';
+  end if;
+  body := substring(p_proof from '^(.*)[.][0-9a-f]{64}$');
+  mac := substring(p_proof from '[.]([0-9a-f]{64})$');
+  if body is null or mac is null then raise exception 'proof refused: shape' using errcode = 'P0001'; end if;
+  begin
+    b := body::jsonb;
+  exception when others then
+    raise exception 'proof refused: shape' using errcode = 'P0001';
+  end;
+  if jsonb_typeof(b) is distinct from 'object'
+     or (select array_agg(j order by j collate "C") from jsonb_object_keys(b) j)
+        is distinct from array['channel', 'expires', 'factor', 'nonce', 'principal', 'tenant']
+     or jsonb_typeof(b->'expires') <> 'number'
+     or exists (select 1 from unnest(array['channel', 'factor', 'nonce', 'principal', 'tenant']) j where jsonb_typeof(b->j) <> 'string')
+     or (b->>'nonce') !~ '^[0-9a-f]{32}$' then
+    raise exception 'proof refused: shape' using errcode = 'P0001';
+  end if;
+  select f.* into fr from dc.factors f where f.factor = b->>'factor';
+  -- compare digests of the two MACs, so the comparison time says nothing about how much of a guessed MAC was right
+  if fr.factor is null or dc_crypto.digest(mac, 'sha256')
+       <> dc_crypto.digest(encode(dc_crypto.hmac(convert_to(body, 'UTF8'), fr.key, 'sha256'), 'hex'), 'sha256') then
+    raise exception 'proof refused: signature' using errcode = 'P0001';
+  end if;
+  if fr.revoked then raise exception 'proof refused: factor revoked' using errcode = 'P0001'; end if;
+  if b->>'tenant' <> fr.tenant or b->>'principal' <> fr.principal or b->>'channel' <> fr.channel then
+    raise exception 'proof refused: binding' using errcode = 'P0001';
+  end if;
+  x := (b->>'expires')::numeric;
+  if x <= extract(epoch from now()) or x > extract(epoch from now()) + 300 then raise exception 'proof refused: time' using errcode = 'P0001'; end if;
+  select p.kind into k from dc.principal p where p.tenant = fr.tenant and p.pid = fr.principal and not p.revoked;
+  if k is null then raise exception 'proof refused: principal' using errcode = 'P0001'; end if;
+  if (k = 'human' and fr.channel not in ('owner_ui', 'owner_cli')) or (k <> 'human' and fr.channel <> 'agent_api') then
+    raise exception 'proof refused: channel' using errcode = 'P0001';
+  end if;
+  delete from dc.used_proofs u where u.factor = fr.factor and u.expires < now() - interval '1 minute';       -- expired proofs are refused anyway
+  insert into dc.used_proofs values (fr.factor, b->>'nonce', to_timestamp(x)) on conflict do nothing;      -- a concurrent twin waits, then sees it
+  get diagnostics n = row_count;
+  if n = 0 then raise exception 'proof refused: replayed' using errcode = 'P0001'; end if;
+  tok := encode(dc_crypto.gen_random_bytes(32), 'hex');
+  insert into dc.sessions values (encode(sha256(convert_to(tok, 'UTF8')), 'hex'), fr.tenant, fr.principal, fr.channel, fr.factor,
                                   now() + make_interval(secs => p_ttl_s), false);
-  return tok;
+  return jsonb_build_object('token', tok, 'tenant', fr.tenant, 'principal', fr.principal, 'channel', fr.channel, 'factor', fr.factor);
+end $$;
+
+-- the identity adapter ends a session (logout, or a failed in-process issue): the token is refused from then on
+create function dc.end_session(p_token text) returns boolean language plpgsql security definer set search_path = dc, pg_temp as $$
+#variable_conflict use_variable
+declare n int;
+begin
+  update dc.sessions s set revoked = true
+   where p_token is not null and s.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex') and not s.revoked;
+  get diagnostics n = row_count;
+  return n = 1;
 end $$;
 
 create function dc._session(p_token text) returns dc.sessions language sql stable as $$
@@ -575,7 +658,7 @@ begin
   if exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.revoked) then
     insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'principal_revoked'); return dc._out('principal_revoked', null, null, null);
   end if;
-  if p_body ?| array['tenant', 'principal', 'channel', 'id'] then
+  if p_body ?| array['tenant', 'principal', 'channel', 'id', 'actor', 'trust_origin'] then
     insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'identity_in_body'); return dc._out('identity_in_body', null, null, null);
   end if;
   cid := case when jsonb_typeof(p_body->'client_id') = 'string' then p_body->>'client_id' end;
@@ -583,7 +666,8 @@ begin
     insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
   end if;
   ev := (p_body - 'client_id' - 'value' - 'label')
-        || jsonb_build_object('id', s.principal || '/' || cid, 'tenant', s.tenant, 'principal', s.principal, 'channel', s.channel);
+        || jsonb_build_object('id', s.principal || '/' || cid, 'tenant', s.tenant, 'principal', s.principal, 'channel', s.channel)
+        || dc._origin((select p.kind from dc.principal p where p.tenant = s.tenant and p.pid = s.principal), s.channel);
   perform dc._lock_event(s.tenant, ev);                 -- tenant FOR SHARE: erase_values (FOR UPDATE) cannot interleave with minting below
   if p_body ? 'value' then
     if jsonb_typeof(p_body->'value') <> 'string' or not p_body ? 'label' then
@@ -716,4 +800,4 @@ grant execute on all functions in schema dc_crypto to dc_owner;
 grant usage on schema dc to dc_app, dc_idp;
 grant execute on function dc.submit(text, jsonb), dc.explain(text, text), dc.read_table(text), dc.erase_candidates(text, text),
                           dc.erase_values(text, text, text[]) to dc_app;
-grant execute on function dc.open_session(text, text, text, text, integer) to dc_idp;
+grant execute on function dc.open_session(text, integer), dc.end_session(text) to dc_idp;

@@ -73,19 +73,16 @@ class Review3Pg(unittest.TestCase):
     # ---------------------------------------------------------------- worlds
     def _world(self, tenant=T, **pol):
         from pol.policy import parse_policy
-        from tests.kit import World, policy_doc
+        from tests.kit import policy_doc
         doc = policy_doc(**pol)
         doc["grants"][TB] = doc["grants"][T]
         for d in doc["destinations"].values():
             d["tenants"] = [T, TB]
-        w = World(principals=_principals(tenant), policy=parse_policy(doc), core_config=dict(CFG, tenant=tenant))
+        from tests.kit import PgLab
+        lab = PgLab(self.o, self.idp, principals=_principals(tenant), policy=parse_policy(doc), core_config=dict(CFG, tenant=tenant))
         conn = Counting(self.raw)
-        svc = pgcore.PgDecisionService(w.enf, conn)
-        bridge = pgcore.PgSessionBridge(w.sessions, self.idp)
-
-        def s(pid, channel=None):
-            return bridge.issue(w.idp.credential(pid, channel or ("owner_ui" if CFG["principals"][pid] == "human" else "agent_api")))
-        return w, svc, s, conn
+        svc = pgcore.PgDecisionService(lab.w.enf, conn)
+        return lab.w, svc, lab.s, conn
 
     def _counts(self):
         q = lambda s: self.o.execute(s).fetchone()[0]          # noqa: E731
@@ -289,9 +286,10 @@ class Review3Rollback(unittest.TestCase):
         MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
 
     def _token(self, pid="alice"):
+        from tests.kit import pg_token
         idp = pgcore.connect_idp(self.port, os.environ["POL_PG_IDP_PASSFILE"])
         try:
-            return idp.execute("select dc.open_session(%s,%s,'owner_ui','f',60)", (T, pid)).fetchone()[0]
+            return pg_token(self.o, idp, T, pid, "owner_ui")        # a login: enrolment, proof and session (excluded from the data mark)
         finally:
             idp.close()
 

@@ -120,7 +120,9 @@ class Conns:
         self.idp = pg.connect_idp(port, os.environ["POL_PG_IDP_PASSFILE"], "b3_idp")
 
     def token(self, pid, channel="owner_ui"):
-        return self.idp.execute("select dc.open_session(%s, %s, %s, %s, 600)", (T, pid, channel, "b3-lab-factor")).fetchone()[0]
+        """A session the deployment way (step 2): the owner enrols a lab factor, the device's proof opens the session through dc_idp."""
+        from tests.kit import pg_token
+        return pg_token(self.adm, self.idp, T, pid, channel, 600)
 
     def close(self):
         for c in (self.a, self.b, self.mon, self.adm, self.app_a, self.app_b, self.idp):

@@ -115,7 +115,7 @@ def build_old_history(OLD, seed, logs=3):
 
 
 def api_write(t, label):
-    """One real request through dc_idp (open_session) and dc_app (dc.submit) by an unrevoked human with authority, a proposal with a
+    """One real request through dc_idp (a factor's proof to open_session) and dc_app (dc.submit) by an unrevoked human with authority, a proposal with a
     value (an applied write: an event and a vault row): (code, event id)."""
     port, _sp, _apw, ap, _ip, idpf = env()
     o = owner("mig_api")
@@ -126,10 +126,11 @@ def api_write(t, label):
         return "no unrevoked human with authority left", None
     human, req = row
     hv = NEW.PgEngine(o, t)._head(req)["version"]
-    o.close()
     idp = NEW.connect_idp(port, idpf, "mig_idp")
-    tok = idp.execute("select dc.open_session(%s, %s, 'owner_ui', 'mig-lab', 60)", (t, human)).fetchone()[0]
+    from tests.kit import pg_token
+    tok = pg_token(o, idp, t, human, "owner_ui", 60)            # step 2: enrolled factor (owner), proof, session (dc_idp)
     idp.close()
+    o.close()
     app = NEW.connect_app(port, ap, "mig_app")
     cid = "mig-%s-%d" % (label, time.time_ns())
     lab = {"tenants": [t], "acl": [], "regions": None, "sensitivity": 0, "models": None, "banned": [], "local_only": False, "restricted": False,

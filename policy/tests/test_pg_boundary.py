@@ -2,7 +2,8 @@
 
 Red first: run at 7080a22 (artifact agent-ad21c9e102633fab2/artifacts/red_pg_boundary_7080a22.out). The application role (dc_app) must
 hold NO table, column, sequence or schema-CREATE privilege and no role membership, and EXECUTE exactly on the session-keyed API below;
-the identity adapter's role (dc_idp) EXECUTE exactly on dc.open_session. Every forgery from p10 must be refused. The hash chain must be
+the identity adapter's role (dc_idp) EXECUTE exactly on dc.open_session(proof, ttl) and dc.end_session (step 2: a session only from a
+factor's proof, never from a bare principal id). Every forgery from p10 must be refused. The hash chain must be
 checked against an anchor OUTSIDE the database, so an owner who rewrites rows AND recomputes every hash is detected (R3-8).
 
 Same environment as tests/test_pg.py (paths to 0600 files only)."""
@@ -16,6 +17,7 @@ try:
 except ImportError:              # pragma: no cover
     psycopg = None
 
+from tests.kit import enroll, pg_token
 from tests.test_pg import CFG, ENV, LAB, T, ev
 
 # The ONLY functions each login role may execute (regprocedure text). A change here is a reviewed API change.
@@ -24,7 +26,7 @@ from tests.test_pg import CFG, ENV, LAB, T, ev
 # in the database under the tenant row lock.
 APP_API = {"dc.submit(text,jsonb)", "dc.explain(text,text)", "dc.read_table(text)", "dc.erase_candidates(text,text)",
            "dc.erase_values(text,text,text[])"}
-IDP_API = {"dc.open_session(text,text,text,text,integer)"}
+IDP_API = {"dc.open_session(text,integer)", "dc.end_session(text)"}
 PRIVS_TABLE = ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")
 DENIED = (psycopg.errors.InsufficientPrivilege, psycopg.errors.UndefinedFunction, psycopg.errors.UndefinedTable,
           psycopg.errors.RaiseException) if psycopg else ()
@@ -114,9 +116,11 @@ class PgBoundary(unittest.TestCase):
             with self.assertRaises(DENIED):
                 with idp.transaction():
                     idp.execute("insert into dc.sessions values ('x','tenant-a','admin','owner_ui','f', now() + interval '1 hour', false)")
+            with self.assertRaises(DENIED):
+                idp.execute("select dc.open_session('tenant-a','alice','owner_ui','f',60)")          # step 2: no bare-principal mint
             with self.assertRaises(psycopg.errors.RaiseException):
-                idp.execute("select dc.open_session('tenant-a','alice','agent_api','f',60)")          # channel must match the kind
-            tok = idp.execute("select dc.open_session('tenant-a','alice','owner_ui','f',60)").fetchone()[0]
+                enroll(self.s, "tenant-a", "alice", "agent_api")                                      # channel must match the kind
+            tok = pg_token(self.s, idp, "tenant-a", "alice", "owner_ui")
         finally:
             idp.close()
         body = '{"type":"retract","client_id":"r","idem":"r","req":"r1","based_on":0}'
@@ -131,6 +135,9 @@ class PgBoundary(unittest.TestCase):
     def test_app_cannot_open_a_session(self):
         """R3-1 in the database: only the identity adapter's role opens sessions; dc_app cannot mint one or write the sessions table."""
         self._refused("select dc.open_session('tenant-a','admin','owner_ui','f',60)")
+        self._refused("select dc.open_session('x.' || repeat('0', 64), 60)")
+        self._refused("select dc.enroll_factor('tenant-a','admin','owner_ui')")
+        self._refused("select dc.end_session('x')")
         self._refused("insert into dc.sessions select")
 
     def test_submit_without_a_valid_session_is_refused(self):
@@ -149,7 +156,7 @@ class PgBoundary(unittest.TestCase):
         self.s.execute("insert into dc.vals values (%s, 'ref-x', 'about dana', %s, array['dana'])", (T, Jsonb(LAB)))
         idp = pgcore.connect_idp(self.port, os.environ["POL_PG_IDP_PASSFILE"])
         try:
-            tok = idp.execute("select dc.open_session(%s,'admin','owner_ui','f',60)", (T,)).fetchone()[0]
+            tok = pg_token(self.s, idp, T, "admin", "owner_ui")
         finally:
             idp.close()
         q = self.c.execute

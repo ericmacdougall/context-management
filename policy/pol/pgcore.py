@@ -3,7 +3,9 @@
 Roles. dc_owner (NOLOGIN) owns every table, trigger and function. dc_app (LOGIN) is the request handler's role: it holds NO table,
 column or sequence privilege and may only EXECUTE the session-keyed API (dc.submit, dc.explain, dc.read_table, dc.erase_candidates,
 dc.erase_values; SECURITY DEFINER, search_path pinned). dc_idp (LOGIN) is the identity adapter's role: it may only EXECUTE
-dc.open_session, which stores sha256(token) of a fresh random token for a principal and channel the adapter has authenticated.
+dc.open_session(proof, ttl) and dc.end_session(token). A session is opened only from a PROOF made by an enrolled factor (HMAC under a
+key that only owner code can read, single use, short-lived); tenant, principal and channel come from the factor row, so neither role
+can mint a session from a bare principal id (step 2, R3-1). Factors are enrolled on the admin path (dc.enroll_factor, owner only).
 Passwords are read from 0600 files; only SCRAM verifiers computed client-side are sent to the server.
 
 The decision rules run in plpgsql (dc._rules, ported from pol/_core.py, which stays as the differential oracle). Identity comes only
@@ -28,6 +30,7 @@ import hmac
 import json
 import os
 import secrets
+import threading
 import time
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Protocol
@@ -194,23 +197,73 @@ class PgSession:
     db_token: str
 
 
+class PgIdentity:
+    """The identity adapter (pol.identity.IdentityAdapter) for the Postgres deployment: a credential is a factor's PROOF, and the
+    database verifies it (dc.open_session over the dc_idp connection, which opens the session in the same call). The opened session's
+    token and stamped identity are kept for the bridge in a per-thread slot, because SessionAuthority.issue calls authenticate on the
+    caller's thread and returns only the in-process Session."""
+
+    def __init__(self, idp_conn, ttl_s: int = 3600):
+        if idp_conn is None:
+            raise TypeError("PgIdentity(idp_conn)")
+        self._c, self._ttl, self._slot = idp_conn, int(ttl_s), threading.local()
+
+    def authenticate(self, credential):
+        from .identity import Assertion
+        self._slot.opened = None
+        d = self._c.execute("select dc.open_session(%s, %s)", (credential, self._ttl)).fetchone()[0]
+        self._slot.opened = d
+        return Assertion(d["principal"], d["channel"], d["factor"])
+
+    def _take(self):
+        d, self._slot.opened = getattr(self._slot, "opened", None), None
+        return d
+
+    def _end(self, token) -> bool:
+        return bool(self._c.execute("select dc.end_session(%s)", (token,)).fetchone()[0])
+
+
 class PgSessionBridge:
-    """The identity adapter's side: authenticates a credential through the SessionAuthority, opens the matching database session over a
-    dc_idp connection and attaches its token to the in-process Session. Holds the only connection that can open sessions; a request
-    handler holds a PgDecisionService (dc_app) only. If opening or attaching fails, the in-process session is ended."""
+    """Issues a PgSession from a proof: the SessionAuthority (whose identity adapter is a PgIdentity) verifies it through the database,
+    which opens the database session; the in-process Session must name the same tenant, principal and channel, and its token is attached
+    to that Session (review-3 N1). Any failure after the database session opened ends it, so no usable token is left behind. end() ends
+    both sides. A request handler holds a PgDecisionService (dc_app) only; this object holds the dc_idp side."""
 
-    def __init__(self, sessions, idp_conn, ttl_s: int = 3600):
-        self._sessions, self._c, self._ttl = sessions, idp_conn, int(ttl_s)
+    def __init__(self, sessions):
+        idp = getattr(sessions, "_idp", None)
+        if not isinstance(idp, PgIdentity):
+            raise TypeError("PgSessionBridge needs a SessionAuthority whose identity adapter is a PgIdentity")
+        self._sessions, self._idp = sessions, idp
 
-    def issue(self, credential) -> PgSession:
-        s = self._sessions.issue(credential)
+    def issue(self, proof) -> PgSession:
+        from .identity import AuthenticationFailed
         try:
-            tok = self._c.execute("select dc.open_session(%s,%s,%s,%s,%s)", (s.tenant, s.principal_id, s.channel, "lab", self._ttl)).fetchone()[0]
-            self._sessions._bind(s, PG_TOKEN, tok)
+            s = self._sessions.issue(proof)
         except BaseException:
+            d = self._idp._take()
+            if d is not None:                             # the database accepted the proof but the in-process side refused it
+                self._idp._end(d["token"])
+            raise
+        d = self._idp._take()
+        if d is None:                                     # unreachable: issue() succeeded only through PgIdentity.authenticate
+            self._sessions.end(s)
+            raise AuthenticationFailed("no database session")
+        try:
+            if (s.tenant, s.principal_id, s.channel) != (d["tenant"], d["principal"], d["channel"]):
+                raise AuthenticationFailed("database and in-process sessions name different identities")
+            self._sessions._bind(s, PG_TOKEN, d["token"])
+        except BaseException:
+            self._idp._end(d["token"])
             self._sessions.end(s)
             raise
-        return PgSession(s, tok)
+        return PgSession(s, d["token"])
+
+    def end(self, session) -> None:
+        """Logout: the database token is refused from now on, and the in-process Session is no longer live."""
+        if not isinstance(session, PgSession):
+            raise TypeError("PgSession")
+        self._idp._end(session.db_token)
+        self._sessions.end(session.session)
 
 
 class _SnapEngine:

@@ -41,7 +41,10 @@ from pol import _core, pgcore
 
 PRE = "dc_pre_r3_7"
 STATE_TABLES = ("principal", "role", "head", "props")
-MARK_EXCLUDED = ("sessions", "migration_mark")
+# Logins are not decision data: sessions, enrolled factors and the replay ledger exist only in the migrated schema (the pre-R3-7 schema
+# has no session path), so a rollback that drops them loses nothing the old schema could hold; enrolled devices re-enrol after a
+# re-migration (step 2). A proof used before a rollback could be replayed after a re-migration until it expires (at most 300 s).
+MARK_EXCLUDED = ("sessions", "factors", "used_proofs", "migration_mark")
 
 
 class MigrationRefused(Exception):

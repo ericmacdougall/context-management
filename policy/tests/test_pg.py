@@ -167,16 +167,14 @@ class PgProofs(unittest.TestCase):
     def _svc(self, **kw):
         from pol.policy import parse_policy
         from tests.kit import P, World, policy_doc
-        w = World(principals=[P("alice"), P("bob"), P("bot", kind="agent", model="local"), P("x", kind="analyst"), P("admin"),
-                              P("carol", clearance=0, groups=("other",))],
-                  policy=parse_policy(policy_doc(**kw)), core_config=dict(CFG))
+        from tests.kit import PgLab
         self.idp = pgcore.connect_idp(self.port, os.environ["POL_PG_IDP_PASSFILE"])
         self.addCleanup(self.idp.close)
-        bridge = pgcore.PgSessionBridge(w.sessions, self.idp)
-
-        def s(pid):
-            return bridge.issue(w.idp.credential(pid, "owner_ui" if CFG["principals"][pid] == "human" else "agent_api"))
-        return w, pgcore.PgDecisionService(w.enf, self.c), s
+        self._lab = PgLab(self.o, self.idp, principals=[P("alice"), P("bob"), P("bot", kind="agent", model="local"), P("x", kind="analyst"),
+                                                       P("admin"), P("carol", clearance=0, groups=("other",))],
+                          policy=parse_policy(policy_doc(**kw)), core_config=dict(CFG))
+        w = self._lab.w
+        return w, pgcore.PgDecisionService(w.enf, self.c), self._lab.s
 
     def test_service_over_postgres(self):
         """The service through the definer API: value refs, retry after a session refresh, forged body, scoped read, erasure with a hold."""
@@ -194,7 +192,7 @@ class PgProofs(unittest.TestCase):
         self.assertEqual(svc.explain(a, "r1")["value"]["text"], "dana is late")
         self.assertIsNone(svc.explain(s("x"), "r2"))               # x is not a participant of r2
         with self.assertRaises(psycopg.errors.RaiseException):
-            pgcore.PgSessionBridge(w.sessions, self.idp).issue(w.idp.credential("carol", "owner_ui"))   # not a principal of the core
+            s("carol")                                   # not a principal of the core: no factor can be enrolled, so no proof exists
         self.assertEqual([x["req"] for x in svc.table(a)], ["r1", "r2"])
         svc.submit(s("bob"), {"type": "propose", "client_id": "p1", "idem": "k3", "req": "r1", "value": "bob on dana",
                               "label": L(subjects=["dana"]).to_dict(), "based_on": 1})
