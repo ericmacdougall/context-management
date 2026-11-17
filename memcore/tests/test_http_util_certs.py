@@ -8,7 +8,9 @@ failed with a connection error, so a zero count cannot come from calls that neve
 import socket
 import ssl
 import threading
+import time
 import unittest
+from unittest import mock
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,18 +45,24 @@ class _CountLoads:
 
 
 def _refused_calls(n, context=None, port=None):
+    """Number of calls that failed with exactly a refused connection (ConnectionRefusedError), so a proxy, a DNS error or any other
+    early failure cannot satisfy the witness."""
     port = port or _closed_port()
-    failed = 0
+    refused = 0
     for _ in range(n):
         try:
             http_util.urlopen(urllib.request.Request("https://127.0.0.1:%d/x" % port), timeout=2, context=context)
-        except (urllib.error.URLError, OSError):
-            failed += 1
-    return failed
+        except urllib.error.URLError as e:
+            if isinstance(e.reason, ConnectionRefusedError):
+                refused += 1
+    return refused
 
 
 class CertStoreLoadedOnce(unittest.TestCase):
     def setUp(self):
+        p = mock.patch("urllib.request.getproxies", lambda: {})      # no proxy from the environment can intercept the loopback calls
+        p.start()
+        self.addCleanup(p.stop)
         # reset module caches so the count is independent of test order (works on the prior module too: attributes absent)
         for name, val in (("_default_ctx", None),):
             if hasattr(http_util, name):
@@ -65,8 +73,8 @@ class CertStoreLoadedOnce(unittest.TestCase):
     def test_default_context_calls_load_the_ca_store_once(self):
         with _CountLoads() as c:
             failed = _refused_calls(20)
-        self.assertEqual(failed, 20, "witness: all 20 calls ran and were refused at connect")
-        self.assertLessEqual(c.n, 1, "CA store loaded %d times for 20 calls" % c.n)
+        self.assertEqual(failed, 20, "witness: all 20 calls ran and were refused at connect (ConnectionRefusedError)")
+        self.assertEqual(c.n, 1, "CA store loaded %d times for 20 calls: exactly one load expected" % c.n)
 
     def test_concurrent_calls_share_one_load(self):
         port = _closed_port()
@@ -78,8 +86,31 @@ class CertStoreLoadedOnce(unittest.TestCase):
             ts = [threading.Thread(target=work) for _ in range(8)]
             [t.start() for t in ts]
             [t.join() for t in ts]
-        self.assertEqual(sum(res), 40, "witness: 40 calls ran and were refused")
-        self.assertLessEqual(c.n, 1, "CA store loaded %d times for 40 concurrent calls" % c.n)
+        self.assertEqual(sum(res), 40, "witness: 40 calls ran and were refused (ConnectionRefusedError)")
+        self.assertEqual(c.n, 1, "CA store loaded %d times for 40 concurrent calls: exactly one load expected" % c.n)
+
+    def test_concurrent_first_calls_for_one_context_build_exactly_one_opener(self):
+        ctx = ssl.create_default_context()
+        built, gate = [], threading.Barrier(8)
+        real = urllib.request.build_opener
+
+        def counting(*handlers):
+            built.append(1)
+            time.sleep(0.05)                      # widen the window in which a second thread could also miss
+            return real(*handlers)
+        got = []
+
+        def work():
+            gate.wait()
+            got.append(http_util._opener_for(ctx))
+        with mock.patch("urllib.request.build_opener", counting):
+            ts = [threading.Thread(target=work) for _ in range(8)]
+            [t.start() for t in ts]
+            [t.join() for t in ts]
+        self.assertEqual(len(got), 8)
+        self.assertEqual(len(built), 1, "opener built %d times for one context" % len(built))
+        self.assertEqual(len({id(o) for o in got}), 1)
+        self.assertEqual(len(http_util._openers), 1, "and no unrelated entry was evicted or added")
 
     def test_a_supplied_context_is_used_as_given_and_not_shared(self):
         verified = ssl.create_default_context()
