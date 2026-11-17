@@ -10,8 +10,9 @@ and how each is inventoried (tests/test_leak_scan.py fails on a creation site th
     *.crt / *.pem certs    public, skipped (listed)
     any other file         its stripped content; an unknown JSON file: each string value except id/name/expiration/type
   key store (the KMS stand-in): subject_keys.key_hex and tenant_keys.hkey_hex, read through `docker exec <PG container>
-    psql` (conf pg_container, pg_user, keys_db) unless --no-keystore REASON is given; and, derived from each tenant key,
-    the tenant chain key (HMAC-SHA256 over "chain-key:v1", wp/keys.py chain_key; the key service sends it as hex).
+    psql` (conf pg_container, pg_user, keys_db) unless --no-keystore REASON is given; derived from each tenant key, the
+    tenant chain key (HMAC-SHA256 over "chain-key:v1", wp/keys.py chain_key; the key service sends it as hex); and, when
+    the database `keys` exists, the legacy write path's keys (keys.key, tenant_keys.hkey; old_repro runs that code).
 Representations: the raw value, hex (both cases), base64 and base64url at all three byte alignments, UTF-16LE and
 UTF-16BE of a non-ASCII value; for key-store and derived keys also the raw bytes and base64 of the hex.
 Normalised views of each file: raw; NUL bytes removed (UTF-16 and UTF-32 text of ASCII values, at any alignment); with
@@ -104,6 +105,15 @@ SITES = [
      "file: secrets/es_broker_password"),
     ("exp/disk_gate.py", 'return "s-" + os.urandom(4).hex()', "stop id", "not secret"),
     ("exp/disk_gate.py", '"-" + os.urandom(4).hex()', "run id", "not secret"),
+    ("host/bootstrap.py", '"POSTGRES_PASSWORD_FILE=/run/secrets/pgpw"', "PG superuser password, passed by file",
+     "file: secrets/pg_password"),
+    ("wp/es_security.py", 'startswith(("xpack.security.", "ELASTIC_PASSWORD"))', "ES bootstrap password variable",
+     "not a creation: removed from the recreated container's environment"),
+    # The legacy write path (old_repro runs it from WP_HOME/oldsrc against this stream's PG, database keys):
+    ("legacy:a13b524:systems/memsys/kms.sql", "k := encode(gen_random_bytes(32), 'hex');", "legacy subject keys",
+     "key store: database keys, table keys (column key)"),
+    ("legacy:a13b524:systems/memsys/kms.sql", "(t, encode(gen_random_bytes(32), 'hex')) on conflict do nothing",
+     "legacy tenant keys", "key store: database keys, table tenant_keys (column hkey)"),
 ]
 
 
@@ -295,15 +305,19 @@ def _file_values(fn, d_name, raw, inv, rel):
     return vals
 
 
-def _psql_keys(c, conf, q):
+def _psql(c, conf, q, db=None):
     try:
-        r = subprocess.run(["docker", "exec", c, "psql", "-U", conf("pg_user", "wp"), "-d", conf("keys_db", "wp_keys"),
+        r = subprocess.run(["docker", "exec", c, "psql", "-U", conf("pg_user", "wp"), "-d", db or conf("keys_db", "wp_keys"),
                             "-At", "-v", "ON_ERROR_STOP=1", "-c", q], capture_output=True, timeout=600)
     except (OSError, subprocess.TimeoutExpired) as e:
         raise ScanError(f"key store not readable ({type(e).__name__}); pass --no-keystore REASON to scan without it") from None
     if r.returncode != 0:
         raise ScanError(f"key store not readable (psql exit {r.returncode}); pass --no-keystore REASON to scan without it")
-    words = r.stdout.decode("utf-8", "replace").split()
+    return r.stdout.decode("utf-8", "replace").split()
+
+
+def _psql_keys(c, conf, q, db=None):
+    words = _psql(c, conf, q, db)
     keys = [x for x in words if re.fullmatch(r"[0-9a-fA-F]{32,}", x) and len(x) % 2 == 0]
     if len(keys) != len(words):
         raise ScanError(f"the key store returned {len(words) - len(keys)} value(s) that are not hex keys")
@@ -358,6 +372,13 @@ def load_inventory(home, keystore=None, no_keystore=None, secrets_dir=None):
                            [("derived chain key", k) for k in derived_keys(tenant)])
         inv["coverage"].append((f"key store: {len(subject)} subject and {len(tenant)} tenant key(s), {len(tenant)} "
                                 "derived chain key(s); keys destroyed before this scan cannot be checked",))
+        if _psql(c, conf, "select datname from pg_database where datname = 'keys'") == ["keys"]:
+            legacy = (_psql_keys(c, conf, "select key from keys", db="keys") +
+                      _psql_keys(c, conf, "select hkey from tenant_keys", db="keys"))
+            inv["keystore"] += [("legacy key store", k) for k in legacy]
+            inv["coverage"].append((f"legacy key store (database keys, old_repro): {len(legacy)} key(s)",))
+        else:
+            inv["coverage"].append(("legacy key store (database keys, old_repro): absent",))
     if not inv["file"] and not inv["keystore"]:
         raise ScanError("no secret value inventoried: nothing to compare against")
     mem = sorted({what for _, _, what, how in SITES if how.startswith("memory only")})
