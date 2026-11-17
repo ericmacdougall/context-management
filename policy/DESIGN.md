@@ -145,7 +145,11 @@ the examples and default deny are what ships.
   The blocking points and their tests are in `tests/test_final_pg.py` (each test witnesses the wait with `pg_blocking_pids`, so none
   passes because nothing waited). The memory `DecisionService` follows the same invariant: `MemoryEngine._submit` runs the service's
   final judgment inside the engine lock, after the key-lock and engine-lock waits and before the reduction; `explain` and `table`
-  judge after their reads; erasure judges inside the vault lock before each deletion (`tests/test_final.py`).
+  judge after their reads; erasure judges inside the vault lock before each deletion (`tests/test_final.py`). `PgDecisionService`
+  judges the in-process authority the database cannot see (the in-process session, the directory, the policy document's
+  revocations) again AFTER its database call: `dc.submit` and `dc.erase_values` run in their own transaction, rolled back when that
+  judgment refuses (`principal_revoked`, or `unauthenticated:invalid_session`; erasure `unauthorized`); reads are rendered by the
+  in-process service, which judges after its reads (`tests/test_final_pg.py::P1_PgServiceJudgment`).
 - Caller contract (restated from the code at the final review; it replaces the delta review 1 M1 text of 8928870):
   - Every `dc_idp` and `dc_app` call must run at READ COMMITTED, the default. READ UNCOMMITTED is refused like REPEATABLE READ and
     SERIALIZABLE: Postgres runs it as READ COMMITTED, but the guard compares the level name exactly and does not rely on that. Under

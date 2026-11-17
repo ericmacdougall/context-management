@@ -294,13 +294,21 @@ class _SnapVault:
         return None if v is None else {"tenant": tenant, "text": v["text"], "label": Label.from_dict(v["label"])}
 
 
+class _Refused(Exception):
+    """The in-process judgment after a database call refused (final review P1): rolls that call's transaction back."""
+
+
 class PgDecisionService:
     """DecisionService over the database API, as the request handler (dc_app) uses it.
 
     Every entry point (submit, explain, table, erase_subject) first verifies the PgSession and gets its token from the SessionAuthority,
     BEFORE any database call: the in-process Session must be live (verified by identity) and the PgSession's token must equal the token
     attached to that Session when the bridge issued it (review-3 N1). The database then derives tenant, principal and channel from that
-    token's session row, so the in-process check and the database act as the same principal, channel and tenant.
+    token's session row, so the in-process check and the database act as the same principal, channel and tenant. Final review P1: the
+    database call can wait, and the in-process authority (the in-process session, the directory, the policy document's revocations) is
+    invisible to the database's own final judgment, so it is judged again AFTER the call: a writing call (dc.submit, dc.erase_values)
+    runs in its own transaction and is rolled back when that judgment refuses (`_judged`); a read is rendered by the in-process
+    DecisionService, which judges after its reads.
 
     submit asks THE revocation source (pol.enforce.Revocations) exactly where the memory service does (review-3 N3): a principal revoked
     by the policy document (skeleton over-match included) or by a core revoke event is refused principal_revoked. LIMIT: the policy
@@ -330,6 +338,21 @@ class PgDecisionService:
             return None
         return p, bound
 
+    def _judged(self, session, pid, sql, args):
+        """One writing API call in its own transaction, judged in process again after it and before COMMIT (final review P1). Returns
+        (result, None), or (None, refusal code) with the call rolled back. Nothing after this judgment waits (COMMIT takes no lock)."""
+        try:
+            with self._c.transaction():
+                out = self._c.execute(sql, args).fetchone()[0]
+                v = self._verified(session)
+                if v is None or v[0].id != pid:
+                    raise _Refused("unauthenticated:invalid_session")
+                if self._enf._revocations._is_revoked(pid):
+                    raise _Refused("principal_revoked")
+                return out, None
+        except _Refused as e:
+            return None, e.args[0]
+
     def _refuse(self, pid, code, body):
         t = body.get("type") if isinstance(body, dict) else None
         self._enf._audit.add({"action": "decision", "principal": pid, "allow": False, "reason": code, "type": t,
@@ -346,10 +369,11 @@ class PgDecisionService:
         if self._enf._revocations._is_revoked(p.id):                  # as DecisionService.submit (R3-10, review-3 N3)
             return self._refuse(p.id, "principal_revoked", body)
         try:
-            payload = Jsonb(body)
-            out = self._c.execute("select dc.submit(%s, %s)", (tok, payload)).fetchone()[0]
+            out, why = self._judged(session, p.id, "select dc.submit(%s, %s)", (tok, Jsonb(body)))
         except (TypeError, ValueError):
-            out = {"code": "bad_event", "original": None, "id": None, "value_ref": None}
+            out, why = {"code": "bad_event", "original": None, "id": None, "value_ref": None}, None
+        if why is not None:
+            return self._refuse(p.id, why, body)
         if out.get("id") and not out["id"].startswith(p.id + "/"):
             raise RuntimeError("database session and in-process session name different principals")      # unreachable after _verified
         if out["code"] == "revoked":
@@ -406,7 +430,9 @@ class PgDecisionService:
                 allowed.append(x["ref"])
             except PolicyDenied as e:
                 out["queued" if e.decision.reason == "erasure_queued" else "denied"] += 1
-        res = self._c.execute("select dc.erase_values(%s, %s, %s)", (tok, subj, allowed)).fetchone()[0]
+        res, why = self._judged(session, p.id, "select dc.erase_values(%s, %s, %s)", (tok, subj, allowed))
+        if why is not None:
+            return dict(none, refused="unauthorized")
         if res.get("refused"):
             return dict(none, refused=res["refused"])
         out["erased"] = res["erased"]

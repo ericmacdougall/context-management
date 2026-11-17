@@ -1,0 +1,65 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
+# a2d65fd + tests/test_final_pg.py: sh kit/run.sh red-a2d65fd t -v tests.test_final_pg.P1_PgServiceJudgment
+test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) ... 
+  test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='policy_revoked') ... FAIL
+  test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='removed') ... FAIL
+test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) ... 
+  test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='policy_revoked') ... FAIL
+  test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='removed') ... FAIL
+
+======================================================================
+FAIL: test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='policy_revoked')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 426, in test_erase_subject
+    self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
+AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+
+First differing element 0:
+None
+'unauthorized'
+
+- (None, 0)
++ ('unauthorized', 1) : service erased after a wait with mutation policy_revoked
+
+======================================================================
+FAIL: test_erase_subject (tests.test_final_pg.P1_PgServiceJudgment.test_erase_subject) (mutation='removed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 426, in test_erase_subject
+    self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
+AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+
+First differing element 0:
+None
+'unauthorized'
+
+- (None, 0)
++ ('unauthorized', 1) : service erased after a wait with mutation removed
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='policy_revoked')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 408, in test_submit
+    self.assertEqual(r.get("code"), want, "service submit after a wait with mutation %s" % name)
+AssertionError: 'proposed' != 'principal_revoked'
+- proposed
++ principal_revoked
+ : service submit after a wait with mutation policy_revoked
+
+======================================================================
+FAIL: test_submit (tests.test_final_pg.P1_PgServiceJudgment.test_submit) (mutation='removed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix/runs/red-a2d65fd/src/tests/test_final_pg.py", line 408, in test_submit
+    self.assertEqual(r.get("code"), want, "service submit after a wait with mutation %s" % name)
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : service submit after a wait with mutation removed
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.700s
+
+FAILED (failures=4)

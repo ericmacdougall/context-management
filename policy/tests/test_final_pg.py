@@ -375,6 +375,57 @@ class P1_JudgmentNeverWaits(_Wait):
                 self.unrevoke("bob")
 
 
+class P1_PgServiceJudgment(_Wait):
+    """PgDecisionService (the request handler over dc_app) judges the IN-PROCESS authority (the in-process session, the directory, the
+    policy document's revocations), which the database's own judgment cannot see, before its database call, and that call can wait.
+    a2d65fd: a principal revoked by the policy document or removed from the directory while dc.submit or dc.erase_values waited was
+    applied. Fixed: the writing call runs in its own transaction and the in-process judgment runs again after it, before COMMIT."""
+
+    @staticmethod
+    def _mutations():
+        from pol.policy import parse_policy
+        from tests.kit import policy_doc
+        return (("live", None), ("policy_revoked", lambda w, pid: setattr(w, "pol", parse_policy(policy_doc(revoked=[pid])))),
+                ("removed", lambda w, pid: w.dir.remove(pid)))
+
+    def _lab(self):
+        from pol.policy import parse_policy
+        from tests.kit import P, PgLab, policy_doc
+        lab = PgLab(self.o, self.idp, principals=[P("alice"), P("bob"), P("admin")], policy=parse_policy(policy_doc()), core_config=dict(CFG))
+        return lab, pgcore.PgDecisionService(lab.w.enf, self.app)
+
+    def test_submit(self):
+        for name, mutate in self._mutations():
+            with self.subTest(mutation=name):
+                lab, svc = self._lab()
+                s, cid = lab.s("alice"), "c" + secrets.token_hex(4)
+                body = self.body(cid, "text " + cid, req="r2")
+                r, waited = self.blocked(self.app, lambda: svc.submit(s, body),
+                                         lambda c: c.execute("select 1 from dc.chainhead where tenant = %s for update", (T,)),
+                                         lambda: mutate and mutate(lab.w, "alice"), None, "alice")
+                self.assertTrue(waited, "vacuous: the service's dc.submit did not wait")
+                want = {"live": "proposed", "policy_revoked": "principal_revoked", "removed": "unauthenticated:invalid_session"}[name]
+                self.assertEqual(r.get("code"), want, "service submit after a wait with mutation %s" % name)
+                self.assertEqual(self.count("select count(*) from dc.events where tenant = %s and evid = %s", T, "alice/" + cid),
+                                 1 if name == "live" else 0)
+
+    def test_erase_subject(self):
+        for name, mutate in self._mutations():
+            with self.subTest(mutation=name):
+                lab, svc = self._lab()
+                ref = self.submit(self.app, self.tok("alice"), self.body(None, "about dana " + name, subjects=["dana"]))["value_ref"]
+                adm = lab.s("admin")
+                r, waited = self.blocked(self.app, lambda: svc.erase_subject(adm, "dana"),
+                                         lambda c: c.execute("select 1 from dc.vals where tenant = %s and ref = %s for update", (T, ref)),
+                                         lambda: mutate and mutate(lab.w, "admin"), None, "admin")
+                self.assertTrue(waited, "vacuous: the service's dc.erase_values did not wait")
+                left = self.count("select count(*) from dc.vals where tenant = %s and ref = %s", T, ref)
+                if name == "live":
+                    self.assertEqual((r["refused"], left), (None, 0))
+                else:
+                    self.assertEqual((r["refused"], left), ("unauthorized", 1), "service erased after a wait with mutation %s" % name)
+
+
 class P4_OpenSessionBlockingPoints(_Wait):
     """dc.open_session: the replay-ledger insert waits for a concurrent presentation of the same proof (an uncommitted ledger row);
     the prune waits for a concurrent prune of the same rows; the ledger's foreign key waits for a factor row held FOR UPDATE."""
