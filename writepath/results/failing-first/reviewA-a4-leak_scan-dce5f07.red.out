@@ -1,0 +1,195 @@
+# failing-first receipt
+# date: 2026-11-17T19:34:19Z
+# file under test: dce5f07:writepath/runkit/leak_scan.py blob b687b64f51d64735934ec066d9c74700407daa51 sha256 241de9c5850978cafe742b633f52539e0f281379d863a42bd6e9bf40e96fe783
+# test file: tests/test_leak_scan.py at HEAD 2337ba4 blob 27ed5c59529b2b2c243f99a76e8ccf4d7f148907
+# command: LEAK_SCAN_UNDER_TEST=<that file> python3 -m unittest tests.test_leak_scan -v
+test_a_hit_exits_1 (tests.test_leak_scan.Scan) ... FAIL
+test_clean_tree_exits_0 (tests.test_leak_scan.Scan) ... FAIL
+test_each_representation_is_found (tests.test_leak_scan.Scan) ... test_in_process_find_for_issuing_processes (tests.test_leak_scan.Scan) ... skipped "library function of this tree's scanner (not counted as red)"
+test_no_value_or_fragment_is_printed (tests.test_leak_scan.Scan) ... ok
+test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan) ... FAIL
+test_self_test_runs_with_every_scan (tests.test_leak_scan.Scan) ... skipped "the self-test is a feature of this tree's scanner (not counted as red)"
+test_unreadable_key_store_fails_closed (tests.test_leak_scan.Scan) ... FAIL
+test_unreadable_secret_source_fails_closed (tests.test_leak_scan.Scan) ... FAIL
+
+======================================================================
+FAIL: test_a_hit_exits_1 (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 136, in test_a_hit_exits_1
+    self.assertEqual(self.rc, 1, "a scan with hits must exit 1 so the copy step can refuse")
+AssertionError: 0 != 1 : a scan with hits must exit 1 so the copy step can refuse
+
+======================================================================
+FAIL: test_clean_tree_exits_0 (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 145, in test_clean_tree_exits_0
+    self.assertNotIn("HIT ", out)
+AssertionError: 'HIT ' unexpectedly found in 'candidate secret values loaded: 8\nfiles scanned: 1 files with a secret value: 1\nHIT /var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp3exqjbzq/clean/result.json 1\n'
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='legacy_oldhome_password')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'legacy_oldhome_password' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation legacy_oldhome_password
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='elastic_password_percent_encoded_url')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'elastic_password_percent_encoded_url' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation elastic_password_percent_encoded_url
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='basic_header_elastic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'basic_header_elastic' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation basic_header_elastic
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='apikey_key_alone')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'apikey_key_alone' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation apikey_key_alone
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='apikey_key_json_unicode_escaped')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'apikey_key_json_unicode_escaped' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation apikey_key_json_unicode_escaped
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='hex')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'hex' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation hex
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='hex_upper')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'hex_upper' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation hex_upper
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='split_across_lines')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'split_across_lines' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation split_across_lines
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='split_in_json_string')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'split_in_json_string' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation split_in_json_string
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='inside_wrapped_base64_document')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'inside_wrapped_base64_document' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation inside_wrapped_base64_document
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='fragment_of_22_chars')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'fragment_of_22_chars' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation fragment_of_22_chars
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='keystore_key_hex')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'keystore_key_hex' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation keystore_key_hex
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='keystore_key_hex_upper')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'keystore_key_hex_upper' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation keystore_key_hex_upper
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='keystore_key_base64')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'keystore_key_base64' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation keystore_key_base64
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='keystore_key_base64url')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'keystore_key_base64url' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation keystore_key_base64url
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='keystore_key_raw_bytes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'keystore_key_raw_bytes' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation keystore_key_raw_bytes
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='gzip_of_a_log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 130, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'gzip_of_a_log' not found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : the scanner missed the planted representation gzip_of_a_log
+
+======================================================================
+FAIL: test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 133, in test_non_secret_controls_do_not_hit
+    self.assertNotIn("controls_not_secret", self.hits, "a key id, user name or host was treated as a secret")
+AssertionError: 'controls_not_secret' unexpectedly found in {'apikey_header_encoded', 'controls_not_secret', 'single_quoted_shell', 'pgpass_password_in_json', 'apikey_decoded_id_key', 'base64', 'basic_header_broker', 'admin_password_in_url'} : a key id, user name or host was treated as a secret
+
+======================================================================
+FAIL: test_unreadable_key_store_fails_closed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 166, in test_unreadable_key_store_fails_closed
+    self.assertEqual(rc, 2, "an unreadable key store must make the scan fail closed (exit 2) unless waived")
+AssertionError: 0 != 2 : an unreadable key store must make the scan fail closed (exit 2) unless waived
+
+======================================================================
+FAIL: test_unreadable_secret_source_fails_closed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_leak_scan.py", line 158, in test_unreadable_secret_source_fails_closed
+    self.assertEqual(rc, 2, "an unreadable secret source must make the scan fail closed (exit 2)")
+AssertionError: 0 != 2 : an unreadable secret source must make the scan fail closed (exit 2)
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.161s
+
+FAILED (failures=22, skipped=2)
+# exit status: 1
