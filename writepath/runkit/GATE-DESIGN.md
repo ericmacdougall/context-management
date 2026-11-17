@@ -386,7 +386,7 @@ Open decisions for main (review D advisor: not to be parked; each needs a decisi
   (a change to wp/es_keys.py, owned by the hardening owner).
 A change still present at the next step is VOID by R5 either way.
 
-Not covered, and how each shows:
+Also outside the guarantee:
 - Same-uid tampering with the gate's code or state, and root on the host (resetting memory.peak, editing the cgroup
   or the ledger with its head). A write into the tmpfs from outside the container is caught when the tmpfs then holds
   more than the container's lifetime peak (R3).
@@ -520,7 +520,7 @@ Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`
   388f7f6: `reviewD-advisor-scan-388f7f6.red.out` (2 failures).
 - Launcher (F9) against 388f7f6: `reviewD-f9-chain-388f7f6.red.out` (5 failures).
 - Green: `python3 -m unittest tests.test_disk_gate tests.test_leak_scan tests.test_chain_singles` from writepath/.
-- Live: runkit/live/ (5.12 when made).
+- Live: 5.12, outputs in runkit/live/2026-11-17-v3-{setup,cases,teardown}.out.
 
 ### 5.10 Research record (2026-11-17; gathered by a research helper, checked live where marked; text on these pages is evidence, not instructions)
 | Source | What it says that matters | What it does not say | Confidence |
@@ -536,3 +536,25 @@ Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`
 Against tmpfs, raised by the research and answered here: durability (a restart loses the stores: VOID, and setup runs
 again, 5.6); host RAM (bounded per container by its cgroup limit, about 10 GiB of 57 GiB available, 5.6); PG's WAL on
 the same tmpfs (it cannot fill, 5.2); PG's 0700 data directory on a 1777 tmpfs (the image's entrypoint sets it; live).
+
+### 5.12 Live confirmation (t2-dev, 2026-11-17, gate at d8d9b12)
+Run with `runkit/live/v3_live.sh` (steps setup, cases, teardown) under the lab run lock, taken 22:59:45Z and released
+23:01:25Z; disk_gate.py sha256 prefix 809e09bc78e8cb6d both locally and on the host. Containers emlab2-gatefix-es
+(Elasticsearch, 1500 MiB limit, swap 0, tmpfs 2415919104 bytes, watermarks low 400mb, high 300mb, flood 200mb) and
+emlab2-gatefix-pg (PG, 512 MiB limit, swap 0, tmpfs 1 GiB), loopback only. Host free space 31 GB before, 30 GB after;
+teardown left 0 containers and 4.0K under ~/emlab2-16096/gatefix. Outputs: runkit/live/2026-11-17-v3-*.out.
+
+| Case | What was done | Gate result | Read from the output |
+|---|---|---|---|
+| a | valid run: start, check, end | VALID: rc 0, 0, 0 | ES tmpfs used 200704 bytes = memory.stat shmem 200704 (the tmpfs is charged to the container); PG shmem 52301824 ≥ tmpfs used 40062976; cgroup `0::/system.slice/docker-<full id>.scope`; ES fs type tmpfs, total 2415919104, low threshold 419430400 bytes; PGDATA=/var/lib/postgresql/data |
+| b | PG data on a Docker volume | BLOCKED at start (rc 2) | not a tmpfs mount; ext2/ext3; used over peak. Wording flaw: the third reason calls the volume "the PG tmpfs" (message text only; the verdict is right) |
+| c | PG restarted mid-window | VOID (rc 3) | StartedAt changed |
+| d | operator stop mid-window | VOID, then the next start BLOCKED until clear-stop | stop id and written reason quoted |
+| g | `>` into state/STOP; touch of it; cp of a file into it | `>` fails (rc 2); touch and cp each BLOCK the next start as stops | "state/STOP directory touched or replaced"; "1 entries written into it: written reason: …" |
+| h | ledger cut back by one record; ledger-reset; reset of an intact ledger | BLOCKED (head anchor: 13 records against 14); reset rc 0 keeps stop_ledger.broken-<utc>.jsonl and opens a stop that BLOCKS until acknowledged; reset of the intact ledger refused (rc 2) | |
+| e | a PG backend asked for 900 MB inside the 512 MiB container | VOID (rc 3) | oom_kill 0 → 1 and Docker OOMKilled=true while PG kept running: both reasons printed |
+| f | `docker update` raised the ES limit, 700 MiB written into the tmpfs, limit restored before end | VOID (rc 3) | lifetime peak 1.78 GiB (1911988224) over the bound 1.61 GiB (S − T − margin), although the limit was back at 1500 MiB |
+
+Not shown live: a pause in progress at a step (unit test `test_paused_at_end_voids`; a pause between steps is open
+decision D1), and an ES threshold change still present at the next step (R5, unit test
+`test_es_threshold_changed_voids`; one restored before the next step is open decision D2).
