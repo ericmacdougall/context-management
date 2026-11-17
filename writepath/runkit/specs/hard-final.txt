@@ -1,0 +1,38 @@
+# Hardening branch, final rerun of the FULL step-1 list (amendment H5): every stamped step-1 experiment, the same
+# lines and arguments as step1-c.txt, at the hardening branch's final commit, under the fixed gate (step-1 delta
+# review P1 and P2 fixed at edf9f93 and 7b4839b; exact-KiB start line, H4), the lab run lock and the 20 GB start line.
+# heldout_secrets is not rerun (carried: no store, wp/secrets.py frozen). The hardening experiments (H2, H3, D6, D3)
+# are appended by a later amendment before the chain runs. Starts as a batch does: cleanup, setup reset, preflight.
+@ exp.cleanup
+@ wp.setup --reset
+@ exp.disk_gate preflight
+guard_start - exp.guard_check start --controls
+static_check - exp.static_check
+es_semantics exp.es_semantics exp.es_semantics
+n_old old_repro.n_old old_repro.n_old
+review_fix exp.review_fix exp.review_fix F3 F4 F5 F7 F1S F6 10
+f1 exp.review_fix exp.review_fix F1
+scope_hold exp.scope_hold exp.scope_hold M H 3
+n_new exp.n_new exp.n_new 10
+row1 exp.row1_zombie exp.row1_zombie 10
+row23 exp.row23_latecommit exp.row23_latecommit 10
+e_verify exp.e_verify exp.e_verify 10
+registry_marker exp.registry_marker exp.registry_marker 10
+d1 exp.d1_hold_mentions exp.d1_hold_mentions 5
+d4_rescan exp.d4_rescan_es exp.d4_rescan_es 5
+row19 exp.row19_secrets exp.row19_secrets
+row6 exp.row6_chain exp.row6_chain 10
+d4_store_mark exp.d4_store_mark exp.d4_store_mark 5
+d3 exp.d3_identifier exp.d3_identifier 5
+mutual_mentions exp.mutual_mentions exp.mutual_mentions 5 10 5
+lock_order exp.lock_order exp.lock_order
+d2 exp.d2_verifier_process exp.d2_verifier_process 5
+phys_purge exp.phys_purge exp.phys_purge
+e1 exp.e2e_restored exp.e2e_restored E1 40
+e2e_E2E3 exp.e2e_restored exp.e2e_restored E2 E3 40
+psr exp.projector_start_race exp.projector_start_race 5
+pef exp.projector_es_fault exp.projector_es_fault 5
+races exp.races exp.races R1 R2 R3 40
+size_probe exp.size_probe exp.size_probe 50000
+plan_stability - exp.plan_stability
+guard_end - exp.guard_check end

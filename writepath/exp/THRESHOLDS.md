@@ -1033,3 +1033,22 @@ disk_gate start, check and end; flood and high-watermark watcher; one run. A VOI
 3. STOP attribution: the flood watcher writes its reason into WP_HOME/state/STOP; the gate's VOID line reports "STOP
    file" with the reason written in the file, or "writer unknown" for an empty file, never "operator stop" by default.
    A STOP left by an earlier run is cleared only by exp.disk_gate start.
+
+## Amendment H5 (2026-11-17, main's ruling after the step-1 delta review at 3c2864f; written before the chain it governs)
+The FULL step-1 list is rerun as ONE gated chain at this branch's final commit: runkit/specs/hard-final.txt (the lines
+and arguments of step1-c.txt: 30 stamped experiment lines plus the cleanup, setup reset and preflight steps). Thresholds are
+those of the amendments that govern each experiment (unchanged here), except where H4 changed the races verdict order.
+Why every one is on the list:
+- All: every step-1 stamp from 31112b4 to 0a433bc was issued under a gate with the delta review's P1 (log coverage not
+  established) and P2 (a STOP missed by end or deleted by start) open. No run is known to have hit either, and it
+  cannot now be shown; the rerun under the fixed gate (edf9f93, 7b4839b) is what closes this.
+- And the code under test changed on this branch: every erasure experiment (review_fix, scope_hold, n_new, row1,
+  row23, e_verify, registry_marker, d1, d4_rescan, d4_store_mark, d3, mutual_mentions, lock_order, d2, phys_purge, e1,
+  e2e_E2E3, plan_stability) completes through the verifier, whose ES check is now strict (D4, 7e83092); d4_rescan's
+  residue keys changed with it; races' verdict order changed (H4); d3_identifier and mutual_mentions exercise the
+  identifier path that D3 changes; guard_check, static_check, es_semantics, n_old, row19, row6, psr, pef and
+  size_probe are on the list for the gate reason alone.
+Not on the list: heldout_secrets (carried, FAIL, main's ruling: no store, wp/secrets.py frozen).
+Rules: one chain under the lab run lock; the start line in exact KiB; the chain stops at the first BLOCKED or VOID run;
+a VOID run may be rerun once and both are recorded; a FAIL stands and is never rerun. The hardening experiments are
+appended to the same chain by a later amendment, before it runs; that amendment also fixes the final commit.
