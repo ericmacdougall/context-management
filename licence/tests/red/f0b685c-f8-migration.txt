@@ -1,0 +1,10 @@
+# F8 behavioural red (gate review 6): f0b685c's summarize.exp3_checks vs the fix on mutations of exp3.migration.migrated_basic_ops in a deep copy of committed results/down_1.json (read-only). f0b685c's migration status ignored migrated_basic_ops: PASS on empty, missing, transport 0 and 4xx/5xx ops.
+healthy (committed down_1)             | f0b685c: status=PASS migrated_ops_ok=True           | fix: PASS
+migrated_basic_ops = {}                | f0b685c: status=PASS migrated_ops_ok=True           | fix: UNVERIFIED
+lic3-sem-mig missing                   | f0b685c: status=PASS migrated_ops_ok=True           | fix: UNVERIFIED
+lic3-sem-mig.force_merge missing       | f0b685c: status=PASS migrated_ops_ok=True           | fix: UNVERIFIED
+migrated_basic_ops absent              | f0b685c: raised KeyError                            | fix: UNVERIFIED
+lic3-bbq_disk-mig.update = 0           | f0b685c: status=PASS migrated_ops_ok=True           | fix: FAIL
+lic3-bbq_disk-mig.update = 404         | f0b685c: status=PASS migrated_ops_ok=False          | fix: FAIL
+lic3-bbq_disk-mig.update = 409         | f0b685c: status=PASS migrated_ops_ok=False          | fix: FAIL
+lic3-bbq_disk-mig.update = 503         | f0b685c: status=PASS migrated_ops_ok=False          | fix: FAIL

@@ -5,9 +5,11 @@ Reads only the result files; does not import the experiment code.
 
 Coverage rule (gate reviews 5 and 6): every gate is declared in GATES with every input it reads and that input's kind; gate() is the only
 producer of a gate status. An input that is absent, None, of the wrong type or outside its kind (for example a count of 0 where a count
-must have been observed) gives UNVERIFIED before the rule runs; the rule then returns PASS only on the intended observation. A status
-outside the intended set is FAIL where it is an observed failure of the operation under test (a 5xx or transport 0 on a migrated index)
-and UNVERIFIED where it says nothing about it (a 401, 5xx or 0 where a DLS refusal was expected). tests/test_gates.py GatePropertyTests
+must have been observed) gives UNVERIFIED before the rule runs; the rule then returns PASS only on the intended observation. One
+declared exception (kind optzero): exp2.writes.sem_failed_other may be absent, which passes only when sem_failed is 0 (nothing to
+classify) and is UNVERIFIED otherwise. A status outside the intended set is FAIL where it is an observed failure of the operation under
+test (any non-2xx, including a 4xx, 5xx or transport 0, on a Basic operation against a migrated index) and UNVERIFIED where it says
+nothing about it (a 401, 5xx or 0 where a DLS 403 refusal was expected). tests/test_gates.py GatePropertyTests
 mutates every declared input of every gate. The per-life reports outside GATES (matrix table, exp3 operation lists, exp4) are reports,
 not gates; they may raise on a malformed life file."""
 import collections
