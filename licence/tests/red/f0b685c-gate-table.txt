@@ -1,0 +1,4 @@
+# Superseded. The first red run of the gate review 6 tests against f0b685c ran from a copy of licence/ outside the repository root, so
+# exp2.py could not import memcore and both test modules failed to load (no behavioural result). The valid red run, with PYTHONPATH set
+# to the repository root, is tests/red/f0b685c-review6.txt (114 tests, failures=9 errors=9); the F8 behavioural red is
+# tests/red/f0b685c-f8-migration.txt.
