@@ -9,11 +9,15 @@ Arms.
      forward -> every event replays to its stored code, chain equal hash for hash, state equal; the pre-migration anchor checks on the
           new schema; the rebuilt view equals MemoryState folded over the same events from genesis; dc_app cannot reach the kept old
           schema (USAGE revoked) nor any table; a real request through dc_idp + dc_app (open_session, submit) is applied.
+     The checks after the FIRST forward write nothing (no API request), so the rollback window is clean.
      rollback -> fingerprint equals F0 exactly; the old engine works again.
-     forward again -> same checks (the procedure is repeatable after a rollback).
+     forward again -> same checks plus a real request through dc_idp + dc_app (a post-migration WRITE); rollback must then be REFUSED
+          (review-3 N4: it would discard that write) and the written event must still be in the migrated schema; finish.
   B  forged history (control): the same, then the R3-7 forgery executed on the OLD schema as dc_app (a grant event inserted directly and
      applied with dc.apply_authority, making a non-admin an admin's equal). forward must REFUSE and leave F(forged) unchanged.
   C  tampered state (control): an old head updated directly by dc_app (no event). forward must REFUSE, state unchanged.
+  D  rollback without the write check (control, the 0a20b64 rollback): forward, one request through the API, then a variant of
+     ops.migrate_r3_7 whose rollback skips the data-mark comparison: it rolls back and the written event is gone (write lost).
 usage: python -m exp.mig_rehearsal (lab host; Postgres env as file paths)."""
 import hashlib
 import json
@@ -25,6 +29,7 @@ import types
 
 from exp import common  # noqa: F401
 from exp.common import write_items, write_result
+from exp.patches import variant
 from exp.core_gen import Gen, config as gen_config
 from exp.seeds import seeds
 import pol._core as CORE
@@ -109,7 +114,44 @@ def build_old_history(OLD, seed, logs=3):
     return tenants, codes, rng
 
 
-def checks_after_forward(OLD, tenants, anchor_path, rep):
+def api_write(t, label):
+    """One real request through dc_idp (open_session) and dc_app (dc.submit) by an unrevoked human with authority, a proposal with a
+    value (an applied write: an event and a vault row): (code, event id)."""
+    port, _sp, _apw, ap, _ip, idpf = env()
+    o = owner("mig_api")
+    row = o.execute("select p.pid, r.req from dc.principal p join dc.role r on r.tenant = p.tenant and r.pid = p.pid and r.role = 'decide' "
+                    "where p.tenant = %s and p.kind = 'human' and not p.revoked order by r.req, p.pid limit 1", (t,)).fetchone()
+    if row is None:
+        o.close()
+        return "no unrevoked human with authority left", None
+    human, req = row
+    hv = NEW.PgEngine(o, t)._head(req)["version"]
+    o.close()
+    idp = NEW.connect_idp(port, idpf, "mig_idp")
+    tok = idp.execute("select dc.open_session(%s, %s, 'owner_ui', 'mig-lab', 60)", (t, human)).fetchone()[0]
+    idp.close()
+    app = NEW.connect_app(port, ap, "mig_app")
+    cid = "mig-%s-%d" % (label, time.time_ns())
+    lab = {"tenants": [t], "acl": [], "regions": None, "sensitivity": 0, "models": None, "banned": [], "local_only": False, "restricted": False,
+           "holds": [], "subjects": []}
+    r = app.execute("select dc.submit(%s, %s::jsonb)", (tok, json.dumps({"type": "propose", "client_id": cid, "idem": cid, "req": req,
+                                                                         "value": "post-migration " + label, "label": lab,
+                                                                         "based_on": hv}))).fetchone()[0]
+    app.close()
+    return r["code"], r.get("id")
+
+
+def event_present(evid):
+    o = owner("mig_ev")
+    try:
+        if o.execute("select to_regclass('dc.events')").fetchone()[0] is None:
+            return False
+        return o.execute("select count(*) from dc.events where evid = %s", (evid,)).fetchone()[0] == 1
+    finally:
+        o.close()
+
+
+def checks_after_forward(OLD, tenants, anchor_path, rep, api=True):
     port, _sp, _apw, ap, _ip, idpf = env()
     o = owner("mig_check")
     out = {"report": rep}
@@ -132,26 +174,14 @@ def checks_after_forward(OLD, tenants, anchor_path, rep):
         except Exception as e:          # noqa: BLE001
             denied[q] = type(e).__name__
     out["app_denied"] = denied
-    idp = NEW.connect_idp(port, idpf, "mig_idp")
-    row = o.execute("select p.pid, r.req from dc.principal p join dc.role r on r.tenant = p.tenant and r.pid = p.pid and r.role = 'decide' "
-                    "where p.tenant = %s and p.kind = 'human' and not p.revoked order by r.req, p.pid limit 1", (t,)).fetchone()
-    human, req = row if row else (None, None)
-    if human is None:
-        o.close()
-        idp.close()
-        app.close()
-        return dict(out, ok=False, api_request="no unrevoked human with authority left")
-    tok = idp.execute("select dc.open_session(%s, %s, 'owner_ui', 'mig-lab', 60)", (t, human)).fetchone()[0]
-    idp.close()
-    hv = eng._head(req)["version"]
-    r = app.execute("select dc.submit(%s, %s::jsonb)", (tok, json.dumps({"type": "retract", "client_id": "mig-%d" % int(time.time() * 1000),
-                                                                         "idem": "mig-%d" % time.time_ns(), "req": req, "based_on": hv}))).fetchone()[0]
-    out["api_request"] = r["code"]
     app.close()
     o.close()
+    out["api_request"], out["api_event"] = api_write(t, "chk") if api else (None, None)
+    rc = out["api_request"]
+    api_ok = (rc is None) if not api else (rc in CORE.OUTCOME_CODES and rc not in ("unauthorized", "principal_revoked", "bad_event",
+                                                                                   "tenant_mismatch", "channel_mismatch"))  # judged by the core
     out["ok"] = (out["anchor_check"]["ok"] and out["anchor_check"]["anchored"] > 0 and out["view_equals_memory_fold"]
-                 and all(v not in (False,) for v in denied.values()) and r["code"] in CORE.OUTCOME_CODES
-                 and r["code"] not in ("unauthorized", "principal_revoked", "bad_event", "tenant_mismatch", "channel_mismatch"))   # judged by the core
+                 and all(v == "InsufficientPrivilege" for v in denied.values()) and api_ok)
     return out
 
 
@@ -165,7 +195,7 @@ def arm_clean(OLD, seed, anchor_path):
     f0 = fingerprint(o)
     res = {"seed": seed, "old_codes": codes}
     res["forward1"] = MIG.forward(o, tenants, env()[4])
-    res["checks1"] = checks_after_forward(OLD, tenants, anchor_path, res["forward1"])
+    res["checks1"] = checks_after_forward(OLD, tenants, anchor_path, res["forward1"], api=False)
     try:
         MIG.forward(o, tenants, env()[4])
         res["forward_twice_refused"] = False
@@ -182,11 +212,21 @@ def arm_clean(OLD, seed, anchor_path):
     res["old_engine_after_rollback"] = OLD.PgEngine(app, t)._verify_chain()[1]
     app.close()
     res["forward2"] = MIG.forward(o, tenants, env()[4])
-    res["checks2"] = checks_after_forward(OLD, tenants, anchor_path, res["forward2"])
+    res["checks2"] = checks_after_forward(OLD, tenants, anchor_path, res["forward2"], api=True)
+    try:                                             # review-3 N4: the request in checks2 wrote to the migrated schema
+        MIG.rollback(o)
+        res["rollback_after_write"] = False
+    except MIG.MigrationRefused as e:
+        res["rollback_after_write"] = str(e)[:200]
+    except Exception as e:      # noqa: BLE001
+        res["rollback_after_write"] = "error:" + type(e).__name__ + ":" + str(e)[:160]
+    res["write_kept"] = (res["checks2"].get("api_request") in CORE.APPLIED and bool(res["checks2"].get("api_event"))
+                         and event_present(res["checks2"]["api_event"]))
     MIG.finish(o)
     o.close()
+    raw = res["rollback_after_write"]
     res["ok"] = (res["checks1"]["ok"] and res["checks2"]["ok"] and res["rollback_restores_fingerprint"] and res["old_engine_after_rollback"]
-                 and bool(res["forward_twice_refused"]))
+                 and bool(res["forward_twice_refused"]) and isinstance(raw, str) and "written after the migration" in raw and res["write_kept"])
     return res
 
 
@@ -222,6 +262,26 @@ def arm_refused(OLD, seed, how):
     return {"seed": seed, "control": how, "refused": refused, "unchanged": f0 == f1, "fp_before": fsha(f0), "fp_after": fsha(f1), "ok": bool(refused) and not str(refused).startswith("error:") and f0 == f1}
 
 
+def arm_rollback_unchecked(OLD, seed):
+    """Control D: the 0a20b64 rollback (no data-mark comparison) after one post-migration request: it rolls back and the write is lost."""
+    tenants, _codes, _rng = build_old_history(OLD, seed)
+    t = next(iter(tenants))
+    o = owner("mig_d")
+    MIG.forward(o, tenants, env()[4])
+    code, evid = api_write(t, "ctl")
+    present = bool(evid) and event_present(evid)
+    BROKEN = variant("ops.migrate_r3_7", "        if changed:\n", "        if False:\n", "n4_rollback_unchecked")
+    try:
+        BROKEN.rollback(o)
+        rolled = True
+    except Exception as e:      # noqa: BLE001
+        rolled = "error:" + type(e).__name__ + ":" + str(e)[:160]
+    o.close()
+    lost = bool(evid) and not event_present(evid)
+    return {"seed": seed, "control": "rollback_unchecked", "api_request": code, "api_event": evid, "written": present, "rolled_back": rolled,
+            "write_lost": lost, "ok": rolled is True and present and lost and code in CORE.APPLIED}
+
+
 def main():
     t0 = time.time()
     OLD = old_module()
@@ -236,6 +296,10 @@ def main():
                 out["controls"].append(arm_refused(OLD, s, how))
             except Exception as e:      # noqa: BLE001
                 out["controls"].append({"seed": s, "control": how, "ok": False, "error": repr(e)[:300]})
+        try:
+            out["controls"].append(arm_rollback_unchecked(OLD, s))
+        except Exception as e:      # noqa: BLE001
+            out["controls"].append({"seed": s, "control": "rollback_unchecked", "ok": False, "error": repr(e)[:300]})
     out["pass"] = all(x["ok"] for x in out["clean"]) and all(x["ok"] for x in out["controls"])
     out["verdict"] = "PASS" if out["pass"] else "FAIL"
     out["seconds"] = round(time.time() - t0, 1)
@@ -251,10 +315,11 @@ def main():
     out["refusal_codes"] = sorted(c for c in CORE.OUTCOME_CODES if c in ("unauthorized", "principal_revoked", "bad_event", "tenant_mismatch",
                                                                         "channel_mismatch"))
     out["outcome_codes"] = sorted(CORE.OUTCOME_CODES)
+    out["applied_codes"] = sorted(CORE.APPLIED)
     _h, p = write_result("mig_rehearsal", {"seeds": sd, "fixture": "exp/fixtures/pgcore_5a80e52.py"}, out)
     print(json.dumps({"pass": out["pass"], "clean": [{k: v for k, v in x.items() if k in ("ok", "rollback_restores_fingerprint", "fingerprint_diff",
-                                                                                      "forward_twice_refused")} for x in out["clean"]],
-                      "controls": [{k: x.get(k) for k in ("control", "ok", "refused", "error")} for x in out["controls"]]}, indent=1, default=str)[:4000])
+                                                                                      "forward_twice_refused", "rollback_after_write", "write_kept")} for x in out["clean"]],
+                      "controls": [{k: x.get(k) for k in ("control", "ok", "refused", "rolled_back", "write_lost", "error")} for x in out["controls"]]}, indent=1, default=str)[:4000])
     print("wrote", p)
     if not out["pass"]:
         raise SystemExit(1)                          # run_all.sh scores a nonzero exit as FAIL

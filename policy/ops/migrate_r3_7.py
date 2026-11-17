@@ -16,13 +16,20 @@ forward(conn, tenants, idp_password_file)   ONE transaction; on any check failur
      means the old state was written outside the event log (R3-7: dc_app could update heads directly) and the migration refuses.
   6. Carried over verbatim: the vault (dc.vals), the subject-token mapping (dc.subject_tokens) and the audit history (dc.audit).
      Not carried: dc.auth_applied (gone with dc.apply_authority). Sessions start empty: every client authenticates again.
-rollback(conn)   ONE transaction: drops the new dc schema (and dc_crypto, which the old schema did not have), renames dc_pre_r3_7 back
-  to dc and restores dc_app's USAGE. Role dc_idp is left in place (roles are cluster-wide; the old schema references none of its
-  grants). Refused when dc_pre_r3_7 is absent.
+  7. At the end, a DATA MARK of the migrated schema is stored in dc.migration_mark: per table of schema dc, the row count and a hash of
+     the rows (dc.sessions excluded: logins are not data, and every client authenticates again after a rollback anyway).
+rollback(conn)   ONE transaction: locks every table of the migrated schema (EXCLUSIVE: no write can land between the check and the
+  drop), recomputes the data mark and REFUSES when it differs from the mark stored at the end of forward, that is when anything was
+  written after the migration (an applied or refused request, an erasure, an audit row): dropping the schema would discard those
+  writes, or undo an erasure (review-3 N4). There is no override: carry such writes back by hand or keep the migrated schema (finish).
+  Otherwise it drops the new dc schema (and dc_crypto, which the old schema did not have), renames dc_pre_r3_7 back to dc and restores
+  dc_app's USAGE. Role dc_idp is left in place (roles are cluster-wide; the old schema references none of its grants). Refused when
+  dc_pre_r3_7 or the mark is absent.
 finish(conn)   drops dc_pre_r3_7 after the deployment has been accepted; there is no rollback after finish.
 
 usage (lab host): python -m ops.migrate_r3_7 forward|rollback|finish --tenants <json file>  (env: POL_PG_PORT, POL_PG_SUPER_PASSFILE,
 POL_PG_IDP_PASSWORD_FILE as file paths; POL_PG_DB names the database)."""
+import hashlib
 import json
 import os
 import sys
@@ -34,6 +41,7 @@ from pol import _core, pgcore
 
 PRE = "dc_pre_r3_7"
 STATE_TABLES = ("principal", "role", "head", "props")
+MARK_EXCLUDED = ("sessions", "migration_mark")
 
 
 class MigrationRefused(Exception):
@@ -60,6 +68,22 @@ def _old_state(c, schema, tenant):
 def _chain(c, schema, tenant):
     return c.execute(sql.SQL("select chain_n, prev_hash, hash from {}.events where tenant=%s order by chain_n").format(sql.Identifier(schema)),
                      (tenant,)).fetchall()
+
+
+def _dc_tables(c):
+    return [t for (t,) in c.execute("select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace "
+                                    "where n.nspname = 'dc' and c.relkind = 'r' order by 1").fetchall()]
+
+
+def _data_mark(c):
+    """{table: [rows, sha256 of the sorted row texts]} for every table of schema dc except MARK_EXCLUDED."""
+    out = {}
+    for t in _dc_tables(c):
+        if t in MARK_EXCLUDED:
+            continue
+        rows = c.execute(sql.SQL("select row_to_json(x)::text from dc.{} x").format(sql.Identifier(t))).fetchall()
+        out[t] = [len(rows), hashlib.sha256("\n".join(sorted(r[0] for r in rows)).encode()).hexdigest()]
+    return out
 
 
 def _genesis(c, tenants):
@@ -130,6 +154,9 @@ def forward(c, tenants, idp_password_file):
         if not public_create:
             c.execute("revoke create on schema public from public")
         c.execute("insert into dc.audit(tenant, principal, code, ev) values (null, null, 'migrated_r3_7', %s)", (Jsonb(report),))
+        c.execute("create table dc.migration_mark(id int primary key check (id = 1), mark jsonb not null)")
+        c.execute("revoke all on dc.migration_mark from public")
+        c.execute("insert into dc.migration_mark values (1, %s)", (Jsonb(_data_mark(c)),))
     return report
 
 
@@ -137,6 +164,15 @@ def rollback(c):
     with c.transaction():
         if not _exists_schema(c, PRE):
             raise MigrationRefused("no %s schema: nothing to roll back (finished, or never migrated)" % PRE)
+        if c.execute("select to_regclass('dc.migration_mark')").fetchone()[0] is None:
+            raise MigrationRefused("no dc.migration_mark: cannot prove the migrated schema is unwritten, so rollback could discard data")
+        c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
+        mark = c.execute("select mark from dc.migration_mark where id = 1").fetchone()[0]
+        now = _data_mark(c)
+        changed = sorted(t for t in set(mark) | set(now) if mark.get(t) != now.get(t))
+        if changed:
+            raise MigrationRefused("written after the migration (%s): a rollback would discard those writes or undo an erasure; carry "
+                                   "them back by hand or keep the migrated schema" % ", ".join(changed))
         c.execute("drop schema dc cascade")
         c.execute("drop schema if exists dc_crypto cascade")
         c.execute(sql.SQL("alter schema {} rename to dc").format(sql.Identifier(PRE)))
