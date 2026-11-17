@@ -1,0 +1,28 @@
+# t2-dev d3_check.sh (agent work dir) 2026-11-17: src at 0aaf789 (git archive 0aaf789:writepath); WP_PG_LIVE=1 python -m unittest tests.test_d3_pg -v, green with src schema.sql, red with SCHEMA_UNDER_TEST=schema.sql at fb60b2e; unstamped, under the lab run lock
+lock taken 2026-11-17T21:00:54Z src 0aaf789 free_kib 54195332
+== reviewer roles
+roles ['wp_rev1', 'wp_rev2', 'wp_reviewer']
+== green (src schema.sql)
+test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers) ... ok
+test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval) ... ok
+test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state) ... ok
+test_b_redaction (tests.test_d3_pg.D3Store.test_b_redaction) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 1.463s
+
+OK
+== red (schema.sql at fb60b2e)
+test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers) ... FAIL
+test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval) ... ERROR
+test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state) ... ERROR
+test_b_redaction (tests.test_d3_pg.D3Store.test_b_redaction) ... FAIL
+ERROR: test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval)
+ERROR: test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state)
+FAIL: test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers)
+AssertionError: 'ok' != '42501'
+FAIL: test_b_redaction (tests.test_d3_pg.D3Store.test_b_redaction)
+AssertionError: '42883' != 'ok'
+Ran 4 tests in 0.319s
+FAILED (failures=2, errors=2)
+lock released 2026-11-17T21:00:56Z
