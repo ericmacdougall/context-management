@@ -529,14 +529,24 @@ create table legal_holds (
 );
 create index legal_holds_subject on legal_holds (tenant_id, subject_id) where released_at is null;
 create function wp_hold_place(t tenant_t, s text, hid text, reason text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
-declare st text;
+declare st text; gone bigint; gone_ids text[];
 begin
   insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
+  -- FOR UPDATE conflicts with the share lock of every in-flight removal that judges this subject (review E F4): the
+  -- hold lands either before that judgement (the event is withheld) or after the removal committed (counted below)
   perform 1 from subjects where tenant_id = t and subject_id = s for update;
   insert into legal_holds(tenant_id, subject_id, hold_id, reason_code) values (t, s, hid, reason);
   select state into st from erasure_jobs where tenant_id = t and subject_id = s and state <> 'done';
+  -- events in this subject's footprint whose content was already removed when the hold landed: recorded, not hidden
+  with fp as (select event_id from events where tenant_id = t and subject_id = s
+              union select event_id from events where tenant_id = t and mentions @> array[s]
+              union select event_id from erasure_mentions where tenant_id = t and subject_id = s)
+  select count(*), (array_agg(fp.event_id order by fp.event_id))[1:20] into gone, gone_ids
+    from fp join events e on e.tenant_id = t and e.event_id = fp.event_id where e.content_enc is null;
   return jsonb_build_object('hold_id', hid, 'open_erasure_state', st,
-    'note', case when st is null or st = 'requested' then 'nothing erased yet'
+    'linked_removed', gone, 'linked_removed_ids', to_jsonb(coalesce(gone_ids, '{}'::text[])),
+    'note', case when gone > 0 then 'linked_removed events of this subject were removed (by its own or another subject''s erasure) before this hold landed and are not recoverable; the rest is held'
+                 when st is null or st = 'requested' then 'nothing erased yet'
                  else 'erasure already past mark: content removed before this hold is not recoverable; the rest is held' end);
 end $$;
 create function wp_hold_release(hid text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
@@ -592,10 +602,15 @@ create trigger erasure_guard before insert or update on erasure_jobs for each ro
 create function wp_erasure_mark(jid text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
 declare j record;
 begin
-  select tenant_id, subject_id into j from erasure_jobs where job_id = jid for update;
+  -- review E F12: the job's identity is immutable (erasure_guard), so it is read unlocked; the SUBJECT is locked before
+  -- the job, the order of a cascade batch (subject FOR SHARE ... job cursor update). Job first made a repeated mark
+  -- and a batch wait on each other (40P01).
+  select tenant_id, subject_id into j from erasure_jobs where job_id = jid;
+  if not found then raise exception 'no erasure job %', jid using errcode = 'WPS08'; end if;
   insert into subjects(tenant_id, subject_id) values (j.tenant_id, j.subject_id) on conflict do nothing;
   -- the subject row exclusively first (it is updated below), so the share lock of wp_hold_check is never upgraded
   perform 1 from subjects where tenant_id = j.tenant_id and subject_id = j.subject_id for update;
+  perform 1 from erasure_jobs where job_id = jid for update;
   perform wp_hold_check(j.tenant_id, j.subject_id);
   update erasure_jobs set ident_xmax = wp_subject_xmax(j.tenant_id, j.subject_id),
     ident_count = (select count(*) from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id)
@@ -613,6 +628,9 @@ declare j record;
 begin
   select tenant_id, subject_id, state into j from erasure_jobs where job_id = jid;
   if j.state not in ('marked', 'cascaded') then raise exception 'rescan only after mark (state %)', j.state using errcode = 'WPS08'; end if;
+  -- review E F4: a link adds a subject to the event's hold footprint; it waits for an in-flight removal of the event
+  -- (wp_erasure_apply locks its events first), so no removal judges a footprint that grows under it
+  perform 1 from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids) order by e.event_id for share;
   insert into erasure_mentions(tenant_id, subject_id, event_id, job_id)
     select j.tenant_id, j.subject_id, e.event_id, jid from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids)
     on conflict do nothing;
@@ -661,7 +679,12 @@ create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns 
 declare ids text[];
 begin
   if cardinality(cand) = 0 then return 0; end if;
-  -- share-lock every subject the batch touches, so a hold (FOR UPDATE on the subject row) cannot land mid-batch
+  -- review E F4 (the hold class): the hold decision reads each event's footprint (speaker, mentions, erasure_mentions);
+  -- erasure_mentions grows (wp_erasure_add_mentions), so the events are locked FIRST: a rescan link to one of them
+  -- (FOR SHARE on the event) either committed before this lock, and is read below, or waits until this batch commits
+  perform 1 from events e where e.tenant_id = t and e.event_id = any(cand) order by e.event_id for no key update;
+  -- then share-lock every subject the decision judges, in the statement that reads the (now fixed) footprint: a hold
+  -- (FOR UPDATE on the subject row) either committed before, and withholds the event, or waits for this batch
   perform 1 from subjects sj where sj.tenant_id = t and sj.subject_id in (
       select e.subject_id from events e where e.tenant_id = t and e.event_id = any(cand)
       union select unnest(e.mentions) from events e where e.tenant_id = t and e.event_id = any(cand)
