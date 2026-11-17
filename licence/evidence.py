@@ -10,8 +10,8 @@ evidence type)) and every cross-field relation (RELATIONS). `parse()` reads exac
 - A control is an evidence type whose fields are `enforce`d: its constructor raises unless the control observation is what it must be.
 - What is guaranteed (review 8 F15): validated construction from JSON under trusted Python code. parse() and the generated dataclass
   constructors check every domain, control and relation, nested evidence by exact type, and containers are stored immutable (tuples).
-  Python cannot stop trusted code from bypassing a frozen dataclass (object.__setattr__, a subclass, copy tricks), and on Python 3.9
-  make_dataclass has no slots; the verdict modules are checked by an AST test to touch nothing but evidence objects.
+  Evidence classes use __slots__ (no per-instance __dict__). Python still cannot stop trusted code from bypassing a frozen dataclass
+  (object.__setattr__, copy tricks); the verdict modules are checked by an AST test to touch nothing but evidence objects.
 - Malformed input never raises out of parse(): input-related arithmetic, type and value errors (a 10**400 integer, a nested wrong type)
   become Unparsed at the parsing boundary (review 8 F14).
 - Mappings with a fixed key set (probes, battery paths, migrated operations) are declared one field per key: a missing key does not parse.
@@ -86,8 +86,8 @@ def licence_text(body):
 @dataclasses.dataclass(frozen=True)
 class Outcome:
     """One closed case per status. A refusal is only ever a 403: LICENCE_REFUSAL is a 403 whose body carries the licence text,
-    AUTHORISATION_REFUSAL a 403 without it. `licence_text` records the text on any status (the harness's cell class uses it for
-    4xx/5xx; verdicts match on `case` only)."""
+    AUTHORISATION_REFUSAL a 403 without it. `licence_text` records the text on any status; only on a 403 does it change the case, and
+    lib.classify labels LICENCE_ERROR only for LICENCE_REFUSAL. Verdicts match on `case` only."""
     status: int
     case: str
     licence_text: bool = False
@@ -172,7 +172,7 @@ def _domain(f, v, at):
     lo = f.lo if f.lo is not None else k.lo
     hi = f.hi if f.hi is not None else k.hi
     if k.type == "status":
-        ok = isinstance(v, Outcome)
+        ok = type(v) is Outcome
     elif k.type == "int":
         ok = _int(v)
     elif k.type == "real":
@@ -206,7 +206,7 @@ def check_value(f, x, at):
         return
     _domain(f, x, at)
     if f.enforce:
-        got = x.case if isinstance(x, Outcome) else x
+        got = x.case if type(x) is Outcome else x
         want = f.expect if isinstance(f.expect, (set, frozenset)) else {f.expect}
         if got not in want:
             raise Unparsed(at, "control not established: %r, need %s" % (got, sorted(want, key=str)))
@@ -278,6 +278,7 @@ class Evidence:
     stores containers as tuples; parse() also checks the relations that involve a stored derived figure (a `verify` field), which is then
     dropped. This holds for construction from JSON and for ordinary construction by trusted Python code; it is not a defence against
     code that deliberately bypasses a frozen dataclass (see the module docstring)."""
+    __slots__ = ()
     SPEC = {}
     RELATIONS = ()
 
@@ -336,7 +337,8 @@ class Evidence:
 def evidence(name, spec, relations=(), doc="", props=None):
     """Declare an evidence type: a frozen dataclass whose fields are the non-`verify` SPEC entries."""
     fields = [(n, object) for n, f in spec.items() if not f.verify]
-    ns = {"SPEC": dict(spec), "RELATIONS": tuple(relations), "__doc__": doc}
+    ns = {"SPEC": dict(spec), "RELATIONS": tuple(relations), "__doc__": doc,
+          "__slots__": tuple(n for n, f in spec.items() if not f.verify)}   # no per-instance __dict__ (review 8 F15)
     ns.update(props or {})
     return dataclasses.make_dataclass(name, fields, bases=(Evidence,), frozen=True, namespace=ns)
 
@@ -355,6 +357,8 @@ OK = {"SUCCESS"}
 # without its Outcome does not parse.
 def _refusal_at(name, case):
     return evidence(name, {"outcome": F("status", "status", text="licence_text", expect={case}, enforce=True),
+                           # the recorded licence-text flag is itself evidence: mandatory, bool, and the one the case requires
+                           "licence_text": F("licence_text", "flag", expect=case == "LICENCE_REFUSAL", enforce=True),
                            "at_s": F("rel_resp_s", "offset", lo=-0.5)},   # observe.moments looks from t_resp - 0.5 s
                     doc="The first %s observed after start_basic and when (seconds from its response)." % case)
 

@@ -121,7 +121,8 @@ def one(path):
         P = json.load(gzip.open(base + ".poll.gz", "rt"))
         feats = {}
         for f in ("rrf", "linear", "semantic_query", "inference_use", "dls_search"):
-            ev = [(p["_times"][f][0], p["_times"][f][1], p[f][0], observe.outcome_from_cell(p[f])) for p in P if f in p and "_times" in p and f in p["_times"]]
+            ev = [(p["_times"][f][0], p["_times"][f][1], "AVAILABLE" if observe.is_success(p[f]) else p[f][0], observe.outcome_from_cell(p[f]))
+                  for p in P if f in p and "_times" in p and f in p["_times"]]   # a success is any 2xx answer, by Outcome (review 8)
             if not ev:
                 continue
             if mode == "down":

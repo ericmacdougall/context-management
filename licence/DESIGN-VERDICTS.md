@@ -135,15 +135,23 @@ Design:
 5a. **Generator extension finding:** the DLS after-cell `class` was a free "text" field; a numeric string or nested object passed EXP1-T4.
    It is now kind `cell_class`, a closed set (AVAILABLE, LICENCE_ERROR, OTHER_ERROR, TRANSPORT, SKIP, UNVERIFIED_PREREQUISITE,
    EMPTY_WITNESS); `text` fields accept exactly str or dict. Differential vs 4761862: 3,822 cases, 0 loosened, 635 tightened.
-6. **F15, stated truthfully:** validated construction from JSON under trusted Python code. Nested evidence is checked by exact type;
-   windows are stored as tuples. Python cannot stop trusted code from bypassing a frozen dataclass, and Python 3.9 `make_dataclass` has no
-   slots; the AST test keeps verdict code to evidence objects.
+6. **F15, stated truthfully:** validated construction from JSON under trusted Python code. Nested evidence and outcomes are checked by
+   exact type; windows are stored as tuples; evidence classes carry `__slots__` (passed through the `make_dataclass` namespace, so no
+   per-instance `__dict__`). Python cannot stop trusted code from bypassing a frozen dataclass (`object.__setattr__`); the AST test keeps
+   verdict code to evidence objects.
+7. **Pre-return review of this round** found the same classes inside the new boundary code, each now a red-first regression
+   (`tests/red/f931710-review8-followup.txt`): the refusal's licence flag had no domain (a bare DLS 403 with no flag passed EXP1-T2; it is
+   now a mandatory enforced `flag`); load-time re-derivation did arithmetic on unparsed times and raw rows (now guarded: nothing attached);
+   cells were counted by label (`["AVAILABLE", 403]` was a DLS refusal, `["EMPTY_WITNESS", 200]` after a refusal was not a success; now a
+   label that contradicts its status is no observation and any 2xx is a success); status fields accepted an Outcome subclass; two report
+   helpers (matrix table text, semantic-only report) raised on odd values, now exercised for every leaf through every report function and
+   `aggregate`.
 
 ### Derived-field audit (every derived figure a verdict reads)
 
 | gate | derived field(s) | where derived | how it is carried now |
 |---|---|---|---|
-| EXP1-T2 | per-probe refusal timing, successes after it, n | `observe.moments` from poll rows | carried: `first_refusal` Outcome (status + licence flag) enforced to the required case; timing nested in it; legacy timing must agree. Committed: down_7 re-derived from poll.gz; down_1..6 have no raw polls: UNVERIFIED |
+| EXP1-T2 | per-probe refusal timing, successes after it, n | `observe.moments` from poll rows | carried: `first_refusal` Outcome (status + mandatory licence flag, both enforced) of the required case; timing nested in it; legacy timing must agree; successes are any 2xx. Committed: down_7 re-derived from poll.gz; down_1..6 have no raw polls: UNVERIFIED |
 | EXP1-T3 latch | cell outcome | status + error body stored per cell | carried: Outcome parsed from the stored status and body |
 | EXP1-T4 DLS | control outcome, `only_kw_a`, `returned`; after outcome, cell class | `matrix` from status, ids and body | carried: Outcomes parsed from stored status and body; `only_kw_a`/`returned` are id comparisons (not statuses), domain-checked; cell class used only to reject prerequisite labels |
 | EXP1 battery | per-path outcome; `returned_hidden_doc`, `returned_any_source` | `matrix` from status and body markers | outcome carried; the body-marker flags are recorded booleans with no stored body (section 5): trusted figures, enforced on the trial control |
@@ -156,6 +164,14 @@ Design:
 | EXP3 semonly | call outcome, hits | `exp3` | outcome parsed from stored status |
 | matrix cell classes | class per cell | `lib.classify` | reports and prerequisite labels only; LICENCE_ERROR now only LICENCE_REFUSAL |
 | recompute.py | moment per probe times, T1, T3 | raw rows | report only, never read by a verdict; moment selection now by required Outcome case |
+
+Report-only output keys (never read by a verdict; the AST test enforces that verdicts read only evidence objects). Generated list for
+every committed life: `tests/red/report-only-keys-review8.txt`. Families: exp1_moment `first_refusal_status`, `success_before_transition`,
+`dls_returned_counts_before`, up `first_success_rel_resp_s` (19 of 34 keys); exp2 per-arm counts (`arms.*`), `T1_examples`,
+`T3_backend_labelled_after_resp_start`, T6 ranking comparisons, `events`, latch timeline, `requests_total`, write bookkeeping
+(`failed_batches`, `live_present`, `present_unacked`, ...) (60 of 93); exp3 read/mutation/restart records, mismatch id lists and the
+corrupted-migration detail (127 of 155); matrix phases `exp1_basic0` (all), `exp1_trial` and `exp1_after` cells other than the DLS and
+latch cells; semonly fields other than status and hits. recompute.py output is a report.
 
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 

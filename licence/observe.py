@@ -20,6 +20,29 @@ _HTTP = re.compile(r"\bHTTP (\d{3})\b")
 NOT_OBSERVED = ("SKIP", "UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS")   # mirrors matrix.NOT_OBSERVED (tested)
 
 
+# the cell class lib.classify gives each Outcome case (LICENCE_ERROR before review 8 also covered any 4xx/5xx with the licence text)
+def _label_agrees(cls, o):
+    if cls == "AVAILABLE":
+        return o.case == "SUCCESS"
+    if cls == "TRANSPORT":
+        return o.case == "TRANSPORT_FAILURE"
+    if cls == "LICENCE_ERROR":
+        return o.status >= 400
+    if cls == "OTHER_ERROR":
+        return o.case not in ("SUCCESS", "TRANSPORT_FAILURE", "LICENCE_REFUSAL")
+    return False   # SKIP, UNVERIFIED_PREREQUISITE, EMPTY_WITNESS or an unknown label: not a refusal observation
+
+
+def is_success(cell):
+    """Any 2xx answer, whatever its label (an EMPTY_WITNESS 200 after a refusal is still an answer, not a refusal)."""
+    if not isinstance(cell, (list, tuple)) or len(cell) < 2:
+        return False
+    try:
+        return evidence.Outcome.of(cell[1]).case == "SUCCESS"
+    except evidence.Unparsed:
+        return False
+
+
 def outcome_from_cell(cell):
     """A recorded matrix probe cell [class, status, ...] -> Outcome, or None when it is not an HTTP observation.
 
@@ -28,9 +51,10 @@ def outcome_from_cell(cell):
     if not isinstance(cell, (list, tuple)) or len(cell) < 2 or type(cell[0]) is not str:
         return None
     try:
-        return evidence.Outcome.of(cell[1], cell[0] == "LICENCE_ERROR")
+        o = evidence.Outcome.of(cell[1], cell[0] == "LICENCE_ERROR")
     except evidence.Unparsed:
         return None
+    return o if _label_agrees(cell[0], o) else None   # a label that contradicts its status is not an observation
 
 
 def outcome_from_row(row):
@@ -74,8 +98,8 @@ def moments(rows, t_resp, features=LICENCE_PROBES + ("dls_search",)):
             "first_refusal": None if sel is None else {"status": sel[1].status, "licence_text": sel[1].licence_text, "rel_resp_s": first_t - t_resp},
             "first_refusal_rel_resp_s": None if sel is None else first_t - t_resp,
             "first_refusal_status": None if sel is None else sel[1].status,
-            "success_before_transition": sum(1 for t, v in seq if t < t_resp and v[0] == "AVAILABLE"),
-            "success_after_first_refusal": sum(1 for t, v in seq if first_t is not None and t > first_t and v[0] == "AVAILABLE"),
+            "success_before_transition": sum(1 for t, v in seq if t < t_resp and is_success(v)),
+            "success_after_first_refusal": sum(1 for t, v in seq if first_t is not None and t > first_t and is_success(v)),
             "dls_returned_counts_before": sorted({v[2] for t, v in seq if t < t_resp and v[0] == "AVAILABLE" and len(v) > 2})
             if f == "dls_search" else None,
             "n": len(seq)}

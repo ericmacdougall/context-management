@@ -52,9 +52,11 @@ def _backfill_observed(R, path):
     the Outcome behind them. Re-derive both from the committed raw files through observe.py, and attach them only when the re-derivation
     reproduces the recorded figures (timing, successes after it, n; control n). Without the raw file, or when it does not reproduce them,
     nothing is attached and the gate is UNVERIFIED. Nothing is written to disk."""
+    import evidence
     base = path[:-5]
+    timed = lambda d, k: isinstance(d, dict) and evidence._real(d.get(k)) and d.get(k) >= 1   # a finite epoch time, else nothing attached
     M = R.get("exp1_moment")
-    if R.get("mode") == "down" and isinstance(M, dict) and isinstance(R.get("start_basic"), dict) and os.path.exists(base + ".poll.gz"):
+    if R.get("mode") == "down" and isinstance(M, dict) and timed(R.get("start_basic"), "t_resp") and os.path.exists(base + ".poll.gz"):
         new = observe.moments(json.load(gzip.open(base + ".poll.gz", "rt")), R["start_basic"]["t_resp"])
         for f, m in M.items():
             n = new.get(f) or {}
@@ -72,7 +74,7 @@ def _backfill_observed(R, path):
         key, t = "T5_control_before_start_trial", (R.get("start_trial") or {}).get("t_req")
         keep = lambda r: r[1] < t
     ctl = E2.get(key)
-    if not isinstance(ctl, dict) or "licence_refusals" in ctl or not isinstance(t, (int, float)):
+    if not isinstance(ctl, dict) or "licence_refusals" in ctl or not evidence._real(t) or t < 1:
         return
     c = observe.control_counts([json.loads(l) for l in gzip.open(base + ".rows.gz", "rt")], keep)
     if c["n"] == ctl.get("n"):   # only trust the recount when it reproduces the recorded denominator
@@ -85,8 +87,11 @@ def load(d, mode):
     for f in sorted(glob.glob(os.path.join(d, "%s_[0-9]*.json" % mode))):
         R = json.load(open(f))
         R["_file"] = os.path.basename(f)
-        _backfill_up_licence_failures(R, f)
-        _backfill_observed(R, f)
+        for backfill in (_backfill_up_licence_failures, _backfill_observed):
+            try:
+                backfill(R, f)
+            except (ArithmeticError, TypeError, ValueError, KeyError, IndexError, AttributeError, EOFError, OSError):
+                pass   # malformed life or raw file: nothing is attached, and the gates that need it are UNVERIFIED (review 8 F14)
         out.append(R)
     return out
 
@@ -162,7 +167,7 @@ def matrix_table(R):
             if v is None:
                 row[k] = None
             elif "class" in v:
-                row[k] = v["class"] + ("/%s" % v.get("status") if v.get("status") else "")
+                row[k] = "%s%s" % (v["class"], "/%s" % v.get("status") if v.get("status") else "")   # report text only
             else:  # composite cells
                 row[k] = {kk: (vv.get("class") if isinstance(vv, dict) else vv) for kk, vv in v.items()}
         t[cell] = row
@@ -254,12 +259,15 @@ def exp3_checks(R):
         out["unrefreshed_partial"] = {"trial": u(R["unrefreshed_twin_on_trial"]), "basic": u(bs)}
     if "semonly_trial" in R:
         sm = {}
-        for k, t in R["semonly_trial"].items():
-            a = R["semonly_after"][k]
-            sm[k] = {"trial": [t["status"], t["hits"]], "basic": [a["status"], a["hits"], (a["error"] or {}).get("reason", "")[:50]],
-                     "silent_difference": a["status"] < 300 and t["status"] < 300 and a["hits"] != t["hits"]}
+        try:   # report only (the EXP3-semonly-control verdict parses its own evidence); a malformed record is reported, not raised
+            for k, t in R["semonly_trial"].items():
+                a = R["semonly_after"][k]
+                sm[k] = {"trial": [t["status"], t["hits"]], "basic": [a["status"], a["hits"], (a["error"] or {}).get("reason", "")[:50]],
+                         "silent_difference": a["status"] < 300 and t["status"] < 300 and a["hits"] != t["hits"]}
+        except (ArithmeticError, TypeError, ValueError, KeyError, AttributeError) as e:
+            sm = "malformed record: %s" % type(e).__name__
         out["semonly"] = sm
-        out["semonly_silent"] = [k for k, v in sm.items() if v["silent_difference"]]
+        out["semonly_silent"] = [k for k, v in sm.items() if v["silent_difference"]] if isinstance(sm, dict) else []
     put(out, "EXP3-semonly-control", R)
     out["restart"] = {"counts_equal": E["after_restart"]["counts_before"] == E["after_restart"]["counts_after"], "counts": E["after_restart"]["counts_after"]}
     return out
