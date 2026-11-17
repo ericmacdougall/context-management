@@ -142,11 +142,52 @@ def _ast_params(fn, is_method):
     a = fn.args
     pos = a.posonlyargs + a.args
     nd = len(pos) - len(a.defaults)
-    ps = [(x.arg, i >= nd, False) for i, x in enumerate(pos)] + [(x.arg, d is not None, False) for x, d in zip(a.kwonlyargs, a.kw_defaults)]
+    ps = [(x.arg, i >= nd, False) for i, x in enumerate(pos)]
+    if a.vararg is not None:                         # inspect.signature lists *args in this position (review-3 N7)
+        ps.append((a.vararg.arg, False, False))
+    ps += [(x.arg, d is not None, False) for x, d in zip(a.kwonlyargs, a.kw_defaults)]
     if a.kwarg is not None:
         ps.append((a.kwarg.arg, False, True))
     if is_method and ps and ps[0][0] in ("self", "cls"):
         ps = ps[1:]
+    return ps
+
+
+def _decorator_name(d):
+    f = d.func if isinstance(d, ast.Call) else d
+    return f.attr if isinstance(f, ast.Attribute) else getattr(f, "id", None)
+
+
+def _kw(call, name):
+    return next((k.value for k in call.keywords if k.arg == name), None) if isinstance(call, ast.Call) else None
+
+
+def _dataclass_init(node):
+    """The parameters of the __init__ that @dataclass generates for `node`, or None (not a dataclass, init=False, or __init__ written).
+    Fields are the class's own annotated names (ClassVar excluded, field(init=False) excluded); a field has a default when it is
+    assigned a value or field(default=...) / field(default_factory=...). Fields inherited from a dataclass base are not resolved here
+    (no class in pol inherits from a dataclass; the agreement test in tests/test_surface.py would show it)."""
+    dec = next((d for d in node.decorator_list if _decorator_name(d) == "dataclass"), None)
+    if dec is None:
+        return None
+    init = _kw(dec, "init")
+    if isinstance(init, ast.Constant) and init.value is False:
+        return None
+    if any(isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and m.name == "__init__" for m in node.body):
+        return None
+    ps = []
+    for m in node.body:
+        if not (isinstance(m, ast.AnnAssign) and isinstance(m.target, ast.Name)) or "ClassVar" in ast.unparse(m.annotation):
+            continue
+        v = m.value
+        if isinstance(v, ast.Call) and _decorator_name(v) == "field":
+            fi = _kw(v, "init")
+            if isinstance(fi, ast.Constant) and fi.value is False:
+                continue
+            has_default = _kw(v, "default") is not None or _kw(v, "default_factory") is not None
+        else:
+            has_default = v is not None
+        ps.append((m.target.id, has_default, False))
     return ps
 
 
@@ -159,6 +200,9 @@ def _ast_defs(modname, path):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
             out.append((modname + "." + node.name, _ast_params(node, False)))
         elif isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
+            gen = _dataclass_init(node)
+            if gen is not None:
+                out.append((modname + "." + node.name + ".__init__", gen))
             for m in node.body:
                 if isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)) and (m.name == "__init__" or not m.name.startswith("_")):
                     static = any(isinstance(d, ast.Name) and d.id == "staticmethod" for d in m.decorator_list)

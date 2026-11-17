@@ -309,6 +309,33 @@ class Surface(unittest.TestCase):
                 ("B3", "behave_pkg.mint2.snapshot_of"), ("B4", "behave_pkg.mint2.relay")}
         self.assertEqual(sorted(want - got), [], "probe missed")
 
+    def test_ast_fallback_agrees_with_runtime_enumeration(self):
+        """Review-3 N7: a module that does not import (pol.pgcore without psycopg) is enumerated from its AST. At 0a20b64 the AST path
+        listed only explicitly written methods, so a dataclass-generated __init__ (PgSession, Session, Principal, ...) vanished and
+        the pinned manifest depended on whether the driver was installed. For every module that DOES import here, the AST enumeration
+        must equal the runtime one for the callables defined in that module."""
+        import inspect
+        from surface import _ast_defs, _params_from_sig, public_modules
+        diffs = []
+        for mod, modname, path in public_modules("pol"):
+            if mod is None or not path or not path.endswith(".py"):
+                continue
+            rt = {}
+            for where, obj in exported("pol"):
+                if where.rsplit(".", 1)[0] != modname or getattr(obj, "__module__", None) != modname:
+                    continue
+                if inspect.isfunction(obj):
+                    rt[where] = _params_from_sig(obj, False)
+                elif inspect.isclass(obj):
+                    for mn, f, static in class_methods(obj, "pol"):
+                        if mn in vars(obj):          # defined on this class, written or generated (not inherited)
+                            rt[where + "." + mn] = _params_from_sig(f, not static)
+            st = {w: p for w, p in _ast_defs(modname, path)}
+            for k in sorted(set(rt) | set(st)):
+                if rt.get(k) != st.get(k):
+                    diffs.append("%s runtime=%s ast=%s" % (k, rt.get(k), st.get(k)))
+        self.assertEqual(diffs, [], "AST fallback differs from the runtime enumeration:\n" + "\n".join(diffs))
+
 
 if __name__ == "__main__":
     unittest.main()
