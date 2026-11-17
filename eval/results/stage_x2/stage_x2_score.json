@@ -505,6 +505,7 @@
    "eaca4986": "e48988bc",
    "e48988bc": "51a45a95"
   },
+  "pairs_with_overlapping_gold": [],
   "hits": {
    "51a45a95": {
     "rrf_raw": false,
@@ -2875,6 +2876,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sc653e84b6b04"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -2926,6 +2930,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "saae4d2258eb7"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -2977,6 +2984,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sb727b97216df"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3028,6 +3038,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6b93891af629"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3079,6 +3092,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sc06566486f2d"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3130,6 +3146,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6312bd8faec1"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3181,6 +3200,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s2ba59aca3937"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3232,6 +3254,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sa3542396d1be"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3283,6 +3308,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6ada2223636c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3334,6 +3362,9 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s9b428bfab70d"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -3389,6 +3420,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "scecae423960c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3440,6 +3474,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s3ba0af9e9733"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3491,6 +3528,11 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "s2878c19790b5",
+    "sd4afdd188da0",
+    "se2dbd3b6dd6c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3542,6 +3584,11 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "s268cc5e3ff0b",
+    "s82772d5ddcc2",
+    "sa011b0f90ca6"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -3597,6 +3644,11 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "s89910be541f4",
+    "sb9e50829e846",
+    "sba3e2fdaefe2"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -3652,6 +3704,11 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "s1d5e583b8b74",
+    "s4f08e9c17e16",
+    "sf3b45b10366e"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -3707,6 +3764,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s21ffbe5c3197",
+    "s2e6c8e114831"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3758,6 +3819,13 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 5,
+   "gold_session_ids": [
+    "s1c4f85ff3d8b",
+    "s5e1ba927a328",
+    "s7e07caca1484",
+    "sbf997cacbdba",
+    "scb15100715bb"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -3813,6 +3881,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s2bcc79fec8f5",
+    "s3de400df9325"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3864,6 +3936,12 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 4,
+   "gold_session_ids": [
+    "s49250e0ff6c3",
+    "s5e765ba122fe",
+    "s6a2922f1e4da",
+    "sdd142a654981"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -3915,6 +3993,13 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 5,
+   "gold_session_ids": [
+    "s6de582b428f4",
+    "s827f306f0106",
+    "s994fd89ef0fe",
+    "sc8fdef3be1bf",
+    "sd2e7e12f3d3c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -3970,6 +4055,12 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 4,
+   "gold_session_ids": [
+    "s2d36a356d11f",
+    "s7e0f06acb84c",
+    "s922a277a99b4",
+    "sb2b7587c05e7"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4025,6 +4116,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sa1033bfa4453"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4076,6 +4170,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s76cb4b1eb00c"
+   ],
    "gold_sessions_without_facts": [
     "s76cb4b1eb00c"
    ],
@@ -4129,6 +4226,9 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "se821aca3328d"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4184,6 +4284,9 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sc699af8d9a5d"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4239,6 +4342,9 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s33556713acd3"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4294,6 +4400,9 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6a157da58e77"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4349,6 +4458,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s2723970ba12f",
+    "s31cb6abb8757"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4400,6 +4513,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s7a8ea111fe82",
+    "s8aa857cf61bf"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4451,6 +4568,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s41399b1f6971",
+    "s6c82dc32e199"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4502,6 +4623,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s7a01f7852ca5",
+    "sb7417b822ace"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4553,6 +4678,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "sd1a25604a4c9",
+    "sf0ffb0e48539"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4604,6 +4733,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s30e1af7ce0a4",
+    "sc639153873a0"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4655,6 +4788,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s0bff7da52ed0",
+    "s39bdfae9daa7"
+   ],
    "gold_sessions_without_facts": [
     "s0bff7da52ed0"
    ],
@@ -4708,6 +4845,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s2ad2ab6b5469",
+    "s489ff4bc8c72"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4759,6 +4900,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s3936532c182d",
+    "s96142d960ec8"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4810,6 +4955,10 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s4b4260113325",
+    "s62b40480a273"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4865,6 +5014,10 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s4d88485105f9",
+    "se609070c82d3"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -4920,6 +5073,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s1e8877fdd337",
+    "s923507583c82"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -4971,6 +5128,10 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s99f01a630a84",
+    "sf9f1e77e38d7"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5026,6 +5187,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s48c7b60894e4"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5081,6 +5245,11 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "sb445650b26f4",
+    "sc159e00da6f2",
+    "sd906a30f9d93"
+   ],
    "gold_sessions_without_facts": [
     "sb445650b26f4"
    ],
@@ -5134,6 +5303,14 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 6,
+   "gold_session_ids": [
+    "s783279bc6932",
+    "s86ce06e5ed3e",
+    "sa1cf449d0605",
+    "sb0f556678a71",
+    "sed56156fc4d8",
+    "sef7226b0d156"
+   ],
    "gold_sessions_without_facts": [
     "sb0f556678a71"
    ],
@@ -5187,6 +5364,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s2bb91f6f0cb8",
+    "s57e857ca2515"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -5238,6 +5419,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s7b0c8042580c",
+    "scbae2b89f011"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -5289,6 +5474,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sd65d98bbe1d9"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -5340,6 +5528,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s7ed61c462040"
+   ],
    "gold_sessions_without_facts": [
     "s7ed61c462040"
    ],
@@ -5393,6 +5584,9 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s48c7b60894e4"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5448,6 +5642,12 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 4,
+   "gold_session_ids": [
+    "s86229562b800",
+    "sb34438710b7a",
+    "sc754005a5820",
+    "seb8a8d0f055f"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5503,6 +5703,13 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 5,
+   "gold_session_ids": [
+    "s1cce344040b1",
+    "s1e826403d244",
+    "s785a3e03c1a5",
+    "s834315afe9d8",
+    "sce3ff0befbf6"
+   ],
    "gold_sessions_without_facts": [
     "s1cce344040b1"
    ],
@@ -5556,6 +5763,10 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s0539f7e6e91e",
+    "s672e0f58b3c0"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5611,6 +5822,10 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "sa6644818dbc3",
+    "sb09bceea100a"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5666,6 +5881,10 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s03ff5b83f423",
+    "sa9841ca93fd2"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5721,6 +5940,10 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "sa2e7e2332238",
+    "scbae2b89f011"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5776,6 +5999,9 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s44c85b7d6fb7"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -5831,6 +6057,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s1dfedeec50c3",
+    "sfcca00e2e089"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -5882,6 +6112,14 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 6,
+   "gold_session_ids": [
+    "s19f4e75fe648",
+    "s543d3b61162c",
+    "s6cfcf391f9b6",
+    "s9d985ca3843b",
+    "sa7856d54d45d",
+    "sfd405dcf21ee"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -5933,6 +6171,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s0913644f88f9",
+    "s76797ed72d41"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -5984,6 +6226,11 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "s948f22128406",
+    "sae153e0ff5e4",
+    "scc9ac66ae283"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -6035,6 +6282,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s3c0667bbcd32",
+    "sa72f7551ca32"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -6086,6 +6337,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s1ed0f90ba48c",
+    "s598b87e0e8dc"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -6137,6 +6392,11 @@
    "stratum": "low_overlap_other",
    "in_low_overlap_23": true,
    "gold_sessions": 3,
+   "gold_session_ids": [
+    "s20b5fc790feb",
+    "s5b5d7d829c9e",
+    "sbfc9bbc3b46f"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6192,6 +6452,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "sdd1413928818",
+    "sfed927154b38"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -6243,6 +6507,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s374bfd73bcc0",
+    "scd72dcd2d247"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -6294,6 +6562,10 @@
    "stratum": "weak_list",
    "in_low_overlap_23": true,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s4705b0609c1d",
+    "sa4f076b23b45"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6349,6 +6621,10 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s0fc54c34535c",
+    "s59c7dc942a8c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -6400,6 +6676,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s3ffe1fba8735",
+    "scf42a9e96ea0"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6455,6 +6735,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s5a4da2ed7df6",
+    "s82d45f892037"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6510,6 +6794,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s1b4219a35f55",
+    "s9408b03fe76a"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6565,6 +6853,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s05ae1dc65aa3",
+    "s4d2671e04b9d"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6620,6 +6912,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s6b4980c86eb9",
+    "se36edef2af9c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6675,6 +6971,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "sa4d111c8a67e",
+    "sa52d028f82a3"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6730,6 +7030,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s8e86964f73a9",
+    "s8eac6d510636"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6785,6 +7089,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "sc2e73c115511",
+    "sc7339b21c6fc"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6840,6 +7148,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s117223df2b45",
+    "s5f2f2e0d88cd"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6895,6 +7207,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s36afb2935017",
+    "sbd290a15fa13"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -6950,6 +7266,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s4be1c5e9396d",
+    "s60f8e18a0642"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -7005,6 +7325,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s14fc07a123eb",
+    "sc24e402487ae"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -7060,6 +7384,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s2d92c5643890",
+    "sdafaa2ac80e6"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -7115,6 +7443,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s3ffe1fba8735",
+    "scf42a9e96ea0"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -7170,6 +7502,10 @@
    "stratum": "knowledge_update",
    "in_low_overlap_23": false,
    "gold_sessions": 2,
+   "gold_session_ids": [
+    "s5a4da2ed7df6",
+    "s82d45f892037"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": true,
    "secondary": {
@@ -7225,6 +7561,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s74f65147bde8"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7276,6 +7615,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s539f8a245ab9"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7327,6 +7669,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s072b15ae2e63"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7378,6 +7723,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6d4c52a9386c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7429,6 +7777,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6e15984068fa"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7480,6 +7831,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s6fd17453dd9b"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7531,6 +7885,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s122422abbbc9"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7582,6 +7939,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s5da7717bd203"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7633,6 +7993,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "sfd61cc84ac1a"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7684,6 +8047,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s87db728bf76c"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7735,6 +8101,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s11f7ed1d3ab4"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
@@ -7786,6 +8155,9 @@
    "stratum": "rest",
    "in_low_overlap_23": false,
    "gold_sessions": 1,
+   "gold_session_ids": [
+    "s1268d145629b"
+   ],
    "gold_sessions_without_facts": [],
    "in_scaling_39": false,
    "secondary": {
