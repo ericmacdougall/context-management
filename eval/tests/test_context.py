@@ -441,6 +441,12 @@ class StageX2WrongQuery(unittest.TestCase):
             self.assertNotEqual(x, y)
             self.assertFalse(gold[x] & gold[y])
 
+    def test_overlapping_pairs_detects_a_shared_gold_session_and_self_pairing(self):
+        from emlab.stage_x2_score import overlapping_pairs
+        gold = {"a": {"s1"}, "b": {"s1", "s2"}, "c": {"s3"}}
+        self.assertEqual(overlapping_pairs({"a": "c", "b": "c", "c": "a"}, gold), [])
+        self.assertEqual(overlapping_pairs({"a": "b", "b": "c", "c": "c"}, gold), ["a", "c"])
+
     def test_wraps_and_reports_none_when_everyone_overlaps(self):
         from emlab.stage_x2_score import wrong_partner
         self.assertEqual(wrong_partner(["a", "b", "c"], {"a": {"s1"}, "b": {"s2"}, "c": {"s1"}}, 2), "b")

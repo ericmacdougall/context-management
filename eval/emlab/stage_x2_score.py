@@ -64,6 +64,11 @@ def wrong_partner(complete: List[str], gold: Dict[str, set], i: int) -> Optional
     return None
 
 
+def overlapping_pairs(pairs: Dict[str, str], gold: Dict[str, set]) -> List[str]:
+    """Questions whose wrong-query partner shares a gold session with them (must be empty), or whose partner is themselves."""
+    return sorted(x for x, y in pairs.items() if x == y or (gold[x] & gold[y]))
+
+
 def paired(rows_ctrl: Dict[str, float], rows_arm: Dict[str, float], clusters: Dict[str, str]) -> Dict[str, Any]:
     qids = sorted(rows_ctrl)
     if not qids:
@@ -201,7 +206,7 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
         wq_pair[x] = y
     res["wrong_query_control"] = {a: sum(wq[x][a] for x in complete) / max(1, len(complete)) for a in ARMS}
     res["wrong_query_pairs"] = {"rule": "next question in cyclic order over the evaluated questions whose gold sessions are disjoint from this question's (asserted for every pairing)",
-                                "partner": wq_pair, "hits": {x: {a: bool(wq[x][a]) for a in ARMS} for x in complete},
+                                "partner": wq_pair, "pairs_with_overlapping_gold": overlapping_pairs(wq_pair, gold), "hits": {x: {a: bool(wq[x][a]) for a in ARMS} for x in complete},
                                 "prior_rule_pairs_with_overlapping_gold": sorted(x for i, x in enumerate(complete) if gold[x] & gold[(complete[(i + 1) % len(complete)] if not (gold[x] & gold[complete[(i + 1) % len(complete)]]) else complete[(i + 2) % len(complete)])]),
                                 "questions_hit_per_arm": {a: sorted(x for x in complete if wq[x][a]) for a in ARMS}}
     # ---- scaling: the questions whose gold is entirely in the Stage X0 200 sessions, at 200 sessions and at the full pool
@@ -279,7 +284,7 @@ def main(dataset, art, sets_path, out_root, in_root, model_dir, out_json):
     # audit rows (enough to rebuild every interval, stratum table and scaling figure from this file alone)
     stratum_of = {x: k for k, v in strata.items() for x in v}
     res["audit_rows"] = {x: {"cluster": ctx.clusters[x], "qtype": qmap[x].qtype, "stratum": stratum_of[x], "in_low_overlap_23": x in set(low),
-                             "gold_sessions": len(gold[x]), "gold_sessions_without_facts": sorted(o for o in gold[x] if o not in has_facts),
+                             "gold_sessions": len(gold[x]), "gold_session_ids": sorted(gold[x]), "gold_sessions_without_facts": sorted(o for o in gold[x] if o not in has_facts),
                              "in_scaling_39": x in per_toy, "secondary": {a: {k: per_full[x][a][k] for k in per_full[x][a] if k != "n_gold"} for a in ARMS},
                              "scaling_pool_200_sess_any_10": ({a: per_toy[x][a][prim] for a in ARMS} if x in per_toy else None)} for x in complete}
     res["missing_records_note"] = ("Sessions without facts are removed from the facts lists of EVERY question, not only their own: this changes BM25 statistics and removes distractors "
