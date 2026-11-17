@@ -12,53 +12,67 @@ _spec = importlib.util.spec_from_file_location("verify_s2_under_test", os.path.j
 S2 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(S2)
 
+# The coverage of THRESHOLDS.md amendment 7, written out here independently of verify/s2.py (delta review M2)
 CLASSES = ["valid", "forged_mac", "body_edited", "other_key", "other_factor_id", "look_alike", "other_principal", "other_channel",
-           "other_tenant", "expired", "far_future", "replay", "revoked_factor", "malformed"]
-TOKENS = ["valid", "forged", "expired", "revoked", "ended", "empty", "other_tenant"]
+           "other_tenant", "expired", "far_future", "replay", "revoked_factor", "malformed", "expired_in_txn"]
+TOKENS = ["valid", "forged", "expired", "revoked", "ended", "empty", "other_tenant", "expired_in_txn", "repeatable_read"]
 CALLS = ["submit", "explain", "read_table", "erase_candidates", "erase_values"]
-CONTROLS = ["ctl_bare_mint_80bb6a7", "ctl_bare_mint_0a20b64", "ctl_no_replay", "ctl_no_mac", "ctl_identity_from_body", "ctl_origin_from_body"]
-DOC = {"params": {"seeds": [1], "trials_per_class": 2, "classes": CLASSES, "tokens": TOKENS, "calls": CALLS, "controls": CONTROLS}}
+CONTROLS = ["ctl_bare_mint_80bb6a7", "ctl_bare_mint_0a20b64", "ctl_no_replay", "ctl_no_mac", "ctl_identity_from_body", "ctl_origin_from_body",
+            "ctl_txn_clock"]
+MINT = [("dc_idp", "bare_principal_open_session"), ("dc_app", "bare_principal_open_session"), ("dc_app", "open_session_with_proof"),
+        ("dc_app", "end_session"), ("dc_app", "enroll_factor"), ("dc_idp", "enroll_factor"), ("dc_app", "insert_session"),
+        ("dc_idp", "insert_session"), ("dc_app", "update_session"), ("dc_idp", "update_session"), ("dc_app", "read_sessions"),
+        ("dc_idp", "read_sessions"), ("dc_app", "read_factors"), ("dc_idp", "read_factors"), ("dc_idp", "alter_factors"),
+        ("dc_idp", "clear_used_proofs"), ("in_process", "bare_principal_issue")]
+ORIGINS = [("alice", "human", "owner_ui", "user", "user_typed"), ("alice", "human", "owner_cli", "user", "user_typed"),
+           ("bob", "human", "owner_ui", "user", "user_typed"), ("carol", "human", "owner_ui", "user", "user_typed"),
+           ("bot", "agent", "agent_api", "assistant", "agent_generated"), ("x", "analyst", "agent_api", "assistant", "agent_generated")]
+TRIALS, SEEDS = 12, [1, 2, 3]
+DOC = {"params": {"seeds": SEEDS, "trials_per_class": TRIALS, "classes": CLASSES, "tokens": TOKENS, "calls": CALLS, "controls": CONTROLS}}
 
 
-def good_rows(seed=1):
+def good_rows(seeds=SEEDS):
     R = []
-    add = lambda arm, **kw: R.append(dict(arm=arm, seed=seed, **kw))                     # noqa: E731
-    for i in range(S2.MINT_EXPECTED):
-        add("real", kind="mint", role="r", what="w%d" % i, outcome="refused")
-    for cls in CLASSES + ["revoked_principal"]:
-        for _ in range(2):
-            if cls == "valid":
-                add("real", kind="proof", cls=cls, outcome="accepted", factor_principal="alice", claimed="alice", stamped="alice", authenticated=True)
+    for seed in seeds:
+        add = lambda arm, **kw: R.append(dict(arm=arm, seed=seed, **kw))                 # noqa: E731
+        for role, what in MINT:
+            add("real", kind="mint", role=role, what=what, outcome="refused")
+        for cls in CLASSES + ["revoked_principal"]:
+            for _ in range(TRIALS):
+                if cls == "valid":
+                    add("real", kind="proof", cls=cls, outcome="accepted", factor_principal="alice", claimed="alice", stamped="alice", authenticated=True)
+                else:
+                    claimed = "bob" if cls in S2.CLAIMS_OTHER else "alice"
+                    add("real", kind="proof", cls=cls, outcome="refused", factor_principal="alice", claimed=claimed, stamped=None)
+                if cls == "replay":
+                    add("real", kind="proof", cls="replay_first", outcome="accepted", principal="alice", stamped="alice", authenticated=True)
+        for rnd in range(3):
+            add("real", kind="replay_concurrent", round=rnd, presented=8, winners=1)
+        for c in TOKENS:
+            if c == "valid":
+                obs = {"submit": "unauthorized", "explain": {"tenant": "tenant-a", "seen": 1}, "read_table": {"n": 2, "seen": 1},
+                       "erase_candidates": {"refused": None, "values": 1}, "erase_values": {"refused": None, "erased": 0}}
+            elif c == "other_tenant":
+                obs = {"submit": "unauthorized", "explain": {"tenant": "tenant-b", "seen": 0}, "read_table": {"n": 2, "seen": 0},
+                       "erase_candidates": {"refused": None, "values": 0}, "erase_values": {"refused": None, "erased": 0}}
             else:
-                claimed = "bob" if cls in S2.CLAIMS_OTHER else "alice"
-                add("real", kind="proof", cls=cls, outcome="refused", factor_principal="alice", claimed=claimed, stamped=None)
-            if cls == "replay":
-                add("real", kind="proof", cls="replay_first", outcome="accepted", principal="alice", stamped="alice", authenticated=True)
-    add("real", kind="replay_concurrent", round=0, presented=8, winners=1)
-    for c in TOKENS:
-        if c == "valid":
-            obs = {"submit": "unauthorized", "explain": {"tenant": "tenant-a", "seen": 1}, "read_table": {"n": 2, "seen": 1},
-                   "erase_candidates": {"refused": None, "values": 1}, "erase_values": {"refused": None, "erased": 0}}
-        elif c == "other_tenant":
-            obs = {"submit": "unauthorized", "explain": {"tenant": "tenant-b", "seen": 0}, "read_table": {"n": 2, "seen": 0},
-                   "erase_candidates": {"refused": None, "values": 0}, "erase_values": {"refused": None, "erased": 0}}
-        else:
-            obs = {"submit": "unauthenticated:invalid_session", "explain": None, "read_table": {"n": 0, "seen": 0},
-                   "erase_candidates": {"refused": "unauthorized", "values": 0}, "erase_values": {"refused": "unauthorized", "erased": None}}
-        for k in CALLS:
-            add("real", kind="token", cls=c, call=k, obs=obs[k])
-    add("real", kind="token_after", ended_returned=True, dana_values=1)
-    for pid, kind, ch, a, t in (("alice", "human", "owner_ui", "user", "user_typed"), ("bot", "agent", "agent_api", "assistant", "agent_generated")):
-        add("real", kind="origin", principal=pid, principal_kind=kind, channel=ch, code="proposed", actor=a, trust_origin=t)
-    for k in S2.BODY_KEYS:
-        add("real", kind="body_identity", key=k, code="identity_in_body", event_actor=None)
-    add("real", kind="install_lookalike", base="alice", look_alike="a1ice", outcome="refused:ValueError")
-    add("ctl_bare_mint_80bb6a7", kind="mint", outcome="accepted")
-    add("ctl_bare_mint_0a20b64", kind="mint", outcome="accepted", authenticated=True)
-    add("ctl_no_replay", kind="proof", cls="replay", outcome="accepted")
-    add("ctl_no_mac", kind="proof", cls="forged_mac", outcome="accepted")
-    add("ctl_identity_from_body", kind="proof", cls="other_principal", outcome="accepted", factor_principal="alice", stamped="bob")
-    add("ctl_origin_from_body", kind="body_identity", key="actor", code="proposed", event_actor="user")
+                obs = {"submit": "unauthenticated:invalid_session", "explain": None, "read_table": {"n": 0, "seen": 0},
+                       "erase_candidates": {"refused": "unauthorized", "values": 0}, "erase_values": {"refused": "unauthorized", "erased": None}}
+            for k in CALLS:
+                add("real", kind="token", cls=c, call=k, obs=obs[k])
+        add("real", kind="token_after", ended_returned=True, dana_values=1)
+        for pid, kind, ch, a, t in ORIGINS:
+            add("real", kind="origin", principal=pid, principal_kind=kind, channel=ch, code="proposed", actor=a, trust_origin=t)
+        for k in S2.BODY_KEYS:
+            add("real", kind="body_identity", key=k, code="identity_in_body", event_actor=None)
+        add("real", kind="install_lookalike", base="alice", look_alike="a1ice", outcome="refused:ValueError")
+        add("ctl_bare_mint_80bb6a7", kind="mint", outcome="accepted")
+        add("ctl_bare_mint_0a20b64", kind="mint", outcome="accepted", authenticated=True)
+        add("ctl_no_replay", kind="proof", cls="replay", outcome="accepted")
+        add("ctl_no_mac", kind="proof", cls="forged_mac", outcome="accepted")
+        add("ctl_identity_from_body", kind="proof", cls="other_principal", outcome="accepted", factor_principal="alice", stamped="bob")
+        add("ctl_origin_from_body", kind="body_identity", key="actor", code="proposed", event_actor="user")
+        add("ctl_txn_clock", kind="proof", cls="expired_in_txn", outcome="accepted")
     return R
 
 
@@ -101,6 +115,10 @@ class VerifyS2(unittest.TestCase):
             "control mac silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_no_mac")),
             "control identity stamps the factor's own": (lambda r: r.update(stamped="alice"), dict(arm="ctl_identity_from_body")),
             "control origin silent": (lambda r: r.update(event_actor="assistant"), dict(arm="ctl_origin_from_body")),
+            "control txn clock silent": (lambda r: r.update(outcome="refused"), dict(arm="ctl_txn_clock")),
+            "in-txn expired token reads": (lambda r: r.update(obs={"n": 2, "seen": 1}), dict(arm="real", kind="token", cls="expired_in_txn", call="read_table")),
+            "repeatable-read token erases": (lambda r: r.update(obs={"refused": None, "erased": 1}), dict(arm="real", kind="token", cls="repeatable_read", call="erase_values")),
+            "in-txn expired proof accepted": (lambda r: r.update(outcome="accepted", stamped="alice"), dict(arm="real", cls="expired_in_txn")),
         }
         for name, (change, where) in breaks.items():
             self.assertEqual(self._broken(change, **where), "FAIL", name)
@@ -112,7 +130,84 @@ class VerifyS2(unittest.TestCase):
                            ("a control arm", lambda r: r["arm"] == "ctl_no_mac"),
                            ("a body key", lambda r: r["kind"] == "body_identity" and r["arm"] == "real" and r["key"] == "trust_origin")):
             self.assertEqual(self._v([r for r in good_rows() if not drop(r)]), "FAIL", name)
-        self.assertEqual(S2.verify(dict(DOC, params=dict(DOC["params"], seeds=[1, 2])), good_rows())["verdict"], "FAIL", "seed 2 missing")
+        self.assertEqual(S2.verify(dict(DOC, params=dict(DOC["params"], seeds=[1, 2, 3, 4])), good_rows())["verdict"], "FAIL", "seed 4 missing")
+
+
+def _drop_classes(doc, rows):
+    """Reviewer 1: the declared classes removed with all their real-arm rows; only replay_first and revoked_principal remain."""
+    keep = ("replay_first", "revoked_principal")
+    doc["params"]["classes"] = []
+    return [r for r in rows if not (r["arm"] == "real" and r["kind"] == "proof" and r["cls"] not in keep)]
+
+
+def _one_mint_probe(doc, rows):
+    """Reviewer 2: the 17 distinct mint probes replaced by 17 copies of one refused probe."""
+    first = next(r for r in rows if r["arm"] == "real" and r["kind"] == "mint")
+    return [dict(r, role=first["role"], what=first["what"]) if r["arm"] == "real" and r["kind"] == "mint" else r for r in rows]
+
+
+def _no_agent_origin(doc, rows):
+    """Reviewer 3: the agent-origin rows removed."""
+    return [r for r in rows if not (r["kind"] == "origin" and r["principal_kind"] != "human")]
+
+
+def _small_replay(doc, rows):
+    """Own 1: concurrency reduced to one round of two proofs (one winner, so the old check saw nothing wrong)."""
+    out = [r for r in rows if not (r["kind"] == "replay_concurrent" and r["round"] != 0)]
+    return [dict(r, presented=2) if r["kind"] == "replay_concurrent" else r for r in out]
+
+
+def _fewer_trials(doc, rows):
+    """Own 2: one trial per class, declared as such in params (the old check took the trial count from the result)."""
+    doc["params"]["trials_per_class"] = 1
+    seen, out = set(), []
+    for r in rows:
+        if r["arm"] == "real" and r["kind"] == "proof":
+            k = (r["seed"], r["cls"])
+            if k in seen:
+                continue
+            seen.add(k)
+        out.append(r)
+    return out
+
+
+def _token_class_dropped(doc, rows):
+    """Own 3: the ended token class removed from params and rows (the old check took the token list from the result)."""
+    doc["params"]["tokens"] = [t for t in doc["params"]["tokens"] if t != "ended"]
+    return [r for r in rows if not (r["kind"] == "token" and r["cls"] == "ended")]
+
+
+def _one_seed(doc, rows):
+    """Own 4: a single seed declared and run (the old check accepted any nonempty seed list)."""
+    first = doc["params"]["seeds"][0]
+    doc["params"]["seeds"] = [first]
+    return [r for r in rows if r["seed"] == first]
+
+
+# _token_class_dropped did not PASS at d05d731: the old verifier raised KeyError on it (a crash, not a false pass); it stays as a case
+MANIPULATIONS = (_drop_classes, _one_mint_probe, _no_agent_origin, _small_replay, _fewer_trials, _one_seed, _token_class_dropped)
+
+
+class CoverageIsPinned(unittest.TestCase):
+    """Delta review M2: at d05d731 verify/s2.py took required classes, trial counts and token pairs from the result document, counted
+    mint rows without their identities and needed only a nonempty origin set, so each manipulation below PASSED there (red log
+    policy/results/red/delta1_m2_verifier_d05d731.out, run on d05d731's own fixture). Each must FAIL."""
+
+    def test_each_manipulation_fails(self):
+        for m in MANIPULATIONS:
+            with self.subTest(m.__name__):
+                doc = copy.deepcopy(DOC)
+                rows = m(doc, copy.deepcopy(good_rows()))
+                self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+
+    def test_duplicated_and_unexpected_coverage_fails(self):
+        rows = good_rows()
+        extra = dict(_find(rows, arm="real", kind="origin", principal="bot"))
+        self.assertEqual(S2.verify(DOC, rows + [extra])["verdict"], "FAIL", "repeated origin row")
+        mint = dict(_find(rows, arm="real", kind="mint"), what="something_else")
+        self.assertEqual(S2.verify(DOC, rows + [mint])["verdict"], "FAIL", "unexpected mint probe")
+        self.assertEqual(S2.verify(DOC, rows + [dict(rows[0], arm="ctl_made_up")])["verdict"], "FAIL", "undeclared control arm")
+        self.assertEqual(S2.verify(dict(DOC, params=dict(DOC["params"], seeds=[1, 2])), good_rows([1, 2]))["verdict"], "FAIL", "two seeds")
 
 
 if __name__ == "__main__":
