@@ -16,7 +16,7 @@ trap 'rm -rf "$W"' EXIT
 git -C "$(git rev-parse --show-toplevel)" archive "$C" writepath | tar -x -C "$W" || { echo "cannot extract $C:writepath"; exit 2; }
 F="$W/$P"
 [ -f "$F" ] || { echo "cannot read $C:$P"; exit 2; }
-TF="tests/$(echo "$M" | sed 's/^tests\.//; s/\..*//').py"   # the module of a dotted test name (tests.m.Class.test)
+TF="tests/$(echo "${M%% *}" | sed 's/^tests\.//; s/\..*//').py"   # the module of a dotted test name; M may list several
 {
   echo "# failing-first receipt"
   echo "# date: $(date -u +%FT%TZ)"
@@ -25,7 +25,8 @@ TF="tests/$(echo "$M" | sed 's/^tests\.//; s/\..*//').py"   # the module of a do
   echo "# test file: $TF at HEAD $(git rev-parse --short HEAD) blob $(git hash-object "$TF")"
   echo "# command: $V=<that file> python3 -m unittest $M -v"
 } >> "$OUT"
-env "$V=$F" python3 -m unittest "$M" -v >> "$OUT" 2>&1
+# shellcheck disable=SC2086 # M may list several dotted test names, split on purpose
+env "$V=$F" python3 -m unittest $M -v >> "$OUT" 2>&1
 RC=$?
 echo "# exit status: $RC" >> "$OUT"
 echo "exit $RC; receipt $OUT"

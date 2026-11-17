@@ -387,7 +387,8 @@ class Gate(unittest.TestCase):
             p.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{pathlib.Path(__file__).resolve()}" --fake {prog} "$@"\n')
             p.chmod(0o755)
         cls.env = mock.patch.dict(os.environ, {"WP_HOME": str(home), "PATH": f"{bindir}:{os.environ['PATH']}",
-                                               "PYTHONPATH": str(HERE), "FAKE_DOCKER_STATE": ""})
+                                               "PYTHONPATH": str(HERE), "FAKE_DOCKER_STATE": "",
+                                               "DISK_GATE_SAMPLE_S": "0.5"})   # the gate only lets this shorten
         cls.env.start()
         sys.path.insert(0, str(HERE))
         src = os.environ.get("DISK_GATE_UNDER_TEST") or str(HERE / "exp" / "disk_gate.py")
@@ -596,6 +597,34 @@ class Gate(unittest.TestCase):
         hits = [p.name for p in written if leak_scan.find(p.read_bytes(), [key, enc])]
         self.assertEqual(hits, [], "a gate file holds the API key")
         self.assertEqual(leak_scan.find((out1 + out2).encode(), [key, enc]), [], "the gate printed the API key")
+
+    # --- stage 2: the companion samples ES's report through the window (DISK_GATE_SAMPLE_S=0.5 here, 10 s live)
+    def _api_records(self):
+        runs = sorted((self.home / "state" / "gate-runs").iterdir())
+        return [json.loads(x) for x in (runs[-1] / "capture.jsonl").read_text().splitlines() if '"api"' in x]
+
+    def test_api_transient_breach_between_readings_voids(self):
+        self.start()
+        self.assertValid(*self.call("check", "x"))
+        FakeES.S.update(avail=int(1.5 * GIB))           # a breach that clears before end reads, with no log line
+        time.sleep(2)
+        FakeES.S.pop("avail")
+        self.assertVoid(*self.call("end"), "ES's own report during the run")
+
+    def test_api_settings_flip_between_samples_voids(self):
+        self.start()
+        FakeES.S.update(persistent={"logger.org.elasticsearch.cluster.routing.allocation": "ERROR"})
+        time.sleep(2)                                   # silenced, then restored before end
+        FakeES.S.pop("persistent")
+        self.assertVoid(*self.call("end"), "changed between samples")
+
+    def test_api_samples_are_in_the_capture(self):
+        self.start()
+        time.sleep(1.5)
+        self.assertValid(*self.call("end"))
+        recs = self._api_records()
+        self.assertGreaterEqual(len(recs), 2, "the companion took fewer than two ES API samples in 1.5 s at 0.5 s")
+        self.assertTrue(all(r.get("free") and r.get("high") and not r.get("why") for r in recs), recs[:2])
 
     def test_flood_line_before_the_run_does_not_void(self):
         self.line(FLOOD)

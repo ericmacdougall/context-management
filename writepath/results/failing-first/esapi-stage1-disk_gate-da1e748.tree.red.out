@@ -170,3 +170,155 @@ ok
 test_replaced_container_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 41049 is still running
   _warn("subprocess %s is still running" % self.pid,
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_rotated_log_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 41925 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_same_second_restart_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 43056 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_start_at_20gb_allowed (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 44108 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_start_under_20gb_blocked (tests.test_disk_gate.Gate) ... ok
+test_start_with_stop_present_is_blocked_and_the_stop_kept (tests.test_disk_gate.Gate) ... ok
+test_stop_arriving_while_end_measures_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 45047 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_stop_command_and_stops_listing (tests.test_disk_gate.Gate) ... ok
+test_stop_reason_names_the_watcher_not_an_operator (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 47595 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_stop_written_during_run_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 49466 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_truncated_log_with_a_flood_line_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 51203 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_tty_container_blocks_start (tests.test_disk_gate.Gate) ... ok
+test_unsupported_log_driver_blocks_start (tests.test_disk_gate.Gate) ... ok
+test_update_event_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 54365 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_usage_not_measured_at_check_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 56528 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_usage_not_measured_at_end_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 58531 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_void_check_closes_the_run (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 60402 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 62149 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_wall_clock_step_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 63722 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+======================================================================
+FAIL: test_api_high_watermark_breach_at_admission_blocks_start (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 548, in test_api_high_watermark_breach_at_admission_blocks_start
+    self.assertBlocked(*self.call("start"), "below its high watermark")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 538, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : start must be BLOCKED: disk_gate start run 20261117T202026Z-03494e1d free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB es 4aab64cb9389 pg 7dc987d0f00b admitted at seq 1
+
+======================================================================
+FAIL: test_api_high_watermark_breach_without_a_log_line_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 544, in test_api_high_watermark_breach_without_a_log_line_voids
+    self.assertVoid(*self.call("end"), "below its high watermark")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 483, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 18 capture_sha256 539dcd4f487c33ec2034a70c9721031fe975e218b49679f8cdd4caf7c6647b19
+
+======================================================================
+FAIL: test_api_jvm_older_than_the_pinned_container_blocks_start (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 569, in test_api_jvm_older_than_the_pinned_container_blocks_start
+    self.assertBlocked(*self.call("start"), "JVM")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 538, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : start must be BLOCKED: disk_gate start run 20261117T202051Z-b1489277 free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB es da646b7854f2 pg 3b354b7b56c2 admitted at seq 1
+
+======================================================================
+FAIL: test_api_key_is_sent_and_never_written (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 588, in test_api_key_is_sent_and_never_written
+    self.assertEqual(rc, 2, "an API that refuses the key must block start")
+AssertionError: 0 != 2 : an API that refuses the key must block start
+
+======================================================================
+FAIL: test_api_logger_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 574, in test_api_logger_setting_changed_during_the_run_voids
+    self.assertVoid(*self.call("end"), "settings changed")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 483, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 21 capture_sha256 65766ea66685a919a7ce852a243d46b7747c3a8ff42ffdc0796fac0e0ff4a307
+
+======================================================================
+FAIL: test_api_percentage_watermark_blocks_start (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 561, in test_api_percentage_watermark_blocks_start
+    self.assertBlocked(*self.call("start"), "byte values")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 538, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : start must be BLOCKED: disk_gate start run 20261117T202129Z-af49f680 free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB es 6f9a9e95f6dc pg 387f905e5bc3 admitted at seq 1
+
+======================================================================
+FAIL: test_api_port_not_published_by_the_pinned_container_blocks_start (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 565, in test_api_port_not_published_by_the_pinned_container_blocks_start
+    self.assertBlocked(*self.call("start"), "does not publish")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 538, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : start must be BLOCKED: disk_gate start run 20261117T202141Z-3f40feac free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB es b3c6affe1ea2 pg ef6fb274cfc0 admitted at seq 1
+
+======================================================================
+FAIL: test_api_unreadable_at_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 557, in test_api_unreadable_at_end_voids
+    self.assertVoid(*self.call("end"), "could not be read")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 483, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 21 capture_sha256 076ca084f96cd4478892f77512362220b0d818900da787c33b8c9234959d5c44
+
+======================================================================
+FAIL: test_api_unreadable_blocks_start (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 552, in test_api_unreadable_blocks_start
+    self.assertBlocked(*self.call("start"), "could not be read")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 538, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : start must be BLOCKED: disk_gate start run 20261117T202204Z-6ec6b7c6 free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB es f32910bafadf pg c3663c70734b admitted at seq 1
+
+----------------------------------------------------------------------
+Ran 60 tests in 811.302s
+
+FAILED (failures=9)
+sys:1: ResourceWarning: unclosed <socket.socket fd=4, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 55987)>
+# exit status: 1
