@@ -1,0 +1,6 @@
+# wp/keysvc.py at f00291a; current tests; python3 -m unittest tests.test_keysvc
+UnboundLocalError: local variable 'req' referenced before assignment
+ERROR: test_7_malformed_requests_survive_and_log_no_caller_bytes (tests.test_keysvc.KeyService)
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Ran 7 tests in 0.553s
+FAILED (errors=1, skipped=1)

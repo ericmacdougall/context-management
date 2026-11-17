@@ -80,18 +80,26 @@ class _Handler(socketserver.StreamRequestHandler):
         ks = None
         try:
             for line in self.rfile:
+                label = "bad_request"       # review B3: the log names only a RECOGNIZED op, never caller bytes
                 try:
-                    req = json.loads(line)
-                    op = req.get("op")
-                    if op not in self.server.ops:
-                        rep = {"error": "unknown_op"}
+                    try:
+                        req = json.loads(line)
+                    except ValueError:
+                        req = None                  # unparseable: answered bad_request below, connection kept
+                    op = req.get("op") if isinstance(req, dict) else None
+                    args = req.get("args") if isinstance(req, dict) else None
+                    if not isinstance(op, str) or op not in self.server.ops:
+                        label = "unknown_op" if isinstance(req, dict) else "bad_request"
+                        rep = {"error": label}
+                    elif args is not None and not isinstance(args, dict):
+                        label, rep = op, {"error": "bad_request"}
                     else:
+                        label = op
                         ks = ks or self.server.make_store()
-                        rep = self.server.dispatch(ks, op, req.get("args") or {})
+                        rep = self.server.dispatch(ks, op, args or {})
                 except Exception as e:  # noqa: BLE001  (a failed request never kills the connection's peer handling)
                     rep = {"error": type(e).__name__, "sqlstate": getattr(e, "sqlstate", None)}
-                self.server.note(f"uid={uid} op={req.get('op') if isinstance(req, dict) else '?'} "
-                                 f"{'ok' if 'ok' in rep else rep.get('error')}")
+                self.server.note(f"uid={uid} op={label} {'ok' if 'ok' in rep else rep.get('error')}")
                 self.wfile.write((json.dumps(rep) + "\n").encode())
                 self.wfile.flush()
         finally:

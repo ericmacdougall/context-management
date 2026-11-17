@@ -155,6 +155,33 @@ class KeyService(unittest.TestCase):
         self.assertEqual(self.S.peer_uid(a), os.getuid())
         a.close(); b.close()
 
+    def test_7_malformed_requests_survive_and_log_no_caller_bytes(self):
+        """review B3: invalid JSON first, then a valid request on the same connection; unknown ops (string, object,
+        non-object request, bad args) are answered with a fixed label and never copied into the log."""
+        import json as _j
+        self.uid["v"] = 20001
+        mark = "zqsecretop9917"
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(self.path)
+        f = s.makefile("rwb")
+
+        def ask(raw):
+            f.write(raw + b"\n")
+            f.flush()
+            return _j.loads(f.readline())
+        n0 = len(self.log)
+        self.assertEqual(ask(b"{not json"), {"error": "bad_request"})
+        self.assertIn("ok", ask(_j.dumps({"op": "chain_key", "args": {"tenant": "t"}}).encode()))
+        self.assertEqual(ask(_j.dumps({"op": mark}).encode()), {"error": "unknown_op"})
+        self.assertEqual(ask(_j.dumps({"op": {"x": mark}}).encode()), {"error": "unknown_op"})
+        self.assertEqual(ask(_j.dumps([mark]).encode()), {"error": "bad_request"})
+        self.assertEqual(ask(_j.dumps({"op": "chain_key", "args": mark}).encode()), {"error": "bad_request"})
+        f.close(); s.close()
+        logged = "\n".join(self.log[n0:])
+        self.assertNotIn(mark, logged)
+        self.assertIn("op=bad_request", logged)
+        self.assertIn("op=unknown_op", logged)
+
 
 if __name__ == "__main__":
     unittest.main()
