@@ -47,8 +47,8 @@ the F6 outcome made explicit, and the recovery is the same (roll forward).
 
 ## Not shown
 
-- The interceptor has NOT been run against the Temporal SDK or a real server: its three tests are skipped where temporalio is absent,
-  and the refusal (task retries, session resumes under a newer worker) is not shown. A multi-service cluster is not covered
-  (single-container server only).
+- The interceptor's unit tests ran against the SDK interface (temporalio 1.36.1, fake next-interceptor, no server): 25 tests OK,
+  0 skipped, on t2-dev at ad63ac9. A refusal against a real Temporal server (task retries, session resumes under a newer worker)
+  is NOT shown. A multi-service cluster is not covered (single-container server only).
 - Worker-level refusal covers state `ver` only. A workflow CODE version older than the history's (replay of newer commands) is
   caught by Temporal's own non-determinism check, not by this guard.
