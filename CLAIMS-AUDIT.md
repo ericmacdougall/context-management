@@ -11,7 +11,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v3. Every number in DESIGN.md v3
 ## Section 0: where this stands
 | Claim | Values | Source | Location | Check |
 |---|---|---|---|---|
-| Components table statuses and counts | 28 rows; 7, 8, 3, 5, 5 | DESIGN.md | counted from the table | derived |
+| Components table statuses and counts | HISTORICAL (superseded; current counts are 9, 6, 3, 5, 5, see Corrections after the independent reviews 2026-11-17): 28 rows; 7, 8, 3, 5, 5 | DESIGN.md | counted from the table | derived |
 | Typed-log review | one session | LEDGER | Held, row "Typed decision log reduced..." | ledger |
 | Replication of quote check | 2,351 of 2,373 | LEDGER | Independent replication table | ledger |
 | Link recall | 10 of 16 against a bar of 12 | LEDGER; PREREG-V2 | Did not hold row on links; section 8 | file |
@@ -21,7 +21,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v3. Every number in DESIGN.md v3
 | Judged accuracy | 0.384, 0.582, 0.911; 77 questions; 4,000 tokens | STAGE-G | section 9.2 table | file |
 | Real session harm per answered item | 0.125 log; 0.27 to 0.50 search | LEDGER | Held, real-session row ("0.125 for the log versus 0.50 and 0.27 for search") | ledger |
 | Untyped position changes | 28% (20 of 71); 0.33 to 0.34 (23 of 67) | LEDGER | Did not hold, "typed decision log alone" row | ledger |
-| Facts X2 headline | 0.862 control; 0.894, +0.032 [-0.032, +0.104], 7 wins 4 losses; 0.904, +0.043 [+0.010, +0.092], 4 wins 0 losses; 94 questions; 1,098 sessions; 0.091 to 0.455; 12 new low-overlap, 1 win 1 loss; 11 seen questions | STAGE-X2 | section 7.3 table, 7.5 | file |
+| Facts X2 headline | 0.862 control; 0.894, +0.032 [-0.032, +0.104], 7 wins 4 losses; 0.904, +0.043 [+0.010, +0.092], 4 wins 0 losses; 94 questions; 1,098 sessions; 0.091 to 0.455; other 12 low-overlap (also used in X1), 1 win 1 loss; 11 seen questions | STAGE-X2 | section 7.3 table, 7.5 | file |
 | Pause date | resets 2026-11-17 08:00 America/Vancouver | WAL | w205c473bd1a, wc66de476c06 | file |
 
 ## Section 2.1: log, fence, erasure
@@ -72,7 +72,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v3. Every number in DESIGN.md v3
 | Review ids R3-1 to R3-8, D-ids | ids only | RV-POL; RV-WP | named sections | file |
 | Adapters | 100 names, 2 prefixes, 0 collisions; 20 of 20; 330 s; 1,716 renders; 9 crafted replies | LEDGER | Held rows (adapters) | ledger |
 | Engine | 800 = 800 = 800; 13 duplicates; 4,045 vs 31,458; 4,121 vs 29,471; 68 events per second; 2,400 | LEDGER | Held rows (durable sessions, Temporal) | ledger |
-| Ingestion | 40 of 40; 20 of 40; 20 of 20; 7 placements; 21 of 28; 12 of 12; 12 of 20; 350 of 800 | LEDGER | Ingestion tables | ledger |
+| Ingestion (HISTORICAL figures as first recorded; 20 of 20 exactly-once is WITHDRAWN, 12 of 20 is in no result file and is replaced by 8 of 20, 350 of 800 is replaced by 300 of 800 then 800 of 960: see the 2026-11-17 corrections) | 40 of 40; 20 of 40; 20 of 20; 7 placements; 21 of 28; 12 of 12; 12 of 20; 350 of 800 | LEDGER | Ingestion tables | ledger |
 | Seal and composition | no numbers | SEAL; COMP | docstring; items 1 to 8 | file |
 
 ## Section 3: dead ideas
@@ -94,7 +94,7 @@ Ticket: GoodQA goodqa#16096. Branch docs/design-v3. Every number in DESIGN.md v3
 | Session cost | 6.2 = 0.7751 / 0.1246 (rounded) | LEDGER | Did not hold row on headless call | derived |
 | Rollback | 4 of 4 | LEDGER | Did not hold row | ledger |
 | Timeout | 120 s | LEDGER | Agent Builder row | ledger |
-| Held-out scanner, truncation | 400 of 400, 350 of 800; 12 of 20 | LEDGER | Ingestion Did not hold | ledger |
+| Held-out scanner, truncation (HISTORICAL; superseded: 300 of 800 then 800 of 960 on a fresh set; 8 of 20 not 12 of 20) | 400 of 400, 350 of 800; 12 of 20 | LEDGER | Ingestion Did not hold | ledger |
 | Evidence hygiene | 0 of 276 | LEDGER | Did not replicate list | ledger |
 
 ## Section 4: unsolved
@@ -141,7 +141,7 @@ All entries cite WAL ids: wb7ed3da806f (decided defaults), w7562bc5d6b7 (assumed
 | 12 | Analyst vs cross-encoder +0.024 (first report) vs +0.075 (recomputed) | LEDGER Reconciliation: recomputed; DESIGN uses it only as a "withdrawn claim" |
 | 13 | Idempotency scope: COMP item 5 per session; RV-POL default per tenant, principal and key | Unresolved; listed as decision 9 |
 | 14 | LEDGER Held rows still say "owner-reported, under review" for the engine; RV-ENG has since reviewed to 3423f4e | LEDGER durable-sessions row (reviewed with limits) is used |
-| 15 | Stage X2 provenance: the score file is dated after the scorer's last commit, but STAGE-X2 7.1 says it cannot prove from files alone that no earlier score output existed | Disclosed in X2; DESIGN labels X2 "not independently reviewed" |
+| 15 | Stage X2 provenance: the score file is dated after the scorer's last commit, but STAGE-X2 7.1 says it cannot prove from files alone that no earlier score output existed | Disclosed in X2; DESIGN labelled X2 "not independently reviewed" (SUPERSEDED 2026-11-17: reviewed with limits, reviews/eval-x2delta/review-1.md) |
 | 16 | Pilot analyst "saw candidates in rank order" (0.603) vs shuffled depth 300 (0.700): depth and order confounded | LEDGER says descriptive only; DESIGN does not compare them |
 
 ## Untraced list
@@ -172,7 +172,7 @@ confirmed the rows below from the files named.
 | Cross-encoder length-matched gain +0.020 (CI -0.004 to +0.049) | +0.023 (CI 0.000 to 0.051), random same-size pool +0.008, on the final 94 questions; +0.020 is the superseded 83-question value | eval/EXPLORATORY.md line 130; LEDGER reconciliation table |
 | Analyst gain survives length matching at +0.098 | True for the earlier 50-candidate unshuffled analyst; the 300-candidate arm was not length-matched | eval/EXPLORATORY.md |
 | 12 material findings each (write path, engine, adapters) | Adapters 12, write path 8 (F1 to F8), durable-session testbed 10 (H1 to H3, M1 to M7); LEDGER corrected | the three review reports |
-| Evaluation harness REVIEWED-WITH-LIMITS | Latest independent verdict: "NOT safe to freeze Phase R at a81d42d"; fixes and freeze checked by main only. Now LAB-EVIDENCE-UNREVIEWED | agent-a63b2d2ca8f38c01c/delta_review_goodqa16096.md |
+| Evaluation harness REVIEWED-WITH-LIMITS (still current for component 23; the ES-pilot scorer reviews of 2026-11-17 are in reviews/eval-espilot*/) | Latest independent verdict: "NOT safe to freeze Phase R at a81d42d"; fixes and freeze checked by main only. Now LAB-EVIDENCE-UNREVIEWED | agent-a63b2d2ca8f38c01c/delta_review_goodqa16096.md |
 | Per-role Elasticsearch keys as lab evidence at 4960f50 | Code at 5fc4bd6 only; commit records py_compile and "run waits for the cluster" | git log, feat/writepath-rescue |
 | Policy: "Postgres port not built" | Decision core in plpgsql exists on the branch (20 commits after 80bb6a7, unreviewed); the composition into the write-path trigger is what is not built | policy/COMPOSITION.md at 3fa69c1 |
 | Freshness scan "failed" | Owner's pass withdrawn (7.59 false challengers per scan, hash-embedding stand-in); no real-embedder test exists | research/wr128embl.output statement 3.6.7 |

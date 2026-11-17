@@ -226,7 +226,7 @@ Position: one policy decision point, enforced at the choke points the design alr
 | K36 | Erasure amplification: cost of erasure at scale (40 erasures took 254 s) | EXP measured under load | in-progress | GOT DESIGN-CHANGES "still missing" UPDATE 2026-11-16: Measured (owner-reported): 1,000,000-document tenant, a 10-event subject 48 s, 1,000 events 90 s, 100,000 events not finished; 22 to 30 s retention-lease wait per erasure. |
 | K37 | Plaintext task state (task_view) brought under the subject key and the erasure cascade | EXP | todo | RV-SYS N6 |
 | K38 | Status drift: registers and ledgers updated from evidence, not left at todo while results exist | process check | todo | GOT CORRECTIONS; RV-SRC critic "missed" list |
-| K39 | Model-graded gold (extraction reference, judge) validated by a person on a sample | EVAL | todo | LEDGER critic correction; GOT DESIGN-CHANGES "still missing" UPDATE 2026-11-16: Stage G judge disagrees with the heuristic on 22 to 32%; human audit file of 40 items prepared, not audited. |
+| K39 | Model-graded gold (extraction reference, judge) validated by a person on a sample | EVAL | todo | LEDGER critic correction; GOT DESIGN-CHANGES "still missing" UPDATE 2026-11-16: Stage G judge disagrees with the heuristic on 22 to 32%; human audit file of 40 items prepared, not audited. UPDATE 2026-11-17: the user chose a second-model audit (labelled deviation); J1 audit agreement 30 of 40 against a bar of 37, G-judge NOT MET (owner-reported, not reviewed); a fixed-judge re-run on fresh items is scheduled after the 2026-11-22 reset (ASSUMPTION, main). |
 | K40 | Crash coverage beyond instrumented points, and blast radius on the shared lab host | EXP | todo | GOT DESIGN-CHANGES "still missing" |
 
 ## L. Questions from outside sources (added 2026-11-15)
@@ -313,7 +313,7 @@ Sources: the review reports (RV-WP delta, RV-POL, RV-CTX, RV-ENG, RV-AD), LEDGER
 | N27 | User preferences: no arm helps; facts do not isolate the user's preference | EVAL | did-not-hold | X2 7.3, 7.7 |
 | N28 | Time anchoring: a soft date-proximity feature (only 9 of 94 questions resolve a range; 2 of 9 gold sessions outside the hard window) | EXP, no model | todo | X2 7.7 |
 | N29 | Questions where first-stage retrieval puts no gold in 300 candidates | EVAL | todo | STAGE-G 9.1; PREREG-V2 section 14 |
-| N30 | Judge validation J1 before any answer-level claim; human audit of 40 items | EVAL + USER | todo | PREREG-V2 section 4; STAGE-G 9.2 |
+| N30 | Judge validation J1 before any answer-level claim; audit of 40 items | EVAL + USER | in-progress | PREREG-V2 section 4; STAGE-G 9.2. UPDATE 2026-11-17: stage 11 approved by the user; the audit is by a second model (user's choice, labelled deviation, not a human audit); first attempt NOT MET (30 of 40 against 37, owner-reported); second attempt with an amended judge prompt and fresh items scheduled after the 2026-11-22 reset (ASSUMPTION, main) |
 | N31 | Freeze PREREG-V2, resolve its internal conflicts (Part A call count, Part X after the X1 stop) and fold in X2 | main decision | todo | DESIGN v3 section 5; WAL waade37da9b7 |
 | N32 | Fresh gate set for extraction and typed-state arms (neither dev2 nor held_back qualifies) | main decision | todo | PREREG-V2 sections 4, 11 |
 | N33 | Reconcile the extraction cost extrapolations (1,756 USD and 58.5 h against 1,630 USD and 49 h) | process check | todo | CLAIMS-AUDIT contradiction 3 |
