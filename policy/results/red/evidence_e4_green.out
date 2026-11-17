@@ -1,0 +1,25 @@
+# green run: tests.test_evidence_e4  against verify/e4.py
+# worktree HEAD: 83413fbd1df0372394d108e33c92cc29b3a53fd2
+# git diff --stat ea4677a -- verify/e4.py (empty: the code under test is ea4677a's):
+ policy/verify/e4.py | 36 +++++++++++++++++++++++++++++++++---
+ 1 file changed, 33 insertions(+), 3 deletions(-)
+# sha256 verify/e4.py in the worktree: 6cef26c546675b91f6d7f5d362e4d61ce5dbb074351b66dd8eae1c1b49c081d9
+# sha256 verify/e4.py at ea4677a:     9c45f6cb248f16bd875a79b3714954e0ae2f3046480585a74f57b178ded1f586
+# command (from policy/): python3 -m unittest -v tests.test_evidence_e4 
+test_audit_probe_one_run_copied (tests.test_evidence_e4.E4Evidence)
+The audit's probe 2: the positive arm is one run (model/model_banned) copied 3000x (PASSED at ea4677a). Copies given ... ok
+test_design_comes_from_the_pins (tests.test_evidence_e4.E4Evidence) ... ok
+test_drop (tests.test_evidence_e4.E4Evidence) ... ok
+test_duplicate (tests.test_evidence_e4.E4Evidence) ... ok
+test_extra (tests.test_evidence_e4.E4Evidence) ... ok
+test_honest_set_passes (tests.test_evidence_e4.E4Evidence) ... ok
+test_overwrite (tests.test_evidence_e4.E4Evidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_e4.E4Evidence) ... ok
+test_relabel (tests.test_evidence_e4.E4Evidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_e4.E4Evidence) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 2.565s
+
+OK
+# unittest exit status 0

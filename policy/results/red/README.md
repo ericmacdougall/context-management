@@ -16,6 +16,7 @@ old verifier had no reasons). "Result" lists the manipulations that returned PAS
 | Verifier | Red log (ea4677a) | Green log | Result at ea4677a |
 |---|---|---|---|
 | mig | `evidence_mig_red_ea4677a.out` | `evidence_mig_green.out` (with tests.test_evidence_layer, test_verify_pgdiff_mig, test_verify_s2, test_verify_provenance: Ran 41, OK) | FAILED (failures=17). PASS on: a duplicated clean row, a duplicated control row, a failing row followed by its passing original (the audit's overwrite, clean and control), and two seeds declared and run. Drops, relabels and extras were already FAIL there. |
+| e4 | `evidence_e4_red_ea4677a.out` | `evidence_e4_green.out` (Ran 10, OK) | FAILED (failures=15). PASS on: a duplicated run, a run relabelled with another run's identity or another seed, a run renumbered past the end, to -1, to a string or a float, an extra run (index far past the end, undeclared seed, undeclared arm), 3000 byte-identical copies of one positive run (the audit's probe 2), and four seeds declared with the runs rotated over them. Drops, overwrites and R = 100 were already FAIL (the 3000-run floor). The new verifier recomputes the stamped 8c03f02 and edb693f E4 files (results/superseded) PASS: their rows already carry the identity. |
 
 ## Final review (reviews/policy-final/review-1.md) at a2d65fd
 
