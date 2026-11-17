@@ -35,6 +35,8 @@ STORES = [
     _pg("quarantine", "ciphertext of unadopted stale writes", "rows of the subject deleted in the cascade; key destroyed", True),
     _pg("quarantine_quota", "per-session counters", "no content", False),
     _pg("subject_identifiers", "HMAC (tenant key) of declared identifiers", "the subject's rows deleted in the cascade after the rescan used them", True),
+    _pg("identifier_proposals", "D3: proposed identifiers, HMAC plus the normalised identifier under the subject key", "the subject's rows deleted in the cascade (subject key destroyed too)", True),
+    _pg("event_redactions", "D3: span-redacted copies of other speakers' events under the speaker key", "kept only for the erasing job's own redactions; any other present text in the footprint nulled (pg:redaction_text)", True),
     _pg("identifier_epochs", "identifier-set version per tenant", "no content", False),
     _pg("erasure_mentions", "event ids found by the erasure rescan", "kept with the job (ids only)", False),
     _pg("legal_holds", "hold ids, subject ids, reason codes, times", "kept as the hold record", False),

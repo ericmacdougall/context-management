@@ -41,6 +41,13 @@ def event_hash(prev, tenant, session, seq, eid, kind, subject, actor, trust, ts_
     return hmac.new(key, h.encode(), hashlib.sha256).hexdigest() if key is not None else h
 
 
+def redaction_hash(prev, tenant, eid, n, job, base_digest, redacted_digest, spans, key=None):
+    """D3: link of an event's redaction chain (event_redactions). prev is the event's hash for n = 1, else the previous
+    redaction's hash; keyed with the tenant chain key exactly like the event chain."""
+    h = _h("redaction", prev, tenant, eid, n, job, base_digest, redacted_digest, ",".join(str(x) for x in spans))
+    return hmac.new(key, h.encode(), hashlib.sha256).hexdigest() if key is not None else h
+
+
 def _noop(_name, _data=None):
     pass
 
@@ -183,10 +190,34 @@ def _verify(conn, tenant, session_id, key, upto):
     prev, ok = "0" * 64, True
     for i, r in enumerate(rows):
         h = event_hash(prev, tenant, session_id, r[0], r[1], r[2], r[3], r[4], r[5], r[6].isoformat(), r[7], r[10], r[11], r[12], r[13], r[14], r[16], r[17], key=key)
-        intact = r[15] is None or digest(r[15]) == r[7]      # redacted (NULL) content is allowed; present content must match its digest
+        intact = r[15] is None or digest(r[15]) == r[7]      # present content must match its digest
         ok = ok and r[0] == i + 1 and r[8] == prev and r[9] == h and intact
         prev = r[9]
-    return ok, len(rows), sorted({r[10] for r in rows})
+    return ok and _verify_redactions(conn, tenant, session_id, key, rows), len(rows), sorted({r[10] for r in rows})
+
+
+def _verify_redactions(conn, tenant, session_id, key, rows):
+    """D3: NULL content only with a tombstone or a redaction; each event's redaction chain links from the event hash
+    (n = 1, 2, ...), each row's keyed hash recomputes, each base is the text before it, present text matches its digest."""
+    ids = [r[1] for r in rows]
+    if not ids:
+        return True
+    tomb = {x[0] for x in conn.execute("select distinct event_id from tombstones where tenant_id=%s and event_id = any(%s)", (tenant, ids)).fetchall()}
+    red = {}
+    for x in conn.execute("select event_id, n, job_id, base_digest, redacted_enc, redacted_digest, spans, prev_hash, hash "
+                          "from event_redactions where tenant_id=%s and event_id = any(%s) order by event_id, n", (tenant, ids)).fetchall():
+        red.setdefault(x[0], []).append(x)
+    ok = True
+    for r in rows:
+        eid, cd, eh, enc = r[1], r[7], r[9], r[15]
+        chain = red.get(eid, [])
+        ok = ok and (enc is not None or eid in tomb or bool(chain))
+        head, base = eh, cd
+        for k, (_, n, job, b, renc, rdig, sp, ph, rh) in enumerate(chain, 1):
+            ok = ok and n == k and ph == head and b == base and rh == redaction_hash(ph, tenant, eid, n, job, b, rdig, sp, key=key)
+            ok = ok and (renc is None or digest(renc) == rdig)
+            head, base = rh, rdig
+    return ok
 
 
 # ---------------------------------------------------------------- inbox

@@ -11,6 +11,8 @@ import psycopg
 from . import config
 
 APP, VERIFIER, KMS, LEGAL, WATCHDOG, BROKER = "wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog", "wp_broker"
+REVIEWER_GROUP = "wp_reviewer"                     # D3: NOLOGIN group; approves identifier proposals
+REVIEWERS = ("wp_rev1", "wp_rev2")                 # one login per reviewer principal (members of REVIEWER_GROUP)
 
 
 def connect(db=None, autocommit=True, application_name="wp", role=APP, **kw):
@@ -45,3 +47,8 @@ def verifier(db=None, **kw):
 def broker(**kw):
     """D6 key broker: executes wp_lease_holder_current only."""
     return connect(application_name="wp-broker", role=BROKER, **kw)
+
+
+def reviewer(n=1, **kw):
+    """D3 reviewer principal n (wp_rev<n>): approves or rejects identifier proposals; may propose, never approve its own."""
+    return connect(application_name=f"wp-reviewer{n}", role=REVIEWERS[n - 1], **kw)

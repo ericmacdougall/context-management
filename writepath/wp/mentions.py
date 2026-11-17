@@ -168,12 +168,56 @@ def check_identifiers(identifiers):
     return norm
 
 
-def declare(conn, ks, tenant, subject_id, identifiers):
-    """Declare identifiers for a subject. Returns the new identifier-set version. Refuses identifiers that fail the D3
-    rule (identifier_problem), an erased subject (WPS03) and an identifier that already names another subject (WPS20).
-    The rule runs in the application: the store sees only HMACs and cannot check it."""
-    hm = _hmacs(ks, tenant, check_identifiers(identifiers))
-    return conn.execute("select wp_identifier_declare(%s::tenant_t, %s, %s)", (tenant, subject_id, hm)).fetchone()[0]
+def propose(conn, ks, tenant, subject_id, identifiers):
+    """Propose identifiers for a subject (the application's ONLY way in, D3). Each normalised identifier is sealed
+    under the subject's key for the reviewer and stored with its HMAC; nothing is matched until a reviewer approves.
+    The rule runs here too, as early feedback only. Returns the proposal ids."""
+    import uuid
+    from . import keys as K
+    norm = check_identifiers(identifiers)
+    key = ks.keys(tenant, [subject_id], create=True)[subject_id]
+    out = []
+    for n, h in zip(norm, _hmacs(ks, tenant, norm)):
+        pid = str(uuid.uuid4())
+        conn.execute("select wp_identifier_propose(%s::tenant_t, %s, %s, %s, %s, %s)",
+                     (tenant, subject_id, pid, h, K.seal(key, tenant, subject_id, "proposal:" + pid, n), RULE_VERSION))
+        out.append(pid)
+    return out
+
+
+def review(rconn, ks, proposal_id):
+    """The reviewer process (a wp_reviewer login): opens the sealed identifier, checks it is in normal form and passes
+    rule r2, recomputes its HMAC and approves with that HMAC (the store refuses it unless it equals the proposal's, and
+    refuses a reviewer approving its own proposal). A failing identifier is rejected with the reason and raised.
+    Returns the new identifier-set version."""
+    from . import keys as K
+    t, s, enc = rconn.execute("select tenant_id, subject_id, ident_enc from identifier_proposals where proposal_id=%s",
+                              (proposal_id,)).fetchone()
+    n = K.open_(ks.keys(t, [s])[s], t, s, "proposal:" + proposal_id, bytes(enc))
+    why = "cannot open the sealed identifier" if n is None else (
+        "not in normal form" if normalize(n) != n else identifier_problem(n))
+    if why:
+        rconn.execute("select wp_identifier_reject(%s, %s)", (proposal_id, why))
+        raise IdentifierRefused(f"{proposal_id}: {why}")
+    h = _hmacs(ks, t, [n])[0]
+    return rconn.execute("select wp_identifier_approve(%s, %s, %s)", (proposal_id, h, RULE_VERSION)).fetchone()[0]
+
+
+def declare(conn, ks, tenant, subject_id, identifiers, reviewer=None):
+    """Propose (through conn) and review (through `reviewer`, a wp_reviewer connection; default: reviewer principal 1)
+    in one call, for experiments and tests. Returns the identifier-set version after the last approval. Refuses
+    identifiers that fail rule r2, an erased subject (WPS03) and an identifier that already names another subject
+    (WPS20)."""
+    from . import db
+    rconn = reviewer or db.reviewer(1)
+    try:
+        v = None
+        for pid in propose(conn, ks, tenant, subject_id, identifiers):
+            v = review(rconn, ks, pid)
+        return v
+    finally:
+        if reviewer is None:
+            rconn.close()
 
 
 def scan(conn, ks, tenant, texts):
