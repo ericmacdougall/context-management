@@ -1,5 +1,5 @@
 #!/bin/sh
-# Proof runs on t2-dev from one synced copy: `SYNC_DEST=emlab2-16096/policy/runs/<name>/src sh sync.sh` (clean tree), then on the host:
+# Proof runs on t2-dev from one synced copy: `SYNC_RUN=<name> sh sync.sh` (clean tree; <name> is one [A-Za-z0-9._-] component), then on the host:
 #   POL_SEEDS=stamped sh ~/emlab2-16096/policy/runs/<name>/src/hostrun.sh all      (stamped: fresh seeds of THRESHOLDS amendment 5, ONCE)
 #   ALLOW_DIRTY=1 sh ~/emlab2-16096/policy/runs/<name>/src/hostrun.sh all --dev    (development: dev-* seeds, results prefixed DEV.)
 # B3, pg_diff and mig_rehearsal need the Postgres env (paths to 0600 files only); hostrun.sh exports it and PY.
