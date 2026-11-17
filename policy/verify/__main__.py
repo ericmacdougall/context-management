@@ -119,7 +119,9 @@ def main(argv):
                      indent=1, sort_keys=True, default=str).encode()
     h = hashlib.sha256(doc).hexdigest()
     out = os.path.join(res, "%sVERIFY.%s.json" % ("DEV." if dev else "", h[:16]))
-    open(out, "wb").write(doc)
+    os.makedirs(res, exist_ok=True)              # a run stopped before any experiment (disk guard) still gets its FAIL record
+    with open(out, "wb") as fh:
+        fh.write(doc)
     print("VERIFY overall=%s sha256=%s file=%s" % ("PASS" if ok_all else "FAIL", h, out))
     return 0 if ok_all else 1
 
