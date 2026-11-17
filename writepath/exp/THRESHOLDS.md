@@ -1106,3 +1106,15 @@ Gates: the run lock; exact-KiB start line (>= 20971520 KiB) before the lock and 
 check and end; flood and high-watermark watcher; leak_scan (dce5f07 or later) before results leave the host. One
 stamped run now; a VOID run may be rerun once and both are recorded; a FAIL stands. The experiment is rerun in the
 final chain (the amendment that appends the hardening experiments to H5's list).
+
+## Amendment H6a (2026-11-17, WRITTEN AFTER the H6 shake-down at 290990e; before any stamped H6 run)
+What the shake-down (R=1, unstamped, under the run lock) showed, before any broker behaviour was reached:
+- wp_broker had no USAGE on schema public (setup --reset recreates it owned by wp_owner; schema.sql granted USAGE to
+  three roles only): every mint failed, C10 recorded 42883 and 42P01. Fixed in the code (the grant), not in a rule.
+- The control's projector role key cannot run the alias CAS with security on: ES refuses to add an alias that has more
+  permissions than the index (the key has create_doc on -w, none on the base index). This is a FINDING about the
+  pre-broker design, reported with the H6 result: that deployment could not fence at all with security on.
+Changes (no threshold changes): the control records its CAS refusals as findings and still runs C1 to C5 (its key
+writes through any existing -w alias without a CAS of its own); the control is judged exactly as H6 states, on
+acceptance of at least one C1 or C4 request, not also on its setup. One more shake-down runs before the stamped run;
+the stamped run is at the commit that carries this amendment or later, and its result names that commit.
