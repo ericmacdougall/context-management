@@ -849,5 +849,351 @@ class RawEdgeTests(unittest.TestCase):
             self.assertEqual(repr(ev), before, name)
 
 
+class RebuildTests(unittest.TestCase):
+    """Gate review 10. F21: every stored derived figure with a raw source is deleted and rebuilt from typed rows; nothing stored is read
+    (completeness generated from the evidence types and summarize's declared sources). F22: every workload-row field has a declared
+    domain and relation (observe.ROW_FIELDS drives the mutation generator). F23: current_summary's inventory is the campaign, not the
+    files found. F24: the adapter message at the 400-byte boundary."""
+
+    @classmethod
+    def setUpClass(cls):
+        import gzip
+        import evidence as E
+        import verdicts as V
+        cls.E, cls.V = E, V
+        cls.raw = {}
+        for life in ("down_7", "up_1"):
+            base = os.path.join(RES, life)
+            raw = {"rows": [json.loads(l) for l in gzip.open(base + ".rows.gz", "rt")]}
+            for k in ("poll", "oracle"):
+                p = "%s.%s.gz" % (base, k)
+                raw[k] = json.load(gzip.open(p, "rt")) if os.path.exists(p) else None
+            cls.raw[life] = raw
+
+    def stored(self, life):
+        return json.load(open(os.path.join(RES, life + ".json")))
+
+    def leaves(self, scope):
+        """Every (gate, absolute leaf path) a verdict of this direction reads, from the evidence types."""
+        out = []
+        for name, g in self.V.GATES.items():
+            if g.scope in ("both", scope):
+                out += [(name, p) for p in self.E.leaf_paths(g.evidence)]
+        return out
+
+    def rebuilt(self, life, mutate=None):
+        R, raw = self.stored(life), copy.deepcopy(self.raw[life])
+        if mutate:
+            mutate(raw, R)
+        summarize.rebuild(R, raw)
+        return R
+
+    # ---- F21: completeness of the raw rebuild ------------------------------------------------------------------------------------
+    def test_f21_every_leaf_a_verdict_reads_has_a_declared_source(self):
+        for scope in ("down", "up"):
+            for gate, p in self.leaves(scope):
+                self.assertIn(summarize.source_of(p), set(summarize.RAW_SOURCES) | {"stored"}, (gate, p))
+                if summarize.source_of(p) == "stored":
+                    self.assertTrue(summarize.stored_category(p), (gate, p, "a stored leaf needs a declared category"))
+
+    def test_f21_stored_values_of_raw_sourced_leaves_are_never_read(self):
+        """Poison every raw-sourced leaf in the stored life: the rebuilt record and every verdict are unchanged."""
+        for life, scope in (("down_7", "down"), ("up_1", "up")):
+            clean = self.rebuilt(life)
+            R = self.stored(life)
+            for _, p in self.leaves(scope):
+                if summarize.source_of(p) == "stored" or summarize.fetch(R, p) is summarize.MISSING:
+                    continue
+                v = summarize.fetch(R, p)
+                bad = (not v) if type(v) is bool else v + 7919 if type(v) is int else v + 77.7 if type(v) is float else [[1.0, 9.0, 1]]
+                _set(R, p, bad)
+            R["exp1_moment"] = {f: {"first_refusal": {"status": 403, "licence_text": True, "rel_resp_s": 0.1}, "n": 9,
+                                    "first_refusal_rel_resp_s": 0.1, "success_after_first_refusal": 0} for f in PROBES} if scope == "down" else {}
+            summarize.rebuild(R, copy.deepcopy(self.raw[life]))
+            for gate, p in self.leaves(scope):
+                if summarize.source_of(p) != "stored":
+                    self.assertEqual(summarize.fetch(R, p), summarize.fetch(clean, p), (life, p))
+            for name, g in self.V.GATES.items():
+                if g.scope in ("both", scope):
+                    self.assertEqual(self.V.judge(name, R).status, self.V.judge(name, clean).status, (life, name))
+
+    def raw_mutations(self, scope):
+        """Raw-row mutations that each change some true figure; the coverage test requires that together they change every
+        raw-sourced leaf, so a leaf still read from storage would show as never changing."""
+        import oracle
+        T = lambda R: (R["start_basic"] if scope == "down" else R["start_trial"])
+        FAIL = lambda r: r[:4] + [0, None, None, "BackendError: HTTP 503: x"]
+        def ok_row(r):
+            return r[:4] + [1, "backend", ["d%05d" % i for i in range(10)], None]
+        def first(W, pred):
+            return next(i for i, r in enumerate(W) if pred(r))
+        def last(W, pred):
+            return max(i for i, r in enumerate(W) if pred(r))
+        def rows(fn):
+            return lambda raw, R: fn(raw["rows"], T(R)["t_req"], T(R)["t_resp"], raw)
+        def drop(i):
+            return lambda W, *a: W.pop(i(W, *a))
+        def setrow(i, f):
+            def m(W, *a):
+                j = i(W, *a)
+                W[j] = f(W[j], *a)
+            return m
+        late_auto = lambda W, q, s, *a: last(W, lambda r: r[2] == "auto" and r[4] and r[0] > s + 5)
+        out = {
+            "a late auto read fails": rows(setrow(late_auto, lambda r, *a: FAIL(r))),
+            "one lexical read is gone": rows(drop(lambda W, *a: last(W, lambda r: r[2] == "lex"))),
+            "ctl before the request: one row gone": rows(drop(lambda W, q, *a: first(W, lambda r: r[2] == "ctl" and r[1] < q))),
+            "ctl after the transition: one row gone": rows(drop(lambda W, q, s, *a: last(W, lambda r: r[2] == "ctl" and r[0] >= s + 1))),
+            "ctl after: a licence refusal becomes a 503": rows(setrow(
+                lambda W, q, s, *a: last(W, lambda r: r[2] == "ctl" and r[0] >= s + 1 and not r[4]), lambda r, *a: FAIL(r))),
+            "ctl after: a licence refusal becomes a success": rows(setrow(
+                lambda W, q, s, *a: last(W, lambda r: r[2] == "ctl" and r[0] >= s + 1 and not r[4]), lambda r, *a: ok_row(r))),
+            "ctl after: a success becomes a 503 (F21)": rows(setrow(
+                lambda W, q, s, *a: last(W, lambda r: r[2] == "ctl" and r[0] >= s + 1 and r[4]), lambda r, *a: FAIL(r))),
+            "ctl before: a licence refusal becomes a 503": rows(setrow(
+                lambda W, q, *a: first(W, lambda r: r[2] == "ctl" and r[1] < q and not r[4]), lambda r, *a: FAIL(r))),
+            "ctl before: a licence refusal becomes a success": rows(setrow(
+                lambda W, q, *a: first(W, lambda r: r[2] == "ctl" and r[1] < q and not r[4]), lambda r, *a: ok_row(r))),
+        }
+        if scope == "down":
+            out["the first client answer is relabelled backend"] = rows(setrow(
+                lambda W, q, *a: first(W, lambda r: r[2] == "auto" and r[4] and r[5] == "client" and r[1] >= q), lambda r, *a: r[:5] + ["backend"] + r[6:]))
+            out["a late client answer is relabelled backend"] = rows(setrow(
+                lambda W, q, s, *a: last(W, lambda r: r[2] == "auto" and r[4] and r[5] == "client"), lambda r, *a: r[:5] + ["backend"] + r[6:]))
+            out["a client answer returns unrelated ids"] = rows(setrow(
+                lambda W, *a: last(W, lambda r: r[2] == "auto" and r[4] and r[5] == "client"), lambda r, *a: r[:6] + [["nope"]] + r[7:]))
+            out["a backend answer has no reference"] = rows(setrow(
+                lambda W, *a: first(W, lambda r: r[2] == "auto" and r[4] and r[5] == "backend"), lambda r, *a: r[:3] + [10 ** 6] + r[4:]))
+            out["a broken-fallback client answer is the legal client fusion"] = rows(setrow(
+                lambda W, *a: last(W, lambda r: r[2] == "brk" and r[4] and r[5] == "client"),
+                lambda r, q, s, raw: r[:6] + [[d for d, _ in sorted(oracle.rrf_scores(list(raw["oracle"]["legs"][str(r[3])])).items(),
+                                                                  key=lambda x: -x[1])[:10]]] + r[7:]))
+            out["a broken-fallback backend answer is gone"] = rows(drop(lambda W, *a: last(W, lambda r: r[2] == "brk" and r[4] and r[5] == "backend")))
+            out["a broken-fallback backend answer is wrong"] = rows(setrow(
+                lambda W, *a: first(W, lambda r: r[2] == "brk" and r[4] and r[5] == "backend"), lambda r, *a: r[:6] + [["nope"]] + r[7:]))
+            out["a broken-fallback client answer is gone"] = rows(drop(lambda W, *a: last(W, lambda r: r[2] == "brk" and r[4] and r[5] == "client")))
+
+            def poll(fn):
+                return lambda raw, R: fn(raw["poll"], R["start_basic"]["t_resp"])
+            def each_probe(cell):
+                def m(P, t):
+                    for f in PROBES:
+                        cell(P, t, f)
+                return m
+            def late_success(P, t, f):
+                P[-1][f] = ["AVAILABLE", 200] + ([4] if f == "dls_search" else [])
+            def first_refusal_later(P, t, f):
+                i = next(k for k, p in enumerate(P) if p["_t1"] >= t - 0.5 and p[f][1] == 403)
+                P[i][f] = ["OTHER_ERROR", 503] + P[i][f][2:]
+            def no_refusal(P, t, f):
+                for p in P:
+                    if p[f][1] == 403:
+                        p[f] = ["OTHER_ERROR", 503] + p[f][2:]
+            out["poll: the last poll is gone"] = poll(lambda P, t: P.pop())
+            out["poll: every probe answers in the last poll"] = poll(each_probe(late_success))
+            out["poll: every first refusal is one poll later"] = poll(each_probe(first_refusal_later))
+            out["poll: no probe is ever refused"] = poll(each_probe(no_refusal))
+        else:
+            out["the first backend answer is relabelled client"] = rows(setrow(
+                lambda W, q, s, *a: first(W, lambda r: r[2] == "auto" and r[4] and r[5] == "backend" and r[1] >= s), lambda r, *a: r[:5] + ["client"] + r[6:]))
+            out["a late backend answer is relabelled client"] = rows(setrow(
+                lambda W, *a: last(W, lambda r: r[2] == "auto" and r[4] and r[5] == "backend"), lambda r, *a: r[:5] + ["client"] + r[6:]))
+        return out
+
+    def test_f21_every_raw_sourced_leaf_follows_its_raw_rows(self):
+        for life, scope in (("down_7", "down"), ("up_1", "up")):
+            base = self.rebuilt(life)
+            stored = self.stored(life)
+            want = {p for _, p in self.leaves(scope) if summarize.source_of(p) in summarize.rebuilt_sources(base)}
+            changed = set()
+            for lab, m in self.raw_mutations(scope).items():
+                try:
+                    R = self.rebuilt(life, m)
+                except (StopIteration, ValueError):
+                    continue   # the mutation does not apply to this life (no such row)
+                for p in want:
+                    if summarize.fetch(R, p) != summarize.fetch(base, p):
+                        changed.add(p)
+                        if summarize.fetch(stored, p) is not summarize.MISSING:
+                            self.assertNotEqual(summarize.fetch(R, p), summarize.fetch(stored, p), (life, lab, p, "stored value read"))
+            self.assertEqual(sorted(want - changed), [], (life, "raw-sourced leaves no raw mutation changed"))
+
+    def test_f21_post_transition_control_failures_fail_the_up_gate(self):
+        def all_post_fail(raw, R):
+            s = R["start_trial"]["t_resp"]
+            raw["rows"] = [r[:4] + [0, None, None, "BackendError: HTTP 503: x"] if r[2] == "ctl" and r[0] >= s + 1 else r for r in raw["rows"]]
+        R = self.rebuilt("up_1", all_post_fail)
+        self.assertEqual(self.V.judge("EXP2-T5-up", R).status, "FAIL")
+        self.assertEqual(self.V.judge("EXP2-T5-up", self.rebuilt("up_1")).status, "PASS")
+
+    def test_f21_a_figure_without_raw_source_says_so(self):
+        R = self.rebuilt("up_1")   # no oracle legs were saved for up_1: T1 is from stored figures
+        self.assertIn("from stored figure, raw not available", summarize.provenance("EXP2-T1", R))
+        self.assertIn("from stored figure, raw not available", summarize.provenance("EXP2-T4", R))
+        self.assertNotIn("from stored figure", summarize.provenance("EXP2-T2", R))
+        cur = json.load(open(os.path.join(RES, "summary_current.json")))
+        self.assertIn("from stored figure, raw not available", cur["lives"]["up_1.json"]["EXP2-T1"]["reason"])
+
+    # ---- F22: every raw field has a declared domain -------------------------------------------------------------------------------
+    BAD = {   # out-of-domain values per declared domain; a domain missing here fails the test
+        "time": (float("nan"), float("inf"), -1.0, 1e12, "1794859121.5", None, True, 10 ** 400, [1.0]),
+        "arm": ("auto2", 17, None, {"a": 1}, ["auto"]),
+        "query_index": (-1, 1.5, "3", None, True, 10 ** 400, {"q": 1}),
+        "ok": (2, -1, "1", None, 1.0, [1]),
+        "label": (17, "bogus", {"x": 1}, ["client"], 1.5),
+        "ids": ("d1", [1, 2], [None], ["d"] * 11, {"d": 1}, [["d"]]),
+        "error_text": (17, {"e": 1}, ["x"], "no failure form", ""),
+    }
+
+    def slice_rows(self):
+        """400 consecutive committed down_7 rows around the first failure (a parseable stream with successes and failures)."""
+        rows = self.raw["down_7"]["rows"]
+        j = next(i for i, r in enumerate(rows) if not r[4])
+        W = [list(r) for r in rows[max(0, j - 200):j + 200]]
+        return W, (min(r[0] for r in W) - 1, max(r[1] for r in W) + 1)
+
+    def via_load(self, life, mutate):
+        """The same mutation through summarize.load on a temporary copy (the path the committed reports use)."""
+        import gzip
+        import shutil
+        d = tempfile.mkdtemp()
+        try:
+            for f in os.listdir(RES):
+                if f.startswith(life + "."):
+                    shutil.copy(os.path.join(RES, f), d)
+            raw, R = copy.deepcopy(self.raw[life]), self.stored(life)
+            mutate(raw, R)
+            with gzip.open(os.path.join(d, life + ".rows.gz"), "wt") as fh:
+                fh.write("".join(json.dumps(r) + "\n" for r in raw["rows"]))
+            return summarize.load(d, life.split("_")[0])[0]
+        finally:
+            shutil.rmtree(d)
+
+    def test_f21_post_transition_control_failures_fail_the_up_gate_through_load(self):
+        def all_post_fail(raw, R):
+            s = R["start_trial"]["t_resp"]
+            raw["rows"] = [r[:4] + [0, None, None, "BackendError: HTTP 503: x"] if r[2] == "ctl" and r[0] >= s + 1 else r for r in raw["rows"]]
+        self.assertEqual(self.V.judge("EXP2-T5-up", self.via_load("up_1", all_post_fail)).status, "FAIL")
+
+    def test_f22_a_bad_label_is_unverified_through_load(self):
+        def relabel(raw, R):
+            s = R["start_basic"]["t_resp"]
+            k = max(i for i, r in enumerate(raw["rows"]) if r[2] == "auto" and r[4] and r[0] > s + 5)
+            raw["rows"][k][5] = 17
+        self.assertEqual(self.V.judge("EXP2-T3-down", self.via_load("down_7", relabel)).status, "UNVERIFIED")
+
+    def test_f22_every_row_field_has_a_domain_and_every_out_of_domain_value_is_unparsed(self):
+        import observe
+        W, window = self.slice_rows()
+        observe.parse_work(W, window)
+        fail_i = next(i for i, r in enumerate(W) if not r[4])
+        ok_i = next(i for i, r in enumerate(W) if r[4] and r[2] == "auto")
+        seen = set()
+        for f in observe.ROW_FIELDS:
+            self.assertIn(f.domain, self.BAD, "field %s has no declared domain with test values" % f.name)
+            seen.add(f.index)
+            for bad in self.BAD[f.domain]:
+                for i in (ok_i, fail_i):
+                    M = copy.deepcopy(W)
+                    M[i][f.index] = bad
+                    with self.assertRaises(observe.Unparsed, msg=(f.name, bad, i)):
+                        observe.parse_work(M, window)
+        self.assertEqual(seen, set(range(8)), "every position of a workload row is a declared field")
+
+    def test_f22_label_success_and_failure_relations(self):
+        import observe
+        W, window = self.slice_rows()
+        auto = next(i for i, r in enumerate(W) if r[4] and r[2] == "auto")
+        lex = next(i for i, r in enumerate(W) if r[4] and r[2] == "lex")
+        fail = next(i for i, r in enumerate(W) if not r[4])
+        cases = {
+            "auto success labelled none": (auto, 5, "none"), "auto success without label": (auto, 5, None),
+            "lexical success labelled client": (lex, 5, "client"), "failure with a label": (fail, 5, "backend"),
+            "failure with ids": (fail, 6, ["d1"]), "success with error text": (auto, 7, "BackendError: x"),
+            "success without ids": (auto, 6, None),
+        }
+        for lab, (i, pos, v) in cases.items():
+            M = copy.deepcopy(W)
+            M[i][pos] = v
+            with self.assertRaises(observe.Unparsed, msg=lab):
+                observe.parse_work(M, window)
+
+    def test_f22_a_bad_label_on_a_late_auto_answer_is_unverified_end_to_end(self):
+        def relabel(v):
+            def m(raw, R):
+                s = R["start_basic"]["t_resp"]
+                k = max(i for i, r in enumerate(raw["rows"]) if r[2] == "auto" and r[4] and r[0] > s + 5)
+                raw["rows"][k][5] = v
+            return m
+        for v in (17, "bogus", {"x": 1}):
+            R = self.rebuilt("down_7", relabel(v))
+            self.assertEqual(self.V.judge("EXP2-T3-down", R).status, "UNVERIFIED", v)
+
+    # ---- F23: the inventory is the campaign ---------------------------------------------------------------------------------------
+    def test_f23_empty_input_is_unverified_for_every_gate(self):
+        d = tempfile.mkdtemp()
+        try:
+            cur = summarize.current_summary(d)
+        finally:
+            os.rmdir(d)
+        self.assertEqual(set(cur["aggregate"]), set(self.V.GATES))
+        for g, v in cur["aggregate"].items():
+            self.assertEqual(v["status"], "UNVERIFIED", g)
+        expected = {"%s_%d.json" % (m, n) for m, ns in summarize.CAMPAIGN.items() for n in ns}
+        self.assertEqual(set(cur["lives"]), expected)
+        for life, gates in cur["lives"].items():
+            for g, v in gates.items():
+                self.assertEqual(v["status"], "UNVERIFIED", (life, g))
+                self.assertIn("absent", v["reason"])
+
+    def test_f23_a_missing_direction_or_life_is_unverified(self):
+        import shutil
+        for drop in ("up", "down_3"):
+            d = tempfile.mkdtemp()
+            try:
+                for f in os.listdir(RES):
+                    if f.startswith(drop + "_" if drop == "up" else drop + "."):
+                        continue
+                    if f.startswith(("down_", "up_")):
+                        shutil.copy(os.path.join(RES, f), d)
+                cur = summarize.current_summary(d)
+            finally:
+                shutil.rmtree(d)
+            for g in ("EXP2-T2", "EXP2-T3-down" if drop == "down_3" else "EXP2-T3-up", "EXP2-T5-down" if drop == "down_3" else "EXP2-T5-up"):
+                self.assertEqual(cur["aggregate"][g]["status"], "UNVERIFIED", (drop, g))
+                self.assertIn("absent", cur["aggregate"][g]["reason"], (drop, g))
+
+    def test_f23_the_campaign_is_the_registered_one(self):
+        self.assertEqual(summarize.CAMPAIGN, {"down": (1, 2, 3, 4, 5, 6, 7), "up": (1, 2, 3, 4, 5)})
+
+    # ---- F24 and the disclosed limits --------------------------------------------------------------------------------------------
+    def test_f24_a_full_400_byte_licence_body_passes(self):
+        import observe
+        body = (b'{"error":{"reason":"current license is non-compliant for [rrf]"' + b" " * 600)[:1000]
+        msg = observe.adapter_message(403, body)
+        self.assertEqual(len(msg), 410)
+        self.assertTrue(observe.adapter_detects(msg))
+        R = _healthy("down")
+        for c in LATCH_CELLS:
+            R["exp1_after"][c].update(adapter_message=msg, adapter_detects=True)
+        self.assertEqual(self.V.judge("EXP1-T3", R).status, "PASS")
+
+    LIMITS = ("EXP3-T2", "EXP1-T3", "EXP2-T2", "EXP1-T2", "EXP1-T1", "EXP4-T2")
+
+    def test_disclosed_limits_are_stated_where_results_are_presented(self):
+        cur = json.load(open(os.path.join(RES, "summary_current.json")))
+        text = json.dumps(cur["limits"])
+        for key in self.LIMITS:
+            self.assertIn(key, text)
+        for doc in ("DEGRADE.md", os.path.join("results", "README.md")):
+            body = open(os.path.join(LIC, doc)).read()
+            self.assertIn("Disclosed limits", body, doc)
+            for key in self.LIMITS:
+                self.assertIn(key, body, (doc, key))
+        import verdicts
+        self.assertNotIn("Thresholds are THRESHOLDS.md's.", verdicts.__doc__)
+
+
+
 if __name__ == "__main__":
     unittest.main()
