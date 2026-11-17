@@ -43,7 +43,8 @@ decisions, the deployment requirements that follow from them, and what is still 
   writes" below).
 - Identifier rule (amendment 11, now rule r3 of "Redesign after review C"): ASSUMPTION, not a user decision:
   single-token identifiers without a digit need >= 6 characters; identifiers made only of common words, or of
-  look-alikes of them, are refused. Decision R1 (review C, ASSUMPTION): there is no span redaction; an event that
+  look-alikes of them, are refused. Decision R1 (decided by the coordinator on the user's delegation, 2026-11-17;
+  "Decisions after review E" below): there is no span redaction; an event that
   mentions an erased subject is removed whole, whoever wrote it, and the receipt lists those of other speakers
   (`other_speakers_removed`).
 - Service separation (D2): the verifier, the key service and the application must run as separate service identities,
@@ -269,7 +270,8 @@ evidence `results/failing-first/d3/d3-store-pg-fb60b2e.red-green.out` is superse
 
 ### Decision R1 (class 1, F1): no span redaction; whole-event removal is the only erasure path
 Source: main's message (review C round) offering "drop span redaction for unverifiable cases and use whole-event
-removal ... as the only path the app can take". Still ASSUMPTION under decision 10 (the user has not decided it).
+removal ... as the only path the app can take". DECIDED 2026-11-17 by the coordinator on the user's delegation (the
+user was asked and answered "you decide"; not the user's own pick): see "Decisions after review E" below.
 Options: (a) redaction computed by the app (rejected: F1, the app holds every key, so it can store the original as a
 "redaction"); (b) computed or checked by the verifier (rejected: by D2 the verifier holds no key material, it reads only
 key ids; giving it keys makes it one more key holder and breaks D2); (c) whole removal only (chosen). Under the current
@@ -430,6 +432,9 @@ schedule, no deadlock) and the earlier C2/C3; any other pair is unproven, and a 
 still possible and retryable (40P01 rolls one transaction back; every step is idempotent).
 
 ### F11: one canonical key per token (matcher m4)
+SUPERSEDED by matcher m5 ("Decisions after review E" below): the coordinator rejected merging i, l and 1 into one
+letter. The UTS 39 source, the class construction and the CORRECTION below still describe m5's identity key, except
+where m5 says otherwise.
 Source: UTS 39 revision 34, version 18.0.0, 2026-08-27, https://www.unicode.org/reports/tr39/ (read 2026-11-17,
 confidence high). Section 4 "Confusable Detection": internalSkeleton(X) = (1) NFD, (2) remove Default_Ignorable_Code_Point
 characters, (3) concatenate the prototype of each character (confusables.txt), (4) reapply NFD; X and Y are confusable
@@ -477,3 +482,102 @@ case variant, excluding the published not-closed pairs), Default_Ignorable inser
 reordered combining marks to approved identifiers, each required to match; the ASCII partition; near-miss negatives
 (a letter replaced by one of another ASCII class, a letter dropped or added) that must not match; closure properties
 enumerated over the tables (case variants and confusable sources share the key, except the published list).
+
+## Decisions after review E (main's relay, 2026-11-17; written before tests and code)
+
+Source: main (500523cf) relaying the user's answer "you decide" on the two open erasure decisions. Both are DECIDED
+BY THE COORDINATOR ON THE USER'S DELEGATION, 2026-11-17; neither is the user's own pick.
+
+### R1: whole-event removal is the only path
+Unchanged in substance from "Decision R1" above; only its label changes (no longer ASSUMPTION). The stated cost stays:
+an event of ANOTHER speaker that mentions the erased subject is removed whole, including everything else that speaker
+said in it, and the receipt lists those events (`other_speakers_removed`). Decision 10 (the identifier mechanism as a
+whole) and rule r3's thresholds remain ASSUMPTION: they were not part of this decision.
+
+### Name matching: matcher m5 (i, l and 1 are never one letter)
+Main's ruling: do not treat i, l and 1 as one letter; only ambiguous glyphs get both readings; distinct letters never
+come together; the same reasoning for o and 0; a digit standing for a letter is caught in TEXT, but approved
+identifiers that genuinely contain digits must stay apart; a capped number of keys, refusal at proposal beyond the cap;
+versioned m5.
+
+1. IDENTITY KEY (what a glyph IS; the one key of an identifier, and the one reading of every unambiguous glyph): the m4
+   pipeline (UTS 39 prototypes from the pinned tables, Default_Ignorable and Cf removed, case folding unless the case
+   pair is closed, class representatives, iterated to a fixed point) with three changes:
+   - a code point whose NFKD is ASCII and contains I, 0 or 1 is replaced by that NFKD first (fullwidth, mathematical,
+     superscript, subscript and circled forms; Roman numerals; the ligature IJ). No other code point is decomposed
+     first, so long s and the m4 CORRECTION cases are unchanged;
+   - the digits 0 and 1 keep themselves (UTS 39 maps 0 to O and 1 to l; m5 reads those maps only as look-alikes, item 2);
+   - NO case pair is closed, ASCII pairs included, if joining would join two classes anchored by different ASCII
+     letters or digits (the anchor of a letter is the prototype of its SMALL form). So I/i is not closed and capital I
+     case-folds to i; every ASCII letter and digit is its own class (m4: {i, l, 1}, {o, 0}).
+   Identifiers have one key: their identity key. A capital I in a DECLARED identifier is the letter i (the declarer
+   wrote a letter; the reviewer reads the normal form, in which it is i).
+2. BOTH READINGS, computed from the tables, never listed by hand: a glyph g gets the readings {identity(g),
+   lookalike(g)} when they differ and both are among the ASCII letters i, l, o and digits 0, 1 (exactly m4's joined
+   classes), where lookalike(g) is the identity key of g's UTS 39 prototype. A DIGIT glyph also reads as every letter
+   whose capital has the digit's prototype (a digit has no case, so it stands for a capital as well: 1 for capital I,
+   hence i). On Unicode 13.0.0 with confusables 18.0.0:
+   - {i, l}: 23 glyphs: capital I and its fullwidth and mathematical forms, Greek capital Iota, Cyrillic capital
+     Byelorussian-Ukrainian I, Latin capital Iota, Roman numeral one, modifier capital I, Coptic Iauda, ... Why: its case
+     makes it i; UTS 39 says it looks like l.
+   - {1, l, i}: 11 glyphs (digit 1 and its compatibility forms). Why: it is 1; UTS 39 says it looks like l; it also
+     looks like capital I, which is i ("1 with l or I").
+   - {0, o}: 11 glyphs (digit 0 and its compatibility forms). Why: it is 0; UTS 39 says it looks like O.
+   - a code point that NFKD-expands (Roman numerals two to twelve, IJ) is read per letter: Roman two as ii, il, li, ll.
+   NOT given both readings, deliberately: small l (it is l and looks like l: never read as i), small i, o, capital O,
+   capital L. A letter is never read as a digit, and a letter is never read as another letter except a capital I
+   look-alike. So Delia and Della, Hailey and Halley, Neil and Nell, Elia and Ella have different keys and plain text
+   naming one never matches the other.
+3. DIGITS READ AS LETTERS ONLY INSIDE WORDS: the letter readings of a digit glyph apply only in a token whose identity
+   key has more letters than digits (A1ison, J0hn, N1ck: yes; 1001, 10am, user1001, XQ-1001, 0x00000001: read
+   literally). Why: a digit standing for a letter is a disguise inside a word; a token that is mostly digits is a
+   number or a code, and reading its digits as letters would blur different numbers and multiply cost. Sound because
+   readings only turn digits into letters: if a text token's identity key has more letters than digits, so does every
+   key it can produce.
+4. KEYS: an identifier has ONE key (its identity key). A text token has the product of its glyphs' readings; a window
+   (1..4 tokens) has the product over its tokens. Invariants (tested): the identity key of any string is one of its
+   text keys; a string with no both-readings glyph has exactly one text key, its identity key; identity keys are fixed
+   points (0 and 1 survive every pass; no second pass maps 1 to l or 0 to o).
+5. THE CAP: at most P = 4096 readings per window. An identifier's CAPACITY is the largest number of readings a window
+   that matches it can have: the product, over its identity key's characters, of the most readings any glyph producing
+   that character has (i, l, 1: 3; o, 0: 2; other characters, and digits in a token with no more letters than digits:
+   1). An identifier whose capacity exceeds P is REFUSED at proposal (rule r3 at propose, again at review) with the
+   reason, never silently under-matched; the declarer can declare a shorter form (fewer tokens). A text window with
+   more than P readings is not enumerated; that loses nothing, because a window that matches an approved identifier has
+   at most that identifier's capacity, which is at most P. One window may still hit several subjects.
+   Refusal rate, measured on a synthetic list (seed 16096: about 200 common first names and 230 surnames in English,
+   Spanish and Italian, combined; probe agent-af5c8cce658ab5a89/m5_probe.py, Unicode 13; not a real population):
+   2-token names 0.3% of 3000, 3-token 4.3% of 1000, 4-token 11.4% of 1000, numbers and codes 0% of 1504. (P = 16384:
+   0.0%, 1.4%, 5.6%; P = 65536: 0.0%, 0.3%, 1.5%. If 1 were read as l only: P = 4096 refuses 0.0%, 0.0%, 0.4%.)
+   P = 4096 is chosen for cost (item 6); it is one constant, and main may change it.
+6. COST (measured, same probe, HMAC about 8 us per key in Python on the Mac): keys per token, all windows of one event
+   counted with repeats: m4 about 4; m5 prose with the pronoun I 7.8; all-caps legal text 34.4; text dense with codes
+   and versions 7.4; hex dump 8.2. ADVERSARIAL text (tokens built to put just under P readings in every window) reaches
+   about 4,600 keys per token at P = 4096 (about 40 ms per token here), and every one of them is sent in the store's
+   lookup array. Content size is not bounded by the write path, so one crafted event can cost minutes of matcher time.
+   OPEN (availability, for main): (a) a per-event key budget that refuses the write when exceeded, so crafted text is
+   refused (it may also refuse a legitimate pathological text); (b) let an over-budget event be written unscanned and
+   found by the erasure-time rescan (a store change to WPS17); (c) accept and monitor. Not built: m5 implements none.
+7. NOT COVERED (receipt and NOT_COVERED): a letter standing for a digit (XQ-l00l or XQ-IOOI for XQ-1001); small l
+   written for i or small i for l (Allson, Aiison for Alison: m4 matched them); digits standing for letters in a token
+   with no more letters than digits (4l1s0n for Alison); non-ASCII digits that look like 0 or 1 read as the letter
+   their prototype names, not as the digit; the computed not-closed capitals, 66 on Unicode 13: m4's 63 unchanged plus
+   three that m4 covered only through its joined i/l class (Latin capital I with stroke, Cyrillic capital Yeru and Yeru
+   with back yer); every m4 NOT_COVERED item.
+8. STILL OVER-MATCHED (receipt and OVER_MATCH): confusable variants (Kim and Kirn) as before; a capital I or one of its
+   look-alikes in TEXT is read as l too, so text in capitals over-matches (DELIA also matches Della, NEIL matches
+   Nell, HAILEY matches Halley); a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and
+   Nell); one text window can hit several subjects (AIIson hits Alison and Allison).
+9. CHANGED FROM m4 beyond i/l and o/0: five code points now read as their digit or letter instead of their UTS 39
+   prototype (superscript one and zero, circled one and zero, modifier capital I), by item 1's NFKD rule.
+10. VERSION: matcher id m5:ucd<version>:di<sha12>:cf<sha12>; rule version r3:<matcher id>. The store keeps the tenant's
+   matcher and refuses work under another (WPS32 at approval, WPS38 at append and rescan): an m4 tenant must re-declare
+   its identifiers; there is no migration and no fallback.
+Tests first (tests/test_ident.py F11M5*, red on 15b3255 by assertion through key(), windows(), find_spans() and
+identifier_problem(), which exist there): the four real-name pairs do not match each other in either direction; AIIson
+and A1ison still match Alison; the seeded generator of case, look-alike (only glyphs from the computed table and the
+confusable sources of a letter's own prototype), ignorable and combining-mark variants still matches, with the
+documented exceptions excluded from it and tested as misses; near misses (now including i for l and l for i) do not
+match; XQ-1001 and XQ-l00l stay distinct and text XQ-1001 does not match XQ-l00l; the cap (an identifier over P
+refused, one at P accepted, a window over P not enumerated; the last is a guard, m4 passes it); the invariants of item
+4; the both-readings table pinned by its counts and members on this Unicode version.
