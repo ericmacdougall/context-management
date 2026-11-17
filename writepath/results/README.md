@@ -380,6 +380,21 @@ WP_UCD_DIR; red = the new tests on the 4fe3ac1 code, tree src-0aaf789, identical
 SUPERSEDED by decision R1 and matcher m3 (kept): `failing-first/d3/d3-store-pg-fb60b2e.red-green.out` (span redaction,
 removed) and `failing-first/d3/m2-*-5e6e378.red.out` (matcher m2, replaced by m3).
 
+Review E (`failing-first/reviewE/`; tests at 00709d9, code at b003532 and 72d2e4b; DESIGN-NOTES "Redesign after
+review E"; home paths shown as ~):
+- `f11-mentions-0e8f67c.red.out` (Mac, Unicode 13.0.0, offline): the new tests on the 0e8f67c matcher m3: 7 failures and
+  1 error; AIIson for Alison missed, 514 of 2,700 generated variants missed.
+- `live-window1-4ffc365.red-green.out` (`harness/reviewE_check.sh`, t2-dev, Unicode 15.0.0, unstamped, under the run
+  lock 22:54:29Z to 22:54:44Z; old tree = 0e8f67c):
+  - green: test_ident 33/33 (m4); test_d3_pg 14/14 (A1-A3, C1-C5, E1-E6); wp.setup --reset then exp.d4_store_mark R=1
+    pass.
+  - red on 0e8f67c: test_ident as on the Mac (514 of 2,700); E1 (the link did not wait for the removal) and E6
+    (40P01, the mark x batch deadlock). E2, E3 and E5 fail there only on the new linked_removed report (0e8f67c already
+    held those subject locks); E4 passes there (regression guard).
+  - one broken variant per lock (`harness/reviewE_variants.py`), each failing exactly its named tests: apply without
+    the event lock (E1), add_mentions without the event lock (E1), apply without the subject share lock (E2, E3, E4),
+    the footprint without rescan links (E3), hold placement without FOR UPDATE (E2), mark taking the job first (E6).
+
 review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
 are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own
 failing-first evidence replaces them when it is integrated.
