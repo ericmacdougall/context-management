@@ -37,7 +37,7 @@ IMAGE = "ubuntu:24.04"
 LABEL = "emlab2.stream=wphard"
 SOCK = "/run/wphard/keysvc.sock"
 PROBE_FILES = {"verifier_pgpass": "/svc/{verifier}/pgpass.wp_verifier", "kms_pgpass": "/svc/{keysvc}/pgpass.wp_kms",
-               "admin_pgpass": "/operator/secrets/pgpass", "elastic_password": "/operator/secrets/es_elastic_password",
+               "admin_pgpass": "/operator/secrets/pgpass", "elastic_pw_file": "/operator/secrets/es_elastic_password",
                "admin_es_key": "/operator/secrets/es_api_key.json"}
 
 
