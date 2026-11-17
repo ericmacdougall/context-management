@@ -121,7 +121,7 @@ class Workload:
         for qi, (t, v) in enumerate(self.queries):
             for kind, store in (("rrf", self.oracle_rrf), ("linear", self.oracle_lin)):
                 c, ids, e = oracle.raw_backend(idx, kind, t, v, TENANT)
-                if c == 200:
+                if c == 200 and ids:   # an empty reference list on the established static index is not an oracle
                     store[qi] = ids
                 else:
                     bad += 1
@@ -212,18 +212,27 @@ class Workload:
             raise AssertionError("refresh of the live index: HTTP %s" % cr)
         present = set()
         c, j, _ = req("POST", "/mc-%s-live/_search?scroll=2m" % TENANT, {"size": 5000, "_source": False, "query": {"match_all": {}}}, timeout=120)
-        sid = j.get("_scroll_id")
-        while c == 200 and j["hits"]["hits"]:
+        sid = j.get("_scroll_id") if isinstance(j, dict) else None
+        while True:   # MUST SUCCEED: a failed or shard-failed page would make present_unacked and failed_ids_present vacuously small
+            if c != 200 or (j.get("_shards") or {}).get("failed") or j.get("timed_out"):
+                raise AssertionError("live index scroll page: HTTP %s shards %s" % (c, j.get("_shards") if isinstance(j, dict) else None))
+            if not j["hits"]["hits"]:
+                break
             present.update(h["_id"] for h in j["hits"]["hits"])
+            sid = j.get("_scroll_id", sid)
             c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)
         if sid:
             req("DELETE", "/_search/scroll", {"scroll_id": sid})
         acked = set(self.acked)
         control_detects = len((acked | {"__injected_lost_write__"}) - present) == len(acked - present) + 1
         failed_ids = {i for _, ids, _ in self.attempted_failed for i in ids}
-        req("POST", "/lic-sem2/_refresh")
-        c, j, _ = req("POST", "/lic-sem2/_search", {"size": 10000, "_source": False, "query": {"match_all": {}}})
-        sem_present = {h["_id"] for h in j.get("hits", {}).get("hits", [])} if c == 200 else set()
+        cr, jr, _ = req("POST", "/lic-sem2/_refresh")
+        c, j, _ = req("POST", "/lic-sem2/_search", {"size": 10000, "track_total_hits": True, "_source": False, "query": {"match_all": {}}})
+        got = j.get("hits", {}).get("hits", []) if c == 200 and isinstance(j, dict) else None
+        if cr != 200 or got is None or (j.get("_shards") or {}).get("failed") or j["hits"].get("total", {}).get("value") != len(got):
+            # MUST SUCCEED: an unread or truncated semantic index would make sem_failed_present and sem_present_unacked vacuously 0
+            raise AssertionError("semantic index read-back: refresh HTTP %s, search HTTP %s" % (cr, c))
+        sem_present = {h["_id"] for h in got}
         sem_ack = {r[1] for r in self.sem_rows if r[2] in (200, 201)}
         sem_fail = [r for r in self.sem_rows if r[2] >= 300 or r[2] == 0]
         loud = sum(1 for r in sem_fail if classify_sem_failure(r[2], r[3]) != "other")
@@ -354,10 +363,11 @@ class Poller(threading.Thread):
         self.sem_idx, self.stop_ev, self.rows = sem_idx, threading.Event(), []
 
     def run(self):
+        self.est = matrix.establish_quick()   # prerequisites checked once, before polling, not inside the 50 ms loop
         while not self.stop_ev.is_set():
             t0 = time.time()
             try:
-                p = matrix.quick_probes(self.sem_idx)
+                p = matrix.quick_probes(self.sem_idx, self.est)
             except Exception as e:  # noqa: BLE001
                 p = {"_error": type(e).__name__}
             p["_t0"] = t0
@@ -371,13 +381,13 @@ def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "
     out = {}
     for f in features:
         seq = [(r["_t1"], r.get(f)) for r in rows if f in r]
-        if not seq or all(x[1] and x[1][0] == "SKIP" for x in seq):
+        if not seq or all(x[1] and x[1][0] in matrix.NOT_OBSERVED for x in seq):
             out[f] = {"skipped": True}
             continue
         if direction == "down":
             ref = next(((t, v) for t, v in seq if t >= t_resp - 0.0 and v[0] in ("LICENCE_ERROR", "OTHER_ERROR")), None)
             before_ok = sum(1 for t, v in seq if t < t_resp and v[0] == "AVAILABLE")
-            refusal = (lambda v: v[0] not in ("AVAILABLE", "SKIP")) if f == "dls_search" else (lambda v: v[0] == "LICENCE_ERROR")
+            refusal = (lambda v: v[0] != "AVAILABLE" and v[0] not in matrix.NOT_OBSERVED) if f == "dls_search" else (lambda v: v[0] == "LICENCE_ERROR")
             first_ref_t = next((t for t, v in seq if t >= t_resp - 0.5 and refusal(v)), None)
             dls_before = sorted({v[2] for t, v in seq if t < t_resp and v[0] == "AVAILABLE" and len(v) > 2}) if f == "dls_search" else None
             succ_after = sum(1 for t, v in seq if first_ref_t is not None and t > first_ref_t and v[0] == "AVAILABLE")

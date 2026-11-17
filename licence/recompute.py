@@ -7,6 +7,8 @@ import json
 import os
 import sys
 
+NOT_OBSERVED = ("SKIP", "UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS")   # neither success nor refusal; mirrors matrix.NOT_OBSERVED (tested)
+
 
 def rrf(lists, c=60):
     s = {}
@@ -111,7 +113,7 @@ def one(path):
             if not ev:
                 continue
             if mode == "down":
-                refused = [e for e in ev if e[2] != "AVAILABLE" and e[2] != "SKIP" and e[1] >= t_resp - 0.5]
+                refused = [e for e in ev if e[2] != "AVAILABLE" and e[2] not in NOT_OBSERVED and e[1] >= t_resp - 0.5]
                 ok_after = [e for e in ev if e[2] == "AVAILABLE" and e[0] >= t_resp]
                 fr = min(refused) if refused else None
                 feats[f] = {"first_refusal_probe_start_rel_resp_s": None if fr is None else fr[0] - t_resp, "first_refusal_probe_end_rel_resp_s": None if fr is None else fr[1] - t_resp,

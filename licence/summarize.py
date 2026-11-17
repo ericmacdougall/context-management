@@ -55,7 +55,7 @@ def exp1_checks(R):
     r["T3_latch_shape_ok"] = {c: (after[c].get("status") == 403 and "current license is non-compliant" in json.dumps(after[c].get("error")).lower()) for c in latch_cells}
     d = after.get("dls_search_as_user", {})
     r["T4_dls_after"] = {"status": d.get("status"), "class": d.get("class"), "returned": d.get("returned"), "reason": (d.get("error") or {}).get("reason", "")[:90]}
-    r["T4_pass"] = d.get("status") in (401, 403) and d.get("returned") in (None, 0)
+    r["T4_pass"] = d.get("status") in (401, 403) and d.get("returned") in (None, 0) and d.get("class") != "UNVERIFIED_PREREQUISITE"   # a 401 for a missing user is not DLS
     r["T4_control_before_returned"] = r["T2_dls_returned_before"]
     if "dls_battery_after" in R:
         a, b = R["dls_battery_after"], R["dls_battery_trial"]
