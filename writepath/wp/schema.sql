@@ -547,7 +547,7 @@ $$;
 -- TENANT (19.4 s of a 20.4 s batch; cost per event proportional to tenant size). enable_seqscan = off was NOT enough
 -- (scale_1m at 481afae: the planner then used the primary key on tenant_id with the overlap as a filter, still a scan
 -- of the tenant). The deletes below probe the GIN once per event id instead, which the planner costs correctly.
-create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp as $$
+create function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp set enable_seqscan = off as $$
 declare ids text[];
 begin
   if cardinality(cand) = 0 then return 0; end if;
@@ -573,7 +573,9 @@ begin
     -- The probe sits behind an optimisation fence (lateral subquery with OFFSET 0) and the tenant is filtered outside
     -- it (event ids are uuids, so the probe returns that event's rows only): otherwise a plan with a low tenant
     -- estimate (plpgsql's generic plan from the 6th batch, or stale statistics) read every job of the tenant per event,
-    -- 1,410 s for 100,000 events in the voided 1f059f4 run (THRESHOLDS amendment 18, exp/plan_stability.py).
+    -- 1,410 s for 100,000 events in the voided 1f059f4 run (THRESHOLDS amendment 18, exp/plan_stability.py). Inside
+    -- the fence the only other path is a sequential scan of the whole table per event, which the planner picked on
+    -- small or unanalysed tables; the function runs with enable_seqscan off, so the GIN index is the probe (18c).
     delete from analyst_jobs a where a.tenant_id = t and a.job_id = any(array(
       select a2.job_id from unnest(ids) x
         cross join lateral (select j2.job_id, j2.tenant_id from analyst_jobs j2 where j2.input_event_ids @> array[x] offset 0) a2
@@ -634,13 +636,15 @@ begin
 end $$;
 
 -- Postgres residue for a subject, computed by the store (never taken from a caller).
-create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+create function wp_erasure_pg_residue(t text, s text) returns jsonb language sql stable security definer set search_path = public, pg_temp set enable_seqscan = off as $$
   -- Item 3 (4960f50 round): every count is driven by the SUBJECT'S footprint through an index (events_subject, the
   -- mentions GIN, erasure_mentions, tombstones, facts_subject, the input_event_ids GINs), never by a scan of the tenant.
   -- The former OR of three predicates over events could use no index and read every event of the tenant.
   -- Amendment 18: this is a SQL function, planned with t and s unknown, so estimates are generic. The per-tombstone
   -- GIN probes sit behind a fence (lateral, OFFSET 0; tenant filtered outside) and the untombstoned count is an EXCEPT
   -- (hashed or sorted, never a nested loop): with a low estimate both had become quadratic in the subject's footprint.
+  -- enable_seqscan is off for this function (18c): inside the fence the alternative to the GIN probe is a sequential
+  -- scan of the whole table per tombstone.
   with fp as (select event_id from events where tenant_id = t and subject_id = s
               union select event_id from events where tenant_id = t and mentions @> array[s]
               union select event_id from erasure_mentions where tenant_id = t and subject_id = s)
