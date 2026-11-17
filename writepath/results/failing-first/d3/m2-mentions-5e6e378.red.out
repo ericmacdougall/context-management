@@ -1,0 +1,40 @@
+# tree: writepath/ at 5357472 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/mentions.py 5e6e378 tests.test_ident
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/mentions.py <- wp/mentions.py at 5e6e378; tests: current; python3 -m unittest tests.test_ident
+ERROR: test_s2_whole_tokens_only (tests.test_ident.MatcherM2)
+AttributeError: module 'wp.mentions' has no attribute 'find_spans'
+ERROR: test_s3_spans_are_offsets_in_the_original_text (tests.test_ident.MatcherM2)
+AttributeError: module 'wp.mentions' has no attribute 'find_spans'
+ERROR: test_s4_invisible_characters_inside_a_name_in_text (tests.test_ident.MatcherM2)
+AttributeError: module 'wp.mentions' has no attribute 'find_spans'
+ERROR: test_s6_text_side_lookalike_is_not_matched_and_is_disclosed (tests.test_ident.MatcherM2)
+AttributeError: module 'wp.mentions' has no attribute 'find_spans'
+ERROR: test_s7_identifier_inside_quoted_text_of_another_speaker (tests.test_ident.MatcherM2)
+AttributeError: module 'wp.mentions' has no attribute 'find_spans'
+ERROR: test_two_occurrences_and_overlap_merged (tests.test_ident.MatcherM2)
+AttributeError: module 'wp.mentions' has no attribute 'find_spans'
+ERROR: test_s12_second_subject_on_redacted_text (tests.test_ident.Redaction)
+AttributeError: module 'wp.mentions' has no attribute 'redaction_for'
+ERROR: test_s8_no_span_means_no_redaction (tests.test_ident.Redaction)
+AttributeError: module 'wp.mentions' has no attribute 'NoRedaction'
+ERROR: test_s8_redaction_is_built_from_spans_and_rescanned (tests.test_ident.Redaction)
+AttributeError: module 'wp.mentions' has no attribute 'redaction_for'
+ERROR: test_s8_residual_hit_means_no_redaction (tests.test_ident.Redaction)
+AttributeError: module 'wp.mentions' has no attribute 'NoRedaction'
+ERROR: test_s8_spans_validated (tests.test_ident.Redaction)
+AttributeError: module 'wp.mentions' has no attribute 'NoRedaction'
+ERROR: test_s15_hmac_label_binds_matcher_and_unicode_version (tests.test_ident.RuleR2)
+AttributeError: module 'wp.mentions' has no attribute 'LABEL'
+FAIL: test_s16_unsegmented_script_refused (tests.test_ident.RuleR2)
+AssertionError: 'spaces' not found in 'empty' : 山田太郎
+FAIL: test_s3_non_ascii_letters_stay_in_the_token (tests.test_ident.RuleR2)
+AssertionError: 'jos garc a' != 'josé garcía'
+FAIL: test_s4_ignorables_removed_from_declared_identifier (tests.test_ident.RuleR2)
+AssertionError: 'al ex k im' != 'alex kim'
+FAIL: test_s5_mixed_script_declared_identifier_refused (tests.test_ident.RuleR2)
+AssertionError: unexpectedly None : Аlexander Kim
+FAIL: test_unassigned_code_point_refused (tests.test_ident.RuleR2)
+AssertionError: unexpectedly None : Alex͸ander Kim
+Ran 19 tests in 0.007s
+FAILED (failures=5, errors=12)

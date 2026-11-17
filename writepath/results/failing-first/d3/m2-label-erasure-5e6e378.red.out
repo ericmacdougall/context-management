@@ -1,0 +1,8 @@
+# tree: writepath/ at 5357472 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/erasure.py 5e6e378 tests.test_ident
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/erasure.py <- wp/erasure.py at 5e6e378; tests: current; python3 -m unittest tests.test_ident
+FAIL: test_s15_no_module_builds_identifier_hmacs_itself (tests.test_ident.LabelInOnePlace)
+AssertionError: Lists differ: ['erasure.py'] != []
+Ran 19 tests in 0.018s
+FAILED (failures=1)
