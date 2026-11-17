@@ -65,5 +65,18 @@ decisions, the deployment requirements that follow from them, and what is still 
   plan_stability. Known residuals: under stale statistics the outer primary-key delete can read the tenant once per
   batch (O(tenant) per batch, not per event); GIN fastupdate pending lists make every probe scan the pending entries
   until vacuum flushes them (about 2 to 3 ms per event early in a large cascade, in every version since 7e8f28f).
+- Projector start race (amendment 19, exp/projector_start_race.py):
+  - Fixed in 5d26746: a projector that loses the start-up race to a forced takeover now drops the lease and returns -1
+    from step(). Until then, the StaleEpoch (alias compare-and-set) or StaleWrite (cursor insert) raised inside start()
+    escaped step() and run() and killed the losing process.
+  - Safety was never affected: no stale write reached Elasticsearch.
+  - Other errors in start() still propagate. One example is the RuntimeError for a family with other than one index; in
+    that case the lease just taken stays held until its TTL expires (30 s).
+- Secret scanning (amendment 15): wp/secrets.py is a list of known families and encodings, not a general detector.
+  - On held-out data it caught 483/1,169 (H1) and 150/750 (H2) in-scope secrets, and blocked 37 of 1,200 negatives. Row
+    19's 880/880 holds only on its author's own corpus.
+  - Seven H1 families were never caught. HTML entities and URL double-encoding are never decoded.
+  - A deployment must not treat a clean scan as proof that no secret is present.
+  - The scanner was not edited after the held-out run. Any later edit needs a new held-out set.
 - Postgres settings are part of the result: the earlier lab's numbers depended on wal_recycle=off, wal_keep_size=0,
   archive_mode=off and max_connections=200, which were not in the repo until 8c7d841 (host/bootstrap.py sets them).
