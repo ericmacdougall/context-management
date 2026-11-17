@@ -227,7 +227,9 @@ succeeded, so their log retrieval at the time cannot be shown; a later window re
 
 Gate versions:
 - **old:** flood stage only, before 72c0708.
-- **N2:** 72c0708, fails closed.
+- **N2:** 72c0708: closed the fail-open cases of review-2 N2. The step-1 delta review at 3c2864f later found two more
+  open conditions in this gate (P1: log coverage of the window was not established; P2: a STOP could be missed by `end`
+  or deleted by the next `start`), fixed on the hardening branch at edf9f93 and 7b4839b.
 - **N2+HW:** N2 plus the high-watermark VOID rule, 39dbad7.
 
 | Experiment | Evidence: commit, gate, verdict | Observations (not evidence) |
@@ -261,7 +263,20 @@ Gate versions:
 | heldout_secrets | carried: 62c6be5, old, FAIL (main's ruling; same secrets.py blob; no store) | |
 | guard_check end | 96214c2, N2+HW 20 GB, PASS | 9cbc798 old PASS |
 
+### Validity of these stamps under the gate's open conditions (step-1 delta review P1, P2)
+
+Every step-1 stamp from 31112b4 to 0a433bc was issued under a gate with P1 and P2 open; the reviewer did not find
+that any run hit either condition, and those containers are gone, so it cannot now be shown either way. The full
+step-1 list is rerun under the fixed gate on the hardening branch (one gated chain; the list is committed in an
+H-amendment first; heldout_secrets stays carried).
+
 ### Limits that apply to every erasure result here
+
+- **F1 residuals (step-1 delta review P3):** under stale statistics the outer delete of the cascade reads the tenant
+  once per batch; early in a large cascade the GIN pending-list cost is paid by the first batches. F1's PASS (100,000
+  events) does not bound either.
+- **size_probe vs the 1M run:** size_probe RAN, as an exploratory measurement (no PASS). What is BLOCKED is the
+  projected 1,000,000-document run, which has not run on this host (projected own usage over the 2 GB cap).
 
 - **Timing under concurrent writes:** an erasure mark can wait without bound while concurrent writes keep taking the
   subject row FOR SHARE (lock_order MS above, amendment 17c). Each attempt is cut at 30 s and the sweep retries. No
