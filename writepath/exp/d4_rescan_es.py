@@ -4,8 +4,9 @@
 Setup per run: Z writes "lunch with yolanda <mk>" BEFORE "yolanda" is declared for Y (so the write-time matcher cannot
 link it); Y writes one message; both are projected; then the identifier is declared. The runner is patched to skip the
 placeholders of rescan hits (a faulty or dishonest runner). Fenced (shipped verifier, which checks every tombstoned id
-is a placeholder): Y's job is NOT done and the residue names es:tombstoned_not_placeholder. Control (the verifier
-without that check, i.e. the 963e597 verifier): the job reports done while Z's ES document still holds <mk>.
+is a placeholder): Y's job is NOT done and the residue names one of the strict placeholder counts (wp/es_verify.py
+KEYS; at fd5d2a3 and earlier the single count es:tombstoned_not_placeholder). Control (the verifier without that check,
+i.e. the 963e597 verifier): the job reports done while Z's ES document still holds <mk>.
 Thresholds: R=5, fenced 5/5, control violated 5/5. usage: python -m exp.d4_rescan_es [R]"""
 import json
 import sys
@@ -13,7 +14,7 @@ import uuid
 
 from exp.common import write_result
 from exp.util import tenant, msg, session, env, es_count_all
-from wp import db, erasure, mentions as M, projector, verifier as V
+from wp import db, erasure, es_verify as EV, mentions as M, projector, verifier as V
 
 
 def once(arm):
@@ -35,7 +36,8 @@ def once(arm):
 
     def old_verifier(self, tt, ss, expunge=True, wait_s=180.0):
         out, info = real_ext(self, tt, ss, expunge, wait_s)
-        out.pop("es:tombstoned_not_placeholder", None)
+        for k in EV.KEYS:
+            out.pop(k, None)
         return out, info
     erasure.tombstoned_ids = skip_rescan
     if arm == "control":
@@ -49,7 +51,7 @@ def once(arm):
     w = {"done": rec["done"], "residue": rec.get("residue"), "rescan_found": found, "es_docs_with_marker": left}
     if found != 1:
         raise RuntimeError(f"setup: rescan found {found}, expected 1")
-    return (not rec["done"]) and "es:tombstoned_not_placeholder" in (rec.get("residue") or ""), w
+    return (not rec["done"]) and any(k in (rec.get("residue") or "") for k in EV.KEYS), w
 
 
 def main(R):

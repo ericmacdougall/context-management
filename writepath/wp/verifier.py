@@ -13,7 +13,7 @@ Cross-store counts (ES, key service) are ATTESTED by this role; Postgres counts 
 import json
 import time
 
-from . import config, db, families as F, keys as K, registry
+from . import config, db, es_verify as EV, families as F, keys as K, registry
 from .es import ES
 
 SCOPE = ("verifier: ES counted by subject_id OR mentions over every index of every family; key presence in the key store "
@@ -45,19 +45,12 @@ class Verifier:
             q = {"bool": {"should": [{"term": {"subject_id": s}}, {"term": {"mentions": s}}], "minimum_should_match": 1}}
             out[f"es:{f}"] = self.es.count(pat, q)
         tm["es_counts_s"], t0 = round(time.time() - t0, 3), time.time()
-        # D4: every tombstoned event (own, write-time mention, rescan hit) must be a placeholder in ES, checked by id in
-        # pages, so an event whose ES document does not carry the subject (a rescan hit) cannot escape the count
-        bad, last = {"events": 0, "facts": 0}, ""
-        while True:
-            ids = [r[0] for r in self.conn.execute("select event_id from tombstones where tenant_id=%s and subject_id=%s and event_id > %s "
-                                                   "order by event_id limit 5000", (t, s, last)).fetchall()]
-            if not ids:
-                break
-            last = ids[-1]
-            for f, page in (("events", ids), ("facts", [K.derive_id(t, e) for e in ids])):
-                q = {"bool": {"filter": [{"ids": {"values": page}}], "must_not": [{"term": {"erased": True}}]}}
-                bad[f] += self.es.count(f"{F.P}{t}-{f}-*", q)
-        out["es:tombstoned_not_placeholder"] = bad["events"] + bad["facts"]
+        # D4 (strict, wp/es_verify.py): every tombstoned event (own, write-time mention, rescan hit) and every derived
+        # fact of a tombstoned fact event must be PRESENT as an exact placeholder ({"erased": true} at version 2^62) on
+        # every started copy; content, a lower version, a missing id or an unsearchable copy each count
+        detail = {}
+        out.update(EV.check(self.es, t, self._tombstoned(t, s), K.derive_id, detail))
+        info["placeholder_detail"] = detail
         tm["placeholder_check_s"], t0 = round(time.time() - t0, 3), time.time()
         out["keys:subject_keys"] = self.kconn.execute("select count(*) from subject_keys where tenant_id=%s and subject_id=%s", (t, s)).fetchone()[0]
         # item 4: attested by the key service (purge() sets purged_at); a destroyed key never purged counts 1
@@ -69,6 +62,18 @@ class Verifier:
         tm["keys_and_gate_s"] = round(time.time() - t0, 3)
         info["timings"] = tm
         return out, info
+
+    def _tombstoned(self, t, s, page=5000):
+        """Pages of (event_id, kind), keyset-paged; the same ids the cascade placed (erasure.tombstoned_ids)."""
+        last = ""
+        while True:
+            rows = self.conn.execute("select tb.event_id, e.kind from tombstones tb join events e on e.tenant_id = tb.tenant_id "
+                                     "and e.event_id = tb.event_id where tb.tenant_id=%s and tb.subject_id=%s and tb.event_id > %s "
+                                     "order by tb.event_id limit %s", (t, s, last, page)).fetchall()
+            if not rows:
+                return
+            yield rows
+            last = rows[-1][0]
 
     def complete(self, jid, expunge=True, wait_s=180.0):
         """Counts and submits; the store answers done, or 'logically_erased_physical_purge_pending' (every logical count
