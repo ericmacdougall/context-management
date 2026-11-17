@@ -114,6 +114,7 @@ class SessionAuthority:
         self._dir = directory
         self._idp = identity
         self._live = {}
+        self._bindings = {}         # token -> {name: value}: values attached to a live session by the adapter's side (review-3 N1)
         self._lock = threading.Lock()
 
     def issue(self, credential) -> Session:
@@ -137,6 +138,25 @@ class SessionAuthority:
         with self._lock:
             if self._live.get(getattr(session, "token", None)) is session:
                 del self._live[session.token]
+                self._bindings.pop(session.token, None)
+
+    def _bind(self, session, name: str, value) -> None:
+        """Attach `value` under `name` to a LIVE session, once (review-3 N1: pol.pgcore.PgSessionBridge attaches the database session
+        token it opened for this session, right after issue). Identity-adapter side only; a request handler never calls it."""
+        with self._lock:
+            if self._live.get(getattr(session, "token", None)) is not session:
+                raise AuthenticationFailed("not a live session")
+            b = self._bindings.setdefault(session.token, {})
+            if name in b:
+                raise AuthenticationFailed("already bound")
+            b[name] = value
+
+    def _bound(self, session, name: str):
+        """The value attached under `name` to this exact live session, or None (unknown, ended, hand-built or never bound)."""
+        with self._lock:
+            if self._live.get(getattr(session, "token", None)) is not session:
+                return None
+            return self._bindings.get(session.token, {}).get(name)
 
     def verify(self, session) -> bool:
         tok = getattr(session, "token", None)

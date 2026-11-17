@@ -182,24 +182,34 @@ class PgEngine:
 
 
 # ------------------------------------------------------------------------------------------------ the deployment path (dc_idp / dc_app)
+PG_TOKEN = "pg_token"          # name of the database session token attached to the in-process Session (SessionAuthority._bind)
+
+
 @dataclass(frozen=True)
 class PgSession:
-    """An in-process Session (pol.directory) paired with the database session token the identity adapter opened for it. A hand-built
-    PgSession carries a token the database does not know (refused) or an in-process Session that fails verification (refused)."""
+    """An in-process Session (pol.directory) and the database session token the bridge opened FOR IT. The pair is accepted only when the
+    token equals the one the SessionAuthority holds for that exact live Session (attached at issue), so a hand-built pair mixing two
+    principals, two channels or two tenants is refused before any database call (review-3 N1)."""
     session: object
     db_token: str
 
 
 class PgSessionBridge:
-    """The identity adapter's side: authenticates a credential through the SessionAuthority and opens the matching database session over
-    a dc_idp connection. Holds the only connection that can open sessions; a request handler holds a PgDecisionService (dc_app) only."""
+    """The identity adapter's side: authenticates a credential through the SessionAuthority, opens the matching database session over a
+    dc_idp connection and attaches its token to the in-process Session. Holds the only connection that can open sessions; a request
+    handler holds a PgDecisionService (dc_app) only. If opening or attaching fails, the in-process session is ended."""
 
     def __init__(self, sessions, idp_conn, ttl_s: int = 3600):
         self._sessions, self._c, self._ttl = sessions, idp_conn, int(ttl_s)
 
     def issue(self, credential) -> PgSession:
         s = self._sessions.issue(credential)
-        tok = self._c.execute("select dc.open_session(%s,%s,%s,%s,%s)", (s.tenant, s.principal_id, s.channel, "lab", self._ttl)).fetchone()[0]
+        try:
+            tok = self._c.execute("select dc.open_session(%s,%s,%s,%s,%s)", (s.tenant, s.principal_id, s.channel, "lab", self._ttl)).fetchone()[0]
+            self._sessions._bind(s, PG_TOKEN, tok)
+        except BaseException:
+            self._sessions.end(s)
+            raise
         return PgSession(s, tok)
 
 
@@ -232,8 +242,12 @@ class _SnapVault:
 
 
 class PgDecisionService:
-    """DecisionService over the database API, as the request handler (dc_app) uses it. Identity is the database session; the in-process
-    Session of the same PgSession is verified too and must name the same principal, and is what the label filter of reads uses."""
+    """DecisionService over the database API, as the request handler (dc_app) uses it.
+
+    Every entry point (submit, explain, table, erase_subject) first verifies the PgSession and gets its token from the SessionAuthority,
+    BEFORE any database call: the in-process Session must be live (verified by identity) and the PgSession's token must equal the token
+    attached to that Session when the bridge issued it (review-3 N1). The database then derives tenant, principal and channel from that
+    token's session row, so the in-process check and the database act as the same principal, channel and tenant."""
 
     def __init__(self, enforcer, app_conn):
         from .enforce import Enforcer
@@ -241,26 +255,32 @@ class PgDecisionService:
             raise TypeError("PgDecisionService(enforcer, app_conn)")
         self._enf, self._c = enforcer, app_conn
 
-    def _principal(self, session):
+    def _verified(self, session):
+        """(principal, database token) for a PgSession whose two parts belong together, else None. No database call."""
         from .enforce import PolicyDenied
-        if not isinstance(session, PgSession):
+        if not isinstance(session, PgSession) or not isinstance(session.db_token, str):
             return None
         try:
-            return self._enf.principal_of(session.session)
+            p = self._enf.principal_of(session.session)
         except PolicyDenied:
             return None
+        bound = self._enf._sessions._bound(session.session, PG_TOKEN)
+        if not isinstance(bound, str) or not hmac.compare_digest(bound.encode(), session.db_token.encode()):
+            return None
+        return p, bound
 
     def submit(self, session, body) -> dict:
-        p = self._principal(session)
-        if p is None:
+        v = self._verified(session)
+        if v is None:
             return {"code": "unauthenticated:invalid_session", "original": None, "id": None, "value_ref": None}
+        p, tok = v
         try:
             payload = Jsonb(body)
-            out = self._c.execute("select dc.submit(%s, %s)", (session.db_token, payload)).fetchone()[0]
+            out = self._c.execute("select dc.submit(%s, %s)", (tok, payload)).fetchone()[0]
         except (TypeError, ValueError):
             out = {"code": "bad_event", "original": None, "id": None, "value_ref": None}
         if out.get("id") and not out["id"].startswith(p.id + "/"):
-            raise RuntimeError("database session and in-process session name different principals")
+            raise RuntimeError("database session and in-process session name different principals")      # unreachable after _verified
         if out["code"] == "revoked" and isinstance(body, dict):
             self._enf._revocations._add(body.get("target"))
         self._enf._audit.add({"action": "decision", "principal": p.id, "allow": out["code"] in _core.APPLIED, "reason": out["code"],
@@ -276,42 +296,46 @@ class PgDecisionService:
         return svc.explain(session.session, raw["req"])
 
     def explain(self, session, req):
-        if self._principal(session) is None or not isinstance(req, str):
+        v = self._verified(session)
+        if v is None or not isinstance(req, str):
             return None
-        raw = self._c.execute("select dc.explain(%s, %s)", (session.db_token, req)).fetchone()[0]
+        raw = self._c.execute("select dc.explain(%s, %s)", (v[1], req)).fetchone()[0]
         return self._render(session, raw)
 
     def table(self, session):
-        if self._principal(session) is None:
+        v = self._verified(session)
+        if v is None:
             return []
-        raws = self._c.execute("select dc.read_table(%s)", (session.db_token,)).fetchone()[0]
+        raws = self._c.execute("select dc.read_table(%s)", (v[1],)).fetchone()[0]
         return [x for x in (self._render(session, r) for r in raws) if x is not None]
 
     def erase_subject(self, session, subject) -> dict:
         """As DecisionService.erase_subject. The database lists the values about the canonical subject (admin session only); the in-process
-        policy point decides each (a legal hold queues it); the database deletes the allowed ones and, when none about the subject remains,
-        the token mapping, under the tenant row lock (no concurrent submit can mint or use the token meanwhile)."""
+        policy point decides each (a legal hold queues it) for the SAME verified session; the database deletes the allowed ones and, when
+        none about the subject remains, the token mapping, under the tenant row lock (no concurrent submit can mint or use the token
+        meanwhile)."""
         from .enforce import PolicyDenied
-        p = self._principal(session)
+        v = self._verified(session)
         none = {"erased": 0, "queued": 0, "denied": 0, "refused": "unauthorized", "result": None}
-        if p is None:
+        if v is None:
             return none
+        p, tok = v
         try:
             subj = canon_subject(subject)
         except LabelError:
             return dict(none, refused="bad_subject")
-        cand = self._c.execute("select dc.erase_candidates(%s, %s)", (session.db_token, subj)).fetchone()[0]
+        cand = self._c.execute("select dc.erase_candidates(%s, %s)", (tok, subj)).fetchone()[0]
         if cand["refused"]:
             return dict(none, refused=cand["refused"])
         out = {"erased": 0, "queued": 0, "denied": 0, "refused": None, "result": None}
         allowed = []
-        for v in cand["values"]:
+        for x in cand["values"]:
             try:
-                self._enf._check(session.session, "erase", [Label.from_dict(v["label"])], {})
-                allowed.append(v["ref"])
+                self._enf._check(session.session, "erase", [Label.from_dict(x["label"])], {})
+                allowed.append(x["ref"])
             except PolicyDenied as e:
                 out["queued" if e.decision.reason == "erasure_queued" else "denied"] += 1
-        res = self._c.execute("select dc.erase_values(%s, %s, %s)", (session.db_token, subj, allowed)).fetchone()[0]
+        res = self._c.execute("select dc.erase_values(%s, %s, %s)", (tok, subj, allowed)).fetchone()[0]
         if res.get("refused"):
             return dict(none, refused=res["refused"])
         out["erased"] = res["erased"]
