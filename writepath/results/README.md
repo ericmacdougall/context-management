@@ -198,6 +198,19 @@ other runs were re-read under it and still stand.
       (facts work > 0) are judged within PS-C.
     - Controls failed 3/3 in each state: CTL_APPLY, CTL_RESIDUE, and the facts-only control CTL_FACTS.
   - **guard_check end: PASS.**
+- **R1 rerun at 0a433bc** (`step1-f.txt`, amendment 24b, `step1-0a433bc/`).
+  - **Attempt 1, 17:27:18Z: BLOCKED** at `disk_gate start` (host free 19.3 GiB < 20.0). My lock waiter read `df -BG`,
+    which rounds up. No experiment ran and no result exists, so this is not the amendment-24b rerun. Its `.out` is
+    kept as `one.0a433bc.races_R1.blocked-1727.out`.
+  - **Attempt 2, 17:29:24Z to 17:32:40Z: PASS.** The waiter now compares exact KiB.
+    - Fenced: 40/40 held, 23 overlapping, 0 violations, 0 errors.
+    - Control: 21 overlapping, violated 21/21.
+    - Window read (`review-2/window_check_0a433bc_r1.out`): exit 0, no high-watermark or flood line.
+    - Recomputed by amendment 24b's rule, the result is the same: no fenced violation or error, both arms at least
+      20, control sensitive.
+  - R1 is reported as INCONCLUSIVE at 96214c2 and PASS at 0a433bc. The rerun rule was written after the first
+    result was seen, and the two runs are never combined.
+- **Code identity:** `git diff 96214c2 0a433bc -- writepath/wp writepath/exp/races.py` is empty.
 - **heldout_secrets (main's ruling):** not rerun. Its FAIL at 62c6be5 is **carried, not re-observed**:
   - wp/secrets.py is the same blob (58b025fc) at 62c6be5, 31112b4, 2e1948c and the final commit;
   - the heldout experiment files are unchanged since 62c6be5;
@@ -241,7 +254,7 @@ Gate versions:
 | e2e E2, E3 | 96214c2, N2+HW 20 GB, PASS | 9cbc798 old PASS |
 | projector_start_race | 96214c2, N2+HW 20 GB, PASS | 62c6be5 old PASS; 5d26746 old FAIL (harness, 19a) |
 | projector_es_fault (N1) | 96214c2, N2+HW 20 GB, PASS | none (failing-first at 1539a75: fixed arm 0/5 per case) |
-| races R1 | **96214c2, N2+HW 20 GB, INCONCLUSIVE** (control 19 overlapping < 20; fenced 0 violations, 0 errors) **and** the one rerun under amendment 24b (0a433bc): pending; never combined | 62c6be5 old PASS |
+| races R1 | **96214c2, N2+HW 20 GB, INCONCLUSIVE** (control 19 overlapping < 20; fenced 0 violations, 0 errors) **and 0a433bc, N2+HW 20 GB, PASS** (the one rerun under amendment 24b, written after the INCONCLUSIVE; fenced 40/40, 23 overlapping; control violated 21/21 overlapping); never combined | 62c6be5 old PASS |
 | races R2, R3 | 96214c2, N2+HW 20 GB, PASS | 62c6be5 old PASS |
 | size_probe (exploratory) | 96214c2, N2+HW 20 GB, measured 4,478 B/doc (WAL refill included); 1M stays BLOCKED | 62c6be5 old, 2,071 B/doc |
 | plan_stability (amendment 22, facts) | 96214c2, N2+HW 20 GB, PASS (CTL_FACTS 3/3 per state) | 62c6be5 old PASS without facts (scope N3) |

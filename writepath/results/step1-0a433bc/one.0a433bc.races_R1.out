@@ -1,0 +1,8 @@
+start 2026-11-17T17:29:24Z head 0a433bc free 22G: exp.races R1 40
+disk_gate start free 21.0 GiB own 0.15 GiB (pg 0.09 es 0.00 home 0.06) cap +2.0 GiB
+disk_gate races_R1 free 21.0 GiB own +0.00 GiB
+R1 PASS {"fenced": {"runs_total": 40, "overlapped": 23, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 23, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.8569, 1.0], "wilson95_violation_rate_overlapped": [-0.0, 0.1431]}, "control": {"runs_total": 40, "overlapped": 21, "errors": 0, "holds_all": 19, "violated_all": 21, "holds_overlapped": 0, "violated_overlapped": 21, "wilson95_hold_rate_overlapped": [0.0, 0.1546], "wilson95_violation_rate_overlapped": [0.8454, 1.0]}}
+RESULT races_R1 sha256=33eeee1274b85cbf13b5ab77966a4804333466bbfb219eedc51809dad50785f8 file=~/emlab2-16096/writepath/wp/results/races_R1.33eeee1274b85cbf.json
+exit=0
+disk_gate end free 20.4 GiB own +-0.01 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+end 2026-11-17T17:32:40Z
