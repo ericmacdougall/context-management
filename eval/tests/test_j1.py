@@ -195,5 +195,33 @@ class TestWrapper(unittest.TestCase):
                 m2.call("other", "s", "claude-opus-5-5", "t", "q", "st")
 
 
+class TestHumanAudit(unittest.TestCase):
+    def test_sheet_is_blind_and_scorer_withholds(self):
+        import os
+        import tempfile
+        from pilots import j1_human_audit as H
+        rs = rows()
+        items = J.select_items(rs, gens(rs))
+        with tempfile.TemporaryDirectory() as d:
+            json.dump(items, open(d + "/items.json", "w"))
+            H.make(d + "/items.json", d)
+            page = open(d + "/audit_sheet.html").read()
+            self.assertNotIn("construction", page)
+            self.assertNotIn("Verdict", page)
+            for k in J.kinds_for("multi-session"):
+                self.assertNotIn("item_id", page)
+            key = json.load(open(d + "/audit_sheet_key.json"))["key"]
+            self.assertEqual(len(key), 40)
+            jr = [{"item_id": i["item_id"], "verdict": True} for i in items if i["category"] == "borderline"]
+            open(d + "/j.jsonl", "w").write("\n".join(json.dumps(r) for r in jr))
+            open(d + "/a.jsonl", "w").write("\n".join(json.dumps(r) for r in jr))
+            json.dump({k: True for k in key}, open(d + "/h.json", "w"))
+            H.score(d + "/audit_sheet_key.json", d + "/h.json", d + "/j.jsonl", d + "/a.jsonl", os.path.join(os.path.dirname(J.__file__), "stage11_bars.json"), d + "/o.json")
+            self.assertTrue(json.load(open(d + "/o.json"))["judge_vs_human"]["pass"])
+            json.dump({k: True for k in list(key)[1:]}, open(d + "/h2.json", "w"))
+            H.score(d + "/audit_sheet_key.json", d + "/h2.json", d + "/j.jsonl", d + "/a.jsonl", os.path.join(os.path.dirname(J.__file__), "stage11_bars.json"), d + "/o2.json")
+            self.assertEqual(json.load(open(d + "/o2.json"))["status"], "WITHHELD")
+
+
 if __name__ == "__main__":
     unittest.main()
