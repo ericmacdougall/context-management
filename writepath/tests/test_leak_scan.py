@@ -1,16 +1,22 @@
-"""Offline test of runkit/leak_scan.py (review A, A4 and A6): every representation of every secret the stream creates
-is found, non-secret controls are not, a hit exits 1, and an unreadable secret source exits 2. All values are FAKE,
-generated here at run time; nothing prints a value (assertion messages name files and classes only).
+"""Offline test of runkit/leak_scan.py (review A, A4 and A6; review D F4, F5, F6, F12): every representation of every
+secret the stream creates is found, non-secret controls are not, a hit exits 1, anything the scanner could not read or
+chose not to read exits 2, and nothing printed holds a candidate. All values are FAKE, generated here at run time;
+nothing prints a value (assertion messages name files and classes only).
 
 The scanner under test runs as a subprocess, the way the run kit runs it: this tree's runkit/leak_scan.py, or the file
 named in LEAK_SCAN_UNDER_TEST (runkit/failing_first.sh runs the dce5f07 blob, the scanner review A inspected). A fake
-`docker` on PATH answers the key-store query (`docker exec <pg> psql ...`) with fake key hex.
+`docker` on PATH answers the key-store queries (`docker exec <pg> psql ...`) with fake key hex: subject keys for a
+query naming subject_keys, tenant keys for one naming tenant_keys (both for the older single query).
 usage (from writepath/): python3 -m unittest tests.test_leak_scan -v"""
 import base64
 import gzip
+import hashlib
+import hmac
+import importlib.util
 import json
 import os
 import pathlib
+import re
 import secrets
 import shutil
 import subprocess
@@ -54,7 +60,10 @@ class Scan(unittest.TestCase):
         kid, key = secrets.token_urlsafe(15)[:20], secrets.token_urlsafe(16)[:22]
         enc = _b64(f"{kid}:{key}")
         kms = _kms()
-        cls.values = [app, admin, legacy, broker, espw, key, enc, kms.hex()]
+        tkey = secrets.token_bytes(32)                      # a tenant key (tenant_keys.hkey_hex)
+        chain = hmac.new(tkey, b"chain-key:v1", hashlib.sha256).digest()   # wp/keys.py chain_key, sent as hex by keysvc
+        cls.broker, cls.key = broker, key
+        cls.values = [app, admin, legacy, broker, espw, key, enc, kms.hex(), tkey.hex(), chain.hex()]
         home = cls.tmp / "home"
         for d in ("secrets", "oldhome", "conf"):
             (home / d).mkdir(parents=True)
@@ -93,6 +102,14 @@ class Scan(unittest.TestCase):
             "keystore_key_base64url": base64.urlsafe_b64encode(kms).decode(),
             "keystore_key_raw_bytes": b"\x00\x01" + kms + b"\x02",
             "gzip_of_a_log": gzip.compress(f"line one\n{app}\nline three\n".encode()),
+            # review D F5: the tenant chain key, derived from a tenant key, as the key service sends it and in base64
+            "chain_key_hex_in_rpc_log": json.dumps({"op": "chain_key", "ok": chain.hex()}),
+            "chain_key_base64": _b64(chain),
+            # review D F6: UTF-16 (both byte orders, odd alignment) and percent-encoded JSON unicode escapes
+            "utf16le_log": f"broker password {broker}\n".encode("utf-16-le"),
+            "utf16be_odd_offset": b"\x07" + f"pw={app}".encode("utf-16-be"),
+            "percent_encoded_json_unicode_escapes": urllib.parse.quote(
+                '{"api_key": "' + "".join("\\u%04x" % ord(c) for c in key) + '"}', safe=""),
         }
         res = cls.tmp / "results"
         res.mkdir()
@@ -106,19 +123,32 @@ class Scan(unittest.TestCase):
         (clean / "result.json").write_text(json.dumps({"key_id": kid, "verdict": "PASS", "n": 5}))
         bindir = cls.tmp / "bin"
         bindir.mkdir()
-        (bindir / "docker").write_text('#!/bin/sh\n[ -e "$FAKE_KS_FAIL" ] && exit 1\ncat "$FAKE_KS"\n')
+        (bindir / "docker").write_text('#!/bin/sh\n[ -e "$FAKE_KS_FAIL" ] && exit 1\n'
+                                       'case "$*" in *subject_keys*) cat "$FAKE_KS";; esac\n'
+                                       'case "$*" in *tenant_keys*) cat "$FAKE_KS_TENANT";; esac\nexit 0\n')
         (bindir / "docker").chmod(0o755)
         (cls.tmp / "keys.txt").write_text(kms.hex() + "\n" + secrets.token_bytes(32).hex() + "\n")
+        (cls.tmp / "tenant_keys.txt").write_text(tkey.hex() + "\n")
         cls.env = dict(os.environ, PATH=f"{bindir}:{os.environ['PATH']}", FAKE_KS=str(cls.tmp / "keys.txt"),
-                       FAKE_KS_FAIL=str(cls.tmp / "ks_fail"))
+                       FAKE_KS_TENANT=str(cls.tmp / "tenant_keys.txt"), FAKE_KS_FAIL=str(cls.tmp / "ks_fail"))
         cls.rc, cls.out = cls.run_scan(home, res)
         cls.hits = {pathlib.Path(ln.split()[1]).name for ln in cls.out.splitlines() if ln.startswith("HIT ")}
 
     @classmethod
-    def run_scan(cls, home, *dirs, env=None):
-        r = subprocess.run([sys.executable, SCANNER, str(home), *map(str, dirs)], capture_output=True, text=True,
-                           env=env or cls.env, timeout=600)
+    def run_scan(cls, home, *dirs, env=None, extra=(), timeout=600):
+        r = subprocess.run([sys.executable, SCANNER, str(home), *map(str, dirs), *extra], capture_output=True,
+                           text=True, env=env or cls.env, timeout=timeout)
         return r.returncode, r.stdout + r.stderr
+
+    def leaked(self, out):
+        """Indexes of the fake values with a 12-character fragment in `out` (never the fragments themselves)."""
+        return [i for i, v in enumerate(self.values) if any(v[j:j + 12] in out for j in range(0, len(v) - 11))]
+
+    def fresh(self, name):
+        d = self.tmp / name
+        d.mkdir()
+        (d / "clean.json").write_text(json.dumps({"verdict": "PASS"}))
+        return d
 
     @classmethod
     def tearDownClass(cls):
@@ -136,8 +166,7 @@ class Scan(unittest.TestCase):
         self.assertEqual(self.rc, 1, "a scan with hits must exit 1 so the copy step can refuse")
 
     def test_no_value_or_fragment_is_printed(self):
-        leaked = [i for i, v in enumerate(self.values) if any(v[j:j + 12] in self.out for j in range(0, len(v) - 11))]
-        self.assertEqual(leaked, [], "the scanner output contains a fragment of a secret value (indexes only shown)")
+        self.assertEqual(self.leaked(self.out), [], "the scanner output contains a fragment of a secret value (indexes only shown)")
 
     def test_clean_tree_exits_0(self):
         rc, out = self.run_scan(self.home, self.tmp / "clean")
@@ -164,6 +193,124 @@ class Scan(unittest.TestCase):
         finally:
             (self.tmp / "ks_fail").unlink()
         self.assertEqual(rc, 2, "an unreadable key store must make the scan fail closed (exit 2) unless waived")
+
+    # ---- review D F4: fail closed, every skip listed
+    def test_missing_root_fails_closed(self):
+        rc, out = self.run_scan(self.home, self.tmp / "clean", self.tmp / "no_such_results_dir")
+        self.assertEqual(rc, 2, "a requested directory that does not exist must make the scan fail closed (exit 2)")
+
+    def test_unreadable_directory_fails_closed(self):
+        d = self.fresh("with_locked_dir")
+        (d / "locked").mkdir()
+        (d / "locked" / "log").write_text("nothing here\n")
+        (d / "locked").chmod(0)
+        try:
+            if os.access(d / "locked", os.R_OK):
+                self.skipTest("running as a user who can read a mode-000 directory")
+            rc, _ = self.run_scan(self.home, d)
+        finally:
+            (d / "locked").chmod(0o700)
+        self.assertEqual(rc, 2, "a directory the walk could not enter was skipped silently (must exit 2)")
+
+    def test_sibling_of_a_secret_source_is_scanned(self):
+        d = self.home.parent / "home" / "oldhome-results"   # shares a string prefix with the oldhome source
+        d.mkdir()
+        try:
+            (d / "log").write_text(f"pw {self.broker}\n")
+            rc, _ = self.run_scan(self.home, d)
+        finally:
+            shutil.rmtree(d)
+        self.assertEqual(rc, 1, "a results directory beside a secret source was excluded by a string prefix")
+
+    def test_damaged_gzip_fails_closed(self):
+        d = self.fresh("bad_gzip")
+        (d / "log.gz").write_bytes(b"\x1f\x8b\x08\x00" + secrets.token_bytes(64))
+        rc, _ = self.run_scan(self.home, d)
+        self.assertEqual(rc, 2, "a gzip file that cannot be decompressed was skipped silently (must exit 2)")
+
+    def test_truncated_gzip_is_searched_as_far_as_it_decompresses(self):
+        d = self.fresh("truncated_gzip")
+        z = gzip.compress((f"first line {self.broker}\n" + "filler line\n" * 20000).encode())
+        (d / "log.gz").write_bytes(z[:len(z) // 2])
+        rc, _ = self.run_scan(self.home, d)
+        self.assertEqual(rc, 1, "the readable part of a truncated gzip file was not searched")
+
+    def test_content_over_the_limit_is_never_sliced(self):
+        d = self.fresh("oversize")
+        (d / "big.gz").write_bytes(gzip.compress(b"\0" * (3 * 1024 * 1024)))
+        rc, out = self.run_scan(self.home, d, env=dict(self.env, LEAK_SCAN_MAX_BYTES=str(1024 * 1024)))
+        self.assertEqual(rc, 2, "content over the size limit must be listed as not scanned (exit 2), not sliced")
+
+    def test_special_file_is_listed_not_read(self):
+        d = self.fresh("fifo")
+        os.mkfifo(d / "pipe")
+        try:
+            rc, _ = self.run_scan(self.home, d, timeout=60)
+        except subprocess.TimeoutExpired:
+            self.fail("the scanner blocked reading a FIFO")
+        self.assertEqual(rc, 2, "a file that is not a regular file must be listed as not scanned (exit 2)")
+
+    def test_symlinked_directory_is_never_skipped_silently(self):
+        # scp -r copies a linked directory's content. A link inside the scanned roots is searched; one that leaves them
+        # is listed and not followed (a link to / must not make the scan unbounded): exit 2.
+        d, t = self.fresh("with_link"), self.fresh("link_target")
+        (t / "log").write_text(f"pw {self.broker}\n")
+        (d / "more").symlink_to(t, target_is_directory=True)
+        rc, _ = self.run_scan(self.home, d)
+        self.assertEqual(rc, 2, "a symlinked directory outside the scanned roots was skipped silently")
+        rc, _ = self.run_scan(self.home, d, t)
+        self.assertEqual(rc, 1, "a symlinked directory inside the scanned roots was not searched")
+
+    # ---- review D F12: nothing printed holds a candidate; a name holding one is a hit
+    def test_path_name_holding_a_candidate_is_a_hit_and_printed_redacted(self):
+        d = self.fresh("named")
+        bad = d / f"dump-{self.broker[3:25]}.log"
+        bad.write_text("nothing secret inside\n")
+        bad.chmod(0)
+        try:
+            rc, out = self.run_scan(self.home, d)
+        finally:
+            bad.chmod(0o600)
+        self.assertEqual(self.leaked(out), [], "the scanner printed a path holding a secret fragment (indexes only)")
+        self.assertEqual(rc, 1, "a file name holding a secret value is copied with the results: it is a hit")
+
+    def test_waiver_reason_is_printed_redacted(self):
+        rc, out = self.run_scan(self.home, self.tmp / "clean", extra=("--no-keystore", f"see {self.key}"))
+        self.assertEqual(self.leaked(out), [], "the scanner printed a waiver reason holding a secret value")
+
+    # ---- review D F5 and F6: inventory from the creation sites, stated limits
+    def test_every_creation_site_is_in_the_inventory_table(self):
+        spec = importlib.util.spec_from_file_location("leak_scan_under_test", SCANNER)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        table = getattr(mod, "SITES", None)
+        self.assertIsNotNone(table, "the scanner has no creation-site table (SITES)")
+        pat = re.compile(r"token_(bytes|hex|urlsafe)\(|urandom\(|hmac\.new\(|hmac\.digest\(|SystemRandom|"
+                         r"secrets\.choice\(|encrypt_password\(|elasticsearch-(reset-password|service-tokens|"
+                         r"create-enrollment-token)|_security/(api_key|service|user)\b.*\b(POST|PUT)\b|"
+                         r"\b(POST|PUT)\b.*_security/(api_key|service|user)\b")
+        found, unlisted = set(), []
+        for top in ("wp", "host", "exp"):
+            for f in sorted((HERE / top).rglob("*")):
+                if f.suffix not in (".py", ".sh", ".sql") or not f.is_file():
+                    continue
+                rel = str(f.relative_to(HERE))
+                for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
+                    if not pat.search(line):
+                        continue
+                    m = [i for i, s in enumerate(table) if s[0] == rel and s[1] in line]
+                    if m:
+                        found.update(m)
+                    else:
+                        unlisted.append(f"{rel}:{n}")
+        self.assertEqual(unlisted, [], "secret creation or derivation sites missing from leak_scan.SITES")
+        stale = [f"{s[0]} {s[1]!r}" for i, s in enumerate(table) if i not in found]
+        self.assertEqual(stale, [], "leak_scan.SITES entries that match no line any more")
+
+    def test_clearance_states_the_split_rule_and_limits(self):
+        rc, out = self.run_scan(self.home, self.tmp / "clean")
+        self.assertEqual(rc, 0)
+        self.assertIn("16 consecutive characters", out, "a clearance must state exactly what it can and cannot find")
 
     def test_self_test_runs_with_every_scan(self):
         if "LEAK_SCAN_UNDER_TEST" in os.environ:
