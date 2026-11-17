@@ -1,6 +1,6 @@
 failing-first run of ingest/tests/test_delta.py
 product code under test: 0801866 (ingester.py, tap.py, scan.py, heldout.py, run_proofs.py, proof_items_*.py unchanged); test support added: proofs_common oracle (HostLedger, event_tuples, repeated_conversation), controls.SharedOmissionIngester
-tests: PREREG-amend-3 (4ce85e3) written before any fix
+tests: PREREG-amend-3 (6eaee20) written before any fix
 date: 2026-11-17T04:50:37Z
 
 test_four_layer_control_disables_all_four_layers (ingest.tests.test_delta.F1Control) ... FAIL
