@@ -6,7 +6,9 @@ import threading
 import time
 
 import lib
+import evidence
 import matrix
+import observe
 import oracle
 from lib import req
 
@@ -59,10 +61,15 @@ def make_broken(ttl):
 def classify_sem_failure(code, e):
     """Addendum C: a failed semantic write is 'licence' (error text names a non-compliant licence), 'missing_endpoint' (404 resource_not_found for the
     inference endpoint) or 'other' (any other 403/404, a missing index, a transport failure). Only the first two are loud licensing failures."""
+    # review 8 F13: through the same Outcome cases as the verdicts; licence text on a 503 is an infrastructure failure, not a licence one
     text = json.dumps(e).lower() if e else ""
-    if "non-compliant" in text:
+    try:
+        o = evidence.Outcome.of(code, e)
+    except evidence.Unparsed:
+        return "other"
+    if o.case == "LICENCE_REFUSAL":
         return "licence"
-    if code == 404 and e and e.get("type") == "resource_not_found_exception" and "inference" in text:
+    if o.case == "NOT_FOUND" and isinstance(e, dict) and e.get("type") == "resource_not_found_exception" and "inference" in text:
         return "missing_endpoint"
     return "other"
 
@@ -234,7 +241,7 @@ class Workload:
             raise AssertionError("semantic index read-back: refresh HTTP %s, search HTTP %s" % (cr, c))
         sem_present = {h["_id"] for h in got}
         sem_ack = {r[1] for r in self.sem_rows if r[2] in (200, 201)}
-        sem_fail = [r for r in self.sem_rows if r[2] >= 300 or r[2] == 0]
+        sem_fail = [r for r in self.sem_rows if r[2] not in (200, 201)]   # every write is acked or failed (a 1xx/202 is not silently neither)
         loud = sum(1 for r in sem_fail if classify_sem_failure(r[2], r[3]) != "other")
         return {"control_injected_loss_detected": control_detects, "live_present": len(present), "acked": len(acked), "acked_absent": len(acked - present), "present_unacked": len(present - acked),
                 "failed_batches": len(self.attempted_failed), "failed_ids_present": len(failed_ids & present),
@@ -316,12 +323,14 @@ class Workload:
         if direction == "down":
             lic = sum(1 for r in ctl if (not r[4]) and "non-compliant" in (r[7] or ""))
             out["T5_control_after_1s"] = {"n": len(ctl), "licence_failures": lic, "other_failures": sum(1 for r in ctl if not r[4]) - lic,
-                                          "success": sum(1 for r in ctl if r[4]), "fail_fraction": (len(ctl) - sum(1 for r in ctl if r[4])) / max(1, len(ctl))}
+                                          "success": sum(1 for r in ctl if r[4]), "fail_fraction": (len(ctl) - sum(1 for r in ctl if r[4])) / max(1, len(ctl)),
+                                          "licence_refusals": observe.control_counts(ctl, lambda r: True)["licence_refusals"]}
         else:
             pre = [r for r in rows if r[2] == "ctl" and r[1] < t_req]
             post = [r for r in rows if r[2] == "ctl" and r[0] >= t_resp + 1.0]
             out["T5_control_before_start_trial"] = {"n": len(pre), "failures": sum(1 for r in pre if not r[4]),
-                                                    "licence_failures": sum(1 for r in pre if (not r[4]) and "non-compliant" in (r[7] or ""))}
+                                                    "licence_failures": sum(1 for r in pre if (not r[4]) and "non-compliant" in (r[7] or "")),
+                                                    "licence_refusals": observe.control_counts(pre, lambda r: True)["licence_refusals"]}
             out["T5_control_after_trial"] = {"n": len(post), "success": sum(1 for r in post if r[4])}
         # T6 ranking function change (rrf vs linear vs client), recorded only
         if self.oracle_rrf:
@@ -377,7 +386,8 @@ class Poller(threading.Thread):
 
 
 def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "inference_use", "dls_search"), direction="down"):
-    """First refusal (down) or first success (up) per feature, relative to the transition response; plus success-after-refusal count."""
+    """First refusal (down) or first success (up) per feature, relative to the transition response; plus success-after-refusal count.
+    Down: observe.moments records the selected refusal's Outcome (status, licence text) with its timing; only that is evidence."""
     out = {}
     for f in features:
         seq = [(r["_t1"], r.get(f)) for r in rows if f in r]
@@ -386,14 +396,7 @@ def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "
             out[f] = {"skipped": True, "unverified": True, "n": len(seq), "classes": sorted({x[1][0] for x in seq if x[1]})}
             continue
         if direction == "down":
-            ref = next(((t, v) for t, v in seq if t >= t_resp - 0.0 and v[0] in ("LICENCE_ERROR", "OTHER_ERROR")), None)
-            before_ok = sum(1 for t, v in seq if t < t_resp and v[0] == "AVAILABLE")
-            refusal = (lambda v: v[0] != "AVAILABLE" and v[0] not in matrix.NOT_OBSERVED) if f == "dls_search" else (lambda v: v[0] == "LICENCE_ERROR")
-            first_ref_t = next((t for t, v in seq if t >= t_resp - 0.5 and refusal(v)), None)
-            dls_before = sorted({v[2] for t, v in seq if t < t_resp and v[0] == "AVAILABLE" and len(v) > 2}) if f == "dls_search" else None
-            succ_after = sum(1 for t, v in seq if first_ref_t is not None and t > first_ref_t and v[0] == "AVAILABLE")
-            out[f] = {"first_refusal_rel_resp_s": None if first_ref_t is None else first_ref_t - t_resp, "success_before_transition": before_ok,
-                      "success_after_first_refusal": succ_after, "dls_returned_counts_before": dls_before, "first_refusal_status": ref[1][1] if ref else None, "n": len(seq)}
+            out[f] = observe.moments(rows, t_resp, (f,))[f]   # the refusal is selected by its Outcome case (review 8 F13)
         else:
             first_ok = next((t for t, v in seq if t >= t_resp and v[0] == "AVAILABLE"), None)
             out[f] = {"first_success_rel_resp_s": None if first_ok is None else first_ok - t_resp, "n": len(seq)}

@@ -7,7 +7,13 @@ evidence type)) and every cross-field relation (RELATIONS). `parse()` reads exac
 - HTTP statuses become a closed Outcome case; no verdict sees an integer status.
 - Rates exist only as Proportion(numerator, denominator); a stored derived rate is a `verify` field: checked against its counts, then
   dropped, so no verdict can read it.
-- A control is an evidence type whose fields are `enforce`d: it cannot be constructed unless the control observation is what it must be.
+- A control is an evidence type whose fields are `enforce`d: its constructor raises unless the control observation is what it must be.
+- What is guaranteed (review 8 F15): validated construction from JSON under trusted Python code. parse() and the generated dataclass
+  constructors check every domain, control and relation, nested evidence by exact type, and containers are stored immutable (tuples).
+  Evidence classes use __slots__ (no per-instance __dict__). Python still cannot stop trusted code from bypassing a frozen dataclass
+  (object.__setattr__, copy tricks); the verdict modules are checked by an AST test to touch nothing but evidence objects.
+- Malformed input never raises out of parse(): input-related arithmetic, type and value errors (a 10**400 integer, a nested wrong type)
+  become Unparsed at the parsing boundary (review 8 F14).
 - Mappings with a fixed key set (probes, battery paths, migrated operations) are declared one field per key: a missing key does not parse.
 """
 import collections
@@ -39,9 +45,13 @@ KINDS = {
     "offset": Kind("real", None, None, "finite SIGNED seconds from a transition; lower bound per field or by relation"),
     "timestamp": Kind("real", 1, None, "finite epoch seconds"),
     "flag": Kind("bool", None, None, "true or false"),
-    "text": Kind("text", None, None, "non-empty string or object (an error body or class label)"),
+    "text": Kind("text", None, None, "non-empty string or object (an error body)"),
+    "cell_class": Kind("enum", None, None, "a matrix cell class: one of lib.classify's and matrix's labels"),
     "windows": Kind("windows", None, None, "list of [start, end, count]: finite, end >= start, count >= 1"),
 }
+
+
+ENUMS = {"cell_class": frozenset({"AVAILABLE", "LICENCE_ERROR", "OTHER_ERROR", "TRANSPORT", "SKIP", "UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS"})}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -76,8 +86,8 @@ def licence_text(body):
 @dataclasses.dataclass(frozen=True)
 class Outcome:
     """One closed case per status. A refusal is only ever a 403: LICENCE_REFUSAL is a 403 whose body carries the licence text,
-    AUTHORISATION_REFUSAL a 403 without it. `licence_text` records the text on any status (the harness's cell class uses it for
-    4xx/5xx; verdicts match on `case` only)."""
+    AUTHORISATION_REFUSAL a 403 without it. `licence_text` records the text on any status; only on a 403 does it change the case, and
+    lib.classify labels LICENCE_ERROR only for LICENCE_REFUSAL. Verdicts match on `case` only."""
     status: int
     case: str
     licence_text: bool = False
@@ -93,7 +103,7 @@ class Outcome:
     def of(status, body=None):
         if type(status) is not int or not (status == 0 or 100 <= status <= 599):
             raise Unparsed((), "HTTP status %r is not 0 or 100..599" % (status,))
-        lt = licence_text(body)
+        lt = body if type(body) is bool else licence_text(body)   # a recorded cell carries the licence text as a flag (observe.py)
         return Outcome(status, Outcome._case(status, lt), lt)
 
     @staticmethod
@@ -133,8 +143,15 @@ class Proportion:
 
 
 # ---- leaf parsing ------------------------------------------------------------------------------------------------------------------
+MAX_INT = 2 ** 53   # no recorded count, status or time exceeds it; a larger integer is not a measurement (and overflows float arithmetic)
+
+
+def _int(v):
+    return type(v) is int and -MAX_INT <= v <= MAX_INT
+
+
 def _real(v):
-    return type(v) in (int, float) and math.isfinite(v)
+    return _int(v) or (type(v) is float and math.isfinite(v))
 
 
 def parse_leaf(f, v, parent, at):
@@ -155,24 +172,28 @@ def _domain(f, v, at):
     lo = f.lo if f.lo is not None else k.lo
     hi = f.hi if f.hi is not None else k.hi
     if k.type == "status":
-        ok = isinstance(v, Outcome)
+        ok = type(v) is Outcome
     elif k.type == "int":
-        ok = type(v) is int
+        ok = _int(v)
     elif k.type == "real":
         ok = _real(v)
     elif k.type == "bool":
         ok = type(v) is bool
     elif k.type == "text":
-        ok = isinstance(v, (str, dict)) and len(v) > 0
+        ok = type(v) in (str, dict) and len(v) > 0
+    elif k.type == "enum":
+        ok = type(v) is str and v in ENUMS[f.kind]
     elif k.type == "windows":
-        ok = isinstance(v, list) and all(isinstance(w, list) and len(w) == 3 and _real(w[0]) and _real(w[1]) and w[1] >= w[0]
-                                         and type(w[2]) is int and w[2] >= 1 for w in v)
+        ok = type(v) in (list, tuple) and all(type(w) in (list, tuple) and len(w) == 3 and _real(w[0]) and _real(w[1]) and w[1] >= w[0]
+                                              and _int(w[2]) and w[2] >= 1 for w in v)
     else:
         raise KeyError(f.kind)
     if not ok:
         raise Unparsed(at, "%r is not a %s (%s)" % (v, f.kind, k.doc))
     if k.type in ("int", "real") and (lo is not None and v < lo or hi is not None and v > hi):
         raise Unparsed(at, "%r outside [%s, %s] for %s" % (v, lo, hi, f.kind))
+    if k.type == "windows":
+        return tuple(tuple(w) for w in v)   # stored immutable
     return v
 
 
@@ -180,12 +201,12 @@ def check_value(f, x, at):
     """A constructed field value: nested evidence of the declared type, an Outcome for a status, else a value in its domain; an
     enforced (control) field must hold its intended observation."""
     if isinstance(f.kind, type):
-        if not isinstance(x, f.kind):
+        if type(x) is not f.kind:   # exact type: a subclass may override validation (review 8 F15)
             raise Unparsed(at, "expected %s evidence, got %s" % (f.kind.__name__, type(x).__name__))
         return
     _domain(f, x, at)
     if f.enforce:
-        got = x.case if isinstance(x, Outcome) else x
+        got = x.case if type(x) is Outcome else x
         want = f.expect if isinstance(f.expect, (set, frozenset)) else {f.expect}
         if got not in want:
             raise Unparsed(at, "control not established: %r, need %s" % (got, sorted(want, key=str)))
@@ -239,13 +260,25 @@ def check_relation(rel, vals):
 
 # ---- evidence base -----------------------------------------------------------------------------------------------------------------
 def _flat(vals):
-    return {n: (v.case if isinstance(v, Outcome) else v) for n, v in vals.items() if not isinstance(v, Evidence)}
+    """Relation values: scalar fields by name, a status by its case, and one level of nested evidence as "field.attr" (so a stored
+    summary can be related to the observation it summarises, e.g. first_refusal_s == first_refusal.at_s)."""
+    out = {}
+    for n, v in vals.items():
+        if isinstance(v, Evidence):
+            for k in v.SPEC:
+                if not v.SPEC[k].verify and not isinstance(getattr(v, k), (Evidence, Outcome)):
+                    out[n + "." + k] = getattr(v, k)
+        else:
+            out[n] = v.case if isinstance(v, Outcome) else v
+    return out
 
 
 class Evidence:
-    """Base of every evidence type. The constructor enforces every domain, control and relation over the stored fields, so an evidence
-    object with an out-of-domain value cannot exist, however it is built; parse() also checks the relations that involve a stored
-    derived figure (a `verify` field), which is then dropped."""
+    """Base of every evidence type. The generated constructor checks every domain, control and relation over the stored fields and
+    stores containers as tuples; parse() also checks the relations that involve a stored derived figure (a `verify` field), which is then
+    dropped. This holds for construction from JSON and for ordinary construction by trusted Python code; it is not a defence against
+    code that deliberately bypasses a frozen dataclass (see the module docstring)."""
+    __slots__ = ()
     SPEC = {}
     RELATIONS = ()
 
@@ -260,12 +293,22 @@ class Evidence:
                     raise Unparsed((n,), "absent")
             else:
                 check_value(f, x, (n,))
+                if not isinstance(f.kind, type) and KINDS[f.kind].type == "windows":
+                    x = _domain(f, x, (n,))
+                    object.__setattr__(self, n, x)
             vals[n] = x
         for rel in self.RELATIONS:
             check_relation(rel, _flat(vals))
 
     @classmethod
     def parse(cls, raw, at=()):
+        try:
+            return cls._parse(raw, at)
+        except (ArithmeticError, TypeError, ValueError, RecursionError) as e:   # input-shaped errors become UNVERIFIED (review 8 F14)
+            raise Unparsed(at, "malformed input: %s" % type(e).__name__)
+
+    @classmethod
+    def _parse(cls, raw, at=()):
         if not isinstance(raw, dict):
             raise Unparsed(at, "expected an object, got %s" % type(raw).__name__)
         vals = {}
@@ -278,7 +321,7 @@ class Evidence:
                 vals[name] = None
                 continue
             if isinstance(f.kind, type):
-                vals[name] = f.kind.parse(v, p)
+                vals[name] = f.kind._parse(v, p)
                 continue
             x = parse_leaf(f, v, _parent(raw, f.path), p)
             check_value(f, x, p)
@@ -294,7 +337,8 @@ class Evidence:
 def evidence(name, spec, relations=(), doc="", props=None):
     """Declare an evidence type: a frozen dataclass whose fields are the non-`verify` SPEC entries."""
     fields = [(n, object) for n, f in spec.items() if not f.verify]
-    ns = {"SPEC": dict(spec), "RELATIONS": tuple(relations), "__doc__": doc}
+    ns = {"SPEC": dict(spec), "RELATIONS": tuple(relations), "__doc__": doc,
+          "__slots__": tuple(n for n, f in spec.items() if not f.verify)}   # no per-instance __dict__ (review 8 F15)
     ns.update(props or {})
     return dataclasses.make_dataclass(name, fields, bases=(Evidence,), frozen=True, namespace=ns)
 
@@ -308,12 +352,34 @@ MIG_INDICES = ("lic3-bbq_disk-mig", "lic3-sem-mig")
 MIG_OPS = ("update", "delete", "force_merge", "index_new")
 OK = {"SUCCESS"}
 
-MomentProbe = evidence("MomentProbe", {
-    "first_refusal_s": F("first_refusal_rel_resp_s", "offset", lo=-0.5),   # exp2.moment_analysis looks from t_resp - 0.5 s
-    "success_after_refusal": F("success_after_first_refusal", "count", expect={0}),
-    "n": F("n", "pos")}, [("le", "success_after_refusal", "n")],
-    "One licensed probe polled across start_basic. A skipped or never-observed probe has no first refusal and does not parse.")
-Moment = evidence("Moment", {p: F("exp1_moment." + p, MomentProbe) for p in T2_PROBES}, doc="All five mandatory probes (EXP1-T2).")
+# EXP1-T2 (review 8 F13): a refusal timing exists only attached to the refusal Outcome it was selected by (observe.moments), and that Outcome
+# must be the probe's required case. The legacy summary fields (first_refusal_rel_resp_s, first_refusal_status) are not read: a timing
+# without its Outcome does not parse.
+def _refusal_at(name, case):
+    return evidence(name, {"outcome": F("status", "status", text="licence_text", expect={case}, enforce=True),
+                           # the recorded licence-text flag is itself evidence: mandatory, bool, and the one the case requires
+                           "licence_text": F("licence_text", "flag", expect=case == "LICENCE_REFUSAL", enforce=True),
+                           "at_s": F("rel_resp_s", "offset", lo=-0.5)},   # observe.moments looks from t_resp - 0.5 s
+                    doc="The first %s observed after start_basic and when (seconds from its response)." % case)
+
+
+LicenceRefusalAt = _refusal_at("LicenceRefusalAt", "LICENCE_REFUSAL")
+DlsRefusalAt = _refusal_at("DlsRefusalAt", "AUTHORISATION_REFUSAL")
+
+
+def _moment_probe(name, at):
+    return evidence(name, {"first_refusal": F("first_refusal", at),
+                           "success_after_refusal": F("success_after_first_refusal", "count", expect={0}),
+                           "n": F("n", "pos"),
+                           "first_refusal_s": F("first_refusal_rel_resp_s", "offset", lo=-0.5, verify=True)},   # legacy summary: must agree
+                    [("le", "success_after_refusal", "n"), ("eq", "first_refusal_s", "first_refusal.at_s")],
+                    "One mandatory probe polled across start_basic. A skipped or never-refused probe has no first_refusal and does not parse.")
+
+
+LicenceMomentProbe = _moment_probe("LicenceMomentProbe", LicenceRefusalAt)
+DlsMomentProbe = _moment_probe("DlsMomentProbe", DlsRefusalAt)
+Moment = evidence("Moment", {p: F("exp1_moment." + p, DlsMomentProbe if p == "dls_search" else LicenceMomentProbe) for p in T2_PROBES},
+                  doc="All five mandatory probes (EXP1-T2).")
 
 LatchCell = evidence("LatchCell", {"outcome": F("status", "status", expect={"LICENCE_REFUSAL"}, text="error"), "error": F("error", "text")})
 Latch = evidence("Latch", {c: F("exp1_after." + c, LatchCell) for c in LATCH_CELLS}, doc="EXP1-T3: the three latch cells after start_basic.")
@@ -325,7 +391,7 @@ DlsControl = evidence("DlsControl", {
     doc="Positive restricted control on trial: the DLS user read some (1..7 of 8) documents, all permitted.")
 DlsAfter = evidence("DlsAfter", {
     "outcome": F("status", "status", expect=REFUSALS, text="error"),
-    "cell_class": F("class", "text", bad=("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIPPED"))})
+    "cell_class": F("class", "cell_class", bad=("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP"))})
 Dls = evidence("Dls", {"control": F("exp1_trial.dls_search_as_user", DlsControl), "after": F("exp1_after.dls_search_as_user", DlsAfter)},
                doc="EXP1-T4.")
 
@@ -396,14 +462,17 @@ WritesGate = evidence("WritesGate", {"writes": F("exp2.writes", Writes)}, doc="E
 
 ControlDown = evidence("ControlDown", {
     "n": F("n", "pos"), "licence_failures": F("licence_failures", "count"), "other_failures": F("other_failures", "count"),
-    "success": F("success", "count"), "fail_fraction": F("fail_fraction", "rate", verify=True)},
+    "success": F("success", "count"), "fail_fraction": F("fail_fraction", "rate", verify=True),
+    "licence_refusals": F("licence_refusals", "count")},   # counted by Outcome case (observe.control_counts), review 8 F13
     [("sum_eq", ("licence_failures", "other_failures", "success"), "n"),
-     ("ratio_matches", "fail_fraction", ("licence_failures", "other_failures"), "n")],
-    props={"licence_share": property(lambda s: Proportion(s.licence_failures, s.n))})
+     ("ratio_matches", "fail_fraction", ("licence_failures", "other_failures"), "n"),
+     ("le", "licence_refusals", ("licence_failures", "other_failures"))],
+    props={"licence_share": property(lambda s: Proportion(s.licence_refusals, s.n))})
 LicenceDown = evidence("LicenceDown", {"control": F("exp2.T5_control_after_1s", ControlDown)}, doc="EXP2-T5 down.")
-ControlPre = evidence("ControlPre", {"n": F("n", "pos"), "failures": F("failures", "count"), "licence_failures": F("licence_failures", "count")},
-                      [("le", "licence_failures", "failures"), ("le", "failures", "n")],
-                      props={"licence_share": property(lambda s: Proportion(s.licence_failures, s.n))})
+ControlPre = evidence("ControlPre", {"n": F("n", "pos"), "failures": F("failures", "count"), "licence_refusals": F("licence_refusals", "count"),
+                                     "licence_failures": F("licence_failures", "count", verify=True)},   # legacy substring count: checked, not used
+                      [("le", "licence_refusals", "failures"), ("le", "failures", "n"), ("le", "licence_failures", "failures")],
+                      props={"licence_share": property(lambda s: Proportion(s.licence_refusals, s.n))})
 ControlPost = evidence("ControlPost", {"n": F("n", "pos"), "success": F("success", "count")}, [("le", "success", "n")],
                        props={"success_share": property(lambda s: Proportion(s.success, s.n))})
 LicenceUp = evidence("LicenceUp", {"before": F("exp2.T5_control_before_start_trial", ControlPre),
@@ -445,3 +514,5 @@ def parse(cls, life):
         return cls.parse(life), None
     except Unparsed as e:
         return None, str(e)
+    except (ArithmeticError, TypeError, ValueError, RecursionError) as e:
+        return None, "malformed input: %s" % type(e).__name__

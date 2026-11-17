@@ -12,6 +12,7 @@ cross-field relation, every outcome case other than the intended one) and assert
 import ast
 import copy
 import inspect
+import json
 import os
 import sys
 import tempfile
@@ -166,6 +167,220 @@ class ScenarioRegressionTests(unittest.TestCase):
             self.assertNotPass(life, report, key, path, val, mode=life.split("_")[0], exact="UNVERIFIED")
 
 
+T_RESP = 1000.0
+PROBES = ("rrf", "linear", "semantic_query", "inference_use", "dls_search")
+
+
+def _poll(after, before=("AVAILABLE", 200)):
+    """Synthetic poll rows as matrix.quick_probes records them ([class, status] per probe; dls also the returned count): 20 polls before
+    the transition response, 40 after. `after` maps probe -> (class, status) observed after it (default: the healthy refusal)."""
+    healthy = {p: ("OTHER_ERROR", 403) if p == "dls_search" else ("LICENCE_ERROR", 403) for p in PROBES}
+    healthy.update(after)
+    rows = []
+    for k in range(60):
+        t = T_RESP - 1.0 + k * 0.05
+        row = {"_t1": t}
+        for p in PROBES:
+            cls, st = before if t < T_RESP else healthy[p]
+            row[p] = [cls, st] + ([4 if cls == "AVAILABLE" else None] if p == "dls_search" else [])
+        rows.append(row)
+    return rows
+
+
+class RecordingBoundaryTests(unittest.TestCase):
+    """Gate review 8 (F13 to F16), end to end from the recorded observation through the verdict: the harness's own moment_analysis turns
+    poll rows into the life record; the summarizer judges that record."""
+
+    def t2(self, after):
+        import exp2
+        R = _life("down_7")
+        R["exp1_moment"] = exp2.moment_analysis(_poll(after), T_RESP)
+        return summarize.exp1_checks(R)["T2_status"]
+
+    def test_f13_healthy_recorded_refusals_pass(self):
+        self.assertEqual(self.t2({}), "PASS")
+
+    def test_f13_dls_401_503_transport_are_not_a_refusal(self):
+        for obs in (("OTHER_ERROR", 401), ("OTHER_ERROR", 503), ("TRANSPORT", 0), ("OTHER_ERROR", 404), ("OTHER_ERROR", 429)):
+            self.assertNotEqual(self.t2({"dls_search": obs}), "PASS", obs)
+
+    def test_f13_dls_licence_refusal_is_not_the_dls_refusal(self):
+        self.assertNotEqual(self.t2({"dls_search": ("LICENCE_ERROR", 403)}), "PASS")
+
+    def test_f13_licence_text_on_503_is_not_a_licence_refusal(self):
+        self.assertNotEqual(self.t2({p: ("LICENCE_ERROR", 503) for p in PROBES[:4]}), "PASS")
+        self.assertNotEqual(self.t2({"rrf": ("OTHER_ERROR", 403)}), "PASS")   # a 403 without the licence marker on a licence probe
+
+    def test_f13_recorded_refusal_status_outside_403_is_not_a_pass(self):
+        for s in (101, 302, 429, 503, 0):
+            R = _life("down_7")
+            for p in PROBES:
+                m = R["exp1_moment"][p]
+                m["first_refusal_status"] = s
+                if isinstance(m.get("first_refusal"), dict):
+                    m["first_refusal"]["status"] = s
+            self.assertNotEqual(summarize.exp1_checks(R)["T2_status"], "PASS", s)
+
+    def test_f13_a_timing_without_its_refusal_outcome_is_unverified(self):
+        """Committed down_1..6 store only a timing and a bare status per probe (no class, no body marker, no raw poll rows): no PASS."""
+        for n in range(1, 7):
+            self.assertEqual(summarize.exp1_checks(_life("down_%d" % n))["T2_status"], "UNVERIFIED", n)
+
+    def test_f13_raw_rows_are_required_for_rederived_figures(self):
+        """A life file copied without its raw rows: the moment (poll.gz) and the T5 licence-refusal count (rows.gz) cannot be re-derived."""
+        import shutil
+        d = tempfile.mkdtemp()
+        try:
+            shutil.copy(os.path.join(RES, "down_7.json"), d)
+            R = summarize.load(d, "down")[0]
+            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+            self.assertEqual(summarize.exp2_checks(R, "down")["T5_status"], "UNVERIFIED")
+        finally:
+            shutil.rmtree(d)
+
+    def test_f13_cell_class_labels_licence_text_only_on_403(self):
+        body = {"error": {"type": "x", "reason": "current license is non-compliant for [security]"}}
+        for code in (500, 503, 401, 404, 409):
+            self.assertNotEqual(lib.classify(code, body), "LICENCE_ERROR", code)
+        self.assertEqual(lib.classify(403, body), "LICENCE_ERROR")
+
+    def test_f13_semantic_write_failure_class_uses_the_outcome(self):
+        """The EXP2-T4 'loud licence failure' class of a failed semantic write: same Outcome rule (derived-field audit)."""
+        import exp2
+        body = {"type": "security_exception", "reason": "current license is non-compliant for [inference]"}
+        self.assertEqual(exp2.classify_sem_failure(403, body), "licence")
+        for code in (503, 500, 429, 0):
+            self.assertEqual(exp2.classify_sem_failure(code, body), "other", code)
+
+    def test_f14_huge_and_odd_values_never_raise(self):
+        cases = [(("exp2", "T2_failed_requests"), 10 ** 400), (("exp2", "T2_longest_failure_window_s"), 10 ** 400),
+                 (("exp2", "T1_control_broken_fallback", "flag_rate"), -10 ** 400), (("exp2", "T3_flip_latency_s"), 10 ** 400),
+                 (("exp2", "T2_failure_windows"), [[0, 10 ** 400, 1]]), (("exp2", "T2_failed_requests"), "5"), (("exp2", "T2_failed_requests"), -0.0)]
+        for path, val in cases:
+            R = _life("down_7")
+            _set(R, path, val)
+            r = summarize.exp2_checks(R, "down")
+            gate = "T1_status" if path[1].startswith("T1") else "T2_status" if path[1].startswith("T2") else "T3_status"
+            self.assertNotEqual(r[gate], "PASS", (path, val))   # the gate that reads the mutated field
+
+    # ---- review 8 follow-up (advisor pass before return): the same classes inside the new boundary code
+    def test_f13_refusal_licence_flag_is_a_declared_domain(self):
+        """A first_refusal without its licence flag, or with a non-bool flag, is not a refusal of either kind."""
+        for bad in ("absent", None, 1, "yes", {"reason": "x"}):
+            R = _life("down_7")
+            fr = R["exp1_moment"]["dls_search"]["first_refusal"]
+            _set(R, ("exp1_moment", "dls_search", "first_refusal", "licence_text"), bad)
+            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED", bad)
+            self.assertTrue(fr is not None)
+
+    def test_f13_successes_and_refusals_are_counted_by_outcome_not_label(self):
+        import observe
+        self.assertIsNone(observe.outcome_from_cell(["AVAILABLE", 403]))      # label contradicts status: not an observation
+        self.assertIsNone(observe.outcome_from_cell(["OTHER_ERROR", 200]))
+        self.assertIsNone(observe.outcome_from_cell(["LICENCE_ERROR", 200]))
+        for cell in (["EMPTY_WITNESS", 200], ["OTHER_ERROR", 200], ["AVAILABLE", 200]):   # any 2xx answer after the refusal
+            rows = _poll({})
+            rows[-1]["rrf"] = cell
+            m = observe.moments(rows, T_RESP)
+            self.assertEqual(m["rrf"]["success_after_first_refusal"], 1, cell)
+        rows = _poll({"dls_search": ("AVAILABLE", 403)})
+        self.assertIsNone(observe.moments(rows, T_RESP)["dls_search"]["first_refusal"])
+
+    def test_f14_load_never_raises_on_bad_transition_times_or_raw_rows(self):
+        import gzip
+        import shutil
+        for life, key, field in (("down_7", "start_basic", "t_resp"), ("up_1", "start_trial", "t_req")):
+            for bad in ("absent", 10 ** 400, "5", None, [1], float("nan")):
+                d = tempfile.mkdtemp()
+                try:
+                    for ext in (".rows.gz", ".poll.gz"):
+                        if os.path.exists(os.path.join(RES, life + ext)):
+                            shutil.copy(os.path.join(RES, life + ext), d)
+                    R = json.load(open(os.path.join(RES, life + ".json")))
+                    _set(R, (key, field), bad)
+                    json.dump(R, open(os.path.join(d, life + ".json"), "w"))
+                    L = summarize.load(d, life.split("_")[0])   # must not raise
+                    self.assertEqual(len(L), 1)
+                finally:
+                    shutil.rmtree(d)
+        d = tempfile.mkdtemp()
+        try:
+            shutil.copy(os.path.join(RES, "down_7.json"), d)
+            with gzip.open(os.path.join(d, "down_7.rows.gz"), "wt") as fh:
+                fh.write('[1, 2, "ctl"]\n{"a": 1}\n')
+            with gzip.open(os.path.join(d, "down_7.poll.gz"), "wt") as fh:
+                fh.write('[{"rrf": [1]}, 5]')
+            R = summarize.load(d, "down")[0]
+            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+        finally:
+            shutil.rmtree(d)
+
+    def test_f14_reports_never_raise_on_odd_values(self):
+        """Every leaf a gate reads, set to each odd value, through every report function (not only judge)."""
+        import verdicts
+        odd = (10 ** 400, "5", {"a": {"b": []}}, "x" * 100000, True, -0.0, [[[]]])
+        gen = GeneratedInvalidEvidenceTests()
+        gen.setUpClass()
+        problems = []
+        base = {"down": _healthy("down"), "up": _healthy("up")}
+        for name, g in verdicts.GATES.items():
+            mode = "up" if g.scope == "up" else "down"
+            R = base[mode]
+            for fname, path, f in gen.leaves(g.evidence, ()):
+                parent = summarize.fetch(R, path[:-1])
+                if not isinstance(parent, dict) or path[-1] not in parent:
+                    continue
+                keep = parent[path[-1]]
+                for v in odd:
+                    parent[path[-1]] = v
+                    try:
+                        summarize.exp2_checks(R, mode)
+                        if mode == "down":
+                            summarize.exp1_checks(R)
+                            summarize.exp3_checks(R)
+                    except Exception as e:  # noqa: BLE001
+                        problems.append("%s %s=%r: %s" % (name, ".".join(path), str(v)[:20], type(e).__name__))
+                parent[path[-1]] = keep
+        self.assertEqual(problems, [], "\n".join(problems[:40]))
+
+    def test_f14_aggregate_never_raises_on_odd_values(self):
+        import verdicts
+        gen = GeneratedInvalidEvidenceTests()
+        gen.setUpClass()
+        orig = summarize.load
+        for v in (10 ** 400, "5", {"a": {"b": []}}, True):
+            lives = {"down": _healthy("down"), "up": _healthy("up")}
+            for name, g in verdicts.GATES.items():
+                R = lives["up" if g.scope == "up" else "down"]
+                for fname, path, f in gen.leaves(g.evidence, ()):
+                    parent = summarize.fetch(R, path[:-1])
+                    if isinstance(parent, dict) and path[-1] in parent:
+                        parent[path[-1]] = v
+            summarize.load = lambda d, mode, L=lives: [copy.deepcopy(L[mode])]
+            try:
+                summarize.aggregate(RES, {})   # must not raise
+            finally:
+                summarize.load = orig
+
+    def test_f15_status_values_are_exact_outcomes(self):
+        import evidence as E
+        Sub = type("Sub", (E.Outcome,), {})
+        with self.assertRaises(E.Unparsed):
+            E.LatchCell(outcome=Sub(403, "LICENCE_REFUSAL", True), error="x")
+
+    def test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable(self):
+        import evidence as E
+        Sub = type("Sub", (E.DlsControl,), {})
+        ok = E.Outcome.of(200)
+        sub = Sub(outcome=ok, only_kw_a=True, returned=4)
+        after = E.DlsAfter(outcome=E.Outcome.of(403), cell_class="OTHER_ERROR")
+        with self.assertRaises(E.Unparsed):
+            E.Dls(control=sub, after=after)
+        a = E.Availability.parse({"exp2": {"T2_failed_requests": 0, "T2_non_control_requests": 5, "T2_longest_failure_window_s": 0.0,
+                                           "T2_failure_windows": []}})
+        self.assertIsInstance(a.windows, tuple)
+
+
 class GeneratedInvalidEvidenceTests(unittest.TestCase):
     """Invalid evidence generated from the evidence type definitions; no PASS, no exception. The healthy fixture passes."""
 
@@ -186,7 +401,12 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
 
     def mutations(self, f, healthy, body):
         k = self.E.KINDS[f.kind]   # a field whose kind has no domain fails here
-        out = [("None", None), ("wrong type", 123 if k.type == "text" else "x"), ("bool", True if k.type != "bool" else 1)]
+        out = [("None", None), ("wrong type", 123 if k.type == "text" else "x"), ("bool", True if k.type != "bool" else 1),
+               ("huge int", 10 ** 400), ("-huge int", -10 ** 400), ("numeric string", "5"), ("nested list", [[[]]]), ("nested dict", {"a": {"b": []}})]
+        if k.type != "text":
+            out.append(("long string", "x" * 100000))
+        if k.type in ("int", "status"):
+            out.append(("negative zero", -0.0))
         if not f.optional:
             out.append(("absent", "absent"))
         if k.type in ("int", "real", "status"):
@@ -223,11 +443,16 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
             if isinstance(f.kind, type) and issubclass(f.kind, self.E.Evidence):
                 yield from self.relation_mutations(f.kind, prefix + f.path, R)
         absp = {n: prefix + f.path for n, f in ecls.SPEC.items()}
+        absp.update({n + "." + k: prefix + f.path + g.path for n, f in ecls.SPEC.items() if isinstance(f.kind, type)
+                     for k, g in f.kind.SPEC.items()})
         get = lambda n: summarize.fetch(R, absp[n])
         for rel in ecls.RELATIONS:
             kind, a = rel[0], rel[1]
             if kind == "le":
-                yield "%s.%s > %s" % (ecls.__name__, a, rel[2]), {absp[a]: get(rel[2]) + 1}
+                rhs = sum(get(x) for x in (rel[2] if isinstance(rel[2], tuple) else (rel[2],)))
+                if isinstance(a, tuple):
+                    raise AssertionError("le relation with a summed left side has no generated mutation: %r" % (rel,))
+                yield "%s.%s > %s" % (ecls.__name__, a, rel[2]), {absp[a]: rhs + 1}
             elif kind == "eq":
                 yield "%s.%s != %s" % (ecls.__name__, a, rel[2]), {absp[a]: get(rel[2]) + 1.0}
             elif kind == "sum_eq":
@@ -322,7 +547,10 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
                 for rel in c.RELATIONS:
                     names = [x for part in rel[1:] for x in (part if isinstance(part, tuple) else (part,))]
                     for x in names:
-                        self.assertIn(x, c.SPEC, (c, rel))
+                        head, _, attr = x.partition(".")
+                        self.assertIn(head, c.SPEC, (c, rel))
+                        if attr:   # one level into nested evidence
+                            self.assertIn(attr, c.SPEC[head].kind.SPEC, (c, rel))
 
     def test_verdicts_see_only_evidence(self):
         """Structural: every verdict function takes one evidence object; verdicts.py never subscripts life data by key and never compares

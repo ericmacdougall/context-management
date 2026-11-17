@@ -143,7 +143,7 @@ def mutations(kind, ix):
         M[name] = {"class": classify(c, j), "status": c, "error": err(j) if not lib.succeeded(c) else None}
         if not lib.succeeded(c) and M[name]["error"] is None:
             M[name]["body"] = json.dumps(j)[:400]
-            if evidence.licence_text(j) and c >= 400:   # same rule as lib.classify for a body that err() cannot read
+            if evidence.licence_text(j) and c == 403:   # same rule as lib.classify (LICENCE_REFUSAL) for a body that err() cannot read
                 M[name]["class"] = "LICENCE_ERROR"
         if check:
             M[name]["effect"] = check()

@@ -56,7 +56,12 @@ WANT_MISSING = "missing_endpoint" if hasattr(exp2, "classify_sem_failure") else 
 
 
 def load(name):
-    return json.load(open(os.path.join(RES, name)))
+    """A committed life as summarize.load sees it: with the in-memory re-derivation from its raw files (review 8 F13)."""
+    path = os.path.join(RES, name)
+    R = json.load(open(path))
+    summarize._backfill_up_licence_failures(R, path)
+    summarize._backfill_observed(R, path)
+    return R
 
 
 # ---------------------------------------------------------------- F1
@@ -82,6 +87,7 @@ class T5Tests(unittest.TestCase):
         R = load("down_1.json")
         c = R["exp2"]["T5_control_after_1s"]
         c["licence_failures"], c["other_failures"] = 0, c["n"]   # every failure now unrelated to licensing
+        c["licence_refusals"] = 0                                 # and so is every failure's Outcome
         self.assertAlmostEqual(c["fail_fraction"], 1.0)
         self.assertFalse(summarize.exp2_checks(R, "down")["T5_pass"])
 
@@ -97,10 +103,11 @@ class T5Tests(unittest.TestCase):
         R = load("up_1.json")
         pre = R["exp2"]["T5_control_before_start_trial"]
         pre["licence_failures"] = 0   # all `failures` unrelated to licensing
+        pre["licence_refusals"] = 0   # and so is every failure's Outcome
         self.assertFalse(summarize.exp2_checks(R, "up")["T5_pass"])
 
     def test_up_legacy_record_without_licence_count_fails_closed(self):
-        R = load("up_1.json")
+        R = json.load(open(os.path.join(RES, "up_1.json")))   # the file as committed, without the raw-row recount
         self.assertNotIn("licence_failures", R["exp2"]["T5_control_before_start_trial"])
         self.assertFalse(summarize.exp2_checks(R, "up")["T5_pass"])
 
@@ -736,6 +743,8 @@ class MatrixVerdictTests(MatrixHarness):
 
     def test_not_observed_classes_agree(self):
         self.assertEqual(tuple(recompute.NOT_OBSERVED), tuple(matrix.NOT_OBSERVED))
+        import observe
+        self.assertEqual(tuple(observe.NOT_OBSERVED), tuple(matrix.NOT_OBSERVED))
 
     def test_moment_analysis_does_not_count_unverified_dls_as_refusal(self):
         rows = [{"_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (1.0, 2.0, 3.0)]
@@ -903,7 +912,8 @@ def _poll_rows(t_resp, unverified=(), drop=()):
         for f in MANDATORY_T2:
             if f in drop:
                 continue
-            cls = "UNVERIFIED_PREREQUISITE" if f in unverified else ("AVAILABLE" if t < t_resp + 0.2 else "LICENCE_ERROR")
+            # after the transition: licence probes refuse with the licence text, dls_search with a plain 403 (review 8 F13: AUTHORISATION_REFUSAL)
+            cls = "UNVERIFIED_PREREQUISITE" if f in unverified else ("AVAILABLE" if t < t_resp + 0.2 else "OTHER_ERROR" if f == "dls_search" else "LICENCE_ERROR")
             p[f] = [cls, 200 if cls == "AVAILABLE" else 403] + ([4 if cls == "AVAILABLE" else None] if f == "dls_search" else [])
         rows.append(p)
     return rows
@@ -949,7 +959,9 @@ class AggregateGateCoverageTests(unittest.TestCase):
         R = load("down_1.json")
         m = exp2.moment_analysis(_poll_rows(100.0), 100.0)
         self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "PASS")
-        m["rrf"]["first_refusal_rel_resp_s"] = 9.0
+        m["rrf"]["first_refusal_rel_resp_s"] = 9.0   # a summary that contradicts its refusal Outcome's timing does not parse
+        self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "UNVERIFIED")
+        m["rrf"]["first_refusal"]["rel_resp_s"] = 9.0
         self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "FAIL")
 
     def test_t4_dls_absent_is_unverified(self):

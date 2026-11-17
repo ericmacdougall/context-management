@@ -7,6 +7,9 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import observe  # noqa: E402
+
 NOT_OBSERVED = ("SKIP", "UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS")   # neither success nor refusal; mirrors matrix.NOT_OBSERVED (tested)
 
 
@@ -118,13 +121,15 @@ def one(path):
         P = json.load(gzip.open(base + ".poll.gz", "rt"))
         feats = {}
         for f in ("rrf", "linear", "semantic_query", "inference_use", "dls_search"):
-            ev = [(p["_times"][f][0], p["_times"][f][1], p[f][0]) for p in P if f in p and "_times" in p and f in p["_times"]]
+            ev = [(p["_times"][f][0], p["_times"][f][1], "AVAILABLE" if observe.is_success(p[f]) else p[f][0], observe.outcome_from_cell(p[f]))
+                  for p in P if f in p and "_times" in p and f in p["_times"]]   # a success is any 2xx answer, by Outcome (review 8)
             if not ev:
                 continue
             if mode == "down":
-                refused = [e for e in ev if e[2] != "AVAILABLE" and e[2] not in NOT_OBSERVED and e[1] >= t_resp - 0.5]
+                # the probe's required refusal by Outcome case (observe.REQUIRED_REFUSAL), not any non-AVAILABLE class (review 8 F13)
+                refused = [e for e in ev if e[3] is not None and e[3].case == observe.REQUIRED_REFUSAL[f] and e[1] >= t_resp - 0.5]
                 ok_after = [e for e in ev if e[2] == "AVAILABLE" and e[0] >= t_resp]
-                fr = min(refused) if refused else None
+                fr = min(refused, key=lambda e: e[:2]) if refused else None
                 feats[f] = {"first_refusal_probe_start_rel_resp_s": None if fr is None else fr[0] - t_resp, "first_refusal_probe_end_rel_resp_s": None if fr is None else fr[1] - t_resp,
                             "last_success_probe_start_rel_resp_s": max([e[0] for e in ev if e[2] == "AVAILABLE"] or [None]) - t_resp if any(e[2] == "AVAILABLE" for e in ev) else None,
                             "successes_started_after_resp": len(ok_after), "polls": len(ev)}

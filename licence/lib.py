@@ -66,13 +66,12 @@ _CELL_CLASS = {"SUCCESS": "AVAILABLE", "TRANSPORT_FAILURE": "TRANSPORT", "LICENC
 
 def classify(code, j):
     """Matrix cell class from the same closed outcome cases the verdicts use (evidence.Outcome): only a 2xx is AVAILABLE; a 1xx or 3xx is
-    OTHER_ERROR (UNEXPECTED); a status outside 0 and 100..599 is OTHER_ERROR rather than a crash in a recording helper."""
+    OTHER_ERROR (UNEXPECTED); LICENCE_ERROR is only a LICENCE_REFUSAL (a 403 with the licence text: review 8 F13,
+    a 503 with the text is an infrastructure failure); a status outside 0 and 100..599 is OTHER_ERROR rather than a crash in a recording helper."""
     try:
         o = evidence.Outcome.of(code, err(j))
     except evidence.Unparsed:
         return "OTHER_ERROR"
-    if o.licence_text and o.status >= 400:   # the harness has always labelled any 4xx/5xx with licence text LICENCE_ERROR (a loud licence failure)
-        return "LICENCE_ERROR"
     return _CELL_CLASS.get(o.case, "OTHER_ERROR")
 
 

@@ -37,8 +37,10 @@ def refusal(name, outcome, leaked=False):
 
 
 def moment(e: Moment):
-    return combine(ok(getattr(e, p).first_refusal_s <= 5.0 and getattr(e, p).success_after_refusal == 0,
-                      "%s: first refusal %.3f s, %d successes after it" % (p, getattr(e, p).first_refusal_s, getattr(e, p).success_after_refusal))
+    # each first_refusal carries its Outcome, already enforced to the probe's required case (LICENCE_REFUSAL; dls: AUTHORISATION_REFUSAL)
+    return combine(ok(getattr(e, p).first_refusal.at_s <= 5.0 and getattr(e, p).success_after_refusal == 0,
+                      "%s: first %s %.3f s, %d successes after it" % (p, getattr(e, p).first_refusal.outcome.case,
+                                                                      getattr(e, p).first_refusal.at_s, getattr(e, p).success_after_refusal))
                    for p in E.T2_PROBES)
 
 
@@ -47,7 +49,7 @@ def latch(e: Latch):
 
 
 def dls(e: Dls):
-    if e.after.cell_class in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIPPED"):
+    if e.after.cell_class in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP"):   # matrix.NOT_OBSERVED
         return Verdict(UNVERIFIED, "after cell not established: %s" % e.after.cell_class)
     return refusal("dls_search_as_user", e.after.outcome)
 
@@ -131,7 +133,7 @@ def semonly(e: SemOnly):
 
 Gate = collections.namedtuple("Gate", "scope report out evidence verdict doc")
 GATES = {
-    "EXP1-T2": Gate("down", "exp1", "T2", Moment, moment, "first licence refusal of every licensed probe within 5 s of start_basic, no success after it"),
+    "EXP1-T2": Gate("down", "exp1", "T2", Moment, moment, "every mandatory probe's first refusal of its required Outcome case (licence probes LICENCE_REFUSAL, dls_search AUTHORISATION_REFUSAL), carried with its timing, within 5 s of start_basic; no success after it"),
     "EXP1-T3": Gate("down", "exp1", "T3_latch", Latch, latch, "every licensed search path refuses with a licence refusal"),
     "EXP1-T4": Gate("down", "exp1", "T4", Dls, dls, "positive restricted control on trial; after start_basic the DLS user's search is refused"),
     "EXP1-T4-battery": Gate("down", "exp1", "T4_battery", Battery, battery, "the same control and a trial battery control; every read path refused, nothing returned"),
@@ -140,8 +142,8 @@ GATES = {
     "EXP2-T3-down": Gate("down", "exp2", "T3", FlipDown, flip_down, "first client-labelled answer within 5 s of start_basic; no backend label after it"),
     "EXP2-T3-up": Gate("up", "exp2", "T3", FlipUp, flip_up, "first backend-labelled answer within TTL + 5 s of start_trial; no client label after it"),
     "EXP2-T4": Gate("both", "exp2", "T4", WritesGate, writes, "no acknowledged write lost; every semantic write failure classified loud"),
-    "EXP2-T5-down": Gate("down", "exp2", "T5", LicenceDown, licence_down, ">= 95% of control requests after 1 s fail with the licence error"),
-    "EXP2-T5-up": Gate("up", "exp2", "T5", LicenceUp, licence_up, ">= 95% licence failures before start_trial; every control request succeeds after it"),
+    "EXP2-T5-down": Gate("down", "exp2", "T5", LicenceDown, licence_down, ">= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)"),
+    "EXP2-T5-up": Gate("up", "exp2", "T5", LicenceUp, licence_up, ">= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it"),
     "EXP3-migration": Gate("down", "exp3", "migration", Migration, migration, "every migrated copy equal to its source; Basic operations on migrated indices succeed"),
     "EXP3-semonly-control": Gate("down", "exp3", "semonly_control", SemOnly, semonly, "semantic-only fixture answers semantic, match and match_all with hits"),
 }
