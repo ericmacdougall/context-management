@@ -1,0 +1,8 @@
+# Step 1, batch a (run 2026-11-17 11:00Z from the 62c6be5 pin with the earlier copy of this kit; amendments 15b, 17c).
+# label  cleanup  module args
+heldout - exp.heldout_secrets
+f1 exp.review_fix exp.review_fix F1
+d4_rescan exp.d4_rescan_es exp.d4_rescan_es 5
+d4_store_mark exp.d4_store_mark exp.d4_store_mark 5
+d3 exp.d3_identifier exp.d3_identifier 5
+lock_order exp.lock_order exp.lock_order

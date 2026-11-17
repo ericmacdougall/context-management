@@ -58,4 +58,4 @@ Stamped single runs after the void (`single-runs/`, code at 62c6be5 unless noted
   - The pre-fix FOR UPDATE controls deadlocked 10/10 each.
   - MS (measured, not thresholded): in 3/3 runs, 59 FOR SHARE locks were granted while the erasure mark waited, and the mark was cancelled by statement_timeout at 30 s. The job stayed requested until the sweep's retry moved it to logically_erased. There is no worst-case bound under sustained concurrent appends.
 
-The remaining step-1 experiments were observed only in the VOID fd4ed53 run: F3, F4, F5, F7, F1S, F6, M, H, N1, N2, N5, N8, row1, row23, e_verify, registry_marker, d1, row19, row6, mutual_mentions, d2, phys_purge, E2 and E3. Not run at 62c6be5: guard_check end, and a full run_all restamp.
+The remaining step-1 experiments were observed only in the VOID fd4ed53 run: F3, F4, F5, F7, F1S, F6, M, H, N1, N2, N5, N8, row1, row23, e_verify, registry_marker, d1, row19 (880/880 on its author's own planted corpus only; on held-out data the scanner caught 483/1,169 and 150/750), row6, mutual_mentions, d2, phys_purge, E2 and E3. Not run at 62c6be5: guard_check end, and a full run_all restamp.

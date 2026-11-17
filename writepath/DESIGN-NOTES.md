@@ -84,6 +84,9 @@ decisions, the deployment requirements that follow from them, and what is still 
     483/1,169 (H1) and 150/750 (H2) in-scope held-out secrets, and blocked 37 of 1,200 negatives. Row 19's 880/880
     holds only on its author's own corpus.
   - Seven H1 families were never caught. HTML entities and URL double-encoding are never decoded.
+  - The scanner's own docstring says removing whitespace "catches a key split across lines or spaces". The held-out
+    variants space_split and hyphen_split were each caught 0/50. The docstring is left as it is, because any edit to
+    wp/secrets.py changes the frozen blob (amendment 15).
   - A deployment must not treat a clean scan as proof that no secret is present.
   - The scanner was not edited after the held-out run. Any later edit needs a new held-out set.
 - Postgres settings are part of the result: the earlier lab's numbers depended on wal_recycle=off, wal_keep_size=0,

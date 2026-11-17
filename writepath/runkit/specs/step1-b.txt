@@ -1,0 +1,26 @@
+# Step 1, batch b (amendment 20): every step-1 experiment observed only in the VOID fd4ed53 run, in run_all order and
+# with run_all's arguments (R=10), each exactly once, then guard_check end. Starts as run_all does: cleanup, setup reset,
+# preflight (direct steps, not stamped).
+# label  cleanup  module args
+@ exp.cleanup
+@ wp.setup --reset
+@ exp.disk_gate preflight
+guard_start - exp.guard_check start --controls
+static_check - exp.static_check
+es_semantics exp.es_semantics exp.es_semantics
+n_old old_repro.n_old old_repro.n_old
+review_fix exp.review_fix exp.review_fix F3 F4 F5 F7 F1S F6 10
+scope_hold exp.scope_hold exp.scope_hold M H 3
+n_new exp.n_new exp.n_new 10
+row1 exp.row1_zombie exp.row1_zombie 10
+row23 exp.row23_latecommit exp.row23_latecommit 10
+e_verify exp.e_verify exp.e_verify 10
+registry_marker exp.registry_marker exp.registry_marker 10
+d1 exp.d1_hold_mentions exp.d1_hold_mentions 5
+row19 exp.row19_secrets exp.row19_secrets
+row6 exp.row6_chain exp.row6_chain 10
+mutual_mentions exp.mutual_mentions exp.mutual_mentions 5 10 5
+d2 exp.d2_verifier_process exp.d2_verifier_process 5
+phys_purge exp.phys_purge exp.phys_purge
+e2e_E2E3 exp.e2e_restored exp.e2e_restored E2 E3 40
+guard_end - exp.guard_check end
