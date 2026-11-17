@@ -23,7 +23,13 @@ import json
 SAMPLES = 8            # identities shown per reason
 
 
+_EXACT = {bool: "bool", int: "int", float: "float", str: "str"}        # exact types first (type(True) is bool, never int)
+
+
 def _t(x):
+    tag = _EXACT.get(type(x))
+    if tag is not None:
+        return (tag, x)
     if isinstance(x, bool):
         return ("bool", x)
     if isinstance(x, int):
@@ -43,7 +49,7 @@ def _t(x):
 
 def key(*parts):
     """The typed identity of a row (or of an expected slot) from its parts."""
-    return tuple(_t(p) for p in parts)
+    return tuple(map(_t, parts))
 
 
 def _show(k):
