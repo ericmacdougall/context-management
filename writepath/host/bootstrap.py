@@ -166,6 +166,10 @@ def main(pg_port, es_port):
         if dbn not in have:
             _psql(f"create database {dbn} owner {owner};")
         _psql(f"alter schema public owner to {owner};", dbn)
+    # the old key service destroys a key with VACUUM, pg_switch_wal() and CHECKPOINT (a13b524 memsys/kms.py purge);
+    # without these the old erasure raises and old_repro would "reproduce" a finding for an environment reason
+    _psql("grant pg_checkpoint to kms;", "postgres")
+    _psql("grant execute on function pg_switch_wal() to kms;", "keys")
     print("bootstrap ok", json.dumps({k: v for k, v in conf.items()}), "secrets: files only, nothing printed")
 
 
