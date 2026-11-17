@@ -24,6 +24,7 @@ class FakeES:
     def __init__(self, copies):
         self.copies = copies
         self.searches = []
+        self.params = []
 
     def req(self, method, path, body=None, ok=(200,), **params):
         if path.startswith("/_cat/shards/"):
@@ -37,10 +38,16 @@ class FakeES:
             shard = pref.split("|")[0].split(":")[1]
             node = pref.split("|")[1].split(":")[1]
             self.searches.append((index, shard, node))
+            self.params.append(params)
             c = [v for (i, sh, pr, n), v in self.copies.items() if i == index and sh == shard and n == node][0]
             ids = body["query"]["ids"]["values"]
             hits = [{"_id": i, "_source": c["docs"][i][0], "_version": c["docs"][i][1]} for i in ids if i in c["docs"]]
-            return 200, {"hits": {"hits": hits}}
+            # a complete single-copy response; c["partial"] overrides its metadata and drops every hit (review C F9)
+            j = {"timed_out": False, "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0}, "hits": {"hits": hits}}
+            if "partial" in c:
+                j.update(c["partial"], hits={"hits": []})
+                j = {k: v for k, v in j.items() if v is not None}
+            return 200, j
         raise AssertionError(path)
 
 
@@ -139,6 +146,41 @@ class StrictPlaceholders(unittest.TestCase):
         detail = {}
         self.EV.check_page(es, "t1", "events", ids, detail=detail)
         self.assertEqual(len(detail["es:placeholder_missing"]), 20)
+
+    # review C F9: a partial or incomplete search is not evidence of absence (red on 4fe3ac1)
+    PARTIAL = {
+        "timed_out": {"timed_out": True},
+        "failed_shard": {"_shards": {"total": 1, "successful": 0, "skipped": 0, "failed": 1}},
+        "terminated_early": {"terminated_early": True},
+        "skipped_shard": {"_shards": {"total": 1, "successful": 1, "skipped": 1, "failed": 0}},
+        "unallocated_shard": {"_shards": {"total": 1, "successful": 0, "skipped": 0, "failed": 0}},
+        "no_shard_searched": {"_shards": {"total": 0, "successful": 0, "skipped": 0, "failed": 0}},
+        "two_shards_answered": {"_shards": {"total": 2, "successful": 2, "skipped": 0, "failed": 0}},
+        "no_shard_metadata": {"_shards": None},
+    }
+
+    def test_12_partial_search_of_another_family_index_is_unverified(self):
+        other = self.F.P + "t1-events-old"
+        for name, meta in self.PARTIAL.items():
+            with self.subTest(name):
+                es = self.es({"a": (PH, V62), "b": (PH, V62)}, extra={(other, "0", "p", "n1"): {
+                    "state": "STARTED", "docs": {"a": ({"content": "x"}, 1)}, "partial": meta}})
+                r = self.run_page(es)
+                self.assertEqual(r["es:copy_unverified"], 1, f"{name}: an incomplete search counted as absence")
+                self.assertEqual(r["es:placeholder_content"], 0)
+
+    def test_13_partial_search_of_the_only_base_copy_proves_nothing(self):
+        for name, meta in self.PARTIAL.items():
+            with self.subTest(name):
+                es = FakeES({(self.base, "0", "p", "n1"): {"state": "STARTED", "docs": {"a": (PH, V62), "b": (PH, V62)}, "partial": meta}})
+                r = self.run_page(es)
+                self.assertEqual(r["es:copy_unverified"], 1, name)
+                self.assertEqual(r["es:placeholder_missing"], 2, f"{name}: no complete base copy shows any id placed")
+
+    def test_14_every_search_refuses_partial_results(self):
+        es = self.es({"a": (PH, V62), "b": (PH, V62)}, {"a": (PH, V62), "b": (PH, V62)})
+        self.assertEqual(sum(self.run_page(es).values()), 0)
+        self.assertEqual([p.get("allow_partial_search_results") for p in es.params], ["false", "false"])
 
 
 if __name__ == "__main__":
