@@ -13,7 +13,7 @@ from psycopg import sql
 from . import config, db, registry
 
 HERE = pathlib.Path(__file__).parent
-LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL, db.WATCHDOG)
+LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL, db.WATCHDOG, db.BROKER)
 ROLE_TIMEOUTS = {"statement_timeout": "30s", "idle_in_transaction_session_timeout": "5s"}
 ROLE_ATTRS = "nosuperuser nocreatedb nocreaterole noreplication nobypassrls inherit"
 
@@ -78,7 +78,7 @@ def main(reset):
     if "wp_ctl" in have:                     # this stream's old all-triggers-dropped control database: retired
         admin.execute('drop database "wp_ctl"')
     admin.execute(f'revoke connect on database "{config.EVENTS_DB}" from public')
-    admin.execute(f'grant connect on database "{config.EVENTS_DB}" to wp_app, wp_verifier, wp_legal')
+    admin.execute(f'grant connect on database "{config.EVENTS_DB}" to wp_app, wp_verifier, wp_legal, wp_broker')
     admin.execute(f'revoke connect on database "{config.KEYS_DB}" from public')
     admin.execute(f'grant connect on database "{config.KEYS_DB}" to wp_kms, wp_verifier')
     admin.execute("grant pg_checkpoint to wp_kms with inherit true")

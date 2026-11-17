@@ -51,6 +51,12 @@ begin
   end if;
 end $$;
 
+-- D6 key broker (wp/broker.py): a writer key for epoch E is issued only while (tenant, scope, E, holder) is the LIVE
+-- lease. The broker's role can execute this and nothing else in this database.
+create function wp_lease_holder_current(t text, sc text, e bigint, who text) returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (select 1 from leases where tenant_id = t and scope = sc and epoch = e and holder = who and expires_at > clock_timestamp());
+$$;
+
 -- TG_ARGV[0] = 'projector' or 'session'; TG_ARGV[1] = the column naming the session the row belongs to.
 create function wp_fence_trg() returns trigger language plpgsql as $$
 declare want text;
@@ -788,3 +794,4 @@ grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_rel
 grant select on legal_holds, erasure_jobs, erasure_withheld to wp_legal;
 grant execute on function wp_erasure_pg_residue(text, text), wp_erasure_complete(text, jsonb, text) to wp_verifier;
 grant execute on function wp_erasure_rank(text) to wp_app, wp_verifier, wp_legal;   -- pure: the transition rule reads it in the guard
+grant execute on function wp_lease_holder_current(text, text, bigint, text) to wp_broker;   -- D6: the broker's only grant

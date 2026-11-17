@@ -83,11 +83,11 @@ class _Handler(socketserver.StreamRequestHandler):
                 try:
                     req = json.loads(line)
                     op = req.get("op")
-                    if op not in OPS:
+                    if op not in self.server.ops:
                         rep = {"error": "unknown_op"}
                     else:
                         ks = ks or self.server.make_store()
-                        rep = dispatch(ks, op, req.get("args") or {})
+                        rep = self.server.dispatch(ks, op, req.get("args") or {})
                 except Exception as e:  # noqa: BLE001  (a failed request never kills the connection's peer handling)
                     rep = {"error": type(e).__name__, "sqlstate": getattr(e, "sqlstate", None)}
                 self.server.note(f"uid={uid} op={req.get('op') if isinstance(req, dict) else '?'} "
@@ -102,13 +102,16 @@ class _Handler(socketserver.StreamRequestHandler):
 class Server(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
     daemon_threads = True
 
-    def __init__(self, path, allow, make_store=None, uid_of=peer_uid, log=None):
+    def __init__(self, path, allow, make_store=None, uid_of=peer_uid, log=None, ops=OPS, dispatch_fn=None):
+        """ops / dispatch_fn: the service's operations (default: the key service's); the broker (wp/broker.py) reuses
+        this transport and its kernel-uid check with its own."""
         if os.path.exists(path):
             os.unlink(path)
         super().__init__(path, _Handler)
         os.chmod(path, 0o666)          # reachability only: the kernel-reported uid decides who is served
         self.allow, self.uid_of, self.log = frozenset(allow), uid_of, log
         self.make_store = make_store or K.KeyService
+        self.ops, self.dispatch = frozenset(ops), dispatch_fn or dispatch
 
     def note(self, s):
         if self.log:

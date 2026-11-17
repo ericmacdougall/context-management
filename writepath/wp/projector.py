@@ -8,17 +8,26 @@ subject are filtered here from the moment the subject is marked, and a batch rea
 document by the erasure placeholders (409), whichever arrives first (families.py).
 
 Late commits: rows are read only below pg_snapshot_xmin, so a transaction that commits after later ones is never
-skipped (top-30 row 23)."""
+skipped (top-30 row 23).
+
+Broker mode (D6, WP_BROKER set or a broker client passed): the projector holds no Elasticsearch credential of its own.
+start() asks the key broker (wp/broker.py) for a writer key for (tenant, epoch, holder); the broker checks the lease,
+runs the alias CAS itself and mints a key that can write only through -w<E>. The projector never runs fence_es and
+never reads aliases; a refused bulk item is classified by the lease (renew raises LeaseLost: a confirmed loss; else
+ProjectionError). A broker refusal of the lease is a confirmed loss (LeaseLost). There is no fallback to a role-key
+file or the admin key. The key is renewed through the broker before it expires (KEY_REFRESH_S)."""
 import json
+import time
 
 import psycopg
 
-from . import families as F, keys as K, lease as L
+from . import broker as B, families as F, keys as K, lease as L
 from .es import ES
 from .log import StaleWrite
 
 BIG = 2 ** 62
 FACT_KIND = "fact"
+KEY_REFRESH_S = 45 * 60            # broker keys expire after broker.KEY_TTL (1 h)
 
 
 def _noop(_n, _data=None):
@@ -30,19 +39,37 @@ class LostLease(Exception):
 
 
 class Projector:
-    def __init__(self, conn, ks: K.KeyService, es: ES, tenant, ttl_s=30.0, batch=500, hook=_noop):
+    def __init__(self, conn, ks: K.KeyService, es, tenant, ttl_s=30.0, batch=500, hook=_noop, broker=None):
+        """es: the projector's ES client, or None in broker mode (then any es passed is ignored: keys come only from
+        the broker)."""
         L.check_tenant(tenant)
-        self.conn, self.ks, self.es, self.t = conn, ks, es, tenant
+        self.broker = broker if broker is not None else (B.Client() if B.broker_mode() else None)
+        self.conn, self.ks, self.t = conn, ks, tenant
+        self.es = None if self.broker is not None else es
         self.ttl, self.batch, self.hook = ttl_s, batch, hook
         self.lease = None
+        self.key_id, self._key_at = None, 0.0
         self.stats = {"stale_bulk_items": 0, "stale_cursor": 0, "docs_written": 0}
 
     # ------------------------------------------------------------ lease
+    def _broker_key(self):
+        """A writer key for the live lease. The broker re-runs its (idempotent) CAS for this epoch."""
+        try:
+            k = self.broker.writer_key(self.t, self.lease.epoch, self.lease.holder)
+        except B.Refused as e:
+            if "lease_not_current" in str(e):
+                raise L.LeaseLost(f"broker: lease not current for e{self.lease.epoch}") from None
+            raise
+        self.es, self.key_id, self._key_at = B.es_with_key(k, "projector"), k["id"], time.monotonic()
+
     def start(self, force=False):
         self.lease = L.acquire(self.conn, self.t, L.PROJECTOR, self.ttl, force=force)
         if self.lease is None:
             return False
-        F.fence_es(self.es, self.t, self.lease.epoch)
+        if self.broker is not None:
+            self._broker_key()
+        else:
+            F.fence_es(self.es, self.t, self.lease.epoch)
         for f in ("events", "facts", "derive"):
             self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
                          (self.t, f, L.PROJECTOR, self.lease.epoch))
@@ -81,6 +108,14 @@ class Projector:
             # Review-2 N1: a refused item is a lost epoch only when that is confirmed. At 1fcf3f7 every refusal became
             # StaleEpoch, so a 429 or a mapping error looked like a lost race and the work looked done.
             kinds = sorted({f"{st} {et}" for _, st, et in hard})[:3]
+            if self.broker is not None:
+                # the writer key cannot read aliases (by design); the lease decides (Postgres is the authority)
+                try:
+                    L.renew(self.conn, self.lease, self.ttl)
+                except L.LeaseLost:
+                    self.stats["stale_bulk_items"] += len(hard)
+                    raise
+                raise F.ProjectionError(f"{family}: {len(hard)} items refused while the lease is ours ({kinds})")
             if F.newer_epoch_visible(self.es, self.t, family, self.lease.epoch):
                 self.stats["stale_bulk_items"] += len(hard)
                 raise F.StaleEpoch(f"{family}: {len(hard)} items refused under a newer epoch ({kinds})")
@@ -183,6 +218,8 @@ class Projector:
             if self.lease is None and not self.start():
                 return 0
             L.renew(self.conn, self.lease, self.ttl)          # heartbeat: a live projector never expires
+            if self.broker is not None and time.monotonic() - self._key_at > KEY_REFRESH_S:
+                self._broker_key()
             return self.derive() + self.mirror_events() + self.mirror_facts()
         except (StaleWrite, F.StaleEpoch, L.LeaseLost):
             self._drop_lease()

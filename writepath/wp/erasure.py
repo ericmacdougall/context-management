@@ -30,7 +30,7 @@ import uuid
 
 import psycopg
 
-from . import db, families as F, keys as K, lease as L, mentions as M
+from . import broker as B, db, families as F, keys as K, lease as L, mentions as M
 from .verifier import Verifier
 
 
@@ -175,7 +175,8 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
     t0 = time.time()
     j = _job(conn, jid)
     t, s = j["tenant"], j["subject"]
-    rec = {"job_id": jid, "tenant": t, "subject": s, "done": False, "error_type": None, "steps": {}, "key_store": ks.describe()}
+    rec = {"job_id": jid, "tenant": t, "subject": s, "done": False, "error_type": None, "steps": {}, "key_store": ks.describe(),
+           "es_fence": B.fence_statement()}
     if j["state"] == "done":                                # already complete: return the stored, store-written receipt
         v, sc, d = conn.execute("select verify, scope, extract(epoch from updated_at - created_at)::float8 from erasure_jobs where job_id=%s", (jid,)).fetchone()
         rec.update(done=True, verify=v, scope=json.loads(sc) if sc and sc.startswith("{") else sc, holds=_holds(conn, t, s),
@@ -236,11 +237,14 @@ def run(conn, ks: K.KeyService, es, jid, ttl_s=60.0, hook=_noop, verifier=None, 
             hook("after_cascade")
             ts, ev_n, fa_n = time.time(), 0, 0
             if placeholders:
+                # broker mode (D6): a per-tenant eraser key that can write only through -x; the broker created the
+                # family indices, so placeholders do not (the key cannot); never the admin key or a role-key file
+                pes, ens = (B.eraser_es(t), False) if B.broker_mode() else (es, True)
                 for page in tombstoned_ids(conn, t, s):
                     if hb.lost.is_set():
                         raise ClaimLost(jid)
-                    F.place_placeholders(es, t, "events", [e for e, _ in page])
-                    F.place_placeholders(es, t, "facts", [K.derive_id(t, e) for e, k in page if k == "fact"])
+                    F.place_placeholders(pes, t, "events", [e for e, _ in page], ensure=ens)
+                    F.place_placeholders(pes, t, "facts", [K.derive_id(t, e) for e, k in page if k == "fact"], ensure=ens)
                     ev_n += len(page)
                     fa_n += sum(1 for _, k in page if k == "fact")
             rec["steps"].update(placeholders_s=round(time.time() - ts, 3), placeholder_events=ev_n, placeholder_facts=fa_n)

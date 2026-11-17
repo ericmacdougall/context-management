@@ -143,9 +143,11 @@ def fence_es(es: ES, t, epoch):
     raise ProjectionError(f"alias CAS: the aliases changed under {CAS_ATTEMPTS} attempts with no newer epoch") from None
 
 
-def place_placeholders(es: ES, t, f, ids, batch=1000):
-    """Content-free placeholders at the given _ids (version 2^62). Returns (written, already_placeholders)."""
-    ensure_family(es, t, f)
+def place_placeholders(es: ES, t, f, ids, batch=1000, ensure=True):
+    """Content-free placeholders at the given _ids (version 2^62). Returns (written, already_placeholders).
+    ensure=False (broker mode): the broker created the family; a key scoped to -x cannot read the family's aliases."""
+    if ensure:
+        ensure_family(es, t, f)
     w = same = 0
     for i in range(0, len(ids), batch):
         acts = [({"index": {"_index": erase_alias(t, f), "_id": d, "version": PLACEHOLDER_VERSION, "version_type": "external"}}, {"erased": True})

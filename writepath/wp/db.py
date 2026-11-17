@@ -1,7 +1,7 @@
 """Postgres connections. Passwords via a 0600 pgpass file (never argv or environment values), one entry per role.
 
 Roles: wp_app (the application; default), wp_verifier (erasure completion), wp_kms (the key-service stand-in),
-wp_legal (legal holds), and the cluster admin (setup, migrations and experiment controls only).
+wp_legal (legal holds), wp_broker (the D6 key broker: lease check only), and the cluster admin (setup, migrations and experiment controls only).
 D2: every role has its own credential file. In this lab all files belong to one OS user, so the separation is per file,
 not per OS identity; a deployment runs each role as its own service identity that can read only its own secret."""
 import os
@@ -10,7 +10,7 @@ import psycopg
 
 from . import config
 
-APP, VERIFIER, KMS, LEGAL, WATCHDOG = "wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog"
+APP, VERIFIER, KMS, LEGAL, WATCHDOG, BROKER = "wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog", "wp_broker"
 
 
 def connect(db=None, autocommit=True, application_name="wp", role=APP, **kw):
@@ -40,3 +40,8 @@ def watchdog(**kw):
 
 def verifier(db=None, **kw):
     return connect(db=db or config.EVENTS_DB, application_name="wp-verifier", role=VERIFIER, **kw)
+
+
+def broker(**kw):
+    """D6 key broker: executes wp_lease_holder_current only."""
+    return connect(application_name="wp-broker", role=BROKER, **kw)

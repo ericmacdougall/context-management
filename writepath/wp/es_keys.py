@@ -15,7 +15,9 @@ its own API key whose privileges make the fence structural:
 
 Keys are created by the cluster superuser `elastic`, whose password is read from a 0600 file and never printed. Each
 key is written to its own 0600 file secrets/es_api_key.<role>.json ({"id", "encoded"}); nothing secret is printed.
-usage: python -m wp.es_keys create   (requires security on; see wp/es_security.py)"""
+The key broker (wp/broker.py, `python -m wp.es_keys broker`) is a native user with its own role; in broker mode the
+write path uses only keys the broker mints per tenant and epoch, and the role-key files above are not used by it.
+usage: python -m wp.es_keys create|broker|invalidate   (requires security on; see wp/es_security.py)"""
 import base64
 import json
 import os
@@ -78,6 +80,27 @@ def create():
     return out                      # key ids only (not secret)
 
 
+def create_broker():
+    """The key broker's own identity (wp/broker.py): role wp16096_broker_role and native user wp16096_broker, password
+    generated here into secrets/es_broker_password (0600, never printed). Idempotent: rerunning rotates the password."""
+    import secrets as _s
+    from . import broker as B
+    es = ES(auth=_superuser_header())
+    es.req("PUT", f"/_security/role/{B.BROKER_ROLE}", B.broker_role_descriptor())
+    pw = _s.token_urlsafe(32)
+    p = config.SECRETS / B.PWFILE_NAME
+    fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.write(fd, (pw + "\n").encode())
+    finally:
+        os.close(fd)
+    os.chmod(p, 0o600)
+    es.req("PUT", f"/_security/user/{B.BROKER_USER}", {"password": pw, "roles": [B.BROKER_ROLE],
+                                                      "metadata": {"stream": "goodqa-16096", "role": "broker"}})
+    del pw
+    return B.BROKER_USER
+
+
 def invalidate_all():
     es = ES()
     es.auth = _superuser_header()
@@ -87,6 +110,8 @@ def invalidate_all():
 if __name__ == "__main__":
     if sys.argv[1:] == ["create"]:
         print("created key ids", create())
+    elif sys.argv[1:] == ["broker"]:
+        print("broker user", create_broker())
     elif sys.argv[1:] == ["invalidate"]:
         print("invalidated", len(invalidate_all()))
     else:
