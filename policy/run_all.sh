@@ -1,8 +1,8 @@
 #!/bin/sh
-# Proof runs on t2-dev from a synced tree: `sh sync.sh` (clean tree), then on the host in ~/emlab-16096/polr/src:
-#   POL_SEEDS=stamped sh run_all.sh        (stamped: fresh seeds of THRESHOLDS amendment 5, each configuration run ONCE)
-#   ALLOW_DIRTY=1 sh run_all.sh --dev      (development: dev-* seeds, results prefixed DEV.)
-# B3, pg_diff and mig_rehearsal need the Postgres env (paths to 0600 files only) exported by the caller; see ~/emlab-16096/polr/runall.sh.
+# Proof runs on t2-dev from one synced copy: `SYNC_DEST=emlab2-16096/policy/runs/<name>/src sh sync.sh` (clean tree), then on the host:
+#   POL_SEEDS=stamped sh ~/emlab2-16096/policy/runs/<name>/src/hostrun.sh all      (stamped: fresh seeds of THRESHOLDS amendment 5, ONCE)
+#   ALLOW_DIRTY=1 sh ~/emlab2-16096/policy/runs/<name>/src/hostrun.sh all --dev    (development: dev-* seeds, results prefixed DEV.)
+# B3, pg_diff and mig_rehearsal need the Postgres env (paths to 0600 files only); hostrun.sh exports it and PY.
 # Each experiment writes one result file under results/ (no partial reruns combined); a run that errors is a FAIL. pg_diff and
 # mig_rehearsal exit nonzero on their own FAIL verdict (scored FAIL here) and are re-judged by verify/pgdiff.py and verify/mig.py.
 PY=${PY:-../venv/bin/python}
