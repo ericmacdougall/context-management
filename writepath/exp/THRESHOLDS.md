@@ -340,3 +340,24 @@ are counted by sqlstate 40P01 on the test connections; the database deadlock cou
 witness. Waits are observed from pg_stat_activity (wait_event_type Lock) on the admin connection.
 Not shown by this fixture: row-level contention inside wp_erasure_apply when both cascades touch the same events,
 facts or tombstones (MM's two subjects share no event rows); stated as not verified.
+Amendment 17b (2026-11-17, written after the failing-first run at eaed478 and before any run at the fixed code; main's
+review questions on share locks). Failing-first record at eaed478 (pre-fix): MM deadlocked 10/10, DA deadlocked 5/5,
+MK, HP, HR held 5/5 each; controls unavailable (as stated). Changes for the run at the fixed code:
+Counts: MM R=30, DA R=30, controls R=10 each (MM control and DA control must each deadlock in >= 9/10). MK, HP, HR
+stay R=5. Rationale: each pre-fix run of the forced interleaving deadlocked (15/15), so 30 passes of each at the fixed
+code are not luck (a fix that left even a 10 % deadlock rate passes 30/30 with probability under 0.05).
+New case M2 (R=10, gating): mark of B behind TWO share holders at once, an open wp_identifier_declare(B) (new
+identifier) and an open wp_hold_check(B). Holds iff the mark waits, is still waiting after the first holder commits,
+completes after the second commits with 0 deadlocks, the job is marked, and the job's ident_xmax includes the identifier
+declared by the first holder (declare-before-mark is still seen by the mark). Not run at the pre-fix code: there the two
+holders exclude each other, so the interleaving cannot exist.
+New case MS (R=3, a measurement, not gating): a relay of share holders on B (wp_hold_check in open transactions, a new
+one started before the previous commits, every 0.8 s for 12 s) while B's mark waits. Recorded: whether each new share
+holder was granted while the FOR UPDATE waited (PostgreSQL does not queue a FOR SHARE behind a waiting FOR UPDATE when
+only share locks are held), whether the mark was starved until its lock_timeout (10 s, sqlstate 55P03), and whether a
+later sweep still finishes the job (retryable, not lost). Any share path behaves the same (appends, other subjects'
+cascades, declares), so a starvation result applies to the pre-fix code's appends too; it is reported as a liveness
+limit with its bound, not hidden.
+Static part of the answer (recorded in the step-1 report, not a run): the only UPDATE of subjects is in wp_erasure_mark,
+which now takes the row FOR UPDATE first in the same statement; no transaction that share-locks a subject row later
+updates or exclusively locks a subject row (audit of every lock site in wp/schema.sql and every transaction in wp/).
