@@ -1118,3 +1118,11 @@ Changes (no threshold changes): the control records its CAS refusals as findings
 writes through any existing -w alias without a CAS of its own); the control is judged exactly as H6 states, on
 acceptance of at least one C1 or C4 request, not also on its setup. One more shake-down runs before the stamped run;
 the stamped run is at the commit that carries this amendment or later, and its result names that commit.
+
+## Amendment H6b (2026-11-17, text correction proposed by the gate fixer after review A; appended, nothing above rewritten)
+To the sentence "A STOP left by an earlier run is cleared only by exp.disk_gate start." (amendment H4): Superseded
+(review A3): STOP is an append-only ledger, state/stop_ledger.jsonl. start never clears a stop; it is BLOCKED while
+any stop is unacknowledged. A stop is acknowledged only by disk_gate clear-stop <stop id> <reason>, which names one
+stop and never revalidates a run that stop voided. A legacy state/STOP file is ingested as a stop and left in place.
+(The ledger is implemented on the gate fixer's branch fix/writepath-gate; it governs runs once that branch is
+integrated here.)
