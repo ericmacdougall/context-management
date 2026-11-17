@@ -114,7 +114,10 @@ create function wp_identifier_declare(t tenant_t, s text, hmacs text[]) returns 
 declare n bigint; er boolean;
 begin
   insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
-  select erased into er from subjects where tenant_id = t and subject_id = s for update;
+  -- FOR SHARE (amendment 17): still exclusive against wp_erasure_mark (FOR UPDATE), so an identifier is never declared
+  -- for a subject being erased; FOR UPDATE here deadlocked with an append that mentions s (it holds identifier_epochs
+  -- FOR SHARE, then share-locks s). Declares of one tenant serialise on identifier_epochs FOR UPDATE below.
+  select erased into er from subjects where tenant_id = t and subject_id = s for share;
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
   insert into identifier_epochs(tenant_id) values (t) on conflict do nothing;
   perform 1 from identifier_epochs where tenant_id = t for update;
@@ -439,7 +442,10 @@ end $$;
 create function wp_hold_check(t text, s text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
 declare hs text;
 begin
-  perform 1 from subjects where tenant_id = t and subject_id = s for update;
+  -- FOR SHARE (amendment 17): a hold (wp_hold_place, FOR UPDATE) still cannot land until this transaction ends, but two
+  -- cascade batches no longer exclude each other: with FOR UPDATE here, A's batch held A and share-locked B while B's
+  -- batch held B and share-locked A (deadlock between erasures of subjects who mention each other).
+  perform 1 from subjects where tenant_id = t and subject_id = s for share;
   select string_agg(hold_id, ',') into hs from legal_holds where tenant_id = t and subject_id = s and released_at is null;
   if hs is not null then raise exception 'legal_hold %', hs using errcode = 'WPS16'; end if;
 end $$;
@@ -481,6 +487,8 @@ declare j record;
 begin
   select tenant_id, subject_id into j from erasure_jobs where job_id = jid for update;
   insert into subjects(tenant_id, subject_id) values (j.tenant_id, j.subject_id) on conflict do nothing;
+  -- the subject row exclusively first (it is updated below), so the share lock of wp_hold_check is never upgraded
+  perform 1 from subjects where tenant_id = j.tenant_id and subject_id = j.subject_id for update;
   perform wp_hold_check(j.tenant_id, j.subject_id);
   update erasure_jobs set ident_xmax = wp_subject_xmax(j.tenant_id, j.subject_id),
     ident_count = (select count(*) from subject_identifiers where tenant_id = j.tenant_id and subject_id = j.subject_id)
