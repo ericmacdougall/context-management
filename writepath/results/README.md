@@ -275,11 +275,11 @@ H-amendment first; heldout_secrets stays carried).
 | row | commit | cases (3 runs each) | verdict |
 |---|---|---|---|
 | H1 (`h1-probe-606f457/`) | 606f457 | PB, PC, PE hold 3/3; PA and PD FAIL, but their requests were defective (PA: derived key without an empty `role_descriptors`; PD: invalidate without `owner: true`), so their behaviour was NOT measured | NOT FEASIBLE by the H1 rule; stands |
-| H1a (`h1a-probe-c8e0a46/`), the one rerun allowed after H1 | c8e0a46 (bootstrap from 1a0fb11: the first attempt stopped in bootstrap before launch, nothing measured) | PB, PC, PE hold 3/3; PD holds 3/3: write 201 before, 401 after invalidation, 0 writes accepted after it, first refusal at most 0.055 s; PA invalid_request 3/3 (every derived-key form, with, without and with empty descriptors, refused 400 illegal_argument_exception) | PA failed a second time: **derived API keys are not demonstrated on Basic** (final). |
+| H1a (`h1a-probe-c8e0a46/`), the one rerun allowed after H1 | c8e0a46 (bootstrap from 1a0fb11: the first attempt stopped in bootstrap before launch, nothing measured) | PB, PC, PE hold 3/3; PD holds 20/20 trials: write 201 before, 401 after invalidation, 0 writes accepted after it, first refusal at most 0.055 s; PA invalid_request 3/3 (every derived-key form, with, without and with empty descriptors, refused 400 illegal_argument_exception) | PA failed a second time: **derived API keys are not demonstrated on Basic** (final). |
 
 Consequence for D6 (main's ruling): the fence rests on alias-name scoping (PB) plus the alias CAS held by the broker
 (PC, PE), not on revocation. The broker authenticates as a native user and never derives keys, so PA is not on its
-path. Revocation (PD) is hygiene; its delay was measured at 0.055 s maximum over 3 runs on ONE node (cross-node API
+path. Revocation (PD) is hygiene; its delay was measured at 0.055 s maximum over 20 trials on ONE node (cross-node API
 key caches not shown).
 
 ### Limits that apply to every erasure result here
