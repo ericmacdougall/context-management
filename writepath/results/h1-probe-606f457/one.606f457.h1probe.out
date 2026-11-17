@@ -1,0 +1,8 @@
+start 2026-11-17T17:21:20Z head 606f457 free 21G: exp.h_probe_es 3 20
+disk_gate start free 20.8 GiB own 0.10 GiB (pg 0.06 es 0.00 home 0.04) cap +2.0 GiB
+disk_gate h1probe free 20.8 GiB own +0.00 GiB
+RESULT h_probe_es sha256=9f6d51f61aeea9c5c26c75206662a4aadf72cb3881578bc2371b9907d99b579b file=~/emlab2-16096/wphard/wp/results/h_probe_es.9f6d51f61aeea9c5.json
+h_probe_es feasible False failed ['pa', 'pd'] pd_max_first_refusal_s 0
+exit=0
+disk_gate end free 19.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+end 2026-11-17T17:25:33Z

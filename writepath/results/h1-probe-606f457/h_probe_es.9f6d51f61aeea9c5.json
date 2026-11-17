@@ -1,0 +1,456 @@
+{
+ "at": "2026-11-17T17:25:33Z",
+ "env": {
+  "argv": "~/emlab2-16096/wphard/wp/runs/606f457-20261117T172120Z/exp/h_probe_es.py 3 20",
+  "code_commit": "606f457",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19570",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   15.17724609375,
+   15.54345703125,
+   12.93701171875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": {
+   "error": "OperationalError"
+  },
+  "python": "3.12.3"
+ },
+ "name": "h_probe_es",
+ "result": {
+  "cleanup": {
+   "invalidated": 44,
+   "role_deleted": 200,
+   "user_deleted": 200
+  },
+  "failed_cases": [
+   "pa",
+   "pd"
+  ],
+  "feasible": false,
+  "licence": "basic",
+  "pa": [
+   {
+    "broker_key_id": "XvKH6qEBd9pbG1KyC9PS",
+    "derived_key_id": null,
+    "derived_write_status": null,
+    "holds": false,
+    "run": 0,
+    "with_descriptors_status": 400,
+    "without_descriptors_status": 400
+   },
+   {
+    "broker_key_id": "ZPKH6qEBd9pbG1KyD9N9",
+    "derived_key_id": null,
+    "derived_write_status": null,
+    "holds": false,
+    "run": 1,
+    "with_descriptors_status": 400,
+    "without_descriptors_status": 400
+   },
+   {
+    "broker_key_id": "avKH6qEBd9pbG1KyE9Nj",
+    "derived_key_id": null,
+    "derived_write_status": null,
+    "holds": false,
+    "run": 2,
+    "with_descriptors_status": 400,
+    "without_descriptors_status": 400
+   }
+  ],
+  "pb": [
+   {
+    "PB1": 201,
+    "PB2": 403,
+    "PB3": 403,
+    "PB4": 403,
+    "PB5": 200,
+    "PB6": 403,
+    "PB7": 403,
+    "PB8": 403,
+    "PB9": 403,
+    "holds": true,
+    "key_id": "cPKH6qEBd9pbG1KyF9NZ",
+    "run": 0
+   },
+   {
+    "PB1": 201,
+    "PB2": 403,
+    "PB3": 403,
+    "PB4": 403,
+    "PB5": 200,
+    "PB6": 403,
+    "PB7": 403,
+    "PB8": 403,
+    "PB9": 403,
+    "holds": true,
+    "key_id": "cvKH6qEBd9pbG1KyG9PP",
+    "run": 1
+   },
+   {
+    "PB1": 201,
+    "PB2": 403,
+    "PB3": 403,
+    "PB4": 403,
+    "PB5": 200,
+    "PB6": 403,
+    "PB7": 403,
+    "PB8": 403,
+    "PB9": 403,
+    "holds": true,
+    "key_id": "dPKH6qEBd9pbG1KyH9N6",
+    "run": 2
+   }
+  ],
+  "pc": [
+   {
+    "PC1": {
+     "add": 403,
+     "remove": null
+    },
+    "PC2": {
+     "add": 403,
+     "remove": null
+    },
+    "PC3": {
+     "add": 403,
+     "remove": null
+    },
+    "PC4": {
+     "add": 200,
+     "remove": 200
+    },
+    "PC5": {
+     "broker_remove": 200,
+     "readd": 200
+    },
+    "holds": true,
+    "key_ids": [
+     "d_KH6qEBd9pbG1KyI9N0",
+     "efKH6qEBd9pbG1KyJ9Mm",
+     "e_KH6qEBd9pbG1KyK9Mc",
+     "ffKH6qEBd9pbG1KyL9MS",
+     "gPKH6qEBd9pbG1KyM9MO"
+    ],
+    "run": 0
+   },
+   {
+    "PC1": {
+     "add": 403,
+     "remove": null
+    },
+    "PC2": {
+     "add": 403,
+     "remove": null
+    },
+    "PC3": {
+     "add": 403,
+     "remove": null
+    },
+    "PC4": {
+     "add": 200,
+     "remove": 200
+    },
+    "PC5": {
+     "broker_remove": 200,
+     "readd": 200
+    },
+    "holds": true,
+    "key_ids": [
+     "hfKH6qEBd9pbG1KyN9P0",
+     "h_KH6qEBd9pbG1KyOtP6",
+     "ifKH6qEBd9pbG1KyPtPw",
+     "i_KH6qEBd9pbG1KyQ9N6",
+     "jfKH6qEBd9pbG1KyR9Nw"
+    ],
+    "run": 1
+   },
+   {
+    "PC1": {
+     "add": 403,
+     "remove": null
+    },
+    "PC2": {
+     "add": 403,
+     "remove": null
+    },
+    "PC3": {
+     "add": 403,
+     "remove": null
+    },
+    "PC4": {
+     "add": 200,
+     "remove": 200
+    },
+    "PC5": {
+     "broker_remove": 200,
+     "readd": 200
+    },
+    "holds": true,
+    "key_ids": [
+     "j_KH6qEBd9pbG1KyWdNe",
+     "kfKH6qEBd9pbG1KyW9O1",
+     "k_KH6qEBd9pbG1KyX9Ow",
+     "lfKH6qEBd9pbG1KyY9Oj",
+     "l_KH6qEBd9pbG1KyZ9OZ"
+    ],
+    "run": 2
+   }
+  ],
+  "pd": [
+   {
+    "accepted_after_invalidate": 581,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "mfKH6qEBd9pbG1KybNOB",
+    "refusal_status": 201,
+    "run": 0,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 653,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "m_KH6qEBd9pbG1Kyl9MR",
+    "refusal_status": 201,
+    "run": 1,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 546,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "nfKH6qEBd9pbG1KywdP-",
+    "refusal_status": 201,
+    "run": 2,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 696,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "n_KH6qEBd9pbG1Ky79Oh",
+    "refusal_status": 201,
+    "run": 3,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 725,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "ofKI6qEBd9pbG1KyF9P-",
+    "refusal_status": 201,
+    "run": 4,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 729,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "o_KI6qEBd9pbG1KyQ9MG",
+    "refusal_status": 201,
+    "run": 5,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 739,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "pfKI6qEBd9pbG1KybtMg",
+    "refusal_status": 201,
+    "run": 6,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 744,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "p_KI6qEBd9pbG1KymdMb",
+    "refusal_status": 201,
+    "run": 7,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 768,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "qfKI6qEBd9pbG1KyxNMm",
+    "refusal_status": 201,
+    "run": 8,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 762,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "q_KI6qEBd9pbG1Ky79Mq",
+    "refusal_status": 201,
+    "run": 9,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 768,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "rfKJ6qEBd9pbG1KyGtMg",
+    "refusal_status": 201,
+    "run": 10,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 473,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "r_KJ6qEBd9pbG1KyRdMk",
+    "refusal_status": 201,
+    "run": 11,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 238,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "sfKJ6qEBd9pbG1KycNMz",
+    "refusal_status": 201,
+    "run": 12,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 162,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "s_KJ6qEBd9pbG1Kyo9O_",
+    "refusal_status": 201,
+    "run": 13,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 166,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "tfKJ6qEBd9pbG1Ky0tMz",
+    "refusal_status": 201,
+    "run": 14,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 621,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "t_KJ6qEBd9pbG1Ky_NMw",
+    "refusal_status": 201,
+    "run": 15,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 663,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "ufKK6qEBd9pbG1KyJtM7",
+    "refusal_status": 201,
+    "run": 16,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 783,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "u_KK6qEBd9pbG1KyUdNI",
+    "refusal_status": 201,
+    "run": 17,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 799,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "vfKK6qEBd9pbG1KyfNNP",
+    "refusal_status": 201,
+    "run": 18,
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 798,
+    "first_refusal_s": null,
+    "holds": false,
+    "invalidate_status": 403,
+    "key_id": "v_KK6qEBd9pbG1Kyp9NK",
+    "refusal_status": 201,
+    "run": 19,
+    "write_before": 201
+   }
+  ],
+  "pd_accepted_after_invalidate_total": 12414,
+  "pd_max_first_refusal_s": 0,
+  "pe": [
+   {
+    "broker_cas": 200,
+    "holds": true,
+    "key_id": "wfKK6qEBd9pbG1Ky0tNf",
+    "no_require_alias": 403,
+    "require_alias": 404,
+    "run": 0,
+    "write_before": 201
+   },
+   {
+    "broker_cas": 200,
+    "holds": true,
+    "key_id": "w_KK6qEBd9pbG1Ky1tOS",
+    "no_require_alias": 403,
+    "require_alias": 404,
+    "run": 1,
+    "write_before": 201
+   },
+   {
+    "broker_cas": 200,
+    "holds": true,
+    "key_id": "xfKK6qEBd9pbG1Ky2tN3",
+    "no_require_alias": 403,
+    "require_alias": 404,
+    "run": 2,
+    "write_before": 201
+   }
+  ],
+  "scope": "single node, Basic licence, security on, HTTP without TLS on loopback; cross-node API-key cache invalidation is not shown",
+  "verdict": {
+   "pa": false,
+   "pb": true,
+   "pc": true,
+   "pd": false,
+   "pe": true
+  }
+ }
+}
