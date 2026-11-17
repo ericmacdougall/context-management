@@ -443,3 +443,20 @@ Changes for the run at the fixed code (no threshold relaxed):
     residue (both checked to equal the pre-fix bodies apart from comments). CTL_APPLY must violate a gate in >= 2 of 3
     runs in each state; CTL_RESIDUE in >= 2 of 3 runs in S1, the state where the pre-fix residue misplanned (its S2
     count is recorded, not required).
+
+## Amendment 18c (2026-11-17, after the run at ba71567 and before any further run; that run's PASS is void)
+The run at ba71567 reported PASS (6/6, controls 3/3 in each state; result plan_stability.98a94c31b9c01856, not
+reported as a result). It is void: the work metric added "Rows Removed by Filter" without multiplying by the node's
+loops, and EXPLAIN prints removed rows as an average per loop. The printed plans of a fixed-code run (ab/ps_plans.py)
+show the fenced probe as a Seq Scan on analyst_jobs per event (2,404 to 3,604 rows removed x 200 loops per batch):
+with the tenant predicate fenced out, the planner's remaining alternative to the GIN index is a sequential scan of the
+whole table, and it picked it on these small fresh tables; the residue's 0.7 s at M=3000 (against 0.02 s for the pre-fix
+linear plan) was the same per-tombstone scan. The failing-first verdict at fdbecb4 is unchanged (the corrected metric
+only raises those counts).
+Changes (no threshold relaxed): (1) work counts each node's actual rows and removed rows x that node's loops; join
+filter rows likewise. (2) Fix shape: wp_erasure_apply and wp_erasure_pg_residue run with enable_seqscan off (function
+SET clause); inside the fence the only other path is the GIN index on input_event_ids, and nothing else in the two
+functions needs a sequential scan of a large table (each other statement has an index on its predicate). The pre-fix
+code's reason to drop enable_seqscan (7f6536c: it pushed the planner onto the tenant primary key) does not apply once
+the tenant predicate is outside the fence. (3) The controls also restore the pre-fix function headers (checked equal
+to the pre-fix bodies apart from comments). Gates, sizes, states, counts and control requirements as in 18 and 18b.
