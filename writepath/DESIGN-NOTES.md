@@ -567,7 +567,9 @@ versioned m5.
 8. STILL OVER-MATCHED (receipt and OVER_MATCH): confusable variants (Kim and Kirn) as before; a capital I or one of its
    look-alikes in TEXT is read as l too, so text in capitals over-matches (DELIA also matches Della, NEIL matches
    Nell, HAILEY matches Halley); a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and
-   Nell); one text window can hit several subjects (AIIson hits Alison and Allison).
+   Nell); one text window can hit several subjects (EIIa Moreno hits Elia Moreno and Ella Moreno; NEIL YOUNG hits
+   Neil Young and Nell Young). CORRECTION (while writing the tests, 3c0da12 said "AIIson hits Alison and Allison",
+   which is wrong: AIIson has six letters and Allison seven).
 9. CHANGED FROM m4 beyond i/l and o/0: five code points now read as their digit or letter instead of their UTS 39
    prototype (superscript one and zero, circled one and zero, modifier capital I), by item 1's NFKD rule.
 10. VERSION: matcher id m5:ucd<version>:di<sha12>:cf<sha12>; rule version r3:<matcher id>. The store keeps the tenant's

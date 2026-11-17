@@ -1,0 +1,236 @@
+# m5 tests (this commit's tests/test_ident.py) run against wp/mentions.py at 15b3255 (matcher m4); Mac, python3 13.0.0, WP_UCD_DIR=<work dir>/ucd
+# command: WP_UCD_DIR=<dir> python3 -m unittest tests.test_ident -v
+test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings)
+Pinned per Unicode version; each reading checked through the text path, and no other reading. ... FAIL
+test_m5_cap_refuses_identifiers_over_it (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_closure_over_the_tables (tests.test_ident.F11M5Readings)
+Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a ... ok
+test_m5_digit_inside_a_word_is_read_as_a_letter (tests.test_ident.F11M5Readings) ... ok
+test_m5_documented_misses (tests.test_ident.F11M5Readings)
+NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no ... FAIL
+test_m5_generated_variants_match (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_identifiers_with_digits_stay_distinct (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_identity_key_is_one_of_the_text_keys (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_near_misses_do_not_match (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_not_closed_list (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_real_name_pairs_stay_apart (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_reordered_combining_marks (tests.test_ident.F11M5Readings) ... ok
+test_m5_reviewer_counterexample_still_matches (tests.test_ident.F11M5Readings) ... ok
+test_m5_stated_over_match (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_window_over_the_cap_is_not_enumerated (tests.test_ident.F11M5Readings) ... FAIL
+test_s15_no_module_builds_identifier_hmacs_itself (tests.test_ident.LabelInOnePlace)
+A second copy of the label (erasure's rescan had "ident:" + w) silently stops matching when the label ... ok
+test_r1_no_span_redaction_api (tests.test_ident.Matcher)
+Decision R1 (review C F1): whole-event removal is the only path; the matcher offers no redaction. ... ok
+test_s2_whole_tokens_only (tests.test_ident.Matcher) ... ok
+test_s3_offsets_are_in_the_original_text (tests.test_ident.Matcher) ... ok
+test_s4_invisible_characters_inside_a_name_in_text (tests.test_ident.Matcher) ... ok
+test_s6_capital_i_lookalike_in_text (tests.test_ident.Matcher) ... FAIL
+test_s6_lookalikes_in_other_speakers_text_match (tests.test_ident.Matcher) ... ok
+test_s6_one_case_insensitive_key_per_identifier (tests.test_ident.Matcher) ... FAIL
+test_s7_identifier_inside_quoted_text_of_another_speaker (tests.test_ident.Matcher) ... ok
+test_two_occurrences_and_overlap_merged (tests.test_ident.Matcher) ... ok
+test_s16_unsegmented_script_refused (tests.test_ident.RuleR3) ... ok
+test_s1_lookalike_of_a_common_word_refused (tests.test_ident.RuleR3) ... ok
+test_s1_short_or_common_refused (tests.test_ident.RuleR3) ... ok
+test_s3_normal_form_keeps_letters (tests.test_ident.RuleR3) ... ok
+test_s4_ignorables_removed_from_declared_identifier (tests.test_ident.RuleR3) ... ok
+test_s5_mixed_script_declared_identifier_refused (tests.test_ident.RuleR3) ... ok
+test_unassigned_code_point_refused (tests.test_ident.RuleR3) ... ok
+test_hmac_label_binds_the_matcher (tests.test_ident.Tables) ... ok
+test_loads_the_pinned_tables (tests.test_ident.Tables) ... ok
+test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables) ... FAIL
+test_missing_table_fails_closed (tests.test_ident.Tables) ... ok
+test_other_unicode_version_fails_closed (tests.test_ident.Tables) ... ok
+test_tampered_table_fails_closed (tests.test_ident.Tables) ... ok
+test_every_default_ignorable_inside_a_name (tests.test_ident.WholeDefaultIgnorable) ... ok
+test_f6_khmer_inherent_vowels (tests.test_ident.WholeDefaultIgnorable) ... ok
+
+======================================================================
+FAIL: test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 294, in test_m5_ascii_letters_and_digits_are_their_own_keys
+    self.assertEqual(sorted("".join(v) for v in keys.values() if len(v) > 1), [])
+AssertionError: Lists differ: ['il1', 'o0'] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+'il1'
+
+- ['il1', 'o0']
++ []
+
+======================================================================
+FAIL: test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings)
+Pinned per Unicode version; each reading checked through the text path, and no other reading.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 481, in test_m5_both_readings_glyphs
+    self.assertEqual(counts, BOTH.get(UCD), "pin the computed table on this Unicode version")
+AssertionError: {} != {'il': 23, '1il': 11, '0o': 11}
+- {}
++ {'0o': 11, '1il': 11, 'il': 23} : pin the computed table on this Unicode version
+
+======================================================================
+FAIL: test_m5_cap_refuses_identifiers_over_it (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 440, in test_m5_cap_refuses_identifiers_over_it
+    self.assertIsNotNone(p, over)
+AssertionError: unexpectedly None : Boooo Boooo Booooo
+
+======================================================================
+FAIL: test_m5_documented_misses (tests.test_ident.F11M5Readings)
+NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 420, in test_m5_documented_misses
+    self.assertFalse(self.matches(text, ident), (text, ident))
+AssertionError: True is not false : ('Allson', 'Alison')
+
+======================================================================
+FAIL: test_m5_generated_variants_match (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 386, in test_m5_generated_variants_match
+    self.assertEqual(missed[:5], [], f"{len(missed)} of {n} generated variants not matched")
+AssertionError: Lists differ: [('Alison', 'AlI\U000e00f8s⓪\U000e0a31N', [465 chars]e'])] != []
+
+First list contains 5 additional elements.
+First extra element 0:
+('Alison', 'AlI\U000e00f8s⓪\U000e0a31N', ['0x41', '0x6c', '0x49', '0xe00f8', '0x73', '0x24ea', '0xe0a31', '0x4e'])
+
++ []
+- [('Alison',
+-   'AlI\U000e00f8s⓪\U000e0a31N',
+-   ['0x41', '0x6c', '0x49', '0xe00f8', '0x73', '0x24ea', '0xe0a31', '0x4e']),
+-  ('Alison',
+-   'A①𝕚\U000e0ea0soN󠇎',
+-   ['0x41', '0x2460', '0x1d55a', '0xe0ea0', '0x73', '0x6f', '0x4e', '0xe01ce']),
+-  ('Alison',
+-   '𝘢¹𝞲\U000e0d6eSOn\U000e03ae',
+-   ['0x1d622', '0xb9', '0x1d7b2', '0xe0d6e', '0x53', '0x4f', '0x6e', '0xe03ae']),
+-  ('Alison',
+-   'Aᴵꙇ󠆆SՕ𝙣',
+-   ['0x41', '0x1d35', '0xa647', '0xe0186', '0x53', '0x555', '0x1d663']),
+-  ('Alison', 'A①IsoN', ['0x41', '0x2460', '0x49', '0x73', '0x6f', '0x4e'])] : 147 of 3300 generated variants not matched
+
+======================================================================
+FAIL: test_m5_identifiers_with_digits_stay_distinct (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 298, in test_m5_identifiers_with_digits_stay_distinct
+    self.assertEqual(len({M.key(x) for x in forms}), len(forms))
+AssertionError: 2 != 6
+
+======================================================================
+FAIL: test_m5_identity_key_is_one_of_the_text_keys (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 471, in test_m5_identity_key_is_one_of_the_text_keys
+    self.assertEqual((M.canonical("1"), M.canonical("0")), ("1", "0"))
+AssertionError: Tuples differ: ('L', 'O') != ('1', '0')
+
+First differing element 0:
+'L'
+'1'
+
+- ('L', 'O')
+?   ^    ^
+
++ ('1', '0')
+?   ^    ^
+
+
+======================================================================
+FAIL: test_m5_near_misses_do_not_match (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 411, in test_m5_near_misses_do_not_match
+    self.assertEqual(bad[:10], [], f"{len(bad)} near misses matched")
+AssertionError: Lists differ: ['Aiison', 'Allson', 'AlLson', 'Aiex Kim',[88 chars]ith'] != []
+
+First list contains 10 additional elements.
+First extra element 0:
+'Aiison'
+
++ []
+- ['Aiison',
+-  'Allson',
+-  'AlLson',
+-  'Aiex Kim',
+-  'Alex Klm',
+-  'Alex KLm',
+-  'Klmberly Moore',
+-  'KLmberly Moore',
+-  'Kimberiy Moore',
+-  'Deiia Smith'] : 17 near misses matched
+
+======================================================================
+FAIL: test_m5_not_closed_list (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 500, in test_m5_not_closed_list
+    self.assertIn(c, self.nc, hex(ord(c)))
+AssertionError: 'Ɨ' not found in {'Ⲙ', 'Ɗ', 'Σ', 'Ҳ', 'Ⲇ', '𐓍', 'Г', 'Ⲷ', 'Ƥ', 'Υ', 'Ϻ', 'Ⲅ', 'Ɠ', 'ﬅ', 'ſ', 'Ƭ', '𑢵', 'ᲄ', 'Ꚍ', 'Ƴ', 'Ʉ', 'Ϭ', 'М', 'Ғ', 'Ӆ', 'ꮇ', 'Ͱ', '𑢼', 'Ɓ', 'Ґ', 'Η', 'Ԋ', 'Ỻ', '𐓄', 'Μ', 'ꮁ', 'Б', 'Ɍ', 'Յ', 'Ƙ', 'Β', 'Ʈ', 'Ю', 'Ӎ', '𑢦', 'Л', 'Ƽ', 'Ƈ', 'Ⱦ', 'Ν', 'Ꞵ', 'Ⱪ', 'Ƒ', 'Ɖ', 'Ꝁ', '𐒼', 'Ⴀ', 'Ⳁ', '𐐟', 'Ⱨ', 'Փ', 'Ð', 'Ꜫ'} : 0x197
+
+======================================================================
+FAIL: test_m5_real_name_pairs_stay_apart (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 286, in test_m5_real_name_pairs_stay_apart
+    self.assertEqual(bad, [])
+AssertionError: Lists differ: [('same key', 'Delia Smith', 'Della Smith'[817 chars]no')] != []
+
+First list contains 20 additional elements.
+First extra element 0:
+('same key', 'Delia Smith', 'Della Smith')
+
+Diff is 929 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_m5_stated_over_match (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 432, in test_m5_stated_over_match
+    self.assertIn(word, om)
+AssertionError: 'DELIA' not found in 'confusable variants of a declared identifier (for example Kim and Kirn share a key): such events of other speakers are removed too letters merged by look-alike and case together (i, l, 1 and capital I; o and 0; and every look-alike in confusables.txt): events of other speakers whose words differ from a declared identifier only by such letters (Allson, Aiison, Ailson or A1ison for Alison; AIEX KIM for Alex Kim) are removed too, and so are events naming a DIFFERENT real person whose name differs only by such letters (Delia and Della, Hailey and Halley, Neil and Nell, Elia and Ella)'
+
+======================================================================
+FAIL: test_m5_window_over_the_cap_is_not_enumerated (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 448, in test_m5_window_over_the_cap_is_not_enumerated
+    self.assertEqual(len(M.windows("I" * 12)), CAP)                      # 2**12 readings: every one
+AssertionError: 1 != 4096
+
+======================================================================
+FAIL: test_s6_capital_i_lookalike_in_text (tests.test_ident.Matcher)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 210, in test_s6_capital_i_lookalike_in_text
+    self.assertNotEqual(M.key("AIex Kim"), M.key("Alex Kim"))
+AssertionError: 'ALEX KLRN' == 'ALEX KLRN'
+
+======================================================================
+FAIL: test_s6_one_case_insensitive_key_per_identifier (tests.test_ident.Matcher)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 205, in test_s6_one_case_insensitive_key_per_identifier
+    self.assertNotEqual(M.key("A1ex Kirn"), M.key("Alex Kim"))
+AssertionError: 'ALEX KLRN' == 'ALEX KLRN'
+
+======================================================================
+FAIL: test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 139, in test_matcher_id_names_unicode_version_and_tables
+    self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}$")
+AssertionError: Regex didn't match: '^m5:ucd13\\.0\\.0:di[0-9a-f]{12}:cf[0-9a-f]{12}$' not found in 'm4:ucd13.0.0:di5f861f7bc729:cf93b569e499e5'
+
+----------------------------------------------------------------------
+Ran 41 tests in 9.294s
+
+FAILED (failures=15)

@@ -1,6 +1,7 @@
-"""Offline unit test (no stores) for D3 rule r3 and matcher m4 (wp/mentions.py), DESIGN-NOTES "Redesign after review C"
-classes 3 and 4 and "Redesign after review E" F11 (scenario ids S1..S16 refer to "Design: D3"). ASSUMPTION: decision 10
-and decision R1 (no span redaction; whole-event removal only).
+"""Offline unit test (no stores) for D3 rule r3 and matcher m5 (wp/mentions.py), DESIGN-NOTES "Redesign after review C"
+classes 3 and 4, "Redesign after review E" F11 and "Decisions after review E" (scenario ids S1..S16 refer to "Design:
+D3"). ASSUMPTION: decision 10 and rule r3. Decision R1 (no span redaction; whole-event removal only) was decided by the
+coordinator on the user's delegation, 2026-11-17.
 
 The matcher's Unicode tables are NOT in the repository (licence: DESIGN-NOTES class 4). WP_UCD_DIR must name the
 directory that tools/ucd_tables.py wrote for this Python's Unicode version; without it every test here FAILS (never
@@ -135,7 +136,7 @@ class Tables(unittest.TestCase):
 
     def test_matcher_id_names_unicode_version_and_tables(self):
         mid = M.matcher_id()
-        self.assertRegex(mid, rf"^m4:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}$")
+        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}$")
         di = hashlib.sha256((pathlib.Path(UCD_DIR) / f"default_ignorable-{UCD}.tsv").read_bytes()).hexdigest()[:12]
         self.assertIn(f":di{di}:", mid)
         self.assertEqual(M.label(), f"ident:{mid}:")
@@ -199,12 +200,14 @@ class Matcher(unittest.TestCase):
 
     def test_s6_one_case_insensitive_key_per_identifier(self):
         self.assertEqual(M.key("ALEX KIM"), M.key("Alex Kim"))
-        self.assertEqual(M.key("ALEX KIM"), M.key("A1ex Kirn"))
         self.assertEqual(hm("Alex Kim"), hm("ａｌｅｘ kirn"))
+        # m5: a digit in a DECLARED identifier is a digit (one key, its identity); in TEXT it is read as l too
+        self.assertNotEqual(M.key("A1ex Kirn"), M.key("Alex Kim"))
+        self.assertEqual(found("call A1ex Kirn now", "Alex Kim"), ["A1ex Kirn"])
 
-    def test_s6_capital_shape_lookalike_has_the_same_single_key(self):
-        # m4 (review E F11): one key per token; capital I (look-alike of l) and small i share a class with l
-        self.assertEqual(M.key("AIex Kim"), M.key("Alex Kim"))
+    def test_s6_capital_i_lookalike_in_text(self):
+        # m5 (main's ruling after review E): in TEXT a capital I is read as i and as l; a declared capital I is i
+        self.assertNotEqual(M.key("AIex Kim"), M.key("Alex Kim"))
         self.assertEqual(found("AIex Kim", "Alex Kim"), ["AIex Kim"])
         self.assertEqual(found("AIEX KIM", "Alex Kim"), ["AIEX KIM"])          # stated over-match (OVER_MATCH)
         self.assertEqual(found("Bill Kim", "Alex Kim"), [])
@@ -224,12 +227,23 @@ class Matcher(unittest.TestCase):
             self.assertFalse(hasattr(M, name), name)
 
 
-class F11OneCanonicalKey(unittest.TestCase):
-    """Review E F11: case changes and look-alike substitutions may be MIXED inside one token; one canonical key per
-    token (matcher m4) must find every such variant of an approved identifier, and nothing outside the stated classes.
-    The generator takes its substitutions from the RAW confusables table, not from the matcher's classes."""
+CAP = 4096       # m5: readings per window (DESIGN-NOTES "Decisions after review E" item 5)
+# The glyphs read more than one way, by reading set (ASCII names), and the not-closed list, computed by the matcher from
+# the pinned tables; pinned here per Unicode version (a version not listed fails: pin it after checking the list).
+BOTH = {"13.0.0": {"il": 23, "1il": 11, "0o": 11}}
+NOT_CLOSED = {"13.0.0": 66}
+
+
+class F11M5Readings(unittest.TestCase):
+    """Main's ruling after review E (matcher m5): i, l and 1 are never one letter. Only ambiguous glyphs get more than
+    one reading, and only in TEXT: a capital I (and its look-alikes) is read as i and as l, a digit 1 inside a word as
+    1, l and i, a digit 0 inside a word as 0 and o. A declared identifier has ONE key. The generator takes its
+    substitutions from the RAW confusables table, restricted to what the design reads; the documented exceptions are
+    tested as misses."""
     IDENTS = ("Alison", "Alex Kim", "Zoë Renée", "Marta Straße", "Nguyệt Lê", "Александр Ким", "Ηλίας Παππάς",
-              "Kimberly Moore", "XQ-1001")
+              "Kimberly Moore", "XQ-1001", "Delia Smith", "Neil Young")
+    PAIRS = (("Delia Smith", "Della Smith"), ("Hailey Brown", "Halley Brown"), ("Neil Young", "Nell Young"),
+             ("Elia Moreno", "Ella Moreno"))
     SEED, PER_IDENT = 16096, 300
 
     @classmethod
@@ -237,53 +251,131 @@ class F11OneCanonicalKey(unittest.TestCase):
         di, conf = M.load_tables(UCD_DIR)
         cls.di = sorted(di)
         cls.conf = {chr(k): v for k, v in conf.items()}
-        cls.by_proto = {}
-        for s, p in cls.conf.items():
-            if unicodedata.category(s)[0] in "LN" and len(unicodedata.normalize("NFKD", s)) == 1:
-                cls.by_proto.setdefault(p, []).append(s)
+        cls.by_proto, cls.by_nfkd = {}, {}
+        for o in range(0x110000):
+            s = chr(o)
+            if unicodedata.category(s)[0] not in "LN":
+                continue
+            d = unicodedata.normalize("NFKD", s)
+            if s in cls.conf and len(d) == 1:
+                cls.by_proto.setdefault(cls.conf[s], []).append(s)
+            if d != s and len(d) == 1 and d in "0123456789IOl":
+                cls.by_nfkd.setdefault(d, []).append(s)
+        cls.small_proto = {cls.conf.get(a, a): a for a in "abcdefghijklmnopqrstuvwxyz"}
+        # the design's both-readings glyphs, from the raw data: compatibility forms of I, 1 and 0, and the capitals
+        # the design names (Greek Iota, Cyrillic Byelorussian-Ukrainian I, Latin Iota)
+        i_like = set(cls.by_nfkd.get("I", ())) | {"I", "Ι", "І", "Ɩ"}
+        one_like = set(cls.by_nfkd.get("1", ())) | {"1"}
+        zero_like = set(cls.by_nfkd.get("0", ())) | {"0"}
+        cls.reads_as = {"i": i_like | one_like, "l": i_like | one_like, "o": zero_like}
+        cls.nc = set(M.not_closed())
 
     def matches(self, text, ident):
         return len(found(f"please ask {text} today", ident)) == 1
 
-    def test_f11_reviewer_counterexample(self):
-        # one capital I is the look-alike of l, the other the capital of i (review E F11)
-        for v in ("AIIson", "AlIson", "aLIsOn", "ALISON", "A1ison"):
-            self.assertEqual(M.key(v), M.key("Alison"), v)
+    # -- main's ruling: distinct letters never come together -------------------------------------------------------
+    def test_m5_real_name_pairs_stay_apart(self):
+        bad = []
+        for a, b in self.PAIRS:
+            if M.key(a) == M.key(b):
+                bad.append(("same key", a, b))
+            for x, y in ((a, b), (b, a)):
+                for form in (x, x.lower()):
+                    if self.matches(form, y):
+                        bad.append((form, "matched", y))
+        self.assertEqual(bad, [])
+
+    def test_m5_ascii_letters_and_digits_are_their_own_keys(self):
+        keys = {}
+        for ch in "abcdefghijklmnopqrstuvwxyz0123456789":
+            keys.setdefault(M.key(ch), []).append(ch)
+            if ch.isalpha():
+                self.assertEqual(M.key(ch), M.key(ch.upper()), ch)       # a DECLARED capital is its letter: I is i
+        self.assertEqual(sorted("".join(v) for v in keys.values() if len(v) > 1), [])
+
+    def test_m5_identifiers_with_digits_stay_distinct(self):
+        forms = ("XQ-1001", "XQ-l00l", "XQ-IOOI", "XQ-lool", "user1001", "userlool")
+        self.assertEqual(len({M.key(x) for x in forms}), len(forms))
+        self.assertEqual(found("ref XQ-1001", "XQ-1001"), ["XQ-1001"])
+        for text, ident in (("ref XQ-1001", "XQ-l00l"), ("ref XQ-1001", "XQ-lool"), ("ref XQ-l00l", "XQ-1001"),
+                            ("ref XQ-IOOI", "XQ-1001"), ("login user1001", "userlool")):
+            self.assertEqual(found(text, ident), [], (text, ident))
+
+    # -- what still matches -------------------------------------------------------------------------------------------
+    def test_m5_reviewer_counterexample_still_matches(self):
+        # review E F11: one capital I is the look-alike of l, the other the capital of i
+        for v in ("AIIson", "AlIson", "aLIsOn", "ALISON", "A1ison", "AIis0n"):
             self.assertTrue(self.matches(v, "Alison"), v)
 
-    def test_f11_one_key_per_token(self):
-        # m3 looked a window up under every combination of two keys per token; m4 has one key, so one window each
-        self.assertEqual(len(M._windows_at("AIex AIIson KIM")), 6)
+    def test_m5_digit_inside_a_word_is_read_as_a_letter(self):
+        for text, ident in (("A1ison", "Alison"), ("J0hn Smith", "John Smith"), ("N1ck Jones", "Nick Jones"),
+                            ("Kimber1y M0ore", "Kimberly Moore"), ("XQ-１００１", "XQ-1001")):
+            self.assertTrue(self.matches(text, ident), (text, ident))
 
-    def test_f11_ascii_classes(self):
-        cls = {}
-        for ch in "abcdefghijklmnopqrstuvwxyz0123456789":
-            cls.setdefault(M.key(ch), []).append(ch)
-            if ch.isalpha():
-                self.assertEqual(M.key(ch), M.key(ch.upper()), ch)
-        self.assertEqual(sorted("".join(v) for v in cls.values() if len(v) > 1), ["il1", "o0"])
+    def test_m5_reordered_combining_marks(self):
+        # e + dot below (ccc 220) + circumflex (230) in either order is canonically equivalent (UAX 15)
+        self.assertTrue(self.matches("Nguyệt Lê", "Nguyệt Lê"))
+        self.assertTrue(self.matches("NGUYỆT LÊ", "Nguyệt Lê"))
+
+    def subs(self, c):
+        """Glyphs the design reads as c, from the raw table (not the matcher)."""
+        if c.isdigit():
+            return sorted(self.by_nfkd.get(c, ()))          # compatibility forms only: a letter is never read as a digit
+        p = self.conf.get
+        lo, up = c.lower(), c.upper()
+        if {c, up} & self.nc:
+            # a capital whose case pair is not closed is matched by its small form (published exception, NOT_COVERED)
+            out = set(self.by_proto.get(p(c.casefold(), c.casefold()), ()))
+        else:
+            out = set(self.by_proto.get(p(lo, lo), ()))
+            if len(up) == 1:
+                pu = p(up, up)
+                if self.small_proto.get(pu, lo) == lo:      # a capital that looks like ANOTHER small letter (I, l): no
+                    out |= set(self.by_proto.get(pu, ()))
+        out |= self.reads_as.get(lo, set()) if c.isascii() else set()
+        if lo == "i":
+            out -= set(self.by_proto.get("l", ())) - self.reads_as["i"]   # small-l look-alikes are not read as i
+        return sorted(out - self.nc)
 
     def variant(self, rnd, ident):
+        src = unicodedata.normalize("NFC", ident)
+        tok = []                                            # token number of each character (separators: -1)
+        t = 0
+        for c in src:
+            if c.isalnum():
+                tok.append(t)
+            else:
+                tok.append(-1)
+                t += 1
+        letters = {}
+        for c, k in zip(src, tok):
+            if c.isalpha():
+                letters[k] = letters.get(k, 0) + 1
+        digits = {k: sum(1 for c, j in zip(src, tok) if j == k and c.isdigit()) for k in letters}
         out = []
-        for c in unicodedata.normalize("NFC", ident):
+        for c, k in zip(src, tok):
             r = rnd.random()
             if r < 0.25 and c.isalpha():
                 c = c.swapcase() if len(c.swapcase()) == 1 else c
-            elif r < 0.55 and c.isalpha():
-                nc = set(getattr(M, "not_closed", tuple)())     # absent before m4: the red shows the misses
-                # a capital whose case pair is not closed is matched by its small form: its look-alikes are the small
-                # form's (the published exception, NOT_COVERED)
-                vs = {c, c.upper(), c.lower()} if not ({c, c.upper()} & nc) else {c.casefold()}
-                src = sorted({s for v in vs if len(v) == 1 for s in self.by_proto.get(self.conf.get(v, v), ())} - nc)
-                if src:
-                    c = rnd.choice(src)
+            elif r < 0.55 and c.isalnum():
+                choices = self.subs(c)
+                if c.isalpha():
+                    # a digit inside a word is read as a letter only while the word has more letters than digits
+                    if not letters[k] - 1 > digits[k] + 1:
+                        choices = [s for s in choices if not unicodedata.normalize("NFKD", s).isdigit()]
+                if choices:
+                    s = rnd.choice(choices)
+                    if c.isalpha() and unicodedata.normalize("NFKD", s).isdigit():
+                        digits[k] += 1
+                        letters[k] -= 1
+                    c = s
             out.append(c)
             if rnd.random() < 0.15:
                 out.append(chr(rnd.choice(self.di)))
         v = "".join(out)
         return unicodedata.normalize(rnd.choice(("NFC", "NFD")), v)
 
-    def test_f11_generated_variants_match(self):
+    def test_m5_generated_variants_match(self):
         rnd, missed, n = random.Random(self.SEED), [], 0
         for ident in self.IDENTS:
             for _ in range(self.PER_IDENT):
@@ -293,23 +385,20 @@ class F11OneCanonicalKey(unittest.TestCase):
                     missed.append((ident, v, [hex(ord(c)) for c in v]))
         self.assertEqual(missed[:5], [], f"{len(missed)} of {n} generated variants not matched")
 
-    def test_f11_reordered_combining_marks(self):
-        # e + dot below (ccc 220) + circumflex (230) in either order is canonically equivalent (UAX 15)
-        self.assertTrue(self.matches("Nguyệt Lê", "Nguyệt Lê"))
-        self.assertTrue(self.matches("NGUYỆT LÊ", "Nguyệt Lê"))
-
-    def test_f11_near_misses_do_not_match(self):
-        merged = {c: g for g in ("il1", "o0") for c in g}
+    # -- what does not match --------------------------------------------------------------------------------------
+    def test_m5_near_misses_do_not_match(self):
         letters = "abcdefghijklmnopqrstuvwxyz"
         bad = []
-        for ident in ("Alison", "Alex Kim", "Kimberly Moore"):
+        for ident in ("Alison", "Alex Kim", "Kimberly Moore", "Delia Smith", "Neil Young"):
             for i, c in enumerate(ident):
                 if not c.isalpha():
                     continue
                 for x in letters:
-                    if x in merged.get(c.lower(), c.lower()):
+                    if x == c.lower():
                         continue
                     for v in (ident[:i] + x + ident[i + 1:], ident[:i] + x.upper() + ident[i + 1:]):
+                        if v[i] == "I" and c.lower() in "il":
+                            continue                        # a capital I is read as i and as l (the design)
                         if self.matches(v, ident):
                             bad.append(v)
                 drop = ident[:i] + ident[i + 1:]
@@ -323,37 +412,112 @@ class F11OneCanonicalKey(unittest.TestCase):
         self.assertFalse(self.matches("Allison", "Alison"))
         self.assertFalse(self.matches("Alisov", "Alison"))
 
-    def test_f11_stated_over_match(self):
-        for v in ("Allson", "Aiison", "Ailson", "A1ison", "AIis0n"):
-            self.assertTrue(self.matches(v, "Alison"), v)
-        self.assertTrue(any("Allson" in x for x in M.OVER_MATCH))
-        # stated (review E advisor check): real names that differ only by i and l share a key under m4
-        for a, b in (("Delia Smith", "Della Smith"), ("Hailey Brown", "Halley Brown"), ("Neil Young", "Nell Young")):
-            self.assertTrue(self.matches(b, a), (a, b))
-        self.assertTrue(any("Della" in x for x in M.OVER_MATCH))
-        self.assertTrue(self.matches("lan Smith", "Ian Smith"))             # no longer in NOT_COVERED
-        self.assertFalse(any("lan for a declared Ian" in x for x in M.NOT_COVERED))
+    def test_m5_documented_misses(self):
+        """NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no
+        more letters than digits."""
+        for text, ident in (("Allson", "Alison"), ("Aiison", "Alison"), ("lan Smith", "Ian Smith"),
+                            ("XQ-l00l", "XQ-1001"), ("XQ-IOOI", "XQ-1001"), ("A11s0n", "Alison")):
+            self.assertFalse(self.matches(text, ident), (text, ident))
+        nc = " ".join(M.NOT_COVERED)
+        for word in ("Allson", "XQ-l00l", "A11s0n"):
+            self.assertIn(word, nc)
 
-    def test_f11_closure_over_the_tables(self):
-        """Every case pair that the matcher declares closed shares the key; every confusable source (letter or digit)
-        shares the key of its prototype, except the published not-closed capitals."""
-        nc = set(M.not_closed())
-        self.assertIn("Ν", nc)                                       # Greek capital Nu: its small form looks like v
-        self.assertLess(len(nc), 400, "the not-closed list is a short published exception, not the rule")
+    def test_m5_stated_over_match(self):
+        for text, ident in (("AIEX KIM", "Alex Kim"), ("DELIA SMITH", "Della Smith"), ("NEIL YOUNG", "Nell Young"),
+                            ("HAILEY BROWN", "Halley Brown"), ("Ne1l Young", "Neil Young"), ("Ne1l Young", "Nell Young"),
+                            ("EIIa Moreno", "Elia Moreno"), ("EIIa Moreno", "Ella Moreno")):
+            self.assertTrue(self.matches(text, ident), (text, ident))
+        om = " ".join(M.OVER_MATCH)
+        for word in ("DELIA", "Ne1l", "several subjects"):
+            self.assertIn(word, om)
+        self.assertNotIn("Delia and Della", om)     # plain text naming one of them no longer matches the other
+
+    # -- the cap ------------------------------------------------------------------------------------------------
+    def test_m5_cap_refuses_identifiers_over_it(self):
+        self.assertIsNone(M.identifier_problem("Boooo Boooo Boooo"))         # 12 o: at most 2**12 = 4096 readings
+        for over in ("Boooo Boooo Booooo", "Lillian Oliveira"):              # 8192; 3**8 * 2 = 13122
+            p = M.identifier_problem(over)
+            self.assertIsNotNone(p, over)
+            self.assertIn(str(CAP), p, over)
+            with self.assertRaises(M.IdentifierRefused):
+                M.check_identifiers([over])
+        for ok in ("Alison Smith", "Kimberly Moore", "XQ-1001", "100010001", "A1B0C1D0E1"):
+            self.assertIsNone(M.identifier_problem(ok), ok)
+
+    def test_m5_window_over_the_cap_is_not_enumerated(self):
+        self.assertEqual(len(M.windows("I" * 12)), CAP)                      # 2**12 readings: every one
+        self.assertEqual(M.windows("I" * 13 + " Kim"), {M.key("Kim")})      # 2**13: no identifier can match it
+        self.assertLessEqual(len(M.windows("I1I1I1 Kim")), CAP + 1)
+
+    # -- invariants --------------------------------------------------------------------------------------------
+    def test_m5_identity_key_is_one_of_the_text_keys(self):
+        rnd = random.Random(self.SEED + 1)
+        plain = [x for x in self.IDENTS if not any(c in x for c in "I10")]
+        samples = list(self.IDENTS) + ["AIIson", "A1ison", "J0hn Smith", "ΗΛΊΑΣ", "Ⅱ Kim", "ＡＩＩＳＯＮ"]
+        samples += [self.variant(rnd, i) for i in self.IDENTS for _ in range(20)]
+        bad = []
+        for s in samples:
+            ws = M._windows_at(s)
+            lo, hi = min(a for _, a, _ in ws), max(b for _, _, b in ws)
+            whole = {w for w, a, b in ws if (a, b) == (lo, hi)}
+            if M.key(s) not in whole:
+                bad.append(("identity key not a text key", s))
+            if s in plain and whole != {M.key(s)}:
+                bad.append(("more than one key without a both-readings glyph", s, len(whole)))
+        self.assertEqual(bad[:5], [], f"{len(bad)} broken")
+        for x in ("0", "1", "I", "l", "o", "O", "i"):
+            k = M.canonical(x)
+            self.assertEqual(M.canonical(k), k, x)
+        self.assertEqual((M.canonical("1"), M.canonical("0")), ("1", "0"))
+
+    def test_m5_both_readings_glyphs(self):
+        """Pinned per Unicode version; each reading checked through the text path, and no other reading."""
+        name = {M.canonical(x): x for x in "ilo01"}
+        table = getattr(M, "both_readings", dict)()
+        counts = {}
+        for g, rs in table.items():
+            k = "".join(sorted(name.get(r, "?") for r in rs))
+            counts[k] = counts.get(k, 0) + 1
+        self.assertEqual(counts, BOTH.get(UCD), "pin the computed table on this Unicode version")
+        get = lambda g: "".join(sorted(name.get(r, "?") for r in table.get(g, ())))
+        for gs, want in (("IΙІＩⅠ𝐈", "il"), ("1１¹𝟏", "1il"), ("0０⁰", "0o")):
+            for g in gs:
+                self.assertEqual(get(g), want, hex(ord(g)))
+        for g in "liLoOӀ":
+            self.assertNotIn(g, table, hex(ord(g)))
+        probe = {"i": ("K{}m Lee", "Kim Lee"), "l": ("A{}ex Kim", "Alex Kim"), "o": ("M{}ore Kim", "Moore Kim"),
+                 "1": ("XQ-{}001", "XQ-1001"), "0": ("XQ-1{}01", "XQ-1001")}
+        bad = []
+        for g, rs in table.items():
+            have = {name.get(r) for r in rs}
+            for n, (t, ident) in probe.items():
+                if self.matches(t.format(g), ident) != (n in have):
+                    bad.append((hex(ord(g)), n))
+        self.assertEqual(bad[:10], [], f"{len(bad)} readings differ from the table")
+
+    def test_m5_not_closed_list(self):
+        for c in ("Ν", "Η", "Ɨ", "Ы", "Ꙑ"):
+            self.assertIn(c, self.nc, hex(ord(c)))
+        for c in ("I", "Ι", "І", "Ⅱ", "Ĳ"):
+            self.assertNotIn(c, self.nc, hex(ord(c)))           # read both ways (or per letter), so not uncovered
+        self.assertEqual(len(self.nc), NOT_CLOSED.get(UCD), "pin the computed list on this Unicode version")
+
+    def test_m5_closure_over_the_tables(self):
+        """Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a
+        both-readings glyph, the other form is one of its readings inside a word; except the not-closed capitals."""
         broken = []
         for o in range(0x110000):
             c = chr(o)
-            if unicodedata.category(c)[0] not in "LN" or c in nc:
+            if unicodedata.category(c)[0] not in "LN" or c in self.nc:
                 continue
             k = M.canonical(c)
             if M.canonical(k) != k:
                 broken.append(("idempotent", hex(o)))
-            f = c.casefold()
-            if f != c and k != M.canonical(f):
-                broken.append(("case", hex(o)))
-            p = self.conf.get(c)
-            if p is not None and M.canonical(c) != M.canonical(p):
-                broken.append(("conf", hex(o)))
+            for other, kind in ((c.casefold(), "case"), (self.conf.get(c), "conf")):
+                if other is None or other == c or M.canonical(other) == k:
+                    continue
+                if M.key(f"ka{other}ka") not in M.windows(f"ka{c}ka"):
+                    broken.append((kind, hex(o)))
         self.assertEqual(broken[:10], [], f"{len(broken)} code points break the closure")
 
 

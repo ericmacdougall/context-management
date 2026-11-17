@@ -1,5 +1,6 @@
-"""Live Postgres test for D3 after review C (DESIGN-NOTES "Redesign after review C"; ASSUMPTION under decision 10 and
-decision R1: no span redaction, whole-event removal only). Builds the schema from scratch in a throwaway database (as
+"""Live Postgres test for D3 after review C (DESIGN-NOTES "Redesign after review C"; ASSUMPTION under decision 10;
+decision R1, decided by the coordinator on the user's delegation 2026-11-17: no span redaction, whole-event removal
+only). Builds the schema from scratch in a throwaway database (as
 wp.setup --reset does), connects as the real login roles (wp_app, wp_rev1, wp_rev2: their own pgpass files), and drops
 the database afterwards. HMACs, matcher ids and ciphertexts here are opaque test bytes: the store never sees plaintext.
 Fixture events are inserted as wp_owner with ONLY the insert guard (events_guard) disabled for the insert and
