@@ -16,6 +16,10 @@ Status: design note for gate reviews 2 to 7 of the licence rehearsal (GoodQA #16
 | F10 | 6 | an empty campaign raised `ValueError` instead of UNVERIFIED; coverage text overstated status handling | C absent evidence, E words exceed code |
 | F11 | 7 | EXP2-T1 trusted the stored `flag_rate` and never read the control's counts; deleting or zeroing `client_labelled` still passed | D derived figure trusted, B control sample not required |
 | F12 | 7 | numbers had no domain: -1 or 0.5 failed requests, rate Infinity or 2.0, licence failures Infinity or 1e9, error magnitude -1 all passed | D value outside its domain |
+| F13 | 8 | the refusal behind each EXP1-T2 timing was selected upstream by a raw predicate and never classified: `moment_analysis` took any DLS error (401, 503, transport 0) as the refusal, `lib.classify` labelled a 503 with licence text LICENCE_ERROR, and the evidence read only the timing, so EXP1-T2 passed for all of these and for a stored `first_refusal_status` of 101, 302 or 429; `recompute.py` had the same predicate | A outcome not classified, D derived figure trusted |
+| F14 | 8 | `10**400` raised OverflowError out of `evidence.parse` (`math.isfinite`, float division) | D value outside its domain |
+| F15 | 8 | the docs claimed that no construction path of any kind could produce invalid evidence; nested evidence was checked with `isinstance` (a subclass passes) and windows stayed mutable lists | E words exceed code |
+| F16 | 8 | CALLSITES called the migrated-index DELETE an ignored cleanup; its status is stored as `r["delete"]` and the migration gate requires SUCCESS | E words exceed code |
 
 Classes:
 
@@ -80,7 +84,7 @@ Decision: use **stdlib frozen dataclasses with declarative field specifications*
    - `SPEC`: field name to (raw path, kind or nested evidence class, optional).
    - `RELATIONS`: cross-field constraints: `le`, `eq`, `sum_eq`, `ratio_matches`, `ge_diff`, `windows_match`.
 
-   **The constructor enforces the invariants**, not only `parse()`. `Evidence.__post_init__` checks every stored field's domain, every enforced control and every relation over stored fields, so an out-of-domain evidence object cannot exist however it is built. `parse()` additionally checks the relations that involve a stored derived figure (a `verify` field: `flag_rate`, `fail_fraction`, the recorded `T3_ttl_s`), which is then dropped.
+   **The constructor enforces the invariants**, not only `parse()`. `Evidence.__post_init__` checks every stored field's domain, every enforced control and every relation over stored fields, so validated construction from JSON, or ordinary construction by trusted Python code, cannot produce an out-of-domain evidence object (Python does not stop code that deliberately bypasses a frozen dataclass; see section 3b, F15). `parse()` additionally checks the relations that involve a stored derived figure (a `verify` field: `flag_rate`, `fail_fraction`, the recorded `T3_ttl_s`), which is then dropped.
 5. **Controls are evidence types that cannot exist without their sample.**
    - `DlsControl`: SUCCESS outcome, 1 ≤ returned < 8, `only_kw_a` true.
    - `BatteryTrial`: the allowed document readable, the hidden one 404, nothing hidden leaked, on every one of the 12 paths.
@@ -101,12 +105,64 @@ Decision: use **stdlib frozen dataclasses with declarative field specifications*
 - The generator takes intended statuses from its own table (`INTENDED_STATUS`), not from `Outcome`, so it cannot inherit a classifier error. It also removes the licence text from a 403 where a licence refusal is intended.
 - Differential on invalid inputs (run for the review report, not in the suite): every generated case judged by 4761862's gate-table `gate()` and by `verdicts.judge`. Result: 2,349 cases, 0 that the old code did not pass and the redesign passes, 197 that the old code passed and the redesign does not (classes B and D), 2,152 the same.
 
+## 3b. Review 8: the observation boundary (F13 to F16)
+
+F13 is class A and D again, one layer earlier: typed parsing began in the summarizer, but the recording code had already decided which
+observation was "the refusal" with its own raw predicate and stored only the timing. The evidence then parsed a well-typed number whose
+meaning had been settled upstream. Patching the predicate would leave the shape (a derived figure detached from its observation) in place.
+
+Research (2026-11-17, web search "parse at the boundary where data enters ... parse, don't validate"):
+- thoughtbot, "A Broader Take on Parsing", https://thoughtbot.com/blog/a-broader-take-on-parsing : parsing is a funnel of stages, each
+  narrowing the type, starting where the data enters. Confidence medium (general engineering guidance).
+- deviq, "Parse, don't validate", https://deviq-hugo.pages.dev/principles/parse-dont-validate/ and OpenShrike check SEC-TYPESCRIPT-001
+  (parse boundary data before trusting types): parse untrusted input once at the edge into precise types. Confidence medium.
+No source addressed provenance of derived measurement figures specifically; the design below applies the funnel to the recording step.
+
+Design:
+1. **The boundary moves to the recording.** `observe.py` (pure) classifies every observation a verdict depends on into an
+   `evidence.Outcome` where it is recorded (`exp2.moment_analysis`, the EXP2-T5 control counts) and where committed raw files are first
+   re-read (`summarize.load`, `recompute.py`). `lib.classify` and the exp3 recorder label LICENCE_ERROR only for case LICENCE_REFUSAL.
+2. **A timing exists only attached to its refusal.** The recording stores `first_refusal: {status, licence_text, rel_resp_s}` per probe,
+   selected by `REQUIRED_REFUSAL` (licence probes: LICENCE_REFUSAL; dls_search: AUTHORISATION_REFUSAL). The evidence types
+   `LicenceRefusalAt` / `DlsRefusalAt` re-derive the Outcome and enforce the required case; `first_refusal` is mandatory. The legacy
+   `first_refusal_rel_resp_s` is a `verify` field that must equal `first_refusal.at_s`; `first_refusal_status` is not read.
+3. **Counts are recounted by case.** EXP2-T5 reads `licence_refusals` (control rows whose Outcome is LICENCE_REFUSAL), not the
+   "non-compliant" substring count; the legacy counts stay `verify`/relation-checked.
+4. **Committed lives** are re-derived from their raw files in memory (`summarize._backfill_observed`), attached only when the re-derivation
+   reproduces the recorded timing, successes-after and n (moments) or the recorded control n (T5). No raw file, no attachment: UNVERIFIED.
+5. **F14:** integers are bounded by type and magnitude (`MAX_INT = 2**53`); input-shaped ArithmeticError, TypeError, ValueError and
+   RecursionError become Unparsed at `Evidence.parse` and `evidence.parse`; report helpers bound ints the same way.
+5a. **Generator extension finding:** the DLS after-cell `class` was a free "text" field; a numeric string or nested object passed EXP1-T4.
+   It is now kind `cell_class`, a closed set (AVAILABLE, LICENCE_ERROR, OTHER_ERROR, TRANSPORT, SKIP, UNVERIFIED_PREREQUISITE,
+   EMPTY_WITNESS); `text` fields accept exactly str or dict. Differential vs 4761862: 3,822 cases, 0 loosened, 635 tightened.
+6. **F15, stated truthfully:** validated construction from JSON under trusted Python code. Nested evidence is checked by exact type;
+   windows are stored as tuples. Python cannot stop trusted code from bypassing a frozen dataclass, and Python 3.9 `make_dataclass` has no
+   slots; the AST test keeps verdict code to evidence objects.
+
+### Derived-field audit (every derived figure a verdict reads)
+
+| gate | derived field(s) | where derived | how it is carried now |
+|---|---|---|---|
+| EXP1-T2 | per-probe refusal timing, successes after it, n | `observe.moments` from poll rows | carried: `first_refusal` Outcome (status + licence flag) enforced to the required case; timing nested in it; legacy timing must agree. Committed: down_7 re-derived from poll.gz; down_1..6 have no raw polls: UNVERIFIED |
+| EXP1-T3 latch | cell outcome | status + error body stored per cell | carried: Outcome parsed from the stored status and body |
+| EXP1-T4 DLS | control outcome, `only_kw_a`, `returned`; after outcome, cell class | `matrix` from status, ids and body | carried: Outcomes parsed from stored status and body; `only_kw_a`/`returned` are id comparisons (not statuses), domain-checked; cell class used only to reject prerequisite labels |
+| EXP1 battery | per-path outcome; `returned_hidden_doc`, `returned_any_source` | `matrix` from status and body markers | outcome carried; the body-marker flags are recorded booleans with no stored body (section 5): trusted figures, enforced on the trial control |
+| EXP2-T1 | examined, mismatches, control counts | rows + oracle labels and ids | not statuses; counts with relations; down_7 recomputed by recompute.py (section 5) |
+| EXP2-T2 | failed requests, failure windows | rows' `ok` = `lib.succeeded` (Outcome SUCCESS) | carried at recording: any non-SUCCESS is a failure (a misclassified failure can only lower availability) |
+| EXP2-T3 | flip latency, labels after flip | rows' backend/client labels and times | labels, not statuses; relations to start_basic times and recorded TTL |
+| EXP2-T4 | `sem_failed_loud_licence_or_missing`, `sem_failed_other` | `exp2.classify_sem_failure` | carried: "licence" is now Outcome LICENCE_REFUSAL and "missing_endpoint" Outcome NOT_FOUND with the inference marker; every semantic write is acked (200/201) or failed. Committed lives lack `sem_failed_other`: UNVERIFIED |
+| EXP2-T5 | licence-refusal count | `observe.control_counts` over control rows | carried: counted by Outcome case; committed lives recounted from rows.gz when n reproduces; no rows.gz: UNVERIFIED |
+| EXP3 migration | copy counts, magnitudes, cosine; migrated op statuses | `exp3` from vectors (not stored) | statuses carried as Outcomes; vector figures trusted (section 5) and domain-checked |
+| EXP3 semonly | call outcome, hits | `exp3` | outcome parsed from stored status |
+| matrix cell classes | class per cell | `lib.classify` | reports and prerequisite labels only; LICENCE_ERROR now only LICENCE_REFUSAL |
+| recompute.py | moment per probe times, T1, T3 | raw rows | report only, never read by a verdict; moment selection now by required Outcome case |
+
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
 - `exp2.T1_examined`, `T1_mismatches` and `T1_backend_without_oracle`: computed by the harness from rows and oracle. down_7 rows are recomputed by recompute.py. The domain is still enforced: counts, with mismatches ≤ examined.
 - `T2_longest_failure_window_s`: checked against `T2_failure_windows` when fewer than 10 windows are stored. With 10 (the list is truncated), it must be ≥ the longest stored window, and the stored windows' failures ≤ `T2_failed_requests`.
 - `T3_flip_latency_s`: derived from rows; recompute.py recomputes T3 for all lives. In up lives the recorded `T3_ttl_s` must equal the life's `ttl`.
-- `first_refusal_rel_resp_s`: from poll rows; raw polls exist for down_7 only.
+- `first_refusal_rel_resp_s`: no longer trusted (review 8 F13). It must sit next to its refusal Outcome; raw polls exist for down_7 only, so down_1..6 EXP1-T2 is UNVERIFIED.
 - `exp3` vector error magnitudes and cosine: computed from vectors that are not stored.
 - `exp2.writes` counts: from a backend scroll at the end of the life.
 
@@ -116,7 +172,7 @@ The harness modules record observations; they decide no gate. Their remaining ra
 - `c == 200` guards that read a response body only on success (`exp2`, `exp3`, `matrix`, `oracle`, `life`, `exp4`): the figure they extract is None or absent otherwise, and that does not parse.
 - `assert c == 200` in exp3 migration setup and exp2 fixture loading: aborts.
 - `200 <= c < 300` in the matrix fixture helpers: the same SUCCESS case.
-- Text matches on "non-compliant" in `exp2` and `recompute.py`: they count licence failures from raw rows and produce counts that the parser domain-checks.
+- Text matches on "non-compliant" in `exp2` (`licence_failures`, a legacy report count): relation-checked, not used by a verdict; the T5 verdict reads `licence_refusals`, counted by Outcome case.
 - `summarize.exp3_checks` `silent`, `reads_diff` and `semonly` lists: reports that read statuses for display only.
 
 None of these values reaches a verdict except through `evidence.parse`.

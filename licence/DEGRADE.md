@@ -78,7 +78,7 @@ Trial expiry by the clock (status `expired`): NOT TESTED (a node clock cannot be
 - **Gate coverage (gate reviews 5 to 7, F6 to F12): verdicts over typed evidence.** Gate reviews 2 to 7 each found the next unchecked condition in the same verdict code. The fix is a redesign, described in DESIGN-VERDICTS.md (scenario list, research, design):
   - `evidence.py` parses each life once into immutable evidence objects. Every leaf has a typed domain: finite values, integer counts ≥ 0, observed counts ≥ 1, rates in [0, 1], signed offsets only where stated. Every cross-field relation is declared and checked: numerator ≤ denominator, parts summing to the total, a stored derived rate equal to its counts, a flip no earlier than the transition request, failure windows consistent with the failure figures.
   - HTTP statuses become a closed set of outcome cases, and only a 403 is ever a refusal. Rates exist only as proportions of counts; a stored rate is checked against its counts and then dropped.
-  - The constructors enforce every domain, control and relation, so an out-of-domain evidence object cannot be built by any route.
+  - The constructors enforce every domain, control and relation (nested evidence by exact type, containers as tuples). The guarantee is validated construction from JSON under trusted Python code; Python cannot prevent code that deliberately bypasses a frozen dataclass.
   - A control is a type that cannot be built without its sample.
   - Fixed key sets (5 probes, 12 battery paths, 2 indices × 4 operations) are one field per key.
   - `verdicts.py` judges only those objects. Evidence that does not parse is UNVERIFIED with the parse reason, which reports carry as `<gate>_reason`.
@@ -88,14 +88,15 @@ Trial expiry by the clock (status `expired`): NOT TESTED (a node clock cannot be
     - A generator builds invalid evidence from the type definitions: every leaf mutated across its domain, every relation broken inside the fields' own domains, every outcome case other than the intended one, and emptied containers. Over 2,000 generated cases; none may PASS or raise, and the healthy fixture passes.
     - A structural test confirms each verdict takes exactly one evidence object and that `verdicts.py` never subscripts life data or compares a bare HTTP status.
   - Differential on invalid inputs, run against 4761862's gate-table summarizer: 2,349 generated cases, 0 loosened (old non-PASS, new PASS), 197 tightened, 2,152 the same.
+  - After gate review 8 (refusal Outcomes carried, huge ints, numeric strings, nested and long values added to the generator): 3,822 generated cases, 0 loosened, 635 tightened, 3,187 the same. The extended generator found one more open domain: the DLS after-cell `class` accepted any string or object ("5", a nested object passed EXP1-T4); it is now the closed set of matrix cell classes, and the verdict's not-observed list now uses matrix's actual `SKIP` label (it named `SKIPPED`).
   - The one optional field is `exp2.writes.sem_failed_other` (addendum D): when it is absent, EXP2-T4 passes only if `sem_failed` is 0.
   - Figures still trusted because the file holds no underlying counts are listed in DESIGN-VERDICTS.md section 5.
   - The aggregate `all_status[T1..T5]` covers the EXP2 gates only. It is UNVERIFIED when either direction has no complete life. Otherwise it is FAIL if any life fails, else UNVERIFIED if any life is not PASS, else PASS. An empty campaign is UNVERIFIED.
 
-  Tables generated from `verdicts.GATES` and the evidence types (13 gates, 36 evidence types, 181 leaf fields):
+  Tables generated from `verdicts.GATES` and the evidence types (13 gates, 39 evidence types, 194 leaf fields as the gates read them):
   | gate | lives | evidence type | verdict |
   |---|---|---|---|
-  | EXP1-T2 | down | `Moment` | first licence refusal of every licensed probe within 5 s of start_basic, no success after it |
+  | EXP1-T2 | down | `Moment` | every mandatory probe's first refusal of its required Outcome case (licence probes LICENCE_REFUSAL, dls_search AUTHORISATION_REFUSAL), carried with its timing, within 5 s of start_basic; no success after it |
   | EXP1-T3 | down | `Latch` | every licensed search path refuses with a licence refusal |
   | EXP1-T4 | down | `Dls` | positive restricted control on trial; after start_basic the DLS user's search is refused |
   | EXP1-T4-battery | down | `Battery` | the same control and a trial battery control; every read path refused, nothing returned |
@@ -104,15 +105,18 @@ Trial expiry by the clock (status `expired`): NOT TESTED (a node clock cannot be
   | EXP2-T3-down | down | `FlipDown` | first client-labelled answer within 5 s of start_basic; no backend label after it |
   | EXP2-T3-up | up | `FlipUp` | first backend-labelled answer within TTL + 5 s of start_trial; no client label after it |
   | EXP2-T4 | both | `WritesGate` | no acknowledged write lost; every semantic write failure classified loud |
-  | EXP2-T5-down | down | `LicenceDown` | >= 95% of control requests after 1 s fail with the licence error |
-  | EXP2-T5-up | up | `LicenceUp` | >= 95% licence failures before start_trial; every control request succeeds after it |
+  | EXP2-T5-down | down | `LicenceDown` | >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case) |
+  | EXP2-T5-up | up | `LicenceUp` | >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it |
   | EXP3-migration | down | `Migration` | every migrated copy equal to its source; Basic operations on migrated indices succeed |
   | EXP3-semonly-control | down | `SemOnly` | semantic-only fixture answers semantic, match and match_all with hits |
 
   | evidence type | field: raw path (domain; intended or enforced observation) | relations |
   |---|---|---|
-  | `MomentProbe` | first_refusal_s: `first_refusal_rel_resp_s` (finite [-0.5, inf])<br>success_after_refusal: `success_after_first_refusal` (int [0, inf]; intended 0)<br>n: `n` (int [1, inf]) | le success_after_refusal n |
-  | `Moment` | rrf: `exp1_moment.rrf` (`MomentProbe`)<br>linear: `exp1_moment.linear` (`MomentProbe`)<br>semantic_query: `exp1_moment.semantic_query` (`MomentProbe`)<br>inference_use: `exp1_moment.inference_use` (`MomentProbe`)<br>dls_search: `exp1_moment.dls_search` (`MomentProbe`) | - |
+  | `LicenceRefusalAt` | outcome: `status` (outcome case; must be LICENCE_REFUSAL)<br>at_s: `rel_resp_s` (finite [-0.5, inf]) | - |
+  | `LicenceMomentProbe` | first_refusal: `first_refusal` (`LicenceRefusalAt`)<br>success_after_refusal: `success_after_first_refusal` (int [0, inf]; intended 0)<br>n: `n` (int [1, inf])<br>first_refusal_s: `first_refusal_rel_resp_s` (finite [-0.5, inf]; stored derived figure, checked then dropped) | le success_after_refusal n<br>eq first_refusal_s first_refusal.at_s |
+  | `DlsRefusalAt` | outcome: `status` (outcome case; must be AUTHORISATION_REFUSAL)<br>at_s: `rel_resp_s` (finite [-0.5, inf]) | - |
+  | `DlsMomentProbe` | first_refusal: `first_refusal` (`DlsRefusalAt`)<br>success_after_refusal: `success_after_first_refusal` (int [0, inf]; intended 0)<br>n: `n` (int [1, inf])<br>first_refusal_s: `first_refusal_rel_resp_s` (finite [-0.5, inf]; stored derived figure, checked then dropped) | le success_after_refusal n<br>eq first_refusal_s first_refusal.at_s |
+  | `Moment` | rrf: `exp1_moment.rrf` (`LicenceMomentProbe`)<br>linear: `exp1_moment.linear` (`LicenceMomentProbe`)<br>semantic_query: `exp1_moment.semantic_query` (`LicenceMomentProbe`)<br>inference_use: `exp1_moment.inference_use` (`LicenceMomentProbe`)<br>dls_search: `exp1_moment.dls_search` (`DlsMomentProbe`) | - |
   | `LatchCell` | outcome: `status` (outcome case; intended LICENCE_REFUSAL)<br>error: `error` (text) | - |
   | `Latch` | retriever_rrf: `exp1_after.retriever_rrf` (`LatchCell`)<br>retriever_linear: `exp1_after.retriever_linear` (`LatchCell`)<br>text_similarity_reranker_gate: `exp1_after.text_similarity_reranker_gate` (`LatchCell`) | - |
   | `DlsControl` | outcome: `status` (outcome case; must be SUCCESS)<br>only_kw_a: `only_kw_a` (bool; must be True)<br>returned: `returned` (int [1, 7]) | - |
@@ -129,11 +133,11 @@ Trial expiry by the clock (status `expired`): NOT TESTED (a node clock cannot be
   | `Availability` | failed: `exp2.T2_failed_requests` (int [0, inf])<br>requests: `exp2.T2_non_control_requests` (int [1, inf])<br>longest_window_s: `exp2.T2_longest_failure_window_s` (finite [0, inf])<br>windows: `exp2.T2_failure_windows` (windows) | le failed requests<br>windows_match windows longest_window_s failed |
   | `FlipDown` | flip_s: `exp2.T3_flip_latency_s` (finite [-inf, inf])<br>backend_after_client: `exp2.T3_backend_after_first_client` (int [0, inf]; intended 0)<br>t_req: `start_basic.t_req` (finite [1, inf])<br>t_resp: `start_basic.t_resp` (finite [1, inf]) | le t_req t_resp<br>ge_diff flip_s t_req t_resp |
   | `FlipUp` | flip_s: `exp2.T3_flip_latency_s` (finite [0, inf])<br>ttl_s: `ttl` (finite [0, inf])<br>ttl_recorded: `exp2.T3_ttl_s` (finite [0, inf]; stored derived figure, checked then dropped)<br>client_after_backend: `exp2.T3_client_after_first_backend` (int [0, inf]; intended 0) | eq ttl_recorded ttl_s |
-  | `Writes` | acked: `acked` (int [1, inf])<br>acked_absent: `acked_absent` (int [0, inf]; intended 0)<br>sem_acked: `sem_acked` (int [1, inf])<br>sem_acked_absent: `sem_acked_absent` (int [0, inf]; intended 0)<br>sem_failed: `sem_failed` (int [0, inf])<br>sem_failed_present: `sem_failed_present` (int [0, inf]; intended 0)<br>sem_failed_loud: `sem_failed_loud_licence_or_missing` (int [0, inf])<br>sem_failed_other: `sem_failed_other` (int [0, inf]; intended 0; optional)<br>loss_control: `control_injected_loss_detected` (bool; intended True) | le acked_absent acked<br>le sem_acked_absent sem_acked<br>le sem_failed_present sem_failed<br>le sem_failed_loud sem_failed<br>le sem_failed_other sem_failed |
+  | `Writes` | acked: `acked` (int [1, inf])<br>acked_absent: `acked_absent` (int [0, inf]; intended 0)<br>sem_acked: `sem_acked` (int [1, inf])<br>sem_acked_absent: `sem_acked_absent` (int [0, inf]; intended 0)<br>sem_failed: `sem_failed` (int [0, inf])<br>sem_failed_present: `sem_failed_present` (int [0, inf]; intended 0)<br>sem_failed_loud: `sem_failed_loud_licence_or_missing` (int [0, inf])<br>sem_failed_other: `sem_failed_other` (int [0, inf]; intended 0)<br>loss_control: `control_injected_loss_detected` (bool; intended True) | le acked_absent acked<br>le sem_acked_absent sem_acked<br>le sem_failed_present sem_failed<br>le sem_failed_loud sem_failed<br>le sem_failed_other sem_failed |
   | `WritesGate` | writes: `exp2.writes` (`Writes`) | - |
-  | `ControlDown` | n: `n` (int [1, inf])<br>licence_failures: `licence_failures` (int [0, inf])<br>other_failures: `other_failures` (int [0, inf])<br>success: `success` (int [0, inf])<br>fail_fraction: `fail_fraction` (finite [0, 1]; stored derived figure, checked then dropped) | sum_eq ('licence_failures', 'other_failures', 'success') n<br>ratio_matches fail_fraction ('licence_failures', 'other_failures') n |
+  | `ControlDown` | n: `n` (int [1, inf])<br>licence_failures: `licence_failures` (int [0, inf])<br>other_failures: `other_failures` (int [0, inf])<br>success: `success` (int [0, inf])<br>fail_fraction: `fail_fraction` (finite [0, 1]; stored derived figure, checked then dropped)<br>licence_refusals: `licence_refusals` (int [0, inf]) | sum_eq licence_failures+other_failures+success n<br>ratio_matches fail_fraction licence_failures+other_failures n<br>le licence_refusals licence_failures+other_failures |
   | `LicenceDown` | control: `exp2.T5_control_after_1s` (`ControlDown`) | - |
-  | `ControlPre` | n: `n` (int [1, inf])<br>failures: `failures` (int [0, inf])<br>licence_failures: `licence_failures` (int [0, inf]) | le licence_failures failures<br>le failures n |
+  | `ControlPre` | n: `n` (int [1, inf])<br>failures: `failures` (int [0, inf])<br>licence_refusals: `licence_refusals` (int [0, inf])<br>licence_failures: `licence_failures` (int [0, inf]; stored derived figure, checked then dropped) | le licence_refusals failures<br>le failures n<br>le licence_failures failures |
   | `ControlPost` | n: `n` (int [1, inf])<br>success: `success` (int [0, inf]) | le success n |
   | `LicenceUp` | before: `exp2.T5_control_before_start_trial` (`ControlPre`)<br>after: `exp2.T5_control_after_trial` (`ControlPost`) | - |
   | `VectorCopyGT` | src: `src_count` (int [1, inf])<br>dst: `dst_count` (int [1, inf])<br>mismatches: `vector_mismatches` (int [0, inf]; intended 0)<br>knn_top1: `knn_self_top1` (int [0, inf])<br>knn_of: `knn_self_of` (int [1, inf])<br>src_vs_truth: `src_vs_ground_truth_max_abs` (finite [0, inf]) | le knn_top1 knn_of<br>le mismatches src |
@@ -154,7 +158,21 @@ Trial expiry by the clock (status `expired`): NOT TESTED (a node clock cannot be
   - No life stored a failure window.
   - Every down flip offset is at or after `t_req - t_resp`: flips 0.03 to 0.06 s against bounds of -0.065 to -0.085 s.
 
-  The non-PASS verdicts and their parse or verdict reasons are unchanged:
+  **Correction, gate review 8 (F13): EXP1-T2 down_1..6 change class from PASS to UNVERIFIED.** The statement above (no class change at
+  the redesign) was true of the redesign's code, but that code trusted a refusal timing whose refusal was never classified. Every committed
+  down life stores per probe only `first_refusal_status` (403 in all 35 probe entries of down_1..7), `first_refusal_rel_resp_s`,
+  `success_after_first_refusal` (0 everywhere), `success_before_transition`, `n` and the DLS returned counts. There is no cell class and
+  no licence marker, so a stored 403 cannot be told to be a licence refusal rather than an authorisation refusal, and the timing was
+  selected by the recording's raw predicate (DLS: any error). Raw polls exist only for down_7 (`down_7.poll.gz`, 494 polls): after
+  start_basic the four licensed probes show 380 LICENCE_ERROR/403 (and one AVAILABLE/200 poll that completed after `t_resp` but is not
+  after the first refusal), dls_search 381 OTHER_ERROR/403. Re-derived through `observe.moments`, down_7 reproduces every stored timing,
+  successes-after and n exactly, and its EXP1-T2 stays PASS with the refusal Outcome attached. down_1..6 have no raw polls: UNVERIFIED,
+  reason `exp1_moment.rrf.first_refusal: absent`. No row changed and nothing was rerun.
+  Re-applied to all committed files against c930416: 6 of 102 statuses change (exactly those six), the EXP2 aggregate is unchanged
+  (T1 FAIL, T2 PASS, T3 PASS, T4 UNVERIFIED, T5 PASS). EXP2-T5 now reads `licence_refusals`, counted by Outcome case from `rows.gz`
+  (every life has one; the recount reproduces every recorded `n`); its class is unchanged in all 12 lives.
+
+  The other non-PASS verdicts and their parse or verdict reasons are unchanged:
   - Battery UNVERIFIED in down_1..5: `dls_battery_trial` absent.
   - Semantic-only control UNVERIFIED in down_1..6: `semonly_trial` absent.
   - EXP2-T4 UNVERIFIED in all 12 lives: semantic write failures never classified.
