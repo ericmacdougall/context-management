@@ -731,7 +731,25 @@ DEV results (dev seeds; development observations, not proof):
 - At 3fa69c1 in the previous owner's environment (runs/dev-3fa69c1 on t2-dev, emlab-pg-polr-16096; the run tree equals 3fa69c1 plus
   this amendment's draft, all 71 files sha256-identical): tests.test_pg, test_pg_boundary, test_verify_pgdiff_mig 24 OK; e1 to e6, b1,
   b2, b3, pg_diff, mig_rehearsal all PASS, verifier agree=True on all 11, DEV.VERIFY f6b95b12.
-@@DEVF1652AA@@
+- At f1652aa in this owner's environment (runs/dev-f1652aa; GIT_STAMP dirty=true, the only dirty file this amendment's draft; log
+  ~/emlab2-16096/policy/logs/dev_f1652aa.log): all 11 PASS, verifier agree=True on all 11, DEV.VERIFY ef311d13.
+  - Unit phase (tests.test_pg, test_pg_boundary, test_verify_pgdiff_mig, test_findings, test_surface, test_round3): 72 tests, 71 OK,
+    1 FAIL = test_surface.test_manifest_is_pinned (PgSession unpinned; fixed in df26c3c, after which test_surface is 9 OK on the
+    host). PG N2 blocks 13.99 15.09 then 7.03 to 7.86 s per 2000 proposals (flat after warm-up). H8 race: production 200 sends, 0
+    bad; control h8_second_lookup 200 bad.
+  - B1: PASS, every control found its expected invariant, no outcome code unreached, 403 s.
+  - B2: 3000 logs, 454,450 events, 0 mismatched logs, 1354 contested logs; controls (mismatch rate, floor 10 percent):
+    agent_may_decide 0.819, agent_may_supersede 0.679, m2_no_original 0.573, n2_no_cap 0.146, n2_no_role 0.751, stale_unchecked 0.870,
+    snapshot_drops_revocations 0.180, restore_drops_idempotency 0.982.
+  - B3: S1 to S8 and S4b 50 of 50 with overlap witnessed 50 of 50; differential arm 40 logs, 7672 events, 0 mismatches, 0 chain or
+    audit failures; controls passed 50 of 50 each, overlap no_head_lock 50, no_advisory_lock 49, idem_unprotected 50.
+  - PG-DIFF: B2 arm 300 logs, 45,206 events, 0 code, view or log mismatches; B1 arms r1 540,504 transitions / 66,565 states, r2
+    94,300 / 8,188, r3 205,650 / 14,816, caps 111,943 / 17,343, joint 220,401 / 21,710, all 0 mismatches; control_no_stale caught
+    (b2 arm 463 code mismatches, r2 arm 5,586).
+  - MIG: 3 dev seeds, clean arms pass; forged_grant refused ("judged principal_revoked by the definer core") and head_tampered
+    refused ("differs from the old tables in ['head']"), fingerprints unchanged.
+  - Between f1652aa and this commit only tests/surface_manifest.json (df26c3c) and THRESHOLDS.md changed; pol/, exp/, verify/ and
+    ops/ are identical.
 
 Stamped run of this round: once, after this commit, on a clean synced copy (SYNC_DEST=emlab2-16096/policy/runs/stamped-<commit>/src),
 with `POL_SEEDS=stamped sh hostrun.sh all` and no override variable. GIT_STAMP must say dirty=false with commit == thresholds commit ==
