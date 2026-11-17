@@ -69,8 +69,10 @@ Stamped single runs after the void (`single-runs/`, code at 62c6be5 unless noted
 
 Every single run above ran under the disk gate as it was before review-2 N2 (fixed in 72c0708). That gate's `end`
 ignored the return code of `docker logs`, so a failed log read passed as "no flood stage". It also printed, without
-rejecting, an own-usage growth over the cap. None of these runs is re-judged by the fixed gate; each is rerun under it
-(amendment 23). What the saved outputs show, per run (`disk_gate end` line of each `one.<head>.<label>.out`):
+rejecting, an own-usage growth over the cap. None of these runs is re-judged by the fixed gate. Every one that uses the
+stores is rerun under it at the post-fix commit (amendment 23). heldout_secrets uses no store, so the flood-stage
+gate has nothing to judge in it, and its FAIL is not rerun (amendment 20). ASSUMPTION, open to main's ruling: it stays
+as recorded at 62c6be5. What the saved outputs show, per run (`disk_gate end` line of each `one.<head>.<label>.out`):
 
 | Run | Own usage at end | Flood lines printed | Log read now, same window (exit, lines, flood) |
 |---|---|---|---|
