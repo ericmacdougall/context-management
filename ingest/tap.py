@@ -392,13 +392,17 @@ class PortTap:
         if mref is not None and getattr(self, "_last", {}).get(stream, {}).get("call") == call_n:
             self._last[stream]["resp_k"] = mref["k"]
 
-    def call(self, request: dict, stream: bool = False, retry_of: Optional[int] = None):
+    def call(self, request: dict, stream: bool = False, retry_of: Optional[int] = None, new_count: Optional[int] = None):
         """retry_of: OPTIONAL host-declared retry identity (the call number being resent). Content alone cannot tell a retry from a
         legitimate repeat; without this the ingester treats an identical resend as a flagged possible duplicate. The tap records the claim;
-        the ingester honours it only for the immediately preceding confirmed call with identical keys (ASSUMPTION: an honest host)."""
+        the ingester honours it only for the immediately preceding confirmed call with identical keys (ASSUMPTION: an honest host).
+        new_count: OPTIONAL explicit boundary, the number of trailing messages of this request that are new. When given the ingester uses it
+        and never infers; without it, alignment that is not provably unambiguous opens a blocking gap (ASSUMPTION: an honest, correct host)."""
         stream_id, sent, body, blobs, reg = self._prepare(request, stream)
         if retry_of is not None:
             body["retry_of"] = int(retry_of)
+        if new_count is not None:
+            body["new_count"] = new_count          # validated by the ingester (integer, 0 to the request length); see PREREG-amend-4 A1
         self.crash("before_req_log")
         seq, call_n, _ = self._append(stream_id, "REQ", None, body, blobs, new_call=True)
         new_ents, used_blocks = self._touched

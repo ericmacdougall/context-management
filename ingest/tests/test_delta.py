@@ -46,16 +46,21 @@ class F1Control(unittest.TestCase):
 
 
 class F2Oracle(unittest.TestCase):
-    def test_private_key_body_left_behind_is_not_complete_redaction(self):
+    def test_complete_redaction_predicate_is_separate_from_detection(self):
+        """amend-3 version of this test pinned the frozen scanner's key-body leak (complete_redaction 0 of 5). amend-4 repaired the scanner,
+        so the same example now redacts completely; the predicate must still report detection and complete redaction separately."""
         from ingest import heldout
         r = heldout._catch({"private_key_header": heldout.HELDOUT["private_key_header"]}, 5, 9)["per_variant"]["private_key_header"]
-        self.assertEqual(r.get("complete_redaction"), 0, "scanner redacts only the header; the body survives (row: %r)" % (r,))
-        self.assertEqual(r.get("detected"), 5)
+        self.assertEqual((r.get("detected"), r.get("complete_redaction")), (5, 5))
 
 
 class F3Repeats(Base):
-    def _check(self, provider, pattern, window, n=20):
-        rig, led = repeated_conversation(Rig, self.sub("%s-%s-%d" % (provider, pattern, window)), provider, pattern, window, n)
+    def _check(self, provider, pattern, window, n=20, boundary=None):
+        """amend-4 changed the contract: repeated-content hosts are exact only when they declare new_count (boundary); unique-text hosts
+        need no declaration."""
+        if boundary is None:
+            boundary = pattern != "unique"
+        rig, led = repeated_conversation(Rig, self.sub("%s-%s-%d" % (provider, pattern, window)), provider, pattern, window, n, boundary=boundary)
         rig.sync()
         self.assertEqual(len(self.user_events(rig)), n, "%s %s window %d" % (provider, pattern, window))
         self.assertEqual(event_tuples(rig.events()), led.expected())
@@ -81,8 +86,11 @@ class F3Repeats(Base):
                 self.assertEqual([g for g in rig.ing.gaps(rig.stream_id, open_only=False) if g["kind"] == "ambiguous_alignment"], [])
 
     def test_repeats_are_reported_not_hidden(self):
-        rig = self._check("anthropic", "same", 4)
+        rig, led = repeated_conversation(Rig, self.sub("nb"), "anthropic", "same", 4, 20)          # no boundary declared
+        rig.sync()
         self.assertTrue(rig.ing.completeness(rig.stream_id)["ambiguous_calls"])
+        self.assertFalse(rig.ing.claim_exactly_once(rig.stream_id))
+        self.assertGreaterEqual(len(self.user_events(rig)), 20)
 
     def test_stateless_host_two_identical_turns_both_ingested(self):
         """yes, then yes again, from a host that resends only the newest message. Indistinguishable from a retry by content."""

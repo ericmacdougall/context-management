@@ -29,17 +29,30 @@ class SecretBlocked(Exception):
     """Policy 'block': a secret was found in an outbound request; nothing is sent (the log gets a tombstone)."""
 
 
+_PEM_BLOCK = (r"-----BEGIN [A-Z ]*PRIVATE KEY-----"
+              r"(?:[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----|(?:[ \t]*\r?\n)?(?:[A-Za-z0-9+/=]{8,}[ \t]*\r?\n?)*)")
 _PATTERNS = [
-    ("api_key", re.compile(r"sk-[A-Za-z0-9_-]{16,}")),
+    ("api_key", re.compile(r"sk[-_][A-Za-z0-9_-]{16,}")),
     ("aws_key", re.compile(r"AKIA[0-9A-Z]{16}")),
     ("bearer", re.compile(r"(?i)bearer\s+[A-Za-z0-9._~+/=-]{16,}")),
-    ("private_key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+    ("private_key", re.compile(_PEM_BLOCK)),                     # the whole block (header, body, footer); with no footer: header plus the base64 body that follows
     ("password_kv", re.compile(r"(?i)(?:password|passwd|secret)\s*[:=]\s*\S{6,}")),
+    ("vendor_token", re.compile(r"gh[pousr]_[A-Za-z0-9]{30,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{30,}")),
+    ("jwt", re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*")),
+    ("aws_secret", re.compile(r"(?i)aws_secret_access_key\s*[:=]\s*\S{16,}")),
+    ("url_credentials", re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[^/\s:@]+:[^/\s:@]{4,}@")),
 ]
 _B64 = re.compile(r"[A-Za-z0-9+/_-]{16,}={0,2}")
 _HEX = re.compile(r"(?:[0-9a-fA-F]{2}){12,}")
 _PCT = re.compile(r"(?:%[0-9a-fA-F]{2}[A-Za-z0-9._~-]{0,3}){6,}")
 _ESC = re.compile(r"(?:\\{1,2}u[0-9a-fA-F]{4}|\\{1,2}x[0-9a-fA-F]{2}){6,}")
+_B32 = re.compile(r"[A-Za-z2-7]{16,}={0,6}")
+_QP = re.compile(r"(?:=[0-9A-Fa-f]{2}){6,}")
+_HTML = re.compile(r"(?:&#(?:[xX][0-9a-fA-F]+|[0-9]+);){6,}")
+_OCT = re.compile(r"(?:\\[0-7]{3}){6,}")
+_SPLIT = re.compile(r"(?:[^\s][-._ \t]){12,}[^\s]")                  # one separator between single characters
+_WRAP = re.compile(r"(?:[A-Za-z0-9+/_-]{8,}[ \t]*\r?\n)+[A-Za-z0-9+/_-]{4,}={0,2}")        # an encoded token broken over lines
+_TOKENS = (_B64, _HEX, _PCT, _ESC, _B32, _QP, _HTML, _OCT, _SPLIT, _WRAP)
 
 
 def _direct(t: str) -> Optional[str]:
@@ -51,13 +64,14 @@ def _direct(t: str) -> Optional[str]:
 
 def _decode_variants(tok: str) -> List[str]:
     out = []
+    squeezed = re.sub(r"\s+", "", tok)
     try:
-        pad = tok + "=" * (-len(tok) % 4)
+        pad = squeezed + "=" * (-len(squeezed) % 4)
         out.append(base64.b64decode(pad.replace("-", "+").replace("_", "/"), validate=False).decode("utf-8", "ignore"))
     except (binascii.Error, ValueError):
         pass
     try:
-        out.append(bytes.fromhex(tok).decode("utf-8", "ignore"))
+        out.append(bytes.fromhex(squeezed).decode("utf-8", "ignore"))
     except ValueError:
         pass
     out.append(urllib.parse.unquote(tok))
@@ -65,6 +79,25 @@ def _decode_variants(tok: str) -> List[str]:
         out.append(tok.replace("\\\\", "\\").encode("ascii").decode("unicode_escape"))
     except (UnicodeError, ValueError):
         pass
+    try:
+        b = squeezed.upper()
+        out.append(base64.b32decode(b + "=" * (-len(b) % 8)).decode("utf-8", "ignore"))
+    except (binascii.Error, ValueError):
+        pass
+    if "=" in tok:
+        try:
+            out.append(re.sub(r"=([0-9A-Fa-f]{2})", lambda m: chr(int(m.group(1), 16)), tok))
+        except ValueError:
+            pass
+    if "&#" in tok:
+        try:
+            out.append(re.sub(r"&#([xX][0-9a-fA-F]+|[0-9]+);", lambda m: chr(int(m.group(1)[1:], 16) if m.group(1)[0] in "xX" else int(m.group(1))), tok))
+        except (ValueError, OverflowError):
+            pass
+    if "\\" in tok:
+        out.append(re.sub(r"\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), tok))
+    out.append(tok[::2])                                  # one separator between every character
+    out.append(re.sub(r"[-._ \t]", "", tok))
     return out
 
 
@@ -84,7 +117,7 @@ class ReferenceScanner(Scanner):
     def _encoded(self, text: str, depth: int) -> Optional[str]:
         if depth > self.max_depth:
             return None
-        for rx in (_B64, _HEX, _PCT, _ESC):
+        for rx in _TOKENS:
             for m in rx.finditer(text):
                 for dec in _decode_variants(m.group(0)):
                     if not dec:
@@ -99,13 +132,19 @@ class ReferenceScanner(Scanner):
         for kind, rx in _PATTERNS:
             for m in rx.finditer(text):
                 out.append(Finding(m.start(), m.end(), kind))
-        for rx in (_B64, _HEX, _PCT, _ESC):
+        for rx in _TOKENS:
             for m in rx.finditer(text):
                 for dec in _decode_variants(m.group(0)):
                     k = dec and (_direct(dec) or _direct(_norm(dec)) or self._encoded(dec, 1))
                     if k:
                         out.append(Finding(m.start(), m.end(), k if k.startswith("encoded_") else "encoded_" + k))
                         break
+        rev = text[::-1]
+        for kind, rx in _PATTERNS:
+            if kind in ("private_key", "url_credentials", "jwt"):
+                continue
+            for m in rx.finditer(rev):
+                out.append(Finding(len(text) - m.end(), len(text) - m.start(), "reversed_" + kind))
         n = _norm(text)
         if n != text and (_direct(n) or self._encoded(n, 0)) and not out:
             out.append(Finding(0, len(text), "obfuscated_whole_string"))   # cannot map spans: fail closed, redact the string

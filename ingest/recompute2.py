@@ -92,22 +92,23 @@ def main(d):
     ok = sum(1 for r in x["runs"] if r["user_events"] == r["calls"] == r["distinct_user"] and r["assistant_events"] == r["calls"] == r["distinct_assistant"]
              and not r["blocking_gaps"] and r["summary_provs"] in ([], ["host"]) and (r["host"] != "compacting" or r["summary_events"] > 0))
     check("item11 pass", ok, x["summary"]["pass"], bad)
-    x = load(d, "item12")
-    for k, rk, sk in (("heldout", "heldout_rows", "heldout"), ("tuned", "tuned_rows", "tuned_for_comparison")):
-        rows = x["runs"][rk]
-        S = x["summary"][sk]
-        check("item12 %s whole_string_absent (old predicate)" % k, [sum(r["whole_string_absent"] for r in rows), len(rows)], [S["overall_whole_string_absent"], S["overall_n"]], bad)
-        check("item12 %s complete_redaction (corrected)" % k, [sum(r["complete_redaction"] for r in rows), len(rows)], [S["overall_complete_redaction"], S["overall_n"]], bad)
-        check("item12 %s detected" % k, sum(r["detected"] for r in rows), S["overall_detected"], bad)
-        # per-class: recomputed from rows
-        per = {}
-        for r in rows:
-            q = per.setdefault(r["variant"], [0, 0])
-            q[0] += r["complete_redaction"]
-            q[1] += r["whole_string_absent"]
-        check("item12 %s per-class" % k, {v: q for v, q in per.items()}, {v: [p["complete_redaction"], p["whole_string_absent"]] for v, p in S["per_variant"].items()}, bad)
-    x = load(d, "item12b")
-    check("item12b benign changed", [sum(r["changed"] for r in x["runs"]), len(x["runs"])], [x["summary"]["overall_changed"], x["summary"]["overall_n"]], bad)
+    x = load(d, "item12c")
+    R, S = x["runs"], x["summary"]
+    for rk, sk in (("fresh_rows", None), ("tuned_rows", "tuned_set_for_comparison"), ("burned_heldout_rows", "burned_heldout_for_comparison")):
+        rows = R[rk]
+        if sk is None:
+            check("item12c fresh complete_redaction", [sum(r["complete_redaction"] for r in rows), len(rows)], [S["fresh"]["complete_redaction"], S["fresh"]["n"]], bad)
+            check("item12c fresh detected", sum(r["detected"] for r in rows), S["fresh"]["detected"], bad)
+            check("item12c fresh whole_string_absent", sum(r["whole_string_absent"] for r in rows), S["fresh"]["whole_string_absent"], bad)
+            cells = {}
+            for r in rows:
+                cells.setdefault(r["cell"], [0, 0])[0] += r["complete_redaction"]
+                cells[r["cell"]][1] += 1
+            check("item12c fresh per cell", {k: v for k, v in cells.items()}, {k: [v["complete_redaction"], v["n"]] for k, v in S["fresh_per_cell"].items()}, bad)
+        else:
+            check("item12c %s complete_redaction" % rk, [sum(r["complete_redaction"] for r in rows), len(rows)], [S[sk]["overall_complete_redaction"], S[sk]["overall_n"]], bad)
+            check("item12c %s whole_string_absent" % rk, sum(r["whole_string_absent"] for r in rows), S[sk]["overall_whole_string_absent"], bad)
+    check("item12c benign changed", [sum(r["changed"] for r in R["benign_rows"]), len(R["benign_rows"])], [S["benign_fresh"]["changed"], S["benign_fresh"]["n"]], bad)
     for tag in ("item2a", "item2b", "item2c", "item2d", "item2a_openai", "item2b_openai", "item2c_openai", "item2d_openai"):
         y = load(d, tag)
         check(tag + " oracle matches", sum(1 for r in y["runs"] if r["oracle_match"]), y["summary"]["oracle_identical"], bad)
@@ -117,17 +118,33 @@ def main(d):
     y = load(d, "item2f")
     check("item2f arm equals baseline", sum(r["arm_equals_baseline"] for r in y["runs"]), y["summary"]["arm_equals_baseline"], bad)
     check("item2f oracle mismatch", sum(1 for r in y["runs"] if not r["oracle_match"]), y["summary"]["oracle_mismatch"], bad)
-    y = load(d, "item13")
-    rep = [r for r in y["runs"] if r["pattern"] != "unique"]
-    uni = [r for r in y["runs"] if r["pattern"] == "unique"]
-    check("item13 repeated pass", sum(1 for r in rep if r["user_events"] == 20 and r["assistant_events"] == 20 and r["oracle_match"] and not r["blocking_gaps"]), y["summary"]["repeated_pass"], bad)
-    check("item13 repeated runs with ambiguity flag", sum(1 for r in rep if r["ambiguous_calls"]), y["summary"]["repeated_runs_with_ambiguity_flag"], bad)
-    check("item13 unique ambiguity flags", sum(1 for r in uni if r["ambiguous_calls"]), y["summary"]["unique_runs_with_ambiguity_flag"], bad)
+    y = load(d, "item2g")
+    check("item2g legacy projection matches", sum(r["legacy_projection_matches"] for r in y["runs"]), y["summary"]["legacy_projection_matches"], bad)
+    check("item2g payload oracle mismatch", sum(1 for r in y["runs"] if not r["payload_oracle_match"]), y["summary"]["payload_oracle_mismatch"], bad)
+    check("item2g arm equals baseline", sum(r["arm_equals_baseline"] for r in y["runs"]), y["summary"]["arm_equals_baseline"], bad)
+    for tag in ("item13", "item13c"):
+        y = load(d, tag)
+        arms = {"declared_boundary": lambda r: r["boundary_declared"] and r["pattern"] != "unique", "no_boundary": lambda r: (not r["boundary_declared"]) and r["pattern"] != "unique",
+                "unique_text": lambda r: r["pattern"] == "unique"}
+        for k, f in arms.items():
+            rows = [r for r in y["runs"] if f(r)]
+            if k not in y["summary"]:
+                continue
+            S = y["summary"][k]
+            check("%s %s exact and unblocked" % (tag, k), sum(1 for r in rows if r["oracle_match"] and not r["blocking_gaps"] and r["exactly_once"]), S["exact_and_unblocked"], bad)
+            check("%s %s no event lost" % (tag, k), sum(1 for r in rows if r["missing_events"] == 0), S["no_event_lost"], bad)
+            check("%s %s blocking" % (tag, k), sum(1 for r in rows if r["blocking_gaps"]), S["with_blocking_gap"], bad)
+            check("%s %s extra events" % (tag, k), sum(r["extra_events"] for r in rows), S["extra_flagged_events"], bad)
     y = load(d, "item13b")
     R = y["runs"]
-    check("item13b undeclared", sum(1 for r in R if r["undeclared"]["user_events"] == 2 and r["undeclared"]["flagged_user_events"] == 1 and r["undeclared"]["ambiguous_calls"] == [2]), y["summary"]["undeclared_flagged_duplicate"], bad)
-    check("item13b declared", sum(1 for r in R if r["declared"]["user_events"] == 1 and r["declared"]["assistant_events"] == 2 and "declared_retry" in r["declared"]["port_kinds"] and r["declared"]["ambiguous_calls"] == []), y["summary"]["declared_suppressed_visibly"], bad)
+    check("item13b undeclared", sum(1 for r in R if r["undeclared"]["user_events"] == 2 and r["undeclared"]["flagged_user_events"] == 1 and r["undeclared"]["ambiguous_calls"] == [2] and not r["undeclared"]["exactly_once"]), y["summary"]["undeclared_flagged_duplicate"], bad)
+    check("item13b declared", sum(1 for r in R if r["declared"]["user_events"] == 1 and r["declared"]["assistant_events"] == 2 and "declared_retry" in r["declared"]["port_kinds"] and r["declared"]["ambiguous_calls"] == [] and r["declared"]["declared_calls"] == [2] and r["declared"]["exactly_once"] and r["declared"]["resp_events_marked_declared"] >= 1), y["summary"]["declared_suppressed_visibly"], bad)
     check("item13b false claim", sum(1 for r in R if r["false_claim"]["user_events"] == 2 and "retry_claim_ignored" in r["false_claim"]["port_kinds"] and "declared_retry" not in r["false_claim"]["port_kinds"]), y["summary"]["false_claim_ignored"], bad)
+    for tag in ("item5", "item5_openai"):
+        y = load(d, tag)
+        em2 = lambda r: r["variant"].endswith("MISS") or r["position"].endswith("MISS")
+        check(tag + " covered fragment hits", sum(1 for r in y["runs"]["real"] if not em2(r) and r["disk_fragment_hits"]), y["summary"]["covered_with_fragment_hit"], bad)
+        check(tag + " control fragment hits", sum(1 for r in y["runs"]["control"] if not em2(r) and r["disk_fragment_hits"]), y["summary"]["control_with_fragment_hit"], bad)
     y = load(d, "item11")
     check("item11 ambiguity flags (unique text)", sum(1 for r in y["runs"] if r["ambiguous_calls"]), y["summary"]["runs_with_ambiguity_flag"], bad)
     print("\nMISMATCHES: %d" % len(bad))

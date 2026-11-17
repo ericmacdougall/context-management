@@ -127,7 +127,22 @@ def resp_text(provider: str, o: dict) -> str:
 # Built at the HOST while a scripted conversation runs, from the messages the host appends and the response the stub returns.
 # It imports no Ingester, reads no log record and no event key, and does not call shapes.blocks_of_message: provider message
 # structure is re-derived here on purpose, so a shared omission in the ingest path cannot also be in the oracle.
+def _canon(o) -> str:
+    return json.dumps(o, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _content_text(c) -> str:
+    """Tool-result content as text: a string, or the concatenated text of a list of text blocks."""
+    if c is None:
+        return ""
+    if isinstance(c, str):
+        return c
+    return "".join(x.get("text", "") for x in c if isinstance(x, dict))
+
+
 def msg_tuples(provider: str, msg: dict, call_n: int, side: str) -> List[tuple]:
+    """(call_n, side, prov, kind, ident, payload). payload: tool name and canonical arguments for a tool call, the result text for a tool
+    result, the signature for thinking (PREREG-amend-4 A2); empty for text, where ident is the text."""
     out: List[tuple] = []
     role, c = msg.get("role"), msg.get("content")
     if provider == "anthropic":
@@ -135,20 +150,21 @@ def msg_tuples(provider: str, msg: dict, call_n: int, side: str) -> List[tuple]:
         for b in blocks:
             t = b.get("type")
             if t == "text":
-                out.append((call_n, side, role, "text", b["text"]))
+                out.append((call_n, side, role, "text", b["text"], ""))
             elif t == "thinking":
-                out.append((call_n, side, "assistant_thinking", "thinking", b["thinking"]))
+                out.append((call_n, side, "assistant_thinking", "thinking", b["thinking"], b.get("signature", "")))
             elif t == "tool_use":
-                out.append((call_n, side, "assistant", "tool_call", b["id"]))
+                out.append((call_n, side, "assistant", "tool_call", b["id"], b["name"] + "|" + _canon(b.get("input"))))
             elif t == "tool_result":
-                out.append((call_n, side, "tool", "tool_result", b["tool_use_id"]))
+                out.append((call_n, side, "tool", "tool_result", b["tool_use_id"], _content_text(b.get("content"))))
         return out
     if role == "tool":
-        return [(call_n, side, "tool", "tool_result", msg["tool_call_id"])]
+        return [(call_n, side, "tool", "tool_result", msg["tool_call_id"], _content_text(c))]
     if isinstance(c, str) and c != "":
-        out.append((call_n, side, role, "text", c))
+        out.append((call_n, side, role, "text", c, ""))
     for tc in msg.get("tool_calls") or []:
-        out.append((call_n, side, "assistant", "tool_call", tc["id"]))
+        fn = tc["function"]
+        out.append((call_n, side, "assistant", "tool_call", tc["id"], fn["name"] + "|" + _canon(json.loads(fn["arguments"]))))
     return out
 
 
@@ -170,25 +186,40 @@ class HostLedger:
         self.rows += msg_tuples(self.provider, msg, call_n, "resp")
 
     def expected(self) -> List[list]:
-        return sorted([list(r) for r in self.rows], key=lambda r: (r[0], r[1], r[2], r[3], str(r[4])))
+        return sorted([list(r) for r in self.rows], key=lambda r: (r[0], r[1], r[2], r[3], str(r[4]), str(r[5])))
 
 
 def event_tuples(events: List[dict]) -> List[list]:
-    """Project ingested events to the oracle's tuple shape (port and injected-block events are excluded: events() already filters port)."""
+    """Project ingested events to the oracle's tuple shape, payload included (port, injected-block and host-authored events excluded)."""
     out = []
     for e in events:
         if e["prov"] in ("port", "memory_injected", "host"):
             continue
         data = json.loads(e["content"]) if e["content"] else {}
         meta = json.loads(e["meta"]) if e["meta"] else {}
+        payload = ""
         if e["kind"] == "text":
             ident = data.get("text")
         elif e["kind"] == "thinking":
-            ident = data.get("thinking")
+            ident, payload = data.get("thinking"), data.get("signature", "")
+        elif e["kind"] == "tool_call":
+            ident = meta.get("tool_id")
+            if "function" in data:
+                payload = data["function"]["name"] + "|" + _canon(json.loads(data["function"]["arguments"]))
+            else:
+                payload = data.get("name", "") + "|" + _canon(data.get("input"))
+        elif e["kind"] == "tool_result":
+            ident = meta.get("tool_id")
+            payload = _content_text(data.get("content")) if "content" in data else data.get("text", "")
         else:
             ident = meta.get("tool_id")
-        out.append([e["call_n"], e["side"], e["prov"], e["kind"], ident])
-    return sorted(out, key=lambda r: (r[0], r[1], r[2], r[3], str(r[4])))
+        out.append([e["call_n"], e["side"], e["prov"], e["kind"], ident, payload])
+    return sorted(out, key=lambda r: (r[0], r[1], r[2], r[3], str(r[4]), str(r[5])))
+
+
+def legacy_event_tuples(events: List[dict]) -> List[list]:
+    """The id-only projection used up to add7c86 (kept to show what it cannot see)."""
+    return sorted([r[:5] for r in event_tuples(events)], key=lambda r: (r[0], r[1], r[2], r[3], str(r[4])))
 
 
 def repeated_conversation(rig_cls, tmp: str, provider: str, pattern: str, window: int, n: int, response: str = "ok", per_call: int = 1,

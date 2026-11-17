@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS witness(stream TEXT PRIMARY KEY, seq INTEGER NOT NULL
 
 BLOCKING = {"seq_hole": 1, "tail_truncated": 1, "chain_break": 1, "conflicting_duplicate": 1, "blob_missing": 1,
             "unlogged_assistant_message": 1, "delta_mismatch": 1, "seed_invalid": 1, "assistant_message_not_in_log": 1, "history_rewritten": 0,
-            "ambiguous_alignment": 0}
+            "ambiguous_alignment": 1}
 
 
 class Fenced(Exception):
@@ -276,6 +276,20 @@ class Ingester:
             runs = new
         return (best[2], best[0], ties) if best[0] else (0, 0, 0)
 
+    @staticmethod
+    def _clean(keys: List[str], H: List[str], seen: set, s: int, L: int, ties: int) -> bool:
+        """True only when the content alignment is provably the only explanation (PREREG-amend-4 A1): the maximal common run is unique
+        (no tie), it ends at the end of the ingested history, and every unaligned message is unseen. Internal repeats inside the aligned
+        run are allowed (the run as a whole is unique). A repeat of a known message among the unaligned ones, a tie, or a run that stops
+        short of the end of the history is ambiguous."""
+        if L == 0:
+            return not any(k in seen for k in keys)
+        if ties != 1:
+            return False
+        if any(k in seen for k in keys[:s] + keys[s + L:]):
+            return False
+        return keys[s + L - 1] == H[-1] and H[len(H) - L:] == keys[s:s + L]
+
     def _apply_resp(self, stream: str, n: int, seq: int, body: dict) -> Optional[str]:
         c = self.c
         status = body["status"]
@@ -310,36 +324,54 @@ class Ingester:
         note: dict = {"recovered": True} if recovered else {}
         req_note: dict = {}
         declared = req.get("retry_of")
+        nc = req.get("new_count")
         retry_ok = False
         if declared is not None and not recovered:
             # explicit host-declared retry identity (ASSUMPTION: an honest host). Honoured only for the immediately preceding confirmed call
-            # with identical message keys; the suppression it causes is made visible below, never silent.
+            # with identical message keys; the suppression it causes is visible (port event, completeness().declared_calls, meta on the events).
             if base and declared == base[0] and keys == json.loads(base[1]):
                 retry_ok = True
             else:
                 self._emit(stream, n, "meta", 4, 0, "port", "retry_claim_ignored", "info", cj({"claimed": declared}), seq)
+        boundary = None
+        if nc is not None and not recovered and not retry_ok:
+            if isinstance(nc, int) and not isinstance(nc, bool) and 0 <= nc <= len(keys):
+                boundary = nc
+            else:
+                self._emit(stream, n, "meta", 6, 0, "port", "boundary_claim_ignored", "info", cj({"claimed": nc, "messages": len(keys)}), seq)
+        ambiguous = False
         if retry_ok:
-            note = {"retry_of": base[0], "declared": True}
+            note = {"retry_of": base[0], "declared": True, "suppressed_request_messages": len(keys)}
             s, L = 0, len(keys)
+            lead_to, tail_from, det_from, hist_from = 0, len(keys), len(keys), len(keys)
             self._emit(stream, n, "meta", 3, 0, "port", "declared_retry", "info", cj({"retry_of": base[0], "suppressed_request_messages": len(keys)}), seq)
+        elif boundary is not None:
+            # host-declared boundary (ASSUMPTION: honest and correct): used as given, never inferred
+            s, L = len(keys) - boundary, 0
+            note = {**note, "declared": True, "new_count": boundary}
+            lead_to, tail_from, det_from, hist_from = s, s, s, s
+            self._emit(stream, n, "meta", 5, 0, "port", "declared_boundary", "info", cj({"new_count": boundary, "messages": len(keys)}), seq)
         elif H:
             s, L, ties = self._lcsub(keys, H)
             if L == 0:
-                s, L = max(len(keys) - 1, 0), 0          # nothing aligns: only the last message is the new tail, the rest is host-authored
-            elif ties > 1:
-                self._gap(stream, "ambiguous_alignment", seq, seq, {"call": n, "reason": "tie", "ties": ties})
+                s = max(len(keys) - 1, 0)            # nothing aligns: only the last message is the new tail, the rest is host-authored
+            if self._clean(keys, H, seen, s, L, ties):
+                lead_to, tail_from, det_from, hist_from = s, s + L, s + L, s + L
+            else:
+                # Alignment is not provably unambiguous (repeated content, a tie, a repeat of a known message among the unaligned ones).
+                # Do not guess: emit everything that could be new, flag it, block the exactly-once and completeness claims.
+                ambiguous = True
+                det_from = s + L
+                cand = [i for i in range(len(keys)) if i >= s + L or keys[i] in seen]
+                tail_from = min(cand + [max(len(keys) - 1, 0)])
+                lead_to, hist_from = min(s, tail_from), min(det_from, max(len(keys) - 1, 0))
                 req_note = {"ambiguous_repeat": True}
-            if s + L >= len(keys) and keys:
-                # Content alone cannot tell a retry, a regeneration or a legitimate repeat from a request with nothing new. Without a
-                # host-declared retry the final message is never suppressed: it is emitted as a new occurrence, flagged.
-                L = len(keys) - 1 - s if len(keys) - 1 >= s else 0
-                self._gap(stream, "ambiguous_alignment", seq, seq, {"call": n, "reason": "no_new_message"})
-                req_note = {"ambiguous_repeat": True}
+                self._gap(stream, "ambiguous_alignment", seq, seq, {"call": n, "emitted_from": tail_from, "messages": len(keys)})
         else:
             s, L = 0, 0
-        tail_from = s + L
+            lead_to, tail_from, det_from, hist_from = 0, 0, 0, 0
         # leading, unaligned messages: host-authored (compaction summaries, re-seeded context), recorded once, never as user content
-        for i in range(0, s if H or "retry_of" in note else 0):
+        for i in range(0, lead_to):
             if keys[i] in seen:
                 continue
             msg = self._blocks(req["msgs"][i]["h"], provider)
@@ -347,8 +379,8 @@ class Ingester:
                 self._emit(stream, n, "host", i, bi, "host", "host_authored_" + str(roles[i]), "complete", cj(b.data), seq, {"tool_id": b.tool_id})
             c.execute("INSERT OR IGNORE INTO seen VALUES(?,?)", (stream, keys[i]))
         partial_ok = bool(base) and not base[2]
-        for i in range(tail_from, len(keys)):
-            if roles[i] == "assistant" and not (partial_ok and i == tail_from):
+        for i in range(det_from, len(keys)):
+            if roles[i] == "assistant" and not (partial_ok and i == det_from):
                 self._gap(stream, "unlogged_assistant_message", seq, seq, {"call": n, "pos": i, "key": keys[i]})
         # ---- events: system (when changed), request tail, injected marker, response blocks
         last_sys = c.execute("SELECT sys_k FROM calls WHERE stream=? AND state='confirmed' ORDER BY call_n DESC LIMIT 1", (stream,)).fetchone()
@@ -364,7 +396,7 @@ class Ingester:
             for bi, b in enumerate(shapes.blocks_of_message(provider, msg)):
                 self._emit(stream, n, "req", i, bi, b.prov, b.kind, "complete", cj(b.data), seq,
                            {"tool_id": b.tool_id, **note, **req_note, **({"unlogged_assistant": True} if roles[i] == "assistant" else {})})
-            if "retry_of" not in note:
+            if "retry_of" not in note and i >= hist_from:
                 c.execute("INSERT OR IGNORE INTO hist VALUES(?,?,?)", (stream, hn, keys[i]))
                 hn += 1
             c.execute("INSERT OR IGNORE INTO seen VALUES(?,?)", (stream, keys[i]))
@@ -431,7 +463,8 @@ class Ingester:
         state = "incomplete" if (blk or pend) else ("complete_except_unconfirmed" if unconf else "complete")
         amb = sorted({json.loads(g["detail"] or "{}").get("call") for g in self.gaps(stream) if g["kind"] == "ambiguous_alignment"} - {None})
         return {"state": state, "complete_up_to": wm if state == "complete" else None, "watermark": wm, "blocking_gaps": blk,
-                "pending_beyond_gap": pend, "unconfirmed_calls": unconf, "in_flight_calls": unconf, "ambiguous_calls": amb}
+                "pending_beyond_gap": pend, "unconfirmed_calls": unconf, "in_flight_calls": unconf, "ambiguous_calls": amb,
+                "declared_calls": [r[0] for r in self.c.execute("SELECT DISTINCT call_n FROM events WHERE stream=? AND prov='port' AND kind IN ('declared_retry','declared_boundary') ORDER BY call_n", (stream,))]}
 
     def claim_complete(self, stream: str, n: int) -> bool:
         """'Memory is complete up to log seq n' with NOTHING outstanding: false across an unconfirmed call or a blocking gap."""

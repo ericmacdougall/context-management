@@ -1,6 +1,8 @@
-"""Held-out scanner variants (PREREG-amend-2 A9). Written AFTER ingest/scan.py was frozen (blob b4b63d74fe7d, commit aa30130) by a
-generator that was not used while tuning. The scanner is NOT edited after seeing these results; if it is, this set is burned.
-The tuned set is the 8 variants of item 5 measured the same way for comparison."""
+"""Scanner variants used before the scanner repair of PREREG-amend-4 (BURNED).
+HELDOUT was registered as a held-out set against the scanner frozen at aa30130 (blob b4b63d74fe7d). The repository records the order of
+commits but cannot show that the generator was independent of earlier tuning; that is asserted by the previous owner, not demonstrated.
+After add7c86 the scanner was repaired using these variants, so HELDOUT and TUNED are both BURNED for the held-out role: they remain only to
+compare old and new scanner figures. The fresh held-out set is ingest/heldout2.py (rule committed before the repair)."""
 from __future__ import annotations
 
 import base64

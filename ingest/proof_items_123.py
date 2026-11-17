@@ -16,7 +16,7 @@ from .canon import cj
 from .controls import ArrivalKeyedIngester
 from .ingester import Fenced, Ingester
 from .portlog import PortLog
-from .proofs_common import REPO, copy_log_prefix, event_sig, event_tuples, scripted_conversation, tmpdir, write_artifact
+from .proofs_common import REPO, copy_log_prefix, event_sig, event_tuples, legacy_event_tuples, scripted_conversation, tmpdir, write_artifact
 from .testkit import Rig
 
 SEEDS = list(range(101, 121))
@@ -559,3 +559,35 @@ def item2f_shared_omission(out: str) -> dict:
                "arm_equals_baseline": sum(r["arm_equals_baseline"] for r in runs), "oracle_mismatch": sum(1 for r in runs if not r["oracle_match"])}
     summary["artifact"] = write_artifact(out, "item2f", {"seeds": SEEDS, "control": "SharedOmissionIngester (drops thinking events)"}, runs, summary)
     return summary
+
+
+def item2g_payload_corruption(out: str) -> dict:
+    """Control for the payload oracle (PREREG-amend-4 A2): CorruptPayloadIngester keeps every tool id and empties tool payloads. The legacy
+    id-only projection cannot see it; the payload oracle can. 20 seeds x 2 providers, item-2a delivery shape."""
+    from .controls import CorruptPayloadIngester
+    runs = []
+    for prov in ("anthropic", "openai"):
+        for seed in SEEDS:
+            tmp = tmpdir()
+            try:
+                rig = scripted_conversation(Rig, tmp, 30, seed=seed, provider=prov)
+                recs = rig.log.read(rig.stream_id)
+                base = CorruptPayloadIngester(os.path.join(tmp, "base.db"), rig.log.blob)
+                base.deliver(recs)
+                base.drain(rig.stream_id)
+                arm = CorruptPayloadIngester(os.path.join(tmp, "arm.db"), rig.log.blob)
+                for b in _plan(recs, random.Random(seed)):
+                    arm.deliver(b)
+                    arm.drain(rig.stream_id)
+                exp = rig.ledger.expected()
+                ev = arm.events(rig.stream_id)
+                runs.append({"provider": prov, "seed": seed, "tool_events_expected": sum(1 for r in exp if r[3] in ("tool_call", "tool_result")),
+                             "arm_equals_baseline": event_sig(ev) == event_sig(base.events(rig.stream_id)),
+                             "legacy_projection_matches": legacy_event_tuples(ev) == sorted([r[:5] for r in exp], key=lambda r: (r[0], r[1], r[2], r[3], str(r[4]))),
+                             "payload_oracle_match": event_tuples(ev) == exp})
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+    S = {"runs": len(runs), "runs_with_tool_events": sum(1 for r in runs if r["tool_events_expected"] > 0), "arm_equals_baseline": sum(r["arm_equals_baseline"] for r in runs),
+         "legacy_projection_matches": sum(r["legacy_projection_matches"] for r in runs), "payload_oracle_mismatch": sum(1 for r in runs if not r["payload_oracle_match"])}
+    S["artifact"] = write_artifact(out, "item2g", {"seeds": SEEDS, "providers": 2, "control": "CorruptPayloadIngester"}, runs, S)
+    return S

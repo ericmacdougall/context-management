@@ -214,6 +214,25 @@ def _disk_hits(d: str, needles: List[str]) -> List[str]:
     return hits
 
 
+def _disk_fragment_hits(d: str, needles: List[str], k: int = 8) -> List[str]:
+    """PREREG-amend-4 A3: a contiguous k-character fragment of any needle in any file of the directory is a hit (partial survival)."""
+    hits = []
+    for f in sorted(os.listdir(d)):
+        p = os.path.join(d, f)
+        if not os.path.isfile(p) or f == "truth.jsonl":
+            continue
+        raw = open(p, "rb").read()
+        for n in needles:
+            b = n.encode()
+            if len(b) <= k:
+                found = b in raw
+            else:
+                found = any(b[i:i + k] in raw for i in range(len(b) - k + 1))
+            if found:
+                hits.append("%s:%d" % (f, len(b)))
+    return hits
+
+
 def _secret_case(variant: str, pos: str, seed: int, control: bool, provider: str = "anthropic") -> dict:
     d = tmpdir()
     rnd = random.Random(seed * 7919 + len(variant) + len(pos))
@@ -264,8 +283,9 @@ def _secret_case(variant: str, pos: str, seed: int, control: bool, provider: str
         sent_has = bool(rig.stub.received) and any(n in s for s in _strings(rig.stub.received[-1]) for n in needles[:1] + forms[:1])
         rig.log.close()
         hits = _disk_hits(d, needles)
+        frag = _disk_fragment_hits(d, needles)
         return {"provider": provider, "variant": variant, "position": pos, "seed": seed, "control": control, "canary_sent_to_model": sent_has,
-                "needles": len(needles), "disk_hits": hits, "files": sorted(os.listdir(d))}
+                "needles": len(needles), "disk_hits": hits, "disk_fragment_hits": frag, "files": sorted(os.listdir(d))}
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -288,6 +308,9 @@ def item5(out: str, provider: str = "anthropic", tag: str = "item5") -> dict:
          "expected_miss_runs": len(runs) - len(covered), "expected_miss_with_disk_hit": sum(1 for r in runs if expected_miss(r) and r["disk_hits"]),
          "expected_miss_detail": sorted({(r["variant"] if r["variant"].endswith("MISS") else r["position"]) for r in runs if expected_miss(r) and r["disk_hits"]}),
          "control_covered_runs": len(cov_ctl), "control_with_disk_hit": sum(1 for r in cov_ctl if r["disk_hits"]),
+         "covered_with_fragment_hit": sum(1 for r in covered if r["disk_fragment_hits"]),
+         "control_with_fragment_hit": sum(1 for r in cov_ctl if r["disk_fragment_hits"]),
+         "expected_miss_with_fragment_hit": sum(1 for r in runs if expected_miss(r) and r["disk_fragment_hits"]),
          "failed_covered_cases": [(r["variant"], r["position"]) for r in covered if r["disk_hits"]][:8],
          "files_scanned_examples": runs[0]["files"]}
     S["artifact"] = write_artifact(out, tag, {"variants": variants, "positions": POSITIONS, "seeds_per_cell": 2, "provider": provider}, {"real": runs, "control": ctl}, S)
