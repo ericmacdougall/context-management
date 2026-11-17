@@ -1,0 +1,4 @@
+# leak_scan_check.sh (fake values): fixed leak_scan
+candidate secret values loaded: 1
+files scanned: 1 files with a secret value: 1
+HIT <tmp>/results/r.json 1

@@ -1,0 +1,3 @@
+# leak_scan_check.sh (fake values): old leak_scan at 3a9eef1
+candidate secret values loaded: 0
+files scanned: 1 files with a secret value: 0
