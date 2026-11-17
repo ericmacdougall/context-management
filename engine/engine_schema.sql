@@ -36,3 +36,17 @@ create index if not exists effect_ledger_tenant on effect_ledger (tenant_id);
 
 -- v3 (delta review): a request id reused with different content is an error (fingerprint of the first content)
 alter table effects add column if not exists fingerprint text;
+
+-- v4 (deploy part 1, goodqa#16096): the durable, operational alert for a poisoned input. One row per (tenant, session, input,
+-- kind); repeats only raise `count` and `last_seen`. Status: open (needs an operator), acked (seen; the input stays
+-- skipped), released (an operator fixed the cause: the input is retried). While open or acked the input is skipped by
+-- reconcile and by the older-unprocessed check, in SQL, so no carried list (and no cap on one) decides it.
+create table if not exists engine_alerts (
+  tenant_id text not null, session_id text not null, event_id text not null, kind text not null,
+  detail text not null default '', count int not null default 1, status text not null default 'open',
+  first_seen timestamptz not null default now(), last_seen timestamptz not null default now(),
+  updated_by text, updated_at timestamptz,
+  primary key (tenant_id, session_id, event_id, kind),
+  check (status in ('open','acked','released'))
+);
+create index if not exists engine_alerts_open on engine_alerts (tenant_id, status);

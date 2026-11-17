@@ -59,6 +59,14 @@ async def main():
             print(f"tree changed since the run started: expected {exp}, found {cur}", flush=True)
             sys.exit(3)
     os.environ["ENGINE_WORKER_IDENT"] = a.identity
+    for i in range(12):                                # additive: a database loaded before engine_alerts existed keeps working;
+        try:                                           # Postgres still starting is waited for (60 s), anything else is raised
+            pgstore.ensure_alert_schema()
+            break
+        except activities.TRANSIENT:
+            if i == 11:
+                raise
+            time.sleep(5)
     mod = importlib.import_module(f"engine.wf.{a.variant}")
     proc = f"{a.identity}-{os.getpid()}"
     client, codec = await connect(proc, a.namespace)

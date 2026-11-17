@@ -161,6 +161,62 @@ def read_digest(tenant, sid, event_id):
     return "d" + hashlib.sha256(row[2].encode()).hexdigest()[:16]
 
 
+# An input with an open or acked alert is skipped by SQL: newer inputs are never held behind it and reconcile never re-queues
+# it, however many such inputs a session has (the carried skip list the workflow passes is now only an optimisation).
+ALERT_SKIP = (" and not exists (select 1 from engine_alerts a where a.tenant_id=e.tenant_id and a.session_id=e.session_id "
+              "and a.event_id=e.event_id and a.status in ('open','acked'))")
+ALERT_KINDS = ("poison",)
+ALERT_STATUSES = ("open", "acked", "released")
+_ALERT_DDL = ("create table if not exists engine_alerts (tenant_id text not null, session_id text not null, event_id text not null, "
+              "kind text not null, detail text not null default '', count int not null default 1, status text not null default 'open', "
+              "first_seen timestamptz not null default now(), last_seen timestamptz not null default now(), updated_by text, "
+              "updated_at timestamptz, primary key (tenant_id, session_id, event_id, kind), "
+              "check (status in ('open','acked','released')))")
+
+
+def ensure_alert_schema():
+    """Additive and idempotent: a worker calls this at start so a database loaded before this table existed keeps working."""
+    with pool().connection() as conn:
+        conn.execute(_ALERT_DDL)
+        conn.execute("create index if not exists engine_alerts_open on engine_alerts (tenant_id, status)")
+
+
+def raise_alert(tenant, sid, event_id, kind, detail=""):
+    """Record (or repeat) an alert. Returns True when this call created it. `detail` is an exception CLASS name or a short
+    fixed phrase, never content. A repeat raises count and last_seen. An acked alert stays acked (the operator accepted it); a
+    released alert (the operator asked for a retry) reopens, because the retry has failed again."""
+    keys.check_tenant(tenant)
+    keys.check_part(sid, "session id")
+    if kind not in ALERT_KINDS:
+        raise ValueError("unknown alert kind %r" % (kind,))
+    with pool().connection() as conn:
+        row = conn.execute(
+            "insert into engine_alerts(tenant_id,session_id,event_id,kind,detail) values (%s,%s,%s,%s,%s) "
+            "on conflict (tenant_id,session_id,event_id,kind) do update set count=engine_alerts.count+1, last_seen=now(), "
+            "status=case when engine_alerts.status='released' then 'open' else engine_alerts.status end "
+            "returning (xmax = 0)", (tenant, sid, event_id, kind, str(detail)[:200])).fetchone()
+    return bool(row[0])
+
+
+def list_alerts(tenant=None, status="open", limit=100):
+    q = ("select tenant_id,session_id,event_id,kind,detail,count,status,first_seen,last_seen from engine_alerts "
+         "where status=%s" + (" and tenant_id=%s" if tenant else "") + " order by first_seen limit %s")
+    args = (status,) + ((tenant,) if tenant else ()) + (limit,)
+    with pool().connection() as conn:
+        return conn.execute(q, args).fetchall()
+
+
+def set_alert_status(tenant, sid, event_id, kind, status, by):
+    """Operator action. 'acked' keeps the input skipped; 'released' lets it be retried. Returns True if a row changed."""
+    if status not in ALERT_STATUSES or not isinstance(by, str) or not APPROVER_RE.match(by):
+        raise ValueError("status must be one of %s and `by` a short operator name" % (ALERT_STATUSES,))
+    with pool().connection() as conn:
+        cur = conn.execute("update engine_alerts set status=%s, updated_by=%s, updated_at=now() "
+                           "where tenant_id=%s and session_id=%s and event_id=%s and kind=%s",
+                           (status, by, tenant, sid, event_id, kind))
+        return cur.rowcount == 1
+
+
 def has_older_unprocessed(tenant, sid, event_id, skip=()):
     """True when an input with a lower seq has no recorded result yet (so this one must wait: sequence order). Inputs
     in `skip` (poisoned: dead-letter failed, alert raised) do not block newer ones."""
@@ -169,7 +225,7 @@ def has_older_unprocessed(tenant, sid, event_id, skip=()):
         row = conn.execute(
             "select 1 from events e where e.tenant_id=%s and e.session_id=%s and e.kind='turn_input' and e.seq < %s "
             "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id) "
-            "and not (e.event_id = any(%s)) limit 1",
+            "and not (e.event_id = any(%s))" + ALERT_SKIP + " limit 1",
             (tenant, sid, seq, keys.result_key_prefix(tenant), list(skip))).fetchone()
     return row is not None
 
@@ -234,8 +290,8 @@ def unprocessed_inputs(tenant, sid, limit=20):
     with pool().connection() as conn:
         rows = conn.execute(
             "select e.event_id from events e where e.tenant_id=%s and e.session_id=%s and e.kind='turn_input' "
-            "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id) "
-            "order by e.seq limit %s", (tenant, sid, keys.result_key_prefix(tenant), limit)).fetchall()
+            "and not exists (select 1 from effects f where f.tenant_id=e.tenant_id and f.key = %s || e.event_id)"
+            + ALERT_SKIP + " order by e.seq limit %s", (tenant, sid, keys.result_key_prefix(tenant), limit)).fetchall()
     return [r[0] for r in rows]
 
 
