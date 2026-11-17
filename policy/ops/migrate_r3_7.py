@@ -12,7 +12,8 @@ forward(conn, tenants, idp_password_file)   ONE transaction; on any check failur
      row in the name of a principal who HAD the authority is indistinguishable from a genuine one (the old schema kept no session
      provenance); the operator must review the log of the R3-7 window if dc_app credentials may have leaked.
   5. The rebuilt chain must equal the old one hash for hash (same chain formula, same events), so an anchor exported before the
-     migration still checks after it. The rebuilt state (principals, roles, heads, proposals) must equal the old tables: a difference
+     migration still checks after it (LIMIT, R3-8: an anchor is only as strong as its storage; FileAnchor is an append-only file, not
+     immutable storage, and events after the last export are protected only by the in-database chain). The rebuilt state (principals, roles, heads, proposals) must equal the old tables: a difference
      means the old state was written outside the event log (R3-7: dc_app could update heads directly) and the migration refuses.
   6. Carried over verbatim: the vault (dc.vals), the subject-token mapping (dc.subject_tokens) and the audit history (dc.audit).
      Not carried: dc.auth_applied (gone with dc.apply_authority). Sessions start empty: every client authenticates again.

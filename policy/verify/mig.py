@@ -1,7 +1,8 @@
 """Independent recomputation of the MIG verdict (exp/mig_rehearsal.py) from its per-arm rows. Stdlib only. The ok flags the experiment
 wrote are ignored; each arm is re-judged from its raw observations.
 
-Clean arm (one per seed): after each forward the pre-migration anchor checks (ok, anchored > 0), the rebuilt view equals the memory fold,
+Clean arm (one per seed): after each forward the pre-migration anchor checks (ok, anchored > 0; LIMIT R3-8: a FileAnchor is an
+append-only file, not immutable storage, and events after its last export are unanchored), the rebuilt view equals the memory fold,
 and each of the three named probe statements by dc_app failed with InsufficientPrivilege exactly (review-3 N8: any other exception, an
 error or a missing probe is not a denial). After the FIRST forward no API request was made (api_request null: the rollback window is
 clean); after the SECOND, the real request through dc_idp + dc_app was APPLIED (a write), the rollback that followed was REFUSED with

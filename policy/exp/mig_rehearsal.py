@@ -4,7 +4,7 @@ emlab-pg-polr-16096, database pol, which every test run reinstalls; the passfile
 Arms.
   A  clean history: install the OLD schema (exp/fixtures/pgcore_5a80e52.py, verbatim from 5a80e52), run random core_gen logs through the
      OLD engine on a dc_app connection (grants and revokes go through dc.apply_authority), add vault and subject-token rows, export
-     the chain heads to a FileAnchor; fingerprint F0 of schema dc (catalog: tables, columns, functions with definitions, ACLs on schema,
+     the chain heads to a FileAnchor (append-only file, not immutable storage: R3-8 LIMIT); fingerprint F0 of schema dc (catalog: tables, columns, functions with definitions, ACLs on schema,
      tables and functions; data: every table's rows hashed in key order) plus the public-schema CREATE privilege.
      forward -> every event replays to its stored code, chain equal hash for hash, state equal; the pre-migration anchor checks on the
           new schema; the rebuilt view equals MemoryState folded over the same events from genesis; dc_app cannot reach the kept old
