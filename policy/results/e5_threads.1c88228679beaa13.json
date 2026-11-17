@@ -1,0 +1,116 @@
+{
+ "name": "e5_threads",
+ "params": {
+  "per_seed": 200,
+  "seeds": [
+   61,
+   62,
+   63,
+   64,
+   65
+  ]
+ },
+ "result": {
+  "items": {
+   "file": "e5_threads.items.9760bf90a8f5c329.jsonl.gz",
+   "sha256": "9760bf90a8f5c3290694a7f93d32faa46d04cb3f9dbcafd8b252248414926cc3"
+  },
+  "not_proven": "timing and ordering side channels; the 'context withheld' count returned by Store.context to the caller; graph shape beyond one hop; store-item conflict notices no longer exist in production (the notice contract is measured on DecisionService only)",
+  "runtime_s": 165.5,
+  "summary": {
+   "arms": {
+    "A_ctl_derive_join_dropped": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 927,
+     "key_rule_worlds": 0,
+     "leak_worlds": 927,
+     "worlds": 1000
+    },
+    "A_ctl_xref_without_decision": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 1000,
+     "key_rule_worlds": 0,
+     "leak_worlds": 1000,
+     "worlds": 1000
+    },
+    "A_enforced": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 0,
+     "key_rule_worlds": 0,
+     "leak_worlds": 0,
+     "worlds": 1000
+    },
+    "B_ctl_flag_always": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 0,
+     "key_rule_worlds": 1000,
+     "leak_worlds": 0,
+     "worlds": 1000
+    },
+    "B_ctl_no_read_check": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 1000,
+     "key_rule_worlds": 0,
+     "leak_worlds": 1000,
+     "worlds": 1000
+    },
+    "B_ctl_unscoped_value": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 0,
+     "key_rule_worlds": 0,
+     "leak_worlds": 0,
+     "worlds": 1000
+    },
+    "B_notice_existence_only": {
+     "flag_wrong": 0,
+     "flags_true": 6732,
+     "interference_worlds": 0,
+     "key_rule_worlds": 0,
+     "leak_worlds": 0,
+     "worlds": 1000
+    },
+    "B_notice_none": {
+     "flag_wrong": 0,
+     "flags_true": 0,
+     "interference_worlds": 0,
+     "key_rule_worlds": 0,
+     "leak_worlds": 0,
+     "worlds": 1000
+    }
+   },
+   "checks": {
+    "control:A_ctl_derive_join_dropped": true,
+    "control:A_ctl_xref_without_decision": true,
+    "control:B_ctl_flag_always": true,
+    "control:B_ctl_no_read_check": true,
+    "positive": true
+   },
+   "verdict": "PASS"
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/e5_threads.py",
+  "at": "2026-11-17T12:23:45Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   1.85546875,
+   2.06591796875,
+   1.95947265625
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}

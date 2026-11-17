@@ -1,0 +1,351 @@
+== e1_lattice 2026-11-17T12:18:15Z free_kb=21365824 db_kb=46604
+RESULT e1_lattice verdict=PASS sha256=ed07fe4db6492051aad0fd19f175aed3d76c3b587c82d8f419b8954b3ee30a91 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/e1_lattice.ed07fe4db6492051.json
+PASS {'derivations': 20000, 'multi': 18065, 'structural': 0, 'semantic': 0, 'probes': 800000, 'allowed': 73779} laws 0 roundtrip {'mismatch': 0, 'stored_derived': 4705} artifact_bytes 9717598 runtime_s 42.9
+ control tenants {'structural_worst_seed': 0.325, 'semantic_worst_seed': 0.1927, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control acl {'structural_worst_seed': 0.68, 'semantic_worst_seed': 0.1243, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control regions {'structural_worst_seed': 0.7904, 'semantic_worst_seed': 0.3661, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control sensitivity {'structural_worst_seed': 0.9176, 'semantic_worst_seed': 0.1207, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control models {'structural_worst_seed': 0.7929, 'semantic_worst_seed': 0.0701, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control banned {'structural_worst_seed': 0.8385, 'semantic_worst_seed': 0.061, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control local_only {'structural_worst_seed': 0.6596, 'semantic_worst_seed': 0.0671, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control restricted {'structural_worst_seed': 0.2861, 'semantic_worst_seed': 0.0811, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control holds {'structural_worst_seed': 0.7201, 'semantic_worst_seed': 0.2057, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+ control subjects {'structural_worst_seed': 0.5956, 'semantic_worst_seed': 0.5956, 'reason_is_dropped_dimension': True, 'meets_floor': True}
+== end e1_lattice 2026-11-17T12:19:00Z free_kb=21355480 low_free_kb=21365064 db_kb=46860
+== e2_egress 2026-11-17T12:19:00Z free_kb=21355476 db_kb=46860
+RESULT e2_egress verdict=PASS sha256=d9b02547db54831bd0025a8e53cb2e13d5de67a0d56f55b9a6c0f7b579000b94 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/e2_egress.d9b02547db54831b.json
+PASS violations 0 forbidden {'eu_only': 5851, 'local_only': 5254, 'model_banned': 2795, 'restricted_channel': 5947, 'other_tenant': 2264, 'plain': 0} permitted {'eu_only': 4283, 'local_only': 3511, 'model_banned': 4699, 'restricted_channel': 4677, 'other_tenant': 0, 'plain': 2873} ['embed', 'export', 'inbox', 'model'] forges 2203 not denied 0 rows 509323
+  ctl_model_port_disabled {'leak_rate': 0.727, 'violations': 11540, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_embed_disabled {'leak_rate': 0.4234, 'violations': 5432, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_inbox_disabled {'leak_rate': 0.4004, 'violations': 4537, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_export_disabled {'leak_rate': 0.4568, 'violations': 5050, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_derive_join_dropped {'leak_rate': 0.261, 'violations': 2177, 'id_pattern_blocks': 0, 'meets_floor': True}
+  ctl_id_pattern_guard {'leak_rate': 0.9802, 'violations': 34578, 'id_pattern_blocks': 2490, 'meets_floor': True}
+  inject-only disabled violations: 0 runtime 90.2
+== end e2_egress 2026-11-17T12:20:46Z free_kb=21347052 low_free_kb=21347064 db_kb=47020
+== e3_clash 2026-11-17T12:20:46Z free_kb=21347052 db_kb=47020
+RESULT e3_clash verdict=PASS sha256=5605fb1ac487c94de2e6ec60505599da196f53eeaeb82ab22753cdbc61738f39 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/e3_clash.5605fb1ac487c94d.json
+PASS {"ctl_body_identity_trusted/forge_body": [100, 30], "ctl_naive_pdp/context": [3000, 1928], "ctl_naive_pdp/fault": [2400, 738], "ctl_naive_pdp/forge_request": [150, 130], "ctl_naive_pdp/planted": [2200, 376], "ctl_no_session_verify/forge_session": [1320, 400], "enforced/context": [3000, 0], "enforced/fault": [2400, 0], "enforced/forge_body": [100, 0], "enforced/forge_request": [150, 0], "enforced/forge_session": [1760, 0], "enforced/legit": [1400, 1400], "enforced/planted": [2200, 0]} missing [] artifact_bytes 136311 runtime_s 3.4
+control rates {"ctl_body_identity_trusted/forge_body": 0.3, "ctl_naive_pdp/context": 0.6426666666666667, "ctl_naive_pdp/fault": 0.3075, "ctl_naive_pdp/forge_request": 0.8666666666666667, "ctl_naive_pdp/planted": 0.1709090909090909, "ctl_no_session_verify/forge_session": 0.30303030303030304}
+== end e3_clash 2026-11-17T12:20:51Z free_kb=21346744 low_free_kb=21347048 db_kb=47020
+== e4_tighten 2026-11-17T12:20:51Z free_kb=21346744 db_kb=47020
+RESULT e4_tighten verdict=PASS sha256=9af3e3ff69d1af112d3c45eb499102f002b1775b5f6baaaca2223d1ea67767eb file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/e4_tighten.9af3e3ff69d1af11.json
+PASS {'fenced': {'runs': 3000, 'runs_delivered': 0, 'marker_payloads': 0, 'enqueue_allowed_v1': 3000, 'snapshot_mismatch': 0, 'reasons': {'model_banned': 400, 'region_forbidden': 600, 'principal_revoked': 400, 'tenant_killed': 600, 'recipient_revoked': 200, 'recipient_acl': 200, 'acl': 400, 'source_erased': 200}}, 'positive': {'runs': 3000, 'runs_delivered': 3000, 'marker_payloads': 5999, 'enqueue_allowed_v1': 3000, 'snapshot_mismatch': 0, 'reasons': {}}, 'control_enqueue_only': {'runs': 3000, 'runs_delivered': 2800, 'marker_payloads': 5612, 'enqueue_allowed_v1': 3000, 'snapshot_mismatch': 386, 'reasons': {'source_erased': 200}}} runtime 3.6
+== end e4_tighten 2026-11-17T12:20:56Z free_kb=21346604 low_free_kb=21346744 db_kb=47020
+== e5_threads 2026-11-17T12:20:56Z free_kb=21346604 db_kb=47020
+RESULT e5_threads verdict=PASS sha256=1c88228679beaa1357c17c38357070f230926398e543929206fad838c515c0c4 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/e5_threads.1c88228679beaa13.json
+PASS {
+"positive": true,
+"control:A_ctl_derive_join_dropped": true,
+"control:A_ctl_xref_without_decision": true,
+"control:B_ctl_flag_always": true,
+"control:B_ctl_no_read_check": true
+} runtime 165.5
+  A_enforced {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  A_ctl_derive_join_dropped {'worlds': 1000, 'leak_worlds': 927, 'interference_worlds': 927, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  A_ctl_xref_without_decision {'worlds': 1000, 'leak_worlds': 1000, 'interference_worlds': 1000, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  B_notice_none {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  B_notice_existence_only {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 6732, 'flag_wrong': 0}
+  B_ctl_flag_always {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 1000, 'flags_true': 0, 'flag_wrong': 0}
+  B_ctl_unscoped_value {'worlds': 1000, 'leak_worlds': 0, 'interference_worlds': 0, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+  B_ctl_no_read_check {'worlds': 1000, 'leak_worlds': 1000, 'interference_worlds': 1000, 'key_rule_worlds': 0, 'flags_true': 0, 'flag_wrong': 0}
+== end e5_threads 2026-11-17T12:23:51Z free_kb=21320788 low_free_kb=21295788 db_kb=47020
+== e6_policy_format 2026-11-17T12:23:51Z free_kb=21320792 db_kb=47020
+RESULT e6_policy_format verdict=PASS sha256=b4c38a8ac3b0a6af30d831234fdb89feba6e2864aac707202f8d6f1677ac1a55 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/e6_policy_format.b4c38a8ac3b0a6af.json
+PASS {'empty_allows': 0, 'malformed': 3000, 'parse_errors': 3000, 'safe_allows': 0, 'lenient_allow_rate': 0.2944, 'valid_allow_rate': 0.601} holds_ok True artifact_bytes 93746 runtime_s 1.5
+== end e6_policy_format 2026-11-17T12:23:56Z free_kb=21320620 low_free_kb=21320792 db_kb=47020
+== b1_modelcheck 2026-11-17T12:23:57Z free_kb=21320620 db_kb=47020
+RESULT b1_modelcheck verdict=PASS sha256=889f29e101d27037556d984e3f7b02814d88aa48cecaecf2313666de4a157ebb file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/b1_modelcheck.889f29e101d27037.json
+PASS states 128622 transitions 1172798 contested 12629 missing []
+  enforced r1 depth 6 states 66565 trans 540504 viol 0 {} 161.5 s
+  enforced r2 depth 8 states 8188 trans 94300 viol 0 {} 25.8 s
+  enforced r3 depth 8 states 14816 trans 205650 viol 0 {} 52.8 s
+  enforced caps depth 8 states 17343 trans 111943 viol 0 {} 39.3 s
+  enforced joint depth 4 states 21710 trans 220401 viol 0 {} 51.3 s
+  control agent_may_decide expected I2_agent_head_move found True len 2 ['P3', 'D4'] {'read_version': 0, 'probe1_code': 'contested_opened', 'probe2_code': 'superseded', 'attempts': 1, 'bound': 1}
+  control cap_blocks_humans expected I18_human_locked_out_by_nonhumans found True len 5 ['C1', 'C2', 'CGR', 'C6', 'C4'] 
+  control n2_no_role expected I15_proposal_without_role found True len 1 ['NP'] 
+  control n2_no_cap expected I17_open_cap found True len 3 ['C1', 'C2', 'C3'] 
+  control stale_unchecked expected I4_decision_not_bound_to_head found True len 1 ['S1'] 
+  control agent_may_supersede expected I2_agent_head_move found True len 1 ['AG1'] {'read_version': 0, 'probe1_code': 'contested_opened', 'probe2_code': 'superseded', 'attempts': 1, 'bound': 1}
+  control m2_no_original expected I6_redelivery_changed_state_or_lost_outcome found True len 2 ['R1', 'R1'] 
+  control idempotency_removed expected I6_redelivery_changed_state_or_lost_outcome found True len 2 ['R1', 'R1'] 
+  control authority_removed expected I1_authority found True len 1 ['S3'] 
+== end b1_modelcheck 2026-11-17T12:30:27Z free_kb=21331140 low_free_kb=21315344 db_kb=47020
+== b2_rebuild 2026-11-17T12:30:27Z free_kb=21331140 db_kb=47020
+RESULT b2_rebuild verdict=PASS sha256=865b51363d7033e4800c123149e1d3a9237fa4c667eee4dd6d8923f4bd966baa file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/b2_rebuild.865b51363d7033e4.json
+PASS {'logs': 3000, 'events': 465810, 'mismatched_logs': 0, 'rebuild_unequal_logs': 0, 'codes_missing': [], 'contested_logs': 1379, 'restores': 82425, 'service_audit_bad': 0, 'service_refusals': 71634, 'seconds': 1670.2}
+  control agent_may_decide {'logs_with_mismatch': 2440, 'rate': 0.8133333333333334, 'meets_floor': True}
+  control n2_no_cap {'logs_with_mismatch': 442, 'rate': 0.14733333333333334, 'meets_floor': True}
+  control n2_no_role {'logs_with_mismatch': 2293, 'rate': 0.7643333333333333, 'meets_floor': True}
+  control m2_no_original {'logs_with_mismatch': 1720, 'rate': 0.5733333333333334, 'meets_floor': True}
+  control stale_unchecked {'logs_with_mismatch': 2618, 'rate': 0.8726666666666667, 'meets_floor': True}
+  control agent_may_supersede {'logs_with_mismatch': 2081, 'rate': 0.6936666666666667, 'meets_floor': True}
+  control snapshot_drops_revocations {'logs_with_mismatch': 526, 'rate': 0.17533333333333334, 'meets_floor': True}
+  control restore_drops_idempotency {'logs_with_mismatch': 2961, 'rate': 0.987, 'meets_floor': True}
+== end b2_rebuild 2026-11-17T12:58:39Z free_kb=21324560 low_free_kb=21316792 db_kb=47020
+== b3_pg 2026-11-17T12:58:39Z free_kb=21324560 db_kb=47020
+RESULT b3_pg verdict=PASS sha256=a0d6c1d24160b5815d567a244b49ab6cc9bba36aa9e9aabb17249dbfcf81e3fd file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/b3_pg.a0d6c1d24160b581.json
+PASS {'S1_conflicting_decisions_contested': (50, 50), 'S2_stale_token_refused': (50, 50), 'S3_zombie_revoked_principal': (50, 50), 'S4_same_idem_key_concurrent': (50, 50), 'S4b_twins_on_two_requirements': (50, 50), 'S5_resolve_race': (50, 50), 'S6_tenant_isolation': (50, 50), 'S7_api_supersede_race': (50, 50), 'S8_api_twins': (50, 50)} {'logs': 40, 'events': 7110, 'mismatch_events': 0, 'view_mismatch_logs': 0, 'rebuild_mismatch_logs': 0, 'chain_bad_logs': 0, 'audit_bad_logs': 0, 'codes': {'unauthorized': 2426, 'pending_created': 568, 'duplicate_id': 23, 'unknown_proposal': 232, 'agent_cannot_confirm': 172, 'agent_not_permitted': 952, 'proposed': 981, 'superseded': 148, 'stale': 282, 'not_contested': 85, 'contested_opened': 21, 'unknown_pending': 88, 'duplicate': 89, 'tenant_mismatch': 73, 'revoked': 11, 'principal_revoked': 126, 'contested_needs_resolve': 108, 'bad_event': 99, 'unknown_candidate': 8, 'idem_conflict': 58, 'decided_reject': 37, 'granted': 30, 'channel_mismatch': 58, 'retracted': 44, 'confirmed_applied': 56, 'decided_accept': 108, 'nothing_to_retract': 21, 'proposal_mismatch': 23, 'pending_closed': 9, 'unknown_req': 46, 'decided_amend': 41, 'resolved': 4, 'proposal_closed': 50, 'same_channel_confirmation': 24, 'contested_joined': 9}} {'no_head_lock': (50, 49), 'no_advisory_lock': (50, 50), 'idem_unprotected': (50, 50)} rebuild True chain (1000, True)
+== end b3_pg 2026-11-17T13:16:10Z free_kb=21221928 low_free_kb=21153296 db_kb=88240
+== pg_diff 2026-11-17T13:16:11Z free_kb=21221928 db_kb=88240
+b2 {"logs": 300, "events": 48828, "code_mismatches": 0, "view_mismatches": 0, "log_mismatches": 0, "first": null} 123 s
+b1 {"scenario": "r1", "depth": 6, "states": 66565, "transitions": 540504, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1148 s
+b1 {"scenario": "r2", "depth": 8, "states": 8188, "transitions": 94300, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1319 s
+b1 {"scenario": "r3", "depth": 8, "states": 14816, "transitions": 205650, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1686 s
+b1 {"scenario": "caps", "depth": 8, "states": 17343, "transitions": 111943, "code_mismatches": 0, "view_mismatches": 0, "first": null} 1910 s
+b1 {"scenario": "joint", "depth": 4, "states": 21710, "transitions": 220401, "code_mismatches": 0, "view_mismatches": 0, "first": null} 2304 s
+RESULT pg_diff verdict=PASS sha256=5daef51d7e9b29ad4a8d70d6577ee1f9511da319a1772d3e07be13915c63ef8d file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/pg_diff.5daef51d7e9b29ad.json
+{
+ "b2": {
+  "logs": 300,
+  "events": 48828,
+  "code_mismatches": 0,
+  "view_mismatches": 0,
+  "log_mismatches": 0,
+  "first": null
+ },
+ "b1": [
+  {
+   "scenario": "r1",
+   "depth": 6,
+   "states": 66565,
+   "transitions": 540504,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "r2",
+   "depth": 8,
+   "states": 8188,
+   "transitions": 94300,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "r3",
+   "depth": 8,
+   "states": 14816,
+   "transitions": 205650,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "caps",
+   "depth": 8,
+   "states": 17343,
+   "transitions": 111943,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  },
+  {
+   "scenario": "joint",
+   "depth": 4,
+   "states": 21710,
+   "transitions": 220401,
+   "code_mismatches": 0,
+   "view_mismatches": 0,
+   "first": null
+  }
+ ],
+ "control_no_stale": {
+  "b2": {
+   "logs": 30,
+   "events": 4945,
+   "code_mismatches": 574,
+   "view_mismatches": 27,
+   "log_mismatches": 28,
+   "first": {
+    "log": "61/0",
+    "i": 5,
+    "ev": {
+     "type": "confirm",
+     "id": "e6",
+     "idem": "k6",
+     "tenant": "t1",
+     "principal": "h3",
+     "channel": "owner_ui",
+     "req": "r2",
+     "pending": "e3",
+     "based_on": 1
+    },
+    "oracle": [
+     "stale",
+     null
+    ],
+    "pg": [
+     "contested_opened",
+     null
+    ]
+   }
+  },
+  "b1_r2": {
+   "scenario": "r2",
+   "depth": 8,
+   "states": 8188,
+   "transitions": 94300,
+   "code_mismatches": 5586,
+   "view_mismatches": 0,
+   "first": {
+    "ev": {
+     "type": "retract",
+     "id": "T2",
+     "idem": "T2",
+     "tenant": "T1",
+     "principal": "u1",
+     "channel": "owner_ui",
+     "req": "r2",
+     "based_on": 0
+    },
+    "oracle": [
+     "stale",
+     null
+    ],
+    "pg": [
+     "contested_opened",
+     null
+    ],
+    "level": 3
+   }
+  }
+ },
+ "control_caught": true,
+ "pass": true,
+ "verdict": "PASS",
+ "judged_by": "this module's pass condition, recomputed from the rows by verify/pgdiff.py (THRESHOLDS amendment 5)",
+ "seconds": 2475.8,
+ "items": {
+  "file": "pg_diff.items.1097755599fbed35.jsonl.gz",
+  "sha256": "1097755599fbed3545fe07ef6a083c2bfc8f1ae7e00ad39664ac0c1504efbb3e",
+  "rows": 1458341
+ }
+}
+wrote /home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/pg_diff.5daef51d7e9b29ad.json sha256 5daef51d7e9b29ad
+== end pg_diff 2026-11-17T13:57:38Z free_kb=20875636 low_free_kb=20609980 db_kb=449420
+== mig_rehearsal 2026-11-17T13:57:38Z free_kb=20875632 db_kb=449420
+RESULT mig_rehearsal verdict=PASS sha256=4a0791586a62c1b3f7716d274679af1f725cc60829e8b524c27328ea4429fcc7 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/mig_rehearsal.4a0791586a62c1b3.json
+{
+ "pass": true,
+ "clean": [
+  {
+   "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+   "rollback_restores_fingerprint": true,
+   "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+   "write_kept": true,
+   "ok": true
+  },
+  {
+   "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+   "rollback_restores_fingerprint": true,
+   "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+   "write_kept": true,
+   "ok": true
+  },
+  {
+   "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+   "rollback_restores_fingerprint": true,
+   "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+   "write_kept": true,
+   "ok": true
+  }
+ ],
+ "controls": [
+  {
+   "control": "forged_grant",
+   "ok": true,
+   "refused": "tenant t1: old event seq 94 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "head_tampered",
+   "ok": true,
+   "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "rollback_unchecked",
+   "ok": true,
+   "refused": null,
+   "rolled_back": true,
+   "write_lost": true,
+   "error": null
+  },
+  {
+   "control": "forged_grant",
+   "ok": true,
+   "refused": "tenant t1: old event seq 90 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "head_tampered",
+   "ok": true,
+   "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "rollback_unchecked",
+   "ok": true,
+   "refused": null,
+   "rolled_back": true,
+   "write_lost": true,
+   "error": null
+  },
+  {
+   "control": "forged_grant",
+   "ok": true,
+   "refused": "tenant t1: old event seq 93 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "head_tampered",
+   "ok": true,
+   "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+   "rolled_back": null,
+   "write_lost": null,
+   "error": null
+  },
+  {
+   "control": "rollback_unchecked",
+   "ok": true,
+   "refused": null,
+   "rolled_back": true,
+   "write_lost": true,
+   "error": null
+  }
+ ]
+}
+wrote /home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/mig_rehearsal.4a0791586a62c1b3.json
+== end mig_rehearsal 2026-11-17T13:57:59Z free_kb=20930564 low_free_kb=20875632 db_kb=394244
+== s2_sessions 2026-11-17T13:57:59Z free_kb=20930564 db_kb=394244
+RESULT s2_sessions verdict=PASS sha256=a99c0d171275c764af82332fc129c18f90691ab6c435cf4bfb2d82b0989f5489 file=/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/results/s2_sessions.a99c0d171275c764.json
+PASS rows 1041 accepted attacks 0
+== end s2_sessions 2026-11-17T13:58:04Z free_kb=20929084 low_free_kb=20930564 db_kb=395052
+e1_lattice         PASS  exp=PASS  recomputed=PASS  agree=True e1_lattice.ed07fe4db6492051.json
+e2_egress          PASS  exp=PASS  recomputed=PASS  agree=True e2_egress.d9b02547db54831b.json
+e3_clash           PASS  exp=PASS  recomputed=PASS  agree=True e3_clash.5605fb1ac487c94d.json
+e4_tighten         PASS  exp=PASS  recomputed=PASS  agree=True e4_tighten.9af3e3ff69d1af11.json
+e5_threads         PASS  exp=PASS  recomputed=PASS  agree=True e5_threads.1c88228679beaa13.json
+e6_policy_format   PASS  exp=PASS  recomputed=PASS  agree=True e6_policy_format.b4c38a8ac3b0a6af.json
+b1_modelcheck      PASS  exp=PASS  recomputed=PASS  agree=True b1_modelcheck.889f29e101d27037.json
+b2_rebuild         PASS  exp=PASS  recomputed=PASS  agree=True b2_rebuild.865b51363d7033e4.json
+b3_pg              PASS  exp=PASS  recomputed=PASS  agree=True b3_pg.a0d6c1d24160b581.json
+pg_diff            PASS  exp=PASS  recomputed=PASS  agree=True pg_diff.5daef51d7e9b29ad.json
+mig_rehearsal      PASS  exp=PASS  recomputed=PASS  agree=True mig_rehearsal.4a0791586a62c1b3.json
+s2_sessions        PASS  exp=PASS  recomputed=PASS  agree=True s2_sessions.a99c0d171275c764.json
+PROVENANCE PASS 
+VERIFY overall=PASS sha256=3b4275a02a461b582c5d61cc17dccccedf4b319137f565c6778d2ec45d2cbd8f file=results/VERIFY.3b4275a02a461b58.json
+RUNALL_EXIT 0

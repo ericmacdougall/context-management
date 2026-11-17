@@ -1,0 +1,85 @@
+{
+ "name": "s2_sessions",
+ "params": {
+  "calls": [
+   "submit",
+   "explain",
+   "read_table",
+   "erase_candidates",
+   "erase_values"
+  ],
+  "classes": [
+   "valid",
+   "forged_mac",
+   "body_edited",
+   "other_key",
+   "other_factor_id",
+   "look_alike",
+   "other_principal",
+   "other_channel",
+   "other_tenant",
+   "expired",
+   "far_future",
+   "replay",
+   "revoked_factor",
+   "malformed"
+  ],
+  "controls": [
+   "ctl_bare_mint_80bb6a7",
+   "ctl_bare_mint_0a20b64",
+   "ctl_no_replay",
+   "ctl_no_mac",
+   "ctl_identity_from_body",
+   "ctl_origin_from_body"
+  ],
+  "seeds": [
+   61,
+   62,
+   63
+  ],
+  "tokens": [
+   "valid",
+   "forged",
+   "expired",
+   "revoked",
+   "ended",
+   "empty",
+   "other_tenant"
+  ],
+  "trials_per_class": 12
+ },
+ "result": {
+  "accepted_attacks": 0,
+  "items": {
+   "file": "s2_sessions.items.74221b632d2a09d7.jsonl.gz",
+   "sha256": "74221b632d2a09d7dd1bf6d2be7b69e7ce45ec2796971baded3ac3c88a09ff32"
+  },
+  "not_proven": "one Postgres 16 instance; lab factors are HMAC keys stored in the database (the owner can forge proofs); the proof window trusts the database clock; the identity adapter's own authentication of a person or device (enrolment) is out of scope; the verdict here is the experiment's own, verify/s2.py re-judges every row",
+  "rows": 1041,
+  "seconds": 4.3,
+  "trials_per_class": 12,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/s2_sessions.py",
+  "at": "2026-11-17T13:58:03Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "env": {
+   "postgres": "16",
+   "roles": "owner (enrol, setup), dc_idp (open/end), dc_app (API)"
+  },
+  "host": "t2-dev",
+  "load_avg": [
+   1.52001953125,
+   1.8232421875,
+   2.0546875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}

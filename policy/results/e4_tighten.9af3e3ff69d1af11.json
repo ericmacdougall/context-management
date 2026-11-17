@@ -1,0 +1,142 @@
+{
+ "name": "e4_tighten",
+ "params": {
+  "R": 200,
+  "combos": [
+   [
+    "model",
+    "model_banned"
+   ],
+   [
+    "model",
+    "region_removed"
+   ],
+   [
+    "model",
+    "sender_revoked"
+   ],
+   [
+    "model",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "model_banned"
+   ],
+   [
+    "inbox",
+    "region_removed"
+   ],
+   [
+    "inbox",
+    "recipient_revoked"
+   ],
+   [
+    "inbox",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "group_removed"
+   ],
+   [
+    "export",
+    "region_removed"
+   ],
+   [
+    "export",
+    "sender_revoked"
+   ],
+   [
+    "export",
+    "tenant_killed"
+   ],
+   [
+    "inbox",
+    "label_narrowed"
+   ],
+   [
+    "inbox",
+    "source_erased"
+   ],
+   [
+    "inbox",
+    "legal_hold_recorded"
+   ]
+  ],
+  "seeds": [
+   61,
+   62,
+   63,
+   64,
+   65
+  ]
+ },
+ "result": {
+  "arms": {
+   "control_enqueue_only": {
+    "enqueue_allowed_v1": 3000,
+    "marker_payloads": 5612,
+    "reasons": {
+     "source_erased": 200
+    },
+    "runs": 3000,
+    "runs_delivered": 2800,
+    "snapshot_mismatch": 386
+   },
+   "fenced": {
+    "enqueue_allowed_v1": 3000,
+    "marker_payloads": 0,
+    "reasons": {
+     "acl": 400,
+     "model_banned": 400,
+     "principal_revoked": 400,
+     "recipient_acl": 200,
+     "recipient_revoked": 200,
+     "region_forbidden": 600,
+     "source_erased": 200,
+     "tenant_killed": 600
+    },
+    "runs": 3000,
+    "runs_delivered": 0,
+    "snapshot_mismatch": 0
+   },
+   "positive": {
+    "enqueue_allowed_v1": 3000,
+    "marker_payloads": 5999,
+    "reasons": {},
+    "runs": 3000,
+    "runs_delivered": 3000,
+    "snapshot_mismatch": 0
+   }
+  },
+  "control_meets_floor": true,
+  "items": {
+   "file": "e4_tighten.items.d44cfed4085f2dc5.jsonl.gz",
+   "sha256": "d44cfed4085f2dc567664a6342f91f94c6c9f241bc4e9be6b61dbb0e950d809c"
+  },
+  "not_proven": "an item already handed to a sink cannot be recalled; legal_hold_recorded is exercised as a narrowing of the source label (a hold itself only affects erasure)",
+  "note": "directory, record and erasure changes (group_removed, label_narrowed, legal_hold_recorded) are logged at the unchanged policy version 1; source_erased is refused by the purge (refusal 'source_erased') without a delivery decision",
+  "pass_conditions_met": true,
+  "runtime_s": 3.6,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/e4_tighten.py",
+  "at": "2026-11-17T12:20:55Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   1.8330078125,
+   2.12548828125,
+   1.94873046875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}

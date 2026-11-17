@@ -1,0 +1,416 @@
+{
+ "name": "b1_modelcheck",
+ "params": {
+  "authority": {
+   "r1": [
+    "u1",
+    "u2"
+   ],
+   "r2": [
+    "u1"
+   ],
+   "r3": [
+    "u1",
+    "a1"
+   ]
+  },
+  "ctl_depth": {
+   "caps": 6,
+   "r1": 6,
+   "r2": 6,
+   "r3": 6
+  },
+  "depth": {
+   "caps": 8,
+   "joint": 4,
+   "r1": 6,
+   "r2": 8,
+   "r3": 8
+  },
+  "pools": {
+   "caps": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "CR",
+    "CA",
+    "CK",
+    "CS",
+    "CT",
+    "CREV",
+    "C6",
+    "CGR"
+   ],
+   "r1": [
+    "P1",
+    "P2",
+    "D1",
+    "D2",
+    "D3",
+    "D5",
+    "S1",
+    "T1",
+    "RES1",
+    "RES2",
+    "RES4",
+    "RESV",
+    "D9",
+    "D10",
+    "Dc",
+    "Dx",
+    "Dp",
+    "Dbad",
+    "D1x",
+    "S2",
+    "REV",
+    "GR1",
+    "D2h",
+    "D3h",
+    "S1h",
+    "S4h",
+    "T1h",
+    "AGJ",
+    "AGA",
+    "P5h",
+    "Xh",
+    "Xt",
+    "Xu",
+    "P1",
+    "RMh",
+    "KMh"
+   ],
+   "r2": [
+    "R1",
+    "R3",
+    "K2",
+    "K3",
+    "K3b",
+    "K3h",
+    "K4",
+    "K5",
+    "RES3",
+    "T2",
+    "T2h",
+    "S3",
+    "S3h",
+    "REV",
+    "RVa",
+    "GR",
+    "NP",
+    "P7h",
+    "R5h",
+    "D7h"
+   ],
+   "r3": [
+    "P3",
+    "P4",
+    "D4",
+    "D8",
+    "D8b",
+    "D8h",
+    "R2",
+    "K1",
+    "K6h",
+    "AG1",
+    "AG2",
+    "AG3",
+    "AG4",
+    "AG4h",
+    "AR3",
+    "AR4",
+    "N1",
+    "N2",
+    "GR3",
+    "REVn",
+    "S5h",
+    "T5h",
+    "P8h",
+    "RM3h",
+    "D11"
+   ]
+  },
+  "principals": {
+   "a1": "agent",
+   "n1": "analyst",
+   "u1": "human",
+   "u2": "human"
+  },
+  "proposers": {
+   "r1": [
+    "n1"
+   ],
+   "r3": [
+    "n1"
+   ]
+  },
+  "small_caps": [
+   [
+    "MAX_OPEN_PER_PRINCIPAL = 16\n",
+    "MAX_OPEN_PER_PRINCIPAL = 2\n"
+   ],
+   [
+    "MAX_OPEN_PER_REQ = 256 ",
+    "MAX_OPEN_PER_REQ = 3 "
+   ]
+  ]
+ },
+ "result": {
+  "controls": {
+   "agent_may_decide": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "game": {
+     "attempts": 1,
+     "bound": 1,
+     "probe1_code": "contested_opened",
+     "probe2_code": "superseded",
+     "read_version": 0
+    },
+    "shortest_trace_ids": [
+     "P3",
+     "D4"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I14_contest_nonhuman_or_unbounded": 5086,
+     "I16_nonhuman_head_move_without_value_change": 444,
+     "I2_agent_head_move": 4279,
+     "L2_head_starvation": 1273
+    }
+   },
+   "agent_may_supersede": {
+    "expected_found": true,
+    "expected_invariant": "I2_agent_head_move",
+    "game": {
+     "attempts": 1,
+     "bound": 1,
+     "probe1_code": "contested_opened",
+     "probe2_code": "superseded",
+     "read_version": 0
+    },
+    "shortest_trace_ids": [
+     "AG1"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I14_contest_nonhuman_or_unbounded": 1311,
+     "I2_agent_head_move": 635,
+     "L2_head_starvation": 635
+    }
+   },
+   "authority_removed": {
+    "expected_found": true,
+    "expected_invariant": "I1_authority",
+    "game": null,
+    "shortest_trace_ids": [
+     "S3"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I1_authority": 560
+    }
+   },
+   "cap_blocks_humans": {
+    "expected_found": true,
+    "expected_invariant": "I18_human_locked_out_by_nonhumans",
+    "game": null,
+    "shortest_trace_ids": [
+     "C1",
+     "C2",
+     "CGR",
+     "C6",
+     "C4"
+    ],
+    "shortest_trace_len": 5,
+    "violated": {
+     "I18_human_locked_out_by_nonhumans": 22
+    }
+   },
+   "idempotency_removed": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state_or_lost_outcome",
+    "game": null,
+    "shortest_trace_ids": [
+     "R1",
+     "R1"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I6_redelivery_changed_state_or_lost_outcome": 2476
+    }
+   },
+   "m2_no_original": {
+    "expected_found": true,
+    "expected_invariant": "I6_redelivery_changed_state_or_lost_outcome",
+    "game": null,
+    "shortest_trace_ids": [
+     "R1",
+     "R1"
+    ],
+    "shortest_trace_len": 2,
+    "violated": {
+     "I6_redelivery_changed_state_or_lost_outcome": 2476
+    }
+   },
+   "n2_no_cap": {
+    "expected_found": true,
+    "expected_invariant": "I17_open_cap",
+    "game": null,
+    "shortest_trace_ids": [
+     "C1",
+     "C2",
+     "C3"
+    ],
+    "shortest_trace_len": 3,
+    "violated": {
+     "I17_open_cap": 69
+    }
+   },
+   "n2_no_role": {
+    "expected_found": true,
+    "expected_invariant": "I15_proposal_without_role",
+    "game": null,
+    "shortest_trace_ids": [
+     "NP"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I15_proposal_without_role": 874
+    }
+   },
+   "stale_unchecked": {
+    "expected_found": true,
+    "expected_invariant": "I4_decision_not_bound_to_head",
+    "game": null,
+    "shortest_trace_ids": [
+     "S1"
+    ],
+    "shortest_trace_len": 1,
+    "violated": {
+     "I4_decision_not_bound_to_head": 78759
+    }
+   }
+  },
+  "controls_found_expected": true,
+  "enforced": {
+   "codes": {
+    "agent_cannot_confirm": 10947,
+    "agent_not_permitted": 95694,
+    "bad_event": 36230,
+    "channel_mismatch": 25171,
+    "concurrent_agree": 505,
+    "confirmed_applied": 10804,
+    "contested_joined": 4462,
+    "contested_needs_resolve": 11809,
+    "contested_opened": 5198,
+    "decided_accept": 7059,
+    "decided_amend": 207,
+    "decided_reject": 4644,
+    "duplicate": 114972,
+    "duplicate_id": 9023,
+    "granted": 30427,
+    "idem_conflict": 103355,
+    "not_contested": 32038,
+    "nothing_to_retract": 11452,
+    "pending_closed": 5577,
+    "pending_created": 34340,
+    "principal_revoked": 34132,
+    "proposal_cap": 632,
+    "proposal_closed": 10426,
+    "proposal_mismatch": 9728,
+    "proposed": 64891,
+    "resolved": 3004,
+    "retracted": 20588,
+    "revoked": 34484,
+    "same_channel_confirmation": 1859,
+    "stale": 115680,
+    "superseded": 33068,
+    "tenant_mismatch": 17735,
+    "unauthorized": 85763,
+    "unknown_candidate": 3720,
+    "unknown_pending": 41333,
+    "unknown_proposal": 124106,
+    "unknown_req": 17735
+   },
+   "contested_states": 12629,
+   "per_scenario": {
+    "caps": {
+     "depth": 8,
+     "pool": 13,
+     "seconds": 39.3,
+     "states": 17343,
+     "transitions": 111943,
+     "violations": 0
+    },
+    "joint": {
+     "depth": 4,
+     "pool": 81,
+     "seconds": 51.3,
+     "states": 21710,
+     "transitions": 220401,
+     "violations": 0
+    },
+    "r1": {
+     "depth": 6,
+     "pool": 36,
+     "seconds": 161.5,
+     "states": 66565,
+     "transitions": 540504,
+     "violations": 0
+    },
+    "r2": {
+     "depth": 8,
+     "pool": 20,
+     "seconds": 25.8,
+     "states": 8188,
+     "transitions": 94300,
+     "violations": 0
+    },
+    "r3": {
+     "depth": 8,
+     "pool": 25,
+     "seconds": 52.8,
+     "states": 14816,
+     "transitions": 205650,
+     "violations": 0
+    }
+   },
+   "states": 128622,
+   "transitions": 1172798,
+   "violations": 0
+  },
+  "items": {
+   "file": "b1_modelcheck.items.5c3a1e278d3bbff4.jsonl.gz",
+   "sha256": "5c3a1e278d3bbff4facb8f3db0e2a18014003ae138af30a15fb46387e112fb2a"
+  },
+  "liveness_bound": "L2: attempts <= (open human-authored proposals on the requirement at the read) + 1, CORE-RULES section 7; checked inductively on every transition",
+  "not_proven": "bounded exhaustive search (depths in params; the joint pool is the shallowest); the caps scenario runs a variant whose caps are 2 and 3 (constants only); candidates_full not reached by BFS; four principals (two humans, one agent, one analyst)",
+  "outcome_codes_not_reached": [],
+  "pass_conditions_met": true,
+  "seconds_total": 389.5,
+  "unreachable_by_design": {
+   "candidates_full": "needs 8 joined candidates (depth >= 10); covered by the B2 targeted mode"
+  },
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/b1_modelcheck.py",
+  "at": "2026-11-17T12:30:26Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   1.48583984375,
+   2.2470703125,
+   2.224609375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}

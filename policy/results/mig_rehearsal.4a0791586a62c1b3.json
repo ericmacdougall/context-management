@@ -1,0 +1,563 @@
+{
+ "name": "mig_rehearsal",
+ "params": {
+  "fixture": "exp/fixtures/pgcore_5a80e52.py",
+  "seeds": [
+   61,
+   62,
+   63
+  ]
+ },
+ "result": {
+  "applied_codes": [
+   "concurrent_agree",
+   "confirmed_applied",
+   "contested_joined",
+   "contested_opened",
+   "decided_accept",
+   "decided_amend",
+   "decided_reject",
+   "granted",
+   "pending_created",
+   "proposed",
+   "resolved",
+   "retracted",
+   "revoked",
+   "superseded"
+  ],
+  "clean": [
+   {
+    "checks1": {
+     "anchor_check": {
+      "anchored": 1,
+      "anchored_through": 93,
+      "chain_ok": true,
+      "events": 93,
+      "mismatches": [],
+      "ok": true,
+      "unanchored_suffix": 0
+     },
+     "api_event": null,
+     "api_request": null,
+     "app_denied": {
+      "select count(*) from dc.events": "InsufficientPrivilege",
+      "select count(*) from dc_pre_r3_7.events": "InsufficientPrivilege",
+      "select dc._apply_event('t1', '{}'::jsonb)": "InsufficientPrivilege"
+     },
+     "ok": true,
+     "report": {
+      "audit": 207,
+      "subject_tokens": 1,
+      "tenants": {
+       "t1": {
+        "chain_head": "75d87f234a98cdb56830ff65c307d3bb579e68ce5a1b40b8af54af4f1fe858ba",
+        "events_replayed": 93
+       }
+      },
+      "vals": 2
+     },
+     "view_equals_memory_fold": true
+    },
+    "checks2": {
+     "anchor_check": {
+      "anchored": 1,
+      "anchored_through": 93,
+      "chain_ok": true,
+      "events": 93,
+      "mismatches": [],
+      "ok": true,
+      "unanchored_suffix": 0
+     },
+     "api_event": "h1/mig-chk-1794923860719575721",
+     "api_request": "proposed",
+     "app_denied": {
+      "select count(*) from dc.events": "InsufficientPrivilege",
+      "select count(*) from dc_pre_r3_7.events": "InsufficientPrivilege",
+      "select dc._apply_event('t1', '{}'::jsonb)": "InsufficientPrivilege"
+     },
+     "ok": true,
+     "report": {
+      "audit": 207,
+      "subject_tokens": 1,
+      "tenants": {
+       "t1": {
+        "chain_head": "75d87f234a98cdb56830ff65c307d3bb579e68ce5a1b40b8af54af4f1fe858ba",
+        "events_replayed": 93
+       }
+      },
+      "vals": 2
+     },
+     "view_equals_memory_fold": true
+    },
+    "forward1": {
+     "audit": 207,
+     "subject_tokens": 1,
+     "tenants": {
+      "t1": {
+       "chain_head": "75d87f234a98cdb56830ff65c307d3bb579e68ce5a1b40b8af54af4f1fe858ba",
+       "events_replayed": 93
+      }
+     },
+     "vals": 2
+    },
+    "forward2": {
+     "audit": 207,
+     "subject_tokens": 1,
+     "tenants": {
+      "t1": {
+       "chain_head": "75d87f234a98cdb56830ff65c307d3bb579e68ce5a1b40b8af54af4f1fe858ba",
+       "events_replayed": 93
+      }
+     },
+     "vals": 2
+    },
+    "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+    "fp_after_rollback": "89ebc087d01647401a808c231963b06fce7796892c5af8e53ffc93be502d05e2",
+    "fp_before": "89ebc087d01647401a808c231963b06fce7796892c5af8e53ffc93be502d05e2",
+    "ok": true,
+    "old_codes": {
+     "agent_cannot_confirm": 7,
+     "agent_not_permitted": 42,
+     "bad_event": 10,
+     "channel_mismatch": 2,
+     "contested_needs_resolve": 11,
+     "contested_opened": 1,
+     "decided_accept": 2,
+     "decided_amend": 1,
+     "decided_reject": 3,
+     "duplicate": 3,
+     "granted": 1,
+     "not_contested": 1,
+     "pending_created": 32,
+     "proposal_mismatch": 1,
+     "proposed": 50,
+     "retracted": 1,
+     "same_channel_confirmation": 1,
+     "stale": 9,
+     "superseded": 2,
+     "tenant_mismatch": 3,
+     "unauthorized": 104,
+     "unknown_candidate": 1,
+     "unknown_pending": 6,
+     "unknown_proposal": 6
+    },
+    "old_engine_after_rollback": true,
+    "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+    "rollback_restores_fingerprint": true,
+    "seed": 61,
+    "write_kept": true
+   },
+   {
+    "checks1": {
+     "anchor_check": {
+      "anchored": 1,
+      "anchored_through": 89,
+      "chain_ok": true,
+      "events": 89,
+      "mismatches": [],
+      "ok": true,
+      "unanchored_suffix": 0
+     },
+     "api_event": null,
+     "api_request": null,
+     "app_denied": {
+      "select count(*) from dc.events": "InsufficientPrivilege",
+      "select count(*) from dc_pre_r3_7.events": "InsufficientPrivilege",
+      "select dc._apply_event('t1', '{}'::jsonb)": "InsufficientPrivilege"
+     },
+     "ok": true,
+     "report": {
+      "audit": 211,
+      "subject_tokens": 1,
+      "tenants": {
+       "t1": {
+        "chain_head": "a6f7f8037286dd2d2cbc1fa653c6829fb056669ec402204a3afdd20591b8997a",
+        "events_replayed": 89
+       }
+      },
+      "vals": 2
+     },
+     "view_equals_memory_fold": true
+    },
+    "checks2": {
+     "anchor_check": {
+      "anchored": 1,
+      "anchored_through": 89,
+      "chain_ok": true,
+      "events": 89,
+      "mismatches": [],
+      "ok": true,
+      "unanchored_suffix": 0
+     },
+     "api_event": "h1/mig-chk-1794923862333601777",
+     "api_request": "proposed",
+     "app_denied": {
+      "select count(*) from dc.events": "InsufficientPrivilege",
+      "select count(*) from dc_pre_r3_7.events": "InsufficientPrivilege",
+      "select dc._apply_event('t1', '{}'::jsonb)": "InsufficientPrivilege"
+     },
+     "ok": true,
+     "report": {
+      "audit": 211,
+      "subject_tokens": 1,
+      "tenants": {
+       "t1": {
+        "chain_head": "a6f7f8037286dd2d2cbc1fa653c6829fb056669ec402204a3afdd20591b8997a",
+        "events_replayed": 89
+       }
+      },
+      "vals": 2
+     },
+     "view_equals_memory_fold": true
+    },
+    "forward1": {
+     "audit": 211,
+     "subject_tokens": 1,
+     "tenants": {
+      "t1": {
+       "chain_head": "a6f7f8037286dd2d2cbc1fa653c6829fb056669ec402204a3afdd20591b8997a",
+       "events_replayed": 89
+      }
+     },
+     "vals": 2
+    },
+    "forward2": {
+     "audit": 211,
+     "subject_tokens": 1,
+     "tenants": {
+      "t1": {
+       "chain_head": "a6f7f8037286dd2d2cbc1fa653c6829fb056669ec402204a3afdd20591b8997a",
+       "events_replayed": 89
+      }
+     },
+     "vals": 2
+    },
+    "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+    "fp_after_rollback": "329783e045424378d307268a765554f17509cc021772ddd975ea3f1429b269be",
+    "fp_before": "329783e045424378d307268a765554f17509cc021772ddd975ea3f1429b269be",
+    "ok": true,
+    "old_codes": {
+     "agent_cannot_confirm": 7,
+     "agent_not_permitted": 45,
+     "bad_event": 4,
+     "channel_mismatch": 4,
+     "decided_accept": 7,
+     "decided_amend": 2,
+     "decided_reject": 6,
+     "duplicate": 2,
+     "duplicate_id": 2,
+     "granted": 2,
+     "idem_conflict": 1,
+     "not_contested": 5,
+     "nothing_to_retract": 4,
+     "pending_created": 25,
+     "proposal_closed": 1,
+     "proposal_mismatch": 2,
+     "proposed": 45,
+     "retracted": 1,
+     "same_channel_confirmation": 4,
+     "stale": 18,
+     "superseded": 1,
+     "tenant_mismatch": 4,
+     "unauthorized": 98,
+     "unknown_pending": 1,
+     "unknown_proposal": 5,
+     "unknown_req": 4
+    },
+    "old_engine_after_rollback": true,
+    "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+    "rollback_restores_fingerprint": true,
+    "seed": 62,
+    "write_kept": true
+   },
+   {
+    "checks1": {
+     "anchor_check": {
+      "anchored": 1,
+      "anchored_through": 92,
+      "chain_ok": true,
+      "events": 92,
+      "mismatches": [],
+      "ok": true,
+      "unanchored_suffix": 0
+     },
+     "api_event": null,
+     "api_request": null,
+     "app_denied": {
+      "select count(*) from dc.events": "InsufficientPrivilege",
+      "select count(*) from dc_pre_r3_7.events": "InsufficientPrivilege",
+      "select dc._apply_event('t1', '{}'::jsonb)": "InsufficientPrivilege"
+     },
+     "ok": true,
+     "report": {
+      "audit": 208,
+      "subject_tokens": 1,
+      "tenants": {
+       "t1": {
+        "chain_head": "b4fa5b8388a0910b43d922ca3c78f6eef7641a9554779e99e0c5922f71af4272",
+        "events_replayed": 92
+       }
+      },
+      "vals": 2
+     },
+     "view_equals_memory_fold": true
+    },
+    "checks2": {
+     "anchor_check": {
+      "anchored": 1,
+      "anchored_through": 92,
+      "chain_ok": true,
+      "events": 92,
+      "mismatches": [],
+      "ok": true,
+      "unanchored_suffix": 0
+     },
+     "api_event": "h1/mig-chk-1794923863849790272",
+     "api_request": "proposed",
+     "app_denied": {
+      "select count(*) from dc.events": "InsufficientPrivilege",
+      "select count(*) from dc_pre_r3_7.events": "InsufficientPrivilege",
+      "select dc._apply_event('t1', '{}'::jsonb)": "InsufficientPrivilege"
+     },
+     "ok": true,
+     "report": {
+      "audit": 208,
+      "subject_tokens": 1,
+      "tenants": {
+       "t1": {
+        "chain_head": "b4fa5b8388a0910b43d922ca3c78f6eef7641a9554779e99e0c5922f71af4272",
+        "events_replayed": 92
+       }
+      },
+      "vals": 2
+     },
+     "view_equals_memory_fold": true
+    },
+    "forward1": {
+     "audit": 208,
+     "subject_tokens": 1,
+     "tenants": {
+      "t1": {
+       "chain_head": "b4fa5b8388a0910b43d922ca3c78f6eef7641a9554779e99e0c5922f71af4272",
+       "events_replayed": 92
+      }
+     },
+     "vals": 2
+    },
+    "forward2": {
+     "audit": 208,
+     "subject_tokens": 1,
+     "tenants": {
+      "t1": {
+       "chain_head": "b4fa5b8388a0910b43d922ca3c78f6eef7641a9554779e99e0c5922f71af4272",
+       "events_replayed": 92
+      }
+     },
+     "vals": 2
+    },
+    "forward_twice_refused": "no pre-R3-7 schema dc (dc.apply_authority not found)",
+    "fp_after_rollback": "95b8d6fe494b51e396fa0cc96b1a6bc38e3e69f435f5d0b5812d6b0ec2d1c61e",
+    "fp_before": "95b8d6fe494b51e396fa0cc96b1a6bc38e3e69f435f5d0b5812d6b0ec2d1c61e",
+    "ok": true,
+    "old_codes": {
+     "agent_cannot_confirm": 9,
+     "agent_not_permitted": 49,
+     "bad_event": 3,
+     "channel_mismatch": 2,
+     "confirmed_applied": 2,
+     "contested_needs_resolve": 2,
+     "contested_opened": 2,
+     "decided_accept": 3,
+     "decided_amend": 1,
+     "decided_reject": 5,
+     "duplicate": 4,
+     "duplicate_id": 1,
+     "granted": 1,
+     "idem_conflict": 1,
+     "not_contested": 3,
+     "nothing_to_retract": 2,
+     "pending_closed": 1,
+     "pending_created": 31,
+     "proposal_closed": 4,
+     "proposal_mismatch": 3,
+     "proposed": 39,
+     "resolved": 1,
+     "retracted": 1,
+     "same_channel_confirmation": 2,
+     "stale": 8,
+     "superseded": 6,
+     "tenant_mismatch": 3,
+     "unauthorized": 94,
+     "unknown_pending": 7,
+     "unknown_proposal": 8,
+     "unknown_req": 2
+    },
+    "old_engine_after_rollback": true,
+    "rollback_after_write": "written after the migration (chainhead, events, props, vals): a rollback would discard those writes or undo an erasure; carry them back by hand or keep the migrated schema",
+    "rollback_restores_fingerprint": true,
+    "seed": 63,
+    "write_kept": true
+   }
+  ],
+  "controls": [
+   {
+    "control": "forged_grant",
+    "fp_after": "2b0db952d02b69248ce9aaf18ddb89cf91103cba23924e9527442c4e5aaeb685",
+    "fp_before": "2b0db952d02b69248ce9aaf18ddb89cf91103cba23924e9527442c4e5aaeb685",
+    "ok": true,
+    "refused": "tenant t1: old event seq 94 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+    "seed": 61,
+    "unchanged": true
+   },
+   {
+    "control": "head_tampered",
+    "fp_after": "d59c3b1c9df41cabaf07343da36e708633a4fd936b4ee195012a591ccd72617f",
+    "fp_before": "d59c3b1c9df41cabaf07343da36e708633a4fd936b4ee195012a591ccd72617f",
+    "ok": true,
+    "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+    "seed": 61,
+    "unchanged": true
+   },
+   {
+    "api_event": "h1/mig-ctl-1794923867317713841",
+    "api_request": "proposed",
+    "control": "rollback_unchecked",
+    "ok": true,
+    "rolled_back": true,
+    "seed": 61,
+    "write_lost": true,
+    "written": true
+   },
+   {
+    "control": "forged_grant",
+    "fp_after": "490a1bece933fcaa17b79f18cfaefb07280fe861d27ee5cc88df97010bffaf44",
+    "fp_before": "490a1bece933fcaa17b79f18cfaefb07280fe861d27ee5cc88df97010bffaf44",
+    "ok": true,
+    "refused": "tenant t1: old event seq 90 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+    "seed": 62,
+    "unchanged": true
+   },
+   {
+    "control": "head_tampered",
+    "fp_after": "359a0f17b18e21ee41a5114ca523adc0b3cee25077e057e37fd98d5303245751",
+    "fp_before": "359a0f17b18e21ee41a5114ca523adc0b3cee25077e057e37fd98d5303245751",
+    "ok": true,
+    "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+    "seed": 62,
+    "unchanged": true
+   },
+   {
+    "api_event": "h1/mig-ctl-1794923870879054264",
+    "api_request": "proposed",
+    "control": "rollback_unchecked",
+    "ok": true,
+    "rolled_back": true,
+    "seed": 62,
+    "write_lost": true,
+    "written": true
+   },
+   {
+    "control": "forged_grant",
+    "fp_after": "4cbb9a14a9ecf1f7407570fe2c9560eecddc0aacbedfd90a55cafddaccfc8100",
+    "fp_before": "4cbb9a14a9ecf1f7407570fe2c9560eecddc0aacbedfd90a55cafddaccfc8100",
+    "ok": true,
+    "refused": "tenant t1: old event seq 93 (forged/1) stored as granted, judged unauthorized by the definer core: the log holds an event the rules refuse (forged or inserted outside the core)",
+    "seed": 63,
+    "unchanged": true
+   },
+   {
+    "control": "head_tampered",
+    "fp_after": "29f3ed60906c35abf63d7d843dd27ae3a3c22d16006a4866801e2c6c29e3dd04",
+    "fp_before": "29f3ed60906c35abf63d7d843dd27ae3a3c22d16006a4866801e2c6c29e3dd04",
+    "ok": true,
+    "refused": "tenant t1: state rebuilt from the log differs from the old tables in ['head']: the old state was written outside the event log",
+    "seed": 63,
+    "unchanged": true
+   },
+   {
+    "api_event": "h1/mig-ctl-1794923874434982084",
+    "api_request": "proposed",
+    "control": "rollback_unchecked",
+    "ok": true,
+    "rolled_back": true,
+    "seed": 63,
+    "write_lost": true,
+    "written": true
+   }
+  ],
+  "items": {
+   "file": "mig_rehearsal.items.d99384240a80d29b.jsonl.gz",
+   "rows": 12,
+   "sha256": "d99384240a80d29bd9235c01ac0ca366074e85bac58599f4533c6846a7435b56"
+  },
+  "not_proven": "replay detects log rows the rules refuse and state written outside the log; a forged row in the name of a principal who had the authority is indistinguishable from a genuine one (the pre-R3-7 schema kept no session provenance); lab database only (the passfiles name database pol); one tenant per history; a failure mid-transaction relies on Postgres transactional DDL (no partial state was injected); roles are cluster-wide and dc_idp is left after rollback",
+  "outcome_codes": [
+   "agent_cannot_confirm",
+   "agent_not_permitted",
+   "bad_event",
+   "candidates_full",
+   "channel_mismatch",
+   "concurrent_agree",
+   "confirmed_applied",
+   "contested_joined",
+   "contested_needs_resolve",
+   "contested_opened",
+   "decided_accept",
+   "decided_amend",
+   "decided_reject",
+   "duplicate",
+   "duplicate_id",
+   "granted",
+   "idem_conflict",
+   "not_contested",
+   "nothing_to_retract",
+   "pending_closed",
+   "pending_created",
+   "principal_revoked",
+   "proposal_cap",
+   "proposal_closed",
+   "proposal_mismatch",
+   "proposed",
+   "resolved",
+   "retracted",
+   "revoked",
+   "same_channel_confirmation",
+   "stale",
+   "superseded",
+   "tenant_mismatch",
+   "unauthorized",
+   "unknown_candidate",
+   "unknown_pending",
+   "unknown_proposal",
+   "unknown_req"
+  ],
+  "pass": true,
+  "refusal_codes": [
+   "bad_event",
+   "channel_mismatch",
+   "principal_revoked",
+   "tenant_mismatch",
+   "unauthorized"
+  ],
+  "seconds": 15.3,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/mig_rehearsal.py",
+  "at": "2026-11-17T13:57:54Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   1.5654296875,
+   1.83740234375,
+   2.060546875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}

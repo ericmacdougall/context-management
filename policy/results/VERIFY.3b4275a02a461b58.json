@@ -1,0 +1,887 @@
+{
+ "dev": false,
+ "overall": "PASS",
+ "provenance": {
+  "commit": [
+   "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1"
+  ],
+  "ok": true,
+  "problems": [],
+  "thresholds_file_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "thresholds_sha256": [
+   "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0"
+  ]
+ },
+ "rows": [
+  {
+   "agree": true,
+   "checks": {
+    "controls": {
+     "acl": {
+      "dims": [
+       "acl"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.1243,
+      "structural_worst_seed": 0.68
+     },
+     "banned": {
+      "dims": [
+       "banned"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.061,
+      "structural_worst_seed": 0.8385
+     },
+     "holds": {
+      "dims": [
+       "holds"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.2057,
+      "structural_worst_seed": 0.7201
+     },
+     "local_only": {
+      "dims": [
+       "local_only"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0671,
+      "structural_worst_seed": 0.6596
+     },
+     "models": {
+      "dims": [
+       "models"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0701,
+      "structural_worst_seed": 0.7929
+     },
+     "regions": {
+      "dims": [
+       "regions"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.3661,
+      "structural_worst_seed": 0.7904
+     },
+     "restricted": {
+      "dims": [
+       "restricted"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.0811,
+      "structural_worst_seed": 0.2861
+     },
+     "sensitivity": {
+      "dims": [
+       "sensitivity"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.1207,
+      "structural_worst_seed": 0.9176
+     },
+     "subjects": {
+      "dims": [
+       "subjects"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.5956,
+      "structural_worst_seed": 0.5956
+     },
+     "tenants": {
+      "dims": [
+       "tenants"
+      ],
+      "meets_floor": true,
+      "reason_is_dropped_dimension": true,
+      "semantic_worst_seed": 0.1927,
+      "structural_worst_seed": 0.325
+     }
+    },
+    "enforced": {
+     "allowed": 73779,
+     "bit_errors": 0,
+     "derivations": 20000,
+     "probes": 800000,
+     "semantic": 0,
+     "structural": 0
+    },
+    "law_failures": 0,
+    "law_triples": 5000,
+    "roundtrip": {
+     "mismatch": 0,
+     "rows": 5000,
+     "stored_derived": 4705
+    }
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "e1_lattice",
+   "experiment_verdict": "PASS",
+   "file": "e1_lattice.ed07fe4db6492051.json",
+   "items_bytes": 9717598,
+   "recomputed": "PASS",
+   "rows": 230000,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "control_floor:ctl_derive_join_dropped": true,
+    "control_floor:ctl_embed_disabled": true,
+    "control_floor:ctl_export_disabled": true,
+    "control_floor:ctl_id_pattern_guard": true,
+    "control_floor:ctl_inbox_disabled": true,
+    "control_floor:ctl_model_port_disabled": true,
+    "every_channel_recorded": true,
+    "forbidden_attempts_ge_1000_per_class": true,
+    "forges_ge_1000_all_denied_nothing_sent": true,
+    "inventory_evaluated_covers_outbound_and_inject": true,
+    "inventory_registered_equals_outbound": true,
+    "permitted_ge_1000_per_class": true,
+    "scenarios_ge_2000": true,
+    "zero_violations": true
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "e2_egress",
+   "experiment_verdict": "PASS",
+   "file": "e2_egress.d9b02547db54831b.json",
+   "items_bytes": 6248063,
+   "recomputed": "PASS",
+   "rows": 509323,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "control_rates": {
+     "ctl_body_identity_trusted/forge_body": 0.3,
+     "ctl_naive_pdp/context": 0.6427,
+     "ctl_naive_pdp/fault": 0.3075,
+     "ctl_naive_pdp/forge_request": 0.8667,
+     "ctl_naive_pdp/planted": 0.1709,
+     "ctl_no_session_verify/forge_session": 0.303
+    },
+    "counts_n_accepted": {
+     "ctl_body_identity_trusted/forge_body": [
+      100,
+      30
+     ],
+     "ctl_naive_pdp/context": [
+      3000,
+      1928
+     ],
+     "ctl_naive_pdp/fault": [
+      2400,
+      738
+     ],
+     "ctl_naive_pdp/forge_request": [
+      150,
+      130
+     ],
+     "ctl_naive_pdp/planted": [
+      2200,
+      376
+     ],
+     "ctl_no_session_verify/forge_session": [
+      1320,
+      400
+     ],
+     "enforced/context": [
+      3000,
+      0
+     ],
+     "enforced/fault": [
+      2400,
+      0
+     ],
+     "enforced/forge_body": [
+      100,
+      0
+     ],
+     "enforced/forge_request": [
+      150,
+      0
+     ],
+     "enforced/forge_session": [
+      1760,
+      0
+     ],
+     "enforced/legit": [
+      1400,
+      1400
+     ],
+     "enforced/planted": [
+      2200,
+      0
+     ]
+    },
+    "escaped_exceptions": 0,
+    "n_surface_entries": 16,
+    "planted_wrong_reason": 0,
+    "seeds": 1,
+    "sizes_ok": true,
+    "uncovered_entries": []
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "e3_clash",
+   "experiment_verdict": "PASS",
+   "file": "e3_clash.5605fb1ac487c94d.json",
+   "items_bytes": 136311,
+   "recomputed": "PASS",
+   "rows": 20180,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "control_enqueue_only_delivers_ge_90pct": true,
+    "enqueue_allowed_at_v1_all_arms": true,
+    "fenced_nothing_delivered": true,
+    "fenced_runs_ge_3000": true,
+    "positive_delivers_every_run_and_item": true,
+    "recipient_snapshot_same_object": true,
+    "refusal_logged_with_expected_version_all_runs": true
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "e4_tighten",
+   "experiment_verdict": "PASS",
+   "file": "e4_tighten.9af3e3ff69d1af11.json",
+   "items_bytes": 74340,
+   "recomputed": "PASS",
+   "rows": 9000,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "A_cross_conflict_ge_90pct": true,
+    "A_findings_ge_1_per_world": true,
+    "A_findings_hidden_and_visible": true,
+    "A_no_interference": true,
+    "A_no_leak": true,
+    "A_worlds_ge_1000": true,
+    "A_xrefs_visible": true,
+    "B_none_no_leak_no_key_no_interference": true,
+    "B_optin_no_leak_key_and_flag_exact": true,
+    "B_optin_notices_ge_1000": true,
+    "control_floor:A_ctl_derive_join_dropped": true,
+    "control_floor:A_ctl_xref_without_decision": true,
+    "control_floor:B_ctl_flag_always": true,
+    "control_floor:B_ctl_no_read_check": true,
+    "sha_bound": true
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "e5_threads",
+   "experiment_verdict": "PASS",
+   "file": "e5_threads.1c88228679beaa13.json",
+   "items_bytes": 7195541,
+   "recomputed": "PASS",
+   "rows": 44512,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "empty_allows": 0,
+    "empty_probes": 12000,
+    "erase_service_ok": true,
+    "escaped": [],
+    "example_ok": true,
+    "holds_ok": true,
+    "lenient_control_allow_rate": 0.2944,
+    "malformed": 3000,
+    "malformed_per_seed": {
+     "919": 3000
+    },
+    "parse_errors": 3000,
+    "safe_allows": 0,
+    "valid_allow_rate": 0.601,
+    "valid_allowed_actions": [
+     "append",
+     "embed",
+     "erase",
+     "export",
+     "inject",
+     "read",
+     "send_inbox",
+     "send_model"
+    ]
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "e6_policy_format",
+   "experiment_verdict": "PASS",
+   "file": "e6_policy_format.b4c38a8ac3b0a6af.json",
+   "items_bytes": 93746,
+   "recomputed": "PASS",
+   "rows": 9008,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "codes_missing": [],
+    "contested_states": 12629,
+    "controls": {
+     "agent_may_decide": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "agent_may_supersede": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "authority_removed": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "cap_blocks_humans": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "idempotency_removed": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "m2_no_original": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "n2_no_cap": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "n2_no_role": {
+      "expected_recomputed": true,
+      "rows": 1
+     },
+     "stale_unchecked": {
+      "expected_recomputed": true,
+      "rows": 1
+     }
+    },
+    "enforced_cex_rows": 0,
+    "enforced_violations": 0,
+    "states": 128622,
+    "transitions": 1172798
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "b1_modelcheck",
+   "experiment_verdict": "PASS",
+   "file": "b1_modelcheck.889f29e101d27037.json",
+   "items_bytes": 5022,
+   "recomputed": "PASS",
+   "rows": 24,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "codes_missing": [],
+    "contested_logs": 1379,
+    "controls": {
+     "agent_may_decide": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2440,
+      "rate": 0.8133333333333334
+     },
+     "agent_may_supersede": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2081,
+      "rate": 0.6936666666666667
+     },
+     "m2_no_original": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 1720,
+      "rate": 0.5733333333333334
+     },
+     "n2_no_cap": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 442,
+      "rate": 0.14733333333333334
+     },
+     "n2_no_role": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2293,
+      "rate": 0.7643333333333333
+     },
+     "restore_drops_idempotency": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2961,
+      "rate": 0.987
+     },
+     "snapshot_drops_revocations": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 526,
+      "rate": 0.17533333333333334
+     },
+     "stale_unchecked": {
+      "logs": 3000,
+      "meets_floor": true,
+      "mismatch": 2618,
+      "rate": 0.8726666666666667
+     }
+    },
+    "events": 465810,
+    "log_codes_consistent": true,
+    "logs": 3000,
+    "mismatched_events": 0,
+    "rebuild_unequal": 0,
+    "ref_audit_bad_logs": 0,
+    "restores": 82425,
+    "service_audit_bad": 0,
+    "service_audit_logs": 600,
+    "service_refusals": 71634
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "b2_rebuild",
+   "experiment_verdict": "PASS",
+   "file": "b2_rebuild.865b51363d7033e4.json",
+   "items_bytes": 22099151,
+   "recomputed": "PASS",
+   "rows": 493410,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "diff_event_mismatch": 0,
+    "diff_events": 7110,
+    "diff_log_bad": 0,
+    "diff_logs": 40,
+    "scenario_rebuild_ok": true,
+    "scenarios": {
+     "S1_conflicting_decisions_contested": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S2_stale_token_refused": {
+      "overlap": 0,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S3_zombie_revoked_principal": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S4_same_idem_key_concurrent": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S4b_twins_on_two_requirements": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S5_resolve_race": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S6_tenant_isolation": {
+      "overlap": 0,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S7_api_supersede_race": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "S8_api_twins": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "ctl_idem_unprotected": {
+      "overlap": 0,
+      "passed": 50,
+      "rounds": 50
+     },
+     "ctl_no_advisory_lock": {
+      "overlap": 50,
+      "passed": 50,
+      "rounds": 50
+     },
+     "ctl_no_head_lock": {
+      "overlap": 49,
+      "passed": 50,
+      "rounds": 50
+     }
+    }
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "b3_pg",
+   "experiment_verdict": "PASS",
+   "file": "b3_pg.a0d6c1d24160b581.json",
+   "items_bytes": 224228,
+   "recomputed": "PASS",
+   "rows": 7751,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "all_scenarios": true,
+    "arms": {
+     "b1:caps": {
+      "code_mismatches": 0,
+      "codes_reached": [
+       "confirmed_applied",
+       "decided_accept",
+       "decided_reject",
+       "duplicate",
+       "granted",
+       "idem_conflict",
+       "nothing_to_retract",
+       "pending_created",
+       "principal_revoked",
+       "proposal_cap",
+       "proposal_closed",
+       "proposed",
+       "retracted",
+       "revoked",
+       "superseded",
+       "unauthorized",
+       "unknown_pending",
+       "unknown_proposal"
+      ],
+      "log_mismatches": 0,
+      "logs": 0,
+      "transitions": 111943,
+      "view_mismatches": 0,
+      "views": 17343
+     },
+     "b1:joint": {
+      "code_mismatches": 0,
+      "codes_reached": [
+       "agent_cannot_confirm",
+       "agent_not_permitted",
+       "bad_event",
+       "channel_mismatch",
+       "concurrent_agree",
+       "confirmed_applied",
+       "contested_joined",
+       "contested_needs_resolve",
+       "contested_opened",
+       "decided_accept",
+       "decided_amend",
+       "decided_reject",
+       "duplicate",
+       "duplicate_id",
+       "granted",
+       "idem_conflict",
+       "not_contested",
+       "nothing_to_retract",
+       "pending_closed",
+       "pending_created",
+       "principal_revoked",
+       "proposal_closed",
+       "proposal_mismatch",
+       "proposed",
+       "resolved",
+       "retracted",
+       "revoked",
+       "same_channel_confirmation",
+       "stale",
+       "superseded",
+       "tenant_mismatch",
+       "unauthorized",
+       "unknown_candidate",
+       "unknown_pending",
+       "unknown_proposal",
+       "unknown_req"
+      ],
+      "log_mismatches": 0,
+      "logs": 0,
+      "transitions": 220401,
+      "view_mismatches": 0,
+      "views": 21710
+     },
+     "b1:r1": {
+      "code_mismatches": 0,
+      "codes_reached": [
+       "agent_not_permitted",
+       "bad_event",
+       "channel_mismatch",
+       "concurrent_agree",
+       "confirmed_applied",
+       "contested_joined",
+       "contested_needs_resolve",
+       "contested_opened",
+       "decided_accept",
+       "decided_amend",
+       "decided_reject",
+       "duplicate",
+       "duplicate_id",
+       "granted",
+       "idem_conflict",
+       "not_contested",
+       "nothing_to_retract",
+       "pending_closed",
+       "pending_created",
+       "principal_revoked",
+       "proposal_closed",
+       "proposal_mismatch",
+       "proposed",
+       "resolved",
+       "retracted",
+       "revoked",
+       "stale",
+       "superseded",
+       "tenant_mismatch",
+       "unauthorized",
+       "unknown_candidate",
+       "unknown_pending",
+       "unknown_proposal",
+       "unknown_req"
+      ],
+      "log_mismatches": 0,
+      "logs": 0,
+      "transitions": 540504,
+      "view_mismatches": 0,
+      "views": 66565
+     },
+     "b1:r2": {
+      "code_mismatches": 0,
+      "codes_reached": [
+       "bad_event",
+       "channel_mismatch",
+       "confirmed_applied",
+       "contested_joined",
+       "contested_needs_resolve",
+       "contested_opened",
+       "decided_accept",
+       "duplicate",
+       "granted",
+       "idem_conflict",
+       "not_contested",
+       "nothing_to_retract",
+       "pending_closed",
+       "pending_created",
+       "principal_revoked",
+       "proposed",
+       "retracted",
+       "revoked",
+       "same_channel_confirmation",
+       "stale",
+       "superseded",
+       "unauthorized",
+       "unknown_pending",
+       "unknown_proposal"
+      ],
+      "log_mismatches": 0,
+      "logs": 0,
+      "transitions": 94300,
+      "view_mismatches": 0,
+      "views": 8188
+     },
+     "b1:r3": {
+      "code_mismatches": 0,
+      "codes_reached": [
+       "agent_cannot_confirm",
+       "agent_not_permitted",
+       "confirmed_applied",
+       "decided_accept",
+       "decided_reject",
+       "duplicate",
+       "granted",
+       "idem_conflict",
+       "nothing_to_retract",
+       "pending_created",
+       "principal_revoked",
+       "proposal_closed",
+       "proposed",
+       "retracted",
+       "revoked",
+       "stale",
+       "superseded",
+       "unauthorized",
+       "unknown_pending",
+       "unknown_proposal"
+      ],
+      "log_mismatches": 0,
+      "logs": 0,
+      "transitions": 205650,
+      "view_mismatches": 0,
+      "views": 14816
+     },
+     "b2": {
+      "code_mismatches": 0,
+      "codes_reached": [
+       "agent_cannot_confirm",
+       "agent_not_permitted",
+       "bad_event",
+       "candidates_full",
+       "channel_mismatch",
+       "concurrent_agree",
+       "confirmed_applied",
+       "contested_joined",
+       "contested_needs_resolve",
+       "contested_opened",
+       "decided_accept",
+       "decided_amend",
+       "decided_reject",
+       "duplicate",
+       "duplicate_id",
+       "granted",
+       "idem_conflict",
+       "not_contested",
+       "nothing_to_retract",
+       "pending_closed",
+       "pending_created",
+       "principal_revoked",
+       "proposal_cap",
+       "proposal_closed",
+       "proposal_mismatch",
+       "proposed",
+       "resolved",
+       "retracted",
+       "revoked",
+       "same_channel_confirmation",
+       "stale",
+       "superseded",
+       "tenant_mismatch",
+       "unauthorized",
+       "unknown_candidate",
+       "unknown_pending",
+       "unknown_proposal",
+       "unknown_req"
+      ],
+      "log_mismatches": 0,
+      "logs": 300,
+      "transitions": 48828,
+      "view_mismatches": 0,
+      "views": 300
+     }
+    },
+    "b2_logs_expected": 300,
+    "b2_logs_ok": true,
+    "control": {
+     "ctl:b1:r2": {
+      "differences": 5586,
+      "errors": 0,
+      "transitions": 94300
+     },
+     "ctl:b2": {
+      "differences": 629,
+      "errors": 0,
+      "transitions": 4945
+     }
+    },
+    "control_caught": true,
+    "counts_equal_summary": true
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "pg_diff",
+   "experiment_verdict": "PASS",
+   "file": "pg_diff.5daef51d7e9b29ad.json",
+   "items_bytes": 3053406,
+   "recomputed": "PASS",
+   "rows": 1458341,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "clean": {
+     "61": true,
+     "62": true,
+     "63": true
+    },
+    "complete": true,
+    "controls": {
+     "61/forged_grant": true,
+     "61/head_tampered": true,
+     "61/rollback_unchecked": true,
+     "62/forged_grant": true,
+     "62/head_tampered": true,
+     "62/rollback_unchecked": true,
+     "63/forged_grant": true,
+     "63/head_tampered": true,
+     "63/rollback_unchecked": true
+    }
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "mig_rehearsal",
+   "experiment_verdict": "PASS",
+   "file": "mig_rehearsal.4a0791586a62c1b3.json",
+   "items_bytes": 2038,
+   "recomputed": "PASS",
+   "rows": 12,
+   "verdict": "PASS"
+  },
+  {
+   "agree": true,
+   "checks": {
+    "61": {
+     "controls_caught": {
+      "ctl_bare_mint_0a20b64": true,
+      "ctl_bare_mint_80bb6a7": true,
+      "ctl_identity_from_body": true,
+      "ctl_no_mac": true,
+      "ctl_no_replay": true,
+      "ctl_origin_from_body": true
+     },
+     "controls_mismatch": [],
+     "real_failure_count": 0,
+     "real_failures": []
+    },
+    "62": {
+     "controls_caught": {
+      "ctl_bare_mint_0a20b64": true,
+      "ctl_bare_mint_80bb6a7": true,
+      "ctl_identity_from_body": true,
+      "ctl_no_mac": true,
+      "ctl_no_replay": true,
+      "ctl_origin_from_body": true
+     },
+     "controls_mismatch": [],
+     "real_failure_count": 0,
+     "real_failures": []
+    },
+    "63": {
+     "controls_caught": {
+      "ctl_bare_mint_0a20b64": true,
+      "ctl_bare_mint_80bb6a7": true,
+      "ctl_identity_from_body": true,
+      "ctl_no_mac": true,
+      "ctl_no_replay": true,
+      "ctl_origin_from_body": true
+     },
+     "controls_mismatch": [],
+     "real_failure_count": 0,
+     "real_failures": []
+    }
+   },
+   "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+   "exp": "s2_sessions",
+   "experiment_verdict": "PASS",
+   "file": "s2_sessions.a99c0d171275c764.json",
+   "items_bytes": 9501,
+   "recomputed": "PASS",
+   "rows": 1041,
+   "verdict": "PASS"
+  }
+ ],
+ "rows_pass": true
+}

@@ -1,0 +1,191 @@
+{
+ "name": "e6_policy_format",
+ "params": {
+  "empty_per_seed": 3000,
+  "good_doc": {
+   "authorizations": {
+    "a": {
+     "expires": 5,
+     "principal": "p",
+     "programme": "x",
+     "tenant": "t1"
+    }
+   },
+   "banned_models": [
+    "m9"
+   ],
+   "destinations": {
+    "e": {
+     "kind": "embedder",
+     "local": true,
+     "max_sensitivity": 3,
+     "model": "m1@1",
+     "region": "eu",
+     "tenants": [
+      "t1",
+      "t2"
+     ]
+    },
+    "m": {
+     "kind": "model",
+     "local": true,
+     "max_sensitivity": 3,
+     "model": "m1@1",
+     "region": "eu",
+     "tenants": [
+      "t1",
+      "t2"
+     ]
+    },
+    "x": {
+     "kind": "export",
+     "local": false,
+     "max_sensitivity": 2,
+     "model": null,
+     "region": "eu",
+     "tenants": [
+      "t1"
+     ]
+    }
+   },
+   "grants": {
+    "t1": [
+     "append",
+     "read",
+     "inject",
+     "send_model",
+     "embed",
+     "send_inbox",
+     "export",
+     "erase"
+    ],
+    "t2": [
+     "append",
+     "read",
+     "inject",
+     "send_model",
+     "embed",
+     "send_inbox",
+     "export",
+     "erase"
+    ]
+   },
+   "hold_events": [
+    "h1"
+   ],
+   "models": {
+    "m1@1": {
+     "family": "m1",
+     "version": "1"
+    }
+   },
+   "version": 3
+  },
+  "lenient_patch": {
+   "module": "pol.policy",
+   "new": "        try:\n            return Policy(1, grants={t: frozenset(a) for t, a in doc[\"grants\"].items()})\n        except Exception:       # noqa: BLE001\n            return Policy(1, grants={\"t1\": frozenset(ACTIONS), \"t2\": frozenset(ACTIONS)})\n",
+   "old": "        return DENY_ALL\n"
+  },
+  "malformed_per_seed": 3000,
+  "probes_per_doc": 5,
+  "seeds": [
+   919
+  ],
+  "valid_per_seed": 3000
+ },
+ "result": {
+  "control_meets_floor": true,
+  "erase_service": {
+   "admin": {
+    "denied": 0,
+    "erased": 2,
+    "queued": 1,
+    "refused": null,
+    "result": "incomplete"
+   },
+   "after": [
+    "alice-about-dana-held",
+    "bob-about-erin"
+   ],
+   "arm": "erase_service",
+   "before": [
+    "alice-about-dana",
+    "alice-about-dana-held",
+    "bob-about-dana",
+    "bob-about-erin"
+   ],
+   "non_admin": {
+    "denied": 0,
+    "erased": 0,
+    "queued": 0,
+    "refused": "unauthorized",
+    "result": null
+   },
+   "seed": 919
+  },
+  "hold_pdp": {
+   "hold_event_removed": [
+    true,
+    "allowed",
+    "erase"
+   ],
+   "no_hold": [
+    true,
+    "allowed",
+    "erase"
+   ],
+   "other_tenant": [
+    false,
+    "tenant_mismatch",
+    "erase"
+   ],
+   "recorded_hold": [
+    false,
+    "erasure_queued",
+    "erase"
+   ],
+   "unrecorded_hold": [
+    true,
+    "allowed",
+    "erase"
+   ]
+  },
+  "holds_ok": true,
+  "items": {
+   "bytes": 93746,
+   "file": "e6_policy_format.items.dd560696c83a9250.jsonl.gz",
+   "sha256": "dd560696c83a925043ed92ffbca72ed74d47825ddce6be472dacc8ee75be6200"
+  },
+  "licence_note": "no Elasticsearch feature is used: enforcement is application-side; nothing here needs more than Basic",
+  "not_proven": "format covers the dimensions this lab models; the client's real policies are not shipped; the example is illustrative only",
+  "pass_conditions_met": true,
+  "results": {
+   "empty_allows": 0,
+   "lenient_allow_rate": 0.2944,
+   "malformed": 3000,
+   "parse_errors": 3000,
+   "safe_allows": 0,
+   "valid_allow_rate": 0.601
+  },
+  "runtime_s": 1.5,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/e6_policy_format.py",
+  "at": "2026-11-17T12:23:53Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "host": "t2-dev",
+  "load_avg": [
+   1.8779296875,
+   2.06298828125,
+   1.96044921875
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}

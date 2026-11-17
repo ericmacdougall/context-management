@@ -1,0 +1,174 @@
+{
+ "name": "b3_pg",
+ "params": {
+  "R": 50,
+  "diff_logs": 40,
+  "pg_port": 25610,
+  "seeds": [
+   61
+  ]
+ },
+ "result": {
+  "backstop_total": 50,
+  "controls": {
+   "idem_unprotected": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "no_advisory_lock": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "no_head_lock": {
+    "failures_sample": [],
+    "overlap_witnessed": 49,
+    "passed": 50,
+    "rounds": 50
+   }
+  },
+  "controls_meet_floor": true,
+  "differential": {
+   "audit_bad_logs": 0,
+   "chain_bad_logs": 0,
+   "codes": {
+    "agent_cannot_confirm": 172,
+    "agent_not_permitted": 952,
+    "bad_event": 99,
+    "channel_mismatch": 58,
+    "confirmed_applied": 56,
+    "contested_joined": 9,
+    "contested_needs_resolve": 108,
+    "contested_opened": 21,
+    "decided_accept": 108,
+    "decided_amend": 41,
+    "decided_reject": 37,
+    "duplicate": 89,
+    "duplicate_id": 23,
+    "granted": 30,
+    "idem_conflict": 58,
+    "not_contested": 85,
+    "nothing_to_retract": 21,
+    "pending_closed": 9,
+    "pending_created": 568,
+    "principal_revoked": 126,
+    "proposal_closed": 50,
+    "proposal_mismatch": 23,
+    "proposed": 981,
+    "resolved": 4,
+    "retracted": 44,
+    "revoked": 11,
+    "same_channel_confirmation": 24,
+    "stale": 282,
+    "superseded": 148,
+    "tenant_mismatch": 73,
+    "unauthorized": 2426,
+    "unknown_candidate": 8,
+    "unknown_pending": 88,
+    "unknown_proposal": 232,
+    "unknown_req": 46
+   },
+   "events": 7110,
+   "logs": 40,
+   "mismatch_events": 0,
+   "rebuild_mismatch_logs": 0,
+   "view_mismatch_logs": 0
+  },
+  "items": {
+   "file": "b3_pg.items.c34e331e43867f60.jsonl.gz",
+   "sha256": "c34e331e43867f60defb986c701d4497066701ac873eec37f3a2434296703928"
+  },
+  "not_proven": "single Postgres 16 instance, READ COMMITTED, two overlapping writers per round (not N-way); no process kill or network partition mid-transaction; revoke takes the tenant row FOR UPDATE and so serialises the whole tenant (a scaling limit)",
+  "pass_conditions_met": true,
+  "scenario_chain": [
+   1000,
+   true
+  ],
+  "scenario_rebuild_equal": true,
+  "scenarios": {
+   "S1_conflicting_decisions_contested": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S2_stale_token_refused": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S3_zombie_revoked_principal": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S4_same_idem_key_concurrent": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S4b_twins_on_two_requirements": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S5_resolve_race": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S6_tenant_isolation": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S7_api_supersede_race": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   },
+   "S8_api_twins": {
+    "failures_sample": [],
+    "overlap_witnessed": 50,
+    "passed": 50,
+    "rounds": 50
+   }
+  },
+  "seconds": 1048.7,
+  "verdict": "PASS"
+ },
+ "stamp": {
+  "argv": "/home/eric/emlab2-16096/policy/runs/stamped-d05d731/src/exp/b3_pg.py",
+  "at": "2026-11-17T13:16:08Z",
+  "commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "dirty": false,
+  "env": {
+   "container": "emlab-pg-polr-16096",
+   "isolation": "read committed",
+   "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+   "roles": "owner (raw core: S1-S6, differential, controls); dc_app with dc_idp sessions (S7, S8)"
+  },
+  "host": "t2-dev",
+  "load_avg": [
+   0.6455078125,
+   0.95751953125,
+   1.24609375
+  ],
+  "model_calls": "none (recording stubs only)",
+  "python": "3.12.3",
+  "synced_from_git": true,
+  "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1",
+  "thresholds_sha256": "c8f90f732c6a83fa312b01bc36a35c0e13df7168a78c121271efb8534bedb3a0",
+  "tree_sha256": "7807a895f0e44f3d717108234d076e183c81936a00d0272a4efe9b1a2f6ca98f"
+ }
+}
