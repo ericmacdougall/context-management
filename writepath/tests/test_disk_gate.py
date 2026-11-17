@@ -192,7 +192,7 @@ class Fake:
             st["c"][cid] = {"name": name, "started": self.ts(st), "running": True, "paused": False, "restarts": 0,
                             "gone": False, "logcfg": {"Type": "json-file", "Config": {}}, "tty": False,
                             "du": {data_path: used}, "kept": 0, "drop": [], "pid": pid, "oom": False,
-                            "node": os.urandom(8).hex(), "mem": mem,
+                            "node": os.urandom(8).hex(), "mem": mem, "env": [f"PGDATA={data_path}", "LANG=C.UTF-8"],
                             "mounts": [{"Type": "tmpfs", "Source": "", "Destination": data_path, "RW": True}],
                             "statfs": {data_path: ["tmpfs", total, total - used]}}
         self.locked(f)
@@ -307,7 +307,8 @@ def fake_main(argv):
                                "State": {"Running": c["running"], "Paused": c["paused"], "StartedAt": c["started"],
                                          "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
                                "Mounts": c["mounts"],
-                               "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]}, "Config": {"Tty": c["tty"]},
+                               "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]},
+                               "Config": {"Tty": c["tty"], "Env": c.get("env", [])},
                                "NetworkSettings": {"Ports": c.get("ports") or {}}}]))
         return 0
     if cmd == "exec":
@@ -683,6 +684,37 @@ class Gate(unittest.TestCase):
         self.assertBlocked(*self.call("start"), "JVM")
 
     # ---- R7 host free space measured inside the locked admission step (review D F1)
+    def test_tmpfs_written_from_outside_the_container_voids(self):
+        # review D advisor: pages written into the tmpfs by another cgroup (docker cp, a host process in the mount
+        # namespace) are not bounded by the container's limit; the premise used <= peak is checked on every observation
+        self.need_v3()
+        self.start()
+        self.F.statfs(self.pg, PGDATA, free=2 * GIB - (3 * GIB) // 4)        # 0.75 GiB used, lifetime peak 0.5 GiB
+        self.assertVoid(*self.call("end"), "charged to another cgroup")
+
+    def test_pgdata_outside_the_tmpfs_blocks(self):
+        self.need_v3()
+        self.F.set(self.pg, env=["PGDATA=/var/lib/postgresql/elsewhere"])
+        self.assertBlocked(*self.call("start"), "PGDATA")
+
+    def test_no_stream_code_writes_disk_or_block_settings(self):
+        # GATE-DESIGN 5.4: thresholds changed and restored between two observations are outside what the gate sees, so
+        # no stream code may change cluster or index settings at all (bootstrap sets the watermarks as node settings);
+        # this fence fails when such a call is added anywhere in writepath. runkit/live/ is left out: its kits change
+        # settings on purpose, as test cases, on their own disposable emlab2-gatefix-* containers only.
+        pat = re.compile(r"\b(PUT|POST)\b[^\n]*(_cluster/settings|/_settings\b|index\.blocks|disk\.watermark)|"
+                         r"(_cluster/settings|/_settings\b)[^\n]*\b(PUT|POST)\b")
+        found = []
+        for f in sorted(HERE.rglob("*")):
+            rel = f.relative_to(HERE)
+            if (rel.parts[0] in ("tests", "results") or rel.parts[:2] == ("runkit", "live") or
+                    f.suffix not in (".py", ".sh") or not f.is_file()):
+                continue
+            for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
+                if pat.search(line):
+                    found.append(f"{rel}:{n}")
+        self.assertEqual(found, [], "stream code that writes cluster or index settings (disk thresholds, blocks)")
+
     def test_free_space_dropping_during_setup_blocks(self):
         # 30 GiB free before the gate observed anything, 18 GiB once it had read ES: admission must use the latter
         self.free = lambda: 18 if FakeES.S.get("reads") else 30
@@ -756,10 +788,20 @@ class Gate(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         kept = list(self.home.joinpath("state").glob("stop_ledger.broken-*.jsonl"))
         self.assertEqual(len(kept), 1, "the broken ledger must be kept")
+        # the damaged ledger's stops cannot be read: the new ledger holds one open stop until a person acknowledges it
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+        self.ack_all("checked the damaged ledger")
         self.start()
 
-    def test_v2_ledger_is_adopted_once(self):
+    def test_ledger_reset_refuses_an_intact_ledger(self):
         self.need_v3()
+        self.call("stop", "an open stop that one command must not clear")
+        rc, out = self.call("ledger-reset", "trying to clear the stops")
+        self.assertEqual(rc, 2, f"ledger-reset on an intact ledger must be refused: {out.strip()[-200:]}")
+        self.assertIn("intact", out)
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+
+    def _write_v2_ledger(self):
         for p in self.home.joinpath("state").glob("stop_ledger*"):
             p.unlink()
         import hashlib
@@ -770,6 +812,27 @@ class Gate(unittest.TestCase):
             lines.append(ln)
             prev = hashlib.sha256(ln).hexdigest()
         self._ledger().write_bytes(b"\n".join(lines) + b"\n")
+        return lines
+
+    def test_ledger_cut_back_past_its_adoption_is_not_readopted_silently(self):
+        # review D advisor: a ledger adopted at record k+1, cut back to k records with its anchor removed, read like
+        # a v2 ledger and was adopted again, dropping every later record.
+        self.need_v3()
+        lines = self._write_v2_ledger()
+        self.call("init", "adopting the v2 ledger")
+        self.call("stop", "a stop recorded after the adoption")
+        self._ledger().write_bytes(b"\n".join(lines) + b"\n")
+        (self.home / "state" / "stop_ledger.head").unlink()
+        rc, out = self.call("stops")
+        self.assertEqual(rc, 2, f"a ledger cut back past its init record read as intact: {out.strip()[-200:]}")
+        self.assertBlocked(*self.call("start"), "init record")
+
+    def test_v2_ledger_is_adopted_once_and_only_by_init(self):
+        self.need_v3()
+        self._write_v2_ledger()
+        self.assertBlocked(*self.call("start"), "init record")     # never adopted implicitly
+        rc, out = self.call("init", "adopting the v2 ledger")
+        self.assertEqual(rc, 0, out)
         self.start()
         self.assertValid(*self.call("end"))
         kinds = [json.loads(x)["kind"] for x in self._ledger().read_text().splitlines()]
@@ -793,6 +856,22 @@ class Gate(unittest.TestCase):
         self.assertTrue(self.stop_path().is_dir(), "state/STOP must become a directory, so legacy writes fail")
         if self.v3:
             self.assertEqual(len(list(self.home.joinpath("state").glob("STOP.ingested-*"))), 1)
+
+    def test_touch_of_the_stop_directory_is_a_stop(self):
+        self.need_v3()
+        self.assertEqual(self.call("stops")[0], 0)
+        os.utime(self.stop_path())                      # `touch state/STOP` succeeds on a directory
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+
+    def test_file_copied_into_the_stop_directory_is_a_stop(self):
+        self.need_v3()
+        self.assertEqual(self.call("stops")[0], 0)
+        (self.stop_path() / "why").write_text("operator: stop, disk\n")   # `cp why state/STOP` lands inside it
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+        self.assertFalse((self.stop_path() / "why").exists(), "the file written into STOP must be kept elsewhere")
+        self.assertEqual(len(list(self.home.joinpath("state").glob("STOP.ingested-*"))), 1)
+        self.ack_all("read it")
+        self.start()                                    # the directory's new state is anchored: no second stop
 
     def test_legacy_stop_write_after_migration_fails_loudly(self):
         self.call("stops")

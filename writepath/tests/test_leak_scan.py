@@ -61,9 +61,10 @@ class Scan(unittest.TestCase):
         enc = _b64(f"{kid}:{key}")
         kms = _kms()
         tkey = secrets.token_bytes(32)                      # a tenant key (tenant_keys.hkey_hex)
+        oldkms = secrets.token_bytes(32).hex()               # a legacy KMS key (database keys, keys.key), hex text
         chain = hmac.new(tkey, b"chain-key:v1", hashlib.sha256).digest()   # wp/keys.py chain_key, sent as hex by keysvc
         cls.broker, cls.key = broker, key
-        cls.values = [app, admin, legacy, broker, espw, key, enc, kms.hex(), tkey.hex(), chain.hex()]
+        cls.values = [app, admin, legacy, broker, espw, key, enc, kms.hex(), tkey.hex(), chain.hex(), oldkms]
         home = cls.tmp / "home"
         for d in ("secrets", "oldhome", "conf"):
             (home / d).mkdir(parents=True)
@@ -105,6 +106,8 @@ class Scan(unittest.TestCase):
             # review D F5: the tenant chain key, derived from a tenant key, as the key service sends it and in base64
             "chain_key_hex_in_rpc_log": json.dumps({"op": "chain_key", "ok": chain.hex()}),
             "chain_key_base64": _b64(chain),
+            # the legacy write path's key store (old_repro), a separate database the stream's queries did not read
+            "legacy_kms_key_in_log": f"kms_key returned {oldkms}",
             # review D F6: UTF-16 (both byte orders, odd alignment) and percent-encoded JSON unicode escapes
             "utf16le_log": f"broker password {broker}\n".encode("utf-16-le"),
             "utf16be_odd_offset": b"\x07" + f"pw={app}".encode("utf-16-be"),
@@ -124,13 +127,17 @@ class Scan(unittest.TestCase):
         bindir = cls.tmp / "bin"
         bindir.mkdir()
         (bindir / "docker").write_text('#!/bin/sh\n[ -e "$FAKE_KS_FAIL" ] && exit 1\n'
+                                       'case "$*" in *pg_database*) echo keys; exit 0;; '
+                                       '*" -d keys "*) cat "$FAKE_KS_LEGACY"; exit 0;; esac\n'
                                        'case "$*" in *subject_keys*) cat "$FAKE_KS";; esac\n'
                                        'case "$*" in *tenant_keys*) cat "$FAKE_KS_TENANT";; esac\nexit 0\n')
         (bindir / "docker").chmod(0o755)
         (cls.tmp / "keys.txt").write_text(kms.hex() + "\n" + secrets.token_bytes(32).hex() + "\n")
         (cls.tmp / "tenant_keys.txt").write_text(tkey.hex() + "\n")
+        (cls.tmp / "legacy_keys.txt").write_text(oldkms + "\n")
         cls.env = dict(os.environ, PATH=f"{bindir}:{os.environ['PATH']}", FAKE_KS=str(cls.tmp / "keys.txt"),
-                       FAKE_KS_TENANT=str(cls.tmp / "tenant_keys.txt"), FAKE_KS_FAIL=str(cls.tmp / "ks_fail"))
+                       FAKE_KS_TENANT=str(cls.tmp / "tenant_keys.txt"), FAKE_KS_LEGACY=str(cls.tmp / "legacy_keys.txt"),
+                       FAKE_KS_FAIL=str(cls.tmp / "ks_fail"))
         cls.rc, cls.out = cls.run_scan(home, res)
         cls.hits = {pathlib.Path(ln.split()[1]).name for ln in cls.out.splitlines() if ln.startswith("HIT ")}
 
@@ -285,27 +292,44 @@ class Scan(unittest.TestCase):
         spec.loader.exec_module(mod)
         table = getattr(mod, "SITES", None)
         self.assertIsNotNone(table, "the scanner has no creation-site table (SITES)")
+        # Every file of writepath except tests/ and results/ (fixtures and receipts) and the scanner itself (its
+        # self-test makes fake values). Python, shell and SQL forms.
         pat = re.compile(r"token_(bytes|hex|urlsafe)\(|urandom\(|hmac\.new\(|hmac\.digest\(|SystemRandom|"
                          r"secrets\.choice\(|encrypt_password\(|elasticsearch-(reset-password|service-tokens|"
                          r"create-enrollment-token)|_security/(api_key|service|user)\b.*\b(POST|PUT)\b|"
-                         r"\b(POST|PUT)\b.*_security/(api_key|service|user)\b")
+                         r"\b(POST|PUT)\b.*_security/(api_key|service|user)\b|/dev/u?random|openssl rand|"
+                         r"gen_random_bytes|gen_random_uuid|POSTGRES_PASSWORD|ELASTIC_PASSWORD|"
+                         r"random\.(rand|choice|getrandbits)")
         found, unlisted = set(), []
-        for top in ("wp", "host", "exp"):
-            for f in sorted((HERE / top).rglob("*")):
-                if f.suffix not in (".py", ".sh", ".sql") or not f.is_file():
+        for f in sorted(HERE.rglob("*")):
+            rel = str(f.relative_to(HERE))
+            if (f.suffix not in (".py", ".sh", ".sql") or not f.is_file() or rel.split("/")[0] in ("tests", "results")
+                    or rel == "runkit/leak_scan.py"):
+                continue
+            for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
+                if not pat.search(line):
                     continue
-                rel = str(f.relative_to(HERE))
-                for n, line in enumerate(f.read_text(errors="replace").splitlines(), 1):
-                    if not pat.search(line):
-                        continue
-                    m = [i for i, s in enumerate(table) if s[0] == rel and s[1] in line]
-                    if m:
-                        found.update(m)
-                    else:
-                        unlisted.append(f"{rel}:{n}")
+                m = [i for i, s in enumerate(table) if s[0] == rel and s[1] in line]
+                if m:
+                    found.update(m)
+                else:
+                    unlisted.append(f"{rel}:{n}")
         self.assertEqual(unlisted, [], "secret creation or derivation sites missing from leak_scan.SITES")
-        stale = [f"{s[0]} {s[1]!r}" for i, s in enumerate(table) if i not in found]
+        stale = [f"{s[0]} {s[1]!r}" for i, s in enumerate(table) if i not in found and not s[0].startswith("legacy:")]
         self.assertEqual(stale, [], "leak_scan.SITES entries that match no line any more")
+        # the legacy write path's creation sites, from its own commit when this checkout has the history
+        legacy = [s for s in table if s[0].startswith("legacy:")]
+        self.assertTrue(legacy, "the legacy write path's key store (old_repro) is not in leak_scan.SITES")
+        for _, commit, path in {tuple(s[0].split(":", 2)) for s in legacy}:
+            r = subprocess.run(["git", "-C", str(HERE), "show", f"{commit}:{path}"], capture_output=True, text=True)
+            if r.returncode != 0:
+                continue                                # no history here (an extracted tree): checked in the repo
+            lines = r.stdout.splitlines()
+            unl = [n for n, ln in enumerate(lines, 1) if pat.search(ln) and
+                   not any(s[1] in ln for s in legacy if s[0] == f"legacy:{commit}:{path}")]
+            self.assertEqual(unl, [], f"creation sites in {commit}:{path} missing from leak_scan.SITES")
+            gone = [s[1] for s in legacy if s[0] == f"legacy:{commit}:{path}" and not any(s[1] in ln for ln in lines)]
+            self.assertEqual(gone, [], f"leak_scan.SITES entries that match no line of {commit}:{path}")
 
     def test_clearance_states_the_split_rule_and_limits(self):
         rc, out = self.run_scan(self.home, self.tmp / "clean")
