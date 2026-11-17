@@ -3,6 +3,7 @@ Twin indices (suffix -t) take the same operations while the node is still on tri
 import json
 import time
 
+import evidence
 import lib
 import matrix
 from lib import BulkError, bulk, bulk_strict, classify, embed, err, req
@@ -139,10 +140,10 @@ def mutations(kind, ix):
         return c, j
 
     def rec(name, c, j, check=None):
-        M[name] = {"class": classify(c, j), "status": c, "error": err(j) if c >= 300 else None}
-        if c >= 300 and M[name]["error"] is None:
+        M[name] = {"class": classify(c, j), "status": c, "error": err(j) if not lib.succeeded(c) else None}
+        if not lib.succeeded(c) and M[name]["error"] is None:
             M[name]["body"] = json.dumps(j)[:400]
-            if "non-compliant" in M[name]["body"]:
+            if evidence.licence_text(j) and c >= 400:   # same rule as lib.classify for a body that err() cannot read
                 M[name]["class"] = "LICENCE_ERROR"
         if check:
             M[name]["effect"] = check()

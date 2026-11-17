@@ -4,9 +4,9 @@ Kinds: **must-succeed** (a fixture or precondition: status and body are checked 
 
 | file:line | call | HTTP status checked | body validated | on failure | kind |
 |---|---|---|---|---|---|
-| lib.py:47 | `c, j, _ = req("GET", "/_license")` | yes (c != 200 handled by caller) | partly | returns the error body; recorded | probe |
-| lib.py:84 | `v = req("GET", "/")[1].get("version", {}).get("number")` | no | version field only | version None in the stamp (metadata, not a measurement) | stamp |
-| lib.py:104 | `return req("POST", "/_bulk?refresh=" + refresh, ndjson=nd, timeout=120)` | returned to caller | n/a | see bulk and bulk_strict | helper |
+| lib.py:49 | `c, j, _ = req("GET", "/_license")` | yes (c != 200 handled by caller) | partly | returns the error body; recorded | probe |
+| lib.py:98 | `v = req("GET", "/")[1].get("version", {}).get("number")` | no | version field only | version None in the stamp (metadata, not a measurement) | stamp |
+| lib.py:118 | `return req("POST", "/_bulk?refresh=" + refresh, ndjson=nd, timeout=120)` | returned to caller | n/a | see bulk and bulk_strict | helper |
 | matrix.py:171 | `req("DELETE", "/" + idx)` | no | no | ignored (404 expected); every fixture or prerequisite that follows is checked | cleanup |
 | matrix.py:179 | `c, j, _ = req("POST", "/%s/_search" % idx, body, **kw)` | returned to caller | hit ids / ES\|QL values | the caller emits the cell; cell decided by verdict(): prerequisites and witness per the cell table below; never AVAILABLE on an unestablished prerequisite or an empty witness | helper |
 | matrix.py:193 | `c, j, _ = req("PUT", "/" + idx, body)` | yes (create 200 acknowledged; bulk_strict; refresh 200, 0 shard failures; _count exact; spot read where given) | yes | FixtureError. Run-scope fixture (base, fm): the run aborts and no cell is emitted. Cell-scope prerequisite: recorded as not established and every dependent cell is UNVERIFIED_PREREQUISITE (see the prerequisite table) | must-succeed / prerequisite check |
@@ -79,65 +79,65 @@ Kinds: **must-succeed** (a fixture or precondition: status and body are checked 
 | exp2.py:225 | `req("DELETE", "/_search/scroll", {"scroll_id": sid})` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
 | exp2.py:229 | `cr, jr, _ = req("POST", "/lic-sem2/_refresh")` | yes (HTTP 200) | no | AssertionError aborts verification | must-succeed (verification read) |
 | exp2.py:230 | `c, j, _ = req("POST", "/lic-sem2/_search", {"size": 10000, "track_total_hits": True, "_sour` | yes (HTTP 200, no shard failure, total equals hits returned) | hit ids | AssertionError aborts verification (an unread or truncated index made sem_failed_present and sem_present_unacked vacuously 0) | must-succeed (verification read) |
-| exp3.py:47 | `c, j, _ = req("PUT", "/_inference/text_embedding/" + matrix.STUB_EP, matrix.stub_endpoint_` | yes (new) | no | ScrollError aborts fixtures | must-succeed (on trial) |
-| exp3.py:54 | `req("DELETE", "/" + ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:55 | `c, j, _ = req("PUT", "/" + ix, mapping(kind))` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |
-| exp3.py:58 | `cb, sb = bulk_strict(ix, [(str(i), doc(kind, i)) for i in range(n_docs(kind))])` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |
-| exp3.py:68 | `req("POST", "/%s/_refresh" % ix)` | no (recorded call) | no | the subsequent count/search shows the effect; fixtures re-checked by source_count | helper: recorded |
-| exp3.py:69 | `c, j, _ = req("GET", "/%s/_count" % ix)` | yes | integer count, shards (source_count) | count() returns a status dict; source_count raises | helper: recorded (count) or must-succeed (source_count) |
-| exp3.py:77 | `c, j, _ = req("GET", "/%s/_doc/%s?_source_includes=_inference_fields" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:93 | `c, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:106 | `c, j, _ = req("POST", "/%s/_search" % ix, dict(body, size=50, track_total_hits=True))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:110 | `c, j, _ = req("POST", "/%s/_search" % ix, {"query": {"match": {"title": "paris"}}, "size":` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:114 | `c, j, _ = req("POST", "/%s/_search" % ix, {"knn": {"field": "v", "query_vector": embed(tit` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |
-| exp3.py:121 | `c, j, _ = req("GET", "/%s/_doc/%d?_source_includes=v&_source_exclude_vectors=false" % (ix,` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:138 | `c, j, _ = req("GET", p)` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:154 | `c, j, _ = req("PUT", "/%s/_doc/1?refresh=true" % ix, d)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:155 | `rec("overwrite_full_doc", c, j, lambda: {"tag": ntag(1), "embedding_present": emb(1)})` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:157 | `c, j, _ = req("POST", "/%s/_update/2?refresh=true" % ix, {"doc": {"tag": "partial"}})` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:158 | `rec("update_partial_api", c, j, lambda: {"tag": ntag(2), "embedding_present": emb(2)})` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:160 | `c, s = bulk(ix, [("3", {"tag": "bulkpartial"})], op="update")` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:163 | `c, j, _ = req("POST", "/%s/_update/4?refresh=true" % ix, {"script": {"source": "ctx._sourc` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:164 | `rec("update_scripted", c, j, lambda: {"tag": ntag(4), "embedding_present": emb(4)})` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:166 | `c, j, _ = req("DELETE", "/%s/_doc/5?refresh=true" % ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:167 | `rec("delete_one", c, j, lambda: {"get_after_status": get(5)[0]})` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:169 | `c, j, _ = req("POST", "/%s/_update_by_query?refresh=true&conflicts=proceed" % ix,` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:171 | `rec("update_by_query", c, j, lambda: {"updated": j.get("updated"), "failures": len(j.get("` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:175 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:176 | `cdst, _jd, _ = req("PUT", "/" + dst, mapping(kind)) # recorded below as dst_create (a refu` | recorded (dst_create) | no | recorded | probe |
-| exp3.py:177 | `c, j, _ = req("POST", "/_reindex?refresh=true", {"source": {"index": ix}, "dest": {"index"` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:178 | `rec("reindex_same_mapping", c, j, lambda: {"dst_create": cdst, "dst_count": count(dst), "f` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:180 | `"dst_vectors_present": None if kind == "sem" else sum(1 for q in (0, 10, 20, 30) if len((r` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:181 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:183 | `c, j, _ = req("POST", "/%s/_forcemerge?max_num_segments=1" % ix, timeout=300)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:184 | `rec("force_merge", c, j, lambda: {"count_after": count(ix)})` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:187 | `c, j, _ = req("PUT", "/%s/_doc/9999?refresh=true" % ix, d)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
-| exp3.py:188 | `rec("index_new_doc", c, j, lambda: {"count": count(ix)})` | recorded or counted | varies | recorded | probe/read (recorded) |
-| exp3.py:204 | `c, j, _ = req("POST", "/%s/_refresh" % ix)` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |
-| exp3.py:214 | `c, j, _ = req("GET", "/%s/_count" % ix)` | yes | integer count, shards (source_count) | count() returns a status dict; source_count raises | helper: recorded (count) or must-succeed (source_count) |
-| exp3.py:234 | `c, j, _ = req("POST", path, body, timeout=page_timeout)` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |
-| exp3.py:247 | `c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=page_` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |
-| exp3.py:252 | `req("DELETE", "/_search/scroll", {"scroll_id": sid})` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:260 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:261 | `c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |
-| exp3.py:275 | `bulk_strict(dst, items[k:k + 100], refresh="false")` | yes | one result per operation | BulkError aborts the migration | must-succeed |
-| exp3.py:293 | `c, j, _ = req("POST", "/%s/_search" % dst, {"knn": {"field": "v", "query_vector": src_docs` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |
-| exp3.py:302 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:303 | `c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |
-| exp3.py:320 | `bulk_strict(dst, items[k:k + 100], refresh="false")` | yes | one result per operation | BulkError aborts the migration | must-succeed |
-| exp3.py:337 | `cc, jj, _ = req("POST", "/%s/_search" % dst, {"knn": {"field": "v", "query_vector": docs[i` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |
-| exp3.py:352 | `req("DELETE", "/" + ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:355 | `c, j, _ = req("PUT", "/" + ix, m)` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |
-| exp3.py:358 | `cb, sb = bulk_strict(ix, [(str(i), doc("sem", i)) for i in range(20)], refresh="false")` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |
-| exp3.py:365 | `cv, jv, _ = req("POST", "/%s/_search" % ix, {"size": 0, "track_total_hits": True, "query":` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:367 | `c, s = bulk(ix, [(str(i), {"tag": "u"}) for i in range(20)], refresh="false", op="update")` | recorded (c) | items counted | failed counts unanswered operations | probe (partial update on Basic) |
-| exp3.py:368 | `req("POST", "/%s/_refresh" % ix)` | no (recorded call) | no | the subsequent count/search shows the effect; fixtures re-checked by source_count | helper: recorded |
-| exp3.py:371 | `cc, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:374 | `cs, js, _ = req("POST", "/%s/_search" % ix, {"query": {"semantic": {"field": "body", "quer` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
-| exp3.py:385 | `req("DELETE", "/" + SEMONLY)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
-| exp3.py:386 | `c, j, _ = req("PUT", "/" + SEMONLY, {"settings": {"number_of_shards": 1, "number_of_replic` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |
-| exp3.py:390 | `cb, sb = bulk_strict(SEMONLY, [(str(i), {"body": "doc %d about %s" % (i, ["paris", "berlin` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |
-| exp3.py:412 | `c, j, _ = req(m, path, b)` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:48 | `c, j, _ = req("PUT", "/_inference/text_embedding/" + matrix.STUB_EP, matrix.stub_endpoint_` | yes (new) | no | ScrollError aborts fixtures | must-succeed (on trial) |
+| exp3.py:55 | `req("DELETE", "/" + ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:56 | `c, j, _ = req("PUT", "/" + ix, mapping(kind))` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |
+| exp3.py:59 | `cb, sb = bulk_strict(ix, [(str(i), doc(kind, i)) for i in range(n_docs(kind))])` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |
+| exp3.py:69 | `req("POST", "/%s/_refresh" % ix)` | no (recorded call) | no | the subsequent count/search shows the effect; fixtures re-checked by source_count | helper: recorded |
+| exp3.py:70 | `c, j, _ = req("GET", "/%s/_count" % ix)` | yes | integer count, shards (source_count) | count() returns a status dict; source_count raises | helper: recorded (count) or must-succeed (source_count) |
+| exp3.py:78 | `c, j, _ = req("GET", "/%s/_doc/%s?_source_includes=_inference_fields" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:94 | `c, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:107 | `c, j, _ = req("POST", "/%s/_search" % ix, dict(body, size=50, track_total_hits=True))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:111 | `c, j, _ = req("POST", "/%s/_search" % ix, {"query": {"match": {"title": "paris"}}, "size":` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:115 | `c, j, _ = req("POST", "/%s/_search" % ix, {"knn": {"field": "v", "query_vector": embed(tit` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |
+| exp3.py:122 | `c, j, _ = req("GET", "/%s/_doc/%d?_source_includes=v&_source_exclude_vectors=false" % (ix,` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:139 | `c, j, _ = req("GET", p)` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:155 | `c, j, _ = req("PUT", "/%s/_doc/1?refresh=true" % ix, d)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:156 | `rec("overwrite_full_doc", c, j, lambda: {"tag": ntag(1), "embedding_present": emb(1)})` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:158 | `c, j, _ = req("POST", "/%s/_update/2?refresh=true" % ix, {"doc": {"tag": "partial"}})` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:159 | `rec("update_partial_api", c, j, lambda: {"tag": ntag(2), "embedding_present": emb(2)})` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:161 | `c, s = bulk(ix, [("3", {"tag": "bulkpartial"})], op="update")` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:164 | `c, j, _ = req("POST", "/%s/_update/4?refresh=true" % ix, {"script": {"source": "ctx._sourc` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:165 | `rec("update_scripted", c, j, lambda: {"tag": ntag(4), "embedding_present": emb(4)})` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:167 | `c, j, _ = req("DELETE", "/%s/_doc/5?refresh=true" % ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:168 | `rec("delete_one", c, j, lambda: {"get_after_status": get(5)[0]})` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:170 | `c, j, _ = req("POST", "/%s/_update_by_query?refresh=true&conflicts=proceed" % ix,` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:172 | `rec("update_by_query", c, j, lambda: {"updated": j.get("updated"), "failures": len(j.get("` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:176 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:177 | `cdst, _jd, _ = req("PUT", "/" + dst, mapping(kind)) # recorded below as dst_create (a refu` | recorded (dst_create) | no | recorded | probe |
+| exp3.py:178 | `c, j, _ = req("POST", "/_reindex?refresh=true", {"source": {"index": ix}, "dest": {"index"` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:179 | `rec("reindex_same_mapping", c, j, lambda: {"dst_create": cdst, "dst_count": count(dst), "f` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:182 | `"dst_vectors_present": None if kind == "sem" else sum(1 for q in (0, 10, 20, 30) if len((r` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:182 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:184 | `c, j, _ = req("POST", "/%s/_forcemerge?max_num_segments=1" % ix, timeout=300)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:185 | `rec("force_merge", c, j, lambda: {"count_after": count(ix)})` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:188 | `c, j, _ = req("PUT", "/%s/_doc/9999?refresh=true" % ix, d)` | recorded (class/status) | error body recorded | recorded; effect verified by a follow-up read | probe (mutation under Basic: the status and error are the observation) |
+| exp3.py:189 | `rec("index_new_doc", c, j, lambda: {"count": count(ix)})` | recorded or counted | varies | recorded | probe/read (recorded) |
+| exp3.py:205 | `c, j, _ = req("POST", "/%s/_refresh" % ix)` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |
+| exp3.py:215 | `c, j, _ = req("GET", "/%s/_count" % ix)` | yes | integer count, shards (source_count) | count() returns a status dict; source_count raises | helper: recorded (count) or must-succeed (source_count) |
+| exp3.py:235 | `c, j, _ = req("POST", path, body, timeout=page_timeout)` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |
+| exp3.py:248 | `c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=page_` | yes | hits, _shards, timed_out, ids | ScrollError | must-succeed |
+| exp3.py:253 | `req("DELETE", "/_search/scroll", {"scroll_id": sid})` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:261 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:262 | `c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |
+| exp3.py:276 | `bulk_strict(dst, items[k:k + 100], refresh="false")` | yes | one result per operation | BulkError aborts the migration | must-succeed |
+| exp3.py:294 | `c, j, _ = req("POST", "/%s/_search" % dst, {"knn": {"field": "v", "query_vector": src_docs` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |
+| exp3.py:303 | `req("DELETE", "/" + dst)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:304 | `c, j, _ = req("PUT", "/" + dst, {"settings": {"number_of_shards": 1, "number_of_replicas":` | yes (assert c == 200) | no | AssertionError aborts | must-succeed |
+| exp3.py:321 | `bulk_strict(dst, items[k:k + 100], refresh="false")` | yes | one result per operation | BulkError aborts the migration | must-succeed |
+| exp3.py:338 | `cc, jj, _ = req("POST", "/%s/_search" % dst, {"knn": {"field": "v", "query_vector": docs[i` | status checked inside the expression | hit ids | a failure counts as a miss, which lowers the rate and fails the gate (fails safe) | measurement |
+| exp3.py:353 | `req("DELETE", "/" + ix)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:356 | `c, j, _ = req("PUT", "/" + ix, m)` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |
+| exp3.py:359 | `cb, sb = bulk_strict(ix, [(str(i), doc("sem", i)) for i in range(20)], refresh="false")` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |
+| exp3.py:366 | `cv, jv, _ = req("POST", "/%s/_search" % ix, {"size": 0, "track_total_hits": True, "query":` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:369 | `c, s = bulk(ix, [(str(i), {"tag": "u"}) for i in range(20)], refresh="false", op="update")` | recorded (c) | items counted | failed counts unanswered operations | probe (partial update on Basic) |
+| exp3.py:369 | `req("POST", "/%s/_refresh" % ix)` | no (recorded call) | no | the subsequent count/search shows the effect; fixtures re-checked by source_count | helper: recorded |
+| exp3.py:372 | `cc, j, _ = req("GET", "/%s/_doc/%d" % (ix, i))` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:375 | `cs, js, _ = req("POST", "/%s/_search" % ix, {"query": {"semantic": {"field": "body", "quer` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
+| exp3.py:386 | `req("DELETE", "/" + SEMONLY)` | no | no | ignored (404 expected); a stale index would make the next create fail, which is checked where the fixture must succeed | cleanup |
+| exp3.py:387 | `c, j, _ = req("PUT", "/" + SEMONLY, {"settings": {"number_of_shards": 1, "number_of_replic` | yes (new) | no | ScrollError aborts | must-succeed (on trial) |
+| exp3.py:391 | `cb, sb = bulk_strict(SEMONLY, [(str(i), {"body": "doc %d about %s" % (i, ["paris", "berlin` | yes | one result per operation | BulkError aborts; count then checked | must-succeed (on trial) |
+| exp3.py:413 | `c, j, _ = req(m, path, b)` | recorded or counted | varies | non-200 counted as unreadable/missing or recorded as class | probe/read (recorded) |
 | oracle.py:12 | `c1, j1, _ = req("POST", "/%s/_search" % index, {"size": window, "query": {"bool": {"must":` | yes (both 200 or RuntimeError) | hit ids | RuntimeError aborts | must-succeed (oracle legs) |
 | oracle.py:13 | `c2, j2, _ = req("POST", "/%s/_search" % index, {"size": window, "knn": {"field": FIELD_V, ` | yes (both 200 or RuntimeError) | hit ids | RuntimeError aborts | must-succeed (oracle legs) |
 | oracle.py:58 | `c, j, _ = req("POST", "/%s/_search" % index, {"size": k, "retriever": r})` | yes (both 200 or RuntimeError) | hit ids | RuntimeError aborts | must-succeed (oracle legs) |
@@ -158,6 +158,7 @@ Kinds: **must-succeed** (a fixture or precondition: status and body are checked 
 | exp4.py:65 | `c, j, _ = req("GET", "/_license", timeout=1.5)` | recorded | no | the probe's own error handling is the thing under test | probe (start-up probe under test) |
 
 Not listed above because they are not `req` calls: the workload readers and writers in `exp2.py` go through the memcore adapter (`a_auto`, `a_lin`, `a_ctl`, `a_brk`, `a_plain`), which raises on any HTTP error or `errors:true`; each exception is recorded as a failed row with its error text and never as a success. The adapter `bulk_add` does not check that every item answered, so `exp2.setup` now establishes the static index count before taking oracle legs.
+
 
 
 
