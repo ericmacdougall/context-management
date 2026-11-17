@@ -213,7 +213,51 @@ Design:
    gate); `results/SUPERSEDED.json` names each historical summary with its sha256 and the current artefact; historical files are kept
    byte-identical; a test regenerates the artefact from the committed rows and requires equality.
 6. **Retained payloads are owned**: no evidence keeps a caller's container; the only retained dict (`LatchCell.error`, unused by any
-   verdict) is dropped; an alias-mutation regression covers every gate.
+   verdict) is dropped, and so is the `text` kind that allowed it; an alias-mutation regression covers every gate.
+
+### Raw-row audit (review 9 F17): every place raw rows, timestamps or durations are compared
+
+| Place | What it compared before | How it is typed now |
+|---|---|---|
+| `exp2.Poller.run` (recording) | writes `_t0`, `_t1` per poll and `_times[probe]` per probe | Recording unchanged. Every reader parses the rows with `observe.parse_poll`. |
+| `exp2.moment_analysis` / `observe.moments` (EXP1-T2, recording and load) | raw `_t1 >= t_resp - 0.5`, label strings, "after" by time | Parses with `parse_poll(rows, window)`. Selection is by `Cell.outcome.case`; "after" is by sequence position. A stream that does not parse gives `stream_error` and no `first_refusal` (UNVERIFIED). |
+| `exp2.Workload.analyse` T2 (failure windows) | `sorted(raw rows)`, `r[0] - cur[1] < 1.0` | `_typed_figures`: `parse_work(rows, run window)`, then `observe.availability(W)`. |
+| `exp2.Workload.analyse` T3 (flip) | raw `r[1] >= t_req`, `r[0] > first[1]` | `observe.flip(W, ...)`, plus `T3_backend_labelled_after_resp_start` from `WorkRow.t0`. |
+| `exp2.Workload.analyse` T5 (control) | raw `r[0] >= t_resp + 1.0`, `"non-compliant" in r[7]` | `WorkRow.t0` / `t1` and `outcome.case == LICENCE_REFUSAL`. A stream that does not parse records `raw_check` and no T2, T3 or T5 figure. |
+| `exp2.Workload.analyse` T1 | arm, ok and label of raw rows; no time compared | Unchanged. The figure is gated through its stored counts (Correctness relations). |
+| `summarize._backfill_observed` (load) | trusted the stored `first_refusal` and `licence_refusals`; recounted from raw lists | 1. Takes every stored derived figure out.<br>2. Re-derives it from the typed `poll.gz` / `rows.gz` inside the life's run window.<br>3. Puts it back only when the raw re-derivation reproduces it.<br>4. Otherwise (no raw file, a parse error, or a disagreement) the figure stays absent (UNVERIFIED) and the reason goes in `_raw_check`. |
+| `summarize._backfill_up_licence_failures` (load) | counts ctl rows before `t_req` whose text contains "non-compliant" | Legacy field `licence_failures` for up lives (addendum C). No verdict reads it: EXP2-T5-up reads `licence_refusals`, which `_backfill_observed` recounts from typed rows. |
+| `recompute.one` (audit artefact) | every T2, T3, T5 and ctl figure from raw `r[0]`, `r[1]`, `r[4]`, `r[7]` | Every figure comes from typed `WorkRow`s (`availability`, `flip`, `t0` / `t1`, `outcome.case`). The T1 loop selects on the typed row and reads only that row's payload (query index, ids). Per-probe `_times` pairs are typed: finite, in the window, start <= end. |
+| `matrix.verdict` cells | status and body of one request; no time compared | The cell records `adapter_message` and `adapter_detects` (F18). Readers parse cells with `observe.parse_cell`, where the label must agree with the status. |
+| `life._latch_changes` | `t - t_ref` for the latch timeline | Informational only: no verdict or evidence type reads `latch_timeline`. |
+| `exp3` | no row timestamps (scroll pages, counts) | Not applicable. Its counts are typed by the Migration and SemOnly evidence. |
+
+Committed streams were checked against these constraints before the constraints were enforced:
+- **Workload rows, all 12 lives.** `ok` is 0/1; error text is present exactly when ok=0; `t0 <= t1`; `t1` is non-decreasing; every time is inside the run window; there are no duplicate rows; the arms are the six.
+- **down_7 poll.** Inside the window, with no overlap.
+- **Load-time re-derivation.** It reproduces every stored EXP2-T2, T3 and T5 figure in all 12 lives. Only EXP1-T2 for down_1..6 is lost, because those lives have no `poll.gz`.
+
+### Threshold wording (review 9 F18), line by line
+
+| Gate | THRESHOLDS.md wording (line) | What the verdict checks | Match |
+|---|---|---|---|
+| EXP1-T1 | L23: LICENCE_ERROR = "HTTP 403 or 400 and \"non-compliant\"" | No gate; it is a matrix label. `Outcome` makes only a 403 with the text a LICENCE_REFUSAL (review 8). | **Drift, open:** a 400 with "non-compliant" is not a licence refusal here. Question for main. |
+| EXP1-T2 | L24: probes rrf, linear, semantic query, inference use and DLS search. The first licence refusal is no later than 5 s after the start_basic response, and no probe succeeds after its first refusal. | Per probe, from typed poll rows:<br>- first refusal of the required case (licence probes LICENCE_REFUSAL, dls AUTHORISATION_REFUSAL)<br>- `at_s <= 5.0`<br>- successes after the first refusal of any kind = 0 | Matches. **Open:** timing uses the poll's `_t1` (end); addendum B says moment claims use the probe start. |
+| EXP1-T3 | L25: for every LICENCE_ERROR cell of a search path, the adapter's `_is_licence_error` must be true for the error text the adapter would build. | The real `_is_licence_error` on `HTTP <code>: <first 400 bytes>` for three latch cells (rrf retriever, linear retriever, reranker gate). The recorded flag must equal the recomputed one. | **Predicate matches** (F18). **Open:** the wording covers every LICENCE_ERROR search-path cell; the code uses a fixed set of three. The committed lives carry no message, so they are UNVERIFIED. |
+| EXP1-T4 | L26: after start_basic the DLS user's search must return an error, and returning any document is a FAIL. Control before: allowed count > 0 and < total. | - Control enforced: 2xx, only_kw_a, returned >= 1.<br>- After: a refusal passes, served data fails, an unobserved cell is UNVERIFIED. | **Matches, but stricter** (review 6 F9): "an error" is read as a 403 refusal, so 401, 5xx and transport failures are not a PASS. |
+| EXP1-T4-battery | addendum (battery) | Every read path refused, nothing returned; trial control. | Matches. |
+| EXP2-T1 | L30 with addenda A and C: 0 mismatches; examined >= 20,000; control flags >= 90%; backend_without_oracle == 0 | The same four checks, plus control backend_wrong == 0. | **Matches**, with one extra control check. |
+| EXP2-T2 | L31: failed auto, lexical and vector reads <= 0.1%. The longest run of consecutive failed **auto** requests (by time, any thread) <= 2.0 s. | Failed reads over auto, lin, lex and vec <= 0.1%. The longest window is the harness window: failures of all four read arms, joined when the gap is < 1 s. | **Drift, open:** the registered window counts only consecutive failed auto requests. Every committed life has 0 failed reads, so no committed verdict depends on the difference. Question for main. |
+| EXP2-T3-down | L32: first auto response labelled client <= 5.0 s after the start_basic response | Flip <= 5.0 s from typed rows, and no backend label after the first client answer. | Matches, plus a stricter no-flip-back check. |
+| EXP2-T3-up | L32: first auto response labelled backend <= probe_ttl_s + 5.0 s after the start_trial response | `flip_s <= ttl + 5`, and no client label after it. | Matches, plus a stricter no-flip-back check. |
+| EXP2-T4 | L33 with addenda A, C and D | Acked-absent 0; semantic acked-absent 0; failed-present 0; loss control detected; every semantic failure loud; `sem_failed_other` required. | Matches. |
+| EXP2-T5-down | L34 with addendum C (L74): after the first 1 s, n > 0 and licence failures / n >= 0.95, where a licence failure is error text with "non-compliant" | Licence refusals / n >= 0.95, counted on typed rows with `t0 >= t_resp + 1 s` (Outcome case = 403 + "non-compliant"). | **Matches the signature.** The case also requires a 403; every committed licence failure is a 403. |
+| EXP2-T5-up | L75: before start_trial the ratio is >= 0.95; after it, n > 0 and every request succeeds | The same checks, from typed rows. | Matches. |
+| EXP3-migration | L41:<br>- counts "300/300 and 200/200"<br>- vectors equal<br>- semantic within 1% relative of the stub's float vectors<br>- kNN top-1 >= 99%<br>- Basic operations succeed | - Counts equal the independent `_count` (299/299 and 199/199 in the lives)<br>- Vectors equal<br>- Semantic abs_err <= 0.005 and cosine >= 0.9999<br>- kNN >= 0.99<br>- Every migrated operation SUCCESS | **Drift, open:**<br>(a) The literal 300/200 differs from the recorded 299/199, because one document is deleted earlier in the life.<br>(b) "1% relative" is implemented as absolute <= 0.005 plus cosine.<br>Questions for main. |
+| EXP3-T3 control | L42 | Plain control unchanged; corrupted control caught (exactly 1 mismatch). | Matches. |
+| EXP3-semonly-control | L67 (control only) | `semantic`, `match` and `match_all` succeed. | **Matches the control.** The EXP3-T4 pass criterion (same total or a loud error per form) has no gate. |
+| EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2 | L40, L67, L68, L46, L47 | No gate in `verdicts.GATES`. | **Not gated**, reported only. Listed for main. |
+| EXP2-T6 | L35: "recorded, not gated" | No gate. | Matches. |
 
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
