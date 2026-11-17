@@ -578,6 +578,226 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
                 if k.endswith("_status") or k.endswith("_pass") or k.endswith("_ok"):
                     self.assertIn(k.rsplit("_", 1)[0], outs, k)
 
+# ---- gate review 9 (F17 to F20) -------------------------------------------------------------------------------------------------
+LIC_BODY = (b'{"error":{"root_cause":[{"type":"security_exception","reason":"current license is non-compliant for [rrf]",'
+            b'"license.expired.feature":"rrf"}],"type":"security_exception","reason":"current license is non-compliant for [rrf]",'
+            b'"license.expired.feature":"rrf"},"status":403}')
+
+
+def adapter_message(code, raw):
+    """The message the REAL adapter builds for an HTTP error (ElasticsearchSearch._req with a fake urlopen)."""
+    import io
+    import urllib.error
+    from memcore.adapters import elasticsearch_search as es
+    from memcore.ports import BackendError
+
+    def fake(req, timeout=None, context=None):
+        raise urllib.error.HTTPError("http://x", code, "x", {}, io.BytesIO(raw))
+    a = es.ElasticsearchSearch("http://127.0.0.1:1", lambda: "x", "t")
+    old, es._urlopen = es._urlopen, fake
+    try:
+        a._req("POST", "/x/_search", {})
+    except BackendError as e:
+        return str(e)
+    finally:
+        es._urlopen = old
+    raise AssertionError("adapter did not raise")
+
+
+def _detects(msg):
+    from memcore.adapters.elasticsearch_search import ElasticsearchSearch
+    from memcore.ports import BackendError
+    return ElasticsearchSearch._is_licence_error(BackendError(msg))
+
+
+class RawEdgeTests(unittest.TestCase):
+    """Gate review 9: the typed layer starts at the raw row (F17); EXP1-T3 is the adapter's own predicate (F18); the current summary
+    artefact (F19); evidence owns its payloads (F20)."""
+
+    # ---- F17: raw rows, through summarize.load on a temporary copy of down_7 -----------------------------------------------------
+    @classmethod
+    def setUpClass(cls):
+        import gzip
+        cls.POLL = json.load(gzip.open(os.path.join(RES, "down_7.poll.gz"), "rt"))
+        cls.T_RESP = json.load(open(os.path.join(RES, "down_7.json")))["start_basic"]["t_resp"]
+
+    def load_with(self, poll=None, rows=None, life=None, drop=()):
+        import gzip
+        import shutil
+        d = tempfile.mkdtemp()
+        try:
+            R = json.load(open(os.path.join(RES, "down_7.json"))) if life is None else life
+            json.dump(R, open(os.path.join(d, "down_7.json"), "w"))
+            if "poll" not in drop:
+                with gzip.open(os.path.join(d, "down_7.poll.gz"), "wt") as fh:
+                    json.dump(self.POLL if poll is None else poll, fh)
+            if "rows" not in drop:
+                if rows is None:
+                    shutil.copy(os.path.join(RES, "down_7.rows.gz"), d)
+                else:
+                    with gzip.open(os.path.join(d, "down_7.rows.gz"), "wt") as fh:
+                        fh.write("".join(json.dumps(r) + "\n" for r in rows))
+            return summarize.load(d, "down")[0]
+        finally:
+            shutil.rmtree(d)
+
+    def late(self):
+        """Index of a poll after the first rrf refusal."""
+        return next(i for i, p in enumerate(self.POLL) if p["rrf"][0] == "LICENCE_ERROR") + 20
+
+    def test_f17_healthy_raw_poll_passes(self):
+        self.assertEqual(summarize.exp1_checks(self.load_with())["T2_status"], "PASS")
+
+    def test_f17_late_success_with_a_bad_timestamp_is_not_a_pass(self):
+        i = self.late()
+        for bad in (float("nan"), -1e300, float("inf"), "x", None, "absent", 1e12):
+            P = copy.deepcopy(self.POLL)
+            P[i]["rrf"] = ["AVAILABLE", 200]
+            if bad == "absent":
+                del P[i]["_t1"]
+            else:
+                P[i]["_t1"] = bad
+            self.assertNotEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "PASS", bad)
+
+    def test_f17_raw_poll_mutations_are_unverified(self):
+        i = self.late()
+        muts = {
+            "out of order": lambda P: P.__setitem__(slice(i, i + 2), [P[i + 1], P[i]]),
+            "duplicated row": lambda P: P.insert(i, copy.deepcopy(P[i])),
+            "overlapping polls": lambda P: P[i].__setitem__("_t0", P[i - 1]["_t1"] - 0.01),
+            "t0 after t1": lambda P: P[i].__setitem__("_t0", P[i]["_t1"] + 0.01),
+            "negative time": lambda P: P[0].__setitem__("_t0", -1.0),
+            "far future": lambda P: P[-1].__setitem__("_t1", 1e12),
+            "before the run": lambda P: P.insert(0, dict(P[0], _t0=1.0, _t1=2.0)),
+            "cell wrong type": lambda P: P[i].__setitem__("rrf", "LICENCE_ERROR"),
+            "cell label contradicts status": lambda P: P[i].__setitem__("rrf", ["AVAILABLE", 403]),
+            "unknown label": lambda P: P[i].__setitem__("rrf", ["MAYBE", 403]),
+            "row wrong type": lambda P: P.insert(i, ["x"]),
+        }
+        for lab, m in muts.items():
+            P = copy.deepcopy(self.POLL)
+            m(P)
+            self.assertEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "UNVERIFIED", lab)
+
+    def test_f17_a_refusal_of_the_wrong_kind_starts_the_no_success_window(self):
+        """[403 without the licence text, 200, 403 licence refusal] after the transition: the probe answered after being refused."""
+        P = copy.deepcopy(self.POLL)
+        i = next(k for k, p in enumerate(P) if p["rrf"][0] == "LICENCE_ERROR")
+        P[i]["rrf"], P[i + 1]["rrf"] = ["OTHER_ERROR", 403], ["AVAILABLE", 200]
+        self.assertNotEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "PASS")
+
+    def test_f17_a_stored_summary_is_never_accepted_without_its_raw_file(self):
+        R = self.load_with()
+        life = json.load(open(os.path.join(RES, "down_7.json")))
+        life["exp1_moment"] = copy.deepcopy(R["exp1_moment"])            # carries first_refusal objects
+        life["exp2"]["T5_control_after_1s"]["licence_refusals"] = R["exp2"]["T5_control_after_1s"]["licence_refusals"]
+        L = self.load_with(life=life, drop=("poll", "rows"))
+        self.assertEqual(summarize.exp1_checks(L)["T2_status"], "UNVERIFIED")
+        self.assertEqual(summarize.exp2_checks(L, "down")["T5_status"], "UNVERIFIED")
+
+    def test_f17_stored_availability_and_flip_must_agree_with_the_raw_rows(self):
+        import gzip
+        rows = [json.loads(l) for l in gzip.open(os.path.join(RES, "down_7.rows.gz"), "rt")]
+        k = next(j for j, r in enumerate(rows) if r[2] == "auto" and r[4] and r[0] > self.T_RESP + 10)
+        rows[k] = rows[k][:4] + [False, rows[k][5], [], "BackendError: HTTP 503: unavailable"]
+        L = self.load_with(rows=rows)
+        self.assertNotEqual(summarize.exp2_checks(L, "down")["T2_status"], "PASS")
+        rows = [json.loads(l) for l in gzip.open(os.path.join(RES, "down_7.rows.gz"), "rt")]
+        rows[k][1] = float("nan")
+        L = self.load_with(rows=rows)
+        r = summarize.exp2_checks(L, "down")
+        self.assertEqual((r["T2_status"], r["T3_latch_status"], r["T5_status"]), ("UNVERIFIED",) * 3)
+
+    # ---- F18: EXP1-T3 is the adapter's detector on the adapter's message ----------------------------------------------------------
+    def latch_life(self, body=LIC_BODY, code=403, error=None, recorded=None, status=None):
+        R = _life("down_7")
+        msg = adapter_message(code, body)
+        for c in ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate"):
+            cell = R["exp1_after"][c]
+            cell["status"] = code if status is None else status
+            cell["adapter_message"] = msg
+            cell["adapter_detects"] = _detects(msg) if recorded is None else recorded
+            if error is not None:
+                cell["error"] = error
+        return R
+
+    def t3(self, R):
+        return summarize.exp1_checks(R)["T3_latch_status"]
+
+    def test_f18_adapter_message_format_is_the_adapters(self):
+        import observe
+        for body in (LIC_BODY, b"x" * 1000, ("é" * 300).encode("utf-8"), b""):
+            self.assertEqual(observe.adapter_message(403, body), adapter_message(403, body))
+
+    def test_f18_t3_passes_on_the_adapter_detector(self):
+        self.assertEqual(self.t3(self.latch_life()), "PASS")
+
+    def test_f18_generic_licence_refusal_but_adapter_false_is_not_a_pass(self):
+        body = b'{"error":{"type":"security_exception","reason":"license expired"},"status":403}'
+        self.assertNotEqual(self.t3(self.latch_life(body=body, error={"type": "security_exception", "reason": "license expired"})), "PASS")
+        pad = b'{"error":{"type":"security_exception","note":"' + b"p" * 500 + b'","reason":"current license is non-compliant for [rrf]"}}'
+        self.assertNotEqual(self.t3(self.latch_life(body=pad)), "PASS")   # the licence text lies beyond the adapter's 400 bytes
+
+    def test_f18_adapter_true_but_generic_summary_without_the_text_passes(self):
+        """The adapter's own predicate decides T3: the stored error summary does not carry the phrase, the adapter message does."""
+        self.assertEqual(self.t3(self.latch_life(error={"type": "security_exception", "reason": "x", "root": "x", "feature": None})), "PASS")
+
+    def test_f18_recorded_detector_or_status_that_contradicts_the_message_is_unverified(self):
+        self.assertEqual(self.t3(self.latch_life(body=b'{"error":"other"}', recorded=True)), "UNVERIFIED")
+        self.assertEqual(self.t3(self.latch_life(status=503)), "UNVERIFIED")
+
+    def test_f18_committed_latch_cells_without_the_adapter_message_are_unverified(self):
+        for n in range(1, 8):
+            self.assertEqual(summarize.exp1_checks(_life("down_%d" % n))["T3_latch_status"], "UNVERIFIED", n)
+
+    def test_f18_licence_signature_is_the_registered_one(self):
+        import evidence as E
+        self.assertFalse(E.licence_text({"reason": "license expired"}))
+        self.assertFalse(E.licence_text({"license.expired.feature": "rrf"}))
+        self.assertTrue(E.licence_text({"reason": "current license is non-compliant for [rrf]"}))
+
+    # ---- F19: the current summary artefact ---------------------------------------------------------------------------------------
+    def test_f19_current_summary_artefact_is_what_the_code_produces(self):
+        cur = json.load(open(os.path.join(RES, "summary_current.json")))
+        self.assertEqual(cur, json.loads(json.dumps(summarize.current_summary(RES), sort_keys=True)))
+        for life, gates in cur["lives"].items():
+            for g, v in gates.items():
+                self.assertIn(v["status"], ("PASS", "FAIL", "UNVERIFIED"), (life, g))
+                self.assertTrue(v["reason"], (life, g))
+
+    def test_f19_historical_summaries_are_indexed_as_superseded_and_unchanged(self):
+        import hashlib
+        idx = json.load(open(os.path.join(RES, "SUPERSEDED.json")))
+        self.assertEqual(idx["current"], "summary_current.json")
+        man = {name: digest for digest, name in (l.split() for l in open(os.path.join(RES, "MANIFEST.sha256")) if l.strip())}
+        names = {e["file"] for e in idx["superseded"]}
+        self.assertEqual(names, {"summary_corrected.json", "summary_campaign.json", "summary_supp.json", "summary_down_7.json"})
+        for e in idx["superseded"]:
+            got = hashlib.sha256(open(os.path.join(RES, e["file"]), "rb").read()).hexdigest()
+            self.assertEqual((e["sha256"], man[e["file"]]), (got, got), e["file"])
+            self.assertEqual(e["superseded_by"], "summary_current.json")
+
+    # ---- F20: parsed evidence owns its payloads ----------------------------------------------------------------------------------
+    def test_f20_mutating_the_source_after_parsing_does_not_change_evidence(self):
+        import evidence as E
+        import verdicts
+        R = _healthy("down")
+        R.update(self.latch_life())
+        for name, g in verdicts.GATES.items():
+            src = copy.deepcopy(R if g.scope != "up" else _healthy("up"))
+            ev, why = E.parse(g.evidence, src)
+            if ev is None:
+                continue
+            before = repr(ev)
+            stack = [src]
+            while stack:   # empty every container in the source
+                x = stack.pop()
+                kids = list(x.values()) if isinstance(x, dict) else list(x) if isinstance(x, list) else []
+                stack += [k for k in kids if isinstance(k, (dict, list))]
+                if isinstance(x, (dict, list)):
+                    x.clear()
+            self.assertEqual(repr(ev), before, name)
+
 
 if __name__ == "__main__":
     unittest.main()
