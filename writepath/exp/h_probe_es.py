@@ -1,5 +1,8 @@
 """Amendment H1: Elasticsearch 9.5.6 security probe (Basic licence, security on). Decides whether per-tenant, per-epoch
 writer API keys minted by a broker can be enforced. A probe, not a PASS of D6.
+Amendment H1a (after the H1 result at 606f457): PA adds the explicitly empty role descriptor; PD invalidates with
+owner: true; every non-2xx key request records its error.type (never its text); a row whose request was rejected
+before it reached the behaviour under test is INVALID-REQUEST, distinct from a behavioural FAIL.
 
 Needs this stream's node with security on (python -m wp.es_security enable) and secrets/es_elastic_password.
 The superuser creates the broker role and native user; every probe key is minted by the broker. Key VALUES stay in
@@ -49,12 +52,21 @@ def broker():
     return client(h)
 
 
+def etype(j):
+    """The error type of a non-2xx reply (never its reason text, which may echo a request value)."""
+    return ((j.get("error") or {}).get("type") if isinstance(j, dict) and isinstance(j.get("error"), dict) else None)
+
+
+ERRORS = {}            # H1a: error.type of every non-2xx key request, by key name (types only, never values)
+
+
 def mint(by, name, descriptors=None, ok=(200,)):
     body = {"name": f"wp16096-hprobe-{name}", "metadata": {"stream": "goodqa-16096", "probe": "H1"}}
     if descriptors is not None:
         body["role_descriptors"] = descriptors
     s, j = by.req("POST", "/_security/api_key", body, ok=None)
     if s not in ok:
+        ERRORS[name] = {"status": s, "error_type": etype(j)}
         return s, None, None
     _VALUES.append(j["encoded"])
     _KEY_IDS.append(j["id"])
@@ -130,17 +142,33 @@ def ensure_w1(t=TA):
         s.aliases(acts)
 
 
+INVALID = "invalid_request"   # H1a: a request rejected before it reached the behaviour under test (not a FAIL)
+
+
+def status(holds, invalid=False):
+    return INVALID if invalid else ("holds" if holds else "fail")
+
+
 def case_pa(r):
+    """H1a: the documented form for a key derived from an API key is an EXPLICITLY EMPTY role descriptor
+    (role_descriptors: {}); H1 sent only an omitted descriptor and one with privileges (both refused with 400, so no
+    derived key existed to test). Now: the privileged request must be refused; the empty form must be created (if it
+    is refused the row is INVALID-REQUEST) and its write through A -w1 refused. The omitted form is recorded."""
     b = broker()
     out = []
     for i in range(r):
-        _, kid, kb = mint(b, f"pa-broker-{i}")                      # broker's own key: no descriptors (snapshot)
+        sb, kid, kb = mint(b, f"pa-broker-{i}")                     # broker's own key: no descriptors (snapshot)
+        if kb is None:
+            out.append({"run": i, "broker_key_status": sb, "holds": False, "status": INVALID})
+            continue
         s_desc, _, _ = mint(kb, f"pa-desc-{i}", writer_descriptors(TA, 1), ok=(200,))
-        s_nodesc, kid0, k0 = mint(kb, f"pa-nodesc-{i}")
+        s_nodesc, _, _ = mint(kb, f"pa-nodesc-{i}")
+        s_empty, kid0, k0 = mint(kb, f"pa-empty-{i}", {})
         w = bulk(k0, wa(TA, 1)) if k0 else None
+        holds = (not allowed(s_desc)) and (k0 is not None) and (w is not None and not allowed(w))
         out.append({"run": i, "broker_key_id": kid, "with_descriptors_status": s_desc, "without_descriptors_status": s_nodesc,
-                    "derived_key_id": kid0, "derived_write_status": w,
-                    "holds": (not allowed(s_desc)) and (k0 is not None) and (w is not None and not allowed(w))})
+                    "empty_descriptor_status": s_empty, "derived_key_id": kid0, "derived_write_status": w,
+                    "holds": holds, "status": status(holds, invalid=allowed(s_desc) is False and k0 is None)})
     return out
 
 
@@ -148,13 +176,17 @@ def case_pb(r):
     b = broker()
     out = []
     for i in range(r):
-        _, kid, k = mint(b, f"pb-{i}", writer_descriptors(TA, 1))
+        sk, kid, k = mint(b, f"pb-{i}", writer_descriptors(TA, 1))
+        if k is None:
+            out.append({"run": i, "mint_status": sk, "holds": False, "status": INVALID})
+            continue
         row = {"run": i, "key_id": kid,
                "PB1": bulk(k, wa(TA, 1)), "PB2": bulk(k, base(TA), require_alias=False), "PB3": bulk(k, wa(TB, 1)),
                "PB4": bulk(k, xa(TA)), "PB5": search(k, rd(TA)), "PB6": search(k, base(TA)), "PB7": search(k, rd(TB)),
                "PB8": bulk(k, wa(TA, 9), require_alias=False), "PB9": k.req("DELETE", f"/{base(TA)}", ok=None)[0]}
         row["holds"] = allowed(row["PB1"]) and allowed(row["PB5"]) and not any(
             allowed(row[c]) for c in ("PB2", "PB3", "PB4", "PB6", "PB7", "PB8", "PB9"))
+        row["status"] = status(row["holds"])
         out.append(row)
     return out
 
@@ -178,6 +210,10 @@ def case_pc(r):
         _, k4id, k4 = mint(b, f"pc4-{i}", {"m": {"indices": [idx([base(TA), wa(TA, 2)], ["manage"])]}})
         _, k5id, k5 = mint(b, f"pc5-{i}", {"m": {"indices": [idx([base(TA), wa(TA, 1)], ["manage"])]}})
         row = {"run": i, "key_ids": [k1id, k2id, k3id, k4id, k5id]}
+        if None in (k1, k2, k3, k4, k5):
+            ensure_w1()
+            out.append(dict(row, holds=False, status=INVALID))
+            continue
         for c, k in (("PC1", k1), ("PC2", k2), ("PC3", k3), ("PC4", k4)):
             add, rm = _add_remove(k, TA, wa(TA, 2))
             row[c] = {"add": add, "remove": rm}
@@ -188,6 +224,7 @@ def case_pc(r):
         row["PC5"] = {"broker_remove": rm_by_broker, "readd": readd}
         row["holds"] = (not allowed(row["PC1"]["add"])) and allowed(row["PC4"]["add"]) and allowed(row["PC4"]["remove"] or 0) \
             and allowed(rm_by_broker)
+        row["status"] = status(row["holds"])
         out.append(row)
     return out
 
@@ -196,9 +233,16 @@ def case_pd(r, retry_s=0.01, window_s=10.0):
     b = broker()
     out = []
     for i in range(r):
-        _, kid, k = mint(b, f"pd-{i}", writer_descriptors(TA, 1))
+        sk, kid, k = mint(b, f"pd-{i}", writer_descriptors(TA, 1))
+        if k is None:
+            out.append({"run": i, "mint_status": sk, "accepted_after_invalidate": 0, "first_refusal_s": None,
+                        "holds": False, "status": INVALID})
+            continue
         before = bulk(k, wa(TA, 1))
-        s = b.req("DELETE", "/_security/api_key", {"ids": [kid]}, ok=None)[0]
+        # H1a: a caller holding only manage_own_api_key invalidates its own keys with owner: true (H1 sent ids only and
+        # got 403 on every run, so revocation was never exercised)
+        s, j = b.req("DELETE", "/_security/api_key", {"ids": [kid], "owner": True}, ok=None)
+        inv_err = None if allowed(s) else etype(j)
         t0 = time.monotonic()
         accepted, first_refusal, last = 0, None, None
         while time.monotonic() - t0 < window_s:
@@ -209,9 +253,10 @@ def case_pd(r, retry_s=0.01, window_s=10.0):
                 first_refusal = round(time.monotonic() - t0, 4)
                 break
             time.sleep(retry_s)
-        out.append({"run": i, "key_id": kid, "write_before": before, "invalidate_status": s, "accepted_after_invalidate": accepted,
-                    "first_refusal_s": first_refusal, "refusal_status": last,
-                    "holds": allowed(before) and allowed(s) and accepted == 0 and first_refusal is not None})
+        holds = allowed(before) and allowed(s) and accepted == 0 and first_refusal is not None
+        out.append({"run": i, "key_id": kid, "write_before": before, "invalidate_status": s, "invalidate_error_type": inv_err,
+                    "accepted_after_invalidate": accepted, "first_refusal_s": first_refusal, "refusal_status": last,
+                    "holds": holds, "status": status(holds, invalid=not allowed(s))})
     return out
 
 
@@ -220,16 +265,19 @@ def case_pe(r):
     out = []
     for i in range(r):
         ensure_w1()
-        _, kid, k = mint(b, f"pe-{i}", writer_descriptors(TA, 1))
+        sk, kid, k = mint(b, f"pe-{i}", writer_descriptors(TA, 1))
+        if k is None:
+            out.append({"run": i, "mint_status": sk, "holds": False, "status": INVALID})
+            continue
         before = bulk(k, wa(TA, 1))
         cas = aliases(b, [{"remove": {"index": base(TA), "alias": wa(TA, 1), "must_exist": True}},
                           {"add": {"index": base(TA), "alias": wa(TA, 2), "is_write_index": True}}])
         with_ra = bulk(k, wa(TA, 1), require_alias=True)
         without_ra = bulk(k, wa(TA, 1), require_alias=False)
         ensure_w1()
+        holds = allowed(before) and allowed(cas) and not allowed(with_ra) and not allowed(without_ra)
         out.append({"run": i, "key_id": kid, "write_before": before, "broker_cas": cas, "require_alias": with_ra,
-                    "no_require_alias": without_ra,
-                    "holds": allowed(before) and allowed(cas) and not allowed(with_ra) and not allowed(without_ra)})
+                    "no_require_alias": without_ra, "holds": holds, "status": status(holds)})
     return out
 
 
@@ -254,17 +302,24 @@ def main(r=3, r_pd=20):
         res_cleanup = cleanup()
     pd = res["pd"]
     verdict = {c: all(x["holds"] for x in res[c]) for c in ("pa", "pb", "pc", "pd", "pe")}
-    res.update(cleanup=res_cleanup, verdict=verdict, feasible=all(verdict.values()),
+    # H1a: per case, fail if any row failed behaviourally; else invalid_request if any row's request never reached
+    # the behaviour; else holds. Decided from statuses and error types only.
+    case_status = {c: ("fail" if any(x["status"] == "fail" for x in res[c]) else
+                       INVALID if any(x["status"] == INVALID for x in res[c]) else "holds") for c in verdict}
+    refusals = [x["first_refusal_s"] for x in pd if x.get("first_refusal_s") is not None]
+    res.update(cleanup=res_cleanup, verdict=verdict, case_status=case_status, feasible=all(verdict.values()),
                failed_cases=[c for c, ok in verdict.items() if not ok],
-               pd_max_first_refusal_s=max((x["first_refusal_s"] or 0) for x in pd),
+               invalid_request_cases=[c for c, s in case_status.items() if s == INVALID],
+               key_request_errors=ERRORS,
+               pd_max_first_refusal_s=max(refusals) if refusals else None,      # H1a: null when nothing was refused
                pd_accepted_after_invalidate_total=sum(x["accepted_after_invalidate"] for x in pd),
                scope="single node, Basic licence, security on, HTTP without TLS on loopback; cross-node API-key cache "
                      "invalidation is not shown")
     raw = json.dumps(res, default=str)
     assert not any(v and v in raw for v in _VALUES), "a key value or password reached the result"
     write_result("h_probe_es", res)
-    print("h_probe_es feasible", res["feasible"], "failed", res["failed_cases"], "pd_max_first_refusal_s",
-          res["pd_max_first_refusal_s"])
+    print("h_probe_es feasible", res["feasible"], "failed", res["failed_cases"], "case_status", json.dumps(case_status),
+          "pd_max_first_refusal_s", res["pd_max_first_refusal_s"])
     return 0
 
 
