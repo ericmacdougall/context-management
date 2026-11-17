@@ -821,3 +821,48 @@ runkit/launch_one.sh).
   mid-batch). A batch-d run that ends BLOCKED or VOID and is rerun after this amendment is rerun at the later commit,
   under 20 GB, and both records are reported.
 - **Unchanged experiments.** This changes only when a run may start, not any experiment or threshold.
+
+## Hardening series (branch feat/writepath-hardening, design path item 4, D2 to D6)
+Amendments H1, H2, ... belong to this branch. The step-1 series (1 to 24a and later) continues on feat/writepath-rescue.
+Main's decisions of 2026-11-17 (recorded as ASSUMPTION, not the user's words; D3 stays under decision 10's ASSUMPTION):
+a key broker for Elasticsearch writer keys only if amendment H1 shows it can be enforced on Basic; the key store as its
+own process and service identity; an identifier reviewer role; span redaction beside the chained ciphertext.
+
+## Amendment H1 (2026-11-17, written before the probe exists or runs): Elasticsearch security probe (exp/h_probe_es.py)
+Why: the broker design (per-tenant, per-epoch writer API keys) rests on four behaviours of Elasticsearch 9.5.6 with
+security on, under the Basic licence, that the docs leave open or that nobody has run here. This is a probe: it decides
+feasibility. It is not a PASS of D6; D6 gets its own amendment and experiment.
+Setup, on this stream's own node (security on, Basic): the superuser creates role wp16096_broker_role (cluster
+manage_own_api_key and monitor; on wp16096-*: manage, create_index, create_doc, index, read, view_index_metadata) and
+native user wp16096_broker (password in a 0600 file, never printed). Two probe tenants A and B, one family each, with the
+same index and alias layout as wp/families.py (base index; read, erase -x and write -w1 aliases). Keys are minted by the
+broker user. Results carry key ids only. At the end every probe key is invalidated and the probe user, role and
+indices are deleted.
+Cases (each R=3 unless stated; a case's outcome is the HTTP status, or the item status inside a bulk):
+- PA, key from a key: an API key of the broker (P1) asks to create a key WITH role descriptors -> expected refused;
+  a key it creates WITHOUT descriptors writes through A's -w1 -> expected refused (no privileges).
+- PB, alias-name authorisation, writer key W(A,1) = create_doc and index on A's -w1 name only, read and
+  view_index_metadata on A's read alias only:
+  PB1 bulk through A -w1 (require_alias) -> expected allowed (positive control);
+  PB2 bulk to A's base index by name -> refused; PB3 through B's -w1 -> refused; PB4 through A's -x -> refused;
+  PB5 search A's read alias -> allowed; PB6 search A's base index by name -> refused; PB7 search B's read alias -> refused;
+  PB8 bulk without require_alias to a name that does not exist (A -w9) -> refused; PB9 DELETE A's base index -> refused.
+- PC, privileges an alias change needs (add A -w2 to A's base index, then remove it):
+  PC1 W(A,1) -> refused; PC2 manage on the base index name only -> recorded; PC3 manage on the alias name only ->
+  recorded; PC4 manage on both -> expected allowed (positive control); PC5 a key with manage on A's base index and on
+  A -w1 re-adds -w1 after the broker removed it -> recorded (if allowed, the alias CAS must not be left to the writer).
+- PD, how fast an invalidated key stops working, R=20: mint W(A,1), confirm a write is allowed, the broker invalidates
+  it, then the old key retries a bulk through A -w1 every 10 ms for up to 10 s. Recorded per run: writes accepted after
+  the invalidate response returned, and the delay to the first refusal. Single node only: cross-node cache behaviour is
+  not shown.
+- PE, the stale epoch without invalidation, R=3: W(A,1) after the broker moved A's write alias from -w1 to -w2 (the old
+  key not invalidated): bulk through A -w1 with require_alias, and the same without require_alias -> both expected refused.
+Feasibility rule (decided by the rows, not by the author):
+  FEASIBLE iff PA's descriptor request is refused and its descriptor-less key cannot write; PB1 and PB5 are allowed in
+  3/3 and PB2, PB3, PB4, PB6, PB7, PB8, PB9 are refused in 3/3; PC1 is refused in 3/3 and PC4 allowed in 3/3; PD shows 0
+  writes accepted after the invalidate response in 20/20; PE is refused in 3/3 in both forms.
+  NOT FEASIBLE otherwise: the probe names the failed cases, and the D6 design returns to main with what CAN be enforced.
+  No weaker claim replaces the per-tenant, per-epoch one silently.
+  The measured PD delay (maximum over the 20 runs) is stated as a limit in the receipt wording.
+Gates: the run lock (OWNER-COMMON addendum), launch_one.sh (20 GB start line, disk_gate start, check and end, flood and
+high-watermark watcher). One run. A VOID run may be rerun and both are recorded.
