@@ -51,7 +51,7 @@ KINDS = {
     "flag": Kind("bool", None, None, "true or false"),
     "cell_class": Kind("enum", None, None, "a matrix cell class: one of lib.classify's and matrix's labels"),
     "windows": Kind("windows", None, None, "list of [start, end, count]: finite, end >= start, count >= 1"),
-    "message": Kind("message", None, None, "the adapter-visible error text: 'HTTP <ddd>: ' + at most 400 decoded bytes"),
+    "message": Kind("message", None, None, "the adapter-visible error text: 'HTTP <ddd>: ' + at most 400 decoded bytes (<= 410 characters)"),
 }
 
 
@@ -186,7 +186,7 @@ def _domain(f, v, at):
     elif k.type == "bool":
         ok = type(v) is bool
     elif k.type == "message":
-        ok = type(v) is str and len(v) <= 409 and re.match(r"HTTP \d{3}: ", v) is not None
+        ok = type(v) is str and len(v) <= 410 and re.match(r"HTTP \d{3}: ", v) is not None   # "HTTP ddd: " + <= 400 chars (F24)
     elif k.type == "enum":
         ok = type(v) is str and v in ENUMS[f.kind]
     elif k.type == "windows":
@@ -343,6 +343,16 @@ class Evidence:
             return cls(**{n: v for n, v in vals.items() if not cls.SPEC[n].verify})
         except Unparsed as e:
             raise Unparsed(at + e.path, e.reason)
+
+
+def leaf_paths(cls, prefix=()):
+    """Every absolute life path an evidence type reads (stored derived `verify` figures included), nested types expanded. The single
+    source for summarize's provenance and the review 10 completeness tests."""
+    out = []
+    for f in cls.SPEC.values():
+        p = prefix + f.path
+        out += leaf_paths(f.kind, p) if isinstance(f.kind, type) and issubclass(f.kind, Evidence) else [p]
+    return out
 
 
 def evidence(name, spec, relations=(), doc="", props=None, checks=()):

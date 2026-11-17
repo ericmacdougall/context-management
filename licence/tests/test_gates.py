@@ -58,10 +58,7 @@ WANT_MISSING = "missing_endpoint" if hasattr(exp2, "classify_sem_failure") else 
 def load(name):
     """A committed life as summarize.load sees it: with the in-memory re-derivation from its raw files (review 8 F13)."""
     path = os.path.join(RES, name)
-    R = json.load(open(path))
-    summarize._backfill_up_licence_failures(R, path)
-    summarize._backfill_observed(R, path)
-    return R
+    return next(R for R in summarize.load(RES, name.split("_")[0]) if R["_file"] == name)   # review 10: one loader, rebuild from raw
 
 
 # ---------------------------------------------------------------- F1
@@ -152,7 +149,8 @@ def workload_with(rows, rrf=None, lin=None, legs=None):
     return w
 
 
-def row(t, arm, qi, fus, ids, ok=1, err=""):
+def row(t, arm, qi, fus, ids, ok=1, err=None):
+    """A workload row in the declared schema (observe.ROW_FIELDS): a success has no error text (review 10 F22)."""
     return [t, t + 0.01, arm, qi, ok, fus, ids, err]
 
 

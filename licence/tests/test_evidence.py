@@ -902,8 +902,8 @@ class RebuildTests(unittest.TestCase):
             clean = self.rebuilt(life)
             R = self.stored(life)
             for _, p in self.leaves(scope):
-                if summarize.source_of(p) == "stored" or summarize.fetch(R, p) is summarize.MISSING:
-                    continue
+                if summarize.source_of(p) not in summarize.rebuilt_sources(clean) or summarize.fetch(R, p) is summarize.MISSING:
+                    continue   # only sources this life's raw files rebuild (up_1 has no oracle: its T1 is stored, labelled)
                 v = summarize.fetch(R, p)
                 bad = (not v) if type(v) is bool else v + 7919 if type(v) is int else v + 77.7 if type(v) is float else [[1.0, 9.0, 1]]
                 _set(R, p, bad)
@@ -911,7 +911,7 @@ class RebuildTests(unittest.TestCase):
                                     "first_refusal_rel_resp_s": 0.1, "success_after_first_refusal": 0} for f in PROBES} if scope == "down" else {}
             summarize.rebuild(R, copy.deepcopy(self.raw[life]))
             for gate, p in self.leaves(scope):
-                if summarize.source_of(p) != "stored":
+                if summarize.source_of(p) in summarize.rebuilt_sources(clean):
                     self.assertEqual(summarize.fetch(R, p), summarize.fetch(clean, p), (life, p))
             for name, g in self.V.GATES.items():
                 if g.scope in ("both", scope):
@@ -956,8 +956,11 @@ class RebuildTests(unittest.TestCase):
                 lambda W, q, *a: first(W, lambda r: r[2] == "ctl" and r[1] < q and not r[4]), lambda r, *a: ok_row(r))),
         }
         if scope == "down":
-            out["the first client answer is relabelled backend"] = rows(setrow(
-                lambda W, q, *a: first(W, lambda r: r[2] == "auto" and r[4] and r[5] == "client" and r[1] >= q), lambda r, *a: r[:5] + ["backend"] + r[6:]))
+            def early_clients_backend(W, q, s, *a):   # every client answer within 2 s of the response: the flip moves later
+                for j, r in enumerate(W):
+                    if r[2] == "auto" and r[4] and r[5] == "client" and r[1] < s + 2:
+                        W[j] = r[:5] + ["backend"] + r[6:]
+            out["the early client answers are relabelled backend"] = rows(early_clients_backend)
             out["a late client answer is relabelled backend"] = rows(setrow(
                 lambda W, q, s, *a: last(W, lambda r: r[2] == "auto" and r[4] and r[5] == "client"), lambda r, *a: r[:5] + ["backend"] + r[6:]))
             out["a client answer returns unrelated ids"] = rows(setrow(
@@ -994,8 +997,12 @@ class RebuildTests(unittest.TestCase):
             out["poll: every first refusal is one poll later"] = poll(each_probe(first_refusal_later))
             out["poll: no probe is ever refused"] = poll(each_probe(no_refusal))
         else:
-            out["the first backend answer is relabelled client"] = rows(setrow(
-                lambda W, q, s, *a: first(W, lambda r: r[2] == "auto" and r[4] and r[5] == "backend" and r[1] >= s), lambda r, *a: r[:5] + ["client"] + r[6:]))
+            def early_backends_client(W, q, s, *a):   # the flip's first backend answer (by start) and those near it: the flip moves later
+                t = min(r[0] for r in W if r[2] == "auto" and r[4] and r[5] == "backend" and r[1] >= s)
+                for j, r in enumerate(W):
+                    if r[2] == "auto" and r[4] and r[5] == "backend" and r[1] >= s and r[0] <= t + 0.5:
+                        W[j] = r[:5] + ["client"] + r[6:]
+            out["the early backend answers are relabelled client"] = rows(early_backends_client)
             out["a late backend answer is relabelled client"] = rows(setrow(
                 lambda W, *a: last(W, lambda r: r[2] == "auto" and r[4] and r[5] == "backend"), lambda r, *a: r[:5] + ["client"] + r[6:]))
         return out

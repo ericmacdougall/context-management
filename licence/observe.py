@@ -14,6 +14,7 @@ adapter_detects() runs the real ElasticsearchSearch._is_licence_error on it.
 
 Pure functions; no I/O.
 """
+import collections
 import dataclasses
 import json
 import os
@@ -64,8 +65,11 @@ class WorkRow:
     t1: float
     arm: str
     ok: bool
-    label: object
+    label: object        # fusion label: a member of LABELS_BY_ARM[arm] for a success, None for a failure
     outcome: object      # SUCCESS for ok rows; else the Outcome named by the error text, or None (no HTTP status: a client exception)
+    qi: int = 0          # query index
+    ids: tuple = ()      # returned ids (a success), () for a failure
+    licence_text: bool = False   # a failure whose error text contains "non-compliant" (addendum C's licence failure)
 
 
 def _time(v, at, window):
@@ -127,36 +131,84 @@ def parse_poll(rows, window=None, probes=LICENCE_PROBES + ("dls_search",)):
 
 _OK = evidence.Outcome.of(200)
 
+# ---- the workload row schema (review 10 F22): every position has a declared domain, and the relations between them are declared ----
+# Observed in all 12 committed lives before being enforced: auto/lin/brk successes are labelled client or backend; the ctl arm
+# (strategy=backend) only backend; lexical and vector arms "none"; a failure has no label, no ids and error text "<Exception>: ...";
+# a success has a list of at most 10 string ids and no error text; qi is a non-negative integer.
+LABELS_BY_ARM = {"auto": ("client", "backend"), "lin": ("client", "backend"), "brk": ("client", "backend"), "ctl": ("backend",),
+                 "lex": ("none",), "vec": ("none",)}
+FAILURE_FORM = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*: ")
+MAX_IDS = 10
+
+
+def _is_int(v):
+    return type(v) is int and 0 <= v < evidence.MAX_INT
+
+
+DOMAINS = {   # domain name -> (predicate over the value alone, description)
+    "time": (lambda v: evidence._real(v) and v >= 1, "finite epoch seconds >= 1 (and inside the run window)"),
+    "arm": (lambda v: type(v) is str and v in ARMS, "one of %s" % (ARMS,)),
+    "query_index": (_is_int, "integer >= 0"),
+    "ok": (lambda v: type(v) in (int, bool) and v in (0, 1), "0 or 1"),
+    "label": (lambda v: v is None or (type(v) is str and v in {l for ls in LABELS_BY_ARM.values() for l in ls}),
+              "None or a fusion label (client, backend, none)"),
+    "ids": (lambda v: v is None or (type(v) is list and len(v) <= MAX_IDS and all(type(x) is str and x for x in v)),
+            "None or a list of at most 10 non-empty strings"),
+    "error_text": (lambda v: v is None or (type(v) is str and FAILURE_FORM.match(v) is not None), "None or '<Exception>: ...'"),
+}
+RowField = collections.namedtuple("RowField", "index name domain")
+ROW_FIELDS = (RowField(0, "t0", "time"), RowField(1, "t1", "time"), RowField(2, "arm", "arm"), RowField(3, "qi", "query_index"),
+              RowField(4, "ok", "ok"), RowField(5, "label", "label"), RowField(6, "ids", "ids"), RowField(7, "error", "error_text"))
+ROW_RELATIONS = (
+    "t0 <= t1; t1 non-decreasing over the stream (completion order); both inside the run window",
+    "ok 1: label in LABELS_BY_ARM[arm], ids a list, error None",
+    "ok 0: label None, ids None, error text in the failure form",
+    "no two rows identical",
+)
+
+
+def _row(r, at, window):
+    if type(r) is not list or len(r) != len(ROW_FIELDS):
+        raise Unparsed(at, "a workload row is not [%s]" % ", ".join(f.name for f in ROW_FIELDS))
+    for f in ROW_FIELDS:   # every field is checked against its domain before anything compares, hashes or stores it
+        ok, doc = DOMAINS[f.domain]
+        if not ok(r[f.index]):
+            raise Unparsed(at + (f.name,), "%r is not %s" % (r[f.index], doc))
+    t0, t1 = _time(r[0], at + ("t0",), window), _time(r[1], at + ("t1",), window)
+    if t0 > t1:
+        raise Unparsed(at, "t0 %r after t1 %r" % (t0, t1))
+    arm, ok, label, ids, err = r[2], bool(r[4]), r[5], r[6], r[7]
+    if ok and not (label in LABELS_BY_ARM[arm] and type(ids) is list and err is None):
+        raise Unparsed(at, "a success on arm %s needs a label in %s, ids and no error text (got %r, %r, %r)"
+                       % (arm, LABELS_BY_ARM[arm], label, type(ids).__name__, err))
+    if not ok and not (label is None and ids is None and err is not None):
+        raise Unparsed(at, "a failure has no label and no ids and carries its error text (got %r, %r, %r)" % (label, ids, err))
+    return t0, t1
+
 
 def parse_work(rows, window=None):
-    """A workload stream ([t0, t1, arm, qi, ok, label, ids, errtext] per row, in completion order) -> tuple of WorkRow."""
+    """A workload stream (ROW_FIELDS per row, in completion order) -> tuple of WorkRow. Raises Unparsed on any field outside its domain
+    or any violated ROW_RELATIONS entry."""
     if type(rows) is not list or not rows:
         raise Unparsed(("rows",), "no workload rows")
     out, seen, last = [], set(), None
     for i, r in enumerate(rows):
         at = ("rows", i)
-        if type(r) is not list or len(r) != 8:
-            raise Unparsed(at, "a workload row is not [t0, t1, arm, qi, ok, label, ids, errtext]")
-        t0, t1 = _time(r[0], at + (0,), window), _time(r[1], at + (1,), window)
-        if t0 > t1:
-            raise Unparsed(at, "t0 %r after t1 %r" % (t0, t1))
+        t0, t1 = _row(r, at, window)
         if last is not None and t1 < last:
             raise Unparsed(at, "completion time %r before the previous row's %r (rows are recorded in completion order)" % (t1, last))
         last = t1
-        if r[2] not in ARMS or type(r[4]) not in (int, bool) or r[4] not in (0, 1) \
-                or not ((r[4] and r[7] is None) or (not r[4] and type(r[7]) is str)):
-            raise Unparsed(at, "arm %r, ok %r or error text %r out of domain (ok 1 has no error text, ok 0 has one)"
-                           % (r[2], r[4], type(r[7]).__name__))
-        key = (r[0], r[1], r[2], repr(r[3]), r[4], r[5], repr(r[6]), r[7])
+        ids = tuple(r[6]) if r[4] else ()
+        key = (t0, t1, r[2], r[3], bool(r[4]), r[5], ids, r[7])   # every element already in a hashable domain
         if key in seen:
             raise Unparsed(at, "duplicated workload row")
         seen.add(key)
         if r[4]:
             o = _OK
         else:
-            m = _HTTP.search(r[7] or "")
+            m = _HTTP.search(r[7])
             o = evidence.Outcome.of(int(m.group(1)), r[7]) if m and 100 <= int(m.group(1)) <= 599 else None
-        out.append(WorkRow(i, t0, t1, r[2], bool(r[4]), r[5], o))
+        out.append(WorkRow(i, t0, t1, r[2], bool(r[4]), r[5], o, r[3], ids, (not r[4]) and "non-compliant" in r[7]))
     return tuple(out)
 
 
@@ -227,6 +279,69 @@ def flip(W, t_req, t_resp, direction):
     first = next((w for w in auto if w.label == "backend" and w.t1 >= t_resp), None)
     return {"T3_flip_latency_s": None if first is None else first.t1 - t_resp,
             "T3_client_after_first_backend": sum(1 for w in auto if first and w.label == "client" and w.t0 > first.t1)}
+
+
+def control(W, t_req, t_resp, direction):
+    """EXP2-T5 from typed rows, both directions (review 10 F21: the post-transition figures too). A licence failure is a failed control
+    request whose error text contains "non-compliant" (addendum C); `licence_refusals` counts the Outcome case LICENCE_REFUSAL (a 403
+    with that text). Down: requests started >= 1 s after the start_basic response. Up: before start_trial (completed before the
+    request) and after it (started >= 1 s after the response)."""
+    ctl = [w for w in W if w.arm == "ctl"]
+    case = lambda ws: sum(1 for w in ws if w.outcome is not None and w.outcome.case == "LICENCE_REFUSAL")
+    if direction == "down":
+        late = [w for w in ctl if w.t0 >= t_resp + 1.0]
+        ok = sum(1 for w in late if w.ok)
+        return {"T5_control_after_1s": {"n": len(late), "licence_failures": _lic(late), "other_failures": len(late) - ok - _lic(late),
+                                        "success": ok, "fail_fraction": (len(late) - ok) / max(1, len(late)),
+                                        "licence_refusals": case(late)}}
+    pre, post = [w for w in ctl if w.t1 < t_req], [w for w in ctl if w.t0 >= t_resp + 1.0]
+    return {"T5_control_before_start_trial": {"n": len(pre), "failures": sum(1 for w in pre if not w.ok), "licence_failures": _lic(pre),
+                                              "licence_refusals": case(pre)},
+            "T5_control_after_trial": {"n": len(post), "success": sum(1 for w in post if w.ok)}}
+
+
+def _lic(ws):
+    return sum(1 for w in ws if not w.ok and w.licence_text)
+
+
+def correctness(W, legs, rrf, lin):
+    """EXP2-T1 from typed rows and the oracle (legs, rrf, lin: dicts keyed by integer query index), exactly as exp2.analyse records it.
+    A client answer is correct when it is a legal top-10 of the client RRF over its legs; a backend answer when it equals the recorded
+    backend reference. A backend answer with no reference is not examined (counted in T1_backend_without_oracle); a client answer with
+    no legs cannot be checked and counts as a mismatch (fail closed)."""
+    import oracle
+    legal = lambda w: w.qi in legs and oracle.valid_topk(list(w.ids), list(legs[w.qi]), 10)
+    ex = wrong = without = 0
+    examples = []
+    for w in W:
+        if w.arm not in ("auto", "lin") or not w.ok:
+            continue
+        if w.label == "client":
+            good = legal(w)
+        else:
+            ref = (rrf if w.arm == "auto" else lin).get(w.qi)
+            if ref is None:
+                without += 1
+                continue
+            good = list(w.ids) == list(ref)
+        ex += 1
+        if not good:
+            wrong += 1
+            if len(examples) < 5:
+                examples.append({"arm": w.arm, "qi": w.qi, "fusion": w.label, "ids": list(w.ids)})
+    brk_client = [w for w in W if w.arm == "brk" and w.ok and w.label == "client"]
+    flagged = sum(1 for w in brk_client if not legal(w))
+    brk_backend = [w for w in W if w.arm == "brk" and w.ok and w.label == "backend" and w.qi in rrf]
+    return {"T1_examined": ex, "T1_mismatches": wrong, "T1_examples": examples, "T1_backend_without_oracle": without,
+            "T1_control_broken_fallback": {"client_labelled": len(brk_client), "flagged_wrong": flagged,
+                                           "flag_rate": flagged / max(1, len(brk_client)), "backend_labelled_checked": len(brk_backend),
+                                           "backend_wrong": sum(1 for w in brk_backend if list(w.ids) != list(rrf[w.qi]))}}
+
+
+def oracle_from_file(O):
+    """The saved oracle (results/<life>.oracle.gz: string query keys) -> (legs, rrf, lin) keyed by integer query index."""
+    conv = lambda d: {int(k): v for k, v in d.items()}
+    return conv(O["legs"]), conv(O["rrf"]), conv(O["linear"])
 
 
 # ---- EXP1-T3: the adapter's own view of an error ------------------------------------------------------------------------------------

@@ -1,7 +1,8 @@
-"""Threshold reapplication: applies the THRESHOLDS.md gates to the figures the harness recorded in the per-life result JSON files.
-It does not recompute those figures from raw rows; recompute.py does that, and only where raw rows were saved (T2, T3, T5 for all lives;
-T1 and the polling moments for down_7 only; see DEGRADE.md "Evidence status and limits"). Usage: summarize.py RESULTS_DIR [out.json]
-Reads only the result files; does not import the experiment code.
+"""Threshold reapplication over the per-life result files. load() rebuilds every figure that has a raw source (RAW_SOURCES: the
+EXP1-T2 moments from poll.gz, EXP2-T2/T3/T5 from rows.gz, EXP2-T1 from rows.gz plus oracle.gz) from typed raw rows, after deleting the
+stored values; figures with no raw source (STORED) are used as recorded and every verdict that reads them says so (provenance).
+current_summary() reports every life and gate of the campaign inventory (CAMPAIGN) with the disclosed limits (LIMITS).
+Usage: summarize.py RESULTS_DIR [out.json] | summarize.py RESULTS_DIR --current OUT. Does not import the experiment code.
 
 Verdicts (DESIGN-VERDICTS.md): this module decides no gate. Every gate status comes from verdicts.judge(), which parses the life into typed,
 immutable evidence (evidence.py: every field's domain, every cross-field relation, HTTP outcomes as a closed set of cases, rates only as
@@ -32,138 +33,234 @@ def wilson_lower(k, n, z=1.96):
     return (c - r) / d
 
 
-def _backfill_up_licence_failures(R, path):
-    """Lives recorded before addendum C kept only the total failure count of the pre-trial control. Recount licence failures
-    ("non-compliant" in the error text) from the committed raw rows, so the gate can use licence_failures / n."""
-    if R.get("mode") != "up" or "exp2" not in R:
-        return
-    pre = R["exp2"].get("T5_control_before_start_trial")
-    rows_path = path[:-5] + ".rows.gz"
-    if pre is None or "licence_failures" in pre or not os.path.exists(rows_path):
-        return
-    t_req = R["start_trial"]["t_req"]
-    rows = [json.loads(l) for l in gzip.open(rows_path, "rt")]
-    ctl = [r for r in rows if r[2] == "ctl" and r[1] < t_req]
-    if len(ctl) == pre["n"]:   # only trust the recount when it reproduces the recorded denominator
-        pre["licence_failures"] = sum(1 for r in ctl if not r[4] and "non-compliant" in (r[7] or ""))
-        pre["licence_failures_source"] = "recounted from rows.gz"
+# ---- raw sources (review 10 F21): which stored figures a raw file rebuilds, declared as data ---------------------------------------
+# When a source's raw file exists for a life, the loader DELETES every path the source declares and rebuilds all of them from typed
+# rows; nothing stored under those paths is read. When it is absent: "delete" sources leave the figures absent (the gate is
+# UNVERIFIED: every recorded life saved its rows, and a stored refusal was never classified without its poll stream); the "keep"
+# source (T1 needs the oracle legs, saved only from down_7 on) keeps the stored figures and every verdict that reads them says
+# "from stored figure, raw not available". Every leaf a verdict reads is either under a source here or declared in STORED
+# (tests.test_evidence.RebuildTests generates that check from the evidence types).
+def _paths(prefix, *names):
+    return tuple(tuple(prefix.split(".")) + (n,) for n in names)
 
 
-_DERIVED_EXP2 = {"down": ("T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
-                          "T3_flip_latency_s", "T3_backend_after_first_client"),
-                 "up": ("T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
-                        "T3_flip_latency_s", "T3_client_after_first_backend")}
+RAW_SOURCES = {
+    "poll": {"needs": ("poll",), "modes": ("down",), "missing": "delete", "paths": (("exp1_moment",),)},
+    "rows": {"needs": ("rows",), "modes": ("down", "up"), "missing": "delete",
+             "paths": _paths("exp2", "T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
+                             "T3_flip_latency_s", "T3_backend_after_first_client", "T3_client_after_first_backend",
+                             "T3_backend_labelled_after_resp_start", "T5_control_after_1s", "T5_control_before_start_trial",
+                             "T5_control_after_trial")},
+    "rows+oracle": {"needs": ("rows", "oracle"), "modes": ("down", "up"), "missing": "keep",
+                    "paths": _paths("exp2", "T1_examined", "T1_mismatches", "T1_examples", "T1_backend_without_oracle",
+                                    "T1_control_broken_fallback")},
+}
+_CELL = "matrix cell, a primary observation recorded once (no raw file)"
+STORED = {   # every other leaf a verdict reads, with why it has no raw source
+    ("exp1_after",): _CELL, ("exp1_trial",): _CELL, ("dls_battery_trial",): _CELL, ("dls_battery_after",): _CELL,
+    ("semonly_trial",): _CELL,
+    ("start_basic",): "transition request and response times, a primary observation (no raw file)",
+    ("start_trial",): "transition request and response times, a primary observation (no raw file)",
+    ("ttl",): "configuration", ("exp2", "T3_ttl_s"): "configuration (copy of ttl)",
+    ("exp2", "writes"): "derived; the write ids were never saved",
+    ("exp3",): "derived; the migration inputs were never saved",
+}
+_NO_ORACLE = "derived; the oracle legs were not saved for this life"
 
 
-def _same(a, b):
-    if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
-        return len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
-    if evidence._real(a) and evidence._real(b):
-        return abs(a - b) <= 1e-9
-    return type(a) is type(b) and a == b
+def source_of(path):
+    """The raw source that rebuilds this life path, or "stored"."""
+    path = tuple(path)
+    for name, src in RAW_SOURCES.items():
+        if any(path[:len(p)] == p for p in src["paths"]):
+            return name
+    return "stored"
+
+
+def stored_category(path):
+    path = tuple(path)
+    best = max((p for p in STORED if path[:len(p)] == p), key=len, default=None)
+    return STORED.get(best)
+
+
+def _drop(R, path):
+    d = R
+    for k in path[:-1]:
+        if not isinstance(d, dict) or k not in d:
+            return
+        d = d[k]
+    if isinstance(d, dict):
+        d.pop(path[-1], None)
+
+
+def _place(R, path, v):
+    d = R
+    for k in path[:-1]:
+        if not isinstance(d.get(k), dict):
+            d[k] = {}
+        d = d[k]
+    d[path[-1]] = v
 
 
 def _timed(v):
     return evidence._real(v) and v >= 1
 
 
-@functools.lru_cache(maxsize=64)
-def _raw_rows(path, stamp, window, t_req, t_resp, mode):
-    """Typed re-derivation of one rows.gz (cached by path, size and mtime; the result is immutable data copied by the caller)."""
-    try:
-        with gzip.open(path, "rt") as fh:
-            W = observe.parse_work([json.loads(l) for l in fh], window)
-    except observe.Unparsed as e:
-        return "rows.gz does not parse as a workload stream: %s" % e
-    keep = (lambda w: w.t0 >= t_resp + 1.0) if mode == "down" else (lambda w: w.t1 < t_req)
-    return json.dumps([observe.availability(W), observe.flip(W, t_req, t_resp, mode), observe.control_counts(W, keep)])
-
-
-@functools.lru_cache(maxsize=64)
-def _raw_poll(path, stamp, window, t_resp):
-    with gzip.open(path, "rt") as fh:
-        rows = json.load(fh)
-    return json.dumps(observe.moments(rows, t_resp, observe.LICENCE_PROBES + ("dls_search",), window))
-
-
-def _stamp(p):
-    st = os.stat(p)
-    return (st.st_size, st.st_mtime_ns)
-
-
-def _backfill_observed(R, path):
-    """Reviews 8 F13 and 9 F17: the figures that EXP1-T2, EXP2-T2, EXP2-T3 and EXP2-T5 judge are re-derived at load from the TYPED raw
-    files (observe.parse_poll / parse_work: finite times inside the run window, recording order, closed domains). First every stored
-    derived figure is taken out of the record; it is put back, as the raw-derived value, only when the raw re-derivation reproduces it.
-    No raw file, a raw file that does not parse, or a disagreement: the figure stays absent (the gate is UNVERIFIED) and the reason is
-    kept in R["_raw_check"]. Nothing is written to disk."""
-    base, mode = path[:-5], R.get("mode")
-    notes = R["_raw_check"] = {}
-    M = R.get("exp1_moment") if isinstance(R.get("exp1_moment"), dict) else {}
-    held_fr = {f: m.pop("first_refusal") for f, m in M.items() if isinstance(m, dict) and "first_refusal" in m}
-    E2 = R.get("exp2") if isinstance(R.get("exp2"), dict) else None
-    held = {k: E2.pop(k) for k in _DERIVED_EXP2.get(mode, ()) if E2 is not None and k in E2}
-    ctl = (E2 or {}).get("T5_control_after_1s" if mode == "down" else "T5_control_before_start_trial")
-    if isinstance(ctl, dict):
-        ctl.pop("licence_refusals", None)
-    ev = (E2 or {}).get("events") if isinstance((E2 or {}).get("events"), dict) else {}
-    window = (ev.get("t_start"), ev.get("t_stop"))
+def _times(R):
+    mode = R.get("mode")
+    ev = (R.get("exp2") or {}).get("events") if isinstance(R.get("exp2"), dict) else None
+    ev = ev if isinstance(ev, dict) else {}
     tr = R.get("start_basic" if mode == "down" else "start_trial")
     t_req, t_resp = (tr.get("t_req"), tr.get("t_resp")) if isinstance(tr, dict) else (None, None)
+    window = (ev.get("t_start"), ev.get("t_stop"))
     if not (all(_timed(x) for x in window + (t_req, t_resp)) and window[0] <= window[1]):
-        notes["life"] = "run window or transition times are not finite epoch times: nothing is re-derived"
-        return
-    if mode == "down" and M:
-        if not os.path.exists(base + ".poll.gz"):
-            notes["exp1_moment"] = "no poll.gz: a stored refusal is not accepted without its raw poll stream"
-        else:
-            new = json.loads(_raw_poll(base + ".poll.gz", _stamp(base + ".poll.gz"), window, t_resp))
-            for f, m in M.items():
-                n = new.get(f) or {}
-                if not isinstance(m, dict):
-                    continue
-                fr = n.get("first_refusal")
-                if n.get("stream_error"):
-                    notes["exp1_moment." + f] = n["stream_error"]
-                elif fr is None or not all(_same(n.get(k), m.get(k)) for k in ("first_refusal_rel_resp_s", "success_after_first_refusal", "n")) \
-                        or (f in held_fr and held_fr[f] != fr):
-                    notes["exp1_moment." + f] = "the raw poll stream does not reproduce the stored figures"
-                else:
-                    m["first_refusal"], m["first_refusal_source"] = fr, "re-derived from poll.gz"
-    if E2 is None:
-        return
-    if not os.path.exists(base + ".rows.gz"):
-        notes["exp2"] = "no rows.gz: T2, T3 and T5 figures are not accepted without their raw rows"
-        return
-    got = _raw_rows(base + ".rows.gz", _stamp(base + ".rows.gz"), window, t_req, t_resp, mode)
-    if not got.startswith("["):
-        notes["exp2"] = got
-        return
-    avail, fl, c = json.loads(got)
-    for k, v in list(avail.items()) + list(fl.items()):
-        if k not in held:
+        return None
+    return mode, window, t_req, t_resp
+
+
+def derive(raw, mode, window, t_req, t_resp):
+    """Every figure each raw source rebuilds, from typed rows only -> {source: {"figures": {path: value}} or {"error": reason}}.
+    raw: {"rows": list or None, "poll": list or None, "oracle": dict or None}. JSON-serialisable (load caches it per file)."""
+    out, W = {}, None
+    if raw.get("rows") is not None:
+        try:
+            W = observe.parse_work(raw["rows"], window)
+        except observe.Unparsed as e:
+            W = e
+    for name, src in RAW_SOURCES.items():
+        if mode not in src["modes"] or any(raw.get(k) is None for k in src["needs"]):
             continue
-        if _same(v, held[k]):
-            E2[k] = v
+        try:
+            if name == "poll":
+                m = observe.moments(raw["poll"], t_resp, observe.LICENCE_PROBES + ("dls_search",), window)
+                bad = [f for f, v in m.items() if v.get("stream_error")]
+                if bad:
+                    raise observe.Unparsed(("poll",), m[bad[0]]["stream_error"])
+                figs = {("exp1_moment",): m}
+            else:
+                if isinstance(W, Exception):
+                    raise W
+                if name == "rows":
+                    f = dict(observe.availability(W), **observe.flip(W, t_req, t_resp, mode))
+                    if mode == "down":
+                        f["T3_backend_labelled_after_resp_start"] = sum(1 for w in W if w.arm == "auto" and w.ok and w.label == "backend"
+                                                                        and w.t0 > t_resp)
+                    f.update(observe.control(W, t_req, t_resp, mode))
+                else:
+                    f = observe.correctness(W, *observe.oracle_from_file(raw["oracle"]))
+                figs = {("exp2", k): v for k, v in f.items()}
+            out[name] = {"figures": [[list(p), v] for p, v in figs.items()]}
+        except (observe.Unparsed, ArithmeticError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
+            out[name] = {"error": "%s does not parse: %s" % (name, e)}
+    return out
+
+
+def apply_derived(R, derived):
+    """Delete every declared path of every source whose raw files exist, then place the rebuilt figures (review 10 F21)."""
+    notes, built, stored_only = R["_raw_check"], R["_rebuilt"], R["_stored_only"]
+    mode = R.get("mode")
+    for name, src in RAW_SOURCES.items():
+        if mode not in src["modes"]:
+            continue
+        if name not in derived and src["missing"] == "keep":
+            stored_only.append(name)
+            continue
+        for p in src["paths"]:
+            _drop(R, p)
+        got = derived.get(name)
+        if got is None:
+            notes[name] = "no %s file: these figures are not accepted without it" % "+".join(src["needs"])
+        elif "error" in got:
+            notes[name] = got["error"]
         else:
-            notes["exp2." + k] = "stored %r, the raw rows give %r" % (held[k], v)
-    if isinstance(ctl, dict) and c["n"] == ctl.get("n"):   # only when the typed recount reproduces the recorded denominator
-        ctl["licence_refusals"], ctl["licence_refusals_source"] = c["licence_refusals"], "recounted from typed rows.gz by Outcome case"
-    elif isinstance(ctl, dict):
-        notes["exp2.T5"] = "stored control n %r, the raw rows give %r" % (ctl.get("n"), c["n"])
+            for p, v in got["figures"]:
+                _place(R, tuple(p), v)
+            built.append(name)
+
+
+def rebuild(R, raw):
+    """Rebuild every raw-sourced figure of life R from in-memory raw files (see RAW_SOURCES). Mutates R."""
+    R["_raw_check"], R["_rebuilt"], R["_stored_only"] = {}, [], []
+    t = _times(R)
+    if t is None:
+        R["_raw_check"]["life"] = "run window or transition times are not finite epoch times: no raw figure is accepted"
+        apply_derived(R, {})
+        return R
+    mode, window, t_req, t_resp = t
+    apply_derived(R, derive(raw, mode, window, t_req, t_resp))
+    return R
+
+
+def rebuilt_sources(R):
+    return set(R.get("_rebuilt") or ())
+
+
+def provenance(name, R):
+    """"" when every figure the gate reads came from typed raw rows; otherwise "from stored figure, raw not available: ..." naming
+    the stored parts and why they have no raw source (configuration is not a figure and is not listed)."""
+    parts = {}
+    for p in evidence.leaf_paths(verdicts.GATES[name].evidence):
+        src = source_of(p)
+        if src == "stored":
+            cat = stored_category(p) or "undeclared"
+        elif src in (R.get("_stored_only") or ()):
+            cat = _NO_ORACLE
+        else:
+            continue
+        if not cat.startswith("configuration"):
+            parts.setdefault(cat, set()).add(".".join(p[:2]))
+    if not parts:
+        return ""
+    return "from stored figure, raw not available: " + "; ".join("%s (%s)" % (", ".join(sorted(v)), k) for k, v in sorted(parts.items()))
+
+
+def _read_raw(base):
+    raw = {}
+    for k in ("rows", "poll", "oracle"):
+        p = "%s.%s.gz" % (base, k)
+        if not os.path.exists(p):
+            raw[k] = None
+            continue
+        with gzip.open(p, "rt") as fh:
+            raw[k] = [json.loads(l) for l in fh] if k == "rows" else json.load(fh)
+    return raw
+
+
+def _stamp(base):
+    out = []
+    for k in ("rows", "poll", "oracle"):
+        p = "%s.%s.gz" % (base, k)
+        st = os.stat(p) if os.path.exists(p) else None
+        out.append((k, st.st_size, st.st_mtime_ns) if st else (k, None, None))
+    return tuple(out)
+
+
+@functools.lru_cache(maxsize=64)
+def _derived_files(base, stamp, mode, window, t_req, t_resp):
+    try:
+        raw = _read_raw(base)
+    except (OSError, EOFError, ValueError) as e:
+        return json.dumps({"_read_error": str(e)})
+    return json.dumps(derive(raw, mode, window, t_req, t_resp))
 
 
 def load(d, mode):
+    """Every life file of a direction, with its raw-sourced figures rebuilt from the raw files beside it (RAW_SOURCES)."""
     out = []
     for f in sorted(glob.glob(os.path.join(d, "%s_[0-9]*.json" % mode))):
         with open(f) as fh:
             R = json.load(fh)
         R["_file"] = os.path.basename(f)
-        for backfill in (_backfill_up_licence_failures, _backfill_observed):
-            try:
-                backfill(R, f)
-            except (ArithmeticError, TypeError, ValueError, KeyError, IndexError, AttributeError, EOFError, OSError, evidence.Unparsed):
-                pass   # malformed life or raw file: nothing is attached, and the gates that need it are UNVERIFIED (review 8 F14)
+        R["_raw_check"], R["_rebuilt"], R["_stored_only"] = {}, [], []
+        t = _times(R) if isinstance(R, dict) else None
+        if t is None:
+            R["_raw_check"]["life"] = "run window or transition times are not finite epoch times: no raw figure is accepted"
+            apply_derived(R, {})
+        else:
+            got = json.loads(_derived_files(f[:-5], _stamp(f[:-5]), *t))
+            if "_read_error" in got:
+                R["_raw_check"]["files"] = got.pop("_read_error")
+            apply_derived(R, got)
         out.append(R)
     return out
 
@@ -206,6 +303,9 @@ def put(r, name, R):
     r[out + "_status"], r[out + "_pass"] = v.status, v.status == "PASS"
     if v.status != "PASS":
         r[out + "_reason"] = v.reason
+    prov = provenance(name, R)
+    if prov:
+        r[out + "_provenance"] = prov   # review 10 F21: a figure with no raw source is labelled
     return v.status
 
 
@@ -393,32 +493,71 @@ def aggregate(d, res):
     return agg
 
 
+# ---- the campaign inventory (review 10 F23), independent of the files found ------------------------------------------------------
+# THRESHOLDS.md "Lives": N = 5 lives of A (down) and 5 of B (up). down_6 and down_7 are supplemental down lives (down_6: 7566b92;
+# down_7: addendum B, 10441ea), counted in every result table (DEGRADE.md evidence ids). A missing life is UNVERIFIED, never skipped.
+CAMPAIGN = {"down": (1, 2, 3, 4, 5, 6, 7), "up": (1, 2, 3, 4, 5)}
+
+# The six registered-wording differences gate review 10 classed as disclosed lab limits. They are stated with the results: here (and
+# so in summary_current.json), in DEGRADE.md and in results/README.md. A PASS below establishes the implemented rule, not more.
+LIMITS = (
+    {"gate": "EXP3-migration (THRESHOLDS EXP3-T2)",
+     "limit": "PASS establishes the implemented rule: counts equal the independent source counts (299/299 and 199/199 after an earlier "
+              "delete; registered text 300/300 and 200/200) and semantic vectors within absolute error 0.005 and cosine 0.9999 of the "
+              "stub. It does NOT establish the registered per-value 1% relative criterion; the vectors needed for it were not kept."},
+    {"gate": "EXP1-T3", "limit": "checks three fixed latch cells (rrf retriever, linear retriever, reranker gate), not every "
+                                 "LICENCE_ERROR cell of a search path; a three-cell PASS cannot establish the every-cell criterion."},
+    {"gate": "EXP2-T2", "limit": "the longest failure window joins failed auto, linear, lexical and vector reads whose gap is under 1 s; "
+                                 "the registered window is consecutive failed auto requests (every committed life has 0 failed reads)."},
+    {"gate": "EXP1-T2", "limit": "refusal timing uses the poll's end time, not the probe start time addendum B names; conservative for "
+                                 "the 5 s bound, but the reported timing is not the registered probe-start measurement."},
+    {"gate": "EXP1-T1", "limit": "a 400 carrying \"non-compliant\" is not counted as a licence refusal; only a 403 with the licence "
+                                 "text is (THRESHOLDS EXP1-T1 says 403 or 400)."},
+    {"gate": "EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2",
+     "limit": "no gate: these registered thresholds are reported only, so this artefact is not a complete registered-threshold verdict."},
+)
+
+
 def current_summary(d):
-    """Review 9 F19: the current summary artefact. For every life and every gate in its scope, the status and reason that the CURRENT
-    code (load() with its raw re-derivation, then verdicts.judge) gives, plus the raw-check notes; per gate an aggregate status (PASS
-    only when every life passes, FAIL when any life fails, otherwise UNVERIFIED) and its reason. Deterministic: no time, no host."""
-    lives, notes, agg = {}, {}, {}
+    """Reviews 9 F19 and 10 F23: the current summary artefact. The inventory is CAMPAIGN x verdicts.GATES, not the files found: a
+    missing life is listed with every gate UNVERIFIED ("life file absent"), and a gate's aggregate is FAIL if any expected life fails,
+    else UNVERIFIED if any expected life is absent or not PASS, else PASS. Files outside the inventory are listed, not counted. Every
+    reason says when a figure is from a stored value with no raw source (provenance). Deterministic: no time, no host."""
+    found = {}
     for mode in ("down", "up"):
         for R in load(d, mode):
-            row = lives[R["_file"]] = {}
-            notes[R["_file"]] = {"mode": mode, "raw_check": R.get("_raw_check") or {}}
+            found[R["_file"]] = R
+    lives, notes, agg = {}, {}, {}
+    for mode, ns in sorted(CAMPAIGN.items()):
+        for n in ns:
+            f = "%s_%d.json" % (mode, n)
+            R = found.pop(f, None)
+            row = lives[f] = {}
+            notes[f] = {"mode": mode, "raw_check": (R or {}).get("_raw_check") or {}, "rebuilt_from_raw": sorted((R or {}).get("_rebuilt") or ())}
             for name, g in sorted(verdicts.GATES.items()):
                 if g.scope not in ("both", mode):
                     continue
-                if R.get("status") != "complete":
-                    v = verdicts.Verdict(verdicts.UNVERIFIED, "life status %r, not complete" % R.get("status"))
+                if R is None:
+                    v, prov = verdicts.Verdict(verdicts.UNVERIFIED, "life file absent (campaign inventory)"), ""
+                elif R.get("status") != "complete":
+                    v, prov = verdicts.Verdict(verdicts.UNVERIFIED, "life status %r, not complete" % R.get("status")), ""
                 else:
-                    v = verdicts.judge(name, R)
-                reason = "PASS: " + g.doc if v.status == verdicts.PASS else v.reason
-                row[name] = {"status": v.status, "reason": reason or "no reason given"}
-                agg.setdefault(name, []).append((R["_file"], v.status))
+                    v, prov = verdicts.judge(name, R), provenance(name, R)
+                reason = ("PASS: " + g.doc) if v.status == verdicts.PASS else (v.reason or "no reason given")
+                row[name] = {"status": v.status, "reason": reason + ("; " + prov if prov else "")}
+                agg.setdefault(name, []).append((f, v.status, R is None))
     out = {}
-    for name, xs in sorted(agg.items()):
-        st = [s for _, s in xs]
-        status = verdicts.PASS if st and all(x == verdicts.PASS for x in st) else verdicts.FAIL if verdicts.FAIL in st else verdicts.UNVERIFIED
-        out[name] = {"status": status, "reason": "; ".join("%s %s" % x for x in xs)}
+    for name, g in sorted(verdicts.GATES.items()):
+        xs = agg.get(name, [])
+        st = [s for _, s, _ in xs]
+        absent = [f for f, _, a in xs if a]
+        status = verdicts.FAIL if verdicts.FAIL in st else verdicts.UNVERIFIED if (absent or not st or any(s != verdicts.PASS for s in st)) \
+            else verdicts.PASS
+        reason = ("absent: %s; " % ", ".join(absent) if absent else "") + "; ".join("%s %s" % (f, s) for f, s, _ in xs)
+        out[name] = {"status": status, "reason": reason or "no life in scope"}
     return {"artefact": "summary_current.json", "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
-            "lives": lives, "raw_checks": notes, "aggregate": out}
+            "inventory": {m: ["%s_%d.json" % (m, n) for n in ns] for m, ns in sorted(CAMPAIGN.items())},
+            "unexpected_files": sorted(found), "limits": list(LIMITS), "lives": lives, "raw_checks": notes, "aggregate": out}
 
 
 def main():
