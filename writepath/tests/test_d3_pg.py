@@ -208,11 +208,12 @@ class D3Store(unittest.TestCase):
             hold.rollback()
             for c in (hold, p, m):
                 c.close()
+        # the lock-order assertion first (F8), so a red names its cause; the cleanup assertion after it
+        self.assertTrue(mark_waited, "the mark did not wait for an in-flight proposal (check without a lock)")
         self.assertEqual(out.get("mark"), "ok")
         self.assertIn(out.get("propose"), ("ok", "WPS03"))
         self.assertEqual(self.one("select count(*) from identifier_proposals where tenant_id=%s and subject_id=%s", (T, s)), (0,),
                          "a proposal survived the completed erasure")
-        self.assertTrue(mark_waited, "the mark did not wait for an in-flight proposal (check without a lock)")
 
     def test_c3_approval_after_mark_refused(self):
         pid = self.propose(self.app, "PG", "hG")
