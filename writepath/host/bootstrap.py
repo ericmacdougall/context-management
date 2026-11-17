@@ -138,6 +138,9 @@ def main(pg_port, es_port):
         try:
             if urllib.request.urlopen(f"http://127.0.0.1:{es_port}/", timeout=5).status == 200:
                 break
+        except urllib.error.HTTPError as e:
+            if e.code == 401:          # security on (wp/es_security.py): an anonymous request is refused once HTTP serves
+                break
         except (urllib.error.URLError, OSError):
             pass
         if time.time() - t0 > 300:
