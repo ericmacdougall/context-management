@@ -50,8 +50,6 @@ create index vals_subjects on dc.vals using gin(subjects);
 create table dc.subject_tokens(tenant text not null, subject text not null, token text not null unique, primary key (tenant, subject));
 create table dc.sessions(token_hash text primary key, tenant text not null, principal text not null, channel text not null, factor text not null,
                          expires_at timestamptz not null, revoked bool not null default false);
-create table dc.vkey(id int primary key check (id = 1), k bytea not null);          -- value-ref HMAC key; never leaves the database
-insert into dc.vkey values (1, dc_crypto.gen_random_bytes(32));
 
 -- ------------------------------------------------------------------------------------------------ append-only, chained log
 create function dc.events_chain() returns trigger language plpgsql security definer set search_path = dc, pg_temp as $$
@@ -606,8 +604,13 @@ begin
       toks := toks || tok;
     end loop;
     tlab := jsonb_set(lab, '{subjects}', coalesce((select jsonb_agg(to_jsonb(t) order by t collate "C") from unnest(toks) t), '[]'::jsonb));
-    vref := 'val-' || left(encode(dc_crypto.hmac(convert_to(jsonb_build_array(s.tenant, s.principal, coalesce(p_body->>'idem', ''), p_body->>'value', tlab)::text, 'UTF8'),
-                                                  (select k from dc.vkey where id = 1), 'sha256'), 'hex'), 40);
+    -- review-3 N5: the reference is RANDOM, never computed from the value, its label or a subject, so a reference left in the log after
+    -- erasure cannot be confirmed by guessing a text or a name (there is no key to guess with). A retry by the same principal with the
+    -- same idempotency key, value and label, while that value is stored, reuses the logged reference, so the event fingerprint is the
+    -- same and the core answers duplicate. The per-principal advisory lock taken by _lock_event above serialises such retries.
+    select v.ref into vref from dc.events e join dc.vals v on v.tenant = e.tenant and v.ref = e.ev->>'value_ref'
+     where e.tenant = s.tenant and e.principal = s.principal and e.idem = p_body->>'idem' and v.text = p_body->>'value' and v.label = lab;
+    if vref is null then vref := 'val-' || encode(dc_crypto.gen_random_bytes(20), 'hex'); end if;
     insert into dc.vals values (s.tenant, vref, p_body->>'value', lab, array(select jsonb_array_elements_text(lab->'subjects')))
       on conflict do nothing;
     created := found;
