@@ -1,17 +1,14 @@
-"""Offline test of exp/disk_gate.py (no stores, no real docker): the run-validity gate voids every run it is meant to
-void (review-2 N2, step-1 delta review P1/P2, review A findings A1/A2/A3; design in runkit/GATE-DESIGN.md).
+"""Offline test of exp/disk_gate.py, the run-validity gate v3 (review D; design in runkit/GATE-DESIGN.md section 5): no
+stores, no real docker, no real cgroups.
 
 docker and du are FAKES on PATH: this same file, run as `python3 test_disk_gate.py --fake docker|du ...`, backed by a
-scenario directory (FAKE_DOCKER_STATE). The fake keeps, per container, an append-only log of (driver timestamp, stream,
-text) lines, a docker events file, and the inspect fields; `docker exec ... sh -c "echo X > /proc/1/fd/N"` appends X
-to that stream as a real container would; `docker logs` serves the retained log (rotation and truncation drop its
-head) or follows it by position; `docker events` streams the events. Faults are injected by the test (lines, clock
-steps, restarts, replacements, pauses, rotation) or by triggers that fire inside a given docker call. The gate runs
-in-process and spawns its real companion process, which uses the same fakes.
-
-Failing-first: DISK_GATE_UNDER_TEST names another gate file (runkit/failing_first.sh runs the 7b4839b blob, the gate
-review A inspected). Tests named test_a1_*, test_a2_*, test_a3_* fail there on an exit-code assertion; tests that need
-a command the old gate lacks are skipped there, never counted as red.
+scenario directory (FAKE_DOCKER_STATE). Per container the fake keeps the inspect fields (Id, StartedAt, Pid,
+OOMKilled, Mounts), the data path's statfs (type, size, free), an ES node id, and, as real files under the scenario's
+proc/ and cg/ trees, /proc/<pid>/cgroup and the cgroup v2 memory files (memory.max, memory.swap.max, memory.peak,
+memory.events). A small HTTP server answers the ES node-stats API for the fake ES container. The fake also keeps a log
+and an events stream, so the v2 gate (eeb9b82) runs under it too: runkit/failing_first.sh runs these tests against
+that gate, where every test of a v3 rule fails on an exit-code assertion (a run it should block or void, admitted or
+passed). Tests that need a v3-only command skip there, never counted as red.
 usage (from writepath/): python3 -m unittest tests.test_disk_gate -v"""
 import calendar
 import fcntl
@@ -37,13 +34,8 @@ HERE = pathlib.Path(__file__).resolve().parents[1]
 GOOD = {"stream": "emlab2-wphard", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
         "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"}
 GIB = 1024 ** 3
-MARK = "wp16096-disk-gate"
-FLOOD = "WARN flood stage disk watermark [15gb] exceeded on [node]"
-# amendment 23a: the real line ES logged at 15:54:43Z during d3 at 31112b4 (node id shortened)
-HIGH = ('{"log.level": "WARN","message":"high disk watermark [17gb] exceeded on [node][7b751d48f8c8]'
-        '[/usr/share/elasticsearch/data] free: 15.7gb[2.4%], shards will be relocated away from this node"}')
-LOW = ('{"log.level": "INFO","message":"low disk watermark [18gb] exceeded on [node][7b751d48f8c8]'
-       '[/usr/share/elasticsearch/data] free: 17.7gb[2.7%], replicas will not be assigned to this node"}')
+MIB = 1024 ** 2
+ESDATA, PGDATA = "/usr/share/elasticsearch/data", "/var/lib/postgresql/data"
 
 
 def _ms(rfc):
@@ -52,27 +44,34 @@ def _ms(rfc):
 
 
 class FakeES(http.server.BaseHTTPRequestHandler):
-    """The two Elasticsearch APIs the gate reads (GATE-DESIGN 4.3), answering for the fake ES container: its JVM starts
-    `jvm_offset_s` after the container's StartedAt. S is reset by each test; `auth` records the headers received."""
+    """ES's node stats for the fake ES container S["cid"]: one data path with the container's statfs, ES's three
+    free-space thresholds (S["thr"], default 3, 2 and 1 GiB like the settings below), the container's node id and a
+    JVM that started `jvm_offset_s` after the container. /_cluster/settings is what the v2 gate reads. S is reset by
+    each test; `auth` records the headers received and `reads` counts requests."""
     S = {}
 
     def do_GET(self):
         S = FakeES.S
         S.setdefault("auth", []).append(self.headers.get("Authorization"))
+        S["reads"] = S.get("reads", 0) + 1
         path = self.path.split("?")[0]
         body, code = None, S.get("status", 200)
+        c = S["F"].st()["c"][S["cid"]] if code == 200 else None
         if code == 200 and path == "/_cluster/settings":
-            body = {"persistent": dict(S.get("persistent", {})), "transient": {},
+            body = {"persistent": {}, "transient": {},
                     "defaults": {"cluster.routing.allocation.disk.threshold_enabled": "true",
                                  "cluster.routing.allocation.disk.watermark.low": "3gb",
                                  "cluster.routing.allocation.disk.watermark.high": "2gb",
                                  "cluster.routing.allocation.disk.watermark.flood_stage": "1gb"}}
         elif code == 200 and path == "/_nodes/_local/stats/fs,jvm":
-            started = _ms(S["F"].st()["c"][S["cid"]]["started"])
-            now = int(time.time() * 1000)
-            body = {"nodes": {"n1": {"name": "node", "fs": {"data": [{
-                "path": "/usr/share/elasticsearch/data", "total_in_bytes": 100 * GIB,
-                "available_in_bytes": S.get("avail", 30 * GIB), "free_in_bytes": S.get("free", 30 * GIB)}]},
+            started, now = _ms(c["started"]), int(time.time() * 1000)
+            typ, total, free = c["statfs"][ESDATA]
+            low, high, flood = S.get("thr", (3 * GIB, 2 * GIB, GIB))
+            body = {"nodes": {c["node"]: {"name": "node", "fs": {"data": [{
+                "path": S.get("path", ESDATA), "mount": f"{ESDATA} ({typ})", "type": S.get("type", typ),
+                "total_in_bytes": total, "free_in_bytes": free, "available_in_bytes": free,
+                "low_watermark_free_space_in_bytes": low, "high_watermark_free_space_in_bytes": high,
+                "flood_stage_free_space_in_bytes": flood}]},
                 "jvm": {"timestamp": now, "uptime_in_millis": now - started - int(S.get("jvm_offset_s", 2) * 1000)}}}}
         elif code == 200:
             code = 404
@@ -97,7 +96,8 @@ def _complete_lines(p):
 
 
 class Fake:
-    """The scenario directory: state.json (containers, flags, triggers, clock offset), log.<id>, events."""
+    """The scenario directory: state.json (containers, flags, triggers, clock offset), log.<id>, events, and the
+    proc/ and cg/ trees the gate reads in place of /proc and /sys/fs/cgroup."""
 
     def __init__(self, root):
         self.root = pathlib.Path(root)
@@ -108,6 +108,8 @@ class Fake:
         (f.root / "state.json").write_text(json.dumps({"c": {}, "clock": 0.0, "flags": {}, "triggers": [], "calls": {},
                                                        "home_du": GIB}))
         (f.root / "events").touch()
+        (f.root / "proc").mkdir()
+        (f.root / "cg").mkdir()
         return f
 
     def st(self):
@@ -156,16 +158,47 @@ class Fake:
                                             "Actor": {"ID": cid, "Attributes": {"name": st["c"][cid]["name"]}},
                                             "time": int(time.time())})
 
+    # --- cgroup v2 files and /proc/<pid>/cgroup, as real files
+    def cgdir(self, cid):
+        return self.root / "cg" / "system.slice" / f"docker-{cid}.scope"
+
+    def cg(self, cid, **kw):
+        """Set memory.max (int or "max"), memory.swap.max, memory.peak and the oom_kill count of the container."""
+        d = self.cgdir(cid)
+        d.mkdir(parents=True, exist_ok=True)
+        for k, name in (("max", "memory.max"), ("swap", "memory.swap.max"), ("peak", "memory.peak")):
+            if k in kw:
+                (d / name).write_text(f"{kw[k]}\n")
+        if "oom_kill" in kw:
+            (d / "memory.events").write_text(f"low 0\nhigh 0\nmax 0\noom {kw['oom_kill']}\noom_kill {kw['oom_kill']}\n"
+                                             "oom_group_kill 0\n")
+
+    def cgread(self, cid):
+        d = self.cgdir(cid)
+        ev = dict(x.split() for x in (d / "memory.events").read_text().splitlines())
+        return {"peak": int((d / "memory.peak").read_text()), "oom_kill": int(ev["oom_kill"])}
+
+    def _proc(self, cid, pid, path=None):
+        p = self.root / "proc" / str(pid)
+        p.mkdir(parents=True, exist_ok=True)
+        (p / "cgroup").write_text(f"0::{path or f'/system.slice/docker-{cid}.scope'}\n")
+
     # --- operations (tests call them directly; triggers call them by name inside a docker call)
-    def add(self, name, data_path, size):
+    def add(self, name, data_path, used, total, mem, peak):
         cid = os.urandom(32).hex()
+        pid = int.from_bytes(os.urandom(2), "big") + 1000
 
         def f(st):
             st["c"][cid] = {"name": name, "started": self.ts(st), "running": True, "paused": False, "restarts": 0,
                             "gone": False, "logcfg": {"Type": "json-file", "Config": {}}, "tty": False,
-                            "du": {data_path: size}, "kept": 0, "drop": []}
+                            "du": {data_path: used}, "kept": 0, "drop": [], "pid": pid, "oom": False,
+                            "node": os.urandom(8).hex(), "mem": mem,
+                            "mounts": [{"Type": "tmpfs", "Source": "", "Destination": data_path, "RW": True}],
+                            "statfs": {data_path: ["tmpfs", total, total - used]}}
         self.locked(f)
         (self.root / f"log.{cid}").touch()
+        self.cg(cid, max=mem, swap=0, peak=peak, oom_kill=0)
+        self._proc(cid, pid)
         return cid
 
     def line(self, cid, text, s="o", drop=False, ts=None):
@@ -179,12 +212,20 @@ class Fake:
         self.locked(lambda st: self._event(st, cid, action, typ))
 
     def restart(self, cid, started=None):
+        """docker restart: same Id, new StartedAt and PID, the tmpfs wiped (a new ES node id), a new cgroup."""
+        pid = int.from_bytes(os.urandom(2), "big") + 1000
+
         def f(st):
             for a in ("kill", "die", "stop", "start", "restart"):
                 self._event(st, cid, a)
             c = st["c"][cid]
-            c["started"], c["restarts"] = started or self.ts(st), c["restarts"] + 1
-        self.locked(f)
+            c.update(started=started or self.ts(st), restarts=c["restarts"] + 1, pid=pid, node=os.urandom(8).hex())
+            for p, v in c["statfs"].items():
+                v[2] = v[1]
+            return c["mem"]
+        mem = self.locked(f)
+        self.cg(cid, max=mem, swap=0, peak=GIB // 4, oom_kill=0)
+        self._proc(cid, pid)
 
     def replace(self, name):
         def f(st):
@@ -192,10 +233,11 @@ class Fake:
             for a in ("kill", "die", "destroy"):
                 self._event(st, old, a)
             st["c"][old].update(gone=True, running=False)
-            return st["c"][old]["du"]
-        du = self.locked(f)
-        path, size = next(iter(du.items()))
-        return self.add(name, path, size)
+            c = st["c"][old]
+            path, (typ, total, free) = next(iter(c["statfs"].items()))
+            return path, total, c["mem"]
+        path, total, mem = self.locked(f)
+        return self.add(name, path, GIB // 4, total, mem, GIB // 4)
 
     def pause(self, cid):
         self.event(cid, "pause")
@@ -207,6 +249,12 @@ class Fake:
 
     def set(self, cid, **kw):
         self.locked(lambda st: st["c"][cid].update(kw))
+
+    def statfs(self, cid, path, typ=None, total=None, free=None):
+        def f(st):
+            v = st["c"][cid]["statfs"][path]
+            st["c"][cid]["statfs"][path] = [typ or v[0], total or v[1], v[2] if free is None else free]
+        self.locked(f)
 
     def flag(self, **kw):
         self.locked(lambda st: st["flags"].update(kw))
@@ -243,6 +291,7 @@ def fake_main(argv):
         fmt = None
         if args[0] == "-f":
             fmt, args = args[1], args[2:]
+        F.fire("inspect")
         st = F.st()
         cid = F.resolve(st, args[0])
         if cid is None:
@@ -255,13 +304,15 @@ def fake_main(argv):
             print(f"{cid}|{c['started']}|{json.dumps(c['logcfg'])}")
         else:
             print(json.dumps([{"Id": cid, "Name": "/" + c["name"], "RestartCount": c["restarts"],
-                               "State": {"Running": c["running"], "Paused": c["paused"], "StartedAt": c["started"]},
-                               "HostConfig": {"LogConfig": c["logcfg"]}, "Config": {"Tty": c["tty"]},
+                               "State": {"Running": c["running"], "Paused": c["paused"], "StartedAt": c["started"],
+                                         "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
+                               "Mounts": c["mounts"],
+                               "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]}, "Config": {"Tty": c["tty"]},
                                "NetworkSettings": {"Ports": c.get("ports") or {}}}]))
         return 0
     if cmd == "exec":
         ref, ex = args[0], args[1:]
-        kind = "du" if ex[:1] == ["du"] else "exec"
+        kind = "du" if ex[:1] == ["du"] else "stat" if ex[:2] == ["stat", "-f"] else "exec"
         F.fire(kind)
         st = F.st()
         cid = F.resolve(st, ref)
@@ -277,6 +328,13 @@ def fake_main(argv):
                 rc = 1
             else:
                 print(f"{st['c'][cid]['du'].get(ex[-1], 0)}\t{ex[-1]}")
+        elif kind == "stat":
+            ent = st["c"][cid]["statfs"].get(ex[-1])
+            if ent is None or st["flags"].get("stat_rc"):
+                print("stat: cannot read file system information", file=sys.stderr)
+                rc = 1
+            else:
+                print(f"{ent[0]} {ent[1] // 4096} 4096 {ent[2] // 4096}")
         else:
             m = re.fullmatch(r"echo (.*) > /proc/1/fd/([12])", ex[2]) if ex[:2] == ["sh", "-c"] and len(ex) == 3 else None
             if m is None:
@@ -302,14 +360,7 @@ def fake_main(argv):
             else:
                 ref = a
             i += 1
-        if not follow:
-            F.fire("logs_read")
         st = F.st()
-        if st["flags"].get("logs_rc"):
-            print("Error response from daemon: fake failure", file=sys.stderr)
-            return st["flags"]["logs_rc"]
-        if not follow and st["flags"].get("logs_sleep"):
-            time.sleep(st["flags"]["logs_sleep"])
         cid = F.resolve(st, ref)
         if cid is None:
             print("Error: No such container: " + str(ref), file=sys.stderr)
@@ -370,6 +421,9 @@ def fake_main(argv):
 
 # ------------------------------------------------------------------------------------------------------------- tests
 class Gate(unittest.TestCase):
+    """Defaults (GATE-DESIGN 5.3, MARGIN 256 MiB): ES tmpfs 6 GiB, limit 2 GiB, peak 1 GiB, ES low threshold 3 GiB
+    (bound 6 - 3 - 0.25 = 2.75 GiB); PG tmpfs 2 GiB, limit 1 GiB, peak 0.5 GiB (bound 1.75 GiB); swap 0."""
+
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.mkdtemp()
@@ -388,7 +442,7 @@ class Gate(unittest.TestCase):
             p.chmod(0o755)
         cls.env = mock.patch.dict(os.environ, {"WP_HOME": str(home), "PATH": f"{bindir}:{os.environ['PATH']}",
                                                "PYTHONPATH": str(HERE), "FAKE_DOCKER_STATE": "",
-                                               "DISK_GATE_SAMPLE_S": "0.5"})   # the gate only lets this shorten
+                                               "DISK_GATE_SAMPLE_S": "0.5"})   # the v2 gate's sampler, in tests
         cls.env.start()
         sys.path.insert(0, str(HERE))
         src = os.environ.get("DISK_GATE_UNDER_TEST") or str(HERE / "exp" / "disk_gate.py")
@@ -396,7 +450,7 @@ class Gate(unittest.TestCase):
         cls.g = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.g)
         cls.home = home
-        cls.new = hasattr(cls.g, "open_stops")      # the ledger gate; the 7b4839b gate lacks it
+        cls.v3 = hasattr(cls.g, "MARGIN")           # the v3 gate; the v2 gate (eeb9b82) runs these as red evidence
 
     @classmethod
     def tearDownClass(cls):
@@ -409,25 +463,31 @@ class Gate(unittest.TestCase):
         root = pathlib.Path(tempfile.mkdtemp(dir=self.tmp))
         os.environ["FAKE_DOCKER_STATE"] = str(root)
         self.F = Fake.create(root)
-        self.es = self.F.add("emlab2-wphard-es", "/usr/share/elasticsearch/data", GIB)
-        self.pg = self.F.add("emlab2-wphard-pg", "/var/lib/postgresql/data", GIB)
+        self.es = self.F.add("emlab2-wphard-es", ESDATA, GIB, 6 * GIB, 2 * GIB, GIB)
+        self.pg = self.F.add("emlab2-wphard-pg", PGDATA, GIB // 4, 2 * GIB, GIB, GIB // 2)
         self.F.set(self.es, ports={"9200/tcp": [{"HostIp": "127.0.0.1", "HostPort": str(self.es_port)}]})
         FakeES.S = {"F": self.F, "cid": self.es}
-        self.free = 30
+        self.free = lambda: 30
         patches = [mock.patch.object(shutil, "disk_usage", lambda p: SimpleNamespace(
-            total=100 * GIB, used=(100 - self.free) * GIB, free=self.free * GIB))]
+            total=100 * GIB, used=(100 - self.free()) * GIB, free=self.free() * GIB))]
         if hasattr(self.g, "_sleep"):
             patches.append(mock.patch.object(self.g, "_sleep", lambda s: time.sleep(min(s, 0.02))))
         for name, v in (("SYNC_TIMEOUT_S", 15.0), ("CLOSE_TIMEOUT_S", 15.0)):
             if hasattr(self.g, name):
                 patches.append(mock.patch.object(self.g, name, v))
+        if self.v3:
+            patches += [mock.patch.object(self.g, "PROC_ROOT", root / "proc"),
+                        mock.patch.object(self.g, "CGROUP_ROOT", root / "cg")]
         for p in patches:
             p.start()
             self.addCleanup(p.stop)
         self.addCleanup(self._reap)
+        if self.v3:
+            rc, out = self.call("init", "test home")
+            self.assertEqual(rc, 0, out)
 
     def _reap(self):
-        """Stop the companions THIS test's gate started (test-owned processes only)."""
+        """Stop capture companions a v2 gate under test started (test-owned processes only)."""
         self.F.flag(kill_followers=True)
         runs = self.home / "state" / "gate-runs"
         pids = []
@@ -447,7 +507,7 @@ class Gate(unittest.TestCase):
             except OSError:
                 pass
 
-    # helpers
+    # ---- helpers
     def call(self, *args):
         buf = io.StringIO()
         try:
@@ -460,120 +520,307 @@ class Gate(unittest.TestCase):
 
     def start(self):
         rc, out = self.call("start")
-        self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-300:]}")
+        self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
 
-    def line(self, text, s="o", **kw):
-        self.F.line(self.es, text, s, **kw)
+    def need_v3(self):
+        if not self.v3:
+            self.skipTest("needs a command the v2 gate lacks (not counted as red)")
 
-    def stop_file(self, text):
-        (self.home / "state").mkdir(exist_ok=True)
-        (self.home / "state" / "STOP").write_text(text)
-
-    def open_stop_ids(self):
-        return [s["id"] for s in self.g.open_stops()] if self.new else None
-
-    def ack(self, reason, ids=None):
-        """Acknowledge stops through the gate's own interface: by stop id (ledger gate), or the 7b4839b clear-stop."""
-        if not self.new:
-            return self.call("clear-stop", reason)
-        for i in (self.open_stop_ids() if ids is None else ids):
-            self.call("clear-stop", i, reason)
+    def assertBlocked(self, rc, out, *why):
+        """BLOCKED; on the v3 gate also for the stated reason(s), so a test cannot pass on an incidental failure."""
+        self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+        for w in (why if self.v3 else ()):
+            self.assertIn(w, out, f"BLOCKED, but not for the reason under test ({w!r})")
 
     def assertVoid(self, rc, out, *why):
-        """VOID; on the ledger gate also for the stated reason(s), so a test cannot pass on an incidental failure."""
-        self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+        self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
         self.assertIn("VOID", out)
-        for w in (why if self.new else ()):
+        for w in (why if self.v3 else ()):
             self.assertIn(w, out, f"VOID, but not for the reason under test ({w!r})")
 
     def assertValid(self, rc, out):
-        self.assertEqual(rc, 0, f"expected a valid run (exit 0), got {rc!r}: {out.strip()[-300:]}")
+        self.assertEqual(rc, 0, f"expected a valid run (exit 0), got {rc!r}: {out.strip()[-400:]}")
 
-    def need_new(self):
-        if not self.new:
-            self.skipTest("needs a command or knob the 7b4839b gate lacks (not counted as red)")
+    def stop_path(self):
+        return self.home / "state" / "STOP"
 
-    # ---- positive controls
-    def test_clean_run_passes(self):
+    def ack_all(self, reason):
+        if self.v3 or hasattr(self.g, "open_stops"):
+            for s in self.g.open_stops():
+                self.call("clear-stop", s["id"], reason)
+
+    # ---- positive control
+    def test_valid_run_passes(self):
         self.start()
         self.assertValid(*self.call("check", "x"))
         self.assertValid(*self.call("end"))
 
-    def test_flood_line_voids(self):
+    # ---- R1 isolation: the data paths must be private tmpfs mounts
+    def test_es_data_on_a_shared_volume_blocks(self):
+        self.F.set(self.es, mounts=[{"Type": "volume", "Name": "emlab2-wphard-es-data", "Destination": ESDATA}])
+        self.F.statfs(self.es, ESDATA, typ="ext4", total=643 * GIB, free=57 * GIB)
+        self.assertBlocked(*self.call("start"), "not a Docker tmpfs mount")
+
+    def test_pg_data_on_a_shared_volume_blocks(self):
+        self.F.set(self.pg, mounts=[{"Type": "volume", "Name": "emlab2-wphard-pg-data", "Destination": PGDATA}])
+        self.F.statfs(self.pg, PGDATA, typ="ext2/ext3", total=643 * GIB, free=57 * GIB)
+        self.assertBlocked(*self.call("start"), "not a Docker tmpfs mount")
+
+    def test_es_reporting_another_filesystem_blocks(self):
+        FakeES.S.update(type="ext4")                    # inspect says tmpfs, ES's own view of its data path does not
+        self.assertBlocked(*self.call("start"), "ES reports its data path on ext4")
+
+    def test_es_reporting_another_data_path_blocks(self):
+        FakeES.S.update(path="/srv/esdata")
+        self.assertBlocked(*self.call("start"), "data path")
+
+    def test_a_mount_inside_the_data_directory_blocks(self):
+        self.F.set(self.es, mounts=[{"Type": "tmpfs", "Destination": ESDATA},
+                                    {"Type": "bind", "Source": "/home/x", "Destination": ESDATA + "/nodes"}])
+        self.assertBlocked(*self.call("start"), "inside the data directory")
+
+    # ---- R2 bound: tmpfs larger than limit + threshold + margin; no swap; a limit at all
+    def test_es_tmpfs_not_above_limit_plus_threshold_blocks(self):
+        self.F.statfs(self.es, ESDATA, total=5 * GIB)      # 5 - 2 = 3 GiB < 3 GiB threshold + 256 MiB
+        self.assertBlocked(*self.call("start"), "can bring free space below")
+
+    def test_pg_tmpfs_not_above_limit_blocks(self):
+        self.F.cg(self.pg, max=2 * GIB)                    # PG tmpfs 2 GiB, limit 2 GiB: the tmpfs could fill
+        self.assertBlocked(*self.call("start"), "can bring free space below")
+
+    def test_swap_allowed_blocks(self):
+        self.F.cg(self.es, swap=GIB)
+        self.assertBlocked(*self.call("start"), "swap")
+
+    def test_no_memory_limit_blocks(self):
+        self.F.cg(self.pg, max="max")
+        self.assertBlocked(*self.call("start"), "no memory limit")
+
+    # ---- R3 lifetime peak
+    def test_peak_already_over_the_bound_blocks(self):
+        self.F.cg(self.es, peak=3 * GIB)                   # earlier in its life the container used more than 2.75 GiB
+        self.assertBlocked(*self.call("start"), "memory peak")
+
+    def test_limit_raised_and_restored_with_a_peak_over_the_bound_voids(self):
+        # docker update raised the limit, the store grew past the bound, then the limit was put back: only the
+        # kernel's lifetime peak still shows it
         self.start()
-        self.line(FLOOD)
-        self.assertVoid(*self.call("end"))
+        self.F.cg(self.es, max=4 * GIB)
+        self.F.cg(self.es, peak=int(3.5 * GIB))
+        self.F.cg(self.es, max=2 * GIB)
+        self.assertVoid(*self.call("end"), "memory peak")
 
-    def test_high_watermark_line_voids(self):
+    # ---- R4 identity
+    def test_oom_kill_of_a_process_in_the_container_voids(self):
+        # live 2026-11-17: an OOM-killed child leaves PID 1, StartedAt and the Id unchanged
         self.start()
-        self.line(HIGH)
-        self.assertVoid(*self.call("end"))
+        self.F.cg(self.pg, oom_kill=1)
+        self.assertVoid(*self.call("end"), "OOM kill")
 
-    def test_high_watermark_on_stderr_voids(self):
+    def test_docker_oomkilled_flag_blocks(self):
+        self.F.set(self.es, oom=True)
+        self.assertBlocked(*self.call("start"), "OOM kill")
+
+    def test_restart_voids(self):
         self.start()
-        self.line(HIGH, s="e")
-        self.assertVoid(*self.call("end"))
+        self.F.restart(self.es)
+        self.assertVoid(*self.call("end"), "StartedAt")
 
-    def test_low_watermark_line_does_not_void(self):
+    def test_recreate_voids(self):
         self.start()
-        self.line(LOW)
-        self.assertValid(*self.call("end"))
+        new = self.F.replace("emlab2-wphard-pg")
+        self.assertTrue(new)
+        self.assertVoid(*self.call("end"), "PG")
 
-    def test_hyphenated_flood_stage_line_voids(self):
-        # the wording Elastic's "Fix watermark errors" page gives (fetched 2026-11-17): "flood-stage watermark [95%]
-        # exceeded on ..."; the gate must not depend on one spelling of the flood-stage message
+    def test_es_node_id_changed_voids(self):
+        # the data path was wiped or swapped under a running container: ES keeps its node id there
         self.start()
-        self.line('{"log.level": "WARN","message":"flood-stage watermark [95%] exceeded on [node][7b751d48f8c8]'
-                  '[/usr/share/elasticsearch/data] free: 1gb[4%], all indices on this node will be marked read-only"}')
-        self.assertVoid(*self.call("end"), "flood stage")
+        self.F.set(self.es, node="0123456789abcdef")
+        self.assertVoid(*self.call("end"), "node id")
 
-    def test_flood_stage_setting_name_does_not_void(self):
-        # a settings line naming watermark.flood_stage is not a watermark event (guards against over-normalising)
+    def test_paused_at_end_voids(self):
         self.start()
-        self.line('{"log.level": "INFO","message":"updating [cluster.routing.allocation.disk.watermark.flood_stage]'
-                  ' from [95%] to [1gb]"}')
-        self.assertValid(*self.call("end"))
+        self.F.set(self.pg, paused=True)
+        self.assertVoid(*self.call("end"), "not running")
 
-    # --- the second evidence source, Elasticsearch's own API (GATE-DESIGN 4.3): red on the capture-only gate
-    def assertBlocked(self, rc, out, why):
-        self.assertEqual(rc, 2, f"start must be BLOCKED: {out.strip()[-300:]}")
-        self.assertIn(why, out)
-
-    def test_api_high_watermark_breach_without_a_log_line_voids(self):
+    # ---- R5 configuration
+    def test_memory_limit_changed_voids(self):
         self.start()
-        FakeES.S.update(avail=int(1.5 * GIB))           # below the 2gb high watermark; ES wrote no line about it
-        self.assertVoid(*self.call("end"), "below its high watermark")
+        self.F.cg(self.es, max=GIB + GIB // 2)
+        self.assertVoid(*self.call("end"), "memory limit")
 
-    def test_api_high_watermark_breach_at_admission_blocks_start(self):
-        FakeES.S.update(avail=int(1.5 * GIB))           # a breach that began before the window: no fresh log line
-        self.assertBlocked(*self.call("start"), "below its high watermark")
+    def test_es_threshold_changed_voids(self):
+        self.start()
+        FakeES.S.update(thr=(GIB, GIB // 2, GIB // 4))
+        self.assertVoid(*self.call("end"), "watermark thresholds")
 
-    def test_api_unreadable_blocks_start(self):
+    # ---- evidence that cannot be read fails the rule, never passes it
+    def test_cgroup_unreadable_blocks(self):
+        (self.F.cgdir(self.es) / "memory.peak").unlink()
+        self.assertBlocked(*self.call("start"), "cgroup")
+
+    def test_cgroup_not_naming_the_container_blocks(self):
+        pid = self.F.st()["c"][self.es]["pid"]
+        self.F._proc(self.es, pid, "/user.slice/user-1000.slice/session-1.scope")
+        self.assertBlocked(*self.call("start"), "cgroup")
+
+    def test_es_api_unreadable_blocks(self):
         FakeES.S.update(status=503)
         self.assertBlocked(*self.call("start"), "could not be read")
 
-    def test_api_unreadable_at_end_voids(self):
+    def test_es_api_unreadable_at_end_voids(self):
         self.start()
         FakeES.S.update(status=503)
         self.assertVoid(*self.call("end"), "could not be read")
 
-    def test_api_percentage_watermark_blocks_start(self):
-        FakeES.S.update(persistent={"cluster.routing.allocation.disk.watermark.high": "90%"})
-        self.assertBlocked(*self.call("start"), "byte values")
+    def test_pg_statfs_unreadable_voids(self):
+        self.start()
+        self.F.flag(stat_rc=1)
+        self.assertVoid(*self.call("end"), "statfs")
 
-    def test_api_port_not_published_by_the_pinned_container_blocks_start(self):
-        self.F.set(self.es, ports={})                   # whatever answers on es_url is not this container
-        self.assertBlocked(*self.call("start"), "does not publish")
-
-    def test_api_jvm_older_than_the_pinned_container_blocks_start(self):
-        FakeES.S.update(jvm_offset_s=-3600)             # the API's process started an hour before this container
+    def test_jvm_not_bound_to_the_container_blocks(self):
+        FakeES.S.update(jvm_offset_s=-3600)
         self.assertBlocked(*self.call("start"), "JVM")
 
-    def test_api_logger_setting_changed_during_the_run_voids(self):
-        self.start()
-        FakeES.S.update(persistent={"logger.org.elasticsearch.cluster.routing.allocation": "ERROR"})
-        self.assertVoid(*self.call("end"), "settings changed")
+    # ---- R7 host free space measured inside the locked admission step (review D F1)
+    def test_free_space_dropping_during_setup_blocks(self):
+        # 30 GiB free before the gate observed anything, 18 GiB once it had read ES: admission must use the latter
+        self.free = lambda: 18 if FakeES.S.get("reads") else 30
+        self.assertBlocked(*self.call("start"), "host free")
 
+    # ---- R8 own files
+    def test_own_files_growing_over_the_cap_voids(self):
+        self.start()
+        self.F.locked(lambda st: st.update(home_du=4 * GIB))
+        self.assertVoid(*self.call("end"), "grew")
+
+    # ---- R6 stops (A3, P2)
+    def test_stop_in_the_window_voids_even_after_ack(self):
+        self.start()
+        self.call("stop", "operator stop mid-run")
+        self.ack_all("acknowledged during the run")
+        self.assertVoid(*self.call("end"), "STOP")
+
+    def test_open_stop_blocks_start(self):
+        self.call("stop", "left by an earlier run")
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+
+    def test_check_void_closes_the_run(self):
+        self.start()
+        self.F.cg(self.pg, oom_kill=2)
+        self.assertVoid(*self.call("check", "x"))
+        rc, out = self.call("end")
+        self.assertEqual(rc, 3, out)
+
+    # ---- ledger continuity (review D F7)
+    def _ledger(self):
+        return self.home / "state" / "stop_ledger.jsonl"
+
+    def test_truncated_ledger_blocks(self):
+        self.call("stop", "a stop that must not vanish")
+        p = self._ledger()
+        lines = p.read_bytes().split(b"\n")[:-1]
+        p.write_bytes(b"\n".join(lines[:-1]) + (b"\n" if lines[:-1] else b""))   # drop the last record, the stop
+        rc, out = self.call("stops")
+        self.assertEqual(rc, 2, f"a ledger missing its last record must not read as intact: {out.strip()[-300:]}")
+        if self.v3:
+            self.assertIn("not intact", out)
+
+    def test_deleted_ledger_blocks(self):
+        self.call("stop", "a stop that must not vanish")
+        for p in self.home.joinpath("state").glob("stop_ledger*"):
+            p.unlink()
+        self.assertBlocked(*self.call("start"), "ledger")
+
+    def test_head_anchor_required(self):
+        self.call("stop", "s")
+        self.ack_all("acknowledged")
+        (self.home / "state" / "stop_ledger.head").unlink(missing_ok=True)
+        self.assertBlocked(*self.call("start"), "head anchor")
+
+    def test_end_requires_this_runs_admit_record(self):
+        self.start()
+        for p in self.home.joinpath("state").glob("stop_ledger*"):
+            p.unlink()
+        if self.v3:
+            self.call("init", "a fresh ledger replaced the one that admitted the run")
+        self.assertVoid(*self.call("end"), "admission record")
+
+    def test_ledger_reset_keeps_the_broken_ledger(self):
+        self.need_v3()
+        self.call("stop", "s")
+        p = self._ledger()
+        p.write_bytes(p.read_bytes()[:-5] + b"}\n")        # damage the last record
+        self.assertBlocked(*self.call("start"), "not intact")
+        rc, out = self.call("ledger-reset", "damaged in a test")
+        self.assertEqual(rc, 0, out)
+        kept = list(self.home.joinpath("state").glob("stop_ledger.broken-*.jsonl"))
+        self.assertEqual(len(kept), 1, "the broken ledger must be kept")
+        self.start()
+
+    def test_v2_ledger_is_adopted_once(self):
+        self.need_v3()
+        for p in self.home.joinpath("state").glob("stop_ledger*"):
+            p.unlink()
+        import hashlib
+        prev, lines = "0" * 64, []
+        for i, rec in enumerate([{"kind": "stop", "id": "s-1", "source": "operator", "reason": "x"},
+                                 {"kind": "ack", "stop_id": "s-1", "reason": "y"}]):
+            ln = json.dumps(dict(rec, seq=i + 1, prev=prev, at="2026-11-16T00:00:00Z"), sort_keys=True).encode()
+            lines.append(ln)
+            prev = hashlib.sha256(ln).hexdigest()
+        self._ledger().write_bytes(b"\n".join(lines) + b"\n")
+        self.start()
+        self.assertValid(*self.call("end"))
+        kinds = [json.loads(x)["kind"] for x in self._ledger().read_text().splitlines()]
+        self.assertEqual(kinds[:3], ["stop", "ack", "init"])
+        self.assertEqual(kinds.count("init"), 1)
+
+    def test_run_admitted_by_an_older_gate_is_refused(self):
+        self.need_v3()
+        (self.home / "state" / "disk_gate.json").write_text(json.dumps({"run": "old", "admit_seq": 1,
+                                                                        "run_dir": "/nonexistent"}))
+        self.assertVoid(*self.call("end"), "older gate")
+
+    # ---- legacy STOP file (review D F3)
+    def test_legacy_stop_file_is_ingested_kept_and_its_path_becomes_a_directory(self):
+        # a home from before v3 (or one whose STOP directory was removed): the path holds a regular file
+        if self.stop_path().is_dir():
+            shutil.rmtree(self.stop_path())
+        self.stop_path().parent.mkdir(parents=True, exist_ok=True)
+        self.stop_path().write_text("operator: stop now\n")
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+        self.assertTrue(self.stop_path().is_dir(), "state/STOP must become a directory, so legacy writes fail")
+        if self.v3:
+            self.assertEqual(len(list(self.home.joinpath("state").glob("STOP.ingested-*"))), 1)
+
+    def test_legacy_stop_write_after_migration_fails_loudly(self):
+        self.call("stops")
+        with self.assertRaises(IsADirectoryError, msg="a legacy `> state/STOP` must fail, not be missed"):
+            self.stop_path().write_text("operator: stop\n")
+
+    def test_legacy_stop_written_during_finalization_is_never_lost(self):
+        # review D F3: a write after the final ingestion and before the end record. Either the writer is refused or
+        # the run is VOID; a VALID run with an unseen STOP file is the defect.
+        self.start()
+        orig, seen = self.g.Ledger.append, {}
+
+        def append(L, kind, **kw):
+            if kind == "end" and "tried" not in seen:
+                seen["tried"] = True
+                try:
+                    self.stop_path().write_text("legacy: stop during finalization\n")
+                    seen["written"] = True
+                except IsADirectoryError:
+                    seen["written"] = False
+            return orig(L, kind, **kw)
+        with mock.patch.object(self.g.Ledger, "append", append):
+            rc, out = self.call("end")
+        self.assertTrue(seen.get("tried"), "the end record was not appended")
+        self.assertTrue(not seen["written"] or rc == 3,
+                        f"a STOP written during finalization was accepted and the run left VALID (rc {rc})")
+
+    # ---- the credential (GATE-DESIGN 4.3, kept in v3)
     def test_api_key_is_sent_and_never_written(self):
         sys.path.insert(0, str(HERE / "runkit"))
         import leak_scan
@@ -587,9 +834,9 @@ class Gate(unittest.TestCase):
             FakeES.S.update(status=401)
             rc, out1 = self.call("start")
             self.assertEqual(rc, 2, "an API that refuses the key must block start")
-            FakeES.S.update(status=200, avail=int(1.5 * GIB))
+            FakeES.S.update(status=200, type="ext4")
             rc, out2 = self.call("start")
-            self.assertEqual(rc, 2, "a breach must block start")
+            self.assertEqual(rc, 2, "a data path off tmpfs must block start")
         finally:
             (sec / "es_api_key.json").unlink()
         self.assertIn("ApiKey " + enc, FakeES.S.get("auth", []), "the gate did not send the stream's API key")
@@ -598,362 +845,12 @@ class Gate(unittest.TestCase):
         self.assertEqual(hits, [], "a gate file holds the API key")
         self.assertEqual(leak_scan.find((out1 + out2).encode(), [key, enc]), [], "the gate printed the API key")
 
-    # --- stage 2: the companion samples ES's report through the window (DISK_GATE_SAMPLE_S=0.5 here, 10 s live)
-    def _api_records(self):
-        runs = sorted((self.home / "state" / "gate-runs").iterdir())
-        return [json.loads(x) for x in (runs[-1] / "capture.jsonl").read_text().splitlines() if '"api"' in x]
-
-    def test_api_transient_breach_between_readings_voids(self):
-        self.start()
-        self.assertValid(*self.call("check", "x"))
-        FakeES.S.update(avail=int(1.5 * GIB))           # a breach that clears before end reads, with no log line
-        time.sleep(2)
-        FakeES.S.pop("avail")
-        self.assertVoid(*self.call("end"), "ES's own report during the run")
-
-    def test_api_settings_flip_between_samples_voids(self):
-        self.start()
-        FakeES.S.update(persistent={"logger.org.elasticsearch.cluster.routing.allocation": "ERROR"})
-        time.sleep(2)                                   # silenced, then restored before end
-        FakeES.S.pop("persistent")
-        self.assertVoid(*self.call("end"), "changed between samples")
-
-    def test_api_samples_are_in_the_capture(self):
-        self.start()
-        time.sleep(1.5)
-        self.assertValid(*self.call("end"))
-        recs = self._api_records()
-        self.assertGreaterEqual(len(recs), 2, "the companion took fewer than two ES API samples in 1.5 s at 0.5 s")
-        self.assertTrue(all(r.get("free") and r.get("high") and not r.get("why") for r in recs), recs[:2])
-
-    def test_api_sampling_gap_voids(self):
-        # The stall rule judges the recorded monotonic times, so it is driven here without a real stall. Gaps are
-        # fixed: 5 s is under SAMPLE_GAP_S in the tests (30.5 s) and in production (40 s), 60 s is over both.
-        run = {"start_token": "t", "tokens": []}
-
-        def ok(m):
-            return {"k": "api", "m": m, "why": [], "settings_sha": "s"}
-
-        def stalled(recs):
-            return [w for w in self.g._judge(recs, run)[0] if "sampling stalled" in w]
-        self.assertEqual(stalled([ok(100.0), ok(105.0), {"k": "final", "m": 110.0}]), [])
-        self.assertTrue(stalled([ok(100.0), ok(160.0), {"k": "final", "m": 165.0}]), "a 60 s gap between samples")
-        self.assertTrue(stalled([ok(100.0), {"k": "final", "m": 160.0}]), "a sampler that died after its first sample")
-
-    def test_flood_line_before_the_run_does_not_void(self):
-        self.line(FLOOD)
-        self.start()
-        self.assertValid(*self.call("end"))
-
-    # ---- amendment 24 start line
-    def test_start_under_20gb_blocked(self):
-        self.free = 19
-        rc, out = self.call("start")
-        self.assertEqual(rc, 2, out)
-        self.assertIn("BLOCKED", out)
-
-    def test_start_at_20gb_allowed(self):
-        self.free = 20
-        self.start()
-
-    # ---- review-2 N2
-    def test_log_read_failure_voids(self):
-        self.start()
-        self.F.flag(logs_rc=1)
-        self.assertVoid(*self.call("end"))
-
-    def test_log_read_timeout_voids(self):
-        self.need_new()
-        self.start()
-        self.F.flag(logs_sleep=5)
-        with mock.patch.object(self.g, "DOCKER_TIMEOUT_S", 1):
-            self.assertVoid(*self.call("end"))
-
-    def test_cap_breach_voids(self):
-        self.start()
-        self.assertValid(*self.call("check", "last"))
-        self.F.set(self.es, du={"/usr/share/elasticsearch/data": 4 * GIB})
-        self.assertVoid(*self.call("end"))
-
-    def test_usage_not_measured_at_end_voids(self):
-        self.start()
-        self.F.flag(du_rc=1)
-        self.assertVoid(*self.call("end"))
-
-    def test_usage_not_measured_at_check_voids(self):
-        self.start()
-        self.F.flag(du_rc=1)
-        self.assertVoid(*self.call("check", "x"))
-
-    # ---- STOP (review P2, amendment H4)
-    def test_stop_written_during_run_voids(self):
-        self.start()
-        self.stop_file("flood stage seen\n")
-        self.assertVoid(*self.call("end"))
-
-    def test_stop_reason_names_the_watcher_not_an_operator(self):
-        self.start()
-        self.stop_file("flood watcher: flood stage or high watermark in the ES log at 10:00:00\n")
-        rc, out = self.call("end")
-        self.assertVoid(rc, out)
-        self.assertIn("flood watcher", out)
-        self.assertNotIn("operator stop", out)
-
-    def test_empty_stop_file_is_not_attributed(self):
-        self.start()
-        self.stop_file("")
-        rc, out = self.call("check", "x")
-        self.assertVoid(rc, out)
-        self.assertIn("writer unknown", out)
-
-    def test_start_with_stop_present_is_blocked_and_the_stop_kept(self):
-        self.stop_file("flood watcher: flood stage at 10:00:00\n")
-        rc, out = self.call("start")
-        self.assertEqual(rc, 2, out)
-        self.assertIn("BLOCKED", out)
-        self.assertTrue((self.home / "state" / "STOP").exists(), "start deleted a STOP")
-        self.assertEqual(self.call("start")[0], 2, "a second start went through: the STOP was lost")
-
-    def test_stop_arriving_while_end_measures_voids(self):
-        self.start()
-        self.F.trigger("du", 1, "write_file", str(self.home / "state" / "STOP"), "operator: stop now\n")
-        self.assertVoid(*self.call("end"))
-
-    def test_ack_with_a_reason_unblocks_start_and_is_recorded(self):
-        self.stop_file("flood watcher: flood stage at 10:00:00\n")
-        self.ack("read it; another tenant's run, ended")
-        self.start()
-        recorded = "".join(p.read_text(errors="replace") for p in (self.home / "state").rglob("*") if p.is_file())
-        self.assertIn("another tenant", recorded)
-
-    def test_ack_needs_a_reason(self):
-        self.stop_file("x\n")
-        if self.new:
-            rc, _ = self.call("clear-stop", self.open_stop_ids()[0], "  ")
-        else:
-            rc, _ = self.call("clear-stop", "  ")
-        self.assertNotEqual(rc, 0)
-        self.assertEqual(self.call("start")[0], 2)
-
-    # ---- review P1
-    def test_rotated_log_voids(self):
-        self.start()
-        self.F.rotate(self.es)
-        self.assertVoid(*self.call("end"))
-
-    def test_truncated_log_with_a_flood_line_voids(self):
-        self.start()
-        self.line(FLOOD)
-        self.F.rotate(self.es)
-        self.assertVoid(*self.call("end"))
-
-    def test_same_second_restart_voids(self):
-        self.start()
-        s = self.F.st()["c"][self.es]["started"]
-        self.F.restart(self.es, started=s[:20] + "999999999Z")
-        self.assertVoid(*self.call("end"))
-
-    def test_replaced_container_voids(self):
-        self.start()
-        self.F.replace("emlab2-wphard-es")
-        self.assertVoid(*self.call("end"))
-
-    def test_wall_clock_step_voids(self):
-        self.start()
-        real = time.time
-        with mock.patch.object(time, "time", lambda: real() - 3600):
-            self.assertVoid(*self.call("end"))
-
-    def test_close_marker_never_lands_voids(self):
-        self.start()
-        self.F.flag(echo_lost=True)
-        with mock.patch.object(self.g, "CLOSE_TIMEOUT_S", 2.0) if self.new else _nullctx():
-            self.assertVoid(*self.call("end"))
-
-    def test_follower_loss_voids(self):
-        """A line the capture never received (follower loss) while the retained log has it: VOID."""
-        self.start()
-        self.line(FLOOD, drop=True)
-        self.assertVoid(*self.call("end"))
-
-    # ---- review A, A1: markers and wall-clock filtering can conceal an in-window warning (red on 7b4839b)
-    def _forge_end_marker(self):
-        start = [r["x"] for r in self.F.lines(self.es) if r["x"].startswith(MARK + " start ")]
-        self.assertTrue(start, "no start marker in the container log")
-        self.line(MARK + " end " + start[0].split()[-1])
-
-    def test_a1_forged_end_marker_conceals_a_later_flood_line(self):
-        self.start()
-        self._forge_end_marker()
-        self.line(FLOOD)
-        self.assertVoid(*self.call("end"), "flood stage", "forged, replayed or missing marker")
-
-    def test_a1_forged_marker_alone_voids(self):
-        self.start()
-        self._forge_end_marker()
-        self.assertVoid(*self.call("end"), "forged, replayed or missing marker")
-
-    def test_a1_small_backward_clock_step_hides_a_flood_line(self):
-        self.start()
-        self.F.clock(-1.5)                          # under the old gate's 2 s slack
-        self.line(FLOOD)
-        self.F.clock(0.0)
-        self.assertVoid(*self.call("end"), "flood stage")
-
-    def test_a1_reversed_endpoints_hide_a_flood_line(self):
-        self.start()
-        self.F.clock(-30.0)
-        self.line(FLOOD)
-        self.assertVoid(*self.call("end"), "flood stage")
-
-    def test_a1_truncation_then_start_marker_replay_hides_a_flood_line(self):
-        self.start()
-        start = [r["x"] for r in self.F.lines(self.es) if r["x"].startswith(MARK + " start ")]
-        self.line(FLOOD)
-        self.F.rotate(self.es)                      # the file is emptied, the flood line with it
-        self.line(start[0])                         # ... and the public start marker written again
-        self.assertVoid(*self.call("end"), "flood stage", "forged, replayed or missing marker", "contiguous")
-
-    def test_a1_non_blocking_log_driver_is_never_certified(self):
-        self.F.set(self.es, logcfg={"Type": "json-file", "Config": {"mode": "non-blocking", "max-buffer-size": "4m"}})
-        rs, out = self.call("start")
-        if self.new:
-            self.assertIn("cannot give lossless coverage", out)
-        re_ = self.call("end")[0] if rs == 0 else None
-        self.assertTrue(rs == 2 or re_ == 3, f"a non-blocking driver (drops are invisible) was certified: start {rs}, end {re_}")
-
-    # ---- review A, A2: identity can change after the only completion inspection (red on 7b4839b)
-    def test_a2_restart_between_end_inspection_and_log_retrieval_voids(self):
-        self.start()
-        self.F.trigger("logs_read", 1, "restart", self.es)
-        self.assertVoid(*self.call("end"), "started changed")
-
-    def test_a2_replacement_during_end_measurement_voids(self):
-        self.start()
-        self.F.trigger("du", 1, "replace", "emlab2-wphard-es")
-        self.assertVoid(*self.call("end"), "own usage not measured", "no longer exists")
-
-    def test_a2_pause_during_the_run_voids(self):
-        self.start()
-        self.F.pause(self.es)
-        self.assertVoid(*self.call("end"), "container:pause")
-
-    # ---- review A, A3: an acknowledgement can erase a run's invalidation (red on 7b4839b)
-    def test_a3_stop_then_ack_during_the_run_still_voids(self):
-        self.start()
-        self.stop_file("flood watcher: flood stage at 10:00:00\n")
-        self.ack("operator read it mid-run")
-        self.assertVoid(*self.call("end"), "STOP: stop")
-
-    def test_a3_newer_stop_during_an_ack_still_blocks_start(self):
-        self.stop_file("flood watcher: first\n")
-        seen = self.open_stop_ids()                 # the operator reads the stop it will acknowledge
-        time.sleep(0.01)
-        self.stop_file("flood watcher: second, arrived while the operator was reading\n")
-        self.ack("acknowledging the first", ids=seen)
-        rc, out = self.call("start")
-        self.assertEqual(rc, 2, f"start went through with an unacknowledged newer STOP: {out.strip()[-300:]}")
-        self.assertIn("second, arrived", out)
-
-    def test_a3_readmission_after_an_ack_does_not_rebaseline_the_window(self):
-        self.start()
-        self.stop_file("flood watcher: flood stage at 10:00:00\n")
-        self.ack("operator read it mid-run")
-        rc, out = self.call("start")                # a second admission while the first run is open
-        if self.new:
-            self.assertEqual(rc, 2, out)
-            self.assertIn("has no end record", out)
-        self.assertVoid(*self.call("end"), "STOP: stop")
-
-    # ---- the ledger gate's own design (need commands the 7b4839b gate lacks)
-    def test_companion_killed_voids(self):
-        self.need_new()
-        self.start()
-        run = json.loads(next((self.home / "state" / "gate-runs").glob("*/run.json")).read_text())
-        os.killpg(run["companion_pid"], signal.SIGKILL)
-        time.sleep(0.2)
-        self.assertVoid(*self.call("check", "x"))
-
-    def test_follower_eof_voids(self):
-        self.need_new()
-        self.start()
-        self.F.flag(kill_followers=True)
-        time.sleep(0.5)
-        self.assertVoid(*self.call("end"))
-
-    def test_capture_edited_voids(self):
-        self.need_new()
-        self.start()
-        self.line("INFO a line")
-        time.sleep(0.3)
-        cap = next((self.home / "state" / "gate-runs").glob("*/capture.jsonl"))
-        lines = cap.read_text().splitlines(True)
-        cap.write_text("".join(lines[:1] + lines[2:]))
-        self.assertVoid(*self.call("end"))
-
-    def test_unsupported_log_driver_blocks_start(self):
-        self.need_new()
-        self.F.set(self.es, logcfg={"Type": "journald", "Config": {}})
-        self.assertEqual(self.call("start")[0], 2)
-
-    def test_tty_container_blocks_start(self):
-        self.need_new()
-        self.F.set(self.es, tty=True)
-        self.assertEqual(self.call("start")[0], 2)
-
-    def test_update_event_voids(self):
-        self.need_new()
-        self.start()
-        self.F.event(self.pg, "update")
-        self.assertVoid(*self.call("end"))
-
-    def test_void_check_closes_the_run(self):
-        self.need_new()
-        self.start()
-        self.stop_file("operator: stop\n")
-        self.assertVoid(*self.call("check", "x"))
-        self.ack("handled")
-        self.start()
-        self.assertValid(*self.call("end"))
-
-    def test_open_run_blocks_start_until_aborted(self):
-        self.need_new()
-        self.start()
-        self.assertEqual(self.call("start")[0], 2)
-        self.assertEqual(self.call("abort", "the launcher died")[0], 0)
-        self.start()
-        self.assertValid(*self.call("end"))
-
-    def test_edited_ledger_blocks_start(self):
-        self.need_new()
-        self.start()
-        self.assertValid(*self.call("end"))
-        led = self.home / "state" / "stop_ledger.jsonl"
-        led.write_text("".join(led.read_text().splitlines(True)[1:]))
-        self.assertEqual(self.call("start")[0], 2)
-
-    def test_stop_command_and_stops_listing(self):
-        self.need_new()
-        self.assertEqual(self.call("stops")[0], 0)
-        self.assertEqual(self.call("stop", "operator: hold the chain")[0], 0)
-        rc, out = self.call("stops")
-        self.assertEqual(rc, 2)
-        self.assertIn("hold the chain", out)
-
 
 def _alive(pid):
     try:
         os.kill(pid, 0)
         return True
     except OSError:
-        return False
-
-
-class _nullctx:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *a):
         return False
 
 
