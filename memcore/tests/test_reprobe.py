@@ -193,7 +193,7 @@ class RetrySchedule(unittest.TestCase):
                 time.sleep(0.02)
         finally:
             tier.stop()
-        self.assertTrue(any(h[5] == "RuntimeError" for h in tier.history), "witness: a refresh did fail")
+        self.assertTrue(any(h[5] == "publish:RuntimeError" for h in tier.history), "witness: a publication did fail")
         self.assertGreaterEqual(len(tier.history), 6, "the loop kept probing after the failure")
         self.assertEqual(tier.tier(), "basic", "and still followed the tier afterwards")
         self.assertFalse(tier._thread.is_alive())

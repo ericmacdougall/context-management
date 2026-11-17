@@ -56,7 +56,12 @@ def start_reprobe(a, store, rep, stderr=sys.stderr, clock=time.time):
     """Follow the licence tier after start-up (deploy part 3). Returns the running tracker, or None (no Elasticsearch, or
     --reprobe-interval-s 0). A tier change is written to <out>/capabilities.json (atomic) and logged on stderr."""
     search = getattr(store, "search", None)
-    if rep is None or search is None or a.reprobe_interval_s <= 0:
+    if rep is None or search is None:
+        return None
+    if a.reprobe_interval_s == 0:
+        print("WARNING: licence re-probing is DISABLED (--reprobe-interval-s 0): the tier found at start-up (%s) is fixed for the life "
+              "of this process; a licence that arrives or lapses later is NOT followed (a licence 403 still falls back in-call)"
+              % rep["tier"], file=stderr, flush=True)
         return None
     from ..reprobe import ReprobingTier
 
@@ -90,7 +95,7 @@ def parser():
     ap.add_argument("--budget-s", type=float, default=20.0)
     ap.add_argument("--max-chars", type=int, default=4000)
     ap.add_argument("--reprobe-interval-s", type=float, default=60.0, help="with --es: re-read the licence tier this often and follow it "
-                    "(Basic <-> licensed, either direction, node unreachable at start); 0 turns re-probing off")
+                    "(Basic <-> licensed, either direction, node unreachable at start); exactly 0 turns re-probing off (logged loudly); negative, nan and inf are refused")
     ap.add_argument("--max-concurrent", type=int, default=8, help="concurrent memory builds; beyond it the route answers "
                     "reason busy with the original prompt")
     return ap
@@ -114,6 +119,9 @@ def serve(a, store, rep, stderr=sys.stderr):
 def main(argv=None) -> int:
     ap = parser()
     a = ap.parse_args(argv)
+    import math
+    if not math.isfinite(a.reprobe_interval_s) or a.reprobe_interval_s < 0:
+        ap.error("--reprobe-interval-s must be a finite number: 0 (re-probing off, logged loudly) or greater than 0, got %r" % a.reprobe_interval_s)
     if bool(a.es) == bool(a.events):
         ap.error("give exactly one of --es or --events")
     if a.es and not a.es_auth_file:

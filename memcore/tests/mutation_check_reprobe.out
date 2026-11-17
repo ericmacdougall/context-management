@@ -1,0 +1,9 @@
+unmutated: rc=0 failures=0 errors=0 (8 tests)
+M1 licensed tier never sets strategy auto                    rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M2 adapter latch never cleared on return                     rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M3 a failing refresh re-raises (loop ends)                   rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M4 backoff exponent not capped                               rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M5 a failed publication is marked published                  rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M6 nan, inf, negative and zero intervals accepted            rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M7 a refresh finishing after stop() still applies            rc=1 failures=1 errors=0  DETECTED BY ASSERTION
+M8 latch cleared on every licensed answer                    rc=1 failures=1 errors=0  DETECTED BY ASSERTION

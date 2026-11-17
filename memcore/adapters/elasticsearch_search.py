@@ -166,6 +166,8 @@ class ElasticsearchSearch(SearchBackend):
         """Forget the cached licence answer (success or lapse latch) so the next fused() call asks the node again. Used by
         memcore.reprobe when a re-probe sees a licensed tier return."""
         self._probe = None
+        self._probe_at = 0.0
+        self.probe_error = None
         self.fusion_location = "unknown"
 
     def _probe_state(self, index, tenant) -> Optional[bool]:

@@ -1,0 +1,17 @@
+test_a_failed_publication_is_retried_without_another_tier_change (memcore.tests.test_reprobe_hardening.Hardening) ... FAIL
+test_a_refresh_that_finishes_after_stop_applies_nothing (memcore.tests.test_reprobe_hardening.Hardening) ... FAIL
+test_after_a_lapse_a_failing_file_update_cannot_leave_the_enterprise_claim_in_place (memcore.tests.test_reprobe_hardening.Hardening) ... ERROR
+test_an_exception_inside_a_refresh_is_recorded_and_the_next_refresh_runs (memcore.tests.test_reprobe_hardening.Hardening) ... ok
+test_an_unchanged_enterprise_answer_leaves_the_adapter_latch_alone (memcore.tests.test_reprobe_hardening.Hardening) ... FAIL
+test_reset_probe_clears_the_stale_diagnostics_too (memcore.tests.test_reprobe_hardening.Hardening) ... ok
+test_the_capabilities_file_is_not_rewritten_while_the_tier_is_unchanged (memcore.tests.test_reprobe_hardening.Hardening) ... ok
+test_the_default_clock_is_monotonic (memcore.tests.test_reprobe_hardening.Hardening) ... FAIL
+test_the_service_refuses_negative_nan_and_inf_at_start_up_and_logs_zero_loudly (memcore.tests.test_reprobe_hardening.Hardening) ... ok
+test_the_tracker_refuses_unusable_intervals (memcore.tests.test_reprobe_hardening.Hardening) ... FAIL
+test_thousands_of_consecutive_failures_never_end_the_loop_or_overflow_the_delay (memcore.tests.test_reprobe_hardening.Hardening) ... FAIL
+AssertionError: Lists differ: [] != ['enterprise']
+AssertionError: {'licence_type': 'trial', 'licence_status': 'active', 'tier': 'enterprise', 'features': {'retriever_fusion': True, 'inference_api': True, 'agent_builder': True}, 'search_strategy': 'au
+AssertionError: 5 != 1 : four unchanged licensed answers: no further reset
+AssertionError: <built-in function time> is not <built-in function monotonic>
+AssertionError: ValueError not raised : nan
+AssertionError: refresh raised on consecutive failure 1025: OverflowError('int too large to convert to float')
