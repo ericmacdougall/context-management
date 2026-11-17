@@ -1,0 +1,1358 @@
+{
+ "header": {
+  "commit": "191bded1250a71daeddaffcaaa23d365c503bacd",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 12.18310546875,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item3_openai",
+  "params": {
+   "calls": 20,
+   "provider": "openai",
+   "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120
+   ]
+  },
+  "time_utc": "2026-11-17T05:11:57Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 15,
+    "gaps": [
+     [
+      "seq_hole",
+      15,
+      15
+     ]
+    ],
+    "watermark": 14
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 21,
+    "gaps": [
+     [
+      "tail_truncated",
+      22,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 5,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":6,\"key\":\"97d37e13576a216191fa\",\"pos\":11}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 27
+   },
+   "head": 40,
+   "seed": 101
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 12,
+    "gaps": [
+     [
+      "seq_hole",
+      12,
+      12
+     ]
+    ],
+    "watermark": 11
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 19,
+    "gaps": [
+     [
+      "tail_truncated",
+      20,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 6,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":7,\"key\":\"a9640bf8ab489ab3a254\",\"pos\":13}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 8
+   },
+   "head": 40,
+   "seed": 102
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 32,
+    "gaps": [
+     [
+      "seq_hole",
+      32,
+      32
+     ]
+    ],
+    "watermark": 31
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 17,
+    "gaps": [
+     [
+      "tail_truncated",
+      18,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 8,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":9,\"key\":\"8ef56008c29bec8d9024\",\"pos\":17}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 36
+   },
+   "head": 40,
+   "seed": 103
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 4,
+    "gaps": [
+     [
+      "seq_hole",
+      4,
+      4
+     ]
+    ],
+    "watermark": 3
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 10,
+    "gaps": [
+     [
+      "tail_truncated",
+      11,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 2,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":3,\"key\":\"a5ac9fe0cde9a509963c\",\"pos\":5}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 10
+   },
+   "head": 40,
+   "seed": 104
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 25,
+    "gaps": [
+     [
+      "seq_hole",
+      25,
+      25
+     ]
+    ],
+    "watermark": 24
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 29,
+    "gaps": [
+     [
+      "tail_truncated",
+      30,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 6,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":7,\"key\":\"a9640bf8ab489ab3a254\",\"pos\":13}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 35
+   },
+   "head": 40,
+   "seed": 105
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 33,
+    "gaps": [
+     [
+      "seq_hole",
+      33,
+      33
+     ]
+    ],
+    "watermark": 32
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 10,
+    "gaps": [
+     [
+      "tail_truncated",
+      11,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 7,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":8,\"key\":\"3cc1946fbebebcfbd783\",\"pos\":15}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 14
+   },
+   "head": 40,
+   "seed": 106
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 18,
+    "gaps": [
+     [
+      "seq_hole",
+      18,
+      18
+     ]
+    ],
+    "watermark": 17
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 19,
+    "gaps": [
+     [
+      "tail_truncated",
+      20,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 2,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":3,\"key\":\"a5ac9fe0cde9a509963c\",\"pos\":5}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 22
+   },
+   "head": 40,
+   "seed": 107
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 11,
+    "gaps": [
+     [
+      "seq_hole",
+      11,
+      11
+     ]
+    ],
+    "watermark": 10
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 17,
+    "gaps": [
+     [
+      "tail_truncated",
+      18,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 2,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":3,\"key\":\"a5ac9fe0cde9a509963c\",\"pos\":5}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 7
+   },
+   "head": 40,
+   "seed": 108
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 20,
+    "gaps": [
+     [
+      "seq_hole",
+      20,
+      20
+     ]
+    ],
+    "watermark": 19
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 13,
+    "gaps": [
+     [
+      "tail_truncated",
+      14,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 5,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":6,\"key\":\"97d37e13576a216191fa\",\"pos\":11}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 26
+   },
+   "head": 40,
+   "seed": 109
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 27,
+    "gaps": [
+     [
+      "seq_hole",
+      27,
+      27
+     ]
+    ],
+    "watermark": 26
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 18,
+    "gaps": [
+     [
+      "tail_truncated",
+      19,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 3,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":4,\"key\":\"50e83bf75e4eeb516dec\",\"pos\":7}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 31
+   },
+   "head": 40,
+   "seed": 110
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 16,
+    "gaps": [
+     [
+      "seq_hole",
+      16,
+      16
+     ]
+    ],
+    "watermark": 15
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 19,
+    "gaps": [
+     [
+      "tail_truncated",
+      20,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 6,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":7,\"key\":\"a9640bf8ab489ab3a254\",\"pos\":13}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 4
+   },
+   "head": 40,
+   "seed": 111
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 33,
+    "gaps": [
+     [
+      "seq_hole",
+      33,
+      33
+     ]
+    ],
+    "watermark": 32
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 20,
+    "gaps": [
+     [
+      "tail_truncated",
+      21,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 7,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":8,\"key\":\"3cc1946fbebebcfbd783\",\"pos\":15}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 38
+   },
+   "head": 40,
+   "seed": 112
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 4,
+    "gaps": [
+     [
+      "seq_hole",
+      4,
+      4
+     ]
+    ],
+    "watermark": 3
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 21,
+    "gaps": [
+     [
+      "tail_truncated",
+      22,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 7,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":8,\"key\":\"3cc1946fbebebcfbd783\",\"pos\":15}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 15
+   },
+   "head": 40,
+   "seed": 113
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 18,
+    "gaps": [
+     [
+      "seq_hole",
+      18,
+      18
+     ]
+    ],
+    "watermark": 17
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 26,
+    "gaps": [
+     [
+      "tail_truncated",
+      27,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 3,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":4,\"key\":\"50e83bf75e4eeb516dec\",\"pos\":7}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 36
+   },
+   "head": 40,
+   "seed": 114
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 21,
+    "gaps": [
+     [
+      "seq_hole",
+      21,
+      21
+     ]
+    ],
+    "watermark": 20
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 27,
+    "gaps": [
+     [
+      "tail_truncated",
+      28,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 6,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":7,\"key\":\"a9640bf8ab489ab3a254\",\"pos\":13}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 15
+   },
+   "head": 40,
+   "seed": 115
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 37,
+    "gaps": [
+     [
+      "seq_hole",
+      37,
+      37
+     ]
+    ],
+    "watermark": 36
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 29,
+    "gaps": [
+     [
+      "tail_truncated",
+      30,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 6,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":7,\"key\":\"a9640bf8ab489ab3a254\",\"pos\":13}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 19
+   },
+   "head": 40,
+   "seed": 116
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 18,
+    "gaps": [
+     [
+      "seq_hole",
+      18,
+      18
+     ]
+    ],
+    "watermark": 17
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 5,
+    "gaps": [
+     [
+      "tail_truncated",
+      6,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 2,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":3,\"key\":\"a5ac9fe0cde9a509963c\",\"pos\":5}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": false,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 16
+   },
+   "head": 40,
+   "seed": 117
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 14,
+    "gaps": [
+     [
+      "seq_hole",
+      14,
+      14
+     ]
+    ],
+    "watermark": 13
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 16,
+    "gaps": [
+     [
+      "tail_truncated",
+      17,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 4,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":5,\"key\":\"b4da889e88cd03f65d9c\",\"pos\":9}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 3
+   },
+   "head": 40,
+   "seed": 118
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 21,
+    "gaps": [
+     [
+      "seq_hole",
+      21,
+      21
+     ]
+    ],
+    "watermark": 20
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 8,
+    "gaps": [
+     [
+      "tail_truncated",
+      9,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 2,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":3,\"key\":\"a5ac9fe0cde9a509963c\",\"pos\":5}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 13
+   },
+   "head": 40,
+   "seed": 119
+  },
+  {
+   "a": {
+    "claim_head": false,
+    "control_complete_up_to": 40,
+    "dropped": 35,
+    "gaps": [
+     [
+      "seq_hole",
+      35,
+      35
+     ]
+    ],
+    "watermark": 34
+   },
+   "b": {
+    "claim_cut": false,
+    "claim_head": false,
+    "cut_at": 28,
+    "gaps": [
+     [
+      "tail_truncated",
+      29,
+      40
+     ]
+    ]
+   },
+   "b2": {
+    "claim_head": true,
+    "open_gaps": 0
+   },
+   "c": {
+    "bypass_at": 8,
+    "claim_head": false,
+    "gaps": [
+     [
+      "unlogged_assistant_message",
+      "{\"call\":9,\"key\":\"8ef56008c29bec8d9024\",\"pos\":17}"
+     ]
+    ]
+   },
+   "d": {
+    "claim_head": true,
+    "closed_gaps": 1,
+    "identical_to_baseline": true,
+    "open_gaps": 0
+   },
+   "e": {
+    "claim_cut": true,
+    "claim_head_real": false,
+    "gaps": 0
+   },
+   "f": {
+    "claim_head": true,
+    "gaps": 0
+   },
+   "g": {
+    "claim_head": false,
+    "gaps": [
+     "chain_break"
+    ],
+    "tampered": 37
+   },
+   "head": 40,
+   "seed": 120
+  }
+ ],
+ "summary": {
+  "a_control_reports_complete": 20,
+  "a_dropped_detected": 20,
+  "b2_restored_closes": 20,
+  "b_truncation_detected_with_witness": 20,
+  "c_bypass_detected": 20,
+  "d_late_closes": 20,
+  "e_false_complete_claims": 8,
+  "e_truncation_no_witness_detected": 0,
+  "f_hidden_bypass_detected": 0,
+  "g_tamper_detected": 20,
+  "seeds": 20
+ }
+}

@@ -1,0 +1,8 @@
+{
+  "_comment": "EXAMPLE ONLY, not installed. Merge into ~/.claude/settings.json or .claude/settings.json yourself.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "python3 -m memcore.hosts.prompt_hook --store /path/to/events.json --max-chars 9000", "timeout": 10}]}
+    ]
+  }
+}

@@ -1,0 +1,372 @@
+{
+ "header": {
+  "commit": "6989e7970dbd04b88df099604a67c4172b6868f5",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 5.57763671875,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item2g",
+  "params": {
+   "control": "CorruptPayloadIngester",
+   "providers": 2,
+   "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120
+   ]
+  },
+  "time_utc": "2026-11-17T05:50:21Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 101,
+   "tool_events_expected": 36
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 102,
+   "tool_events_expected": 46
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 103,
+   "tool_events_expected": 34
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 104,
+   "tool_events_expected": 30
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 105,
+   "tool_events_expected": 40
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 106,
+   "tool_events_expected": 44
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 107,
+   "tool_events_expected": 38
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 108,
+   "tool_events_expected": 32
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 109,
+   "tool_events_expected": 40
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 110,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 111,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 112,
+   "tool_events_expected": 46
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 113,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 114,
+   "tool_events_expected": 40
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 115,
+   "tool_events_expected": 34
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 116,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 117,
+   "tool_events_expected": 36
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 118,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 119,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "anthropic",
+   "seed": 120,
+   "tool_events_expected": 38
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 101,
+   "tool_events_expected": 36
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 102,
+   "tool_events_expected": 46
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 103,
+   "tool_events_expected": 34
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 104,
+   "tool_events_expected": 30
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 105,
+   "tool_events_expected": 40
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 106,
+   "tool_events_expected": 44
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 107,
+   "tool_events_expected": 38
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 108,
+   "tool_events_expected": 32
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 109,
+   "tool_events_expected": 40
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 110,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 111,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 112,
+   "tool_events_expected": 46
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 113,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 114,
+   "tool_events_expected": 40
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 115,
+   "tool_events_expected": 34
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 116,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 117,
+   "tool_events_expected": 36
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 118,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 119,
+   "tool_events_expected": 42
+  },
+  {
+   "arm_equals_baseline": true,
+   "legacy_projection_matches": true,
+   "payload_oracle_match": false,
+   "provider": "openai",
+   "seed": 120,
+   "tool_events_expected": 38
+  }
+ ],
+ "summary": {
+  "arm_equals_baseline": 40,
+  "legacy_projection_matches": 40,
+  "payload_oracle_mismatch": 40,
+  "runs": 40,
+  "runs_with_tool_events": 40
+ }
+}

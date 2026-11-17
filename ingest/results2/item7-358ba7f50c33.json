@@ -1,0 +1,75 @@
+{
+ "header": {
+  "commit": "71f3bfaa28eab7992fa9e859e5731e9daefeeb69",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 9.35498046875,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item7",
+  "params": {
+   "calls": 20,
+   "window_msgs": [
+    4,
+    8
+   ]
+  },
+  "time_utc": "2026-11-16T19:28:07Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "assistant_events": 20,
+   "blocking_gaps_open": 0,
+   "calls": 20,
+   "claim_complete": true,
+   "distinct_assistant_texts": 20,
+   "distinct_user_texts": 20,
+   "gap_kinds": [],
+   "user_events": 20,
+   "window_msgs": 4
+  },
+  {
+   "assistant_events": 20,
+   "blocking_gaps_open": 0,
+   "calls": 20,
+   "claim_complete": true,
+   "distinct_assistant_texts": 20,
+   "distinct_user_texts": 20,
+   "gap_kinds": [],
+   "user_events": 20,
+   "window_msgs": 8
+  }
+ ],
+ "summary": {
+  "probe": "sliding-window host (UNREGISTERED)",
+  "runs": [
+   {
+    "assistant_events": 20,
+    "blocking_gaps_open": 0,
+    "calls": 20,
+    "claim_complete": true,
+    "distinct_assistant_texts": 20,
+    "distinct_user_texts": 20,
+    "gap_kinds": [],
+    "user_events": 20,
+    "window_msgs": 4
+   },
+   {
+    "assistant_events": 20,
+    "blocking_gaps_open": 0,
+    "calls": 20,
+    "claim_complete": true,
+    "distinct_assistant_texts": 20,
+    "distinct_user_texts": 20,
+    "gap_kinds": [],
+    "user_events": 20,
+    "window_msgs": 8
+   }
+  ]
+ }
+}

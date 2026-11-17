@@ -1,0 +1,1 @@
+The committed tree is authoritative. A working copy may also hold untracked artifacts from a superseded run (different file names); ignore them and run recompute.py and recompute2.py on a fresh checkout.

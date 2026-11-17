@@ -1,0 +1,44 @@
+failing-first run of ingest/tests/test_delta.py
+product code under test: 0801866 (ingester.py, tap.py, scan.py, heldout.py, run_proofs.py, proof_items_*.py unchanged); test support added: proofs_common oracle (HostLedger, event_tuples, repeated_conversation), controls.SharedOmissionIngester
+tests: PREREG-amend-3 (6eaee20) written before any fix
+date: 2026-11-17T04:50:37Z
+
+test_four_layer_control_disables_all_four_layers (ingest.tests.test_delta.F1Control) ... FAIL
+test_private_key_body_left_behind_is_not_complete_redaction (ingest.tests.test_delta.F2Oracle) ... FAIL
+test_alternating_and_cycle_windows (ingest.tests.test_delta.F3Repeats) ... FAIL
+test_repeats_are_reported_not_hidden (ingest.tests.test_delta.F3Repeats) ... FAIL
+test_same_text_windows (ingest.tests.test_delta.F3Repeats) ... FAIL
+test_stateless_host_two_identical_turns_both_ingested (ingest.tests.test_delta.F3Repeats)
+yes, then yes again, from a host that resends only the newest message. Indistinguishable from a retry by content. ... FAIL
+test_unique_text_windows_carry_no_ambiguity_flag (ingest.tests.test_delta.F3Repeats) ... ERROR
+test_declared_retry_suppresses_request_events_visibly (ingest.tests.test_delta.F3RetryIdentity) ... ERROR
+test_false_retry_claim_is_ignored_and_recorded (ingest.tests.test_delta.F3RetryIdentity) ... ERROR
+test_undeclared_identical_resend_is_a_flagged_duplicate (ingest.tests.test_delta.F3RetryIdentity) ... FAIL
+test_delivery_item_reports_oracle_match_per_run (ingest.tests.test_delta.F4Oracle) ... ERROR
+test_shared_omission_passes_baseline_comparison_but_fails_the_oracle (ingest.tests.test_delta.F4Oracle) ... ok
+ERROR: test_unique_text_windows_carry_no_ambiguity_flag (ingest.tests.test_delta.F3Repeats)
+KeyError: 'ambiguous_calls'
+ERROR: test_declared_retry_suppresses_request_events_visibly (ingest.tests.test_delta.F3RetryIdentity)
+TypeError: call() got an unexpected keyword argument 'retry_of'
+ERROR: test_false_retry_claim_is_ignored_and_recorded (ingest.tests.test_delta.F3RetryIdentity)
+TypeError: call() got an unexpected keyword argument 'retry_of'
+ERROR: test_delivery_item_reports_oracle_match_per_run (ingest.tests.test_delta.F4Oracle)
+KeyError: 'oracle_identical'
+FAIL: test_four_layer_control_disables_all_four_layers (ingest.tests.test_delta.F1Control)
+AssertionError: None is not False : the 4-layer control leaves chain enabled
+FAIL: test_private_key_body_left_behind_is_not_complete_redaction (ingest.tests.test_delta.F2Oracle)
+AssertionError: None != 0 : scanner redacts only the header; the body survives (row: {'n': 5, 'caught': 5, 'rate': 1.0})
+FAIL: test_alternating_and_cycle_windows (ingest.tests.test_delta.F3Repeats)
+AssertionError: 4 != 20 : anthropic alt window 4
+FAIL: test_repeats_are_reported_not_hidden (ingest.tests.test_delta.F3Repeats)
+AssertionError: 3 != 20 : anthropic same window 4
+FAIL: test_same_text_windows (ingest.tests.test_delta.F3Repeats)
+AssertionError: 3 != 20 : anthropic same window 4
+FAIL: test_stateless_host_two_identical_turns_both_ingested (ingest.tests.test_delta.F3Repeats)
+AssertionError: 1 != 2 : anthropic
+FAIL: test_undeclared_identical_resend_is_a_flagged_duplicate (ingest.tests.test_delta.F3RetryIdentity)
+AssertionError: 1 != 2
+Ran 12 tests in 2.569s
+FAILED (failures=7, errors=4)
+
+reading: F1 FAIL (chain left on); F2 FAIL (no complete-redaction predicate; old predicate scores caught 5/5 for the key header with body surviving); F3 7 tests FAIL on event counts (3 of 20 / 4 of 20 / 1 of 2 user events) or missing retry_of / ambiguous_calls API; F4 per-item oracle_identical absent (KeyError). test_shared_omission_passes_baseline_comparison_but_fails_the_oracle PASSES at base by design: it demonstrates that the old baseline-vs-arm comparison cannot see a shared omission, and that the new oracle can (control sensitivity).
