@@ -1,0 +1,7 @@
+lock taken 2026-11-17T22:11:29Z new 7bc6e43 free_kib 37478484
+== setup --reset (new schema)
+setup ok reset
+== P1 exp.d4_store_mark R=1 (new)
+d4_store_mark {'pass': True, 'why': []}
+RESULT d4_store_mark sha256=5c2c5754aab3954792cfe99c0c296b25976b73d0878689632d5e0f4970401942 file=~/emlab2-16096/wphard/wp/results/d4_store_mark.5c2c5754aab39547.json
+lock released 2026-11-17T22:11:29Z

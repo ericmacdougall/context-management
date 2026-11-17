@@ -374,6 +374,9 @@ WP_UCD_DIR; red = the new tests on the 4fe3ac1 code, tree src-0aaf789, identical
   the lock-order one. Green on the new tree; red on a broken variant whose only change removes FOR SHARE from propose's
   erased check, and red on 4fe3ac1, both with "the mark did not wait". Its P1 (exp.d4_store_mark) ran against the lab
   database still on the pre-m3 schema (UndefinedColumn); rerun after `wp.setup --reset` in window 4.
+- `live-window4-7bc6e43.green.out` (`harness/reviewC_check3.sh`): `wp.setup --reset` on the m3 schema, then
+  exp.d4_store_mark R=1 through log.append, declare/init_tenant and erasure.rescan with the matcher: pass (honest
+  accepted, 12 examined, hit found; lazy fenced WPS24; lazy control accepted). Unstamped; the result file stays on t2-dev.
 SUPERSEDED by decision R1 and matcher m3 (kept): `failing-first/d3/d3-store-pg-fb60b2e.red-green.out` (span redaction,
 removed) and `failing-first/d3/m2-*-5e6e378.red.out` (matcher m2, replaced by m3).
 
