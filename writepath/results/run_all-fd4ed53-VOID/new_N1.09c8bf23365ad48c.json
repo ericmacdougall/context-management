@@ -1,0 +1,319 @@
+{
+ "at": "2026-11-17T08:36:43Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/n_new.py 10",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.96142578125,
+   2.45068359375,
+   3.85791015625
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "new_N1",
+ "result": {
+  "R": 10,
+  "arms": {
+   "control": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": false,
+      "why": "X leaked into ES after erasure done",
+      "witness": {
+       "X_docs_all_indices": 1,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     }
+    ],
+    "violated": 10
+   },
+   "fenced": {
+    "errors": 0,
+    "holds": 10,
+    "runs": [
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "X_docs_all_indices": 0,
+       "Y_docs_live_after_recovery": 1,
+       "erase_done": true,
+       "overlap": true,
+       "refused_bulk_items": 0,
+       "rows_read_with_X": 1,
+       "step_result": 1
+      }
+     }
+    ],
+    "violated": 0
+   }
+  },
+  "control_patch": "place_placeholders issues DELETEs",
+  "control_violated": 10,
+  "errors": {
+   "control": 0,
+   "fenced": 0
+  },
+  "fenced_holds": 10,
+  "pass": true
+ }
+}

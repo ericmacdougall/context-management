@@ -1,0 +1,630 @@
+{
+ "at": "2026-11-17T05:25:56Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/eaed478-20261117T052345Z/exp/lock_order.py",
+  "code_commit": "eaed478",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   21.14794921875,
+   23.615234375,
+   22.71484375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "lock_order",
+ "result": {
+  "cases": {
+   "DA": {
+    "R": 5,
+    "deadlocked": 5,
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "T1": {
+       "err": null
+      },
+      "T2": {
+       "err": "40P01 DeadlockDetected: deadlock detected"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "t1_waited": true,
+      "t2_mentions_Y": false,
+      "t2_waited": true,
+      "tenant": "loc30afd"
+     },
+     {
+      "T1": {
+       "err": null
+      },
+      "T2": {
+       "err": "40P01 DeadlockDetected: deadlock detected"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "t1_waited": true,
+      "t2_mentions_Y": false,
+      "t2_waited": true,
+      "tenant": "lo80b007"
+     },
+     {
+      "T1": {
+       "err": null
+      },
+      "T2": {
+       "err": "40P01 DeadlockDetected: deadlock detected"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "t1_waited": true,
+      "t2_mentions_Y": false,
+      "t2_waited": true,
+      "tenant": "lo92f652"
+     },
+     {
+      "T1": {
+       "err": null
+      },
+      "T2": {
+       "err": "40P01 DeadlockDetected: deadlock detected"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "t1_waited": true,
+      "t2_mentions_Y": false,
+      "t2_waited": true,
+      "tenant": "lo93f24d"
+     },
+     {
+      "T1": {
+       "err": null
+      },
+      "T2": {
+       "err": "40P01 DeadlockDetected: deadlock detected"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "t1_waited": true,
+      "t2_mentions_Y": false,
+      "t2_waited": true,
+      "tenant": "lof0d4ac"
+     }
+    ]
+   },
+   "HP": {
+    "R": 5,
+    "deadlocked": 0,
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "hold_check_B": "WPS16",
+      "holds": true,
+      "place": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "place_waited": true,
+      "t1_rows": 2,
+      "tenant": "mmdddb88"
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "hold_check_B": "WPS16",
+      "holds": true,
+      "place": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "place_waited": true,
+      "t1_rows": 2,
+      "tenant": "mm343b6c"
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "hold_check_B": "WPS16",
+      "holds": true,
+      "place": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "place_waited": true,
+      "t1_rows": 2,
+      "tenant": "mm47b3c5"
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "hold_check_B": "WPS16",
+      "holds": true,
+      "place": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "place_waited": true,
+      "t1_rows": 2,
+      "tenant": "mm10c7f3"
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "hold_check_B": "WPS16",
+      "holds": true,
+      "place": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "place_waited": true,
+      "t1_rows": 2,
+      "tenant": "mmff22a6"
+     }
+    ]
+   },
+   "HR": {
+    "R": 5,
+    "deadlocked": 0,
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "release": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "release_waited": true,
+      "released": true,
+      "t1_rows": 2,
+      "tenant": "mm423f18",
+      "withheld_A": 1
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "release": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "release_waited": true,
+      "released": true,
+      "t1_rows": 2,
+      "tenant": "mmf90b34",
+      "withheld_A": 1
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "release": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "release_waited": true,
+      "released": true,
+      "t1_rows": 2,
+      "tenant": "mmb49e97",
+      "withheld_A": 1
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "release": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "release_waited": true,
+      "released": true,
+      "t1_rows": 2,
+      "tenant": "mm4becc8",
+      "withheld_A": 1
+     },
+     {
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "release": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "release_waited": true,
+      "released": true,
+      "t1_rows": 2,
+      "tenant": "mm1d55d6",
+      "withheld_A": 1
+     }
+    ]
+   },
+   "MK": {
+    "R": 5,
+    "deadlocked": 0,
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "T2": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "b_state": "marked",
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "t1_rows": 2,
+      "t2_waited": true,
+      "tenant": "mmdbfdbf"
+     },
+     {
+      "T2": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "b_state": "marked",
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "t1_rows": 2,
+      "t2_waited": true,
+      "tenant": "mm40652a"
+     },
+     {
+      "T2": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "b_state": "marked",
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "t1_rows": 2,
+      "t2_waited": true,
+      "tenant": "mm9e8718"
+     },
+     {
+      "T2": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "b_state": "marked",
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "t1_rows": 2,
+      "t2_waited": true,
+      "tenant": "mm512913"
+     },
+     {
+      "T2": {
+       "after_t1_commit": true,
+       "err": null
+      },
+      "b_state": "marked",
+      "db_deadlocks_delta": 0,
+      "deadlock": false,
+      "errors": [],
+      "holds": true,
+      "t1_rows": 2,
+      "t2_waited": true,
+      "tenant": "mm9efc48"
+     }
+    ]
+   },
+   "MM": {
+    "R": 10,
+    "deadlocked": 10,
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "afb52baa522b497c": false,
+       "d9bf371e83a94d61": false
+      },
+      "t1_waited": true,
+      "tenant": "mm3edf43"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "88ebc01121574a9d": false,
+       "a938ba4ccaf340bc": false
+      },
+      "t1_waited": true,
+      "tenant": "mm3625a9"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "6c329b55b9bc4ec2": false,
+       "e251321199a943df": false
+      },
+      "t1_waited": true,
+      "tenant": "mma8086d"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "61d73ba3e3974bbc": false,
+       "a5c60887bed04b18": false
+      },
+      "t1_waited": true,
+      "tenant": "mmebc9ec"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "8de9a794b1c74e11": false,
+       "b97394cee960486b": false
+      },
+      "t1_waited": true,
+      "tenant": "mm48e3f0"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "ea58c89e06044755": false,
+       "f0049e7da2d04630": false
+      },
+      "t1_waited": true,
+      "tenant": "mme46881"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "76eb67758a224c84": false,
+       "ad497d4cc8204d8c": false
+      },
+      "t1_waited": true,
+      "tenant": "mm4e60cc"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "5579d32b406742f0": false,
+       "6e33a4ba5af9448b": false
+      },
+      "t1_waited": true,
+      "tenant": "mmd04e43"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "b30f138acda94cd4": false,
+       "b4a027adfa45430e": false
+      },
+      "t1_waited": true,
+      "tenant": "mm92f550"
+     },
+     {
+      "T1": {
+       "err": "40P01 DeadlockDetected: deadlock detected",
+       "rows": null
+      },
+      "T2": {
+       "err": null,
+       "rows": 2
+      },
+      "after_sweep": {
+       "A": "logically_erased",
+       "B": "logically_erased"
+      },
+      "db_deadlocks_delta": 1,
+      "deadlock": true,
+      "errors": [],
+      "holds": false,
+      "sweep": {
+       "2f80d65fda3342a7": false,
+       "88eb72785bf24bd7": false
+      },
+      "t1_waited": true,
+      "tenant": "mm6ae83a"
+     }
+    ]
+   }
+  },
+  "controls": {
+   "DA_prefix_declare": {
+    "R": 5,
+    "available": false,
+    "why": "wp_identifier_declare: fixed fragment absent (pre-fix code)"
+   },
+   "MM_prefix_hold_check": {
+    "R": 10,
+    "available": false,
+    "why": "wp_hold_check: fixed fragment absent (pre-fix code)"
+   }
+  },
+  "verdict": "FAIL",
+  "why": [
+   "MM: holds 0/10, deadlocked 10, errors 0",
+   "DA: holds 0/5, deadlocked 5, errors 0",
+   "control MM_prefix_hold_check unavailable: wp_hold_check: fixed fragment absent (pre-fix code)",
+   "control DA_prefix_declare unavailable: wp_identifier_declare: fixed fragment absent (pre-fix code)"
+  ]
+ }
+}

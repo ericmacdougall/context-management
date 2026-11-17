@@ -1,0 +1,619 @@
+{
+ "at": "2026-11-17T09:08:15Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/n_new.py 10",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   10.1357421875,
+   9.0712890625,
+   6.8798828125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "new_N8",
+ "result": {
+  "R": 10,
+  "arms": {
+   "control": {
+    "errors": 0,
+    "holds": 0,
+    "runs": [
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:03:27.099748+00:00",
+       "t_read": "2026-11-17 09:02:56.256205+00:00",
+       "t_write": "2026-11-17 09:03:27.132338+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:03:59.083861+00:00",
+       "t_read": "2026-11-17 09:03:28.264024+00:00",
+       "t_write": "2026-11-17 09:03:59.116933+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:04:31.078778+00:00",
+       "t_read": "2026-11-17 09:04:00.199021+00:00",
+       "t_write": "2026-11-17 09:04:31.112357+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:05:03.026118+00:00",
+       "t_read": "2026-11-17 09:04:32.199659+00:00",
+       "t_write": "2026-11-17 09:05:03.057544+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:05:34.997589+00:00",
+       "t_read": "2026-11-17 09:05:04.162558+00:00",
+       "t_write": "2026-11-17 09:05:35.029911+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:06:06.936571+00:00",
+       "t_read": "2026-11-17 09:05:36.121370+00:00",
+       "t_write": "2026-11-17 09:06:06.966536+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:06:38.853345+00:00",
+       "t_read": "2026-11-17 09:06:08.057949+00:00",
+       "t_write": "2026-11-17 09:06:38.884188+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:07:10.794573+00:00",
+       "t_read": "2026-11-17 09:06:39.986667+00:00",
+       "t_write": "2026-11-17 09:07:10.826525+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:07:42.828764+00:00",
+       "t_read": "2026-11-17 09:07:11.960275+00:00",
+       "t_write": "2026-11-17 09:07:42.859116+00:00"
+      }
+     },
+     {
+      "holds": false,
+      "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0",
+      "witness": {
+       "derive": 1,
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "accepted",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 1,
+        "pg:identifiers": 0,
+        "pg:inbox": 1,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:08:14.912795+00:00",
+       "t_read": "2026-11-17 09:07:44.023129+00:00",
+       "t_write": "2026-11-17 09:08:14.951426+00:00"
+      }
+     }
+    ],
+    "violated": 10
+   },
+   "fenced": {
+    "errors": 0,
+    "holds": 10,
+    "runs": [
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 08:58:07.188047+00:00",
+       "t_read": "2026-11-17 08:57:36.330895+00:00",
+       "t_write": "2026-11-17 08:58:07.218228+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 08:58:39.277790+00:00",
+       "t_read": "2026-11-17 08:58:08.302998+00:00",
+       "t_write": "2026-11-17 08:58:39.309565+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 08:59:11.208688+00:00",
+       "t_read": "2026-11-17 08:58:40.364305+00:00",
+       "t_write": "2026-11-17 08:59:11.241669+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 08:59:43.167438+00:00",
+       "t_read": "2026-11-17 08:59:12.342619+00:00",
+       "t_write": "2026-11-17 08:59:43.199604+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:00:15.126942+00:00",
+       "t_read": "2026-11-17 08:59:44.312432+00:00",
+       "t_write": "2026-11-17 09:00:15.157236+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:00:47.153442+00:00",
+       "t_read": "2026-11-17 09:00:16.280044+00:00",
+       "t_write": "2026-11-17 09:00:47.185278+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:01:19.093761+00:00",
+       "t_read": "2026-11-17 09:00:48.289644+00:00",
+       "t_write": "2026-11-17 09:01:19.126759+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:01:51.060313+00:00",
+       "t_read": "2026-11-17 09:01:20.216963+00:00",
+       "t_write": "2026-11-17 09:01:51.092533+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:02:23.047603+00:00",
+       "t_read": "2026-11-17 09:01:52.204297+00:00",
+       "t_write": "2026-11-17 09:02:23.075615+00:00"
+      }
+     },
+     {
+      "holds": true,
+      "why": "",
+      "witness": {
+       "derive": "DatabaseError",
+       "derive_read_has_X": true,
+       "erase": "keys:subject_keys",
+       "es_X_after": 0,
+       "inbox_after_erasure": "WPS03",
+       "overlap": true,
+       "residue_after": {
+        "pg:analyst_jobs": 0,
+        "pg:content_present": 0,
+        "pg:events_untombstoned": 0,
+        "pg:facts": 0,
+        "pg:identifiers": 0,
+        "pg:inbox": 0,
+        "pg:mentions_unscanned": 0,
+        "pg:quarantine": 0,
+        "pg:quarantine_mentions": 0,
+        "pg:subject_not_marked": 0,
+        "pg:withheld_by_hold": 0
+       },
+       "t_erase_done": "2026-11-17 09:02:55.083450+00:00",
+       "t_read": "2026-11-17 09:02:24.236478+00:00",
+       "t_write": "2026-11-17 09:02:55.114273+00:00"
+      }
+     }
+    ],
+    "violated": 0
+   }
+  },
+  "control_patch": "subject_not_erased() without its check",
+  "control_violated": 10,
+  "errors": {
+   "control": 0,
+   "fenced": 0
+  },
+  "fenced_holds": 10,
+  "pass": true
+ }
+}

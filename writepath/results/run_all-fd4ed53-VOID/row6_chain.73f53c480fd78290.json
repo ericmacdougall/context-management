@@ -1,0 +1,766 @@
+{
+ "at": "2026-11-17T09:41:58Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/row6_chain.py 10",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.47900390625,
+   3.79638671875,
+   6.15673828125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "row6_chain",
+ "result": {
+  "R": 10,
+  "anchor_store": {
+   "kind": "lab-append-only-file",
+   "stand_in": true
+  },
+  "cases": {
+   "A_forged_append": {
+    "control": {
+     "errors": 0,
+     "holds": 0,
+     "runs": [
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "forged_verifies": true
+       }
+      }
+     ],
+     "violated": 10
+    },
+    "fenced": {
+     "errors": 0,
+     "holds": 10,
+     "runs": [
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "forged_verifies": false
+       }
+      }
+     ],
+     "violated": 0
+    }
+   },
+   "B_app_guard_tamper": {
+    "control": {
+     "errors": 0,
+     "holds": 0,
+     "runs": [
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "disable_guard_trigger": "accepted",
+        "disable_user_triggers": "accepted",
+        "drop_guard_trigger": "accepted",
+        "replace_guard_function": "accepted",
+        "replication_role_replica": "refused:42501"
+       }
+      }
+     ],
+     "violated": 10
+    },
+    "fenced": {
+     "errors": 0,
+     "holds": 10,
+     "runs": [
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "disable_guard_trigger": "refused:42501",
+        "disable_user_triggers": "refused:42501",
+        "drop_guard_trigger": "refused:42501",
+        "replace_guard_function": "refused:42501",
+        "replication_role_replica": "refused:42501"
+       }
+      }
+     ],
+     "violated": 0
+    }
+   },
+   "C_lost_tail": {
+    "control": {
+     "errors": 0,
+     "holds": 0,
+     "runs": [
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 1
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 1
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 5
+       }
+      }
+     ],
+     "violated": 10
+    },
+    "fenced": {
+     "errors": 0,
+     "holds": 10,
+     "runs": [
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 1
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "truncated"
+        ],
+        "chain_ok": true,
+        "k": 2
+       }
+      }
+     ],
+     "violated": 0
+    }
+   },
+   "D_regressed_head": {
+    "control": {
+     "errors": 0,
+     "holds": 0,
+     "runs": [
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 1
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": false,
+       "witness": {
+        "chain_ok": true,
+        "k": 3
+       }
+      }
+     ],
+     "violated": 10
+    },
+    "fenced": {
+     "errors": 0,
+     "holds": 10,
+     "runs": [
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 1
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 4
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 3
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 5
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 2
+       }
+      },
+      {
+       "holds": true,
+       "witness": {
+        "anchor_findings": [
+         "rewritten"
+        ],
+        "chain_ok": true,
+        "k": 3
+       }
+      }
+     ],
+     "violated": 0
+    }
+   }
+  },
+  "pass": true
+ }
+}

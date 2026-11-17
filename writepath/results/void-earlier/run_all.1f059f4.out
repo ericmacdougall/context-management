@@ -1,0 +1,80 @@
+start 2026-11-17T05:40:48Z head 1f059f4 R=10
+disk_gate start free 31.0 GiB own 0.15 GiB (pg 0.10 es 0.00 home 0.04) cap +2.0 GiB
+disk_gate -m exp.cleanup free 31.0 GiB own +0.00 GiB
+cleanup  indices 94 shards 94 tenants 47 node_shards_total 98 max_shards_per_node 1000
+deleted 94 indices with prefix wp16096-
+disk_gate -m wp.setup --reset free 31.0 GiB own +-0.00 GiB
+setup ok reset
+disk_gate -m exp.guard_check start --controls free 31.0 GiB own +-0.00 GiB
+guard_check start FAIL {'G6': ['dir:~/emlab2-16096/writepath/wp/logs/disk_gate.json', 'dir:~/emlab2-16096/writepath/wp/logs/run_all-1f059f4.launch']}
+RESULT guard_check_start sha256=9d483ebeca5fde192444c7f3009b4c7ca43295b53e5868a1847ddd105e7947a8 file=~/emlab2-16096/writepath/wp/results/guard_check_start.9d483ebeca5fde19.json
+GATE guard_check start FAILED
+disk_gate -m exp.static_check free 31.0 GiB own +-0.00 GiB
+{'checks': {'S1': [], 'S2': [], 'S3': [], 'S4': [], 'S5': [], 'S6': []}, 'families': ['events', 'facts'], 'tables': ['leases', 'subjects', 'identifier_epochs', 'subject_identifiers', 'chains', 'events', 'decision_heads', 'quarantine', 'quarantine_quota', 'tombstones', 'inbox', 'analyst_jobs', 'facts', 'cursors', 'store_registry', 'erasure_jobs', 'erasure_mentions', 'erasure_withheld', 'erasure_rescanned', 'legal_holds'], 'controls_fail': {'S1': True, 'S2': True, 'S3': True, 'S4': True, 'S5': True, 'S6': True}}
+RESULT static_check sha256=6105fb7d0c08c73c6c04ad6e62f798abd92fe10182637c9780542a5d5f6ed6f4 file=~/emlab2-16096/writepath/wp/results/static_check.6105fb7d0c08c73c.json
+disk_gate exp.es_semantics free 31.0 GiB own +-0.00 GiB
+ "pass": true
+}
+RESULT es_semantics sha256=ba62f1567e99c0fb8221d485c70e3f2a931a3a35186ce60da31e786b32419c80 file=~/emlab2-16096/writepath/wp/results/es_semantics.ba62f1567e99c0fb.json
+disk_gate -m exp.cleanup exp.es_semantics free 31.0 GiB own +-0.00 GiB
+cleanup exp.es_semantics indices 0 shards 0 tenants 0 node_shards_total 4 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m old_repro.n_old free 31.0 GiB own +-0.00 GiB
+N1 {"property": "erased subject X absent from the live events index after erasure completes", "property_holds": false, "witness": {"rows_read_before_erasure": 1, "read_contained_X": true, "receipt_es_event_docs": 0, "job_state": ["done"], "X_docs_in_live_index_after": 1, "projector_exc": "OperationalError"}}
+N2 {"property": "erasure purges X from every index family (ev2 included)", "property_holds": false, "witness": {"X_in_ev2_before": 1, "X_in_ev2_after": 1, "X_in_events_after": 0, "receipt_rebuilt": [["events", 227, ["sys-n2old-events-b00227-g1", "sys-n2old-events-b00227-g2", 1]]], "job_state": ["done"]}}
+N3 {"property": "after B erases Y, Y is absent from every index of the tenant", "property_holds": false, "witness": {"A_survivor_read_had_Y": true, "B_receipt_es_event_docs": 0, "Y_docs_live": 1, "Y_docs_any_index": 1, "A_exc": "OperationalError", "job_states": ["key_destroyed", "done"]}}
+N4 {"property": "job reaches done only with verification zero; reader hides tombstoned events after done", "property_holds": false, "witness": {"job_states": ["done"], "receipt_es_event_docs": 1, "reader_served_X_event_after_done": ["n4old/s1/2"]}}
+N5 {"property": "no read path serves an erased fact while the job is pending", "property_holds": false, "witness": {"job_states": ["pending"], "query_facts_hits": 1, "query_facts_leaked": 1, "search_facts_hits": 1}}
+N6 {"property": "no plaintext of an erased subject remains in any Postgres table", "property_holds": false, "witness": {"task_view_rows_with_marker_before": 1, "after_erasure": 1, "job_states": ["done"]}}
+N7 {"property": "stale approval refused; replayed approval refused; retried decision id is a no-op", "property_holds": false, "witness": {"sub": {"a_stale_readback_refused": false, "b_replayed_accept_refused": false, "c_retry_same_id_is_noop": false}, "a_text": "US only", "b_text": "US only", "c_text": "EU only", "c_pending": []}}
+RESULT old_code_N1_N7 sha256=c622ba3e323144a97b4428b080f71f36b4566590b236b0c0dde6148d52f48491 file=~/emlab2-16096/writepath/wp/results/old_code_N1_N7.c622ba3e323144a9.json
+disk_gate -m exp.cleanup old_repro.n_old free 31.0 GiB own +-0.00 GiB
+cleanup old_repro.n_old indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.review_fix F3 F4 F5 F7 F1S F6 10 free 31.0 GiB own +-0.00 GiB
+F3 FAIL {"property": "the app role cannot bypass the fence or the guards", "pass": false, "fenced_refused": 14, "attacks": 14, "controls_accepted": 12, "cases": {"junk_scope_fact": {"fenced": "refused:WPS12", "control": "accepted:1", "patch": "scope binding removed from wp_fence_trg"}, "lease_direct_insert": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app INSERT on leases (privilege + owner-only trigger)"}, "delete_facts": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app DELETE on facts (privilege + owner-only trigger)"}, "truncate_inbox": {"fenced": "refused:42501", "control": "accepted:-1", "patch": "app TRUNCATE on inbox (privilege + trigger)"}, "reset_erased": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app UPDATE on subjects"}, "delete_tombstones": {"fenced": "refused:42501", "control": "accepted:2", "patch": "app DELETE on tombstones"
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "~/emlab2-16096/writepath/wp/runs/1f059f4-20261117T054042Z/exp/review_fix.py", line 518, in <module>
+    res = f4(); ok = res["pass"]
+          ^^^^
+  File "~/emlab2-16096/writepath/wp/runs/1f059f4-20261117T054042Z/exp/review_fix.py", line 235, in f4
+    r = db.verifier().execute("select wp_erasure_complete(%s, %s, 'x')", (jid, json.dumps(zeros))).fetchone()[0]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.DatabaseError: done_missing_stores keys:physical_pending
+CONTEXT:  PL/pgSQL function wp_erasure_complete(text,jsonb,text) line 8 at RAISE
+RESULT review_fix_F3 sha256=8017c0defeb28390e9896b87bb41dfb67022c4d91d19ce8bec2864f640228312 file=~/emlab2-16096/writepath/wp/results/review_fix_F3.8017c0defeb28390.json
+disk_gate -m exp.cleanup exp.review_fix free 31.0 GiB own +-0.00 GiB
+cleanup exp.review_fix indices 58 shards 58 tenants 29 node_shards_total 68 max_shards_per_node 1000
+deleted 58 indices with prefix wp16096-
+disk_gate -m exp.review_fix F1 free 31.0 GiB own +-0.00 GiB
+F1 FAIL {"property": "erasure of one subject with N events completes (done) with zero residue in every store", "N_events": 100000, "property_holds": false, "witness": {"X_docs_before": 100100, "X_docs_after": 0, "Y_docs_after": 3, "append_s": 105.8, "project_s": 9.2, "receipt": {"done": false, "error_type": "residue", "verify": {"es:facts": 0, "pg:facts": 0, "pg:inbox": 0, "es:events": 0, "pg:quarantine": 0, "pg:identifiers": 0, "es:soft_deleted": 0, "pg:analyst_jobs": 0, "gate:unregistered": 2, "keys:subject_keys": 0, "pg:content_present": 0, "pg:withheld_by_hold": 0, "keys:physical_pending": 0, "pg:mentions_unscanned": 0, "pg:subject_not_marked": 0, "pg:events_untombstoned": 0, "pg:quarantine_mentions": 0, "es:tombstoned_not_placeholder": 0}, "steps": {"mark_s": 0.008, "rescan_s": 0.0, "rescan_scanned": 0, "rescan_found": 0, "cascade_s": 1410.552, "cascade_batches": 1042, "cascade_batch_s": [1
+RESULT review_fix_F1 sha256=33a350a18639dfa2f405ecc2c5b48d65f91a6c76d7ca0d3e9f50871f3caa2501 file=~/emlab2-16096/writepath/wp/results/review_fix_F1.33a350a18639dfa2.json
+disk_gate -m exp.cleanup exp.review_fix free 30.2 GiB own +0.36 GiB
+cleanup exp.review_fix indices 2 shards 2 tenants 1 node_shards_total 12 max_shards_per_node 1000
+deleted 2 indices with prefix wp16096-
+disk_gate -m exp.scope_hold M H 3 free 30.2 GiB own +0.36 GiB
+M FAIL {"fenced": {"holds": 1, "violated": 2, "errors": 0, "why": ["done=False over=[] under=[] counts_ok=False", "done=False over=[] under=[] counts_ok=False", ""]}, "ctl_write_matcher": {"holds": 0, "violated": 3, "errors": 0, "why": ["done=True over=['zqa99am01x', 'zqa99am02x', 'zqa99am03x', 'zqa99am04x'] under=[] counts_ok=False", "done=True over=['zq8d7dm01x', 'zq8d7dm02x', 'zq8d7dm03x', 'zq8d7dm04x'] under=[] counts_ok=False", "done=True over=['zq69bdm01x', 'zq69bdm02x', 'zq69bdm03x', 'zq69bdm04x'] under=[] counts_ok=False"]}, "norescan_fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "ctl_norescan": {"holds": 0, "violated": 3, "errors": 0, "why": ["done=True over=['zq75bbm12x', 'zq75bbm13x'] under=[] counts_ok=False", "done=True over=['zqc802m12x', 'zqc802m13x'] under=[] counts_ok=False", "done=True over=['zq0713m12x', 'zq0713m13x'] under=[] counts_ok=False"]}}
+RESULT scope_hold_M sha256=8a408003c31b599a8fe271f99532ed6742121960283cec3c31e92139b852bb53 file=~/emlab2-16096/writepath/wp/results/scope_hold_M.8a408003c31b599a.json
+H PASS {"fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "control": {"holds": 0, "violated": 3, "errors": 0, "why": ["cases=[False, False, False]", "cases=[False, False, False]", "cases=[False, False, False]"]}}
+RESULT scope_hold_H sha256=1addf2b5d386af5352541c3f17deec34ccfe348114f14c04974c144e87865c03 file=~/emlab2-16096/writepath/wp/results/scope_hold_H.1addf2b5d386af53.json
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "~/emlab2-16096/writepath/wp/runs/1f059f4-20261117T054042Z/exp/disk_gate.py", line 82, in <module>
+    main(sys.argv[1] if len(sys.argv) > 1 else "", sys.argv[2] if len(sys.argv) > 2 else "")
+  File "~/emlab2-16096/writepath/wp/runs/1f059f4-20261117T054042Z/exp/disk_gate.py", line 55, in main
+    st = json.loads(STATE.read_text())
+                    ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '~/emlab2-16096/writepath/wp/logs/disk_gate.json'
+VOID: run stopped before -m exp.cleanup exp.scope_hold (disk gate)
+end VOID 2026-11-17T06:24:33Z

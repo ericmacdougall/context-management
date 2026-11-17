@@ -1,0 +1,549 @@
+{
+ "at": "2026-11-17T09:36:35Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/d1_hold_mentions.py 5",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   4.37255859375,
+   7.6279296875,
+   7.95751953125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "d1_hold_mentions",
+ "result": {
+  "R": 5,
+  "controls": {
+   "ctl_app_can_release:S3": {
+    "errors": 0,
+    "patch": [
+     "grant execute on function wp_hold_release(text), wp_hold_place(tenant_t, text, text, text) to wp_app"
+    ],
+    "runs": [
+     {
+      "holds": false,
+      "witness": {
+       "place": "accepted",
+       "release": "accepted"
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "place": "accepted",
+       "release": "accepted"
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "place": "accepted",
+       "release": "accepted"
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "place": "accepted",
+       "release": "accepted"
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "place": "accepted",
+       "release": "accepted"
+      }
+     }
+    ],
+    "violated": 5
+   },
+   "ctl_apply_ignores_holds:S1": {
+    "errors": 0,
+    "patch": [
+     "set role wp_owner",
+     "create or replace function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp set enable_seqscan = off as $$\ndeclare ids text[];\nbegin\n  if cardinality(cand) = 0 then return 0; end if;\n  -- share-lock every subject the batch touches, so a hold (FOR UPDATE on the subject row) cannot land mid-batch\n  perform 1 from subjects sj where sj.tenant_id = t and sj.subject_id in (\n      select e.subject_id from events e where e.tenant_id = t and e.event_id = any(cand)\n      union select unnest(e.mentions) from events e where e.tenant_id = t and e.event_id = any(cand)\n      union select m.subject_id from erasure_mentions m where m.tenant_id = t and m.event_id = any(cand))\n    order by sj.subject_id for share;\n  insert into erasure_withheld(tenant_id, job_id, event_id, speaker, hold_ids)\n    select t, jid, e.event_id, e.subject_id, string_agg(distinct h.hold_id, ',' order by h.hold_id)\n      from events e join legal_holds h on h.tenant_id = t and h.released_at is null and h.subject_id <> s\n       and false and (h.subject_id = e.subject_id or h.subject_id = any(e.mentions)\n            or exists (select 1 from erasure_mentions m where m.tenant_id = t and m.event_id = e.event_id and m.subject_id = h.subject_id))\n     where e.tenant_id = t and e.event_id = any(cand)\n     group by e.event_id, e.subject_id\n    on conflict (job_id, event_id) do update set hold_ids = excluded.hold_ids;\n  ids := array(select x from unnest(cand) x where not exists (select 1 from erasure_withheld w where w.job_id = jid and w.event_id = x));\n  insert into tombstones(tenant_id, event_id, subject_id, job_id) select t, unnest(ids), s, jid on conflict do nothing;\n  update events set content_enc = null where tenant_id = t and event_id = any(ids) and content_enc is not null;\n  if cardinality(ids) > 0 then\n    -- one GIN probe per event (input_event_ids @> array[x]), then primary-key deletes: O(batch) at any tenant size.\n    -- The probe sits behind an optimisation fence (lateral subquery with OFFSET 0) and the tenant is filtered outside\n    -- it (event ids are uuids, so the probe returns that event's rows only): otherwise a plan with a low tenant\n    -- estimate (plpgsql's generic plan from the 6th batch, or stale statistics) read every job of the tenant per event,\n    -- 1,410 s for 100,000 events in the voided 1f059f4 run (THRESHOLDS amendment 18, exp/plan_stability.py). Inside\n    -- the fence the only other path is a sequential scan of the whole table per event, which the planner picked on\n    -- small or unanalysed tables; the function runs with enable_seqscan off, so the GIN index is the probe (18c).\n    delete from analyst_jobs a where a.tenant_id = t and a.job_id = any(array(\n      select a2.job_id from unnest(ids) x\n        cross join lateral (select j2.job_id, j2.tenant_id from analyst_jobs j2 where j2.input_event_ids @> array[x] offset 0) a2\n       where a2.tenant_id = t));\n    delete from facts f where f.tenant_id = t and f.fact_id = any(array(\n      select f2.fact_id from unnest(ids) x\n        cross join lateral (select g.fact_id, g.tenant_id from facts g where g.input_event_ids @> array[x] offset 0) f2\n       where f2.tenant_id = t));\n  end if;\n  return cardinality(ids);\nend $$;",
+     "reset role"
+    ],
+    "runs": [
+     {
+      "holds": false,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "queued_until_release": null,
+        "withheld": null
+       },
+       "x_es_doc_placeholder": true,
+       "x_event_plain_has_marker": false,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "queued_until_release": null,
+        "withheld": null
+       },
+       "x_es_doc_placeholder": true,
+       "x_event_plain_has_marker": false,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "queued_until_release": null,
+        "withheld": null
+       },
+       "x_es_doc_placeholder": true,
+       "x_event_plain_has_marker": false,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "queued_until_release": null,
+        "withheld": null
+       },
+       "x_es_doc_placeholder": true,
+       "x_event_plain_has_marker": false,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "queued_until_release": null,
+        "withheld": null
+       },
+       "x_es_doc_placeholder": true,
+       "x_event_plain_has_marker": false,
+       "y_own_content_null": true
+      }
+     }
+    ],
+    "violated": 5
+   },
+   "ctl_apply_ignores_holds:S2": {
+    "errors": 0,
+    "patch": [
+     "set role wp_owner",
+     "create or replace function wp_erasure_apply(t text, s text, jid text, cand text[]) returns int language plpgsql security definer set search_path = public, pg_temp set enable_seqscan = off as $$\ndeclare ids text[];\nbegin\n  if cardinality(cand) = 0 then return 0; end if;\n  -- share-lock every subject the batch touches, so a hold (FOR UPDATE on the subject row) cannot land mid-batch\n  perform 1 from subjects sj where sj.tenant_id = t and sj.subject_id in (\n      select e.subject_id from events e where e.tenant_id = t and e.event_id = any(cand)\n      union select unnest(e.mentions) from events e where e.tenant_id = t and e.event_id = any(cand)\n      union select m.subject_id from erasure_mentions m where m.tenant_id = t and m.event_id = any(cand))\n    order by sj.subject_id for share;\n  insert into erasure_withheld(tenant_id, job_id, event_id, speaker, hold_ids)\n    select t, jid, e.event_id, e.subject_id, string_agg(distinct h.hold_id, ',' order by h.hold_id)\n      from events e join legal_holds h on h.tenant_id = t and h.released_at is null and h.subject_id <> s\n       and false and (h.subject_id = e.subject_id or h.subject_id = any(e.mentions)\n            or exists (select 1 from erasure_mentions m where m.tenant_id = t and m.event_id = e.event_id and m.subject_id = h.subject_id))\n     where e.tenant_id = t and e.event_id = any(cand)\n     group by e.event_id, e.subject_id\n    on conflict (job_id, event_id) do update set hold_ids = excluded.hold_ids;\n  ids := array(select x from unnest(cand) x where not exists (select 1 from erasure_withheld w where w.job_id = jid and w.event_id = x));\n  insert into tombstones(tenant_id, event_id, subject_id, job_id) select t, unnest(ids), s, jid on conflict do nothing;\n  update events set content_enc = null where tenant_id = t and event_id = any(ids) and content_enc is not null;\n  if cardinality(ids) > 0 then\n    -- one GIN probe per event (input_event_ids @> array[x]), then primary-key deletes: O(batch) at any tenant size.\n    -- The probe sits behind an optimisation fence (lateral subquery with OFFSET 0) and the tenant is filtered outside\n    -- it (event ids are uuids, so the probe returns that event's rows only): otherwise a plan with a low tenant\n    -- estimate (plpgsql's generic plan from the 6th batch, or stale statistics) read every job of the tenant per event,\n    -- 1,410 s for 100,000 events in the voided 1f059f4 run (THRESHOLDS amendment 18, exp/plan_stability.py). Inside\n    -- the fence the only other path is a sequential scan of the whole table per event, which the planner picked on\n    -- small or unanalysed tables; the function runs with enable_seqscan off, so the GIN index is the probe (18c).\n    delete from analyst_jobs a where a.tenant_id = t and a.job_id = any(array(\n      select a2.job_id from unnest(ids) x\n        cross join lateral (select j2.job_id, j2.tenant_id from analyst_jobs j2 where j2.input_event_ids @> array[x] offset 0) a2\n       where a2.tenant_id = t));\n    delete from facts f where f.tenant_id = t and f.fact_id = any(array(\n      select f2.fact_id from unnest(ids) x\n        cross join lateral (select g.fact_id, g.tenant_id from facts g where g.input_event_ids @> array[x] offset 0) f2\n       where f2.tenant_id = t));\n  end if;\n  return cardinality(ids);\nend $$;",
+     "reset role"
+    ],
+    "runs": [
+     {
+      "holds": false,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": false,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "withheld": null
+       }
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": false,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "withheld": null
+       }
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": false,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "withheld": null
+       }
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": false,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "withheld": null
+       }
+      }
+     },
+     {
+      "holds": false,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": false,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": true,
+        "error_type": null,
+        "withheld": null
+       }
+      }
+     }
+    ],
+    "violated": 5
+   }
+  },
+  "fenced": {
+   "S1": {
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "holds": true,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "queued_until_release": true,
+        "withheld": [
+         {
+          "event_id": "a94742b5cc3b49a9ad092c43d48c3c29",
+          "hold_ids": [
+           "hold-7d30f5ad"
+          ],
+          "speaker": "X"
+         }
+        ]
+       },
+       "x_es_doc_placeholder": false,
+       "x_event_plain_has_marker": true,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "queued_until_release": true,
+        "withheld": [
+         {
+          "event_id": "4fea068c0aec481dbc1f3f756eda2abc",
+          "hold_ids": [
+           "hold-d564897b"
+          ],
+          "speaker": "X"
+         }
+        ]
+       },
+       "x_es_doc_placeholder": false,
+       "x_event_plain_has_marker": true,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "queued_until_release": true,
+        "withheld": [
+         {
+          "event_id": "77d526f1ad11472e8a0468b8cee3ae8a",
+          "hold_ids": [
+           "hold-71fe77b0"
+          ],
+          "speaker": "X"
+         }
+        ]
+       },
+       "x_es_doc_placeholder": false,
+       "x_event_plain_has_marker": true,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "queued_until_release": true,
+        "withheld": [
+         {
+          "event_id": "94bfaa2043d2427a9a4412dd665921d2",
+          "hold_ids": [
+           "hold-08169f6e"
+          ],
+          "speaker": "X"
+         }
+        ]
+       },
+       "x_es_doc_placeholder": false,
+       "x_event_plain_has_marker": true,
+       "y_own_content_null": true
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release": {
+        "x_event_content_after": false,
+        "y_state": "done"
+       },
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "queued_until_release": true,
+        "withheld": [
+         {
+          "event_id": "e04f01b7081b45e897caa4564fe94160",
+          "hold_ids": [
+           "hold-ece03261"
+          ],
+          "speaker": "X"
+         }
+        ]
+       },
+       "x_es_doc_placeholder": false,
+       "x_event_plain_has_marker": true,
+       "y_own_content_null": true
+      }
+     }
+    ]
+   },
+   "S2": {
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "holds": true,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": true,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "withheld": [
+         {
+          "event_id": "790f84bf76b04ff383b0d7d96fb2e583",
+          "hold_ids": [
+           "hold-dc485f69"
+          ],
+          "speaker": "X"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": true,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "withheld": [
+         {
+          "event_id": "ffc6f377b2d74aab857dec0a26887943",
+          "hold_ids": [
+           "hold-e2c94498"
+          ],
+          "speaker": "X"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": true,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "withheld": [
+         {
+          "event_id": "098abb974a624f7fa9b849a4307a98d8",
+          "hold_ids": [
+           "hold-9d05cad9"
+          ],
+          "speaker": "X"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": true,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "withheld": [
+         {
+          "event_id": "9d6d14443676491c9ac7e8abb76cdb13",
+          "hold_ids": [
+           "hold-252eaf98"
+          ],
+          "speaker": "X"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "after_release_state": "done",
+       "mentioning_event_content_kept": true,
+       "other_event_content_kept": false,
+       "receipt": {
+        "done": false,
+        "error_type": "withheld_by_hold",
+        "withheld": [
+         {
+          "event_id": "1eefcbac543f407b9bd72e115ed50248",
+          "hold_ids": [
+           "hold-18c25de8"
+          ],
+          "speaker": "X"
+         }
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "S3": {
+    "errors": 0,
+    "holds": 5,
+    "runs": [
+     {
+      "holds": true,
+      "witness": {
+       "place": "refused:insufficient_privilege",
+       "release": "refused:insufficient_privilege"
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "place": "refused:insufficient_privilege",
+       "release": "refused:insufficient_privilege"
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "place": "refused:insufficient_privilege",
+       "release": "refused:insufficient_privilege"
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "place": "refused:insufficient_privilege",
+       "release": "refused:insufficient_privilege"
+      }
+     },
+     {
+      "holds": true,
+      "witness": {
+       "place": "refused:insufficient_privilege",
+       "release": "refused:insufficient_privilege"
+      }
+     }
+    ]
+   }
+  },
+  "pass": true
+ }
+}

@@ -1,0 +1,1452 @@
+{
+ "at": "2026-11-17T10:19:46Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py E1 E2 E3 40",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.19287109375,
+   1.375,
+   1.787109375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "e2e_E1",
+ "result": {
+  "N": 40,
+  "control": {
+   "errors": 6,
+   "holds_all": 0,
+   "holds_overlapped": 0,
+   "overlapped": 23,
+   "runs": [
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910693.756475,
+       "docs_written": 6,
+       "read": 1794910692.788023,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910694.075582
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096500
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910695.651957,
+       "docs_written": 6,
+       "read": 1794910694.613988,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910695.589379
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096501
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910697.371373,
+       "docs_written": 6,
+       "read": 1794910696.302677,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910697.162828
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096502
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910698.702296,
+       "docs_written": 6,
+       "read": 1794910698.00974,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910698.289704
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096503
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910700.373498,
+       "docs_written": 6,
+       "read": 1794910699.342101,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910699.742497
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096504
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910702.524416,
+       "docs_written": 6,
+       "read": 1794910701.035781,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910702.131047
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096505
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910704.198798,
+       "docs_written": 6,
+       "read": 1794910703.169489,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910704.370421
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096506
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096507
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910711.800784,
+       "docs_written": 6,
+       "read": 1794910710.569078,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910710.884447
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096508
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910714.377925,
+       "docs_written": 6,
+       "read": 1794910712.467854,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910712.983077
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096509
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096510
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910721.036404,
+       "docs_written": 6,
+       "read": 1794910720.722348,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910721.690843
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096511
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910724.333098,
+       "docs_written": 6,
+       "read": 1794910722.265492,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910723.100994
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096512
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910725.669963,
+       "docs_written": 6,
+       "read": 1794910725.019734,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910725.559089
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096513
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910726.96392,
+       "docs_written": 6,
+       "read": 1794910726.363155,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910727.039546
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096514
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910729.756899,
+       "docs_written": 6,
+       "read": 1794910727.648226,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910728.038595
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096515
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910732.637806,
+       "docs_written": 6,
+       "read": 1794910730.443218,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910731.240219
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096516
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910734.425727,
+       "docs_written": 6,
+       "read": 1794910733.305557,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910734.152183
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096517
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096518
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910741.700831,
+       "docs_written": 6,
+       "read": 1794910740.781028,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910741.187012
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096519
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910744.307832,
+       "docs_written": 6,
+       "read": 1794910742.414238,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910742.516648
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096520
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910745.605107,
+       "docs_written": 6,
+       "read": 1794910745.04978,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910745.880539
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096521
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910747.235986,
+       "docs_written": 6,
+       "read": 1794910746.512221,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910747.132624
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096522
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910749.925301,
+       "docs_written": 6,
+       "read": 1794910747.967223,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910749.102559
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096523
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910751.418182,
+       "docs_written": 6,
+       "read": 1794910750.653725,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910751.433751
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096524
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910752.689824,
+       "docs_written": 6,
+       "read": 1794910752.190607,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910752.552071
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096525
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096526
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910759.551066,
+       "docs_written": 6,
+       "read": 1794910759.026973,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910760.242571
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096527
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910761.403462,
+       "docs_written": 6,
+       "read": 1794910760.669815,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910761.162521
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096528
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910762.364451,
+       "docs_written": 6,
+       "read": 1794910761.926732,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910762.605672
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096529
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910764.402068,
+       "docs_written": 6,
+       "read": 1794910763.034621,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910763.425968
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096530
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910765.74778,
+       "docs_written": 6,
+       "read": 1794910764.924235,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910765.561177
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096531
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910766.920616,
+       "docs_written": 6,
+       "read": 1794910766.282227,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910767.202432
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096532
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910768.21704,
+       "docs_written": 6,
+       "read": 1794910767.631055,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910767.86388
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096533
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910769.309326,
+       "docs_written": 6,
+       "read": 1794910768.745166,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910770.080324
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096534
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096535
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910776.51263,
+       "docs_written": 6,
+       "read": 1794910776.045163,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910776.784848
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096536
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910778.763327,
+       "docs_written": 6,
+       "read": 1794910777.226309,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910778.261585
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096537
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096538
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910786.319903,
+       "docs_written": 6,
+       "read": 1794910784.815658,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910785.563935
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 6,
+     "seed": 16096539
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 34,
+   "violated_overlapped": 23,
+   "wilson95_hold_rate_overlapped": [
+    -0.0,
+    0.1431
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.8569,
+    1.0
+   ]
+  },
+  "fenced": {
+   "errors": 5,
+   "holds_all": 28,
+   "holds_overlapped": 28,
+   "overlapped": 28,
+   "runs": [
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910597.176853,
+       "docs_written": 0,
+       "read": 1794910595.661587,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910595.952968
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096000
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910599.75284,
+       "docs_written": 0,
+       "read": 1794910597.685875,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910598.263572
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096001
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910601.57747,
+       "docs_written": 6,
+       "read": 1794910600.259125,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910601.587841
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096002
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910603.384132,
+       "docs_written": 0,
+       "read": 1794910602.113123,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910603.107542
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096003
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910604.968045,
+       "docs_written": 0,
+       "read": 1794910603.893351,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910604.585651
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096004
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910607.810149,
+       "docs_written": 0,
+       "read": 1794910605.478122,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910605.547952
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096005
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096006
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910614.281657,
+       "docs_written": 6,
+       "read": 1794910613.824495,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910615.058542
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096007
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910616.924334,
+       "docs_written": 0,
+       "read": 1794910615.520756,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910615.878869
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096008
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910617.762949,
+       "docs_written": 6,
+       "read": 1794910617.438267,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910618.196185
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096009
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910619.632792,
+       "docs_written": 0,
+       "read": 1794910618.666906,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910619.336465
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096010
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910620.925923,
+       "docs_written": 0,
+       "read": 1794910620.162216,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910620.407144
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096011
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096012
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910628.309155,
+       "docs_written": 0,
+       "read": 1794910626.951076,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910628.093664
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096013
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910629.807569,
+       "docs_written": 0,
+       "read": 1794910628.839559,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910629.154512
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096014
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910631.637637,
+       "docs_written": 0,
+       "read": 1794910630.357946,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910630.642752
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096015
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096016
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910640.211512,
+       "docs_written": 0,
+       "read": 1794910637.711551,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910637.831119
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096017
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910643.203057,
+       "docs_written": 0,
+       "read": 1794910640.744413,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910641.566498
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096018
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910644.117122,
+       "docs_written": 6,
+       "read": 1794910643.747059,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910645.025666
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096019
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910647.49289,
+       "docs_written": 0,
+       "read": 1794910645.489796,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910645.814112
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096020
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910649.55118,
+       "docs_written": 0,
+       "read": 1794910648.048298,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910648.83719
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096021
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910650.577875,
+       "docs_written": 0,
+       "read": 1794910650.085313,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910650.42693
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096022
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910653.206086,
+       "docs_written": 0,
+       "read": 1794910651.118503,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910651.840448
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096023
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910654.121863,
+       "docs_written": 6,
+       "read": 1794910653.74695,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910654.766669
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096024
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910657.122203,
+       "docs_written": 0,
+       "read": 1794910655.246164,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910655.400591
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096025
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910659.019278,
+       "docs_written": 0,
+       "read": 1794910657.669574,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910657.732767
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096026
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096027
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910665.404688,
+       "docs_written": 6,
+       "read": 1794910665.097819,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910666.331874
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096028
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910669.307362,
+       "docs_written": 0,
+       "read": 1794910666.83141,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910667.572241
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096029
+    },
+    {
+     "events_in_es": 6,
+     "holds": false,
+     "instants": {
+      "p1": {
+       "bulk": 1794910670.768238,
+       "docs_written": 6,
+       "read": 1794910669.864237,
+       "stale_bulk_items": 0
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910671.140598
+      }
+     },
+     "overlap": false,
+     "p1_docs_in_es": 6,
+     "seed": 16096030
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910672.769187,
+       "docs_written": 0,
+       "read": 1794910671.649385,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910671.807478
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096031
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910675.695929,
+       "docs_written": 0,
+       "read": 1794910673.34039,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910673.747513
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096032
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910677.196508,
+       "docs_written": 0,
+       "read": 1794910676.244023,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910676.924536
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096033
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910679.397463,
+       "docs_written": 0,
+       "read": 1794910677.770864,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910678.87387
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096034
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910681.413217,
+       "docs_written": 0,
+       "read": 1794910679.957151,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910680.569707
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096035
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910682.975077,
+       "docs_written": 0,
+       "read": 1794910681.978728,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910682.236146
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096036
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910685.620337,
+       "docs_written": 0,
+       "read": 1794910683.554878,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910684.050286
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096037
+    },
+    {
+     "error": "Empty: ",
+     "holds": null,
+     "overlap": false,
+     "seed": 16096038
+    },
+    {
+     "events_in_es": 6,
+     "holds": true,
+     "instants": {
+      "p1": {
+       "bulk": 1794910692.196984,
+       "docs_written": 0,
+       "read": 1794910691.830282,
+       "stale_bulk_items": 6
+      },
+      "p2": {
+       "epoch": 2,
+       "fenced_at": 1794910691.879716
+      }
+     },
+     "overlap": true,
+     "p1_docs_in_es": 0,
+     "seed": 16096039
+    }
+   ],
+   "runs_total": 40,
+   "violated_all": 7,
+   "violated_overlapped": 0,
+   "wilson95_hold_rate_overlapped": [
+    0.8794,
+    1.0
+   ],
+   "wilson95_violation_rate_overlapped": [
+    0.0,
+    0.1206
+   ]
+  },
+  "patch": "alias CAS adds the new write alias without removing the old one (in P2's process)",
+  "verdict": "FAIL"
+ }
+}

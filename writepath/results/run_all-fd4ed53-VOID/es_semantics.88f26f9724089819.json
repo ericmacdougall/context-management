@@ -1,0 +1,170 @@
+{
+ "at": "2026-11-17T07:57:14Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/es_semantics.py",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   7.4873046875,
+   7.77294921875,
+   12.2255859375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "es_semantics",
+ "result": {
+  "P10_placeholder_first": [
+   1,
+   []
+  ],
+  "P10_stale_create": [
+   [
+    "create",
+    409,
+    "version_conflict_engine_exception"
+   ]
+  ],
+  "P11_placeholder_over_fact": [
+   1,
+   []
+  ],
+  "P11_stale_fact_rev8": [
+   [
+    "index",
+    409,
+    "version_conflict_engine_exception"
+   ]
+  ],
+  "P12_control_no_expunge": {
+   "docs_count": 200,
+   "docs_deleted": 1,
+   "expunge": null,
+   "files_after": 1,
+   "files_before": 1
+  },
+  "P12_expunge": {
+   "docs_count": 200,
+   "docs_deleted": 0,
+   "expunge": {
+    "docs_deleted_after": 0,
+    "lease_wait_s": 30.0,
+    "target_seq": 200
+   },
+   "files_after": 0,
+   "files_before": 1
+  },
+  "P1_concrete_name_rejected": [
+   [
+    "index",
+    404,
+    "index_not_found_exception"
+   ]
+  ],
+  "P2_missing_alias_rejected": [
+   [
+    "index",
+    404,
+    "index_not_found_exception"
+   ]
+  ],
+  "P2b_index_count_after": [
+   "wp16096-probe-a",
+   "wp16096-probe-b"
+  ],
+  "P3_must_exist_failed_whole": "aliases_not_found_exception",
+  "P3_r_alias_still_only_on_a": [
+   "wp16096-probe-a"
+  ],
+  "P4_aliases_after_move": {
+   "wp16096-probe-a": [],
+   "wp16096-probe-b": [
+    "wp16096-probe-r",
+    "wp16096-probe-w2"
+   ]
+  },
+  "P4_old_w1_write": [
+   [
+    "index",
+    404,
+    "index_not_found_exception"
+   ]
+  ],
+  "P5_v3_rejected": [
+   [
+    "index",
+    409,
+    "version_conflict_engine_exception"
+   ]
+  ],
+  "P5_v5": [
+   1,
+   []
+  ],
+  "P6_delete_v4_rejected": [
+   [
+    "delete",
+    409,
+    "version_conflict_engine_exception"
+   ]
+  ],
+  "P7_autocreate_plain_put": [
+   404,
+   "index_not_found_exception"
+  ],
+  "P7_indices": [
+   "wp16096-probe-a",
+   "wp16096-probe-b",
+   "wp16096-probe-c",
+   "wp16096-probe-xe",
+   "wp16096-probe-xn"
+  ],
+  "P8_alias_not_added": true,
+  "P8_index_survived": true,
+  "P8_request_failed": "aliases_not_found_exception",
+  "P9_P11_sources_are_placeholders": true,
+  "P9_placeholder_over_create": [
+   1,
+   []
+  ],
+  "P9_stale_create_after": [
+   [
+    "create",
+    409,
+    "version_conflict_engine_exception"
+   ]
+  ],
+  "P9_stale_external_after": [
+   [
+    "index",
+    409,
+    "version_conflict_engine_exception"
+   ]
+  ],
+  "auto_create_index_setting": {
+   "defaults": {
+    "action": {
+     "auto_create_index": "false"
+    }
+   }
+  },
+  "license": "basic",
+  "pass": true
+ }
+}

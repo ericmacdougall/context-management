@@ -1,0 +1,75 @@
+{
+ "at": "2026-11-17T07:58:32Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/review_fix.py F3 F4 F5 F7 F1S F6 10",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   5.62646484375,
+   7.29345703125,
+   11.69775390625
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "review_fix_F4",
+ "result": {
+  "cases": {
+   "fabricated_zeros_with_pg_residue": {
+    "control": {
+     "done": true,
+     "residue": null
+    },
+    "fenced": {
+     "done": false,
+     "residue": "pg:facts,pg:subject_not_marked,pg:events_untombstoned"
+    },
+    "patch": "wp_erasure_complete takes verify from the caller only"
+   },
+   "missing_store_count": {
+    "control": {
+     "done": true
+    },
+    "fenced": {
+     "refused": "WPS08"
+    },
+    "patch": "store_registry row es:facts removed"
+   },
+   "unregistered_gate": {
+    "control": {
+     "done": true,
+     "gate": 0
+    },
+    "fenced": {
+     "done": false,
+     "gate": 1
+    },
+    "patch": "verifier reports gate:unregistered=0"
+   }
+  },
+  "controls_violated": 3,
+  "fenced_holds": 3,
+  "params": {
+   "R": 10,
+   "n100k": 100000
+  },
+  "pass": true,
+  "property": "'done' requires store-recomputed Postgres residue 0, every registered store counted, and no unregistered store"
+ }
+}

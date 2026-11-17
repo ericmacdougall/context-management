@@ -1,0 +1,3580 @@
+{
+ "at": "2026-11-17T07:16:11Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/ba71567-20261117T071304Z/exp/plan_stability.py",
+  "code_commit": "ba71567",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   9.01953125,
+   15.56494140625,
+   18.2841796875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "plan_stability",
+ "result": {
+  "controls": {
+   "CTL_APPLY": {
+    "available": true,
+    "function": "wp_erasure_apply",
+    "gates": {
+     "S1": [
+      {
+       "PS_C": false,
+       "PS_R": true,
+       "run": 0
+      },
+      {
+       "PS_C": false,
+       "PS_R": true,
+       "run": 1
+      },
+      {
+       "PS_C": false,
+       "PS_R": true,
+       "run": 2
+      }
+     ],
+     "S2": [
+      {
+       "PS_C": false,
+       "PS_R": true,
+       "run": 0
+      },
+      {
+       "PS_C": false,
+       "PS_R": true,
+       "run": 1
+      },
+      {
+       "PS_C": false,
+       "PS_R": true,
+       "run": 2
+      }
+     ]
+    },
+    "required_states": [
+     "S1",
+     "S2"
+    ],
+    "violated": {
+     "S1": 3,
+     "S2": 3
+    }
+   },
+   "CTL_RESIDUE": {
+    "available": true,
+    "function": "wp_erasure_pg_residue",
+    "gates": {
+     "S1": [
+      {
+       "PS_C": true,
+       "PS_R": false,
+       "run": 0
+      },
+      {
+       "PS_C": true,
+       "PS_R": false,
+       "run": 1
+      },
+      {
+       "PS_C": true,
+       "PS_R": false,
+       "run": 2
+      }
+     ],
+     "S2": [
+      {
+       "PS_C": true,
+       "PS_R": false,
+       "run": 0
+      },
+      {
+       "PS_C": true,
+       "PS_R": false,
+       "run": 1
+      },
+      {
+       "PS_C": true,
+       "PS_R": false,
+       "run": 2
+      }
+     ]
+    },
+    "required_states": [
+     "S1"
+    ],
+    "violated": {
+     "S1": 3,
+     "S2": 3
+    }
+   }
+  },
+  "gates": {
+   "S1": [
+    {
+     "PS_C": true,
+     "PS_R": true,
+     "run": 0
+    },
+    {
+     "PS_C": true,
+     "PS_R": true,
+     "run": 1
+    },
+    {
+     "PS_C": true,
+     "PS_R": true,
+     "run": 2
+    }
+   ],
+   "S2": [
+    {
+     "PS_C": true,
+     "PS_R": true,
+     "run": 0
+    },
+    {
+     "PS_C": true,
+     "PS_R": true,
+     "run": 1
+    },
+    {
+     "PS_C": true,
+     "PS_R": true,
+     "run": 2
+    }
+   ]
+  },
+  "params": {
+   "M": [
+    1500,
+    3000
+   ],
+   "R": 3,
+   "batch": 200,
+   "small_events": 20,
+   "small_tenants": 30
+  },
+  "runs": {
+   "S1": {
+    "1500": [
+     {
+      "M": 1500,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 13.52,
+        "holds": true,
+        "later_per_event": 10.69
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1615
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1401
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2704
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1316
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2504
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1188
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2304
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1094
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0961
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0793
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 100,
+        "s": 0.0351
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.3348,
+       "work": 19108
+      },
+      "state": "S1",
+      "tenant": "psx283ba5"
+     },
+     {
+      "M": 1500,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 13.52,
+        "holds": true,
+        "later_per_event": 10.69
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1672
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1438
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2704
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1317
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2504
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1222
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2304
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.11
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0962
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0825
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 100,
+        "s": 0.0384
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.3397,
+       "work": 19092
+      },
+      "state": "S1",
+      "tenant": "psxcf6abf"
+     },
+     {
+      "M": 1500,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 13.52,
+        "holds": true,
+        "later_per_event": 10.69
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1521
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1312
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2704
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1361
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2504
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1121
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2304
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1018
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0902
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0764
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 100,
+        "s": 0.0335
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.312,
+       "work": 19089
+      },
+      "state": "S1",
+      "tenant": "psx1926ec"
+     }
+    ],
+    "3000": [
+     {
+      "M": 3000,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 6.0,
+        "holds": true,
+        "later_per_event": 6.0
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "PS_R": {
+       "holds": true,
+       "ratio": 2.07
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0636
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0519
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0514
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0509
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.051
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0475
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0466
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0481
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0465
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0474
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0484
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0473
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0475
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0455
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "analyst_jobs_inputs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1200
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0467
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.4269,
+       "work": 39630
+      },
+      "state": "S1",
+      "tenant": "psx8081df"
+     },
+     {
+      "M": 3000,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 21.02,
+        "holds": true,
+        "later_per_event": 16.02
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "PS_R": {
+       "holds": true,
+       "ratio": 1.95
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.283
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2393
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2319
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2192
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2075
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1894
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1782
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1702
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1566
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1467
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1376
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1224
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1082
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.096
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0817
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.7279,
+       "work": 37234
+      },
+      "state": "S1",
+      "tenant": "psx1c4c42"
+     },
+     {
+      "M": 3000,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 21.02,
+        "holds": true,
+        "later_per_event": 16.02
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "PS_R": {
+       "holds": true,
+       "ratio": 1.95
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2423
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2208
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.206
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1988
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1929
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1765
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1737
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.156
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1456
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1352
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1238
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1111
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1072
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.095
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0815
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.7538,
+       "work": 37240
+      },
+      "state": "S1",
+      "tenant": "psxe235fa"
+     }
+    ]
+   },
+   "S2": {
+    "1500": [
+     {
+      "M": 1500,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 18.05,
+        "holds": true,
+        "later_per_event": 10.69
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4409
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1733
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4009
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1471
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3609
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1365
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3209
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1194
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2809
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1061
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0944
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0814
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 100,
+        "s": 0.0372
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.3292,
+       "work": 21131
+      },
+      "state": "S2",
+      "tenant": "psxec27cd"
+     },
+     {
+      "M": 1500,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 18.05,
+        "holds": true,
+        "later_per_event": 10.69
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4409
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1745
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4009
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1464
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3609
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1311
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3209
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1219
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2809
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1091
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0978
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0827
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 100,
+        "s": 0.039
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.3419,
+       "work": 21165
+      },
+      "state": "S2",
+      "tenant": "psxdd1978"
+     },
+     {
+      "M": 1500,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 18.05,
+        "holds": true,
+        "later_per_event": 10.69
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4409
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1696
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 4009
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.146
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3609
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1349
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3209
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1202
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2809
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1081
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2104
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0982
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1904
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0847
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 100,
+        "s": 0.0391
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.3422,
+       "work": 21109
+      },
+      "state": "S2",
+      "tenant": "psxa5b77c"
+     }
+    ],
+    "3000": [
+     {
+      "M": 3000,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 33.05,
+        "holds": true,
+        "later_per_event": 16.02
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "PS_R": {
+       "holds": true,
+       "ratio": 1.94
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 7409
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2678
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 7009
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2436
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 6609
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2297
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 6209
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2169
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 5809
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2125
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1896
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1701
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.157
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1471
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1538
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1271
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1138
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1006
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0912
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0848
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.7569,
+       "work": 41037
+      },
+      "state": "S2",
+      "tenant": "psxde207e"
+     },
+     {
+      "M": 3000,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 33.05,
+        "holds": true,
+        "later_per_event": 16.02
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "PS_R": {
+       "holds": true,
+       "ratio": 1.94
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 7409
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2651
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 7009
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.235
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 6609
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2222
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 6209
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2167
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 5809
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2139
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1944
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.18
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1698
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1593
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1468
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1378
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1252
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1129
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1003
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0884
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.7647,
+       "work": 41041
+      },
+      "state": "S2",
+      "tenant": "psxda6cdb"
+     },
+     {
+      "M": 3000,
+      "PS_C": {
+       "analyst_delete": {
+        "first_per_event": 33.05,
+        "holds": true,
+        "later_per_event": 16.02
+       },
+       "facts_delete": {
+        "first_per_event": 0.0,
+        "holds": true,
+        "later_per_event": 0.0
+       }
+      },
+      "PS_R": {
+       "holds": true,
+       "ratio": 1.94
+      },
+      "batches": [
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 7409
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2689
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 7009
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2499
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 6609
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2224
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 6209
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.2131
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 5809
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.201
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1834
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.17
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1579
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 3004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1491
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1392
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2604
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1248
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2404
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1144
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2204
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.1017
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 2004
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0906
+       },
+       {
+        "analyst_delete": {
+         "indexes": [
+          "a2",
+          "analyst_jobs",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 1804
+        },
+        "facts_delete": {
+         "indexes": [
+          "f2",
+          "facts",
+          "unnest"
+         ],
+         "join_filter_max": 0,
+         "work": 0
+        },
+        "rows": 200,
+        "s": 0.0809
+       }
+      ],
+      "residue": {
+       "events_untombstoned": 0,
+       "join_filter_max": 0,
+       "logged": 1,
+       "s": 0.7027,
+       "work": 41011
+      },
+      "state": "S2",
+      "tenant": "psxc55269"
+     }
+    ]
+   }
+  },
+  "verdict": "PASS",
+  "why": []
+ }
+}

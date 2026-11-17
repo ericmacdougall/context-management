@@ -1,0 +1,161 @@
+{
+ "at": "2026-11-17T09:42:00Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/d4_store_mark.py 5",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   2.47900390625,
+   3.79638671875,
+   6.15673828125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "d4_store_mark",
+ "result": {
+  "R": 5,
+  "honest": [
+   {
+    "accepted": true,
+    "examined": 12,
+    "mode": "honest",
+    "rescanned_xmax_set": true,
+    "scanned_found": [
+     12,
+     1
+    ]
+   },
+   {
+    "accepted": true,
+    "examined": 12,
+    "mode": "honest",
+    "rescanned_xmax_set": true,
+    "scanned_found": [
+     12,
+     1
+    ]
+   },
+   {
+    "accepted": true,
+    "examined": 12,
+    "mode": "honest",
+    "rescanned_xmax_set": true,
+    "scanned_found": [
+     12,
+     1
+    ]
+   },
+   {
+    "accepted": true,
+    "examined": 12,
+    "mode": "honest",
+    "rescanned_xmax_set": true,
+    "scanned_found": [
+     12,
+     1
+    ]
+   },
+   {
+    "accepted": true,
+    "examined": 12,
+    "mode": "honest",
+    "rescanned_xmax_set": true,
+    "scanned_found": [
+     12,
+     1
+    ]
+   }
+  ],
+  "lazy_control": [
+   {
+    "accepted": true,
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": true
+   },
+   {
+    "accepted": true,
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": true
+   },
+   {
+    "accepted": true,
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": true
+   },
+   {
+    "accepted": true,
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": true
+   },
+   {
+    "accepted": true,
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": true
+   }
+  ],
+  "lazy_fenced": [
+   {
+    "accepted": false,
+    "error": "WPS24",
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": false
+   },
+   {
+    "accepted": false,
+    "error": "WPS24",
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": false
+   },
+   {
+    "accepted": false,
+    "error": "WPS24",
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": false
+   },
+   {
+    "accepted": false,
+    "error": "WPS24",
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": false
+   },
+   {
+    "accepted": false,
+    "error": "WPS24",
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": false
+   }
+  ],
+  "patch": "control: wp_erasure_rescan_done without the missing-candidate check",
+  "verdict": {
+   "pass": true,
+   "why": []
+  }
+ }
+}

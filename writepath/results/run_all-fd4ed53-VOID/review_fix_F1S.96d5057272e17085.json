@@ -1,0 +1,363 @@
+{
+ "at": "2026-11-17T08:03:50Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/review_fix.py F3 F4 F5 F7 F1S F6 10",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   8.0400390625,
+   7.15234375,
+   10.279296875
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "review_fix_F1S",
+ "result": {
+  "control": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    },
+    {
+     "holds": false,
+     "why": "B=requested A_released=True",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "requested"
+      },
+      "sweep": {
+       "aborte": "RuntimeError"
+      }
+     }
+    }
+   ],
+   "violated": 10
+  },
+  "fenced": {
+   "errors": 0,
+   "holds": 10,
+   "runs": [
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "b5ac78": true,
+       "c3ce3a": false
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "5738c2": false,
+       "9517f8": true
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "0874ed": true,
+       "7d26dc": false
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "31b18e": false,
+       "b8a190": true
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "4faa10": true,
+       "d94832": false
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "433ae5": true,
+       "871b51": false
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "46d5e0": true,
+       "b1c7e8": false
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "1cc57a": true,
+       "d8cd72": false
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "8d5bd3": false,
+       "c10f2e": true
+      }
+     }
+    },
+    {
+     "holds": true,
+     "why": "",
+     "witness": {
+      "A_claim_released": true,
+      "injected_failures": 1,
+      "states": {
+       "A": "marked",
+       "B": "done"
+      },
+      "sweep": {
+       "61a0e7": false,
+       "6cd862": true
+      }
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "params": {
+   "R": 10,
+   "n100k": 100000
+  },
+  "pass": true
+ }
+}

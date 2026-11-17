@@ -1,0 +1,2749 @@
+{
+ "at": "2026-11-17T09:26:10Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/registry_marker.py 10",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   8.8994140625,
+   8.58984375,
+   8.00927734375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "registry_marker",
+ "result": {
+  "R": 10,
+  "arms": {
+   "ctl_key_kept": [
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 2,
+      "keydb_disk_paths_keyhex": [
+       "/var/lib/postgresql/data/pg_wal/000000010000000300000074",
+       "/var/lib/postgresql/data/base/16399/55037"
+      ],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_key_kept",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "keys:subject_keys",
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 1,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 2
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    }
+   ],
+   "ctl_no_placeholders": [
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "ctl_no_placeholders",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": false,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": false,
+      "error_type": "residue",
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": "es:facts,es:events,es:tombstoned_not_placeholder",
+      "verify": {
+       "es:events": 3,
+       "es:facts": 1,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 4,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 2,
+      "es_api_X": 4,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    }
+   ],
+   "fenced": [
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    },
+    {
+     "after": {
+      "es_api_X": 0,
+      "es_api_Y": 3,
+      "es_disk_files_X": 0,
+      "es_disk_files_Y": 2,
+      "keydb_disk_files_keyhex": 0,
+      "keydb_disk_paths_keyhex": [],
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "arm": "fenced",
+     "before": {
+      "es_api_X": 4,
+      "es_api_Y": 3,
+      "es_disk_files_X": 2,
+      "keydb_disk_files_keyhex": 2,
+      "pg_disk_files_X": 0,
+      "pg_disk_positive_control_old_plaintext": 1,
+      "pg_sql_hits_events_db": {},
+      "pg_sql_hits_keys_db": {}
+     },
+     "controls_flagged": {
+      "index": true,
+      "logfile": true,
+      "table": true
+     },
+     "es_on_disk_claim_made": true,
+     "holds": true,
+     "planted": {
+      "analyst_jobs_done": 2,
+      "decision": 1,
+      "events": 4,
+      "inbox": 1,
+      "quarantined": 1
+     },
+     "receipt": {
+      "done": true,
+      "error_type": null,
+      "key_store": {
+       "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+       "kind": "lab-postgres-keystore",
+       "stand_in": true
+      },
+      "residue": null,
+      "verify": {
+       "es:events": 0,
+       "es:facts": 0,
+       "es:soft_deleted": 0,
+       "es:tombstoned_not_placeholder": 0,
+       "gate:unregistered": 0,
+       "keys:physical_pending": 0,
+       "keys:subject_keys": 0,
+       "pg:analyst_jobs": 0,
+       "pg:content_present": 0,
+       "pg:events_untombstoned": 0,
+       "pg:facts": 0,
+       "pg:identifiers": 0,
+       "pg:inbox": 0,
+       "pg:mentions_unscanned": 0,
+       "pg:quarantine": 0,
+       "pg:quarantine_mentions": 0,
+       "pg:subject_not_marked": 0,
+       "pg:withheld_by_hold": 0
+      }
+     },
+     "residue_on_disk": {
+      "es_X_files": 0,
+      "es_api_X": 0,
+      "keyhex_files": 0
+     },
+     "stores_registered": 36,
+     "stores_verifiable": [
+      "pg:events",
+      "pg:quarantine",
+      "pg:subject_identifiers",
+      "pg:inbox",
+      "pg:analyst_jobs",
+      "pg:facts",
+      "keys:subject_keys",
+      "keys:physical_pending",
+      "es:events",
+      "es:facts",
+      "es:soft_deleted",
+      "gate:unregistered"
+     ],
+     "unregistered_after_cleanup": [],
+     "unregistered_clean": []
+    }
+   ]
+  },
+  "control_violated": {
+   "ctl_key_kept": 10,
+   "ctl_no_placeholders": 10
+  },
+  "fenced_holds": 10,
+  "pass": true
+ }
+}

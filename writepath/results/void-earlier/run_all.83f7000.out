@@ -1,0 +1,53 @@
+start 2026-11-17T07:31:26Z head 83f7000 R=10
+disk_gate start free 18.5 GiB own 0.15 GiB (pg 0.10 es 0.01 home 0.05) cap +2.0 GiB
+disk_gate -m exp.cleanup free 18.5 GiB own +0.00 GiB
+cleanup  indices 2 shards 2 tenants 1 node_shards_total 12 max_shards_per_node 1000
+deleted 2 indices with prefix wp16096-
+disk_gate -m wp.setup --reset free 18.5 GiB own +-0.01 GiB
+setup ok reset
+disk_gate preflight unregistered 0 []
+disk_gate -m exp.guard_check start --controls free 18.5 GiB own +-0.01 GiB
+guard_check start PASS {}
+RESULT guard_check_start sha256=2d814b1d6627059b31fc803f10483253ce3c38cc5649bc0efdd9c807378f102f file=~/emlab2-16096/writepath/wp/results/guard_check_start.2d814b1d6627059b.json
+disk_gate -m exp.static_check free 18.5 GiB own +-0.01 GiB
+{'checks': {'S1': [], 'S2': [], 'S3': [], 'S4': [], 'S5': [], 'S6': []}, 'families': ['events', 'facts'], 'tables': ['leases', 'subjects', 'identifier_epochs', 'subject_identifiers', 'chains', 'events', 'decision_heads', 'quarantine', 'quarantine_quota', 'tombstones', 'inbox', 'analyst_jobs', 'facts', 'cursors', 'store_registry', 'erasure_jobs', 'erasure_mentions', 'erasure_withheld', 'erasure_rescanned', 'legal_holds'], 'controls_fail': {'S1': True, 'S2': True, 'S3': True, 'S4': True, 'S5': True, 'S6': True}}
+RESULT static_check sha256=a35ede6fdaf9d9e896129ce1dff429e47bd2d7380900827578220b53f607d39a file=~/emlab2-16096/writepath/wp/results/static_check.a35ede6fdaf9d9e8.json
+disk_gate exp.es_semantics free 18.5 GiB own +-0.01 GiB
+ "pass": true
+}
+RESULT es_semantics sha256=07e14dd9425d5c92373bc647e52ea73a6cdea055b51b9fb0e2fe144c6a6605a8 file=~/emlab2-16096/writepath/wp/results/es_semantics.07e14dd9425d5c92.json
+disk_gate -m exp.cleanup exp.es_semantics free 14.5 GiB own +-0.01 GiB
+disk_gate FLOOR: host free 14.5 GiB < 15.0 from other work; own usage within cap, continuing
+cleanup exp.es_semantics indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m old_repro.n_old free 14.5 GiB own +-0.01 GiB
+disk_gate FLOOR: host free 14.5 GiB < 15.0 from other work; own usage within cap, continuing
+N1 {"property": "erased subject X absent from the live events index after erasure completes", "property_holds": false, "witness": {"rows_read_before_erasure": 1, "read_contained_X": true, "receipt_es_event_docs": 0, "job_state": ["done"], "X_docs_in_live_index_after": 1, "projector_exc": "OperationalError"}}
+N2 {"property": "erasure purges X from every index family (ev2 included)", "property_holds": false, "witness": {"X_in_ev2_before": 1, "X_in_ev2_after": 1, "X_in_events_after": 0, "receipt_rebuilt": [["events", 227, ["sys-n2old-events-b00227-g1", "sys-n2old-events-b00227-g2", 1]]], "job_state": ["done"]}}
+N3 {"property": "after B erases Y, Y is absent from every index of the tenant", "property_holds": false, "witness": {"A_survivor_read_had_Y": true, "B_receipt_es_event_docs": 0, "Y_docs_live": 1, "Y_docs_any_index": 1, "A_exc": "OperationalError", "job_states": ["key_destroyed", "done"]}}
+N4 {"property": "job reaches done only with verification zero; reader hides tombstoned events after done", "property_holds": false, "witness": {"job_states": ["done"], "receipt_es_event_docs": 1, "reader_served_X_event_after_done": ["n4old/s1/2"]}}
+N5 {"property": "no read path serves an erased fact while the job is pending", "property_holds": false, "witness": {"job_states": ["pending"], "query_facts_hits": 1, "query_facts_leaked": 1, "search_facts_hits": 1}}
+N6 {"property": "no plaintext of an erased subject remains in any Postgres table", "property_holds": false, "witness": {"task_view_rows_with_marker_before": 1, "after_erasure": 1, "job_states": ["done"]}}
+N7 {"property": "stale approval refused; replayed approval refused; retried decision id is a no-op", "property_holds": false, "witness": {"sub": {"a_stale_readback_refused": false, "b_replayed_accept_refused": false, "c_retry_same_id_is_noop": false}, "a_text": "US only", "b_text": "US only", "c_text": "EU only", "c_pending": []}}
+RESULT old_code_N1_N7 sha256=f6716424270fdec9cc93faf7283a9d9e5cfac57f7cf4a0480c344bada77782f2 file=~/emlab2-16096/writepath/wp/results/old_code_N1_N7.f6716424270fdec9.json
+disk_gate -m exp.cleanup old_repro.n_old free 14.5 GiB own +-0.03 GiB
+disk_gate FLOOR: host free 14.5 GiB < 15.0 from other work; own usage within cap, continuing
+cleanup old_repro.n_old indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.review_fix F3 F4 F5 F7 F1S F6 10 free 14.5 GiB own +-0.03 GiB
+disk_gate FLOOR: host free 14.5 GiB < 15.0 from other work; own usage within cap, continuing
+F3 PASS {"property": "the app role cannot bypass the fence or the guards", "pass": true, "fenced_refused": 14, "attacks": 14, "controls_accepted": 14, "cases": {"junk_scope_fact": {"fenced": "refused:WPS12", "control": "accepted:1", "patch": "scope binding removed from wp_fence_trg"}, "lease_direct_insert": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app INSERT on leases (privilege + owner-only trigger)"}, "delete_facts": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app DELETE on facts (privilege + owner-only trigger)"}, "truncate_inbox": {"fenced": "refused:42501", "control": "accepted:-1", "patch": "app TRUNCATE on inbox (privilege + trigger)"}, "reset_erased": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app UPDATE on subjects"}, "delete_tombstones": {"fenced": "refused:42501", "control": "accepted:2", "patch": "app DELETE on tombstones"}
+RESULT review_fix_F3 sha256=910e3fd418d6698f9a22c8d851e5c2ea694f72838b7b3cc485becae9f725a2ef file=~/emlab2-16096/writepath/wp/results/review_fix_F3.910e3fd418d6698f.json
+F4 PASS {"property": "'done' requires store-recomputed Postgres residue 0, every registered store counted, and no unregistered store", "pass": true, "fenced_holds": 3, "controls_violated": 3, "cases": {"fabricated_zeros_with_pg_residue": {"fenced": {"done": false, "residue": "pg:facts,pg:subject_not_marked,pg:events_untombstoned"}, "control": {"done": true, "residue": null}, "patch": "wp_erasure_complete takes verify from the caller only"}, "missing_store_count": {"fenced": {"refused": "WPS08"}, "control": {"done": true}, "patch": "store_registry row es:facts removed"}, "unregistered_gate": {"fenced": {"done": false, "gate": 1}, "control": {"done": true, "gate": 0}, "patch": "verifier reports gate:unregistered=0"}}, "params": {"R": 10, "n100k": 100000}}
+RESULT review_fix_F4 sha256=385bc1d5fb75158ae4fc3f964a502ae10db47e31a531aabec0ad545db8298b1b file=~/emlab2-16096/writepath/wp/results/review_fix_F4.385bc1d5fb75158a.json
+F5 PASS {"property": "the store binds decisions to the approval, the tenant-wide head, one source, typed user sources and the request", "pass": true, "fenced": {"a1_execute_reading_head_after_amend": "refused:WPS05", "a2_execute_citing_superseded_approval": "refused:WPS05", "b1_execute_after_cross_session_reapproval": "refused:WPS05", "b2_execute_after_cross_session_amend": "refused:WPS05", "c1_second_decision_same_source": "refused:WPS13", "c2_decision_as_source": "refused:WPS04", "d1_same_key_different_content": "refused:idem", "pos_execute_current_approval": "accepted", "pos_first_decision": "accepted", "pos_same_key_other_session_is_own_event": "accepted"}, "controls": {"a1_execute_reading_head_after_amend": "accepted", "a2_execute_citing_superseded_approval": "accepted", "b1_execute_after_cross_session_reapproval": "accepted", "b2_execute_after_cross_session_amend": "accepted", "c1_second_d
+RESULT review_fix_F5 sha256=2866eedc45bc062f541b41b88ab4a86b4d7f032536c25d3d3bf5efbef0d11a56 file=~/emlab2-16096/writepath/wp/results/review_fix_F5.2866eedc45bc062f.json
+F7 PASS {"property": "an alias response with errors:true is an error (stubbed response)", "pass": true, "outcome": "raised ESError", "params": {"R": 10, "n100k": 100000}}
+RESULT review_fix_F7 sha256=70cc00deff489b2593266ab6219cd92260fdac95b21667675b67be7d64fbbd4b file=~/emlab2-16096/writepath/wp/results/review_fix_F7.70cc00deff489b25.json
+F1S PASS {"fenced": {"holds": 10, "violated": 0, "errors": 0, "runs": [{"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"c4eb16": false, "8f1606": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"fea83b": false, "1a7500": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"031541": false, "e33ce9": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"2c8f17": false, "d3b7b9": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": 
+RESULT review_fix_F1S sha256=df8cfe29f8d8d82f8df2388c3ac6ae20ca3cde19b5f8b86904b32850f5ff99ae file=~/emlab2-16096/writepath/wp/results/review_fix_F1S.df8cfe29f8d8d82f.json
+F6 PASS {"takeover": {"fenced": {"holds": 3, "violated": 0, "errors": 0, "runs": [{"holds": true, "why": "takeover 4.05s", "witness": {"stall_s": 20.0, "takeover_s": 4.05, "lock_timeout_retries": 3, "zombie_outcome": "error OperationalError", "zombie_events_committed": 0}}, {"holds": true, "why": "takeover 4.02s", "witness": {"stall_s": 20.0, "takeover_s": 4.02, "lock_timeout_retries": 3, "zombie_outcome": "error OperationalError", "zombie_events_committed": 0}}, {"holds": true, "why": "takeover 4.05s", "witness": {"stall_s": 20.0, "takeover_s": 4.05, "lock_timeout_retries": 3, "zombie_outcome": "error OperationalError", "zombie_events_committed": 0}}]}, "control": {"holds": 0, "violated": 3, "errors": 0, "runs": [{"holds": false, "why": "takeover 19.03s", "witness": {"stall_s": 20.0, "takeover_s": 19.03, "lock_timeout_retries": 10, "zombie_outcome": "{'accepted': ['632b2056e13a41bf90c5165c6133c
+RESULT review_fix_F6 sha256=6f25321623fa1a4816f0ab02fed49e82acdb1c9c2dfe236e7b87f365e76da8bd file=~/emlab2-16096/writepath/wp/results/review_fix_F6.6f25321623fa1a48.json
+disk_gate VOID: operator stop (~/emlab2-16096/writepath/wp/state/STOP: ) before -m exp.cleanup exp.review_fix
+VOID: run stopped before -m exp.cleanup exp.review_fix (disk gate)
+end VOID 2026-11-17T07:45:01Z

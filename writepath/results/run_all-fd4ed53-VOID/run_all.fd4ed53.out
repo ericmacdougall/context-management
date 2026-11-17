@@ -1,0 +1,371 @@
+start 2026-11-17T07:56:40Z head fd4ed53 R=10
+disk_gate start free 26.9 GiB own 0.14 GiB (pg 0.09 es 0.00 home 0.05) cap +2.0 GiB
+disk_gate -m exp.cleanup free 26.9 GiB own +-0.00 GiB
+cleanup  indices 112 shards 112 tenants 56 node_shards_total 122 max_shards_per_node 1000
+deleted 112 indices with prefix wp16096-
+disk_gate -m wp.setup --reset free 26.9 GiB own +-0.00 GiB
+setup ok reset
+disk_gate preflight unregistered 0 []
+disk_gate -m exp.guard_check start --controls free 26.9 GiB own +-0.01 GiB
+guard_check start PASS {}
+RESULT guard_check_start sha256=911990eeeb48ec73d86c00f6bdc71c91c224ee4bb5c69e05751da9744692a129 file=~/emlab2-16096/writepath/wp/results/guard_check_start.911990eeeb48ec73.json
+disk_gate -m exp.static_check free 26.9 GiB own +-0.01 GiB
+{'checks': {'S1': [], 'S2': [], 'S3': [], 'S4': [], 'S5': [], 'S6': []}, 'families': ['events', 'facts'], 'tables': ['leases', 'subjects', 'identifier_epochs', 'subject_identifiers', 'chains', 'events', 'decision_heads', 'quarantine', 'quarantine_quota', 'tombstones', 'inbox', 'analyst_jobs', 'facts', 'cursors', 'store_registry', 'erasure_jobs', 'erasure_mentions', 'erasure_withheld', 'erasure_rescanned', 'legal_holds'], 'controls_fail': {'S1': True, 'S2': True, 'S3': True, 'S4': True, 'S5': True, 'S6': True}}
+RESULT static_check sha256=06c7fa46c812b906cc3bbf6113c5ca2b46ee37b5756537c0e3bd26b6a00dddec file=~/emlab2-16096/writepath/wp/results/static_check.06c7fa46c812b906.json
+disk_gate exp.es_semantics free 26.9 GiB own +-0.01 GiB
+ "pass": true
+}
+RESULT es_semantics sha256=88f26f9724089819614af64f6974d472ea43d0a07b08e05c51e627e357a2490d file=~/emlab2-16096/writepath/wp/results/es_semantics.88f26f9724089819.json
+disk_gate -m exp.cleanup exp.es_semantics free 26.9 GiB own +-0.01 GiB
+cleanup exp.es_semantics indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m old_repro.n_old free 26.9 GiB own +-0.01 GiB
+N1 {"property": "erased subject X absent from the live events index after erasure completes", "property_holds": false, "witness": {"rows_read_before_erasure": 1, "read_contained_X": true, "receipt_es_event_docs": 0, "job_state": ["done"], "X_docs_in_live_index_after": 1, "projector_exc": "OperationalError"}}
+N2 {"property": "erasure purges X from every index family (ev2 included)", "property_holds": false, "witness": {"X_in_ev2_before": 1, "X_in_ev2_after": 1, "X_in_events_after": 0, "receipt_rebuilt": [["events", 227, ["sys-n2old-events-b00227-g1", "sys-n2old-events-b00227-g2", 1]]], "job_state": ["done"]}}
+N3 {"property": "after B erases Y, Y is absent from every index of the tenant", "property_holds": false, "witness": {"A_survivor_read_had_Y": true, "B_receipt_es_event_docs": 0, "Y_docs_live": 1, "Y_docs_any_index": 1, "A_exc": "OperationalError", "job_states": ["key_destroyed", "done"]}}
+N4 {"property": "job reaches done only with verification zero; reader hides tombstoned events after done", "property_holds": false, "witness": {"job_states": ["done"], "receipt_es_event_docs": 1, "reader_served_X_event_after_done": ["n4old/s1/2"]}}
+N5 {"property": "no read path serves an erased fact while the job is pending", "property_holds": false, "witness": {"job_states": ["pending"], "query_facts_hits": 1, "query_facts_leaked": 1, "search_facts_hits": 1}}
+N6 {"property": "no plaintext of an erased subject remains in any Postgres table", "property_holds": false, "witness": {"task_view_rows_with_marker_before": 1, "after_erasure": 1, "job_states": ["done"]}}
+N7 {"property": "stale approval refused; replayed approval refused; retried decision id is a no-op", "property_holds": false, "witness": {"sub": {"a_stale_readback_refused": false, "b_replayed_accept_refused": false, "c_retry_same_id_is_noop": false}, "a_text": "US only", "b_text": "US only", "c_text": "EU only", "c_pending": []}}
+RESULT old_code_N1_N7 sha256=ea00b927d031e0f0ef147cee72907d1d7aa8b9f3dde6e442376bed815abfa5de file=~/emlab2-16096/writepath/wp/results/old_code_N1_N7.ea00b927d031e0f0.json
+disk_gate -m exp.cleanup old_repro.n_old free 26.9 GiB own +-0.02 GiB
+cleanup old_repro.n_old indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.review_fix F3 F4 F5 F7 F1S F6 10 free 26.9 GiB own +-0.02 GiB
+F3 PASS {"property": "the app role cannot bypass the fence or the guards", "pass": true, "fenced_refused": 14, "attacks": 14, "controls_accepted": 14, "cases": {"junk_scope_fact": {"fenced": "refused:WPS12", "control": "accepted:1", "patch": "scope binding removed from wp_fence_trg"}, "lease_direct_insert": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app INSERT on leases (privilege + owner-only trigger)"}, "delete_facts": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app DELETE on facts (privilege + owner-only trigger)"}, "truncate_inbox": {"fenced": "refused:42501", "control": "accepted:-1", "patch": "app TRUNCATE on inbox (privilege + trigger)"}, "reset_erased": {"fenced": "refused:42501", "control": "accepted:1", "patch": "app UPDATE on subjects"}, "delete_tombstones": {"fenced": "refused:42501", "control": "accepted:2", "patch": "app DELETE on tombstones"}
+RESULT review_fix_F3 sha256=58654bf575e69c40876f195f74c9972ad6014643218094566d5373c85304f9fd file=~/emlab2-16096/writepath/wp/results/review_fix_F3.58654bf575e69c40.json
+F4 PASS {"property": "'done' requires store-recomputed Postgres residue 0, every registered store counted, and no unregistered store", "pass": true, "fenced_holds": 3, "controls_violated": 3, "cases": {"fabricated_zeros_with_pg_residue": {"fenced": {"done": false, "residue": "pg:facts,pg:subject_not_marked,pg:events_untombstoned"}, "control": {"done": true, "residue": null}, "patch": "wp_erasure_complete takes verify from the caller only"}, "missing_store_count": {"fenced": {"refused": "WPS08"}, "control": {"done": true}, "patch": "store_registry row es:facts removed"}, "unregistered_gate": {"fenced": {"done": false, "gate": 1}, "control": {"done": true, "gate": 0}, "patch": "verifier reports gate:unregistered=0"}}, "params": {"R": 10, "n100k": 100000}}
+RESULT review_fix_F4 sha256=e47508371a945a10123ccf821b73fc48d6ef4dbeb6ee8708ff30888368eeca02 file=~/emlab2-16096/writepath/wp/results/review_fix_F4.e47508371a945a10.json
+F5 PASS {"property": "the store binds decisions to the approval, the tenant-wide head, one source, typed user sources and the request", "pass": true, "fenced": {"a1_execute_reading_head_after_amend": "refused:WPS05", "a2_execute_citing_superseded_approval": "refused:WPS05", "b1_execute_after_cross_session_reapproval": "refused:WPS05", "b2_execute_after_cross_session_amend": "refused:WPS05", "c1_second_decision_same_source": "refused:WPS13", "c2_decision_as_source": "refused:WPS04", "d1_same_key_different_content": "refused:idem", "pos_execute_current_approval": "accepted", "pos_first_decision": "accepted", "pos_same_key_other_session_is_own_event": "accepted"}, "controls": {"a1_execute_reading_head_after_amend": "accepted", "a2_execute_citing_superseded_approval": "accepted", "b1_execute_after_cross_session_reapproval": "accepted", "b2_execute_after_cross_session_amend": "accepted", "c1_second_d
+RESULT review_fix_F5 sha256=bf91d81948b0b80ac0e21bcc6da3c698ad44cbf045de8d776577331b443f1410 file=~/emlab2-16096/writepath/wp/results/review_fix_F5.bf91d81948b0b80a.json
+F7 PASS {"property": "an alias response with errors:true is an error (stubbed response)", "pass": true, "outcome": "raised ESError", "params": {"R": 10, "n100k": 100000}}
+RESULT review_fix_F7 sha256=82f0808fece74b096c8eb47d230f8c25799041a1a5598e6187d62569ba1420fb file=~/emlab2-16096/writepath/wp/results/review_fix_F7.82f0808fece74b09.json
+F1S PASS {"fenced": {"holds": 10, "violated": 0, "errors": 0, "runs": [{"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"c3ce3a": false, "b5ac78": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"5738c2": false, "9517f8": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"7d26dc": false, "0874ed": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": {"31b18e": false, "b8a190": true}}}, {"holds": true, "why": "", "witness": {"states": {"A": "marked", "B": "done"}, "A_claim_released": true, "injected_failures": 1, "sweep": 
+RESULT review_fix_F1S sha256=96d5057272e17085f0ce8b90f2b7a9aa5eb7425ca94770e8bf7a5c14dd12da94 file=~/emlab2-16096/writepath/wp/results/review_fix_F1S.96d5057272e17085.json
+F6 PASS {"takeover": {"fenced": {"holds": 3, "violated": 0, "errors": 0, "runs": [{"holds": true, "why": "takeover 4.02s", "witness": {"stall_s": 20.0, "takeover_s": 4.02, "lock_timeout_retries": 3, "zombie_outcome": "error OperationalError", "zombie_events_committed": 0}}, {"holds": true, "why": "takeover 4.02s", "witness": {"stall_s": 20.0, "takeover_s": 4.02, "lock_timeout_retries": 3, "zombie_outcome": "error OperationalError", "zombie_events_committed": 0}}, {"holds": true, "why": "takeover 4.02s", "witness": {"stall_s": 20.0, "takeover_s": 4.02, "lock_timeout_retries": 3, "zombie_outcome": "error OperationalError", "zombie_events_committed": 0}}]}, "control": {"holds": 0, "violated": 3, "errors": 0, "runs": [{"holds": false, "why": "takeover 19.03s", "witness": {"stall_s": 20.0, "takeover_s": 19.03, "lock_timeout_retries": 10, "zombie_outcome": "{'accepted': ['8f6bbade778645929eb67b7ff12ce
+RESULT review_fix_F6 sha256=f0fdde0ee7b3122c951ddf454d36187df697ab216a217c92c150d461eb225d69 file=~/emlab2-16096/writepath/wp/results/review_fix_F6.f0fdde0ee7b3122c.json
+disk_gate -m exp.cleanup exp.review_fix free 26.7 GiB own +0.00 GiB
+cleanup exp.review_fix indices 112 shards 112 tenants 56 node_shards_total 122 max_shards_per_node 1000
+deleted 112 indices with prefix wp16096-
+disk_gate -m exp.review_fix F1 free 26.7 GiB own +-0.00 GiB
+F1 PASS {"property": "erasure of one subject with N events completes (done) with zero residue in every store", "N_events": 100000, "property_holds": true, "witness": {"X_docs_before": 100100, "X_docs_after": 0, "Y_docs_after": 3, "append_s": 103.2, "project_s": 6.7, "receipt": {"done": true, "error_type": null, "verify": {"es:facts": 0, "pg:facts": 0, "pg:inbox": 0, "es:events": 0, "pg:quarantine": 0, "pg:identifiers": 0, "es:soft_deleted": 0, "pg:analyst_jobs": 0, "gate:unregistered": 0, "keys:subject_keys": 0, "pg:content_present": 0, "pg:withheld_by_hold": 0, "keys:physical_pending": 0, "pg:mentions_unscanned": 0, "pg:subject_not_marked": 0, "pg:events_untombstoned": 0, "pg:quarantine_mentions": 0, "es:tombstoned_not_placeholder": 0}, "steps": {"mark_s": 0.009, "rescan_s": 0.0, "rescan_scanned": 0, "rescan_found": 0, "cascade_s": 16.251, "cascade_batches": 27, "cascade_batch_s": [3.685, 1.201
+RESULT review_fix_F1 sha256=b065613dc7ec7f1445b317cecc64829cbc08ec0cb1edb7b335004e4c47ed1083 file=~/emlab2-16096/writepath/wp/results/review_fix_F1.b065613dc7ec7f14.json
+disk_gate -m exp.cleanup exp.review_fix free 26.6 GiB own +0.17 GiB
+cleanup exp.review_fix indices 2 shards 2 tenants 1 node_shards_total 12 max_shards_per_node 1000
+deleted 2 indices with prefix wp16096-
+disk_gate -m exp.scope_hold M H 3 free 26.6 GiB own +0.17 GiB
+M PASS {"fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "ctl_write_matcher": {"holds": 0, "violated": 3, "errors": 0, "why": ["done=True over=['zqe9fdm01x', 'zqe9fdm02x', 'zqe9fdm03x', 'zqe9fdm04x'] under=[] counts_ok=False", "done=True over=['zqbe43m01x', 'zqbe43m02x', 'zqbe43m03x', 'zqbe43m04x'] under=[] counts_ok=False", "done=True over=['zq8fa6m01x', 'zq8fa6m02x', 'zq8fa6m03x', 'zq8fa6m04x'] under=[] counts_ok=False"]}, "norescan_fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "ctl_norescan": {"holds": 0, "violated": 3, "errors": 0, "why": ["done=True over=['zq0e70m12x', 'zq0e70m13x'] under=[] counts_ok=False", "done=True over=['zq3f15m12x', 'zq3f15m13x'] under=[] counts_ok=False", "done=True over=['zq536em12x', 'zq536em13x'] under=[] counts_ok=False"]}}
+RESULT scope_hold_M sha256=f8cb194bfe806cbbd6430af9714bb24b69106d2c7eb1ccd4a1596b522dcccde1 file=~/emlab2-16096/writepath/wp/results/scope_hold_M.f8cb194bfe806cbb.json
+H PASS {"fenced": {"holds": 3, "violated": 0, "errors": 0, "why": ["", "", ""]}, "control": {"holds": 0, "violated": 3, "errors": 0, "why": ["cases=[False, False, False]", "cases=[False, False, False]", "cases=[False, False, False]"]}}
+RESULT scope_hold_H sha256=e2f6504ebcd3fd177d2e6f11a554dcd28cf009115a4c83886bfab3f43e8ee757 file=~/emlab2-16096/writepath/wp/results/scope_hold_H.e2f6504ebcd3fd17.json
+disk_gate -m exp.cleanup exp.scope_hold free 27.0 GiB own +0.17 GiB
+cleanup exp.scope_hold indices 60 shards 60 tenants 30 node_shards_total 70 max_shards_per_node 1000
+deleted 60 indices with prefix wp16096-
+disk_gate -m exp.n_new 10 free 27.0 GiB own +0.17 GiB
+N1 PASS fenced 10 / 10 control violated 10 / 10 errors {'fenced': 0, 'control': 0}
+  sample fenced witness: {"holds": true, "why": "", "witness": {"rows_read_with_X": 1, "overlap": true, "step_result": 1, "refused_bulk_items": 0, "X_docs_all_indices": 0, "Y_docs_live_after_recovery": 1, "erase_done": true}}
+  sample control witness: {"holds": false, "why": "X leaked into ES after erasure done", "witness": {"rows_read_with_X": 1, "overlap": true, "step_result": 1, "refused_bulk_items": 0, "X_docs_all_indices": 1, "Y_docs_live_after_recovery": 1, "erase_done": true}}
+RESULT new_N1 sha256=09c8bf23365ad48c8a174a96644cf393a6a32af8f7049d1362d2d1ea20940147 file=~/emlab2-16096/writepath/wp/results/new_N1.09c8bf23365ad48c.json
+N2 PASS fenced 10 / 10 control violated 10 / 10 errors {'fenced': 0, 'control': 0}
+  sample fenced witness: {"holds": true, "why": "", "witness": {"families_enumerated": 2, "X_docs_before_per_family": {"events": 2, "facts": 1}, "X_docs_all_indices_after": 0, "receipt_done": true, "receipt_verify": {"es:facts": 0, "pg:facts": 0, "pg:inbox": 0, "es:events": 0, "pg:quarantine": 0, "pg:identifiers": 0, "es:soft_deleted": 0, "pg:analyst_jobs": 0, "gate:unregistered": 0, "keys:subject_keys": 0, "pg:content_present": 0, "pg:withheld_by_hold": 0, "keys:physical_pending": 0, "pg:mentions_unscanned": 0, "pg:subject_not_marked": 0, "pg:events_untombstoned": 0, "pg:quarantine_mentions": 0, "es:tombstoned_not_placeholder": 0}, "unregistered_flagged": []}}
+  sample control witness: {"holds": false, "why": "residue in an unregistered family flagged:es-index:wp16096-n2901d32-ev2-base", "witness": {"families_enumerated": 2, "X_docs_before_per_family": {"events": 2, "facts": 1}, "X_docs_all_indices_after": 1, "receipt_done": false, "receipt_verify": {"es:facts": 0, "pg:facts": 0, "pg:inbox": 0, "es:events": 0, "pg:quarantine": 0, "pg:identifiers": 0, "es:soft_deleted": 0, "pg:analyst_jobs": 0, "gate:unregistered": 1, "keys:subject_keys": 0, "pg:content_present": 0, "pg:withheld_by_hold": 0, "keys:physical_pending": 0, "pg:mentions_unscanned": 0, "pg:subject_not_marked": 0, "pg:events_untombstoned": 0, "pg:quarantine_mentions": 0, "es:tombstoned_not_placeholder": 0}, "unreg
+RESULT new_N2 sha256=207434f9358b3e96ed0612a49b70194849211cd6f55d5ec2079dc267f42a336b file=~/emlab2-16096/writepath/wp/results/new_N2.207434f9358b3e96.json
+N5 PASS fenced 10 / 10 control violated 10 / 10 errors {'fenced': 0, 'control': 0}
+  sample fenced witness: {"holds": true, "why": "", "witness": {"job_state_while_pending": "marked", "raw_es_docs_of_X": 3, "served": 0}}
+  sample control witness: {"holds": false, "why": "erased fact/event served while pending", "witness": {"job_state_while_pending": "marked", "raw_es_docs_of_X": 3, "served": 3}}
+RESULT new_N5 sha256=4a1eb0ef7dec78910ecc993feca009e6af60c887393887b5654d5212ca2b29d8 file=~/emlab2-16096/writepath/wp/results/new_N5.4a1eb0ef7dec7891.json
+N8 PASS fenced 10 / 10 control violated 10 / 10 errors {'fenced': 0, 'control': 0}
+  sample fenced witness: {"holds": true, "why": "", "witness": {"derive_read_has_X": true, "t_read": "2026-11-17 08:57:36.330895+00:00", "erase": "keys:subject_keys", "t_erase_done": "2026-11-17 08:58:07.188047+00:00", "inbox_after_erasure": "WPS03", "derive": "DatabaseError", "t_write": "2026-11-17 08:58:07.218228+00:00", "residue_after": {"pg:facts": 0, "pg:inbox": 0, "pg:quarantine": 0, "pg:identifiers": 0, "pg:analyst_jobs": 0, "pg:content_present": 0, "pg:withheld_by_hold": 0, "pg:mentions_unscanned": 0, "pg:subject_not_marked": 0, "pg:events_untombstoned": 0, "pg:quarantine_mentions": 0}, "es_X_after": 0, "overlap": true}}
+  sample control witness: {"holds": false, "why": "residue {'pg:facts': 1, 'pg:inbox': 1} es 0", "witness": {"derive_read_has_X": true, "t_read": "2026-11-17 09:02:56.256205+00:00", "erase": "keys:subject_keys", "t_erase_done": "2026-11-17 09:03:27.099748+00:00", "inbox_after_erasure": "accepted", "derive": 1, "t_write": "2026-11-17 09:03:27.132338+00:00", "residue_after": {"pg:facts": 1, "pg:inbox": 1, "pg:quarantine": 0, "pg:identifiers": 0, "pg:analyst_jobs": 0, "pg:content_present": 0, "pg:withheld_by_hold": 0, "pg:mentions_unscanned": 0, "pg:subject_not_marked": 0, "pg:events_untombstoned": 0, "pg:quarantine_mentions": 0}, "es_X_after": 0, "overlap": true}}
+RESULT new_N8 sha256=6c84859883e95c7280cb650cc7f22b9549d08f1e9062105563e646dee9501669 file=~/emlab2-16096/writepath/wp/results/new_N8.6c84859883e95c72.json
+disk_gate -m exp.cleanup exp.n_new free 25.2 GiB own +0.18 GiB
+cleanup exp.n_new indices 160 shards 160 tenants 80 node_shards_total 170 max_shards_per_node 1000
+deleted 160 indices with prefix wp16096-
+disk_gate -m exp.row1_zombie 10 free 25.2 GiB own +0.17 GiB
+before_txn fenced {'holds': 10, 'violated': 0, 'errors': 0} {"holds": true, "why": "", "witness": {"zombie_attempts": 20, "accepted": 0, "quarantined": 20, "chain_ok": true, "chain_len": 8, "chain_epochs": [1, 2], "zombie_events_in_chain_after_takeover": 0, "zombie_analyst_jobs": 0, "inbox_shown": 1, "inbox_confirmed_epoch": 2, "B_epoch": 2, "zombie_inbox": [["naive_claim", "refused"], ["naive_confirm", "refused"]], "B_confirm": true, "es_zombie_docs": 0, "overlap": "2026-11-17 09:08:18.477194+00:00 < 2026-11-17 09:08:18.598771+00:00 < 2026-11-17 09:08:19.481839+00:00 < 2026-11-17 09:08:19.485504+00:00", "overlap_ok": true}}
+before_txn control {'holds': 0, 'violated': 10, 'errors': 0} {"holds": false, "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20", "witness": {"zombie_attempts": 20, "accepted": 20, "quarantined": 0, "chain_ok": true, "chain_len": 28, "chain_epochs": [1, 2], "zombie_events_in_chain_after_takeover": 20, "zombie_analyst_jobs": 20, "inbox_shown": 2, "inbox_confirmed_epoch": 1, "B_epoch": 2, "zombie_inbox": [["naive_claim", true], ["naive_confirm", true]], "B_confirm": false, "es_zombie_docs": null, "overlap": "2026-11-17 09:08:32.677073+00:00 < 2026-11-17 09:08:32.703012+00:00 < 2026-11-17 09:08:33.685426+00:00 < 2026-11-17 09:08:33.688892+00:00"
+in_txn fenced {'holds': 10, 'violated': 0, 'errors': 0} {"holds": true, "why": "", "witness": {"zombie_attempts": 20, "accepted": 0, "quarantined": 20, "chain_ok": true, "chain_len": 8, "chain_epochs": [1, 2], "zombie_events_in_chain_after_takeover": 0, "zombie_analyst_jobs": 0, "inbox_shown": 1, "inbox_confirmed_epoch": 2, "B_epoch": 2, "zombie_inbox": [["naive_claim", "refused"], ["naive_confirm", "refused"]], "B_confirm": true, "es_zombie_docs": 0, "overlap": "2026-11-17 09:08:44.323273+00:00 < 2026-11-17 09:08:44.353273+00:00 < 2026-11-17 09:08:45.342615+00:00 < 2026-11-17 09:08:45.345816+00:00", "overlap_ok": true}}
+in_txn control {'holds': 0, 'violated': 10, 'errors': 0} {"holds": false, "why": "accepted=20 shown=2 confirmed_epoch=1 zombie_jobs=20", "witness": {"zombie_attempts": 20, "accepted": 20, "quarantined": 0, "chain_ok": true, "chain_len": 28, "chain_epochs": [1, 2], "zombie_events_in_chain_after_takeover": 20, "zombie_analyst_jobs": 20, "inbox_shown": 2, "inbox_confirmed_epoch": 1, "B_epoch": 2, "zombie_inbox": [["naive_claim", true], ["naive_confirm", true]], "B_confirm": false, "es_zombie_docs": null, "overlap": "2026-11-17 09:08:58.501356+00:00 < 2026-11-17 09:08:58.523082+00:00 < 2026-11-17 09:08:59.502620+00:00 < 2026-11-17 09:08:59.505867+00:00"
+PASS
+RESULT row1_zombie sha256=418fb55911e241ae248ae8e4d0224a2fd5571b036aae4eb488b8ca58db8b584a file=~/emlab2-16096/writepath/wp/results/row1_zombie.418fb55911e241ae.json
+disk_gate -m exp.cleanup exp.row1_zombie free 25.2 GiB own +0.17 GiB
+cleanup exp.row1_zombie indices 40 shards 40 tenants 20 node_shards_total 50 max_shards_per_node 1000
+deleted 40 indices with prefix wp16096-
+disk_gate -m exp.row23_latecommit 10 free 25.2 GiB own +0.17 GiB
+{'R': 10, 'control_violated': 10, 'fenced_holds': 10, 'pass': True} {'events_total': 11, 'during_stall': {'naive_seen': 10, 'xmin_projected': 0}, 'naive_projected': 10, 'naive_skipped_H': True, 'xmin_projected': 11, 'xmin_has_H': True, 'H_first_in_commit_xid_order': True}
+RESULT row23_latecommit sha256=675e40a5be51644762c244e4966ba09b4ea9a6e599769d0dd015d9d5843c4521 file=~/emlab2-16096/writepath/wp/results/row23_latecommit.675e40a5be516447.json
+disk_gate -m exp.cleanup exp.row23_latecommit free 25.2 GiB own +0.17 GiB
+cleanup exp.row23_latecommit indices 20 shards 20 tenants 10 node_shards_total 30 max_shards_per_node 1000
+deleted 20 indices with prefix wp16096-
+disk_gate -m exp.e_verify 10 free 25.2 GiB own +0.17 GiB
+e_verify PASS {"a_no_verify": {"fenced_refused": 10, "control_accepted": 10, "patch": "ab", "sample": ["refused:23514", "accepted:1"]}, "b_verify_false": {"fenced_refused": 10, "control_accepted": 10, "patch": "ab", "sample": ["refused:23514", "accepted:1"]}, "c_stale_claimant": {"fenced_refused": 10, "control_accepted": 10, "patch": "c", "sample": ["refused:WPS07", "accepted:1"]}, "d_input_erased": {"fenced_refused": 10, "control_accepted": 10, "patch": "d", "sample": ["refused:WPS03", "accepted:1"]}} e_proper 10
+RESULT e_verify sha256=0f18b8901f0bb673abfe241f699efb9fd060b21b145f8d70e3a3e7e31b23d202 file=~/emlab2-16096/writepath/wp/results/e_verify.0f18b8901f0bb673.json
+disk_gate -m exp.cleanup exp.e_verify free 25.2 GiB own +0.17 GiB
+cleanup exp.e_verify indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.registry_marker 10 free 25.2 GiB own +0.17 GiB
+registry_marker PASS fenced 10 / 10 controls violated {'ctl_no_placeholders': 10, 'ctl_key_kept': 10}
+  sample fenced: {'before': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 4, 'es_api_Y': 3, 'pg_disk_files_X': 0, 'pg_disk_positive_control_old_plaintext': 1, 'es_disk_files_X': 2, 'keydb_disk_files_keyhex': 2}, 'after': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 0, 'es_api_Y': 3, 'es_disk_files_X': 0, 'es_disk_files_Y': 2, 'keydb_disk_files_keyhex': 0, 'keydb_disk_paths_keyhex': []}, 'controls_flagged': {'table': True, 'index': True, 'logfile': True}}
+  sample controls: {'ctl_no_placeholders': {'es_X_files': 2, 'keyhex_files': 0, 'es_api_X': 4}, 'ctl_key_kept': {'es_X_files': 0, 'keyhex_files': 2, 'es_api_X': 0}}
+RESULT registry_marker sha256=45698c6e79c7d46345151b1e305f9415ef0f4073844e33101cb2afc518a2ef3c file=~/emlab2-16096/writepath/wp/results/registry_marker.45698c6e79c7d463.json
+disk_gate -m exp.cleanup exp.registry_marker free 22.2 GiB own +0.17 GiB
+cleanup exp.registry_marker indices 60 shards 60 tenants 30 node_shards_total 70 max_shards_per_node 1000
+deleted 60 indices with prefix wp16096-
+disk_gate -m exp.d1_hold_mentions 5 free 22.2 GiB own +0.17 GiB
+D1 PASS {"fenced": {"S1": [5, 0], "S2": [5, 0], "S3": [5, 0]}, "controls": {"ctl_apply_ignores_holds:S1": [5, 0], "ctl_apply_ignores_holds:S2": [5, 0], "ctl_app_can_release:S3": [5, 0]}}
+RESULT d1_hold_mentions sha256=48915b2760a8ca0cfe189b653f9489ee7920514a141f974852b93492afd4f976 file=~/emlab2-16096/writepath/wp/results/d1_hold_mentions.48915b2760a8ca0c.json
+disk_gate -m exp.cleanup exp.d1_hold_mentions free 22.3 GiB own +0.17 GiB
+cleanup exp.d1_hold_mentions indices 40 shards 40 tenants 20 node_shards_total 50 max_shards_per_node 1000
+deleted 40 indices with prefix wp16096-
+disk_gate -m exp.d4_rescan_es 5 free 22.3 GiB own +0.17 GiB
+D4 PASS {"fenced": [5, 0, 0], "control": [0, 5, 0]} {"holds": true, "witness": {"done": false, "residue": "es:tombstoned_not_placeholder", "rescan_found": 1, "es_docs_with_marker": 1}} {"holds": false, "witness": {"done": true, "residue": null, "rescan_found": 1, "es_docs_with_marker": 1}}
+RESULT d4_rescan_es sha256=8b6f31700c02fc88d03f19c76f6114b6f6cf86258e3dc60dd281d3f880f22667 file=~/emlab2-16096/writepath/wp/results/d4_rescan_es.8b6f31700c02fc88.json
+disk_gate -m exp.cleanup exp.d4_rescan_es free 22.3 GiB own +0.17 GiB
+cleanup exp.d4_rescan_es indices 20 shards 20 tenants 10 node_shards_total 30 max_shards_per_node 1000
+deleted 20 indices with prefix wp16096-
+disk_gate -m exp.row19_secrets free 22.3 GiB own +0.17 GiB
+row19 PASS {"catch_lb_ge_0.98": true, "false_block_ub_le_0.01": true, "ctl_nodecode_violated": true, "fenced_scanner_refused": true, "fenced_store_refused_WPS21": true, "ctl_noscan_violated": true}
+  planted 880 / 880 (0.9957, 1.0) missed {}
+  out_of_scope {"slack_token/split_two_writes_first_half": 10, "llm_api_key/split_two_writes_first_half": 10, "private_key_block/split_two_writes_first_half": 10, "url_credentials/rot13": 10}
+  clean 2 / 3862 (0.0001, 0.0019) [{"where": "/usr/lib/python3.12/getpass.py:1", "detectors": ["generic_assignment"]}, {"where": "/usr/lib/python3.12/getpass.py:81", "detectors": ["generic_assignment"]}]
+  ctl_nodecode 340 / 880 (0.3548, 0.419)
+  store {"fenced_scanner": "refused:['github_token']", "fenced_scanner_rows": [0, 0], "fenced_store": "refused:WPS21", "fenced_store_rows": [0, 0], "ctl_noscan": "stored", "ctl_noscan_rows": [1, 0]}
+RESULT row19_secrets sha256=c2258cc3ad8cc943b01334d8cba2d8315e21a0a16f9e67896a55a6ba8ef8afad file=~/emlab2-16096/writepath/wp/results/row19_secrets.c2258cc3ad8cc943.json
+disk_gate -m exp.cleanup exp.row19_secrets free 22.3 GiB own +0.17 GiB
+cleanup exp.row19_secrets indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.heldout_secrets free 22.3 GiB own +0.17 GiB
+heldout_secrets FAIL {"H1_in_scope": {"n": 1169, "caught": 483, "rate": 0.4132, "wilson95": [0.3853, 0.4416]}, "H2_in_scope": {"n": 750, "caught": 150, "rate": 0.2, "wilson95": [0.1729, 0.2301]}, "H1_negatives_blocked": {"n": 1200, "caught": 37, "rate": 0.0308, "wilson95": [0.0225, 0.0422]}, "H1_out_of_scope": {"n": 31, "caught": 1, "rate": 0.0323, "wilson95": [0.0057, 0.1619]}, "H2_out_of_scope": {"n": 50, "caught": 0, "rate": 0.0, "wilson95": [0.0, 0.0714]}, "control": {"items": 576, "shipped": {"n": 576, "caught": 212, "rate": 0.3681, "wilson95": [0.3297, 0.4082]}, "nodecode": {"n": 576, "caught": 25, "rate": 0.0434, "wilson95": [0.0296, 0.0633]}, "gap": 0.3247}, "why": ["H1 in-scope Wilson lower 0.3853 < 0.95", "H2 in-scope Wilson lower 0.1729 < 0.95", "H1 false-block Wilson upper 0.0422 > 0.02"]}
+RESULT heldout_secrets sha256=2e854942e98843601ba85d870aea7073d9622620af6b96fc19e3ee051631a331 file=~/emlab2-16096/writepath/wp/results/heldout_secrets.2e854942e9884360.json
+disk_gate -m exp.row6_chain 10 free 22.3 GiB own +0.17 GiB
+row6 PASS {"A_forged_append": {"fenced": [10, 0, 0], "control": [0, 10, 0]}, "B_app_guard_tamper": {"fenced": [10, 0, 0], "control": [0, 10, 0]}, "C_lost_tail": {"fenced": [10, 0, 0], "control": [0, 10, 0]}, "D_regressed_head": {"fenced": [10, 0, 0], "control": [0, 10, 0]}}
+  A_forged_append {"fenced": {"holds": true, "witness": {"forged_verifies": false}}, "control": {"holds": false, "witness": {"forged_verifies": true}}}
+  B_app_guard_tamper {"fenced": {"holds": true, "witness": {"disable_guard_trigger": "refused:42501", "disable_user_triggers": "refused:42501", "drop_guard_trigger": "refused:42501", "replace_guard_function": "refused:42501", "replication_role_replica": "refused:42501"}}, "control": {"holds": false, "witness": {"disable_guard_trigger": "accepted", "disable_user_triggers": "accepted", "drop_guard_trigger": "accepted", "replace_guard_function": "accepted", "replication_role_replica": "refused:42501"}}}
+  C_lost_tail {"fenced": {"holds": true, "witness": {"k": 4, "chain_ok": true, "anchor_findings": ["truncated"]}}, "control": {"holds": false, "witness": {"k": 5, "chain_ok": true}}}
+  D_regressed_head {"fenced": {"holds": true, "witness": {"k": 3, "chain_ok": true, "anchor_findings": ["rewritten"]}}, "control": {"holds": false, "witness": {"k": 1, "chain_ok": true}}}
+RESULT row6_chain sha256=73f53c480fd78290fa14d218475a79d09d0b983a5b356b8c375d992a76587e12 file=~/emlab2-16096/writepath/wp/results/row6_chain.73f53c480fd78290.json
+disk_gate -m exp.cleanup exp.row6_chain free 22.3 GiB own +0.17 GiB
+cleanup exp.row6_chain indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.d4_store_mark 5 free 22.3 GiB own +0.17 GiB
+d4_store_mark {'pass': True, 'why': []}
+RESULT d4_store_mark sha256=9501473577962a0711896f1ce0e1fa53b8bd5cd93b26e2c7a7673f3b617932da file=~/emlab2-16096/writepath/wp/results/d4_store_mark.9501473577962a07.json
+disk_gate -m exp.cleanup exp.d4_store_mark free 22.3 GiB own +0.17 GiB
+cleanup exp.d4_store_mark indices 0 shards 0 tenants 0 node_shards_total 10 max_shards_per_node 1000
+deleted 0 indices with prefix wp16096-
+disk_gate -m exp.d3_identifier 5 free 22.3 GiB own +0.17 GiB
+d3_identifier {'pass': True, 'why': []}
+RESULT d3_identifier sha256=9641209a9dd8e318dab99e55850688dc65b2431045f71b9c7a9e743714591b8f file=~/emlab2-16096/writepath/wp/results/d3_identifier.9641209a9dd8e318.json
+disk_gate -m exp.cleanup exp.d3_identifier free 22.3 GiB own +0.17 GiB
+cleanup exp.d3_identifier indices 20 shards 20 tenants 10 node_shards_total 30 max_shards_per_node 1000
+deleted 20 indices with prefix wp16096-
+disk_gate -m exp.mutual_mentions 5 10 5 free 22.3 GiB own +0.17 GiB
+mutual_mentions PASS {"seq": {"R": 5, "holds": 5, "violated": 0, "errors": 0, "overlapped": 0}, "conc": {"R": 10, "holds": 10, "violated": 0, "errors": 0, "overlapped": 10}, "control": {"R": 5, "holds": 0, "violated": 5, "errors": 0, "overlapped": 0}}
+RESULT mutual_mentions sha256=fe57fff426430e85aed42a03c87fe49912ef6fb0749b599161b8ba4ab4f2be72 file=~/emlab2-16096/writepath/wp/results/mutual_mentions.fe57fff426430e85.json
+disk_gate -m exp.cleanup exp.mutual_mentions free 20.2 GiB own +0.17 GiB
+cleanup exp.mutual_mentions indices 40 shards 40 tenants 20 node_shards_total 50 max_shards_per_node 1000
+deleted 40 indices with prefix wp16096-
+disk_gate -m exp.lock_order free 20.2 GiB own +0.17 GiB
+lock_order PASS {"MM": {"R": 30, "holds": 30, "deadlocked": 0, "errors": 0}, "MK": {"R": 5, "holds": 5, "deadlocked": 0, "errors": 0}, "HP": {"R": 5, "holds": 5, "deadlocked": 0, "errors": 0}, "HR": {"R": 5, "holds": 5, "deadlocked": 0, "errors": 0}, "DA": {"R": 30, "holds": 30, "deadlocked": 0, "errors": 0}, "M2": {"R": 10, "holds": 10, "deadlocked": 0, "errors": 0}, "MM_prefix_hold_check": {"R": 10, "deadlocked": 10, "errors": 0}, "DA_prefix_declare": {"R": 10, "deadlocked": 10, "errors": 0}, "MS": [{"share_granted_while_mark_waited": 59, "share_queued_behind_mark": 0, "starved": true, "mark_err": "57014 QueryCanceled: canceling statement due to statement timeout", "mark_wait_s": 30.0, "state_after": "requested", "state_after_sweep": "logically_erased"}, {"share_granted_while_mark_waited": 59, "share_queued_behind_mark": 0, "starved": true, "mark_err": "57014 QueryCanceled: canceling statement due to statement timeout", "mark_wait_s": 30.0, "state_after": "requested", "state_after_sweep": "logically_erased"}, {"share_granted_while_mark_waited": 59, "share_queued_behind_mark": 0, "starved": true, "mark_err": "57014 QueryCanceled: canceling statement due to statement timeout", "mark_wait_s": 30.0, "state_after": "requested", "state_after_sweep": "logically_erased"}]}
+RESULT lock_order sha256=d7c0052d594b0ed31525bf2a9de48178dc6e4879cb69d7ccd70454bff7b11247 file=~/emlab2-16096/writepath/wp/results/lock_order.d7c0052d594b0ed3.json
+disk_gate -m exp.cleanup exp.lock_order free 20.2 GiB own +0.18 GiB
+cleanup exp.lock_order indices 136 shards 136 tenants 68 node_shards_total 146 max_shards_per_node 1000
+deleted 136 indices with prefix wp16096-
+disk_gate -m exp.d2_verifier_process 5 free 20.2 GiB own +0.17 GiB
+d2_verifier_process {'pass': True, 'why': []}
+RESULT d2_verifier_process sha256=0816cabbf1efb7288dbb561b6ab64f2f624a9e8975926c78a773e216164b627c file=~/emlab2-16096/writepath/wp/results/d2_verifier_process.0816cabbf1efb728.json
+disk_gate -m exp.cleanup exp.d2_verifier_process free 20.2 GiB own +0.17 GiB
+cleanup exp.d2_verifier_process indices 20 shards 20 tenants 10 node_shards_total 30 max_shards_per_node 1000
+deleted 20 indices with prefix wp16096-
+disk_gate -m exp.phys_purge free 20.2 GiB own +0.17 GiB
+phys_purge {'pass': True, 'why': []}
+RESULT phys_purge sha256=5ec82be1020072655aea4ed2c0453c3e552c1d7def6e1369a8aa7f180367ae6b file=~/emlab2-16096/writepath/wp/results/phys_purge.5ec82be102007265.json
+disk_gate -m exp.cleanup exp.phys_purge free 20.2 GiB own +0.17 GiB
+cleanup exp.phys_purge indices 20 shards 20 tenants 10 node_shards_total 30 max_shards_per_node 1000
+deleted 20 indices with prefix wp16096-
+disk_gate -m exp.e2e_restored E1 E2 E3 40 free 20.2 GiB own +0.17 GiB
+Process Process-13:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 45, in start
+    F.fence_es(self.es, self.t, self.lease.epoch)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/families.py", line 99, in fence_es
+    raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
+wp.families.StaleEpoch: facts: newer write alias than e1
+Process Process-25:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+Process Process-33:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+Process Process-55:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 45, in start
+    F.fence_es(self.es, self.t, self.lease.epoch)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/families.py", line 99, in fence_es
+    raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
+wp.families.StaleEpoch: facts: newer write alias than e1
+Process Process-77:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+Process Process-95:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+Process Process-101:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+Process Process-117:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+Process Process-133:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 45, in start
+    F.fence_es(self.es, self.t, self.lease.epoch)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/families.py", line 99, in fence_es
+    raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
+wp.families.StaleEpoch: facts: newer write alias than e1
+Process Process-151:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 45, in start
+    F.fence_es(self.es, self.t, self.lease.epoch)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/families.py", line 99, in fence_es
+    raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
+wp.families.StaleEpoch: facts: newer write alias than e1
+Process Process-157:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/e2e_restored.py", line 57, in _e1_p1
+    p.step()
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 169, in step
+    if self.lease is None and not self.start():
+                                  ^^^^^^^^^^^^
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 47, in start
+    self._fenced("insert into cursors(tenant_id, family, lease_scope, lease_epoch) values (%s,%s,%s,%s) on conflict (tenant_id, family) do nothing",
+  File "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/wp/projector.py", line 58, in _fenced
+    raise StaleWrite(str(ex).split("\n")[0]) from None
+wp.log.StaleWrite: stale_epoch scope=projector presented=1 current=2
+E1 FAIL {"fenced": {"runs_total": 40, "overlapped": 28, "errors": 5, "holds_all": 28, "violated_all": 7, "holds_overlapped": 28, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.8794, 1.0], "wilson95_violation_rate_overlapped": [0.0, 0.1206]}, "control": {"runs_total": 40, "overlapped": 23, "errors": 6, "holds_all": 0, "violated_all": 34, "holds_overlapped": 0, "violated_overlapped": 23, "wilson95_hold_rate_overlapped": [-0.0, 0.1431], "wilson95_violation_rate_overlapped": [0.8569, 1.0]}}
+RESULT e2e_E1 sha256=bf4bd8db3b372a495192baab6320b0c7cd1c52922dd788be40551bacf9a5765f file=~/emlab2-16096/writepath/wp/results/e2e_E1.bf4bd8db3b372a49.json
+E2 PASS {"fenced": {"runs_total": 40, "overlapped": 40, "errors": 0, "holds_all": 40, "violated_all": 0, "holds_overlapped": 40, "violated_overlapped": 0, "wilson95_hold_rate_overlapped": [0.9124, 1.0], "wilson95_violation_rate_overlapped": [-0.0, 0.0876]}, "control": {"runs_total": 40, "overlapped": 40, "errors": 0, "holds_all": 0, "violated_all": 40, "holds_overlapped": 0, "violated_overlapped": 40, "wilson95_hold_rate_overlapped": [-0.0, 0.0876], "wilson95_violation_rate_overlapped": [0.9124, 1.0]}, "store_only": {"runs_total": 40, "overlapped": 40, "holds_overlapped": 40, "violated_all": 0, "errors": 0, "wilson95_hold_rate_overlapped": [0.9124, 1.0]}}
+RESULT e2e_E2 sha256=42ffc120fedbc33ef083d39c18b5aa00b00ce7cd2a230c7cc1c0005898710a39 file=~/emlab2-16096/writepath/wp/results/e2e_E2.42ffc120fedbc33e.json
+E3 PASS {}
+RESULT e2e_E3 sha256=b43776ed80b693bc2e9e511bb10243145f34cbe53e040022eef59043c0239950 file=~/emlab2-16096/writepath/wp/results/e2e_E3.b43776ed80b693bc.json
+disk_gate VOID: operator stop (~/emlab2-16096/writepath/wp/state/STOP: ) before -m exp.cleanup exp.e2e_restored
+VOID: run stopped before -m exp.cleanup exp.e2e_restored (disk gate)
+end VOID 2026-11-17T10:24:04Z

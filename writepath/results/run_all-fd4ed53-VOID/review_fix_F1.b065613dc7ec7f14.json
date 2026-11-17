@@ -1,0 +1,151 @@
+{
+ "at": "2026-11-17T08:08:58Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/fd4ed53-20261117T075640Z/exp/review_fix.py F1",
+  "code_commit": "fd4ed53",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   5.2431640625,
+   6.1962890625,
+   9.03662109375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "review_fix_F1",
+ "result": {
+  "N_events": 100000,
+  "cascade_linearity": {
+   "batches": 27,
+   "first5_s": 5.299,
+   "last5_s": 2.529,
+   "linear": true
+  },
+  "control": "aaa0fec at the same property: review_repro F1 (verify ESError, job stuck, lease held, sweep blocked)",
+  "params": {
+   "R": 10,
+   "n100k": 100000
+  },
+  "property": "erasure of one subject with N events completes (done) with zero residue in every store",
+  "property_holds": true,
+  "witness": {
+   "X_docs_after": 0,
+   "X_docs_before": 100100,
+   "Y_docs_after": 3,
+   "append_s": 103.2,
+   "project_s": 6.7,
+   "receipt": {
+    "done": true,
+    "error_type": null,
+    "seconds": 28.131,
+    "steps": {
+     "cascade_batch_max_s": 3.685,
+     "cascade_batch_s": [
+      3.685,
+      1.201,
+      0.05,
+      0.131,
+      0.232,
+      0.294,
+      0.646,
+      0.713,
+      0.574,
+      0.581,
+      0.548,
+      0.554,
+      0.511,
+      0.508,
+      0.542,
+      0.661,
+      0.544,
+      0.53,
+      0.524,
+      0.538,
+      0.517,
+      0.505,
+      0.513,
+      0.492,
+      0.502,
+      0.15,
+      0.006
+     ],
+     "cascade_batches": 27,
+     "cascade_conflicts": 0,
+     "cascade_s": 16.251,
+     "expunge": {
+      "wp16096-f1big1482d2-events-base": {
+       "docs_deleted_after": 0,
+       "lease_wait_s": 4.0,
+       "target_seq": 200001
+      },
+      "wp16096-f1big1482d2-facts-base": {
+       "docs_deleted_after": 0,
+       "lease_wait_s": 0.0,
+       "target_seq": 200
+      }
+     },
+     "heartbeat_transient": 0,
+     "key_destroy_s": 0.007,
+     "key_purge": {
+      "covered": 1,
+      "purged": true,
+      "waited_s": 0.321
+     },
+     "mark_s": 0.009,
+     "physical_attempts": 1,
+     "physical_s": 8.494,
+     "placeholder_events": 100000,
+     "placeholder_facts": 100,
+     "placeholders_s": 3.33,
+     "rescan_found": 0,
+     "rescan_s": 0.0,
+     "rescan_scanned": 0,
+     "verify_s": 8.173,
+     "verify_timings": {
+      "es_counts_s": 0.007,
+      "expunge_s": 4.812,
+      "keys_and_gate_s": 0.015,
+      "pg_complete_s": 2.729,
+      "placeholder_check_s": 0.606
+     }
+    },
+    "verify": {
+     "es:events": 0,
+     "es:facts": 0,
+     "es:soft_deleted": 0,
+     "es:tombstoned_not_placeholder": 0,
+     "gate:unregistered": 0,
+     "keys:physical_pending": 0,
+     "keys:subject_keys": 0,
+     "pg:analyst_jobs": 0,
+     "pg:content_present": 0,
+     "pg:events_untombstoned": 0,
+     "pg:facts": 0,
+     "pg:identifiers": 0,
+     "pg:inbox": 0,
+     "pg:mentions_unscanned": 0,
+     "pg:quarantine": 0,
+     "pg:quarantine_mentions": 0,
+     "pg:subject_not_marked": 0,
+     "pg:withheld_by_hold": 0
+    }
+   }
+  }
+ }
+}
