@@ -3,6 +3,7 @@ committed thresholds (ES-PILOT-THRESHOLDS.md) and writes score.json. Pure stdlib
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
 import math
 import os
@@ -52,7 +53,7 @@ def project(mean_diff: float, lo: float, hi: float, n: int, band_int: float = 0.
 
 
 WITHHELD = "WITHHELD-INCOMPLETE-EVIDENCE"
-ROW_KEYS = ("qid", "cluster", "level", "gold", "exact", "es", "ctl_whitespace", "ctl_keyword", "wrong_exact", "wrong_es")
+ROW_KEYS = ("qid", "cluster", "level", "n_level_sessions", "gold", "exact", "es", "ctl_whitespace", "ctl_keyword", "wrong_exact", "wrong_es")
 CE_KEYS = ("qid", "level", "ce_exact", "ce_es", "head_same_set", "head_same_order")
 
 
@@ -70,37 +71,100 @@ def load(run_dir: str):
     return rows, ce, ce_list
 
 
-def validate(rows: List[Dict[str, Any]], ce_list: List[Dict[str, Any]]):
-    """Evidence completeness. Returns (row_problems, ce_problems). No recommendation may be given when either is non-empty:
-    every (question, level) must appear exactly once in every arm's evidence, the question set must be identical across levels,
-    and every cross-encoder head must be a reordering of the RRF head it was made from."""
+def _strs(x) -> bool:
+    return isinstance(x, list) and all(isinstance(i, str) for i in x)
+
+
+def _num(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def load_manifest(run_dir: str, manifest_path: Optional[str] = None):
+    """The committed pilot manifest (expected question ids, clusters, levels, artifact hashes). Returns (manifest or None, sha256 or None, problems)."""
+    path = manifest_path or os.path.join(run_dir, "pilot_manifest.json")
+    if not os.path.exists(path):
+        return None, None, ["no pilot manifest at %s" % os.path.basename(path)]
+    raw = open(path, "rb").read()
+    try:
+        m = json.loads(raw)
+        ok = (isinstance(m.get("qids"), list) and isinstance(m.get("clusters"), dict) and isinstance(m.get("levels"), list)
+              and isinstance(m.get("artifacts"), dict) and set(m["qids"]) == set(m["clusters"]) and len(set(m["qids"])) == len(m["qids"]))
+    except (ValueError, AttributeError):
+        ok = False
+    if not ok:
+        return None, hashlib.sha256(raw).hexdigest(), ["pilot manifest unreadable or malformed"]
+    return m, hashlib.sha256(raw).hexdigest(), []
+
+
+def file_sha256(path: str) -> Optional[str]:
+    if not os.path.exists(path):
+        return None
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for blk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(blk)
+    return h.hexdigest()
+
+
+def validate(rows: List[Dict[str, Any]], ce_list: List[Dict[str, Any]], manifest: Optional[Dict[str, Any]] = None, artifact_hashes: Optional[Dict[str, Optional[str]]] = None):
+    """Evidence completeness and authenticity. Returns (row_problems, ce_problems). No recommendation may be given when either is non-empty:
+    the evidence must match the committed pilot manifest EXACTLY (question ids, clusters, levels, artifact hashes), every (question, level) must
+    appear exactly once in every arm's evidence, consumed fields must have the right types (finite numbers, strings), and every cross-encoder head
+    must be a reordering of the RRF head it was made from, ordered by its recorded scores."""
     rp: List[str] = []
     cp: List[str] = []
+    if manifest is None:
+        return ["no valid pilot manifest"], cp
+    for name, want in sorted(manifest["artifacts"].items()):
+        got = (artifact_hashes or {}).get(name)
+        if got != want:
+            rp.append("artifact %s hash %s does not match the stamped %s" % (name, (got or "absent")[:12], str(want)[:12]))
     seen: Dict[Any, int] = {}
     for r in rows:
         miss = [k for k in ROW_KEYS if k not in r]
         if miss:
             rp.append("row %s/%s missing keys %s" % (r.get("qid"), r.get("level"), miss))
             continue
+        if not (isinstance(r["qid"], str) and isinstance(r["level"], str) and isinstance(r["cluster"], str) and _strs(r["gold"])):
+            rp.append("row %s/%s has non-string qid, level, cluster or gold" % (r["qid"], r["level"]))
+            continue
         for side in ("exact", "es", "wrong_exact", "wrong_es"):
+            if not isinstance(r[side], dict):
+                rp.append("row %s/%s %s is not a mapping" % (r["qid"], r["level"], side))
+                continue
             for a in ("bm25", "dense", "rrf"):
                 if a not in r[side]:
                     rp.append("row %s/%s lacks %s.%s" % (r["qid"], r["level"], side, a))
+                elif not _strs(r[side][a]):
+                    rp.append("row %s/%s %s.%s is not a list of round ids" % (r["qid"], r["level"], side, a))
+        for k in ("ctl_whitespace", "ctl_keyword"):
+            if not _strs(r[k]):
+                rp.append("row %s/%s %s is not a list of round ids" % (r["qid"], r["level"], k))
         seen[(r["qid"], r["level"])] = seen.get((r["qid"], r["level"]), 0) + 1
     for k, n in sorted(seen.items(), key=repr):
         if n > 1:
             rp.append("duplicate row %s x%d" % (k, n))
-    levels = sorted({k[1] for k in seen})
-    if levels != sorted(LEVELS):
-        rp.append("levels present %s, expected %s" % (levels, list(LEVELS)))
-    sets = {lv: {k[0] for k in seen if k[1] == lv} for lv in levels}
-    if sets:
-        union = set().union(*sets.values())
-        for lv, st in sets.items():
-            if st != union:
-                rp.append("question set at %s differs from the union (%d missing)" % (lv, len(union - st)))
+    levels = [lv for lv in manifest["levels"]]
+    present = sorted({k[1] for k in seen})
+    if present != sorted(levels):
+        rp.append("levels present %s, manifest has %s" % (present, sorted(levels)))
+    want_q = set(manifest["qids"])
+    for lv in levels:
+        got_q = {k[0] for k in seen if k[1] == lv}
+        if got_q != want_q:
+            rp.append("question set at %s differs from the manifest (%d missing, %d unexpected)" % (lv, len(want_q - got_q), len(got_q - want_q)))
+    nls: Dict[str, Dict[str, Any]] = {}
+    for r in rows:
+        nls.setdefault(r.get("qid"), {})[r.get("level")] = r.get("n_level_sessions")
+    for q, d in sorted(nls.items(), key=repr):  # the haystack grows with the level, so consistently swapped level labels cannot pass
+        seq = [d.get(lv) for lv in levels]
+        if not all(isinstance(v, int) and not isinstance(v, bool) for v in seq) or not all(x < y for x, y in zip(seq, seq[1:])):
+            rp.append("n_level_sessions of %s does not increase strictly with the level (%s)" % (q, seq))
+    for r in rows:
+        if isinstance(r.get("qid"), str) and r.get("qid") in manifest["clusters"] and r.get("cluster") != manifest["clusters"][r["qid"]]:
+            rp.append("cluster of %s at %s is %r, manifest says %r" % (r["qid"], r.get("level"), r.get("cluster"), manifest["clusters"][r["qid"]]))
     if rp:
-        return rp, cp
+        return rp[:200], cp
     rowmap = {(r["qid"], r["level"]): r for r in rows}
     if not ce_list:
         cp.append("no cross-encoder records")
@@ -116,10 +180,26 @@ def validate(rows: List[Dict[str, Any]], ce_list: List[Dict[str, Any]]):
             cp.append("ce record %s has no row" % (k,))
             continue
         r = rowmap[k]
+        if not (_strs(c["ce_exact"]) and _strs(c["ce_es"]) and isinstance(c["scores"], dict)):
+            cp.append("ce record %s has malformed heads or scores" % (k,))
+            continue
+        if not all(_num(v) for v in c["scores"].values()):
+            cp.append("ce record %s has a non-finite or non-numeric score" % (k,))
+            continue
+        heads = {}
         for key, side in (("ce_exact", "exact"), ("ce_es", "es")):
             src = r[side]["rrf"][:HEAD]
+            heads[key] = src
             if sorted(c[key]) != sorted(src):
                 cp.append("%s %s is not a reordering of the %s RRF head" % (k, key, side))
+        if set(c["scores"]) != set(heads["ce_exact"]) | set(heads["ce_es"]):
+            cp.append("%s scores do not cover exactly the two heads" % (k,))
+        else:
+            for key in ("ce_exact", "ce_es"):
+                src = heads[key]
+                want = [src[j] for j in sorted(range(len(src)), key=lambda j: (-c["scores"][src[j]], j))]
+                if c[key] != want:
+                    cp.append("%s %s order disagrees with its recorded scores" % (k, key))
         if bool(c["head_same_set"]) != (set(r["exact"]["rrf"][:HEAD]) == set(r["es"]["rrf"][:HEAD])):
             cp.append("%s head_same_set disagrees with the rows" % (k,))
         if bool(c["head_same_order"]) != (r["exact"]["rrf"][:HEAD] == r["es"]["rrf"][:HEAD]):
@@ -130,7 +210,7 @@ def validate(rows: List[Dict[str, Any]], ce_list: List[Dict[str, Any]]):
     for k in sorted(rowmap, key=repr):
         if k not in cseen:
             cp.append("missing ce record %s" % (k,))
-    return rp, cp
+    return rp, cp[:200]
 
 
 def lists_for(row: Dict[str, Any], arm: str, ce: Dict) -> Optional[Dict[str, List[str]]]:
@@ -142,16 +222,32 @@ def lists_for(row: Dict[str, Any], arm: str, ce: Dict) -> Optional[Dict[str, Lis
     return {"exact": rec["ce_exact"] + row["exact"]["rrf"][HEAD:], "es": rec["ce_es"] + row["es"]["rrf"][HEAD:]}
 
 
-def score(run_dir: str, prior_es: Optional[str] = None, prior_ce: Optional[str] = None) -> Dict[str, Any]:
-    rows, ce, ce_list = load(run_dir)
-    row_problems, ce_problems = validate(rows, ce_list)
+def score(run_dir: str, prior_es: Optional[str] = None, prior_ce: Optional[str] = None, manifest_path: Optional[str] = None) -> Dict[str, Any]:
+    """Any exception or evidence problem yields WITHHELD-INCOMPLETE-EVIDENCE, never a traceback and never a positive category."""
+    try:
+        return _score(run_dir, prior_es, prior_ce, manifest_path)
+    except Exception as e:  # malformed evidence that slipped past validate()
+        return {"run_dir": run_dir, "levels": {}, "evidence": {"complete": False, "problems": ["exception while scoring: %s: %s" % (type(e).__name__, str(e)[:200])], "n_problems": 1},
+                "recommendation": {"category": WITHHELD, "complete_all_arms": False, "evidence_complete": False, "reason": "exception"}, "control_checks": None}
+
+
+def _score(run_dir: str, prior_es: Optional[str], prior_ce: Optional[str], manifest_path: Optional[str]) -> Dict[str, Any]:
+    manifest, manifest_sha, mproblems = load_manifest(run_dir, manifest_path)
+    artifact_hashes = {n: file_sha256(os.path.join(run_dir, n)) for n in ("rows.jsonl.gz", "ce.jsonl")}
+    try:
+        rows, ce, ce_list = load(run_dir)
+    except (ValueError, OSError) as e:
+        return {"run_dir": run_dir, "levels": {}, "evidence": {"complete": False, "problems": mproblems + ["evidence unreadable: %s" % type(e).__name__], "n_problems": 1},
+                "recommendation": {"category": WITHHELD, "complete_all_arms": False, "evidence_complete": False, "reason": "unreadable evidence"}, "control_checks": None}
+    row_problems, ce_problems = validate(rows, ce_list, manifest, artifact_hashes)
+    row_problems = mproblems + row_problems
     problems = row_problems + ce_problems
-    out: Dict[str, Any] = {"run_dir": run_dir, "n_rows": len(rows), "levels": {},
-                           "evidence": {"complete": not problems, "problems": problems[:50], "n_problems": len(problems)}}
-    if row_problems:
-        out["recommendation"] = {"category": WITHHELD, "complete_all_arms": False, "reason": "rows incomplete or inconsistent"}
-        out["control_checks"] = None
-        return out
+    if problems:  # no number is computed from evidence that failed validation
+        return {"run_dir": run_dir, "n_rows": len(rows), "levels": {}, "manifest_sha256": manifest_sha, "artifact_sha256": artifact_hashes,
+                "evidence": {"complete": False, "problems": problems[:50], "n_problems": len(problems)},
+                "recommendation": {"category": WITHHELD, "complete_all_arms": False, "evidence_complete": False, "reason": "evidence failed validation"}, "control_checks": None}
+    out: Dict[str, Any] = {"run_dir": run_dir, "n_rows": len(rows), "levels": {}, "manifest_sha256": manifest_sha, "manifest_source": manifest.get("source"),
+                           "artifact_sha256": artifact_hashes, "evidence": {"complete": True, "problems": [], "n_problems": 0}}
     try:
         out["meta"] = json.load(open(os.path.join(run_dir, "retrieve_meta.json")))
     except FileNotFoundError:

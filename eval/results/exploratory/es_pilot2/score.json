@@ -1088,5 +1088,11 @@
   "complete": true,
   "problems": [],
   "n_problems": 0
+ },
+ "manifest_sha256": "a98dd4fd4eaa9fbb9bc1634187d94384a5f524e89f0d0b33ac45c6557ed4be5a",
+ "manifest_source": "dataset longmemeval_s_cleaned.json via select_split(pilot) with retrieval gold and PoolContext.clusters (emlab/pool.py, content.py); cross-checked to results/pilot/curve_rerank_v2.json (committed 2026-11-15, before the run); derived from the dataset and split code, not from the run rows",
+ "artifact_sha256": {
+  "rows.jsonl.gz": "a6f91530f7084cc10c2c671fea15f94b770ffb3be135802acac57af9b0b9e2cb",
+  "ce.jsonl": "4017b956e6177581b40247c968fc96d4a41b2f4970e6e42e2d8e50c79177e6f9"
  }
 }

@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import json
 import os
 import tempfile
@@ -23,16 +24,37 @@ def make(tmp, es_good):
         for lv in LV:
             ex = {a: lists(True) for a in ("bm25", "dense", "rrf")}
             es = {a: lists(es_good) for a in ("bm25", "dense", "rrf")}
-            rows.append({"qid": "q%d" % i, "cluster": "c%d" % i, "level": lv, "gold": ["s0"], "exact": ex, "es": es,
+            rows.append({"qid": "q%d" % i, "cluster": "c%d" % i, "level": lv, "n_level_sessions": 50 * (1 + 10 * LV.index(lv)) + LV.index(lv), "gold": ["s0"], "exact": ex, "es": es,
                          "ctl_whitespace": lists(False), "ctl_keyword": [], "wrong_qid": "q%d" % ((i + 1) % 8), "wrong_exact": {a: lists(False) for a in ex},
                          "wrong_es": {a: lists(False) for a in ex}})
-            ce.append({"qid": "q%d" % i, "level": lv, "ce_exact": ex["rrf"][:20], "ce_es": es["rrf"][:20], "head_same_set": es_good, "head_same_order": es_good})
+            hx, he = ex["rrf"][:20], es["rrf"][:20]
+            union = hx + [d for d in he if d not in hx]
+            sc_ = {d: -float(j) for j, d in enumerate(union)}  # one score per round, as the real run records it
+            ce.append({"qid": "q%d" % i, "level": lv, "ce_exact": sorted(hx, key=lambda d: (-sc_[d], hx.index(d))), "ce_es": sorted(he, key=lambda d: (-sc_[d], he.index(d))),
+                       "head_same_set": es_good, "head_same_order": es_good, "scores": sc_})
     with gzip.open(os.path.join(tmp, "rows.jsonl.gz"), "wt") as f:
         for r in rows:
             f.write(json.dumps(r) + "\n")
     with open(os.path.join(tmp, "ce.jsonl"), "w") as f:
         for c in ce:
             f.write(json.dumps(c) + "\n")
+    write_manifest(tmp, fresh=True)
+
+
+def sha(path):
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+
+def write_manifest(tmp, fresh=False):
+    """The expected pilot (q0..q7 in clusters c0..c7) and the sha256 of the artifacts; `fresh` False keeps the expected sets and only re-hashes."""
+    mp = os.path.join(tmp, "pilot_manifest.json")
+    if fresh or not os.path.exists(mp):
+        m = {"version": 1, "source": "test fixture", "qids": ["q%d" % i for i in range(8)], "clusters": {"q%d" % i: "c%d" % i for i in range(8)},
+             "levels": list(LV), "arms": ["bm25", "dense", "rrf", "ce"]}
+    else:
+        m = json.load(open(mp))
+    m["artifacts"] = {n: sha(os.path.join(tmp, n)) for n in ("rows.jsonl.gz", "ce.jsonl") if os.path.exists(os.path.join(tmp, n))}
+    json.dump(m, open(mp, "w"))
 
 
 class Score(unittest.TestCase):
@@ -76,7 +98,7 @@ class Score(unittest.TestCase):
 WITHHELD = "WITHHELD-INCOMPLETE-EVIDENCE"
 
 
-def rewrite(tmp, rows_fn=None, ce_fn=None):
+def rewrite(tmp, rows_fn=None, ce_fn=None, rehash=True):
     """Edit the fixture's rows and CE records in place (each fn receives and returns the list)."""
     rp, cp = os.path.join(tmp, "rows.jsonl.gz"), os.path.join(tmp, "ce.jsonl")
     rows = [json.loads(l) for l in gzip.open(rp, "rt")]
@@ -94,6 +116,8 @@ def rewrite(tmp, rows_fn=None, ce_fn=None):
                 f.write(json.dumps(c) + "\n")
     elif os.path.exists(cp):
         os.remove(cp)
+    if rehash:  # the manifest keeps the EXPECTED pilot; only the artifact hashes follow the edit, so each logic check is tested on its own
+        write_manifest(tmp)
 
 
 class IncompleteEvidence(unittest.TestCase):
@@ -161,6 +185,133 @@ class IncompleteEvidence(unittest.TestCase):
         r = self.run_case()
         self.assertEqual(r["reproduction_prior_es"]["status"], "NOT_CHECKED")
         self.assertEqual(r["reproduction_prior_ce"]["status"], "NOT_CHECKED")
+
+
+def clone_question(rows, ces, src="q0", dst="q99"):
+    """Add a copy of question `src` under a new id at every level (rows and CE)."""
+    return (rows + [dict(r, qid=dst) for r in rows if r["qid"] == src], ces + [dict(c, qid=dst) for c in ces if c["qid"] == src])
+
+
+class PilotManifest(unittest.TestCase):
+    """Evidence must match the committed pilot manifest exactly (question ids, clusters, levels, artifact hashes); the reviewer's attacks."""
+
+    def run_case(self, rows_fn=None, ce_fn=None, rehash=True, drop_manifest=False):
+        with tempfile.TemporaryDirectory() as t:
+            make(t, True)
+            rewrite(t, rows_fn, ce_fn, rehash)
+            if drop_manifest:
+                os.remove(os.path.join(t, "pilot_manifest.json"))
+            return sc.score(t)
+
+    def test_manifest_is_required(self):
+        self.assertEqual(self.run_case(drop_manifest=True)["recommendation"]["category"], WITHHELD)
+
+    def test_complete_fixture_records_the_manifest_hash_and_keeps(self):
+        r = self.run_case()
+        self.assertEqual(r["recommendation"]["category"], "KEEP")
+        self.assertEqual(len(r["manifest_sha256"]), 64)
+        self.assertEqual(set(r["artifact_sha256"]), {"rows.jsonl.gz", "ce.jsonl"})
+
+    def test_removing_a_whole_question_at_every_level_withholds(self):
+        r = self.run_case(rows_fn=lambda rows: [x for x in rows if x["qid"] != "q0"], ce_fn=lambda ce: [x for x in ce if x["qid"] != "q0"])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_adding_a_cloned_question_at_every_level_withholds(self):
+        with tempfile.TemporaryDirectory() as t:
+            make(t, True)
+            rows = [json.loads(l) for l in gzip.open(os.path.join(t, "rows.jsonl.gz"), "rt")]
+            ces = [json.loads(l) for l in open(os.path.join(t, "ce.jsonl"))]
+            rows2, ces2 = clone_question(rows, ces)
+            rewrite(t, rows_fn=lambda _: rows2, ce_fn=lambda _: ces2)
+            self.assertEqual(sc.score(t)["recommendation"]["category"], WITHHELD)
+
+    def test_replacing_a_question_id_keeping_the_count_withholds(self):
+        r = self.run_case(rows_fn=lambda rows: [dict(x, qid="qX") if x["qid"] == "q3" else x for x in rows],
+                          ce_fn=lambda ce: [dict(x, qid="qX") if x["qid"] == "q3" else x for x in ce])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_collapsing_every_cluster_to_one_withholds(self):
+        r = self.run_case(rows_fn=lambda rows: [dict(x, cluster="one") for x in rows])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_swapping_two_questions_clusters_keeps_the_count_but_withholds(self):
+        swap = {"c1": "c2", "c2": "c1"}
+        r = self.run_case(rows_fn=lambda rows: [dict(x, cluster=swap.get(x["cluster"], x["cluster"])) for x in rows])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_a_cluster_that_differs_between_levels_withholds(self):
+        r = self.run_case(rows_fn=lambda rows: [dict(x, cluster="c7x") if (x["qid"] == "q7" and x["level"] == "H3") else x for x in rows])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_consistently_swapping_h0_and_h3_labels_is_caught_by_the_artifact_hash(self):
+        flip = {"H0": "H3", "H3": "H0"}
+        r = self.run_case(rows_fn=lambda rows: [dict(x, level=flip.get(x["level"], x["level"])) for x in rows],
+                          ce_fn=lambda ce: [dict(x, level=flip.get(x["level"], x["level"])) for x in ce], rehash=False)
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+        self.assertTrue(any("hash" in p for p in r["evidence"]["problems"]))
+
+    def test_swapped_h0_and_h3_labels_are_caught_even_if_the_hashes_are_rewritten(self):
+        flip = {"H0": "H3", "H3": "H0"}
+        r = self.run_case(rows_fn=lambda rows: [dict(x, level=flip.get(x["level"], x["level"])) for x in rows],
+                          ce_fn=lambda ce: [dict(x, level=flip.get(x["level"], x["level"])) for x in ce], rehash=True)
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+        self.assertTrue(any("n_level_sessions" in p for p in r["evidence"]["problems"]))
+
+    def test_any_edit_of_an_artifact_after_stamping_is_caught_by_the_hash(self):
+        r = self.run_case(rows_fn=lambda rows: [dict(x, extra="x") for x in rows], rehash=False)
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+
+class MalformedEvidence(unittest.TestCase):
+    """Malformed evidence gives WITHHELD, never a traceback and never KEEP."""
+
+    def run_case(self, rows_fn=None, ce_fn=None):
+        with tempfile.TemporaryDirectory() as t:
+            make(t, True)
+            rewrite(t, rows_fn, ce_fn)
+            return sc.score(t)
+
+    def test_missing_ce_exact_withholds_without_a_traceback(self):
+        r = self.run_case(ce_fn=lambda ce: [{k: v for k, v in c.items() if k != "ce_exact"} if i == 0 else c for i, c in enumerate(ce)])
+        self.assertEqual(r["recommendation"]["category"], WITHHELD)
+
+    def test_nan_round_id_withholds_without_a_traceback(self):
+        def rf(rows):
+            rows = [dict(x) for x in rows]
+            rows[0]["exact"] = dict(rows[0]["exact"], bm25=[float("nan")] + rows[0]["exact"]["bm25"][1:])
+            return rows
+        self.assertEqual(self.run_case(rows_fn=rf).get("recommendation", {}).get("category"), WITHHELD)
+
+    def test_non_string_gold_withholds(self):
+        self.assertEqual(self.run_case(rows_fn=lambda rows: [dict(x, gold=[1]) if i == 0 else x for i, x in enumerate(rows)])["recommendation"]["category"], WITHHELD)
+
+    def test_nan_ce_score_withholds(self):
+        def cf(ce):
+            ce = [dict(c) for c in ce]
+            ce[0]["scores"] = dict(ce[0]["scores"], **{ce[0]["ce_exact"][0]: float("nan")})
+            return ce
+        self.assertEqual(self.run_case(ce_fn=cf)["recommendation"]["category"], WITHHELD)
+
+    def test_non_numeric_ce_score_withholds(self):
+        def cf(ce):
+            ce = [dict(c) for c in ce]
+            ce[0]["scores"] = dict(ce[0]["scores"], **{ce[0]["ce_exact"][0]: "high"})
+            return ce
+        self.assertEqual(self.run_case(ce_fn=cf)["recommendation"]["category"], WITHHELD)
+
+    def test_ce_order_that_disagrees_with_its_scores_withholds(self):
+        def cf(ce):
+            ce = [dict(c) for c in ce]
+            ce[0]["ce_exact"] = list(reversed(ce[0]["ce_exact"]))
+            return ce
+        self.assertEqual(self.run_case(ce_fn=cf)["recommendation"]["category"], WITHHELD)
+
+    def test_ce_scores_missing_or_for_other_rounds_withhold(self):
+        def cf(ce):
+            ce = [dict(c) for c in ce]
+            ce[0]["scores"] = {k: v for k, v in list(ce[0]["scores"].items())[1:]}
+            return ce
+        self.assertEqual(self.run_case(ce_fn=cf)["recommendation"]["category"], WITHHELD)
 
 
 if __name__ == "__main__":
