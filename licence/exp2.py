@@ -254,7 +254,8 @@ class Workload:
         # T2, T3, T5 are computed only from the TYPED workload stream (review 9 F17): finite times inside the run window, completion
         # order, closed arms. The same observe functions re-derive them from rows.gz at load (summarize._backfill_observed). A stream
         # that does not parse records the reason and no figure, so those gates are UNVERIFIED.
-        window = (self.events.get("t_start"), self.events.get("t_stop"))
+        ev = getattr(self, "events", {})   # a test fixture may build a Workload without __init__
+        window = (ev.get("t_start"), ev.get("t_stop"))
         try:
             TW = observe.parse_work([list(r) for r in rows], window if None not in window else None)
         except observe.Unparsed as e:

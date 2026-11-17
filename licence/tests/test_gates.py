@@ -747,8 +747,8 @@ class MatrixVerdictTests(MatrixHarness):
         self.assertEqual(tuple(observe.NOT_OBSERVED), tuple(matrix.NOT_OBSERVED))
 
     def test_moment_analysis_does_not_count_unverified_dls_as_refusal(self):
-        rows = [{"_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (1.0, 2.0, 3.0)]
-        m = exp2.moment_analysis(rows, 2.0, features=("dls_search",))["dls_search"]
+        rows = [{"_t0": t - 0.01, "_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (11.0, 12.0, 13.0)]
+        m = exp2.moment_analysis(rows, 12.0, features=("dls_search",))["dls_search"]
         self.assertTrue(m["skipped"] and m["unverified"])
         self.assertNotIn("first_refusal_rel_resp_s", m)
 
