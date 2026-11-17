@@ -11,6 +11,8 @@ VARIANTS = {
     "apply_no_subject_lock": ("E2 E3 E4", "    order by sj.subject_id for share;\n", "    order by sj.subject_id;\n"),
     "footprint_no_rescan_links": ("E3", "      union select m.subject_id from erasure_mentions m where m.tenant_id = t and m.event_id = any(cand))\n", ")\n"),
     "hold_place_no_lock": ("E2", "  perform 1 from subjects where tenant_id = t and subject_id = s for update;\n  insert into legal_holds", "  insert into legal_holds"),
+    "release_no_lock": ("E4", "  perform 1 from subjects where tenant_id = h.tenant_id and subject_id = h.subject_id for update;\n", ""),
+    "hold_check_no_lock": ("E8", "  perform 1 from subjects where tenant_id = t and subject_id = s for share;\n", ""),
     "mark_job_first": ("E6", "  select tenant_id, subject_id into j from erasure_jobs where job_id = jid;\n  if not found then raise exception 'no erasure job %'",
                        "  select tenant_id, subject_id into j from erasure_jobs where job_id = jid for update;\n  if not found then raise exception 'no erasure job %'"),
 }

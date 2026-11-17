@@ -327,6 +327,10 @@ class F11OneCanonicalKey(unittest.TestCase):
         for v in ("Allson", "Aiison", "Ailson", "A1ison", "AIis0n"):
             self.assertTrue(self.matches(v, "Alison"), v)
         self.assertTrue(any("Allson" in x for x in M.OVER_MATCH))
+        # stated (review E advisor check): real names that differ only by i and l share a key under m4
+        for a, b in (("Delia Smith", "Della Smith"), ("Hailey Brown", "Halley Brown"), ("Neil Young", "Nell Young")):
+            self.assertTrue(self.matches(b, a), (a, b))
+        self.assertTrue(any("Della" in x for x in M.OVER_MATCH))
         self.assertTrue(self.matches("lan Smith", "Ian Smith"))             # no longer in NOT_COVERED
         self.assertFalse(any("lan for a declared Ian" in x for x in M.NOT_COVERED))
 
@@ -341,8 +345,11 @@ class F11OneCanonicalKey(unittest.TestCase):
             c = chr(o)
             if unicodedata.category(c)[0] not in "LN" or c in nc:
                 continue
+            k = M.canonical(c)
+            if M.canonical(k) != k:
+                broken.append(("idempotent", hex(o)))
             f = c.casefold()
-            if f != c and M.canonical(c) != M.canonical(f):
+            if f != c and k != M.canonical(f):
                 broken.append(("case", hex(o)))
             p = self.conf.get(c)
             if p is not None and M.canonical(c) != M.canonical(p):

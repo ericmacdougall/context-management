@@ -467,6 +467,65 @@ class D3Store(unittest.TestCase):
         self.assertTrue(mark_waited)
         self.assertEqual((out.get("batch"), out.get("mark")), ("ok", "ok"), "40P01 is the deadlock")
 
+    def test_e7_hold_against_mark(self):
+        """Hold x mark, both orders. A hold placed first refuses the mark (WPS16). A hold placed while a mark is paused
+        (after its hold check: a holder transaction inserts the erasure_mentions row the mark is about to insert) waits
+        and then reports the subject past mark. A regression guard: mark holds the subject three ways (FOR UPDATE, the
+        hold check's FOR SHARE, the erased update before the pause), so no single-lock variant can make it fail."""
+        lg = self.legal("wp-e7-legal")
+        self.place(lg, "E7F", "h-e7f")
+        jf = self.new_job("E7F")
+        self.assertEqual(self.state(self.app, "select wp_erasure_mark(%s)", (jf,)), "WPS16")
+        self.event("e7e", "E7B", ["E7S"])
+        js = self.new_job("E7S")
+        hold = self.db.admin(db=self.name, autocommit=False)
+        hold.execute("set role wp_owner")
+        hold.execute("insert into erasure_mentions(tenant_id, subject_id, event_id, job_id, source) values (%s, 'E7S', 'e7e', 'x', 'write')", (T,))
+        out = {}
+        m = self.db.connect(db=self.name, application_name="wp-e7-mark")
+        try:
+            tm = self.run_bg(out, "mark", m, "select wp_erasure_mark(%s)", (js,))
+            self.assertTrue(self.waiting("wp-e7-mark", tm.is_alive), "the mark did not reach its insert")
+            th = self.run_bg(out, "hold", lg, "select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, "E7S", "h-e7s"), fetch=True)
+            hold_waited = self.waiting("wp-e7-legal", th.is_alive, secs=3.0)
+            hold.rollback()
+            tm.join(10)
+            th.join(10)
+        finally:
+            hold.rollback()
+            for x in (hold, m, lg):
+                x.close()
+        self.assertTrue(hold_waited, "a hold landed inside a mark")
+        self.assertEqual(out.get("mark"), "ok")
+        self.assertEqual((out.get("hold") or {}).get("open_erasure_state"), "marked")
+
+    def test_e8_hold_waits_for_the_final_pass(self):
+        """Hold x the cascade's final pass (facts, inbox, quarantine, proposals, identifiers of the subject), which no
+        apply() runs in: only the batch's hold check (subject FOR SHARE) keeps a hold out. The pass is paused on the
+        subject's proposal row (a holder transaction locks it FOR UPDATE)."""
+        pid = self.propose(self.app, "E8S", "hE8")
+        js = self.job("E8S")
+        hold = self.db.admin(db=self.name, autocommit=False)
+        hold.execute("set role wp_owner")
+        hold.execute("select 1 from identifier_proposals where proposal_id=%s for update", (pid,))
+        out, lg = {}, self.legal("wp-e8-legal")
+        c = self.db.connect(db=self.name, application_name="wp-e8-batch")
+        try:
+            tb = self.run_bg(out, "batch", c, "select wp_erasure_cascade(%s, 100)", (js,))
+            self.assertTrue(self.waiting("wp-e8-batch", tb.is_alive), "the final pass did not reach the proposal")
+            th = self.run_bg(out, "hold", lg, "select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, "E8S", "h-e8"), fetch=True)
+            hold_waited = self.waiting("wp-e8-legal", th.is_alive, secs=3.0)
+            hold.rollback()
+            tb.join(10)
+            th.join(10)
+        finally:
+            hold.rollback()
+            for x in (hold, c, lg):
+                x.close()
+        self.assertTrue(hold_waited, "a hold landed inside the final pass")
+        self.assertEqual(out.get("batch"), "ok")
+        self.assertEqual(self.one("select count(*) from identifier_proposals where proposal_id=%s", (pid,)), (0,))
+
 
 if __name__ == "__main__":
     unittest.main()
