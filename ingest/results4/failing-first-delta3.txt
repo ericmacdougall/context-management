@@ -1,0 +1,8 @@
+failing-first run of ingest/tests/test_delta3.py on 2b23546 product code (final-gate review 3, finding F2)
+Ran 6 tests, failures=3, ok=3
+behavioural FAIL on 2b23546:
+  test_no_overlap_unseen_user_messages_keep_user_provenance_and_block   users ['old question','second new question'] != [... 'first new question' ...] (the first new message became host_authored_user; no gap; claims true)
+  test_undeclared_leading_unseen_message_before_aligned_run_blocks      'unseen lead' not found among user events
+  test_host_authored_only_when_declared                                undeclared summary was recorded as a host event
+guards that pass before and after: test_partial_overlap_with_new_tail_is_clean, test_overlap_not_at_end_of_history_blocks, test_first_ever_call_with_several_users_keeps_user_provenance
+After the fix: Ran 59 tests (test_ingest, test_delta, test_delta2, test_followup, test_delta3) OK.

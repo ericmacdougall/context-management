@@ -1,6 +1,6 @@
 # Ingestion from the model port: claims and their denominators
 
-Source of figures: `ingest/results4/` (one stamped run, code commit `6989e79`, clean tree, stubs only, SQLite stand-in, no model calls),
+Source of figures: `ingest/results4/` (one stamped run, code commit `6989e79`; the ingester was changed afterwards only for undeclared requests with no overlap or an unseen leading message, and items 3, 4, 7, 10, 11, 13 and 13c were rerun unstamped on the changed code with identical summaries, clean tree, stubs only, SQLite stand-in, no model calls),
 recomputed from stored rows by `ingest/recompute.py` and `ingest/recompute2.py` (0 mismatches both). Registration: `PREREG-amend-3.json`,
 `-amend-4.json`, `-amend-5.json`. Earlier runs (`results/`, `results2/`, `results3/`) stay as history; `results4` governs. Each line names the
 hosts and sets it was measured on and what it does not cover. There is no universal claim in this file.
@@ -11,10 +11,14 @@ hosts and sets it was measured on and what it does not cover. There is no univer
   confirmed call with identical message keys and that `new_count` is an integer within the request length. It cannot check that they are
   true. A wrong `new_count` drops or duplicates messages; a false `retry_of` that passes the key check suppresses a real repeat. Every use
   is visible: a port event, `completeness()["declared_calls"]`, and `declared`/`new_count`/`retry_of` in the meta of that call's events.
-- Without a declaration the ingester accepts content alignment only when it is provably the only explanation (unique maximal run that ends
-  at the end of the ingested history, every unaligned message unseen). Otherwise it emits everything that could be new, flags it, opens a
+- Without a declaration the ingester accepts content alignment only when it is provably the only explanation: a unique maximal run that
+  starts the request (no unaligned message before it) and ends at the end of the ingested history, every unaligned message unseen; or a
+  one-message request with unseen content. A request with several messages and no overlap with history, or with an unseen message before the
+  aligned run, is NOT accepted (final-gate F2): every message keeps its original provenance. Otherwise it emits everything that could be new, flags it, opens a
   blocking `ambiguous_alignment` gap, and `claim_complete()` and `claim_exactly_once()` are false for that stream.
 - A stateless or repeating host that cannot declare its boundary therefore gets a superset of events plus a blocking gap, never silent loss.
+- A message can be recorded as host-authored (for example a compaction summary) only when the host declares `new_count`; undeclared, it is
+  ingested with its original provenance and the stream is blocked.
 
 ## What the evidence supports
 
@@ -29,7 +33,7 @@ hosts and sets it was measured on and what it does not cover. There is no univer
 | The oracle sees payload loss that keeps ids | a control that keeps every tool id and empties arguments and results: arm equals baseline 40 of 40 and the old id-only projection matches in 40 of 40, the payload oracle flags 40 of 40 (item 2g, 20 seeds x 2 providers) | Payloads other than tool arguments, tool results and thinking signatures |
 | A host that declares `new_count` is ingested exactly, whatever the content | 18 of 18 runs of the repeated-content hosts (all-same, alternating, three-cycle text; windows of 4, 6, 8 messages; 2 providers; 20 calls; 1 new message per call), 8 of 8 runs with 2 or 3 new messages per call (same/alternating text, windows 6 and 8, 2 providers, 12 calls), each equal to the oracle, 0 blocking gaps, `claim_exactly_once` true | The declaration is trusted; hosts with other patterns |
 | The same hosts without a declaration lose nothing and are blocked | 18 of 18 and 8 of 8 runs contain every oracle event; 18 of 18 and 8 of 8 carry a blocking gap and `claim_exactly_once` false; the cost is duplicates: 1,884 extra flagged events over the 18 runs (about 105 per run) and 588 over the 8 | Consumers must treat these streams as at-least-once with flagged repeats |
-| No false ambiguity on unique text | 0 of 4 unique-text hosts (item 13, constant model answer, windows 4 and 8) and 0 of 12 (item 11, windows and compaction) carry a gap; both equal the oracle | |
+| No false ambiguity on unique text | 0 of 4 unique-text hosts (item 13, constant model answer, windows 4 and 8) and 0 of 12 (item 11: windows undeclared; compaction hosts declare `new_count=1`) carry a gap; both equal the oracle | |
 | The reviewer's case (history `yes`,`ok`; then a request `yes`,`new`) | without a declaration: all three user events present, flagged, blocking gap, both claims false; with `new_count=2`: exact, claims true (tests, not a rate) | |
 | An identical resend without a declaration is a flagged duplicate and blocks | 20 of 20 probes (2 providers x 10 seeds): second user event flagged, call listed in `ambiguous_calls`, `claim_exactly_once` false | It may be a true duplicate |
 | A declared retry suppresses visibly; a false claim is ignored and recorded | 20 of 20: one user event, a `declared_retry` event, call in `declared_calls`, response events marked `declared`; 20 of 20 retry claims for a call whose keys differ ignored and recorded | The declaration is trusted |
