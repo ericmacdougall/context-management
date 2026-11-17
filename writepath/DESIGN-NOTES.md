@@ -44,3 +44,14 @@ decisions, the deployment requirements that follow from them, and what is still 
   each able to read only its own credential. The lab runs them as separate OS processes with separate credential files
   on one host and one OS user (exp/d2_verifier_process.py); separate OS users or hosts are a deployment requirement,
   not proven here.
+- Subject-row locks (amendment 17, exp/lock_order.py): the order is unchanged (lease, subjects, identifier epochs,
+  mentioned subjects, chain, decision head). Only wp_hold_place, wp_hold_release and wp_erasure_mark take a subject row
+  FOR UPDATE, each one row in its own statement; every other path (appends, cascade batches, wp_hold_check,
+  wp_identifier_declare) takes FOR SHARE and never upgrades it. Until 5ab1e2e the hold check and the declare took FOR
+  UPDATE, which deadlocked two erasures of subjects who mention each other, and a declare against an append that
+  mentions the subject. Step 3 (decision core in events_guard) must keep to this order.
+- Erasure timing under concurrent writes (amendment 17c): PostgreSQL grants a new FOR SHARE ahead of a waiting FOR
+  UPDATE, so a sustained overlap of writes touching a subject can delay that subject's erasure mark without bound. Each
+  attempt is cut by statement_timeout (30 s); the job stays open and the sweep retries it. Receipts say so ("timing");
+  nothing in this lab claims bounded-time erasure under concurrent appends. A deployment that needs a bound has to pause
+  writes for the subject (for example refuse appends naming a subject with an open erasure job) and prove it.
