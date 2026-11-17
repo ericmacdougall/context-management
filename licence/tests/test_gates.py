@@ -739,7 +739,9 @@ class MatrixVerdictTests(MatrixHarness):
 
     def test_moment_analysis_does_not_count_unverified_dls_as_refusal(self):
         rows = [{"_t1": t, "dls_search": [matrix.UNVERIFIED, None, None]} for t in (1.0, 2.0, 3.0)]
-        self.assertEqual(exp2.moment_analysis(rows, 2.0, features=("dls_search",))["dls_search"], {"skipped": True})
+        m = exp2.moment_analysis(rows, 2.0, features=("dls_search",))["dls_search"]
+        self.assertTrue(m["skipped"] and m["unverified"])
+        self.assertNotIn("first_refusal_rel_resp_s", m)
 
     def test_callsites_table_matches_registry(self):
         doc = open(os.path.join(LIC, "CALLSITES.md")).read()
@@ -888,6 +890,124 @@ class MigrationVerdictTests(unittest.TestCase):
         chk = summarize.exp3_checks(R)["migration_checks"]
         self.assertFalse(chk["bbq_disk_to_hnsw"])
         self.assertFalse(chk["source_count_independent"])
+
+
+MANDATORY_T2 = ("rrf", "linear", "semantic_query", "inference_use", "dls_search")   # THRESHOLDS.md EXP1-T2 scope
+
+
+def _poll_rows(t_resp, unverified=(), drop=()):
+    """Synthetic poll rows: every probe AVAILABLE before the transition, LICENCE_ERROR from t_resp + 0.2; probes in `unverified` stay
+    UNVERIFIED_PREREQUISITE throughout; probes in `drop` never appear."""
+    rows = []
+    for k in range(40):
+        t = t_resp - 1.0 + k * 0.05
+        p = {"_t1": t}
+        for f in MANDATORY_T2:
+            if f in drop:
+                continue
+            cls = "UNVERIFIED_PREREQUISITE" if f in unverified else ("AVAILABLE" if t < t_resp + 0.2 else "LICENCE_ERROR")
+            p[f] = [cls, 200 if cls == "AVAILABLE" else 403] + ([4 if cls == "AVAILABLE" else None] if f == "dls_search" else [])
+        rows.append(p)
+    return rows
+
+
+class AggregateGateCoverageTests(unittest.TestCase):
+    """Gate review 5 F6: a mandatory input that is unverified, skipped or absent must give a non-passing UNVERIFIED status, never a pass and never a
+    silent skip. moment_analysis() through exp1_checks(); then the same rule for the other aggregate gates."""
+
+    def t2(self, **kw):
+        R = load("down_1.json")
+        R["exp1_moment"] = exp2.moment_analysis(_poll_rows(100.0, **kw), 100.0)
+        return summarize.exp1_checks(R)
+
+    def test_t2_all_probes_verified_passes(self):   # control: the synthetic rows are a real pass
+        r = self.t2()
+        self.assertTrue(r["T2_pass"])
+        self.assertEqual(r.get("T2_status"), "PASS")
+
+    def test_t2_one_probe_unverified_is_not_a_pass(self):
+        r = self.t2(unverified=("dls_search",))
+        self.assertFalse(r["T2_pass"])
+        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+
+    def test_t2_one_probe_missing_is_not_a_pass(self):
+        r = self.t2(drop=("inference_use",))
+        self.assertFalse(r["T2_pass"])
+        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+
+    def test_t2_all_probes_missing_is_not_a_pass(self):
+        r = self.t2(drop=MANDATORY_T2)
+        self.assertFalse(r["T2_pass"])
+        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+
+    def test_t2_refusal_after_bound_fails_not_unverified(self):
+        R = load("down_1.json")
+        m = exp2.moment_analysis(_poll_rows(100.0, unverified=("dls_search",)), 100.0)
+        m["rrf"]["first_refusal_rel_resp_s"] = 9.0
+        R["exp1_moment"] = m
+        self.assertEqual(summarize.exp1_checks(R).get("T2_status"), "FAIL")
+
+    def test_t4_dls_absent_is_unverified(self):
+        R = load("down_1.json")
+        del R["exp1_after"]["dls_search_as_user"]
+        r = summarize.exp1_checks(R)
+        self.assertFalse(r["T4_pass"])
+        self.assertEqual(r.get("T4_status"), "UNVERIFIED")
+
+    def test_t4_battery_empty_or_absent_is_not_a_pass(self):
+        R = load("down_7.json")
+        R["dls_battery_after"] = {}
+        r = summarize.exp1_checks(R)
+        self.assertFalse(r.get("T4_battery_pass"))
+        self.assertEqual(r.get("T4_battery_status"), "UNVERIFIED")
+        R2 = load("down_7.json")
+        del R2["dls_battery_after"]
+        self.assertEqual(summarize.exp1_checks(R2).get("T4_battery_status"), "UNVERIFIED")
+
+    def test_exp2_t2_with_no_requests_is_not_a_pass(self):
+        R = load("down_1.json")
+        R["exp2"]["T2_non_control_requests"] = 0
+        R["exp2"]["T2_failed_requests"] = 0
+        r = summarize.exp2_checks(R, "down")
+        self.assertFalse(r["T2_pass"])
+        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+
+    def test_exp2_t4_with_no_acknowledged_writes_is_not_a_pass(self):
+        R = load("down_1.json")
+        w = R["exp2"]["writes"]
+        w.update({"acked": 0, "acked_absent": 0, "sem_acked": 0, "sem_acked_absent": 0, "sem_failed": 0, "sem_failed_loud_licence_or_missing": 0})
+        r = summarize.exp2_checks(R, "down")
+        self.assertFalse(r["T4_pass"])
+        self.assertEqual(r["T4_status"], "UNVERIFIED")
+
+    def test_migration_with_zero_documents_is_not_a_pass(self):
+        R = load("down_1.json")
+        M = R["exp3"]["migration"]
+        for k in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw"):
+            M[k]["src_count"] = M[k]["dst_count"] = 0
+        M["semantic_to_text_vector"]["docs"] = M["semantic_to_text_vector"]["dst_count"] = 0
+        R["exp3"]["after_restart"]["counts_before"].update({"bbq_disk": 0, "sem": 0})
+        chk = summarize.exp3_checks(R)["migration_checks"]
+        self.assertFalse(chk["bbq_disk_to_hnsw"] or chk["bbq_disk_to_bbq_hnsw"] or chk["semantic_to_text_vector"])
+        self.assertEqual(chk.get("status"), "UNVERIFIED")
+
+    def test_aggregate_with_one_direction_absent_is_not_all_pass(self):
+        import shutil
+        import tempfile
+        d = tempfile.mkdtemp()
+        try:
+            shutil.copy(os.path.join(RES, "down_1.json"), d)
+            agg = summarize.aggregate(d, {})
+            self.assertFalse(any(v is True for v in agg["all_pass"].values()), agg["all_pass"])
+            self.assertEqual(agg.get("all_status", {}).get("T1_pass"), "UNVERIFIED")
+        finally:
+            shutil.rmtree(d)
+
+    def test_recompute_agreement_needs_both_figures(self):
+        self.assertFalse(recompute.agree(None, 0))
+        self.assertFalse(recompute.agree(0.0, None))
+        self.assertTrue(recompute.agree(None, None))
+        self.assertTrue(recompute.agree(1.0, 1.0 + 1e-9))
 
 
 if __name__ == "__main__":

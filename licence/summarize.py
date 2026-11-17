@@ -1,5 +1,10 @@
-"""Independent recomputation of every verdict from the per-life result JSON files (THRESHOLDS.md). Usage: summarize.py RESULTS_DIR [out.json]
-Reads only the result files; does not import the experiment code."""
+"""Threshold reapplication: applies the THRESHOLDS.md gates to the figures the harness recorded in the per-life result JSON files.
+It does not recompute those figures from raw rows; recompute.py does that, and only where raw rows were saved (T2, T3, T5 for all lives;
+T1 and the polling moments for down_7 only; see DEGRADE.md "Evidence status and limits"). Usage: summarize.py RESULTS_DIR [out.json]
+Reads only the result files; does not import the experiment code.
+
+Coverage rule (gate review 5, F6): every gate names its mandatory inputs. An input that is absent, skipped, unverified or empty makes the
+gate's status UNVERIFIED, which is never a pass; a gate passes only as PASS with every mandatory input observed."""
 import glob
 import gzip
 import json
@@ -44,25 +49,53 @@ def load(d, mode):
     return out
 
 
+T2_PROBES = ("rrf", "linear", "semantic_query", "inference_use", "dls_search")   # THRESHOLDS.md EXP1-T2: all five licensed probes are mandatory
+BATTERY = ("get_allowed_doc0", "get_hidden_doc1", "search_match_all", "search_term_hidden", "count", "mget", "msearch", "scroll_open", "knn_search",
+           "termvectors_hidden", "wildcard_index", "esql")
+
+
+def combine(statuses):
+    """FAIL if any input failed; else UNVERIFIED if any is unverified (or there are none); else PASS."""
+    s = list(statuses)
+    return "FAIL" if "FAIL" in s else ("UNVERIFIED" if not s or any(x != "PASS" for x in s) else "PASS")
+
+
+def t2_probe_status(v):
+    if not isinstance(v, dict) or v.get("skipped") or v.get("unverified") or not v.get("n"):
+        return "UNVERIFIED"
+    ok = v.get("first_refusal_rel_resp_s") is not None and v["first_refusal_rel_resp_s"] <= 5.0 and v.get("success_after_first_refusal") == 0
+    return "PASS" if ok else "FAIL"
+
+
 def exp1_checks(R):
     r = {}
     m = R.get("exp1_moment", {})
     r["T2_first_refusal_s"] = {f: v.get("first_refusal_rel_resp_s") for f, v in m.items()}
-    r["T2_pass"] = all(v.get("first_refusal_rel_resp_s") is not None and v["first_refusal_rel_resp_s"] <= 5.0 and v.get("success_after_first_refusal") == 0 for v in m.values() if not v.get("skipped"))
+    r["T2_probe_status"] = {f: t2_probe_status(m.get(f)) for f in T2_PROBES}
+    r["T2_status"] = combine(r["T2_probe_status"].values())
+    r["T2_pass"] = r["T2_status"] == "PASS"
     r["T2_dls_returned_before"] = m.get("dls_search", {}).get("dls_returned_counts_before")
     after = R["exp1_after"]
     latch_cells = ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate")
     r["T3_latch_shape_ok"] = {c: (after[c].get("status") == 403 and "current license is non-compliant" in json.dumps(after[c].get("error")).lower()) for c in latch_cells}
     d = after.get("dls_search_as_user", {})
     r["T4_dls_after"] = {"status": d.get("status"), "class": d.get("class"), "returned": d.get("returned"), "reason": (d.get("error") or {}).get("reason", "")[:90]}
-    r["T4_pass"] = d.get("status") in (401, 403) and d.get("returned") in (None, 0) and d.get("class") != "UNVERIFIED_PREREQUISITE"   # a 401 for a missing user is not DLS
+    if not d or d.get("class") in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIPPED") or d.get("status") is None:
+        r["T4_status"] = "UNVERIFIED"   # absent cell, or the DLS user / shared base was not established: a 401 for a missing user is not DLS
+    else:
+        r["T4_status"] = "PASS" if d.get("status") in (401, 403) and d.get("returned") in (None, 0) else "FAIL"
+    r["T4_pass"] = r["T4_status"] == "PASS"
     r["T4_control_before_returned"] = r["T2_dls_returned_before"]
-    if "dls_battery_after" in R:
-        a, b = R["dls_battery_after"], R["dls_battery_trial"]
+    a, b = R.get("dls_battery_after"), R.get("dls_battery_trial") or {}
+    if a is not None:
         r["T4_battery_after_statuses"] = {k: v["status"] for k, v in a.items()}
         r["T4_battery_trial_statuses"] = {k: v["status"] for k, v in b.items()}
-        r["T4_battery_pass"] = all(v["status"] >= 400 and not v["returned_hidden_doc"] and not v["returned_any_source"] for v in a.values())
         r["T4_battery_control_trial_hidden_leak"] = [k for k, v in b.items() if v["returned_hidden_doc"]]
+    if a is None or any(k not in a for k in BATTERY):
+        r["T4_battery_status"] = "UNVERIFIED"   # battery not recorded, or a read path missing from it
+    else:
+        r["T4_battery_status"] = "PASS" if all(a[k]["status"] >= 400 and not a[k]["returned_hidden_doc"] and not a[k]["returned_any_source"] for k in BATTERY) else "FAIL"
+    r["T4_battery_pass"] = r["T4_battery_status"] == "PASS"
     return r
 
 
@@ -95,10 +128,15 @@ def exp2_checks(R, direction):
                "sem_acked": w["sem_acked"], "sem_acked_absent": w["sem_acked_absent"], "sem_failed": w["sem_failed"], "sem_failed_loud": w["sem_failed_loud_licence_or_missing"],
                "sem_failed_present": w["sem_failed_present"], "control_detects_injected_loss": w["control_injected_loss_detected"]}
     base = (w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed_present"] == 0 and w["control_injected_loss_detected"])
+    observed = w["acked"] > 0 and w["sem_acked"] > 0   # no acknowledged write of either kind: "nothing lost" would be vacuous
     # legacy rule (addendum C predecessor): every semantic failure was counted loud if it carried any 403/404 error body
     r["T4_legacy_pass"] = base and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"]
-    if "sem_failed_other" in w:
-        r["T4_status"] = "PASS" if base and w["sem_failed_other"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] else "FAIL"
+    if not base:
+        r["T4_status"] = "FAIL"
+    elif not observed:
+        r["T4_status"] = "UNVERIFIED"
+    elif "sem_failed_other" in w:
+        r["T4_status"] = "PASS" if w["sem_failed_other"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] else "FAIL"
     elif w["sem_failed"] == 0:
         r["T4_status"] = "PASS" if base else "FAIL"
     else:   # failures exist but were never classified under addendum C and the rows were not saved (addendum D)
@@ -119,7 +157,11 @@ def exp2_checks(R, direction):
         r["sem_first_ok_after_trial_s"] = e.get("sem_first_ok_after_trial_s")
     r["T1_backend_without_oracle"] = e.get("T1_backend_without_oracle")
     r["T1_pass"] = e.get("T1_backend_without_oracle") == 0 and e["T1_mismatches"] == 0 and e["T1_examined"] >= 20000 and r["T1_control_flag_rate"] >= 0.9 and r["T1_control_backend_wrong"] == 0
-    r["T2_pass"] = r["T2_fail_fraction"] <= 0.001 and r["T2_longest_window_s"] <= 2.0
+    if not e["T2_non_control_requests"]:
+        r["T2_status"] = "UNVERIFIED"   # no read request: a zero failure fraction would be vacuous
+    else:
+        r["T2_status"] = "PASS" if r["T2_fail_fraction"] <= 0.001 and r["T2_longest_window_s"] <= 2.0 else "FAIL"
+    r["T2_pass"] = r["T2_status"] == "PASS"
     return r
 
 
@@ -162,6 +204,7 @@ def exp3_checks(R):
     chk = {}
     if "error" in M:
         chk["error"] = M["error"]
+        chk["status"] = "UNVERIFIED"   # the migration did not complete: nothing was checked
     else:
         b = M["bbq_disk_to_hnsw"]
         chk["bbq_disk_to_hnsw"] = b["dst_count"] == b["src_count"] and b["vector_mismatches"] == 0 and b["knn_self_top1"] / b["knn_self_of"] >= 0.99 and b["src_vs_ground_truth_max_abs"] <= 1e-6
@@ -176,8 +219,11 @@ def exp3_checks(R):
         ind = E["after_restart"]["counts_before"]
         chk["source_count_independent"] = (b["src_count"] == ind["bbq_disk"] and b2["src_count"] == ind["bbq_disk"] and s["docs"] + s["skipped_not_single_chunk"] == ind["sem"]
                                            and M["control_plain_to_hnsw"]["src_count"] == ind["plain"])
+        populated = b["src_count"] > 0 and b2["src_count"] > 0 and s["docs"] > 0 and M["control_plain_to_hnsw"]["src_count"] > 0
         for k in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw", "semantic_to_text_vector"):
-            chk[k] = chk[k] and chk["source_count_independent"]
+            chk[k] = chk[k] and chk["source_count_independent"] and populated
+        chk["status"] = "UNVERIFIED" if not populated else ("PASS" if all(chk[k] for k in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw", "semantic_to_text_vector",
+                                                                                           "control_plain", "control_corrupt_caught")) else "FAIL")
         chk["migrated_ops_ok"] = all(v < 300 for d in M["migrated_basic_ops"].values() for v in d.values())
     out["migration_checks"] = chk
     if "unrefreshed_twin_on_trial" in R:
@@ -237,7 +283,11 @@ def aggregate(d, res):
                          "max_flip_down_s": max((exp2_checks(R, "down")["T3_flip_latency_s"] for R in downs), default=None),
                          "max_flip_up_s": max((exp2_checks(R, "up")["T3_flip_latency_s"] for R in ups), default=None),
                          "total_acked_writes": sum(x["T4"]["acked"] for x in allx), "total_acked_absent": sum(x["T4"]["acked_absent"] for x in allx)}
-    agg["all_pass"] = {k: all(x[k] for x in allx) for k in ("T1_pass", "T2_pass", "T3_pass", "T4_pass", "T5_pass")}
+    # mandatory: at least one complete life in each direction (EXP2 has both); every life's gate must pass
+    both = bool(downs) and bool(ups)
+    life = lambda x, k: x.get(k[:-5] + "_status") or ("PASS" if x[k] else "FAIL")   # a life's own status where the gate has one
+    agg["all_status"] = {k: combine(life(x, k) for x in allx) if both else "UNVERIFIED" for k in ("T1_pass", "T2_pass", "T3_pass", "T4_pass", "T5_pass")}
+    agg["all_pass"] = {k: v == "PASS" for k, v in agg["all_status"].items()}
     return agg
 
 

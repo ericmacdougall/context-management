@@ -33,6 +33,15 @@ def legal_topk(ids, lists, k=10):
     return {d for d, v in sc.items() if v > kth + 1e-12} <= set(ids)
 
 
+def agree(a, b):
+    """Two figures agree only when both are present and equal (floats within 1e-6), or both are absent. None never equals 0."""
+    if a is None or b is None:
+        return a is None and b is None
+    if isinstance(a, float) or isinstance(b, float):
+        return abs(a - b) < 1e-6
+    return a == b
+
+
 def one(path):
     base = path[:-5]
     R = json.load(open(path))
@@ -132,7 +141,7 @@ def one(path):
     if "T1_examined" in out:
         cmp["T1_examined"] = (out["T1_examined"], e["T1_examined"])
         cmp["T1_mismatches"] = (out["T1_mismatches"], e["T1_mismatches"])
-    out["agrees_with_harness"] = {k: (abs((a or 0) - (b or 0)) < 1e-6 if isinstance(a, float) or isinstance(b, float) else a == b) for k, (a, b) in cmp.items()}
+    out["agrees_with_harness"] = {k: agree(a, b) for k, (a, b) in cmp.items()}
     return out
 
 
