@@ -1,0 +1,35 @@
+# green run: tests.test_evidence_e1 tests.test_evidence_layer against verify/e1.py
+# worktree HEAD: 4226508ea38e8894ea63597135b5ebaad45de126
+# git diff --stat ea4677a -- verify/e1.py (empty: the code under test is ea4677a's):
+ policy/verify/e1.py | 51 ++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 46 insertions(+), 5 deletions(-)
+# sha256 verify/e1.py in the worktree: 5f8ec148666eeb806b57eb1e0184bca36cff45fa4ae7dc4f837d4bbc647114ca
+# sha256 verify/e1.py at ea4677a:     be142fede16f02953f859996ebd1b3416c09d57dc61270addb446a70ee5a61a7
+# command (from policy/): python3 -m unittest -v tests.test_evidence_e1 tests.test_evidence_layer
+test_design_comes_from_the_pins (tests.test_evidence_e1.E1Evidence) ... ok
+test_drop (tests.test_evidence_e1.E1Evidence) ... ok
+test_duplicate (tests.test_evidence_e1.E1Evidence) ... ok
+test_extra (tests.test_evidence_e1.E1Evidence) ... ok
+test_honest_set_passes (tests.test_evidence_e1.E1Evidence) ... ok
+test_overwrite (tests.test_evidence_e1.E1Evidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_e1.E1Evidence) ... ok
+test_relabel (tests.test_evidence_e1.E1Evidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_e1.E1Evidence) ... ok
+test_each_reason_is_named (tests.test_evidence_layer.Layer) ... ok
+test_identities_are_typed (tests.test_evidence_layer.Layer) ... ok
+test_main_import_gate_covers_the_layer (tests.test_evidence_layer.Layer) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/exp/e1_lattice.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_pins_compare_exactly (tests.test_evidence_layer.Layer) ... ok
+test_unclassified_rows_and_bad_seeds (tests.test_evidence_layer.Layer) ... ok
+test_wrong_experiment_name (tests.test_evidence_layer.Layer) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 526.403s
+
+OK
+# unittest exit status 0
