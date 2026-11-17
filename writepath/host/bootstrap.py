@@ -173,6 +173,18 @@ def main(pg_port, es_port):
     # amendment 17c: cap the WAL this node keeps (the host's free space swings by several GB; the run's own growth is
     # capped at 2 GiB). A deviation from the earlier lab's default max_wal_size of 1GB, stated in THRESHOLDS.
     _psql("alter system set max_wal_size = '256MB';\nalter system set min_wal_size = '64MB';\nselect pg_reload_conf();", "postgres")
+    # parity with the earlier lab's node (its container ran postgres -c wal_recycle=off -c wal_keep_size=0
+    # -c archive_mode=off -c max_connections=200, recorded nowhere in the repo until now): wal_recycle=off matters to
+    # the key-residue proofs (a recycled WAL segment keeps old bytes on disk), max_connections to the concurrent runs
+    _psql("alter system set wal_recycle = off;\nalter system set wal_keep_size = 0;\nalter system set archive_mode = off;\n"
+          "alter system set max_connections = 200;\nselect pg_reload_conf();", "postgres")
+    if _psql("select count(*) from pg_settings where pending_restart;", "postgres").strip() != "0":
+        subprocess.run(["docker", "restart", PG_C], check=True, capture_output=True)
+        t1 = time.time()
+        while subprocess.run(["docker", "exec", PG_C, "pg_isready", "-U", "wp", "-q"]).returncode != 0:
+            if time.time() - t1 > 120:
+                raise SystemExit("postgres not ready in 120 s after the settings restart")
+            time.sleep(2)
     print("bootstrap ok", json.dumps({k: v for k, v in conf.items()}), "secrets: files only, nothing printed")
 
 

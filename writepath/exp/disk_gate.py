@@ -4,6 +4,7 @@
   check NAME    before each experiment: own usage may grow by at most CAP_GB over the baseline, else exit 3 (the run
                 stops itself and is VOID); a host under FLOOR_GB from other work is recorded, and the run continues
   end           VOID (exit 3) if the ES node logged a flood-stage event since start (it then refuses writes)
+  operator stop: write a reason into WP_HOME/state/STOP; the next check ends the run as VOID
 Own usage = du of this stream's Postgres and ES data directories (inside its own containers) plus WP_HOME. Sizes in GiB
 (as df -h prints them). Prints numbers only."""
 import json
@@ -19,7 +20,12 @@ from wp import config
 START_GB, FLOOR_GB, CAP_GB = 17.0, 15.0, 2.0
 GIB = 1024 ** 3
 HOME = pathlib.Path(os.environ["WP_HOME"])
-STATE = HOME / "logs" / "disk_gate.json"
+# NOT under WP_HOME/logs: that directory is a registered store whose files the erasure gate inventories (only *.log is
+# allowed), so a harness file there makes every erasure report gate:unregistered residue (the 1f059f4 run was voided
+# by exactly this).
+STATE_DIR = HOME / "state"
+STATE = STATE_DIR / "disk_gate.json"
+STOP = STATE_DIR / "STOP"          # an operator stop: the next check ends the run cleanly as VOID (no process kill)
 
 
 def _du(container, path):
@@ -48,12 +54,27 @@ def main(cmd, name=""):
             print(f"disk_gate BLOCKED start: host free {f:.1f} GiB < {START_GB}")
             sys.exit(2)
         o = own()
+        STATE_DIR.mkdir(exist_ok=True)
+        if STOP.exists():
+            STOP.unlink()                  # a stop file left by an earlier run does not stop this one
         STATE.write_text(json.dumps({"base": o, "since": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "floor_breaches": []}))
         print(f"disk_gate start free {f:.1f} GiB own {o['total'] / GIB:.2f} GiB (pg {o['pg'] / GIB:.2f} es {o['es'] / GIB:.2f} "
               f"home {o['home'] / GIB:.2f}) cap +{CAP_GB} GiB")
         return
+    if cmd == "preflight":             # after setup: the erasure gate's inventory must be empty before any experiment
+        from wp import db, registry
+        from wp.es import ES
+        unreg = registry.unregistered(db.admin(), db.keys_connect(), ES())
+        print(f"disk_gate preflight unregistered {len(unreg)} {unreg[:10]}")
+        if unreg:
+            print("disk_gate BLOCKED: the store inventory is not empty before the run (every erasure would report residue)")
+            sys.exit(2)
+        return
     st = json.loads(STATE.read_text())
     if cmd == "check":
+        if STOP.exists():
+            print(f"disk_gate VOID: operator stop ({STOP}: {STOP.read_text().strip()[:200]}) before {name}")
+            sys.exit(3)
         o = own()
         d = (o["total"] - st["base"]["total"]) / GIB
         print(f"disk_gate {name} free {f:.1f} GiB own +{d:.2f} GiB")

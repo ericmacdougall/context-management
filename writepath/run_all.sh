@@ -19,6 +19,7 @@ run() { gate "$*"; $PY "$@"; }
   $PY -m exp.disk_gate start || { echo "end BLOCKED $(date -u +%FT%TZ)"; exit 2; }
   run -m exp.cleanup
   run -m wp.setup --reset
+  $PY -m exp.disk_gate preflight || { echo "end BLOCKED $(date -u +%FT%TZ)"; exit 2; }
   run -m exp.guard_check start --controls || echo "GATE guard_check start FAILED"
   run -m exp.static_check
   gate exp.es_semantics          # not inside the pipeline: an exit there would only leave a subshell
