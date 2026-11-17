@@ -15,7 +15,9 @@ PY=$WP_HOME/venv/bin/python
 echo "chain start $(date -u +%FT%TZ) head $H spec $(basename "$SPEC")"
 while read -r L C M; do
   case "$L" in ''|'#'*) continue ;; esac
-  # Operator stop: each launch's `disk_gate start` deletes a STOP left by an earlier run, so the chain itself must look
+  # STOP: since the step-1 delta review P2, `disk_gate start` refuses while a STOP exists and never deletes it (consume
+  # one with `python -m exp.disk_gate clear-stop <reason>`); the chain still looks first, to stop cleanly. Before P2,
+  # start deleted a STOP left by an earlier run, so the chain itself had to look
   # before launching. At 9cbc798 a STOP written at 11:32:50Z during es_semantics was ignored by that gate's end (fixed in
   # review N2: end now voids on STOP) and deleted by n_old's start at 11:32:56Z, and the chain went on.
   [ -e "$WP_HOME/state/STOP" ] && { echo "chain stopped: operator stop before $L ($(head -c 200 "$WP_HOME/state/STOP"))"; exit 3; }

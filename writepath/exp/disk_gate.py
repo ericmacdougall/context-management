@@ -13,7 +13,13 @@
                 marker missing from the RETAINED log (rotated, truncated or replaced), and judges only the lines between
                 the two markers. The log check has log-line granularity: ES repeats these warnings about every 30 s,
                 so a run shorter than that can fall between two lines.
-  operator stop: write a reason into WP_HOME/state/STOP; the next check (or end) ends the run as VOID
+  STOP:         anyone (the launcher's flood watcher, an operator) writes a reason into WP_HOME/state/STOP; the next
+                check, or end (checked first AND again after its last measurement), ends the run as VOID; start is
+                BLOCKED while it exists and never deletes it (step-1 delta review P2)
+  clear-stop R  consume STOP atomically (renamed to state/STOP.cleared.*) with reason R recorded in state/stop_clears.log
+What the gate guarantees: start-line free space; own usage growth SAMPLED at each check and at end (not a bound on a
+transient peak between samples); no flood-stage or high-watermark line in the ES log between this run's markers,
+with coverage established as described under end; any STOP during the run voids it.
 Any failure to measure own usage at check or end is VOID (exit 3), never a pass.
 Own usage = du of this stream's Postgres and ES data directories (inside its own containers) plus WP_HOME. Sizes in GiB
 (as df -h prints them). Prints numbers only."""
@@ -119,16 +125,38 @@ def free_gb():
     return shutil.disk_usage(HOME).free / GIB
 
 
+def clear_stop(reason):
+    """Consume STOP atomically (rename, so a STOP written meanwhile is never lost silently) and record why."""
+    if not reason.strip():
+        raise SystemExit("clear-stop needs a reason")
+    if not STOP.exists():
+        print("disk_gate clear-stop: no STOP file")
+        return
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    kept = STATE_DIR / f"STOP.cleared.{stamp}.{os.urandom(4).hex()}"
+    os.rename(STOP, kept)
+    with open(STATE_DIR / "stop_clears.log", "a") as f:
+        f.write(json.dumps({"cleared_at": stamp, "kept_as": kept.name, "stop_text": kept.read_text().strip()[:200],
+                            "reason": reason.strip()[:200]}) + "\n")
+    print(f"disk_gate clear-stop: STOP consumed, kept as {kept.name}")
+
+
 def main(cmd, name=""):
+    if cmd == "clear-stop":
+        return clear_stop(name)
     f = free_gb()
     if cmd == "start":
         if f < START_GB:
             print(f"disk_gate BLOCKED start: host free {f:.1f} GiB < {START_GB}")
             sys.exit(2)
+        # review P2: start never deletes a STOP (one written after the chain looked and before this start was lost);
+        # a STOP blocks every start until it is consumed with a recorded reason (clear-stop)
+        if STOP.exists():
+            print(f"disk_gate BLOCKED start: STOP file present ({_stop_reason()}); consume it with "
+                  f"'python -m exp.disk_gate clear-stop <reason>' after reading it")
+            sys.exit(2)
         o = own()
         STATE_DIR.mkdir(exist_ok=True)
-        if STOP.exists():
-            STOP.unlink()                  # a stop file left by an earlier run does not stop this one
         # review P1: pin the container's identity and the clocks, and anchor the window in the container's own log
         ident = _identity()
         if ident is None:
@@ -175,7 +203,7 @@ def main(cmd, name=""):
             print(f"disk_gate FLOOR: host free {f:.1f} GiB < {FLOOR_GB} from other work; own usage within cap, continuing")
         return
     if cmd == "end":
-        # Fail closed (review N2): the run is valid only if the absence of a flood stage was OBSERVED (the log read
+        # Review N2: the run is valid only if the absence of a flood stage was OBSERVED (the log read
         # succeeded and covers the whole run) and own usage was measured and stayed within the cap.
         if STOP.exists():
             void(f"STOP file, {_stop_reason()}, during the run")
@@ -222,6 +250,9 @@ def main(cmd, name=""):
             void("the ES node passed its high disk watermark during the run (new shards were not allocated)")
         if d > CAP_GB:
             void(f"own usage grew {d:.2f} GiB > cap {CAP_GB} by the end of the run")
+        # review P2: a STOP that arrived during inspection, log retrieval or usage measurement still voids the run
+        if STOP.exists():
+            void(f"STOP file, {_stop_reason()}, arrived while end was measuring")
         return
     raise SystemExit(__doc__)
 

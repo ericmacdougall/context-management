@@ -1,0 +1,50 @@
+................F.FF......
+======================================================================
+FAIL: test_p2_clear_stop_consumes_with_a_recorded_reason (tests.test_disk_gate.DiskGateVoids)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 265, in test_p2_clear_stop_consumes_with_a_recorded_reason
+    self.assertEqual(rc, 0, out)
+AssertionError: "Run-validity gate for run_all (THRESHOLD[1901 chars]nly." != 0 : Run-validity gate for run_all (THRESHOLDS amendment 17c; main's disk rule of 2026-11-17).
+
+  start         refuse (exit 2) unless the host has >= START_GB free; record this stream's own usage as the baseline
+  check NAME    before each experiment: own usage may grow by at most CAP_GB over the baseline, else exit 3 (the run
+                stops itself and is VOID); a host under FLOOR_GB from other work is recorded, and the run continues
+  end           VOID (exit 3) unless the absence of a flood stage and the cap were OBSERVED: VOID if a STOP file exists,
+                the ES container cannot be inspected, `docker logs` fails or times out, the log shows a flood-stage
+                line or a high-watermark-exceeded line (amendment 23a), own usage cannot be measured, or own usage grew
+                over CAP_GB (review N2). Log coverage (step-1 delta review P1): start records the container id, its
+                full-precision StartedAt, its log driver config, the boot id, the wall and monotonic clocks, and writes
+                a nonce marker into the container's own log; end VOIDs on a different id or StartedAt, another boot, a
+                wall-clock step over CLOCK_SLACK_S, an end marker it cannot write or that does not appear, or a start
+                marker missing from the RETAINED log (rotated, truncated or replaced), and judges only the lines between
+                the two markers. The log check has log-line granularity: ES repeats these warnings about every 30 s,
+                so a run shorter than that can fall between two lines.
+  operator stop: write a reason into WP_HOME/state/STOP; the next check (or end) ends the run as VOID
+Any failure to measure own usage at check or end is VOID (exit 3), never a pass.
+Own usage = du of this stream's Postgres and ES data directories (inside its own containers) plus WP_HOME. Sizes in GiB
+(as df -h prints them). Prints numbers only.
+
+======================================================================
+FAIL: test_p2_start_with_stop_present_is_blocked_and_keeps_it (tests.test_disk_gate.DiskGateVoids)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 252, in test_p2_start_with_stop_present_is_blocked_and_keeps_it
+    self.assertEqual(rc, 2, out)
+AssertionError: 0 != 2 : disk_gate start free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB
+
+
+======================================================================
+FAIL: test_p2_stop_arriving_while_end_measures_voids (tests.test_disk_gate.DiskGateVoids)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 259, in test_p2_stop_arriving_while_end_measures_voids
+    self.assertVoid(*self.call("end"))
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_disk_gate.py", line 138, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-200:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+----------------------------------------------------------------------
+Ran 26 tests in 0.079s
+
+FAILED (failures=3)

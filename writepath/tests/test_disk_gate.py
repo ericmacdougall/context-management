@@ -1,9 +1,10 @@
-"""Offline unit test (no stores, no docker): exp/disk_gate.py fails closed (review N2).
+"""Offline unit test (no stores, no docker): exp/disk_gate.py voids a run on each doubt it is meant to catch (review N2,
+step-1 delta review P1 and P2).
 
 docker and du are stubbed; WP_HOME is a temporary home with this stream's conf, so wp/config.py loads without opening
 any connection. The gate under test is loaded from a file: this tree's exp/disk_gate.py by default, or the file named
 in DISK_GATE_UNDER_TEST (failing-first: the 1fcf3f7 file fails the fail-open cases).
-usage (from writepath/): python3 -m unittest discover -s tests -v   (all offline tests; 13 of them here)"""
+usage (from writepath/): python3 -m unittest tests.test_disk_gate -v"""
 import importlib.util
 import io
 import os
@@ -40,6 +41,7 @@ class Host:
         self.logcfg = '{"Config":{},"Type":"json-file"}'
         self.markers = []
         self.rotated = self.truncated = self.end_lost = self.pre_flood = False
+        self.on_du = None                           # called when the gate measures WP_HOME (P2: a STOP arriving mid-end)
 
     def _log_rows(self):
         rows = [("before", "INFO an earlier line")]
@@ -79,11 +81,13 @@ class Host:
             size = self.pg if "postgresql" in argv[-1] else self.es
             return SimpleNamespace(returncode=self.du_rc, stdout=f"{size}\t{argv[-1]}\n" if self.du_rc == 0 else "", stderr="")
         if argv[0] == "du":
+            if self.on_du:
+                self.on_du()
             return SimpleNamespace(returncode=0, stdout=f"{self.home}\t{argv[-1]}\n", stderr="")
         raise AssertionError(f"unexpected command {argv}")
 
 
-class DiskGateFailsClosed(unittest.TestCase):
+class DiskGateVoids(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.mkdtemp()
@@ -239,6 +243,37 @@ class DiskGateFailsClosed(unittest.TestCase):
     def test_p1_end_marker_never_lands_voids(self):
         self.h.end_lost = True
         self.assertVoid(*self.call("end"))
+
+    # review P2: a STOP is never lost
+    def test_p2_start_with_stop_present_is_blocked_and_keeps_it(self):
+        stop = self.home / "state" / "STOP"
+        stop.write_text("flood watcher: flood stage at 10:00:00\n")   # arrived after the chain looked, before start
+        rc, out = self.call("start")
+        self.assertEqual(rc, 2, out)
+        self.assertIn("BLOCKED", out)
+        self.assertTrue(stop.exists(), "start deleted a STOP")
+
+    def test_p2_stop_arriving_while_end_measures_voids(self):
+        stop = self.home / "state" / "STOP"
+        self.h.on_du = lambda: stop.write_text("operator: stop now\n")
+        self.assertVoid(*self.call("end"))
+
+    def test_p2_clear_stop_consumes_with_a_recorded_reason(self):
+        stop = self.home / "state" / "STOP"
+        stop.write_text("flood watcher: flood stage at 10:00:00\n")
+        rc, out = self.call("clear-stop", "read it; the flood was from another tenant's run, which ended")
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(stop.exists())
+        log = (self.home / "state" / "stop_clears.log").read_text()
+        self.assertIn("flood watcher", log)
+        self.assertIn("another tenant", log)
+        self.assertEqual(self.call("start")[0], 0)
+
+    def test_p2_clear_stop_needs_a_reason(self):
+        (self.home / "state" / "STOP").write_text("x\n")
+        rc, _ = self.call("clear-stop", "  ")
+        self.assertNotEqual(rc, 0)
+        self.assertTrue((self.home / "state" / "STOP").exists())
 
     def test_es_container_restarted_during_run_voids(self):
         self.h.started = "2999-01-01T00:00:00.000000000Z"
