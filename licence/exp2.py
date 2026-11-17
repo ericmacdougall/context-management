@@ -267,18 +267,9 @@ class Workload:
             out["T3_backend_labelled_after_resp_start"] = sum(1 for w in TW if w.arm == "auto" and w.ok and w.label == "backend" and w.t0 > t_resp)
         else:
             out["T3_ttl_s"] = self.ttl
-        ctl = lambda keep: [w for w in TW if w.arm == "ctl" and keep(w)]
-        lic = lambda ws: sum(1 for w in ws if w.outcome is not None and w.outcome.case == "LICENCE_REFUSAL")
-        if direction == "down":
-            late = ctl(lambda w: w.t0 >= t_resp + 1.0)
-            ok = sum(1 for w in late if w.ok)
-            out["T5_control_after_1s"] = {"n": len(late), "licence_failures": lic(late), "other_failures": len(late) - ok - lic(late),
-                                          "success": ok, "fail_fraction": (len(late) - ok) / max(1, len(late)), "licence_refusals": lic(late)}
-        else:
-            pre, post = ctl(lambda w: w.t1 < t_req), ctl(lambda w: w.t0 >= t_resp + 1.0)
-            out["T5_control_before_start_trial"] = {"n": len(pre), "failures": sum(1 for w in pre if not w.ok),
-                                                    "licence_failures": lic(pre), "licence_refusals": lic(pre)}
-            out["T5_control_after_trial"] = {"n": len(post), "success": sum(1 for w in post if w.ok)}
+        out.update(observe.control(TW, t_req, t_resp, direction))
+        # T1 on the same typed rows (review 10 F21: one implementation, also used by summarize.rebuild on the saved oracle)
+        out.update(observe.correctness(TW, getattr(self, "oracle_legs", {}), getattr(self, "oracle_rrf", {}), getattr(self, "oracle_lin", {})))
 
     def analyse(self, t_req, t_resp, direction):
         """direction 'down' (trial->basic at t_resp) or 'up' (basic->trial)."""
@@ -295,35 +286,6 @@ class Workload:
                 k = r[7][:60]
                 a["errs"][k] = a["errs"].get(k, 0) + 1
         out["arms"] = arms
-        # T1: wrong-but-successful
-        ex, wrong, wrong_examples = 0, 0, []
-        unlabeled_backend_without_oracle = 0
-        for r in rows:
-            if r[2] not in ("auto", "lin") or not r[4]:
-                continue
-            qi, ids, fus = r[3], r[6], r[5]
-            if fus == "client":
-                ok = oracle.valid_topk(ids, list(self.oracle_legs[qi]), 10)
-            elif fus == "backend":
-                ref = (self.oracle_rrf if r[2] == "auto" else self.oracle_lin).get(qi)
-                if ref is None:   # no reference: not examined (fail closed through T1_backend_without_oracle, never counted correct)
-                    unlabeled_backend_without_oracle += 1
-                    continue
-                ok = ids == ref
-            else:
-                ok = False
-            ex += 1
-            if not ok:
-                wrong += 1
-                if len(wrong_examples) < 5:
-                    wrong_examples.append({"arm": r[2], "qi": qi, "fusion": fus, "ids": ids[:10]})
-        brk_client = [r for r in rows if r[2] == "brk" and r[4] and r[5] == "client"]
-        brk_flagged = sum(1 for r in brk_client if not oracle.valid_topk(r[6], list(self.oracle_legs[r[3]]), 10))
-        brk_backend = [r for r in rows if r[2] == "brk" and r[4] and r[5] == "backend" and r[3] in self.oracle_rrf]
-        out["T1_control_broken_fallback"] = {"client_labelled": len(brk_client), "flagged_wrong": brk_flagged,
-                                             "flag_rate": brk_flagged / max(1, len(brk_client)),
-                                             "backend_labelled_checked": len(brk_backend), "backend_wrong": sum(1 for r in brk_backend if r[6] != self.oracle_rrf[r[3]])}
-        out["T1_examined"], out["T1_mismatches"], out["T1_examples"], out["T1_backend_without_oracle"] = ex, wrong, wrong_examples, unlabeled_backend_without_oracle
         self._typed_figures(out, rows, t_req, t_resp, direction)
         # T6 ranking function change (rrf vs linear vs client), recorded only
         if self.oracle_rrf:

@@ -18,6 +18,31 @@
 - **EXP1-T3** passes only when the adapter's own `ElasticsearchSearch._is_licence_error` recognises the message the adapter would build: `HTTP <code>: ` followed by the first 400 bytes of the body.
   - The committed lives recorded only an error summary, not that message, so EXP1-T3 is UNVERIFIED for them.
 
+## Review 10: rebuild, row schema, inventory
+
+- **Rebuild by construction.** When a life has a raw file, the loader deletes every stored figure that the raw file can rebuild and then rebuilds all of them from typed rows. The sources are declared in `summarize.RAW_SOURCES`:
+  - EXP1-T2 moments: `poll.gz`
+  - EXP2-T2, T3 and T5, both directions (including the post-transition control): `rows.gz`
+  - EXP2-T1: `rows.gz` plus `oracle.gz`
+
+  Nothing stored under those paths is read.
+- **Figures with no raw source.** These include matrix cells, transition times, write counts, EXP3, and T1 for lives without saved oracle legs. They are declared in `summarize.STORED`, and every verdict that reads one says "from stored figure, raw not available" in its reason. A test generated from the evidence types fails if any figure a verdict reads is undeclared.
+- **Row schema.** Every workload-row field has a declared domain (`observe.ROW_FIELDS`), together with its relation to the arm and to the success state.
+- **Inventory.** It comes from the campaign (`summarize.CAMPAIGN`: down_1..7 and up_1..5), not from the files found. A missing life or direction is UNVERIFIED.
+
+## Disclosed limits
+
+Gate review 10 classed these six differences from the registered wording as disclosed lab limits. A PASS establishes the implemented rule only. The same list is in `summary_current.json` (`limits`) and in DEGRADE.md.
+
+| Threshold | Limit |
+|---|---|
+| EXP3-T2 (migration) | 1. PASS establishes counts equal to the independent source counts: 299/299 and 199/199 after an earlier delete, where the registered text says 300/300 and 200/200.<br>2. PASS establishes semantic vectors within absolute error 0.005 and cosine 0.9999 of the stub. It does **not** establish the registered per-value 1% relative criterion, because the vectors needed for it were not kept. |
+| EXP1-T3 | Three fixed latch cells are checked, not every LICENCE_ERROR cell of a search path. |
+| EXP2-T2 | The failure window joins failed reads from four arms with a gap under 1 s, not consecutive failed auto requests. Every committed life has 0 failed reads. |
+| EXP1-T2 | Timing uses the poll end time, not the probe start time. This is conservative for the 5 s bound. |
+| EXP1-T1 | A 400 with "non-compliant" is not counted as a licence refusal; only a 403 is. |
+| EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2 | No gate exists. The artefact is not a complete registered-threshold verdict. |
+
 ## Historical files
 
 `SUPERSEDED.json` lists every superseded summary with its sha256:

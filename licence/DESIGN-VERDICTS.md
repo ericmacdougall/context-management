@@ -224,9 +224,9 @@ Design:
 | `exp2.Workload.analyse` T2 (failure windows) | `sorted(raw rows)`, `r[0] - cur[1] < 1.0` | `_typed_figures`: `parse_work(rows, run window)`, then `observe.availability(W)`. |
 | `exp2.Workload.analyse` T3 (flip) | raw `r[1] >= t_req`, `r[0] > first[1]` | `observe.flip(W, ...)`, plus `T3_backend_labelled_after_resp_start` from `WorkRow.t0`. |
 | `exp2.Workload.analyse` T5 (control) | raw `r[0] >= t_resp + 1.0`, `"non-compliant" in r[7]` | `WorkRow.t0` / `t1` and `outcome.case == LICENCE_REFUSAL`. A stream that does not parse records `raw_check` and no T2, T3 or T5 figure. |
-| `exp2.Workload.analyse` T1 | arm, ok and label of raw rows; no time compared | Unchanged. The figure is gated through its stored counts (Correctness relations). |
-| `summarize._backfill_observed` (load) | trusted the stored `first_refusal` and `licence_refusals`; recounted from raw lists | 1. Takes every stored derived figure out.<br>2. Re-derives it from the typed `poll.gz` / `rows.gz` inside the life's run window.<br>3. Puts it back only when the raw re-derivation reproduces it.<br>4. Otherwise (no raw file, a parse error, or a disagreement) the figure stays absent (UNVERIFIED) and the reason goes in `_raw_check`. |
-| `summarize._backfill_up_licence_failures` (load) | counts ctl rows before `t_req` whose text contains "non-compliant" | Legacy field `licence_failures` for up lives (addendum C). No verdict reads it: EXP2-T5-up reads `licence_refusals`, which `_backfill_observed` recounts from typed rows. |
+| `exp2.Workload.analyse` T1 | arm, ok, label, qi and ids of raw rows; no time compared | Review 10: `observe.correctness` on typed `WorkRow`s (qi, ids and label typed), the same function the loader uses on `oracle.gz`. |
+| `summarize._backfill_observed` (load, review 9) | re-derived T2, T3 and part of T5; left `T5_control_after_trial` stored (review 10 F21) | **Replaced in review 10** by `summarize.rebuild` / `load`: every path in `RAW_SOURCES` is deleted and rebuilt from typed rows whenever the raw file exists; nothing stored there is read. |
+| `summarize._backfill_up_licence_failures` (load, review 9) | counted ctl rows before `t_req` from raw lists | **Removed in review 10.** `observe.control` rebuilds `licence_failures` from typed rows. Correction: `ControlPre` does read it, as a checked stored figure, so "no verdict reads it" was wrong. |
 | `recompute.one` (audit artefact) | every T2, T3, T5 and ctl figure from raw `r[0]`, `r[1]`, `r[4]`, `r[7]` | Every figure comes from typed `WorkRow`s (`availability`, `flip`, `t0` / `t1`, `outcome.case`). The T1 loop selects on the typed row and reads only that row's payload (query index, ids). Per-probe `_times` pairs are typed: finite, in the window, start <= end. |
 | `matrix.verdict` cells | status and body of one request; no time compared | The cell records `adapter_message` and `adapter_detects` (F18). Readers parse cells with `observe.parse_cell`, where the label must agree with the status. |
 | `life._latch_changes` | `t - t_ref` for the latch timeline | Informational only: no verdict or evidence type reads `latch_timeline`. |
@@ -258,6 +258,34 @@ Committed streams were checked against these constraints before the constraints 
 | EXP3-semonly-control | L67 (control only) | `semantic`, `match` and `match_all` succeed. | **Matches the control.** The EXP3-T4 pass criterion (same total or a loud error per form) has no gate. |
 | EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2 | L40, L67, L68, L46, L47 | No gate in `verdicts.GATES`. | **Not gated**, reported only. Listed for main. |
 | EXP2-T6 | L35: "recorded, not gated" | No gate. | Matches. |
+
+## 3d. Review 10: the rules as data, so they cannot be missed (F21 to F24)
+
+Review 10 found three places where a rule stated in prose was enforced only where the author remembered it. Each rule is now a
+declared table, and the tests are generated from that table.
+1. **F21: raw sources.**
+   - `summarize.RAW_SOURCES` maps each raw file to every life path it rebuilds:
+     - `poll`: `exp1_moment`
+     - `rows`: EXP2-T2, T3 and T5 in both directions, including `T5_control_after_trial`
+     - `rows+oracle`: EXP2-T1
+   - `summarize.STORED` names every other leaf a verdict reads, with why it has no raw source.
+   - The loader deletes every path of a present source, then rebuilds it, so a stored value under a raw source cannot be read.
+   - An absent `rows` or `poll` leaves the figures absent (UNVERIFIED). An absent `oracle` keeps T1 as stored, and the reason says "from stored figure, raw not available".
+   - Completeness tests in `RebuildTests`, all generated from `evidence.leaf_paths` over `verdicts.GATES`:
+     1. Every leaf has a declared source.
+     2. Poisoned stored values under a present source change no rebuilt figure and no verdict.
+     3. Raw-row mutations together change every raw-sourced leaf of down_7 (poll, rows, oracle) and up_1 (rows), and no changed leaf equals its stored value.
+2. **F22: row schema.**
+   - `observe.ROW_FIELDS` gives every position of a workload row a named domain (`observe.DOMAINS`).
+   - `ROW_RELATIONS` declares how the label, ids and error text depend on the arm and on success. The label sets come from `LABELS_BY_ARM`, observed in all 12 lives before being enforced.
+   - Every field is checked against its domain before it is hashed, stored or compared.
+   - The mutation generator iterates `ROW_FIELDS`. A field whose domain has no test values fails the test.
+3. **F23: inventory.**
+   - `summarize.CAMPAIGN` is the registered 5 + 5 lives plus the supplemental down_6 and down_7. `current_summary` reports CAMPAIGN × GATES whatever files exist.
+   - A missing life gives UNVERIFIED for every gate, and the aggregate names the absent lives.
+   - Files outside the inventory are listed, not counted.
+4. **F24:** the message domain allows the full 410 characters.
+5. **Disclosed limits.** The six wording differences are `summarize.LIMITS`. They are emitted into `summary_current.json` and stated in DEGRADE.md and results/README.md, and the verdicts.py docstring no longer claims the thresholds are THRESHOLDS.md's unqualified.
 
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 

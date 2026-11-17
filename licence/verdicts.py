@@ -1,7 +1,8 @@
 """Verdicts over typed evidence only (DESIGN-VERDICTS.md). Each verdict function takes exactly one evidence object (evidence.py) and returns
 Verdict(status, reason); it never sees a life dictionary, an integer HTTP status or a stored derived figure. PASS is returned only on a
 branch that matched the intended observation. judge() parses first: evidence that does not parse is UNVERIFIED with the parse reason.
-Thresholds are THRESHOLDS.md's."""
+Thresholds are THRESHOLDS.md's as implemented, with six disclosed differences from the registered wording (summarize.LIMITS,
+DESIGN-VERDICTS.md threshold-wording table); EXP3-T1/T4/T5 and EXP4 have no gate here."""
 import collections
 
 import evidence as E
