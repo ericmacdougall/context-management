@@ -330,6 +330,34 @@ class Review3Rollback(unittest.TestCase):
         self._assert_refused_and_kept("erasure")
         self.assertEqual(self.o.execute("select count(*) from dc.vals where ref = 'val-x1'").fetchone()[0], 0)
 
+    def test_n4_failure_mid_rollback_changes_nothing(self):
+        """Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename
+        of the old schema, must leave everything as it was: the migrated schema with its data and the pre-migration schema both still
+        there. Non-vacuous: the same injection against a rollback without its transaction leaves no dc schema (red log
+        policy/results/red/delta1_n4_injection_broken_variant.out)."""
+        self._token()                                     # a login after the migration (not data: the rollback proceeds to the drops)
+        conn, outer = self.o, self
+
+        class Inject:
+            def transaction(self):
+                return conn.transaction()
+
+            def execute(self, q, *a, **k):
+                text = q.as_string(conn) if hasattr(q, "as_string") else str(q)
+                if "rename to dc" in text:
+                    outer.assertIsNone(conn.execute("select to_regnamespace('dc')").fetchone()[0], "the drop did not run first")
+                    raise RuntimeError("injected failure mid-rollback")
+                return conn.execute(q, *a, **k)
+
+        with self.assertRaises(RuntimeError):
+            self.MIG.rollback(Inject())
+        self.assertFalse(self._is_old_schema(), "the old schema replaced the migrated one")
+        self.assertIsNotNone(self.o.execute("select to_regnamespace(%s)", (self.MIG.PRE,)).fetchone()[0], "the pre-migration schema is gone")
+        self.assertIsNotNone(self.o.execute("select to_regnamespace('dc_crypto')").fetchone()[0], "dc_crypto is gone")
+        self.assertEqual(self.o.execute("select count(*) from dc.vals where ref = 'val-x1'").fetchone()[0], 1)
+        self.MIG.rollback(self.o)                                                   # and the rollback still works afterwards
+        self.assertTrue(self._is_old_schema())
+
     def test_n4_rollback_after_a_refused_request_is_refused(self):
         """A refused request writes an audit row: audit history is data too (0a20b64 drops it)."""
         out = self._app("select dc.submit(%s, %s::jsonb)", self._token(), json.dumps({"type": "propose", "client_id": "m2", "idem": "m2",

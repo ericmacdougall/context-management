@@ -14,8 +14,8 @@ PASS needs, for EVERY seed:
     token    every (token class, call) pair of the pinned TOKENS x CALLS exactly once. valid: submit is an authenticated decision (not
              unauthenticated:*), explain answers for tenant-a and shows the seeded proposal, read_table shows it, erase_candidates finds
              one value, erase_values is not refused. forged, expired, revoked, ended, empty, expired_in_txn (a token valid when an
-             explicit transaction began and expired inside it) and repeatable_read (a valid token used in a REPEATABLE READ
-             transaction): submit unauthenticated:invalid_session, explain null, read_table empty, both erase calls refused
+             explicit transaction began and expired inside it) and repeatable_read (a REPEATABLE READ transaction takes its
+             snapshot, then dc_idp ends the token): submit unauthenticated:invalid_session, explain null, read_table empty, both erase calls refused
              "unauthorized". other_tenant: submit authenticated, explain answers for tenant-b and never shows the seeded proposal,
              read_table never shows it, erase_candidates finds nothing, erase_values erases nothing. token_after: exactly one row, the
              seeded value is still there, end_session returned true.

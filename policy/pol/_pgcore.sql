@@ -578,6 +578,10 @@ begin
   if p_proof is null or length(p_proof) > 2048 or p_ttl_s is null or p_ttl_s < 1 or p_ttl_s > 86400 then
     raise exception 'proof refused: shape' using errcode = 'P0001';
   end if;
+  -- delta review M1: a REPEATABLE READ or SERIALIZABLE snapshot could predate a factor or principal revoke; refuse it (see dc._session)
+  if current_setting('transaction_isolation') <> 'read committed' then
+    raise exception 'proof refused: isolation' using errcode = 'P0001';
+  end if;
   body := substring(p_proof from '^(.*)[.][0-9a-f]{64}$');
   mac := substring(p_proof from '[.]([0-9a-f]{64})$');
   if body is null or mac is null then raise exception 'proof refused: shape' using errcode = 'P0001'; end if;
@@ -605,19 +609,24 @@ begin
     raise exception 'proof refused: binding' using errcode = 'P0001';
   end if;
   x := (b->>'expires')::numeric;
-  if x <= extract(epoch from now()) or x > extract(epoch from now()) + 300 then raise exception 'proof refused: time' using errcode = 'P0001'; end if;
+  -- delta review M1: the wall clock, not now() (fixed when the caller's transaction began)
+  if x <= extract(epoch from clock_timestamp()) or x > extract(epoch from clock_timestamp()) + 300 then
+    raise exception 'proof refused: time' using errcode = 'P0001';
+  end if;
   select p.kind into k from dc.principal p where p.tenant = fr.tenant and p.pid = fr.principal and not p.revoked;
   if k is null then raise exception 'proof refused: principal' using errcode = 'P0001'; end if;
   if (k = 'human' and fr.channel not in ('owner_ui', 'owner_cli')) or (k <> 'human' and fr.channel <> 'agent_api') then
     raise exception 'proof refused: channel' using errcode = 'P0001';
   end if;
-  delete from dc.used_proofs u where u.factor = fr.factor and u.expires < now() - interval '1 minute';       -- expired proofs are refused anyway
+  delete from dc.used_proofs u where u.factor = fr.factor and u.expires < clock_timestamp() - interval '1 minute';   -- refused anyway
   insert into dc.used_proofs values (fr.factor, b->>'nonce', to_timestamp(x)) on conflict do nothing;      -- a concurrent twin waits, then sees it
   get diagnostics n = row_count;
   if n = 0 then raise exception 'proof refused: replayed' using errcode = 'P0001'; end if;
+  -- the insert above can wait for a concurrent twin's transaction: judge expiry again after that wait (delta review M1)
+  if x <= extract(epoch from clock_timestamp()) then raise exception 'proof refused: time' using errcode = 'P0001'; end if;
   tok := encode(dc_crypto.gen_random_bytes(32), 'hex');
   insert into dc.sessions values (encode(sha256(convert_to(tok, 'UTF8')), 'hex'), fr.tenant, fr.principal, fr.channel, fr.factor,
-                                  now() + make_interval(secs => p_ttl_s), false);
+                                  clock_timestamp() + make_interval(secs => p_ttl_s), false);
   return jsonb_build_object('token', tok, 'tenant', fr.tenant, 'principal', fr.principal, 'channel', fr.channel, 'factor', fr.factor);
 end $$;
 
@@ -632,11 +641,20 @@ begin
   return n = 1;
 end $$;
 
-create function dc._session(p_token text) returns dc.sessions language sql stable as $$
-  select s.* from dc.sessions s
-   where p_token is not null and p_token <> '' and s.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex')
-     and not s.revoked and s.expires_at > now()
-$$;
+-- The live session for a token, or a row of nulls. Delta review M1: expiry is judged on the WALL CLOCK (clock_timestamp()), never on
+-- now(), which stays fixed at the start of the caller's transaction (a caller could open a transaction while its token is valid and
+-- keep calling after expiry). VOLATILE, so every call reads afresh; and only under READ COMMITTED: in a REPEATABLE READ or
+-- SERIALIZABLE transaction the snapshot is fixed when the transaction first reads, so an end_session, a session revoke or a principal
+-- revoke committed after that would stay invisible to it. Such a transaction gets no session.
+create function dc._session(p_token text) returns dc.sessions language plpgsql volatile as $$
+declare s dc.sessions;
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then return s; end if;
+  select x.* into s from dc.sessions x
+   where p_token is not null and p_token <> '' and x.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex')
+     and not x.revoked and x.expires_at > clock_timestamp();
+  return s;
+end $$;
 
 -- ------------------------------------------------------------------------------------------------ the application API (dc_app)
 create function dc._out(code text, orig text, evid text, ref text) returns jsonb language sql immutable as $$
@@ -669,6 +687,14 @@ begin
         || jsonb_build_object('id', s.principal || '/' || cid, 'tenant', s.tenant, 'principal', s.principal, 'channel', s.channel)
         || dc._origin((select p.kind from dc.principal p where p.tenant = s.tenant and p.pid = s.principal), s.channel);
   perform dc._lock_event(s.tenant, ev);                 -- tenant FOR SHARE: erase_values (FOR UPDATE) cannot interleave with minting below
+  -- delta review M1: the locks above can wait (a revoke holds the tenant row, a twin the principal's advisory lock): the session must
+  -- still be live, and the principal unrevoked, after the wait; nothing has been written for this call yet
+  if (dc._session(p_token)).principal is distinct from s.principal then
+    return dc._out('unauthenticated:invalid_session', null, null, null);
+  end if;
+  if exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.revoked) then
+    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'principal_revoked'); return dc._out('principal_revoked', null, null, null);
+  end if;
   if p_body ? 'value' then
     if jsonb_typeof(p_body->'value') <> 'string' or not p_body ? 'label' then
       insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
@@ -777,6 +803,11 @@ begin
   end if;
   if p_subject is null or p_subject <> dc._canon_subject(p_subject) then return jsonb_build_object('refused', 'bad_subject'); end if;
   perform 1 from dc.tenant where tenant = s.tenant for update;
+  -- delta review M1: the lock above can wait; the session, and the caller's admin right, must still hold after the wait
+  if (dc._session(p_token)).principal is distinct from s.principal
+     or not exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.admin and not p.revoked) then
+    return jsonb_build_object('refused', 'unauthorized');
+  end if;
   delete from dc.vals v where v.tenant = s.tenant and v.ref = any(coalesce(p_refs, array[]::text[])) and p_subject = any(v.subjects);
   get diagnostics n = row_count;
   select count(*) into rest from dc.vals v where v.tenant = s.tenant and p_subject = any(v.subjects);

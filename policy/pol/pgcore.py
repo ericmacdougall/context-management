@@ -305,7 +305,10 @@ class PgDecisionService:
     submit asks THE revocation source (pol.enforce.Revocations) exactly where the memory service does (review-3 N3): a principal revoked
     by the policy document (skeleton over-match included) or by a core revoke event is refused principal_revoked. LIMIT: the policy
     document lives in process; a caller that bypasses this service with raw SQL as dc_app and holds a still-valid token of a principal
-    revoked ONLY by the policy document is stopped by the database only after a core `revoke` event or at the token's expiry."""
+    revoked ONLY by the policy document is stopped by the database only after a core `revoke` event, a dc.end_session of that token,
+    or at the token's expiry: the lifetime dc_idp chose at dc.open_session (1 to 86400 s; PgIdentity's default is 3600 s), judged on
+    the wall clock and refused inside REPEATABLE READ or SERIALIZABLE transactions (delta review M1). The deployment must end a
+    principal's sessions when it revokes that principal in the policy document, or accept that window."""
 
     def __init__(self, enforcer, app_conn):
         from .enforce import Enforcer

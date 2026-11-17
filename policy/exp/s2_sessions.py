@@ -7,11 +7,14 @@ Real arm (current pol/_pgcore.sql), per seed, one install of tenants tenant-a an
   proof     N trials per class, principals and factors drawn by the seed: valid (must open a session that authenticates on dc.submit),
             forged MAC, body edited, another factor's key, another factor's id, look-alike principal, another principal, another
             channel, another tenant, expired, beyond the 300 s window, replay (the first use must open), revoked factor, malformed
-            (one of eight shapes), and, last, a revoked principal. Every class but valid and replay_first must be refused.
+            (one of eight shapes), expired inside a transaction (begun while the proof was valid; delta review M1), and, last, a
+            revoked principal. Every class but valid and replay_first must be refused.
   replay_concurrent  8 dc_idp connections present ONE proof at once: exactly one opens a session.
   token     valid, forged, expired, revoked, ended (dc.end_session), empty and other-tenant admin tokens on all five dc_app calls
             (submit, explain, read_table, erase_candidates, erase_values), with a value about `dana` in tenant-a: the valid token
-            gets data, every bad token gets the refusal, the other tenant's token sees and erases nothing of tenant-a.
+            gets data, every bad token gets the refusal, the other tenant's token sees and erases nothing of tenant-a. Delta review
+            M1 adds expired_in_txn (a 1 s token, all five calls in a transaction begun while it was valid, made after it expired) and
+            repeatable_read (a REPEATABLE READ transaction takes its snapshot, dc_idp then ends the token, then the five calls).
   origin    events by every kind and channel carry actor and trust_origin derived from the session; a body naming tenant, principal,
             channel, id, actor or trust_origin is refused identity_in_body.
   install_lookalike  a tenant config with look-alike principal ids is refused.
@@ -25,6 +28,8 @@ Controls, per seed, each on its own install (each must CATCH, i.e. show the atta
                           look-alike principal opens a session as that principal.
   ctl_origin_from_body    variant (the e15241c submit plus body keys actor and trust_origin accepted, origin not stamped): a non-human
                           body naming actor "user" writes an event with actor "user".
+  ctl_txn_clock           variant with d05d731's clock (now(), fixed at transaction start) and no isolation guard: a proof that
+                          expires inside a transaction begun while it was valid opens a session.
 Rows carry factor ids and outcomes only: no key, proof, MAC or token is written.
 usage: python -m exp.s2_sessions (lab host; Postgres env as file paths)."""
 import hashlib
@@ -54,10 +59,10 @@ LAB = {"tenants": [T], "acl": [], "regions": None, "sensitivity": 0, "models": N
        "holds": [], "subjects": []}
 N = int(os.environ.get("S2_TRIALS") or 12)
 CLASSES = ("valid", "forged_mac", "body_edited", "other_key", "other_factor_id", "look_alike", "other_principal", "other_channel",
-           "other_tenant", "expired", "far_future", "replay", "revoked_factor", "malformed")
+           "other_tenant", "expired", "far_future", "replay", "revoked_factor", "malformed", "expired_in_txn")
 MALFORMED = ("no_mac", "not_json", "extra_field", "nonce_not_hex", "expires_string", "empty", "oversized", "null")
 CALLS = ("submit", "explain", "read_table", "erase_candidates", "erase_values")
-TOKENS = ("valid", "forged", "expired", "revoked", "ended", "empty", "other_tenant")
+TOKENS = ("valid", "forged", "expired", "revoked", "ended", "empty", "other_tenant", "expired_in_txn", "repeatable_read")
 HERE = os.path.dirname(os.path.abspath(__file__))
 SQL0 = PG._SQL_PATH
 ROWS = []
@@ -71,6 +76,16 @@ STAMP_RETURN = "  return jsonb_build_object('token', tok, 'tenant', fr.tenant, '
 ID_KEYS = "  if p_body ?| array['tenant', 'principal', 'channel', 'id', 'actor', 'trust_origin'] then\n"
 ORIGIN_STAMP = "        || dc._origin((select p.kind from dc.principal p where p.tenant = s.tenant and p.pid = s.principal), s.channel);\n"
 BODY_KEYS = "                                  'choose','target','role'];\n"
+# delta review M1: the wall-clock checks and the isolation guards of the fix, and what d05d731 had instead (ctl_txn_clock)
+TIME_CHECK = ("  if x <= extract(epoch from clock_timestamp()) or x > extract(epoch from clock_timestamp()) + 300 then\n"
+              "    raise exception 'proof refused: time' using errcode = 'P0001';\n  end if;\n")
+TIME_CHECK_OLD = ("  if x <= extract(epoch from now()) or x > extract(epoch from now()) + 300 then raise exception 'proof refused: time' "
+                  "using errcode = 'P0001'; end if;\n")
+TIME_RECHECK = "  if x <= extract(epoch from clock_timestamp()) then raise exception 'proof refused: time' using errcode = 'P0001'; end if;\n"
+OPEN_ISOLATION = ("  if current_setting('transaction_isolation') <> 'read committed' then\n"
+                  "    raise exception 'proof refused: isolation' using errcode = 'P0001';\n  end if;\n")
+SESSION_ISOLATION = "  if current_setting('transaction_isolation') <> 'read committed' then return s; end if;\n"
+SESSION_CLOCK = "     and not x.revoked and x.expires_at > clock_timestamp();\n"
 VARIANTS = {
     "ctl_no_replay": [(REPLAY_CHECK, "")],
     "ctl_no_mac": [(MAC_CHECK, "  if fr.factor is null then\n")],
@@ -80,6 +95,8 @@ VARIANTS = {
                                                                    "'tenant', b->>'tenant', 'principal', b->>'principal', 'channel', b->>'channel'"))],
     "ctl_origin_from_body": [(ID_KEYS, "  if p_body ?| array['tenant', 'principal', 'channel', 'id'] then\n"), (ORIGIN_STAMP, ";\n"),
                              (BODY_KEYS, "                                  'choose','target','role','actor','trust_origin'];\n")],
+    "ctl_txn_clock": [(TIME_CHECK, TIME_CHECK_OLD), (TIME_RECHECK, ""), (OPEN_ISOLATION, ""), (SESSION_ISOLATION, ""),
+                      (SESSION_CLOCK, SESSION_CLOCK.replace("clock_timestamp()", "now()"))],
 }
 
 
@@ -121,9 +138,11 @@ class Lab:
         self.o = owner("s2_owner")
         self.idp = PG.connect_idp(port, ip, "s2_idp")
         self.app = PG.connect_app(port, ap, "s2_app")
+        self.idp_t = PG.connect_idp(port, ip, "s2_idp_txn")     # explicit transactions (expired_in_txn)
+        self.app_t = PG.connect_app(port, ap, "s2_app_txn")
 
     def close(self):
-        for c in (self.o, self.idp, self.app):
+        for c in (self.o, self.idp, self.app, self.idp_t, self.app_t):
             c.close()
 
     def open(self, p, conn=None):
@@ -142,6 +161,20 @@ class Lab:
         code = self.submit(tok, {"type": "retract", "client_id": "a" + secrets.token_hex(4), "idem": "a" + secrets.token_hex(4), "req": "r1",
                                  "based_on": 0})["code"]
         return not code.startswith("unauthenticated")
+
+
+def open_in_txn(lab, p):
+    """delta review M1: begin a transaction while the proof is still valid, read once (now() is fixed from here), wait until the proof
+    has expired by the wall clock, then present it inside that transaction. The transaction is rolled back either way."""
+    x = json.loads(p.rpartition(".")[0])["expires"]
+    c = lab.idp_t
+    c.execute("begin")
+    try:
+        c.execute("select now()")
+        time.sleep(max(0.0, x + 0.3 - time.time()))
+        return lab.open(p, c)
+    finally:
+        c.execute("rollback")
 
 
 def channels(kind):
@@ -224,7 +257,10 @@ def proof_rows(arm, seed, lab, fs, rng, classes, trials):
     for cls in classes:
         for i in range(trials):
             f = fs[rng.choice(keys)]
-            if cls == "replay":
+            if cls == "expired_in_txn":
+                p, claimed = proof(f, expires_in=1.2), f.principal
+                st, d = open_in_txn(lab, p)
+            elif cls == "replay":
                 p = proof(f)
                 st1, d1 = lab.open(p)
                 ROWS.append({"arm": arm, "seed": seed, "kind": "proof", "cls": "replay_first", "outcome": st1, "factor": f.factor_id,
@@ -310,7 +346,7 @@ def mint_rows(arm, seed, lab, fs):
 def _obs(name, v, marker):
     """What a call returned, reduced: `seen` counts the seeded tenant-a proposal (its id) in the answer."""
     if name == "submit":
-        return v["code"]
+        return v
     if name == "explain":
         return None if v is None else {"tenant": v.get("tenant"), "seen": json.dumps(v).count(marker)}
     if name == "read_table":
@@ -331,14 +367,43 @@ def token_rows(arm, seed, lab, fs):
     lab.o.execute("update dc.sessions set expires_at = now() - interval '1 second' where token_hash = %s", (h(toks["expired"]),))
     lab.o.execute("update dc.sessions set revoked = true where token_hash = %s", (h(toks["revoked"]),))
     ended = lab.idp.execute("select dc.end_session(%s)", (toks["ended"],)).fetchone()[0]
+    def calls(c, tok):
+        return {"submit": c.execute("select dc.submit(%s, %s)", (tok, Jsonb({"type": "propose", "client_id": "t" + secrets.token_hex(4),
+                                                                            "idem": "t" + secrets.token_hex(4), "req": "r1", "value": "w",
+                                                                            "label": LAB, "based_on": 0}))).fetchone()[0]["code"],
+                "explain": c.execute("select dc.explain(%s, 'r1')", (tok,)).fetchone()[0],
+                "read_table": c.execute("select dc.read_table(%s)", (tok,)).fetchone()[0],
+                "erase_candidates": c.execute("select dc.erase_candidates(%s, 'dana')", (tok,)).fetchone()[0],
+                "erase_values": c.execute("select dc.erase_values(%s, 'dana', %s)", (tok, ["nothing"])).fetchone()[0]}
+
+    def in_txn(cls):
+        """delta review M1. expired_in_txn: an admin token opened with a 1 s lifetime, a transaction begun while it is valid (now() fixed
+        by a first read), the five calls made after it has expired by the wall clock. repeatable_read: a valid admin token, a
+        REPEATABLE READ transaction that takes its snapshot, dc.end_session committed by dc_idp, then the five calls. Rolled back."""
+        c = lab.app_t
+        if cls == "expired_in_txn":
+            tok = lab.idp.execute("select dc.open_session(%s, 1)", (proof(fs[(T, "admin", "owner_ui")]),)).fetchone()[0]["token"]
+            c.execute("begin")
+            try:
+                c.execute("select now()")
+                time.sleep(1.3)
+                return calls(c, tok)
+            finally:
+                c.execute("rollback")
+        tok = adm()
+        c.execute("begin isolation level repeatable read")
+        try:
+            c.execute("select 1")
+            assert lab.idp.execute("select dc.end_session(%s)", (tok,)).fetchone()[0] is True
+            return calls(c, tok)
+        finally:
+            c.execute("rollback")
+
     for cls in TOKENS:
-        tok = toks[cls]
-        got = {"submit": lab.submit(tok, {"type": "propose", "client_id": "t" + secrets.token_hex(4), "idem": "t" + secrets.token_hex(4),
-                                          "req": "r1", "value": "w", "label": LAB, "based_on": 0}),
-               "explain": lab.app.execute("select dc.explain(%s, 'r1')", (tok,)).fetchone()[0],
-               "read_table": lab.app.execute("select dc.read_table(%s)", (tok,)).fetchone()[0],
-               "erase_candidates": lab.app.execute("select dc.erase_candidates(%s, 'dana')", (tok,)).fetchone()[0],
-               "erase_values": lab.app.execute("select dc.erase_values(%s, 'dana', %s)", (tok, ["nothing"])).fetchone()[0]}
+        if cls in ("expired_in_txn", "repeatable_read"):
+            got = in_txn(cls)
+        else:
+            got = calls(lab.app, toks[cls])
         for call in CALLS:
             ROWS.append({"arm": arm, "seed": seed, "kind": "token", "cls": cls, "call": call, "obs": _obs(call, got[call], "alice/seed-%s" % seed)})
     ROWS.append({"arm": arm, "seed": seed, "kind": "token_after", "ended_returned": ended,
@@ -454,6 +519,12 @@ def controls(seed):
     lab = Lab()
     try:
         origin_rows("ctl_origin_from_body", seed, lab, factors(lab, rng))
+    finally:
+        lab.close()
+    install(variant("ctl_txn_clock"))
+    lab = Lab()
+    try:
+        proof_rows("ctl_txn_clock", seed, lab, factors(lab, rng), rng, ("expired_in_txn",), 3)
     finally:
         lab.close()
 
