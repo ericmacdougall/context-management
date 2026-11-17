@@ -1,0 +1,136 @@
+lock taken 2026-11-17T23:06:49Z new 0bff333 old 0e8f67c free_kib 26923812
+unicode 15.0.0
+== M matcher classes: build time, not-closed count
+classes_s 0.23 not_closed 63 total_s 0.43
+== G1 test_ident (m4)
+Ran 33 tests in 4.289s
+
+OK
+== R1 test_ident (new tests, wp/mentions.py of the old tree)
+ERROR: test_f11_closure_over_the_tables (tests.test_ident.F11OneCanonicalKey.test_f11_closure_over_the_tables)
+AttributeError: module 'wp.mentions' has no attribute 'not_closed'
+FAIL: test_f11_ascii_classes (tests.test_ident.F11OneCanonicalKey.test_f11_ascii_classes)
+AssertionError: Lists differ: ['l1', 'o0'] != ['il1', 'o0']
+FAIL: test_f11_generated_variants_match (tests.test_ident.F11OneCanonicalKey.test_f11_generated_variants_match)
+    self.assertEqual(missed[:5], [], f"{len(missed)} of {n} generated variants not matched")
+AssertionError: Lists differ: [('Alison', 'a\U000e00d8𐲥اs\U000e0c1a೦N', [446 chars]7'])] != []
+-  ('Alison', 'AlӀSᴑ𝐧', ['0x41', '0x6c', '0x4c0', '0x53', '0x1d11', '0x1d427'])] : 514 of 2700 generated variants not matched
+FAIL: test_f11_one_key_per_token (tests.test_ident.F11OneCanonicalKey.test_f11_one_key_per_token)
+AssertionError: 22 != 6
+FAIL: test_f11_reviewer_counterexample (tests.test_ident.F11OneCanonicalKey.test_f11_reviewer_counterexample)
+AssertionError: 'aiison' != 'alison'
+FAIL: test_f11_stated_over_match (tests.test_ident.F11OneCanonicalKey.test_f11_stated_over_match)
+AssertionError: False is not true : Allson
+FAIL: test_s6_capital_shape_lookalike_has_the_same_single_key (tests.test_ident.Matcher.test_s6_capital_shape_lookalike_has_the_same_single_key)
+AssertionError: 'aiex kirn' != 'alex kirn'
+FAIL: test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables.test_matcher_id_names_unicode_version_and_tables)
+AssertionError: Regex didn't match: '^m4:ucd15\\.0\\.0:di[0-9a-f]{12}:cf[0-9a-f]{12}$' not found in 'm3:ucd15.0.0:di24e2227db9c3:cf93b569e499e5'
+Ran 33 tests in 2.261s
+FAILED (failures=7, errors=1)
+== G2 test_d3_pg live (new)
+test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers) ... ok
+test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval) ... ok
+test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state) ... ok
+test_c1_app_has_no_redaction_path (tests.test_d3_pg.D3Store.test_c1_app_has_no_redaction_path) ... ok
+test_c2_proposal_cannot_commit_after_the_erasure (tests.test_d3_pg.D3Store.test_c2_proposal_cannot_commit_after_the_erasure)
+test_c3_approval_after_mark_refused (tests.test_d3_pg.D3Store.test_c3_approval_after_mark_refused) ... ok
+test_c4_matcher_stored_and_enforced (tests.test_d3_pg.D3Store.test_c4_matcher_stored_and_enforced) ... ok
+test_c5_null_content_needs_tombstone_and_job (tests.test_d3_pg.D3Store.test_c5_null_content_needs_tombstone_and_job) ... ok
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... ok
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... ok
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... ok
+test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself) ... ok
+test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+test_e7_hold_against_mark (tests.test_d3_pg.D3Store.test_e7_hold_against_mark)
+test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+Ran 16 tests in 1.786s
+OK
+== R2 E1-E8 on the old tree (new test file, old schema)
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... FAIL
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... FAIL
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... ok
+test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself) ... FAIL
+test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+test_e7_hold_against_mark (tests.test_d3_pg.D3Store.test_e7_hold_against_mark)
+test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+FAIL: test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+AssertionError: False is not true : a rescan link committed while the removal of its event was in flight
+FAIL: test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal)
+AssertionError: 'e2e' not found in [] : the hold did not record the removal
+FAIL: test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports)
+AssertionError: 'e3e' not found in []
+FAIL: test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself)
+AssertionError: 'e5b' not found in []
+FAIL: test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+AssertionError: Tuples differ: ('ok', '40P01') != ('ok', 'ok')
+Ran 8 tests in 2.471s
+FAILED (failures=5)
+== V apply_no_event_lock (must fail: E1)
+variant apply_no_event_lock: applied
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+FAIL: test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+AssertionError: False is not true : a rescan link committed while the removal of its event was in flight
+Ran 1 test in 0.490s
+FAILED (failures=1)
+== V link_no_event_lock (must fail: E1)
+variant link_no_event_lock: applied
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+FAIL: test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+AssertionError: False is not true : a rescan link committed while the removal of its event was in flight
+Ran 1 test in 0.500s
+FAILED (failures=1)
+== V apply_no_subject_lock (must fail: E2,E3,E4)
+variant apply_no_subject_lock: applied
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... FAIL
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... FAIL
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... FAIL
+FAIL: test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal)
+AssertionError: False is not true : a hold on the speaker landed while the removal it judged was in flight
+FAIL: test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports)
+AssertionError: False is not true : a hold on a rescan-linked subject landed while the removal it judged was in flight
+FAIL: test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits)
+AssertionError: False is not true : a release landed while the removal that judged the hold was in flight
+Ran 3 tests in 0.860s
+FAILED (failures=3)
+== V footprint_no_rescan_links (must fail: E3)
+variant footprint_no_rescan_links: applied
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... FAIL
+FAIL: test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports)
+AssertionError: False is not true : a hold on a rescan-linked subject landed while the removal it judged was in flight
+Ran 1 test in 0.467s
+FAILED (failures=1)
+== V hold_place_no_lock (must fail: E2)
+variant hold_place_no_lock: applied
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... FAIL
+FAIL: test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal)
+AssertionError: False is not true : a hold on the speaker landed while the removal it judged was in flight
+Ran 1 test in 0.499s
+FAILED (failures=1)
+== V release_no_lock (must fail: E4)
+variant release_no_lock: applied
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... FAIL
+FAIL: test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits)
+AssertionError: False is not true : a release landed while the removal that judged the hold was in flight
+Ran 1 test in 0.579s
+FAILED (failures=1)
+== V hold_check_no_lock (must fail: E8)
+variant hold_check_no_lock: applied
+test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+FAIL: test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+AssertionError: False is not true : a hold landed inside the final pass
+Ran 1 test in 0.462s
+FAILED (failures=1)
+== V mark_job_first (must fail: E6)
+variant mark_job_first: applied
+test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+FAIL: test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+AssertionError: Tuples differ: ('ok', '40P01') != ('ok', 'ok')
+Ran 1 test in 1.427s
+FAILED (failures=1)
+== P1 setup --reset, exp.d4_store_mark R=1 (new)
+setup ok reset
+d4_store_mark {'pass': True, 'why': []}
+RESULT d4_store_mark sha256=a0444c80de3a23267ba0146d1dd4461f5958f474a8c0722855ae52dbf69bacaa file=~/emlab2-16096/wphard/wp/results/d4_store_mark.a0444c80de3a2326.json
+lock released 2026-11-17T23:07:09Z

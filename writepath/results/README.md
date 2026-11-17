@@ -394,6 +394,12 @@ review E"; home paths shown as ~):
   - one broken variant per lock (`harness/reviewE_variants.py`), each failing exactly its named tests: apply without
     the event lock (E1), add_mentions without the event lock (E1), apply without the subject share lock (E2, E3, E4),
     the footprint without rescan links (E3), hold placement without FOR UPDATE (E2), mark taking the job first (E6).
+- `live-window2-0bff333.red-green.out` (same harness after the advisor review; under the run lock 23:06:49Z to
+  23:07:09Z): matcher classes built in 0.23 s, 63 not-closed capitals on Unicode 15.0.0; test_ident 33/33 (adds the
+  real-name over-match pins and idempotence); test_d3_pg 16/16 (adds E7 hold x mark, E8 hold x the final pass); on
+  0e8f67c E1, E2, E3, E5, E6 red and E4, E7, E8 pass (guards); eight variants each failing their named tests (adds hold
+  release without FOR UPDATE: E4; the hold check without FOR SHARE: E8); d4_store_mark R=1 pass after reset. E7 has no
+  failing variant: mark holds the subject three ways (DESIGN-NOTES "Redesign after review E").
 
 review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
 are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own
