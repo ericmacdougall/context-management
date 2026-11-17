@@ -995,3 +995,29 @@ shown offline only (tests/test_es_verify.py cases 5 and 6, fake per-copy search)
 and a way to make a started copy diverge, which Elasticsearch's in-sync allocation is designed to prevent.
 Gates: the run lock, launch_one.sh (20 GB start line, disk_gate start, check and end, flood and high-watermark
 watcher), one stamped run; a VOID run may be rerun and both are recorded.
+
+## Amendment H1a (2026-11-17, WRITTEN AFTER the H1 result at 606f457 was seen; main's ruling; governs one rerun)
+Why after the result: the H1 run (results/h1-probe-606f457, verdict NOT FEASIBLE, failed PA and PD) did not reach the
+behaviour of PA and PD. Every broker invalidate returned 403 (the request named ids only; a caller holding only
+manage_own_api_key must send owner: true) and both derived-key requests returned 400 (the documented form for a key
+derived from an API key is an explicitly empty role descriptor; H1 sent an omitted one and one with privileges). The H1
+verdict STANDS as recorded and is not re-judged. This amendment governs exactly ONE rerun; both rows are reported side
+by side and never combined.
+Changes (exp/h_probe_es.py at 092fbbb):
+- PA: the broker key additionally asks for a key with role_descriptors {} -> expected created; that key's bulk through
+  A -w1 -> expected refused. The request with privileges -> expected refused. The omitted form is recorded only.
+- PD: the broker invalidates with {"ids": [id], "owner": true}.
+- Every non-2xx key request records its error.type (types only, never reason text or values).
+- pd_max_first_refusal_s is null when no run saw a refusal.
+General rule for this stream (main's ruling): a probe row whose request was rejected before it reached the behaviour
+under test is INVALID-REQUEST, distinct from a behavioural FAIL, decided from the HTTP status and error.type of that
+request, never from the outcome wanted. Here: a refused key mint for the case's key, a refused PA empty-descriptor
+request, or a refused PD invalidate.
+Feasibility rule: as H1 for PB, PC and PE; PA holds iff the privileged request is refused AND the empty-descriptor key
+is created AND its write is refused, in 3/3; PD holds iff the invalidate succeeds and 0 writes are accepted after it, in
+20/20. A second failure of PA or PD (FAIL or INVALID-REQUEST) is final and is reported as "not demonstrated on Basic".
+Design consequence, independent of this rerun (main's ruling): the tenant and epoch fence rests on alias-name scoping
+and the broker-held alias CAS (H1 PB, PC, PE held 3/3); key invalidation is hygiene only. Receipts state the measured
+revocation delay (PD maximum over 20 runs) if H1a measures it, else "revocation delay not measured".
+Gates: the run lock; free space checked in exact KiB (>= 20971520 KiB) before the lock is taken and by launch_one.sh;
+disk_gate start, check and end; flood and high-watermark watcher; one run. A VOID run is recorded and may be rerun once.
