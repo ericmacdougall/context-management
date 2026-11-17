@@ -226,3 +226,14 @@ Security on for this stream's node only (wp/es_security.py). R=3. PASS = fenced 
 P_concrete, P_erase, E_concrete, E_walias, V_write refused with 403; AND control (one shared key) 3/3: every refused
 case succeeds. Reported only: the projector's `manage` privilege lets it delete its family index (data loss, rebuilt
 from Postgres; not a content plant).
+
+## Amendment 14 (2026-11-16, written before the run): restored end-to-end tests (exp/e2e_restored.py)
+E1 (alias fence between two projectors) and E2 (concurrent same-idempotency-key submissions, K=4 processes): N=40 per
+arm, judged as amendment 3 (>= 20 overlapping runs per arm, else INCONCLUSIVE). PASS = fenced: 0 violations and 0
+errors over all runs; control: >= 1 violation among overlapping runs. E1 control: alias CAS without removing the old
+write alias. E2 control: the client drops the idempotency key. E2 also has a store_only arm (client pre-check removed),
+N=40: >= 20 overlapping runs, 0 violations (exactly one event carries the key) and 0 harness errors, else FAIL.
+E3 (replay of a decision under a new key after a lost response), R=5, sequential: PASS = fenced 5/5 (first accepted,
+same-key retry returns the same event as duplicate, new-key replay refused WPS13, one decision, head version 1) AND
+control (single-use source removed, F5 c1 patch) 5/5 violated. Not claimed: that a concurrent new-key replay isolates
+the single-use rule (the head compare-and-set also stops it).
