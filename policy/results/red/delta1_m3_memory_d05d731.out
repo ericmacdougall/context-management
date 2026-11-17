@@ -1,0 +1,26 @@
+# M3 memory, tests/test_delta1.py run on unchanged d05d731 code (d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1), 2026-11-17T12:44:10Z
+test_losers_reference_is_deleted_and_the_winners_kept (tests.test_delta1.M3_OverlappingIdempotency)
+The loser's value is never kept and the winner's value is: the vault holds exactly the winner's reference. ... ok
+test_overlapping_conflicting_payloads_keep_the_winner_retryable (tests.test_delta1.M3_OverlappingIdempotency)
+d05d731: Vault._mint publishes the retry mapping for A before the engine decides. B (same principal and idempotency key, ... FAIL
+
+======================================================================
+FAIL: test_overlapping_conflicting_payloads_keep_the_winner_retryable (tests.test_delta1.M3_OverlappingIdempotency)
+d05d731: Vault._mint publishes the retry mapping for A before the engine decides. B (same principal and idempotency key,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy/policy/tests/test_delta1.py", line 55, in test_overlapping_conflicting_payloads_keep_the_winner_retryable
+    self.assertEqual((retry["code"], retry["value_ref"]), ("duplicate", out[win]["value_ref"]),
+AssertionError: Tuples differ: ('idem_conflict', None) != ('duplicate', 'val-e01b3248a85948b128da765f08879631ad512b27')
+
+First differing element 0:
+'idem_conflict'
+'duplicate'
+
+- ('idem_conflict', None)
++ ('duplicate', 'val-e01b3248a85948b128da765f08879631ad512b27') : the accepted submission is no longer retryable (winner B)
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.001s
+
+FAILED (failures=1)

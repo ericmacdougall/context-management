@@ -1,0 +1,30 @@
+F
+======================================================================
+FAIL: test_ast_fallback_agrees_with_runtime_enumeration (tests.test_surface_n7.Surface)
+Review-3 N7: a module that does not import (pol.pgcore without psycopg) is enumerated from its AST. At 0a20b64 the AST path
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_surface_n7.py", line 336, in test_ast_fallback_agrees_with_runtime_enumeration
+    self.assertEqual(diffs, [], "AST fallback differs from the runtime enumeration:\n" + "\n".join(diffs))
+AssertionError: Lists differ: ["pol.directory.Principal.__init__ runtime[2008 chars]one"] != []
+
+First list contains 10 additional elements.
+First extra element 0:
+"pol.directory.Principal.__init__ runtime=[('id', False, False), ('tenant', False, False), ('groups', False, False), ('clearance', False, False), ('restricted_ok', False, False), ('kind', False, False), ('region', False, False), ('model', False, False)] ast=None"
+
+Diff is 2228 characters long. Set self.maxDiff to None to see it. : AST fallback differs from the runtime enumeration:
+pol.directory.Principal.__init__ runtime=[('id', False, False), ('tenant', False, False), ('groups', False, False), ('clearance', False, False), ('restricted_ok', False, False), ('kind', False, False), ('region', False, False), ('model', False, False)] ast=None
+pol.directory.Session.__init__ runtime=[('tenant', False, False), ('principal_id', False, False), ('channel', False, False), ('token', False, False)] ast=None
+pol.enforce.Record.__init__ runtime=[('id', False, False), ('tenant', False, False), ('text', False, False), ('label', False, False), ('lineage', False, False)] ast=None
+pol.identity.Assertion.__init__ runtime=[('principal_id', False, False), ('channel', False, False), ('factor', False, False)] ast=None
+pol.labels.Label.__init__ runtime=[('tenants', False, False), ('acl', True, False), ('regions', True, False), ('sensitivity', True, False), ('models', True, False), ('banned', True, False), ('local_only', True, False), ('restricted', True, False), ('holds', True, False), ('subjects', True, False)] ast=None
+pol.labels.join_dicts runtime=[('ds', False, False)] ast=[]
+pol.policy.Authorization.__init__ runtime=[('principal', False, False), ('tenant', False, False), ('programme', False, False), ('expires', False, False)] ast=None
+pol.policy.Dest.__init__ runtime=[('kind', False, False), ('region', False, False), ('local', False, False), ('max_sensitivity', False, False), ('model', False, False), ('programme', False, False), ('tenants', False, False)] ast=None
+pol.policy.ModelDecl.__init__ runtime=[('family', False, False), ('version', False, False)] ast=None
+pol.policy.Policy.__init__ runtime=[('version', False, False), ('grants', True, False), ('destinations', True, False), ('models', True, False), ('model_aliases', True, False), ('banned_models', True, False), ('tenant_banned', True, False), ('deny_tenants', True, False), ('revoked', True, False), ('authorizations', True, False), ('extra_rules', True, False), ('conflict_notice', True, False), ('hold_events', True, False)] ast=None
+
+----------------------------------------------------------------------
+Ran 1 test in 0.034s
+
+FAILED (failures=1)

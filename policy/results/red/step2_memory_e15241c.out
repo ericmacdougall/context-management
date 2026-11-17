@@ -1,0 +1,63 @@
+step-2 memory tests at e15241c (review-3 fixes, before step 2), 2026-11-17T10:06:49Z
+FFEFF.
+======================================================================
+ERROR: test_derivation_table (tests.test_step2.DerivedOrigin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy/policy/tests/test_step2.py", line 45, in test_derivation_table
+    self.assertEqual(_core.origin("human", "owner_ui"), ("user", "user_typed"))
+AttributeError: module 'pol._core' has no attribute 'origin'
+
+======================================================================
+FAIL: test_agent_event_is_stamped_agent_generated (tests.test_step2.DerivedOrigin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy/policy/tests/test_step2.py", line 33, in test_agent_event_is_stamped_agent_generated
+    self.assertEqual((ev.get("actor"), ev.get("trust_origin")), ("assistant", "agent_generated"))
+AssertionError: Tuples differ: (None, None) != ('assistant', 'agent_generated')
+
+First differing element 0:
+None
+'assistant'
+
+- (None, None)
++ ('assistant', 'agent_generated')
+
+======================================================================
+FAIL: test_body_naming_actor_or_trust_origin_is_refused (tests.test_step2.DerivedOrigin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy/policy/tests/test_step2.py", line 41, in test_body_naming_actor_or_trust_origin_is_refused
+    self.assertEqual(out["code"], "identity_in_body", k)
+AssertionError: 'bad_event' != 'identity_in_body'
+- bad_event
++ identity_in_body
+ : actor
+
+======================================================================
+FAIL: test_human_event_is_stamped_user_typed (tests.test_step2.DerivedOrigin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy/policy/tests/test_step2.py", line 26, in test_human_event_is_stamped_user_typed
+    self.assertEqual((ev.get("actor"), ev.get("trust_origin")), ("user", "user_typed"))
+AssertionError: Tuples differ: (None, None) != ('user', 'user_typed')
+
+First differing element 0:
+None
+'user'
+
+- (None, None)
++ ('user', 'user_typed')
+
+======================================================================
+FAIL: test_core_config_with_look_alike_principals_is_refused (tests.test_step2.LookAlikes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy/policy/tests/test_step2.py", line 57, in test_core_config_with_look_alike_principals_is_refused
+    _core.MemoryState(cfg)
+AssertionError: Exception not raised : alice / a1ice accepted
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+FAILED (failures=4, errors=1)

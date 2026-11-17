@@ -1,0 +1,137 @@
+FFFFFFFFFFFFFF.................
+======================================================================
+FAIL: test_erase_values_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_erase_values_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.erase_values checked the session before taking the tenant row FOR UPDATE; a call that waited there past its
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 156, in test_erase_values_judges_the_session_again_after_waiting_for_a_lock
+    self.assertEqual(late, {"refused": "unauthorized"}, "erased after the token expired during the lock wait")
+AssertionError: {'erased': 1, 'refused': None, 'remaining': 0} != {'refused': 'unauthorized'}
+- {'erased': 1, 'refused': None, 'remaining': 0}
++ {'refused': 'unauthorized'} : erased after the token expired during the lock wait
+
+======================================================================
+FAIL: test_proof_that_expires_inside_a_transaction_is_refused (tests.test_delta1_pg.M1_WallClock.test_proof_that_expires_inside_a_transaction_is_refused)
+d05d731: open_session compared the proof's expiry with now(); a dc_idp caller that began its transaction while the proof was
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 108, in test_proof_that_expires_inside_a_transaction_is_refused
+    self.assertFalse(opened, "a proof that expired inside the transaction opened a session")
+AssertionError: True is not false : a proof that expired inside the transaction opened a session
+
+======================================================================
+FAIL: test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke)
+d05d731: open_session in a REPEATABLE READ transaction read the factor row from a snapshot taken before the factor was
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 194, in test_repeatable_read_snapshot_does_not_outlive_a_factor_revoke
+    self.assertFalse(opened, "a factor revoked after the snapshot opened a session")
+AssertionError: True is not false : a factor revoked after the snapshot opened a session
+
+======================================================================
+FAIL: test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session) [submit]
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 176, in test_repeatable_read_snapshot_does_not_outlive_end_session
+    self.assertFalse(after, "%s accepted a token ended after the transaction's snapshot" % name)
+AssertionError: True is not false : submit accepted a token ended after the transaction's snapshot
+
+======================================================================
+FAIL: test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session) [explain]
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 176, in test_repeatable_read_snapshot_does_not_outlive_end_session
+    self.assertFalse(after, "%s accepted a token ended after the transaction's snapshot" % name)
+AssertionError: True is not false : explain accepted a token ended after the transaction's snapshot
+
+======================================================================
+FAIL: test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session) [read_table]
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 176, in test_repeatable_read_snapshot_does_not_outlive_end_session
+    self.assertFalse(after, "%s accepted a token ended after the transaction's snapshot" % name)
+AssertionError: True is not false : read_table accepted a token ended after the transaction's snapshot
+
+======================================================================
+FAIL: test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session) [erase_candidates]
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 176, in test_repeatable_read_snapshot_does_not_outlive_end_session
+    self.assertFalse(after, "%s accepted a token ended after the transaction's snapshot" % name)
+AssertionError: True is not false : erase_candidates accepted a token ended after the transaction's snapshot
+
+======================================================================
+FAIL: test_repeatable_read_snapshot_does_not_outlive_end_session (tests.test_delta1_pg.M1_WallClock.test_repeatable_read_snapshot_does_not_outlive_end_session) [erase_values]
+d05d731: in a REPEATABLE READ transaction dc._session read the snapshot taken at the transaction's first read, so a token
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 176, in test_repeatable_read_snapshot_does_not_outlive_end_session
+    self.assertFalse(after, "%s accepted a token ended after the transaction's snapshot" % name)
+AssertionError: True is not false : erase_values accepted a token ended after the transaction's snapshot
+
+======================================================================
+FAIL: test_submit_judges_the_session_again_after_waiting_for_a_lock (tests.test_delta1_pg.M1_WallClock.test_submit_judges_the_session_again_after_waiting_for_a_lock)
+d05d731: dc.submit checked the session once, before _lock_event; a call that waited on the principal's advisory lock past
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 146, in test_submit_judges_the_session_again_after_waiting_for_a_lock
+    self.assertEqual(late["code"], "unauthenticated:invalid_session", "applied after the token expired during the lock wait")
+AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+- proposed
++ unauthenticated:invalid_session
+ : applied after the token expired during the lock wait
+
+======================================================================
+FAIL: test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call) [submit]
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 125, in test_token_that_expires_inside_a_transaction_is_refused_on_every_call
+    self.assertFalse(after, "%s accepted a token that expired inside the transaction" % name)
+AssertionError: True is not false : submit accepted a token that expired inside the transaction
+
+======================================================================
+FAIL: test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call) [explain]
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 125, in test_token_that_expires_inside_a_transaction_is_refused_on_every_call
+    self.assertFalse(after, "%s accepted a token that expired inside the transaction" % name)
+AssertionError: True is not false : explain accepted a token that expired inside the transaction
+
+======================================================================
+FAIL: test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call) [read_table]
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 125, in test_token_that_expires_inside_a_transaction_is_refused_on_every_call
+    self.assertFalse(after, "%s accepted a token that expired inside the transaction" % name)
+AssertionError: True is not false : read_table accepted a token that expired inside the transaction
+
+======================================================================
+FAIL: test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call) [erase_candidates]
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 125, in test_token_that_expires_inside_a_transaction_is_refused_on_every_call
+    self.assertFalse(after, "%s accepted a token that expired inside the transaction" % name)
+AssertionError: True is not false : erase_candidates accepted a token that expired inside the transaction
+
+======================================================================
+FAIL: test_token_that_expires_inside_a_transaction_is_refused_on_every_call (tests.test_delta1_pg.M1_WallClock.test_token_that_expires_inside_a_transaction_is_refused_on_every_call) [erase_values]
+d05d731: dc._session compared expires_at with now(); a dc_app caller that began its transaction while the token was valid
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-a/src/tests/test_delta1_pg.py", line 125, in test_token_that_expires_inside_a_transaction_is_refused_on_every_call
+    self.assertFalse(after, "%s accepted a token that expired inside the transaction" % name)
+AssertionError: True is not false : erase_values accepted a token that expired inside the transaction
+
+----------------------------------------------------------------------
+Ran 23 tests in 17.638s
+
+FAILED (failures=14)
+EXIT 1

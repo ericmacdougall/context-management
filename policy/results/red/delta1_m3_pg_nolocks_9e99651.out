@@ -1,0 +1,38 @@
+Exception in thread Thread-1 (<lambda>):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "~/emlab2-16096/policy/runs/red-d1-nolockb/src/tests/test_delta1_pg.py", line 204, in <lambda>
+    t = threading.Thread(target=lambda: out.__setitem__("B", self.submit(self.app, tok, b)))
+                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-d1-nolockb/src/tests/test_delta1_pg.py", line 59, in submit
+    return c.execute("select dc.submit(%s, %s)", (tok, Jsonb(body))).fetchone()[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UniqueViolation: duplicate key value violates unique constraint "events_idem"
+DETAIL:  Key (tenant, principal, idem)=(tenant-a, alice, k-same) already exists.
+CONTEXT:  SQL statement "insert into dc.events(tenant, principal, idem, req, evid, fp, code, ev)
+    values (p_tenant, ev->>'principal', ev->>'idem', case when ev->>'type' <> 'revoke' then ev->>'req' end, ev->>'id', fp, code, ev)"
+PL/pgSQL function _reduce_apply(text,jsonb) line 28 at SQL statement
+PL/pgSQL function submit(text,jsonb) line 60 at assignment
+E.
+======================================================================
+ERROR: test_first_committed_stays_retryable (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-nolockb/src/tests/test_delta1_pg.py", line 216, in test_first_committed_stays_retryable
+    tok, a, _b, ra, rb = self._overlap(True)
+                         ^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-d1-nolockb/src/tests/test_delta1_pg.py", line 210, in _overlap
+    return tok, a, b, ra, out["B"]
+                          ~~~^^^^^
+KeyError: 'B'
+
+----------------------------------------------------------------------
+Ran 2 tests in 1.335s
+
+FAILED (errors=1)
+EXIT 1

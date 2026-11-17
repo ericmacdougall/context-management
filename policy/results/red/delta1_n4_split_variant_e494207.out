@@ -1,0 +1,15 @@
+..........F....
+======================================================================
+FAIL: test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-n4split/src/tests/test_review3_pg.py", line 356, in test_n4_failure_mid_rollback_changes_nothing
+    self.assertIsNotNone(self.o.execute("select to_regnamespace('dc_crypto')").fetchone()[0], "dc_crypto is gone")
+AssertionError: unexpectedly None : dc_crypto is gone
+
+----------------------------------------------------------------------
+Ran 15 tests in 2.533s
+
+FAILED (failures=1)
+EXIT 1

@@ -1,0 +1,101 @@
+# M2 verifier, d05d731 verify/s2.py with d05d731's own fixture plus the fix commit's manipulations (red branch red/d05d731-delta1), 2026-11-17T12:52:44Z
+test_duplicated_and_unexpected_coverage_fails (tests.test_verify_s2.CoverageIsPinned) ... FAIL
+test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) ... test_each_break_fails (tests.test_verify_s2.VerifyS2) ... ok
+test_good_set_passes (tests.test_verify_s2.VerifyS2) ... ok
+test_missing_rows_fail (tests.test_verify_s2.VerifyS2) ... ok
+
+======================================================================
+ERROR: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_token_class_dropped]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/verify/s2.py", line 123, in verify
+    why = _real(rows, par, s)
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/verify/s2.py", line 74, in _real
+    if not (v(c, "submit") == "unauthenticated:invalid_session" and v(c, "explain") is None and v(c, "read_table") == {"n": 0, "seen": 0}
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/verify/s2.py", line 67, in <lambda>
+    v = lambda c, k: tok[(c, k)]          # noqa: E731
+KeyError: ('ended', 'submit')
+
+======================================================================
+FAIL: test_duplicated_and_unexpected_coverage_fails (tests.test_verify_s2.CoverageIsPinned)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 190, in test_duplicated_and_unexpected_coverage_fails
+    self.assertEqual(S2.verify(DOC, rows + [extra])["verdict"], "FAIL", "repeated origin row")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : repeated origin row
+
+======================================================================
+FAIL: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_drop_classes]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _drop_classes
+
+======================================================================
+FAIL: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_one_mint_probe]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _one_mint_probe
+
+======================================================================
+FAIL: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_no_agent_origin]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _no_agent_origin
+
+======================================================================
+FAIL: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_small_replay]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _small_replay
+
+======================================================================
+FAIL: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_fewer_trials]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _fewer_trials
+
+======================================================================
+FAIL: test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) [_one_seed]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-d05d731/policy/tests/test_verify_s2.py", line 185, in test_each_manipulation_fails
+    self.assertEqual(S2.verify(doc, rows)["verdict"], "FAIL", m.__name__)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : _one_seed
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.040s
+
+FAILED (failures=7, errors=1)

@@ -1,0 +1,186 @@
+test_anchor_check_without_anchors_is_not_ok (tests.test_review3_pg.Review3Pg.test_anchor_check_without_anchors_is_not_ok)
+0a20b64: anchor_check returns ok=True with zero anchors for the tenant (nothing outside the database was ever compared). ... FAIL
+test_n1_erase_split_across_two_principals_is_refused (tests.test_review3_pg.Review3Pg.test_n1_erase_split_across_two_principals_is_refused)
+0a20b64: PgSession(alice.session, admin.db_token): the database lists and deletes as ADMIN while the in-process policy point ... FAIL
+test_n1_matching_pair_still_works_and_ended_session_is_refused (tests.test_review3_pg.Review3Pg.test_n1_matching_pair_still_works_and_ended_session_is_refused)
+Control: the bridge's own pair (and an equal PgSession carrying the same two parts) works; after SessionAuthority.end it does not. ... ok
+test_n1_mixed_channel_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_channel_pair_is_refused_before_any_call)
+0a20b64: alice's owner_ui Session with alice's owner_cli token: same principal, so the late id-prefix check passes and the event is ... FAIL
+test_n1_mixed_principal_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_principal_pair_is_refused_before_any_call)
+0a20b64: PgSession(alice.session, bob.db_token) passes the in-process check; submit commits Bob's event (autocommit) and only ... FAIL
+test_n1_mixed_tenant_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_tenant_pair_is_refused_before_any_call)
+0a20b64: tenant-a's alice Session with tenant-b's alice token: the id prefix matches, so tenant-b receives a write that the ... FAIL
+test_n3_memory_and_postgres_agree_on_policy_revocation (tests.test_review3_pg.Review3Pg.test_n3_memory_and_postgres_agree_on_policy_revocation)
+Differential: the same requests through the memory service and the Postgres service, with the policy revoking 'b0b' (a ... FAIL
+test_n3_policy_revoked_principal_cannot_submit_through_postgres (tests.test_review3_pg.Review3Pg.test_n3_policy_revoked_principal_cannot_submit_through_postgres)
+0a20b64: PgDecisionService.submit never asks the revocation source: bob, revoked by the policy document (not by a core event), ... FAIL
+test_n5_database_retry_keeps_the_reference (tests.test_review3_pg.Review3Pg.test_n5_database_retry_keeps_the_reference)
+M2 in the database: the same body retried (new session) is a duplicate with the original reference; a changed body is idem_conflict. ... ok
+test_n5_database_value_ref_is_not_recomputable_after_erasure (tests.test_review3_pg.Review3Pg.test_n5_database_value_ref_is_not_recomputable_after_erasure)
+0a20b64: vref = HMAC(dc.vkey, [tenant, principal, idem, text, tokenised label]); after erasure the token and the label are still ... FAIL
+test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it). ... FAIL
+test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears. ... FAIL
+test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone). ... FAIL
+test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back. ... ok
+
+======================================================================
+FAIL: test_anchor_check_without_anchors_is_not_ok (tests.test_review3_pg.Review3Pg.test_anchor_check_without_anchors_is_not_ok)
+0a20b64: anchor_check returns ok=True with zero anchors for the tenant (nothing outside the database was ever compared).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 255, in test_anchor_check_without_anchors_is_not_ok
+    self.assertFalse(r["ok"], r)
+AssertionError: True is not false : {'ok': True, 'chain_ok': True, 'events': 3, 'anchored': 0, 'mismatches': []}
+
+======================================================================
+FAIL: test_n1_erase_split_across_two_principals_is_refused (tests.test_review3_pg.Review3Pg.test_n1_erase_split_across_two_principals_is_refused)
+0a20b64: PgSession(alice.session, admin.db_token): the database lists and deletes as ADMIN while the in-process policy point
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 156, in test_n1_erase_split_across_two_principals_is_refused
+    self.assertEqual(self.o.execute("select count(*) from dc.vals where tenant=%s", (T,)).fetchone()[0], 1, "a non-admin pair erased")
+AssertionError: 0 != 1 : a non-admin pair erased
+
+======================================================================
+FAIL: test_n1_mixed_channel_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_channel_pair_is_refused_before_any_call)
+0a20b64: alice's owner_ui Session with alice's owner_cli token: same principal, so the late id-prefix check passes and the event is
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 138, in test_n1_mixed_channel_pair_is_refused_before_any_call
+    self._assert_refused_before_any_call(svc, conn, pgcore.PgSession(ui.session, cli.db_token))
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 118, in _assert_refused_before_any_call
+    self.assertEqual(self._counts(), before, "the mismatched pair changed the database (submit committed, or values erased)")
+AssertionError: {'events': 1, 'vals': 1, 'audit': 0, 'tokens': 0} != {'events': 0, 'vals': 0, 'audit': 0, 'tokens': 0}
+- {'audit': 0, 'events': 1, 'tokens': 0, 'vals': 1}
+?                        ^                       ^
+
++ {'audit': 0, 'events': 0, 'tokens': 0, 'vals': 0}
+?                        ^                       ^
+ : the mismatched pair changed the database (submit committed, or values erased)
+
+======================================================================
+FAIL: test_n1_mixed_principal_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_principal_pair_is_refused_before_any_call)
+0a20b64: PgSession(alice.session, bob.db_token) passes the in-process check; submit commits Bob's event (autocommit) and only
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 130, in test_n1_mixed_principal_pair_is_refused_before_any_call
+    self._assert_refused_before_any_call(svc, conn, pgcore.PgSession(alice.session, bob.db_token))
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 118, in _assert_refused_before_any_call
+    self.assertEqual(self._counts(), before, "the mismatched pair changed the database (submit committed, or values erased)")
+AssertionError: {'events': 1, 'vals': 1, 'audit': 0, 'tokens': 0} != {'events': 0, 'vals': 0, 'audit': 0, 'tokens': 0}
+- {'audit': 0, 'events': 1, 'tokens': 0, 'vals': 1}
+?                        ^                       ^
+
++ {'audit': 0, 'events': 0, 'tokens': 0, 'vals': 0}
+?                        ^                       ^
+ : the mismatched pair changed the database (submit committed, or values erased)
+
+======================================================================
+FAIL: test_n1_mixed_tenant_pair_is_refused_before_any_call (tests.test_review3_pg.Review3Pg.test_n1_mixed_tenant_pair_is_refused_before_any_call)
+0a20b64: tenant-a's alice Session with tenant-b's alice token: the id prefix matches, so tenant-b receives a write that the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 145, in test_n1_mixed_tenant_pair_is_refused_before_any_call
+    self._assert_refused_before_any_call(svc, conn, pgcore.PgSession(s("alice").session, sb("alice").db_token))
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 118, in _assert_refused_before_any_call
+    self.assertEqual(self._counts(), before, "the mismatched pair changed the database (submit committed, or values erased)")
+AssertionError: {'events': 1, 'vals': 1, 'audit': 0, 'tokens': 0} != {'events': 0, 'vals': 0, 'audit': 0, 'tokens': 0}
+- {'audit': 0, 'events': 1, 'tokens': 0, 'vals': 1}
+?                        ^                       ^
+
++ {'audit': 0, 'events': 0, 'tokens': 0, 'vals': 0}
+?                        ^                       ^
+ : the mismatched pair changed the database (submit committed, or values erased)
+
+======================================================================
+FAIL: test_n3_memory_and_postgres_agree_on_policy_revocation (tests.test_review3_pg.Review3Pg.test_n3_memory_and_postgres_agree_on_policy_revocation)
+Differential: the same requests through the memory service and the Postgres service, with the policy revoking 'b0b' (a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 208, in test_n3_memory_and_postgres_agree_on_policy_revocation
+    self.assertEqual(pg, mem)
+AssertionError: Lists differ: [('su[45 chars], 'proposed'), ('submit', 'x', 'proposed'), ('[153 chars], 1)] != [('su[45 chars], 'principal_revoked'), ('submit', 'x', 'propo[155 chars], 1)]
+
+First differing element 1:
+('submit', 'bob', 'proposed')
+('submit', 'bob', 'principal_revoked')
+
+  [('submit', 'alice', 'proposed'),
+-  ('submit', 'bob', 'proposed'),
+?                        ^^^
+
++  ('submit', 'bob', 'principal_revoked'),
+?                       +++++++++++ ^
+
+   ('submit', 'x', 'proposed'),
+   ('submit', 'bot', 'proposed'),
+-  ('explain', 'alice', (0, ['alice', 'bob', 'bot', 'x'])),
+?                                     -------
+
++  ('explain', 'alice', (0, ['alice', 'bot', 'x'])),
+   ('table', 'alice', 2),
+   ('explain', 'bob', (0, [])),
+   ('table', 'bob', 1)]
+
+======================================================================
+FAIL: test_n3_policy_revoked_principal_cannot_submit_through_postgres (tests.test_review3_pg.Review3Pg.test_n3_policy_revoked_principal_cannot_submit_through_postgres)
+0a20b64: PgDecisionService.submit never asks the revocation source: bob, revoked by the policy document (not by a core event),
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 185, in test_n3_policy_revoked_principal_cannot_submit_through_postgres
+    self.assertEqual(out["code"], "principal_revoked", out)
+AssertionError: 'proposed' != 'principal_revoked'
+- proposed
++ principal_revoked
+ : {'id': 'bob/n1', 'code': 'proposed', 'original': None, 'value_ref': 'val-6860b3a36357bd1faffdc43fc920af0579612b28'}
+
+======================================================================
+FAIL: test_n5_database_value_ref_is_not_recomputable_after_erasure (tests.test_review3_pg.Review3Pg.test_n5_database_value_ref_is_not_recomputable_after_erasure)
+0a20b64: vref = HMAC(dc.vkey, [tenant, principal, idem, text, tokenised label]); after erasure the token and the label are still
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 233, in test_n5_database_value_ref_is_not_recomputable_after_erasure
+    self.assertEqual(hits, 0, "a database key reproduces the erased value's reference from a guessed text")
+AssertionError: 1 != 0 : a database key reproduces the erased value's reference from a guessed text
+
+======================================================================
+FAIL: test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 340, in test_n4_rollback_after_a_refused_request_is_refused
+    self._assert_refused_and_kept("audit row")
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 310, in _assert_refused_and_kept
+    with self.assertRaises(self.MIG.MigrationRefused, msg="rollback discarded a post-migration %s" % what):
+AssertionError: MigrationRefused not raised : rollback discarded a post-migration audit row
+
+======================================================================
+FAIL: test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 325, in test_n4_rollback_after_a_submit_is_refused
+    self._assert_refused_and_kept("submit")
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 310, in _assert_refused_and_kept
+    with self.assertRaises(self.MIG.MigrationRefused, msg="rollback discarded a post-migration %s" % what):
+AssertionError: MigrationRefused not raised : rollback discarded a post-migration submit
+
+======================================================================
+FAIL: test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 332, in test_n4_rollback_after_an_erasure_is_refused
+    self._assert_refused_and_kept("erasure")
+  File "~/emlab2-16096/policy/runs/red-0a20b64-r3/src/tests/test_review3_pg.py", line 310, in _assert_refused_and_kept
+    with self.assertRaises(self.MIG.MigrationRefused, msg="rollback discarded a post-migration %s" % what):
+AssertionError: MigrationRefused not raised : rollback discarded a post-migration erasure
+
+----------------------------------------------------------------------
+Ran 14 tests in 2.282s
+
+FAILED (failures=11)

@@ -1,0 +1,184 @@
+test_dev_set_is_not_held_to_provenance (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-65cvi774/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-65cvi774/tmpg99tcdel/DEV.x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-65cvi774/tmpg99tcdel/DEV.x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-65cvi774/tmpg99tcdel/DEV.VERIFY.b18dbba2fd47a645.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_dirty_stamp_fails (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-d7w0bi0u/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-d7w0bi0u/tmpskoibsq_/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-d7w0bi0u/tmpskoibsq_/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-d7w0bi0u/tmpskoibsq_/VERIFY.1cc19f47aeaf378f.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_good_stamped_set_passes (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-sccm1ots/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-sccm1ots/tmpmpjf2rst/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-sccm1ots/tmpmpjf2rst/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-sccm1ots/tmpmpjf2rst/VERIFY.1cc19f47aeaf378f.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_run_not_at_the_thresholds_commit_fails (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-l926j0he/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-l926j0he/tmpyo_46wgv/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-l926j0he/tmpyo_46wgv/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-l926j0he/tmpyo_46wgv/VERIFY.1cc19f47aeaf378f.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_thresholds_digest_must_match_the_file (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rmwc869h/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rmwc869h/tmpf7xatgxr/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rmwc869h/tmpf7xatgxr/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rmwc869h/tmpf7xatgxr/VERIFY.1cc19f47aeaf378f.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_two_result_files_fail (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xewfkya5/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xewfkya5/tmp0wmdiopz/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xewfkya5/tmp0wmdiopz/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xewfkya5/tmp0wmdiopz/x_exp.0000000000000001.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xewfkya5/tmp0wmdiopz/VERIFY.7cc0bd3b50a605e6.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_verify_record_keeps_rows_and_provenance_apart (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-3t27uvmu/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-3t27uvmu/tmpkfoo0r5w/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-3t27uvmu/tmpkfoo0r5w/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-3t27uvmu/tmpkfoo0r5w/VERIFY.1cc19f47aeaf378f.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_wrong_seeds_fail (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-fmukat7a/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:60: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-fmukat7a/tmp2svitxmy/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:64: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-fmukat7a/tmp2svitxmy/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/verify/__main__.py:83: ResourceWarning: unclosed file <_io.BufferedWriter name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-fmukat7a/tmp2svitxmy/VERIFY.1cc19f47aeaf378f.json'>
+  open(out, "wb").write(doc)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+
+======================================================================
+FAIL: test_dirty_stamp_fails (tests.test_verify_provenance.Provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_provenance.py", line 73, in test_dirty_stamp_fails
+    self.assertEqual(self._verify(self._set(stamp={"dirty": True})), 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_run_not_at_the_thresholds_commit_fails (tests.test_verify_provenance.Provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_provenance.py", line 76, in test_run_not_at_the_thresholds_commit_fails
+    self.assertEqual(self._verify(self._set(stamp={"thresholds_commit": "c0"})), 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_thresholds_digest_must_match_the_file (tests.test_verify_provenance.Provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_provenance.py", line 86, in test_thresholds_digest_must_match_the_file
+    self.assertEqual(self._verify(self._set(stamp={"thresholds_sha256": "0" * 64})), 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_two_result_files_fail (tests.test_verify_provenance.Provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_provenance.py", line 83, in test_two_result_files_fail
+    self.assertEqual(self._verify(self._set(n=2)), 1)
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_verify_record_keeps_rows_and_provenance_apart (tests.test_verify_provenance.Provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_provenance.py", line 98, in test_verify_record_keeps_rows_and_provenance_apart
+    self.assertEqual((doc.get("overall"), doc.get("rows_pass"), (doc.get("provenance") or {}).get("ok")), ("FAIL", True, False))
+AssertionError: Tuples differ: ('PASS', None, None) != ('FAIL', True, False)
+
+First differing element 0:
+'PASS'
+'FAIL'
+
+- ('PASS', None, None)
++ ('FAIL', True, False)
+
+======================================================================
+FAIL: test_wrong_seeds_fail (tests.test_verify_provenance.Provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_provenance.py", line 79, in test_wrong_seeds_fail
+    self.assertEqual(self._verify(self._set(seeds=[1, 3])), 1)
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.022s
+
+FAILED (failures=6)
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True DEV.x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=b18dbba2fd47a64532bfea40072e8a197c382cb71c8f07872c473e856ea436df file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-65cvi774/tmpg99tcdel/DEV.VERIFY.b18dbba2fd47a645.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=1cc19f47aeaf378ff9a3b1fb4b618bb04a1c3f5c53f489fdc51d4f1bff8332fe file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-d7w0bi0u/tmpskoibsq_/VERIFY.1cc19f47aeaf378f.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=1cc19f47aeaf378ff9a3b1fb4b618bb04a1c3f5c53f489fdc51d4f1bff8332fe file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-sccm1ots/tmpmpjf2rst/VERIFY.1cc19f47aeaf378f.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=1cc19f47aeaf378ff9a3b1fb4b618bb04a1c3f5c53f489fdc51d4f1bff8332fe file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-l926j0he/tmpyo_46wgv/VERIFY.1cc19f47aeaf378f.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=1cc19f47aeaf378ff9a3b1fb4b618bb04a1c3f5c53f489fdc51d4f1bff8332fe file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rmwc869h/tmpf7xatgxr/VERIFY.1cc19f47aeaf378f.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000001.json
+VERIFY overall=PASS sha256=7cc0bd3b50a605e619f050313a421bb8d964af7e82beac5adfa8796ba5a28c2c file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xewfkya5/tmp0wmdiopz/VERIFY.7cc0bd3b50a605e6.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=1cc19f47aeaf378ff9a3b1fb4b618bb04a1c3f5c53f489fdc51d4f1bff8332fe file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-3t27uvmu/tmpkfoo0r5w/VERIFY.1cc19f47aeaf378f.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=1cc19f47aeaf378ff9a3b1fb4b618bb04a1c3f5c53f489fdc51d4f1bff8332fe file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-fmukat7a/tmp2svitxmy/VERIFY.1cc19f47aeaf378f.json

@@ -1,0 +1,202 @@
+test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-5wt_3of_/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+test_existing_run_is_refused (tests.test_sync_guard.SyncGuard)
+One fresh run directory per sync: an existing runs/<name> (even without src) is refused before any copy. ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-96gsevmj/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-7v5bpai6/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+test_symlinked_ancestor_is_refused (tests.test_sync_guard.SyncGuard)
+runs/ is a symlink to a directory outside the tree: nothing is created there and nothing is copied. ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-61vqo2os/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_valid_name_builds_the_destination_from_the_name (tests.test_sync_guard.SyncGuard) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py:59: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/syncguard-3j_r8ma5/calls.log' mode='r' encoding='UTF-8'>
+  calls = open(self.log).read() if os.path.exists(self.log) else ""
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='.hidden')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='-rf')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='a/b')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='a b')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='café')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='x\t')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_bad_names_are_refused_before_any_remote_call (tests.test_sync_guard.SyncGuard) (name='*')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 83, in test_bad_names_are_refused_before_any_remote_call
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_existing_run_is_refused (tests.test_sync_guard.SyncGuard)
+One fresh run directory per sync: an existing runs/<name> (even without src) is refused before any copy.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 100, in test_existing_run_is_refused
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name='x;echo INJECTED-N2;#')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yyY60dheOi/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src/GIT_STAMP.json]\n' : the injected text reached the remote command: 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yyY60dheOi/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x;echo INJECTED-N2;#/src/GIT_STAMP.json]\n'
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name='x$(echo INJECTED-N2)')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.L14sKGxVqW/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src/GIT_STAMP.json]\n' : the injected text reached the remote command: 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.L14sKGxVqW/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x$(echo INJECTED-N2)/src/GIT_STAMP.json]\n'
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name='x`echo INJECTED-N2`')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x`echo INJECTED-N2`/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x`echo INJECTED-N2`/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x`echo INJECTED-N2`/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.H0edZfDYaJ/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x`echo INJECTED-N2`/src/GIT_STAMP.json]\n' : the injected text reached the remote command: 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x`echo INJECTED-N2`/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x`echo INJECTED-N2`/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x`echo INJECTED-N2`/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.H0edZfDYaJ/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x`echo INJECTED-N2`/src/GIT_STAMP.json]\n'
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name='x\necho INJECTED-N2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x\necho INJECTED-N2/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x\necho INJECTED-N2/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x\necho INJECTED-N2/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.J1j5HIe3Q9/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x\necho INJECTED-N2/src/GIT_STAMP.json]\n' : the injected text reached the remote command: 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x\necho INJECTED-N2/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x\necho INJECTED-N2/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x\necho INJECTED-N2/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.J1j5HIe3Q9/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x\necho INJECTED-N2/src/GIT_STAMP.json]\n'
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name="x' ; echo INJECTED-N2 ; '")
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in "CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.9eQtMxpgmi/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src/GIT_STAMP.json]\n" : the injected text reached the remote command: "CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.9eQtMxpgmi/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x' ; echo INJECTED-N2 ; '/src/GIT_STAMP.json]\n"
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name='x|echo INJECTED-N2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x|echo INJECTED-N2/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x|echo INJECTED-N2/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x|echo INJECTED-N2/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Q0YE5bDymD/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x|echo INJECTED-N2/src/GIT_STAMP.json]\n' : the injected text reached the remote command: 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x|echo INJECTED-N2/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x|echo INJECTED-N2/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x|echo INJECTED-N2/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Q0YE5bDymD/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x|echo INJECTED-N2/src/GIT_STAMP.json]\n'
+
+======================================================================
+FAIL: test_injected_name_never_reaches_ssh_or_rsync (tests.test_sync_guard.SyncGuard) (name='x&&echo INJECTED-N2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 73, in test_injected_name_never_reaches_ssh_or_rsync
+    self.assertNotIn(MARK, calls, "the injected text reached the remote command: %r" % calls)
+AssertionError: 'INJECTED-N2' unexpectedly found in 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x&&echo INJECTED-N2/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x&&echo INJECTED-N2/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x&&echo INJECTED-N2/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Zp8QpRLhw0/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x&&echo INJECTED-N2/src/GIT_STAMP.json]\n' : the injected text reached the remote command: 'CALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[test ! -e emlab2-16096/policy/runs/x&&echo INJECTED-N2/src]\nCALL ssh\nARG[-F]\nARG[~/.ssh/config_fleetops]\nARG[t2-dev]\nARG[mkdir -p emlab2-16096/policy/runs/x&&echo INJECTED-N2/src]\nCALL rsync\nARG[-a]\nARG[--delete]\nARG[--exclude]\nARG[results]\nARG[--exclude]\nARG[__pycache__]\nARG[--exclude]\nARG[GIT_STAMP.json]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[./]\nARG[t2-dev:emlab2-16096/policy/runs/x&&echo INJECTED-N2/src/]\nCALL rsync\nARG[-a]\nARG[-e]\nARG[ssh -F ~/.ssh/config_fleetops]\nARG[/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Zp8QpRLhw0/GIT_STAMP.json]\nARG[t2-dev:emlab2-16096/policy/runs/x&&echo INJECTED-N2/src/GIT_STAMP.json]\n'
+
+======================================================================
+FAIL: test_symlinked_ancestor_is_refused (tests.test_sync_guard.SyncGuard)
+runs/ is a symlink to a directory outside the tree: nothing is created there and nothing is copied.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_sync_guard.py", line 92, in test_symlinked_ancestor_is_refused
+    self.assertNotEqual(r.returncode, 0)
+AssertionError: 0 == 0
+
+----------------------------------------------------------------------
+Ran 5 tests in 3.241s
+
+FAILED (failures=17)

@@ -1,0 +1,23 @@
+.F..
+======================================================================
+FAIL: test_first_committed_stays_retryable_different_requirements (tests.test_delta1_pg.M3_PgOverlapping.test_first_committed_stays_retryable_different_requirements)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-nolocka2/src/tests/test_delta1_pg.py", line 247, in test_first_committed_stays_retryable_different_requirements
+    self._first_committed("r2")
+  File "~/emlab2-16096/policy/runs/red-d1-nolocka2/src/tests/test_delta1_pg.py", line 228, in _first_committed
+    self.assertEqual((ra["code"], rb["code"]), ("proposed", "idem_conflict"))
+AssertionError: Tuples differ: ('proposed', 'error:UniqueViolation') != ('proposed', 'idem_conflict')
+
+First differing element 1:
+'error:UniqueViolation'
+'idem_conflict'
+
+- ('proposed', 'error:UniqueViolation')
++ ('proposed', 'idem_conflict')
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.731s
+
+FAILED (failures=1)
+EXIT 1

@@ -1,0 +1,273 @@
+{"commit": "e15241c81d9fac6c6f255c99eb9b0c9efeffe7d6", "dirty": true, "thresholds_commit": "edb693f3b119212863c0ea897e4b735d5edcd466", "tree_sha256": "d5d1db64a4d0dba337775b6f813c57551707131e097d6c7ae894d0cb476abd8e"}
+
+FFFEEEFFFFFFFFFFFFFEFF.
+======================================================================
+ERROR: test_bridge_ends_the_database_session_when_the_directory_refuses (tests.test_step2_pg.Step2Pg.test_bridge_ends_the_database_session_when_the_directory_refuses)
+The core knows `x` (analyst) but this Directory does not: the database session the proof opened must not stay usable.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 320, in test_bridge_ends_the_database_session_when_the_directory_refuses
+    idp = pgcore.PgIdentity(self.idp, ttl_s=60)
+          ^^^^^^^^^^^^^^^^^
+AttributeError: module 'pol.pgcore' has no attribute 'PgIdentity'
+
+======================================================================
+ERROR: test_bridge_issue_and_end (tests.test_step2_pg.Step2Pg.test_bridge_issue_and_end)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 298, in test_bridge_issue_and_end
+    w, bridge, svc = self._world()
+                     ^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 292, in _world
+    idp = pgcore.PgIdentity(self.idp, ttl_s=60)
+          ^^^^^^^^^^^^^^^^^
+AttributeError: module 'pol.pgcore' has no attribute 'PgIdentity'
+
+======================================================================
+ERROR: test_bridge_refuses_replay_and_leaves_nothing_live (tests.test_step2_pg.Step2Pg.test_bridge_refuses_replay_and_leaves_nothing_live)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 309, in test_bridge_refuses_replay_and_leaves_nothing_live
+    w, bridge, svc = self._world()
+                     ^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 292, in _world
+    idp = pgcore.PgIdentity(self.idp, ttl_s=60)
+          ^^^^^^^^^^^^^^^^^
+AttributeError: module 'pol.pgcore' has no attribute 'PgIdentity'
+
+======================================================================
+ERROR: test_derivation_table (tests.test_step2.DerivedOrigin.test_derivation_table)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2.py", line 45, in test_derivation_table
+    self.assertEqual(_core.origin("human", "owner_ui"), ("user", "user_typed"))
+                     ^^^^^^^^^^^^
+AttributeError: module 'pol._core' has no attribute 'origin'
+
+======================================================================
+FAIL: test_bad_tokens_are_refused_on_every_call (tests.test_step2_pg.Step2Pg.test_bad_tokens_are_refused_on_every_call)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 231, in test_bad_tokens_are_refused_on_every_call
+    alice = self._token()
+            ^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 83, in _token
+    self.assertEqual(st, "ok", "positive control: a valid proof must open a session (got %r)" % (d,))
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control: a valid proof must open a session (got '42883')
+
+======================================================================
+FAIL: test_bare_principal_mint_is_refused_for_every_role (tests.test_step2_pg.Step2Pg.test_bare_principal_mint_is_refused_for_every_role)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 105, in test_bare_principal_mint_is_refused_for_every_role
+    self.assertTrue(self._refused_sql(conn, "select dc.open_session('tenant-a','alice','owner_ui','f',60)"),
+AssertionError: False is not true : dc_idp minted a session from a bare principal id
+
+======================================================================
+FAIL: test_body_naming_identity_or_origin_is_refused (tests.test_step2_pg.Step2Pg.test_body_naming_identity_or_origin_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 283, in test_body_naming_identity_or_origin_is_refused
+    tok = self._token(pid="bot")
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 83, in _token
+    self.assertEqual(st, "ok", "positive control: a valid proof must open a session (got %r)" % (d,))
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control: a valid proof must open a session (got '42883')
+
+======================================================================
+FAIL: test_concurrent_replay_exactly_one_wins (tests.test_step2_pg.Step2Pg.test_concurrent_replay_exactly_one_wins)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 196, in test_concurrent_replay_exactly_one_wins
+    self.assertEqual(sorted(out), ["ok"] + ["refused"] * (n - 1))
+AssertionError: Lists differ: ['refused', 'refused', 'refused', 'refused'[40 chars]sed'] != ['ok', 'refused', 'refused', 'refused', 're[35 chars]sed']
+
+First differing element 0:
+'refused'
+'ok'
+
+- ['refused',
++ ['ok',
+   'refused',
+   'refused',
+   'refused',
+   'refused',
+   'refused',
+   'refused',
+   'refused']
+
+======================================================================
+FAIL: test_enrolment_refuses_unknown_principal_and_wrong_channel (tests.test_step2_pg.Step2Pg.test_enrolment_refuses_unknown_principal_and_wrong_channel)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 211, in test_enrolment_refuses_unknown_principal_and_wrong_channel
+    self.assertEqual(self._open(proof(self._factor()))[0], "ok", "positive control")
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control
+
+======================================================================
+FAIL: test_events_carry_actor_and_trust_origin_derived_from_the_session (tests.test_step2_pg.Step2Pg.test_events_carry_actor_and_trust_origin_derived_from_the_session)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 277, in test_events_carry_actor_and_trust_origin_derived_from_the_session
+    tok = self._token(pid=pid)
+          ^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 83, in _token
+    self.assertEqual(st, "ok", "positive control: a valid proof must open a session (got %r)" % (d,))
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control: a valid proof must open a session (got '42883')
+
+======================================================================
+FAIL: test_expired_and_far_future_proofs_are_refused (tests.test_step2_pg.Step2Pg.test_expired_and_far_future_proofs_are_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 169, in test_expired_and_far_future_proofs_are_refused
+    self.assertEqual(self._open(proof(f))[0], "ok", "positive control")
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control
+
+======================================================================
+FAIL: test_forged_proofs_are_refused_and_write_no_session (tests.test_step2_pg.Step2Pg.test_forged_proofs_are_refused_and_write_no_session)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 136, in test_forged_proofs_are_refused_and_write_no_session
+    self.assertEqual(self._open(proof(a))[0], "ok", "positive control")
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control
+
+======================================================================
+FAIL: test_install_refuses_look_alike_principals (tests.test_step2_pg.Step2Pg.test_install_refuses_look_alike_principals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 331, in test_install_refuses_look_alike_principals
+    with self.assertRaises(Exception):
+AssertionError: Exception not raised
+
+======================================================================
+FAIL: test_other_tenant_token_sees_and_changes_nothing_of_this_tenant (tests.test_step2_pg.Step2Pg.test_other_tenant_token_sees_and_changes_nothing_of_this_tenant)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 256, in test_other_tenant_token_sees_and_changes_nothing_of_this_tenant
+    alice = self._token()
+            ^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 83, in _token
+    self.assertEqual(st, "ok", "positive control: a valid proof must open a session (got %r)" % (d,))
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control: a valid proof must open a session (got '42883')
+
+======================================================================
+FAIL: test_proof_replay_is_refused (tests.test_step2_pg.Step2Pg.test_proof_replay_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 176, in test_proof_replay_is_refused
+    self.assertEqual(self._open(p)[0], "ok", "positive control")
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control
+
+======================================================================
+FAIL: test_revoked_principal_and_revoked_factor_are_refused (tests.test_step2_pg.Step2Pg.test_revoked_principal_and_revoked_factor_are_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 202, in test_revoked_principal_and_revoked_factor_are_refused
+    self.assertEqual(self._open(proof(a))[0], "ok", "positive control")
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control
+
+======================================================================
+FAIL: test_roles_cannot_mint_alter_or_read_sessions_and_factors (tests.test_step2_pg.Step2Pg.test_roles_cannot_mint_alter_or_read_sessions_and_factors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 110, in test_roles_cannot_mint_alter_or_read_sessions_and_factors
+    tok = self._token()
+          ^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 83, in _token
+    self.assertEqual(st, "ok", "positive control: a valid proof must open a session (got %r)" % (d,))
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : positive control: a valid proof must open a session (got '42883')
+
+======================================================================
+FAIL: test_valid_proof_opens_a_session_stamped_from_the_factor (tests.test_step2_pg.Step2Pg.test_valid_proof_opens_a_session_stamped_from_the_factor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2_pg.py", line 127, in test_valid_proof_opens_a_session_stamped_from_the_factor
+    self.assertEqual(st, "ok", d)
+AssertionError: 'refused' != 'ok'
+- refused
++ ok
+ : 42883
+
+======================================================================
+FAIL: test_agent_event_is_stamped_agent_generated (tests.test_step2.DerivedOrigin.test_agent_event_is_stamped_agent_generated)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2.py", line 33, in test_agent_event_is_stamped_agent_generated
+    self.assertEqual((ev.get("actor"), ev.get("trust_origin")), ("assistant", "agent_generated"))
+AssertionError: Tuples differ: (None, None) != ('assistant', 'agent_generated')
+
+First differing element 0:
+None
+'assistant'
+
+- (None, None)
++ ('assistant', 'agent_generated')
+
+======================================================================
+FAIL: test_body_naming_actor_or_trust_origin_is_refused (tests.test_step2.DerivedOrigin.test_body_naming_actor_or_trust_origin_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2.py", line 41, in test_body_naming_actor_or_trust_origin_is_refused
+    self.assertEqual(out["code"], "identity_in_body", k)
+AssertionError: 'bad_event' != 'identity_in_body'
+- bad_event
++ identity_in_body
+ : actor
+
+======================================================================
+FAIL: test_human_event_is_stamped_user_typed (tests.test_step2.DerivedOrigin.test_human_event_is_stamped_user_typed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2.py", line 26, in test_human_event_is_stamped_user_typed
+    self.assertEqual((ev.get("actor"), ev.get("trust_origin")), ("user", "user_typed"))
+AssertionError: Tuples differ: (None, None) != ('user', 'user_typed')
+
+First differing element 0:
+None
+'user'
+
+- (None, None)
++ ('user', 'user_typed')
+
+======================================================================
+FAIL: test_core_config_with_look_alike_principals_is_refused (tests.test_step2.LookAlikes.test_core_config_with_look_alike_principals_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-s2-e15241c/src/tests/test_step2.py", line 56, in test_core_config_with_look_alike_principals_is_refused
+    with self.assertRaises(Exception, msg="%s / %s accepted" % (a, b)):
+AssertionError: Exception not raised : alice / a1ice accepted
+
+----------------------------------------------------------------------
+Ran 23 tests in 2.066s
+
+FAILED (failures=18, errors=4)

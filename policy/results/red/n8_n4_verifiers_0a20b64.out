@@ -1,0 +1,60 @@
+test_each_break_fails (tests.test_verify_pgdiff_mig_r3.MigVerifier) ... ok
+test_good_passes (tests.test_verify_pgdiff_mig_r3.MigVerifier) ... FAIL
+test_n4_rollback_after_a_write_must_be_refused_and_the_write_kept (tests.test_verify_pgdiff_mig_r3.MigVerifier) ... ok
+test_n8_probe_must_fail_with_insufficient_privilege (tests.test_verify_pgdiff_mig_r3.MigVerifier)
+0a20b64 accepted any non-empty exception name as a denied privilege probe (an OperationalError, or a missing function). ... ok
+test_each_break_fails (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier) ... FAIL
+test_good_passes (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier) ... ok
+test_n8_control_caught_only_by_errors_fails (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier)
+0a20b64 counted error:* outcomes as control differences: a control arm whose broken run only errored looked 'caught'. ... FAIL
+test_n8_each_control_arm_must_catch_semantically (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier) ... FAIL
+
+======================================================================
+FAIL: test_good_passes (tests.test_verify_pgdiff_mig_r3.MigVerifier)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_pgdiff_mig_r3.py", line 89, in test_good_passes
+    self.assertEqual(self.v([CLEAN, C1, C2, C3]), "PASS")
+AssertionError: 'FAIL' != 'PASS'
+- FAIL
++ PASS
+
+
+======================================================================
+FAIL: test_each_break_fails (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_pgdiff_mig_r3.py", line 60, in test_each_break_fails
+    self.assertEqual(self.v(rows), "FAIL", row)
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+ : ['t', 'ctl:b2', '1/0', 'a', None, 'a', None]
+
+======================================================================
+FAIL: test_n8_control_caught_only_by_errors_fails (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier)
+0a20b64 counted error:* outcomes as control differences: a control arm whose broken run only errored looked 'caught'.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_pgdiff_mig_r3.py", line 69, in test_n8_control_caught_only_by_errors_fails
+    self.assertEqual(self.v(rows), "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_n8_each_control_arm_must_catch_semantically (tests.test_verify_pgdiff_mig_r3.PgDiffVerifier)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_verify_pgdiff_mig_r3.py", line 74, in test_n8_each_control_arm_must_catch_semantically
+    self.assertEqual(self.v(rows), "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+FAILED (failures=4)

@@ -1,0 +1,22 @@
+test_references_are_not_a_function_of_the_value (tests.test_review3.N5_ValueRefs)
+Two principals storing the same text and label get unrelated references (no deterministic derivation to test guesses with). ... ok
+test_retry_after_erasure_stores_nothing_and_leaks_nothing (tests.test_review3.N5_ValueRefs)
+After erasure a retry of the erased submission is an idem_conflict (fresh reference, fresh subject token), and its value is ... ok
+test_retry_gets_the_stored_reference_while_the_value_exists (tests.test_review3.N5_ValueRefs)
+M2 kept: the same body retried with the same idempotency key is a duplicate carrying the original reference; one value stored. ... ok
+test_value_ref_cannot_be_confirmed_by_guessing_the_subject_after_erasure (tests.test_review3.N5_ValueRefs)
+0a20b64: _value_ref HMACs the label, subject NAME included, under the vault key that survives erasure; the key holder, with ... FAIL
+
+======================================================================
+FAIL: test_value_ref_cannot_be_confirmed_by_guessing_the_subject_after_erasure (tests.test_review3.N5_ValueRefs)
+0a20b64: _value_ref HMACs the label, subject NAME included, under the vault key that survives erasure; the key holder, with
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-a9fd13f613df8860c/red-0a20b64/policy/tests/test_review3.py", line 36, in test_value_ref_cannot_be_confirmed_by_guessing_the_subject_after_erasure
+    self.assertEqual(len(right), 0, "a key the vault retains after erasure confirms the erased subject's name")
+AssertionError: 1 != 0 : a key the vault retains after erasure confirms the erased subject's name
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.002s
+
+FAILED (failures=1)

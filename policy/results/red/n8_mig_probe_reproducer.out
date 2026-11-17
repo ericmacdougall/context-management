@@ -1,0 +1,2 @@
+edb693f artifact, 0a20b64 verifier: PASS
+same artifact with one probe failing as OperationalError, 0a20b64 verifier: PASS

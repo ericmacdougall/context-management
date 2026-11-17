@@ -1,0 +1,80 @@
+..........EEEEE
+======================================================================
+ERROR: test_n4_failure_mid_rollback_changes_nothing (tests.test_review3_pg.Review3Rollback.test_n4_failure_mid_rollback_changes_nothing)
+Delta review 1 (N4 leftover): a failure injected after rollback has dropped the migrated schema and dc_crypto, at the rename
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 353, in test_n4_failure_mid_rollback_changes_nothing
+    self.MIG.rollback(Inject())
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/ops/migrate_r3_7.py", line 172, in rollback
+    c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 350, in execute
+    return conn.execute(q, *a, **k)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/policy/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.NoActiveSqlTransaction: LOCK TABLE can only be used in transaction blocks
+
+======================================================================
+ERROR: test_n4_rollback_after_a_refused_request_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_refused_request_is_refused)
+A refused request writes an audit row: audit history is data too (0a20b64 drops it).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 366, in test_n4_rollback_after_a_refused_request_is_refused
+    self._assert_refused_and_kept("audit row")
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 309, in _assert_refused_and_kept
+    self.MIG.rollback(self.o)
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/ops/migrate_r3_7.py", line 172, in rollback
+    c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
+  File "~/emlab2-16096/policy/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.NoActiveSqlTransaction: LOCK TABLE can only be used in transaction blocks
+
+======================================================================
+ERROR: test_n4_rollback_after_a_submit_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_a_submit_is_refused)
+0a20b64: rollback drops the new schema unconditionally; an applied request made after the migration silently disappears.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 323, in test_n4_rollback_after_a_submit_is_refused
+    self._assert_refused_and_kept("submit")
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 309, in _assert_refused_and_kept
+    self.MIG.rollback(self.o)
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/ops/migrate_r3_7.py", line 172, in rollback
+    c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
+  File "~/emlab2-16096/policy/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.NoActiveSqlTransaction: LOCK TABLE can only be used in transaction blocks
+
+======================================================================
+ERROR: test_n4_rollback_after_an_erasure_is_refused (tests.test_review3_pg.Review3Rollback.test_n4_rollback_after_an_erasure_is_refused)
+0a20b64: a value erased after the migration comes back with the old schema (erasure undone).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 330, in test_n4_rollback_after_an_erasure_is_refused
+    self._assert_refused_and_kept("erasure")
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 309, in _assert_refused_and_kept
+    self.MIG.rollback(self.o)
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/ops/migrate_r3_7.py", line 172, in rollback
+    c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
+  File "~/emlab2-16096/policy/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.NoActiveSqlTransaction: LOCK TABLE can only be used in transaction blocks
+
+======================================================================
+ERROR: test_n4_rollback_without_writes_proceeds (tests.test_review3_pg.Review3Rollback.test_n4_rollback_without_writes_proceeds)
+Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/tests/test_review3_pg.py", line 315, in test_n4_rollback_without_writes_proceeds
+    self.MIG.rollback(self.o)
+  File "~/emlab2-16096/policy/runs/red-d1-b/src/ops/migrate_r3_7.py", line 172, in rollback
+    c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
+  File "~/emlab2-16096/policy/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.NoActiveSqlTransaction: LOCK TABLE can only be used in transaction blocks
+
+----------------------------------------------------------------------
+Ran 15 tests in 2.424s
+
+FAILED (errors=5)
+EXIT 1
