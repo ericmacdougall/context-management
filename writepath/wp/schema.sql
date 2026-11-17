@@ -775,7 +775,7 @@ end $$;
 revoke all on all tables in schema public from public;
 revoke all on all functions in schema public from public;
 revoke all on all sequences in schema public from public;
-grant usage on schema public to wp_app, wp_verifier, wp_legal;
+grant usage on schema public to wp_app, wp_verifier, wp_legal, wp_broker;   -- wp_broker: wp_lease_holder_current only
 grant usage on type tenant_t to wp_app, wp_verifier, wp_legal;
 grant select on all tables in schema public to wp_verifier;
 grant select, insert on events, quarantine to wp_app;

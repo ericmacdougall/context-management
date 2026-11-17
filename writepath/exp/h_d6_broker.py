@@ -180,12 +180,15 @@ def child_control(a):
     es = ES(role="projector")                 # the pre-broker deployment: the app holds the projector role key
     conn = db.connect(application_name="h6-ctl")
     la = L.acquire(conn, A, L.PROJECTOR, 120.0)
+    # H6a: with security on, ES refuses this key's alias CAS ("an alias that has more permissions than any of the
+    # indices": create_doc on -w, none on the base index). Recorded as a finding of the pre-broker design; the cases
+    # still run, since the key writes through any tenant's existing -w alias without a CAS of its own.
+    res["findings"] = {}
     try:
         F.fence_es(es, A, la.epoch)
+        res["findings"]["fence_A"] = "ok"
     except (ESError, F.StaleEpoch, F.ProjectionError) as e:
-        res["invalid"]["fence_A"] = _err(e)
-        _emit("H6CHILD", res, [])
-        return
+        res["findings"]["fence_A"] = _err(e)
     E = la.epoch
     idx = F.base_index(A, "events")
     res["own_write"] = _w(es, F.write_alias(A, "events", E), "h6-own")
@@ -199,8 +202,9 @@ def child_control(a):
     l2 = L.acquire(conn, A, L.PROJECTOR, 120.0, force=True)
     try:
         F.fence_es(es, A, l2.epoch)
+        res["findings"]["fence_A_h2"] = "ok"
     except (ESError, F.StaleEpoch, F.ProjectionError) as e:
-        res["invalid"]["fence_A_h2"] = _err(e)
+        res["findings"]["fence_A_h2"] = _err(e)
     res["C5"] = {"E2": l2.epoch, "readd_old": _alias_req(es, [{"add": {"index": idx, "alias": F.write_alias(A, "events", E)}}]),
                  "stale": [_w(es, F.write_alias(A, "events", E), f"h6-c5-{i}") for i in range(N_STALE)]}
     res["C5"]["stale_accepted"] = sum(1 for s, _ in res["C5"]["stale"] if s in (200, 201))
@@ -541,7 +545,8 @@ def main(r=5):
             rows = [once(arm, i) for i in range(r)]
             for x in rows:
                 x["why"], x["invalid_request"] = judge(arm, x, wit)
-                x["holds" if arm == "fenced" else "violated"] = not x["why"] and not x["invalid_request"]
+                # control: the H6 rule is acceptance of a C1 or C4 request only (H6a)
+                x["holds" if arm == "fenced" else "violated"] = not x["why"] and (arm == "control" or not x["invalid_request"])
             res[arm] = rows
             stop_services()
     finally:
