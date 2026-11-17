@@ -370,6 +370,10 @@ WP_UCD_DIR; red = the new tests on the 4fe3ac1 code, tree src-0aaf789, identical
   proposals of a subject with no approved identifiers.
 - `live-window2-e8c4829.red-green.out`: green test_ident 25/25, test_d3_pg 8/8, es_alias_live F5 and F9 true; red
   test_ident 14 failing (U+17B4/U+17B5 on 15.0 too), test_d3_pg C1, C2, C4, C5.
+- `live-window3-1f99021.red-green.out` (`harness/reviewC_check2.sh`; home path shown as ~): C2's first assertion is now
+  the lock-order one. Green on the new tree; red on a broken variant whose only change removes FOR SHARE from propose's
+  erased check, and red on 4fe3ac1, both with "the mark did not wait". Its P1 (exp.d4_store_mark) ran against the lab
+  database still on the pre-m3 schema (UndefinedColumn); rerun after `wp.setup --reset` in window 4.
 SUPERSEDED by decision R1 and matcher m3 (kept): `failing-first/d3/d3-store-pg-fb60b2e.red-green.out` (span redaction,
 removed) and `failing-first/d3/m2-*-5e6e378.red.out` (matcher m2, replaced by m3).
 
