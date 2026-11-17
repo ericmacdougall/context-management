@@ -85,20 +85,31 @@ def _walias_epochs(t, f, aliases):
     return [(a, int(m.group(1))) for a in aliases for m in [rx.match(a)] if m]
 
 
+GENERATION0 = 0       # -w0: the generation alias a family is born with; no lease ever holds epoch 0 (the first is 1)
+
+
 def ensure_family(es: ES, t, f):
-    """Create the index once (fixed name: a second creator gets resource_already_exists and moves on)."""
+    """Create the index once (fixed name: a second creator gets resource_already_exists and moves on). The index is
+    born WITH its generation alias -w0 in the same request (is_write_index=false: nothing writes through it), so a
+    family never exists without a -w alias and every CAS has one to remove (review B2)."""
     if _family_state(es, t, f):
         return
     try:
         es.req("PUT", f"/{base_index(t, f)}", {"settings": SETTINGS, "mappings": FAMILIES[f]["mappings"],
-                                                "aliases": {read_alias(t, f): {"is_write_index": False}, erase_alias(t, f): {"is_write_index": True}}})
+                                                "aliases": {read_alias(t, f): {"is_write_index": False}, erase_alias(t, f): {"is_write_index": True},
+                                                            write_alias(t, f, GENERATION0): {"is_write_index": False}}})
     except ESError as e:
         if e.etype != "resource_already_exists_exception":
             raise
 
 
 def _observe(es: ES, t, epoch):
-    """({family: (index, aliases)}, actions) for the CAS; raises StaleEpoch if a newer epoch is already visible."""
+    """({family: (index, aliases)}, actions) for the CAS; raises StaleEpoch if a newer epoch is already visible.
+
+    INVARIANT (review B2): a CAS never ADDS a write alias without REMOVING, in the same atomic request and with
+    must_exist=true, every write alias it observed, and it refuses a family with no write alias at all. A request that
+    observed generation g and stalls cannot install its alias after anyone else's CAS has moved the family past g:
+    its removal of g's alias fails, the whole request fails (P3), and the re-read classifies it."""
     seen_all, actions = {}, []
     for f in FAMILIES:
         ensure_family(es, t, f)
@@ -112,6 +123,9 @@ def _observe(es: ES, t, epoch):
             raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
         if any(e == epoch for _, e in seen):
             continue
+        if not seen:
+            raise ProjectionError(f"{f}: no write or generation alias (created before the -w0 rule); refusing an "
+                                  "unconditional add")
         for a, _ in seen:
             actions.append({"remove": {"index": idx, "alias": a, "must_exist": True}})
         actions.append({"add": {"index": idx, "alias": write_alias(t, f, epoch), "is_write_index": True}})
@@ -125,7 +139,9 @@ def fence_es(es: ES, t, epoch):
       a newer write alias is visible        -> StaleEpoch (a confirmed loss: another projector holds a newer epoch)
       the aliases changed, nothing newer    -> observe again and retry the CAS (at most CAS_ATTEMPTS requests)
       the aliases are unchanged             -> ProjectionError (the request failed for another reason)
-    A failure of the re-read itself propagates as it is (an infrastructure error)."""
+    A failure of the re-read itself propagates as it is (an infrastructure error). Epochs start at 1 (0 is -w0)."""
+    if int(epoch) <= GENERATION0:
+        raise ValueError(f"epoch {epoch}: projector epochs start at 1")
     for _ in range(CAS_ATTEMPTS):
         seen_all, actions = _observe(es, t, epoch)
         if not actions:

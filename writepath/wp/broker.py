@@ -100,6 +100,8 @@ class Broker:
     def writer_key(self, t, epoch, holder):
         L.check_tenant(t)
         epoch = int(epoch)
+        if epoch <= F.GENERATION0:
+            raise Refused("bad_epoch")                     # -w0 is the generation alias: no key for it, ever
         if not holder or not self.lease_ok(t, L.PROJECTOR, epoch, holder):
             raise Refused("lease_not_current")
         F.fence_es(self.es, t, epoch)                      # broker-held CAS; StaleEpoch if a newer epoch is visible

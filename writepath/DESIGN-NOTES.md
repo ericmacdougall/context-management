@@ -114,3 +114,24 @@ decisions, the deployment requirements that follow from them, and what is still 
   Result fingerprints before cf8f08e record only the server version, not these effective settings, so those results
   cannot be reproduced from their fingerprints alone. From cf8f08e every fingerprint records the effective values of
   a named list of settings (exp/common.PG_SETTINGS).
+
+## Invariant: the write-alias generation (review B2, D6)
+
+The Elasticsearch fence rests on alias-name scoping plus the alias compare-and-set held by the key broker, so the
+alias state itself must be safe under every interleaving of family creation, takeover CAS and key minting:
+
+- A family index is born with its generation alias `-w0` in the SAME create request (is_write_index=false; no lease
+  ever holds epoch 0; the broker refuses a key for epoch < 1). A family therefore never exists without a `-w` alias.
+- Only the CAS (`families.fence_es`) installs a `-w<E>` alias, and only in ONE atomic `_aliases` request that also
+  removes, with `must_exist=true`, every `-w` alias it observed. It never adds to a family with no `-w` alias
+  (ProjectionError). ES rejects such a request as a whole when any observed alias is gone (probe P3, 9.5.6).
+- Consequence: a request that observed generation g and stalls cannot install its alias after anyone else's CAS moved
+  the family past g; the re-read then sees the newer epoch (StaleEpoch) or the same epoch (no action). At most one
+  `-w` alias exists per family, and it is the newest epoch whose CAS completed. A key minted for an epoch whose alias
+  is later removed can write nowhere; revocation stays hygiene.
+- Callers: the broker (writer_key: lease check, CAS, lease re-check, mint) and the non-broker projector start use
+  fence_es; erasure's placeholders (ensure=False in broker mode) and eraser_key only create families (with `-w0`) and
+  never touch `-w` aliases. tests/test_alias_generation.py enumerates the interleavings (pause before create, before
+  the CAS, before the re-check; against a retry, one, two and three later CAS requests; invalidation down).
+- Not covered: families created before this rule have no `-w0`; if one has no `-w` alias at all, the CAS refuses it
+  (lab data is recreated by setup; a deployment would add `-w0` in a maintenance window with writers stopped).

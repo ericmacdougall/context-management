@@ -1,0 +1,54 @@
+# WP_PKG_UNDER_TEST=<wp/ at 0110981> python3 -m unittest tests.test_alias_generation (writepath/, at the B2 fix commit)
+F
+======================================================================
+FAIL: test_interleavings (tests.test_alias_generation.AliasGeneration) [before_cas/C]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_alias_generation.py", line 169, in test_interleavings
+    self.check(cl, outcome, completed, label)
+  File "<repo>/tests/test_alias_generation.py", line 157, in check
+    self.assertEqual(len(ws), 1, f"{label}: I1 {f} write aliases {ws}")
+AssertionError: 2 != 1 : before_cas/C: I1 events write aliases [1, 2]
+
+======================================================================
+FAIL: test_interleavings (tests.test_alias_generation.AliasGeneration) [before_cas/BC]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_alias_generation.py", line 169, in test_interleavings
+    self.check(cl, outcome, completed, label)
+  File "<repo>/tests/test_alias_generation.py", line 157, in check
+    self.assertEqual(len(ws), 1, f"{label}: I1 {f} write aliases {ws}")
+AssertionError: 2 != 1 : before_cas/BC: I1 events write aliases [1, 2]
+
+======================================================================
+FAIL: test_interleavings (tests.test_alias_generation.AliasGeneration) [before_cas/CD]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_alias_generation.py", line 169, in test_interleavings
+    self.check(cl, outcome, completed, label)
+  File "<repo>/tests/test_alias_generation.py", line 157, in check
+    self.assertEqual(len(ws), 1, f"{label}: I1 {f} write aliases {ws}")
+AssertionError: 2 != 1 : before_cas/CD: I1 events write aliases [1, 3]
+
+======================================================================
+FAIL: test_interleavings (tests.test_alias_generation.AliasGeneration) [before_cas/BCD]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_alias_generation.py", line 169, in test_interleavings
+    self.check(cl, outcome, completed, label)
+  File "<repo>/tests/test_alias_generation.py", line 157, in check
+    self.assertEqual(len(ws), 1, f"{label}: I1 {f} write aliases {ws}")
+AssertionError: 2 != 1 : before_cas/BCD: I1 events write aliases [1, 3]
+
+======================================================================
+FAIL: test_no_epoch_zero_key (tests.test_alias_generation.AliasGeneration)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/tests/test_alias_generation.py", line 178, in test_no_epoch_zero_key
+    b.writer_key(T, 0, "h0")
+AssertionError: (<class 'ValueError'>, <class 'wp.broker.Refused'>) not raised
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.369s
+
+FAILED (failures=5)
