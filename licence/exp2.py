@@ -382,7 +382,8 @@ def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "
     for f in features:
         seq = [(r["_t1"], r.get(f)) for r in rows if f in r]
         if not seq or all(x[1] and x[1][0] in matrix.NOT_OBSERVED for x in seq):
-            out[f] = {"skipped": True}
+            # never observed: summarize treats this as UNVERIFIED (a mandatory probe), never as a pass
+            out[f] = {"skipped": True, "unverified": True, "n": len(seq), "classes": sorted({x[1][0] for x in seq if x[1]})}
             continue
         if direction == "down":
             ref = next(((t, v) for t, v in seq if t >= t_resp - 0.0 and v[0] in ("LICENCE_ERROR", "OTHER_ERROR")), None)
