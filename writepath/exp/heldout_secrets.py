@@ -19,7 +19,8 @@ from exp import heldout_secrets_gen as G
 
 HERE = pathlib.Path(__file__).resolve().parent
 SCANNER_BLOB = "58b025fcb5b6266077c586436e00acf247d97854"
-GEN_SHA256 = "bc731ed07cab94d700303a473c9a758180c85c8c1abfb775e6e00af054bf65c1"
+GEN_SHA256 = "d67e76929102a65130d0ab6db3e279300273688b6bd677f565757ebee58abeba"      # amendment 15a (comment line)
+CORPUS_SHA256 = "2392990636495a3acd0d635e0917e337a5d8ac860b338a6e26d53edbb9d704a5"   # amendment 15a: unchanged corpus
 OUT_OF_SCOPE = {"reversed"}                                   # row 19's docstring at 4960f50 (amendment 15)
 # the generator's value transforms (its docstring), restricted to amendment 15's control list: base64*, hex*, url_*,
 # json_* value transforms, quoted_printable, html_entity_*, double_base64, base64_of_assignment. json_document is a
@@ -126,6 +127,9 @@ def main(selftest):
     gen_sha = hashlib.sha256((HERE / "heldout_secrets_gen.py").read_bytes()).hexdigest()
     if gen_sha != GEN_SHA256 or G.VERSION != "heldout-secrets-gen-1.0.0-2026-11-17":
         raise SystemExit("refusing: the H1 generator is not the pinned file")
+    corpus = hashlib.sha256(json.dumps([G.positives(16096), G.negatives(16096)], sort_keys=True).encode()).hexdigest()
+    if corpus != CORPUS_SHA256:
+        raise SystemExit("refusing: the H1 corpus is not the pinned corpus")
     if selftest:                      # plumbing only: a stub scanner, nothing real is scored, nothing is written
         stub = lambda t, decode=True: {"stub"} if (hash(t) % 2) else set()  # noqa: E731
         out, forbidden = run(stub, lambda t: stub(t, False))

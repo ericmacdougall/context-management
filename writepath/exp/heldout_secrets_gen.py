@@ -850,6 +850,7 @@ def n_doc_example_key(r):
     stripe = "sk_test_" + "4eC39HqLyjWDarj" + "tT1zdp7dc"
     hdr = _b64u(b'{"alg":"HS256","typ":"JWT"}')
     pl = _b64u(b'{"sub":"1234567890","name":"John Doe","iat":1516239022}')
+    # public documentation example: the default HS256 sample token shown on https://jwt.io (negative set only)
     jwt_doc = hdr + "." + pl + "." + "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
     mongo = "mongodb://myDBReader:D1fficultP%40ssw0rd@mongodb0.example.com:27017/?authSource=admin"
     pick = r.choice([
