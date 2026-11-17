@@ -268,3 +268,19 @@ Reported, not thresholded: catch rate per family and per encoding (cells under 1
 row 19's 880/880, negative blocks per negative family.
 Rows: set, family, encoding, context, index, caught, detector names, sha256 of the text (16 hex). Never the text or the
 planted value; the harness asserts before writing that no planted value or text occurs in the result document.
+
+## Amendment 16 (2026-11-17, written before the run; new owner): two erasures of subjects who mention each other
+Low item from the 7f6536c round (exp/mutual_mentions.py). Per run, a fresh tenant: identifiers declared for A and B
+(>= 6 characters, accepted by the D3 rule); events A1 (A's own, mentions B), A2 (A's own), B1 (B's own, mentions A),
+B2 (B's own), C1 (C's own, mentions nobody), C2 (C's own, mentions A and B); projected before erasure. Both erasures run
+with physical="wait".
+Property (per run): both jobs done with error_type None; A1, A2, B1, B2 and C2 have content NULL in Postgres and no
+non-placeholder Elasticsearch document; C1 still decrypts to its original text and its Elasticsearch document is not a
+placeholder.
+Modes: SEQ (erase A, then B; R=5) and CONC (two real processes, each erasing one subject, held at a barrier on the
+named hook after_mark until both have marked, so both cascades run at once; R=10). Overlap witness (CONC): the two
+cascade intervals [barrier release, after_cascade] intersect on the database clock.
+Control (one patch, reverted): wp_erasure_cascade with its mention branch removed (erasure_mentions never read), run in
+SEQ mode, R=5.
+PASS = SEQ holds 5/5 AND CONC holds 10/10 with >= 5 overlapping runs AND 0 errors in both AND the control violates 5/5.
+CONC with < 5 overlapping runs and no violation = INCONCLUSIVE. Any error or violation in SEQ or CONC = FAIL.
