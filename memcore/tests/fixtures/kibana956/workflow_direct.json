@@ -1,0 +1,15 @@
+{
+ "ok": {
+  "status": "completed",
+  "error": null,
+  "duration": 189
+ },
+ "fail": {
+  "status": "failed",
+  "error": {
+   "type": "ConnectorExecutionError",
+   "message": "[ECONNREFUSED] connect ECONNREFUSED 172.17.0.1:1"
+  },
+  "duration": 85
+ }
+}

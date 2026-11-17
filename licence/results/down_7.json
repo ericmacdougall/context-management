@@ -1,0 +1,3792 @@
+{
+ "dls_battery_after": {
+  "count": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "esql": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "get_allowed_doc0": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "get_hidden_doc1": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "knn_search": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "mget": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "msearch": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "scroll_open": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "search_match_all": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "search_term_hidden": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "termvectors_hidden": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  },
+  "wildcard_index": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 403
+  }
+ },
+ "dls_battery_trial": {
+  "count": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "esql": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "get_allowed_doc0": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "get_hidden_doc1": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 404
+  },
+  "knn_search": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "mget": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "msearch": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "scroll_open": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "search_match_all": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "search_term_hidden": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "termvectors_hidden": {
+   "returned_any_source": false,
+   "returned_hidden_doc": false,
+   "status": 200
+  },
+  "wildcard_index": {
+   "returned_any_source": true,
+   "returned_hidden_doc": false,
+   "status": 200
+  }
+ },
+ "dls_setup": {
+  "role": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "user": {
+   "class": "AVAILABLE",
+   "status": 200
+  }
+ },
+ "exp1_after": {
+  "alias_must_exist": {
+   "existing": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "ghost_refused": {
+    "class": "OTHER_ERROR",
+    "status": 404
+   }
+  },
+  "alias_require_alias": {
+   "write_to_non_alias_refused": {
+    "class": "OTHER_ERROR",
+    "status": 404
+   },
+   "write_via_alias": {
+    "class": "AVAILABLE",
+    "status": 201
+   }
+  },
+  "bm25_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5",
+    "6"
+   ]
+  },
+  "client_side_fusion": {
+   "class": "AVAILABLE",
+   "status": [
+    200,
+    200
+   ],
+   "witness": [
+    "0",
+    "5",
+    "2",
+    "1",
+    "6"
+   ]
+  },
+  "dense_knn": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "1",
+    "5"
+   ]
+  },
+  "dls_role_create": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "field and document level security",
+    "reason": "current license is non-compliant for [field and document level security]",
+    "root": "current license is non-compliant for [field and document level security]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "dls_search_as_user": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective roles [] (assigned roles [lic_dls_role] were not found) on indices [lic1-base], this action is granted by the index privileges [read,all]",
+    "root": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective roles [] (assigned roles [lic_dls_role] were not found) on indices [lic1-base], this action is granted by the index privileges [read,all]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "esql_fork": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "1",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "4",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "5",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "0",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "2",
+     "fork1",
+     0.6931471228599548
+    ]
+   ]
+  },
+  "esql_fuse": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "Found 1 problem\nline 1:179: current license is non-compliant for [FUSE]",
+    "root": "Found 1 problem\nline 1:179: current license is non-compliant for [FUSE]",
+    "type": "verification_exception"
+   },
+   "status": 400
+  },
+  "esql_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "paris berlin train",
+     0.6931471228599548
+    ],
+    [
+     "paris trip planning",
+     0.6931471228599548
+    ],
+    [
+     "dentist appointment paris",
+     0.6931471228599548
+    ]
+   ]
+  },
+  "force_merge": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "inference_create": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "inference_list": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    ".elser-2-elasticsearch",
+    ".multilingual-e5-small-elasticsearch",
+    ".rerank-v1-elasticsearch",
+    "lic-stub"
+   ]
+  },
+  "inference_use_existing": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "inference_use_new": {
+   "class": "SKIPPED (create refused)"
+  },
+  "knn_rescore_vector": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "7",
+    "1",
+    "16"
+   ]
+  },
+  "match_on_semantic_text": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "percolator_lexical": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "t1"
+   ]
+  },
+  "retriever_linear": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "linear retriever",
+    "reason": "current license is non-compliant for [linear retriever]",
+    "root": "current license is non-compliant for [linear retriever]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "retriever_rrf": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "Reciprocal Rank Fusion (RRF)",
+    "reason": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+    "root": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "semantic_query": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "semantic_text_index": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "semantic_text_mapping": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "text_similarity_reranker_gate": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "text_similarity_reranker",
+    "reason": "current license is non-compliant for [text_similarity_reranker]",
+    "root": "current license is non-compliant for [text_similarity_reranker]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "vec_bbq_disk": {
+   "bulk": {
+    "failed": 40,
+    "first_error": {
+     "license.expired.feature": "bbq_disk",
+     "reason": "current license is non-compliant for [bbq_disk]",
+     "type": "security_exception"
+    },
+    "items": 40,
+    "ok": 0
+   },
+   "class": "LICENCE_ERROR",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": []
+   }
+  },
+  "vec_bbq_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  },
+  "vec_int8_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  }
+ },
+ "exp1_after_quick": {
+  "_t": 1794859223.6235275,
+  "_times": {
+   "bm25": [
+    1794859223.6273324,
+    1794859223.631839
+   ],
+   "dls_search": [
+    1794859223.6424863,
+    1794859223.644846
+   ],
+   "inference_use": [
+    1794859223.6408632,
+    1794859223.6424859
+   ],
+   "knn": [
+    1794859223.63184,
+    1794859223.636808
+   ],
+   "linear": [
+    1794859223.625567,
+    1794859223.6273308
+   ],
+   "rrf": [
+    1794859223.6235325,
+    1794859223.6255665
+   ],
+   "semantic_query": [
+    1794859223.6368124,
+    1794859223.6408625
+   ]
+  },
+  "bm25": [
+   "AVAILABLE",
+   200
+  ],
+  "dls_search": [
+   "OTHER_ERROR",
+   403,
+   null
+  ],
+  "inference_use": [
+   "LICENCE_ERROR",
+   403
+  ],
+  "knn": [
+   "AVAILABLE",
+   200
+  ],
+  "linear": [
+   "LICENCE_ERROR",
+   403
+  ],
+  "rrf": [
+   "LICENCE_ERROR",
+   403
+  ],
+  "semantic_query": [
+   "LICENCE_ERROR",
+   403
+  ]
+ },
+ "exp1_basic0": {
+  "alias_must_exist": {
+   "existing": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "ghost_refused": {
+    "class": "OTHER_ERROR",
+    "status": 404
+   }
+  },
+  "alias_require_alias": {
+   "write_to_non_alias_refused": {
+    "class": "OTHER_ERROR",
+    "status": 404
+   },
+   "write_via_alias": {
+    "class": "AVAILABLE",
+    "status": 201
+   }
+  },
+  "bm25_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5",
+    "6"
+   ]
+  },
+  "client_side_fusion": {
+   "class": "AVAILABLE",
+   "status": [
+    200,
+    200
+   ],
+   "witness": [
+    "0",
+    "5",
+    "2",
+    "1",
+    "6"
+   ]
+  },
+  "dense_knn": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "1",
+    "5"
+   ]
+  },
+  "dls_role_create": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "field and document level security",
+    "reason": "current license is non-compliant for [field and document level security]",
+    "root": "current license is non-compliant for [field and document level security]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "dls_search_as_user": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective roles [] (assigned roles [lic_dls_role] were not found) on indices [lic1-base], this action is granted by the index privileges [read,all]",
+    "root": "action [indices:data/read/search] is unauthorized for user [lic_dls_user] with effective roles [] (assigned roles [lic_dls_role] were not found) on indices [lic1-base], this action is granted by the index privileges [read,all]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "esql_fork": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "1",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "4",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "5",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "0",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "2",
+     "fork1",
+     0.6931471228599548
+    ]
+   ]
+  },
+  "esql_fuse": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "Found 1 problem\nline 1:180: current license is non-compliant for [FUSE]",
+    "root": "Found 1 problem\nline 1:180: current license is non-compliant for [FUSE]",
+    "type": "verification_exception"
+   },
+   "status": 400
+  },
+  "esql_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "paris berlin train",
+     0.6931471228599548
+    ],
+    [
+     "paris trip planning",
+     0.6931471228599548
+    ],
+    [
+     "dentist appointment paris",
+     0.6931471228599548
+    ]
+   ]
+  },
+  "force_merge": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "inference_create": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "inference_list": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    ".elser-2-elasticsearch",
+    ".multilingual-e5-small-elasticsearch",
+    ".rerank-v1-elasticsearch"
+   ]
+  },
+  "inference_use_existing": {
+   "class": "NO_ENDPOINT",
+   "status": 404
+  },
+  "inference_use_new": {
+   "class": "SKIPPED (create refused)"
+  },
+  "knn_rescore_vector": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "7",
+    "1",
+    "16"
+   ]
+  },
+  "match_on_semantic_text": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "Inference endpoint not found [lic-stub]",
+    "root": "Inference endpoint not found [lic-stub]",
+    "type": "resource_not_found_exception"
+   },
+   "status": 404
+  },
+  "percolator_lexical": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "t1"
+   ]
+  },
+  "retriever_linear": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "linear retriever",
+    "reason": "current license is non-compliant for [linear retriever]",
+    "root": "current license is non-compliant for [linear retriever]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "retriever_rrf": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "Reciprocal Rank Fusion (RRF)",
+    "reason": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+    "root": "current license is non-compliant for [Reciprocal Rank Fusion (RRF)]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "semantic_query": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "Inference endpoint not found [lic-stub]",
+    "root": "Inference endpoint not found [lic-stub]",
+    "type": "resource_not_found_exception"
+   },
+   "status": 404
+  },
+  "semantic_text_index": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "Inference id [lic-stub] not found for field [body]",
+    "root": "Inference id [lic-stub] not found for field [body]",
+    "type": "resource_not_found_exception"
+   },
+   "status": 404
+  },
+  "semantic_text_mapping": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "text_similarity_reranker_gate": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "text_similarity_reranker",
+    "reason": "current license is non-compliant for [text_similarity_reranker]",
+    "root": "current license is non-compliant for [text_similarity_reranker]",
+    "type": "security_exception"
+   },
+   "status": 403
+  },
+  "vec_bbq_disk": {
+   "bulk": {
+    "failed": 40,
+    "first_error": {
+     "license.expired.feature": "bbq_disk",
+     "reason": "current license is non-compliant for [bbq_disk]",
+     "type": "security_exception"
+    },
+    "items": 40,
+    "ok": 0
+   },
+   "class": "LICENCE_ERROR",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": []
+   }
+  },
+  "vec_bbq_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  },
+  "vec_int8_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  }
+ },
+ "exp1_moment": {
+  "dls_search": {
+   "dls_returned_counts_before": [
+    4
+   ],
+   "first_refusal_rel_resp_s": 0.0077135562896728516,
+   "first_refusal_status": 403,
+   "n": 494,
+   "success_after_first_refusal": 0,
+   "success_before_transition": 113
+  },
+  "inference_use": {
+   "dls_returned_counts_before": null,
+   "first_refusal_rel_resp_s": 0.19491910934448242,
+   "first_refusal_status": 403,
+   "n": 494,
+   "success_after_first_refusal": 0,
+   "success_before_transition": 113
+  },
+  "linear": {
+   "dls_returned_counts_before": null,
+   "first_refusal_rel_resp_s": 0.19491910934448242,
+   "first_refusal_status": 403,
+   "n": 494,
+   "success_after_first_refusal": 0,
+   "success_before_transition": 113
+  },
+  "rrf": {
+   "dls_returned_counts_before": null,
+   "first_refusal_rel_resp_s": 0.19491910934448242,
+   "first_refusal_status": 403,
+   "n": 494,
+   "success_after_first_refusal": 0,
+   "success_before_transition": 113
+  },
+  "semantic_query": {
+   "dls_returned_counts_before": null,
+   "first_refusal_rel_resp_s": 0.19491910934448242,
+   "first_refusal_status": 403,
+   "n": 494,
+   "success_after_first_refusal": 0,
+   "success_before_transition": 113
+  }
+ },
+ "exp1_moment_n_polls": 494,
+ "exp1_trial": {
+  "alias_must_exist": {
+   "existing": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "ghost_refused": {
+    "class": "OTHER_ERROR",
+    "status": 404
+   }
+  },
+  "alias_require_alias": {
+   "write_to_non_alias_refused": {
+    "class": "OTHER_ERROR",
+    "status": 404
+   },
+   "write_via_alias": {
+    "class": "AVAILABLE",
+    "status": 201
+   }
+  },
+  "bm25_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5",
+    "6"
+   ]
+  },
+  "client_side_fusion": {
+   "class": "AVAILABLE",
+   "status": [
+    200,
+    200
+   ],
+   "witness": [
+    "0",
+    "5",
+    "2",
+    "1",
+    "6"
+   ]
+  },
+  "dense_knn": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "1",
+    "5"
+   ]
+  },
+  "dls_role_create": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "dls_search_as_user": {
+   "class": "AVAILABLE",
+   "only_kw_a": true,
+   "returned": 4,
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "4",
+    "6"
+   ]
+  },
+  "esql_fork": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "0",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "2",
+     "fork1",
+     0.6931471228599548
+    ],
+    [
+     "5",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "1",
+     "fork2",
+     0.6931471228599548
+    ],
+    [
+     "4",
+     "fork2",
+     0.6931471228599548
+    ]
+   ]
+  },
+  "esql_fuse": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "5",
+     0.03278688524590164
+    ],
+    [
+     "0",
+     0.016129032258064516
+    ],
+    [
+     "2",
+     0.015873015873015872
+    ],
+    [
+     "1",
+     0.016129032258064516
+    ],
+    [
+     "4",
+     0.015873015873015872
+    ]
+   ]
+  },
+  "esql_match": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    [
+     "paris berlin train",
+     0.6931471228599548
+    ],
+    [
+     "paris trip planning",
+     0.6931471228599548
+    ],
+    [
+     "dentist appointment paris",
+     0.6931471228599548
+    ]
+   ]
+  },
+  "force_merge": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "inference_create": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "inference_list": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    ".elser-2-elasticsearch",
+    ".multilingual-e5-small-elasticsearch",
+    ".rerank-v1-elasticsearch",
+    "lic-stub"
+   ]
+  },
+  "inference_use_existing": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "inference_use_new": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "knn_rescore_vector": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "7",
+    "1",
+    "16"
+   ]
+  },
+  "match_on_semantic_text": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "1"
+   ]
+  },
+  "percolator_lexical": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "t1"
+   ]
+  },
+  "retriever_linear": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "2",
+    "5",
+    "1",
+    "6"
+   ]
+  },
+  "retriever_rrf": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "0",
+    "5",
+    "1",
+    "2",
+    "6"
+   ]
+  },
+  "semantic_query": {
+   "class": "AVAILABLE",
+   "status": 200,
+   "witness": [
+    "1"
+   ]
+  },
+  "semantic_text_index": {
+   "class": "AVAILABLE",
+   "status": 201
+  },
+  "semantic_text_mapping": {
+   "class": "AVAILABLE",
+   "status": 200
+  },
+  "text_similarity_reranker_gate": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "[text_similarity_reranker] search failed - retrievers '[standard]' returned errors. All failures are attached as suppressed exceptions.",
+    "root": "[text_similarity_reranker] search failed - retrievers '[standard]' returned errors. All failures are attached as suppressed exceptions.",
+    "type": "status_exception"
+   },
+   "status": 404
+  },
+  "vec_bbq_disk": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  },
+  "vec_bbq_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  },
+  "vec_int8_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 40,
+    "ok": 40
+   },
+   "class": "AVAILABLE",
+   "mapping": {
+    "class": "AVAILABLE",
+    "status": 200
+   },
+   "search": {
+    "class": "AVAILABLE",
+    "status": 200,
+    "witness": [
+     "7",
+     "1",
+     "16"
+    ]
+   }
+  }
+ },
+ "exp1_trial_quick": {
+  "_t": 1794859063.0607674,
+  "_times": {
+   "bm25": [
+    1794859063.097076,
+    1794859063.1067154
+   ],
+   "dls_search": [
+    1794859063.1948712,
+    1794859063.206334
+   ],
+   "inference_use": [
+    1794859063.1512713,
+    1794859063.1948698
+   ],
+   "knn": [
+    1794859063.1067166,
+    1794859063.1179743
+   ],
+   "linear": [
+    1794859063.0799956,
+    1794859063.0970743
+   ],
+   "rrf": [
+    1794859063.060772,
+    1794859063.0799944
+   ],
+   "semantic_query": [
+    1794859063.1179788,
+    1794859063.1512706
+   ]
+  },
+  "bm25": [
+   "AVAILABLE",
+   200
+  ],
+  "dls_search": [
+   "AVAILABLE",
+   200,
+   4
+  ],
+  "inference_use": [
+   "AVAILABLE",
+   200
+  ],
+  "knn": [
+   "AVAILABLE",
+   200
+  ],
+  "linear": [
+   "AVAILABLE",
+   200
+  ],
+  "rrf": [
+   "AVAILABLE",
+   200
+  ],
+  "semantic_query": [
+   "AVAILABLE",
+   200
+  ]
+ },
+ "exp2": {
+  "T1_backend_without_oracle": 0,
+  "T1_control_broken_fallback": {
+   "backend_labelled_checked": 2520,
+   "backend_wrong": 0,
+   "client_labelled": 5925,
+   "flag_rate": 1.0,
+   "flagged_wrong": 5925
+  },
+  "T1_examined": 27599,
+  "T1_examples": [],
+  "T1_mismatches": 0,
+  "T2_failed_requests": 0,
+  "T2_failure_windows": [],
+  "T2_longest_failure_window_s": 0.0,
+  "T2_non_control_requests": 45041,
+  "T3_backend_after_first_client": 0,
+  "T3_backend_labelled_after_resp_start": 0,
+  "T3_flip_latency_s": 0.046076059341430664,
+  "T5_control_after_1s": {
+   "fail_fraction": 1.0,
+   "licence_failures": 12214,
+   "n": 12214,
+   "other_failures": 0,
+   "success": 0
+  },
+  "T6_linear_backend_vs_client_rrf_top10": {
+   "list_differs": 60,
+   "queries": 60,
+   "set_differs": 59
+  },
+  "T6_rrf_backend_vs_client_top10": {
+   "list_differs": 0,
+   "queries": 60,
+   "set_differs": 0
+  },
+  "arms": {
+   "auto": {
+    "backend": 10154,
+    "client": 11928,
+    "errs": {},
+    "fail": 0,
+    "n": 22082,
+    "ok": 22082
+   },
+   "brk": {
+    "backend": 2520,
+    "client": 5925,
+    "errs": {},
+    "fail": 0,
+    "n": 8445,
+    "ok": 8445
+   },
+   "ctl": {
+    "backend": 5070,
+    "client": 0,
+    "errs": {
+     "BackendError: HTTP 403: {\"error\":{\"root_cause\":[{\"type\":\"sec": 12387
+    },
+    "fail": 12387,
+    "n": 17457,
+    "ok": 5070
+   },
+   "lex": {
+    "backend": 0,
+    "client": 0,
+    "errs": {},
+    "fail": 0,
+    "n": 8849,
+    "ok": 8849
+   },
+   "lin": {
+    "backend": 2540,
+    "client": 2977,
+    "errs": {},
+    "fail": 0,
+    "n": 5517,
+    "ok": 5517
+   },
+   "vec": {
+    "backend": 0,
+    "client": 0,
+    "errs": {},
+    "fail": 0,
+    "n": 8593,
+    "ok": 8593
+   }
+  },
+  "events": {
+   "sem2_create": [
+    200,
+    null
+   ],
+   "static_count": 1500,
+   "t_start": 1794859121.541822,
+   "t_stop": 1794859218.7144613
+  },
+  "latch_sample_n": 943,
+  "latch_timeline": [
+   [
+    -26.03,
+    true,
+    "backend"
+   ],
+   [
+    0.07,
+    false,
+    "client"
+   ],
+   [
+    5.03,
+    null,
+    "client"
+   ],
+   [
+    5.13,
+    false,
+    "client"
+   ],
+   [
+    10.05,
+    null,
+    "client"
+   ],
+   [
+    10.15,
+    false,
+    "client"
+   ]
+  ],
+  "linear_arm_labels": {
+   "backend": 2540,
+   "client": 2977
+  },
+  "requests_total": 70943,
+  "writes": {
+   "acked": 10625,
+   "acked_absent": 0,
+   "control_injected_loss_detected": true,
+   "failed_batches": 0,
+   "failed_ids_present": 0,
+   "live_present": 10625,
+   "present_unacked": 0,
+   "sem_acked": 85,
+   "sem_acked_absent": 0,
+   "sem_failed": 257,
+   "sem_failed_loud_licence_or_missing": 257,
+   "sem_failed_present": 0,
+   "sem_first_ok_t": 1794859121.5889199,
+   "sem_present_unacked": 0
+  }
+ },
+ "exp2_backend_oracle_failures": 0,
+ "exp3": {
+  "after": {
+   "mutations": {
+    "bbq_disk": {
+     "bulk_partial_update": {
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "status": 200,
+      "summary": {
+       "failed": 1,
+       "first_error": {
+        "license.expired.feature": "bbq_disk",
+        "reason": "current license is non-compliant for [bbq_disk]",
+        "type": "security_exception"
+       },
+       "items": 1,
+       "ok": 0
+      }
+     },
+     "delete_one": {
+      "class": "AVAILABLE",
+      "effect": {
+       "get_after_status": 404
+      },
+      "error": null,
+      "status": 200
+     },
+     "force_merge": {
+      "class": "AVAILABLE",
+      "effect": {
+       "count_after": 299
+      },
+      "error": null,
+      "status": 200
+     },
+     "index_new_doc": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "count": 299
+      },
+      "error": {
+       "feature": "bbq_disk",
+       "reason": "current license is non-compliant for [bbq_disk]",
+       "root": "current license is non-compliant for [bbq_disk]",
+       "type": "security_exception"
+      },
+      "status": 403
+     },
+     "overwrite_full_doc": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "error": {
+       "feature": "bbq_disk",
+       "reason": "current license is non-compliant for [bbq_disk]",
+       "root": "current license is non-compliant for [bbq_disk]",
+       "type": "security_exception"
+      },
+      "status": 403
+     },
+     "reindex_same_mapping": {
+      "body": "{\"took\": 41, \"timed_out\": false, \"total\": 299, \"updated\": 0, \"created\": 0, \"deleted\": 0, \"batches\": 1, \"version_conflicts\": 0, \"noops\": 0, \"retries\": {\"bulk\": 0, \"search\": 0}, \"throttled_millis\": 0, \"requests_per_second\": -1.0, \"throttled_until_millis\": 0, \"failures\": [{\"index\": \"lic3-bbq_disk-rx\", \"id\": \"0\", \"cause\": {\"type\": \"security_exception\", \"reason\": \"current license is non-compliant for [",
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "created": 0,
+       "dst_count": 0,
+       "dst_embeddings": null,
+       "dst_vectors_present": 0,
+       "failures": null
+      },
+      "error": null,
+      "status": 403
+     },
+     "update_by_query": {
+      "body": "{\"took\": 91, \"timed_out\": false, \"total\": 299, \"updated\": 0, \"deleted\": 0, \"batches\": 1, \"version_conflicts\": 0, \"noops\": 0, \"retries\": {\"bulk\": 0, \"search\": 0}, \"throttled_millis\": 0, \"requests_per_second\": -1.0, \"throttled_until_millis\": 0, \"failures\": [{\"index\": \"lic3-bbq_disk\", \"id\": \"0\", \"cause\": {\"type\": \"security_exception\", \"reason\": \"current license is non-compliant for [bbq_disk]\", \"lice",
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present_10": 1,
+       "failures": null,
+       "tag_of_10": "t0",
+       "updated": 0
+      },
+      "error": null,
+      "status": 403
+     },
+     "update_partial_api": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "error": {
+       "feature": "bbq_disk",
+       "reason": "current license is non-compliant for [bbq_disk]",
+       "root": "current license is non-compliant for [bbq_disk]",
+       "type": "security_exception"
+      },
+      "status": 403
+     },
+     "update_scripted": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "error": {
+       "feature": "bbq_disk",
+       "reason": "current license is non-compliant for [bbq_disk]",
+       "root": "current license is non-compliant for [bbq_disk]",
+       "type": "security_exception"
+      },
+      "status": 403
+     }
+    },
+    "bbq_hnsw": {
+     "bulk_partial_update": {
+      "effect": {
+       "embedding_present": 1,
+       "tag": "bulkpartial"
+      },
+      "status": 200,
+      "summary": {
+       "failed": 0,
+       "first_error": null,
+       "items": 1,
+       "ok": 1
+      }
+     },
+     "delete_one": {
+      "class": "AVAILABLE",
+      "effect": {
+       "get_after_status": 404
+      },
+      "error": null,
+      "status": 200
+     },
+     "force_merge": {
+      "class": "AVAILABLE",
+      "effect": {
+       "count_after": 299
+      },
+      "error": null,
+      "status": 200
+     },
+     "index_new_doc": {
+      "class": "AVAILABLE",
+      "effect": {
+       "count": 300
+      },
+      "error": null,
+      "status": 201
+     },
+     "overwrite_full_doc": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "full"
+      },
+      "error": null,
+      "status": 200
+     },
+     "reindex_same_mapping": {
+      "class": "AVAILABLE",
+      "effect": {
+       "created": 299,
+       "dst_count": 299,
+       "dst_embeddings": null,
+       "dst_vectors_present": 4,
+       "failures": 0
+      },
+      "error": null,
+      "status": 200
+     },
+     "update_by_query": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present_10": 1,
+       "failures": 0,
+       "tag_of_10": "ubq",
+       "updated": 295
+      },
+      "error": null,
+      "status": 200
+     },
+     "update_partial_api": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "partial"
+      },
+      "error": null,
+      "status": 200
+     },
+     "update_scripted": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "scripted"
+      },
+      "error": null,
+      "status": 200
+     }
+    },
+    "plain": {
+     "bulk_partial_update": {
+      "effect": {
+       "embedding_present": 1,
+       "tag": "bulkpartial"
+      },
+      "status": 200,
+      "summary": {
+       "failed": 0,
+       "first_error": null,
+       "items": 1,
+       "ok": 1
+      }
+     },
+     "delete_one": {
+      "class": "AVAILABLE",
+      "effect": {
+       "get_after_status": 404
+      },
+      "error": null,
+      "status": 200
+     },
+     "force_merge": {
+      "class": "AVAILABLE",
+      "effect": {
+       "count_after": 299
+      },
+      "error": null,
+      "status": 200
+     },
+     "index_new_doc": {
+      "class": "AVAILABLE",
+      "effect": {
+       "count": 300
+      },
+      "error": null,
+      "status": 201
+     },
+     "overwrite_full_doc": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "full"
+      },
+      "error": null,
+      "status": 200
+     },
+     "reindex_same_mapping": {
+      "class": "AVAILABLE",
+      "effect": {
+       "created": 299,
+       "dst_count": 299,
+       "dst_embeddings": null,
+       "dst_vectors_present": 4,
+       "failures": 0
+      },
+      "error": null,
+      "status": 200
+     },
+     "update_by_query": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present_10": 1,
+       "failures": 0,
+       "tag_of_10": "ubq",
+       "updated": 295
+      },
+      "error": null,
+      "status": 200
+     },
+     "update_partial_api": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "partial"
+      },
+      "error": null,
+      "status": 200
+     },
+     "update_scripted": {
+      "class": "AVAILABLE",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "scripted"
+      },
+      "error": null,
+      "status": 200
+     }
+    },
+    "sem": {
+     "bulk_partial_update": {
+      "effect": {
+       "embedding_present": 1,
+       "tag": "bulkpartial"
+      },
+      "status": 200,
+      "summary": {
+       "failed": 0,
+       "first_error": null,
+       "items": 1,
+       "ok": 1
+      }
+     },
+     "delete_one": {
+      "class": "AVAILABLE",
+      "effect": {
+       "get_after_status": 404
+      },
+      "error": null,
+      "status": 200
+     },
+     "force_merge": {
+      "class": "AVAILABLE",
+      "effect": {
+       "count_after": 199
+      },
+      "error": null,
+      "status": 200
+     },
+     "index_new_doc": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "count": 199
+      },
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "status": 403
+     },
+     "overwrite_full_doc": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "status": 403
+     },
+     "reindex_same_mapping": {
+      "body": "{\"took\": 15, \"timed_out\": false, \"total\": 199, \"updated\": 0, \"created\": 0, \"deleted\": 0, \"batches\": 1, \"version_conflicts\": 0, \"noops\": 0, \"retries\": {\"bulk\": 0, \"search\": 0}, \"throttled_millis\": 0, \"requests_per_second\": -1.0, \"throttled_until_millis\": 0, \"failures\": [{\"index\": \"lic3-sem-rx\", \"id\": \"0\", \"cause\": {\"type\": \"security_exception\", \"reason\": \"current license is non-compliant for [infer",
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "created": 0,
+       "dst_count": 0,
+       "dst_embeddings": {
+        "of": 10,
+        "unreadable": 10,
+        "with_embeddings": 0
+       },
+       "dst_vectors_present": null,
+       "failures": null
+      },
+      "error": null,
+      "status": 403
+     },
+     "update_by_query": {
+      "body": "{\"took\": 37, \"timed_out\": false, \"total\": 198, \"updated\": 0, \"deleted\": 0, \"batches\": 1, \"version_conflicts\": 0, \"noops\": 0, \"retries\": {\"bulk\": 0, \"search\": 0}, \"throttled_millis\": 0, \"requests_per_second\": -1.0, \"throttled_until_millis\": 0, \"failures\": [{\"index\": \"lic3-sem\", \"id\": \"0\", \"cause\": {\"type\": \"security_exception\", \"reason\": \"current license is non-compliant for [inference]\", \"license.",
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present_10": 1,
+       "failures": null,
+       "tag_of_10": "t0",
+       "updated": 0
+      },
+      "error": null,
+      "status": 403
+     },
+     "update_partial_api": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "status": 403
+     },
+     "update_scripted": {
+      "class": "LICENCE_ERROR",
+      "effect": {
+       "embedding_present": 1,
+       "tag": "t0"
+      },
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "status": 403
+     }
+    }
+   },
+   "reads": {
+    "bbq_disk": {
+     "count": 300,
+     "get_all": {
+      "found": 300,
+      "missing_first": [],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 60,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 60,
+      "of": 60
+     }
+    },
+    "bbq_hnsw": {
+     "count": 300,
+     "get_all": {
+      "found": 300,
+      "missing_first": [],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 60,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 60,
+      "of": 60
+     }
+    },
+    "plain": {
+     "count": 300,
+     "get_all": {
+      "found": 300,
+      "missing_first": [],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 60,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 60,
+      "of": 60
+     }
+    },
+    "sem": {
+     "count": 200,
+     "get_all": {
+      "found": 200,
+      "missing_first": [],
+      "of": 200
+     },
+     "inference_embeddings_sample": {
+      "of": 20,
+      "unreadable": 0,
+      "with_embeddings": 20
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "error": null,
+      "hits": 40,
+      "status": 200
+     },
+     "match_on_semantic_field": {
+      "class": "LICENCE_ERROR",
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "hits": null,
+      "status": 403
+     },
+     "query_string_on_all": {
+      "class": "AVAILABLE",
+      "error": null,
+      "hits": 40,
+      "status": 200
+     },
+     "semantic_query": {
+      "class": "LICENCE_ERROR",
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "hits": null,
+      "status": 403
+     }
+    }
+   },
+   "reads_after_mut": {
+    "bbq_disk": {
+     "count": 299,
+     "get_all": {
+      "found": 299,
+      "missing_first": [
+       5
+      ],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 59,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 59,
+      "of": 59
+     }
+    },
+    "bbq_hnsw": {
+     "count": 300,
+     "get_all": {
+      "found": 299,
+      "missing_first": [
+       5
+      ],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 59,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 59,
+      "of": 59
+     }
+    },
+    "plain": {
+     "count": 300,
+     "get_all": {
+      "found": 299,
+      "missing_first": [
+       5
+      ],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 59,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 59,
+      "of": 59
+     }
+    },
+    "sem": {
+     "count": 199,
+     "get_all": {
+      "found": 199,
+      "missing_first": [
+       5
+      ],
+      "of": 200
+     },
+     "inference_embeddings_sample": {
+      "of": 20,
+      "unreadable": 0,
+      "with_embeddings": 20
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "error": null,
+      "hits": 39,
+      "status": 200
+     },
+     "match_on_semantic_field": {
+      "class": "LICENCE_ERROR",
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "hits": null,
+      "status": 403
+     },
+     "query_string_on_all": {
+      "class": "AVAILABLE",
+      "error": null,
+      "hits": 39,
+      "status": 200
+     },
+     "semantic_query": {
+      "class": "LICENCE_ERROR",
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "hits": null,
+      "status": 403
+     }
+    }
+   }
+  },
+  "after_restart": {
+   "cat": [
+    {
+     "docs.count": "199",
+     "health": "green",
+     "index": "lic3-sem-mig",
+     "store.size": "39.7kb"
+    },
+    {
+     "docs.count": "300",
+     "health": "green",
+     "index": "lic3-bbq_disk-t",
+     "store.size": "100.2kb"
+    },
+    {
+     "docs.count": "40",
+     "health": "green",
+     "index": "lic3-semu",
+     "store.size": "22.7kb"
+    },
+    {
+     "docs.count": "40",
+     "health": "green",
+     "index": "lic3-semu-t",
+     "store.size": "22.7kb"
+    },
+    {
+     "docs.count": "299",
+     "health": "green",
+     "index": "lic3-bbq_disk-mig-bad",
+     "store.size": "89.8kb"
+    },
+    {
+     "docs.count": "299",
+     "health": "green",
+     "index": "lic3-bbq_disk-mig-bbq",
+     "store.size": "96.9kb"
+    },
+    {
+     "docs.count": "300",
+     "health": "green",
+     "index": "lic3-bbq_hnsw",
+     "store.size": "109.3kb"
+    },
+    {
+     "docs.count": "300",
+     "health": "green",
+     "index": "lic3-plain",
+     "store.size": "100.5kb"
+    },
+    {
+     "docs.count": "299",
+     "health": "green",
+     "index": "lic3-bbq_disk-mig",
+     "store.size": "99kb"
+    },
+    {
+     "docs.count": "400",
+     "health": "green",
+     "index": "lic3-sem-t",
+     "store.size": "31.1kb"
+    },
+    {
+     "docs.count": "60",
+     "health": "green",
+     "index": "lic3-semonly",
+     "store.size": "10kb"
+    },
+    {
+     "docs.count": "300",
+     "health": "green",
+     "index": "lic3-bbq_hnsw-t",
+     "store.size": "99.1kb"
+    },
+    {
+     "docs.count": "299",
+     "health": "green",
+     "index": "lic3-bbq_disk",
+     "store.size": "113.1kb"
+    },
+    {
+     "docs.count": "398",
+     "health": "green",
+     "index": "lic3-sem",
+     "store.size": "30.8kb"
+    },
+    {
+     "docs.count": "300",
+     "health": "green",
+     "index": "lic3-plain-t",
+     "store.size": "91.8kb"
+    },
+    {
+     "docs.count": "300",
+     "health": "green",
+     "index": "lic3-plain-mig",
+     "store.size": "90.5kb"
+    }
+   ],
+   "counts_after": {
+    "bbq_disk": 299,
+    "bbq_hnsw": 300,
+    "plain": 300,
+    "sem": 199
+   },
+   "counts_before": {
+    "bbq_disk": 299,
+    "bbq_hnsw": 300,
+    "plain": 300,
+    "sem": 199
+   },
+   "reads": {
+    "bbq_disk": {
+     "count": 299,
+     "get_all": {
+      "found": 299,
+      "missing_first": [
+       5
+      ],
+      "of": 300
+     },
+     "knn_self_top1": {
+      "last_error": null,
+      "last_status": 200,
+      "of": 50,
+      "top1": 50
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "hits": 59,
+      "status": 200
+     },
+     "vectors_equal_ground_truth": {
+      "equal": 59,
+      "of": 59
+     }
+    },
+    "sem": {
+     "count": 199,
+     "get_all": {
+      "found": 199,
+      "missing_first": [
+       5
+      ],
+      "of": 200
+     },
+     "inference_embeddings_sample": {
+      "of": 20,
+      "unreadable": 0,
+      "with_embeddings": 20
+     },
+     "lexical_title": {
+      "class": "AVAILABLE",
+      "error": null,
+      "hits": 39,
+      "status": 200
+     },
+     "match_on_semantic_field": {
+      "class": "LICENCE_ERROR",
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "hits": null,
+      "status": 403
+     },
+     "query_string_on_all": {
+      "class": "AVAILABLE",
+      "error": null,
+      "hits": 39,
+      "status": 200
+     },
+     "semantic_query": {
+      "class": "LICENCE_ERROR",
+      "error": {
+       "feature": "inference",
+       "reason": "current license is non-compliant for [inference]",
+       "root": "current license is non-compliant for [inference]",
+       "type": "security_exception"
+      },
+      "hits": null,
+      "status": 403
+     }
+    }
+   }
+  },
+  "migration": {
+   "bbq_disk_to_bbq_hnsw": {
+    "dst_count": 299,
+    "knn_self_of": 100,
+    "knn_self_top1": 100,
+    "mismatch_ids": [],
+    "src_count": 299,
+    "src_vs_ground_truth_max_abs": 1.6888776266377192e-08,
+    "vector_mismatches": 0
+   },
+   "bbq_disk_to_hnsw": {
+    "dst_count": 299,
+    "knn_self_of": 100,
+    "knn_self_top1": 100,
+    "mismatch_ids": [],
+    "src_count": 299,
+    "src_vs_ground_truth_max_abs": 1.6888776266377192e-08,
+    "vector_mismatches": 0
+   },
+   "control_corrupted_migration": {
+    "dst_count": 299,
+    "knn_self_of": 100,
+    "knn_self_top1": 100,
+    "mismatch_ids": [
+     "0"
+    ],
+    "src_count": 299,
+    "src_vs_ground_truth_max_abs": 1.6888776266377192e-08,
+    "vector_mismatches": 1
+   },
+   "control_corrupted_vs_true_source": {
+    "dst_count": 299,
+    "knn_self_of": 100,
+    "knn_self_top1": 100,
+    "mismatch_ids": [
+     "0"
+    ],
+    "src_count": 299,
+    "src_vs_ground_truth_max_abs": 1.6888776266377192e-08,
+    "vector_mismatches": 1
+   },
+   "control_plain_to_hnsw": {
+    "dst_count": 300,
+    "knn_self_of": 100,
+    "knn_self_top1": 100,
+    "mismatch_ids": [],
+    "src_count": 300,
+    "src_vs_ground_truth_max_abs": 1.6888776266377192e-08,
+    "vector_mismatches": 0
+   },
+   "migrated_basic_ops": {
+    "lic3-bbq_disk-mig": {
+     "delete": 200,
+     "force_merge": 200,
+     "index_new": 201,
+     "update": 200
+    },
+    "lic3-sem-mig": {
+     "delete": 200,
+     "force_merge": 200,
+     "index_new": 201,
+     "update": 200
+    }
+   },
+   "semantic_to_text_vector": {
+    "docs": 199,
+    "dst_count": 199,
+    "first_search_status": 200,
+    "knn_self_of": 100,
+    "knn_self_top1": 100,
+    "skipped_not_single_chunk": 0,
+    "vector_mismatches_vs_stored": 0,
+    "worst_abs_err_vs_stub": 0.0019493844933587967,
+    "worst_cosine_vs_stub": 0.999996474584878
+   }
+  },
+  "pre_reads": {
+   "bbq_disk": {
+    "count": 300,
+    "get_all": {
+     "found": 300,
+     "missing_first": [],
+     "of": 300
+    },
+    "knn_self_top1": {
+     "last_error": null,
+     "last_status": 200,
+     "of": 50,
+     "top1": 50
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "hits": 60,
+     "status": 200
+    },
+    "vectors_equal_ground_truth": {
+     "equal": 60,
+     "of": 60
+    }
+   },
+   "bbq_hnsw": {
+    "count": 300,
+    "get_all": {
+     "found": 300,
+     "missing_first": [],
+     "of": 300
+    },
+    "knn_self_top1": {
+     "last_error": null,
+     "last_status": 200,
+     "of": 50,
+     "top1": 50
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "hits": 60,
+     "status": 200
+    },
+    "vectors_equal_ground_truth": {
+     "equal": 60,
+     "of": 60
+    }
+   },
+   "plain": {
+    "count": 300,
+    "get_all": {
+     "found": 300,
+     "missing_first": [],
+     "of": 300
+    },
+    "knn_self_top1": {
+     "last_error": null,
+     "last_status": 200,
+     "of": 50,
+     "top1": 50
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "hits": 60,
+     "status": 200
+    },
+    "vectors_equal_ground_truth": {
+     "equal": 60,
+     "of": 60
+    }
+   },
+   "sem": {
+    "count": 200,
+    "get_all": {
+     "found": 200,
+     "missing_first": [],
+     "of": 200
+    },
+    "inference_embeddings_sample": {
+     "of": 20,
+     "unreadable": 0,
+     "with_embeddings": 20
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 40,
+     "status": 200
+    },
+    "match_on_semantic_field": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 50,
+     "status": 200
+    },
+    "query_string_on_all": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 40,
+     "status": 200
+    },
+    "semantic_query": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 50,
+     "status": 200
+    }
+   }
+  },
+  "twin_mutations": {
+   "bbq_disk": {
+    "bulk_partial_update": {
+     "effect": {
+      "embedding_present": 1,
+      "tag": "bulkpartial"
+     },
+     "status": 200,
+     "summary": {
+      "failed": 0,
+      "first_error": null,
+      "items": 1,
+      "ok": 1
+     }
+    },
+    "delete_one": {
+     "class": "AVAILABLE",
+     "effect": {
+      "get_after_status": 404
+     },
+     "error": null,
+     "status": 200
+    },
+    "force_merge": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count_after": 299
+     },
+     "error": null,
+     "status": 200
+    },
+    "index_new_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count": 300
+     },
+     "error": null,
+     "status": 201
+    },
+    "overwrite_full_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "full"
+     },
+     "error": null,
+     "status": 200
+    },
+    "reindex_same_mapping": {
+     "class": "AVAILABLE",
+     "effect": {
+      "created": 299,
+      "dst_count": 299,
+      "dst_embeddings": null,
+      "dst_vectors_present": 4,
+      "failures": 0
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_by_query": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present_10": 1,
+      "failures": 0,
+      "tag_of_10": "ubq",
+      "updated": 295
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_partial_api": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "partial"
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_scripted": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "scripted"
+     },
+     "error": null,
+     "status": 200
+    }
+   },
+   "bbq_hnsw": {
+    "bulk_partial_update": {
+     "effect": {
+      "embedding_present": 1,
+      "tag": "bulkpartial"
+     },
+     "status": 200,
+     "summary": {
+      "failed": 0,
+      "first_error": null,
+      "items": 1,
+      "ok": 1
+     }
+    },
+    "delete_one": {
+     "class": "AVAILABLE",
+     "effect": {
+      "get_after_status": 404
+     },
+     "error": null,
+     "status": 200
+    },
+    "force_merge": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count_after": 299
+     },
+     "error": null,
+     "status": 200
+    },
+    "index_new_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count": 300
+     },
+     "error": null,
+     "status": 201
+    },
+    "overwrite_full_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "full"
+     },
+     "error": null,
+     "status": 200
+    },
+    "reindex_same_mapping": {
+     "class": "AVAILABLE",
+     "effect": {
+      "created": 299,
+      "dst_count": 299,
+      "dst_embeddings": null,
+      "dst_vectors_present": 4,
+      "failures": 0
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_by_query": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present_10": 1,
+      "failures": 0,
+      "tag_of_10": "ubq",
+      "updated": 295
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_partial_api": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "partial"
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_scripted": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "scripted"
+     },
+     "error": null,
+     "status": 200
+    }
+   },
+   "plain": {
+    "bulk_partial_update": {
+     "effect": {
+      "embedding_present": 1,
+      "tag": "bulkpartial"
+     },
+     "status": 200,
+     "summary": {
+      "failed": 0,
+      "first_error": null,
+      "items": 1,
+      "ok": 1
+     }
+    },
+    "delete_one": {
+     "class": "AVAILABLE",
+     "effect": {
+      "get_after_status": 404
+     },
+     "error": null,
+     "status": 200
+    },
+    "force_merge": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count_after": 299
+     },
+     "error": null,
+     "status": 200
+    },
+    "index_new_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count": 300
+     },
+     "error": null,
+     "status": 201
+    },
+    "overwrite_full_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "full"
+     },
+     "error": null,
+     "status": 200
+    },
+    "reindex_same_mapping": {
+     "class": "AVAILABLE",
+     "effect": {
+      "created": 299,
+      "dst_count": 299,
+      "dst_embeddings": null,
+      "dst_vectors_present": 4,
+      "failures": 0
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_by_query": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present_10": 1,
+      "failures": 0,
+      "tag_of_10": "ubq",
+      "updated": 295
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_partial_api": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "partial"
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_scripted": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "scripted"
+     },
+     "error": null,
+     "status": 200
+    }
+   },
+   "sem": {
+    "bulk_partial_update": {
+     "effect": {
+      "embedding_present": 1,
+      "tag": "bulkpartial"
+     },
+     "status": 200,
+     "summary": {
+      "failed": 0,
+      "first_error": null,
+      "items": 1,
+      "ok": 1
+     }
+    },
+    "delete_one": {
+     "class": "AVAILABLE",
+     "effect": {
+      "get_after_status": 404
+     },
+     "error": null,
+     "status": 200
+    },
+    "force_merge": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count_after": 199
+     },
+     "error": null,
+     "status": 200
+    },
+    "index_new_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "count": 200
+     },
+     "error": null,
+     "status": 201
+    },
+    "overwrite_full_doc": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "full"
+     },
+     "error": null,
+     "status": 200
+    },
+    "reindex_same_mapping": {
+     "class": "AVAILABLE",
+     "effect": {
+      "created": 199,
+      "dst_count": 199,
+      "dst_embeddings": {
+       "of": 10,
+       "unreadable": 0,
+       "with_embeddings": 10
+      },
+      "dst_vectors_present": null,
+      "failures": 0
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_by_query": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present_10": 1,
+      "failures": 0,
+      "tag_of_10": "ubq",
+      "updated": 195
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_partial_api": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "partial"
+     },
+     "error": null,
+     "status": 200
+    },
+    "update_scripted": {
+     "class": "AVAILABLE",
+     "effect": {
+      "embedding_present": 1,
+      "tag": "scripted"
+     },
+     "error": null,
+     "status": 200
+    }
+   }
+  },
+  "twin_reads_after": {
+   "bbq_disk": {
+    "count": 300,
+    "get_all": {
+     "found": 299,
+     "missing_first": [
+      5
+     ],
+     "of": 300
+    },
+    "knn_self_top1": {
+     "last_error": null,
+     "last_status": 200,
+     "of": 50,
+     "top1": 50
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "hits": 59,
+     "status": 200
+    },
+    "vectors_equal_ground_truth": {
+     "equal": 59,
+     "of": 59
+    }
+   },
+   "bbq_hnsw": {
+    "count": 300,
+    "get_all": {
+     "found": 299,
+     "missing_first": [
+      5
+     ],
+     "of": 300
+    },
+    "knn_self_top1": {
+     "last_error": null,
+     "last_status": 200,
+     "of": 50,
+     "top1": 50
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "hits": 59,
+     "status": 200
+    },
+    "vectors_equal_ground_truth": {
+     "equal": 59,
+     "of": 59
+    }
+   },
+   "plain": {
+    "count": 300,
+    "get_all": {
+     "found": 299,
+     "missing_first": [
+      5
+     ],
+     "of": 300
+    },
+    "knn_self_top1": {
+     "last_error": null,
+     "last_status": 200,
+     "of": 50,
+     "top1": 50
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "hits": 59,
+     "status": 200
+    },
+    "vectors_equal_ground_truth": {
+     "equal": 59,
+     "of": 59
+    }
+   },
+   "sem": {
+    "count": 200,
+    "get_all": {
+     "found": 199,
+     "missing_first": [
+      5
+     ],
+     "of": 200
+    },
+    "inference_embeddings_sample": {
+     "of": 20,
+     "unreadable": 0,
+     "with_embeddings": 20
+    },
+    "lexical_title": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 39,
+     "status": 200
+    },
+    "match_on_semantic_field": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 50,
+     "status": 200
+    },
+    "query_string_on_all": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 39,
+     "status": 200
+    },
+    "semantic_query": {
+     "class": "AVAILABLE",
+     "error": null,
+     "hits": 50,
+     "status": 200
+    }
+   }
+  }
+ },
+ "exp4_fresh_start": {
+  "cluster_health": [
+   200,
+   "yellow"
+  ],
+  "expected_strategy": "client",
+  "poll_rows_n": 327,
+  "readback": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "c4b6aea6-a159-4de6-89b3-5a8de76c2735"
+  },
+  "ready_after_s": 33.7,
+  "services": {
+   "http404": {
+    "first_probe_error": "BackendError",
+    "first_tier": "basic",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "client",
+    "reprobe_history_n": 3,
+    "reprobe_seconds_to_correct_after_first_200": 0.0,
+    "reviewed_correct": true,
+    "reviewed_final_strategy": "client",
+    "t_start_s": 28.625
+   },
+   "ok": {
+    "first_probe_error": null,
+    "first_tier": "basic",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "client",
+    "reprobe_history_n": 2,
+    "reprobe_seconds_to_correct_after_first_200": 0.0,
+    "reviewed_correct": true,
+    "reviewed_final_strategy": "client",
+    "t_start_s": 30.636
+   },
+   "refused": {
+    "first_probe_error": "ConnectionResetError",
+    "first_tier": "basic",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "client",
+    "reprobe_history_n": 32,
+    "reprobe_seconds_to_correct_after_first_200": 0.0,
+    "reviewed_correct": true,
+    "reviewed_final_strategy": "client",
+    "t_start_s": 0.0
+   }
+  },
+  "status_sequence": [
+   [
+    0.0,
+    0,
+    null
+   ],
+   [
+    28.625,
+    404,
+    null
+   ],
+   [
+    30.636,
+    200,
+    "basic"
+   ]
+  ],
+  "t_first_200_s": 30.636
+ },
+ "exp4_restart_basic": {
+  "expected_strategy": "client",
+  "poll_rows_n": 408,
+  "readback": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "b11c127a-075e-4656-b33e-ea91e05c0853"
+  },
+  "services": {
+   "ok": {
+    "first_probe_error": null,
+    "first_tier": "basic",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "client",
+    "reprobe_history_n": 33,
+    "reprobe_seconds_to_correct_after_first_200": 0.0,
+    "reviewed_correct": true,
+    "reviewed_final_strategy": "client",
+    "t_start_s": 0.0
+   },
+   "refused": {
+    "first_probe_error": "ConnectionResetError",
+    "first_tier": "basic",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "client",
+    "reprobe_history_n": 35,
+    "reprobe_seconds_to_correct_after_first_200": 0.0,
+    "reviewed_correct": true,
+    "reviewed_final_strategy": "client",
+    "t_start_s": 0.104
+   }
+  },
+  "status_sequence": [
+   [
+    0.0,
+    200,
+    "basic"
+   ],
+   [
+    0.104,
+    0,
+    null
+   ],
+   [
+    30.645,
+    200,
+    "basic"
+   ]
+  ],
+  "t_first_200_s": 30.645
+ },
+ "exp4_restart_trial": {
+  "expected_strategy": "auto",
+  "poll_rows_n": 404,
+  "readback": {
+   "expiry_ms": 1797451057626,
+   "status": "active",
+   "status_code": 200,
+   "type": "trial",
+   "uid": "2f69bfda-a6e6-4971-b29a-12358487a857"
+  },
+  "services": {
+   "ok": {
+    "first_probe_error": null,
+    "first_tier": "enterprise",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "auto",
+    "reprobe_history_n": 33,
+    "reprobe_seconds_to_correct_after_first_200": 0.897,
+    "reviewed_correct": true,
+    "reviewed_final_strategy": "auto",
+    "t_start_s": 0.0
+   },
+   "refused": {
+    "first_probe_error": "ConnectionResetError",
+    "first_tier": "basic",
+    "reprobe_correct": true,
+    "reprobe_final_strategy": "auto",
+    "reprobe_history_n": 35,
+    "reprobe_seconds_to_correct_after_first_200": 1.012,
+    "reviewed_correct": false,
+    "reviewed_final_strategy": "client",
+    "t_start_s": 0.105
+   }
+  },
+  "status_sequence": [
+   [
+    0.0,
+    200,
+    "trial"
+   ],
+   [
+    0.105,
+    0,
+    null
+   ],
+   [
+    30.234,
+    200,
+    "trial"
+   ]
+  ],
+  "t_first_200_s": 30.234
+ },
+ "exp4_state_basic0": {
+  "exact": true,
+  "paths": [
+   "/_license"
+  ],
+  "probe_error": null,
+  "readback": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "c4b6aea6-a159-4de6-89b3-5a8de76c2735"
+  },
+  "report": {
+   "licence_status": "active",
+   "licence_type": "basic",
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "safe": true
+ },
+ "exp4_state_basic_after": {
+  "exact": true,
+  "paths": [
+   "/_license"
+  ],
+  "probe_error": null,
+  "readback": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "b11c127a-075e-4656-b33e-ea91e05c0853"
+  },
+  "report": {
+   "licence_status": "active",
+   "licence_type": "basic",
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "safe": true
+ },
+ "exp4_state_trial": {
+  "exact": true,
+  "paths": [
+   "/_license"
+  ],
+  "probe_error": null,
+  "readback": {
+   "expiry_ms": 1797451057626,
+   "status": "active",
+   "status_code": 200,
+   "type": "trial",
+   "uid": "2f69bfda-a6e6-4971-b29a-12358487a857"
+  },
+  "report": {
+   "licence_status": "active",
+   "licence_type": "trial",
+   "search_strategy": "auto",
+   "tier": "enterprise"
+  },
+  "safe": true
+ },
+ "exp4_state_trial_after_restart": {
+  "exact": true,
+  "paths": [
+   "/_license"
+  ],
+  "probe_error": null,
+  "readback": {
+   "expiry_ms": 1797451057626,
+   "status": "active",
+   "status_code": 200,
+   "type": "trial",
+   "uid": "2f69bfda-a6e6-4971-b29a-12358487a857"
+  },
+  "report": {
+   "licence_status": "active",
+   "licence_type": "trial",
+   "search_strategy": "auto",
+   "tier": "enterprise"
+  },
+  "safe": true
+ },
+ "exp4_units": {
+  "basic_active": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "conn_refused": {
+   "paths": [
+    "/_license"
+   ],
+   "probe_error": "ConnectionRefusedError",
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "empty_dict": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "enterprise_active": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "auto",
+   "tier": "enterprise"
+  },
+  "enterprise_inactive": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "gold_active": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "http_404": {
+   "paths": [
+    "/_license"
+   ],
+   "probe_error": "BackendErr",
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "http_503": {
+   "paths": [
+    "/_license"
+   ],
+   "probe_error": "BackendErr",
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "list_instead": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "no_type": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "null_license": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "platinum_active": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "timeout": {
+   "paths": [
+    "/_license"
+   ],
+   "probe_error": "TimeoutError",
+   "search_strategy": "client",
+   "tier": "basic"
+  },
+  "trial_active": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "auto",
+   "tier": "enterprise"
+  },
+  "trial_expired": {
+   "paths": [
+    "/_license"
+   ],
+   "search_strategy": "client",
+   "tier": "basic"
+  }
+ },
+ "fixtures": {
+  "endpoint": [
+   200,
+   null
+  ],
+  "lic3-bbq_disk": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 300,
+    "ok": 300
+   },
+   "create": 200
+  },
+  "lic3-bbq_disk-t": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 300,
+    "ok": 300
+   },
+   "create": 200
+  },
+  "lic3-bbq_hnsw": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 300,
+    "ok": 300
+   },
+   "create": 200
+  },
+  "lic3-bbq_hnsw-t": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 300,
+    "ok": 300
+   },
+   "create": 200
+  },
+  "lic3-plain": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 300,
+    "ok": 300
+   },
+   "create": 200
+  },
+  "lic3-plain-t": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 300,
+    "ok": 300
+   },
+   "create": 200
+  },
+  "lic3-sem": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 200,
+    "ok": 200
+   },
+   "create": 200
+  },
+  "lic3-sem-t": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 200,
+    "ok": 200
+   },
+   "create": 200
+  }
+ },
+ "fixtures_unrefreshed": {
+  "lic3-semu": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 20,
+    "ok": 20
+   },
+   "create": 200
+  },
+  "lic3-semu-t": {
+   "bulk": {
+    "failed": 0,
+    "first_error": null,
+    "items": 20,
+    "ok": 20
+   },
+   "create": 200
+  }
+ },
+ "harness": {
+  "http_patch": true,
+  "patch": "cached no-redirect opener replaces per-call opener (CA load 21 ms/request)"
+ },
+ "licence_after_start_basic": {
+  "expiry_ms": null,
+  "status": "active",
+  "status_code": 200,
+  "type": "basic",
+  "uid": "b11c127a-075e-4656-b33e-ea91e05c0853"
+ },
+ "licence_end": {
+  "expiry_ms": null,
+  "status": "active",
+  "status_code": 200,
+  "type": "basic",
+  "uid": "b11c127a-075e-4656-b33e-ea91e05c0853"
+ },
+ "licence_trial": {
+  "expiry_ms": 1797451057626,
+  "status": "active",
+  "status_code": 200,
+  "type": "trial",
+  "uid": "2f69bfda-a6e6-4971-b29a-12358487a857"
+ },
+ "mode": "down",
+ "n": 7,
+ "post_s": 70,
+ "second_start_trial": {
+  "body": {
+   "acknowledged": true,
+   "error_message": "Operation failed: Trial was already activated.",
+   "trial_was_started": false
+  },
+  "status": 403,
+  "t_req": 1794859279.1877656,
+  "t_resp": 1794859279.1947339
+ },
+ "seed": 1007,
+ "semonly_after": {
+  "match": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "hits": null,
+   "status": 403
+  },
+  "match_all": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 30,
+   "status": 200
+  },
+  "multi_match": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "all shards failed",
+    "root": "failed to create query: Field [body] of type [semantic_text] does not support match queries",
+    "type": "search_phase_execution_exception"
+   },
+   "hits": null,
+   "status": 400
+  },
+  "q_param_default": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 0,
+   "status": 200
+  },
+  "q_param_field": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 0,
+   "status": 200
+  },
+  "query_string_default": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 0,
+   "status": 200
+  },
+  "query_string_fields": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "all shards failed",
+    "root": "failed to create query: Field [body] of type [semantic_text] does not support match queries",
+    "type": "search_phase_execution_exception"
+   },
+   "hits": null,
+   "status": 400
+  },
+  "semantic": {
+   "class": "LICENCE_ERROR",
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "hits": null,
+   "status": 403
+  },
+  "simple_query_string": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "all shards failed",
+    "root": "failed to create query: Field [body] of type [semantic_text] does not support match queries",
+    "type": "search_phase_execution_exception"
+   },
+   "hits": null,
+   "status": 400
+  }
+ },
+ "semonly_fixture": {
+  "bulk": {
+   "failed": 0,
+   "first_error": null,
+   "items": 30,
+   "ok": 30
+  },
+  "create": 200
+ },
+ "semonly_trial": {
+  "match": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 10,
+   "status": 200
+  },
+  "match_all": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 30,
+   "status": 200
+  },
+  "multi_match": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "all shards failed",
+    "root": "failed to create query: Field [body] of type [semantic_text] does not support match queries",
+    "type": "search_phase_execution_exception"
+   },
+   "hits": null,
+   "status": 400
+  },
+  "q_param_default": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 0,
+   "status": 200
+  },
+  "q_param_field": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 0,
+   "status": 200
+  },
+  "query_string_default": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 0,
+   "status": 200
+  },
+  "query_string_fields": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "all shards failed",
+    "root": "failed to create query: Field [body] of type [semantic_text] does not support match queries",
+    "type": "search_phase_execution_exception"
+   },
+   "hits": null,
+   "status": 400
+  },
+  "semantic": {
+   "class": "AVAILABLE",
+   "error": null,
+   "hits": 10,
+   "status": 200
+  },
+  "simple_query_string": {
+   "class": "OTHER_ERROR",
+   "error": {
+    "feature": null,
+    "reason": "all shards failed",
+    "root": "failed to create query: Field [body] of type [semantic_text] does not support match queries",
+    "type": "search_phase_execution_exception"
+   },
+   "hits": null,
+   "status": 400
+  }
+ },
+ "stamp_after": {
+  "code_commit": "c2c7f64",
+  "es_version": "9.5.6",
+  "host": "t2-dev",
+  "licence_read_back": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "b11c127a-075e-4656-b33e-ea91e05c0853"
+  },
+  "loadavg": [
+   5.248046875,
+   3.4423828125,
+   4.37255859375
+  ],
+  "nodes": 1,
+  "params": {},
+  "utc": "2026-11-16T20:00:21Z"
+ },
+ "stamp_basic0": {
+  "code_commit": "c2c7f64",
+  "es_version": "9.5.6",
+  "host": "t2-dev",
+  "licence_read_back": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "c4b6aea6-a159-4de6-89b3-5a8de76c2735"
+  },
+  "loadavg": [
+   2.34814453125,
+   2.51220703125,
+   4.34228515625
+  ],
+  "nodes": 1,
+  "params": {},
+  "utc": "2026-11-16T19:57:37Z"
+ },
+ "stamp_before_transition": {
+  "code_commit": "c2c7f64",
+  "es_version": "9.5.6",
+  "host": "t2-dev",
+  "licence_read_back": {
+   "expiry_ms": 1797451057626,
+   "status": "active",
+   "status_code": 200,
+   "type": "trial",
+   "uid": "2f69bfda-a6e6-4971-b29a-12358487a857"
+  },
+  "loadavg": [
+   4.037109375,
+   2.84423828125,
+   4.27880859375
+  ],
+  "nodes": 1,
+  "params": {},
+  "utc": "2026-11-16T19:59:06Z"
+ },
+ "stamp_end": {
+  "code_commit": "c2c7f64",
+  "es_version": "9.5.6",
+  "host": "t2-dev",
+  "licence_read_back": {
+   "expiry_ms": null,
+   "status": "active",
+   "status_code": 200,
+   "type": "basic",
+   "uid": "b11c127a-075e-4656-b33e-ea91e05c0853"
+  },
+  "loadavg": [
+   4.3173828125,
+   3.4892578125,
+   4.33447265625
+  ],
+  "nodes": 1,
+  "params": {
+   "mode": "down",
+   "n": 7,
+   "post": 70,
+   "ttl": 5.0
+  },
+  "utc": "2026-11-16T20:01:19Z"
+ },
+ "stamp_trial": {
+  "code_commit": "c2c7f64",
+  "es_version": "9.5.6",
+  "host": "t2-dev",
+  "licence_read_back": {
+   "expiry_ms": 1797451057626,
+   "status": "active",
+   "status_code": 200,
+   "type": "trial",
+   "uid": "2f69bfda-a6e6-4971-b29a-12358487a857"
+  },
+  "loadavg": [
+   2.23974609375,
+   2.48681640625,
+   4.32421875
+  ],
+  "nodes": 1,
+  "params": {},
+  "utc": "2026-11-16T19:57:43Z"
+ },
+ "start_basic": {
+  "body": {
+   "acknowledged": true,
+   "basic_was_started": true
+  },
+  "status": 200,
+  "t_req": 1794859147.5457366,
+  "t_resp": 1794859147.6186318,
+  "without_ack": {
+   "acknowledge_keys": [
+    "beats",
+    "ccr",
+    "enterprise_search",
+    "esql",
+    "gpu_vector_indexing",
+    "graph",
+    "inference",
+    "logstash",
+    "message",
+    "ml",
+    "monitoring",
+    "redact_processor",
+    "security",
+    "sql",
+    "watcher"
+   ],
+   "acknowledged": false,
+   "basic_was_started": false,
+   "error_message": "Operation failed: Needs acknowledgement.",
+   "status": 200
+  }
+ },
+ "start_trial": {
+  "body": {
+   "acknowledged": true,
+   "trial_was_started": true,
+   "type": "trial"
+  },
+  "status": 200,
+  "t_req": 1794859057.6215153,
+  "t_resp": 1794859057.676236
+ },
+ "status": "complete",
+ "stub": {
+  "n": 16595
+ },
+ "trial_status": {
+  "eligible_to_start_trial": false
+ },
+ "ttl": 5.0,
+ "unrefreshed_after_start_basic": {
+  "bulk": {
+   "failed": 0,
+   "first_error": null,
+   "items": 20,
+   "ok": 20
+  },
+  "bulk_status": 200,
+  "count": 20,
+  "embeddings": {
+   "of": 20,
+   "unreadable": 0,
+   "with_embeddings": 20
+  },
+  "searchable_before_update": 0,
+  "semantic_search": {
+   "error": {
+    "feature": "inference",
+    "reason": "current license is non-compliant for [inference]",
+    "root": "current license is non-compliant for [inference]",
+    "type": "security_exception"
+   },
+   "hits": null,
+   "status": 403
+  },
+  "tags": {
+   "u": 20
+  }
+ },
+ "unrefreshed_twin_on_trial": {
+  "bulk": {
+   "failed": 0,
+   "first_error": null,
+   "items": 20,
+   "ok": 20
+  },
+  "bulk_status": 200,
+  "count": 20,
+  "embeddings": {
+   "of": 20,
+   "unreadable": 0,
+   "with_embeddings": 20
+  },
+  "searchable_before_update": 0,
+  "semantic_search": {
+   "error": null,
+   "hits": 20,
+   "status": 200
+  },
+  "tags": {
+   "u": 20
+  }
+ }
+}

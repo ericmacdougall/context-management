@@ -1,0 +1,597 @@
+[
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.05637025833129883,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 12160,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    21724,
+    0
+   ],
+   "brk": [
+    8352,
+    0
+   ],
+   "ctl": [
+    17259,
+    12332
+   ],
+   "lex": [
+    8721,
+    0
+   ],
+   "lin": [
+    5437,
+    0
+   ],
+   "vec": [
+    8508,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.021611690521240234,
+  "ctl_last_success_start_rel_resp_s": -0.02674722671508789,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_1.json",
+  "mode": "down",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 70001
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.04059767723083496,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 11903,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    21440,
+    0
+   ],
+   "brk": [
+    8172,
+    0
+   ],
+   "ctl": [
+    17019,
+    12076
+   ],
+   "lex": [
+    8636,
+    0
+   ],
+   "lin": [
+    5340,
+    0
+   ],
+   "vec": [
+    8336,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.011983871459960938,
+  "ctl_last_success_start_rel_resp_s": -0.017621755599975586,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_2.json",
+  "mode": "down",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 68943
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.037999868392944336,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 11971,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    21367,
+    0
+   ],
+   "brk": [
+    8192,
+    0
+   ],
+   "ctl": [
+    17062,
+    12161
+   ],
+   "lex": [
+    8597,
+    0
+   ],
+   "lin": [
+    5335,
+    0
+   ],
+   "vec": [
+    8334,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.017001628875732422,
+  "ctl_last_success_start_rel_resp_s": -0.023160219192504883,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_3.json",
+  "mode": "down",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 68887
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.03200840950012207,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 11950,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    21699,
+    0
+   ],
+   "brk": [
+    8293,
+    0
+   ],
+   "ctl": [
+    17114,
+    12135
+   ],
+   "lex": [
+    8671,
+    0
+   ],
+   "lin": [
+    5423,
+    0
+   ],
+   "vec": [
+    8450,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.0056307315826416016,
+  "ctl_last_success_start_rel_resp_s": -0.011249303817749023,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_4.json",
+  "mode": "down",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 69650
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.043910980224609375,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 11672,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    21287,
+    0
+   ],
+   "brk": [
+    8132,
+    0
+   ],
+   "ctl": [
+    16697,
+    11850
+   ],
+   "lex": [
+    8528,
+    0
+   ],
+   "lin": [
+    5265,
+    0
+   ],
+   "vec": [
+    8265,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.011490106582641602,
+  "ctl_last_success_start_rel_resp_s": -0.016106843948364258,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_5.json",
+  "mode": "down",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 68174
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.044356346130371094,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 5030,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    15078,
+    0
+   ],
+   "brk": [
+    5034,
+    0
+   ],
+   "ctl": [
+    10245,
+    5210
+   ],
+   "lex": [
+    5376,
+    0
+   ],
+   "lin": [
+    3742,
+    0
+   ],
+   "vec": [
+    5204,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.023485422134399414,
+  "ctl_last_success_start_rel_resp_s": -0.029229164123535156,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_6.json",
+  "mode": "down",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 44679
+ },
+ {
+  "T1_control_client_n": 5925,
+  "T1_control_flagged": 5925,
+  "T1_examined": 27599,
+  "T1_mismatches": 0,
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_backend_labelled_started_after_resp": 0,
+  "T3_flip_s": 0.046076059341430664,
+  "T5_fail_fraction": 1.0,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 12214,
+  "agrees_with_harness": {
+   "T1_examined": true,
+   "T1_mismatches": true,
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    22082,
+    0
+   ],
+   "brk": [
+    8445,
+    0
+   ],
+   "ctl": [
+    17457,
+    12387
+   ],
+   "lex": [
+    8849,
+    0
+   ],
+   "lin": [
+    5517,
+    0
+   ],
+   "vec": [
+    8593,
+    0
+   ]
+  },
+  "ctl_first_licence_failure_start_rel_resp_s": -0.01766514778137207,
+  "ctl_last_success_start_rel_resp_s": -0.024394512176513672,
+  "ctl_success_started_after_resp": 0,
+  "file": "down_7.json",
+  "mode": "down",
+  "moment_per_probe_times": {
+   "dls_search": {
+    "first_refusal_probe_end_rel_resp_s": 0.007705211639404297,
+    "first_refusal_probe_start_rel_resp_s": -0.007288694381713867,
+    "last_success_probe_start_rel_resp_s": -0.23145437240600586,
+    "polls": 494,
+    "successes_started_after_resp": 0
+   },
+   "inference_use": {
+    "first_refusal_probe_end_rel_resp_s": 0.17565107345581055,
+    "first_refusal_probe_start_rel_resp_s": 0.16530704498291016,
+    "last_success_probe_start_rel_resp_s": -0.05913066864013672,
+    "polls": 494,
+    "successes_started_after_resp": 0
+   },
+   "linear": {
+    "first_refusal_probe_end_rel_resp_s": 0.10167288780212402,
+    "first_refusal_probe_start_rel_resp_s": 0.08270549774169922,
+    "last_success_probe_start_rel_resp_s": -0.14777803421020508,
+    "polls": 494,
+    "successes_started_after_resp": 0
+   },
+   "rrf": {
+    "first_refusal_probe_end_rel_resp_s": 0.0827031135559082,
+    "first_refusal_probe_start_rel_resp_s": 0.060874223709106445,
+    "last_success_probe_start_rel_resp_s": -0.16297674179077148,
+    "polls": 494,
+    "successes_started_after_resp": 0
+   },
+   "semantic_query": {
+    "first_refusal_probe_end_rel_resp_s": 0.16530585289001465,
+    "first_refusal_probe_start_rel_resp_s": 0.1372077465057373,
+    "last_success_probe_start_rel_resp_s": -0.11483883857727051,
+    "polls": 494,
+    "successes_started_after_resp": 0
+   }
+  },
+  "rows": 70943
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_client_after_first_backend": 0,
+  "T3_flip_s": 5.031755685806274,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 4348,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    31907,
+    0
+   ],
+   "brk": [
+    9062,
+    0
+   ],
+   "ctl": [
+    18501,
+    4359
+   ],
+   "lex": [
+    9943,
+    0
+   ],
+   "lin": [
+    7925,
+    0
+   ],
+   "vec": [
+    9663,
+    0
+   ]
+  },
+  "ctl_before_trial_fail_fraction": 1.0,
+  "ctl_first_success_start_rel_resp_s": -0.03085923194885254,
+  "file": "up_1.json",
+  "mode": "up",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 87001
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_client_after_first_backend": 0,
+  "T3_flip_s": 5.031309366226196,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 4264,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    32190,
+    0
+   ],
+   "brk": [
+    9249,
+    0
+   ],
+   "ctl": [
+    18619,
+    4277
+   ],
+   "lex": [
+    10097,
+    0
+   ],
+   "lin": [
+    7988,
+    0
+   ],
+   "vec": [
+    9759,
+    0
+   ]
+  },
+  "ctl_before_trial_fail_fraction": 1.0,
+  "ctl_first_success_start_rel_resp_s": -0.01564168930053711,
+  "file": "up_2.json",
+  "mode": "up",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 87902
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_client_after_first_backend": 0,
+  "T3_flip_s": 5.04240608215332,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 4300,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    31575,
+    0
+   ],
+   "brk": [
+    9043,
+    0
+   ],
+   "ctl": [
+    18292,
+    4314
+   ],
+   "lex": [
+    9956,
+    0
+   ],
+   "lin": [
+    7999,
+    0
+   ],
+   "vec": [
+    9639,
+    0
+   ]
+  },
+  "ctl_before_trial_fail_fraction": 1.0,
+  "ctl_first_success_start_rel_resp_s": -0.008221864700317383,
+  "file": "up_3.json",
+  "mode": "up",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 86504
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_client_after_first_backend": 0,
+  "T3_flip_s": 0.2653372287750244,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 4388,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    33123,
+    0
+   ],
+   "brk": [
+    9326,
+    0
+   ],
+   "ctl": [
+    18921,
+    4404
+   ],
+   "lex": [
+    10275,
+    0
+   ],
+   "lin": [
+    8273,
+    0
+   ],
+   "vec": [
+    9981,
+    0
+   ]
+  },
+  "ctl_before_trial_fail_fraction": 1.0,
+  "ctl_first_success_start_rel_resp_s": -0.01568436622619629,
+  "file": "up_4.json",
+  "mode": "up",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 89899
+ },
+ {
+  "T1": "NOT RECOMPUTABLE: oracle legs were not saved for this life",
+  "T2_failed": 0,
+  "T2_longest_window_s": 0.0,
+  "T3_client_after_first_backend": 0,
+  "T3_flip_s": 274.855197429657,
+  "T5_licence_fail_fraction": 1.0,
+  "T5_licence_n": 4432,
+  "agrees_with_harness": {
+   "T2_failed": true,
+   "T3_flip_s": true
+  },
+  "arms_n_fail": {
+   "auto": [
+    73478,
+    0
+   ],
+   "brk": [
+    30803,
+    0
+   ],
+   "ctl": [
+    57820,
+    4445
+   ],
+   "lex": [
+    31436,
+    0
+   ],
+   "lin": [
+    18270,
+    0
+   ],
+   "vec": [
+    30647,
+    0
+   ]
+  },
+  "ctl_before_trial_fail_fraction": 1.0,
+  "ctl_first_success_start_rel_resp_s": -0.028122663497924805,
+  "file": "up_5.json",
+  "mode": "up",
+  "moment_per_probe_times": "NOT RECOMPUTABLE: per-probe times were not saved for this life",
+  "rows": 242454
+ }
+]
