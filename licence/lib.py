@@ -95,15 +95,45 @@ def save(path, obj):
         return hashlib.sha256(fh.read()).hexdigest()
 
 
-def bulk(index, docs, refresh="true", op="index"):
-    """docs: list of (id, source). -> (status, summary)."""
+class BulkError(RuntimeError):
+    """A bulk request that cannot be trusted to have written every submitted operation."""
+
+
+def _bulk_request(index, docs, refresh, op):
     nd = "".join(json.dumps({op: {"_index": index, "_id": i}}) + "\n" + json.dumps(s if op == "index" else {"doc": s}) + "\n" for i, s in docs)
-    c, j, _ = req("POST", "/_bulk?refresh=" + refresh, ndjson=nd, timeout=120)
-    items = j.get("items", []) if isinstance(j, dict) else []
-    st = [list(it.values())[0] for it in items]
-    ok = sum(1 for s in st if s.get("status", 500) < 300)
-    first = next((s.get("error") for s in st if s.get("status", 500) >= 300), None)
-    return c, {"items": len(items), "ok": ok, "failed": len(items) - ok, "first_error": first}
+    return req("POST", "/_bulk?refresh=" + refresh, ndjson=nd, timeout=120)
+
+
+def bulk(index, docs, refresh="true", op="index"):
+    """docs: list of (id, source). -> (status, summary). Recording helper: it never raises. `failed` counts every submitted operation that
+    did not get a successful item result, so a transport failure, an error body or a truncated `items` list is failed, not zero (review: F2)."""
+    c, j, _ = _bulk_request(index, docs, refresh, op)
+    items = j.get("items") if isinstance(j, dict) else None
+    items = items if isinstance(items, list) else []
+    st = [list(it.values())[0] if isinstance(it, dict) and it else {} for it in items]
+    ok = sum(1 for s in st if isinstance(s, dict) and isinstance(s.get("status"), int) and s["status"] < 300) if c == 200 else 0
+    first = next((s.get("error") for s in st if isinstance(s, dict) and s.get("status", 500) >= 300), None)
+    if first is None and ok < len(docs):
+        first = {"type": "bulk_incomplete", "reason": "HTTP %s, %d item results for %d operations" % (c, len(items), len(docs))}
+    return c, {"items": len(items), "ok": ok, "failed": len(docs) - ok, "first_error": first}
+
+
+def bulk_strict(index, docs, refresh="true", op="index"):
+    """Like bulk, but raises BulkError unless HTTP 200, `errors` is not true, and there is exactly one successful item result per submitted
+    operation, in order, for the submitted id."""
+    c, j, _ = _bulk_request(index, docs, refresh, op)
+    if c != 200 or not isinstance(j, dict):
+        raise BulkError("bulk into %s: HTTP %s" % (index, c))
+    items = j.get("items")
+    if not isinstance(items, list) or len(items) != len(docs):
+        raise BulkError("bulk into %s: %s item results for %d operations" % (index, len(items) if isinstance(items, list) else "no", len(docs)))
+    if j.get("errors") is True:
+        raise BulkError("bulk into %s: errors=true" % index)
+    for (i, _s), it in zip(docs, items):
+        r = list(it.values())[0] if isinstance(it, dict) and len(it) == 1 else None
+        if not isinstance(r, dict) or not isinstance(r.get("status"), int) or r["status"] >= 300 or r.get("_id") != i:
+            raise BulkError("bulk into %s: bad item result for id %s: %s" % (index, i, json.dumps(r)[:160]))
+    return c, {"items": len(items), "ok": len(items), "failed": 0, "first_error": None}
 
 
 def embed(text, dims=8):

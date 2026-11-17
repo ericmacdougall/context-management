@@ -5,7 +5,7 @@ import time
 
 import lib
 import matrix
-from lib import bulk, classify, embed, err, req
+from lib import BulkError, bulk, bulk_strict, classify, embed, err, req
 
 N_SEM, N_VEC, DIM = 200, 300, 64
 
@@ -193,13 +193,18 @@ def _shards_ok(j, where):
         raise ScrollError("%s: _shards missing or failed (%s)" % (where, sh))
 
 
-def source_count(ix):
-    """Independent document count of an index: `_count` after a refresh. Never derived from a scroll. Raises unless the refresh and the count both
-    answered 200 with zero shard failures. The caller must keep the source quiescent until the scroll has finished (separate requests share no snapshot)."""
+def refresh_checked(ix):
+    """Refresh an index and raise unless it answered 200 with zero shard failures."""
     c, j, _ = req("POST", "/%s/_refresh" % ix)
     if c != 200:
         raise ScrollError("refresh of %s: HTTP %s" % (ix, c))
     _shards_ok(j, "refresh of %s" % ix)
+
+
+def source_count(ix):
+    """Independent document count of an index: `_count` after a refresh. Never derived from a scroll. Raises unless the refresh and the count both
+    answered 200 with zero shard failures. The caller must keep the source quiescent until the scroll has finished (separate requests share no snapshot)."""
+    refresh_checked(ix)
     c, j, _ = req("GET", "/%s/_count" % ix)
     if c != 200 or not isinstance(j.get("count"), int):
         raise ScrollError("cannot count %s: status %s" % (ix, c))
@@ -261,9 +266,8 @@ def migrate_vectors(src, dst, typ="hnsw", corrupt=False):
         s0["v"][0] += 0.01
         items[0] = (i0, s0)
     for k in range(0, len(items), 100):
-        cb, sb = bulk(dst, items[k:k + 100], refresh="false")
-        assert sb["failed"] == 0, sb
-    req("POST", "/%s/_refresh" % dst)
+        bulk_strict(dst, items[k:k + 100], refresh="false")
+    refresh_checked(dst)
     return docs
 
 
@@ -307,9 +311,8 @@ def migrate_semantic(src, dst):
         docs[h["_id"]] = {"title": s.get("title"), "tag": s.get("tag"), "body": s.get("body"), "v": chunks[0]["embeddings"]}
     items = sorted(docs.items())
     for k in range(0, len(items), 100):
-        cb, sb = bulk(dst, items[k:k + 100], refresh="false")
-        assert sb["failed"] == 0, sb
-    req("POST", "/%s/_refresh" % dst)
+        bulk_strict(dst, items[k:k + 100], refresh="false")
+    refresh_checked(dst)
     return docs, {"first_search_status": first_status, "skipped_not_single_chunk": multi}
 
 

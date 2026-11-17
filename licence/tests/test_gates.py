@@ -28,6 +28,7 @@ LIC = os.path.dirname(HERE)
 sys.path.insert(0, LIC)
 sys.path.insert(0, os.path.dirname(LIC))
 import exp2  # noqa: E402
+import lib  # noqa: E402
 import exp3  # noqa: E402
 import recompute  # noqa: E402
 import summarize  # noqa: E402
@@ -35,6 +36,7 @@ import summarize  # noqa: E402
 RES = os.path.join(LIC, "results")
 # Shims so that old code fails by behaviour, not by a missing name. ScrollError: old migrations raise nothing, so assertRaises(Exception) fails there.
 ScrollError = getattr(exp3, "ScrollError", Exception)
+BulkError = getattr(lib, "BulkError", Exception)
 
 
 def _old_rule(code, e):   # reconstruction of the cc45153 rule: any 403/404 or the licence text counted as loud
@@ -169,9 +171,11 @@ class FakeES:
     """Minimal in-memory source index with scroll paging; fail_after = serve this many scroll pages then answer fail_status."""
 
     def __init__(self, n=5, page=2, fail_after=None, fail_status=500, count=None, shard_failed=0, refresh_status=200, refresh_failed=0, count_failed=0,
-                 timed_out=False, dup=False):
+                 timed_out=False, dup=False, bulk_mode=None, dst_refresh_status=200, dst_refresh_failed=0):
+        self.bulk_mode, self.dst_refresh_status, self.dst_refresh_failed = bulk_mode, dst_refresh_status, dst_refresh_failed
         self.refresh_status, self.refresh_failed, self.count_failed, self.timed_out, self.dup, self.last_sid = refresh_status, refresh_failed, count_failed, timed_out, dup, None
-        self.docs = [{"_id": str(i), "_source": {"title": "t%d" % i, "tag": "a", "v": [float(i)] * exp3.DIM}} for i in range(n)]
+        self.docs = [{"_id": str(i), "_source": {"title": "t%d" % i, "tag": "a", "body": "b%d" % i, "v": [float(i)] * exp3.DIM,
+                                                   "_inference_fields": {"body": {"inference": {"chunks": {"body": [{"embeddings": [0.1] * 8}]}}}}}} for i in range(n)]
         self.page, self.fail_after, self.fail_status, self.pos, self.pages, self.shard_failed = page, fail_after, fail_status, 0, 0, shard_failed
         self.count_value = n if count is None else count
         self.bulked = []
@@ -190,6 +194,10 @@ class FakeES:
     def req(self, method, path, body=None, ndjson=None, timeout=60, **kw):
         if method == "GET" and path.endswith("/_count"):
             return 200, {"count": self.count_value, "_shards": {"total": 1, "successful": 1 - self.count_failed, "failed": self.count_failed}}, 1
+        if method == "POST" and path.startswith("/_bulk"):
+            return self._bulk(ndjson)
+        if method == "POST" and path.endswith("/_refresh") and "/dst/" in path + "/":
+            return self.dst_refresh_status, {"_shards": {"total": 1, "successful": 1 - self.dst_refresh_failed, "failed": self.dst_refresh_failed}}, 1
         if method == "POST" and path.endswith("/_refresh") and "/src/" in path + "/":
             return self.refresh_status, {"_shards": {"total": 1, "successful": 1 - self.refresh_failed, "failed": self.refresh_failed}}, 1
         if "_search/scroll" in path and method == "POST":
@@ -200,20 +208,36 @@ class FakeES:
             return self._page()
         return 200, {"acknowledged": True}, 1
 
-    def bulk(self, ix, items, refresh="false", op="index"):
-        self.bulked.extend(k for k, _ in items)
-        return 200, {"failed": 0}
+    def _bulk(self, ndjson):
+        """Real wire format in, Elasticsearch-shaped answer out; failure modes injected by bulk_mode."""
+        ids = [list(json.loads(l).values())[0]["_id"] for l in ndjson.splitlines()[::2]]
+        m = self.bulk_mode
+        if m == "transport":
+            return 0, {"_raw": ""}, 1
+        if m == "503":
+            return 503, {"error": {"type": "es_rejected_execution_exception", "reason": "queue full"}, "status": 503}, 1
+        if m == "noitems":
+            return 200, {"took": 1, "errors": False}, 1
+        if m == "malformed":
+            return 200, {"_raw": "<html>"}, 1
+        items = [{"index": {"_id": i, "status": 201}} for i in ids]
+        if m == "truncated":
+            items = items[:-1]
+        if m == "item_error":
+            items[0] = {"index": {"_id": ids[0], "status": 403, "error": {"type": "security_exception", "reason": "non-compliant"}}}
+        self.bulked.extend(i for it in items for i in [list(it.values())[0]["_id"]] if list(it.values())[0]["status"] < 300)
+        return 200, {"took": 1, "errors": m == "item_error", "items": items}, 1
 
 
 class MigrationCompletenessTests(unittest.TestCase):
     def setUp(self):
-        self._req, self._bulk = exp3.req, exp3.bulk
+        self._req, self._lreq = exp3.req, lib.req
 
     def tearDown(self):
-        exp3.req, exp3.bulk = self._req, self._bulk
+        exp3.req, lib.req = self._req, self._lreq
 
     def use(self, es):
-        exp3.req, exp3.bulk = es.req, es.bulk
+        exp3.req, lib.req = es.req, es.req   # the real lib.bulk and bulk_strict run against the fake wire
 
     def test_non200_scroll_after_first_page_raises_and_writes_nothing(self):
         es = FakeES(n=5, page=2, fail_after=1)
@@ -233,6 +257,50 @@ class MigrationCompletenessTests(unittest.TestCase):
         self.use(es)
         with self.assertRaises(ScrollError):
             exp3.migrate_vectors("src", "dst")
+
+    def _bulk_case(self, mode, fn="vec", **kw):
+        es = FakeES(n=5, page=2, bulk_mode=mode, **kw)
+        self.use(es)
+        with self.assertRaises((ScrollError, BulkError)):
+            (exp3.migrate_vectors if fn == "vec" else exp3.migrate_semantic)("src", "dst")
+
+    def test_bulk_transport_failure_raises(self):
+        self._bulk_case("transport")
+
+    def test_bulk_http_503_with_error_body_raises(self):
+        self._bulk_case("503")
+
+    def test_bulk_response_without_items_raises(self):
+        self._bulk_case("noitems")
+
+    def test_bulk_malformed_response_raises(self):
+        self._bulk_case("malformed")
+
+    def test_bulk_truncated_items_raises(self):
+        self._bulk_case("truncated")
+
+    def test_bulk_item_error_raises(self):
+        self._bulk_case("item_error")
+
+    def test_semantic_bulk_503_raises(self):
+        self._bulk_case("503", fn="sem")
+
+    def test_semantic_bulk_truncated_raises(self):
+        self._bulk_case("truncated", fn="sem")
+
+    def test_destination_refresh_failure_raises(self):
+        self._bulk_case(None, dst_refresh_status=503)
+
+    def test_destination_refresh_shard_failure_raises(self):
+        self._bulk_case(None, dst_refresh_failed=1)
+
+    def test_recording_bulk_counts_unanswered_operations_as_failed(self):
+        for mode in ("transport", "503", "noitems", "truncated", "item_error"):
+            es = FakeES(n=5, page=2, bulk_mode=mode)
+            self.use(es)
+            c, s = lib.bulk("dst", [(str(i), {"v": [0.0]}) for i in range(3)])
+            self.assertGreater(s["failed"], 0, mode)
+            self.assertIsNotNone(s["first_error"], mode)
 
     def test_failed_refresh_status_raises(self):
         self.use(FakeES(n=4, page=2, refresh_status=503))
