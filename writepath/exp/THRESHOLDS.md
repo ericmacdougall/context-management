@@ -608,3 +608,58 @@ does (cleanup, wp.setup --reset, disk_gate preflight) and runs these experiments
 
 Row 19's planted-corpus result, whatever it is, is reported together with the held-out result (483/1,169 and 150/750;
 amendments 15 and 15b). It never stands alone as evidence that the scanner generalises.
+
+## Amendment 21 (2026-11-17, review-2 N1, written before the test exists): projector Elasticsearch faults (exp/projector_es_fault.py)
+Finding (review-2 N1, goodqa#16302):
+- At 1fcf3f7, families.fence_es maps every ESError from the alias request to StaleEpoch.
+- Projector._bulk maps every refused item other than 409 to StaleEpoch.
+- step() catches StaleEpoch, forgets its lease and returns -1, but the lease row in Postgres stays live until its TTL.
+- The next acquires return None, so run() sees two idle rounds and returns True while events are still pending.
+- A bulk request that raises, or a dropped connection, already propagates, but it leaves the lease live for its TTL, so
+  no other projector can take over at once.
+
+Property: an Elasticsearch failure that is not a confirmed loss of the lease never looks like idle success. It
+propagates out of step() and run(). The projector's own lease is released on the way out, and the pending work stays
+retryable: a fresh projector takes the lease without force and without waiting for the TTL, then projects every
+pending event exactly once. A confirmed loss still returns -1 without raising, and never releases the taker's lease.
+
+Confirmed loss means one of:
+- a write alias newer than the projector's epoch is visible in the family after the failure;
+- the projector's lease no longer renews (LeaseLost).
+
+Anything else is an infrastructure error. A failure while re-reading the aliases is also an infrastructure error.
+
+The test is deterministic: one process, separate connections, and the fault injected on P1's own ES client object only.
+Each case runs on a fresh tenant with 6 pending events, R=5 times.
+
+| Case | Injected into P1 | Holds when |
+|---|---|---|
+| CAS | The first alias request raises ESError 503 unavailable_shards_exception | (a) P1.run(10) raises, never returns; (b) P1 holds no lease and the lease row is no longer live; (c) a fresh projector P3, not forced, takes the lease at its first step; (d) P3.run(50) returns True; (e) every event is in Elasticsearch exactly once |
+| ITEM | The first events bulk returns every item as 429 es_rejected_execution_exception, nothing sent | As for CAS |
+| REQ | The first bulk request raises ESError 503 | As for CAS |
+| CONN | The first bulk request raises ConnectionResetError | As for CAS |
+| STALE | A real forced takeover by P2 between P1's read and P1's bulk; P1's bulk then hits a missing alias | P1.step() returns -1 without raising; P1 holds no lease; the lease row's holder is P2 and is still live after P1's handler; P2 then projects every event exactly once |
+
+STALE is a positive control: it must hold in both arms and does not count as sensitivity.
+
+Control (one mechanism): families.fence_es, Projector._bulk and Projector.step replaced by their 1fcf3f7 bodies,
+verbatim. Expected control violations:
+- CAS and ITEM: run() returns True while events are pending.
+- REQ and CONN: run() raises, but the lease row stays live, so P3 cannot take the lease at its first step.
+
+PASS = the fixed arm holds R/R in all five cases with 0 errors, AND the control is violated R/R in CAS, ITEM, REQ and
+CONN, AND the control holds R/R in STALE. Otherwise FAIL.
+
+An offline unit test (tests/test_fence_es.py, stubbed ES) also covers the classification inside fence_es:
+- newer alias visible: StaleEpoch;
+- unchanged state: infrastructure error;
+- a changed alias set with no newer epoch: the CAS is observed again and retried, at most 3 attempts, then an
+  infrastructure error.
+The retry branch is covered only offline. The stamped test does not create a lower-epoch alias change.
+
+Order:
+1. This amendment, alone.
+2. The test and the 1fcf3f7 control at their own commit, with no product change. Failing-first: one run there, whose
+   fixed arm must be violated in CAS, ITEM, REQ and CONN (the code under test is still 1fcf3f7's). Saved, not stamped.
+3. The fix commit.
+4. One stamped run at the post-fix commit named by the rerun amendment.
