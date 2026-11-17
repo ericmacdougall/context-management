@@ -58,7 +58,20 @@ def family_index_re(t, f):
 
 
 class StaleEpoch(Exception):
-    pass
+    """A CONFIRMED loss of the projector epoch: a newer write alias is visible (or the lease no longer renews)."""
+
+
+class ProjectionError(Exception):
+    """An Elasticsearch failure that is NOT a confirmed loss of the epoch (review-2 N1): it must propagate, never look
+    like a lost race or like idle success. Carries the error type and status only (never a response body)."""
+
+
+CAS_ATTEMPTS = 3
+
+
+def newer_epoch_visible(es: ES, t, f, epoch):
+    """Re-read one family's write aliases (a failure here propagates: it is itself an infrastructure error)."""
+    return any(e > epoch for als in _family_state(es, t, f).values() for _, e in _walias_epochs(t, f, als))
 
 
 def _family_state(es: ES, t, f):
@@ -84,16 +97,16 @@ def ensure_family(es: ES, t, f):
             raise
 
 
-def fence_es(es: ES, t, epoch):
-    """Alias CAS for ALL registered families in one atomic request. Raises StaleEpoch if a newer epoch is visible or
-    if the observed state changed before the request applied."""
-    actions = []
+def _observe(es: ES, t, epoch):
+    """({family: (index, aliases)}, actions) for the CAS; raises StaleEpoch if a newer epoch is already visible."""
+    seen_all, actions = {}, []
     for f in FAMILIES:
         ensure_family(es, t, f)
         st = _family_state(es, t, f)
         if len(st) != 1:
             raise RuntimeError(f"family {f}: {len(st)} indices")
         (idx, als), = st.items()
+        seen_all[f] = (idx, frozenset(als))
         seen = _walias_epochs(t, f, als)
         if any(e > epoch for _, e in seen):
             raise StaleEpoch(f"{f}: newer write alias than e{epoch}")
@@ -102,12 +115,32 @@ def fence_es(es: ES, t, epoch):
         for a, _ in seen:
             actions.append({"remove": {"index": idx, "alias": a, "must_exist": True}})
         actions.append({"add": {"index": idx, "alias": write_alias(t, f, epoch), "is_write_index": True}})
-    if not actions:
-        return
-    try:
-        es.aliases(actions)
-    except ESError as e:
-        raise StaleEpoch(f"alias CAS failed: {e.etype}") from None
+    return seen_all, actions
+
+
+def fence_es(es: ES, t, epoch):
+    """Alias CAS for ALL registered families in one atomic request.
+
+    A failed request is classified by re-reading the aliases (review-2 N1; at 1fcf3f7 every ESError became StaleEpoch):
+      a newer write alias is visible        -> StaleEpoch (a confirmed loss: another projector holds a newer epoch)
+      the aliases changed, nothing newer    -> observe again and retry the CAS (at most CAS_ATTEMPTS requests)
+      the aliases are unchanged             -> ProjectionError (the request failed for another reason)
+    A failure of the re-read itself propagates as it is (an infrastructure error)."""
+    for _ in range(CAS_ATTEMPTS):
+        seen_all, actions = _observe(es, t, epoch)
+        if not actions:
+            return
+        try:
+            es.aliases(actions)
+            return
+        except ESError as e:
+            err = e
+        now = {f: (idx, frozenset(als)) for f in FAMILIES for idx, als in _family_state(es, t, f).items()}
+        if any(e > epoch for f, (_, als) in now.items() for _, e in _walias_epochs(t, f, als)):
+            raise StaleEpoch(f"alias CAS lost to a newer epoch ({err.etype})") from None
+        if now == seen_all:
+            raise ProjectionError(f"alias CAS failed: ES {err.status} {err.etype}") from None
+    raise ProjectionError(f"alias CAS: the aliases changed under {CAS_ATTEMPTS} attempts with no newer epoch") from None
 
 
 def place_placeholders(es: ES, t, f, ids, batch=1000):

@@ -81,15 +81,24 @@ decisions, the deployment requirements that follow from them, and what is still 
     from step(). Until then, the StaleEpoch (alias compare-and-set) or StaleWrite (cursor insert) raised inside start()
     escaped step() and run() and killed the losing process.
   - Safety was never affected: no stale write reached Elasticsearch.
-  - Residual, not fixed: families.fence_es turns every ESError on the alias request into StaleEpoch, not only a lost
-    compare-and-set. This includes a flood-stage write block or a cluster error.
-    - Since 5d26746, such an error inside start() also returns -1 instead of crashing.
-    - The lease row stays held under the dropped epoch until its TTL (30 s).
-    - The projector's own next acquire then finds that live lease, so run() can return True as if idle.
-    - Hard bulk errors in the main loop already behaved this way before 5d26746.
-    - Only errors outside ESError and the stale types propagate. Examples are the RuntimeError for a family with other
-      than one index, or an ESError from ensure_family; the lease just taken then also stays held until its TTL.
-    - Needed: tell a lost CAS apart from an ES failure, and release or report the latter.
+- Projector under Elasticsearch failures (review-2 N1, goodqa#16302, amendment 21, exp/projector_es_fault.py):
+  - Until the N1 fix, families.fence_es turned every ESError on the alias request into StaleEpoch, and _bulk did the
+    same for every refused item other than 409. step() then forgot its lease while the lease row stayed live until its
+    TTL, the next acquires returned None, and run() returned True as if idle with work pending. A bulk request that
+    raised, or a dropped connection, propagated but left the lease live for its TTL.
+  - Now a failure is a lost epoch only when that is confirmed: a write alias newer than the projector's epoch is
+    visible after the failure, or the lease no longer renews (LeaseLost). Those still return -1 from step().
+  - Everything else propagates out of step() and run() as ProjectionError (or as the original error). Examples: a
+    failed alias request with the aliases unchanged, refused items while the lease is still ours, a bulk request
+    error, a dropped connection, a failed re-read of the aliases.
+  - A failed CAS whose aliases changed with no newer epoch (a lower epoch moved them) is observed again and retried,
+    at most 3 requests. That branch is covered only by the offline test tests/test_fence_es.py.
+  - On every error exit, step() releases its own lease (wp_lease_release matches epoch and holder, so it is a no-op
+    once another projector holds a newer epoch). The release is best-effort and never replaces the original error, so
+    a fresh projector can take over at once rather than after the TTL.
+  - run() returning True means there is nothing for this projector to do: the work is projected, or another live
+    projector holds the lease.
+  - A deployment's projector process must treat a raised error as a failure to report and retry, not as success.
 - Secret scanning (amendment 15): wp/secrets.py is a list of known families and encodings, not a general detector.
   - In the stamped run at 62c6be5 (amendment 15b; results/single-runs/heldout_secrets.930e32ec3d99a161.json), it caught
     483/1,169 (H1) and 150/750 (H2) in-scope held-out secrets, and blocked 37 of 1,200 negatives. Row 19's 880/880

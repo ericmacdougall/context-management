@@ -78,8 +78,14 @@ class Projector:
         self.stats["docs_written"] += ok
         hard = [b for b in bad if b[1] != 409]
         if hard:
-            self.stats["stale_bulk_items"] += len(hard)
-            raise F.StaleEpoch(f"{family}: {len(hard)} items refused ({hard[0][2]})")
+            # Review-2 N1: a refused item is a lost epoch only when that is confirmed. At 1fcf3f7 every refusal became
+            # StaleEpoch, so a 429 or a mapping error looked like a lost race and the work looked done.
+            kinds = sorted({f"{st} {et}" for _, st, et in hard})[:3]
+            if F.newer_epoch_visible(self.es, self.t, family, self.lease.epoch):
+                self.stats["stale_bulk_items"] += len(hard)
+                raise F.StaleEpoch(f"{family}: {len(hard)} items refused under a newer epoch ({kinds})")
+            L.renew(self.conn, self.lease, self.ttl)       # LeaseLost here is a confirmed loss too
+            raise F.ProjectionError(f"{family}: {len(hard)} items refused while the lease is ours ({kinds})")
         self.es.req("POST", f"/{F.read_alias(self.t, family)}/_refresh")
 
     def _keys(self, subjects):
@@ -165,20 +171,38 @@ class Projector:
         return len(rows)
 
     def step(self):
-        """One round. Returns rows handled; on a lost lease or refused write, drops the lease and returns -1.
-        start() sits inside the handler: a forced takeover landing between acquire and the alias CAS (StaleEpoch) or
-        before the cursor insert (StaleWrite) means this projector lost the start-up race, not that it crashed
-        (amendment 19; at fd4ed53 the exception escaped and killed the loser's process). Other errors still propagate."""
+        """One round. Returns rows handled; on a CONFIRMED loss of the lease (StaleWrite, StaleEpoch, LeaseLost) it
+        drops the lease and returns -1. start() sits inside the handler: a forced takeover landing between acquire and
+        the alias CAS or before the cursor insert means this projector lost the start-up race, not that it crashed
+        (amendment 19).
+        Every other error propagates (review-2 N1: an Elasticsearch failure is never a lost race and never idle
+        success). On every exit with an error the projector releases ITS OWN lease first, so the work is retryable at
+        once instead of after the TTL. The release matches epoch and holder (wp_lease_release), so it is a no-op when
+        another projector already holds a newer epoch, and it is best-effort: it never replaces the original error."""
         try:
             if self.lease is None and not self.start():
                 return 0
             L.renew(self.conn, self.lease, self.ttl)          # heartbeat: a live projector never expires
             return self.derive() + self.mirror_events() + self.mirror_facts()
         except (StaleWrite, F.StaleEpoch, L.LeaseLost):
-            self.lease = None
+            self._drop_lease()
             return -1
+        except BaseException:
+            self._drop_lease()
+            raise
+
+    def _drop_lease(self):
+        lease, self.lease = self.lease, None
+        if lease is None:
+            return
+        try:
+            L.release(self.conn, lease)
+        except Exception:  # noqa: BLE001  (best-effort: the connection may be the thing that failed)
+            self.stats["release_failed"] = self.stats.get("release_failed", 0) + 1
 
     def run(self, max_rounds=1000):
+        """Steps until two idle rounds (True) or max_rounds (False). True means there is nothing for THIS projector to
+        do: the work is projected, or another live projector holds the lease. Errors propagate (review-2 N1)."""
         idle = 0
         for _ in range(max_rounds):
             n = self.step()
