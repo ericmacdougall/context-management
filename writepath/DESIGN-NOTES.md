@@ -135,3 +135,98 @@ alias state itself must be safe under every interleaving of family creation, tak
   the CAS, before the re-check; against a retry, one, two and three later CAS requests; invalidation down).
 - Not covered: families created before this rule have no `-w0`; if one has no `-w` alias at all, the CAS refuses it
   (lab data is recreated by setup; a deployment would add `-w0` in a maintenance window with writers stopped).
+
+## Design: D3 identifiers, reviewer role and span redaction (ASSUMPTION under decision 10)
+
+Status: design written before tests and code (2026-11-17), per main's D3 instruction. Decision 10 and P3 are
+ASSUMPTIONS (main's decisions), not the user's words. Code and unit tests only; no stamped runs.
+
+### Principle
+The previous D3 put the identifier rule in the application (`mentions.declare`) while the app role could call
+`wp_identifier_declare` directly: a check that could be skipped. This design moves WHO may make an identifier active
+into the database, so for the app role an unreviewed or malformed identifier has no path to `subject_identifiers`
+(the only table the matcher, the rescan and the cascade read). Trust boundary, stated plainly: the database enforces
+who proposes, who approves, that they differ, and that the approved identifier is exactly the one proposed (HMAC
+binding). The reviewer process enforces the rule on the plaintext. The store never sees plaintext, so it cannot judge
+"malformed" itself.
+
+Redaction follows the same idea: whole removal (tombstone) stays the default for every mentioning event, and span
+redaction is an optional step that must succeed completely before the cascade reaches the event; anything short of
+that falls through to the existing tombstone path, and the store, not the app, lists those fallbacks.
+
+### Mechanism
+1. `identifier_proposals` (append-only except the state transition): tenant, proposal id, subject, `ident_hmac`,
+   `ident_enc` (the normalised identifier sealed under the SUBJECT key, AAD `proposal:<id>`, so destroying the subject
+   key shreds it), `rule_version`, `proposed_by` (= session_user, set by the store), state proposed|approved|rejected,
+   `reviewed_by`, reason.
+2. `wp_identifier_propose` (wp_app): inserts a proposal. `wp_identifier_declare` is DROPPED; wp_app gets no function
+   or table grant that writes `subject_identifiers`.
+3. `wp_identifier_approve(proposal, hmac, rule_version)` executable only by members of the new group role
+   `wp_reviewer` (one login per reviewer principal): refuses session_user = proposed_by (WPS30), a non-proposed state,
+   an HMAC that differs from the proposal's (the reviewer recomputes it from the plaintext it reviewed; WPS31), a
+   rule_version other than the store's current one (WPS32); then does what declare did, with the same lock order
+   (subject FOR SHARE, identifier_epochs FOR UPDATE, WPS20 ambiguity, WPS03 erased).
+4. Rule r2 (`wp/ident.py`), run by the reviewer and as early feedback by the app: NFKC, casefold, NFKC again (an
+   approximation of toNFKC_Casefold); default-ignorable and format characters (Cf, variation selectors) removed;
+   tokens are runs of letters, marks and digits. Refused: empty, more than 4 tokens, only stop words, a single token
+   under 6 characters without a digit, a token mixing scripts, any unassigned code point, any token in a script
+   written without spaces (Han, Hiragana, Katakana, Thai, Lao, Khmer, Myanmar: whole-token matching cannot find them,
+   so declaring them would promise erasure that cannot happen). Script is taken from the Unicode character name
+   (unicodedata has no Script property): a labelled HEURISTIC, not UTS 39 conformance.
+5. Matcher m2 (`wp/mentions.py`): the same normalisation applied per grapheme-like cluster (base plus combining
+   marks) with an offset map back to the ORIGINAL text (UAX 15: normalisation changes length, so offsets on the
+   normalised text do not map back). Windows of 1..4 tokens are HMAC'd as before under the label
+   `ident:m2:ucd<version>:`, so identifiers declared under one Unicode version are never compared with text normalised
+   under another (the Mac has UCD 13.0, t2-dev 15.0).
+6. `event_redactions` (append-only; `redacted_enc` may only be nulled by the owner, like `events.content_enc`): tenant,
+   event, n (1, 2, ... per event), job, `base_digest` (the digest of the text it was computed from), `redacted_enc`
+   (under the SPEAKER key, AAD `redaction:<event>:<n>`), `redacted_digest`, `spans` (start/end code-point offsets in
+   the base text, ids and integers only), `prev_hash` (events.hash for n = 1, else the previous redaction's hash),
+   `hash` (keyed with the tenant chain key like the event chain).
+7. `wp_erasure_redact(job, event, n, base_digest, redacted_enc, spans)` (wp_app, during the cascade, before the event's
+   batch): refuses an event of the subject itself, an event under another subject's hold, empty or overlapping or
+   unordered spans, a base_digest that is not the event's current text (compare-and-set; a concurrent or repeated
+   redaction fails cleanly), and a second redaction by the same job. In one transaction it inserts the row, nulls
+   `events.content_enc` (and the previous redaction's `redacted_enc`) and records the event in `erasure_redacted`.
+8. The cascade is unchanged in what it removes: every mentioning event is still TOMBSTONED (ES placeholder, derived
+   facts and jobs deleted, D4 strict verifier covers it), UNLESS it is in `erasure_redacted` for this job, in which case
+   its ES document is replaced by the placeholder too (ES gets no redacted text in this version: over-removal from the
+   derived index, stated in the receipt) and its facts are deleted. Only the Postgres record keeps the redacted text.
+   The residue function counts a mentioning event with present content and no tombstone as residue whether or not it
+   was redacted, so a missing redaction can only fall back, never leak.
+9. Receipt: `other_speakers_redacted` (event ids, span counts), `fallback_removed` (event ids with the store's reason:
+   no redaction row for this job), matcher m2 and its not-covered list.
+10. Chain verification (`log.verify_chain`): content NULL is accepted only if the event has a tombstone or a redaction
+    row; the redaction chain of each event is walked (prev_hash links, keyed hash, redacted_digest of present text).
+
+### Scenarios and how each is ruled out
+| # | Scenario | Ruled out by |
+|---|---|---|
+| S1 | identifier too short or a common word ("alex", "the team") | rule r2 in the reviewer; for the app role, no write path to subject_identifiers at all (grants; live test) |
+| S2 | identifier is a substring of another word ("Kim" in "Kimball") | whole-token windows only; offsets come from token boundaries |
+| S3 | case and compatibility forms ("ALEX KIM", "Ａｌｅｘ", "ﬁ", "straße"/"STRASSE") | NFKC + casefold on both sides, same function |
+| S4 | invisible characters inside a name in text (zero width joiner, variation selector) | default-ignorables removed before tokenising, offsets kept |
+| S5 | look-alikes in the DECLARED identifier (Cyrillic "а" in "Аlex") | mixed-script token refused (heuristic) |
+| S6 | look-alikes in OTHER speakers' text | NOT ruled out: needs the UTS 39 skeleton and confusables.txt, which is on neither machine; fetching it is a download that needs the user's permission (ask to main). Receipt lists it under not covered. |
+| S7 | identifier inside another speaker's quoted text | the span inside the quote is redacted like any other span; quoted words of the subject that carry no identifier are not found (receipt: not covered) |
+| S8 | redaction that changes nothing (offset drift, empty spans) | the store refuses empty/unordered spans; the app builds the text only from spans, inserts a fixed marker that cannot be an identifier, rescans the result and falls back to removal on any hit; a missing redaction leaves the event to the tombstone path |
+| S9 | reviewer approves its own proposal | WPS30 on session_user; tested with one login that holds both rights |
+| S10 | approved identifier differs from the reviewed one | the reviewer's recomputed HMAC must equal the proposal's (WPS31) |
+| S11 | re-erasure / retry idempotency | unique (job, event); compare-and-set on base_digest; tombstones and placeholders already idempotent |
+| S12 | a second subject erased later on an already-redacted event | the rescan and the redaction read the latest redacted text; the new row chains to the previous one, whose text is nulled |
+| S13 | hash chain after redaction | the event hash covers the ciphertext digest, untouched; redaction rows chain from the event hash; verification walks both |
+| S14 | redaction under another subject's legal hold | wp_erasure_redact refuses it; the event is withheld exactly as today |
+| S15 | Unicode version skew between hosts | UCD version in the HMAC label and the rule version |
+| S16 | scripts without spaces | refused at declaration with the reason |
+
+### Sources (read 2026-11-17)
+- UTS 39 Unicode Security Mechanisms v18.0.0 (2026-08-27), https://www.unicode.org/reports/tr39/ : skeleton =
+  NFD plus confusables.txt mapping, no NFKC or casefold; skeletons are for internal comparison only, never stored as a
+  normalisation; mixed-script = empty resolved script set (5.1); restriction levels (5.2). Confidence high (primary).
+- UAX 15 Unicode Normalization Forms rev 58 (2026-08-12), https://www.unicode.org/reports/tr15/ : NFKC fits
+  identifiers, not arbitrary text; normalisation changes length, so offsets do not map back; stability holds for
+  assigned characters only. Confidence high (primary).
+- Crypto-shredding with hash chains over ciphertext: conduktor.io (crypto-shredding in Kafka) and a 2026
+  systematisation on redactable ledgers, https://eprint.iacr.org/2026/1109 (search summary only, not read in full).
+  Supports chaining ciphertext digests and destroying keys rather than rewriting the chain. Confidence medium
+  (secondary and vendor-authored); the lab's own chain already hashes the ciphertext digest.
