@@ -152,6 +152,19 @@ other runs were re-read under it and still stand.
   mutual_mentions, lock_order, d2, phys_purge, E1, E2 and E3, projector_start_race, projector_es_fault, races,
   size_probe, plan_stability (amendment 22) and guard_check end. Started at 28G free, under the 17 GB start line of
   its pinned tree. Amendment 24 (20 GB, 1bad3bd and 2cf33f3) governs only later runs.
+  - **d3: PASS** (fenced and control as pre-registered), 0 high-watermark and 0 flood lines. This is the rerun of
+    the 31112b4 FAIL, which still stands.
+  - **mutual_mentions: PASS.** seq 5/5, conc 10/10 (all overlapped), control violated 5/5.
+  - **lock_order: PASS.** MM 30/30, MK 5/5, HP 5/5, HR held, no deadlocks or errors. Own usage +0.01 GiB.
+  - **d2: VOID** (not evidence).
+    - The experiment itself returned PASS, but other tenants of the host pushed the ES node past its high disk
+      watermark at 16:34:45Z (free 15.7 GiB) and into flood stage at 16:35:15Z (free 12.6 GiB).
+    - The watcher wrote STOP at 16:34:52Z, and `disk_gate end` voided the run. Its message says "operator stop",
+      because it does not record who wrote STOP.
+    - Own usage was +0.00 GiB at the run's check.
+    - Window read (`review-2/window_check_2e1948c_batch_d.out`): exit 0, 1 high-watermark line, 2 flood lines.
+  - **The chain stopped after d2**, as designed. The rest, including d2, runs again as batch e under amendment 24
+    (20 GB start line).
 - **heldout_secrets (main's ruling):** not rerun. Its FAIL at 62c6be5 is **carried, not re-observed**:
   - wp/secrets.py is the same blob (58b025fc) at 62c6be5, 31112b4, 2e1948c and the final commit;
   - the heldout experiment files are unchanged since 62c6be5;
@@ -185,19 +198,19 @@ Gate versions:
 | row19 (own corpus only) | 31112b4, N2, PASS | 9cbc798 old PASS |
 | row6 | 31112b4, N2, PASS | 9cbc798 old PASS |
 | d3 | **31112b4, N2, FAIL** (no verdict; high watermark from other tenants) **and 2e1948c, N2+HW, PASS** (rerun after amendment 23a) | 62c6be5 old PASS |
-| mutual_mentions | 2e1948c, N2+HW, running (BLOCKED at 31112b4, never started) | 9cbc798 old PASS |
-| lock_order | 2e1948c, N2+HW, running | 62c6be5 old PASS |
-| d2 | 2e1948c, N2+HW, running | 9cbc798 old PASS |
-| phys_purge | 2e1948c, N2+HW, running | 9cbc798 old PASS |
-| e2e E1 | 2e1948c, N2+HW, running | 62c6be5 old PASS |
-| e2e E2, E3 | 2e1948c, N2+HW, running | 9cbc798 old PASS |
-| projector_start_race | 2e1948c, N2+HW, running | 62c6be5 old PASS; 5d26746 old FAIL (harness, 19a) |
-| projector_es_fault (N1) | 2e1948c, N2+HW, running | none (failing-first at 1539a75: fixed arm 0/5 per case) |
-| races R1, R2, R3 | 2e1948c, N2+HW, running | 62c6be5 old PASS |
-| size_probe (exploratory) | 2e1948c, N2+HW, running | 62c6be5 old, 2,071 B/doc |
-| plan_stability (amendment 22, facts) | 2e1948c, N2+HW, running | 62c6be5 old PASS without facts (scope N3) |
+| mutual_mentions | 2e1948c, N2+HW, PASS (BLOCKED at 31112b4, never started) | 9cbc798 old PASS |
+| lock_order | 2e1948c, N2+HW, PASS | 62c6be5 old PASS |
+| d2 | batch e, pending (2e1948c: VOID, other tenants' disk; the experiment returned PASS, not evidence) | 9cbc798 old PASS |
+| phys_purge | batch e, pending | 9cbc798 old PASS |
+| e2e E1 | batch e, pending | 62c6be5 old PASS |
+| e2e E2, E3 | batch e, pending | 9cbc798 old PASS |
+| projector_start_race | batch e, pending | 62c6be5 old PASS; 5d26746 old FAIL (harness, 19a) |
+| projector_es_fault (N1) | batch e, pending | none (failing-first at 1539a75: fixed arm 0/5 per case) |
+| races R1, R2, R3 | batch e, pending | 62c6be5 old PASS |
+| size_probe (exploratory) | batch e, pending | 62c6be5 old, 2,071 B/doc |
+| plan_stability (amendment 22, facts) | batch e, pending | 62c6be5 old PASS without facts (scope N3) |
 | heldout_secrets | carried: 62c6be5, old, FAIL (main's ruling; same secrets.py blob; no store) | |
-| guard_check end | 2e1948c, N2+HW, running | 9cbc798 old PASS |
+| guard_check end | batch e, pending | 9cbc798 old PASS |
 
 ### Limits that apply to every erasure result here
 
