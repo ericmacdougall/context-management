@@ -1,0 +1,8 @@
+start 2026-11-17T11:07:34Z head 62c6be5 free 21G: exp.d4_store_mark 5
+disk_gate start free 20.2 GiB own 0.39 GiB (pg 0.33 es 0.00 home 0.05) cap +2.0 GiB
+disk_gate d4_store_mark free 20.2 GiB own +0.00 GiB
+d4_store_mark {'pass': True, 'why': []}
+RESULT d4_store_mark sha256=19121c80aff83d37852e8ed2c9b09750d23aa15472e60b490d2e76a4a9949772 file=~/emlab2-16096/writepath/wp/results/d4_store_mark.19121c80aff83d37.json
+exit=0
+disk_gate end free 20.2 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T11:07:35Z

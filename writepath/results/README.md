@@ -42,4 +42,20 @@ Stamped single runs after the void (`single-runs/`, code at 62c6be5 unless noted
   - Linear projection: 2.28 GB for the 1.1M-document scale_1m run. That is over this stream's 2 GB own-usage cap before any transient peak (ES segment merges, WAL growth, the key-table VACUUM FULL).
   - Result: the 1M rerun stays BLOCKED on this host.
 
-Not run at 62c6be5: guard_check end, and a full run_all restamp.
+- **heldout_secrets: FAIL**, as pre-registered (amendment 15b), with the same figures as the VOID-run observation.
+  - H1 in-scope: 483/1,169 caught.
+  - H2 in-scope: 150/750 caught.
+  - False blocks: 37/1,200.
+  - Control gap: 0.3247.
+- **review_fix F1: PASS.** 100,000 events, zero residue.
+  - Cascade: 12.5 s over 24 batches; the first five batches took 2.48 s and the last five 2.69 s.
+  - verify: 12.0 s. Postgres completion: 3.2 s.
+- **d4_rescan_es: PASS.** Fenced 5/5, control violated 5/5.
+- **d4_store_mark: PASS.**
+- **d3_identifier: PASS.**
+- **lock_order: PASS**, with no deadlocks or errors.
+  - MM held 30/30, DA 30/30, MK 5/5, HP 5/5, HR 5/5 and M2 10/10.
+  - The pre-fix FOR UPDATE controls deadlocked 10/10 each.
+  - MS (measured, not thresholded): in 3/3 runs, 59 FOR SHARE locks were granted while the erasure mark waited, and the mark was cancelled by statement_timeout at 30 s. The job stayed requested until the sweep's retry moved it to logically_erased. There is no worst-case bound under sustained concurrent appends.
+
+The remaining step-1 experiments were observed only in the VOID fd4ed53 run: F3, F4, F5, F7, F1S, F6, M, H, N1, N2, N5, N8, row1, row23, e_verify, registry_marker, d1, row19, row6, mutual_mentions, d2, phys_purge, E2 and E3. Not run at 62c6be5: guard_check end, and a full run_all restamp.

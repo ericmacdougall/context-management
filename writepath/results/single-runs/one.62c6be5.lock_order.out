@@ -1,0 +1,8 @@
+start 2026-11-17T11:12:54Z head 62c6be5 free 21G: exp.lock_order
+disk_gate start free 20.2 GiB own 0.39 GiB (pg 0.33 es 0.00 home 0.05) cap +2.0 GiB
+disk_gate lock_order free 20.2 GiB own +0.00 GiB
+lock_order PASS {"MM": {"R": 30, "holds": 30, "deadlocked": 0, "errors": 0}, "MK": {"R": 5, "holds": 5, "deadlocked": 0, "errors": 0}, "HP": {"R": 5, "holds": 5, "deadlocked": 0, "errors": 0}, "HR": {"R": 5, "holds": 5, "deadlocked": 0, "errors": 0}, "DA": {"R": 30, "holds": 30, "deadlocked": 0, "errors": 0}, "M2": {"R": 10, "holds": 10, "deadlocked": 0, "errors": 0}, "MM_prefix_hold_check": {"R": 10, "deadlocked": 10, "errors": 0}, "DA_prefix_declare": {"R": 10, "deadlocked": 10, "errors": 0}, "MS": [{"share_granted_while_mark_waited": 59, "share_queued_behind_mark": 0, "starved": true, "mark_err": "57014 QueryCanceled: canceling statement due to statement timeout", "mark_wait_s": 30.0, "state_after": "requested", "state_after_sweep": "logically_erased"}, {"share_granted_while_mark_waited": 59, "share_queued_behind_mark": 0, "starved": true, "mark_err": "57014 QueryCanceled: canceling statement due to statement timeout", "mark_wait_s": 30.0, "state_after": "requested", "state_after_sweep": "logically_erased"}, {"share_granted_while_mark_waited": 59, "share_queued_behind_mark": 0, "starved": true, "mark_err": "57014 QueryCanceled: canceling statement due to statement timeout", "mark_wait_s": 30.0, "state_after": "requested", "state_after_sweep": "logically_erased"}]}
+RESULT lock_order sha256=9c0e651f75900e4f2f32696e631f28c7b14b0b1fc574854ea95170c3785bfcdb file=~/emlab2-16096/writepath/wp/results/lock_order.9c0e651f75900e4f.json
+exit=0
+disk_gate end free 20.1 GiB own +0.01 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T11:21:01Z

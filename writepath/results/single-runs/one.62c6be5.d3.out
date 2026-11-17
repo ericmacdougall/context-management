@@ -1,0 +1,8 @@
+start 2026-11-17T11:07:39Z head 62c6be5 free 21G: exp.d3_identifier 5
+disk_gate start free 20.2 GiB own 0.39 GiB (pg 0.33 es 0.00 home 0.05) cap +2.0 GiB
+disk_gate d3 free 20.2 GiB own +0.00 GiB
+d3_identifier {'pass': True, 'why': []}
+RESULT d3_identifier sha256=8e0f46eb7694d2c2d16db91122b3a96057e909fd6a3b743cf05fe8b251288848 file=~/emlab2-16096/writepath/wp/results/d3_identifier.8e0f46eb7694d2c2.json
+exit=0
+disk_gate end free 20.2 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T11:12:51Z

@@ -1,0 +1,8 @@
+start 2026-11-17T11:00:13Z head 62c6be5 free 21G: exp.heldout_secrets
+disk_gate start free 20.4 GiB own 0.22 GiB (pg 0.16 es 0.01 home 0.05) cap +2.0 GiB
+disk_gate heldout free 20.4 GiB own +0.00 GiB
+heldout_secrets FAIL {"H1_in_scope": {"n": 1169, "caught": 483, "rate": 0.4132, "wilson95": [0.3853, 0.4416]}, "H2_in_scope": {"n": 750, "caught": 150, "rate": 0.2, "wilson95": [0.1729, 0.2301]}, "H1_negatives_blocked": {"n": 1200, "caught": 37, "rate": 0.0308, "wilson95": [0.0225, 0.0422]}, "H1_out_of_scope": {"n": 31, "caught": 1, "rate": 0.0323, "wilson95": [0.0057, 0.1619]}, "H2_out_of_scope": {"n": 50, "caught": 0, "rate": 0.0, "wilson95": [0.0, 0.0714]}, "control": {"items": 576, "shipped": {"n": 576, "caught": 212, "rate": 0.3681, "wilson95": [0.3297, 0.4082]}, "nodecode": {"n": 576, "caught": 25, "rate": 0.0434, "wilson95": [0.0296, 0.0633]}, "gap": 0.3247}, "why": ["H1 in-scope Wilson lower 0.3853 < 0.95", "H2 in-scope Wilson lower 0.1729 < 0.95", "H1 false-block Wilson upper 0.0422 > 0.02"]}
+RESULT heldout_secrets sha256=930e32ec3d99a161e7966071c00960f7d9bd23c2a660835faf5e126addc80b0d file=~/emlab2-16096/writepath/wp/results/heldout_secrets.930e32ec3d99a161.json
+exit=0
+disk_gate end free 20.4 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0
+end 2026-11-17T11:00:15Z

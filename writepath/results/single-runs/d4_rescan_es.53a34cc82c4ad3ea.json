@@ -1,0 +1,140 @@
+{
+ "at": "2026-11-17T11:07:31Z",
+ "env": {
+  "argv": "~/emlab2-16096/writepath/wp/runs/62c6be5-20261117T103622Z/exp/d4_rescan_es.py 5",
+  "code_commit": "62c6be5",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19460",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   1.7626953125,
+   2.0107421875,
+   2.36767578125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "python": "3.12.3"
+ },
+ "name": "d4_rescan_es",
+ "result": {
+  "R": 5,
+  "control": {
+   "errors": 0,
+   "holds": 0,
+   "runs": [
+    {
+     "holds": false,
+     "witness": {
+      "done": true,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": null
+     }
+    },
+    {
+     "holds": false,
+     "witness": {
+      "done": true,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": null
+     }
+    },
+    {
+     "holds": false,
+     "witness": {
+      "done": true,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": null
+     }
+    },
+    {
+     "holds": false,
+     "witness": {
+      "done": true,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": null
+     }
+    },
+    {
+     "holds": false,
+     "witness": {
+      "done": true,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": null
+     }
+    }
+   ],
+   "violated": 5
+  },
+  "fenced": {
+   "errors": 0,
+   "holds": 5,
+   "runs": [
+    {
+     "holds": true,
+     "witness": {
+      "done": false,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": "es:tombstoned_not_placeholder"
+     }
+    },
+    {
+     "holds": true,
+     "witness": {
+      "done": false,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": "es:tombstoned_not_placeholder"
+     }
+    },
+    {
+     "holds": true,
+     "witness": {
+      "done": false,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": "es:tombstoned_not_placeholder"
+     }
+    },
+    {
+     "holds": true,
+     "witness": {
+      "done": false,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": "es:tombstoned_not_placeholder"
+     }
+    },
+    {
+     "holds": true,
+     "witness": {
+      "done": false,
+      "es_docs_with_marker": 1,
+      "rescan_found": 1,
+      "residue": "es:tombstoned_not_placeholder"
+     }
+    }
+   ],
+   "violated": 0
+  },
+  "pass": true
+ }
+}
