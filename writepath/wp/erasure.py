@@ -150,7 +150,7 @@ def rescan(conn, ks, jid, page=2000):
             if plain is not None:
                 texts[eid] = sorted(M.windows(plain))
         flat = sorted({w for v in texts.values() for w in v})
-        h = dict(zip(flat, ks.tenant_hmac_many(t, ["ident:" + w for w in flat]))) if flat else {}
+        h = dict(zip(flat, M.window_hmacs(ks, t, flat))) if flat else {}
         hits = [eid for eid, ws in texts.items() if any(h[w] in hm for w in ws)]
         if hits:
             conn.execute("select wp_erasure_add_mentions(%s, %s)", (jid, hits))

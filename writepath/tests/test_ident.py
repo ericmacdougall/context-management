@@ -76,6 +76,15 @@ class RuleR2(unittest.TestCase):
         self.assertEqual(M.subject_hmacs(KS, T, ["Alex Kim"]), set(KS.tenant_hmac_many(T, [M.LABEL + "alex kim"])))
 
 
+class LabelInOnePlace(unittest.TestCase):
+    def test_s15_no_module_builds_identifier_hmacs_itself(self):
+        """A second copy of the label (erasure's rescan had "ident:" + w) silently stops matching when the label
+        changes: every identifier HMAC must come from wp/mentions.py."""
+        offenders = [p.name for p in (HERE / "wp").glob("*.py")
+                     if p.name != "mentions.py" and ('"ident:' in p.read_text() or "'ident:" in p.read_text())]
+        self.assertEqual(offenders, [])
+
+
 class MatcherM2(unittest.TestCase):
     def test_s2_whole_tokens_only(self):
         self.assertEqual(spans("Alex Kimball called", "Alex Kim"), [])
