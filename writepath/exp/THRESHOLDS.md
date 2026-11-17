@@ -237,3 +237,34 @@ E3 (replay of a decision under a new key after a lost response), R=5, sequential
 same-key retry returns the same event as duplicate, new-key replay refused WPS13, one decision, head version 1) AND
 control (single-use source removed, F5 c1 patch) 5/5 violated. Not claimed: that a concurrent new-key replay isolates
 the single-use rule (the head compare-and-set also stops it).
+
+## Amendment 15 (2026-11-17, written before the held-out corpora were scored; new owner): held-out secret scan
+Why: row 19's 880 of 880 is on a corpus the scanner's author planted; a tuned scanner elsewhere in the lab fell to 350
+of 800 on held-out data. Test (exp/heldout_secrets.py), one stamped run inside run_all, no stores needed.
+Scanner under test: wp/secrets.py, git blob 58b025fcb5b6266077c586436e00acf247d97854 (last changed 47a932a,
+2026-11-15 23:12 -0700). The harness refuses to run against any other blob. The scanner is NOT edited after this
+run; any later edit burns both sets, and a later claim needs a new held-out set.
+Judge: an item is caught iff wp.secrets.scan(text) is non-empty (the same judge as row 19's planted corpus; check()
+raises on exactly those texts). Negatives: a block is a scan() hit on a negative item.
+Sets:
+- H1, independent: exp/heldout_secrets_gen.py (sha256 bc731ed07cab94d700303a473c9a758180c85c8c1abfb775e6e00af054bf65c1,
+  VERSION heldout-secrets-gen-1.0.0-2026-11-17), written on 2026-11-17 by an agent that read neither the scanner nor any
+  earlier corpus, seed 16096: 1,200 positives (24 families x 50, 38 encodings) and 1,200 negatives (20 families x 60).
+- H2, the ingest stream's held-out variants: the 16 HELDOUT transforms of ingest/heldout.py (feat/port-ingest blob
+  3e4f3dc057d2f32480b1a8a73dd58b3f6243315f, committed a7f0529 2026-11-16 12:25 -0700, after the scanner's last change;
+  the previous write-path owner's transcript never refers to it), vendored verbatim with their own generator and seed
+  (n=50 per variant, seed0=9, the same text frame), 800 positives.
+Scope split, fixed now from row 19's own docstring at 4960f50 ("Out-of-scope variants (reversed, ROT13, split across
+two writes)"): items whose encoding is reversed (H1 reversed, H2 reversed) are DECLARED OUT OF SCOPE; everything else,
+including splits inside one text (H1 split_concat_literal, zero_width_inserted; H2 hyphen_split, space_split), is in
+scope. Both splits and the overall figures are reported.
+PASS (the scanner generalises to held-out data) = H1 in-scope positives Wilson 95% lower bound >= 0.95 AND H2 in-scope
+positives Wilson 95% lower bound >= 0.95 AND H1 negatives false-block Wilson 95% upper bound <= 0.02. Otherwise FAIL.
+Control (sensitivity of the harness): the scanner with decoding off (scan(text, decode=False), row 19's ctl_nodecode)
+on the H1 in-scope positives whose encoding is a value transform other than plain (base64*, hex*, url_*, json_*,
+quoted_printable, html_entity_*, double_base64, base64_of_assignment): its catch rate must be at least 0.10 below the
+shipped scanner's on the same items; if not, the verdict is INCONCLUSIVE unless it is already FAIL.
+Reported, not thresholded: catch rate per family and per encoding (cells under 100% listed), the comparison with
+row 19's 880/880, negative blocks per negative family.
+Rows: set, family, encoding, context, index, caught, detector names, sha256 of the text (16 hex). Never the text or the
+planted value; the harness asserts before writing that no planted value or text occurs in the result document.
