@@ -247,7 +247,12 @@ class PgDecisionService:
     Every entry point (submit, explain, table, erase_subject) first verifies the PgSession and gets its token from the SessionAuthority,
     BEFORE any database call: the in-process Session must be live (verified by identity) and the PgSession's token must equal the token
     attached to that Session when the bridge issued it (review-3 N1). The database then derives tenant, principal and channel from that
-    token's session row, so the in-process check and the database act as the same principal, channel and tenant."""
+    token's session row, so the in-process check and the database act as the same principal, channel and tenant.
+
+    submit asks THE revocation source (pol.enforce.Revocations) exactly where the memory service does (review-3 N3): a principal revoked
+    by the policy document (skeleton over-match included) or by a core revoke event is refused principal_revoked. LIMIT: the policy
+    document lives in process; a caller that bypasses this service with raw SQL as dc_app and holds a still-valid token of a principal
+    revoked ONLY by the policy document is stopped by the database only after a core `revoke` event or at the token's expiry."""
 
     def __init__(self, enforcer, app_conn):
         from .enforce import Enforcer
@@ -269,11 +274,21 @@ class PgDecisionService:
             return None
         return p, bound
 
+    def _refuse(self, pid, code, body):
+        t = body.get("type") if isinstance(body, dict) else None
+        self._enf._audit.add({"action": "decision", "principal": pid, "allow": False, "reason": code, "type": t,
+                              "req": body.get("req") if isinstance(body, dict) else None, "policy_version": self._enf._ver()})
+        return {"code": code, "original": None, "id": None, "value_ref": None}
+
     def submit(self, session, body) -> dict:
         v = self._verified(session)
         if v is None:
             return {"code": "unauthenticated:invalid_session", "original": None, "id": None, "value_ref": None}
         p, tok = v
+        if not isinstance(body, dict):
+            return self._refuse(p.id, "bad_event", {})
+        if self._enf._revocations._is_revoked(p.id):                  # as DecisionService.submit (R3-10, review-3 N3)
+            return self._refuse(p.id, "principal_revoked", body)
         try:
             payload = Jsonb(body)
             out = self._c.execute("select dc.submit(%s, %s)", (tok, payload)).fetchone()[0]
@@ -281,10 +296,10 @@ class PgDecisionService:
             out = {"code": "bad_event", "original": None, "id": None, "value_ref": None}
         if out.get("id") and not out["id"].startswith(p.id + "/"):
             raise RuntimeError("database session and in-process session name different principals")      # unreachable after _verified
-        if out["code"] == "revoked" and isinstance(body, dict):
+        if out["code"] == "revoked":
             self._enf._revocations._add(body.get("target"))
         self._enf._audit.add({"action": "decision", "principal": p.id, "allow": out["code"] in _core.APPLIED, "reason": out["code"],
-                              "type": body.get("type") if isinstance(body, dict) else None, "policy_version": self._enf._ver()})
+                              "type": body.get("type"), "policy_version": self._enf._ver()})
         return out
 
     def _render(self, session, raw):
