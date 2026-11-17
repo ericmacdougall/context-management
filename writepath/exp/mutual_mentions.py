@@ -94,6 +94,8 @@ def _child(t, subj, barrier, q):
             elif name == "after_cascade" and "cascade_end" not in marks:
                 marks["cascade_end"] = _now(conn)
         rec = erasure.erase(conn, ks, es, t, subj, hook=hk, physical="wait")
+        if "cascade_end" not in marks:         # amendment 16a: a failed cascade's interval ends when erase() returns
+            marks["cascade_end"], marks["cascade_end_from"] = _now(conn), "erase_return"
         q.put((subj, {k: rec.get(k) for k in ("done", "error_type", "receipt_state")}, marks, None))
     except Exception as ex:  # noqa: BLE001
         q.put((subj, {}, {}, f"{type(ex).__name__}: {str(ex)[:160]}"))
