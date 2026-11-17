@@ -69,8 +69,22 @@ call, positions slide with the window, hosts copy message objects, and delivery 
 turns silently while completeness read complete; at add7c86 a newly authored message that repeated old content could still vanish with
 `claim_exactly_once()` true. The contract above (declared boundary, otherwise block) replaces inference where inference is not provable.
 
+## Scanner note (amend-6)
+
+`scan.py` at 45f3413 held a dead duplicate block (a stray first `ReferenceScanner` and a verbatim copy of the patterns), left by a text splice.
+It held no pattern that was meant to be live; the live class was always the second. It was removed in its own commit with identical findings
+on 2,883 texts (`results4/scan-dedup-equivalence.txt`). No pattern was enabled or changed after the fresh set was scored.
+
 ## Not verified here
 
 Production database concurrency; real providers; host integration; hosts with other repeating patterns or declarations that are wrong;
 payloads beyond those the oracle compares; latency and cost items (6, 8, 9) were measured on a shared, loaded Mac and are indicative
 (item 9 ratios 1.10 and 1.20 persistent, medians about 1.5 ms).
+
+## Open items before a client deployment
+
+- Scanner gap: four fresh held-out cells at 0 of 40 (a bearer header and a private-key block with a dot or a tab between every character); the scanner was not edited after scoring. The scanner is a reference implementation; the client's scanner must be measured on its own held-out set.
+- Provenance at the registered n=40 per placement (7 were run); the altered-block placement `host_alters_block` still leaks into user events and needs a constrained integration contract or a repair.
+- Real provider runs (no provider documents idempotent retrieval of a response, so an unconfirmed call stays unconfirmed) and real database runs: everything here is stubs and SQLite; production Postgres concurrency, migration, rollback and durability are untested.
+- Trusted-host assumptions: `retry_of` and `new_count` are declarations the ingester cannot verify; a host that cannot declare its boundary gets duplicates and a blocking gap.
+- Payloads outside tool arguments, tool results and thinking signatures are not compared by the oracle; timing figures are indicative on a loaded machine.
