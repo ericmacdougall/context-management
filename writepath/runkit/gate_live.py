@@ -5,12 +5,13 @@ It runs `exp.disk_gate <command> [args]` unchanged except for one function: `_ta
 the stream's containers from WP_HOME/conf through wp.config, returns the two disposable containers named in
 GATE_LIVE_ES and GATE_LIVE_PG instead. wp.config only accepts names starting with emlab2-wphard-, so a gate-test home
 names nonexistent emlab2-wphard-gatefixnone-* containers in its conf: any path that bypasses the seam addresses
-nothing. Everything the gate judges (the capture companion, the ledger, the final inspect by ID) runs as in a real
-run, and the companion takes the pinned container IDs from the run record, not from this seam.
+nothing. Everything the gate judges (inspect by ID, the cgroup files, ES's node stats, PG's statfs, the ledger) runs
+as in a real run; after start the gate addresses the containers by the IDs in its run record, not through this seam.
 
 usage (on the lab host, in a gate-test home):
   WP_HOME=~/emlab2-16096/gatefix/home GATE_LIVE_ES=emlab2-gatefix-es GATE_LIVE_PG=emlab2-gatefix-pg \\
-      python3 runkit/gate_live.py start|check <label>|end|stop <reason>|stops|clear-stop <id> <reason>|abort <reason>"""
+      python3 runkit/gate_live.py init <reason>|start|check <label>|end|stop <reason>|stops|clear-stop <id> <reason>|\\
+      abort <reason>|ledger-reset <reason>"""
 import os
 import pathlib
 import sys

@@ -1,32 +1,31 @@
-"""Run-validity gate for stamped runs (amendment 17c; reviews N2, P1/P2 and A1/A2/A3). Threat model, design and the
-exact guarantee: runkit/GATE-DESIGN.md. The gate judges ONLY evidence it captures itself.
+"""Run-validity gate v3 for stamped runs (review D). Design, argument and limits: runkit/GATE-DESIGN.md section 5.
 
-  start          BLOCKED (exit 2) under START_GB host free, while a stop is unacknowledged, while an earlier run has no
-                 end record, if the ES or PG container cannot be inspected, or if the ES log driver cannot give lossless
-                 coverage (json-file or local in blocking mode, no TTY). Otherwise: pins both container IDs, measures own
-                 usage, spawns the capture companion (`docker logs --follow --tail 0 --timestamps <es id>` and
-                 `docker events` for both IDs, into a sequence-numbered, hash-chained capture file), writes a fresh
-                 start token to PID 1's stdout and stderr and waits until it is captured on both streams and in the
-                 events stream, then admits the run in the stop ledger in one locked step.
-  check NAME     VOID (exit 3) if a stop was recorded after admission; if the capture so far holds a flood-stage or
-                 high-watermark line, a gate-marker line the gate did not write, a lifecycle event or an early end; if
-                 the companion is not running; or if own usage is unmeasured or grew over CAP_GB. A VOID check closes
-                 the run. A host under FLOOR_GB from other work is recorded and the run continues.
-  end            measures own usage, writes fresh close tokens and waits for them (both streams and the events stream),
-                 stops the companion, verifies the capture (chain, sequence, final record, exactly the gate's own
-                 marker lines), judges EVERY captured line, allows only exec/top/archive-path events, checks that the
-                 capture is a contiguous run of the retained log, re-inspects both containers by ID, keeps the boot
-                 and 2 s wall-clock-step rules, and in one locked ledger step voids the run on any stop recorded after
-                 its admission and writes the end record. VOID (exit 3) on any reason; every reason is printed.
+The hazard is removed, not detected: each store's data directory is a private tmpfs, larger than its container's
+memory limit plus Elasticsearch's largest watermark threshold, with no swap. Every tmpfs page is charged to the
+container's memory cgroup, so no writer in the container can bring free space down to a watermark (or, for PG, to
+zero) without exceeding the limit, and the kernel's lifetime memory.peak proves afterwards that it never did. Other
+tenants cannot write into the tmpfs. The gate checks that arrangement and the containers' identity; it reads no log
+text and compares no wall-clock times inside the window.
+
+  init REASON    start a new stop ledger (every other command is BLOCKED without one).
+  start          BLOCKED (exit 2) unless, for both containers (by ID): the data directory is a Docker tmpfs mount with
+                 no mount inside it, and the store itself reports it as tmpfs (ES's node stats; PG's statfs); memory
+                 limit set, swap 0, size - limit >= ES's low-watermark free-space threshold + MARGIN (PG: MARGIN);
+                 lifetime memory.peak within the same bound; running, not paused, no OOM kill flagged; the ES API
+                 bound to the pinned container (its published port; its JVM started with it). Then, in one locked
+                 ledger step: no unacknowledged stop, no open run, host free >= START_GB (measured there), admit.
+  check NAME     VOID (exit 3) if any start rule fails now, or anything differs from admission: Id, StartedAt, ES node
+                 id, oom_kill count, memory limit, swap, tmpfs size, ES's thresholds; or a stop was recorded since
+                 admission; or WP_HOME grew over CAP_GB. A VOID check closes the run.
+  end            the same checks, then in one locked ledger step: this run's admit record must be there, any stop
+                 after it voids the run, and the end record is written. VOID (exit 3) on any reason; all are printed.
   preflight      the erasure gate's store inventory must be empty before any experiment.
   stop REASON    record a stop.   stops: list unacknowledged stops (exit 2 if any).
   clear-stop ID REASON   acknowledge ONE stop by id; it unblocks later starts and never changes a run's verdict.
   abort REASON   close an open run whose launcher died (VOID).
-A legacy WP_HOME/state/STOP file is ingested as a stop (each new write is a new stop) and left in place.
-Guarantee (see GATE-DESIGN.md for the limits): 20 GiB free at admission; every line the ES container wrote to
-stdout/stderr between admission and the close tokens captured, none a flood-stage or high-watermark line and no forged
-marker; the admitted containers not stopped, restarted, paused, updated or replaced in the window; no stop recorded
-in the window; own usage SAMPLED within the cap (not a bound on a transient peak); no reboot or wall-clock step.
+  ledger-reset REASON    keep a damaged ledger under a new name and start a new one (open runs end VOID).
+The legacy path state/STOP is a directory the gate keeps there: a legacy `> state/STOP` write fails instead of being
+missed; a regular file found there is ingested as a stop and kept as state/STOP.ingested-<seq>.
 Prints numbers, ids and reasons only."""
 import calendar
 import fcntl
@@ -34,57 +33,36 @@ import hashlib
 import json
 import os
 import pathlib
-import queue
-import re
 import shutil
+import stat
 import subprocess
 import sys
-import threading
 import time
 import urllib.error
 import urllib.request
 
 from wp import config
 
-START_GB, FLOOR_GB, CAP_GB = 20.0, 15.0, 2.0   # start line 20 GB from amendment 24 (17 GB before)
+FORMAT = 3
+START_GB, FLOOR_GB, CAP_GB = 20.0, 15.0, 2.0   # start line 20 GB from amendment 24
 GIB = 1024 ** 3
+MARGIN = 256 * 1024 ** 2                       # headroom over the bound: statfs rounding, tmpfs inodes
 HOME = pathlib.Path(os.environ["WP_HOME"])
-# NOT under WP_HOME/logs: that directory is a registered store whose files the erasure gate inventories (only *.log is
-# allowed), so a harness file there makes every erasure report gate:unregistered residue (the 1f059f4 run was voided
-# by exactly this).
+# NOT under WP_HOME/logs: that directory is a registered store the erasure gate inventories.
 STATE_DIR = HOME / "state"
 STATE = STATE_DIR / "disk_gate.json"
-STOP = STATE_DIR / "STOP"                  # legacy stop file: ingested into the ledger, never deleted by the gate
-LEDGER = STATE_DIR / "stop_ledger.jsonl"   # append-only, hash-chained: stop, ack, admit, end
+STOP = STATE_DIR / "STOP"                      # kept as a directory: legacy writers fail (GATE-DESIGN 5.5)
+LEDGER = STATE_DIR / "stop_ledger.jsonl"       # append-only, hash-chained: init, stop, ack, admit, end
+HEAD = STATE_DIR / "stop_ledger.head"          # count and SHA-256 of the last record, replaced atomically
 LOCK = STATE_DIR / "stop_ledger.lock"
-RUNS = STATE_DIR / "gate-runs"             # per run: run.json, capture.jsonl, companion.err (kept as evidence)
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-MARK = "wp16096-disk-gate"
+DATA = {"es": "/usr/share/elasticsearch/data", "pg": "/var/lib/postgresql/data"}
+NAMES = {"es": "ES", "pg": "PG"}
+PROC_ROOT = pathlib.Path("/proc")
+CGROUP_ROOT = pathlib.Path("/sys/fs/cgroup")
 CLOCK_SLACK_S = 2.0
-SYNC_TIMEOUT_S = 30.0
-CLOSE_TIMEOUT_S = 30.0
+JVM_BIND_S = 300
+API_TIMEOUT_S = 10
 DOCKER_TIMEOUT_S = 300
-DEADLINE_S = 48 * 3600
-POLL_S = 0.05
-ALLOWED_EVENTS = ("exec_create", "exec_start", "exec_die", "exec_detach", "top", "archive-path")
-DRIVERS = ("json-file", "local")
-API_TIMEOUT_S = 10                          # one ES API read (GATE-DESIGN 4.3)
-JVM_BIND_S = 300                            # the node's JVM must start within this after the container's StartedAt
-WATERMARKS = ("low", "high", "flood_stage")
-_UNITS = {"b": 1, "kb": 1024, "mb": 1024 ** 2, "gb": 1024 ** 3, "tb": 1024 ** 4, "pb": 1024 ** 5}
-
-
-def _sample_s():
-    """The companion's ES API sampling interval: 10 s; DISK_GATE_SAMPLE_S may only shorten it (tests use 0.5 s)."""
-    try:
-        return max(0.2, min(10.0, float(os.environ.get("DISK_GATE_SAMPLE_S") or 10.0)))
-    except ValueError:
-        return 10.0
-
-
-SAMPLE_S = _sample_s()
-SAMPLE_GAP_S = SAMPLE_S + 2 * API_TIMEOUT_S + 10   # a longer gap between samples means the sampler stalled or died
-_sleep = time.sleep
 
 
 class GateError(Exception):
@@ -114,10 +92,247 @@ def _docker(*args, timeout=None):
                           timeout=timeout or DOCKER_TIMEOUT_S)
 
 
-# ------------------------------------------------------------------------------- Elasticsearch's own report (4.3)
+def _ms(rfc):
+    """Docker's RFC3339Nano UTC time in epoch milliseconds."""
+    base, _, frac = str(rfc).rstrip("Z").partition(".")
+    return calendar.timegm(time.strptime(base, "%Y-%m-%dT%H:%M:%S")) * 1000 + int((frac + "000")[:3])
+
+
+def _boot_id():
+    try:
+        return pathlib.Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+    except OSError:
+        return None
+
+
+def _fsync_dir(d):
+    try:
+        fd = os.open(d, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    except OSError:
+        pass
+    finally:
+        os.close(fd)
+
+
+def _write_json(p, obj):
+    tmp = p.with_name(p.name + ".tmp")
+    with open(tmp, "w") as f:
+        f.write(json.dumps(obj))
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, p)
+    _fsync_dir(p.parent)
+
+
+# ------------------------------------------------------------------------------------------------------ stop ledger
+def _read_head():
+    try:
+        h = json.loads(HEAD.read_text())
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError):
+        raise LedgerError("the ledger's head anchor cannot be read") from None
+    if not (isinstance(h, dict) and isinstance(h.get("count"), int) and h["count"] >= 1 and isinstance(h.get("tip"), str)):
+        raise LedgerError("the ledger's head anchor is malformed")
+    return h
+
+
+def _read_ledger():
+    """(records, hash of the last record), or (None, None) when there is no ledger yet. A LedgerError for any edit,
+    removal, reordering or partial record, for fewer records than the head anchor holds or a different record at its
+    position (truncated or replaced), for a missing ledger whose anchor remains, and for a v3 ledger without anchor."""
+    head = _read_head()
+    try:
+        raw = LEDGER.read_bytes()
+    except FileNotFoundError:
+        if head:
+            raise LedgerError(f"the stop ledger is missing but its head anchor says it held {head['count']} records")
+        return None, None
+    if raw and not raw.endswith(b"\n"):
+        raise LedgerError("the stop ledger ends in a partial record")
+    recs, prev, hashes = [], "0" * 64, []
+    for i, ln in enumerate(raw.split(b"\n")[:-1]):
+        try:
+            r = json.loads(ln)
+        except ValueError:
+            raise LedgerError(f"stop ledger record {i + 1} is not JSON") from None
+        if not isinstance(r, dict) or r.get("seq") != i + 1 or r.get("prev") != prev:
+            raise LedgerError(f"stop ledger record {i + 1} breaks the sequence or the hash chain (edited or removed)")
+        recs.append(r)
+        prev = hashlib.sha256(ln).hexdigest()
+        hashes.append(prev)
+    if head:
+        n = head["count"]
+        if len(recs) < n or hashes[n - 1] != head["tip"]:
+            raise LedgerError(f"the stop ledger holds {len(recs)} records, but its head anchor holds {n} with a "
+                              f"different last record: truncated or replaced")
+    elif any(r.get("kind") == "init" for r in recs):
+        raise LedgerError("the head anchor of this ledger is missing")
+    elif not recs:
+        return None, None                           # an empty file and no anchor: not a ledger yet
+    return recs, prev
+
+
+class Ledger:
+    """The stop ledger under an exclusive flock, verified on entry; nothing is ever rewritten. `need` (default True)
+    makes a missing ledger a LedgerError. A v2 ledger (intact chain, no init, no anchor) is adopted once."""
+
+    def __init__(self, need=True):
+        self.need = need
+
+    def __enter__(self):
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        self._f = open(LOCK, "a")
+        fcntl.flock(self._f, fcntl.LOCK_EX)
+        try:
+            self.recs, self.prev = _read_ledger()
+            if self.recs is None and self.need:
+                raise LedgerError("there is no stop ledger in this home: run 'python -m exp.disk_gate init <reason>' "
+                                  "(a deleted ledger is never read as an empty one)")
+            if self.recs is not None and not any(r.get("kind") == "init" for r in self.recs):
+                self.append("init", v=FORMAT, source="adopted a v2 ledger", v2_records=len(self.recs))
+            if self.recs is not None:
+                self.legacy()
+        except BaseException:
+            self.__exit__()
+            raise
+        return self
+
+    def __exit__(self, *a):
+        fcntl.flock(self._f, fcntl.LOCK_UN)
+        self._f.close()
+        return False
+
+    def append(self, kind, **kw):
+        recs = self.recs or []
+        rec = dict(kw, seq=len(recs) + 1, prev=self.prev or "0" * 64, kind=kind, at=_utc())
+        ln = json.dumps(rec, sort_keys=True).encode()
+        fd = os.open(LEDGER, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+        try:
+            os.write(fd, ln + b"\n")
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        self.recs = recs + [rec]
+        self.prev = hashlib.sha256(ln).hexdigest()
+        _write_json(HEAD, {"count": len(self.recs), "tip": self.prev, "at": rec["at"]})
+        return rec
+
+    def legacy(self):
+        """Keep state/STOP a directory (GATE-DESIGN 5.5). A regular file there is a stop: record it, keep it under a
+        new name, make the directory; retried while a legacy writer recreates the file."""
+        for _ in range(10):
+            try:
+                st = os.lstat(STOP)
+            except FileNotFoundError:
+                try:
+                    STOP.mkdir()
+                    (STOP / "README").write_text("Not a stop file. Record a stop with: python -m exp.disk_gate stop "
+                                                 "<reason> (GATE-DESIGN 5.5).\n")
+                    return
+                except FileExistsError:
+                    continue
+            if stat.S_ISDIR(st.st_mode):
+                return
+            if stat.S_ISREG(st.st_mode):
+                try:
+                    text = STOP.read_bytes()[:400].decode("utf-8", "replace").strip()[:200]
+                except OSError:
+                    text = ""
+                reason = f"written reason: {text}" if text else "no reason written in the file (writer unknown)"
+            else:
+                reason = "state/STOP was not a regular file (not read)"
+            rec = self.append("stop", id=_new_id(), source="state/STOP file", reason=reason)
+            try:
+                os.replace(STOP, STATE_DIR / f"STOP.ingested-{rec['seq']}")
+            except FileNotFoundError:
+                pass
+        raise LedgerError("state/STOP keeps reappearing as a file; a legacy writer is still running")
+
+    def open_stops(self):
+        acked = {r.get("stop_id") for r in self.recs if r["kind"] == "ack"}
+        return [r for r in self.recs if r["kind"] == "stop" and r["id"] not in acked]
+
+    def closed(self, run):
+        return any(r["kind"] == "end" and r.get("run") == run for r in self.recs)
+
+    def open_run(self):
+        adm = [r for r in self.recs if r["kind"] == "admit" and not self.closed(r["run"])]
+        return adm[-1] if adm else None
+
+    def admitted(self, run, seq):
+        return any(r["kind"] == "admit" and r.get("run") == run and r["seq"] == seq and r.get("v") == FORMAT
+                   for r in self.recs)
+
+    def stops_after(self, seq):
+        return [r for r in self.recs if r["kind"] == "stop" and r["seq"] > seq]
+
+
+def _stop_text(s):
+    return f"stop {s['id']} at seq {s['seq']} ({s.get('source')}): {s.get('reason')}"
+
+
+def open_stops():
+    with Ledger() as L:
+        return L.open_stops()
+
+
+def _admission_blocker(L):
+    op = L.open_stops()
+    if op:
+        return ("unacknowledged stop(s): " + "; ".join(_stop_text(s) for s in op) +
+                "; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'")
+    o = L.open_run()
+    if o:
+        return (f"run {o['run']} (admitted at seq {o['seq']}) has no end record; if its launcher died: "
+                f"'python -m exp.disk_gate abort <reason>'")
+    return None
+
+
+# ------------------------------------------------------------------------------------------------------- evidence
+def _inspect(ref):
+    try:
+        r = _docker("inspect", ref, timeout=60)
+        j = json.loads(r.stdout) if r.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return None
+    return j[0] if isinstance(j, list) and j and isinstance(j[0], dict) else None
+
+
+def _cgroup(j):
+    """The container's cgroup v2 memory figures (bytes, or "max" for no limit) and its oom_kill count. The cgroup is
+    the one /proc/<Pid>/cgroup names, and its path must name the container's full Id."""
+    pid, cid = (j.get("State") or {}).get("Pid"), j.get("Id") or ""
+    try:
+        lines = (PROC_ROOT / str(int(pid)) / "cgroup").read_text().splitlines()
+    except (OSError, TypeError, ValueError):
+        raise GateError(f"cannot read the cgroup of the container's PID {pid}") from None
+    path = next((x[3:] for x in lines if x.startswith("0::")), None)
+    if not path or len(cid) < 64 or cid not in path:
+        raise GateError("the container's PID is not in a cgroup v2 group named by its Id")
+    d = CGROUP_ROOT / path.lstrip("/")
+
+    def rd(name):
+        v = (d / name).read_text().strip()
+        return int(v) if v.isdigit() else v
+    try:
+        ev = dict(x.split() for x in (d / "memory.events").read_text().splitlines())
+        out = {"max": rd("memory.max"), "swap": rd("memory.swap.max"), "peak": rd("memory.peak"),
+               "oom_kill": int(ev["oom_kill"])}
+    except (OSError, ValueError, KeyError) as e:
+        raise GateError(f"cannot read the container's cgroup memory files ({type(e).__name__})") from None
+    if not isinstance(out["peak"], int):
+        raise GateError("the container's cgroup memory.peak is not a number")
+    return out
+
+
 def _es_get(path):
-    """GET from the stream's ES with the gate's auth header, which stays in this process's memory: never on a command
-    line (docker exec text reaches the events stream and so the capture), never printed. Returns (status, body)."""
+    """GET from the stream's ES with the gate's auth header, held in this process's memory only: never on a command
+    line, never printed or written. Returns (status, body)."""
     req = urllib.request.Request(config.ES_URL.rstrip("/") + path)
     try:
         h = config.es_auth_header()
@@ -134,540 +349,154 @@ def _es_get(path):
         return type(e).__name__, None
 
 
-def _bytes(v):
-    """An ES byte value ("2gb", "500mb") in bytes; None for a percentage, a ratio or anything else."""
-    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*(b|kb|mb|gb|tb|pb)\s*", str(v).lower())
-    return int(float(m.group(1)) * _UNITS[m.group(2)]) if m else None
-
-
-def _ms(rfc):
-    """Docker's RFC3339Nano UTC time in epoch milliseconds."""
-    base, _, frac = str(rfc).rstrip("Z").partition(".")
-    return calendar.timegm(time.strptime(base, "%Y-%m-%dT%H:%M:%S")) * 1000 + int((frac + "000")[:3])
-
-
-def _es_read(es_j, ident):
-    """ES's own report of its disk, bound to the pinned container: (evidence, reasons). The evidence holds HTTP status
-    codes, settings of the disk decider and loggers, and byte counts only."""
+def _es_fs(j):
+    """ES's own view of its data path, from the API bound to the pinned container: (evidence, reasons)."""
     why, port = [], str(config.ES_PORT)
-    ports = (es_j.get("NetworkSettings") or {}).get("Ports") or {}
+    ports = (j.get("NetworkSettings") or {}).get("Ports") or {}
     if not any(b.get("HostIp") == "127.0.0.1" and str(b.get("HostPort")) == port
                for bs in ports.values() for b in (bs or [])):
-        why.append(f"the pinned ES container does not publish es_url's port {port} on 127.0.0.1, so the API may "
-                   "answer for another process")
-    s1, sb = _es_get("/_cluster/settings?include_defaults=true&flat_settings=true")
-    s2, nb = _es_get("/_nodes/_local/stats/fs,jvm")
-    ev = {"settings_status": s1, "stats_status": s2}
-    if s1 != 200 or s2 != 200 or not isinstance(sb, dict) or not isinstance(nb, dict):
-        return ev, why + [f"the ES API could not be read (settings {s1}, node stats {s2})"]
-    eff = {}
-    for section in ("defaults", "persistent", "transient"):     # later sections override earlier ones
-        eff.update(sb.get(section) or {})
-    ev["settings"] = {k: str(v) for k, v in eff.items()
-                      if k.startswith("cluster.routing.allocation.disk.") or k.startswith("logger.")}
-    if str(eff.get("cluster.routing.allocation.disk.threshold_enabled", "true")).lower() != "true":
-        why.append("ES disk thresholds are disabled (cluster.routing.allocation.disk.threshold_enabled)")
-    wm = {w: _bytes(eff.get(f"cluster.routing.allocation.disk.watermark.{w}")) for w in WATERMARKS}
-    ev["watermarks"] = wm
-    if None in wm.values():
-        why.append("ES watermarks are not all byte values (the gate does not evaluate percentages or max_headroom)")
-    nodes = list((nb.get("nodes") or {}).values())
+        why.append(f"the pinned ES container does not publish es_url's port {port} on 127.0.0.1, so the API may answer "
+                   "for another process")
+    code, nb = _es_get("/_nodes/_local/stats/fs,jvm")
+    if code != 200 or not isinstance(nb, dict):
+        return None, why + [f"the ES API could not be read (node stats {code})"]
+    nodes = nb.get("nodes") or {}
     if len(nodes) != 1:
-        return ev, why + [f"the ES API reported {len(nodes)} local nodes"]
-    fs, jvm = (nodes[0].get("fs") or {}).get("data") or [], nodes[0].get("jvm") or {}
+        return None, why + [f"the ES API reported {len(nodes)} local nodes"]
+    (node_id, node), = nodes.items()
+    paths = (node.get("fs") or {}).get("data") or []
+    if len(paths) != 1 or paths[0].get("path") != DATA["es"]:
+        return None, why + [f"ES does not report exactly one data path, at {DATA['es']} ({len(paths)} reported)"]
+    p, jvm = paths[0], node.get("jvm") or {}
     try:
-        ev["jvm_start_ms"] = int(jvm["timestamp"]) - int(jvm["uptime_in_millis"])
-        ev["min_free_bytes"] = min(min(int(p["available_in_bytes"]), int(p["free_in_bytes"])) for p in fs)
+        ev = {"node": node_id, "type": p.get("type"), "total": int(p["total_in_bytes"]),
+              "free": min(int(p["free_in_bytes"]), int(p["available_in_bytes"])),
+              "thr": [int(p["low_watermark_free_space_in_bytes"]), int(p["high_watermark_free_space_in_bytes"]),
+                      int(p["flood_stage_free_space_in_bytes"])],
+              "jvm_start_ms": int(jvm["timestamp"]) - int(jvm["uptime_in_millis"])}
     except (KeyError, TypeError, ValueError):
-        return ev, why + ["the ES node stats lack data-path or JVM figures"]
-    lag = (ev["jvm_start_ms"] - _ms(ident["started"])) / 1000
-    if not -CLOCK_SLACK_S <= lag <= JVM_BIND_S:
-        why.append(f"the ES API's JVM did not start with the pinned container (JVM start {lag:+.0f} s from its "
-                   "StartedAt): the API answers for another process or run")
-    if wm["high"] is not None and ev["min_free_bytes"] < wm["high"]:
-        why.append(f"ES reports {ev['min_free_bytes'] / GIB:.2f} GiB free on a data path, below its high watermark "
-                   f"({wm['high'] / GIB:.2f} GiB)")
+        return None, why + ["the ES node stats lack the data path's size, free space, watermark thresholds or JVM figures"]
+    if ev["type"] != "tmpfs":
+        why.append(f"ES reports its data path on {ev['type']}, not tmpfs: its free space is shared with other tenants")
     return ev, why
 
 
-def _api_why(st, when):
-    """Reasons from ES's own report at a check or at end, against the admission reading."""
-    a0 = st.get("api0")
-    if not a0:
-        return ["ES API: no admission reading in the gate state (written by an older gate)"]
-    j = _inspect(st["es"]["id"])
-    if j is None:
-        return [f"ES API {when}: the pinned ES container cannot be inspected"]
-    ev, w = _es_read(j, st["es"])
-    out = [f"ES API {when}: {x}" for x in w]
-    if "settings" in ev and ev["settings"] != a0.get("settings"):
-        s0 = a0.get("settings") or {}
-        keys = sorted(k for k in set(s0) | set(ev["settings"]) if s0.get(k) != ev["settings"].get(k))
-        out.append(f"ES API {when}: disk or logger settings changed during the run ({', '.join(keys)[:300]})")
-    if "min_free_bytes" in ev:
-        print(f"disk_gate api {when}: min free {ev['min_free_bytes'] / GIB:.2f} GiB, high watermark "
-              f"{(ev['watermarks']['high'] or 0) / GIB:.2f} GiB")
-    return out
-
-
-def _bad(text):
-    """The amendment-23a predicates: past the HIGH watermark the node allocates no new primaries (d3 at 31112b4: 503
-    unavailable_shards_exception); at the flood stage writes are refused. The low watermark only stops replicas.
-    Hyphens count as spaces: ES logs "flood stage disk watermark", Elastic's troubleshooting page writes "flood-stage
-    watermark"; underscores do not, so a settings line naming watermark.flood_stage is not a watermark event."""
-    t = text.lower().replace("-", " ")
-    if "flood stage" in t:
-        return "flood-stage"
-    if "high disk watermark" in t and "exceeded" in t:
-        return "high-watermark"
-    return None
-
-
-def _boot_id():
+def _pg_fs(cid):
+    """PG's data directory filesystem, from statfs inside the container (the exec text holds no secret)."""
     try:
-        return pathlib.Path("/proc/sys/kernel/random/boot_id").read_text().strip()
-    except OSError:
-        return None
-
-
-def _alive(pid):
-    if not pid:
-        return False
-    try:
-        if os.waitpid(pid, os.WNOHANG)[0] == pid:   # our own child (a test) that already exited
-            return False
-    except ChildProcessError:
-        pass
-    try:
-        os.kill(pid, 0)                             # signal 0: existence only, nothing is sent
-        return True
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-
-
-def _write_json(p, obj):
-    tmp = p.with_name(p.name + ".tmp")
-    tmp.write_text(json.dumps(obj))
-    os.replace(tmp, p)
-
-
-# ------------------------------------------------------------------------------------------------------ stop ledger
-def _read_ledger():
-    """(records, hash of the last record). Any edit, removal, reordering or partial record is a LedgerError."""
-    try:
-        raw = LEDGER.read_bytes()
-    except FileNotFoundError:
-        return [], "0" * 64
-    if raw and not raw.endswith(b"\n"):
-        raise LedgerError("the stop ledger ends in a partial record")
-    recs, prev = [], "0" * 64
-    for i, ln in enumerate(raw.split(b"\n")[:-1]):
-        try:
-            r = json.loads(ln)
-        except ValueError:
-            raise LedgerError(f"stop ledger record {i + 1} is not JSON") from None
-        if not isinstance(r, dict) or r.get("seq") != i + 1 or r.get("prev") != prev:
-            raise LedgerError(f"stop ledger record {i + 1} breaks the sequence or the hash chain (edited or removed records)")
-        recs.append(r)
-        prev = hashlib.sha256(ln).hexdigest()
-    return recs, prev
-
-
-class Ledger:
-    """The stop ledger under an exclusive flock, verified on entry. Appends are fsynced; nothing is ever rewritten."""
-
-    def __enter__(self):
-        STATE_DIR.mkdir(parents=True, exist_ok=True)
-        self._f = open(LOCK, "a")
-        fcntl.flock(self._f, fcntl.LOCK_EX)
-        try:
-            self.recs, self.prev = _read_ledger()
-        except LedgerError:
-            self.__exit__()
-            raise
-        return self
-
-    def __exit__(self, *a):
-        fcntl.flock(self._f, fcntl.LOCK_UN)
-        self._f.close()
-        return False
-
-    def append(self, kind, **kw):
-        rec = dict(kw, seq=len(self.recs) + 1, prev=self.prev, kind=kind, at=_utc())
-        ln = json.dumps(rec, sort_keys=True).encode()
-        fd = os.open(LEDGER, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
-        try:
-            os.write(fd, ln + b"\n")
-            os.fsync(fd)
-        finally:
-            os.close(fd)
-        self.recs.append(rec)
-        self.prev = hashlib.sha256(ln).hexdigest()
-        return rec
-
-    def ingest_legacy(self):
-        """A state/STOP file (old instructions, other scripts) becomes a stop record; a file not yet recorded (by inode,
-        size, mtime and content) is a new stop. The file is left in place."""
-        try:
-            stt = os.stat(STOP)
-            data = STOP.read_bytes()
-        except FileNotFoundError:
-            return
-        fp = f"{stt.st_ino}:{stt.st_size}:{stt.st_mtime_ns}:{hashlib.sha256(data).hexdigest()[:16]}"
-        if any(r["kind"] == "stop" and r.get("fingerprint") == fp for r in self.recs):
-            return
-        text = data.decode("utf-8", "replace").strip()[:200]
-        self.append("stop", id=_new_id(), source="state/STOP file", fingerprint=fp,
-                    reason=f"written reason: {text}" if text else "no reason written in the file (writer unknown)")
-
-    def open_stops(self):
-        acked = {r.get("stop_id") for r in self.recs if r["kind"] == "ack"}
-        return [r for r in self.recs if r["kind"] == "stop" and r["id"] not in acked]
-
-    def closed(self, run):
-        return any(r["kind"] == "end" and r.get("run") == run for r in self.recs)
-
-    def open_run(self):
-        adm = [r for r in self.recs if r["kind"] == "admit" and not self.closed(r["run"])]
-        return adm[-1] if adm else None
-
-    def stops_after(self, seq):
-        return [r for r in self.recs if r["kind"] == "stop" and r["seq"] > seq]
-
-
-def _stop_text(s):
-    return f"stop {s['id']} at seq {s['seq']} ({s.get('source')}): {s.get('reason')}"
-
-
-def open_stops():
-    with Ledger() as L:
-        L.ingest_legacy()
-        return L.open_stops()
-
-
-def _admission_blocker(L):
-    op = L.open_stops()
-    if op:
-        return ("unacknowledged stop(s): " + "; ".join(_stop_text(s) for s in op) +
-                "; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'")
-    o = L.open_run()
-    if o:
-        return (f"run {o['run']} (admitted at seq {o['seq']}) has no end record; if its launcher died: "
-                f"'python -m exp.disk_gate abort <reason>'")
-    return None
-
-
-# ---------------------------------------------------------------------------------------------- containers, usage
-def _inspect(ref):
-    try:
-        r = _docker("inspect", ref, timeout=60)
-        j = json.loads(r.stdout) if r.returncode == 0 else None
+        r = _docker("exec", cid, "stat", "-f", "-c", "%T %b %S %a", DATA["pg"], timeout=60)
+        typ, b, s, a = r.stdout.decode("utf-8", "replace").split()
+        if r.returncode != 0:
+            raise ValueError
+        ev = {"type": typ, "total": int(b) * int(s), "free": int(a) * int(s), "thr": [0, 0, 0]}
     except (OSError, subprocess.TimeoutExpired, ValueError):
-        return None
-    return j[0] if isinstance(j, list) and j and isinstance(j[0], dict) else None
+        return None, ["the PG data directory's statfs could not be read"]
+    if typ != "tmpfs":
+        return ev, [f"PG's data directory is on {typ}, not tmpfs: its free space is shared with other tenants"]
+    return ev, []
 
 
-def _ident(j):
+def _observe(key, ref):
+    """(evidence, reasons) for one container, by name at start and by Id after: the start rules R1 to R4."""
+    K = NAMES[key]
+    j = _inspect(ref)
+    if j is None:
+        return None, [f"the {K} container {str(ref)[:12]} cannot be inspected (removed or replaced)"]
     s = j.get("State") or {}
-    return {"id": j.get("Id"), "name": (j.get("Name") or "").lstrip("/"), "started": s.get("StartedAt"),
-            "restarts": j.get("RestartCount"), "running": s.get("Running"), "paused": s.get("Paused")}
-
-
-def _num(r):
-    o = r.stdout.decode("utf-8", "replace").split()
-    return int(o[0]) if r.returncode == 0 and o and o[0].isdigit() else None
-
-
-def own(es, pg):
-    """du of this stream's PG and ES data directories (addressed by container ID) plus WP_HOME, in bytes."""
+    ev = {"id": j.get("Id"), "name": (j.get("Name") or "").lstrip("/"), "started": s.get("StartedAt")}
+    why = []
+    if not s.get("Running") or s.get("Paused"):
+        why.append(f"the {K} container is not running or is paused")
+    if s.get("OOMKilled"):
+        why.append(f"Docker reports an OOM kill in the {K} container")
+    mounts, data = j.get("Mounts") or [], DATA[key]
+    at = [m for m in mounts if m.get("Destination") == data]
+    if len(at) != 1 or at[0].get("Type") != "tmpfs":
+        kind = at[0].get("Type") if at else "the container's own layer"
+        why.append(f"the {K} data directory {data} is not a Docker tmpfs mount ({kind}): its free space is shared "
+                   "with other tenants")
+    inside = sorted(m.get("Destination") for m in mounts if str(m.get("Destination", "")).startswith(data + "/"))
+    if inside:
+        why.append(f"a mount inside the data directory ({', '.join(inside)[:200]}) is outside the private tmpfs")
     try:
-        pgb = _num(_docker("exec", pg, "du", "-sb", "/var/lib/postgresql/data", timeout=600))
-        esb = _num(_docker("exec", es, "du", "-sb", "/usr/share/elasticsearch/data", timeout=600))
-        home = _num(subprocess.run(["du", "-sb", str(HOME)], capture_output=True, timeout=600))
-    except (OSError, subprocess.TimeoutExpired) as e:
-        raise GateError(f"cannot measure own usage ({type(e).__name__})") from None
-    if None in (pgb, esb, home):
-        raise GateError(f"cannot measure own usage (pg={pgb} es={esb} home={home})")
-    return {"pg": pgb, "es": esb, "home": home, "total": pgb + esb + home}
+        ev["cg"] = _cgroup(j)
+    except GateError as e:
+        why.append(f"{K}: {e}")
+    fs, w = _es_fs(j) if key == "es" else _pg_fs(ev["id"])
+    ev["fs"] = fs
+    why += [f"{K}: {x}" if not x.startswith(("the ", "ES ", "PG")) else x for x in w]
+    cg = ev.get("cg")
+    if fs and cg:
+        T = max(fs["thr"])
+        bound = fs["total"] - T - MARGIN
+        if not isinstance(cg["max"], int):
+            why.append(f"the {K} container has no memory limit (memory.max {cg['max']}): its tmpfs use is unbounded")
+        elif cg["swap"] != 0:
+            why.append(f"the {K} container may swap (memory.swap.max {cg['swap']}): tmpfs pages can leave the memory "
+                       "bound")
+        elif cg["max"] > bound:
+            why.append(f"the {K} memory limit {cg['max'] / GIB:.2f} GiB can bring free space below "
+                       f"{'the low watermark' if key == 'es' else 'the margin'}: tmpfs {fs['total'] / GIB:.2f} GiB, "
+                       f"threshold {T / GIB:.2f} GiB, margin {MARGIN / GIB:.2f} GiB, bound {bound / GIB:.2f} GiB")
+        if cg["peak"] > bound:
+            why.append(f"the {K} container's lifetime memory peak {cg['peak'] / GIB:.2f} GiB exceeds the bound "
+                       f"{bound / GIB:.2f} GiB: its tmpfs free space may have reached the threshold")
+    return ev, why
+
+
+def _drift(now, adm):
+    """R4 and R5: what differs from admission (Id, StartedAt, node id, oom_kill, limit, swap, size, thresholds)."""
+    why = []
+    for key in ("es", "pg"):
+        K, a, n = NAMES[key], adm[key], now.get(key)
+        if n is None:
+            continue
+        if n["id"] != a["id"]:
+            why.append(f"the {K} container was replaced ({a['id'][:12]} -> {str(n['id'])[:12]})")
+        if n["started"] != a["started"]:
+            why.append(f"the {K} container restarted: StartedAt {a['started']} -> {n['started']}")
+        ac, nc = a.get("cg") or {}, n.get("cg") or {}
+        if nc and ac:
+            if nc["oom_kill"] != ac["oom_kill"]:
+                why.append(f"an OOM kill in the {K} container during the run (oom_kill {ac['oom_kill']} -> "
+                           f"{nc['oom_kill']})")
+            if (nc["max"], nc["swap"]) != (ac["max"], ac["swap"]):
+                why.append(f"the {K} memory limit or swap changed during the run")
+        af, nf = a.get("fs") or {}, n.get("fs") or {}
+        if nf and af:
+            if nf["total"] != af["total"]:
+                why.append(f"the {K} tmpfs size changed during the run")
+            if key == "es" and nf["node"] != af["node"]:
+                why.append("the ES node id changed: its data path was wiped or replaced during the run")
+            if key == "es" and nf["thr"] != af["thr"]:
+                why.append("ES's watermark thresholds changed during the run")
+    return why
+
+
+def _home_bytes():
+    try:
+        r = subprocess.run(["du", "-sb", str(HOME)], capture_output=True, timeout=600)
+        o = r.stdout.decode("utf-8", "replace").split()
+        if r.returncode == 0 and o and o[0].isdigit():
+            return int(o[0])
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    raise GateError("cannot measure WP_HOME's size")
 
 
 def free_gb():
     return shutil.disk_usage(HOME).free / GIB
 
 
-# ------------------------------------------------------------------------------------------------- capture companion
-def _write_token(es, token):
-    """One line on PID 1's stdout and one on its stderr: the two streams the log driver records."""
-    ok = True
-    for fd in (1, 2):
-        try:
-            ok = _docker("exec", es, "sh", "-c", f"echo {token} > /proc/1/fd/{fd}", timeout=60).returncode == 0 and ok
-        except (OSError, subprocess.TimeoutExpired):
-            ok = False
-    return ok
-
-
-def _read_capture(rd):
-    """(records, problem): complete records with contiguous numbers and an intact hash chain; a trailing partial
-    record (the companion mid-write) is ignored."""
-    try:
-        raw = (rd / "capture.jsonl").read_bytes()
-    except FileNotFoundError:
-        return [], "no capture file"
-    recs, h = [], "0" * 64
-    for i, ln in enumerate(raw.split(b"\n")[:-1]):
-        try:
-            r = json.loads(ln)
-            body = {k: v for k, v in r.items() if k != "h"}
-        except (ValueError, AttributeError):
-            return recs, f"capture record {i} is not a JSON object"
-        want = hashlib.sha256((h + json.dumps(body, sort_keys=True)).encode()).hexdigest()
-        if r.get("n") != i or r.get("h") != want:
-            return recs, f"capture record {i} breaks the sequence or the hash chain (edited, removed or reordered)"
-        h = want
-        recs.append(r)
-    return recs, None
-
-
-def _await_token(rd, token, timeout):
-    """None once the token is captured on both streams and an exec event carrying it is in the events capture."""
-    t0 = time.monotonic()
-    while time.monotonic() - t0 < timeout:
-        recs, problem = _read_capture(rd)
-        if problem:
-            return problem
-        streams = {r["s"] for r in recs if r["k"] == "log" and r["x"].strip() == token}
-        if streams == {"o", "e"} and any(r["k"] == "ev" and token in (r["e"].get("Action") or "") for r in recs):
-            return None
-        if any(r["k"] == "final" for r in recs):
-            return "the capture companion ended before the token was captured"
-        _sleep(POLL_S)
-    return (f"the token was not captured on both streams and in the events stream within {timeout:.0f} s "
-            f"(watchers not attached or not caught up)")
-
-
-def _stop_companion(rd, timeout):
-    """Ask the companion to stop (a file in its run directory; never a signal to a pid) and wait for its final record."""
-    (rd / "stop").touch()
-    t0 = time.monotonic()
-    while True:
-        recs, problem = _read_capture(rd)
-        if problem or any(r["k"] == "final" for r in recs) or time.monotonic() - t0 > timeout:
-            return recs, problem
-        _sleep(POLL_S)
-
-
-def _capture(rd):
-    """The companion: copies the ES container's log stream and the two containers' events into capture.jsonl until
-    end asks it to stop, a stream closes, its run is closed or never admitted, or the deadline passes."""
-    rd = pathlib.Path(rd)
-    run = json.loads((rd / "run.json").read_text())
-    es, pg = run["es"]["id"], run["pg"]["id"]
-    PIPE, NUL = subprocess.PIPE, subprocess.DEVNULL
-    procs = {"logs": subprocess.Popen(["docker", "logs", "--follow", "--tail", "0", "--timestamps", es],
-                                      stdout=PIPE, stderr=PIPE, stdin=NUL),
-             "events": subprocess.Popen(["docker", "events", "--filter", f"container={es}", "--filter",
-                                         f"container={pg}", "--format", "{{json .}}"], stdout=PIPE, stderr=NUL, stdin=NUL)}
-    q = queue.Queue()
-
-    def pump(pipe, kind, src):
-        for raw in iter(pipe.readline, b""):
-            q.put((kind, raw.decode("utf-8", "replace").rstrip("\n")))
-        q.put(("eof", src))
-    threads = [threading.Thread(target=pump, args=a, daemon=True) for a in
-               ((procs["logs"].stdout, "o", "log stdout"), (procs["logs"].stderr, "e", "log stderr"),
-                (procs["events"].stdout, "ev", "events"))]
-    for t in threads:
-        t.start()
-    halt = threading.Event()
-
-    def sampler():
-        """ES's own report every SAMPLE_S (GATE-DESIGN 4.3), bound to the pinned container; never dies silently."""
-        while not halt.is_set():
-            try:
-                j = _inspect(es)
-                q.put(("api", _es_read(j, run["es"]) if j else ({}, ["the pinned ES container cannot be inspected"])))
-            except Exception as e:                    # noqa: BLE001 - reported as a reason, judged VOID
-                q.put(("api", ({}, [f"the ES API sampler failed ({type(e).__name__})"])))
-            halt.wait(SAMPLE_S)
-    smp = threading.Thread(target=sampler, daemon=True)
-    smp.start()
-    out = open(rd / "capture.jsonl", "ab")
-    s = {"n": 0, "h": "0" * 64, "flagged": False, "api_flagged": False, "draining": False}
-
-    def emit(rec):
-        rec["n"] = s["n"]
-        rec["h"] = hashlib.sha256((s["h"] + json.dumps(rec, sort_keys=True)).encode()).hexdigest()
-        out.write((json.dumps(rec, sort_keys=True) + "\n").encode())
-        out.flush()
-        s["n"], s["h"] = s["n"] + 1, rec["h"]
-
-    def handle(kind, payload):
-        if kind in ("o", "e"):
-            ts, _, text = payload.partition(" ")
-            emit({"k": "log", "s": kind, "t": ts, "x": text})
-            bad = _bad(text)
-            if bad and not s["flagged"]:             # replaces the launcher's wall-clock watcher
-                s["flagged"] = True
-                try:
-                    with Ledger() as L:
-                        L.append("stop", id=_new_id(), source="gate capture", run=run["run"],
-                                 reason=f"gate capture: a {bad} line in the ES log at {ts}")
-                except (OSError, LedgerError):
-                    pass                              # the line is in the capture, and end judges it
-        elif kind == "ev":
-            try:
-                e = json.loads(payload)
-            except ValueError:
-                e = {"Type": "unparsed", "Action": payload[:200]}
-            emit({"k": "ev", "e": {"Type": e.get("Type"), "Action": e.get("Action") or e.get("status"),
-                                   "id": (e.get("Actor") or {}).get("ID") or e.get("id")}})
-        elif kind == "api":                           # status codes, byte counts and a settings hash only
-            ev, w = payload
-            sha = (hashlib.sha256(json.dumps(ev["settings"], sort_keys=True).encode()).hexdigest()
-                   if "settings" in ev else None)
-            emit({"k": "api", "m": round(time.monotonic(), 3), "why": w, "free": ev.get("min_free_bytes"),
-                  "high": (ev.get("watermarks") or {}).get("high"), "settings_sha": sha,
-                  "status": [ev.get("settings_status"), ev.get("stats_status")]})
-            if w and not s["api_flagged"]:
-                s["api_flagged"] = True
-                try:
-                    with Ledger() as L:
-                        L.append("stop", id=_new_id(), source="gate capture", run=run["run"],
-                                 reason=f"gate capture: ES API: {w[0][:200]}")
-                except (OSError, LedgerError):
-                    pass                              # the sample is in the capture, and end judges it
-        else:
-            emit({"k": "eof", "src": payload, "after_stop": s["draining"]})
-            return payload
-        return None
-
-    emit({"k": "ready", "pid": os.getpid()})
-    reason, t0, polled = None, time.monotonic(), time.monotonic()
-    while reason is None:
-        try:
-            ended = handle(*q.get(timeout=0.1))
-        except queue.Empty:
-            ended = None
-        if ended:
-            reason = f"{ended} closed"
-        elif (rd / "stop").exists():
-            reason = "stop requested"
-        now = time.monotonic()
-        if reason is None and now - t0 > DEADLINE_S:
-            reason = "deadline"
-        if reason is None and now - polled > 2:
-            polled = now
-            try:
-                recs = _read_ledger()[0]
-                if any(r["kind"] == "end" and r.get("run") == run["run"] for r in recs):
-                    reason = "run closed in the ledger"
-                elif now - t0 > 2 * SYNC_TIMEOUT_S + 60 and not any(r["kind"] == "admit" and r.get("run") == run["run"]
-                                                                     for r in recs):
-                    reason = "run never admitted"
-            except (OSError, LedgerError):
-                pass
-    s["draining"] = True
-    halt.set()
-    smp.join(2 * API_TIMEOUT_S + 70)                 # an in-flight sample finishes and is captured
-    for p in procs.values():
-        if p.poll() is None:
-            p.terminate()
-    for p in procs.values():
-        try:
-            p.wait(5)
-        except subprocess.TimeoutExpired:
-            p.kill()
-            p.wait()
-    for t in threads:
-        t.join(5)
-    while True:
-        try:
-            handle(*q.get_nowait())
-        except queue.Empty:
-            break
-    emit({"k": "final", "reason": reason, "rc": {k: p.returncode for k, p in procs.items()},
-          "m": round(time.monotonic(), 3)})
-    out.close()
-
-
-# ---------------------------------------------------------------------------------------------------------- judging
-def _judge(recs, run, close_token=None):
-    """(reasons, counts) for the captured records. Every captured log line is judged: the capture starts when the
-    follower attached, before admission, so it is a superset of the window."""
-    why = []
-    logs = [r for r in recs if r["k"] == "log"]
-    flood = sum(1 for r in logs if _bad(r["x"]) == "flood-stage")
-    high = sum(1 for r in logs if _bad(r["x"]) == "high-watermark")
-    if flood:
-        why.append(f"the ES node hit its flood stage during the run ({flood} captured lines; writes were refused)")
-    if high:
-        why.append(f"the ES node passed its high disk watermark during the run ({high} captured lines; new shards were "
-                   f"not allocated)")
-    # every marker-shaped line must be a token the gate wrote, none twice; the admitted start token exactly once, and
-    # after it nothing but the close token (earlier start attempts may precede it)
-    start, written = run["start_token"], set(run.get("tokens") or []) | {run["start_token"], close_token}
-    for st, name in (("o", "stdout"), ("e", "stderr")):
-        seen = [r["x"].strip() for r in logs if r["s"] == st and MARK in r["x"]]
-        ok = seen.count(start) == 1 and len(set(seen)) == len(seen) and all(x in written for x in seen)
-        if ok:
-            ok = seen[seen.index(start) + 1:] == ([close_token] if close_token else [])
-        if not ok:
-            why.append(f"the gate-marker lines on the ES container's {name} are not the gate's own tokens in order "
-                       f"({len(seen)} seen): a forged, replayed or missing marker")
-    evs = [r["e"] for r in recs if r["k"] == "ev"]
-    bad_ev = sorted({f"{e.get('Type')}:{(e.get('Action') or '?').split(':')[0]}" for e in evs
-                     if not (e.get("Type") == "container" and (e.get("Action") or "").split(":")[0] in ALLOWED_EVENTS)})
-    if bad_ev:
-        why.append("lifecycle events on the ES or PG container during the run: " + ", ".join(bad_ev))
-    early = [r["src"] for r in recs if r["k"] == "eof" and not r.get("after_stop")]
-    if early:
-        why.append("the capture ended early: " + ", ".join(early) + " closed (container stopped, restarted or removed, "
-                   "or the docker daemon restarted)")
-    # GATE-DESIGN 4.3, stage 2: the companion's samples of ES's own report
-    api = [r for r in recs if r["k"] == "api"]
-    flagged = [r for r in api if r.get("why")]
-    if flagged:
-        why.append(f"ES's own report during the run: {flagged[0]['why'][0]} ({len(flagged)} of {len(api)} samples)")
-    if len({r.get("settings_sha") for r in api if r.get("settings_sha")}) > 1:
-        why.append("ES disk or logger settings changed between samples during the run")
-    fin = [r for r in recs if r["k"] == "final"]
-    if fin:
-        ms = [r["m"] for r in api] + ([fin[0]["m"]] if "m" in fin[0] else [])
-        if not api:
-            why.append("the capture holds no ES API sample")
-        elif len(ms) > 1 and max(b - a for a, b in zip(ms, ms[1:])) > SAMPLE_GAP_S:
-            why.append(f"ES API sampling stalled ({max(b - a for a, b in zip(ms, ms[1:])):.0f} s without a sample)")
-    return why, {"lines": len(logs), "flood": flood, "high": high, "events": len(evs), "api_samples": len(api)}
-
-
-def _contiguous(cap, ret):
-    if not cap:
-        return True
-    n = len(cap)
-    return any(ret[i:i + n] == cap for i in range(len(ret) - n + 1) if ret[i] == cap[0])
-
-
-def _cross_check(es, recs):
-    """Loss detection: per stream, the capture must be a contiguous run of the retained log read now by ID."""
-    try:
-        r = _docker("logs", "--timestamps", es)
-    except (OSError, subprocess.TimeoutExpired) as e:
-        return [f"cannot read the retained ES log for the loss check ({type(e).__name__})"]
-    if r.returncode != 0:
-        return [f"docker logs exited {r.returncode}: loss of captured lines cannot be ruled out"]
-    why = []
-    for st, raw, name in (("o", r.stdout, "stdout"), ("e", r.stderr, "stderr")):
-        ret = raw.decode("utf-8", "replace").split("\n")
-        if ret and ret[-1] == "":
-            ret.pop()
-        cap = [f"{x['t']} {x['x']}" for x in recs if x["k"] == "log" and x["s"] == st]
-        if not _contiguous(cap, ret):
-            why.append(f"the capture of the ES {name} is not a contiguous run of the retained log (lines lost by the "
-                       f"follower, or the log rotated or truncated during the run)")
-    return why
+def _summary(obs):
+    out = []
+    for key in ("es", "pg"):
+        o = obs.get(key) or {}
+        fs, cg = o.get("fs") or {}, o.get("cg") or {}
+        if fs and cg and isinstance(cg.get("max"), int):
+            out.append(f"{key} {str(o['id'])[:12]} {fs['type']} {fs['total'] / GIB:.2f} GiB limit {cg['max'] / GIB:.2f} "
+                       f"peak {cg['peak'] / GIB:.2f} free {fs['free'] / GIB:.2f}")
+    return "; ".join(out)
 
 
 # --------------------------------------------------------------------------------------------------------- commands
@@ -682,84 +511,46 @@ def _void_now(msg):
 
 
 def _start():
-    f = free_gb()
-    if f < START_GB:
-        _blocked(f"host free {f:.1f} GiB < {START_GB}")
     try:
         with Ledger() as L:
-            L.ingest_legacy()
             b = _admission_blocker(L)
     except LedgerError as e:
         b = f"the stop ledger is not intact ({e})"
     if b:
         _blocked(b)
-    es_j, pg_j = (_inspect(n) for n in _targets())
-    if es_j is None or pg_j is None:
-        _blocked("cannot inspect the ES or PG container")
-    es, pg = _ident(es_j), _ident(pg_j)
-    lc = (es_j.get("HostConfig") or {}).get("LogConfig") or {}
-    mode = (lc.get("Config") or {}).get("mode") or "blocking"
-    if lc.get("Type") not in DRIVERS or mode != "blocking":
-        _blocked(f"the ES log driver ({lc.get('Type')}, mode {mode}) cannot give lossless coverage (supported: "
-                 f"{', '.join(DRIVERS)} in blocking mode)")
-    if (es_j.get("Config") or {}).get("Tty"):
-        _blocked("the ES container has a TTY (stdout and stderr merged): coverage is not established")
-    if not (es["running"] and pg["running"]) or es["paused"] or pg["paused"]:
-        _blocked("the ES or PG container is not running")
-    api0, w = _es_read(es_j, es)                    # GATE-DESIGN 4.3: ES's own report, bound to this container
-    if w:
-        _blocked("ES API: " + "; ".join(w))
+    names = dict(zip(("es", "pg"), _targets()))
+    obs, why = {}, []
+    for key in ("es", "pg"):
+        obs[key], w = _observe(key, names[key])
+        why += w
+    es = obs["es"]
+    if es and es.get("fs"):
+        lag = (es["fs"]["jvm_start_ms"] - _ms(es["started"])) / 1000
+        if not -CLOCK_SLACK_S <= lag <= JVM_BIND_S:
+            why.append(f"the ES API's JVM did not start with the pinned container (JVM start {lag:+.0f} s from its "
+                       "StartedAt): the API answers for another process or run")
+    if why:
+        _blocked("; ".join(why))
     try:
-        base = own(es["id"], pg["id"])
+        base = _home_bytes()
     except GateError as e:
         _blocked(str(e))
     run_id = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + os.urandom(4).hex()
-    rd = RUNS / run_id
-    rd.mkdir(parents=True)
-    run = {"run": run_id, "es": es, "pg": pg, "log_config": lc, "start_token": None, "tokens": []}
-    _write_json(rd / "run.json", run)
-    pp = os.environ.get("PYTHONPATH")
-    env = dict(os.environ, PYTHONPATH=str(ROOT) + (os.pathsep + pp if pp else ""))
-    with open(rd / "companion.err", "ab") as err:
-        p = subprocess.Popen([sys.executable, "-m", "exp.disk_gate", "_capture", str(rd)], cwd=str(ROOT), env=env,
-                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=err, start_new_session=True)
-    run["companion_pid"] = p.pid
-    _write_json(rd / "run.json", run)
-    # `--tail 0` attaches at an unknown moment: a token written before the follower attached is never delivered, so
-    # write a fresh token until one is captured on both streams and in the events stream. Every token is recorded
-    # before it is written; the admitted start token is the one that was captured.
-    why, t0 = "no start token captured", time.monotonic()
-    while time.monotonic() - t0 < SYNC_TIMEOUT_S:
-        tok = f"{MARK} start {os.urandom(16).hex()}"
-        run["tokens"].append(tok)
-        _write_json(rd / "run.json", run)
-        why = None if _write_token(es["id"], tok) else "cannot write the start token into the ES log"
-        why = why or _await_token(rd, tok, min(2.0, SYNC_TIMEOUT_S))
-        if why is None or "ended" in why:
-            break
-    if why is None:
-        run["start_token"] = tok
-        _write_json(rd / "run.json", run)
-    if why:
-        _stop_companion(rd, 10)
-        _blocked("log capture not established: " + why)
-    wall0, mono0 = time.time(), time.monotonic()
     try:
-        with Ledger() as L:                         # no unacknowledged stop and no open run, then admit: one step
-            L.ingest_legacy()
+        with Ledger() as L:                         # stops, open run, host free space and the admit record: one step
             b = _admission_blocker(L)
-            adm = None if b else L.append("admit", run=run_id, es=es["id"], pg=pg["id"])
+            f = free_gb()
+            if not b and f < START_GB:
+                b = f"host free {f:.1f} GiB < {START_GB} (measured at admission)"
+            adm = None if b else L.append("admit", v=FORMAT, run=run_id, es=es["id"], pg=obs["pg"]["id"],
+                                          free_bytes=int(f * GIB), free_at=_utc())
     except LedgerError as e:
         b = f"the stop ledger is not intact ({e})"
     if b:
-        _stop_companion(rd, 10)
         _blocked(b)
-    _write_json(STATE, {"run": run_id, "admit_seq": adm["seq"], "run_dir": str(rd), "base": base, "floor_breaches": [],
-                        "es": es, "pg": pg, "wall0": wall0, "mono0": mono0, "boot": _boot_id(), "since": _utc(),
-                        "api0": api0})
-    print(f"disk_gate start run {run_id} free {f:.1f} GiB own {base['total'] / GIB:.2f} GiB (pg {base['pg'] / GIB:.2f} "
-          f"es {base['es'] / GIB:.2f} home {base['home'] / GIB:.2f}) cap +{CAP_GB} GiB es {es['id'][:12]} "
-          f"pg {pg['id'][:12]} admitted at seq {adm['seq']}")
+    _write_json(STATE, {"v": FORMAT, "run": run_id, "admit_seq": adm["seq"], "obs": obs, "base_home": base,
+                        "boot": _boot_id(), "floor_breaches": []})
+    print(f"disk_gate start run {run_id} free {f:.1f} GiB {_summary(obs)} admitted at seq {adm['seq']}")
 
 
 def _state():
@@ -767,143 +558,132 @@ def _state():
         st = json.loads(STATE.read_text())
     except (OSError, ValueError):
         st = None
-    if not isinstance(st, dict) or "run" not in st:
-        _void_now("no admitted run in the gate state (none, or written by an older gate): coverage unknown")
-    return st, pathlib.Path(st["run_dir"])
+    if not isinstance(st, dict) or st.get("v") != FORMAT or "run" not in st:
+        _void_now("no run admitted by this gate (none, or admitted by an older gate: close it with 'abort')")
+    return st
+
+
+def _judge(st, when):
+    """Every rule against the containers now, and against admission."""
+    obs, why = {}, []
+    for key in ("es", "pg"):
+        obs[key], w = _observe(key, st["obs"][key]["id"])
+        why += w
+    why += _drift(obs, st["obs"])
+    if _boot_id() != st["boot"]:
+        why.append("the host rebooted during the run")
+    try:
+        d = (_home_bytes() - st["base_home"]) / GIB
+        if d > CAP_GB:
+            why.append(f"WP_HOME grew {d:.2f} GiB > cap {CAP_GB} {when}")
+    except GateError as e:
+        why.append(f"{e} {when}")
+    return obs, why
 
 
 def _close(st, why, **extra):
-    """Close the run in the ledger as VOID (unless already closed) and let its companion stop."""
     try:
         with Ledger() as L:
             if not L.closed(st["run"]):
                 L.append("end", run=st["run"], verdict="VOID", reasons=why[:20], **extra)
     except LedgerError as e:
         why.append(f"the stop ledger is not intact ({e}); the run could not be closed in it")
-    (pathlib.Path(st["run_dir"]) / "stop").touch()
+
+
+def _ledger_why(L, st, when):
+    why = []
+    if not L.admitted(st["run"], st["admit_seq"]):
+        why.append(f"this run's admission record (run {st['run']}, seq {st['admit_seq']}) is not in the ledger: "
+                   "truncated, reset or replaced")
+    why += [f"STOP: {_stop_text(s)}, {when}" for s in L.stops_after(st["admit_seq"])]
+    return why
 
 
 def _check(name):
-    st, rd = _state()
+    st = _state()
     why = []
     try:
         with Ledger() as L:
-            L.ingest_legacy()
             if L.closed(st["run"]):
                 _void_now(f"run {st['run']} is already closed")
-            why += [f"STOP: {_stop_text(s)}, before {name}" for s in L.stops_after(st["admit_seq"])]
+            why += _ledger_why(L, st, f"before {name}")
     except LedgerError as e:
         why.append(f"the stop ledger is not intact ({e})")
-    run = json.loads((rd / "run.json").read_text())
-    recs, problem = _read_capture(rd)
-    if problem:
-        why.append("capture: " + problem)
-    why += _judge(recs, run)[0]
-    if any(r["k"] == "final" for r in recs):
-        why.append("the capture companion ended before the run did")
-    elif not _alive(run.get("companion_pid")):
-        why.append("the capture companion is not running")
-    f, d = free_gb(), None
-    try:
-        o = own(st["es"]["id"], st["pg"]["id"])
-        d = (o["total"] - st["base"]["total"]) / GIB
-        print(f"disk_gate {name} free {f:.1f} GiB own +{d:.2f} GiB")
-        if d > CAP_GB:
-            why.append(f"own usage grew {d:.2f} GiB > cap {CAP_GB} before {name}")
-    except GateError as e:
-        why.append(f"own usage not measured before {name} ({e})")
-    why += _api_why(st, f"before {name}")
+    obs, w = _judge(st, f"before {name}")
+    why += w
+    f = free_gb()
     if why:
         _close(st, why, at_check=name)
-        for w in why:
-            print(f"disk_gate VOID: {w}")
+        for x in why:
+            print(f"disk_gate VOID: {x}")
         sys.exit(3)
     if f < FLOOR_GB:
-        st["floor_breaches"].append({"before": name, "free_gb": round(f, 2), "own_delta_gb": round(d, 2)})
+        st["floor_breaches"].append({"before": name, "free_gb": round(f, 2)})
         _write_json(STATE, st)
-        print(f"disk_gate FLOOR: host free {f:.1f} GiB < {FLOOR_GB} from other work; own usage within cap, continuing")
+    print(f"disk_gate {name} free {f:.1f} GiB {_summary(obs)}")
 
 
 def _end():
-    st, rd = _state()
-    try:
-        with Ledger() as L:
-            if L.closed(st["run"]):
-                _void_now(f"run {st['run']} was already closed (a VOID check or an abort)")
-    except LedgerError:
-        pass                                        # judged again in the final locked step
-    run = json.loads((rd / "run.json").read_text())
-    es = st["es"]["id"]
-    why, f, d = [], free_gb(), None
-    # A2: own usage first, so every later observation of the containers happens inside the watched window
-    try:
-        o = own(es, st["pg"]["id"])
-        d = (o["total"] - st["base"]["total"]) / GIB
-        if d > CAP_GB:
-            why.append(f"own usage grew {d:.2f} GiB > cap {CAP_GB} by the end of the run")
-    except GateError as e:
-        why.append(f"own usage not measured at end ({e})")
-    why += _api_why(st, "at end")                   # before the close tokens, inside the watched window
-    close = f"{MARK} end {os.urandom(16).hex()}"
-    if _write_token(es, close):
-        w = _await_token(rd, close, CLOSE_TIMEOUT_S)
-        if w:
-            why.append("close: " + w)
-    else:
-        why.append("cannot write the close token into the ES log (container gone or not running)")
-        close = None
-    recs, problem = _stop_companion(rd, CLOSE_TIMEOUT_S)
-    if problem:
-        why.append("capture: " + problem)
-    fin = [r for r in recs if r["k"] == "final"]
-    if not fin:
-        why.append("the capture companion did not close its capture (dead or hung): coverage unknown")
-    elif fin[0]["reason"] != "stop requested":
-        why.append(f"the capture ended before end asked it to: {fin[0]['reason']}")
-    jw, cnt = _judge(recs, run, close)
-    why += jw
-    why += _cross_check(es, recs)
-    for key in ("es", "pg"):
-        pinned, j = st[key], _inspect(st[key]["id"])
-        now = _ident(j) if j else None
-        if now is None:
-            why.append(f"the {key.upper()} container {pinned['id'][:12]} no longer exists (removed or replaced)")
-            continue
-        for fld in ("id", "started", "restarts"):
-            if now[fld] != pinned[fld]:
-                why.append(f"the {key.upper()} container's {fld} changed during the run ({pinned[fld]} -> {now[fld]})")
-        if not now["running"] or now["paused"]:
-            why.append(f"the {key.upper()} container is not running at end")
-    if _boot_id() != st["boot"]:
-        why.append("the host rebooted during the run")
-    step = (time.time() - st["wall0"]) - (time.monotonic() - st["mono0"])
-    if abs(step) > CLOCK_SLACK_S:
-        why.append(f"the host wall clock stepped {step:+.1f} s during the run")
-    sha = hashlib.sha256((rd / "capture.jsonl").read_bytes()).hexdigest() if (rd / "capture.jsonl").exists() else None
+    st = _state()
+    obs, why = _judge(st, "by the end of the run")
+    f = free_gb()
     try:
         with Ledger() as L:                         # the final stop read and the end record: one locked step
-            L.ingest_legacy()
-            why += [f"STOP: {_stop_text(s)}, during the run" for s in L.stops_after(st["admit_seq"])]
             if L.closed(st["run"]):
-                why.append(f"run {st['run']} was closed while end was measuring (a VOID check or an abort)")
+                why.append(f"run {st['run']} was closed before end (a VOID check or an abort)")
             else:
+                why += _ledger_why(L, st, "during the run")
                 L.append("end", run=st["run"], verdict="VOID" if why else "VALID", reasons=why[:20],
-                         capture_sha256=sha, counts=cnt)
+                         free_bytes=int(f * GIB), evidence=_summary(obs))
     except LedgerError as e:
         why.append(f"the stop ledger is not intact ({e})")
-    print(f"disk_gate end free {f:.1f} GiB own {'+%.2f GiB' % d if d is not None else 'unmeasured'} floor_breaches "
-          f"{len(st['floor_breaches'])} es_flood_lines {cnt['flood']} es_high_watermark_lines {cnt['high']} "
-          f"capture_lines {cnt['lines']} events {cnt['events']} capture_sha256 {sha}")
-    for w in why:
-        print(f"disk_gate VOID: {w}")
+    print(f"disk_gate end free {f:.1f} GiB floor_breaches {len(st['floor_breaches'])} {_summary(obs)}")
+    for x in why:
+        print(f"disk_gate VOID: {x}")
     if why:
         sys.exit(3)
+
+
+def _ledger_reset(reason):
+    """Keep a damaged ledger (and its anchor) under new names and start a new one that names them."""
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    with open(LOCK, "a") as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        tag = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        old = {}
+        if LEDGER.exists():
+            data = LEDGER.read_bytes()
+            old = {"file": f"stop_ledger.broken-{tag}.jsonl", "bytes": len(data),
+                   "sha256": hashlib.sha256(data).hexdigest()}
+            os.replace(LEDGER, STATE_DIR / old["file"])
+        if HEAD.exists():
+            os.replace(HEAD, STATE_DIR / f"stop_ledger.head.broken-{tag}")
+        L = Ledger(need=False)
+        L.recs, L.prev = None, None
+        L.append("init", v=FORMAT, source="ledger-reset", reason=reason[:200], reset_from=old)
+        L.legacy()
+    print(f"disk_gate ledger-reset: new ledger started; the old one kept as {old.get('file', '(none)')}; a run open "
+          "before the reset ends VOID")
 
 
 def _ledger_cmd(cmd, args):
     reason = " ".join(args[1:] if cmd == "clear-stop" else args).strip()
+    if cmd == "ledger-reset":
+        if not reason:
+            raise SystemExit("ledger-reset needs a reason")
+        return _ledger_reset(reason)
+    if cmd == "init":
+        if not reason:
+            raise SystemExit("init needs a reason")
+        with Ledger(need=False) as L:
+            if L.recs is not None:
+                print("disk_gate init: the ledger exists already (nothing changed)")
+                return None
+            L.append("init", v=FORMAT, source="init", reason=reason[:200])
+            L.legacy()
+        print("disk_gate init: new stop ledger started")
+        return None
     with Ledger() as L:
-        L.ingest_legacy()
         if cmd == "stop":
             if not reason:
                 raise SystemExit("stop needs a reason")
@@ -929,23 +709,20 @@ def _ledger_cmd(cmd, args):
             o = L.open_run()
             if not o:
                 print("disk_gate abort: no open run")
-                return
+                return None
             L.append("end", run=o["run"], verdict="VOID", reasons=[f"aborted: {reason[:200]}"])
-            if (RUNS / o["run"]).is_dir():
-                (RUNS / o["run"] / "stop").touch()
             print(f"disk_gate abort: run {o['run']} closed VOID")
+    return None
 
 
 def main(cmd="", *args):
-    if cmd == "_capture":
-        return _capture(args[0])
     if cmd == "start":
         return _start()
     if cmd == "check":
         return _check(args[0] if args else "")
     if cmd == "end":
         return _end()
-    if cmd in ("stop", "stops", "clear-stop", "abort"):
+    if cmd in ("init", "stop", "stops", "clear-stop", "abort", "ledger-reset"):
         try:
             return _ledger_cmd(cmd, list(args))
         except LedgerError as e:
