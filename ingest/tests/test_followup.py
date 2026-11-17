@@ -31,6 +31,8 @@ class Base(unittest.TestCase):
         script = [{"content": [text("a%d" % i)]} for i in range(n)] if provider == "anthropic" else \
             [{"message": {"role": "assistant", "content": "a%d" % i}} for i in range(n)]
         rig = Rig(self.d, provider, script)
+        if compact:
+            rig.call_kw = {"new_count": 1}      # a host-authored summary is representable only when the host declares its boundary (final-gate F2)
         for i in range(n):
             rig.msgs.append({"role": "user", "content": "q%d" % i})
             o = rig.call(rig.request())

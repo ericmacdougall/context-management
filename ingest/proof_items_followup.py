@@ -38,6 +38,8 @@ def item11(out: str) -> dict:
                 d = tmpdir()
                 try:
                     rig = Rig(d, provider, [spec_text(provider, "a%d" % i) for i in range(n)])
+                    if kind == "compacting":
+                        rig.call_kw = {"new_count": 1}       # host-authored summary: representable only when the host declares its boundary
                     for i in range(n):
                         rig.msgs.append({"role": "user", "content": "q%d" % i})
                         o = rig.call(rig.request())

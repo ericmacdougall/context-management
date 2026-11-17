@@ -283,7 +283,9 @@ class Ingester:
         run are allowed (the run as a whole is unique). A repeat of a known message among the unaligned ones, a tie, or a run that stops
         short of the end of the history is ambiguous."""
         if L == 0:
-            return not any(k in seen for k in keys)
+            return len(keys) == 1 and keys[0] not in seen       # no overlap: with more than one message the boundary cannot be established
+        if s != 0:
+            return False                                         # an unaligned message BEFORE the run: new or host-authored? only a declaration says
         if ties != 1:
             return False
         if any(k in seen for k in keys[:s] + keys[s + L:]):
@@ -353,18 +355,19 @@ class Ingester:
             self._emit(stream, n, "meta", 5, 0, "port", "declared_boundary", "info", cj({"new_count": boundary, "messages": len(keys)}), seq)
         elif H:
             s, L, ties = self._lcsub(keys, H)
-            if L == 0:
-                s = max(len(keys) - 1, 0)            # nothing aligns: only the last message is the new tail, the rest is host-authored
             if self._clean(keys, H, seen, s, L, ties):
                 lead_to, tail_from, det_from, hist_from = s, s + L, s + L, s + L
             else:
                 # Alignment is not provably unambiguous (repeated content, a tie, a repeat of a known message among the unaligned ones).
                 # Do not guess: emit everything that could be new, flag it, block the exactly-once and completeness claims.
+                # No message is reclassified as host-authored here (only a host declaration can say that): every message before the aligned
+                # run, after it, or repeating a known one is kept with its original provenance.
                 ambiguous = True
                 det_from = s + L
-                cand = [i for i in range(len(keys)) if i >= s + L or keys[i] in seen]
+                cand = [i for i in range(len(keys)) if i < s or i >= s + L or keys[i] in seen]
                 tail_from = min(cand + [max(len(keys) - 1, 0)])
-                lead_to, hist_from = min(s, tail_from), min(det_from, max(len(keys) - 1, 0))
+                lead_to = 0
+                hist_from = 0 if (L == 0 or s > 0) else min(det_from, max(len(keys) - 1, 0))
                 req_note = {"ambiguous_repeat": True}
                 self._gap(stream, "ambiguous_alignment", seq, seq, {"call": n, "emitted_from": tail_from, "messages": len(keys)})
         else:
