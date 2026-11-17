@@ -15,6 +15,8 @@ each must violate a gate in >= 2 of 3 runs per state. At the pre-fix code the fi
 controls are recorded as unavailable; that run is the failing-first evidence.
 Amendment 18b: every run starts from a fresh database (wp.setup --reset, then the control's patch); PS-R also bounds
 residue work at 100 rows per event; CTL_RESIDUE is required in S1 only (the state where the pre-fix residue misplanned).
+Amendment 18c: removed rows count x their node's loops; the fix runs both functions with enable_seqscan off; the
+controls restore the pre-fix headers too. A plan line printer for one run is not part of the result (ab/ps_plans.py).
 usage: python -m exp.plan_stability [R=3] [M1=1500] [M2=3000]"""
 import json
 import re
@@ -55,7 +57,9 @@ FIX_RESIDUE = [(
                           where""",
     """from tombstones x join analyst_jobs a on a.input_event_ids @> array[x.event_id]
                           where""")]
-CONTROLS = {"CTL_APPLY": ("wp_erasure_apply", FIX_APPLY), "CTL_RESIDUE": ("wp_erasure_pg_residue", FIX_RESIDUE)}
+HDR_FIXED, HDR_PRE = "set search_path = public, pg_temp set enable_seqscan = off as $$", "set search_path = public, pg_temp as $$"
+CONTROLS = {"CTL_APPLY": ("wp_erasure_apply", FIX_APPLY + [(HDR_FIXED, HDR_PRE)]),
+            "CTL_RESIDUE": ("wp_erasure_pg_residue", FIX_RESIDUE + [(HDR_FIXED, HDR_PRE)])}
 # amendment 18b: which states each control must be shown in (>= 2 of R runs); other states are recorded
 CONTROL_STATES = {"CTL_APPLY": ("S1", "S2"), "CTL_RESIDUE": ("S1",)}
 RESIDUE_PER_EVENT_MAX = 100
@@ -65,8 +69,22 @@ INDEX = re.compile(r" on (\w+)(?: \w+)?  \(")
 
 
 def work(plan):
-    w = sum(int(r) * int(l) for r, l in ROWS.findall(plan)) + sum(int(n) for _, n in REMOVED.findall(plan))
-    jf = max([int(n) for k, n in REMOVED.findall(plan) if k == "Join Filter"] or [0])
+    """Rows processed by one statement. EXPLAIN prints actual rows AND rows removed as averages per loop, so each is
+    multiplied by its own node's loops (amendment 18c: the 18b harness added removed rows unmultiplied and missed a
+    per-event sequential scan)."""
+    w, jf, loops = 0, 0, 1
+    for line in plan.splitlines():
+        m = ROWS.search(line)
+        if m:
+            loops = int(m.group(2))
+            w += int(m.group(1)) * loops
+            continue
+        m = REMOVED.search(line)
+        if m:
+            n = int(m.group(2)) * loops
+            w += n
+            if m.group(1) == "Join Filter":
+                jf = max(jf, n)
     return w, jf
 
 

@@ -68,6 +68,8 @@ run() { gate "$*"; $PY "$@"; }
   run -m exp.cleanup exp.e2e_restored
   run -m exp.races R1 R2 R3 40
   run -m exp.cleanup exp.races
+  # amendment 18: resets the database for each of its runs, so it runs after every experiment that keeps state
+  run -m exp.plan_stability
   run -m exp.guard_check end || echo "GATE guard_check end FAILED"
   # D6 (per-role ES keys with security on) is build step 2: its projector role cannot move the epoch alias yet
   # (security_exception in the 4f403dd shake-down), so it is not part of the step-1 run.
