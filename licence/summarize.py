@@ -3,8 +3,16 @@ It does not recompute those figures from raw rows; recompute.py does that, and o
 T1 and the polling moments for down_7 only; see DEGRADE.md "Evidence status and limits"). Usage: summarize.py RESULTS_DIR [out.json]
 Reads only the result files; does not import the experiment code.
 
-Coverage rule (gate review 5, F6): every gate names its mandatory inputs. An input that is absent, skipped, unverified or empty makes the
-gate's status UNVERIFIED, which is never a pass; a gate passes only as PASS with every mandatory input observed."""
+Coverage rule (gate reviews 5 and 6): every gate is declared in GATES with every input it reads and that input's kind; gate() is the only
+producer of a gate status. An input that is absent, None, of the wrong type or outside its kind (for example a count of 0 where a count
+must have been observed) gives UNVERIFIED before the rule runs; the rule then returns PASS only on the intended observation. One
+declared exception (kind optzero): exp2.writes.sem_failed_other may be absent, which passes only when sem_failed is 0 (nothing to
+classify) and is UNVERIFIED otherwise. A status outside the intended set is FAIL where it is an observed failure of the operation under
+test (any non-2xx, including a 4xx, 5xx or transport 0, on a Basic operation against a migrated index) and UNVERIFIED where it says
+nothing about it (a 401, 5xx or 0 where a DLS 403 refusal was expected). tests/test_gates.py GatePropertyTests
+mutates every declared input of every gate. The per-life reports outside GATES (matrix table, exp3 operation lists, exp4) are reports,
+not gates; they may raise on a malformed life file."""
+import collections
 import glob
 import gzip
 import json
@@ -52,6 +60,65 @@ def load(d, mode):
 T2_PROBES = ("rrf", "linear", "semantic_query", "inference_use", "dls_search")   # THRESHOLDS.md EXP1-T2: all five licensed probes are mandatory
 BATTERY = ("get_allowed_doc0", "get_hidden_doc1", "search_match_all", "search_term_hidden", "count", "mget", "msearch", "scroll_open", "knn_search",
            "termvectors_hidden", "wildcard_index", "esql")
+LATCH_CELLS = ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate")
+MIG_INDICES = ("lic3-bbq_disk-mig", "lic3-sem-mig")
+MIG_OPS = ("update", "delete", "force_merge", "index_new")
+OK2XX = frozenset(range(200, 300))
+
+# ---- the gate table. EVERY gate this module reports is declared here with EVERY input it reads; gate() is the only function that
+# produces a gate status, and an input that is absent, None, of the wrong type or outside its kind gives UNVERIFIED before the gate's
+# rule runs. Kinds (each tested by tests/test_gates.py GatePropertyTests with the mutations listed there):
+#   status  an HTTP status (int); `expect` is the set that counts as the intended observation, the rule decides what anything else means
+#   pos     an int > 0 (a count that must have been observed)
+#   zero    an int that the rule requires to be 0
+#   one     an int that the rule requires to be 1
+#   measure a number (int or float); `bad` is a value the rule must reject
+#   flag    a bool; `expect` is the value the rule requires
+#   text    a non-empty str or dict (an error body)
+#   optzero absent, or an int that must be 0 (needed by the rule only in some cases; the rule returns UNVERIFIED if it needs it and it is absent)
+Input = collections.namedtuple("Input", "path kind expect bad")
+Gate = collections.namedtuple("Gate", "scope out inputs rule doc")
+
+
+def I(path, kind, expect=None, bad=None):
+    return Input(tuple(path.split(".")), kind, expect, bad)
+
+
+MISSING = object()
+
+
+def fetch(R, path):
+    v = R
+    for k in path:
+        if not isinstance(v, dict) or k not in v:
+            return MISSING
+        v = v[k]
+    return v
+
+
+def _is_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def well_formed(inp, v):
+    k = inp.kind
+    if k == "optzero":
+        return v is MISSING or _is_int(v)
+    if v is MISSING:
+        return False
+    if v is None:
+        return False
+    if k in ("status", "zero", "one"):
+        return _is_int(v)
+    if k == "pos":
+        return _is_int(v) and v > 0
+    if k == "measure":
+        return (_is_int(v) or isinstance(v, float)) and v == v
+    if k == "flag":
+        return isinstance(v, bool)
+    if k == "text":
+        return isinstance(v, (str, dict)) and len(v) > 0
+    raise ValueError("unknown input kind %s" % k)
 
 
 def combine(statuses):
@@ -60,42 +127,229 @@ def combine(statuses):
     return "FAIL" if "FAIL" in s else ("UNVERIFIED" if not s or any(x != "PASS" for x in s) else "PASS")
 
 
-def t2_probe_status(v):
-    if not isinstance(v, dict) or v.get("skipped") or v.get("unverified") or not v.get("n"):
+def _status_rule(ok, observed):
+    return "PASS" if ok else ("FAIL" if observed else "UNVERIFIED")
+
+
+# rules: v(path_string) -> validated value; return PASS / FAIL / UNVERIFIED
+def _r_exp1_t2(v):
+    return combine("PASS" if v("exp1_moment.%s.first_refusal_rel_resp_s" % p) <= 5.0 and v("exp1_moment.%s.success_after_first_refusal" % p) == 0
+                   else "FAIL" for p in T2_PROBES)
+
+
+def _r_exp1_t3(v):
+    return combine("PASS" if v("exp1_after.%s.status" % c) == 403 and "current license is non-compliant" in json.dumps(v("exp1_after.%s.error" % c)).lower()
+                   else "FAIL" for c in LATCH_CELLS)
+
+
+def _dls_control(v):
+    """Positive restricted control before the transition: the DLS user read the permitted documents only (4 of 8, all kw a)."""
+    return v("exp1_trial.dls_search_as_user.status") == 200 and v("exp1_trial.dls_search_as_user.only_kw_a") is True \
+        and 0 < v("exp1_trial.dls_search_as_user.returned") < 8
+
+
+def _refusal(status, leaked):
+    """After the transition: 403 with nothing returned is the fail-closed refusal; a 2xx or a returned document is a FAIL; anything else
+    (401 authentication, 404, 5xx, transport 0) says nothing about DLS: UNVERIFIED."""
+    if leaked or status in OK2XX:
+        return "FAIL"
+    return "PASS" if status == 403 else "UNVERIFIED"
+
+
+def _r_exp1_t4(v):
+    if not _dls_control(v):
         return "UNVERIFIED"
-    ok = v.get("first_refusal_rel_resp_s") is not None and v["first_refusal_rel_resp_s"] <= 5.0 and v.get("success_after_first_refusal") == 0
+    if v("exp1_after.dls_search_as_user.class") in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIPPED"):
+        return "UNVERIFIED"
+    return _refusal(v("exp1_after.dls_search_as_user.status"), False)   # any 2xx is already a FAIL; a refusal carries no hits
+
+
+def _r_exp1_t4_battery(v):
+    if not _dls_control(v):
+        return "UNVERIFIED"
+    for p in BATTERY:   # trial control: each read path answered as DLS should (allowed doc readable, hidden doc not found, nothing hidden leaked)
+        want = 404 if p == "get_hidden_doc1" else 200
+        if v("dls_battery_trial.%s.status" % p) != want or v("dls_battery_trial.%s.returned_hidden_doc" % p):
+            return "UNVERIFIED"
+    if not (v("dls_battery_trial.get_allowed_doc0.returned_any_source") and v("dls_battery_trial.search_match_all.returned_any_source")):
+        return "UNVERIFIED"
+    return combine(_refusal(v("dls_battery_after.%s.status" % p), v("dls_battery_after.%s.returned_hidden_doc" % p) or v("dls_battery_after.%s.returned_any_source" % p))
+                   for p in BATTERY)
+
+
+def _r_exp2_t1(v):
+    ok = (v("exp2.T1_examined") >= 20000 and v("exp2.T1_mismatches") == 0 and v("exp2.T1_backend_without_oracle") == 0
+          and v("exp2.T1_control_broken_fallback.flag_rate") >= 0.9 and v("exp2.T1_control_broken_fallback.backend_wrong") == 0)
     return "PASS" if ok else "FAIL"
+
+
+def _r_exp2_t2(v):
+    frac = v("exp2.T2_failed_requests") / v("exp2.T2_non_control_requests")
+    return "PASS" if frac <= 0.001 and v("exp2.T2_longest_failure_window_s") <= 2.0 else "FAIL"
+
+
+def _r_exp2_t3_down(v):
+    return "PASS" if v("exp2.T3_flip_latency_s") <= 5.0 and v("exp2.T3_backend_after_first_client") == 0 else "FAIL"
+
+
+def _r_exp2_t3_up(v):
+    return "PASS" if v("exp2.T3_flip_latency_s") <= v("ttl") + 5.0 and v("exp2.T3_client_after_first_backend") == 0 else "FAIL"
+
+
+def _r_exp2_t4(v):
+    w = lambda k: v("exp2.writes." + k)
+    if not (w("acked_absent") == 0 and w("sem_acked_absent") == 0 and w("sem_failed_present") == 0 and w("control_injected_loss_detected") is True):
+        return "FAIL"
+    if w("sem_failed") == 0:
+        return "PASS"   # no semantic write failed: nothing to classify
+    other = w("sem_failed_other")
+    if other is MISSING:
+        return "UNVERIFIED"   # failures exist but were never classified under addendum C (addendum D)
+    return "PASS" if other == 0 and w("sem_failed") == w("sem_failed_loud_licence_or_missing") else "FAIL"
+
+
+def _r_exp2_t5_down(v):
+    return "PASS" if v("exp2.T5_control_after_1s.licence_failures") / v("exp2.T5_control_after_1s.n") >= 0.95 else "FAIL"
+
+
+def _r_exp2_t5_up(v):
+    pre, post = "exp2.T5_control_before_start_trial.", "exp2.T5_control_after_trial."
+    return "PASS" if v(pre + "licence_failures") / v(pre + "n") >= 0.95 and v(post + "success") == v(post + "n") else "FAIL"
+
+
+def _r_exp3_migration(v):
+    m = lambda k: v("exp3.migration." + k)
+    ind = lambda k: v("exp3.after_restart.counts_before." + k)
+    indep = (m("bbq_disk_to_hnsw.src_count") == ind("bbq_disk") and m("bbq_disk_to_bbq_hnsw.src_count") == ind("bbq_disk")
+             and m("semantic_to_text_vector.docs") + m("semantic_to_text_vector.skipped_not_single_chunk") == ind("sem")
+             and m("control_plain_to_hnsw.src_count") == ind("plain"))
+    parts = [
+        m("bbq_disk_to_hnsw.dst_count") == m("bbq_disk_to_hnsw.src_count") and m("bbq_disk_to_hnsw.vector_mismatches") == 0
+        and m("bbq_disk_to_hnsw.knn_self_top1") / m("bbq_disk_to_hnsw.knn_self_of") >= 0.99 and m("bbq_disk_to_hnsw.src_vs_ground_truth_max_abs") <= 1e-6,
+        m("bbq_disk_to_bbq_hnsw.dst_count") == m("bbq_disk_to_bbq_hnsw.src_count") and m("bbq_disk_to_bbq_hnsw.vector_mismatches") == 0
+        and m("bbq_disk_to_bbq_hnsw.knn_self_top1") / m("bbq_disk_to_bbq_hnsw.knn_self_of") >= 0.99,
+        m("semantic_to_text_vector.dst_count") == m("semantic_to_text_vector.docs") and m("semantic_to_text_vector.vector_mismatches_vs_stored") == 0
+        and m("semantic_to_text_vector.worst_abs_err_vs_stub") <= 0.005 and m("semantic_to_text_vector.worst_cosine_vs_stub") >= 0.9999
+        and m("semantic_to_text_vector.knn_self_top1") / m("semantic_to_text_vector.knn_self_of") >= 0.99 and m("semantic_to_text_vector.skipped_not_single_chunk") == 0,
+        m("control_plain_to_hnsw.vector_mismatches") == 0 and m("control_plain_to_hnsw.dst_count") == m("control_plain_to_hnsw.src_count"),
+        m("control_corrupted_vs_true_source.vector_mismatches") == 1,
+        indep,
+        # EXP3-T2: every Basic operation on every migrated index answered 2xx (a 0 transport sentinel or a 5xx is an observed failure)
+        all(m("migrated_basic_ops.%s.%s" % (i, o)) in OK2XX for i in MIG_INDICES for o in MIG_OPS),
+    ]
+    return "PASS" if all(parts) else "FAIL"
+
+
+def _r_exp3_semonly(v):
+    return "PASS" if all(v("semonly_trial.%s.status" % k) == 200 for k in ("semantic", "match", "match_all")) else "FAIL"
+
+
+def _mig_inputs():
+    out = []
+    for pre in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw"):
+        out += [I("exp3.migration.%s.src_count" % pre, "pos"), I("exp3.migration.%s.dst_count" % pre, "pos"),
+                I("exp3.migration.%s.vector_mismatches" % pre, "zero"), I("exp3.migration.%s.knn_self_top1" % pre, "pos"),
+                I("exp3.migration.%s.knn_self_of" % pre, "pos")]
+    s = "exp3.migration.semantic_to_text_vector."
+    out += [I("exp3.migration.bbq_disk_to_hnsw.src_vs_ground_truth_max_abs", "measure", bad=0.5),
+            I(s + "docs", "pos"), I(s + "dst_count", "pos"), I(s + "vector_mismatches_vs_stored", "zero"), I(s + "worst_abs_err_vs_stub", "measure", bad=0.5),
+            I(s + "worst_cosine_vs_stub", "measure", bad=0.5), I(s + "knn_self_top1", "pos"), I(s + "knn_self_of", "pos"), I(s + "skipped_not_single_chunk", "zero"),
+            I("exp3.migration.control_plain_to_hnsw.vector_mismatches", "zero"), I("exp3.migration.control_plain_to_hnsw.dst_count", "pos"),
+            I("exp3.migration.control_plain_to_hnsw.src_count", "pos"), I("exp3.migration.control_corrupted_vs_true_source.vector_mismatches", "one")]
+    out += [I("exp3.after_restart.counts_before.%s" % k, "pos") for k in ("bbq_disk", "sem", "plain")]
+    out += [I("exp3.migration.migrated_basic_ops.%s.%s" % (i, o), "status", expect=OK2XX) for i in MIG_INDICES for o in MIG_OPS]
+    return out
+
+
+_DLS_CONTROL = [I("exp1_trial.dls_search_as_user.status", "status", expect={200}), I("exp1_trial.dls_search_as_user.only_kw_a", "flag", expect=True),
+                I("exp1_trial.dls_search_as_user.returned", "pos", bad=8)]
+
+GATES = {
+    "EXP1-T2": Gate("down", ("exp1", "T2"), [I("exp1_moment.%s.%s" % (p, f), k, bad=b) for p in T2_PROBES
+                                            for f, k, b in (("first_refusal_rel_resp_s", "measure", 9.0), ("success_after_first_refusal", "zero", None), ("n", "pos", None))],
+                    _r_exp1_t2, "first licence refusal of every licensed probe within 5 s of start_basic, no success after it"),
+    "EXP1-T3": Gate("down", ("exp1", "T3_latch"), [x for c in LATCH_CELLS for x in (I("exp1_after.%s.status" % c, "status", expect={403}), I("exp1_after.%s.error" % c, "text"))],
+                    _r_exp1_t3, "every licensed search path refuses with 403 and the non-compliant licence text the adapter latches on"),
+    "EXP1-T4": Gate("down", ("exp1", "T4"), _DLS_CONTROL + [I("exp1_after.dls_search_as_user.status", "status", expect={403}),
+                                                           I("exp1_after.dls_search_as_user.class", "text", bad="UNVERIFIED_PREREQUISITE")],
+                    _r_exp1_t4, "positive restricted control on trial; after start_basic the DLS user's search is refused with 403 (a 2xx is FAIL; 401, 5xx or 0 is UNVERIFIED; the after cell records no hit count)"),
+    "EXP1-T4-battery": Gate("down", ("exp1", "T4_battery"),
+                            _DLS_CONTROL + [x for p in BATTERY for x in (
+                                I("dls_battery_trial.%s.status" % p, "status", expect={404} if p == "get_hidden_doc1" else {200}),
+                                I("dls_battery_trial.%s.returned_hidden_doc" % p, "flag", expect=False),
+                                I("dls_battery_after.%s.status" % p, "status", expect={403}),
+                                I("dls_battery_after.%s.returned_hidden_doc" % p, "flag", expect=False),
+                                I("dls_battery_after.%s.returned_any_source" % p, "flag", expect=False))]
+                            + [I("dls_battery_trial.get_allowed_doc0.returned_any_source", "flag", expect=True),
+                               I("dls_battery_trial.search_match_all.returned_any_source", "flag", expect=True)],
+                            _r_exp1_t4_battery, "the same control, then every one of 12 read paths refused with 403 and no document after start_basic"),
+    "EXP2-T1": Gate("both", ("exp2", "T1"), [I("exp2.T1_examined", "pos", bad=19999), I("exp2.T1_mismatches", "zero"), I("exp2.T1_backend_without_oracle", "zero"),
+                                             I("exp2.T1_control_broken_fallback.flag_rate", "measure", bad=0.5), I("exp2.T1_control_broken_fallback.backend_wrong", "zero")],
+                    _r_exp2_t1, "0 wrong answers over >= 20,000 examined, every backend answer had an oracle, control flagged"),
+    "EXP2-T2": Gate("both", ("exp2", "T2"), [I("exp2.T2_failed_requests", "measure", bad=10 ** 9), I("exp2.T2_non_control_requests", "pos"),
+                                             I("exp2.T2_longest_failure_window_s", "measure", bad=9.0)],
+                    _r_exp2_t2, "failed reads <= 0.1% and the longest failure window <= 2 s"),
+    "EXP2-T3-down": Gate("down", ("exp2", "T3"), [I("exp2.T3_flip_latency_s", "measure", bad=9.0), I("exp2.T3_backend_after_first_client", "zero")],
+                         _r_exp2_t3_down, "first client-labelled answer within 5 s of start_basic, no backend label after it"),
+    "EXP2-T3-up": Gate("up", ("exp2", "T3"), [I("exp2.T3_flip_latency_s", "measure", bad=10 ** 6), I("ttl", "measure", bad=-10.0), I("exp2.T3_client_after_first_backend", "zero")],
+                       _r_exp2_t3_up, "first backend-labelled answer within probe TTL + 5 s of start_trial, no client label after it"),
+    "EXP2-T4": Gate("both", ("exp2", "T4"), [I("exp2.writes.acked", "pos"), I("exp2.writes.acked_absent", "zero"), I("exp2.writes.sem_acked", "pos"),
+                                             I("exp2.writes.sem_acked_absent", "zero"), I("exp2.writes.sem_failed_present", "zero"),
+                                             I("exp2.writes.control_injected_loss_detected", "flag", expect=True),
+                                             I("exp2.writes.sem_failed", "measure", bad=10 ** 6), I("exp2.writes.sem_failed_loud_licence_or_missing", "measure", bad=-1),
+                                             I("exp2.writes.sem_failed_other", "optzero")],
+                    _r_exp2_t4, "no acknowledged write lost and every semantic write failure classified loud (addendum C)"),
+    "EXP2-T5-down": Gate("down", ("exp2", "T5"), [I("exp2.T5_control_after_1s.n", "pos"), I("exp2.T5_control_after_1s.licence_failures", "measure", bad=0)],
+                         _r_exp2_t5_down, ">= 95% of control requests after 1 s fail with the licence error"),
+    "EXP2-T5-up": Gate("up", ("exp2", "T5"), [I("exp2.T5_control_before_start_trial.n", "pos"), I("exp2.T5_control_before_start_trial.licence_failures", "measure", bad=0),
+                                              I("exp2.T5_control_after_trial.n", "pos"), I("exp2.T5_control_after_trial.success", "measure", bad=0)],
+                       _r_exp2_t5_up, ">= 95% licence failures before start_trial and every control request succeeds after it"),
+    "EXP3-migration": Gate("down", ("exp3", "migration"), _mig_inputs(), _r_exp3_migration,
+                           "every migrated copy complete and equal to the source (independent counts, controls) and EXP3-T2: Basic operations on the migrated indices 2xx"),
+    "EXP3-semonly-control": Gate("down", ("exp3", "semonly_control"), [x for k in ("semantic", "match", "match_all") for x in
+                                                                       (I("semonly_trial.%s.status" % k, "status", expect={200}), I("semonly_trial.%s.hits" % k, "pos"))],
+                                 _r_exp3_semonly, "the semantic-only fixture answers semantic, match and match_all with hits on trial"),
+}
+
+
+def gate(name, R):
+    """The ONLY producer of a gate status. Inputs are validated against the table first: any absent or malformed input gives UNVERIFIED."""
+    g = GATES[name]
+    vals = {}
+    for inp in g.inputs:
+        x = fetch(R, inp.path)
+        if not well_formed(inp, x):
+            return "UNVERIFIED"
+        vals[".".join(inp.path)] = x
+
+    def v(p):
+        return vals[p]   # a rule reading an undeclared input raises KeyError: caught by the property test
+    return g.rule(v)
+
+
+def put(r, name, R):
+    """Write gate `name` into result dict r as <out>_status and <out>_pass (pass only for PASS)."""
+    s = gate(name, R)
+    out = GATES[name].out[1]
+    r[out + "_status"], r[out + "_pass"] = s, s == "PASS"
+    return s
 
 
 def exp1_checks(R):
     r = {}
-    m = R.get("exp1_moment", {})
-    r["T2_first_refusal_s"] = {f: v.get("first_refusal_rel_resp_s") for f, v in m.items()}
-    r["T2_probe_status"] = {f: t2_probe_status(m.get(f)) for f in T2_PROBES}
-    r["T2_status"] = combine(r["T2_probe_status"].values())
-    r["T2_pass"] = r["T2_status"] == "PASS"
-    r["T2_dls_returned_before"] = m.get("dls_search", {}).get("dls_returned_counts_before")
-    after = R["exp1_after"]
-    latch_cells = ("retriever_rrf", "retriever_linear", "text_similarity_reranker_gate")
-    r["T3_latch_shape_ok"] = {c: (after[c].get("status") == 403 and "current license is non-compliant" in json.dumps(after[c].get("error")).lower()) for c in latch_cells}
-    d = after.get("dls_search_as_user", {})
-    r["T4_dls_after"] = {"status": d.get("status"), "class": d.get("class"), "returned": d.get("returned"), "reason": (d.get("error") or {}).get("reason", "")[:90]}
-    if not d or d.get("class") in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIPPED") or d.get("status") is None:
-        r["T4_status"] = "UNVERIFIED"   # absent cell, or the DLS user / shared base was not established: a 401 for a missing user is not DLS
-    else:
-        r["T4_status"] = "PASS" if d.get("status") in (401, 403) and d.get("returned") in (None, 0) else "FAIL"
-    r["T4_pass"] = r["T4_status"] == "PASS"
+    m = R.get("exp1_moment") if isinstance(R.get("exp1_moment"), dict) else {}
+    r["T2_first_refusal_s"] = {f: v.get("first_refusal_rel_resp_s") for f, v in m.items() if isinstance(v, dict)}
+    r["T2_dls_returned_before"] = (m.get("dls_search") or {}).get("dls_returned_counts_before") if isinstance(m.get("dls_search"), dict) else None
+    for name in ("EXP1-T2", "EXP1-T3", "EXP1-T4", "EXP1-T4-battery"):
+        put(r, name, R)
+    after = R.get("exp1_after") if isinstance(R.get("exp1_after"), dict) else {}
+    d = after.get("dls_search_as_user") if isinstance(after.get("dls_search_as_user"), dict) else {}
+    r["T4_dls_after"] = {"status": d.get("status"), "class": d.get("class"), "returned": d.get("returned"), "reason": str((d.get("error") or {}).get("reason", ""))[:90]}
     r["T4_control_before_returned"] = r["T2_dls_returned_before"]
-    a, b = R.get("dls_battery_after"), R.get("dls_battery_trial") or {}
-    if a is not None:
-        r["T4_battery_after_statuses"] = {k: v["status"] for k, v in a.items()}
-        r["T4_battery_trial_statuses"] = {k: v["status"] for k, v in b.items()}
-        r["T4_battery_control_trial_hidden_leak"] = [k for k, v in b.items() if v["returned_hidden_doc"]]
-    if a is None or any(k not in a for k in BATTERY):
-        r["T4_battery_status"] = "UNVERIFIED"   # battery not recorded, or a read path missing from it
-    else:
-        r["T4_battery_status"] = "PASS" if all(a[k]["status"] >= 400 and not a[k]["returned_hidden_doc"] and not a[k]["returned_any_source"] for k in BATTERY) else "FAIL"
-    r["T4_battery_pass"] = r["T4_battery_status"] == "PASS"
+    a, b = R.get("dls_battery_after"), R.get("dls_battery_trial")
+    if isinstance(a, dict) and isinstance(b, dict):
+        r["T4_battery_after_statuses"] = {k: v.get("status") for k, v in a.items() if isinstance(v, dict)}
+        r["T4_battery_trial_statuses"] = {k: v.get("status") for k, v in b.items() if isinstance(v, dict)}
     return r
 
 
@@ -117,51 +371,40 @@ def matrix_table(R):
     return t
 
 
+def _g(R, path):
+    v = fetch(R, tuple(path.split(".")))
+    return None if v is MISSING else v
+
+
+def _num(x):
+    return (_is_int(x) or isinstance(x, float)) and x == x
+
+
 def exp2_checks(R, direction):
-    e = R["exp2"]
-    r = {"T1_examined": e["T1_examined"], "T1_mismatches": e["T1_mismatches"], "T1_control_flag_rate": e["T1_control_broken_fallback"]["flag_rate"],
-         "T1_control_n": e["T1_control_broken_fallback"]["client_labelled"], "T1_control_backend_wrong": e["T1_control_broken_fallback"]["backend_wrong"],
-         "T2_fail_fraction": e["T2_failed_requests"] / max(1, e["T2_non_control_requests"]), "T2_longest_window_s": e["T2_longest_failure_window_s"],
-         "T3_flip_latency_s": e["T3_flip_latency_s"], "ttl": R["ttl"], "T6_rrf": e.get("T6_rrf_backend_vs_client_top10"), "T6_linear": e.get("T6_linear_backend_vs_client_rrf_top10")}
-    w = e["writes"]
-    r["T4"] = {"acked": w["acked"], "acked_absent": w["acked_absent"], "present_unacked": w["present_unacked"], "failed_batches": w["failed_batches"],
-               "sem_acked": w["sem_acked"], "sem_acked_absent": w["sem_acked_absent"], "sem_failed": w["sem_failed"], "sem_failed_loud": w["sem_failed_loud_licence_or_missing"],
-               "sem_failed_present": w["sem_failed_present"], "control_detects_injected_loss": w["control_injected_loss_detected"]}
-    base = (w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed_present"] == 0 and w["control_injected_loss_detected"])
-    observed = w["acked"] > 0 and w["sem_acked"] > 0   # no acknowledged write of either kind: "nothing lost" would be vacuous
-    # legacy rule (addendum C predecessor): every semantic failure was counted loud if it carried any 403/404 error body
-    r["T4_legacy_pass"] = base and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"]
-    if not base:
-        r["T4_status"] = "FAIL"
-    elif not observed:
-        r["T4_status"] = "UNVERIFIED"
-    elif "sem_failed_other" in w:
-        r["T4_status"] = "PASS" if w["sem_failed_other"] == 0 and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"] else "FAIL"
-    elif w["sem_failed"] == 0:
-        r["T4_status"] = "PASS" if base else "FAIL"
-    else:   # failures exist but were never classified under addendum C and the rows were not saved (addendum D)
-        r["T4_status"] = "UNVERIFIED" if base else "FAIL"
-    r["T4_pass"] = r["T4_status"] == "PASS"
+    """Report figures (None where not recorded) plus the EXP2 gates from the table. Never raises on a missing or malformed field."""
+    g = lambda p: _g(R, p)
+    failed, n = g("exp2.T2_failed_requests"), g("exp2.T2_non_control_requests")
+    r = {"T1_examined": g("exp2.T1_examined"), "T1_mismatches": g("exp2.T1_mismatches"), "T1_control_flag_rate": g("exp2.T1_control_broken_fallback.flag_rate"),
+         "T1_control_n": g("exp2.T1_control_broken_fallback.client_labelled"), "T1_control_backend_wrong": g("exp2.T1_control_broken_fallback.backend_wrong"),
+         "T1_backend_without_oracle": g("exp2.T1_backend_without_oracle"),
+         "T2_fail_fraction": failed / n if _num(failed) and _is_int(n) and n > 0 else None, "T2_longest_window_s": g("exp2.T2_longest_failure_window_s"),
+         "T3_flip_latency_s": g("exp2.T3_flip_latency_s"), "ttl": g("ttl"), "T6_rrf": g("exp2.T6_rrf_backend_vs_client_top10"),
+         "T6_linear": g("exp2.T6_linear_backend_vs_client_rrf_top10")}
+    r["T4"] = {k: g("exp2.writes." + k) for k in ("acked", "acked_absent", "present_unacked", "failed_batches", "sem_acked", "sem_acked_absent", "sem_failed",
+                                                   "sem_failed_loud_licence_or_missing", "sem_failed_present", "control_injected_loss_detected")}
     if direction == "down":
-        c = e["T5_control_after_1s"]
-        r["T5"] = {"n": c["n"], "fail_fraction": c["fail_fraction"], "licence_failures": c["licence_failures"]}
-        r["T3_pass"] = e["T3_flip_latency_s"] is not None and e["T3_flip_latency_s"] <= 5.0 and e.get("T3_backend_after_first_client") == 0
-        r["T5_pass"] = c["n"] > 0 and c.get("licence_failures") is not None and c["licence_failures"] / c["n"] >= 0.95
+        r["T5"] = {k: g("exp2.T5_control_after_1s." + k) for k in ("n", "fail_fraction", "licence_failures")}
     else:
-        pre = e["T5_control_before_start_trial"]
-        r["T5"] = {"before_n": pre["n"], "before_failures": pre["failures"], "before_licence_failures": pre.get("licence_failures"), "after_trial_n": e["T5_control_after_trial"]["n"], "after_trial_success": e["T5_control_after_trial"]["success"]}
-        r["T3_pass"] = (e["T3_flip_latency_s"] is not None and e["T3_flip_latency_s"] <= R["ttl"] + 5.0 and e.get("T3_client_after_first_backend") == 0)
-        post = e["T5_control_after_trial"]
-        r["T5_pass"] = (pre["n"] > 0 and pre.get("licence_failures") is not None and pre["licence_failures"] / pre["n"] >= 0.95
-                        and post["n"] > 0 and post["success"] == post["n"])
-        r["sem_first_ok_after_trial_s"] = e.get("sem_first_ok_after_trial_s")
-    r["T1_backend_without_oracle"] = e.get("T1_backend_without_oracle")
-    r["T1_pass"] = e.get("T1_backend_without_oracle") == 0 and e["T1_mismatches"] == 0 and e["T1_examined"] >= 20000 and r["T1_control_flag_rate"] >= 0.9 and r["T1_control_backend_wrong"] == 0
-    if not e["T2_non_control_requests"]:
-        r["T2_status"] = "UNVERIFIED"   # no read request: a zero failure fraction would be vacuous
-    else:
-        r["T2_status"] = "PASS" if r["T2_fail_fraction"] <= 0.001 and r["T2_longest_window_s"] <= 2.0 else "FAIL"
-    r["T2_pass"] = r["T2_status"] == "PASS"
+        r["T5"] = {"before_n": g("exp2.T5_control_before_start_trial.n"), "before_failures": g("exp2.T5_control_before_start_trial.failures"),
+                   "before_licence_failures": g("exp2.T5_control_before_start_trial.licence_failures"), "after_trial_n": g("exp2.T5_control_after_trial.n"),
+                   "after_trial_success": g("exp2.T5_control_after_trial.success")}
+        r["sem_first_ok_after_trial_s"] = g("exp2.sem_first_ok_after_trial_s")
+    w = r["T4"]
+    # report, not a gate: the pre-addendum-C rule (every semantic failure with any 403/404 body counted loud), kept for comparison
+    r["T4_legacy_rule_result"] = (w["acked_absent"] == 0 and w["sem_acked_absent"] == 0 and w["sem_failed_present"] == 0 and w["control_injected_loss_detected"] is True
+                                  and w["sem_failed"] == w["sem_failed_loud_licence_or_missing"]) if all(x is not None for x in w.values()) else None
+    for name in ("EXP2-T1", "EXP2-T2", "EXP2-T3-" + direction, "EXP2-T4", "EXP2-T5-" + direction):
+        put(r, name, R)
     return r
 
 
@@ -200,31 +443,11 @@ def exp3_checks(R):
             elif k in ("get_all", "count", "inference_embeddings_sample", "knn_self_top1", "vectors_equal_ground_truth"):
                 if json.dumps(pre[k], sort_keys=True) != json.dumps(aft[k], sort_keys=True) and kind != "x":
                     out["reads_diff"].append([kind, k, pre[k], aft[k]])
-    M = E["migration"]
     chk = {}
-    if "error" in M:
-        chk["error"] = M["error"]
-        chk["status"] = "UNVERIFIED"   # the migration did not complete: nothing was checked
-    else:
-        b = M["bbq_disk_to_hnsw"]
-        chk["bbq_disk_to_hnsw"] = b["dst_count"] == b["src_count"] and b["vector_mismatches"] == 0 and b["knn_self_top1"] / b["knn_self_of"] >= 0.99 and b["src_vs_ground_truth_max_abs"] <= 1e-6
-        b2 = M["bbq_disk_to_bbq_hnsw"]
-        chk["bbq_disk_to_bbq_hnsw"] = b2["dst_count"] == b2["src_count"] and b2["vector_mismatches"] == 0 and b2["knn_self_top1"] / b2["knn_self_of"] >= 0.99
-        s = M["semantic_to_text_vector"]
-        chk["semantic_to_text_vector"] = (s["dst_count"] == s["docs"] and s["vector_mismatches_vs_stored"] == 0 and s["worst_abs_err_vs_stub"] <= 0.005 and s["worst_cosine_vs_stub"] >= 0.9999
-                                          and s["knn_self_top1"] / s["knn_self_of"] >= 0.99 and s["skipped_not_single_chunk"] == 0)
-        chk["control_plain"] = M["control_plain_to_hnsw"]["vector_mismatches"] == 0 and M["control_plain_to_hnsw"]["dst_count"] == M["control_plain_to_hnsw"]["src_count"]
-        chk["control_corrupt_caught"] = M["control_corrupted_vs_true_source"]["vector_mismatches"] == 1
-        # independent source counts: `_count` of the source index recorded after the operations and before the restart (never derived from the scroll)
-        ind = E["after_restart"]["counts_before"]
-        chk["source_count_independent"] = (b["src_count"] == ind["bbq_disk"] and b2["src_count"] == ind["bbq_disk"] and s["docs"] + s["skipped_not_single_chunk"] == ind["sem"]
-                                           and M["control_plain_to_hnsw"]["src_count"] == ind["plain"])
-        populated = b["src_count"] > 0 and b2["src_count"] > 0 and s["docs"] > 0 and M["control_plain_to_hnsw"]["src_count"] > 0
-        for k in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw", "semantic_to_text_vector"):
-            chk[k] = chk[k] and chk["source_count_independent"] and populated
-        chk["status"] = "UNVERIFIED" if not populated else ("PASS" if all(chk[k] for k in ("bbq_disk_to_hnsw", "bbq_disk_to_bbq_hnsw", "semantic_to_text_vector",
-                                                                                           "control_plain", "control_corrupt_caught")) else "FAIL")
-        chk["migrated_ops_ok"] = all(v < 300 for d in M["migrated_basic_ops"].values() for v in d.values())
+    if isinstance(E.get("migration"), dict) and "error" in E["migration"]:
+        chk["error"] = E["migration"]["error"]
+    put(chk, "EXP3-migration", R)   # EXP3 migration and EXP3-T2 (Basic operations on the migrated indices): one gate from the table
+    chk["migrated_basic_ops"] = _g(R, "exp3.migration.migrated_basic_ops")
     out["migration_checks"] = chk
     if "unrefreshed_twin_on_trial" in R:
         u = lambda x: {"searchable_before_update": x.get("searchable_before_update", "not recorded (fixture was refreshed by a restart: not a clean test)"), "bulk_failed": x["bulk"]["failed"], "bulk_http": x["bulk_status"],
@@ -239,7 +462,7 @@ def exp3_checks(R):
                      "silent_difference": a["status"] < 300 and t["status"] < 300 and a["hits"] != t["hits"]}
         out["semonly"] = sm
         out["semonly_silent"] = [k for k, v in sm.items() if v["silent_difference"]]
-        out["semonly_trial_witness_ok"] = all(R["semonly_trial"][k]["hits"] and R["semonly_trial"][k]["hits"] > 0 for k in ("semantic", "match", "match_all"))
+    put(out, "EXP3-semonly-control", R)
     out["restart"] = {"counts_equal": E["after_restart"]["counts_before"] == E["after_restart"]["counts_after"], "counts": E["after_restart"]["counts_after"]}
     return out
 
@@ -273,20 +496,21 @@ def aggregate(d, res):
     agg["matrix_distinct_values_across_lives"] = {c: {ph: sorted(v) for ph, v in d2.items()} for c, d2 in mt.items()}
     agg["matrix_nondeterministic_cells"] = sorted(c for c, d2 in mt.items() if any(len(v) > 1 for v in d2.values()))
     allx = [exp2_checks(R, "down") for R in downs] + [exp2_checks(R, "up") for R in ups]
-    ex = sum(x["T1_examined"] for x in allx)
-    mm = sum(x["T1_mismatches"] for x in allx)
+    nums = lambda key, sub=None: [v for v in ((x.get(key) if sub is None else (x.get(key) or {}).get(sub)) for x in allx) if _num(v)]
+    lo = lambda xs: min(xs) if xs else None
+    hi = lambda xs: max(xs) if xs else None
+    ex, mm = sum(nums("T1_examined")), sum(nums("T1_mismatches"))
     agg["exp2_total_examined"], agg["exp2_total_mismatches"] = ex, mm
     agg["exp2_correct_rate_wilson_lower"] = wilson_lower(ex - mm, ex)
     agg["exp2_lives"] = {"down": len(downs), "up": len(ups)}
-    agg["exp2_worst"] = {"min_examined": min(x["T1_examined"] for x in allx), "max_longest_window_s": max(x["T2_longest_window_s"] for x in allx),
-                         "max_fail_fraction": max(x["T2_fail_fraction"] for x in allx), "min_control_flag_rate": min(x["T1_control_flag_rate"] for x in allx),
-                         "max_flip_down_s": max((exp2_checks(R, "down")["T3_flip_latency_s"] for R in downs), default=None),
-                         "max_flip_up_s": max((exp2_checks(R, "up")["T3_flip_latency_s"] for R in ups), default=None),
-                         "total_acked_writes": sum(x["T4"]["acked"] for x in allx), "total_acked_absent": sum(x["T4"]["acked_absent"] for x in allx)}
-    # mandatory: at least one complete life in each direction (EXP2 has both); every life's gate must pass
+    agg["exp2_worst"] = {"min_examined": lo(nums("T1_examined")), "max_longest_window_s": hi(nums("T2_longest_window_s")),
+                         "max_fail_fraction": hi(nums("T2_fail_fraction")), "min_control_flag_rate": lo(nums("T1_control_flag_rate")),
+                         "max_flip_down_s": hi([x["T3_flip_latency_s"] for x in allx[:len(downs)] if _num(x["T3_flip_latency_s"])]),
+                         "max_flip_up_s": hi([x["T3_flip_latency_s"] for x in allx[len(downs):] if _num(x["T3_flip_latency_s"])]),
+                         "total_acked_writes": sum(nums("T4", "acked")), "total_acked_absent": sum(nums("T4", "acked_absent"))}
+    # mandatory: at least one complete life in each direction (EXP2 has both); each life's own gate status, combined
     both = bool(downs) and bool(ups)
-    life = lambda x, k: x.get(k[:-5] + "_status") or ("PASS" if x[k] else "FAIL")   # a life's own status where the gate has one
-    agg["all_status"] = {k: combine(life(x, k) for x in allx) if both else "UNVERIFIED" for k in ("T1_pass", "T2_pass", "T3_pass", "T4_pass", "T5_pass")}
+    agg["all_status"] = {k + "_pass": combine(x[k + "_status"] for x in allx) if both else "UNVERIFIED" for k in ("T1", "T2", "T3", "T4", "T5")}
     agg["all_pass"] = {k: v == "PASS" for k, v in agg["all_status"].items()}
     return agg
 

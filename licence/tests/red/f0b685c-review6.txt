@@ -1,0 +1,180 @@
+# tests.test_gates + tests.test_offline from fix/licence-matrix (gate review 6 round) run against a copy of licence/ whose summarize.py is byte-identical to f0b685c (cmp checked); PYTHONPATH=repo root for memcore. KeyError rows are outputs f0b685c does not produce (no gate table, no migration_status, no explicit EXP2 statuses).
+...F...F..........FFFF..................................................EE..EEEEEE.FF.F............E..............
+======================================================================
+ERROR: test_recorded_lives_have_independent_source_counts_and_pass (tests.test_gates.MigrationVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 883, in test_recorded_lives_have_independent_source_counts_and_pass
+    self.assertEqual(chk["migration_status"], "PASS", n)
+KeyError: 'migration_status'
+
+======================================================================
+ERROR: test_source_count_not_matching_independent_count_fails (tests.test_gates.MigrationVerdictTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 890, in test_source_count_not_matching_independent_count_fails
+    self.assertEqual(chk["migration_status"], "FAIL")
+KeyError: 'migration_status'
+
+======================================================================
+ERROR: test_exp2_missing_inputs_give_explicit_status (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1108, in test_exp2_missing_inputs_give_explicit_status
+    r = summarize.exp2_checks(R, "down")
+  File "<f0b685c-copy>/licence/summarize.py", line 122, in exp2_checks
+    r = {"T1_examined": e["T1_examined"], "T1_mismatches": e["T1_mismatches"], "T1_control_flag_rate": e["T1_control_broken_fallback"]["flag_rate"],
+KeyError: 'T1_examined'
+
+======================================================================
+ERROR: test_f10_empty_campaign_is_unverified_not_an_exception (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1101, in test_f10_empty_campaign_is_unverified_not_an_exception
+    agg = summarize.aggregate(tempfile.mkdtemp(), {})
+  File "<f0b685c-copy>/licence/summarize.py", line 281, in aggregate
+    agg["exp2_worst"] = {"min_examined": min(x["T1_examined"] for x in allx), "max_longest_window_s": max(x["T2_longest_window_s"] for x in allx),
+ValueError: min() arg is an empty sequence
+
+======================================================================
+ERROR: test_f8_migration_healthy_passes (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1040, in test_f8_migration_healthy_passes
+    self.assertEqual(summarize.exp3_checks(_life("down_1"))["migration_checks"]["migration_status"], "PASS")
+KeyError: 'migration_status'
+
+======================================================================
+ERROR: test_f8_no_operations_is_unverified (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1043, in test_f8_no_operations_is_unverified
+    self.assertEqual(self.mig({}), "UNVERIFIED")
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1037, in mig
+    return summarize.exp3_checks(R)["migration_checks"]["migration_status"]
+KeyError: 'migration_status'
+
+======================================================================
+ERROR: test_f8_partially_missing_operations_is_unverified (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1048, in test_f8_partially_missing_operations_is_unverified
+    self.assertEqual(self.mig(ops), "UNVERIFIED")
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1037, in mig
+    return summarize.exp3_checks(R)["migration_checks"]["migration_status"]
+KeyError: 'migration_status'
+
+======================================================================
+ERROR: test_f8_transport_sentinel_and_503_fail (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1055, in test_f8_transport_sentinel_and_503_fail
+    self.assertEqual(self.mig(o), "FAIL", code)
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1037, in mig
+    return summarize.exp3_checks(R)["migration_checks"]["migration_status"]
+KeyError: 'migration_status'
+
+======================================================================
+ERROR: test_every_recorded_life_is_unverified_not_pass (tests.test_gates.T4Tests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 370, in test_every_recorded_life_is_unverified_not_pass
+    self.assertTrue(r["T4_legacy_rule_result"], f)   # the old-rule result is kept as a report, separately named
+KeyError: 'T4_legacy_rule_result'
+
+======================================================================
+FAIL: test_migration_with_zero_documents_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 996, in test_migration_with_zero_documents_is_not_a_pass
+    self.assertEqual(chk.get("migration_status"), "UNVERIFIED")
+AssertionError: None != 'UNVERIFIED'
+
+======================================================================
+FAIL: test_t2_late_refusal_with_an_unverified_probe_is_unverified (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 946, in test_t2_late_refusal_with_an_unverified_probe_is_unverified
+    self.assertEqual(summarize.exp1_checks(R).get("T2_status"), "UNVERIFIED")   # validate-first: an unverified probe makes the gate UNVERIFIED
+AssertionError: 'FAIL' != 'UNVERIFIED'
+- FAIL
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_every_mutation_of_every_input_is_never_pass_and_never_raises (tests.test_gates.GatePropertyTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1141, in setUp
+    self.assertTrue(getattr(summarize, "GATES", None), "summarize has no gate table")
+AssertionError: None is not true : summarize has no gate table
+
+======================================================================
+FAIL: test_healthy_fixture_passes_every_gate (tests.test_gates.GatePropertyTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1141, in setUp
+    self.assertTrue(getattr(summarize, "GATES", None), "summarize has no gate table")
+AssertionError: None is not true : summarize has no gate table
+
+======================================================================
+FAIL: test_no_gate_reported_outside_the_table (tests.test_gates.GatePropertyTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1141, in setUp
+    self.assertTrue(getattr(summarize, "GATES", None), "summarize has no gate table")
+AssertionError: None is not true : summarize has no gate table
+
+======================================================================
+FAIL: test_rules_read_only_declared_inputs (tests.test_gates.GatePropertyTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1141, in setUp
+    self.assertTrue(getattr(summarize, "GATES", None), "summarize has no gate table")
+AssertionError: None is not true : summarize has no gate table
+
+======================================================================
+FAIL: test_f9_after_all_503_or_401_is_not_a_pass (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1084, in test_f9_after_all_503_or_401_is_not_a_pass
+    self.assertEqual(self.battery(m), ("UNVERIFIED", False), code)
+AssertionError: Tuples differ: ('PASS', True) != ('UNVERIFIED', False)
+
+First differing element 0:
+'PASS'
+'UNVERIFIED'
+
+- ('PASS', True)
++ ('UNVERIFIED', False) : 503
+
+======================================================================
+FAIL: test_f9_dls_search_after_401_or_missing_control_is_not_a_pass (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1094, in test_f9_dls_search_after_401_or_missing_control_is_not_a_pass
+    self.assertEqual(summarize.exp1_checks(R)["T4_status"], "UNVERIFIED")
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_f9_trial_control_absent_empty_or_401_is_not_a_pass (tests.test_gates.ReviewSixGateTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<f0b685c-copy>/licence/tests/test_gates.py", line 1077, in test_f9_trial_control_absent_empty_or_401_is_not_a_pass
+    self.assertEqual(self.battery(m), ("UNVERIFIED", False), m.__name__)
+AssertionError: Tuples differ: ('PASS', True) != ('UNVERIFIED', False)
+
+First differing element 0:
+'PASS'
+'UNVERIFIED'
+
+- ('PASS', True)
++ ('UNVERIFIED', False) : absent
+
+----------------------------------------------------------------------
+Ran 114 tests in 10.409s
+
+FAILED (failures=9, errors=9)

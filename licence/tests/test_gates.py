@@ -367,7 +367,7 @@ class T4Tests(unittest.TestCase):
                 self.assertNotIn("sem_failed_other", R["exp2"]["writes"], f)
                 self.assertFalse(r["T4_pass"], f)
                 self.assertEqual(r["T4_status"], "UNVERIFIED", f)
-                self.assertTrue(r["T4_legacy_pass"], f)   # the old-rule result is kept, separately named
+                self.assertTrue(r["T4_legacy_rule_result"], f)   # the old-rule result is kept as a report, separately named
 
     def test_classified_clean_record_passes(self):
         R = load("down_1.json")
@@ -880,16 +880,14 @@ class MigrationVerdictTests(unittest.TestCase):
         for n in (1, 2, 3, 4, 5, 6, 7):
             R = load("down_%d.json" % n)
             chk = summarize.exp3_checks(R)["migration_checks"]
-            self.assertTrue(chk["bbq_disk_to_hnsw"] and chk["bbq_disk_to_bbq_hnsw"] and chk["semantic_to_text_vector"], n)
-            self.assertTrue(chk["source_count_independent"], n)
+            self.assertEqual(chk["migration_status"], "PASS", n)
 
     def test_source_count_not_matching_independent_count_fails(self):
         R = load("down_1.json")
         R["exp3"]["migration"]["bbq_disk_to_hnsw"]["src_count"] = 298
         R["exp3"]["migration"]["bbq_disk_to_hnsw"]["dst_count"] = 298   # a partial copy that agrees with itself
         chk = summarize.exp3_checks(R)["migration_checks"]
-        self.assertFalse(chk["bbq_disk_to_hnsw"])
-        self.assertFalse(chk["source_count_independent"])
+        self.assertEqual(chk["migration_status"], "FAIL")
 
 
 MANDATORY_T2 = ("rrf", "linear", "semantic_query", "inference_use", "dls_search")   # THRESHOLDS.md EXP1-T2 scope
@@ -940,12 +938,19 @@ class AggregateGateCoverageTests(unittest.TestCase):
         self.assertFalse(r["T2_pass"])
         self.assertEqual(r.get("T2_status"), "UNVERIFIED")
 
-    def test_t2_refusal_after_bound_fails_not_unverified(self):
+    def test_t2_late_refusal_with_an_unverified_probe_is_unverified(self):
         R = load("down_1.json")
         m = exp2.moment_analysis(_poll_rows(100.0, unverified=("dls_search",)), 100.0)
         m["rrf"]["first_refusal_rel_resp_s"] = 9.0
         R["exp1_moment"] = m
-        self.assertEqual(summarize.exp1_checks(R).get("T2_status"), "FAIL")
+        self.assertEqual(summarize.exp1_checks(R).get("T2_status"), "UNVERIFIED")   # validate-first: an unverified probe makes the gate UNVERIFIED
+
+    def test_t2_refusal_after_bound_with_all_probes_verified_fails(self):
+        R = load("down_1.json")
+        m = exp2.moment_analysis(_poll_rows(100.0), 100.0)
+        self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "PASS")
+        m["rrf"]["first_refusal_rel_resp_s"] = 9.0
+        self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "FAIL")
 
     def test_t4_dls_absent_is_unverified(self):
         R = load("down_1.json")
@@ -988,8 +993,7 @@ class AggregateGateCoverageTests(unittest.TestCase):
         M["semantic_to_text_vector"]["docs"] = M["semantic_to_text_vector"]["dst_count"] = 0
         R["exp3"]["after_restart"]["counts_before"].update({"bbq_disk": 0, "sem": 0})
         chk = summarize.exp3_checks(R)["migration_checks"]
-        self.assertFalse(chk["bbq_disk_to_hnsw"] or chk["bbq_disk_to_bbq_hnsw"] or chk["semantic_to_text_vector"])
-        self.assertEqual(chk.get("status"), "UNVERIFIED")
+        self.assertEqual(chk.get("migration_status"), "UNVERIFIED")
 
     def test_aggregate_with_one_direction_absent_is_not_all_pass(self):
         import shutil
@@ -1008,6 +1012,191 @@ class AggregateGateCoverageTests(unittest.TestCase):
         self.assertFalse(recompute.agree(0.0, None))
         self.assertTrue(recompute.agree(None, None))
         self.assertTrue(recompute.agree(1.0, 1.0 + 1e-9))
+
+
+def _life(name):
+    """A committed life through summarize.load (as the summarizer sees it, including the up-life licence-failure backfill)."""
+    mode = name.split("_")[0]
+    return copy.deepcopy(next(R for R in summarize.load(RES, mode) if R["_file"] == name + ".json"))
+
+
+def _healthy(scope):
+    """Known-good fixture per gate scope: committed down_7 / up_1, with the one field the recorded lives never carried (addendum C's
+    sem_failed_other) set so that EXP2-T4 can be PASS. Every other value is as committed."""
+    R = _life("down_7" if scope in ("down", "both") else "up_1")
+    R["exp2"]["writes"]["sem_failed_other"] = 0
+    return R
+
+
+class ReviewSixGateTests(unittest.TestCase):
+    """Gate review 6: F8 (migration ignores Basic operations), F9 (DLS battery without a control, accepting 401/5xx), F10 (empty campaign)."""
+
+    def mig(self, ops):
+        R = _life("down_1")
+        R["exp3"]["migration"]["migrated_basic_ops"] = ops
+        return summarize.exp3_checks(R)["migration_checks"]["migration_status"]
+
+    def test_f8_migration_healthy_passes(self):
+        self.assertEqual(summarize.exp3_checks(_life("down_1"))["migration_checks"]["migration_status"], "PASS")
+
+    def test_f8_no_operations_is_unverified(self):
+        self.assertEqual(self.mig({}), "UNVERIFIED")
+
+    def test_f8_partially_missing_operations_is_unverified(self):
+        ops = copy.deepcopy(_life("down_1")["exp3"]["migration"]["migrated_basic_ops"])
+        del ops["lic3-sem-mig"]["force_merge"]
+        self.assertEqual(self.mig(ops), "UNVERIFIED")
+
+    def test_f8_transport_sentinel_and_503_fail(self):
+        ops = copy.deepcopy(_life("down_1")["exp3"]["migration"]["migrated_basic_ops"])
+        for code in (0, 503):
+            o = copy.deepcopy(ops)
+            o["lic3-bbq_disk-mig"]["update"] = code
+            self.assertEqual(self.mig(o), "FAIL", code)
+
+    def battery(self, mutate):
+        R = _life("down_7")
+        mutate(R)
+        r = summarize.exp1_checks(R)
+        return r.get("T4_battery_status"), r.get("T4_battery_pass")
+
+    def test_f9_healthy_battery_passes(self):
+        self.assertEqual(self.battery(lambda R: None), ("PASS", True))
+
+    def test_f9_trial_control_absent_empty_or_401_is_not_a_pass(self):
+        def absent(R):
+            del R["dls_battery_trial"]
+
+        def empty(R):
+            R["dls_battery_trial"] = {}
+
+        def auth(R):
+            for v in R["dls_battery_trial"].values():
+                v.update(status=401, returned_any_source=False)
+        for m in (absent, empty, auth):
+            self.assertEqual(self.battery(m), ("UNVERIFIED", False), m.__name__)
+
+    def test_f9_after_all_503_or_401_is_not_a_pass(self):
+        for code in (503, 401, 0):
+            def m(R, code=code):
+                for v in R["dls_battery_after"].values():
+                    v["status"] = code
+            self.assertEqual(self.battery(m), ("UNVERIFIED", False), code)
+
+    def test_f9_after_200_is_fail(self):
+        def m(R):
+            R["dls_battery_after"]["search_match_all"].update(status=200, returned_any_source=True)
+        self.assertEqual(self.battery(m), ("FAIL", False))
+
+    def test_f9_dls_search_after_401_or_missing_control_is_not_a_pass(self):
+        R = _life("down_7")
+        R["exp1_after"]["dls_search_as_user"]["status"] = 401
+        self.assertEqual(summarize.exp1_checks(R)["T4_status"], "UNVERIFIED")
+        R = _life("down_7")
+        R["exp1_trial"]["dls_search_as_user"]["only_kw_a"] = False
+        self.assertEqual(summarize.exp1_checks(R)["T4_status"], "UNVERIFIED")
+
+    def test_f10_empty_campaign_is_unverified_not_an_exception(self):
+        import tempfile
+        agg = summarize.aggregate(tempfile.mkdtemp(), {})
+        self.assertEqual(set(agg["all_status"].values()), {"UNVERIFIED"})
+
+    def test_exp2_missing_inputs_give_explicit_status(self):
+        for key in ("T1_examined", "T3_flip_latency_s", "T5_control_after_1s"):
+            R = _life("down_7")
+            del R["exp2"][key]
+            r = summarize.exp2_checks(R, "down")
+            self.assertIn("UNVERIFIED", (r.get("T1_status"), r.get("T3_status"), r.get("T5_status")), key)
+
+
+def _mutations(inp, healthy):
+    """The mutations applied to one declared input (kind-specific); values equal to the healthy value are skipped by the caller."""
+    k = inp.kind
+    out = [("None", None), ("wrong type", 123 if k == "text" else "x")]
+    if k == "optzero":
+        out = [("None", None), ("wrong type", "x"), ("1", 1)]
+    elif k == "status":
+        out += [(str(c), c) for c in (0, 401, 403, 404, 500, 503, 200) if not inp.expect or c not in inp.expect]
+    elif k == "pos":
+        out += [("0", 0), ("-1", -1)] + ([("bad", inp.bad)] if inp.bad is not None else [])
+    elif k == "zero":
+        out += [("1", 1), ("float", 0.0)]
+    elif k == "one":
+        out += [("0", 0), ("2", 2)]
+    elif k == "measure":
+        out += [("nan", float("nan"))] + ([("bad", inp.bad)] if inp.bad is not None else [])
+    elif k == "flag":
+        out += [("not expected", not inp.expect), ("int", 1)]
+    elif k == "text":
+        out += [("empty str", ""), ("empty dict", {})] + ([("bad", inp.bad)] if inp.bad is not None else [])
+    return out
+
+
+class GatePropertyTests(unittest.TestCase):
+    """Gate review 6: EVERY gate in summarize.GATES, EVERY declared input, EVERY mutation (absent key, None, wrong type, empty or truncated parent
+    container, and per kind: 0, transport 0, 401, 403 where not expected, 404, 500, 503, 1 where 0 is required, NaN, the declared bad value) on a
+    known-good fixture: the gate is never PASS and never raises. The healthy fixture is PASS. No gate is reported outside the table."""
+
+    def setUp(self):
+        self.assertTrue(getattr(summarize, "GATES", None), "summarize has no gate table")
+
+    def test_healthy_fixture_passes_every_gate(self):
+        for name, g in summarize.GATES.items():
+            self.assertEqual(summarize.gate(name, _healthy(g.scope)), "PASS", name)
+
+    def test_every_mutation_of_every_input_is_never_pass_and_never_raises(self):
+        problems, n = [], 0
+        for name, g in summarize.GATES.items():
+            base = _healthy(g.scope)
+            for inp in g.inputs:
+                parent = summarize.fetch(base, inp.path[:-1])
+                healthy = parent[inp.path[-1]]
+                cases = [("absent", "absent")] + [(lab, val) for lab, val in _mutations(inp, healthy) if not (type(val) is type(healthy) and val == healthy)]
+                cases += [("empty parent", "empty parent"), ("parent as list", "parent as list"), ("truncated parent", "truncated parent")]
+                for lab, val in cases:
+                    R = copy.deepcopy(base)
+                    par = summarize.fetch(R, inp.path[:-1])
+                    if val == "absent" or val == "truncated parent":
+                        del par[inp.path[-1]]
+                    elif val in ("empty parent", "parent as list"):
+                        grand = summarize.fetch(R, inp.path[:-2]) if len(inp.path) > 1 else None
+                        if grand is None or grand is summarize.MISSING:
+                            continue
+                        grand[inp.path[-2]] = {} if val == "empty parent" else []
+                    else:
+                        par[inp.path[-1]] = val
+                    n += 1
+                    try:
+                        st = summarize.gate(name, R)
+                    except Exception as e:  # noqa: BLE001
+                        problems.append("%s %s %s: raised %s" % (name, ".".join(inp.path), lab, type(e).__name__))
+                        continue
+                    if st == "PASS":
+                        problems.append("%s %s %s: PASS" % (name, ".".join(inp.path), lab))
+        self.assertGreater(n, 500)
+        self.assertEqual(problems, [], "\n".join(problems[:60]))
+
+    def test_rules_read_only_declared_inputs(self):   # a rule reading an undeclared field would escape the mutation coverage
+        for name, g in summarize.GATES.items():
+            seen = set()
+            vals = {".".join(i.path): summarize.fetch(_healthy(g.scope), i.path) for i in g.inputs}
+            g.rule(lambda p: (seen.add(p), vals[p])[1])
+            self.assertLessEqual(seen, set(vals), name)   # inputs not read by the rule (for example EXP1-T2 `n`) are validation-only
+
+    def test_no_gate_reported_outside_the_table(self):
+        outs = {g.out[1] for g in summarize.GATES.values()}
+        R = _healthy("down")
+        reports = [summarize.exp1_checks(R), summarize.exp2_checks(R, "down"), summarize.exp3_checks(R), summarize.exp3_checks(R)["migration_checks"],
+                   summarize.exp2_checks(_healthy("up"), "up")]
+        for rep in reports:
+            for k in rep:
+                if k.endswith("_pass") or k.endswith("_status") or k.endswith("_ok"):
+                    self.assertIn(k.rsplit("_", 1)[0], outs, k)
+        import ast
+        tree = ast.parse(open(os.path.join(LIC, "summarize.py")).read())
+        consts = [n.value for n in ast.walk(tree) if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+        self.assertEqual([c for c in consts if c.endswith("_pass") and c not in ("_pass", "all_pass", "T1_pass", "T2_pass", "T3_pass", "T4_pass", "T5_pass")], [])
+        self.assertEqual([c for c in consts if c.endswith("_ok")], [])
 
 
 if __name__ == "__main__":
