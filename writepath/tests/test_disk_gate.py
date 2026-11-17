@@ -467,6 +467,21 @@ class Gate(unittest.TestCase):
         self.line(LOW)
         self.assertValid(*self.call("end"))
 
+    def test_hyphenated_flood_stage_line_voids(self):
+        # the wording Elastic's "Fix watermark errors" page gives (fetched 2026-11-17): "flood-stage watermark [95%]
+        # exceeded on ..."; the gate must not depend on one spelling of the flood-stage message
+        self.start()
+        self.line('{"log.level": "WARN","message":"flood-stage watermark [95%] exceeded on [node][7b751d48f8c8]'
+                  '[/usr/share/elasticsearch/data] free: 1gb[4%], all indices on this node will be marked read-only"}')
+        self.assertVoid(*self.call("end"), "flood stage")
+
+    def test_flood_stage_setting_name_does_not_void(self):
+        # a settings line naming watermark.flood_stage is not a watermark event (guards against over-normalising)
+        self.start()
+        self.line('{"log.level": "INFO","message":"updating [cluster.routing.allocation.disk.watermark.flood_stage]'
+                  ' from [95%] to [1gb]"}')
+        self.assertValid(*self.call("end"))
+
     def test_flood_line_before_the_run_does_not_void(self):
         self.line(FLOOD)
         self.start()

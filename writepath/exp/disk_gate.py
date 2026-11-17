@@ -96,8 +96,10 @@ def _docker(*args, timeout=None):
 
 def _bad(text):
     """The amendment-23a predicates: past the HIGH watermark the node allocates no new primaries (d3 at 31112b4: 503
-    unavailable_shards_exception); at the flood stage writes are refused. The low watermark only stops replicas."""
-    t = text.lower()
+    unavailable_shards_exception); at the flood stage writes are refused. The low watermark only stops replicas.
+    Hyphens count as spaces: ES logs "flood stage disk watermark", Elastic's troubleshooting page writes "flood-stage
+    watermark"; underscores do not, so a settings line naming watermark.flood_stage is not a watermark event."""
+    t = text.lower().replace("-", " ")
     if "flood stage" in t:
         return "flood-stage"
     if "high disk watermark" in t and "exceeded" in t:

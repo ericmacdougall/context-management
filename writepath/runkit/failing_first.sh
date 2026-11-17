@@ -12,7 +12,7 @@ W=$(mktemp -d)
 trap 'rm -rf "$W"' EXIT
 F="$W/$(basename "$P")"
 git show "$C:$P" > "$F" || { echo "cannot read $C:$P"; exit 2; }
-TF="tests/$(echo "$M" | sed 's/^tests\.//').py"
+TF="tests/$(echo "$M" | sed 's/^tests\.//; s/\..*//').py"   # the module of a dotted test name (tests.m.Class.test)
 {
   echo "# failing-first receipt"
   echo "# date: $(date -u +%FT%TZ)"
