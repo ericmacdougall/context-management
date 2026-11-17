@@ -269,6 +269,14 @@ row 19's 880/880, negative blocks per negative family.
 Rows: set, family, encoding, context, index, caught, detector names, sha256 of the text (16 hex). Never the text or the
 planted value; the harness asserts before writing that no planted value or text occurs in the result document.
 
+## Amendment 15a (2026-11-17, before any held-out item was scored by the real scanner; thresholds of 15 unchanged)
+At the coordinator's request one comment line was added to exp/heldout_secrets_gen.py naming the public source of a
+documentation-example value in the negative set. The file's sha256 is now
+d67e76929102a65130d0ab6db3e279300273688b6bd677f565757ebee58abeba (was bc731ed0...). The generated corpus is unchanged:
+sha256 of json.dumps([positives(16096), negatives(16096)], sort_keys=True) =
+2392990636495a3acd0d635e0917e337a5d8ac860b338a6e26d53edbb9d704a5 at both file versions. The harness now pins the new
+file hash AND this corpus digest.
+
 ## Amendment 16 (2026-11-17, written before the run; new owner): two erasures of subjects who mention each other
 Low item from the 7f6536c round (exp/mutual_mentions.py). Per run, a fresh tenant: identifiers declared for A and B
 (>= 6 characters, accepted by the D3 rule); events A1 (A's own, mentions B), A2 (A's own), B1 (B's own, mentions A),
