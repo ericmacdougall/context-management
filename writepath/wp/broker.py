@@ -86,7 +86,15 @@ class Broker:
         return {"id": j["id"], "encoded": j["encoded"], "expiration": j.get("expiration")}
 
     def _invalidate_older(self, t, epoch):
-        """Hygiene only: the fence does not depend on it (PE). Returns (invalidated ids, error type or None)."""
+        """Hygiene only: the fence does not depend on it (PE, and the generation invariant in families.py). Returns
+        (invalidated ids, error or None). Never raises (review B5): it runs AFTER the mint, and an exception here would
+        withhold a key that already exists; the failure is recorded as a sanitized type name instead."""
+        try:
+            return self._invalidate_older_once(t, epoch)
+        except Exception as e:  # noqa: BLE001  (transport, protocol or parse failure: recorded, never fatal)
+            return [], f"hygiene {type(e).__name__}"
+
+    def _invalidate_older_once(self, t, epoch):
         s, j = self.es.req("GET", "/_security/api_key", ok=None, owner="true", name=f"wp16096-w-{t}-e*", active_only="true")
         if s != 200:
             return [], f"list {s}"

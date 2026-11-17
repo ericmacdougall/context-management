@@ -1,0 +1,5 @@
+# wp/broker.py at b87d705; current tests; python3 -m unittest tests.test_broker
+ERROR: test_hygiene_transport_failure_returns_the_key (tests.test_broker.BrokerTest)
+ConnectionResetError: simulated
+Ran 18 tests in 1.475s
+FAILED (errors=1)

@@ -222,6 +222,32 @@ class BrokerTest(unittest.TestCase):
         self.assertEqual((k["invalidated_older"], k["invalidate_error"]), (0, "invalidate 403"))
         self.assertEqual(k["encoded"], ENC)
 
+    def test_hygiene_transport_failure_returns_the_key(self):
+        """review B5: a transport exception in listing or invalidation is recorded; the minted key is returned."""
+        for fail_on in ("GET", "DELETE"):
+            es = FakeES(self.F, keys=[{"id": "old4", "metadata": {"tenant": T, "epoch": E - 1}}])
+            real = es.req
+
+            def req(method, path, *a, _real=real, _m=fail_on, **k):
+                if method == _m and path == "/_security/api_key":
+                    raise ConnectionResetError("simulated")
+                return _real(method, path, *a, **k)
+            es.req = req
+            b, log = self.broker(es)
+            k = b.writer_key(T, E, HOLDER)
+            self.assertEqual(k["encoded"], ENC, fail_on)
+            self.assertEqual(k["invalidate_error"], "hygiene ConnectionResetError", fail_on)
+            self.assertIn("err=hygiene ConnectionResetError", "\n".join(log))
+            self.assertNotIn("simulated", "\n".join(log))
+
+    def test_mint_failure_stays_fatal(self):
+        es = FakeES(self.F)
+        real = es.req
+        es.req = lambda m, p, *a, **k: (500, {"error": {"type": "x"}}) if (m, p) == ("POST", "/_security/api_key") else real(m, p, *a, **k)
+        b, _ = self.broker(es)
+        with self.assertRaises(self.B.Refused):
+            b.writer_key(T, E, HOLDER)
+
     # ------------------------------------------------------------ secrets
     def test_log_has_key_id_never_key_value(self):
         es = FakeES(self.F)
