@@ -324,6 +324,7 @@ class BrokerTest(unittest.TestCase):
         self.assertIn("not key revocation", s["basis"])
         self.assertIn("0.055 s", s["revocation"])
         self.assertIn("one node", s["revocation"])
+        self.assertIn("broker is down", s["issued_key_window"])
         self.assertIn("none claimed", s["time_bound"])
         s = self.B.fence_statement()
         self.assertNotEqual(s["mode"], "broker")

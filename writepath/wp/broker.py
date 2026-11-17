@@ -195,6 +195,9 @@ def fence_statement():
                          "not key revocation",
                 "revocation": "hygiene only; " + REVOCATION_DELAY,
                 "derived_keys": "not used (not demonstrated on Basic: H1a PA)",
+                "issued_key_window": "a key already issued for epoch E keeps writing through -w<E> until a newer "
+                                     "epoch's CAS (which needs the broker) or its expiry (" + KEY_TTL + "); while the "
+                                     "broker is down no new epoch gets a key",
                 "time_bound": "none claimed under concurrent appends"}
     return {"mode": "role_keys" if any((config.SECRETS / f"es_api_key.{r}.json").exists() for r in config.ES_ROLES)
             else "single_key",
