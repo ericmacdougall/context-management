@@ -423,3 +423,23 @@ refuses the same update, so the control was no longer a broken implementation. R
 wp/registry.py (every verifiable store not of kind pg, as wp_erasure_complete requires); F4 case b still omits es:facts
 on purpose; the app_sets_done control removes both owner checks of erasure_guard (one patch, reverted). Pass rules
 unchanged: F3 needs 14/14 attacks refused and 14/14 controls accepted; F4 as before.
+
+## Amendment 18b (2026-11-17, after the failing-first run at fdbecb4 and before any run at the fixed code)
+Failing-first record (fdbecb4, pre-fix schema; result plan_stability.e1cf9f86e3a5c08b): PS-C violated in 6/6 runs
+(S1 3/3, S2 3/3). S1: 5 rows of work per event in batches 1..5, then 1,022 to 4,022 per event from batch 6 (generic plan
+reading the tenant through analyst_jobs_tenant_id_idem_key_key). S2: the custom plans of batches 1..5 already read the
+tenant (3,027 to 6,042 per event), so forcing custom plans would not fix it. PS-R held 6/6 as written, but in S1 run 0
+(the first run on a fresh database) the residue at M=1500 did 2,286,481 rows (about M^2, the tenant index intersected
+per tombstone) while that run's M=3000 residue got a linear plan, so the ratio gate passed a quadratic plan; and the
+residue's facts probe removed 5 x M rows by join filter in every run (M x the tenant's facts).
+Changes for the run at the fixed code (no threshold relaxed):
+(1) PS-R adds an absolute bound: residue work <= 100 rows per event (<= 100 x M) in every run; linear residue plans
+    measured 25 to 35 per event at the pre-fix code.
+(2) Every run starts from a fresh database (wp.setup --reset inside the run, then the control's patch, if any), so
+    every run has the same statistics history, the one that produced the quadratic residue plan.
+(3) Fix shape: each per-event GIN probe (cascade deletes, residue facts and analyst_jobs counts) behind an optimisation
+    fence (lateral subquery with OFFSET 0, tenant filtered outside; event ids are uuids) and the residue's untombstoned
+    count as an EXCEPT. Controls: CTL_APPLY restores the pre-fix wp_erasure_apply probes, CTL_RESIDUE the pre-fix
+    residue (both checked to equal the pre-fix bodies apart from comments). CTL_APPLY must violate a gate in >= 2 of 3
+    runs in each state; CTL_RESIDUE in >= 2 of 3 runs in S1, the state where the pre-fix residue misplanned (its S2
+    count is recorded, not required).
