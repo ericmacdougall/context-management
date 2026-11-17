@@ -897,3 +897,25 @@ Limits stated in the result: docker access on the host is root-equivalent, so th
 identities on one host, not host isolation; the app still receives subject key bytes (app-side encryption); the
 operator's directory is mounted into the app container for this test only.
 Gates: the run lock, launch_one.sh, one stamped run; VOID may be rerun and both are recorded.
+
+## Amendment H3 (2026-11-17, written before any run of exp/h_d4_strict.py): D4, content absence per tombstoned id
+Property: an erasure job is not done while any tombstoned id (events: every tombstoned event; facts: the derived id of
+every tombstoned fact event) is, on any started copy of any index of the tenant's family, anything but an exact
+placeholder: _source exactly {"erased": true} at _version 2^62, present on every copy of the base index. Checked by
+wp/es_verify.py (7e83092), each copy searched alone.
+Cases, R=5 per case per arm (fresh tenant per run; Y writes two messages, one with a marker; projected; Y erased with
+physical='wait'; one fault injected between the placeholders and the verifier):
+  content  the operator client re-indexes Y's marked event at 2^62 (external_gte) with erased:true plus its content;
+  missing  the operator client deletes the placeholder of Y's marked event;
+  version  the runner writes its placeholders at external version 5 (event docs are created at version 1).
+Arms: fenced = the shipped verifier; control = the fd5d2a3 check (count of ids whose document lacks erased:true), all
+other verifier counts unchanged.
+PASS per case iff fenced holds 5/5 (job not done, residue names es:placeholder_content / _missing / _version
+respectively) AND control is violated 5/5 (job reports done while the witness, a GET by id on the base index, shows
+the injected state). A run whose witness does not show the injected fault is a setup error: counted as an error, and
+the case then fails. H3 PASS iff all three cases pass.
+Not run live, stated with the result: a stale replica copy (this lab is one node with number_of_replicas 0). It is
+shown offline only (tests/test_es_verify.py cases 5 and 6, fake per-copy search); a live case needs a two-node lab
+and a way to make a started copy diverge, which Elasticsearch's in-sync allocation is designed to prevent.
+Gates: the run lock, launch_one.sh (20 GB start line, disk_gate start, check and end, flood and high-watermark
+watcher), one stamped run; a VOID run may be rerun and both are recorded.
