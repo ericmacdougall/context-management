@@ -132,3 +132,21 @@ class SharedOmissionIngester(Ingester):
         if kind == "thinking":
             return
         return super()._emit(stream, call_n, side, pos, blk, prov, kind, *a, **k)
+
+
+class CorruptPayloadIngester(Ingester):
+    """Control for the payload oracle (PREREG-amend-4 A2): keeps every tool id and empties tool arguments and tool-result content."""
+
+    def _emit(self, stream, call_n, side, pos, blk, prov, kind, status, content, *a, **k):
+        if kind in ("tool_call", "tool_result", "server_tool_call"):
+            d = json.loads(content)
+            if "input" in d:
+                d["input"] = {}
+            if "function" in d:
+                d["function"] = dict(d["function"], arguments="{}")
+            if "content" in d:
+                d["content"] = ""
+            if d.get("type") == "text":
+                d["text"] = ""
+            content = cj(d)
+        return super()._emit(stream, call_n, side, pos, blk, prov, kind, status, content, *a, **k)

@@ -55,11 +55,11 @@ class Rig:
     def request(self) -> dict:
         return {"model": "stub-model", "max_tokens": 256, "messages": [dict(m) for m in self.msgs]}
 
-    def call(self, req: dict):
+    def call(self, req: dict, **kw):
         if not self.stream:
-            return self.tap.call(req)
+            return self.tap.call(req, **kw)
         acc = shapes.AnthropicAcc() if self.provider == "anthropic" else shapes.OpenAIAcc()
-        for ev in self.tap.call(req, stream=True):
+        for ev in self.tap.call(req, stream=True, **kw):
             acc.feed(ev)
         m, _ = acc.result()
         return m if self.provider == "anthropic" else m

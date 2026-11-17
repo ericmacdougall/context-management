@@ -191,20 +191,23 @@ def event_tuples(events: List[dict]) -> List[list]:
     return sorted(out, key=lambda r: (r[0], r[1], r[2], r[3], str(r[4])))
 
 
-def repeated_conversation(rig_cls, tmp: str, provider: str, pattern: str, window: int, n: int, response: str = "ok", **kw):
-    """A host that sends repeated or alternating user text and keeps only the last `window` messages. Returns (rig, ledger)."""
+def repeated_conversation(rig_cls, tmp: str, provider: str, pattern: str, window: int, n: int, response: str = "ok", per_call: int = 1,
+                          boundary: bool = False, **kw):
+    """A host that sends repeated or alternating user text and keeps only the last `window` messages, appending `per_call` new user
+    messages before each call. With boundary=True it declares new_count=per_call. Returns (rig, ledger)."""
     from .stubs import text
     script = [{"content": [text(response)]} if provider == "anthropic" else {"message": {"role": "assistant", "content": response}} for _ in range(n)]
     rig = rig_cls(tmp, provider, script, **kw)
     led = HostLedger(provider)
     cycle = {"same": ["yes"], "alt": ["yes", "no"], "tri": ["a", "b", "c"], "unique": None}[pattern]
     for i in range(n):
-        utext = ("q%d" % i) if cycle is None else cycle[i % len(cycle)]
         c = led.begin_call()
-        um = {"role": "user", "content": utext}
-        rig.msgs.append(um)
-        led.new_request_msg(c, um)
-        o = rig.call(rig.request())
+        for k in range(per_call):
+            idx = i * per_call + k
+            um = {"role": "user", "content": ("q%d" % idx) if cycle is None else cycle[idx % len(cycle)]}
+            rig.msgs.append(um)
+            led.new_request_msg(c, um)
+        o = rig.call(rig.request(), **({"new_count": per_call} if boundary else {}))
         am = {"role": "assistant", "content": o["content"]} if provider == "anthropic" else o["choices"][0]["message"]
         led.response(c, am)
         rig.msgs.append(am)
