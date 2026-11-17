@@ -90,6 +90,9 @@ def _vsha(v):
 #   ["v", arm, unit, oracle_view_sha, pg_view_sha]                   one per B2 log end / B1 tree node
 #   ["l", arm, unit, oracle_applied, pg_applied, chain_ok]           one per B2 log: [evid, code] lists in chain order
 # arm is "b2", "b1:<scenario>", "ctl:b2" or "ctl:b1:r2"; unit is the log id or the B1 node level.
+# Identity fields (GoodQA #16096, verify/evidence.py), appended: B2 t rows + [i] (event index in its log), l rows + [n] (events in the
+# log); B1 v rows + [node] (the node's index in the exploration, root 0), B1 t rows + [node, ti, child] (ti the template's index in
+# the pool, child the node the transition discovered or None).
 ROWS = []
 
 
@@ -113,7 +116,7 @@ def run_b2(pg, logs, sql_path=None, stop_at_first=False, arm="b2"):
                     got = ("error:" + type(e).__name__, None)
                     res["errors"] = res.get("errors", 0) + 1
                 res["events"] += 1
-                ROWS.append(["t", arm, lid, code, orig, got[0], got[1]])
+                ROWS.append(["t", arm, lid, code, orig, got[0], got[1], i])
                 if tuple(got) != (code, orig):
                     res["code_mismatches"] += 1
                     if res["first"] is None:
@@ -131,7 +134,7 @@ def run_b2(pg, logs, sql_path=None, stop_at_first=False, arm="b2"):
                 res["log_mismatches"] += 1
             res["logs"] += 1
             chain_ok = bool(eng._verify_chain()[1])
-            ROWS.append(["l", arm, lid, applied, rows, chain_ok])
+            ROWS.append(["l", arm, lid, applied, rows, chain_ok, len(evs)])
             if not chain_ok:
                 res["chain_bad"] = res.get("chain_bad", 0) + 1
         finally:
@@ -173,6 +176,7 @@ def run_b1(pg, scen, depth, sql_path=None, arm=None):
     from exp import b1_modelcheck as B1
     core = B1.core_for("enforced", scen)
     nodes, root = b1_tree(scen, depth, core)
+    nid = {k: n for n, k in enumerate(nodes)}          # node identity: exploration order, root 0
     res = {"scenario": scen, "depth": depth, "states": len(nodes), "transitions": 0, "code_mismatches": 0, "view_mismatches": 0, "first": None}
     conn, eng = pg.install(B1.config(), sql_path)
     t = B1.config()["tenant"]
@@ -185,10 +189,10 @@ def run_b1(pg, scen, depth, sql_path=None, arm=None):
             psha = _vsha(eng._comparable())
         except Exception as e:  # noqa: BLE001
             psha, res["errors"] = "error:" + type(e).__name__, res.get("errors", 0) + 1
-        ROWS.append(["v", arm, lvl, osha, psha])
+        ROWS.append(["v", arm, lvl, osha, psha, nid[key]])
         if osha != psha:
             res["view_mismatches"] += 1
-        for ev, code, orig, child in edges:
+        for ti, (ev, code, orig, child) in enumerate(edges):
             try:
                 with conn.transaction():
                     try:
@@ -198,7 +202,7 @@ def run_b1(pg, scen, depth, sql_path=None, arm=None):
                         got = ("error:" + type(e).__name__, None)
                         res["errors"] = res.get("errors", 0) + 1
                     res["transitions"] += 1
-                    ROWS.append(["t", arm, lvl, code, orig, got[0], got[1]])
+                    ROWS.append(["t", arm, lvl, code, orig, got[0], got[1], nid[key], ti, nid.get(child)])
                     if tuple(got) != (code, orig):
                         res["code_mismatches"] += 1
                         if res["first"] is None:
