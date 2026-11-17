@@ -1,4 +1,4 @@
-"""Exactly-once, ordered ingestion from the port log into an event store (SQLite stand-in for the Postgres event log), with a
+"""Ordered ingestion with duplicate suppression and explicit completeness limits (see ingest/CLAIMS.md; "exactly once" is withdrawn), from the port log into an event store (SQLite stand-in for the Postgres event log), with a
 per-stream watermark, typed gap events and optimistic fencing (compare-and-set on the watermark inside the apply transaction)."""
 from __future__ import annotations
 
