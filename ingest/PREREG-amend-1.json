@@ -1,0 +1,13 @@
+{
+  "amends": "PREREG.json item1_crashpoints (committed b2b80a7)",
+  "reason": "Counting error found before any run: mid_stream exists only for streaming and after_send_before_resp_log only for non-streaming, so each mode has 5 applicable points, not 6; the matrix is 5 points x 4 modes x 2 crash calls = 40 runs, not 48. The control sensitivity is restated over the same 40 runs.",
+  "item1_crashpoints": {
+    "applicable_points": {
+      "non_stream": ["before_req_log", "after_req_log_before_send", "after_send_before_resp_log", "after_resp_log_before_return", "after_return"],
+      "stream": ["before_req_log", "after_req_log_before_send", "mid_stream", "after_resp_log_before_return", "after_return"]
+    },
+    "pass": "40/40 runs match the EXPECTED table in run_proofs.py",
+    "control_sensitivity": "LateTap: stub-completed turn absent from the ingested events in >=50% of the 40 runs (expected 20/40: non-stream points 3,4,5 and stream points 4,5 lose it); reported separately: turns already returned to the host and lost (after_return runs, 8/40)",
+    "unavoidable_ambiguity_reported": "after_send_before_resp_log: the model completed but the tap process died before logging the response; the log cannot show it. The tap marks the call unconfirmed and never ingests it; this is a stated limit, not covered."
+  }
+}

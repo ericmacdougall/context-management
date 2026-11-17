@@ -1,0 +1,21 @@
+failing-first run of ingest/tests/test_followup.py
+code under test: aa30130 + PREREG-amend-2 (1e68964); tests written before any fix
+date: 2026-11-16T19:18:05Z
+
+ERROR: test_authorised_backfill_clears_and_records (ingest.tests.test_followup.SeedBackfill)
+ERROR: test_bad_signature_seed_is_gap (ingest.tests.test_followup.SeedBackfill)
+ERROR: test_signed_seed_no_gap_and_history_not_reingested (ingest.tests.test_followup.SeedBackfill)
+ERROR: test_unauthorised_backfill_does_not_clear (ingest.tests.test_followup.SeedBackfill)
+ERROR: test_dropped_record_is_incomplete (ingest.tests.test_followup.States)
+ERROR: test_recoverer_resolves_unconfirmed (ingest.tests.test_followup.States)
+ERROR: test_retry_returns_to_complete (ingest.tests.test_followup.States)
+ERROR: test_unconfirmed_call_state (ingest.tests.test_followup.States)
+FAIL: test_no_issued_table_and_restart_keeps_alignment (ingest.tests.test_followup.BlockStorage)
+FAIL: test_compacting_host_summary_is_host_not_user (ingest.tests.test_followup.StableIdentity)
+FAIL: test_window_4 (ingest.tests.test_followup.StableIdentity)
+FAIL: test_window_8 (ingest.tests.test_followup.StableIdentity)
+FAIL: test_window_openai (ingest.tests.test_followup.StableIdentity)
+Ran 15 tests in 0.228s
+FAILED (failures=5, errors=8)
+
+expected-pass-on-base (contract pins, behaviour already as declared): test_live_mode_loses_deltas_on_crash, test_buffered_mode_gates

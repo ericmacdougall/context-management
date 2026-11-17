@@ -1,0 +1,1179 @@
+{
+ "header": {
+  "commit": "191bded1250a71daeddaffcaaa23d365c503bacd",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 12.50048828125,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item10",
+  "params": {
+   "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120
+   ]
+  },
+  "time_utc": "2026-11-17T05:11:21Z",
+  "tree_clean": true
+ },
+ "runs": {
+  "backfill": [
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 101,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 102,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 103,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 104,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 105,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 106,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 107,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 108,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 109,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 110,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 111,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 112,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 113,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 114,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 115,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 116,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 117,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 118,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 119,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   },
+   {
+    "authorised": {
+     "closed_by": [
+      "backfill:ops:alice"
+     ],
+     "detected": 1,
+     "open_blocking_after": 0
+    },
+    "seed": 120,
+    "unauthorised": {
+     "closed_by": [],
+     "detected": 1,
+     "open_blocking_after": 1
+    }
+   }
+  ],
+  "recover": [
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 101,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 102,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 103,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 104,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 105,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 106,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 107,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 108,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 109,
+    "state": "complete"
+   },
+   {
+    "provs": [
+     "user",
+     "assistant"
+    ],
+    "recovered": 1,
+    "seed": 110,
+    "state": "complete"
+   }
+  ],
+  "seed": [
+   {
+    "bad": {
+     "chat_events": 12,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 10,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 10,
+    "seed": 101
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 102
+   },
+   {
+    "bad": {
+     "chat_events": 10,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 8,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 8,
+    "seed": 103
+   },
+   {
+    "bad": {
+     "chat_events": 4,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 2,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 2,
+    "seed": 104
+   },
+   {
+    "bad": {
+     "chat_events": 12,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 10,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 10,
+    "seed": 105
+   },
+   {
+    "bad": {
+     "chat_events": 10,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 8,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 8,
+    "seed": 106
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 107
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 108
+   },
+   {
+    "bad": {
+     "chat_events": 8,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 6,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 6,
+    "seed": 109
+   },
+   {
+    "bad": {
+     "chat_events": 10,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 8,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 8,
+    "seed": 110
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 111
+   },
+   {
+    "bad": {
+     "chat_events": 10,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 8,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 8,
+    "seed": 112
+   },
+   {
+    "bad": {
+     "chat_events": 4,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 2,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 2,
+    "seed": 113
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 114
+   },
+   {
+    "bad": {
+     "chat_events": 8,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 6,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 6,
+    "seed": 115
+   },
+   {
+    "bad": {
+     "chat_events": 12,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 10,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 10,
+    "seed": 116
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 117
+   },
+   {
+    "bad": {
+     "chat_events": 6,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 4,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 4,
+    "seed": 118
+   },
+   {
+    "bad": {
+     "chat_events": 8,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 6,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 6,
+    "seed": 119
+   },
+   {
+    "bad": {
+     "chat_events": 12,
+     "gap_kinds": [
+      "seed_invalid",
+      "unlogged_assistant_message"
+     ],
+     "old_history_events": 10,
+     "state": "incomplete"
+    },
+    "good": {
+     "chat_events": 2,
+     "gap_kinds": [],
+     "old_history_events": 0,
+     "state": "complete"
+    },
+    "history_msgs": 10,
+    "seed": 120
+   }
+  ],
+  "states": [
+   {
+    "claim_complete": false,
+    "claim_except": [
+     true,
+     [
+      1
+     ]
+    ],
+    "mode": "nonstream",
+    "provider": "anthropic",
+    "state": "complete_except_unconfirmed",
+    "unconfirmed": [
+     1
+    ]
+   },
+   {
+    "claim_complete": false,
+    "claim_except": [
+     true,
+     [
+      1
+     ]
+    ],
+    "mode": "stream",
+    "provider": "anthropic",
+    "state": "complete_except_unconfirmed",
+    "unconfirmed": [
+     1
+    ]
+   },
+   {
+    "claim_complete": false,
+    "claim_except": [
+     true,
+     [
+      1
+     ]
+    ],
+    "mode": "nonstream",
+    "provider": "openai",
+    "state": "complete_except_unconfirmed",
+    "unconfirmed": [
+     1
+    ]
+   },
+   {
+    "claim_complete": false,
+    "claim_except": [
+     true,
+     [
+      1
+     ]
+    ],
+    "mode": "stream",
+    "provider": "openai",
+    "state": "complete_except_unconfirmed",
+    "unconfirmed": [
+     1
+    ]
+   }
+  ],
+  "storage": [
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 101,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 102,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 103,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 104,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 105,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 106,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 107,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 108,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 109,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 110,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 111,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 112,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 113,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 114,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 115,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 116,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 117,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 118,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "anthropic",
+    "seed": 119,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   },
+   {
+    "blob_update": "refused",
+    "block_text_in_blobs": 3,
+    "block_text_in_chained_records": 0,
+    "events_with_block_text": 0,
+    "gaps": 0,
+    "host_events": 0,
+    "provider": "openai",
+    "seed": 120,
+    "tables": [
+     "blobs",
+     "port_log"
+    ]
+   }
+  ]
+ },
+ "summary": {
+  "backfill_authorised_closes": 20,
+  "backfill_runs": 20,
+  "backfill_unauthorised_closes": 0,
+  "block_text_in_blobs_runs": 20,
+  "block_text_in_chained_record_bodies": 0,
+  "recover_ok": 10,
+  "recover_runs": 10,
+  "seed_bad_gap": 20,
+  "seed_good_ok": 20,
+  "seed_runs": 20,
+  "states_ok": 4,
+  "states_runs": 4,
+  "storage_ok": 20,
+  "storage_runs": 20
+ }
+}

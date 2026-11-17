@@ -1,0 +1,21 @@
+﻿event: message
+data: {"id":"chatcmpl-45ce9e633e84d33ff9e3fe3d","choices":[{"delta":{"content":"","role":"assistant"},"index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-45ce9e633e84d33ff9e3fe3d","choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_45ce9e633e84d33f","function":{"arguments":"","name":"answer"},"type":"function"}]},"index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-45ce9e633e84d33ff9e3fe3d","choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"person\": \"Ana\", \"city\": \"Lisbon\", \"amount\": 10"},"type":null}]},"index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-45ce9e633e84d33ff9e3fe3d","choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"0, \"tags\": [\"invoice\"]}"},"type":null}]},"index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-45ce9e633e84d33ff9e3fe3d","choices":[{"delta":{},"finish_reason":"tool_calls","index":0}],"model":"stub-chat","object":"chat.completion.chunk"}
+
+﻿event: message
+data: {"id":"chatcmpl-45ce9e633e84d33ff9e3fe3d","choices":[],"model":"stub-chat","object":"chat.completion.chunk","usage":{"completion_tokens":17,"prompt_tokens":16,"total_tokens":33,"prompt_tokens_details":{"cached_tokens":0}}}
+
+﻿event: message
+data: [DONE]
+

@@ -1,0 +1,149 @@
+{
+ "header": {
+  "commit": "6989e7970dbd04b88df099604a67c4172b6868f5",
+  "dirty": "",
+  "env": {
+   "journal": "WAL",
+   "load1": 5.7939453125,
+   "platform": "macOS-26.6-arm64-arm-64bit",
+   "python": "3.9.6",
+   "sqlite": "3.51.0",
+   "synchronous": "FULL"
+  },
+  "item": "item2d_openai",
+  "params": {
+   "provider": "openai",
+   "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110
+   ]
+  },
+  "time_utc": "2026-11-17T05:51:28Z",
+  "tree_clean": true
+ },
+ "runs": [
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 101,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 102,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 103,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 104,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 105,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 106,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 107,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 108,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 109,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  },
+  {
+   "baseline_events": 60,
+   "events_after_B": 60,
+   "events_final": 60,
+   "identical_to_baseline": true,
+   "oracle_match": true,
+   "seed": 110,
+   "wm_before_B": 0,
+   "z_fenced": 1,
+   "z_records_applied": 0
+  }
+ ],
+ "summary": {
+  "oracle_identical": 10,
+  "runs": 10,
+  "zombie_rejected_no_writes": 10
+ }
+}

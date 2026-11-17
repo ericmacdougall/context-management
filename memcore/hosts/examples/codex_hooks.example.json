@@ -1,0 +1,8 @@
+{
+  "_comment": "EXAMPLE ONLY, not installed. Codex reads ~/.codex/hooks.json or <repo>/.codex/hooks.json; non-managed hooks must be reviewed and trusted with /hooks before they run (never use the trust-bypass flag). Cap is about 2,500 tokens by default.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {"hooks": [{"type": "command", "command": "python3 -m memcore.hosts.prompt_hook --store /path/to/events.json --max-chars 6000"}]}
+    ]
+  }
+}

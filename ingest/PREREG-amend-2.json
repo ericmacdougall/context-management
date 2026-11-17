@@ -1,0 +1,42 @@
+{
+  "dated": "2026-11-16",
+  "amends": "PREREG.json and PREREG-amend-1.json are NOT changed and their floors are NOT lowered. This file adds new, separately registered checks for the coordinator follow-up of 2026-11-16 (ticket goodqa#16096). Committed alone before any run of the new code.",
+  "base_commit": "aa30130c4d96ded55ffd467bc92186a46775bd1b",
+  "failing_first": "Each new behaviour has a test or probe that is run on base_commit and recorded as FAILING (ingest/results2/failing-first.txt) before the fix is written.",
+  "A1_controls": {
+    "late_tap_control": "Same floor as before (stub-completed turn absent in >=20/40 runs). Fix: stub 'completed' truth line is written when the stub emits its terminal event (before yielding it), so stream runs are counted at the right point. Rerun registered item 1 unchanged otherwise.",
+    "k1_witness": "Restated for every cell (including k=1): per run the stub's received-call count must equal the expected count for that point and the log record count must equal the expected count; 40/40 cells. A cell with zero events is allowed only if both counts match.",
+    "race_ablation": "10 thread seeds per configuration, same shape as item2b. Layers: CAS fence, chain-prev check, unique event key, call-state guard. Configs: all on; all off (registered 4-layer control, floor: >=5/10 runs with duplicate rows); each single layer alone on; each layer removed alone. Report for every config duplicate runs and identical-to-baseline runs, and name every single layer that alone gives 10/10 identical with 0 duplicates."
+  },
+  "A2_stable_identity": {
+    "design": "Ingest keys come from content identity aligned against the logical history already ingested (longest common contiguous run of message keys); unmatched leading messages are host-authored (prov host), never user; messages already seen are not re-ingested.",
+    "hosts": "sliding window of 4 and 8 messages; compacting host (keeps last 4 messages plus one summary message that changes at each compaction); 20 calls and 60 calls each.",
+    "pass": "user events == distinct user texts and assistant events == distinct assistant texts (no duplicates, none missing); zero blocking gaps; every summary message appears only as prov=host; in all 6 host runs. Failing-first: base commit gives 54 and 80 user events for 20 messages."
+  },
+  "A3_completeness_states": {
+    "states": "complete | complete_except_unconfirmed (lists the call ids) | incomplete (blocking gap or held records). claim_complete is true only in 'complete'.",
+    "pass": "crash at after_send_before_resp_log (stream and non-stream) gives complete_except_unconfirmed with [k] in 4/4 runs; a retry that completes returns to complete; a dropped record gives incomplete.",
+    "recovery": "Documentation checked 2026-11-16: Anthropic Messages has a request-id response header and no documented idempotency key or retrieval of a synchronous message by id (NOT AVAILABLE); OpenAI Python README documents x-request-id and automatic retries but no idempotency key and no documented retrieval of a stored completion (NOT AVAILABLE / unverified). Implemented as an interface only (a Recoverer callable); tested with a stub recoverer: unconfirmed call recovered writes a RESP marked recovered and state returns to complete in 10/10."
+  },
+  "A4_seed_and_backfill": {
+    "pass": "20 resumed sessions with a signed seed: 0 gaps, history not re-ingested, seed recorded; invalid signature: seed_invalid blocking gap 20/20; authorised BACKFILL closes a detected bypass gap 20/20 and records authorized_by; BACKFILL with a wrong signature closes 0/20."
+  },
+  "A5_injected_block_storage": {
+    "choice": "Block text is kept REDACTED in the append-only content-addressed blob store, referenced by the REQ record that is in the hash chain; the separate issued table is removed. Events carry ids and the keyed hash only.",
+    "pass": "no issued table; blob store append-only triggers hold; 20/20 tap restarts with merged blocks in history give no false host events and no gaps; no ingested event carries block text."
+  },
+  "A6_streaming": {
+    "contract": "Live mode (default): deltas are delivered as they arrive; a crash mid-stream loses them from memory. Buffered mode: nothing reaches the host before the response record is durable.",
+    "pass": "crash mid-stream: live mode host saw >=1 delta and memory has no response in 8/8; buffered mode host saw 0 events in 8/8. Report time-to-first-event and total time, tap off vs live vs buffered (indicative)."
+  },
+  "A7_flat_cost": {
+    "pass": "200 calls, injector and egress guard on, zero-delay stub: median(calls 181-200) <= 1.5 x median(calls 11-30) and <= 5 ms. Report the per-block medians and the fitted slope."
+  },
+  "A8_openai": {
+    "pass": "items 2a, 2b, 2c, 2d, 3, 4 (no thinking checks), 5, 6 rerun on OpenAI-compatible shapes with the same thresholds as the registered Anthropic runs."
+  },
+  "A9_scanner_heldout": {
+    "frozen_scanner": "ingest/scan.py at base_commit aa30130 (git blob b4b63d74fe7dd33c31416802e9bae7fe05e57697). It is not edited after this file is committed.",
+    "heldout": "ingest/heldout.py, written after this commit by a generator not used while tuning; variants chosen beyond the tuned set (base32, uppercase hex, line-wrapped base64, quoted-printable, HTML numeric entities, octal escapes, reversed string, hyphen- and space-split, base64 of hex, double urlencoding, bearer, AWS key, password=kv, private key header). Catch rate reported separately from the tuned set. No floor is set; any edit to scan.py after seeing the held-out result marks the held-out set burned."
+  }
+}

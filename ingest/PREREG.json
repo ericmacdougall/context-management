@@ -1,0 +1,48 @@
+{
+  "_note": "Committed alone before any result-producing run. Never amended; a change is a new file version with a stated reason. Timeouts, refusals and budget exhaustion score as failures.",
+  "environment": "pure Python 3.9, SQLite (WAL, synchronous=FULL), scripted stubs only, no model calls",
+  "item1_crashpoints": {
+    "points": ["before_req_log", "after_req_log_before_send", "after_send_before_resp_log", "mid_stream", "after_resp_log_before_return", "after_return"],
+    "matrix": "6 points x {anthropic non-stream, anthropic stream, openai non-stream, openai stream} x crash during call k in {1, 3} = 48 subprocess runs (os._exit(137) at a named hook; ingestion by a fresh process)",
+    "pass": "48/48 runs: ingested event set equals the expected set for that point (table in run_proofs.py EXPECTED); no event from a crashed call has status complete unless a RESP record with status complete is in the log; calls before the crash are exactly the stub's completed set",
+    "min_witness": "every run must show stub truth lines for the calls before the crash (>=1 completed call when k=3) and >=1 event examined",
+    "control": "LateTap (writes REQ and RESP after the response returns to the caller)",
+    "control_sensitivity": "in >=50% of the 48 control runs a turn that the stub completed and returned to the host (truth file) is absent from the ingested events"
+  },
+  "item2_exactly_once": {
+    "delivery": "20 seeds x 30-call conversations; each log record delivered 1-3 times, random order, random batch sizes 1-7; compared to the single in-order ingest of the same log",
+    "pass": "20/20 seeds: event rows (ikey, content hash, ord order) identical to the baseline; zero duplicate ikeys; watermark == log head",
+    "control": "ArrivalKeyedIngester (key = arrival counter, no unique constraint, applies on arrival)",
+    "control_sensitivity": ">=50% of the 20 seeds show a duplicate or reorder violation",
+    "race_threads": "10 seeds: 2 ingester threads on one event store, barrier at after_snapshot forcing both to hold the same token; pass: 10/10 identical to baseline AND fenced>=1 in >=8/10 runs (overlap at the contended step) AND measured overlap of in_apply/lock intervals logged",
+    "race_processes": "5 seeds: 2 OS processes, same shape; pass 5/5 identical to baseline, fenced>=1 in >=4/5",
+    "zombie": "10 runs: ingester Z snapshots, pauses, ingester B advances the watermark, Z resumes with the stale token; pass: 10/10 Z rejected (Fenced) and zero events written by Z",
+    "race_control": "no-CAS no-unique ingester on the same shape: >=50% of the runs show duplicate rows"
+  },
+  "item3_gaps": {
+    "scenarios": "20 seeds each: (a) one random middle record dropped, (b) truncated tail with an out-of-band witness, (c) host bypasses the port for one call whose answer re-enters history, (d) late arrival of the dropped record, (e) tail truncation WITHOUT witness, (f) bypass whose output never re-enters history",
+    "pass": "(a)(b)(c) 20/20 typed gap (seq_hole / tail_truncated / unlogged_assistant_message) opened and claim_complete(head) is False while open; (d) 20/20 gap closed and claim_complete True after the late record and events identical to baseline",
+    "not_detectable_expected": "(e) and (f): 0/20 detected is the EXPECTED and reported result; they are limits, not passes",
+    "control": "WatermarkFreeReporter: reports complete_up_to = max seen seq; sensitivity: reports complete with a hole in >=90% of (a) runs",
+    "never": "a host that never uses the port at all is not detectable by any mechanism here"
+  },
+  "item4_provenance": {
+    "n": "40 conversations x placements {tap_user_block, host_merged_into_user_text, host_merged_in_system, user_forges_block_with_old_delimiter, model_quotes_block_back, history_resend_of_merged}",
+    "pass": "0 of 40 planted injected-block marker strings appear in any event with prov in (user, tool, system); injected content appears only as prov=memory_injected (ids and keyed hash, no text); model quote-back stays prov=assistant with quotes_injected set in 40/40; user-forged block stays prov=user in 40/40; thinking signatures byte-identical to the stub in 100% of thinking blocks; thinking blocks never prov=assistant; tool_use/tool_result pairing preserved by tool id",
+    "control": "RoleOnlyIngester (role from the request as given; no injected registry)",
+    "control_sensitivity": "marker in a user event in >=50% of the merged-block runs"
+  },
+  "item5_redaction": {
+    "variants": "plain, base64, hex, urlencoded, double base64, JSON unicode escapes, zero-width-split, base64-url; across positions user text, tool_result, assistant text, system, tool_use input, injected block",
+    "pass": "0 occurrences of any variant (plain or encoded) of any planted canary in the raw bytes of every file in the DB directory (db, -wal, -shm); the canary is first confirmed present in the request the stub received (witness); thinking signature/data are exempt and reported as possibly carrying the secret encrypted",
+    "expected_miss_reported": "variants the reference scanner is not designed for (ROT13, split across two blocks) are reported as MISSED, not hidden",
+    "control": "scan-after-write tap",
+    "control_sensitivity": "canary found on disk in >=90% of runs"
+  },
+  "item6_cost": {
+    "load": "200 non-stream calls, stub delay 40 ms; and 100 stream calls, 20 events at 2 ms; tap off vs on; run order alternated; indicative only (host not quiet, no isolation)",
+    "threshold": "median added latency per call <= 10 ms non-stream; exactly 2 commits per call (REQ, RESP); bytes per turn reported with growing history up to 50 turns and compared with naive full-request logging"
+  },
+  "seeds": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120],
+  "run_conditions": "clean committed tree; each artifact records commit, time, params and python/sqlite versions"
+}
