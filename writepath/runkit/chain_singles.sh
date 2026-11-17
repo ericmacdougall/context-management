@@ -15,12 +15,12 @@ PY=$WP_HOME/venv/bin/python
 echo "chain start $(date -u +%FT%TZ) head $H spec $(basename "$SPEC")"
 while read -r L C M; do
   case "$L" in ''|'#'*) continue ;; esac
-  # STOP: since the step-1 delta review P2, `disk_gate start` refuses while a STOP exists and never deletes it (consume
-  # one with `python -m exp.disk_gate clear-stop <reason>`); the chain still looks first, to stop cleanly. Before P2,
-  # start deleted a STOP left by an earlier run, so the chain itself had to look
-  # before launching. At 9cbc798 a STOP written at 11:32:50Z during es_semantics was ignored by that gate's end (fixed in
-  # review N2: end now voids on STOP) and deleted by n_old's start at 11:32:56Z, and the chain went on.
-  [ -e "$WP_HOME/state/STOP" ] && { echo "chain stopped: operator stop before $L ($(head -c 200 "$WP_HOME/state/STOP"))"; exit 3; }
+  # STOP: since review A, stops are records in the gate's append-only ledger (state/stop_ledger.jsonl; a legacy
+  # state/STOP file is ingested as one). `disk_gate stops` lists unacknowledged stops and exits 2 if there is one;
+  # `disk_gate start` is BLOCKED by the same rule; acknowledge one with `disk_gate clear-stop <stop id> <reason>`.
+  # History: at 9cbc798 a STOP written at 11:32:50Z during es_semantics was ignored by that gate's end (review N2) and
+  # deleted by n_old's start at 11:32:56Z, and the chain went on.
+  SL=$(cd "$D" && $PY -m exp.disk_gate stops < /dev/null 2>&1) || { echo "chain stopped: unacknowledged stop before $L"; printf '%s\n' "$SL" | head -5; exit 3; }
   if [ "$L" = "@" ]; then
     echo "direct: $C $M"
     OUTD=$(cd "$D" && $PY -m $C $M < /dev/null 2>&1); RC=$?

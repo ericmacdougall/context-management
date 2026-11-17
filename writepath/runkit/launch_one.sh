@@ -1,14 +1,15 @@
 #!/bin/sh
 # One stamped experiment on the lab host, from a PINNED tree (pin_run.sh), with the run_all validity gates of amendment
-# 17c: the start line (20 GB from amendment 24; 17 GB before), exp.disk_gate start / check / end, and a watcher that writes WP_HOME/state/STOP when this
-# stream's Elasticsearch logs a flood-stage watermark (disk_gate end then marks the run VOID).
+# 17c: the start line (20 GB from amendment 24; 17 GB before) and exp.disk_gate start / check / end. Since review A the
+# gate's own capture companion (started by `disk_gate start`) records a stop in the ledger at the first flood-stage or
+# high-watermark line it captures; the launcher's wall-clock `docker logs --since | grep` watcher is gone
+# (runkit/GATE-DESIGN.md). A VOID check closes the run in the ledger itself.
 # usage: sh runkit/launch_one.sh <pinned dir> <label> <module> [args...]
 #        output WP_HOME/results/one.<head>.<label>.out; prints that path, the head, the start time and free space.
-# Needs WP_HOME (this stream's home on the host) and ES_CONTAINER (default emlab2-wphard-es).
+# Needs WP_HOME (this stream's home on the host).
 set -eu
 : "${WP_HOME:?WP_HOME must name the home of this stream}"
 export WP_HOME
-ES_CONTAINER=${ES_CONTAINER:-emlab2-wphard-es}
 # exact KiB (amendment H4): df -BG rounds up and let 19.3 GiB through; disk_gate measures free / GiB >= 20.0
 FREEK=$(df -k --output=avail "$WP_HOME" | tail -1 | tr -dc 0-9)
 FREE=$(awk -v k="$FREEK" 'BEGIN{printf "%.1f", k/1048576}')
@@ -27,9 +28,4 @@ setsid sh -c "echo start $S head $H free ${FREE}G: $*
   echo exit=\$?
   $PY -m exp.disk_gate end || { echo \"end VOID \$(date -u +%FT%TZ)\"; exit 3; }
   echo \"end \$(date -u +%FT%TZ)\"" > "$OUT" 2>&1 < /dev/null &
-RP=$!
-setsid sh -c "while kill -0 $RP 2>/dev/null; do
-  if docker logs --since $S $ES_CONTAINER 2>&1 | grep -qiE 'flood stage disk watermark|high disk watermark .* exceeded'; then
-    echo \"flood watcher: flood stage or high watermark in the ES log at \$(date -u +%T)\" > $WP_HOME/state/STOP; echo \"flood stage or high watermark seen \$(date -u +%T): STOP written\"; exit 0; fi
-  sleep 10; done; echo 'run ended, watcher exits'" > "$WP_HOME/state/flood_watch-$H.$L.log" 2>&1 < /dev/null &
 echo "$OUT head $H start $S free ${FREE}G"

@@ -427,9 +427,12 @@ class Gate(unittest.TestCase):
         for i in (self.open_stop_ids() if ids is None else ids):
             self.call("clear-stop", i, reason)
 
-    def assertVoid(self, rc, out):
+    def assertVoid(self, rc, out, *why):
+        """VOID; on the ledger gate also for the stated reason(s), so a test cannot pass on an incidental failure."""
         self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
         self.assertIn("VOID", out)
+        for w in (why if self.new else ()):
+            self.assertIn(w, out, f"VOID, but not for the reason under test ({w!r})")
 
     def assertValid(self, rc, out):
         self.assertEqual(rc, 0, f"expected a valid run (exit 0), got {rc!r}: {out.strip()[-300:]}")
@@ -610,25 +613,25 @@ class Gate(unittest.TestCase):
         self.start()
         self._forge_end_marker()
         self.line(FLOOD)
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "flood stage", "forged, replayed or missing marker")
 
     def test_a1_forged_marker_alone_voids(self):
         self.start()
         self._forge_end_marker()
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "forged, replayed or missing marker")
 
     def test_a1_small_backward_clock_step_hides_a_flood_line(self):
         self.start()
         self.F.clock(-1.5)                          # under the old gate's 2 s slack
         self.line(FLOOD)
         self.F.clock(0.0)
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "flood stage")
 
     def test_a1_reversed_endpoints_hide_a_flood_line(self):
         self.start()
         self.F.clock(-30.0)
         self.line(FLOOD)
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "flood stage")
 
     def test_a1_truncation_then_start_marker_replay_hides_a_flood_line(self):
         self.start()
@@ -636,11 +639,13 @@ class Gate(unittest.TestCase):
         self.line(FLOOD)
         self.F.rotate(self.es)                      # the file is emptied, the flood line with it
         self.line(start[0])                         # ... and the public start marker written again
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "flood stage", "forged, replayed or missing marker", "contiguous")
 
     def test_a1_non_blocking_log_driver_is_never_certified(self):
         self.F.set(self.es, logcfg={"Type": "json-file", "Config": {"mode": "non-blocking", "max-buffer-size": "4m"}})
         rs, out = self.call("start")
+        if self.new:
+            self.assertIn("cannot give lossless coverage", out)
         re_ = self.call("end")[0] if rs == 0 else None
         self.assertTrue(rs == 2 or re_ == 3, f"a non-blocking driver (drops are invisible) was certified: start {rs}, end {re_}")
 
@@ -648,24 +653,24 @@ class Gate(unittest.TestCase):
     def test_a2_restart_between_end_inspection_and_log_retrieval_voids(self):
         self.start()
         self.F.trigger("logs_read", 1, "restart", self.es)
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "started changed")
 
     def test_a2_replacement_during_end_measurement_voids(self):
         self.start()
         self.F.trigger("du", 1, "replace", "emlab2-wphard-es")
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "own usage not measured", "no longer exists")
 
     def test_a2_pause_during_the_run_voids(self):
         self.start()
         self.F.pause(self.es)
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "container:pause")
 
     # ---- review A, A3: an acknowledgement can erase a run's invalidation (red on 7b4839b)
     def test_a3_stop_then_ack_during_the_run_still_voids(self):
         self.start()
         self.stop_file("flood watcher: flood stage at 10:00:00\n")
         self.ack("operator read it mid-run")
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "STOP: stop")
 
     def test_a3_newer_stop_during_an_ack_still_blocks_start(self):
         self.stop_file("flood watcher: first\n")
@@ -675,13 +680,17 @@ class Gate(unittest.TestCase):
         self.ack("acknowledging the first", ids=seen)
         rc, out = self.call("start")
         self.assertEqual(rc, 2, f"start went through with an unacknowledged newer STOP: {out.strip()[-300:]}")
+        self.assertIn("second, arrived", out)
 
     def test_a3_readmission_after_an_ack_does_not_rebaseline_the_window(self):
         self.start()
         self.stop_file("flood watcher: flood stage at 10:00:00\n")
         self.ack("operator read it mid-run")
-        self.call("start")                          # a second admission while the first run is open
-        self.assertVoid(*self.call("end"))
+        rc, out = self.call("start")                # a second admission while the first run is open
+        if self.new:
+            self.assertEqual(rc, 2, out)
+            self.assertIn("has no end record", out)
+        self.assertVoid(*self.call("end"), "STOP: stop")
 
     # ---- the ledger gate's own design (need commands the 7b4839b gate lacks)
     def test_companion_killed_voids(self):
