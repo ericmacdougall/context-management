@@ -5,7 +5,9 @@
                 stops itself and is VOID); a host under FLOOR_GB from other work is recorded, and the run continues
   end           VOID (exit 3) unless the absence of a flood stage and the cap were OBSERVED: VOID if a STOP file exists,
                 the ES container cannot be inspected or (re)started after start, `docker logs` fails or times out, the
-                log shows a flood-stage line, own usage cannot be measured, or own usage grew over CAP_GB (review N2)
+                log shows a flood-stage line or a high-watermark-exceeded line (amendment 23a), own usage cannot be
+                measured, or own usage grew over CAP_GB (review N2). The log check has log-line granularity: ES repeats
+                these warnings about every 30 s, so a run shorter than that can fall between two lines.
   operator stop: write a reason into WP_HOME/state/STOP; the next check (or end) ends the run as VOID
 Any failure to measure own usage at check or end is VOID (exit 3), never a pass.
 Own usage = du of this stream's Postgres and ES data directories (inside its own containers) plus WP_HOME. Sizes in GiB
@@ -115,15 +117,22 @@ def main(cmd, name=""):
             void(f"the ES container (re)started at {started.stdout.strip()[:19]}Z, after the run began; log coverage unknown")
         if r.returncode != 0:
             void(f"docker logs exited {r.returncode}; the absence of a flood stage was not observed")
-        flood = sum(1 for line in (r.stdout + r.stderr).splitlines() if "flood stage" in line.lower())
+        lines = [line.lower() for line in (r.stdout + r.stderr).splitlines()]
+        flood = sum(1 for line in lines if "flood stage" in line)
+        # amendment 23a: past the HIGH watermark the node will not allocate new primaries, so a new index stays red and
+        # writes to it fail (d3 at 31112b4: 503 unavailable_shards_exception). The low watermark only stops replicas.
+        high = sum(1 for line in lines if "high disk watermark" in line and "exceeded" in line)
         try:
             o = own()
         except SystemExit as e:
             void(f"own usage not measured at end ({e})")
         d = (o["total"] - st["base"]["total"]) / GIB
-        print(f"disk_gate end free {f:.1f} GiB own +{d:.2f} GiB floor_breaches {len(st['floor_breaches'])} es_flood_lines {flood}")
+        print(f"disk_gate end free {f:.1f} GiB own +{d:.2f} GiB floor_breaches {len(st['floor_breaches'])} es_flood_lines {flood} "
+              f"es_high_watermark_lines {high}")
         if flood:
             void("the ES node hit its flood stage during the run (writes were refused)")
+        if high:
+            void("the ES node passed its high disk watermark during the run (new shards were not allocated)")
         if d > CAP_GB:
             void(f"own usage grew {d:.2f} GiB > cap {CAP_GB} by the end of the run")
         return

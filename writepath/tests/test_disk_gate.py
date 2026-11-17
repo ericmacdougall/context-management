@@ -104,6 +104,17 @@ class DiskGateFailsClosed(unittest.TestCase):
         self.h.log = "WARN flood stage disk watermark [15gb] exceeded\n"
         self.assertVoid(*self.call("end"))
 
+    # amendment 23a: the real line ES logged at 15:54:43Z during d3 at 31112b4 (node id shortened); fails on 31112b4
+    def test_high_watermark_line_voids(self):
+        self.h.log = ('{"log.level": "WARN","message":"high disk watermark [17gb] exceeded on [node][7b751d48f8c8]'
+                      '[/usr/share/elasticsearch/data] free: 15.7gb[2.4%], shards will be relocated away from this node"}\n')
+        self.assertVoid(*self.call("end"))
+
+    def test_low_watermark_line_does_not_void(self):
+        self.h.log = ('{"log.level": "INFO","message":"low disk watermark [18gb] exceeded on [node][7b751d48f8c8]'
+                      '[/usr/share/elasticsearch/data] free: 17.7gb[2.7%], replicas will not be assigned to this node"}\n')
+        self.assertEqual(self.call("end")[0], 0)
+
     # the fail-open cases of review N2
     def test_log_command_failure_voids(self):
         self.h.log_rc = 1

@@ -27,7 +27,7 @@ setsid sh -c "echo start $S head $H free ${FREE}G: $*
   echo \"end \$(date -u +%FT%TZ)\"" > "$OUT" 2>&1 < /dev/null &
 RP=$!
 setsid sh -c "while kill -0 $RP 2>/dev/null; do
-  if docker logs --since $S $ES_CONTAINER 2>&1 | grep -qi 'flood stage disk watermark'; then
-    touch $WP_HOME/state/STOP; echo \"flood stage seen \$(date -u +%T): STOP written\"; exit 0; fi
+  if docker logs --since $S $ES_CONTAINER 2>&1 | grep -qiE 'flood stage disk watermark|high disk watermark .* exceeded'; then
+    touch $WP_HOME/state/STOP; echo \"flood stage or high watermark seen \$(date -u +%T): STOP written\"; exit 0; fi
   sleep 10; done; echo 'run ended, watcher exits'" > "$WP_HOME/state/flood_watch-$H.$L.log" 2>&1 < /dev/null &
 echo "$OUT head $H start $S free ${FREE}G"
