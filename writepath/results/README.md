@@ -73,8 +73,8 @@ Every single run above ran under the disk gate as it was before review-2 N2 (fix
 ignored the return code of `docker logs`, so a failed log read passed as "no flood stage". It also printed, without
 rejecting, an own-usage growth over the cap. None of these runs is re-judged by the fixed gate. Every one that uses the
 stores is rerun under it at the post-fix commit (amendment 23). heldout_secrets uses no store, so the flood-stage
-gate has nothing to judge in it, and its FAIL is not rerun (amendment 20). ASSUMPTION, open to main's ruling: it stays
-as recorded at 62c6be5. What the saved outputs show, per run (`disk_gate end` line of each `one.<head>.<label>.out`):
+gate has nothing to judge in it, and its FAIL is not rerun (amendment 20). Main ruled so: the FAIL at 62c6be5 is carried,
+not re-observed (wp/secrets.py is the same blob, 58b025fc, at every later commit). What the saved outputs show, per run (`disk_gate end` line of each `one.<head>.<label>.out`):
 
 | Run | Own usage at end | Flood lines printed | Log read now, same window (exit, lines, flood) |
 |---|---|---|---|
@@ -116,8 +116,25 @@ as recorded at 62c6be5. What the saved outputs show, per run (`disk_gate end` li
 
 ### Step 1 at the post-fix commit (review-2 N1 to N3)
 
-Product code at 31112b4 includes the N1 fix (8a03b80); `git diff 31112b4 2e1948c -- writepath/wp` is empty. Every run
-uses the fixed gate (72c0708) and, from 2e1948c, the high-watermark rule (39dbad7).
+**Commits.** Both carry the N1 fix (8a03b80).
+- **Product code (`writepath/wp`):**
+  - Changed between 62c6be5 and 31112b4 in wp/families.py and wp/projector.py (N1), and in wp/erasure.py
+    (docstring only, N4).
+  - **No change between 31112b4 and 2e1948c**: `git diff 31112b4 2e1948c -- writepath/wp` is empty.
+- **Harness changes between 31112b4 and 2e1948c:**
+  - exp/disk_gate.py and runkit/launch_one.sh (the high-watermark VOID rule, 39dbad7);
+  - tests/test_disk_gate.py;
+  - runkit/specs/step1-d.txt;
+  - exp/THRESHOLDS.md (amendment 23a).
+  - No experiment module and no threshold changed.
+- **Gates:** every run at 31112b4 used the fixed gate of 72c0708 (N2). Runs at 2e1948c also used the high-watermark
+  rule.
+
+**d3 timing.** Amendment 23a (the high-watermark VOID rule, symmetric) was written **after** d3's FAIL at 31112b4 was
+observed. d3 was rerun at the later commit 2e1948c, where it passed. Both records stand. d3 is FAIL at 31112b4 and
+PASS at 2e1948c, and is never reported as simply passed. Whether 23a is a legitimate validity rule or a moved
+goalpost is put to the delta review. The rule voids a PASS in such a window as well as a failure, and 31112b4's 17
+other runs were re-read under it and still stand.
 
 - **Batch c at 31112b4** (`step1-c.txt`, amendment 23, `step1-31112b4/`), 14:05:07Z to 15:56:48Z:
   - **PASS:** guard_check start, static_check (no violations), es_semantics, F3, F4, F5, F7, F1S, F6, F1 (100,000
@@ -131,9 +148,56 @@ uses the fixed gate (72c0708) and, from 2e1948c, the high-watermark rule (39dbad
     created at 15:54:47Z, never started its shard. The gate of 72c0708 judged only the flood stage; that harness
     defect is fixed in 39dbad7. The FAIL stands and is reported beside its rerun.
   - **mutual_mentions: BLOCKED** at its start (host free 16G, under the 17G start line). The chain stopped there.
-- **Batch d at 2e1948c** (`step1-d.txt`, amendment 23a): d3 again, then mutual_mentions, lock_order, d2, phys_purge,
-  E1, E2 and E3, projector_start_race, projector_es_fault, races, size_probe, plan_stability (amendment 22) and
-  guard_check end. Its results are added here when the batch ends.
+- **Batch d at 2e1948c** (`step1-d.txt`, amendment 23a, `step1-2e1948c/`), from 16:04:44Z: d3 again, then
+  mutual_mentions, lock_order, d2, phys_purge, E1, E2 and E3, projector_start_race, projector_es_fault, races,
+  size_probe, plan_stability (amendment 22) and guard_check end. Started at 28G free, under the 17 GB start line of
+  its pinned tree. Amendment 24 (20 GB, 1bad3bd and 2cf33f3) governs only later runs.
+- **heldout_secrets (main's ruling):** not rerun. Its FAIL at 62c6be5 is **carried, not re-observed**:
+  - wp/secrets.py is the same blob (58b025fc) at 62c6be5, 31112b4, 2e1948c and the final commit;
+  - the heldout experiment files are unchanged since 62c6be5;
+  - the experiment uses no store.
+
+### Step 1 stamp table
+
+**Evidence** is one stamped run per experiment at the post-fix commit (31112b4 or 2e1948c). **Observation** is
+everything else: the VOID run_all at fd4ed53, and the old-gate runs at 62c6be5, 5d26746 and 9cbc798. Old-gate runs
+used the gate from before review-2 N2, which judged flood stage only and did not record whether `docker logs`
+succeeded, so their log retrieval at the time cannot be shown; a later window read is in `review-2/`.
+
+Gate versions:
+- **old:** flood stage only, before 72c0708.
+- **N2:** 72c0708, fails closed.
+- **N2+HW:** N2 plus the high-watermark VOID rule, 39dbad7.
+
+| Experiment | Evidence: commit, gate, verdict | Observations (not evidence) |
+|---|---|---|
+| guard_check start | 31112b4, N2, PASS | 9cbc798 old PASS |
+| static_check | 31112b4, N2, PASS | 9cbc798 old PASS |
+| es_semantics | 31112b4, N2, PASS | 9cbc798 old PASS |
+| n_old N1 to N7 (old code) | 31112b4, N2, violated as intended | 9cbc798 old, violated as intended |
+| review_fix F3, F4, F5, F7, F1S, F6 | 31112b4, N2, PASS | 9cbc798 old PASS |
+| review_fix F1 (100,000 events) | 31112b4, N2, PASS | 62c6be5 old PASS |
+| scope_hold M, H | 31112b4, N2, PASS | 9cbc798 old PASS |
+| n_new N1, N2, N5, N8 | 31112b4, N2, PASS | 9cbc798 old PASS |
+| row1, row23, e_verify, registry_marker | 31112b4, N2, PASS | 9cbc798 old PASS |
+| d1 | 31112b4, N2, PASS | 9cbc798 old PASS |
+| d4 rescan, d4 store mark | 31112b4, N2, PASS | 62c6be5 old PASS |
+| row19 (own corpus only) | 31112b4, N2, PASS | 9cbc798 old PASS |
+| row6 | 31112b4, N2, PASS | 9cbc798 old PASS |
+| d3 | **31112b4, N2, FAIL** (no verdict; high watermark from other tenants) **and 2e1948c, N2+HW, PASS** (rerun after amendment 23a) | 62c6be5 old PASS |
+| mutual_mentions | 2e1948c, N2+HW, running (BLOCKED at 31112b4, never started) | 9cbc798 old PASS |
+| lock_order | 2e1948c, N2+HW, running | 62c6be5 old PASS |
+| d2 | 2e1948c, N2+HW, running | 9cbc798 old PASS |
+| phys_purge | 2e1948c, N2+HW, running | 9cbc798 old PASS |
+| e2e E1 | 2e1948c, N2+HW, running | 62c6be5 old PASS |
+| e2e E2, E3 | 2e1948c, N2+HW, running | 9cbc798 old PASS |
+| projector_start_race | 2e1948c, N2+HW, running | 62c6be5 old PASS; 5d26746 old FAIL (harness, 19a) |
+| projector_es_fault (N1) | 2e1948c, N2+HW, running | none (failing-first at 1539a75: fixed arm 0/5 per case) |
+| races R1, R2, R3 | 2e1948c, N2+HW, running | 62c6be5 old PASS |
+| size_probe (exploratory) | 2e1948c, N2+HW, running | 62c6be5 old, 2,071 B/doc |
+| plan_stability (amendment 22, facts) | 2e1948c, N2+HW, running | 62c6be5 old PASS without facts (scope N3) |
+| heldout_secrets | carried: 62c6be5, old, FAIL (main's ruling; same secrets.py blob; no store) | |
+| guard_check end | 2e1948c, N2+HW, running | 9cbc798 old PASS |
 
 ### Limits that apply to every erasure result here
 
