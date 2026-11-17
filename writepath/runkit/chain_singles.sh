@@ -15,6 +15,10 @@ PY=$WP_HOME/venv/bin/python
 echo "chain start $(date -u +%FT%TZ) head $H spec $(basename "$SPEC")"
 while read -r L C M; do
   case "$L" in ''|'#'*) continue ;; esac
+  # Operator stop: each launch's `disk_gate start` deletes a STOP left by an earlier run, so the chain itself must look
+  # before launching. At 9cbc798 a STOP written at 11:32:50Z during es_semantics was ignored by that gate's end (fixed in
+  # review N2: end now voids on STOP) and deleted by n_old's start at 11:32:56Z, and the chain went on.
+  [ -e "$WP_HOME/state/STOP" ] && { echo "chain stopped: operator stop before $L ($(head -c 200 "$WP_HOME/state/STOP"))"; exit 3; }
   if [ "$L" = "@" ]; then
     echo "direct: $C $M"
     OUTD=$(cd "$D" && $PY -m $C $M < /dev/null 2>&1); RC=$?
