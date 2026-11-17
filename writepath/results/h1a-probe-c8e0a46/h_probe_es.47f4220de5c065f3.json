@@ -1,0 +1,558 @@
+{
+ "at": "2026-11-17T18:08:02Z",
+ "env": {
+  "argv": "~/emlab2-16096/wphard/wp/runs/c8e0a46-20261117T175926Z/exp/h_probe_es.py 3 20",
+  "code_commit": "c8e0a46",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19570",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   4.83349609375,
+   5.9912109375,
+   7.42578125
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": {
+   "error": "OperationalError"
+  },
+  "python": "3.12.3"
+ },
+ "name": "h_probe_es",
+ "result": {
+  "case_status": {
+   "pa": "invalid_request",
+   "pb": "holds",
+   "pc": "holds",
+   "pd": "holds",
+   "pe": "holds"
+  },
+  "cleanup": {
+   "invalidated": 24,
+   "role_deleted": 200,
+   "user_deleted": 200
+  },
+  "failed_cases": [
+   "pa"
+  ],
+  "feasible": false,
+  "invalid_request_cases": [
+   "pa"
+  ],
+  "key_request_errors": {
+   "pa-desc-0": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-desc-1": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-desc-2": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-empty-0": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-empty-1": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-empty-2": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-nodesc-0": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-nodesc-1": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   },
+   "pa-nodesc-2": {
+    "error_type": "illegal_argument_exception",
+    "status": 400
+   }
+  },
+  "licence": "basic",
+  "pa": [
+   {
+    "broker_key_id": "zsaw6qEBm7AUTpz5yZgL",
+    "derived_key_id": null,
+    "derived_write_status": null,
+    "empty_descriptor_status": 400,
+    "holds": false,
+    "run": 0,
+    "status": "invalid_request",
+    "with_descriptors_status": 400,
+    "without_descriptors_status": 400
+   },
+   {
+    "broker_key_id": "1saw6qEBm7AUTpz5zJj9",
+    "derived_key_id": null,
+    "derived_write_status": null,
+    "empty_descriptor_status": 400,
+    "holds": false,
+    "run": 1,
+    "status": "invalid_request",
+    "with_descriptors_status": 400,
+    "without_descriptors_status": 400
+   },
+   {
+    "broker_key_id": "3saw6qEBm7AUTpz50Jjd",
+    "derived_key_id": null,
+    "derived_write_status": null,
+    "empty_descriptor_status": 400,
+    "holds": false,
+    "run": 2,
+    "status": "invalid_request",
+    "with_descriptors_status": 400,
+    "without_descriptors_status": 400
+   }
+  ],
+  "pb": [
+   {
+    "PB1": 201,
+    "PB2": 403,
+    "PB3": 403,
+    "PB4": 403,
+    "PB5": 200,
+    "PB6": 403,
+    "PB7": 403,
+    "PB8": 403,
+    "PB9": 403,
+    "holds": true,
+    "key_id": "5saw6qEBm7AUTpz51JjV",
+    "run": 0,
+    "status": "holds"
+   },
+   {
+    "PB1": 201,
+    "PB2": 403,
+    "PB3": 403,
+    "PB4": 403,
+    "PB5": 200,
+    "PB6": 403,
+    "PB7": 403,
+    "PB8": 403,
+    "PB9": 403,
+    "holds": true,
+    "key_id": "6Maw6qEBm7AUTpz52ZhS",
+    "run": 1,
+    "status": "holds"
+   },
+   {
+    "PB1": 201,
+    "PB2": 403,
+    "PB3": 403,
+    "PB4": 403,
+    "PB5": 200,
+    "PB6": 403,
+    "PB7": 403,
+    "PB8": 403,
+    "PB9": 403,
+    "holds": true,
+    "key_id": "68aw6qEBm7AUTpz53Jjy",
+    "run": 2,
+    "status": "holds"
+   }
+  ],
+  "pc": [
+   {
+    "PC1": {
+     "add": 403,
+     "remove": null
+    },
+    "PC2": {
+     "add": 403,
+     "remove": null
+    },
+    "PC3": {
+     "add": 403,
+     "remove": null
+    },
+    "PC4": {
+     "add": 200,
+     "remove": 200
+    },
+    "PC5": {
+     "broker_remove": 200,
+     "readd": 200
+    },
+    "holds": true,
+    "key_ids": [
+     "7caw6qEBm7AUTpz54Jjs",
+     "78aw6qEBm7AUTpz55Jii",
+     "8caw6qEBm7AUTpz56JiY",
+     "88aw6qEBm7AUTpz57JiS",
+     "9caw6qEBm7AUTpz58JiL"
+    ],
+    "run": 0,
+    "status": "holds"
+   },
+   {
+    "PC1": {
+     "add": 403,
+     "remove": null
+    },
+    "PC2": {
+     "add": 403,
+     "remove": null
+    },
+    "PC3": {
+     "add": 403,
+     "remove": null
+    },
+    "PC4": {
+     "add": 200,
+     "remove": 200
+    },
+    "PC5": {
+     "broker_remove": 200,
+     "readd": 200
+    },
+    "holds": true,
+    "key_ids": [
+     "98aw6qEBm7AUTpz59Zhu",
+     "-caw6qEBm7AUTpz5-Jh2",
+     "-8aw6qEBm7AUTpz5_Jhr",
+     "_cax6qEBm7AUTpz5AJhh",
+     "_8ax6qEBm7AUTpz5BJhW"
+    ],
+    "run": 1,
+    "status": "holds"
+   },
+   {
+    "PC1": {
+     "add": 403,
+     "remove": null
+    },
+    "PC2": {
+     "add": 403,
+     "remove": null
+    },
+    "PC3": {
+     "add": 403,
+     "remove": null
+    },
+    "PC4": {
+     "add": 200,
+     "remove": 200
+    },
+    "PC5": {
+     "broker_remove": 200,
+     "readd": 200
+    },
+    "holds": true,
+    "key_ids": [
+     "Acax6qEBm7AUTpz5CZkL",
+     "A8ax6qEBm7AUTpz5DJlC",
+     "Bcax6qEBm7AUTpz5EJk8",
+     "B8ax6qEBm7AUTpz5FJkw",
+     "Ccax6qEBm7AUTpz5GJkm"
+    ],
+    "run": 2,
+    "status": "holds"
+   }
+  ],
+  "pd": [
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.007,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "C8ax6qEBm7AUTpz5HZlD",
+    "refusal_status": 401,
+    "run": 0,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.055,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Dcax6qEBm7AUTpz5JJkW",
+    "refusal_status": 401,
+    "run": 1,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0064,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "D8ax6qEBm7AUTpz5LJk3",
+    "refusal_status": 401,
+    "run": 2,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0052,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Ecax6qEBm7AUTpz5M5ny",
+    "refusal_status": 401,
+    "run": 3,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0056,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "E8ax6qEBm7AUTpz5O5nZ",
+    "refusal_status": 401,
+    "run": 4,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0069,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Fcax6qEBm7AUTpz5Q5nP",
+    "refusal_status": 401,
+    "run": 5,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0065,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "F8ax6qEBm7AUTpz5S5m7",
+    "refusal_status": 401,
+    "run": 6,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0053,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Gcax6qEBm7AUTpz5U5ms",
+    "refusal_status": 401,
+    "run": 7,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0067,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "G8ax6qEBm7AUTpz5W5mS",
+    "refusal_status": 401,
+    "run": 8,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0056,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Hcax6qEBm7AUTpz5Y5mj",
+    "refusal_status": 401,
+    "run": 9,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0051,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "H8ax6qEBm7AUTpz5a5mX",
+    "refusal_status": 401,
+    "run": 10,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0059,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Icax6qEBm7AUTpz5c5mG",
+    "refusal_status": 401,
+    "run": 11,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0049,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "I8ax6qEBm7AUTpz5e5lt",
+    "refusal_status": 401,
+    "run": 12,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0051,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Jcax6qEBm7AUTpz5g5lW",
+    "refusal_status": 401,
+    "run": 13,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.006,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "J8ax6qEBm7AUTpz5i5lP",
+    "refusal_status": 401,
+    "run": 14,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0055,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Kcax6qEBm7AUTpz5k5k-",
+    "refusal_status": 401,
+    "run": 15,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.005,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "K8ax6qEBm7AUTpz5m5kd",
+    "refusal_status": 401,
+    "run": 16,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0053,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Lcax6qEBm7AUTpz5o5kE",
+    "refusal_status": 401,
+    "run": 17,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.005,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "L8ax6qEBm7AUTpz5q5ka",
+    "refusal_status": 401,
+    "run": 18,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "accepted_after_invalidate": 0,
+    "first_refusal_s": 0.0046,
+    "holds": true,
+    "invalidate_error_type": null,
+    "invalidate_status": 200,
+    "key_id": "Mcax6qEBm7AUTpz5s5kL",
+    "refusal_status": 401,
+    "run": 19,
+    "status": "holds",
+    "write_before": 201
+   }
+  ],
+  "pd_accepted_after_invalidate_total": 0,
+  "pd_max_first_refusal_s": 0.055,
+  "pe": [
+   {
+    "broker_cas": 200,
+    "holds": true,
+    "key_id": "M8ax6qEBm7AUTpz5upn5",
+    "no_require_alias": 403,
+    "require_alias": 404,
+    "run": 0,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "broker_cas": 200,
+    "holds": true,
+    "key_id": "Ncax6qEBm7AUTpz5v5k9",
+    "no_require_alias": 403,
+    "require_alias": 404,
+    "run": 1,
+    "status": "holds",
+    "write_before": 201
+   },
+   {
+    "broker_cas": 200,
+    "holds": true,
+    "key_id": "N8ax6qEBm7AUTpz5w5kj",
+    "no_require_alias": 403,
+    "require_alias": 404,
+    "run": 2,
+    "status": "holds",
+    "write_before": 201
+   }
+  ],
+  "scope": "single node, Basic licence, security on, HTTP without TLS on loopback; cross-node API-key cache invalidation is not shown",
+  "verdict": {
+   "pa": false,
+   "pb": true,
+   "pc": true,
+   "pd": true,
+   "pe": true
+  }
+ }
+}
