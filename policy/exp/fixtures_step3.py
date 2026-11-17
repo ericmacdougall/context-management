@@ -233,6 +233,14 @@ def check_oracle(d, control=None, rep=None):
     return rep
 
 
+def _pg_view_sha(eng):
+    """The dc core's comparable-view hash, or "error:<type>" when a broken core cannot even build its view (counted as a mismatch)."""
+    try:
+        return vsha(eng._comparable())
+    except Exception as e:  # noqa: BLE001
+        return "error:" + type(e).__name__
+
+
 def check_pg(d, rep=None, patches=()):
     """Replay through the dc core in Postgres: B2 by the session-free raw engine (PgEngine._submit), B1 by dc._lock_event +
     dc._reduce_apply inside savepoints, as exp/pg_diff.py does. The port must pass the same replay against the write-path schema.
@@ -259,7 +267,7 @@ def check_pg(d, rep=None, patches=()):
                                                     (r["config"]["tenant"],)).fetchall()]
             if rows != r["applied"]:
                 rep.bad({"pg_b2": r["log"], "applied": "differs"})
-            if vsha(eng._comparable()) != r["view_sha"]:
+            if _pg_view_sha(eng) != r["view_sha"]:
                 rep.bad({"pg_b2": r["log"], "view": "differs"})
             rep.counts["b2_logs"] += 1
         finally:
@@ -273,7 +281,7 @@ def check_pg(d, rep=None, patches=()):
         def walk(k):
             node = nodes[k]
             rep.counts["b1_nodes"] += 1
-            if vsha(eng._comparable()) != node["view_sha"]:
+            if _pg_view_sha(eng) != node["view_sha"]:
                 rep.bad({"pg_b1": r["scenario"], "node": k, "view": "differs"})
             for ev, code, orig, child in node["edges"]:
                 try:
