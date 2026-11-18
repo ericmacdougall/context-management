@@ -1,0 +1,144 @@
+# failing-first receipt
+# date: 2026-11-18T21:35:16Z
+# file under test: aacf3c0:writepath/sync.sh blob 82e8406bec1e854d02083f2f079d1ad0db0d77a6 sha256 822b0f1455af14e4185c4b15fd00dc439f61482578cdf5249fc55361ae500946
+# tree: writepath at aacf3c0 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_runkit_scripts.py from HEAD 7b81db9 blob eac98868ccfbf1f5fc495206b46b7ef983bbbd5c
+# command: (cd <tree>/writepath && SYNC_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_runkit_scripts
+test_refuses_a_module_outside_its_tree (tests.test_runkit_scripts.Isolated) ... ok
+test_refuses_without_isolation (tests.test_runkit_scripts.Isolated) ... FAIL
+test_runs_a_module_of_its_tree_isolated (tests.test_runkit_scripts.Isolated) ... FAIL
+test_mj_failed_archive_pins_nothing (tests.test_runkit_scripts.PinRun) ... FAIL
+test_pin_copies_the_tree (tests.test_runkit_scripts.PinRun) ... ok
+test_a_descriptor_of_another_file_is_refused (tests.test_runkit_scripts.RunLock) ... FAIL
+test_a_fresh_descriptor_of_the_lock_file_is_refused (tests.test_runkit_scripts.RunLock) ... FAIL
+test_free_lock_is_taken (tests.test_runkit_scripts.RunLock) ... FAIL
+test_held_lock_refuses (tests.test_runkit_scripts.RunLock) ... FAIL
+test_the_gates_own_descriptor_is_accepted (tests.test_runkit_scripts.RunLock) ... FAIL
+test_sync_default_home_is_the_streams (tests.test_runkit_scripts.Sync) ... ok
+test_sync_refuses_an_absolute_or_escaping_home (tests.test_runkit_scripts.Sync) ... FAIL
+test_sync_ships_to_the_named_home (tests.test_runkit_scripts.Sync) ... FAIL
+
+======================================================================
+FAIL: test_refuses_without_isolation (tests.test_runkit_scripts.Isolated)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 188, in test_refuses_without_isolation
+    self.assertIn("python -I -B", p.stdout)
+AssertionError: 'python -I -B' not found in ''
+
+======================================================================
+FAIL: test_runs_a_module_of_its_tree_isolated (tests.test_runkit_scripts.Isolated)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 183, in test_runs_a_module_of_its_tree_isolated
+    self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/runkit/isolated.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_mj_failed_archive_pins_nothing (tests.test_runkit_scripts.PinRun)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 58, in test_mj_failed_archive_pins_nothing
+    self.assertNotEqual(p.returncode, 0, f"pin_run exited 0 after its archive failed: {p.stdout} {p.stderr}")
+AssertionError: 0 == 0 : pin_run exited 0 after its archive failed: ../runs/abc1234-20261118T213517Z
+ 
+
+======================================================================
+FAIL: test_a_descriptor_of_another_file_is_refused (tests.test_runkit_scripts.RunLock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 169, in test_a_descriptor_of_another_file_is_refused
+    self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
+AssertionError: 1 != 2 : Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ImportError: cannot import name 'runlock' from 'wp' (/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/wp/__init__.py)
+
+
+======================================================================
+FAIL: test_a_fresh_descriptor_of_the_lock_file_is_refused (tests.test_runkit_scripts.RunLock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 162, in test_a_fresh_descriptor_of_the_lock_file_is_refused
+    self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
+AssertionError: 1 != 2 : Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ImportError: cannot import name 'runlock' from 'wp' (/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/wp/__init__.py)
+
+
+======================================================================
+FAIL: test_free_lock_is_taken (tests.test_runkit_scripts.RunLock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 144, in test_free_lock_is_taken
+    self.assertEqual((p.returncode, p.stdout.strip()), (0, "held"), p.stderr)
+AssertionError: Tuples differ: (1, '') != (0, 'held')
+
+First differing element 0:
+1
+0
+
+- (1, '')
++ (0, 'held') : Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ImportError: cannot import name 'runlock' from 'wp' (/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/wp/__init__.py)
+
+
+======================================================================
+FAIL: test_held_lock_refuses (tests.test_runkit_scripts.RunLock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 149, in test_held_lock_refuses
+    self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
+AssertionError: 1 != 2 : Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ImportError: cannot import name 'runlock' from 'wp' (/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/wp/__init__.py)
+
+
+======================================================================
+FAIL: test_the_gates_own_descriptor_is_accepted (tests.test_runkit_scripts.RunLock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 155, in test_the_gates_own_descriptor_is_accepted
+    self.assertEqual((p.returncode, p.stdout.strip()), (0, "held"), p.stderr)
+AssertionError: Tuples differ: (1, '') != (0, 'held')
+
+First differing element 0:
+1
+0
+
+- (1, '')
++ (0, 'held') : Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ImportError: cannot import name 'runlock' from 'wp' (/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/wp/__init__.py)
+
+
+======================================================================
+FAIL: test_sync_refuses_an_absolute_or_escaping_home (tests.test_runkit_scripts.Sync)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 113, in test_sync_refuses_an_absolute_or_escaping_home
+    self.assertEqual(p.returncode, 2, f"{bad!r}: {p.stdout} {p.stderr}")
+AssertionError: 0 != 2 : '/etc': synced 1111111
+ 
+
+======================================================================
+FAIL: test_sync_ships_to_the_named_home (tests.test_runkit_scripts.Sync)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.i5ZBrrvOtU/writepath/tests/test_runkit_scripts.py", line 103, in test_sync_ships_to_the_named_home
+    self.assertEqual(self.target(), "t2-dev:emlab2-16096/gatefix/wp/src/")
+AssertionError: 't2-dev:emlab2-16096/wphard/wp/src/' != 't2-dev:emlab2-16096/gatefix/wp/src/'
+- t2-dev:emlab2-16096/wphard/wp/src/
+?                     ^^^ ^^
++ t2-dev:emlab2-16096/gatefix/wp/src/
+?                     ^ ^^^^^
+
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.768s
+
+FAILED (failures=10)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_runkit_scripts tests/test_runkit_scripts.py 6c6fed15b8296426
+# exit status: 1
