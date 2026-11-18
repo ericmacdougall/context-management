@@ -853,3 +853,166 @@ the new verifiers its mig file recomputes FAIL (artifact format of N4) and it ha
 Stamped run of this round: once, after this commit, on a rebuilt container and a clean synced copy (`SYNC_RUN=stamped-<commit> sh
 sync.sh`), with `POL_SEEDS=stamped sh hostrun.sh all` and no override variable; GIT_STAMP dirty=false, commit == thresholds commit ==
 this commit. Started only with at least 17 GiB free. Its verdict is reported as it falls.
+
+## Amendment 7 (2026-11-18: delta review 1, the final review, S1, the evidence identity layer and FINAL-JUDGMENT.md 4.4; written after DEV runs; committed ALONE, before the stamped run of this round)
+
+Why:
+- **Delta review of d05d731** (reviews/policy-delta/review-1.md, run ad27751f: LAB PASS WITH LIMITS, CLIENT BLOCK on M1-M3).
+- **Final review of a2d65fd** (reviews/policy-final/review-1.md: LAB PASS WITH LIMITS, CLIENT BLOCK on P1-P4).
+- **The class-B evidence review.**
+
+Together they found three gaps:
+- database authority was judged before waits that came later;
+- verifiers counted rows, not identities;
+- the S2 verifier took its coverage from the result it judged.
+
+The fixes change product code and verifiers, so the stamped set of d05d731 (amendment 6) no longer covers the code. It is SUPERSEDED by this
+round's run and moves to results/superseded/ with that run's results commit; its verdict stands as recorded (results/README.md).
+Everything below is fixed before this round's stamped run, and the verdict is reported as it falls. Earlier amendments stay in force
+where not changed here. All commits named are on fix/policy-final-review; red-variant commits that are not ancestors live on their red
+branches, and every red log is under results/red/ (README maps each finding to its log).
+
+Delta review 1 (each with a failing-first test at d05d731):
+- M1 (8928870): authentication time is the WALL CLOCK (`clock_timestamp()`) in `dc.open_session` and `dc._session`; sessions expire
+  at `clock_timestamp()` + TTL. `dc._session` and `dc.open_session` refuse unless the transaction is READ COMMITTED (READ UNCOMMITTED,
+  REPEATABLE READ and SERIALIZABLE refused): a fixed snapshot would outlive an end_session or a revocation. Caller contract in
+  DESIGN.md (1a1c7d0).
+- M2 (38ee43d): verify/s2.py pins the S2 coverage below and fails a result whose params differ from it.
+- M3 (7edef60): the in-memory service serialises reference allocation, the decision and the loser's cleanup per (tenant, principal,
+  idempotency key). Postgres already serialised it with its per-principal advisory lock (M3_PgOverlapping, 1ce569c: passes on
+  unmodified d05d731, red 6b67f47; fails without that lock, red e9dd0af).
+- M4 (a2d65fd): red logs of every round are committed under results/red/ with a README.
+- N4 leftover (8928870): a failure injected after the rollback's drops leaves both schemas and the data as they were (red e494207).
+- R3-8 (d4e7449): the append-only, not immutable, anchor limit is stated wherever anchors are described.
+
+Final review of a2d65fd (each with a failing-first test at a2d65fd):
+- P1 and P4 (5814ea0, 68c6dcd, 3153059, ad2a9cb; then S1 below): every database judgment comes after the call's last wait. The
+  in-process authority and each erasure decision are judged again after the database call (`PgDecisionService._judged`), and a lock
+  wait after the final judgment fails the call.
+- P2 (0d57970): S2 rows carry trial and nonce identities; twelve copies of one observation no longer count as twelve trials.
+- P3 (3699ef2): the in-memory service validates event types before allocating; staging, acceptance and cleanup are exception-safe
+  under the key lock.
+- P5 (5814ea0): `dc.end_session` raises unless READ COMMITTED: under REPEATABLE READ or SERIALIZABLE its update read the
+  transaction's snapshot, so a session opened after that snapshot was "not found" and stayed live.
+
+S1, acquire then judge then apply (3ae71c0 design, 53e1269 and 310dd0c failing tests, 078252d code; FINAL-JUDGMENT.md sections 4-6):
+- Every API call and `dc.open_session` takes every lock it needs before it judges, in one global order L0-L8, enforced at run time by
+  `dc._at` (SQLSTATE DCORD) and checked by `S1_LockOrder` against FINAL-JUDGMENT.md 4.2. The caller's session, factor and principal
+  rows are pinned FOR SHARE by the statement that judges them; a revoke, end_session or factor revocation waits for the call (FIFO).
+- Each wait is capped by the credential's remaining life (`dc._budget`) and the caller's own lock_timeout; an exclusive wait for A or
+  T also by XWAIT = 2 s, then 55P03, nothing applied, retryable. After the last lock, lock_timeout is 1 ms; the final judgment reads
+  the clock last. Ceiling: a refused call returns by E + d + 1 ms plus CPU time; no effect is judged at or after E (exclusions in
+  FINAL-JUDGMENT.md 4.4).
+- `dc.revoke_factor` (owner-only) is the queued path for factor revocation.
+
+Evidence identity layer (83413fb..53b85d8, merged in 7c2903e): verify/evidence.py is shared by all twelve verifiers. Every row carries a
+declared identity; each verifier derives its EXPECTED identity set from pins written into it and from the declared seeds, never from the
+rows, and judges only a row set whose identities are exactly that set. A duplicate, missing, extra, unidentified or unclassified row, a
+design parameter that differs from its pin, or a bad seed list FAILs the experiment (checks["evidence"]). The experiments write the
+identity fields their verifiers name. ASSUMPTIONS of the pins (not confirmed by the user): parent-declared child counts are taken from
+the parent row, itself an exact member of its expected set; a bijective relabelling inside a declared sequence is a reordering, not a
+defect (only S2's nonce binds an identity to an observation).
+
+FINAL-JUDGMENT.md 4.4, stalled holders (failing tests 174d837, 6bed430, 0046ef6; code 7464493, 088ab4c). ASSUMPTION: the policy owner's
+choice, not the user's. A connection that keeps its transaction open after a call no longer blocks a revocation past XWAIT:
+- After XWAIT the revocation, once its own caller is pinned and judged, ends (`pg_terminate_backend`) the dc_app and dc_idp backends of
+  this database that hold the needed A or T lock, or wait for it shared, at most three rounds.
+- Only `dc._evict` signals, as the NOLOGIN role dc_evictor (member of `pg_signal_backend` only; EXECUTE for dc_owner only).
+- Fences F_A and F_T make new shared callers of that key refuse (55P03) while it evicts.
+- The pg_catalog advisory-lock functions are not PUBLIC in the policy database.
+- `ops/migrate_r3_7` creates dc_evictor; its rollback restores PUBLIC EXECUTE on those functions, which the pre-R3-7 engine needs.
+
+This is proven by tests and broken-variant controls, not by a stamped experiment: tests/test_s44_pg.py (eviction, scope, fence, the
+idle-timeout option), with controls for eviction made a no-op, the queued-revoker filter removed, the eviction made unconditional, and
+`dc._fenced` made a no-op. The measured bounds (t2-dev, PG 16.15) and the options not taken are in FINAL-JUDGMENT.md 4.4. Its disclosed
+residuals:
+- an evicted backend loses its whole connection;
+- the fence refuses new calls while a revocation evicts;
+- a stalled submitter holding the chain head (L7) stalls the tenant's other submits until a revoke, grant or erasure evicts it.
+
+S2 coverage, pinned in verify/s2.py (stamped and DEV alike; a result whose params differ FAILS):
+- seeds: at least 3 distinct, every row carrying one of them; arms: real plus the 7 controls below, no other.
+- proof classes, exactly 12 trials each per seed, trials 0..11 each exactly once: valid, forged_mac, body_edited, other_key,
+  other_factor_id, look_alike, other_principal, other_channel, other_tenant, expired, far_future, replay, revoked_factor, malformed,
+  expired_in_txn (a proof presented after its expiry inside a transaction begun while it was valid). Derived classes: replay_first (one
+  per replay trial, sharing its arm, seed, trial, nonce and factor) and revoked_principal (12). valid and replay_first open a working
+  session; every other class is refused. Every real-arm proof row and every replay_concurrent row carries nonce_sha256 (the first 16 hex
+  digits of sha256 of the nonce drawn for that trial or round, asserted equal to the presented proof's nonce).
+- mint probes, exactly once each, all refused (17): dc_idp and dc_app bare_principal_open_session; dc_app open_session_with_proof and
+  end_session; dc_app and dc_idp enroll_factor, insert_session, update_session, read_sessions, read_factors; dc_idp alter_factors and
+  clear_used_proofs; in_process bare_principal_issue.
+- replay_concurrent: rounds 0, 1, 2, each 8 proofs presented, exactly one winner.
+- tokens x calls, each pair exactly once: valid, forged, expired, revoked, ended, empty, other_tenant, expired_in_txn (a 1 s token, the
+  five calls inside a transaction begun while it was valid, after expiry), repeatable_read (a REPEATABLE READ transaction takes its
+  snapshot, dc_idp ends the token, then the five calls) x submit, explain, read_table, erase_candidates, erase_values; expired_in_txn
+  and repeatable_read are judged as bad tokens.
+- origin cases, exactly once each: alice/human/owner_ui, alice/human/owner_cli, bob/human/owner_ui, carol/human/owner_ui (user,
+  user_typed); bot/agent/agent_api, x/analyst/agent_api (assistant, agent_generated).
+- body identity keys, exactly once each, refused identity_in_body: tenant, principal, channel, id, actor, trust_origin.
+- install_lookalike and token_after: exactly one row each.
+- controls, each must CATCH on every seed: ctl_bare_mint_80bb6a7, ctl_bare_mint_0a20b64, ctl_no_replay, ctl_no_mac,
+  ctl_identity_from_body, ctl_origin_from_body, and ctl_txn_clock (3 expired_in_txn trials per seed). ctl_txn_clock is the variant with
+  d05d731's clock and no isolation guard, as four patch pairs: (TIME_CHECK, the transaction clock now()), (OPEN_ISOLATION, ""),
+  (SESSION_ISOLATION, ""), (SESSION_CLOCK, the same line with now() for clock_timestamp()). The separate expiry re-check after the
+  ledger insert (TIME_RECHECK) is gone since 5814ea0 (final review P4): `dc._judge_proof` runs again after the last wait.
+
+Expected FAIL of the earlier stamped S2 rows (checked, not assumed): the current verify/s2.py on the amendment 6 stamped set (d05d731,
+s2_sessions.a99c0d171275c764.json with its items s2_sessions.items.74221b632d2a09d7.jsonl.gz, items sha256 matching, read in place on
+t2-dev, 1041 rows) gives verdict FAIL. checks["evidence"]: ok false, problem_count 25. The params differ from the pins: classes lack
+expired_in_txn, tokens lack expired_in_txn and repeatable_read, controls lack ctl_txn_clock. Rows: expected 1116, distinct 249,
+unidentified 792 (no trial or nonce identity: d05d731 wrote neither), missing 867, duplicates 0, extra 0. ASSUMPTION (not confirmed by
+the user): that FAIL is the verifier tightening, not a regression of the code; the set's seeds stay used.
+
+B1 control depth of r1 (a conflict in this file, resolved here): amendment 3 ("Depths") says "Controls: r1 5"; amendment 4 and the code
+since f23f119 use 6 (exp/b1_modelcheck.py CTL_DEPTH; the shortest trace of the I16 consequence is at depth 6). This amendment
+supersedes amendment 3's r1 control depth: it is 6. verify/b1.py pins DEPTH {r1 6, r2 8, r3 8, caps 8, joint 4} and CTL_DEPTH {r1 6, r2
+6, r3 6, caps 6}; the B1_QUICK development variant is not a stamped configuration.
+
+Seeds (fresh, never used; exp/seeds.py STAMPED, committed before this amendment in f8a8b39): e1, e2, e4, e5, b2, pgdiff 71..75; e3 399;
+e6 929; b1 71 (reserved, unused: b1 is SEEDLESS); b3 71; mig 71..73; s2 71..73. Used before and never reused: 11..15, 21..25, 31..35,
+41..45, 61..65, 77, 88, 99, 100..159, 199, 299, 606, 707, 808, 909, 919. DEV runs use only the string seeds dev-<exp>-<n>.
+
+DEV results (dev seeds; development observations, not proof; each with its commit; logs in results/red/):
+- e816310 (the fixer's S1 green): the seven Postgres modules Ran 126 OK; DEV s2_sessions PASS, b3_pg PASS; a COMPLETE DEV pg_diff
+  (no PGDIFF_LOGS, no PGDIFF_SCEN) PASS in 2597.7 s, 1,454,803 rows, b2 300 logs 45,206 events 0 mismatches, lowest free 17042204 KiB.
+  At 8547b27 (tests only since e816310): DEV e2, e3, e5, e6 PASS (`s1_dev_*_8547b27.out`).
+- 8547b27, 7464493: my complete DEV pg_diff reruns were VOID, stopped by my 15 GiB disk watcher (free space shared with, likely, other tenants' jobs; b2 had
+  finished clean at 8547b27: 300 logs, 45,206 events, 0 mismatches).
+- ae644df (code identical to this commit in pol/, exp/, ops/, verify/): test_s44_pg plus the seven Postgres modules Ran 145, OK
+  (238 s); DEV mig_rehearsal PASS (3 seeds clean, 9 controls refused or caught); s2_sessions PASS (1860 rows, 0 accepted attacks);
+  verify --dev agrees on both. 088ab4c gave the same. These ae644df runs used my DEV container with its WAL capped (max_wal_size 64MB,
+  min_wal_size 32MB; ASSUMPTION: WAL sizing changes checkpoint frequency, not results). The in-memory and evidence suites at ae644df (no
+  database): Ran 183, OK (176 s).
+- Open, not passed: b3_pg is VOID three times (088ab4c once, ae644df twice). b3 needs about 17 minutes (the fixer's run: 1031.7 s),
+  because each of the 50 idem_unprotected control rounds runs to its 20 s TIMEOUT (B waits on A's transaction id, observed in
+  pg_locks); free space on t2-dev fell under 15 GiB at 08:18, 08:37:57, 08:51:27, 08:58:21 and 09:08:30Z (lowest 15456224 KiB, 14.74
+  GiB = 15.83 GB), likely other tenants' jobs (not attributed), and my watcher stopped my container each time. The nine scenarios and
+  the no_head_lock and no_advisory_lock controls had passed 50 of 50 before each stop. The complete DEV pg_diff at the final code was
+  NOT RUN: free space 15.5-15.8 GiB (16.6-17.0 GB) against the owner's start bar (17 GiB, later 16.25 GiB; ASSUMPTION). The last
+  complete DEV pg_diff is the fixer's at e816310, before the 4.4 code.
+- Unreviewed observation, not changed here: b3's idem_unprotected control returns overlap True unconditionally, and with the S1
+  chain-head lock its forced overlap (B reaching before_commit while A is open) appears never to happen; the control still catches
+  the duplicate (two events) sequentially.
+- 4.4 measurements at 7464493 (DEV, one run each, t2-dev, development observations): a revoke behind a stalled holder 2.107 to
+  2.124 s; end_session 2.106 s; revoke_factor 2.107 s; tenant revoke 2.122 s and erasure 2.106 s; bystanders 2.122 s; a revoke
+  behind an owner holder gives up at 2.013 s (55P03, nothing applied); the no-eviction control 55P03 at 2.011 s; a cooperative
+  idle-timeout holder ends at 2.831 s while a non-cooperative one is still alive at 8.000 s; the reconnecting adversary 0.531 s.
+
+Disk: run_all.sh is unchanged (16 GiB free before each experiment, 15.5 GiB while it runs). The stamped run starts only with at least 20
+GB free by `df` (OWNER-COMMON, main 2026-11-17 16:45Z), checked by hand before kit/preflight.sh (whose own check is 18 GB).
+
+Unchanged: every other threshold, the provenance gate, the environment of amendment 6 (own container emlab2-policy-pg, postgres 16.15
+image 933463a6c8eb, rebuilt by kit/rebuild_pg.sh before the stamped run), and the ASSUMPTIONS of amendment 6 (decisions 8 to 11 and the
+origin vocabulary, not confirmed by the user).
+
+LIMITS (unchanged from amendment 6 unless stated): factor keys are symmetric, so the database owner can forge a proof; the proof window
+and session expiry trust the database host's wall clock; enrolment is the identity adapter's, out of scope; FileAnchor is an append-only
+file, not immutable storage; the provenance gate proves consistency, not authenticity. N3: a raw-SQL dc_app caller holding a live token
+of a principal revoked ONLY in the policy document is stopped by the database after a core revoke, a dc.end_session of that token, or
+the token's expiry (1 to 86400 s, judged on the wall clock). New: the 4.4 residuals above.
+
+Run lock (OWNER-COMMON): the stamped run starts only holding ~/emlab2-16096/RUNLOCK, and the lock is released the moment it ends.
+
+Stamped run of this round: once, after this commit, on a rebuilt container and a clean synced copy (`SYNC_RUN=stamped-<commit> sh
+sync.sh`), with kit/launch_stamped.sh (POL_SEEDS=stamped, hostrun.sh all, no override variable) after kit/preflight.sh passes;
+GIT_STAMP dirty=false, commit == thresholds commit == this commit. Its verdict is reported as it falls.
