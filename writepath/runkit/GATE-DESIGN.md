@@ -1080,9 +1080,17 @@ the test that violates only it, is in `runkit/VERDICT-PATHS.md` (draft 2). v6 ke
   ssh login's `session-N.scope` under `user-1000.slice`, `memory.events` readable with `oom_kill` 0. The scope is the
   whole login session, so every process of that session shares the counter (fails closed, LIMITS v6). Unreadable
   BLOCKS.
-- The catalog SQL is validated offline only against a fake (PENDING_REAL_TEST GF16096-L9; the stores' code accepts
-  only the `emlab2-wphard` stream, whose containers this round may not touch). Postgres 16 catalogs
-  (`pg_parameter_acl` exists from 15).
+- The catalog SQL ran live on the stream's Postgres 16 (t2-dev, 2026-11-18 22:02Z and 22:06Z, receipts
+  results/failing-first/live-642abff/): every tagged query read without error, and the cluster rules before the reset
+  BLOCKED. The first run (8dbc368) showed the expectation lacked what host/bootstrap.py builds (legacy roles emlab and
+  kms, kms in pg_checkpoint, databases emlab and keys, six ALTER SYSTEM values): fixed in 642abff (guard_policy
+  LEGACY_* and AUTO_CONF; allowed, never required). The second run BLOCKED only on roles, a membership, settings and
+  CONNECT grants that feat/writepath-hardening's setup creates (wp_rev1, wp_rev2, wp_reviewer, wp_sealer) and this
+  branch's does not: when the branches meet, guard_policy must take them from that setup.
+- The stream's live stores keep their data on Docker volumes (ext4), not tmpfs, and some ES indices carry a
+  flood-stage block (22:07Z): v4's storage rules (5.6, 6.2) refuse them, so no live admission can pass on those
+  containers until they are rebuilt by host/bootstrap.py with the tmpfs precondition. The VALID and VOID live items
+  (GF16096-L1 run, L6, L7, L9 F-2/F-3 VOID) wait on that.
 
 ### 9.4 What v6 guarantees, and what it does not (LIMITS v6)
 A VALID end record adds to 8.4: the stores were reset by this gate under its lock and were the same databases, schema

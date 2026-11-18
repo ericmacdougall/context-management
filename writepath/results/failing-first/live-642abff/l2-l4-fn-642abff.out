@@ -1,0 +1,18 @@
+2026-11-18T22:07:05Z
+gate disk_gate v6 tree 642abff1163a-20261118T220611Z
+L2/L3 _clean reasons: 4
+  clean: stores not clean before the run: tables of wp_events holding rows: analyst_jobs, chains, cursors, decision_heads, erasure_jobs, erasure_mentions, erasure_rescanned, events, facts, identifier_epochs, identifier_proposals, leases, quarantine_quota, subject_identifiers,
+  clean: stores not clean before the run: tables of wp_keys holding rows: destroyed, subject_keys, tenant_keys
+  clean: stores not clean before the run: 3 unregistered: pg:identifier_proposals, pg:seal_keys, pg:write_refusals
+  clean: stores not clean before the run: ES indices under wp16096-: wp16096-h6a02f15e-events-base, wp16096-h6a02f15e-facts-base, wp16096-h6a13bb42-events-base, wp16096-h6a13bb42-facts-base, wp16096-h6a1a397b-events-base, wp16096-h6a1a397b-facts-base, wp16096-h6a264d2b
+L2 gate connection to wp_events: statement_timeout = 10s
+L2 gate connection to wp_keys: statement_timeout = 10s
+L4 _slow pg: reasons 2; observed keys ['fs', 'id', 'iso', 'name', 'sysid', 'tablespaces']
+  slow: the PG data directory /var/lib/postgresql/data is not a Docker tmpfs mount (volume): its free space is shared with other tenants
+  slow: the PG data mount /var/lib/postgresql/data is not a single tmpfs mount in the container's mount table (ext4; statfs ext2/ext3)
+L4 _slow es: reasons 4; observed keys ['eph', 'fs', 'id', 'iso', 'name', 'node', 'settings']
+  slow: the ES data directory /usr/share/elasticsearch/data is not a Docker tmpfs mount (volume): its free space is shared with other tenants
+  slow: ES reports its data path on ext4, not tmpfs: its free space is shared with other tenants
+  slow: index(es) under a flood-stage block (index.blocks.read_only_allow_delete): .ds-.logs-elasticsearch.deprecation-default-2026.11.17-000001, .ds-ilm-history-7-2026.11.17-000001, .security-7, wp16096-h6a02f15e-events-base, wp16096-h6a02f15e-facts-base, wp16096-h6a13bb42-events-b
+  slow: the ES data mount /usr/share/elasticsearch/data is not a single tmpfs mount in the container's mount table (ext4; statfs ext2/ext3)
+exit 0
