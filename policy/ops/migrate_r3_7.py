@@ -26,9 +26,11 @@ rollback(conn)   ONE transaction: locks every table of the migrated schema (EXCL
   written after the migration (an applied or refused request, an erasure, an audit row): dropping the schema would discard those
   writes, or undo an erasure (review-3 N4). There is no override: carry such writes back by hand or keep the migrated schema (finish).
   Otherwise it drops the new dc schema (and dc_crypto, which the old schema did not have), renames dc_pre_r3_7 back to dc and restores
-  dc_app's USAGE, and gives PUBLIC its EXECUTE on the pg_catalog advisory-lock functions back (PostgreSQL's default: the old engine
-  takes its idempotency lock as dc_app with a raw pg_advisory_xact_lock). Roles dc_idp and dc_evictor are left in place (roles are
-  cluster-wide; the old schema references none of their grants). Refused when dc_pre_r3_7 or the mark is absent.
+  dc_app's USAGE, and restores the EXECUTE grants of the pg_catalog advisory-lock functions exactly as forward recorded them before it
+  installed the core (review of 2262eaa F8; the old engine takes its idempotency lock as dc_app with a raw pg_advisory_xact_lock, which
+  PostgreSQL's default, PUBLIC, allows). A mark written by an older forward has no recorded grants: then PUBLIC gets EXECUTE back (the
+  default), as before. Roles dc_idp and dc_evictor are left in place (roles are cluster-wide; the old schema references none of their
+  grants). Refused when dc_pre_r3_7 or the mark is absent.
 finish(conn)   drops dc_pre_r3_7 after the deployment has been accepted; there is no rollback after finish.
 
 usage (lab host): python -m ops.migrate_r3_7 forward|rollback|finish --tenants <json file>  (env: POL_PG_PORT, POL_PG_SUPER_PASSFILE,
@@ -65,6 +67,38 @@ def advisory_to_public(c):
     pre-R3-7 engine needs it (its dc_app connection calls pg_advisory_xact_lock itself)."""
     for (f,) in c.execute(ADVISORY).fetchall():
         c.execute(sql.SQL("grant execute on function {} to public").format(sql.SQL(f)))
+
+
+def advisory_acl(c):
+    """{function: [[grantee, grantable], ...]} of EXECUTE on the advisory-lock functions, the owner left out ("public" for PUBLIC)."""
+    rows = c.execute("select p.oid::regprocedure::text, case when a.grantee = 0 then 'public' else r.rolname end, a.is_grantable"
+                     " from pg_catalog.pg_proc p cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a"
+                     " left join pg_catalog.pg_roles r on r.oid = a.grantee"
+                     " where p.pronamespace = 'pg_catalog'::regnamespace and p.proname like 'pg\\_%advisory%'"
+                     " and a.privilege_type = 'EXECUTE' and a.grantee <> p.proowner").fetchall()
+    out = {}
+    for f, g, opt in rows:
+        out.setdefault(f, []).append([g, bool(opt)])
+    for (f,) in c.execute(ADVISORY).fetchall():
+        out.setdefault(f, [])
+    return {f: sorted(v) for f, v in out.items()}
+
+
+def restore_advisory_acl(c, acl):
+    """Make the EXECUTE grants of each advisory-lock function exactly `acl` (as advisory_acl returns it): revoke every grantee that is
+    not in it, grant every one that is (a role dropped since forward is skipped)."""
+    now = advisory_acl(c)
+    for f in sorted(set(now) | set(acl)):
+        want = {g: opt for g, opt in acl.get(f, [])}
+        for g, _opt in now.get(f, []):
+            if g not in want:
+                c.execute(sql.SQL("revoke execute on function {} from {} cascade").format(
+                    sql.SQL(f), sql.SQL("public") if g == "public" else sql.Identifier(g)))
+        for g, opt in sorted(want.items()):
+            if g != "public" and c.execute("select 1 from pg_roles where rolname = %s", (g,)).fetchone() is None:
+                continue
+            c.execute(sql.SQL("grant execute on function {} to {}" + (" with grant option" if opt else "")).format(
+                sql.SQL(f), sql.SQL("public") if g == "public" else sql.Identifier(g)))
 
 
 def _exists_schema(c, name):
@@ -137,6 +171,7 @@ def forward(c, tenants, idp_password_file):
             if not ok:
                 raise MigrationRefused("tenant %s: the old chain does not verify" % t)
         before = {t: (_old_state(c, "dc", t), _chain(c, "dc", t)) for t in old_tenants}
+        acl_before = advisory_acl(c)                      # F8: restored exactly by rollback
         public_create = c.execute("select has_schema_privilege('public', 'public', 'CREATE')").fetchone()[0]
         c.execute(sql.SQL("alter schema dc rename to {}").format(sql.Identifier(PRE)))
         c.execute(sql.SQL("revoke usage on schema {} from dc_app").format(sql.Identifier(PRE)))
@@ -176,9 +211,9 @@ def forward(c, tenants, idp_password_file):
         if not public_create:
             c.execute("revoke create on schema public from public")
         c.execute("insert into dc.audit(tenant, principal, code, ev) values (null, null, 'migrated_r3_7', %s)", (Jsonb(report),))
-        c.execute("create table dc.migration_mark(id int primary key check (id = 1), mark jsonb not null)")
+        c.execute("create table dc.migration_mark(id int primary key check (id = 1), mark jsonb not null, advisory_acl jsonb)")
         c.execute("revoke all on dc.migration_mark from public")
-        c.execute("insert into dc.migration_mark values (1, %s)", (Jsonb(_data_mark(c)),))
+        c.execute("insert into dc.migration_mark values (1, %s, %s)", (Jsonb(_data_mark(c)), Jsonb(acl_before)))
     return report
 
 
@@ -189,7 +224,7 @@ def rollback(c):
         if c.execute("select to_regclass('dc.migration_mark')").fetchone()[0] is None:
             raise MigrationRefused("no dc.migration_mark: cannot prove the migrated schema is unwritten, so rollback could discard data")
         c.execute(sql.SQL("lock table {} in exclusive mode").format(sql.SQL(", ").join(sql.SQL("dc.") + sql.Identifier(t) for t in _dc_tables(c))))
-        mark = c.execute("select mark from dc.migration_mark where id = 1").fetchone()[0]
+        mark, acl = c.execute("select mark, to_jsonb(m) -> 'advisory_acl' from dc.migration_mark m where id = 1").fetchone()
         now = _data_mark(c)
         changed = sorted(t for t in set(mark) | set(now) if mark.get(t) != now.get(t))
         if changed:
@@ -199,7 +234,10 @@ def rollback(c):
         c.execute("drop schema if exists dc_crypto cascade")
         c.execute(sql.SQL("alter schema {} rename to dc").format(sql.Identifier(PRE)))
         c.execute("grant usage on schema dc to dc_app")
-        advisory_to_public(c)
+        if acl is None:
+            advisory_to_public(c)                         # a mark from an older forward: PostgreSQL's default
+        else:
+            restore_advisory_acl(c, acl)
     return {"rolled_back": True}
 
 

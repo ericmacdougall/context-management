@@ -192,13 +192,21 @@ the examples and default deny are what ships.
     honoured and never lengthened.
   - Stalled holders (FINAL-JUDGMENT.md 4.4; ASSUMPTION, the policy owner's choice, not the user's). The idle timeout bounds only a
     caller that leaves it alone. When a revoke, `end_session`, `dc.revoke_factor`, grant or erasure has waited XWAIT for A or T
-    exclusively, and its own caller is pinned and judged, it ends (`pg_terminate_backend`) the dc_app and dc_idp backends of this
-    database that hold that lock or wait for it shared, then tries again, at most three rounds, never after its caller's expiry.
-    Only `dc._evict` signals, as the NOLOGIN role dc_evictor (member of `pg_signal_backend` only; EXECUTE for dc_owner only).
-    While it evicts it holds a fence, and new shared callers of that key refuse with 55P03. Owner and superuser holders are never
-    evicted; the revocation then gives up with 55P03. A caller that keeps a transaction open after a call should expect its
-    connection to be ended if that transaction blocks a revocation for more than XWAIT (2 s). The advisory-lock functions are not
-    PUBLIC in the policy database: only dc_owner may call them.
+    exclusively, and its own caller is pinned and judged, it takes the fence of that lock and then ends (`pg_terminate_backend`)
+    the backends of this database, other than superusers and members of dc_owner, that hold that lock or wait for it shared, or
+    hold it exclusively while waiting for nothing (a revocation that is itself waiting is in progress and is left alone); then it
+    tries again, at most three rounds, never after its caller's expiry. Only `dc._evict` signals, as the NOLOGIN role dc_evictor
+    (member of `pg_signal_backend` only; EXECUTE for dc_owner only). While it evicts it holds the fence, and new shared callers of
+    that key refuse with 55P03. Owner and superuser holders are never evicted; the revocation then gives up with 55P03. A caller
+    that keeps a transaction open after a call should expect its connection to be ended if that transaction blocks a revocation
+    for more than XWAIT (2 s). The advisory-lock functions are not executable by any role but the owner and dc_owner in the policy
+    database (install removes PUBLIC and every explicit grant).
+  - Lock identities (review of 2262eaa; ASSUMPTION, the fixer's choice): A and T, and their fences, use the `lockid` of the
+    principal or tenant row (one sequence, unique, fixed at insert), so tenants never share an A or T key; the subject lock is
+    classed by tenant. A revoke or grant takes its exclusive locks only when the rules would apply it.
+  - Two-phase commit (review of 2262eaa F2a; ASSUMPTION, the fixer's choice): install and every API call refuse while
+    `max_prepared_transactions > 0` (SQLSTATE 55000), because a prepared transaction would keep a call's locks where no
+    eviction can reach them.
   - New SQLSTATE 55P03 from a call: a wait before the expiry ended by the caller's own `lock_timeout` or by XWAIT on an exclusive
     lock, or a wait after the acquisition. Nothing was applied; the call is retryable.
 - Revoke, grant and erasure serialise the tenant (T exclusive), which is a scaling limit; so do all submits of a tenant from the

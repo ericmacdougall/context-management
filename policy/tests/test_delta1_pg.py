@@ -150,7 +150,7 @@ class M1_WallClock(_Base):
         """d05d731: dc.erase_values checked the session before taking the tenant row FOR UPDATE; a call that waited there past its
         token's expiry then erased. S1 (FINAL-JUDGMENT.md): erasure waits on the tenant's advisory lock (L3), no longer on the tenant
         row, so the holder takes that lock; the wait is capped at the token's expiry."""
-        q = "select pg_advisory_xact_lock(1145241602, hashtext(jsonb_build_array('tenant', %s::text, null::text)::text))"
+        q = "select pg_advisory_xact_lock(1145241602, dc._tk(%s::text))"                 # T's exact key (review of 2262eaa F1)
         tok = self.tok("admin", ttl=2)
         late = self._blocked_call(lambda: self.app.execute("select dc.erase_values(%s, 'dana', %s)", (tok, [self.ref])).fetchone()[0],
                                   q, (T,), 2.6)

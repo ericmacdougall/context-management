@@ -24,6 +24,7 @@ import unittest
 
 try:
     import psycopg
+    from psycopg import sql
     from pol import pgcore
 except ImportError:              # pragma: no cover
     psycopg = None
@@ -281,6 +282,12 @@ class Review3Rollback(unittest.TestCase):
         self.o.execute("drop schema if exists dc_crypto cascade")
         OLD = _old_module()
         OLD.install(self.port, sp, os.environ["POL_PG_APP_PASSWORD_FILE"], {T: CFG})
+        # a pre-R3-7 database has PostgreSQL's default advisory ACL (PUBLIC), not what an earlier install of the new core left in this
+        # lab database: rollback now restores the ACL recorded before forward (review of 2262eaa F8), so model the real one
+        if self.o.execute("select 1 from pg_roles where rolname = 'dc_owner'").fetchone():
+            for (f,) in self.o.execute(MIG.ADVISORY).fetchall():
+                self.o.execute(sql.SQL("revoke all on function {} from dc_owner").format(sql.SQL(f)))
+        MIG.advisory_to_public(self.o)
         self.o.execute("insert into dc.vals values (%s,'val-x1','about dana','{}'::jsonb, array['dana'])", (T,))
         self.o.execute("insert into dc.subject_tokens values (%s,'dana','subj-t1')", (T,))
         MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
