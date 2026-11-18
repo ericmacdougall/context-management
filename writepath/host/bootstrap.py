@@ -5,8 +5,18 @@ does not import wp (whose config refuses to start until this has written the con
 
 - WP_HOME must end with emlab2-16096/wphard/wp (never the previous lab's ~/emlab-16096).
 - Containers emlab2-wphard-pg (postgres:16) and emlab2-wphard-es (elasticsearch 9.5.6, security off; D6 turns it
-  on with wp/es_security.py), loopback ports only, memory limits, labelled emlab2.stream=wphard. A container of
-  that name without the label is refused, never removed.
+  on with wp/es_security.py), loopback ports only, labelled emlab2.stream=wphard. A container of that name without
+  the label is refused, never removed.
+- STORAGE (the stamped-run gate's precondition, runkit/GATE-DESIGN.md 5.6, B3 and B4 on fix/writepath-gate at
+  a293050): each store's data directory is a private tmpfs (--tmpfs, nr_inodes=0) whose size exceeds the container's
+  memory limit (memory-swap equal to it: no swap) by the store's largest free-space threshold plus a margin, so the
+  data path can never reach a watermark (ES) or fill (PG), and no other tenant of the host disk can write into it.
+  Sizes (ASSUMPTION, the gate design's figures; this stream's largest live steps use well under 1 GiB of store data):
+    PG  memory 4 GiB, tmpfs 4.5 GiB (S - M = 0.5 GiB >= the 0.25 GiB margin)
+    ES  memory 6 GiB, tmpfs 16.5 GiB (S - M = 10.5 GiB >= the 10 GiB low watermark + 0.25 GiB margin)
+  At most 10 GiB of host memory is held. A stop, restart or recreate of a container EMPTIES its store: bootstrap and
+  wp.setup run again (both idempotent) and recreate what lived there (roles, databases, ES users and keys). So the PG
+  settings that need a restart are passed on the server's command line, never by ALTER SYSTEM plus a restart.
 - Elasticsearch disk watermarks are ABSOLUTE free-space floors (low 10gb, high 9gb, flood 8gb; amendment H6d, the
   user's lab disk rule, were 18/17/15gb): at 8 GB free the node stops writes itself, which enforces the stop line from
   inside the store. wp/es_security.py applies the same values when it recreates the node.
@@ -32,6 +42,38 @@ import urllib.request
 PG_C, ES_C = "emlab2-wphard-pg", "emlab2-wphard-es"
 LABEL = "emlab2.stream=wphard"
 PG_IMAGE, ES_IMAGE = "postgres:16", "docker.elastic.co/elasticsearch/elasticsearch:9.5.6"
+GIB = 1024 ** 3
+PG_DATA, ES_DATA = "/var/lib/postgresql/data", "/usr/share/elasticsearch/data"
+PG_MEM, PG_TMPFS = 4 * GIB, 4 * GIB + GIB // 2
+ES_MEM, ES_TMPFS = 6 * GIB, 16 * GIB + GIB // 2
+WATERMARKS = {"low": "10gb", "high": "9gb", "flood_stage": "8gb"}          # amendment H6d (wp/es_security.py: the same)
+ES_LOW_BYTES = 10 * GIB                       # the largest free-space threshold (ES byte units: gb = 1024^3 bytes)
+MARGIN = GIB // 4                             # the gate's MARGIN (256 MiB)
+# the earlier lab's node parity and amendment 17c (WAL cap), on the command line: a restart would empty the tmpfs
+PG_SETTINGS = {"max_wal_size": "256MB", "min_wal_size": "64MB", "wal_recycle": "off", "wal_keep_size": "0",
+               "archive_mode": "off", "max_connections": "200"}
+assert PG_TMPFS - PG_MEM >= MARGIN and ES_TMPFS - ES_MEM >= ES_LOW_BYTES + MARGIN
+
+
+def tmpfs_arg(path, size):
+    return ["--tmpfs", f"{path}:rw,size={size},nr_inodes=0,mode=1777"]
+
+
+def pg_run_args(pg_port, pw_file):
+    return (["docker", "run", "-d", "--name", PG_C, "--label", LABEL, "--memory", str(PG_MEM), "--memory-swap", str(PG_MEM),
+             "--shm-size", "256m", *tmpfs_arg(PG_DATA, PG_TMPFS), "-p", f"127.0.0.1:{pg_port}:5432",
+             "-v", f"{pw_file}:/run/secrets/pgpw:ro", "-e", "POSTGRES_PASSWORD_FILE=/run/secrets/pgpw",
+             "-e", "POSTGRES_USER=wp", "-e", "POSTGRES_DB=wp_events", "-e", f"PGDATA={PG_DATA}", PG_IMAGE, "postgres"]
+            + [x for k, v in PG_SETTINGS.items() for x in ("-c", f"{k}={v}")])
+
+
+def es_run_args(es_port):
+    return (["docker", "run", "-d", "--name", ES_C, "--label", LABEL, "--memory", str(ES_MEM), "--memory-swap", str(ES_MEM),
+             *tmpfs_arg(ES_DATA, ES_TMPFS), "-p", f"127.0.0.1:{es_port}:9200",
+             "-e", "ES_JAVA_OPTS=-Xms1g -Xmx1g", "-e", "discovery.type=single-node",
+             "-e", "xpack.security.enabled=false", "-e", "action.auto_create_index=false"]
+            + [x for k, v in WATERMARKS.items() for x in ("-e", f"cluster.routing.allocation.disk.watermark.{k}={v}")]
+            + [ES_IMAGE])
 
 
 def _home():
@@ -114,21 +156,11 @@ def main(pg_port, es_port):
     if _container(PG_C) is None:
         if not _port_free(pg_port):
             raise SystemExit(f"refusing: port {pg_port} is in use")
-        subprocess.run(["docker", "run", "-d", "--name", PG_C, "--label", LABEL, "-m", "2g", "--shm-size", "256m",
-                        "-p", f"127.0.0.1:{pg_port}:5432", "-v", f"{PG_C}-data:/var/lib/postgresql/data",
-                        "-v", f"{sec / 'pg_password'}:/run/secrets/pgpw:ro", "-e", "POSTGRES_PASSWORD_FILE=/run/secrets/pgpw",
-                        "-e", "POSTGRES_USER=wp", "-e", "POSTGRES_DB=wp_events", PG_IMAGE], check=True, capture_output=True)
+        subprocess.run(pg_run_args(pg_port, sec / "pg_password"), check=True, capture_output=True)
     if _container(ES_C) is None:
         if not _port_free(es_port):
             raise SystemExit(f"refusing: port {es_port} is in use")
-        subprocess.run(["docker", "run", "-d", "--name", ES_C, "--label", LABEL, "-m", "2g",
-                        "-p", f"127.0.0.1:{es_port}:9200", "-v", f"{ES_C}-data:/usr/share/elasticsearch/data",
-                        "-e", "ES_JAVA_OPTS=-Xms1g -Xmx1g", "-e", "discovery.type=single-node",
-                        "-e", "xpack.security.enabled=false", "-e", "action.auto_create_index=false",
-                        "-e", "cluster.routing.allocation.disk.watermark.low=10gb",
-                        "-e", "cluster.routing.allocation.disk.watermark.high=9gb",
-                        "-e", "cluster.routing.allocation.disk.watermark.flood_stage=8gb",
-                        ES_IMAGE], check=True, capture_output=True)
+        subprocess.run(es_run_args(es_port), check=True, capture_output=True)
 
     t0 = time.time()
     while subprocess.run(["docker", "exec", PG_C, "pg_isready", "-U", "wp", "-q"]).returncode != 0:
@@ -174,21 +206,14 @@ def main(pg_port, es_port):
     # without these the old erasure raises and old_repro would "reproduce" a finding for an environment reason
     _psql("grant pg_checkpoint to kms;", "postgres")
     _psql("grant execute on function pg_switch_wal() to kms;", "keys")
-    # amendment 17c: cap the WAL this node keeps (the host's free space swings by several GB; the run's own growth is
-    # capped at 2 GiB). A deviation from the earlier lab's default max_wal_size of 1GB, stated in THRESHOLDS.
-    _psql("alter system set max_wal_size = '256MB';\nalter system set min_wal_size = '64MB';\nselect pg_reload_conf();", "postgres")
-    # parity with the earlier lab's node (its container ran postgres -c wal_recycle=off -c wal_keep_size=0
-    # -c archive_mode=off -c max_connections=200, recorded nowhere in the repo until now): wal_recycle=off matters to
-    # the key-residue proofs (a recycled WAL segment keeps old bytes on disk), max_connections to the concurrent runs
-    _psql("alter system set wal_recycle = off;\nalter system set wal_keep_size = 0;\nalter system set archive_mode = off;\n"
-          "alter system set max_connections = 200;\nselect pg_reload_conf();", "postgres")
-    if _psql("select count(*) from pg_settings where pending_restart;", "postgres").strip() != "0":
-        subprocess.run(["docker", "restart", PG_C], check=True, capture_output=True)
-        t1 = time.time()
-        while subprocess.run(["docker", "exec", PG_C, "pg_isready", "-U", "wp", "-q"]).returncode != 0:
-            if time.time() - t1 > 120:
-                raise SystemExit("postgres not ready in 120 s after the settings restart")
-            time.sleep(2)
+    # amendment 17c (WAL cap) and the earlier lab's node parity (wal_recycle=off matters to the key-residue proofs: a
+    # recycled WAL segment keeps old bytes on disk; max_connections to the concurrent runs) are on the server's
+    # command line (PG_SETTINGS): checked here, never changed by ALTER SYSTEM and a restart (the tmpfs would empty)
+    got = dict(ln.split("|", 1) for ln in _psql("select name || '|' || current_setting(name) from pg_settings where name in ("
+                                                 + ", ".join(f"'{k}'" for k in PG_SETTINGS) + ");", "postgres").split())
+    if got != PG_SETTINGS:
+        raise SystemExit("postgres settings differ from the command line: "
+                         f"{sorted(set(got.items()) ^ set(PG_SETTINGS.items()))}")
     print("bootstrap ok", json.dumps({k: v for k, v in conf.items()}), "secrets: files only, nothing printed")
 
 
