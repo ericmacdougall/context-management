@@ -271,8 +271,7 @@ class S44_Scope(_S44):
         up retryably (55P03) after its rounds, applies nothing, and the holder is still connected."""
         self.unrevoke("alice")
         self.hold.execute("begin")
-        self.hold.execute("select pg_advisory_xact_lock_shared(%s::int, hashtext(jsonb_build_array('auth', %s::text, 'alice')::text))",
-                          (A_CLS, T))
+        self.hold.execute("select pg_advisory_xact_lock_shared(%s::int, dc._ak(%s::text, 'alice'))", (A_CLS, T))
         r, dt = self.revoke("alice")
         measure("revoke_owner_holder_gives_up", dt)
         self.hold.execute("rollback")
@@ -293,7 +292,9 @@ class S44_Scope(_S44):
                             autocommit=True, application_name="s44-other-db")
         self.addCleanup(self._close, x)
         x.execute("begin")
-        x.execute("select pg_advisory_xact_lock_shared(%s::int, hashtext(jsonb_build_array('auth', %s::text, 'alice')::text))", (A_CLS, T))
+        ak = self.count("select dc._ak(%s, 'alice')", T)      # alice's exact key, taken in the OTHER database (no dc schema there)
+        self.assertIsNotNone(ak)
+        x.execute("select pg_advisory_xact_lock_shared(%s::int, %s::int)", (A_CLS, ak))
         xp = x.info.backend_pid
         cb, bpb, _ = self.holder("bob", "idle_reset")
         ci = self.conn("s44-idle-idp", idp=True)
@@ -369,8 +370,8 @@ class S44_Scope(_S44):
         self.unrevoke("alice")
 
 
-FENCE_A = "select pg_advisory_xact_lock(1145241605, hashtext(jsonb_build_array('auth', %s::text, %s::text)::text))"
-FENCE_T = "select pg_advisory_xact_lock(1145241606, hashtext(jsonb_build_array('tenant', %s::text, null::text)::text))"
+FENCE_A = "select pg_advisory_xact_lock(1145241605, dc._ak(%s::text, %s::text))"        # exact keys (review of 2262eaa F1)
+FENCE_T = "select pg_advisory_xact_lock(1145241606, dc._tk(%s::text))"
 
 
 class _Fence(_S44):

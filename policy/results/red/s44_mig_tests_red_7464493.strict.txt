@@ -1,0 +1,4 @@
+== s44_mig_tests_red_7464493.out
+missing-api  FAIL  test_44_forward_creates_the_evictor_role.test_44_forward_creates_the_evictor_role  | AssertionError: forward failed on a cluster without dc_evictor: 42704 role "dc_evictor" does not exist
+liveness     FAIL  test_44_rollback_gives_the_old_engine_its_advisory_lock.test_44_rollback_gives_the_old_engine_its_advisory_lock  | AssertionError: False is not true
+STRICT {'missing-api': 1, 'liveness': 1} [('Ran 7 tests in 1.678s', 'FAILED (failures=2)')]

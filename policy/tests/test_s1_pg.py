@@ -34,13 +34,15 @@ from tests.test_final_pg import UNAUTH, _Wait
 from tests.test_pg import T
 
 A_CLS, T_CLS, S_CLS, N_CLS = 1145241601, 1145241602, 1145241603, 1145241604
-ADV = "select pg_advisory_xact_lock(%s::int, hashtext(jsonb_build_array(%s::text, %s::text, %s::text)::text))"   # as dc._k
+# the exact keys of A and T (review of 2262eaa F1: the lockid of the principal or tenant row, as dc._ak and dc._tk)
+ADV = {"auth": "select pg_advisory_xact_lock(%s::int, dc._ak(%s::text, %s::text))",
+       "tenant": "select pg_advisory_xact_lock(%s::int, dc._tk(%s::text))"}
 XWAIT = 2.0
 POST = ("principal", "factor", "end", "revoke")
 
 
 def adv(c, cls, kind, a, b=None):
-    c.execute(ADV, (cls, kind, a, b))
+    c.execute(ADV[kind], (cls, a, b) if kind == "auth" else (cls, a))
 
 
 class _S1(_Wait):

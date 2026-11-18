@@ -1,0 +1,245 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), containers emlab2-policyfix2-pg (127.0.0.1:25811) and emlab2-policyfix2-prep (max_prepared_transactions 5, F2a only); home paths shown as ~
+# RED (F1 F2a F2b F3 F5 F8 H1; the H1 mirror is a regression guard and passes): 2262eaa + tests/test_rev2262_pg.py of tree 20da971 (tree red-2262c), batch b2: t -v tests.test_rev2262_pg
+# free 19245268992 bytes at 2026-11-18T18:51:30Z
+# tree red-2262c 2262eaa + tests/test_rev2262_pg.py tests/test_rev2262.py of tree-commit fea99cb (fix worktree) tgz-sha256 7340d743fa060e2ca601e1d7709b5b8f878c1336a6437bf4852eb397104d298b
+# cmd t -v tests.test_rev2262_pg
+test_a_colliding_subject_never_stalls_another_tenant (tests.test_rev2262_pg.F1_CrossTenant.test_a_colliding_subject_never_stalls_another_tenant)
+NEG-4. alice (tenant-a) submits a value about subject sa and keeps her transaction open; tenant-b's v submits about sb, whose ... MEASURE f1_colliding_subject 1.012
+FAIL
+test_a_nonexistent_colliding_target_evicts_nobody (tests.test_rev2262_pg.F1_CrossTenant.test_a_nonexistent_colliding_target_evicts_nobody)
+NEG-1. tenant-a's admin revokes a name that is no principal of tenant-a and whose 2262eaa key equals tenant-b principal v's. ... MEASURE f1_nonexistent_colliding_target 2.122
+FAIL
+test_colliding_principals_never_cross_evict_or_cross_fence (tests.test_rev2262_pg.F1_CrossTenant.test_colliding_principals_never_cross_evict_or_cross_fence)
+NEG-2. Both names exist: t in tenant-a (stalled holder, must be evicted: positive control) and v in tenant-b (stalled holder ... MEASURE f1_colliding_existing_target 2.223
+FAIL
+test_a_prepared_transaction_cannot_hold_authority (tests.test_rev2262_pg.F2a_PreparedTransactions.test_a_prepared_transaction_cannot_hold_authority)
+dc_app: begin; explain as alice; PREPARE TRANSACTION. Red at 2262eaa: the prepared transaction kept A(alice) shared with no ... F2a install_refused=None minted=True call_error=None prepared=True advisory_locks_held_by_prepared=1 revoke={'error': '55P03'}
+FAIL
+test_a_member_login_role_holder_is_evicted (tests.test_rev2262_pg.F2b_MemberRole.test_a_member_login_role_holder_is_evicted)
+NEG-6. A login role that is a member of dc_app (the one-role-per-service pattern) calls explain as alice and keeps its ... MEASURE f2b_member_role_holder 2.013
+FAIL
+test_a_reconnecting_adversary_never_re_takes_the_lock (tests.test_rev2262_pg.F3_FenceBeforeEviction.test_a_reconnecting_adversary_never_re_takes_the_lock)
+Six connections of alice each hold her authority lock 10 s (past XWAIT, so the revoke must evict them) with a SPARE ... MEASURE f3_reconnecting_adversary 2.632
+F3 adversary evicted=6 gated=20 answered_after_first_eviction=[0.012, 0.016, 0.022, 0.027, 0.032, 0.036, 0.04, 0.044, 0.047, 0.051, 0.054, 0.058, 0.061, 0.065, 0.068, 0.072, 0.076, 0.08, 0.084, 0.088, 0.092, 0.096, 0.102, 0.106, 0.11, 0.113, 0.114, 0.119, 0.119, 0.123, 0.123, 0.127, 0.128, 0.131, 0.132, 0.135, 0.138, 0.138, 0.142, 0.142, 0.145, 0.146, 0.149, 0.149, 0.153, 0.153, 0.156, 0.156, 0.16, 0.16, 0.163, 0.164, 0.167, 0.167, 0.17, 0.172, 0.174, 0.176, 0.177, 0.18, 0.18, 0.183, 0.184, 0.187, 0.188, 0.19, 0.192, 0.195, 0.196, 0.199, 0.2, 0.203, 0.205, 0.207, 0.21, 0.211, 0.213, 0.215, 0.216, 0.218, 0.218, 0.222, 0.222, 0.223, 0.226, 0.226, 0.228, 0.23, 0.23, 0.233, 0.234, 0.234, 0.237, 0.238, 0.239, 0.241, 0.242, 0.243, 0.246, 0.246, 0.246, 0.25, 0.25, 0.251, 0.254, 0.255, 0.255, 0.258, 0.258, 0.259, 0.261, 0.262, 0.263, 0.265, 0.265, 0.266, 0.268, 0.27, 0.272, 0.272, 0.273, 0.275, 0.276, 0.277, 0.279, 0.28, 0.281, 0.282, 0.283, 0.285, 0.285, 0.287, 0.288, 0.289, 0.29, 0.292, 0.292, 0.294, 0.296, 0.296, 0.298, 0.3, 0.3, 0.302, 0.304, 0.305, 0.306, 0.308, 0.308, 0.31, 0.312, 0.312, 0.313, 0.313, 0.315, 0.317, 0.317, 0.318, 0.319, 0.321, 0.321, 0.322, 0.323, 0.325, 0.325, 0.327, 0.327, 0.329, 0.329, 0.331, 0.331, 0.332, 0.332, 0.334, 0.336, 0.336, 0.337, 0.337, 0.339, 0.339, 0.34, 0.341, 0.342, 0.344, 0.345, 0.345, 0.347, 0.35, 0.35, 0.352, 0.353, 0.354, 0.355, 0.357, 0.357, 0.359, 0.36, 0.362, 0.362, 0.365, 0.365, 0.366, 0.367, 0.369, 0.369, 0.371, 0.372, 0.372, 0.373, 0.375, 0.376, 0.376, 0.376, 0.381, 0.382, 0.383, 0.383, 0.385, 0.386, 0.387, 0.387, 0.389, 0.39, 0.391, 0.392, 0.392, 0.394, 0.396, 0.396, 0.396, 0.398, 0.399, 0.4, 0.401, 0.402, 0.403, 0.404, 0.404, 0.405, 0.407, 0.407, 0.408, 0.409, 0.41, 0.411, 0.412, 0.412, 0.412, 0.414, 0.415, 0.416, 0.416, 0.419, 0.419, 0.419, 0.419, 0.42, 0.423, 0.423, 0.423, 0.423, 0.423, 0.426, 0.428, 0.428, 0.428, 0.429, 0.43, 0.432, 0.432, 0.432, 0.434, 0.434, 0.435, 0.435, 0.436, 0.437, 0.439, 0.439, 0.439, 0.44, 0.441, 0.442, 0.443, 0.443, 0.444, 0.445, 0.445, 0.446, 0.447, 0.447, 0.449, 0.449, 0.45, 0.451, 0.451, 0.452, 0.453, 0.454, 0.455, 0.456, 0.456, 0.457, 0.457, 0.459, 0.459, 0.46, 0.46, 0.46, 0.463, 0.463, 0.463, 0.464, 0.464, 0.467, 0.467, 0.467, 0.467, 0.468, 0.47, 0.471, 0.472, 0.472, 0.472, 0.474, 0.475, 0.475, 0.476, 0.476, 0.477, 0.479, 0.479, 0.479, 0.48, 0.481, 0.482, 0.483, 0.483, 0.483, 0.485, 0.486, 0.486, 0.486, 0.487, 0.489, 0.489, 0.489, 0.49, 0.491, 0.492, 0.493, 0.493, 0.494, 0.495, 0.496, 0.497, 0.497, 0.497, 0.499, 0.5, 0.5, 0.501, 0.501, 0.503, 0.503, 0.504, 0.504, 0.504, 0.506, 0.507, 0.507, 0.508, 0.508, 0.51, 0.511, 0.511, 0.512, 0.512, 0.512, 0.513, 0.514, 0.515, 0.516, 0.516, 0.517, 0.517, 0.518, 0.519, 0.52, 0.52, 0.521, 0.521, 0.522, 0.523, 0.524, 0.524, 0.525, 0.525, 0.526, 0.527, 0.527, 0.528, 0.529, 0.529, 0.53, 0.531, 0.531, 0.531, 0.532, 0.532, 0.534, 0.534, 0.535, 0.536, 0.536, 0.536, 0.538, 0.538, 0.538, 0.539, 0.54, 0.54, 0.541, 0.542, 0.543, 0.544, 0.544, 0.544, 0.545, 0.546, 0.547, 0.549, 0.55, 0.55, 0.55, 0.55, 0.55, 0.553, 0.553, 0.553, 0.554, 0.554, 0.554, 0.556, 0.557, 0.557, 0.558, 0.558, 0.558, 0.56, 0.561, 0.561, 0.561, 0.562, 0.562, 0.564, 0.564, 0.564, 0.565, 0.565, 0.566, 0.568, 0.568, 0.568, 0.568, 0.569, 0.57, 0.572, 0.572, 0.572, 0.572, 0.572, 0.573, 0.575, 0.575, 0.576, 0.576, 0.577, 0.577, 0.579, 0.579, 0.579, 0.58, 0.58, 0.581, 0.582, 0.583, 0.583, 0.583, 0.584, 0.585, 0.586, 0.586, 0.587, 0.587, 0.587, 0.589, 0.589, 0.59, 0.59, 0.59, 0.591, 0.593, 0.593, 0.593, 0.594, 0.594, 0.594, 0.596, 0.597, 0.597, 0.597, 0.598, 0.598] refused_after=692 dt=2.632
+FAIL
+test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody)
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes, ... MEASURE f5_stalled_submitter_grant_unknown_req 2.120
+
+  test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [grant_unknown_req]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes, ... FAIL
+MEASURE f5_stalled_submitter_grant_unknown_target 0.004
+  test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [grant_unknown_target]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes, ... FAIL
+MEASURE f5_stalled_submitter_grant_revoked_target 0.003
+  test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [grant_revoked_target]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes, ... FAIL
+MEASURE f5_stalled_submitter_revoke_unknown_target 0.005
+  test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [revoke_unknown_target]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes, ... FAIL
+test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock)
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a ... MEASURE f5_owner_t_grant_unknown_req 2.013
+
+  test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [grant_unknown_req]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a ... FAIL
+MEASURE f5_owner_t_grant_unknown_target 2.004
+  test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [grant_unknown_target]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a ... FAIL
+MEASURE f5_owner_t_grant_revoked_target 2.004
+  test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [grant_revoked_target]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a ... FAIL
+MEASURE f5_owner_t_revoke_unknown_target 2.005
+  test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [revoke_unknown_target]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a ... FAIL
+test_install_removes_explicit_advisory_grants (tests.test_rev2262_pg.F8_AdvisoryAcl.test_install_removes_explicit_advisory_grants)
+Explicit EXECUTE on advisory-lock functions to dc_app, and to a role dc_app is a member of, before an install. Red at ... FAIL
+test_rollback_restores_the_recorded_acl (tests.test_rev2262_pg.F8_AdvisoryAcl.test_rollback_restores_the_recorded_acl)
+A pre-R3-7 database whose advisory ACL is NOT PostgreSQL's default (one function granted to a tool role instead of PUBLIC). ... FAIL
+test_a_stalled_applied_revoke_is_still_evicted (tests.test_rev2262_pg.H1_RevocationInProgress.test_a_stalled_applied_revoke_is_still_evicted)
+H1 mirror, regression guard (passes at 2262eaa too): an admin transaction that applied a revoke and stays open holds A(bob) ... MEASURE h1_mirror_stalled_admin 2.123
+ok
+test_end_session_does_not_cancel_a_revoke_in_progress (tests.test_rev2262_pg.H1_RevocationInProgress.test_end_session_does_not_cancel_a_revoke_in_progress)
+H1. The admin's revoke of alice holds A(alice) exclusively and waits for the tenant lock: bob's stalled submit (evicted in its ... H1 revoke {'error': None, 'message': None} end_session True
+FAIL
+
+======================================================================
+FAIL: test_a_colliding_subject_never_stalls_another_tenant (tests.test_rev2262_pg.F1_CrossTenant.test_a_colliding_subject_never_stalls_another_tenant)
+NEG-4. alice (tenant-a) submits a value about subject sa and keeps her transaction open; tenant-b's v submits about sb, whose
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 182, in test_a_colliding_subject_never_stalls_another_tenant
+    self.assertEqual(r.get("code"), "proposed", "%r" % (r,))
+AssertionError: None != 'proposed' : {'error': '55P03', 'message': 'canceling statement due to lock timeout'}
+
+======================================================================
+FAIL: test_a_nonexistent_colliding_target_evicts_nobody (tests.test_rev2262_pg.F1_CrossTenant.test_a_nonexistent_colliding_target_evicts_nobody)
+NEG-1. tenant-a's admin revokes a name that is no principal of tenant-a and whose 2262eaa key equals tenant-b principal v's.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 135, in test_a_nonexistent_colliding_target_evicts_nobody
+    self.assertTrue(self.alive(bp), "a tenant-a revoke of a nonexistent target ended a tenant-b backend")
+AssertionError: False is not true : a tenant-a revoke of a nonexistent target ended a tenant-b backend
+
+======================================================================
+FAIL: test_colliding_principals_never_cross_evict_or_cross_fence (tests.test_rev2262_pg.F1_CrossTenant.test_colliding_principals_never_cross_evict_or_cross_fence)
+NEG-2. Both names exist: t in tenant-a (stalled holder, must be evicted: positive control) and v in tenant-b (stalled holder
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 157, in test_colliding_principals_never_cross_evict_or_cross_fence
+    self.assertTrue(self.alive(vbp), "a tenant-a revoke ended tenant-b's backend through a key collision")
+AssertionError: False is not true : a tenant-a revoke ended tenant-b's backend through a key collision
+
+======================================================================
+FAIL: test_a_prepared_transaction_cannot_hold_authority (tests.test_rev2262_pg.F2a_PreparedTransactions.test_a_prepared_transaction_cannot_hold_authority)
+dc_app: begin; explain as alice; PREPARE TRANSACTION. Red at 2262eaa: the prepared transaction kept A(alice) shared with no
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 525, in test_a_prepared_transaction_cannot_hold_authority
+    self.assertEqual(held, 0, "a prepared transaction holds a call's advisory locks (its principal cannot be revoked): revoke %r"
+AssertionError: 1 != 0 : a prepared transaction holds a call's advisory locks (its principal cannot be revoked): revoke {'error': '55P03'}
+
+======================================================================
+FAIL: test_a_member_login_role_holder_is_evicted (tests.test_rev2262_pg.F2b_MemberRole.test_a_member_login_role_holder_is_evicted)
+NEG-6. A login role that is a member of dc_app (the one-role-per-service pattern) calls explain as alice and keeps its
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 262, in test_a_member_login_role_holder_is_evicted
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'authority lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_a_reconnecting_adversary_never_re_takes_the_lock (tests.test_rev2262_pg.F3_FenceBeforeEviction.test_a_reconnecting_adversary_never_re_takes_the_lock)
+Six connections of alice each hold her authority lock 10 s (past XWAIT, so the revoke must evict them) with a SPARE
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 377, in test_a_reconnecting_adversary_never_re_takes_the_lock
+    self.assertEqual(late, [], "an adversary re-took alice's authority lock and answered after the first eviction")
+AssertionError: Lists differ: [0.012, 0.016, 0.022, 0.027, 0.032, 0.036,[3487 chars].598] != []
+
+First list contains 514 additional elements.
+First extra element 0:
+0.012
+
+Diff is 5081 characters long. Set self.maxDiff to None to see it. : an adversary re-took alice's authority lock and answered after the first eviction
+
+======================================================================
+FAIL: test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [grant_unknown_req]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 226, in test_refused_changes_evict_nobody
+    self.assertTrue(self.alive(bp), "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+AssertionError: False is not true : a refused grant_unknown_req evicted bob's in-flight submit: {'id': 'admin/g4b912b', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [grant_unknown_target]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 226, in test_refused_changes_evict_nobody
+    self.assertTrue(self.alive(bp), "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+AssertionError: False is not true : a refused grant_unknown_target evicted bob's in-flight submit: {'id': 'admin/gd7f345', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [grant_revoked_target]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 226, in test_refused_changes_evict_nobody
+    self.assertTrue(self.alive(bp), "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+AssertionError: False is not true : a refused grant_revoked_target evicted bob's in-flight submit: {'id': 'admin/ge5cc21', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_changes_evict_nobody (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_evict_nobody) [revoke_unknown_target]
+NEG-3b. bob's submit holds T shared AND the tenant's chain head row (L7) in an open transaction. The same refused changes,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 226, in test_refused_changes_evict_nobody
+    self.assertTrue(self.alive(bp), "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+AssertionError: False is not true : a refused revoke_unknown_target evicted bob's in-flight submit: {'id': 'admin/gddf4a3', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [grant_unknown_req]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 209, in test_refused_changes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), "bad_event", "%r" % (r,))
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [grant_unknown_target]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 209, in test_refused_changes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), "bad_event", "%r" % (r,))
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [grant_revoked_target]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 209, in test_refused_changes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), "bad_event", "%r" % (r,))
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_changes_never_wait_for_the_tenant_lock (tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock) [revoke_unknown_target]
+NEG-3a. An owner connection holds the tenant lock T shared (never evicted, and it holds no chain head). A grant to a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 209, in test_refused_changes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), "bad_event", "%r" % (r,))
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_install_removes_explicit_advisory_grants (tests.test_rev2262_pg.F8_AdvisoryAcl.test_install_removes_explicit_advisory_grants)
+Explicit EXECUTE on advisory-lock functions to dc_app, and to a role dc_app is a member of, before an install. Red at
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 416, in test_install_removes_explicit_advisory_grants
+    self.assertEqual(can, [], "a login role of the API can still execute advisory-lock functions after install")
+AssertionError: Lists differ: ['pg_advisory_lock_shared(integer,integer)[39 chars]er)'] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+'pg_advisory_lock_shared(integer,integer)'
+
++ []
+- ['pg_advisory_lock_shared(integer,integer)',
+-  'pg_advisory_xact_lock(integer,integer)'] : a login role of the API can still execute advisory-lock functions after install
+
+======================================================================
+FAIL: test_rollback_restores_the_recorded_acl (tests.test_rev2262_pg.F8_AdvisoryAcl.test_rollback_restores_the_recorded_acl)
+A pre-R3-7 database whose advisory ACL is NOT PostgreSQL's default (one function granted to a tool role instead of PUBLIC).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 446, in test_rollback_restores_the_recorded_acl
+    self.assertEqual(self._acl(), before, "rollback did not restore the advisory ACL recorded before forward")
+AssertionError: Lists differ: [('pg[21 chars])', 'dc_owner', False), ('pg_advisory_lock(big[2488 chars]lse)] != [('pg[21 chars])', 'public', False), ('pg_advisory_lock(integ[1159 chars]lse)]
+
+First differing element 0:
+('pg_advisory_lock(bigint)', 'dc_owner', False)
+('pg_advisory_lock(bigint)', 'public', False)
+
+First list contains 22 additional elements.
+First extra element 21:
+('pg_advisory_xact_lock(integer,integer)', 'public', False)
+
+Diff is 2754 characters long. Set self.maxDiff to None to see it. : rollback did not restore the advisory ACL recorded before forward
+
+======================================================================
+FAIL: test_end_session_does_not_cancel_a_revoke_in_progress (tests.test_rev2262_pg.H1_RevocationInProgress.test_end_session_does_not_cancel_a_revoke_in_progress)
+H1. The admin's revoke of alice holds A(alice) exclusively and waits for the tenant lock: bob's stalled submit (evicted in its
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262c/policy/tests/test_rev2262_pg.py", line 290, in test_end_session_does_not_cancel_a_revoke_in_progress
+    self.assertTrue(self.alive(rp), "end_session evicted the revocation in progress")
+AssertionError: False is not true : end_session evicted the revocation in progress
+
+----------------------------------------------------------------------
+Ran 12 tests in 34.530s
+
+FAILED (failures=17)
+# rc 1 seconds 35 free-after 19281895424 pg-volume 114062577

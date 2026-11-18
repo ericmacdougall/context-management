@@ -1,0 +1,3 @@
+== s44_ctl_sharelock_7464493.out
+liveness     FAIL  test_a_queued_revoker_is_not_evicted.test_a_queued_revoker_is_not_evicted  | AssertionError: False is not true : the queued revoker was evicted: {'r': {'id': 'admin/rv48b29d', 'code': 'revoked', 'original': None, 'value_ref': None}, 't': 1794990831.6957688}
+STRICT {'liveness': 1} [('Ran 1 test in 2.655s', 'FAILED (failures=1)')]

@@ -403,6 +403,8 @@ class DecisionService:
             p = self._enf.principal_of(session)
         except PolicyDenied:
             return None
+        if self._enf._revocations._is_revoked(p.id):           # review of 2262eaa H2: a revoked principal reads nothing (as dc.explain)
+            return None
         eng = self._engines.get(session.tenant)
         if eng is None or not isinstance(req, str) or not eng._participant(p.id, req):
             return None
@@ -438,16 +440,21 @@ class DecisionService:
         return out if self._still(session, p.id) else None      # final review P1: judged again after the engine-lock waits
 
     def _still(self, session, pid: str) -> bool:
-        """The read calls' final judgment: the session still names the same current principal (the entry judgment of a read)."""
+        """The read calls' final judgment: the session still names the same current principal, and that principal is not revoked (the
+        entry judgment of a read; review of 2262eaa H2: the revocation source was not consulted, so a revoked principal kept reading)."""
         try:
-            return self._enf.principal_of(session).id == pid
+            if self._enf.principal_of(session).id != pid:
+                return False
         except PolicyDenied:
             return False
+        return not self._enf._revocations._is_revoked(pid)
 
     def table(self, session) -> List[dict]:
         try:
             p = self._enf.principal_of(session)
         except PolicyDenied:
+            return []
+        if self._enf._revocations._is_revoked(p.id):           # H2
             return []
         eng = self._engines.get(session.tenant)
         if eng is None:

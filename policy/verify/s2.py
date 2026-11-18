@@ -39,8 +39,9 @@ PASS needs, for EVERY seed:
     ctl_identity_from_body  at least one other_principal or look_alike proof accepted with a stamped principal different from the
                             factor's (a session as someone the factor does not belong to).
     ctl_origin_from_body    the body naming actor "user" from a non-human was applied with event actor "user".
-    ctl_txn_clock           (the d05d731 transaction-start clock) an expired_in_txn proof accepted, or an expired_in_txn token that
-                            reads the seeded proposal.
+    ctl_txn_clock           (the d05d731 transaction-start proof clock) an expired_in_txn proof accepted, or an expired_in_txn token
+                            that reads the seeded proposal (the arm writes proof rows only, so since the review of 2262eaa F7 the
+                            token clause matches nothing it writes; token expiry in a transaction is tested in tests/test_delta1_pg.py).
 
 Evidence identity (GoodQA #16096 class B, verify/evidence.py), checked before anything above: every row of EVERY arm has an identity
 (arm, seed, kind, then role and what for mint, cls and trial for proof, round for replay_concurrent, cls and call for token, principal,

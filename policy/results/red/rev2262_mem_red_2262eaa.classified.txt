@@ -1,0 +1,6 @@
+FAIL  test_core_revoke_ends_reads.test_core_revoke_ends_reads  | AssertionError: Tuples differ: ({'req': 'r1', 'version': 0, 'status': 'un[348 chars][]}]) != (None, [])
+FAIL  test_policy_revocation_ends_reads.test_policy_revocation_ends_reads  | AssertionError: Tuples differ: ({'req': 'r1', 'version': 0, 'status': 'un[348 chars][]}]) != (None, [])
+FAIL  test_revocation_during_the_wait.test_revocation_during_the_wait [explain] | AssertionError: {'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []} is not false : {'r': {'req': 'r1', 'version': 0, 'status': 'unset', 'value
+FAIL  test_revocation_during_the_wait.test_revocation_during_the_wait [table] | AssertionError: [{'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []}, {'req': 'r2', 'version': 0, 'status': 'unset', 'value': None, 'value_by'
+TOTALS {('FAIL', 'AssertionError'): 4} [('Ran 3 tests in 0.607s', 'FAILED (failures=4)')]
+VACUOUS/LIVENESS-CONTROL entries: 0

@@ -1,0 +1,4 @@
+== s44_ctl_refused_088ab4c.out
+liveness     FAIL  test_a_refused_revoker_evicts_nobody.test_a_refused_revoker_evicts_nobody (mutation='factor') | AssertionError: False is not true : a refused revoker evicted the holder
+liveness     FAIL  test_a_refused_revoker_evicts_nobody.test_a_refused_revoker_evicts_nobody (mutation='principal') | AssertionError: False is not true : a refused revoker evicted the holder
+STRICT {'liveness': 2} [('Ran 1 test in 6.102s', 'FAILED (failures=2)')]

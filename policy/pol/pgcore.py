@@ -107,8 +107,9 @@ def install(port: int, super_passfile: str, app_password_file: str, tenants, idp
                 if c.execute("select 1 from pg_roles where rolname=%s", (r,)).fetchone() is None:
                     c.execute(sql.SQL("create role {} " + ("login" if login else "nologin")).format(sql.Identifier(r)))
             # FINAL-JUDGMENT.md 4.4: dc_evictor owns dc._evict only; pg_signal_backend lets it end non-superuser backends. ASSUMPTION
-            # (the policy owner's choice, not the user's): this privilege, scoped by dc._evict to dc_app and dc_idp backends of this
-            # database that hold or wait for the lock a revocation needs.
+            # (the policy owner's choice, not the user's): this privilege, scoped by dc._evict to the backends of this database that
+            # are neither superusers nor members of dc_owner and stall the lock a revocation needs (review of 2262eaa F2b: a login
+            # role that is a member of dc_app or dc_idp is covered; roles are not matched by name).
             c.execute("grant pg_signal_backend to dc_evictor")
             for r, pw in pws.items():
                 c.execute(sql.SQL("alter role {} with login password {}").format(sql.Identifier(r), sql.Literal(_scram_verifier(pw))))

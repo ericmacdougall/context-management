@@ -1,0 +1,21 @@
+== rerun_final_pg_red_a2d65fd.out
+vacuous      FAIL  test_explain.test_explain (table='factors') | AssertionError: False is not true : vacuous: explain did not wait for dc.factors
+safety       FAIL  test_explain.test_explain (table='principal') | AssertionError: {'req': 'r1', 'head': {'last': None, 'status': 'unset', 'version': 0, 'value_by': None, 'contested': None, 'value_ref': None, 'value_event': None, 'value_label': None, 'value_version':
+vacuous      FAIL  test_submit.test_submit (table='factors') | AssertionError: False is not true : vacuous: submit did not wait for dc.factors
+safety       FAIL  test_erase_decision_changes_during_wait.test_erase_decision_changes_during_wait (mutation='hold_recorded') | AssertionError: Tuples differ: ({'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}, (0, 0)) != ({'erased': 1, 'queued': 1, 'denied': 0, 'result': 'incomplete'}, (1, 0))
+safety       FAIL  test_erase_decision_changes_during_wait.test_erase_decision_changes_during_wait (mutation='erase_grant_withdrawn') | AssertionError: Tuples differ: ({'erased': 2, 'queued': 0, 'denied': 0, 'result': 'erased'}, (0, 0)) != ({'erased': 0, 'queued': 0, 'denied': 2, 'result': 'incomplete'}, (1, 1))
+safety       FAIL  test_erase_subject.test_erase_subject (mutation='policy_revoked') | AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+safety       FAIL  test_erase_subject.test_erase_subject (mutation='removed') | AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+safety       FAIL  test_erase_subject.test_erase_subject (mutation='session_ended') | AssertionError: Tuples differ: (None, 0) != ('unauthorized', 1)
+safety       FAIL  test_submit.test_submit (mutation='policy_revoked') | AssertionError: 'proposed' != 'principal_revoked'
+safety       FAIL  test_submit.test_submit (mutation='removed') | AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+safety       FAIL  test_submit.test_submit (mutation='session_ended') | AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+safety       FAIL  test_a_revoked_factor_ends_its_sessions_on_every_call.test_a_revoked_factor_ends_its_sessions_on_every_call [submit] | AssertionError: True is not false : submit accepted a session of a revoked factor
+safety       FAIL  test_a_revoked_factor_ends_its_sessions_on_every_call.test_a_revoked_factor_ends_its_sessions_on_every_call [explain] | AssertionError: True is not false : explain accepted a session of a revoked factor
+safety       FAIL  test_a_revoked_factor_ends_its_sessions_on_every_call.test_a_revoked_factor_ends_its_sessions_on_every_call [read_table] | AssertionError: True is not false : read_table accepted a session of a revoked factor
+safety       FAIL  test_a_revoked_factor_ends_its_sessions_on_every_call.test_a_revoked_factor_ends_its_sessions_on_every_call [erase_candidates] | AssertionError: True is not false : erase_candidates accepted a session of a revoked factor
+safety       FAIL  test_a_revoked_factor_ends_its_sessions_on_every_call.test_a_revoked_factor_ends_its_sessions_on_every_call [erase_values] | AssertionError: True is not false : erase_values accepted a session of a revoked factor
+safety       FAIL  test_end_session_refuses_other_isolation_levels.test_end_session_refuses_other_isolation_levels (level='read uncommitted') | AssertionError: True != 'refused:end_session refused: isolation' : read uncommitted: end_session answered True (token live: True)
+safety       FAIL  test_end_session_refuses_other_isolation_levels.test_end_session_refuses_other_isolation_levels (level='repeatable read') | AssertionError: False != 'refused:end_session refused: isolation' : repeatable read: end_session answered False (token live: True)
+safety       FAIL  test_end_session_refuses_other_isolation_levels.test_end_session_refuses_other_isolation_levels (level='serializable') | AssertionError: False != 'refused:end_session refused: isolation' : serializable: end_session answered False (token live: True)
+STRICT {'vacuous': 2, 'safety': 17} [('Ran 12 tests in 15.903s', 'FAILED (failures=19)')]

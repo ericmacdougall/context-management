@@ -30,8 +30,10 @@ Controls, per seed, each on its own install (each must CATCH, i.e. show the atta
                           look-alike principal opens a session as that principal.
   ctl_origin_from_body    variant (the e15241c submit plus body keys actor and trust_origin accepted, origin not stamped): a non-human
                           body naming actor "user" writes an event with actor "user".
-  ctl_txn_clock           variant with d05d731's clock (now(), fixed at transaction start) and no isolation guard: a proof that
-                          expires inside a transaction begun while it was valid opens a session.
+  ctl_txn_clock           variant with d05d731's proof clock (now(), fixed at transaction start) and no open_session isolation
+                          guard: a proof that expires inside a transaction begun while it was valid opens a session. PROOF expiry
+                          only (review of 2262eaa F7): a TOKEN that expires inside a transaction has no control here (it is tested
+                          by tests/test_delta1_pg.py M1_WallClock, red at d05d731).
 Rows carry factor ids and outcomes only: no key, proof, MAC or token is written. Each proof trial and concurrent round also carries
 its index and nonce_sha256, the first 16 hex digits of sha256 of the nonce drawn for it (final review P2: verify/s2.py counts DISTINCT
 trials; the nonce is the presentation's identity, already stored in clear in dc.used_proofs, and is not a credential).
@@ -99,8 +101,10 @@ VARIANTS = {
     "ctl_origin_from_body": [(ID_KEYS, "  if p_body ?| array['tenant', 'principal', 'channel', 'id'] then\n"), (ORIGIN_STAMP, ";\n"),
                              (BODY_KEYS, "                                  'choose','target','role','actor','trust_origin'];\n")],
     # final review P4: the separate expiry re-check after the ledger insert is gone; dc._judge_proof (TIME_CHECK) runs again instead
-    "ctl_txn_clock": [(TIME_CHECK, TIME_CHECK_OLD), (OPEN_ISOLATION, ""), (SESSION_ISOLATION, ""),
-                      (SESSION_CLOCK, SESSION_CLOCK.replace("clock_timestamp()", "now()"))],
+    # review of 2262eaa F7: the arm runs only expired_in_txn PROOF trials, so the session-side patches (SESSION_ISOLATION, and
+    # SESSION_CLOCK, one of the token's four expiry checks) changed nothing it measured and were removed. Token expiry inside a
+    # transaction has no control in this experiment; tests/test_delta1_pg.py M1_WallClock covers it (red at d05d731).
+    "ctl_txn_clock": [(TIME_CHECK, TIME_CHECK_OLD), (OPEN_ISOLATION, "")],
 }
 
 
