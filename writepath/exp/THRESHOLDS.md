@@ -1118,3 +1118,19 @@ Changes (no threshold changes): the control records its CAS refusals as findings
 writes through any existing -w alias without a CAS of its own); the control is judged exactly as H6 states, on
 acceptance of at least one C1 or C4 request, not also on its setup. One more shake-down runs before the stamped run;
 the stamped run is at the commit that carries this amendment or later, and its result names that commit.
+
+## Amendment GF1 (2026-11-18, the user's ruling on t2-dev disk; fix/writepath-gate; governs runs started from a commit after this one)
+Source: the user's answer `answer:73716864-6b3b-4deb-94ef-8ed2c8432e4a/3335a07a-728a-4abf-99c2-6e0229b92d77`
+("Lower floor to 10 GB (Recommended)"), relayed by main: a lab run on t2-dev starts with at least 10 GB free by df
+and stops itself at 8 GB.
+- **Start line.** Amendment 24's 20 GB start line becomes 10 GB host free (exp.disk_gate START_GB, measured inside
+  the locked admission).
+- **Stop line.** A run stops itself when host free falls under 8 GB during the run: the gate stops the experiment and
+  the run is VOID; a run whose end measurement is under 8 GB is VOID too.
+- **Why the lower line is safe for the stores.** Amendment 24 sized the start line against the ES node's disk
+  watermarks on the shared volume. Since gate v4 (GATE-DESIGN 5 and 6) each store's data directory is a private
+  tmpfs, so host free space no longer reaches the ES watermarks; the host line now protects the host and the run's
+  own files only (the 2 GB own-usage cap is unchanged).
+- **Unchanged.** Every VOID rule of amendments 17c, 23, 23a and 24a; the 2 GB cap. Experiments that carry their own
+  disk stop (exp.erasure_cost and exp.scale_1m at 20 GB, exp.size_probe's 15 GB floor) are not changed by this
+  amendment: they are experiment thresholds, not the gate's.
