@@ -1163,3 +1163,29 @@ and watcher (amendment 17c) for the runs named below.
   scripts. They belong to the stamped-run gate (fix/writepath-gate, under independent review); its owner applies this
   rule there. No stamped run is made under this amendment.
 - Unchanged: the run lock, the 2 GB own-usage cap and every VOID rule.
+
+## Amendment H6e (2026-11-18, review J M7; written before the code it governs exists or runs; owner a5bed869)
+Source: main's relay of review J (writepath-review-f36766c.md, M7). Additions to H6; nothing above is rewritten and
+no existing threshold changes. Governs the next unstamped live-chain run (H6c, H6d) and every later H6 run.
+C9 extended: uid 20001 also opens, under /operator/secrets, es_api_key.projector.json, es_api_key.eraser.json,
+  es_api_key.verifier.json and seal_key -> each EACCES (an existence witness is required as for the other C9 files).
+C14 request shapes, fenced arm, with A's writer key for epoch E, before C5 unless stated:
+  C14a mixed bulk     one POST _bulk (require_alias) with a create through A's -w<E> and a create through B's
+                      -w<eb>                                                     -> B's item refused (not 2xx);
+                      A's item must be accepted, else C14a is INVALID-REQUEST (the refusal would be vacuous)
+  C14b reindex        POST _reindex, source B's read alias, dest A's -w<E> (op_type create)
+                                                                                 -> refused, or 0 documents created
+  C14c no require_alias  after C5's CAS: h1's key writes through the now-stale name -w<E> WITHOUT require_alias,
+                      5 times (an accepted write would auto-create an index of that name)
+                                                                                 -> 0 accepted
+  C14d mapping        PUT _mapping through B's -w<eb>                            -> refused;
+                      PUT _mapping through A's own -w<E> (a new keyword field)   -> REPORTED, not judged: expected
+                      accepted (the index privilege includes mapping updates); a stated limit, tenant-local only
+The control arm runs C14a, C14b and C14d with the projector role key and REPORTS them (findings of the role-key
+build); it is judged on C1 or C4 acceptance exactly as H6 and H6a state.
+Verdict rule extended: in the fenced arm C14a, C14b, C14c and C14d's B request hold in R/R runs together with C1 to C11
+and C13; any C14 INVALID-REQUEST makes the verdict "not demonstrated" for that case, as H6 states.
+Stated with the result (limits, not cases): the default role-key mode (WP_BROKER unset) has NO tenant isolation: the
+projector role key holds manage and create_index on every tenant's base, read, write and erase names, so it can
+re-point any tenant's alias (the control arm's reason). Only broker-minted keys are tenant- and epoch-scoped. A client
+deployment in broker mode must not mint or place the role keys (es_api_key.<role>.json) where the application runs.
