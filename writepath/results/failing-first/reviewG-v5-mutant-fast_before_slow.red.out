@@ -1,0 +1,32 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T09:44:57Z
+# tree: writepath at 18da8c8 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v5-mutant-fast_before_slow.py sha256 bdbb5cfc9d50326b5f145cd66e2caac8caf9330412c8016a6d72905e29b3540b, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 59be819:
+# diff: 1166,1168d1165
+# diff: <         for key in ("es", "pg"):
+# diff: <             slow[key], w = _slow(key, run["obs"][key]["id"])
+# diff: <             why += w
+# diff: 1185a1183,1185
+# diff: >                 for key in ("es", "pg"):
+# diff: >                     slow[key], w = _slow(key, run["obs"][key]["id"])
+# diff: >                     why += w
+# test file: tests/test_disk_gate.py from HEAD 59be819 blob f851d2293fbc107dd28d8205bd1ecd16fcaa221a
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v5-mutant-fast_before_slow.py python3 -m unittest -v tests.test_disk_gate.Gate.test_mutant_oom_kill_during_the_slow_end_probes_voids)
+test_mutant_oom_kill_during_the_slow_end_probes_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_mutant_oom_kill_during_the_slow_end_probes_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.ERAw22B5aW/writepath/tests/test_disk_gate.py", line 1801, in test_mutant_oom_kill_during_the_slow_end_probes_voids
+    self.assertVoid(*self.call("end"), "OOM")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.ERAw22B5aW/writepath/tests/test_disk_gate.py", line 842, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: oup on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 1 test in 6.106s
+
+FAILED (failures=1)
+# exit status: 1

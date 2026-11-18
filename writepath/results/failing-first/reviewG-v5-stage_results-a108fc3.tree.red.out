@@ -1,0 +1,93 @@
+# failing-first receipt
+# date: 2026-11-18T08:59:15Z
+# file under test: a108fc3:writepath/runkit/stage_results.py blob e7a906eb36edcc5849363c004aa589a9a25eace9 sha256 d41d240ee708e60bc93724e47938c163db6b4a43b454de39b6a152b571065c1a
+# tree: writepath at a108fc3 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_stage_results.py from HEAD 53920bf blob aa1140816a969ee5fd9cedc21aa7d9dd013f5943
+# command: (cd <tree>/writepath && STAGE_RESULTS_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_stage_results
+test_edited_ledger_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_file_changed_after_the_run_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_file_listed_by_a_valid_end_record_is_staged (tests.test_stage_results.Stage) ... FAIL
+test_file_of_a_void_run_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_file_the_gate_did_not_list_is_refused (tests.test_stage_results.Stage) ... FAIL
+
+======================================================================
+FAIL: test_edited_ledger_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 97, in test_edited_ledger_is_refused
+    self.assertRefused(*self.stage(self.ledger(verdict="VOID", edit=True)), "the ledger copy was edited")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 82, in assertRefused
+    self.assertIn("refused", out, f"not refused for the reason under test ({why}): {out[-300:]}")
+AssertionError: 'refused' not found in 'Traceback (most recent call last):\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>\n    main(*sys.argv[1:5])\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main\n    raw = (src[r["source"]] / r["file"]).read_bytes()\nKeyError: \'source\'\n' : not refused for the reason under test (the ledger copy was edited): gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>
+    main(*sys.argv[1:5])
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main
+    raw = (src[r["source"]] / r["file"]).read_bytes()
+KeyError: 'source'
+
+
+======================================================================
+FAIL: test_file_changed_after_the_run_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 94, in test_file_changed_after_the_run_is_refused
+    self.assertRefused(*self.stage(self.ledger()), "the file changed after the gate hashed it")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 82, in assertRefused
+    self.assertIn("refused", out, f"not refused for the reason under test ({why}): {out[-300:]}")
+AssertionError: 'refused' not found in 'Traceback (most recent call last):\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>\n    main(*sys.argv[1:5])\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main\n    raw = (src[r["source"]] / r["file"]).read_bytes()\nKeyError: \'source\'\n' : not refused for the reason under test (the file changed after the gate hashed it): gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>
+    main(*sys.argv[1:5])
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main
+    raw = (src[r["source"]] / r["file"]).read_bytes()
+KeyError: 'source'
+
+
+======================================================================
+FAIL: test_file_listed_by_a_valid_end_record_is_staged (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 73, in test_file_listed_by_a_valid_end_record_is_staged
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>
+    main(*sys.argv[1:5])
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main
+    raw = (src[r["source"]] / r["file"]).read_bytes()
+KeyError: 'source'
+
+
+======================================================================
+FAIL: test_file_of_a_void_run_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 90, in test_file_of_a_void_run_is_refused
+    self.assertRefused(*self.stage(self.ledger(verdict="VOID")), "the run is VOID")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 82, in assertRefused
+    self.assertIn("refused", out, f"not refused for the reason under test ({why}): {out[-300:]}")
+AssertionError: 'refused' not found in 'Traceback (most recent call last):\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>\n    main(*sys.argv[1:5])\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main\n    raw = (src[r["source"]] / r["file"]).read_bytes()\nKeyError: \'source\'\n' : not refused for the reason under test (the run is VOID): gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>
+    main(*sys.argv[1:5])
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main
+    raw = (src[r["source"]] / r["file"]).read_bytes()
+KeyError: 'source'
+
+
+======================================================================
+FAIL: test_file_the_gate_did_not_list_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 86, in test_file_the_gate_did_not_list_is_refused
+    self.assertRefused(*self.stage(self.ledger(files=[f for f in self.files if f["name"] == "experiment.out"])),
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/tests/test_stage_results.py", line 82, in assertRefused
+    self.assertIn("refused", out, f"not refused for the reason under test ({why}): {out[-300:]}")
+AssertionError: 'refused' not found in 'Traceback (most recent call last):\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>\n    main(*sys.argv[1:5])\n  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main\n    raw = (src[r["source"]] / r["file"]).read_bytes()\nKeyError: \'source\'\n' : not refused for the reason under test (the end record does not list the file): gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 39, in <module>
+    main(*sys.argv[1:5])
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.O4354H2iMj/writepath/runkit/stage_results.py", line 25, in main
+    raw = (src[r["source"]] / r["file"]).read_bytes()
+KeyError: 'source'
+
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.457s
+
+FAILED (failures=5)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_stage_results tests/test_stage_results.py 464e72997d1b5312
+# exit status: 1

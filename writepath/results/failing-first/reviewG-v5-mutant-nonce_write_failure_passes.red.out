@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T09:45:09Z
+# tree: writepath at 18da8c8 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v5-mutant-nonce_write_failure_passes.py sha256 028cd6d0fb86b0042c3f471a45b5497c3d12243be66d9eee1c0fc4c9e28b8abe, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 59be819:
+# diff: 618c618
+# diff: <         return ["the nonce could not be written into the PG container's data directory"]
+# diff: ---
+# diff: >         return []
+# test file: tests/test_disk_gate.py from HEAD 59be819 blob f851d2293fbc107dd28d8205bd1ecd16fcaa221a
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v5-mutant-nonce_write_failure_passes.py python3 -m unittest -v tests.test_disk_gate.Gate.test_mutant_nonce_write_failure_blocks)
+test_mutant_nonce_write_failure_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_mutant_nonce_write_failure_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.dLd2CKGgVj/writepath/tests/test_disk_gate.py", line 1809, in test_mutant_nonce_write_failure_blocks
+    self.assertBlocked(*self.call("start"), "nonce could not be written")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.dLd2CKGgVj/writepath/tests/test_disk_gate.py", line 837, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run r-c81d0e57bf6638515eb14078522d6ce4
+
+----------------------------------------------------------------------
+Ran 1 test in 3.686s
+
+FAILED (failures=1)
+# exit status: 1
