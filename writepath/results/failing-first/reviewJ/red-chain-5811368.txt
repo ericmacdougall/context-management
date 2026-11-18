@@ -1,0 +1,43 @@
+# tree e087433; live_chain.sh from: ~/emlab2-16096/wphard/wp/src-5811368.retired/results/failing-first/harness/live_chain.sh (- = same tree); run 2026-11-18T21:20:10Z
+# python -m unittest -v tests.test_live_chain_disk tests.test_stopsig  (WP_HOME unset)
+test_dr1_starts_at_12_gb (tests.test_live_chain_disk.ChainDisk.test_dr1_starts_at_12_gb) ... ok
+test_dr2_refuses_at_9_gb (tests.test_live_chain_disk.ChainDisk.test_dr2_refuses_at_9_gb) ... ok
+test_dr2b_exact_boundary (tests.test_live_chain_disk.ChainDisk.test_dr2b_exact_boundary) ... ok
+test_dr3_stops_at_8_gb_during_a_step (tests.test_live_chain_disk.ChainDisk.test_dr3_stops_at_8_gb_during_a_step) ... ok
+test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk.test_dr5_grouped_step_runs_nothing_after_the_stop) ... FAIL
+test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk.test_dr6_watermark_line_voids_the_step) ... FAIL
+test_dr4_recreated_node_watermarks (tests.test_live_chain_disk.NodeWatermarks.test_dr4_recreated_node_watermarks) ... ok
+test_sg1_term_runs_finally (tests.test_stopsig.StopSignal.test_sg1_term_runs_finally) ... ok
+test_sg2_second_term_does_not_interrupt_cleanup (tests.test_stopsig.StopSignal.test_sg2_second_term_does_not_interrupt_cleanup) ... ok
+test_sg3_orchestrators_install_it (tests.test_stopsig.StopSignal.test_sg3_orchestrators_install_it) ... ok
+
+======================================================================
+FAIL: test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk.test_dr5_grouped_step_runs_nothing_after_the_stop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/red-chain-5811368.GCpa/tests/test_live_chain_disk.py", line 110, in test_dr5_grouped_step_runs_nothing_after_the_stop
+    self.assertLess(took, 40, out)
+AssertionError: 75.24751615524292 not less than 40 : lock taken 2026-11-18T21:20:55Z head new seal0 seal0 h0 h0 free_kib 12582912
+D6 exit=0 
+  D6 seconds=76
+STOPPED during D6: below stop line: 7340032 KiB at 2026-11-18T21:21:10Z
+lock released 2026-11-18T21:22:11Z
+
+
+======================================================================
+FAIL: test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk.test_dr6_watermark_line_voids_the_step)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/red-chain-5811368.GCpa/tests/test_live_chain_disk.py", line 122, in test_dr6_watermark_line_voids_the_step
+    self.assertEqual(rc, 7, out)
+AssertionError: 0 != 7 : lock taken 2026-11-18T21:22:11Z head new seal0 seal0 h0 h0 free_kib 12582912
+G1 exit=0 
+  G1 seconds=60
+free_kib_end 12582912 chain done 2026-11-18T21:23:11Z
+lock released 2026-11-18T21:23:11Z
+
+
+----------------------------------------------------------------------
+Ran 10 tests in 182.796s
+
+FAILED (failures=2)

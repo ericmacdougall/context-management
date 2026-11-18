@@ -1,0 +1,6 @@
+# offline modules from a working-tree copy (m2-wip2), run 2026-11-18T21:27:32Z: python -m unittest tests.test_sealer tests.test_es_keys_output tests.test_broker tests.test_stopsig tests.test_ident
+................................................................................................................
+----------------------------------------------------------------------
+Ran 112 tests in 43.307s
+
+OK

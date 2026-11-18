@@ -149,19 +149,15 @@ class Client:
     def __init__(self, path=None):
         self.path = path or os.environ["WP_BROKER"]
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.settimeout(keysvc.CLIENT_TIMEOUT_S)      # review J M11: a socket.timeout (OSError) ends the call
         self.sock.connect(self.path)
         self.f = self.sock.makefile("rwb")
 
     def close(self):
-        try:
-            self.f.close()
-        finally:
-            self.sock.close()
+        keysvc.close_quietly(self.f, self.sock)
 
     def _req(self, op, **a):
-        self.f.write((json.dumps({"op": op, "args": a}) + "\n").encode())
-        self.f.flush()
-        line = self.f.readline()
+        line = keysvc.exchange(self.f, (json.dumps({"op": op, "args": a}) + "\n").encode())
         if not line:
             raise keysvc.ServiceError("broker closed the connection")
         rep = json.loads(line)

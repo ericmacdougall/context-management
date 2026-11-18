@@ -1,0 +1,17 @@
+# tree e087433; live_chain.sh from: - (- = same tree); run 2026-11-18T21:18:37Z
+# python -m unittest -v tests.test_live_chain_disk tests.test_stopsig  (WP_HOME unset)
+test_dr1_starts_at_12_gb (tests.test_live_chain_disk.ChainDisk.test_dr1_starts_at_12_gb) ... ok
+test_dr2_refuses_at_9_gb (tests.test_live_chain_disk.ChainDisk.test_dr2_refuses_at_9_gb) ... ok
+test_dr2b_exact_boundary (tests.test_live_chain_disk.ChainDisk.test_dr2b_exact_boundary) ... ok
+test_dr3_stops_at_8_gb_during_a_step (tests.test_live_chain_disk.ChainDisk.test_dr3_stops_at_8_gb_during_a_step) ... ok
+test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk.test_dr5_grouped_step_runs_nothing_after_the_stop) ... ok
+test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk.test_dr6_watermark_line_voids_the_step) ... ok
+test_dr4_recreated_node_watermarks (tests.test_live_chain_disk.NodeWatermarks.test_dr4_recreated_node_watermarks) ... ok
+test_sg1_term_runs_finally (tests.test_stopsig.StopSignal.test_sg1_term_runs_finally) ... ok
+test_sg2_second_term_does_not_interrupt_cleanup (tests.test_stopsig.StopSignal.test_sg2_second_term_does_not_interrupt_cleanup) ... ok
+test_sg3_orchestrators_install_it (tests.test_stopsig.StopSignal.test_sg3_orchestrators_install_it) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 92.500s
+
+OK

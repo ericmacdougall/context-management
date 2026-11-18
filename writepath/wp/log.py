@@ -66,6 +66,19 @@ SEAL_COLS = ("seal_key_id", "seal_mac", "seal_batch", "seal_index", "seal_count"
 
 
 def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
+    """See _append. With no `sealer`, the authority's connection opened here is closed before returning (review J N2:
+    the authority caps connections per peer uid, so none is left to the garbage collector)."""
+    if sealer is not None:
+        return _append(conn, ks, lease, events, hook, sealer)
+    auth = SL.sealer_for(conn, ks)
+    try:
+        return _append(conn, ks, lease, events, hook, auth)
+    finally:
+        if isinstance(auth, SL.Client):         # an in-process Authority shares conn and ks: they stay open
+            auth.close()
+
+
+def _append(conn, ks: K.KeyService, lease, events, hook, auth):
     """events: dicts with subject_id, kind, actor, trust_origin, ts_event (aware datetime), content (str), optional
     idem_key and, for kind='decision', decision={item, action, based_on_event_id, source_event_id}.
     Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch
@@ -78,7 +91,6 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
     encrypts and attests the batch; this function only orders, chains and inserts what it returned (the store refuses
     anything else: WPS40, WPS41). No authority reachable: SealUnavailable, nothing stored."""
     t, sid = lease.tenant, lease.scope.split(":", 1)[1]
-    auth = sealer if sealer is not None else SL.sealer_for(conn, ks)
     eids = [uuid.uuid4().hex for _ in events]
     batch = uuid.uuid4().hex
 

@@ -1,0 +1,20 @@
+# offline modules from a working-tree copy (m2-wip), run 2026-11-18T21:26:37Z: python -m unittest tests.test_sealer tests.test_es_keys_output tests.test_broker tests.test_stopsig tests.test_ident
+.......................................................................................E........................
+======================================================================
+ERROR: test_s15_no_module_builds_identifier_hmacs_itself (tests.test_ident.LabelInOnePlace.test_s15_no_module_builds_identifier_hmacs_itself)
+A second copy of the label (erasure's rescan had "ident:" + w) silently stops matching when the label
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m2-wip.knrW/writepath/tests/test_ident.py", line 159, in test_s15_no_module_builds_identifier_hmacs_itself
+    if p.name != "mentions.py" and ('"ident:' in p.read_text() or "'ident:" in p.read_text())]
+                                                 ^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1030, in read_text
+    return f.read()
+           ^^^^^^^^
+  File "<frozen codecs>", line 322, in decode
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa3 in position 45: invalid start byte
+
+----------------------------------------------------------------------
+Ran 112 tests in 44.215s
+
+FAILED (errors=1)

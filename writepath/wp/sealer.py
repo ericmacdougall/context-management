@@ -34,7 +34,7 @@ import stat
 import sys
 import time
 
-from . import keys as K, mentions as M, secrets as SEC
+from . import keys as K, keysvc, mentions as M, secrets as SEC
 
 VERSION = "wp-seal-v2"                       # v2 (review J M2): the target table is attested
 PURPOSES = ("events", "quarantine")
@@ -42,6 +42,17 @@ OPS = ("seal",)
 BLOCK = 64                                   # SHA-256 block size (RFC 2104 B)
 KEY_FILE = "seal_key"
 _REFUSALS = {c.code: c for c in (M.ContentTooLarge, M.MatcherBudgetExceeded, M.CallBudgetExceeded)}
+# Transport bounds of the authority (review J N2; wp/keysvc.py Server enforces them). One request line holds a whole
+# call: at most call_bytes of content, which JSON escaping can grow 6-fold (a control character is \u0001), plus per
+# event envelope and ids (EVENT_ENVELOPE bytes assumed; an event id is a 32-hex uuid). A line over LINE_LIMIT is refused
+# by the client before sending (CallBudgetExceeded) and by the server (request_too_large, connection closed).
+EVENT_ENVELOPE = 1024
+LINE_LIMIT = 8 * 2**20
+assert LINE_LIMIT >= 6 * M.BUDGET.call_bytes + M.BUDGET.call_events * EVENT_ENVELOPE + 4096
+REQUEST_TIMEOUT_S = 30.0
+MAX_CONN_PER_UID = 8           # buffers held at most MAX_CONN x LINE_LIMIT = 256 MiB
+MAX_CONN = 32
+CLIENT_TIMEOUT_S = 120.0       # review J M11: worst admitted call measured about 32 s (DESIGN-NOTES H10)
 
 
 class SealError(Exception):
@@ -130,10 +141,22 @@ class Authority:
     """Admits, secret-scans, matches (version first), encrypts and attests one batch. `conn` reads identifier_epochs and
     subject_identifiers (deployed: as wp_sealer); `ks` is a KeyStore (deployed: the key service's client)."""
 
-    def __init__(self, conn, ks, key_id, key, log=None):
+    def __init__(self, conn, ks, key_id, key, log=None, owns=False):
+        """owns: close() closes conn and ks (the served authority opens its own per connection); otherwise they are the
+        caller's and close() leaves them open."""
         if not isinstance(key, bytes) or len(key) != 32 or not key_id:
             raise ValueError("a seal key is 32 bytes with a key id")
-        self.conn, self.ks, self.key_id, self._key, self.log = conn, ks, key_id, key, log
+        self.conn, self.ks, self.key_id, self._key, self.log, self.owns = conn, ks, key_id, key, log, owns
+
+    def close(self):
+        """The transport calls this when the peer disconnects: the store connection and the key-service client go too
+        (review J N2: no connection is left to the garbage collector). Only what it owns."""
+        for c in ((self.conn, self.ks) if self.owns else ()):
+            if c is not None and hasattr(c, "close"):
+                try:
+                    c.close()
+                except Exception:  # noqa: BLE001
+                    pass
 
     def _note(self, tenant, batch_id, events, result, t0):
         if self.log:
@@ -211,9 +234,12 @@ def dispatch(auth, op, a):
 class Client:
     """The authority over its socket. Same seal() as Authority; SealUnavailable when it cannot be reached."""
 
-    def __init__(self, path=None):
+    def __init__(self, path=None, timeout_s=None):
+        """timeout_s (default CLIENT_TIMEOUT_S; review J M11): the longest wait for one reply; past it the connection is
+        closed and SealUnavailable raised (nothing was stored by this call)."""
         self.path = path or os.environ.get("WP_SEALER") or ""
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.sock.settimeout(CLIENT_TIMEOUT_S if timeout_s is None else float(timeout_s))
         try:
             self.sock.connect(self.path)
         except OSError as e:
@@ -226,11 +252,13 @@ class Client:
                                       "purpose": purpose,
                                       "events": [{"event_id": e["event_id"], "subject_id": e["subject_id"], "content": e["content"]}
                                                  for e in events]}}
+        data = (json.dumps(req) + "\n").encode()
+        if len(data) > LINE_LIMIT:
+            raise M.CallBudgetExceeded("call over the seal authority's request line limit", None)
         try:
-            self.f.write((json.dumps(req) + "\n").encode())
-            self.f.flush()
-            line = self.f.readline()
-        except OSError as e:
+            line = keysvc.exchange(self.f, data)
+        except OSError as e:          # socket.timeout included: the connection is closed, never reused
+            self.close()
             raise SealUnavailable(f"seal authority connection failed ({type(e).__name__})") from None
         if not line:
             raise SealUnavailable("the seal authority closed the connection")
@@ -248,13 +276,13 @@ class Client:
             raise M.MatcherMismatch("the tenant's matcher is not the authority's")
         if err == "peer_refused":
             raise SealUnavailable("the seal authority refused this peer uid")
+        if err == "busy":
+            self.close()
+            raise SealUnavailable("the seal authority is at its connection cap")
         raise SealError(f"seal authority error {err}")
 
     def close(self):
-        try:
-            self.f.close()
-        finally:
-            self.sock.close()
+        keysvc.close_quietly(self.f, self.sock)
 
 
 def key_path():
@@ -290,8 +318,10 @@ def serve(path):
     log = lambda s: print("sealer", s, flush=True)       # noqa: E731
 
     def make():
-        return Authority(db.connect(application_name="wp-sealer", role=db.SEALER), keysvc.key_store(), kid, key, log=log)
-    srv = keysvc.Server(path, allow, make_store=make, log=log, ops=OPS, dispatch_fn=dispatch)
+        return Authority(db.connect(application_name="wp-sealer", role=db.SEALER), keysvc.key_store(), kid, key, log=log,
+                         owns=True)
+    srv = keysvc.Server(path, allow, make_store=make, log=log, ops=OPS, dispatch_fn=dispatch, line_limit=LINE_LIMIT,
+                        request_timeout_s=REQUEST_TIMEOUT_S, max_per_uid=MAX_CONN_PER_UID, max_conn=MAX_CONN)
     print(f"sealer serving uids={sorted(allow)} key_id={kid}", flush=True)
     srv.serve_forever()
 

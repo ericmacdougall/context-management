@@ -1,0 +1,172 @@
+# offline modules from a working-tree copy (n2-red-8615532), run 2026-11-18T21:48:33Z: python -m unittest tests.test_transport_bounds
+F----------------------------------------
+Exception occurred during processing of request from 
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/wp/keysvc.py", line 103, in handle
+    self.wfile.write((json.dumps(rep) + "\n").encode())
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+F----------------------------------------
+Exception occurred during processing of request from 
+FTraceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/wp/keysvc.py", line 103, in handle
+    self.wfile.write((json.dumps(rep) + "\n").encode())
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+FF<frozen importlib._bootstrap>:488: ResourceWarning: unclosed <socket.socket fd=8, family=1, type=1, proto=0, raddr=/tmp/tmpm2owu_wl/t0.sock>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap>:488: ResourceWarning: unclosed <socket.socket fd=9, family=1, type=1, proto=0, raddr=/tmp/tmpm2owu_wl/t0.sock>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap>:488: ResourceWarning: unclosed <socket.socket fd=10, family=1, type=1, proto=0, raddr=/tmp/tmpm2owu_wl/t0.sock>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap>:488: ResourceWarning: unclosed <socket.socket fd=4, family=1, type=1, proto=0, raddr=/tmp/tmphhcsb6zd/t0.sock>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+<frozen importlib._bootstrap>:488: ResourceWarning: unclosed <socket.socket fd=5, family=1, type=1, proto=0, raddr=/tmp/tmphhcsb6zd/t0.sock>
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FFFFF
+======================================================================
+FAIL: test_tb1_unterminated_line_is_cut_at_the_limit (tests.test_transport_bounds.Transport.test_tb1_unterminated_line_is_cut_at_the_limit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 168, in test_tb1_unterminated_line_is_cut_at_the_limit
+    self.assertEqual(got, [{"error": "request_too_large"}], f"no refusal after {sent[0]} MiB offered")
+AssertionError: Lists differ: [] != [{'error': 'request_too_large'}]
+
+Second list contains 1 additional elements.
+First extra element 0:
+{'error': 'request_too_large'}
+
+- []
++ [{'error': 'request_too_large'}] : no refusal after 64 MiB offered
+
+======================================================================
+FAIL: test_tb2_line_limit_boundary (tests.test_transport_bounds.Transport.test_tb2_line_limit_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 193, in test_tb2_line_limit_boundary
+    self.assertEqual(got, [{"error": "request_too_large"}], "a line one byte over the limit was served")
+AssertionError: Lists differ: [{'ok': 4063}] != [{'error': 'request_too_large'}]
+
+First differing element 0:
+{'ok': 4063}
+{'error': 'request_too_large'}
+
+- [{'ok': 4063}]
++ [{'error': 'request_too_large'}] : a line one byte over the limit was served
+
+======================================================================
+FAIL: test_tb3_slow_request_times_out_idle_does_not (tests.test_transport_bounds.Transport.test_tb3_slow_request_times_out_idle_does_not)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 204, in test_tb3_slow_request_times_out_idle_does_not
+    self.assertEqual(got, [{"error": "request_timeout"}], "a request left unfinished was never cut")
+AssertionError: Lists differ: [] != [{'error': 'request_timeout'}]
+
+Second list contains 1 additional elements.
+First extra element 0:
+{'error': 'request_timeout'}
+
+- []
++ [{'error': 'request_timeout'}] : a request left unfinished was never cut
+
+======================================================================
+FAIL: test_tb4_per_uid_cap (tests.test_transport_bounds.Transport.test_tb4_per_uid_cap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 221, in test_tb4_per_uid_cap
+    self.assertEqual(got, [{"error": "busy"}], "a third connection of a uid capped at 2 was taken")
+AssertionError: Lists differ: [] != [{'error': 'busy'}]
+
+Second list contains 1 additional elements.
+First extra element 0:
+{'error': 'busy'}
+
+- []
++ [{'error': 'busy'}] : a third connection of a uid capped at 2 was taken
+
+======================================================================
+FAIL: test_tb5_overall_cap (tests.test_transport_bounds.Transport.test_tb5_overall_cap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 247, in test_tb5_overall_cap
+    self.assertEqual(got, [{"error": "busy"}], "a fourth connection was taken with 3 allowed in all")
+AssertionError: Lists differ: [] != [{'error': 'busy'}]
+
+Second list contains 1 additional elements.
+First extra element 0:
+{'error': 'busy'}
+
+- []
++ [{'error': 'busy'}] : a fourth connection was taken with 3 allowed in all
+
+======================================================================
+FAIL: test_tb6_authority_limit_admits_the_largest_call (tests.test_transport_bounds.Transport.test_tb6_authority_limit_admits_the_largest_call)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 267, in test_tb6_authority_limit_admits_the_largest_call
+    self.assertIsNotNone(lim, "the seal authority states no request line limit")
+AssertionError: unexpectedly None : the seal authority states no request line limit
+
+======================================================================
+FAIL: test_tb6b_serve_wires_the_authority_bounds (tests.test_transport_bounds.Transport.test_tb6b_serve_wires_the_authority_bounds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 296, in test_tb6b_serve_wires_the_authority_bounds
+    self.assertIsNotNone(seen.get("line_limit"), "serve() did not set the line limit")
+AssertionError: unexpectedly None : serve() did not set the line limit
+
+======================================================================
+FAIL: test_tb7_keysvc_client_times_out (tests.test_transport_bounds.Transport.test_tb7_keysvc_client_times_out)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 337, in test_tb7_keysvc_client_times_out
+    self.gives_up(self.S, lambda: self.S.Client(path).chain_key("t"), self.S.ServiceError)
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 331, in gives_up
+    self.assertFalse(th.is_alive(), "the client is still waiting on a peer that never answers")
+AssertionError: True is not false : the client is still waiting on a peer that never answers
+
+======================================================================
+FAIL: test_tb7b_sealer_client_times_out (tests.test_transport_bounds.Transport.test_tb7b_sealer_client_times_out)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 342, in test_tb7b_sealer_client_times_out
+    self.gives_up(SL, lambda: SL.Client(path).seal("t", "session:s", 1, "b", [{"event_id": "e", "subject_id": "X", "content": "hi"}]),
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 331, in gives_up
+    self.assertFalse(th.is_alive(), "the client is still waiting on a peer that never answers")
+AssertionError: True is not false : the client is still waiting on a peer that never answers
+
+======================================================================
+FAIL: test_tb8_no_chmod_by_path (tests.test_transport_bounds.Transport.test_tb8_no_chmod_by_path)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/n2-red-8615532.1ZBy/writepath/tests/test_transport_bounds.py", line 354, in test_tb8_no_chmod_by_path
+    self.assertEqual(calls, [], "the server chmods the socket by path after binding")
+AssertionError: Lists differ: [('/tmp/tmp9pk1566v/t0.sock', 438)] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+('/tmp/tmp9pk1566v/t0.sock', 438)
+
+- [('/tmp/tmp9pk1566v/t0.sock', 438)]
++ [] : the server chmods the socket by path after binding
+
+----------------------------------------------------------------------
+Ran 10 tests in 40.690s
+
+FAILED (failures=10)
