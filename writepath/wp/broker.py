@@ -24,7 +24,7 @@ The broker is its own process and service identity: it authenticates to Elastics
 wp16096_broker (password in its own 0600 file, never printed) and to Postgres as wp_broker (execute on
 wp_lease_holder_current only). It serves the application over a unix socket with the key service's transport
 (wp/keysvc.py: kernel peer uid, fail-closed allow list WP_BROKER_ALLOW_UIDS). It logs operation names, tenants,
-epochs and key ids, never a key value.
+epochs and fingerprints of key ids (wp/es_keys.py fingerprint; review J M8), never a key id or value.
 
 NOT shown by this design: tenant authority (the broker trusts the peer uid for every tenant: design path item 2);
 cross-node API-key cache behaviour (one node here)."""
@@ -33,7 +33,7 @@ import os
 import socket
 import sys
 
-from . import config, families as F, keysvc, lease as L
+from . import config, es_keys, families as F, keysvc, lease as L
 from .es import ES
 
 BROKER_USER, BROKER_ROLE = "wp16096_broker", "wp16096_broker_role"
@@ -118,7 +118,7 @@ class Broker:
         k = self._mint(f"wp16096-w-{t}-e{epoch}", writer_descriptors(t, epoch),
                        {"stream": "goodqa-16096", "kind": "writer", "tenant": t, "epoch": epoch})
         inv, err = self._invalidate_older(t, epoch)
-        self.note(f"writer_key tenant={t} epoch={epoch} key_id={k['id']} invalidated_older={len(inv)} err={err}")
+        self.note(f"writer_key tenant={t} epoch={epoch} key={es_keys.fingerprint(k['id'])} invalidated_older={len(inv)} err={err}")
         return dict(k, invalidated_older=len(inv), invalidate_error=err)
 
     def eraser_key(self, t):
@@ -126,7 +126,7 @@ class Broker:
         for f in F.FAMILIES:
             F.ensure_family(self.es, t, f)
         k = self._mint(f"wp16096-x-{t}", eraser_descriptors(t), {"stream": "goodqa-16096", "kind": "eraser", "tenant": t})
-        self.note(f"eraser_key tenant={t} key_id={k['id']}")
+        self.note(f"eraser_key tenant={t} key={es_keys.fingerprint(k['id'])}")
         return k
 
 

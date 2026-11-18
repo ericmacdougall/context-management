@@ -73,23 +73,39 @@ def _write(name, obj):
     os.chmod(p, 0o600)
 
 
-def create():
+def _rotate(es, name, body, file_name):
+    """Mint the successor, write its file, THEN invalidate every other active key of that name (review J M8). A
+    failure before the write leaves the old key valid and its file unchanged; a failure after it leaves two valid keys
+    until the next run (reported), never none. Returns (fingerprint of the new id, number invalidated, error or None)."""
+    j = es.req("POST", "/_security/api_key", dict(body, name=name))[1]
+    _write(file_name, {"id": j["id"], "encoded": j["encoded"]})
+    s, lst = es.req("GET", "/_security/api_key", ok=None, name=name, active_only="true")
+    if s != 200:
+        return fingerprint(j["id"]), 0, f"list {s}"
+    old = [k["id"] for k in (lst or {}).get("api_keys", []) if k.get("id") != j["id"] and not k.get("invalidated")]
+    if not old:
+        return fingerprint(j["id"]), 0, None
+    s, inv = es.req("DELETE", "/_security/api_key", {"ids": old}, ok=None)
+    return fingerprint(j["id"]), len((inv or {}).get("invalidated_api_keys", [])), (None if s == 200 else f"invalidate {s}")
+
+
+def create(rotation=None):
+    """Rotate every role key and the admin key. Returns {role: fingerprint of the new key id} (no id, no key); when
+    `rotation` is a dict it receives {role: [keys invalidated, error or None]}."""
     es = ES()
     es.auth = _superuser_header()
-    out = {}
-    # Rotation: the previous key of each role is invalidated before its successor is minted, so a rerun leaves one
-    # valid key per role.
+    out, rot = {}, {}
     for role, rd in ROLE_DESCRIPTORS.items():
-        es.req("DELETE", "/_security/api_key", {"name": f"wp16096-{role}"}, ok=(200, 404))
-        j = es.req("POST", "/_security/api_key", {"name": f"wp16096-{role}", "role_descriptors": {f"wp16096_{role}": rd},
-                                                 "metadata": {"stream": "goodqa-16096", "role": role}})[1]
-        _write(f"es_api_key.{role}.json", {"id": j["id"], "encoded": j["encoded"]})
-        out[role] = fingerprint(j["id"])
-    es.req("DELETE", "/_security/api_key", {"name": "wp16096-admin"}, ok=(200, 404))
-    j = es.req("POST", "/_security/api_key", {"name": "wp16096-admin", "metadata": {"stream": "goodqa-16096", "role": "admin"}})[1]
-    _write("es_api_key.json", {"id": j["id"], "encoded": j["encoded"]})
-    out["admin"] = fingerprint(j["id"])
-    return out                      # fingerprints of key ids only: no id, no key
+        out[role], n, err = _rotate(es, f"wp16096-{role}", {"role_descriptors": {f"wp16096_{role}": rd},
+                                                            "metadata": {"stream": "goodqa-16096", "role": role}},
+                                    f"es_api_key.{role}.json")
+        rot[role] = [n, err]
+    out["admin"], n, err = _rotate(es, "wp16096-admin", {"metadata": {"stream": "goodqa-16096", "role": "admin"}},
+                                   "es_api_key.json")
+    rot["admin"] = [n, err]
+    if rotation is not None:
+        rotation.update(rot)
+    return out
 
 
 def create_broker():
@@ -121,7 +137,8 @@ def invalidate_all():
 
 if __name__ == "__main__":
     if sys.argv[1:] == ["create"]:
-        print("created key ids", create())
+        _rot = {}
+        print("created keys; id fingerprints", create(_rot), "rotation (invalidated, error)", _rot)
     elif sys.argv[1:] == ["broker"]:
         print("broker user", create_broker())
     elif sys.argv[1:] == ["invalidate"]:

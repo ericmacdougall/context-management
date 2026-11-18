@@ -1,0 +1,49 @@
+# offline modules from a working-tree copy (m8-red-b2b31be), run 2026-11-18T21:53:08Z: python -m unittest tests.test_es_keys_output tests.test_broker
+..FFF........F.........
+======================================================================
+FAIL: test_k_rot1_mint_first_then_invalidate_the_others (tests.test_es_keys_output.CreateOutput.test_k_rot1_mint_first_then_invalidate_the_others)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m8-red-b2b31be.eruQ/writepath/tests/test_es_keys_output.py", line 132, in test_k_rot1_mint_first_then_invalidate_the_others
+    self.assertEqual(seq[0], "POST", f"{role}: something ran before the successor was minted: {seq}")
+AssertionError: 'DELETE' != 'POST'
+- DELETE
++ POST
+ : projector: something ran before the successor was minted: ['DELETE', 'POST']
+
+======================================================================
+FAIL: test_k_rot2_failed_mint_leaves_the_old_key (tests.test_es_keys_output.CreateOutput.test_k_rot2_failed_mint_leaves_the_old_key)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m8-red-b2b31be.eruQ/writepath/tests/test_es_keys_output.py", line 143, in test_k_rot2_failed_mint_leaves_the_old_key
+    self.assertEqual(FakeES.active("wp16096-projector"), [old], "a failed mint left the role without its key")
+AssertionError: Lists differ: [] != ['KEYID0001abcdefghijklmnop']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'KEYID0001abcdefghijklmnop'
+
+- []
++ ['KEYID0001abcdefghijklmnop'] : a failed mint left the role without its key
+
+======================================================================
+FAIL: test_k_rot3_failed_invalidation_leaves_two_never_none (tests.test_es_keys_output.CreateOutput.test_k_rot3_failed_invalidation_leaves_two_never_none)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m8-red-b2b31be.eruQ/writepath/tests/test_es_keys_output.py", line 153, in test_k_rot3_failed_invalidation_leaves_two_never_none
+    self.assertEqual(rot.get("eraser"), [0, "invalidate 500"])
+AssertionError: None != [0, 'invalidate 500']
+
+======================================================================
+FAIL: test_log_has_key_fingerprint_never_id_or_value (tests.test_broker.BrokerTest.test_log_has_key_fingerprint_never_id_or_value)
+Review J M8: the stream's leak scan counts key ids as secret values, so the broker logs a fingerprint.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m8-red-b2b31be.eruQ/writepath/tests/test_broker.py", line 266, in test_log_has_key_fingerprint_never_id_or_value
+    self.assertIn("key=" + EK.fingerprint("kid1"), text)
+AssertionError: 'key=sha256:3fb49c2ff2c50a18' not found in 'writer_key tenant=acme epoch=5 key_id=kid1 invalidated_older=0 err=None\neraser_key tenant=acme key_id=kid2'
+
+----------------------------------------------------------------------
+Ran 23 tests in 1.077s
+
+FAILED (failures=4)

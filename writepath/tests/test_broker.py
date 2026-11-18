@@ -9,7 +9,7 @@ broker-held alias CAS; key invalidation is hygiene only).
   order              the alias CAS happens before the key is minted; StaleEpoch (a newer epoch visible) mints nothing
   hygiene            older-epoch writer keys of the SAME tenant are invalidated with owner: true; other tenants' and
                      newer keys are not; a failed invalidation is recorded, never fatal
-  secrets            the broker's log carries key ids, never an encoded key
+  secrets            the broker's log carries key id fingerprints, never a key id or an encoded key
   transport          an unlisted peer uid is refused; an allowed one gets the key; an error crosses as its type
   projector          in broker mode the projector ignores any ES client it is given, takes its key from the broker,
                      maps a broker lease refusal to LeaseLost, and classifies a refused bulk item by the lease (never by
@@ -255,14 +255,17 @@ class BrokerTest(unittest.TestCase):
             b.writer_key(T, E, HOLDER)
 
     # ------------------------------------------------------------ secrets
-    def test_log_has_key_id_never_key_value(self):
+    def test_log_has_key_fingerprint_never_id_or_value(self):
+        """Review J M8: the stream's leak scan counts key ids as secret values, so the broker logs a fingerprint."""
         es = FakeES(self.F)
         b, log = self.broker(es)
         b.writer_key(T, E, HOLDER)
         b.eraser_key(T)
         text = "\n".join(log)
-        self.assertIn("key_id=kid1", text)
-        self.assertIn("key_id=kid2", text)
+        EK = importlib.import_module("wp.es_keys")
+        self.assertIn("key=" + EK.fingerprint("kid1"), text)
+        self.assertIn("key=" + EK.fingerprint("kid2"), text)
+        self.assertNotRegex(text, r"\bkid[12]\b", "the broker logged a key id")
         self.assertNotIn(ENC, text)
 
     # ------------------------------------------------------------ transport

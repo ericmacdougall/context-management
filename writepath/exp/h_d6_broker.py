@@ -9,7 +9,7 @@
 The operator (this process: setup, projection of tenants A and B, witnesses, descriptor reads, broker stop and start)
 uses the lab's admin credentials, which the app container gets read-only at /operator/secrets for C9 only.
 Cases C1 to C13 and the verdict rule are in exp/THRESHOLDS.md amendment H6. Every encoded key stays in the child's
-memory; the child prints only key ids and, on a separate line the orchestrator keeps in memory and never writes, the
+memory; the child prints only key id fingerprints and, on a separate line the orchestrator keeps in memory and never writes, the
 sha256 of each key value, so C13 can look for the values in the broker log, the child output and the result.
 usage: python -m exp.h_d6_broker [R]"""
 import hashlib
@@ -37,6 +37,11 @@ TOKEN = re.compile(rb"[A-Za-z0-9+/=_-]{20,}")
 
 def _sha(v):
     return hashlib.sha256(v.encode() if isinstance(v, str) else v).hexdigest()
+
+
+def _fp(key_id):
+    """A key id as results record it (review J M8): wp/es_keys.py fingerprint, never the id."""
+    return None if key_id is None else "sha256:" + _sha(key_id)[:16]
 
 
 # ------------------------------------------------------------------ inside the application container
@@ -94,7 +99,7 @@ def child_fenced(a):
     if k1:
         E = la.epoch
         es1 = B.es_with_key(k1, "projector")
-        res["key_A_id"], res["E"] = k1["id"], E
+        res["key_A_fp"], res["E"] = _fp(k1["id"]), E
         res["own_write"] = _w(es1, F.write_alias(A, "events", E), "h6-own")
         res["C1"] = {"B_w": _w(es1, F.write_alias(Bt, "events", eb), "h6-c1w"),
                      "B_read": _w(es1, F.read_alias(Bt, "events"), "h6-c1r"),
@@ -140,7 +145,7 @@ def child_fenced(a):
                 try:
                     k = c.writer_key(t, lease.epoch, lease.holder)
                     seen.append(k["encoded"])
-                    got.append([t, lease.epoch, k["id"]])
+                    got.append([t, lease.epoch, _fp(k["id"])])
                 except Exception as e:  # noqa: BLE001
                     errs.append(_err(e))
             c.close()
@@ -165,7 +170,7 @@ def child_fenced(a):
         done = p2.run(max_rounds=500)
         res["C7"] = {"p1_first_step": n1, "p1_step_after_takeover": r1, "p1_written_before": w_before,
                      "p1_written_after": p1.stats["docs_written"], "p2_done": done, "p2_written": p2.stats["docs_written"],
-                     "p1_key_id": p1.key_id, "p2_key_id": p2.key_id}
+                     "p1_key_fp": _fp(p1.key_id), "p2_key_fp": _fp(p2.key_id)}
         p2.stop()
     except Exception as e:  # noqa: BLE001
         res["invalid"]["C7_setup"] = _err(e)
@@ -254,7 +259,7 @@ def child_c12(a):
     try:
         k2 = B.Client(B_SOCK).writer_key(D, l2.epoch, l2.holder)
         seen.append(k2["encoded"])
-        res["c_h2_key_id"] = k2["id"]
+        res["c_h2_key_fp"] = _fp(k2["id"])
         res["c_stale"] = [_w(es1, F.write_alias(D, "events", E), f"h6-12-c{i}") for i in range(N_STALE)]
         res["c_stale_accepted"] = sum(1 for s, _ in res["c_stale"] if s in (200, 201))
     except Exception as e:  # noqa: BLE001
