@@ -52,9 +52,21 @@ class _S1(_Wait):
         self.mut_app = pgcore.connect_app(self.port, ap, "s1-mut-app")
         for c in (self.mut_o, self.mut_idp, self.mut_app):
             self.addCleanup(c.close)
+        self._threads = []
 
-    @staticmethod
-    def start(fn):
+    def tearDown(self):
+        """Before any cleanup closes a connection: a call that outlived its test (on the red tree a call can stay blocked past the
+        test's join) is cancelled and its thread joined, so no connection is closed under a thread still inside libpq (that
+        corrupted the process heap in a red run). Only this test database's active queries are cancelled; nothing else is signalled."""
+        alive = [t for t in self._threads if t.is_alive()]
+        if alive:
+            self.o.execute("select pg_cancel_backend(pid) from pg_stat_activity where datname = current_database()"
+                           " and pid <> pg_backend_pid() and state = 'active'")
+            for t in alive:
+                t.join(15)
+        super().tearDown()
+
+    def start(self, fn):
         out = {}
 
         def run():
@@ -65,6 +77,7 @@ class _S1(_Wait):
             out["t"] = time.time()
         t = threading.Thread(target=run, daemon=True)
         t.start()
+        self._threads.append(t)
         return t, out
 
     def blocked_by(self, waiter, holder, timeout=5.0):
