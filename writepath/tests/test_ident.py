@@ -694,6 +694,21 @@ class F12Budget(unittest.TestCase):
         self.assertEqual(M.find_spans(ks, T, text, hm(NAME)) != [], True)
         self.assertLessEqual(ks.max_batch, CHUNK)
 
+    def test_count_equals_enumeration(self):
+        # the bound rests on this: the arithmetic count is exactly the number of keys enumerated (repeats included), and
+        # a token's reading count is exactly its number of distinct keys (so the cap skips the same windows as before b1)
+        if not callable(getattr(M, "key_count", None)):
+            self.fail("no key count before enumeration (m5 b1 B4)")
+        glyphs = ["I", "l", "i", "1", "0", "o", "O", "Ⅱ", "Ⅲ", "ĳ", "Ĳ", "Ｉ", "Ι", "ⅰ",
+                  "¹", "①", "a", "n", "m", "rn", "e", "́", "​"]
+        r = random.Random(16096)
+        for _ in range(500):
+            s = " ".join("".join(r.choice(glyphs) for _ in range(r.randint(1, 9))) for _ in range(r.randint(1, 6)))
+            self.assertEqual(len(M._windows_at(s)), M.key_count(s)[1], repr(s))
+            for tok in M._tokens(s):
+                tk = M._token_keys(tok)
+                self.assertEqual(None if tk is None else len(tk), M._reading_count(tok), repr(tok[0]))
+
     def test_budget_is_named_in_the_matcher_id(self):
         self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES)), M.matcher_id())
 

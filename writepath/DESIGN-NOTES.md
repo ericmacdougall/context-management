@@ -686,13 +686,32 @@ B6. RETRIES: append rescans after WPS17 (identifiers declared meanwhile), up to 
    lookup): 14,600 tokens "IIa", "IIb", ... (58,399 bytes) have 4,963,088 window keys, just under the event maximum;
    scan() took 14.5 s (2.9 us per window key; 3.9 million distinct keys HMACed in 476 chunks of at most 8,192; peak RSS
    grew by 6 MB). Adding 4,000 bytes puts it over the maximum: refused (WPM02) in 0.19 s. So one crafted event that is
-   ADMITTED can still cost about 15 s of matcher CPU in Python plus 476 store lookups (NOT MEASURED), and up to 8 times
+   ADMITTED can still cost about 15 s of matcher CPU in Python plus 476 store lookups and 476 key-store reads (NOT
+   MEASURED), and up to 8 times
    that with WPS17 retries; realistic text costs well under a second. This is the trade-off main asked to see, not
    tuned away: holding the 10 times margin at the size bound fixes the event maximum near 4.5 million keys; a smaller
    size bound (16 KiB: maximum about 1.2 million keys, about 4 s) or a per-tenant rate limit would lower it.
    THE RESCAN PAGE: the rescan reads up to 2,000 events per page; with the size bound a page's ciphertext is at most
-   about 131 MB (2,000 times 65,564 bytes), decrypted one event at a time. Stated, not changed. The number of events in one append is not bounded here (each event is);
-   ASSUMPTION: the API layer bounds the batch.
+   about 131 MB (2,000 times 65,564 bytes), decrypted one event at a time. Stated, not changed.
+   EQUIVALENCE, CHECKED after the code (agent-af5c8cce658ab5a89/budget_equiv.py): over 3,010 strings (seeded, built
+   from I, l, i, 1, 0, o, O, Roman numerals, IJ, fullwidth and Greek capitals, superscript one, circled one, combining
+   marks and zero-width space), windows() at 819258c and under b1 are identical; the keys enumerated equal key_count()
+   and each token's reading count equals its number of distinct keys (tests/test_ident.py checks 500 such strings), so
+   the cap skips exactly the windows it skipped before.
+   OPEN (for main): the number of events in one append is NOT bounded (each event is), so the work of one call is
+   bounded only per event. scan() admits the whole batch first and then rebuilds each event's plan as it streams (no
+   plan is kept), so memory is one event's tokens plus one chunk, but work grows with the batch. Options: a per-call
+   event count or byte total (refused with its own code), or leave it to the API layer.
+   ADMISSION DOES NOT DEPEND ON IDENTIFIERS: every event is counted, also in a tenant with no identifiers (819258c did
+   no matcher work there), because the erasure rescan later reads those events under the budget (B7).
+   NORMAL-PATH COST, MEASURED after the code (agent-af5c8cce658ab5a89/budget_normal.py, Mac, fake lookup; old is
+   819258c): scan() of a 170-byte chat message 0.01 ms old against 0.55 ms new with no identifiers, 1.6 against 2.6
+   ms with; 3 KB prose 0.01 against 12.9 ms, 18.6 against 32.0 ms; 60 KB prose 0.03 against 198 ms, 304 against 568
+   ms. The added cost is tokenising each event again (append admits once before anything, scan admits and plans
+   again); append pays one more tokenisation than scan() alone.
+   THE FLOOR IS THE COSTLIEST POINT PER BYTE: a 144-byte event of 29 "IIIa"-like tokens has 122,344 keys, under the
+   floor, and took 0.50 s to scan. Every chunk also costs one key-store round trip (tenant_hmac_many reads the tenant
+   key per call) besides the lookup.
 B7. THE ERASURE RESCAN runs under the same budget by construction: it counts each event's keys with the same function
    before enumerating and streams the keys, checking each HMAC against the subject's identifier HMACs (no lookup
    array). Every event admitted under this matcher is within the budget. An event over the current budget can exist

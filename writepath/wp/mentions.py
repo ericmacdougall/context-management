@@ -803,7 +803,7 @@ def scan(conn, ks, tenant, texts):
     the tenant's matcher are read BEFORE the identifiers, so a declaration that lands in between makes the store refuse
     the write (WPS17) and the caller rescans. A tenant whose stored matcher is not this one raises MatcherMismatch (the
     store refuses it too: WPS38); a tenant with no matcher has no identifiers. Keys are looked up CHUNK at a time."""
-    plans = [_admitted(x, i) for i, x in enumerate(texts)]
+    admit(texts)                 # the whole batch first; plans are rebuilt one text at a time below (none are kept)
     r = conn.execute("select max_seq, matcher from identifier_epochs where tenant_id=%s", (tenant,)).fetchone()
     version, tm = (r[0], r[1]) if r else (0, None)
     if tm is not None and tm != matcher_id():
@@ -814,7 +814,7 @@ def scan(conn, ks, tenant, texts):
     def lookup(hs):
         return dict(conn.execute("select ident_hmac, subject_id from subject_identifiers where tenant_id=%s and ident_hmac = any(%s)",
                                  (tenant, hs)).fetchall())
-    hits = _stream(ks, tenant, enumerate(plans), lookup)
+    hits = _stream(ks, tenant, ((i, _admitted(x, i)) for i, x in enumerate(texts)), lookup)
     return version, [sorted({v for _, v in hits.get(i, ())}) for i in range(len(texts))]
 
 
