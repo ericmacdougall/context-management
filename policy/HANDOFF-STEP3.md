@@ -6,7 +6,11 @@ transaction; the core's rules move into its `events_guard` trigger transaction).
 
 Proof status (2026-11-18, policy owner; an owner report, NOT a review pass: an independent review follows):
 - Port from commit `2262eaa` of `fix/policy-final-review` (the Amendment 7 commit; its `pol/`, `exp/`, `ops/` and `verify/` are
-  identical to ae644df). Not merged to main.
+  identical to ae644df). Not merged to main. The step-3 fixture set (`exp/fixtures_step3.py`, `fixtures/step3/`,
+  `tests/test_fixtures_step3.py`, `tests/test_fixtures_step3_set.py`) is NOT on `fix/policy-final-review`: it is on this branch,
+  `docs/step3-handoff` (cherry-picked from the draft branch: 3ef0fe4, 75a5799, 0b887b5). At this branch's f98768c on t2-dev,
+  `tests.test_fixtures_step3` and `tests.test_fixtures_step3_set` Ran 11, OK (151 s), including the Postgres class: the set replays
+  clean through the dc core of 2262eaa and pg_diff's no-stale core is caught.
 - Green on t2-dev (Postgres 16.15) at ae644df, exact-commit tree: `tests.test_s44_pg` plus the seven Postgres modules, Ran 145, OK
   (238 s). The in-memory and evidence suites at ae644df (no database): Ran 183, OK.
 - Failing-first (behavioural assertions only; logs and the counting rule in `results/red/README.md`): S1 P1/P4 at a2d65fd (28),
