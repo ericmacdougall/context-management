@@ -6,6 +6,9 @@
 # The verdict is the gate's end record in the ledger (`exp.disk_gate verdict <run>`); the experiment's output goes to
 # WP_HOME/results/runs/<run>/experiment.out and never into the gate's own lines (review a108fc3 G-3). No shell string
 # is built from the label or arguments (m-5); the gate validates the label. To detach, run this under nohup yourself.
+# Gate v6 (GATE-DESIGN 9): the gate resets the stores itself under its run lock (no reset before this script), and
+# runs isolated: `python -I -B <tree>/runkit/isolated.py exp.disk_gate run ...` (review aacf3c0 m-G; the gate refuses
+# a non-isolated interpreter).
 # usage: sh runkit/launch_one.sh <pinned dir> <label> <module> [args...]
 # Needs WP_HOME (this stream's home on the host).
 set -eu
@@ -14,4 +17,4 @@ export WP_HOME
 D=$1; shift
 case "$D" in */runs/*) ;; *) echo "refusing: not a pinned tree"; exit 2 ;; esac
 cd "$D"
-exec "$WP_HOME/venv/bin/python" -B -m exp.disk_gate run "$@"
+exec "$WP_HOME/venv/bin/python" -I -B "$D/runkit/isolated.py" exp.disk_gate run "$@"
