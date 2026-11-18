@@ -37,13 +37,13 @@ import subprocess
 import sys
 import time
 
-VERSION = "2"
-LIMITS = ("LIMITS clearance v2 (GATE-DESIGN 7.4): cleared = every store (a container named by a gate admit record "
+VERSION = "3"
+LIMITS = ("LIMITS clearance v3 (GATE-DESIGN 7.4): cleared = every store (a container named by a gate admit record "
           "since the previous receipt, by every admit when there is none, or by the conf) was shown to keep its data "
           "on a private tmpfs, by a gate of ledger format 3 or later at admission or by clearance from docker inspect at "
           "the seal, and was "
-          "absent from Docker's container list at teardown and at the stage check, so every role, API key and key held "
-          "only in it is destroyed; a receipt that names no store, or a store not so shown, fails the stage check; "
+          "absent from Docker's container list at teardown and at the stage check, when no other container carried a "
+          "conf name either, so every role, API key and key held only in it is destroyed; a receipt that names no store, or a store not so shown, fails the stage check; "
           "every entry in WP_HOME/secrets*, WP_SECRETS_DIR and WP_HOME/svc and the file oldhome/pgpass was removed; "
           "the set is byte-for-byte the sealed set; and the scanner (its own LIMITS) found nothing at the seal. Not "
           "covered: data encrypted or keyed under a key-store key and published with it; copies of a store or "
@@ -329,6 +329,13 @@ def _storage(cid, data):
             "its data directory is in the container's own layer") + ": removing the container is not shown to destroy it"
 
 
+def _late_conf(g, listing, sealed):
+    """Ids of containers that carry a conf name but are not in the seal: a store started after the seal. Until H-1,
+    bootstrap reuses an existing password file, so such a store holds the sealed values."""
+    names = {g.config.ES_CONTAINER, g.config.PG_CONTAINER}
+    return sorted(c for c, n in listing.items() if n in names and c not in sealed)
+
+
 def _store_reasons(ids):
     """Why a receipt does not show its credentials dead: no store at all, or a store whose destruction is not proven."""
     stores = {c: v for c, v in ids.items() if isinstance(v, dict) and v.get("store")}
@@ -564,6 +571,11 @@ def teardown(home, s, remove):
         raise Refused(f"{len(present)} sealed container(s) still exist ({', '.join(c[:12] for c in present)})" +
                       (f"; not removed by --remove: {'; '.join(spared)}" if spared else "") +
                       ": if they are this home's stores, remove them (docker rm -fv), then run teardown again")
+    late = _late_conf(g, listing, sealed)
+    if late:
+        short = ", ".join(c[:12] for c in late)
+        raise Refused(f"{len(late)} container(s) carry a conf name but are not in the seal ({short}): a store started "
+                      "after the seal may hold the sealed credentials; stop it, then seal again")
     locs, bad = locations(home)
     if bad:
         raise Refused(bad[0])
@@ -620,6 +632,10 @@ def stage_check(home, s):
             back = sorted(c for c in rec["containers"] if c in listing)
             if back:
                 why.append(f"{len(back)} receipted container(s) exist ({', '.join(c[:12] for c in back)})")
+            late = _late_conf(g, listing, set(rec["containers"]))
+            if late:
+                why.append(f"{len(late)} container(s) carry a conf name but are not in the receipt "
+                           f"({', '.join(c[:12] for c in late)}): a store started after the seal")
             why += credentials_left(home)
         except Refused as e:
             why.append(str(e))

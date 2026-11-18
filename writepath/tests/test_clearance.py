@@ -392,6 +392,28 @@ class Clearance(unittest.TestCase):
         self.assertEqual(self.teardown(s2)[0], 0, "the second set's teardown is refused after the first")
         self.assertEqual((self.check()[0], self.check(s2)[0]), (0, 0))
 
+    def test_store_started_under_a_conf_name_after_the_seal_fails(self):
+        """bootstrap reuses an existing password file until H-1: a store recreated after the seal holds sealed values."""
+        self.seal()
+        for c in (self.es, self.pg):
+            (self.dock / f"{c}.name").unlink()
+        late = self.container("emlab2-wphard-pg")
+        rc, _ = self.teardown(remove=False)
+        self.assertEqual(rc, 1, "teardown wrote a receipt while an unsealed store runs under a conf name")
+        self.assertTrue((self.home / "secrets" / "pgpass").exists(), "teardown deleted credentials before refusing")
+        (self.dock / f"{late}.name").unlink()
+        self.assertEqual(self.teardown(remove=False)[0], 0)
+        self.container("emlab2-wphard-es")
+        rc, _ = self.check()
+        self.assertEqual(rc, 1, "stage-check passed while an unsealed store runs under a conf name")
+
+    def test_set_is_wp_home_results_itself(self):
+        """The runbook's shape: launch_one.sh writes flat into WP_HOME/results, and that directory is the set."""
+        s = self.home / "results"
+        (s / "one.abc.y.out").write_text("start\ngate=VALID\n")
+        self.cleared(s)
+        self.assertEqual(self.check(s)[0], 0)
+
     def test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing(self):
         old_es, old_pg = self.container("emlab2-wphard-es"), self.container("emlab2-wphard-pg")
         self.run_ledger(old_es, old_pg, v=None)                  # admitted by the v2 gate, removed long ago

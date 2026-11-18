@@ -692,7 +692,9 @@ restart loses its store, the run is VOID, and setup runs again, which under sect
   - a limited nr_inodes: BLOCKED, and slab memory rising under nr_inodes=0 (A-6);
   - threshold_enabled=false mid-run: VOID;
   - a state/STOP touch: VOID, next start BLOCKED, retire-legacy-stop, then ack;
-  - clearance: seal, teardown, stage-check on that home, whose conf names no running container.
+  - clearance: seal, teardown, stage-check on that home, whose conf names no running container; step 0 also records
+    the real `docker inspect --type container` shape of a tmpfs data mount (clearance's store check has met only the
+    fake).
 
   Its PG binding needs psycopg on the host. The kit would copy psycopg 3.2.3 from the policy stream's venv into
   `gatefix/pylib`; that copy is a labelled deviation, disclosed and not yet done.
@@ -800,7 +802,10 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   they show nothing. Clearance itself checks every other store that still exists (a conf-named container, or one a v2
   gate admitted): from `docker inspect` at the seal, its data directory must be on a single tmpfs mount, with nothing
   mounted below it. A pre-v3 store already removed cannot be shown: a home whose ledger holds one cannot be cleared
-  (its way out is a fresh home, which H-1's per-generation rule gives anyway). A named volume, a
+  (its way out is a fresh home, which H-1's per-generation rule gives anyway).
+- Conf names are read again at teardown and at stage-check: any container that carries a conf name and is not in the
+  seal refuses the receipt (before anything is deleted) and fails the check. Until H-1, `host/bootstrap.py` reuses an
+  existing `secrets/pw_*` file, so a store recreated under the conf name after the seal holds the sealed passwords. A named volume, a
   bind mount or the container layer is "not shown". A 64-hex token from an unreadable replaced-ledger line is only an
   Id that must be absent, not a store. Stage-check FAILs when the receipt names no store (nothing shows the
   credentials dead) or names a store whose destruction is not shown. Until H-8 lands, the gate admits no run on the
@@ -814,12 +819,13 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   anyway; the scan could not complete, so fix it and seal again BEFORE teardown, or the set can never be scanned; no
   store; a store not shown on tmpfs), 2 (not sealed); teardown 0 (receipt written), 1 (refused), 2 (no seal or usage);
   stage-check and verify-copy 0 or 1.
-- LIMITS clearance v2 is a constant in the tool, printed with every result and copied into the receipt. v1 (73549e4)
-  claimed destruction for conf-named containers that nothing had shown to be on a tmpfs. v2 states, and enforces,
-  the store rule above.
+- LIMITS clearance v3 is a constant in the tool, printed with every result and copied into the receipt. v1 (73549e4)
+  claimed destruction for conf-named containers that nothing had shown to be on a tmpfs. v2 (4a3640b, reworded at
+  1d22146 for the format-3 rule) states and enforces the store rule. v3 adds the conf names read again at teardown
+  and at stage-check.
 Hand-off H-9 (runkit/stage_results.py, the repo author's file): refuse a source set unless `verify-copy` passes on
 it, and carry CLEARANCE.json, CLEARANCE.check.json and CLEARANCE.seal.json into the committed set unchanged.
-Evidence (offline). `tests/test_clearance.py` has 24 tests, all passing (blob 3d33f9f). Every ledger record in them
+Evidence (offline). `tests/test_clearance.py` has 26 tests, all passing (blob 4f31fce). Every ledger record in them
 is written by the gate's own `Ledger`, and a fake docker accepts only the exact calls clearance makes (`ps`, `rm -fv`,
 `inspect --type container`). Each red receipt names the test blob it ran:
 - `reviewF-clearance-absent-8668f5e.tree.red.out` (blob 0eae9c4, 19 tests): with the tool absent, 23 of 23 cases
@@ -835,6 +841,9 @@ is written by the gate's own `Ledger`, and a fake docker accepts only the exact 
   not a red test.
 - `reviewF-clearance-pre-v3-admit-4a3640b.red.out` (blob 3d33f9f, 24 tests): the committed 4a3640b, which took any
   admit as proof, fails exactly `test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing`.
+- `reviewF-clearance-conf-name-late-1d22146.red.out` (blob 4f31fce, 26 tests): the committed 1d22146, which resolved
+  conf names only at the seal, fails exactly `test_store_started_under_a_conf_name_after_the_seal_fails`. The new
+  positive control, with SET = `WP_HOME/results` itself, passes there.
 
 While the tool was being built, a test found that wp.config's `NotThisStream` is a `SystemExit`, which would have
 printed the home path; the tool catches it. Live: 6.7.
@@ -925,7 +934,10 @@ the module absent (`reviewF-sink-absent-e21b99b.tree.red.out`, 9 errors) and aga
   (wp/keys.py chain_key) has no creation call of its own: H-3 registers it there, and no fence checks that call.
 - H-6 the gated chain's runbook: seal, scan, teardown, receipt and stage-check after the last experiment of a chain
   (runkit/README.md steps 5 and 6: `runkit/clearance.py seal`, `teardown --remove`, `stage-check`, and `verify-copy`
-  on the workstation copy), before any result is committed.
+  on the workstation copy), before any result is committed. Constraints on that runbook, for main to decide with
+  the hardening owner: a home whose ledger holds an admit by the v2 gate (no format field) for a store already removed
+  can never be cleared (7.4, stores), so each chain should start in a fresh home; and until H-8 the gate admits no
+  run on the real stores, so `--remove` removes none of them: their owner removes them by hand before teardown.
 - H-9 runkit/stage_results.py: refuse a source set unless `clearance.py verify-copy` passes on it, and carry the three
   CLEARANCE files into the committed set unchanged (7.4).
 - H-7 THRESHOLDS.md: append H6c (6.6).
