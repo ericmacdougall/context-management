@@ -54,6 +54,9 @@ class Stage(unittest.TestCase):
                 {"kind": "end", "run": RUN, "verdict": verdict, "files": self.files if files is None else files,
                  "commit": COMMIT, "gate": "disk_gate v5"}]
         raw = chain(recs)
+        lines = raw.split(b"\n")[:-1]
+        (self.tmp / "stop_ledger.head").write_text(json.dumps(        # the gate's head anchor, copied with the ledger
+            {"count": len(lines), "tip": hashlib.sha256(lines[-1]).hexdigest(), "at": "2026-11-18T00:00:00Z"}))
         if edit:
             raw = raw.replace(b'"verdict": "VOID"', b'"verdict": "VALID"')
         p = self.tmp / "stop_ledger.jsonl"

@@ -1,0 +1,7 @@
+# failing-first receipt (own interface): a108fc3:writepath/runkit/stage_results.py blob e7a906eb36edcc5849363c004aa589a9a25eace9
+# input: one JSON row that no gate run, end record or ledger lists; command: HOST_HOME=/nohome/ python3 old_stage_results.py groups.tsv results ab dst
+files 1
+exit 0
+staged files:
+./MANIFEST.tsv
+./forged-group/forged.0000000000000000.json

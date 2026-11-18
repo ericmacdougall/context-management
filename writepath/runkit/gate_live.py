@@ -10,8 +10,10 @@ as in a real run; after start the gate addresses the containers by the IDs in it
 
 usage (on the lab host, in a gate-test home):
   WP_HOME=~/emlab2-16096/gatefix/home GATE_LIVE_ES=emlab2-gatefix-es GATE_LIVE_PG=emlab2-gatefix-pg \\
-      python3 runkit/gate_live.py init <reason>|start|check <label>|end|stop <reason>|stops|clear-stop <id> <reason>|\\
-      abort <reason>|ledger-reset <reason>"""
+      python3 -B <pinned tree>/runkit/gate_live.py init <reason>|run <label> <module> [args]|stop <reason>|stops|\\
+      clear-stop <id> <reason>|abort <run> <reason>|verdict <run>|ledger-reset <reason>
+Gate v5 (GATE-DESIGN 8): `run` admits only from a pinned tree directly under the gate-test home's runs/ whose files
+equal its TREE.manifest, so run this file from such a tree (sync, pin_run.sh), never from src."""
 import os
 import pathlib
 import sys

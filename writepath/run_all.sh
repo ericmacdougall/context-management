@@ -3,6 +3,9 @@
 # overwrite mid-run). One reported run per experiment; no partial reruns. WP_HOME is required (wp/config.py refuses
 # to start without it and without this stream's conf marker).
 # Output: WP_HOME/results/<name>.<sha16>.json (content-addressed) and WP_HOME/results/run_all.<head>.out
+# NOT A STAMPED PATH since gate v5 (runkit/GATE-DESIGN.md 8.2): the gate's start, check and end commands are gone and
+# exit 2, so this script stops BLOCKED at its first gate call. Stamped runs go through runkit/chain_singles.sh
+# (exp.disk_gate run). Kept for the history of the earlier batches.
 set -u
 : "${WP_HOME:?WP_HOME must name the home of this stream}"
 export WP_HOME
