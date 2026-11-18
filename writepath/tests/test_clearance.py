@@ -333,6 +333,18 @@ class Clearance(unittest.TestCase):
                 for p in {str(self.tmp), os.path.realpath(self.tmp)}:
                     self.assertNotIn(p, out, f"{cmd} printed an absolute path")
 
+    def test_remove_spares_a_conf_named_container_this_ledger_never_admitted(self):
+        """A shared host: another home with the same conf names runs stores under the same names. They are sealed (they
+        may hold this home's credentials) but --remove must not destroy them; teardown refuses until their owner acts."""
+        (self.dock / f"{self.es}.name").unlink()               # this home's admitted ES is gone
+        stranger = self.container("emlab2-wphard-es")           # a store under the conf name, never admitted here
+        self.assertEqual(self.seal()[0], 0)
+        self.assertIn(stranger, self.receipt("CLEARANCE.seal.json")["containers"], "a conf-named container was not sealed")
+        rc, _ = self.teardown()
+        self.assertEqual(rc, 1, "teardown wrote a receipt while a conf-named container exists")
+        self.assertTrue(self.exists(stranger), "--remove destroyed a container this home's ledger never admitted")
+        self.assertFalse(self.exists(self.pg), "--remove spared an admitted container of the stream")
+
     def test_remove_spares_a_container_outside_the_stream_prefix(self):
         other = self.container("other-stream-es")
         self.run_ledger(other, self.pg)

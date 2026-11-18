@@ -1,0 +1,44 @@
+# failing-first receipt
+# date: 2026-11-18T01:30:51Z
+# file under test: 73549e4:writepath/runkit/clearance.py blob 8da2c52ce85e963916f48175c80b3bfa3a327ba5 sha256 f746df96a97f42ba042fd797328abef8569539d4db31cdc5cdcd75d9f1ef330c
+# tree: writepath at 73549e4 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_clearance.py from HEAD 73549e4 blob 72289615236d673f7cf832e35f1a811a6b03a7ea
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_clearance
+test_credential_file_after_teardown_fails (tests.test_clearance.Clearance) ... ok
+test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance) ... ok
+test_docker_error_is_never_gone (tests.test_clearance.Clearance) ... ok
+test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) ... ok
+test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance) ... ok
+test_no_receipt_no_staging (tests.test_clearance.Clearance) ... ok
+test_open_run_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_receipted_container_back_fails (tests.test_clearance.Clearance) ... ok
+test_remove_spares_a_conf_named_container_this_ledger_never_admitted (tests.test_clearance.Clearance)
+A shared host: another home with the same conf names runs stores under the same names. They are sealed (they ... FAIL
+test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance) ... ok
+test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) ... ok
+test_seal_teardown_stage_check (tests.test_clearance.Clearance) ... ok
+test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance) ... ok
+test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance) ... ok
+test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance) ... ok
+test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance) ... ok
+
+======================================================================
+FAIL: test_remove_spares_a_conf_named_container_this_ledger_never_admitted (tests.test_clearance.Clearance)
+A shared host: another home with the same conf names runs stores under the same names. They are sealed (they
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.xVQf1qJnuh/writepath/tests/test_clearance.py", line 344, in test_remove_spares_a_conf_named_container_this_ledger_never_admitted
+    self.assertEqual(rc, 1, "teardown wrote a receipt while a conf-named container exists")
+AssertionError: 0 != 1 : teardown wrote a receipt while a conf-named container exists
+
+----------------------------------------------------------------------
+Ran 20 tests in 23.568s
+
+FAILED (failures=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_clearance tests/test_clearance.py b40eafa0378b31cd
+# exit status: 1

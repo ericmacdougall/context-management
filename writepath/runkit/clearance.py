@@ -10,8 +10,8 @@ byte-for-byte the one sealed, and that the defence-in-depth scan of it (runkit/l
       credential by inventory id, class, source number and SHA-256; the scanner's result. Writes SET/CLEARANCE.seal.json.
       Exit 0 sealed and the scan clean, 1 sealed and the scan not clean (teardown still proceeds), 2 not sealed.
   teardown WP_HOME SET [--remove]
-      --remove runs `docker rm -fv` on each sealed container that still exists and whose name starts with the stream's
-      OWN_PREFIX; then requires every sealed Id absent from a successful `docker ps -a --no-trunc`, removes every
+      --remove runs `docker rm -fv` on each sealed container that still exists, that this home's ledger admitted, and
+      whose name starts with the stream's OWN_PREFIX (a container named only by the conf is never removed); then requires every sealed Id absent from a successful `docker ps -a --no-trunc`, removes every
       non-directory entry in WP_HOME/secrets*, WP_SECRETS_DIR and WP_HOME/svc and the file oldhome/pgpass, and writes
       SET/CLEARANCE.json and WP_HOME/state/clearance.last.json. Exit 0 receipt written, 1 refused, 2 no seal or usage.
   stage-check WP_HOME SET
@@ -480,10 +480,15 @@ def teardown(home, s, remove):
         raise Refused(why[0])
     listing = containers()
     present = sorted(c for c in sealed if c in listing)
-    removed, foreign = [], [c for c in present if not listing[c].startswith(g.config.OWN_PREFIX)]
+    # --remove destroys only what this home's ledger admitted, under the stream's prefix: a container named only by
+    # the conf may be another home's store on a shared host (the same conf names), so its owner removes it.
+    admitted = {c for c, src in sl["container_sources"].items() if not src.startswith("conf ")}
+    foreign = [c for c in present if c in admitted and not listing[c].startswith(g.config.OWN_PREFIX)]
+    conf_only = [c for c in present if c not in admitted]
+    removed = []
     if remove:
         for c in present:
-            if c in foreign:
+            if c in foreign or c in conf_only:
                 continue
             r = subprocess.run(["docker", "rm", "-fv", c], capture_output=True, text=True, timeout=600,
                                stdin=subprocess.DEVNULL)
@@ -493,9 +498,15 @@ def teardown(home, s, remove):
         listing = containers()
         present = sorted(c for c in sealed if c in listing)
     if present:
+        spared = []
+        if remove and foreign:
+            spared.append(f"{len(foreign)} with a name outside the stream prefix {g.config.OWN_PREFIX}")
+        if remove and conf_only:
+            spared.append(f"{len(conf_only)} named only by the conf, never admitted in this home's ledger (on a shared "
+                          "host they may be another home's stores)")
         raise Refused(f"{len(present)} sealed container(s) still exist ({', '.join(c[:12] for c in present)})" +
-                      (f"; {len(foreign)} not removed by --remove: name outside the stream prefix "
-                       f"{g.config.OWN_PREFIX}" if foreign and remove else "") + ": remove them, then run again")
+                      (f"; not removed by --remove: {'; '.join(spared)}" if spared else "") +
+                      ": if they are this home's stores, remove them (docker rm -fv), then run teardown again")
     locs, bad = locations(home)
     if bad:
         raise Refused(bad[0])

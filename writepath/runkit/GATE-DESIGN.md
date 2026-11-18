@@ -672,6 +672,31 @@ exists in any form, start is BLOCKED and check and end are VOID; `disk_gate reti
 aside unread and records a stop to acknowledge." Restart semantics and recovery are in 5.6: a container stop or
 restart loses its store, the run is VOID, and setup runs again, which under section 7 also means new credentials.
 
+### 6.7 As built, evidence, and the live state (2026-11-18)
+- Sequence: design 201612d, red tests 13dc47d, gate v4 cf8f322 (exp/disk_gate.py, runkit/launch_one.sh: `version`
+  before `start`; a gate that cannot name itself runs nothing).
+- Red, made by `runkit/failing_first.sh` in a temporary tree of f666f4d (the v3 gate review F read):
+  `reviewF-gate-v4-disk_gate-f666f4d.red.out` (79 tests, 31 failures, 1 skip) and
+  `reviewF-gate-v4-launch_one-f666f4d.red.out` (8 tests, 3 failures).
+- Green at cf8f322 and still at the head of this branch: `python3 -m unittest tests.test_disk_gate` 80 tests OK;
+  `tests.test_chain_singles` OK.
+- Live: NOT RUN. On 2026-11-18, t2-dev had 17 GB free on the host home volume, under the 20 GB start bar that is never
+  lowered, and the lab run lock was held by another stream's owner (since 00:22Z). So A-1 to A-6 are still
+  ASSUMPTIONs, and the gate fails closed on each. With B4 in force, every start on the stream's own containers is
+  BLOCKED with the inode reason until bootstrap mounts each data tmpfs with `nr_inodes=0` (H-8).
+- The live kit, when the lock and space allow, runs on the stream's own `emlab2-gatefix-*` containers only:
+  - step 0 observes A-1 to A-6;
+  - valid control;
+  - a second PG container behind the endpoint: BLOCKED;
+  - a tablespace, and separately pg_wal, outside the tmpfs: BLOCKED;
+  - a limited nr_inodes: BLOCKED, and slab memory rising under nr_inodes=0 (A-6);
+  - threshold_enabled=false mid-run: VOID;
+  - a state/STOP touch: VOID, next start BLOCKED, retire-legacy-stop, then ack;
+  - clearance: seal, teardown, stage-check on that home, whose conf names no running container.
+
+  Its PG binding needs psycopg on the host. The kit would copy psycopg 3.2.3 from the policy stream's venv into
+  `gatefix/pylib`; that copy is a labelled deviation, disclosed and not yet done.
+
 ## 7. Clearance by teardown (review F, scanner half, 2026-11-17)
 
 ### 7.1 The class and the research
@@ -748,8 +773,11 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   token it holds (extra Ids cost nothing: they must be absent). Admit Ids must be full 64-hex Docker Ids. The
   containers the conf names are added when they exist.
 - "Gone" is a positive observation: `docker ps -a --no-trunc` succeeded and the Id is not in it. A Docker error is
-  never "gone". `--remove` runs `docker rm -fv` only on sealed Ids whose current name starts with the stream's
-  `OWN_PREFIX` (wp/config.py); any other sealed container that still exists makes teardown refuse.
+  never "gone". `--remove` runs `docker rm -fv` only on sealed Ids that this home's ledger admitted and whose
+  current name starts with the stream's `OWN_PREFIX` (wp/config.py). A container named only by the conf is sealed but
+  never removed: on a shared host another home with the same conf runs stores under the same names (t2-dev, 2026-11-18:
+  `emlab2-wphard-es` and `-pg` were up). Any sealed container that still exists makes teardown refuse; its owner
+  removes it.
 - Credential locations: every `WP_HOME/secrets*` directory, `WP_SECRETS_DIR` when set (it must lie inside WP_HOME),
   `WP_HOME/svc` (h_d2_uids copies credentials there for its service uids and removes it with its root helper at the
   end of its run), and `oldhome/pgpass`. Teardown removes every non-directory entry under them (links are removed,
@@ -770,13 +798,13 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
 - LIMITS clearance v1 is a constant in the tool, printed with every result and copied into the receipt.
 Hand-off H-9 (runkit/stage_results.py, the repo author's file): refuse a source set unless `verify-copy` passes on
 it, and carry CLEARANCE.json, CLEARANCE.check.json and CLEARANCE.seal.json into the committed set unchanged.
-Evidence (offline): `tests/test_clearance.py`, 19 tests. Every ledger record in them is written by the gate's own
+Evidence (offline): `tests/test_clearance.py`, 20 tests. Every ledger record in them is written by the gate's own
 `Ledger`, and a fake docker accepts only the exact calls clearance makes. Red in a temporary tree from 8668f5e
 (`runkit/failing_first_variant.sh`): with the tool absent, 23 of 23 cases fail
 (`reviewF-clearance-absent-8668f5e.tree.red.out`); against variant a, where a Docker error reads as an empty list,
 exactly `test_docker_error_is_never_gone` fails (`reviewF-clearance-broken-a-error-is-gone.red.out`); against variant
 b, which finds `secrets*` directories by following links, exactly `test_deletion_stays_inside_wp_home` fails
-(`reviewF-clearance-broken-b-follows-links.red.out`). While the tool was being built, a test found that wp.config's
+(`reviewF-clearance-broken-b-follows-links.red.out`). A later test, that `--remove` spares a container the conf names but this home's ledger never admitted, failed against the committed 73549e4 (`reviewF-clearance-conf-only-73549e4.red.out`, made by `runkit/failing_first.sh`: exactly that test) and passes with the fix. While the tool was being built, a test found that wp.config's
 `NotThisStream` is a `SystemExit`, which would have printed the home path; the tool catches it. Live: 6.7.
 
 ### 7.5 Scanner v4 (runkit/leak_scan.py), narrowed
