@@ -71,7 +71,8 @@ class D3Store(unittest.TestCase):
         a = db.admin(db="postgres")
         a.execute(f'create database "{cls.name}"')
         a.execute(f'revoke connect on database "{cls.name}" from public')
-        a.execute(f'grant connect on database "{cls.name}" to wp_app, wp_legal, ' + ", ".join(db.REVIEWERS))
+        a.execute(f'grant connect on database "{cls.name}" to wp_app, wp_legal, wp_verifier, wp_sealer, wp_broker, '
+                  + ", ".join(db.REVIEWERS))
         a.close()
         ev = db.admin(db=cls.name)
         ev.execute("drop schema public cascade")
@@ -1042,14 +1043,23 @@ class D3Store(unittest.TestCase):
         self.assertEqual(left, ["q-held", "q-new"], "a quarantine row scanned before the identifier existed survived the erasure")
 
     def test_s8_seal_keys_are_private(self):
+        """Every login role of the deployment, wp_verifier, wp_sealer and wp_broker included (review J M6): none reads
+        the seal keys, none installs one, none is a member of wp_owner."""
+        extra = [(r, self.db.connect(db=self.name, application_name=f"wp-s8-{r}", role=r))
+                 for r in ("wp_verifier", self.db.SEALER, "wp_broker")]
         lg = self.legal("wp-s8-legal")
         try:
-            for name, conn in (("wp_app", self.app), ("reviewer 1", self.r1), ("reviewer 2", self.r2), ("wp_legal", lg)):
+            for name, conn in [("wp_app", self.app), ("reviewer 1", self.r1), ("reviewer 2", self.r2), ("wp_legal", lg)] + extra:
                 self.assertEqual(self.state(conn, "select * from wp_seal.seal_keys"), "42501", f"{name} can read the seal keys")
-            self.assertEqual(self.state(self.app, "select wp_seal.install('x', %s, %s)", (b"\x00" * 64, b"\x00" * 64)), "42501",
-                             "wp_app can install a seal key")
+                self.assertEqual(self.state(conn, "select wp_seal.install('x', %s, %s)", (b"\x00" * 64, b"\x00" * 64)), "42501",
+                                 f"{name} can install a seal key")
+            for r in ("wp_app", "wp_legal", "wp_verifier", self.db.SEALER, "wp_broker") + tuple(self.db.REVIEWERS):
+                self.assertFalse(self.ev.execute("select pg_has_role(%s, 'wp_owner', 'member')", (r,)).fetchone()[0],
+                                 f"{r} is a member of wp_owner")
         finally:
             lg.close()
+            for _, c in extra:
+                c.close()
 
     def test_s9_unknown_inactive_key_and_bad_mac(self):
         t = "d3s9"

@@ -54,10 +54,22 @@ def run_one(arm):
     es.req("PUT", f"/{config.INDEX_PREFIX}zz-rogue")
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     (config.LOG_DIR / "rogue.txt").write_text("x")
+    # review J M5: a large object (wp_app can create one by default) and a data stream under the prefix
+    lo = conn.execute("select lo_from_bytea(0, 'zqrogue'::bytea)").fetchone()[0]
+    P = config.INDEX_PREFIX
+    ds_t = es.req("PUT", "/_index_template/zz-rogue-ds", {"index_patterns": [f"{P}zzds*"], "data_stream": {}, "priority": 900},
+                  ok=None)[0]
+    ds = es.req("PUT", f"/_data_stream/{P}zzds1", ok=None)[0]
     flagged = registry.unregistered(vc, vk, es)
-    out["controls_flagged"] = {"table": "pg:rogue_cache" in flagged, "index": f"es-index:{config.INDEX_PREFIX}zz-rogue" in flagged,
-                               "logfile": any(f.endswith("rogue.txt") for f in flagged)}
-    adm.execute("drop table rogue_cache"); es.req("DELETE", f"/{config.INDEX_PREFIX}zz-rogue"); (config.LOG_DIR / "rogue.txt").unlink()
+    out["controls_setup"] = {"lo": lo is not None, "ds_template": ds_t, "ds": ds}
+    out["controls_flagged"] = {"table": "pg:rogue_cache" in flagged, "index": f"es-index:{P}zz-rogue" in flagged,
+                               "logfile": any(f.endswith("rogue.txt") for f in flagged),
+                               "large_object": "pg:large_objects(1)" in flagged,
+                               "data_stream": f"es-datastream:{P}zzds1" in flagged,
+                               "ds_backing_index": any(f.startswith(f"es-index:.ds-{P}zzds1") for f in flagged)}
+    adm.execute("drop table rogue_cache"); es.req("DELETE", f"/{P}zz-rogue"); (config.LOG_DIR / "rogue.txt").unlink()
+    adm.execute("select lo_unlink(%s)", (lo,))
+    es.req("DELETE", f"/_data_stream/{P}zzds1", ok=None); es.req("DELETE", "/_index_template/zz-rogue-ds", ok=None)
     out["unregistered_after_cleanup"] = registry.unregistered(vc, vk, es)
     out["stores_registered"] = len(registry.STORES)
     out["stores_verifiable"] = [s.name for s in registry.verifiable()]

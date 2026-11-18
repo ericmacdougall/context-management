@@ -1,0 +1,38 @@
+# offline modules from a working-tree copy (m5m6-red-ec86d75), run 2026-11-18T22:01:27Z: python -m unittest tests.test_m5m6_statics
+FFFF
+======================================================================
+FAIL: test_rg1_large_objects_and_data_streams (tests.test_m5m6_statics.Registry.test_rg1_large_objects_and_data_streams)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m5m6-red-ec86d75.Zn2H/writepath/tests/test_m5m6_statics.py", line 116, in test_rg1_large_objects_and_data_streams
+    self.assertIn(want, got)
+AssertionError: 'pg:large_objects(2)' not found in []
+
+======================================================================
+FAIL: test_rg2_temporary_revoked (tests.test_m5m6_statics.Statics.test_rg2_temporary_revoked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m5m6-red-ec86d75.Zn2H/writepath/tests/test_m5m6_statics.py", line 76, in test_rg2_temporary_revoked
+    self.assertTrue(re.search(r"revoke temporary on database", s), "TEMPORARY is not revoked from public")
+AssertionError: None is not true : TEMPORARY is not revoked from public
+
+======================================================================
+FAIL: test_st1_real_source_clean (tests.test_m5m6_statics.Statics.test_st1_real_source_clean)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m5m6-red-ec86d75.Zn2H/writepath/tests/test_m5m6_statics.py", line 61, in test_st1_real_source_clean
+    self.assertIn("S7", out, "no static check on privileges over wp_seal or wp_owner")
+AssertionError: 'S7' not found in {'S1': [], 'S2': [], 'S3': [], 'S4': [], 'S5': [], 'S6': []} : no static check on privileges over wp_seal or wp_owner
+
+======================================================================
+FAIL: test_st2_mutations_flagged (tests.test_m5m6_statics.Statics.test_st2_mutations_flagged)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m5m6-red-ec86d75.Zn2H/writepath/tests/test_m5m6_statics.py", line 72, in test_st2_mutations_flagged
+    self.assertTrue(out.get(k), f"{k} misses {add.strip()!r}")
+AssertionError: [] is not true : S5 misses 'create unlogged table ghost_u (x text);'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.113s
+
+FAILED (failures=4)

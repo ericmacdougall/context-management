@@ -85,6 +85,8 @@ def main(reset):
     admin.execute(f'grant connect on database "{config.EVENTS_DB}" to wp_app, wp_verifier, wp_legal, wp_broker, wp_sealer, ' + ', '.join(db.REVIEWERS))
     admin.execute(f'revoke connect on database "{config.KEYS_DB}" from public')
     admin.execute(f'grant connect on database "{config.KEYS_DB}" to wp_kms, wp_verifier')
+    for d in (config.EVENTS_DB, config.KEYS_DB):      # review J M5: no role needs temp tables; another session's temp
+        admin.execute(f'revoke temporary on database "{d}" from public')   # table would hold every erasure open
     admin.execute("grant pg_checkpoint to wp_kms with inherit true")
     admin.execute("grant pg_read_all_stats to wp_kms with inherit true")   # purge() reads other backends' xid/xmin
     # item 1 (4960f50 round): on PG 16 no setting bounds a transaction that keeps issuing short statements

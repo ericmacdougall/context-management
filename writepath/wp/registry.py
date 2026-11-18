@@ -110,8 +110,16 @@ def unregistered(conn, kconn, es):
     out += [f"pg:{r}" for r in sorted(_pg_relations(conn) - pg)]
     kk = {s.where for s in STORES if s.kind == "keys"}
     out += [f"keys:{r}" for r in sorted(_pg_relations(kconn) - kk)]
+    for tag, c in (("pg", conn), ("keys", kconn)):    # review J M5: large objects are a store no relation lists
+        n = c.execute("select count(*) from pg_largeobject_metadata").fetchone()[0]
+        if n:
+            out.append(f"{tag}:large_objects({n})")
     fam_rx = re.compile(rf"^{re.escape(P)}[a-z0-9_]+-({'|'.join(map(re.escape, F.FAMILIES))})-base$")
-    out += [f"es-index:{i}" for i in sorted(es.indices(P + "*")) if not fam_rx.match(i)]
+    # review J M5: data streams and their backing indices (.ds-<name>-...) do not match the prefix; none is registered
+    idx = {i for i in es.indices(P + "*") if not fam_rx.match(i)} | set(es.indices(".ds-" + P + "*"))
+    out += [f"es-index:{i}" for i in sorted(idx)]
+    s, j = es.req("GET", f"/_data_stream/{P}*", ok=(200, 404), expand_wildcards="all")
+    out += [f"es-datastream:{d['name']}" for d in (j.get("data_streams", []) if s == 200 else [])]
     alias_rx = re.compile(rf"^{re.escape(P)}[a-z0-9_]+-({'|'.join(map(re.escape, F.FAMILIES))})(-w\d+|-x)?$")
     for i, als in es.alias_map(P + "*").items():
         out += [f"es-alias:{a}" for a in sorted(als) if not alias_rx.match(a)]
