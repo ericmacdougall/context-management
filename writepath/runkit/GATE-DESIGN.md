@@ -733,6 +733,52 @@ What (1) does not cover: confidentiality of data encrypted or keyed under a leak
 (7.3); operator credentials; secrets of other streams; values written before this design to sets already committed
 (those sets keep their stated limits: results/README.md).
 
+**As built (amended before the code; it replaces the bullets above where they differ).** Usage:
+`python3 runkit/clearance.py seal WP_HOME SET (--keystore-container NAME | --no-keystore REASON)`, `teardown WP_HOME
+SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
+- The set is bound by a manifest, not by times: seal records the SHA-256 of every file in SET (the three CLEARANCE
+  files excepted), taken before and after the scan and required equal. Teardown and stage-check fail on any file
+  added, changed or removed since; "newer than the receipt" would miss a removed file and a preserved mtime. Any
+  entry in SET that is not a regular file or directory (link, FIFO, socket, device) refuses the seal.
+- The ledger is read by the gate's own code (`exp/disk_gate.py` `Ledger`, under its lock, with its hash-chain and
+  head-anchor verification), so the reader cannot drift from the writer. Seal refuses while a run is open (an admit
+  without an end). Admits are taken since the previous receipt's anchor (`state/clearance.last.json`: sequence and
+  record hash at that seal); when there is no anchor, or it no longer matches (a `ledger-reset`), seal takes every
+  admit in the ledger and in every `stop_ledger.broken-*.jsonl`, where an unparsable line contributes every 64-hex
+  token it holds (extra Ids cost nothing: they must be absent). Admit Ids must be full 64-hex Docker Ids. The
+  containers the conf names are added when they exist.
+- "Gone" is a positive observation: `docker ps -a --no-trunc` succeeded and the Id is not in it. A Docker error is
+  never "gone". `--remove` runs `docker rm -fv` only on sealed Ids whose current name starts with the stream's
+  `OWN_PREFIX` (wp/config.py); any other sealed container that still exists makes teardown refuse.
+- Credential locations: every `WP_HOME/secrets*` directory, `WP_SECRETS_DIR` when set (it must lie inside WP_HOME),
+  `WP_HOME/svc` (h_d2_uids copies credentials there for its service uids and removes it with its root helper at the
+  end of its run), and `oldhome/pgpass`. Teardown removes every non-directory entry under them (links are removed,
+  never followed; nothing outside the resolved WP_HOME is touched); a `secrets*` entry that is not a real directory,
+  or a directory that cannot be listed or emptied (the service uids' 0700 directories), refuses the receipt and
+  names the way out (h_d2_uids' cleanup through its root helper). Stage-check requires them empty and listable.
+- The receipt records each inventoried value by inventory id, class, `source #k` (the scanner's numbering) and the
+  SHA-256 of its inventoried form (file values as bytes, key-store keys as their hex text); deleted entries are
+  counted per location, never named; no absolute path appears in any CLEARANCE file. A bare SHA-256 is safe to
+  publish for the stream's generated values (`token_urlsafe(32)`, `os.urandom`); it would be a dictionary target for a
+  low-entropy value, which H-1 rules out, and the value is dead after teardown in any case.
+- stage-check writes `SET/CLEARANCE.check.json` (PASS or FAIL, with the receipt's SHA-256) on every run. `verify-copy
+  COPY` checks a copy fetched from the host before `runkit/stage_results.py` rewrites it: receipt present and torn
+  down, recorded scan exit 0, a PASS check bound to that receipt, and the copy's files equal to the manifest. It does
+  not see Docker or WP_HOME; stage-check on the host does.
+- Exit codes: seal 0 (sealed, scan clean), 1 (sealed, scan not clean: teardown still proceeds, staging is blocked), 2
+  (not sealed); teardown 0 (receipt written), 1 (refused), 2 (no seal or usage); stage-check and verify-copy 0 or 1.
+- LIMITS clearance v1 is a constant in the tool, printed with every result and copied into the receipt.
+Hand-off H-9 (runkit/stage_results.py, the repo author's file): refuse a source set unless `verify-copy` passes on
+it, and carry CLEARANCE.json, CLEARANCE.check.json and CLEARANCE.seal.json into the committed set unchanged.
+Evidence (offline): `tests/test_clearance.py`, 19 tests. Every ledger record in them is written by the gate's own
+`Ledger`, and a fake docker accepts only the exact calls clearance makes. Red in a temporary tree from 8668f5e
+(`runkit/failing_first_variant.sh`): with the tool absent, 23 of 23 cases fail
+(`reviewF-clearance-absent-8668f5e.tree.red.out`); against variant a, where a Docker error reads as an empty list,
+exactly `test_docker_error_is_never_gone` fails (`reviewF-clearance-broken-a-error-is-gone.red.out`); against variant
+b, which finds `secrets*` directories by following links, exactly `test_deletion_stays_inside_wp_home` fails
+(`reviewF-clearance-broken-b-follows-links.red.out`). While the tool was being built, a test found that wp.config's
+`NotThisStream` is a `SystemExit`, which would have printed the home path; the tool catches it. Live: 6.7.
+
 ### 7.5 Scanner v4 (runkit/leak_scan.py), narrowed
 Its statement is "these inventoried values were not found in these representations and views"; it never says a set
 holds no secrets. Fixes:
@@ -818,7 +864,10 @@ the module absent (`reviewF-sink-absent-e21b99b.tree.red.out`, 9 errors) and aga
   wp/keys.py KeyService.keys, tenant_hmac and tenant_hmac_many (os.urandom); wp/setup.py _ensure_roles. The chain key
   (wp/keys.py chain_key) has no creation call of its own: H-3 registers it there, and no fence checks that call.
 - H-6 the gated chain's runbook: seal, scan, teardown, receipt and stage-check after the last experiment of a chain
-  (runkit/README.md step 6), before any result is committed.
+  (runkit/README.md steps 5 and 6: `runkit/clearance.py seal`, `teardown --remove`, `stage-check`, and `verify-copy`
+  on the workstation copy), before any result is committed.
+- H-9 runkit/stage_results.py: refuse a source set unless `clearance.py verify-copy` passes on it, and carry the three
+  CLEARANCE files into the committed set unchanged (7.4).
 - H-7 THRESHOLDS.md: append H6c (6.6).
 - H-8 host/bootstrap.py (5.6, gate v4 B4): mount each store's data tmpfs with `nr_inodes=0`, in the Docker form 6.7
   records from the live step (A-1). Until then gate v4 BLOCKS every start on the stream's own containers with the

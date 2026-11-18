@@ -1,0 +1,281 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T01:26:30Z
+# tree: writepath at 8668f5e (git archive); the current tests/ copied into it; run from it
+# module under test: none (CLEARANCE_UNDER_TEST unset; the module is absent at 8668f5e)
+# test file: tests/test_clearance.py from HEAD 8668f5e blob 0eae9c49d73f4d56535d9452554f5bf4f8d39482
+# command: (cd <tree>/writepath && python3 -m unittest -v tests.test_clearance)
+test_credential_file_after_teardown_fails (tests.test_clearance.Clearance) ... FAIL
+test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance) ... FAIL
+test_docker_error_is_never_gone (tests.test_clearance.Clearance) ... FAIL
+test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance) ... FAIL
+test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) ... test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance) ... FAIL
+test_no_receipt_no_staging (tests.test_clearance.Clearance) ... FAIL
+test_open_run_refuses_the_seal (tests.test_clearance.Clearance) ... FAIL
+test_receipted_container_back_fails (tests.test_clearance.Clearance) ... FAIL
+test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance) ... FAIL
+test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance) ... FAIL
+test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance) ... FAIL
+test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) ... test_seal_teardown_stage_check (tests.test_clearance.Clearance) ... FAIL
+test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance) ... FAIL
+test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) ... test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance) ... FAIL
+test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance) ... FAIL
+test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance) ... FAIL
+
+======================================================================
+FAIL: test_credential_file_after_teardown_fails (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 210, in test_credential_file_after_teardown_fails
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 315, in test_deletion_stays_inside_wp_home
+    self.assertEqual(self.seal()[0], 0)
+AssertionError: 2 != 0
+
+======================================================================
+FAIL: test_docker_error_is_never_gone (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 295, in test_docker_error_is_never_gone
+    self.assertEqual(rc, 1, "teardown took an unreachable Docker for 'gone'")
+AssertionError: 2 != 1 : teardown took an unreachable Docker for 'gone'
+
+======================================================================
+FAIL: test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 260, in test_edited_ledger_refuses_the_seal
+    self.assertEqual((rc, "NOT SEALED" in out), (2, True), "seal accepted a ledger with an admit record removed")
+AssertionError: Tuples differ: (2, False) != (2, True)
+
+First differing element 1:
+False
+True
+
+- (2, False)
++ (2, True) : seal accepted a ledger with an admit record removed
+
+======================================================================
+FAIL: test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) (cmd='seal')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 331, in test_home_of_another_stream_is_refused_without_its_path
+    self.assertEqual((rc, "NOT SEALED" in out or "FAIL" in out), (2 if cmd == "seal" else 1, True),
+AssertionError: Tuples differ: (2, False) != (2, True)
+
+First differing element 1:
+False
+True
+
+- (2, False)
++ (2, True) : seal ran on a home that is not this stream's
+
+======================================================================
+FAIL: test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) (cmd='stage-check')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 331, in test_home_of_another_stream_is_refused_without_its_path
+    self.assertEqual((rc, "NOT SEALED" in out or "FAIL" in out), (2 if cmd == "seal" else 1, True),
+AssertionError: Tuples differ: (2, False) != (1, True)
+
+First differing element 0:
+2
+1
+
+- (2, False)
++ (1, True) : stage-check ran on a home that is not this stream's
+
+======================================================================
+FAIL: test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 274, in test_ledger_reset_seals_every_admit_ever
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_no_receipt_no_staging (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 185, in test_no_receipt_no_staging
+    self.assertEqual(self.seal()[0], 0)
+AssertionError: 2 != 0
+
+======================================================================
+FAIL: test_open_run_refuses_the_seal (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 254, in test_open_run_refuses_the_seal
+    self.assertEqual((rc, "NOT SEALED" in out), (2, True), "seal accepted a ledger with an open run")
+AssertionError: Tuples differ: (2, False) != (2, True)
+
+First differing element 1:
+False
+True
+
+- (2, False)
++ (2, True) : seal accepted a ledger with an open run
+
+======================================================================
+FAIL: test_receipted_container_back_fails (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 224, in test_receipted_container_back_fails
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 339, in test_remove_spares_a_container_outside_the_stream_prefix
+    self.assertEqual(self.seal()[0], 0)
+AssertionError: 2 != 0
+
+======================================================================
+FAIL: test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 219, in test_run_admitted_after_the_seal_fails
+    self.assertEqual(rc, 1, "teardown accepted a run admitted after the seal on containers it did not seal")
+AssertionError: 2 != 1 : teardown accepted a run admitted after the seal on containers it did not seal
+
+======================================================================
+FAIL: test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 232, in test_scan_hit_at_seal_blocks_staging
+    self.assertEqual(rc, 1, "a seal whose scan found a value did not exit 1")
+AssertionError: 2 != 1 : a seal whose scan found a value did not exit 1
+
+======================================================================
+FAIL: test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) (kind='fifo')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 247, in test_seal_refuses_a_special_file_or_link
+    self.assertEqual((rc, "NOT SEALED" in out), (2, True), f"seal accepted a set holding a {kind}")
+AssertionError: Tuples differ: (2, False) != (2, True)
+
+First differing element 1:
+False
+True
+
+- (2, False)
++ (2, True) : seal accepted a set holding a fifo
+
+======================================================================
+FAIL: test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) (kind='link')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 247, in test_seal_refuses_a_special_file_or_link
+    self.assertEqual((rc, "NOT SEALED" in out), (2, True), f"seal accepted a set holding a {kind}")
+AssertionError: Tuples differ: (2, False) != (2, True)
+
+First differing element 1:
+False
+True
+
+- (2, False)
++ (2, True) : seal accepted a set holding a link
+
+======================================================================
+FAIL: test_seal_teardown_stage_check (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 148, in test_seal_teardown_stage_check
+    out = self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 263, in test_second_chain_seals_only_its_containers
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) (change='added')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 199, in test_set_changed_after_the_seal_fails
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) (change='changed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 199, in test_set_changed_after_the_seal_fails
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) (change='removed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 199, in test_set_changed_after_the_seal_fails
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+======================================================================
+FAIL: test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 192, in test_teardown_refuses_while_a_sealed_container_exists
+    self.assertEqual(rc, 1, "teardown wrote a receipt while sealed containers still exist")
+AssertionError: 2 != 1 : teardown wrote a receipt while sealed containers still exist
+
+======================================================================
+FAIL: test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 307, in test_unlistable_credential_dir_refuses_the_receipt
+    self.assertEqual(rc, 1, "teardown wrote a receipt over a credential directory it could not list")
+AssertionError: 2 != 1 : teardown wrote a receipt over a credential directory it could not list
+
+======================================================================
+FAIL: test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 169, in test_verify_copy_on_a_copied_set
+    self.cleared()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/tests/test_clearance.py", line 138, in cleared
+    self.assertEqual(rc, 0, out[-400:])
+AssertionError: 2 != 0 : /Library/Developer/CommandLineTools/usr/bin/python3: can't open file '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JyCHc6qfTk/writepath/runkit/clearance.py': [Errno 2] No such file or directory
+
+
+----------------------------------------------------------------------
+Ran 19 tests in 6.412s
+
+FAILED (failures=23)
+# exit status: 1

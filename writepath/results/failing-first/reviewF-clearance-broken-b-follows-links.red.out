@@ -1,0 +1,44 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T01:27:06Z
+# tree: writepath at 8668f5e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/clearance.broken-b-follows-links.py sha256 27965c36f168f8225552e386a70f3c659aa50377c540c9f0fb430dd359a20b73, copied into the tree
+# its difference from runkit/clearance.py at HEAD 8668f5e:
+# diff: 311c311
+# diff: <             if _real_dir(home / n):
+# diff: ---
+# diff: >             if (home / n).is_dir():
+# test file: tests/test_clearance.py from HEAD 8668f5e blob 0eae9c49d73f4d56535d9452554f5bf4f8d39482
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/clearance.broken-b-follows-links.py python3 -m unittest -v tests.test_clearance)
+test_credential_file_after_teardown_fails (tests.test_clearance.Clearance) ... ok
+test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance) ... FAIL
+test_docker_error_is_never_gone (tests.test_clearance.Clearance) ... ok
+test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) ... ok
+test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance) ... ok
+test_no_receipt_no_staging (tests.test_clearance.Clearance) ... ok
+test_open_run_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_receipted_container_back_fails (tests.test_clearance.Clearance) ... ok
+test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance) ... ok
+test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) ... ok
+test_seal_teardown_stage_check (tests.test_clearance.Clearance) ... ok
+test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance) ... ok
+test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance) ... ok
+test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance) ... ok
+test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance) ... ok
+
+======================================================================
+FAIL: test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.iprTny9B6V/writepath/tests/test_clearance.py", line 318, in test_deletion_stays_inside_wp_home
+    self.assertEqual(rc, 1, "teardown accepted a secrets entry that is a link")
+AssertionError: 0 != 1 : teardown accepted a secrets entry that is a link
+
+----------------------------------------------------------------------
+Ran 19 tests in 23.099s
+
+FAILED (failures=1)
+# exit status: 1

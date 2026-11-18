@@ -4,11 +4,12 @@
 # the module ("-") or against a broken VARIANT copied from this tree (a stated, minimal change of the module), and
 # saves the receipt. Like failing_first.sh it runs in a temporary tree, so the receipt holds no local path, and the
 # tests generate fake values and print names only. Run from writepath/.
-# usage: sh runkit/failing_first_variant.sh <commit> <variant path | -> <ENV var naming the module> <tests> <out>
+# usage: sh runkit/failing_first_variant.sh <commit> <variant path | -> <ENV var naming the module> <tests> <out> [base]
 #   e.g. sh runkit/failing_first_variant.sh e21b99b results/failing-first/variants/secret_sink.broken-a-no-views.r2.py \
 #          SECRET_SINK_UNDER_TEST tests.test_secret_sink results/failing-first/<name>.red.out
+#   base: the module the variant differs from, for the receipt's diff (default wp/secret_sink.py)
 set -u
-C=$1; V=$2; E=$3; M=$4; OUT=$5
+C=$1; V=$2; E=$3; M=$4; OUT=$5; B=${6:-wp/secret_sink.py}
 [ -e "$OUT" ] && { echo "refusing: $OUT exists (a receipt is never overwritten)"; exit 2; }
 CUR=$(pwd)
 case $OUT in /*) ;; *) OUT="$CUR/$OUT" ;; esac
@@ -27,8 +28,8 @@ TF="tests/$(echo "${M%% *}" | sed 's/^tests\.//; s/\..*//').py"
   else
     mkdir -p "$W/writepath/$(dirname "$V")" && cp "$CUR/$V" "$W/writepath/$V" || { echo "cannot copy $V"; exit 2; }
     echo "# module under test: $V sha256 $(shasum -a 256 "$CUR/$V" | cut -c1-64), copied into the tree"
-    echo "# its difference from wp/secret_sink.py at HEAD $(git rev-parse --short HEAD):"
-    diff "$CUR/wp/secret_sink.py" "$CUR/$V" | sed 's/^/# diff: /'
+    echo "# its difference from $B at HEAD $(git rev-parse --short HEAD):"
+    diff "$CUR/$B" "$CUR/$V" | sed 's/^/# diff: /'
   fi
   echo "# test file: $TF from HEAD $(git rev-parse --short HEAD) blob $(git hash-object "$TF")"
   if [ "$V" = "-" ]; then echo "# command: (cd <tree>/writepath && python3 -m unittest -v $M)"
