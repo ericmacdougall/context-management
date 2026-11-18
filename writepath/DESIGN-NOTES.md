@@ -1109,3 +1109,50 @@ file is the only source); schema static checks (wp_seal private, guards verify, 
   results). Medium. REJECTED: asymmetric signatures, because PostgreSQL cannot verify Ed25519 or ECDSA without an
   extension the lab does not have; and per-tenant seal keys derived from the tenant key (the key service is an HMAC
   oracle for that key, A4 item 2).
+
+### A8. Amendments before the tests (gaps the code exposed; agent-af5c8cce658ab5a89, 2026-11-18)
+
+A3 named only seal_key_id and seal_mac; the guard must recompute M from the row alone, so every attested field needs a
+column. Fixed here, before any test or code:
+
+- COLUMNS. events gains seal_key_id, seal_mac, seal_batch (batch_id), seal_index, seal_count. quarantine gains
+  event_id, mention_scan_upto, mention_matcher, secret_scan and the same five seal columns, and is unique on
+  (tenant_id, event_id); for a quarantine row the guard derives lease_scope as 'session:' || session_id and lease_epoch
+  as presented_epoch (the epoch the writer presented, which is what the authority attested). The digest of a
+  quarantine row is computed from its content_enc.
+- GUARD ORDER. The attestation is checked first, right after the scope check (WPS12), before the fence, so a forged
+  row is refused as forged whatever else is wrong with it. A row with neither seal_key_id nor seal_mac is WPS40; any
+  other failure is WPS41: a mac that is not 64 hex digits, an unknown or inactive key_id, or ANY attested field that
+  is null (the SQL encoding refuses a null element instead of skipping it, since string_agg skips nulls and a skipped
+  field would make two rows encode alike). The comparison uses `is distinct from`, so a null can never compare as
+  equal. Matcher forgery: an attestation made under matcher X on a row rewritten to the tenant's matcher is WPS41; the
+  row left at X verifies and is then refused by the existing matcher check (WPS38).
+- ENCODING PARITY. Each field is "<UTF-8 octet length>:<value>"; integers in decimal without sign or padding (Python
+  str(int), SQL bigint::text); mentions as their count, then each in stored order (the authority sorts by code
+  point). Tests cover a non-ASCII subject id and mention (octets, not characters), empty and multi-element mentions.
+- QUARANTINE AND THE IDENTIFIER SET. The erasure rescan reads events only, and the final pass removed quarantine rows
+  only by speaker or by mentions: a quarantine row scanned against a set older than the erased subject's identifiers
+  kept content that may mention the subject (Class B again: erasure depending on a scan that never covered it). Rule,
+  by arithmetic and without decrypting: the final pass also removes the tenant's quarantine rows whose
+  mention_scan_upto is below the job's identifier-set version (ident_xmax), unless the row's speaker is under an
+  active legal hold. Cost: stale-scanned quarantine rows of other speakers are removed; they are never promoted (an
+  unadopted stale write, at most 1,000 per session). Not covered: a held speaker's stale quarantine row is kept and
+  not retried after release (quarantine has no withheld list); disclosed. quarantine_guard does not require the
+  current version (the stale path runs after a lost lease; refusing there would lose the row), the version rule above
+  covers it.
+- WHICH SEALER. log.append(..., sealer=None): an explicit sealer is used as given (tests inject an authority with a
+  test key, never the lab's key file); otherwise WP_SEALER set means the authority's socket ONLY, never an
+  in-process authority, even when a key file is readable; otherwise (operator tools and experiments that hold every
+  credential, as keysvc.key_store()) an in-process authority with the key from WP_SECRETS_DIR/seal_key; no socket and
+  no key file is SealUnavailable. The app now calls the key service only AFTER the authority sealed (for req_hash,
+  without create), so a refused batch still creates no subject key (b1).
+- SCHEMA CREATION. schema.sql runs as wp_owner, which cannot create a schema in the database; the admin creates
+  wp_seal (authorization wp_owner) next to public, in setup and in every test fixture that builds a database, and a
+  reset drops both (otherwise old pads survive a reset). USAGE on wp_seal and EXECUTE on its functions are revoked
+  from public explicitly; the install function wp_seal.install(key_id, ipad, opad) is reachable only by its owner.
+- NOT CHANGED BY THE AUTHORITY: erasure runs as wp_app, so the rescan's links (wp_erasure_add_mentions only adds)
+  remain the eraser's word: an eraser that omits a link leaves a mentioning event. That is a different trust (the
+  eraser, not the writer) and out of this design's scope; disclosed.
+- LIVE STATUS. t2-dev 16,938,356 KiB free at 2026-11-18T02:18:09Z (floor 20,971,520) and the run lock held by another
+  owner: the live S-series is written but NOT RUN, neither red nor green; the offline receipts are not evidence for
+  the store-side checks.
