@@ -945,6 +945,25 @@ planted over-budget event and B6 a garbage-ciphertext event inserted through wp_
 listed; B7 wp_app cannot UPDATE events; H16a a large footprint (placement quick, report bounded); H16b a report under
 statement_timeout fails and the hold stays; H6 a bounded receipt; the new constraints refuse oversize rows.
 
+### H10. Measured after the code (Mac, Python, real HMAC-SHA256, fake lookup; agent-af5c8cce658ab5a89 probes)
+
+| shape | 6ddeca3 | after |
+|---|---|---|
+| F13 token ("I" x 12 + "a" x 65,524) | 6.9 s, 518.5 MiB traced, 691 MB RSS | 0.52 s, 3.8 MiB (over-long: no reading) |
+| one 64 KiB cluster of marks | 3.4 s | 0.08 s (cut at the cap) |
+| 1,000 identical events, 3,848 keys each | 20.3 s, 123.0 MiB traced | 7.4 s, 4.6 MiB |
+| 64 KiB of one-letter tokens (plan) | 0.9 s, 9.5 MiB | 0.49 s, 9.5 MiB |
+| worst event by key bytes (worst_bytes_probe.py) | not measured | 2.1 s, 13.1 MiB traced, 34 MB RSS; 495,418 keys, 144 M code points |
+| worst call by key bytes (10 such events) | not measured | 23.7 s scan, 33 MB RSS; 4.93 M keys, 1.44 G code points |
+| worst short-key event (budget_worst.py) | 14.5 s | 10.1 s, 27 MB RSS |
+| worst short-key call (budget_worst_call.py) | about 16 s | 15.4 s scan + 2.4 s admission, 39 MB RSS |
+
+So memory is now bounded as the model says (every admitted shape measured stayed under 40 MB RSS; the test ceiling is 64 MiB traced),
+and the WORST ADMITTED CALL IS THE LONG-KEY SHAPE, ABOUT 24 S OF MATCHER CPU (plus admission and store lookups, not
+measured), up to 8 times that with WPS17 retries; there is no per-tenant rate limit. That is the cost of a key-count
+budget with keys up to 259 code points; a budget counted in key code points instead would cap it, at the price of
+re-deriving every b1 number (not done; stated for main).
+
 ### H9. Sources (read 2026-11-17)
 
 - OWASP API Security Top 10 2023, API4 Unrestricted Resource Consumption

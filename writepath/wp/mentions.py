@@ -48,13 +48,19 @@ are found by the erasure-time rescan (wp/erasure.py).
 Budget (m5 b1, DESIGN-NOTES "Matcher budget"): event content is at most MAX_CONTENT_BYTES UTF-8 bytes (ContentTooLarge,
 WPM01) and its window keys at most budget(tokens) (MatcherBudgetExceeded, WPM02), both checked before any key is
 enumerated or HMAC'd, and one call is bounded too (CallBudgetExceeded, WPM03); keys are then enumerated lazily and
-matched CHUNK at a time, so work is bounded by the budget and memory by one chunk. Worst admitted event about 14.5 s of
-matcher CPU (Mac; store lookups not measured); no per-tenant rate limit."""
+matched CHUNK at a time, so work is bounded by the budget and memory by one chunk. No per-tenant rate limit.
+Resource model (review H H1, DESIGN-NOTES "Review H"): a token is at most TOKEN_CP code points as written and as key
+(longer: over-long, never normalised past the cap, no readings, refused as an identifier), so a window key is at most
+4 x TOKEN_CP + 3 code points; derived bytes held at once are bounded by the admitted bytes plus fixed chunks (CHUNK
+keys, CHUNK_TAGS key-tag pairs, the cluster cache CLUSTER_CACHE_BYTES) and work by the key count times the key length.
+Admission is the writer's word (cost control) until the seal authority lands; the erasure rescan does not rely on it:
+stream_matches(unscannable=...) classifies an event it cannot scan within budget instead of raising."""
 import collections
 import hashlib
 import itertools
 import os
 import pathlib
+import sys
 import unicodedata as UD
 
 UCD = UD.unidata_version
@@ -72,11 +78,19 @@ MAX_READINGS = 4096          # readings per window (DESIGN-NOTES "Decisions afte
 # Per CALL (one append or scan; main's decision, ASSUMPTION): at most call_events events, call_bytes bytes and call_keys
 # keys in all (B10). Worst admitted event about 14.5 s and worst admitted call about 16 s of matcher CPU (Python on the
 # Mac; store lookups not measured); there is no per-tenant rate limit.
-Budget = collections.namedtuple("Budget", "per_token floor event_max content_bytes call_events call_bytes call_keys")
+# token_cp (review H H1, the ONE structural constant of the resource model): a token is at most token_cp code points as
+# written (ignorables removed, marks counted) and as identity key; a longer token is over-long: never normalised past
+# that, no readings, every window containing it skipped (count and enumeration alike), refused as an identifier by r3.
+Budget = collections.namedtuple("Budget", "per_token floor event_max content_bytes call_events call_bytes call_keys token_cp")
 BUDGET = Budget(per_token=512, floor=131072, event_max=5_000_000, content_bytes=65536,
-                call_events=1000, call_bytes=1_048_576, call_keys=5_000_000)
+                call_events=1000, call_bytes=1_048_576, call_keys=5_000_000, token_cp=64)
 MAX_CONTENT_BYTES = BUDGET.content_bytes
+TOKEN_CP = BUDGET.token_cp
 CHUNK = 8192                 # distinct window keys HMAC'd and looked up at a time (memory, not the budget)
+CHUNK_TAGS = 65536           # (key, tag) pairs pending at a time: many identical events give one key many tags (memory)
+CLUSTER_CACHE_BYTES = 8 * 2**20   # the cluster cache, counted in str bytes; emptied when full (performance only)
+MAX_IDENTIFIERS = 64         # identifiers per proposal call (review H H4; cost control, Python only)
+MAX_IDENTIFIER_BYTES = 256   # UTF-8 bytes of one identifier, checked before normalisation (the store: ciphertext <= 284)
 NOT_COVERED = (
     "identifiers that were never declared (nicknames, misspellings, initials, inflected forms)",
     "pronouns and indirect references",
@@ -95,6 +109,8 @@ NOT_COVERED = (
     "look-alikes that are punctuation or symbols (| for l): they end the token",
     "words of the subject quoted by others that contain no declared identifier",
     "names in scripts written without spaces (refused at declaration)",
+    "a token longer than %d code points, written or as key (a name glued to other letters, a hash, a blob): no window "
+    "containing it is searched; identifiers with such a token are refused" % BUDGET.token_cp,
 )
 OVER_MATCH = (
     "confusable variants of a declared identifier (for example Kim and Kirn share a key): such events of other "
@@ -106,6 +122,8 @@ OVER_MATCH = (
     "a handle such as maria1 matches a declared Marial)",
     "one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno): erasing either "
     "removes that event",
+    "punctuation and spaces only separate tokens, so codes that differ only in their separators share a key (AB-1001, "
+    "AB/1001 and AB 1001; 12.30 and 12:30)",
 )
 
 
@@ -401,11 +419,17 @@ def _key(cluster):
 
 
 _CLUSTERS = {}
+_CLUSTERS_BYTES = [0]
+
+
+def _cluster_size(cl, r):
+    return sys.getsizeof(cl) + sum(sys.getsizeof(x) for x in (r[0],) + tuple(r[1]) + tuple(r[2]))
 
 
 def _cluster(cl):
-    """(identity key, readings, readings with digits literal) of one cluster. The readings are its keys in TEXT; the
-    third form applies in a token with no more letters than digits (DESIGN-NOTES "Decisions after review E" item 3)."""
+    """(identity key, readings, readings with digits literal) of one cluster (at most TOKEN_CP code points: _tokens
+    never passes a longer one). The readings are its keys in TEXT; the third form applies in a token with no more
+    letters than digits (DESIGN-NOTES "Decisions after review E" item 3). Cached; the cache is bounded in bytes."""
     r = _CLUSTERS.get(cl)
     if r is not None:
         return r
@@ -420,39 +444,63 @@ def _cluster(cl):
             return tuple(sorted({"".join(ch for ch in canonical("".join(p)) if not ch.isspace())
                                  for p in itertools.product(*opts)}))
         r = (ident, alts(False), alts(True))
-    if len(_CLUSTERS) < 100000:
+    if not _CLUSTERS:
+        _CLUSTERS_BYTES[0] = 0
+    sz = _cluster_size(cl, r)
+    if _CLUSTERS_BYTES[0] + sz > CLUSTER_CACHE_BYTES:
+        _CLUSTERS.clear()
+        _CLUSTERS_BYTES[0] = 0
+    if sz <= CLUSTER_CACHE_BYTES:
         _CLUSTERS[cl] = r
+        _CLUSTERS_BYTES[0] += sz
     return r
 
 
 def _tokens(text, ident=False):
     """[(normal token, identity key token, start, end, cluster readings)], start/end code-point offsets in `text`;
-    cluster readings: per cluster (readings, readings with digits literal), see _cluster()."""
+    cluster readings: per cluster (readings, readings with digits literal), see _cluster(). An OVER-LONG token (more
+    than TOKEN_CP code points as written, or as identity key; review H H1) is (normal token, None, start, end, None):
+    no cluster of it is keyed once the cap is passed, and a cluster is never read past TOKEN_CP + 1 code points (its
+    word-ness is judged on that prefix), so the work per code point of text is bounded."""
     out, cur, ck, cr, cs, ce = [], [], [], [], 0, 0
+    st = [0, 0, False]                          # code points as written, as key, over-long
     i, n = 0, len(text)
 
     def close():
-        out.append((UD.normalize("NFKC", "".join(cur)), UD.normalize("NFD", "".join(ck)), cs, ce, tuple(cr)))
+        if st[2]:
+            out.append((UD.normalize("NFKC", "".join(cur)), None, cs, ce, None))
+        else:
+            out.append((UD.normalize("NFKC", "".join(cur)), UD.normalize("NFD", "".join(ck)), cs, ce, tuple(cr)))
 
     while i < n:
         c = text[i]
         if _ignorable(c, ident):
             i += 1
             continue
-        parts, j = [c], i + 1
+        parts, ncl, j = [c], 1, i + 1
         while j < n and (UD.category(text[j])[0] == "M" or _ignorable(text[j], ident)):
             if not _ignorable(text[j], ident):
-                parts.append(text[j])
+                ncl += 1
+                if ncl <= TOKEN_CP + 1:
+                    parts.append(text[j])
             j += 1
         cl = "".join(parts)
         f = _fold(cl)
         if f and all(_wordch(x, ident) for x in f):
             if not cur:
-                cs = i
-            k, full, lit = _cluster(cl)
+                cs, st[0], st[1], st[2] = i, 0, 0, False
+            st[0] += ncl
+            if not st[2] and st[0] <= TOKEN_CP:
+                k, full, lit = _cluster(cl)
+                st[1] += len(k)
+                if st[1] > TOKEN_CP:
+                    st[2] = True
+                else:
+                    ck.append(k)
+                    cr.append((full, lit))
+            else:
+                st[2] = True
             cur.append(f)
-            ck.append(k)
-            cr.append((full, lit))
             ce = j
         elif cur:
             close()
@@ -470,7 +518,10 @@ def _letters_over_digits(k):
 
 
 def _token_keys(tok):
-    """The text keys of one token, or None when it has more than MAX_READINGS (no approved identifier can match it)."""
+    """The text keys of one token, or None when it is over-long or has more than MAX_READINGS (no approved identifier
+    can match it)."""
+    if tok[1] is None:
+        return None
     word = _letters_over_digits(tok[1])
     opts = [full if word else lit for full, lit in tok[4]]
     m = 1
@@ -508,14 +559,21 @@ def not_closed():
 def capacity(identifier):
     """The most readings a text window that matches this identifier can have: the product, over its identity key's
     characters, of _weights() (digits in a token with no more letters than digits count 1). Rule r3 refuses an
-    identifier over MAX_READINGS, which is what makes skipping a window over the cap lose nothing."""
+    identifier over MAX_READINGS, which is what makes skipping a window over the cap lose nothing. Saturating (review H
+    F15): it stops once the product passes MAX_READINGS (the value returned is then above the cap, at most 3 times it:
+    no weight is above 3),
+    and an over-long token counts as over the cap."""
     w, m = _weights(), 1
     for tok in _tokens(identifier, ident=True):
+        if tok[1] is None:
+            return MAX_READINGS + 1
         word = _letters_over_digits(tok[1])
         for ch in tok[1]:
             if UD.category(ch)[0] == "N" and not word:
                 continue
             m *= w.get(ch, 1)
+            if m > MAX_READINGS:
+                return m
     return m
 
 
@@ -547,11 +605,15 @@ def _stop_keys():
 def identifier_problem(identifier):
     """None if the identifier (raw or in normal form) is acceptable under rule r3, else the reason. Scripts, unassigned
     code points, digits and length are judged on the NORMAL form (a key hides mixed script); the stop list on KEYS
-    ("custorner" has the key of "customer")."""
+    ("custorner" has the key of "customer"). The size is judged first, before any normalisation (review H F15)."""
+    if _too_big(identifier):
+        return "longer than %d UTF-8 bytes" % MAX_IDENTIFIER_BYTES
     toks = _tokens(identifier, ident=True)
     norm = [x[0] for x in toks]
     if not norm:
         return "empty"
+    if any(x[1] is None for x in toks):
+        return "a token longer than %d code points (as written or as key): declare a shorter form" % TOKEN_CP
     if any(UD.category(c) in ("Cn", "Co", "Cs") for t in norm for c in t):
         return "unassigned or private-use code point (normalisation is not stable for it)"
     if len(norm) > MAX_N:
@@ -583,8 +645,18 @@ def normalize(identifier):
 
 
 def key(identifier):
-    """The ONE key that is HMAC'd for an identifier (per token: the identity key, canonical())."""
-    return " ".join(x[1] for x in _tokens(identifier, ident=True))
+    """The ONE key that is HMAC'd for an identifier (per token: the identity key, canonical()). An over-long token has
+    no key (IdentifierRefused)."""
+    toks = _tokens(identifier, ident=True)
+    if any(x[1] is None for x in toks):
+        raise IdentifierRefused("a token longer than %d code points has no key" % TOKEN_CP)
+    return " ".join(x[1] for x in toks)
+
+
+def _too_big(identifier):
+    """True when an identifier is over MAX_IDENTIFIER_BYTES UTF-8 bytes (code points first: no encoding of a long one)."""
+    return (len(identifier) > MAX_IDENTIFIER_BYTES
+            or len(identifier.encode("utf-8", "surrogatepass")) > MAX_IDENTIFIER_BYTES)
 
 
 def check_size(text, index=None, what="event content"):
@@ -604,7 +676,10 @@ def budget(n_tokens):
 
 
 def _reading_count(tok):
-    """The number of text keys of one token, or None when it has more than MAX_READINGS (counted, not enumerated)."""
+    """The number of text keys of one token, or None when it is over-long or has more than MAX_READINGS (counted, not
+    enumerated)."""
+    if tok[1] is None:
+        return None
     word = _letters_over_digits(tok[1])
     m = 1
     for full, lit in tok[4]:
@@ -707,11 +782,12 @@ def windows(text):
     return {w for w, _, _ in _iter_windows(*_admitted(text))}
 
 
-def _stream(ks, tenant, plans, lookup):
+def _stream(ks, tenant, plans, lookup, keep_keys=False):
     """Match the window keys of each (tag, plan) in `plans` (an iterable, consumed lazily), CHUNK distinct keys at a
-    time: HMAC them, call lookup(list of HMACs) -> {hmac: value}, and collect {tag: {(key, value)}} for every hit.
-    Holds at most CHUNK pending keys (each with the tags that produced it)."""
-    hits, pending = {}, {}
+    time: HMAC them, call lookup(list of HMACs) -> {hmac: value}, and collect {tag: {value}} for every hit ({tag:
+    {(key, value)}} with keep_keys, for find_spans). Flushes at CHUNK pending keys or CHUNK_TAGS pending (key, tag)
+    pairs, whichever comes first (review H H1: a key carries one entry per tag that produced it)."""
+    hits, pending, pairs = {}, {}, [0]
 
     def flush():
         keys = list(pending)
@@ -719,19 +795,27 @@ def _stream(ks, tenant, plans, lookup):
         found = lookup(hs)
         for k, h in zip(keys, hs):
             if h in found:
+                v = (k, found[h]) if keep_keys else found[h]
                 for tag in pending[k]:
-                    hits.setdefault(tag, set()).add((k, found[h]))
+                    hits.setdefault(tag, set()).add(v)
         pending.clear()
+        pairs[0] = 0
 
     for tag, plan in plans:
         for w, _, _ in _iter_windows(*plan):
             s = pending.get(w)
             if s is None:
-                if len(pending) >= CHUNK:
+                if len(pending) >= CHUNK or pairs[0] >= CHUNK_TAGS:
                     flush()
                 pending[w] = {tag}
-            else:
-                s.add(tag)
+                pairs[0] += 1
+            elif tag not in s:
+                if pairs[0] >= CHUNK_TAGS:
+                    flush()
+                    pending[w] = {tag}
+                else:
+                    s.add(tag)
+                pairs[0] += 1
     if pending:
         flush()
     return hits
@@ -746,15 +830,23 @@ window_hmacs = _hmacs        # the ONLY place the identifier label is applied (t
 
 
 def check_identifiers(identifiers):
-    """The identifiers (stripped, one per key), or IdentifierRefused naming each refused one and why (rule r3)."""
-    by_key = {}
-    for i in identifiers:
-        by_key.setdefault(key(i), i.strip())
-    norm = sorted(by_key.values())
-    bad = [(n, identifier_problem(n)) for n in norm if identifier_problem(n)] if norm else [("", "no identifiers")]
+    """The identifiers (stripped, one per key), or IdentifierRefused naming each refused one and why (rule r3). The
+    count (MAX_IDENTIFIERS) and each identifier's size (MAX_IDENTIFIER_BYTES) are refused first, before anything is
+    normalised (review H F15); a refusal for size names the identifier by its position only."""
+    it = list(itertools.islice(iter(identifiers), MAX_IDENTIFIERS + 1))
+    if len(it) > MAX_IDENTIFIERS:
+        raise IdentifierRefused(f"more than {MAX_IDENTIFIERS} identifiers in one call")
+    big = [n for n, x in enumerate(it) if _too_big(x)]
+    if big:
+        raise IdentifierRefused("; ".join(f"identifier {n}: longer than {MAX_IDENTIFIER_BYTES} UTF-8 bytes" for n in big))
+    bad = [(n, identifier_problem(n)) for n in sorted({x.strip() for x in it})] if it else [("", "no identifiers")]
+    bad = [(n, why) for n, why in bad if why]
     if bad:
         raise IdentifierRefused("; ".join(f"{normalize(n)!r}: {why}" for n, why in bad))
-    return norm
+    by_key = {}
+    for i in it:
+        by_key.setdefault(key(i), i.strip())
+    return sorted(by_key.values())
 
 
 def propose(conn, ks, tenant, subject_id, identifiers):
@@ -841,19 +933,32 @@ def scan(conn, ks, tenant, texts):
         return dict(conn.execute("select ident_hmac, subject_id from subject_identifiers where tenant_id=%s and ident_hmac = any(%s)",
                                  (tenant, hs)).fetchall())
     hits = _stream(ks, tenant, ((i, _admitted(x, i)) for i, x in enumerate(texts)), lookup)
-    return version, [sorted({v for _, v in hits.get(i, ())}) for i in range(len(texts))]
+    return version, [sorted(hits.get(i, ())) for i in range(len(texts))]
 
 
 def subject_hmacs(ks, tenant, identifiers):
     return set(_hmacs(ks, tenant, [key(i) for i in identifiers]))
 
 
-def stream_matches(ks, tenant, items, hmacs):
+def stream_matches(ks, tenant, items, hmacs, unscannable=None):
     """The tags of (tag, text) items whose text contains one of the identifier HMACs, texts admitted one at a time as
-    they are consumed (the erasure rescan). A text over the size bound or its budget raises WriteRefused (fail closed)."""
+    they are consumed (the erasure rescan). A text over the size bound or its budget raises WriteRefused; with a list
+    `unscannable` (the rescan, review H H3) its tag is appended there instead, decided by the size and the arithmetic
+    key count alone (no key of it is enumerated or HMAC'd), and the other items are still matched."""
     hm = set(hmacs)
-    plans = ((tag, _admitted(text, tag)) for tag, text in items)
-    return set(_stream(ks, tenant, plans, lambda hs: {h: True for h in hs if h in hm}))
+
+    def plans():
+        for tag, text in items:
+            if unscannable is None:
+                yield tag, _admitted(text, tag)
+                continue
+            try:
+                plan = _admitted(text, tag)
+            except (ContentTooLarge, MatcherBudgetExceeded):
+                unscannable.append(tag)
+                continue
+            yield tag, plan
+    return set(_stream(ks, tenant, plans(), lambda hs: {h: True for h in hs if h in hm}))
 
 
 def matches(ks, tenant, text, hmacs):
@@ -869,7 +974,7 @@ def find_spans(ks, tenant, text, hmacs):
     if not hmacs:
         return []
     hm = set(hmacs)
-    keys = {k for k, _ in _stream(ks, tenant, [(0, plan)], lambda hs: {h: True for h in hs if h in hm}).get(0, ())}
+    keys = {k for k, _ in _stream(ks, tenant, [(0, plan)], lambda hs: {h: True for h in hs if h in hm}, keep_keys=True).get(0, ())}
     hits = sorted((a, b) for w, a, b in _iter_windows(*plan) if w in keys)
     out = []
     for a, b in hits:

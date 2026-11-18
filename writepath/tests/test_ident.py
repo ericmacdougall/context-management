@@ -871,7 +871,7 @@ class H13Resource(unittest.TestCase):
         self.assertIsNone(M._reading_count(M._tokens("a" * (TOKEN_CP + 1))[0]))
         self.assertEqual(M._reading_count(M._tokens("a" * TOKEN_CP)[0]), 1)
         self.assertEqual(M.key_count("a" * TOKEN_CP + " " + "b" * (TOKEN_CP + 1)), (2, 1))
-        self.assertEqual(M.windows("a" * TOKEN_CP + " " + "b" * (TOKEN_CP + 1)), {"a" * TOKEN_CP})
+        self.assertEqual(M.windows("a" * TOKEN_CP + " " + "b" * (TOKEN_CP + 1)), {M.key("a" * TOKEN_CP)})
 
     def test_count_equals_enumeration_with_over_long_tokens(self):
         glyphs = ["I", "l", "1", "0", "a", "n", "m", "́", "​", "Ⅲ"]
@@ -1047,8 +1047,8 @@ class H14Schema(unittest.TestCase):
     def test_unscannable_is_a_mention_source(self):
         self.has(r"source in \('write', 'rescan', 'unscannable'\)", "erasure_mentions has no unscannable source")
         self.has(r"grant execute on function [^;]*wp_erasure_add_unscannable\(text, text\[\]\)[^;]* to wp_app", "no unscannable link for the runner")
-        self.assertNotIn("CANNOT COMPLETE", self.sql, "the receipt still says such an erasure cannot complete")
-        self.assertIn("'unscannable_removed'", self.sql)
+        self.assertFalse("CANNOT COMPLETE" in self.sql, "the receipt still says such an erasure cannot complete")
+        self.assertTrue("'unscannable_removed'" in self.sql, "no unscannable_removed in the receipt")
 
     def test_hold_placement_does_no_footprint_work(self):
         body = _fn_body(self.sql, "wp_hold_place")
@@ -1070,10 +1070,10 @@ class H14Schema(unittest.TestCase):
             self.assertIn("limit 1000", m.group(1), f"{key} aggregates every id")
 
     def test_minors(self):
-        self.assertNotIn("one lock order everywhere", self.sql)
+        self.assertFalse("one lock order everywhere" in self.sql, "schema.sql still claims one lock order everywhere")
         self.assertEqual(M.key("AB-1001"), M.key("AB/1001"))
         self.assertTrue(any("AB-1001" in x for x in M.OVER_MATCH), "separator collisions are not catalogued")
-        self.assertIn("AB-1001", self.sql, "the receipt does not state separator collisions")
+        self.assertTrue("AB-1001" in self.sql, "the receipt does not state separator collisions")
 
 
 if __name__ == "__main__":

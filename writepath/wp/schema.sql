@@ -175,7 +175,8 @@ end $$;
 -- The store enforces WHO: the proposer is session_user, set here; the approver is a member of wp_reviewer and not the
 -- proposer (WPS30); the approved HMAC is the one proposed, recomputed by the reviewer from the plaintext it reviewed
 -- (WPS31); both ran the rule version of the tenant's matcher, 'r3:' || identifier_epochs.matcher (WPS32). Review C
--- class 2 (F8): one lock order everywhere, subject row, identifier_epochs, proposal row, then events; propose and
+-- class 2 (F8): this path takes subject row, identifier_epochs, proposal row, then events (not a global order: see
+-- DESIGN-NOTES "F12", where the claim of a single global order was withdrawn); propose and
 -- approve check `erased` only under the subject lock, so the erasure mark (FOR UPDATE on the subject) waits for an
 -- in-flight proposal and the cascade deletes it; no proposal can commit after the mark.
 -- The reviewer process enforces the rule on the plaintext
@@ -184,6 +185,8 @@ create table identifier_proposals (
   tenant_id tenant_t not null, proposal_id text primary key, subject_id text not null,
   ident_hmac text not null,
   ident_enc bytea not null,                                 -- the identifier as written, under the SUBJECT key (AAD proposal:<id>)
+  -- review H H4: 256 bytes of identifier (wp/mentions.py MAX_IDENTIFIER_BYTES) plus 28 bytes of nonce and tag
+  constraint identifier_proposals_size check (octet_length(ident_enc) <= 284),
   rule_version text not null,
   proposed_by name not null, proposed_at timestamptz not null default clock_timestamp(),
   state text not null default 'proposed' check (state in ('proposed', 'approved', 'rejected')),
@@ -197,6 +200,12 @@ begin
   select erased into er from subjects where tenant_id = t and subject_id = s for share;   -- lock before check (F8)
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
   if h is null or enc is null or rv is null then raise exception 'proposal incomplete' using errcode = 'WPS33'; end if;
+  -- review H H4: at most 64 open proposals per subject, counted exactly: proposals of one subject serialise on a
+  -- transaction-scoped advisory lock taken only here (after the subject lock, in one order), so two cannot both see 63
+  perform pg_advisory_xact_lock(hashtextextended('wp_propose:' || t || ':' || s, 0));
+  if (select count(*) from identifier_proposals where tenant_id = t and subject_id = s and state = 'proposed') >= 64 then
+    raise exception 'open_proposals_full: 64 open proposals for this subject' using errcode = 'WPS39';
+  end if;
   insert into identifier_proposals(tenant_id, proposal_id, subject_id, ident_hmac, ident_enc, rule_version, proposed_by)
     values (t, pid, s, h, enc, rv, session_user);
 end $$;
@@ -418,6 +427,8 @@ create trigger quarantine_guard before insert on quarantine for each row execute
 
 create table tombstones (
   tenant_id tenant_t not null, event_id text not null, subject_id text not null, job_id text not null,
+  -- review H H5: the removing transaction; a hold report counts a removal only if it is visible in the hold's snapshot
+  removed_xid xid8 not null default pg_current_xact_id(),
   primary key (tenant_id, subject_id, event_id)
 );
 create index tombstones_event on tombstones (tenant_id, event_id);
@@ -436,7 +447,9 @@ create table inbox (
   payload_enc bytea not null, state text not null default 'new' check (state in ('new','claimed','confirmed')),
   claimed_epoch bigint, confirmed_epoch bigint, shown_count int not null default 0,
   lease_scope text not null, lease_epoch bigint not null,
-  primary key (tenant_id, item_id)
+  primary key (tenant_id, item_id),
+  -- review H H1: the payload bound of wp/log.py inbox_enqueue (WPM01, 65,536 bytes) plus 28 bytes of nonce and tag
+  constraint inbox_payload_size check (octet_length(payload_enc) <= 65564)
 );
 create trigger inbox_fence_ins before insert on inbox for each row execute function wp_fence_trg('session', 'sender_session');
 create trigger inbox_fence_upd before update on inbox for each row execute function wp_fence_trg('session', 'target_session');
@@ -448,7 +461,9 @@ create table analyst_jobs (
   claim_epoch bigint not null default 0, claim_expires timestamptz, result_enc bytea, verify jsonb,
   lease_scope text not null, lease_epoch bigint not null,
   primary key (tenant_id, job_id), unique (tenant_id, idem_key),
-  constraint done_needs_verify check (state <> 'done' or (verify is not null and (verify->>'ok')::boolean is true and result_enc is not null))
+  constraint done_needs_verify check (state <> 'done' or (verify is not null and (verify->>'ok')::boolean is true and result_enc is not null)),
+  -- review H H1: the result bound of wp/log.py job_complete (WPM01) plus nonce and tag
+  constraint analyst_jobs_result_size check (result_enc is null or octet_length(result_enc) <= 65564)
 );
 create index analyst_jobs_inputs on analyst_jobs using gin (input_event_ids);
 create function jobs_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
@@ -526,7 +541,9 @@ create unique index erasure_one_open on erasure_jobs (tenant_id, subject_id) whe
 -- Mentions found by the erasure-time rescan (events written before the subject's identifiers were declared).
 create table erasure_mentions (
   tenant_id tenant_t not null, subject_id text not null, event_id text not null, job_id text not null,
-  source text not null default 'rescan' check (source in ('write', 'rescan')),   -- 'write': materialised at mark from events.mentions
+  -- 'write': materialised at mark from events.mentions; 'rescan': matched by the rescan; 'unscannable' (review H H3): an
+  -- event the rescan could not scan within budget (or decrypt with its speaker's key present), treated as a mention
+  source text not null default 'rescan' check (source in ('write', 'rescan', 'unscannable')),
   primary key (tenant_id, subject_id, event_id)
 );
 create index erasure_mentions_event on erasure_mentions (tenant_id, event_id);
@@ -550,29 +567,62 @@ create table erasure_rescanned (
 -- cascade batch and at key destruction with WPS16) and runs when the last hold is released.
 create table legal_holds (
   tenant_id tenant_t not null, subject_id text not null, hold_id text primary key, reason_code text not null,
-  placed_at timestamptz not null default clock_timestamp(), released_at timestamptz
+  placed_at timestamptz not null default clock_timestamp(), released_at timestamptz,
+  -- review H F16: the footprint report is separate from placement (wp_hold_report); the snapshot of the placing insert
+  -- decides which removals happened before the hold
+  report_state text not null default 'pending' check (report_state in ('pending', 'done')),
+  report_snapshot pg_snapshot, report jsonb
 );
 create index legal_holds_subject on legal_holds (tenant_id, subject_id) where released_at is null;
 create function wp_hold_place(t tenant_t, s text, hid text, reason text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
-declare st text; gone bigint; gone_ids text[];
+declare st text;
 begin
   insert into subjects(tenant_id, subject_id) values (t, s) on conflict do nothing;
   -- FOR UPDATE conflicts with the share lock of every in-flight removal that judges this subject (review E F4): the
-  -- hold lands either before that judgement (the event is withheld) or after the removal committed (counted below)
+  -- hold lands either before that judgement (the event is withheld) or after the removal committed (reported)
   perform 1 from subjects where tenant_id = t and subject_id = s for update;
-  insert into legal_holds(tenant_id, subject_id, hold_id, reason_code) values (t, s, hid, reason);
+  -- review H F16: the hold is installed ALONE (nothing proportional to the footprint runs under the exclusive lock, so
+  -- a large footprint cannot time out and roll back the hold). This statement's snapshot is taken after the lock above
+  -- was granted, so every removal the hold waited for is visible in it; wp_hold_report reports by that snapshot.
+  insert into legal_holds(tenant_id, subject_id, hold_id, reason_code, report_snapshot) values (t, s, hid, reason, pg_current_snapshot());
   select state into st from erasure_jobs where tenant_id = t and subject_id = s and state <> 'done';
-  -- events in this subject's footprint whose content was already removed when the hold landed: recorded, not hidden
-  with fp as (select event_id from events where tenant_id = t and subject_id = s
-              union select event_id from events where tenant_id = t and mentions @> array[s]
-              union select event_id from erasure_mentions where tenant_id = t and subject_id = s)
-  select count(*), (array_agg(fp.event_id order by fp.event_id))[1:20] into gone, gone_ids
-    from fp join events e on e.tenant_id = t and e.event_id = fp.event_id where e.content_enc is null;
-  return jsonb_build_object('hold_id', hid, 'open_erasure_state', st,
-    'linked_removed', gone, 'linked_removed_ids', to_jsonb(coalesce(gone_ids, '{}'::text[])),
-    'note', case when gone > 0 then 'linked_removed events of this subject were removed (by its own or another subject''s erasure) before this hold landed and are not recoverable; the rest is held'
-                 when st is null or st = 'requested' then 'nothing erased yet'
-                 else 'erasure already past mark: content removed before this hold is not recoverable; the rest is held' end);
+  return jsonb_build_object('hold_id', hid, 'open_erasure_state', st, 'report_state', 'pending',
+    'note', 'hold installed; what was removed before it is reported by wp_hold_report(hold_id)');
+end $$;
+-- Review H F16: the report of a hold, in its own transaction and without an exclusive lock, bounded in memory: the
+-- footprint events (speaker, mentions, rescan links) whose removal is visible in the hold's snapshot; the first 20 ids
+-- (top-N, LIMIT 20) and a count stopped at 10,001. One scan with an OR over the three sources: no UNION, nothing
+-- de-duplicated in memory. Idempotent; a failed or timed-out report leaves the hold installed and report_state
+-- 'pending', and may be rerun. Its work is linear in the tenant's removed events in the worst case (stated).
+create function wp_hold_report(hid text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare h record; st text; gone bigint; ids text[]; r jsonb;
+begin
+  select tenant_id, subject_id, report_snapshot into h from legal_holds where hold_id = hid;
+  if not found then raise exception 'no hold %', hid using errcode = 'WPS08'; end if;
+  select array_agg(x.event_id order by x.event_id) into ids from (
+    select e.event_id from events e
+     where e.tenant_id = h.tenant_id and e.content_enc is null
+       and (e.subject_id = h.subject_id or e.mentions @> array[h.subject_id]
+            or exists (select 1 from erasure_mentions m where m.tenant_id = h.tenant_id and m.subject_id = h.subject_id and m.event_id = e.event_id))
+       and exists (select 1 from tombstones tb where tb.tenant_id = h.tenant_id and tb.event_id = e.event_id
+                   and pg_visible_in_snapshot(tb.removed_xid, h.report_snapshot))
+     order by e.event_id limit 20) x;
+  select count(*) into gone from (
+    select 1 from events e
+     where e.tenant_id = h.tenant_id and e.content_enc is null
+       and (e.subject_id = h.subject_id or e.mentions @> array[h.subject_id]
+            or exists (select 1 from erasure_mentions m where m.tenant_id = h.tenant_id and m.subject_id = h.subject_id and m.event_id = e.event_id))
+       and exists (select 1 from tombstones tb where tb.tenant_id = h.tenant_id and tb.event_id = e.event_id
+                   and pg_visible_in_snapshot(tb.removed_xid, h.report_snapshot))
+     limit 10001) y;
+  select state into st from erasure_jobs where tenant_id = h.tenant_id and subject_id = h.subject_id and state <> 'done';
+  r := jsonb_build_object('hold_id', hid, 'open_erasure_state_at_report', st,
+    'linked_removed', gone, 'linked_removed_more', gone > 10000, 'linked_removed_ids', to_jsonb(coalesce(ids, '{}'::text[])),
+    'note', case when gone > 10000 then 'more than 10,000 events of this subject''s footprint were removed (by its own or another subject''s erasure) before this hold landed and are not recoverable; the first 20 ids are listed; the rest is held'
+                 when gone > 0 then 'linked_removed events of this subject were removed (by its own or another subject''s erasure) before this hold landed and are not recoverable; the rest is held'
+                 else 'nothing of this subject''s footprint was removed before this hold landed' end);
+  update legal_holds set report = r, report_state = 'done' where hold_id = hid;
+  return r;
 end $$;
 create function wp_hold_release(hid text) returns void language plpgsql security definer set search_path = public, pg_temp as $$
 declare h record;
@@ -658,6 +708,20 @@ begin
   perform 1 from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids) order by e.event_id for share;
   insert into erasure_mentions(tenant_id, subject_id, event_id, job_id)
     select j.tenant_id, j.subject_id, e.event_id, jid from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids)
+    on conflict do nothing;
+  update erasure_jobs set men_after = '' where job_id = jid and exists (select 1 from unnest(ids) x where x <= men_after);
+end $$;
+-- Review H H3 (main's decision, Class B): an event the rescan could not scan within budget, or could not decrypt with
+-- its speaker's key present, is linked to the subject as 'unscannable' and removed by the cascade like any mention
+-- (a legal hold still withholds it). The runner's word, as for a match: the store cannot decrypt either.
+create function wp_erasure_add_unscannable(jid text, ids text[]) returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare j record;
+begin
+  select tenant_id, subject_id, state into j from erasure_jobs where job_id = jid;
+  if j.state not in ('marked', 'cascaded') then raise exception 'rescan only after mark (state %)', j.state using errcode = 'WPS08'; end if;
+  perform 1 from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids) order by e.event_id for share;   -- as add_mentions (F4)
+  insert into erasure_mentions(tenant_id, subject_id, event_id, job_id, source)
+    select j.tenant_id, j.subject_id, e.event_id, jid, 'unscannable' from events e where e.tenant_id = j.tenant_id and e.event_id = any(ids)
     on conflict do nothing;
   update erasure_jobs set men_after = '' where job_id = jid and exists (select 1 from unnest(ids) x where x <= men_after);
 end $$;
@@ -890,16 +954,30 @@ begin
                       'is read as i and l, a digit 1 inside a word as 1, l and i, a digit 0 inside a word as 0 and o; at most 4096 '
                       'readings per window, identifiers that could need more are refused; Unicode tables pinned by version: '
                       'wp/mentions.py)',
-      'matcher_budget', 'm5 b1 (ASSUMPTION): event content at most 65,536 bytes; window keys per event at most 512 per token, '
-                        'at least 131,072, at most 5,000,000; per call at most 1,000 events, 1,048,576 bytes and 5,000,000 keys; '
-                        'writes over these are refused (WPM01, WPM02, WPM03) and never stored. The erasure rescan runs under the '
-                        'same budget: an event admitted under another matcher that is over it stops the rescan, and such an '
-                        'erasure CANNOT COMPLETE until a matcher migration re-admits that event; no migration exists yet. Worst '
-                        'admitted event about 14.5 s of matcher CPU (measured on a Mac; store lookups not measured); there is no '
-                        'per-tenant rate limit.',
-      'other_speakers_removed', (select coalesce(jsonb_agg(tb.event_id order by tb.event_id), '[]') from tombstones tb
-                                 join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
-                                 where tb.job_id = jid and e.subject_id <> j.subject_id),
+      'matcher_budget', 'm5 b1 with review H (ASSUMPTION): event content at most 65,536 bytes; a token at most 64 code points '
+                        '(a longer one is not searched); window keys per event at most 512 per token, at least 131,072, at most '
+                        '5,000,000; per call at most 1,000 events, 1,048,576 bytes and 5,000,000 keys; writes over these are '
+                        'refused (WPM01, WPM02, WPM03) and never stored. That admission ran is the writer''s word (cost control): '
+                        'the store does not yet check it. The erasure does not depend on it: an event the rescan cannot scan '
+                        'within the budget, or cannot decrypt while its speaker''s key exists, is treated as mentioning the '
+                        'subject and removed whole (unscannable_removed). There is no per-tenant rate limit.',
+      -- review H H6: every id list here is bounded (first 1,000 by LIMIT) with an exact count beside it; the full lists
+      -- stay in tombstones (by job_id) and erasure_mentions (by source)
+      'other_speakers_removed', (select coalesce(jsonb_agg(x.event_id order by x.event_id), '[]') from (
+                                 select tb.event_id from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
+                                 where tb.job_id = jid and e.subject_id <> j.subject_id order by tb.event_id limit 1000) x),
+      'other_speakers_removed_count', (select count(*) from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
+                                       where tb.job_id = jid and e.subject_id <> j.subject_id),
+      'unscannable_removed', jsonb_build_object(
+        'count', (select count(*) from erasure_mentions m join tombstones tb on tb.tenant_id = m.tenant_id and tb.event_id = m.event_id and tb.job_id = jid
+                  where m.job_id = jid and m.source = 'unscannable'),
+        'ids', (select coalesce(jsonb_agg(x.event_id order by x.event_id), '[]') from (
+                  select m.event_id from erasure_mentions m join tombstones tb on tb.tenant_id = m.tenant_id and tb.event_id = m.event_id and tb.job_id = jid
+                  where m.job_id = jid and m.source = 'unscannable' order by m.event_id limit 1000) x),
+        'rule', 'events the rescan could not scan within the matcher budget, or could not decrypt while the speaker''s key '
+                'existed, are treated as mentioning the subject (main''s decision, review H; ASSUMPTION) and removed whole',
+        'cost', 'whatever other speakers wrote in these events is lost, whether or not it named the subject',
+        'full_list', 'erasure_mentions where job_id = this job and source = ''unscannable'''),
       'declared_identifiers', j.ident_count, 'identifier_set_version', j.ident_xmax, 'rescan_covered_version', j.rescanned_xmax,
       'found_at_write', (select count(*) from tombstones tb join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
                          where tb.tenant_id = j.tenant_id and tb.subject_id = j.subject_id and e.subject_id <> j.subject_id and e.mentions @> array[j.subject_id]),
@@ -908,7 +986,8 @@ begin
       'over_match', jsonb_build_array('confusable variants of a declared identifier (Kim and Kirn share a key): such events of other speakers are removed too',
                                       'a capital I (or a look-alike of it) in text is read as i and as l, so text in capitals also matches a name that differs by i and l (DELIA also matches Della, NEIL also matches Nell, HAILEY also matches Halley; AIEX KIM matches Alex Kim)',
                                       'a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John; maria1 matches a declared Marial)',
-                                      'one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno)'),
+                                      'one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno)',
+                                      'codes that differ only in separators share a key (AB-1001, AB/1001 and AB 1001)'),
       'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials, inflected forms)', 'pronouns and indirect references',
                                        'look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones)',
                                        'a small l written for i or a small i for l (Allson or Aiison for Alison): distinct letters are never read as each other',
@@ -919,6 +998,7 @@ begin
                                        'look-alikes that are punctuation or symbols (| for l): they end the token',
                                        'words of the subject quoted by others that contain no declared identifier',
                                        'names in scripts written without spaces (refused at declaration)',
+                                       'a token longer than 64 code points, written or as key (a name glued to other letters): not searched',
                                        'mentions inside inbox payloads and analyst-job results',
                                        'content outside this store (ES snapshots, backups, logs: see store_registry ext:*)')),
     'timing', 'no completion-time bound under concurrent writes: the erasure mark waits for every in-flight share lock on '
@@ -977,12 +1057,12 @@ grant usage on sequence ingest_seq, fact_rev, quarantine_id_seq to wp_app;
 grant execute on function wp_lease_acquire(tenant_t, text, double precision, boolean, text, int), wp_lease_renew(tenant_t, text, bigint, text, double precision),
   wp_lease_release(tenant_t, text, bigint, text), wp_subjects_ensure(tenant_t, text[]), wp_erasure_mark(text), wp_erasure_cascade(text, int),
   wp_erasure_pg_residue(text, text), wp_fence(text, text, bigint),
-  wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]),
+  wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]), wp_erasure_add_unscannable(text, text[]),
   wp_identifier_propose(tenant_t, text, text, text, bytea, text),
   wp_erasure_rescan_done(text, bigint, text), wp_erasure_rescan_page(text, text[], text), wp_subject_xmax(text, text),
   wp_write_refused(tenant_t, text) to wp_app;
 -- D1: holds are placed and released only by the legal-operations role; the application cannot lift a hold.
-grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_release(text) to wp_legal;
+grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_release(text), wp_hold_report(text) to wp_legal;
 grant select on legal_holds, erasure_jobs, erasure_withheld to wp_legal;
 grant execute on function wp_erasure_pg_residue(text, text), wp_erasure_complete(text, jsonb, text) to wp_verifier;
 grant execute on function wp_erasure_rank(text) to wp_app, wp_verifier, wp_legal;   -- pure: the transition rule reads it in the guard

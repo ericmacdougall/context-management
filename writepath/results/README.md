@@ -426,13 +426,37 @@ Matcher budget m5 b1 (`failing-first/budget/`; design f545ad8, tests 80c6be4, co
   77fb0e7: 7 failures, all by assertion (1,001 events, 17 x 64,000 bytes and 41 floor-shaped events not refused; the
   matcher id lacks the call limits; the store does not accept WPM03).
 - `test_ident-budget.green.out` (Mac, Unicode 13.0.0): test_ident 57/57 at the m5 b1 head with the per-call limit.
-- STATED (main's decisions 2 and 3, ASSUMPTION under the user's delegation): an erasure whose rescan meets an event
-  admitted under another matcher and over the current budget CANNOT COMPLETE until a matcher migration re-admits that
-  event; NO MIGRATION EXISTS YET (the receipt's matcher_budget says the same). The 64 KiB content bound is an
+- SUPERSEDED by review H (main's decision on Class B): the b1 statement that an erasure whose rescan meets an
+  over-budget event cannot complete until a migration is withdrawn; such an event is now unscannable, removed whole and
+  listed (see "Review H" below). The 64 KiB content bound is an
   ASSUMPTION (no real event-size evidence). The worst admitted event costs about 14.5 s of matcher CPU and the worst
   admitted call about 16 s (Mac; store lookups not measured); there is no per-tenant rate limit.
 - NOT RUN: tests/test_d3_pg.py B1-B4 (live): t2-dev was below the 20 GB run floor and its run lock was held by another
   owner. No live evidence for the store constraint, write_refusals or the rescan's fail-closed path yet.
+
+
+Review H (`failing-first/reviewH/`; design 9ac45e9, tests bca7764, code in the commit after it; DESIGN-NOTES "Review
+H"; home paths shown as ~):
+- `test_ident-reviewH-on-6ddeca3.red.out` (Mac, Unicode 13.0.0, offline): the review H tests against the 6ddeca3 code:
+  19 failures, all by assertion, 0 errors (the F13 token HMACed 4,096 readings; a 32,768-code-point cluster
+  normalised whole; an over-long token keyed; 1,000 identical events peaked at 122.7 MiB traced; the cluster cache
+  held 1,250,994 bytes under a 64 KiB limit; no unscannable classification; 65 identifiers, a 257-byte identifier and
+  a 65-letter token accepted; capacity of 60 I's not saturated; no SQL size constraints, unscannable source,
+  separate hold report or bounded receipt lists; the token cap missing from the matcher id).
+- `test_ident-reviewH.green.out` (Mac): test_ident 78/78 at the review H code head; the 13 focused offline modules 216
+  run, OK, 32 skipped (the live ones); exp/static_check S1 to S6 clean, each control failing as designed.
+- MEASURED after the code (Mac, Python, real HMAC-SHA256, fake lookup; probes in the work dir
+  agent-af5c8cce658ab5a89/): the F13 shape 0.52 s and 3.8 MiB traced (6ddeca3: 6.9 s, 518.5 MiB, 691 MB RSS); 1,000
+  identical events 7.4 s and 4.6 MiB traced (6ddeca3: 20.3 s, 123.0 MiB); one 64 KiB mark cluster 0.08 s (6ddeca3:
+  3.4 s); 64 KiB of one-letter tokens 9.5 MiB; the worst admitted event by key BYTES (worst_bytes_probe.py: one
+  4,096-reading 64-code-point token every 81 tokens of 64 letters, 495,418 keys, 144 million code points HMACed) 2.1 s,
+  13.1 MiB traced, 34 MB RSS; the worst admitted CALL by key bytes (10 such events, 4.93 million keys, 1.44 billion
+  code points HMACed) 23.7 s of scan, 33 MB RSS: the new worst admitted call (the short-key worst call is 15.4 s of
+  scan plus 2.4 s of admission, the worst short-key event 10.1 s). Work is keys times key length, as the model says.
+- NOT RUN: tests/test_d3_pg.py B4 to B8, H16a, H16b, H6 and the size constraints (live): t2-dev had 17,301,352 KiB
+  free at 2026-11-18T01:46:19Z, under the 20,971,520 KiB run floor (the lock was free). Red on 6ddeca3 is not run for
+  them either. No live evidence yet for the unscannable path, the hold report split, the snapshot semantics in E1 to
+  E5, the receipt bounds or the new constraints.
 
 review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
 are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own

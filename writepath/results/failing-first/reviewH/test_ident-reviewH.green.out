@@ -1,0 +1,11 @@
+# review H green: test_ident (78/78) then the 13 focused offline modules (216 run, OK, 32 skipped), Mac, Unicode 13.0.0, 2026-11-18, review H code head; commands: WP_UCD_DIR=<ucd> python3 ~/.claude/hooks/run_capped.py --max-rss-gb 2 --timeout-s 900 -- python3 -m unittest tests.test_ident; and the same with the 13 modules
+..............................................................................
+----------------------------------------------------------------------
+Ran 78 tests in 31.642s
+
+OK
+................................................ssssssssssssssssssssssssssss..................................................................................................................................s......sss
+----------------------------------------------------------------------
+Ran 216 tests in 33.743s
+
+OK (skipped=32)
