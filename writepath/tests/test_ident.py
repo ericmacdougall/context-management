@@ -230,8 +230,8 @@ class Matcher(unittest.TestCase):
 CAP = 4096       # m5: readings per window (DESIGN-NOTES "Decisions after review E" item 5)
 # The glyphs read more than one way, by reading set (ASCII names), and the not-closed list, computed by the matcher from
 # the pinned tables; pinned here per Unicode version (a version not listed fails: pin it after checking the list).
-BOTH = {"13.0.0": {"il": 23, "1il": 11, "0o": 11}}
-NOT_CLOSED = {"13.0.0": 66}
+BOTH = {"13.0.0": {"il": 23, "1il": 11, "0o": 11}, "15.0.0": {"il": 23, "1il": 11, "0o": 11}}
+NOT_CLOSED = {"13.0.0": 66, "15.0.0": 66}
 
 
 class F11M5Readings(unittest.TestCase):
