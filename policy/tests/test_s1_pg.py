@@ -844,18 +844,24 @@ class S1_OpenSession(_S1):
         self.assertTrue(self.blocked_by(bp, ap), "vacuous: B did not wait for A")
         mut = {"factor": ("update dc.factors set revoked = true where factor = %s", (f.factor_id,)),
                "principal": ("update dc.principal set revoked = true where tenant = %s and pid = 'bob'", (T,))}.get(how)
-        mt, waited = None, None
+        mt, waited, a_ended = None, None, False
         try:
             if mut:
                 mt, _mo = self.start(lambda: self.mut_o.execute(*mut))
                 self.assertTrue(self._blocked_by_any(mp, (ap, bp)), "vacuous: the %s revocation did not wait while B waited" % how)
             self.idp_t.execute(a_end)
+            a_ended = True
             bt.join(20)
             self.assertFalse(bt.is_alive(), "B stuck")
             if mt is not None:
                 waited = self.blocked_by(mp, bp, timeout=1.0) and mt.is_alive()
         finally:
-            b.execute("commit")       # a refused call left B's transaction aborted: COMMIT then rolls it back
+            # A first: B waits for A, and B's connection is busy until B's call returns (a red run fails above with A still open)
+            if not a_ended:
+                self.idp_t.execute("rollback")
+            bt.join(20)
+            if not bt.is_alive():
+                b.execute("commit")   # a refused call left B's transaction aborted: COMMIT then rolls it back
         if mt is not None:
             mt.join(20)
             self.assertFalse(mt.is_alive(), "the mutation is stuck")
