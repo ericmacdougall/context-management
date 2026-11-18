@@ -58,11 +58,17 @@ class FakeES(http.server.BaseHTTPRequestHandler):
         body, code = None, S.get("status", 200)
         c = S["F"].st()["c"][S["cid"]] if code == 200 else None
         if code == 200 and path == "/_cluster/settings":
-            body = {"persistent": {}, "transient": {},
+            body = {"persistent": dict(S.get("persistent", {})), "transient": dict(S.get("transient", {})),
                     "defaults": {"cluster.routing.allocation.disk.threshold_enabled": "true",
                                  "cluster.routing.allocation.disk.watermark.low": "3gb",
                                  "cluster.routing.allocation.disk.watermark.high": "2gb",
-                                 "cluster.routing.allocation.disk.watermark.flood_stage": "1gb"}}
+                                 "cluster.routing.allocation.disk.watermark.flood_stage": "1gb",
+                                 "cluster.info.update.interval": "30s", "search.default_search_timeout": "-1"}}
+        elif code == 200 and path == "/_cluster/state/nodes":
+            # v4 (B2): the node answering at es_url; S["eph"] makes it another process than the container's node
+            body = {"nodes": {c["node"]: {"name": "node", "ephemeral_id": S.get("eph") or c["eph"]}}}
+        elif code == 200 and path.startswith("/_all/_settings"):
+            body = S.get("idx", {})
         elif code == 200 and path == "/_nodes/_local/stats/fs,jvm":
             started, now = _ms(c["started"]), int(time.time() * 1000)
             typ, total, free = c["statfs"][ESDATA]
@@ -163,15 +169,57 @@ class Fake:
         return self.root / "cg" / "system.slice" / f"docker-{cid}.scope"
 
     def cg(self, cid, **kw):
-        """Set memory.max (int or "max"), memory.swap.max, memory.peak and the oom_kill count of the container."""
+        """Set memory.max (int or "max"), memory.swap.max, memory.swap.current, memory.peak and the oom_kill count."""
         d = self.cgdir(cid)
         d.mkdir(parents=True, exist_ok=True)
-        for k, name in (("max", "memory.max"), ("swap", "memory.swap.max"), ("peak", "memory.peak")):
+        for k, name in (("max", "memory.max"), ("swap", "memory.swap.max"), ("peak", "memory.peak"),
+                        ("swap_cur", "memory.swap.current")):
             if k in kw:
                 (d / name).write_text(f"{kw[k]}\n")
         if "oom_kill" in kw:
             (d / "memory.events").write_text(f"low 0\nhigh 0\nmax 0\noom {kw['oom_kill']}\noom_kill {kw['oom_kill']}\n"
                                              "oom_group_kill 0\n")
+
+    def oom(self, cid, kill=1):
+        """One memory-limit OOM event in the container; with kill=0 the allocation failed and nothing was killed."""
+        p = self.cgdir(cid) / "memory.events"
+        ev = dict((k, int(v)) for k, v in (x.split() for x in p.read_text().splitlines()))
+        ev["oom"] += 1
+        ev["oom_kill"] += int(kill)
+        p.write_text("".join(f"{k} {v}\n" for k, v in ev.items()))
+
+    def probe(self, c, root, paths):
+        """The v4 in-container probe's output for container c (see exp/disk_gate.py PROBE): its mount table, the data
+        mount's statfs, each requested path and each link under root resolved, with device numbers."""
+        out = [f"M\t{20 + i} 1 {mm} / {mp} rw,relatime - {fs} {fs} {so}" for i, (mp, fs, mm, so) in enumerate(c["mi"])]
+        typ, total, free = c["statfs"][root]
+        files, ffree = c["inodes"]
+        out.append(f"F\t{typ}\t{total // 4096}\t4096\t{free // 4096}\t{files}\t{ffree}")
+        mm_root = next((mm for mp, fs, mm, so in c["mi"] if mp == root), "0:40")
+
+        def dev(mm):
+            return os.makedev(*map(int, mm.split(":")))
+
+        def res(p):
+            real = os.path.normpath(p) if p.startswith("/") else p
+            for link, target in c["links"]:
+                if real == link or real.startswith(link + "/"):
+                    real = os.path.normpath(target + real[len(link):])
+                    break
+            if real in c.get("missing", []):
+                return ["-", "-"]
+            d = dev(mm_root) if (real == root or real.startswith(root + "/")) else dev("0:40")
+            for mp, fs, mm, so in c["mi"]:
+                if mp.startswith(root + "/") and (real == mp or real.startswith(mp + "/")):
+                    d = dev(mm)
+            return [str(d), real]
+        for p in [root] + list(paths):
+            out.append("P\t%s\t%s\t%s" % (*res(p), p))
+        for link, target in c["links"]:
+            if link.startswith(root + "/"):
+                out.append("L\t%s\t%s\t%s" % (*res(target), link))
+        out.append("END")
+        return out
 
     def cgread(self, cid):
         d = self.cgdir(cid)
@@ -194,10 +242,18 @@ class Fake:
                             "du": {data_path: used}, "kept": 0, "drop": [], "pid": pid, "oom": False,
                             "node": os.urandom(8).hex(), "mem": mem, "env": [f"PGDATA={data_path}", "LANG=C.UTF-8"],
                             "mounts": [{"Type": "tmpfs", "Source": "", "Destination": data_path, "RW": True}],
-                            "statfs": {data_path: ["tmpfs", total, total - used]}}
+                            "statfs": {data_path: ["tmpfs", total, total - used]},
+                            # v4: the node's process id (ES), files written into the container, links under the data
+                            # mount, the container's own mount table, inode counts, and what its PG server reports
+                            "eph": os.urandom(8).hex(), "files": {}, "links": [], "inodes": [0, 0],
+                            "mi": [["/", "overlay", "0:40", "rw,lowerdir=/l,upperdir=/u"],
+                                   [data_path, "tmpfs", "0:50", f"rw,nosuid,nodev,size={total // 1024}k,nr_inodes=0,"
+                                                                "mode=1777,inode64"]],
+                            "pgsrv": {"sysid": str(int.from_bytes(os.urandom(7), "big")), "dd": None, "ts": [],
+                                      "su": True}}
         self.locked(f)
         (self.root / f"log.{cid}").touch()
-        self.cg(cid, max=mem, swap=0, peak=peak, oom_kill=0)
+        self.cg(cid, max=mem, swap=0, peak=peak, oom_kill=0, swap_cur=0)
         self._proc(cid, pid)
         return cid
 
@@ -219,12 +275,14 @@ class Fake:
             for a in ("kill", "die", "stop", "start", "restart"):
                 self._event(st, cid, a)
             c = st["c"][cid]
-            c.update(started=started or self.ts(st), restarts=c["restarts"] + 1, pid=pid, node=os.urandom(8).hex())
+            c.update(started=started or self.ts(st), restarts=c["restarts"] + 1, pid=pid, node=os.urandom(8).hex(),
+                     eph=os.urandom(8).hex(), files={})
+            c["pgsrv"]["sysid"] = str(int.from_bytes(os.urandom(7), "big"))     # the wiped tmpfs: a new initdb
             for p, v in c["statfs"].items():
                 v[2] = v[1]
             return c["mem"]
         mem = self.locked(f)
-        self.cg(cid, max=mem, swap=0, peak=GIB // 4, oom_kill=0)
+        self.cg(cid, max=mem, swap=0, peak=GIB // 4, oom_kill=0, swap_cur=0)
         self._proc(cid, pid)
 
     def replace(self, name):
@@ -276,6 +334,53 @@ class Fake:
             getattr(self, do[0])(*do[1:])
 
 
+class FakePG:
+    """The PG server at the experiment's endpoint, as the v4 gate's connection sees it (patched in as _pg_connect).
+    By default it is the server in the emlab2-wphard-pg container; state "pg_endpoint" = "other" makes it another
+    server (a copy with the same layout but not the inspected container's files), "unreachable" refuses connections.
+    pg_read_file reads the files written into the serving container (the nonce)."""
+
+    def __init__(self, F):
+        self.F = F
+        if F.st().get("pg_endpoint") == "unreachable":
+            raise ConnectionRefusedError("connection refused")
+
+    def _server(self):
+        st = self.F.st()
+        if st.get("pg_endpoint") == "other":
+            return {"pgsrv": {"sysid": "1", "dd": None, "ts": [], "su": True}, "env": [f"PGDATA={PGDATA}"]}, {}
+        c = st["c"][self.F.resolve(st, "emlab2-wphard-pg")]
+        return c, c["files"]
+
+    def execute(self, sql, params=()):
+        c, files = self._server()
+        s = c["pgsrv"]
+        dd = s["dd"] or dict(e.split("=", 1) for e in c.get("env", []) if "=" in e).get("PGDATA")
+        if "data_directory" in sql:
+            rows = [(dd,)]
+        elif "pg_control_system" in sql:
+            rows = [(int(s["sysid"]),)]
+        elif "pg_tablespace" in sql:
+            rows = [("pg_default", ""), ("pg_global", "")] + [tuple(x) for x in s["ts"]]
+        elif "pg_read_file" in sql:
+            if not s["su"]:
+                raise PermissionError("permission denied for function pg_read_file")
+            real = os.path.normpath(dd)
+            for link, target in c.get("links", []):
+                if real == link or real.startswith(link + "/"):
+                    real = os.path.normpath(target + real[len(link):])
+            v = files.get(real + "/" + params[0])
+            if v is None:
+                raise FileNotFoundError("could not open file for reading")
+            rows = [(v,)]
+        else:
+            raise ValueError("FakePG: unexpected query")
+        return SimpleNamespace(fetchall=lambda: rows)
+
+    def close(self):
+        pass
+
+
 def fake_main(argv):
     F = Fake(os.environ["FAKE_DOCKER_STATE"])
     prog, args = argv[0], argv[1:]
@@ -312,19 +417,43 @@ def fake_main(argv):
                                "NetworkSettings": {"Ports": c.get("ports") or {}}}]))
         return 0
     if cmd == "exec":
+        opts = []
+        while args and args[0].startswith("-"):
+            n = 2 if args[0] in ("-u", "--user", "-e", "--env", "-w", "--workdir") else 1
+            opts, args = opts + args[:n], args[n:]
         ref, ex = args[0], args[1:]
-        kind = "du" if ex[:1] == ["du"] else "stat" if ex[:2] == ["stat", "-f"] else "exec"
+        stdin = sys.stdin.read() if "-i" in opts else ""
+        sh = ex[:2] == ["sh", "-c"] and len(ex) > 2
+        kind = ("du" if ex[:1] == ["du"] else "stat" if ex[:2] == ["stat", "-f"] else
+                "probe" if sh and "disk_gate probe" in ex[2] else "nonce" if sh and "disk_gate nonce" in ex[2] else
+                "rm" if ex[:1] == ["rm"] else "curl" if ex[:1] == ["curl"] else "exec")
         F.fire(kind)
         st = F.st()
         cid = F.resolve(st, ref)
         if cid is None or not st["c"][cid]["running"]:
             print("Error response from daemon: container is not running", file=sys.stderr)
             return 1
-        text = " ".join(ex)
+        text = " ".join(opts + [ref] + ex)               # what Docker's event stream records: the command line
         F.event(cid, "exec_create: " + text)
         F.event(cid, "exec_start: " + text)
         rc = 0
-        if kind == "du":
+        if kind == "probe":
+            c = st["c"][cid]
+            if st["flags"].get("stat_rc") or ex[4] not in c["statfs"]:
+                print("stat: cannot read file system information", file=sys.stderr)
+                rc = 1
+            else:
+                print("\n".join(F.probe(c, ex[4], ex[5:])))
+        elif kind == "nonce":
+            F.locked(lambda s: s["c"][cid]["files"].update({ex[-1]: stdin}))
+        elif kind == "rm":
+            F.locked(lambda s: s["c"][cid]["files"].pop(ex[-1], None))
+        elif kind == "curl":
+            # only whether the credential arrived on stdin is kept, never the header itself
+            F.locked(lambda s: s["c"][cid].update(curl_auth=stdin.startswith("Authorization: ")))
+            c = st["c"][cid]
+            print(json.dumps({"nodes": {c["node"]: {"name": "node", "ephemeral_id": c["eph"]}}}))
+        elif kind == "du":
             if st["flags"].get("du_rc"):
                 rc = 1
             else:
@@ -478,7 +607,10 @@ class Gate(unittest.TestCase):
                 patches.append(mock.patch.object(self.g, name, v))
         if self.v3:
             patches += [mock.patch.object(self.g, "PROC_ROOT", root / "proc"),
-                        mock.patch.object(self.g, "CGROUP_ROOT", root / "cg")]
+                        mock.patch.object(self.g, "CGROUP_ROOT", root / "cg"),
+                        # v4's connection to the experiment's PG endpoint (B1); create=True so that an older gate
+                        # under test runs these tests to a FAIL, not an error
+                        mock.patch.object(self.g, "_pg_connect", lambda: FakePG(self.F), create=True)]
         for p in patches:
             p.start()
             self.addCleanup(p.stop)
@@ -526,6 +658,25 @@ class Gate(unittest.TestCase):
     def need_v3(self):
         if not self.v3:
             self.skipTest("needs a command the v2 gate lacks (not counted as red)")
+
+    def need_v4(self):
+        if not hasattr(self.g, "LIMITS"):
+            self.skipTest("needs a command the v3 gate lacks (not counted as red)")
+
+    def last_record(self):
+        return json.loads((self.home / "state" / "stop_ledger.jsonl").read_text().splitlines()[-1])
+
+    def legacy_write(self, how):
+        """A legacy writer at state/STOP: `touch` (a directory's times, or a new file), `cp` (a file landing inside a
+        directory, or at the path) or `overwrite` (an existing entry's content, or the path itself)."""
+        p = self.stop_path()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if how == "touch":
+            p.touch()
+        elif p.is_dir():
+            (p / ("why" if how == "cp" else "README")).write_text("legacy: stop now\n")
+        else:
+            p.write_text("legacy: stop now\n")
 
     def assertBlocked(self, rc, out, *why):
         """BLOCKED; on the v3 gate also for the stated reason(s), so a test cannot pass on an incidental failure."""
@@ -679,9 +830,15 @@ class Gate(unittest.TestCase):
         self.F.flag(stat_rc=1)
         self.assertVoid(*self.call("end"), "statfs")
 
-    def test_jvm_not_bound_to_the_container_blocks(self):
-        FakeES.S.update(jvm_offset_s=-3600)
-        self.assertBlocked(*self.call("start"), "JVM")
+    # ---- B2 (review F F14, ES): the node at es_url is the node running in the inspected container
+    def test_es_url_answered_by_another_node_process_blocks(self):
+        FakeES.S.update(eph="0f0f0f0f0f0f0f0f")       # es_url answers for a process that is not the container's node
+        self.assertBlocked(*self.call("start"), "ephemeral")
+
+    def test_es_url_switched_to_another_node_during_the_run_voids(self):
+        self.start()
+        FakeES.S.update(eph="0f0f0f0f0f0f0f0f")
+        self.assertVoid(*self.call("end"), "ephemeral")
 
     # ---- R7 host free space measured inside the locked admission step (review D F1)
     def test_tmpfs_written_from_outside_the_container_voids(self):
@@ -695,7 +852,148 @@ class Gate(unittest.TestCase):
     def test_pgdata_outside_the_tmpfs_blocks(self):
         self.need_v3()
         self.F.set(self.pg, env=["PGDATA=/var/lib/postgresql/elsewhere"])
-        self.assertBlocked(*self.call("start"), "PGDATA")
+        self.assertBlocked(*self.call("start"), "/var/lib/postgresql/elsewhere")
+
+    # ---- B1 (review F F14): the server at the experiment's endpoint is the one in the inspected container
+    def test_another_pg_server_at_the_experiments_endpoint_blocks(self):
+        # a qualifying tmpfs container is inspected while 127.0.0.1:pg_port is served by another PG server
+        self.F.locked(lambda st: st.update(pg_endpoint="other"))
+        self.assertBlocked(*self.call("start"), "nonce")
+
+    def test_endpoint_switched_to_another_pg_server_during_the_run_voids(self):
+        self.start()
+        self.F.locked(lambda st: st.update(pg_endpoint="other"))
+        self.assertVoid(*self.call("end"), "nonce")
+
+    def test_pg_endpoint_unreachable_at_end_voids(self):
+        self.start()
+        self.F.locked(lambda st: st.update(pg_endpoint="unreachable"))
+        self.assertVoid(*self.call("end"), "endpoint")
+
+    def test_admin_role_that_cannot_read_server_files_blocks(self):
+        self.F.locked(lambda st: st["c"][self.pg]["pgsrv"].update(su=False))
+        self.assertBlocked(*self.call("start"), "server file")
+
+    def test_pg_cluster_replaced_under_the_container_voids(self):
+        # a new initdb in the same tmpfs (same container, same StartedAt): the system identifier changes
+        self.start()
+        self.F.locked(lambda st: st["c"][self.pg]["pgsrv"].update(sysid="42"))
+        self.assertVoid(*self.call("end"), "system identifier")
+
+    def test_nonce_file_is_removed_after_each_step(self):
+        self.start()
+        self.assertEqual(self.F.st()["c"][self.pg]["files"], {}, "the gate left its nonce file in PG's data directory")
+
+    # ---- B3 (review F F15): every storage path the server names, and every link, is on the private tmpfs
+    def test_pgdata_dotdot_escape_blocks(self):
+        self.F.set(self.pg, env=[f"PGDATA={PGDATA}/../on-disk"])
+        self.assertBlocked(*self.call("start"), "on-disk")
+
+    def test_data_directory_overriding_pgdata_blocks(self):
+        # PGDATA names the tmpfs, but the server runs with data_directory set elsewhere (postgresql.conf, -D)
+        self.F.locked(lambda st: st["c"][self.pg]["pgsrv"].update(dd="/srv/pgdata"))
+        self.assertBlocked(*self.call("start"), "/srv/pgdata")
+
+    def test_pg_wal_linked_outside_the_tmpfs_blocks(self):
+        self.F.set(self.pg, links=[[PGDATA + "/pg_wal", "/var/lib/pgwal"]])
+        self.assertBlocked(*self.call("start"), "/var/lib/pgwal")
+
+    def test_tablespace_outside_the_tmpfs_blocks(self):
+        self.F.locked(lambda st: st["c"][self.pg]["pgsrv"].update(ts=[["ts_ext", "/mnt/ts"]]))
+        self.F.set(self.pg, links=[[PGDATA + "/pg_tblspc/16400", "/mnt/ts"]])
+        self.assertBlocked(*self.call("start"), "/mnt/ts")
+
+    def test_tablespace_created_during_the_run_outside_the_tmpfs_voids(self):
+        self.start()
+        self.F.locked(lambda st: st["c"][self.pg]["pgsrv"].update(ts=[["ts_ext", "/mnt/ts"]]))
+        self.assertVoid(*self.call("end"), "/mnt/ts")
+
+    def test_mount_below_the_data_mount_in_the_containers_mount_table_blocks(self):
+        self.F.locked(lambda st: st["c"][self.pg]["mi"].append([PGDATA + "/base", "ext4", "8:1", "rw"]))
+        self.assertBlocked(*self.call("start"), "below")
+
+    def test_es_data_link_outside_the_tmpfs_blocks(self):
+        self.F.set(self.es, links=[[ESDATA + "/indices", "/var/tmp/indices"]])
+        self.assertBlocked(*self.call("start"), "/var/tmp/indices")
+
+    def test_dangling_link_under_the_data_mount_blocks(self):
+        self.F.set(self.pg, links=[[PGDATA + "/pg_tblspc/16401", "/gone"]], missing=["/gone"])
+        self.assertBlocked(*self.call("start"), "resolve")
+
+    # ---- B4 (review F F16): no inode limit; an allocation failure at the memory limit voids
+    def test_tmpfs_with_an_inode_limit_blocks(self):
+        def f(st):
+            st["c"][self.pg]["mi"][1][3] = "rw,nosuid,nodev,size=2097152k,nr_inodes=4096,mode=1777"
+            st["c"][self.pg]["inodes"] = [4096, 4000]
+        self.F.locked(f)
+        self.assertBlocked(*self.call("start"), "inode")
+
+    def test_oom_event_without_a_kill_voids(self):
+        self.start()
+        self.F.oom(self.pg, kill=0)                         # an allocation failed at the limit; nothing was killed
+        self.assertVoid(*self.call("end"), "oom")
+
+    # ---- B5 (review F F17): the disk and allocation settings, at admission and every step
+    def test_disk_threshold_check_disabled_at_admission_blocks(self):
+        FakeES.S.update(persistent={"cluster.routing.allocation.disk.threshold_enabled": "false"})
+        self.assertBlocked(*self.call("start"), "threshold_enabled")
+
+    def test_disk_threshold_check_disabled_persistently_during_the_run_voids(self):
+        # unchanged threshold figures (node stats) do not show that the disk decider was turned off
+        self.start()
+        FakeES.S.update(persistent={"cluster.routing.allocation.disk.threshold_enabled": "false"})
+        self.assertVoid(*self.call("check", "x"), "threshold_enabled")
+
+    def test_transient_watermark_change_still_present_voids(self):
+        self.start()
+        FakeES.S.update(transient={"cluster.routing.allocation.disk.watermark.flood_stage": "10mb"})
+        self.assertVoid(*self.call("end"), "flood_stage")
+
+    def test_flood_stage_block_on_an_index_voids(self):
+        self.start()
+        FakeES.S.update(idx={"wp16096-events": {"settings": {"index.blocks.read_only_allow_delete": "true"}}})
+        self.assertVoid(*self.call("end"), "read_only_allow_delete")
+
+    def test_index_created_during_the_run_with_es_defaults_stays_valid(self):
+        self.start()
+        FakeES.S.update(idx={"wp16096-new": {"settings": {
+            "index.routing.allocation.include._tier_preference": "data_content"}}})
+        self.assertValid(*self.call("end"))
+
+    # ---- B6 (review F F18): nothing slow after the final identity read
+    def test_restart_during_the_end_home_measurement_voids(self):
+        self.start()
+        self.F.trigger("du", 1, "restart", self.pg)         # fires inside end's WP_HOME measurement
+        self.assertVoid(*self.call("end"), "restarted")
+
+    def test_oom_kill_during_the_check_home_measurement_voids(self):
+        self.start()
+        self.F.trigger("du", 1, "oom", self.es, 1)
+        self.assertVoid(*self.call("check", "x"), "OOM")
+
+    # ---- B8 (review F F19): every verdict carries the gate version, its hash, the window's end and the limits
+    def test_every_verdict_states_the_gate_and_its_limits(self):
+        self.start()
+        rc, out = self.call("end")
+        self.assertValid(rc, out)
+        self.assertIn("LIMITS v4", out, "the VALID verdict line does not state the operator trust boundary")
+        rec = self.last_record()
+        self.assertEqual(rec.get("limits"), "v4")
+        self.assertEqual(rec.get("gate"), "disk_gate v4")
+        self.assertRegex(rec.get("gate_sha256") or "", r"^[0-9a-f]{64}$")
+        self.assertLessEqual(rec.get("window_end") or "~", rec["at"])
+
+    # ---- B9 (review F F20, F21)
+    def test_store_on_a_volume_is_not_called_a_tmpfs(self):
+        self.F.set(self.pg, mounts=[{"Type": "volume", "Name": "emlab2-wphard-pg-data", "Destination": PGDATA}])
+        self.F.statfs(self.pg, PGDATA, typ="ext2/ext3", total=643 * GIB, free=57 * GIB)
+        rc, out = self.call("start")
+        self.assertBlocked(rc, out, "not a Docker tmpfs mount")
+        self.assertNotIn("tmpfs holds", out, "a volume's figures were reported as a tmpfs's")
+
+    def test_swap_in_use_blocks(self):
+        self.F.cg(self.pg, swap_cur=4096)                   # memory.swap.max 0 now, pages swapped before it was set
+        self.assertBlocked(*self.call("start"), "swap")
 
     def test_no_stream_code_writes_disk_or_block_settings(self):
         # GATE-DESIGN 5.4: thresholds changed and restored between two observations are outside what the gate sees, so
@@ -845,59 +1143,80 @@ class Gate(unittest.TestCase):
                                                                         "run_dir": "/nonexistent"}))
         self.assertVoid(*self.call("end"), "older gate")
 
-    # ---- legacy STOP file (review D F3)
-    def test_legacy_stop_file_is_ingested_kept_and_its_path_becomes_a_directory(self):
-        # a home from before v3 (or one whose STOP directory was removed): the path holds a regular file
-        if self.stop_path().is_dir():
-            shutil.rmtree(self.stop_path())
-        self.stop_path().parent.mkdir(parents=True, exist_ok=True)
-        self.stop_path().write_text("operator: stop now\n")
-        self.assertBlocked(*self.call("start"), "unacknowledged stop")
-        self.assertTrue(self.stop_path().is_dir(), "state/STOP must become a directory, so legacy writes fail")
-        if self.v3:
-            self.assertEqual(len(list(self.home.joinpath("state").glob("STOP.ingested-*"))), 1)
+    # ---- legacy STOP path (review D F3, review F F13): never read, never moved, never anchored; its existence stops
+    def test_legacy_stop_file_blocks_and_stays_where_it_was_written(self):
+        p = self.stop_path()
+        if p.is_dir():
+            shutil.rmtree(p)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("operator: stop now\n")
+        self.assertBlocked(*self.call("start"), "state/STOP")
+        self.assertTrue(p.is_file() and p.read_text() == "operator: stop now\n",
+                        "the gate moved or changed a legacy STOP file instead of leaving it for a person")
 
-    def test_touch_of_the_stop_directory_is_a_stop(self):
-        self.need_v3()
-        self.assertEqual(self.call("stops")[0], 0)
-        os.utime(self.stop_path())                      # `touch state/STOP` succeeds on a directory
-        self.assertBlocked(*self.call("start"), "unacknowledged stop")
-
-    def test_file_copied_into_the_stop_directory_is_a_stop(self):
-        self.need_v3()
-        self.assertEqual(self.call("stops")[0], 0)
-        (self.stop_path() / "why").write_text("operator: stop, disk\n")   # `cp why state/STOP` lands inside it
-        self.assertBlocked(*self.call("start"), "unacknowledged stop")
-        self.assertFalse((self.stop_path() / "why").exists(), "the file written into STOP must be kept elsewhere")
-        self.assertEqual(len(list(self.home.joinpath("state").glob("STOP.ingested-*"))), 1)
-        self.ack_all("read it")
-        self.start()                                    # the directory's new state is anchored: no second stop
-
-    def test_legacy_stop_write_after_migration_fails_loudly(self):
-        self.call("stops")
-        with self.assertRaises(IsADirectoryError, msg="a legacy `> state/STOP` must fail, not be missed"):
-            self.stop_path().write_text("operator: stop\n")
-
-    def test_legacy_stop_written_during_finalization_is_never_lost(self):
-        # review D F3: a write after the final ingestion and before the end record. Either the writer is refused or
-        # the run is VOID; a VALID run with an unseen STOP file is the defect.
+    def _finalization_write(self, how):
+        """A legacy write made inside end's locked ledger step, after the gate read the ledger (review F F13)."""
         self.start()
-        orig, seen = self.g.Ledger.append, {}
+        orig = self.g._ledger_why
 
-        def append(L, kind, **kw):
-            if kind == "end" and "tried" not in seen:
-                seen["tried"] = True
-                try:
-                    self.stop_path().write_text("legacy: stop during finalization\n")
-                    seen["written"] = True
-                except IsADirectoryError:
-                    seen["written"] = False
-            return orig(L, kind, **kw)
-        with mock.patch.object(self.g.Ledger, "append", append):
+        def lw(L, st, when):
+            self.legacy_write(how)
+            return orig(L, st, when)
+        with mock.patch.object(self.g, "_ledger_why", lw):
             rc, out = self.call("end")
-        self.assertTrue(seen.get("tried"), "the end record was not appended")
-        self.assertTrue(not seen["written"] or rc == 3,
-                        f"a STOP written during finalization was accepted and the run left VALID (rc {rc})")
+        rc2, out2 = self.call("start")
+        self.assertTrue(rc == 3 or rc2 == 2,
+                        f"a legacy STOP {how} during finalization was lost: end rc {rc}, next start rc {rc2}")
+        if rc2 == 2 and self.v3:
+            self.assertIn("STOP", out2)
+
+    def test_legacy_stop_touched_during_finalization_is_never_lost(self):
+        self._finalization_write("touch")
+
+    def test_legacy_stop_copied_during_finalization_is_never_lost(self):
+        self._finalization_write("cp")
+
+    def test_legacy_stop_overwritten_during_finalization_is_never_lost(self):
+        self._finalization_write("overwrite")
+
+    def test_legacy_stop_entry_overwritten_in_the_window_voids(self):
+        # review F F13: overwriting an existing entry changes no directory time and no entry name
+        self.start()
+        self.legacy_write("overwrite")
+        self.assertVoid(*self.call("end"), "STOP")
+
+    def test_legacy_stop_written_in_the_window_voids_and_persists(self):
+        self.start()
+        self.legacy_write("touch")
+        self.assertVoid(*self.call("end"), "STOP")
+        self.assertBlocked(*self.call("start"), "STOP")
+
+    def test_stop_and_abort_still_work_while_a_legacy_path_exists(self):
+        self.start()
+        self.legacy_write("touch")
+        rc, out = self.call("stop", "recorded while a legacy STOP path exists")
+        self.assertEqual(rc, 0, out)
+        rc, out = self.call("abort", "launcher gone")
+        self.assertEqual(rc, 0, out)
+
+    def test_retire_legacy_stop_moves_it_unread_and_leaves_a_stop_to_acknowledge(self):
+        self.need_v4()
+        p = self.stop_path()
+        p.mkdir(parents=True, exist_ok=True)                 # what every v3.0 home holds
+        (p / "README").write_text("Not a stop file.\n")
+        self.assertBlocked(*self.call("start"), "state/STOP")
+        rc, out = self.call("clear-stop", "state/STOP", "trying to acknowledge the legacy path")
+        self.assertEqual(rc, 2, "clear-stop must not acknowledge the legacy path")
+        rc, out = self.call("retire-legacy-stop", "v3.0 home: the gate-made directory")
+        self.assertEqual(rc, 0, out)
+        self.assertFalse(os.path.lexists(p), "the legacy path is still there after retire")
+        kept = list(p.parent.glob("STOP.retired-*"))
+        self.assertEqual(len(kept), 1)
+        self.assertEqual((kept[0] / "README").read_text(), "Not a stop file.\n", "retire changed what was there")
+        self.assertBlocked(*self.call("start"), "unacknowledged stop")
+        self.ack_all("read the retired directory")
+        self.start()
+        self.assertFalse(os.path.lexists(p), "the gate created state/STOP again")
 
     # ---- the credential (GATE-DESIGN 4.3, kept in v3)
     def test_api_key_is_sent_and_never_written(self):
@@ -916,9 +1235,20 @@ class Gate(unittest.TestCase):
             FakeES.S.update(status=200, type="ext4")
             rc, out2 = self.call("start")
             self.assertEqual(rc, 2, "a data path off tmpfs must block start")
+            FakeES.S.pop("type")
+            rc, out3 = self.call("start")
+            self.assertEqual(rc, 0, out3)
+            rc, out4 = self.call("end")
+            out2 += out3 + out4
         finally:
             (sec / "es_api_key.json").unlink()
         self.assertIn("ApiKey " + enc, FakeES.S.get("auth", []), "the gate did not send the stream's API key")
+        # Docker's event stream records every exec command line: the key must never be in one (review F, advisor)
+        argv = [json.dumps(e) for e in self.F.events()]
+        self.assertFalse(any(key in a or enc in a for a in argv), "the API key was put on a docker command line")
+        if hasattr(self.g, "LIMITS"):
+            self.assertTrue(self.F.st()["c"][self.es].get("curl_auth"),
+                            "the in-container ES request did not receive the credential on stdin")
         written = [p for p in (self.home / "state").rglob("*") if p.is_file()]
         hits = [p.name for p in written if leak_scan.find(p.read_bytes(), [key, enc])]
         self.assertEqual(hits, [], "a gate file holds the API key")
