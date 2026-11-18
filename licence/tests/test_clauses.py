@@ -381,5 +381,86 @@ class LegacyWriterTests(unittest.TestCase):
         self.assertNotIn("writes no status of record", design)
 
 
+# ---- review 13 F31 and F32: raw rows in, verdict out (the recorder and the reducer are part of what is tested) ---------------------
+def committed_raw(name):
+    """A committed life exactly as the loader parses it (stored raw-sourced figures still in place) and its raw rows."""
+    import gzip
+    R = summarize.parse_life(os.path.join(RES, name + ".json"), name.split("_")[0])
+    with gzip.open(os.path.join(RES, name + ".rows.gz"), "rt") as fh:
+        rows = [json.loads(l) for l in fh]
+    return R, rows
+
+
+def insert_row(rows, row):
+    """Insert a workload row keeping completion (t1) order, as the recorder writes them."""
+    out = list(rows)
+    i = next((k for k, r in enumerate(out) if r[1] > row[1]), len(out))
+    out.insert(i, row)
+    return out
+
+
+def through_loader(R, rows, gate, poll=None, oracle=None):
+    """The real path: typed parse of the raw rows, reduction (summarize.rebuild), then the verdict."""
+    R = copy.deepcopy(R)
+    summarize.rebuild(R, {"rows": rows, "poll": poll, "oracle": oracle})
+    return verdicts.judge(gate, R)
+
+
+class RecorderLevelReview13Tests(unittest.TestCase):
+    def test_f31_a_control_failure_in_the_first_second_after_trial_activation_is_not_a_pass(self):
+        R, rows = committed_raw("up_1")
+        self.assertEqual(through_loader(R, rows, "EXP2-T5-up").status, "PASS", "the unmodified committed rows must pass (non-vacuous)")
+        t = R["start_trial"]["t_resp"]
+        bad = insert_row(rows, [t + 0.1, t + 0.15, "ctl", 0, 0, None, None,
+                                'BackendError: HTTP 503: {"error":{"type":"unavailable_shards_exception"},"status":503}'])
+        v = through_loader(R, bad, "EXP2-T5-up")
+        self.assertNotEqual(v.status, "PASS", "a control request failing 0.1 s after the start_trial response must not pass: %s" % v.reason)
+
+    def _verify(self, sem_rows, acked, present, sem_present, t_req, t_resp, direction):
+        import inspect
+        import exp2
+        w = object.__new__(exp2.Workload)
+        w.acked, w.attempted_failed, w.sem_rows = dict(acked), [], [list(r) for r in sem_rows]
+        pages = [[{"_id": i} for i in present], []]
+
+        def fake(method, path, body=None, **kw):
+            if "lic-sem2/_search" in path:
+                return 200, {"hits": {"total": {"value": len(sem_present)}, "hits": [{"_id": i} for i in sem_present]},
+                             "_shards": {"failed": 0}}, 1
+            if "_search" in path and method == "POST" and ("scroll" in path):
+                return 200, {"_scroll_id": "x", "hits": {"hits": pages.pop(0) if pages else []}, "_shards": {"failed": 0}}, 1
+            return 200, {"_shards": {"failed": 0}}, 1
+        old = exp2.req
+        exp2.req = fake
+        try:
+            if "t_req" in inspect.signature(w.verify_writes).parameters:
+                return w.verify_writes(t_req=t_req, t_resp=t_resp, direction=direction)
+            return w.verify_writes()   # the reviewed head records without transition times
+        finally:
+            exp2.req = old
+
+    def _t4(self, sem_rows, sem_present):
+        R = _healthy_for_t4()
+        t_req, t_resp = 101.9, 102.0
+        R["start_basic"].update(t_req=t_req, t_resp=t_resp)
+        R["exp2"]["writes"] = self._verify(sem_rows, {"w0-000000": 101.0, "w0-000001": 103.0}, ["w0-000000", "w0-000001"], sem_present,
+                                           t_req, t_resp, "down")
+        return verdicts.judge("EXP2-T4", R)
+
+    def test_f32_a_semantic_write_acknowledged_and_present_on_basic_is_not_a_pass(self):
+        lic = {"type": "security_exception", "reason": "current license is non-compliant for [inference]"}
+        ok = self._t4([[100.0, "s000000", 201, None], [102.1, "s000001", 403, lic]], ["s000000"])
+        self.assertEqual(ok.status, "PASS", "a loud Basic failure, nothing acknowledged or present on Basic, must pass: %s" % ok.reason)
+        v = self._t4([[100.0, "s000000", 201, None], [102.1, "s000001", 201, None]], ["s000000", "s000001"])
+        self.assertNotEqual(v.status, "PASS", "a semantic write acknowledged at 102.1 s, after the Basic response at 102.0 s, and present "
+                                              "must not pass: %s" % v.reason)
+
+
+def _healthy_for_t4():
+    R = _healthy("down")
+    R["exp2"].setdefault("events", {})
+    return R
+
+
 if __name__ == "__main__":
     unittest.main()
