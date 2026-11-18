@@ -7,8 +7,9 @@ does not import wp (whose config refuses to start until this has written the con
 - Containers emlab2-wphard-pg (postgres:16) and emlab2-wphard-es (elasticsearch 9.5.6, security off; D6 turns it
   on with wp/es_security.py), loopback ports only, memory limits, labelled emlab2.stream=wphard. A container of
   that name without the label is refused, never removed.
-- Elasticsearch disk watermarks are ABSOLUTE free-space floors (low 18gb, high 17gb, flood 15gb): at 15 GB free the
-  node stops writes itself, which enforces the host disk rule (do not leave under 15 GB free) from inside the store.
+- Elasticsearch disk watermarks are ABSOLUTE free-space floors (low 10gb, high 9gb, flood 8gb; amendment H6d, the
+  user's lab disk rule, were 18/17/15gb): at 8 GB free the node stops writes itself, which enforces the stop line from
+  inside the store. wp/es_security.py applies the same values when it recreates the node.
 - Secrets: the admin Postgres password and the two legacy-code role passwords are generated here into 0600 files
   under WP_HOME/secrets (0700) and WP_HOME/oldhome. Role passwords reach Postgres only as SCRAM verifiers computed
   here, so no cleartext reaches a statement, the server log, argv or the environment. Nothing secret is printed.
@@ -124,9 +125,9 @@ def main(pg_port, es_port):
                         "-p", f"127.0.0.1:{es_port}:9200", "-v", f"{ES_C}-data:/usr/share/elasticsearch/data",
                         "-e", "ES_JAVA_OPTS=-Xms1g -Xmx1g", "-e", "discovery.type=single-node",
                         "-e", "xpack.security.enabled=false", "-e", "action.auto_create_index=false",
-                        "-e", "cluster.routing.allocation.disk.watermark.low=18gb",
-                        "-e", "cluster.routing.allocation.disk.watermark.high=17gb",
-                        "-e", "cluster.routing.allocation.disk.watermark.flood_stage=15gb",
+                        "-e", "cluster.routing.allocation.disk.watermark.low=10gb",
+                        "-e", "cluster.routing.allocation.disk.watermark.high=9gb",
+                        "-e", "cluster.routing.allocation.disk.watermark.flood_stage=8gb",
                         ES_IMAGE], check=True, capture_output=True)
 
     t0 = time.time()

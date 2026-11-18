@@ -1,0 +1,27 @@
+# Lab host (t2-dev), 2026-11-18 about 20:55Z. Scratch tree ~/emlab2-16096/wphard/try-h6d: the ba46276 pinned tree with
+# the four changed files of this commit copied over (tests/test_live_chain_disk.py,
+# results/failing-first/harness/live_chain.sh, wp/es_security.py, host/bootstrap.py). The scratch tree was removed
+# afterwards. Commands: WP_HOME=~/emlab2-16096/wphard/wp $WP_HOME/venv/bin/python -m unittest -v tests.test_live_chain_disk
+# Output lines are copied verbatim from the terminal; long test names are shortened.
+
+== new (this commit)
+test_dr1_starts_at_12_gb ... ok
+test_dr2_refuses_at_9_gb ... ok
+test_dr3_stops_at_8_gb_during_a_step ... ok
+test_dr4_recreated_node_watermarks ... ok
+Ran 4 tests in 30.294s
+OK
+
+== live_chain.sh from ba46276 (same file at 5b93238)
+FAIL: test_dr1_starts_at_12_gb
+AssertionError: 'lock taken' not found in 'below start line: 12582912 KiB\n'
+FAIL: test_dr3_stops_at_8_gb_during_a_step
+AssertionError: 4 != 6 : below start line: 12582912 KiB
+Ran 4 tests in 3.042s
+FAILED (failures=2)
+
+== broken variant: this commit's live_chain.sh with STOP_KIB=0 (no stop line); DR3 only
+FAIL: test_dr3_stops_at_8_gb_during_a_step
+AssertionError: 0 != 6 : lock taken 2026-11-18T20:56:14Z head new seal0 seal0 h0 h0 free_kib 12582912
+Ran 1 test in 60.043s
+FAILED (failures=1)

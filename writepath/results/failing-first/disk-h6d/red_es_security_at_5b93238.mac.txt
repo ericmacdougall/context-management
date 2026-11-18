@@ -1,0 +1,8 @@
+# tree: writepath/ at 5b93238 (dirty: 5 paths)
+# command: python3 results/failing-first/harness/red_with.py . wp/es_security.py 5b93238 tests.test_live_chain_disk
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/es_security.py <- wp/es_security.py at 5b93238; tests: current; python3 -m unittest tests.test_live_chain_disk
+FAIL: test_dr4_recreated_node_watermarks (tests.test_live_chain_disk.NodeWatermarks)
+AssertionError: Lists differ: ['clu[46 chars]tage=15gb', 'cluster.routing.allocation.disk.w[69 chars]8gb'] != ['clu[46 chars]tage=8gb', 'cluster.routing.allocation.disk.wa[67 chars]0gb']
+Ran 4 tests in 0.026s
+FAILED (failures=1, skipped=3)

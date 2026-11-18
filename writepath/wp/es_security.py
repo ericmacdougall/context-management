@@ -19,6 +19,10 @@ import urllib.request
 from . import config
 
 NAME = config.ES_CONTAINER
+# Absolute free-space watermarks of the node (amendment H6d, the user's lab disk rule: start >= 10 GB, stop at 8 GB).
+# The recreated container gets these whatever the old one had (host/bootstrap.py had 18gb/17gb/15gb).
+WM = "cluster.routing.allocation.disk.watermark."
+WATERMARKS = {"low": "10gb", "high": "9gb", "flood_stage": "8gb"}
 if not NAME.startswith(config.OWN_PREFIX):          # config refuses this too; checked again before any docker rm
     raise SystemExit(f"refusing: {NAME!r} is not this stream's container")
 
@@ -48,7 +52,8 @@ def _run_args(j, security):
         args += ["--ulimit", f"{u['Name']}={u['Soft']}:{u['Hard']}"]
     if hc.get("Memory"):
         args += ["-m", str(hc["Memory"])]
-    env = [e for e in cfg.get("Env") or [] if not e.startswith(("xpack.security.", "ELASTIC_PASSWORD"))]
+    env = [e for e in cfg.get("Env") or [] if not e.startswith(("xpack.security.", "ELASTIC_PASSWORD", WM))]
+    env += [f"{WM}{k}={v}" for k, v in WATERMARKS.items()]
     env += [f"xpack.security.enabled={'true' if security else 'false'}"]
     if security:
         env += ["xpack.security.http.ssl.enabled=false", "xpack.security.transport.ssl.enabled=false"]

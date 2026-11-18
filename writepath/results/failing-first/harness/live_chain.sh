@@ -1,6 +1,8 @@
 #!/bin/sh
 # wphard live recheck (agent a5bed86994269066b, writepath hardening owner). UNSTAMPED; no launch_one, no disk gate
-# verdict claimed. Holds the lab run lock only while it runs (>= 20971520 KiB free at start). Home paths printed as ~.
+# verdict claimed. Holds the lab run lock only while it runs. Disk rule (amendment H6d, the user's decision): starts only
+# with >= 10485760 KiB free; stops itself under 8388608 KiB, checked before every step and every 15 s by a watcher that
+# stops the running step (exit 6, $O/STOP names the reading). Home paths printed as ~.
 # Full -v output per step goes to $O (on t2-dev); the summary prints per-step result lines.
 #   G1  tests.test_ident (HEAD)            G2 WP_PG_LIVE tests.test_d3_pg -v (HEAD schema)
 #   G3  WP_PG_LIVE tests.test_schema_broker_pg -v      P0 wp.setup --reset (HEAD)
@@ -22,18 +24,38 @@ export WP_HOME=$HOME/emlab2-16096/wphard/wp
 export WP_UCD_DIR=$HOME/emlab2-16096/wphard/ucd
 PY=$WP_HOME/venv/bin/python
 NEW=$1; SEAL0=$2; H0=$3; O=$4; STEPS=${5:-"G1 P0 G2 G3 PC P1 P2 RR RS RH XB SS SU D6 LS"}
+START_KIB=10485760; STOP_KIB=8388608     # amendment H6d (were 20971520 start, 15 GB floor)
+free_kib() { df -k --output=avail "$HOME" | tail -1 | tr -dc 0-9; }
 mkdir -p "$O"
-K=$(df -k --output=avail "$HOME" | tail -1 | tr -dc 0-9)
-[ "$K" -ge 20971520 ] || { echo "below start line: $K KiB"; exit 4; }
+K=$(free_kib)
+[ "$K" -ge "$START_KIB" ] || { echo "below start line: $K KiB"; exit 4; }
 mkdir "$L" 2>/dev/null || { echo "lock held: $(cut -c1-60 "$L/owner" 2>/dev/null)"; exit 5; }
 echo "$ME $(date -u +%FT%TZ) live-recheck" > "$L/owner"
-release() { grep -q "$ME" "$L/owner" 2>/dev/null && rm -r "$L" && echo "lock released $(date -u +%FT%TZ)"; }
+CHAIN=$$
+rm -f "$O/STOP"
+# stop watcher: under the stop line it records the reading and stops every descendant of this chain except itself
+killtree() { for c in $(pgrep -P "$1"); do killtree "$c"; done; kill -TERM "$1" 2>/dev/null; }
+( SELF=$(sh -c 'echo $PPID')
+  while kill -0 "$CHAIN" 2>/dev/null; do
+    k=$(free_kib)
+    if [ "$k" -lt "$STOP_KIB" ]; then
+      echo "below stop line: $k KiB at $(date -u +%FT%TZ)" > "$O/STOP"
+      for c in $(pgrep -P "$CHAIN"); do [ "$c" = "$SELF" ] || killtree "$c"; done
+      exit 0
+    fi
+    sleep 15
+  done ) &
+WATCH=$!
+release() { kill "$WATCH" 2>/dev/null
+  grep -q "$ME" "$L/owner" 2>/dev/null && rm -r "$L" && echo "lock released $(date -u +%FT%TZ)"; }
 trap release EXIT
 S() { sed "s#$HOME#~#g"; }
 sum() { grep -E "^(Ran |OK|FAILED)" "$1" | tr '\n' ' '; echo; }
 echo "lock taken $(date -u +%FT%TZ) head $(cat "$NEW/GIT_HEAD") seal0 $(cat "$SEAL0/GIT_HEAD") h0 $(cat "$H0/GIT_HEAD") free_kib $K"
 cd "$NEW" || exit 2
+stopped() { [ -e "$O/STOP" ] || [ "$(free_kib)" -lt "$STOP_KIB" ]; }
 for st in $STEPS; do
+  stopped && { echo "STOPPED before $st: $(cat "$O/STOP" 2>/dev/null || echo "below stop line: $(free_kib) KiB")"; exit 6; }
   t0=$(date +%s)
   case $st in
     G1) timeout 900 $PY -m unittest -v tests.test_ident > "$O/G1.out" 2>&1; echo "G1 exit=$? $(sum "$O/G1.out")";;
@@ -75,6 +97,7 @@ print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' >
     LS) echo "LS $($PY runkit/leak_scan.py "$WP_HOME" "$O" "$WP_HOME/results" "$WP_HOME/logs" "$WP_HOME/state" 2>&1 | S | tr '\n' ' ')";;
   esac
   echo "  $st seconds=$(( $(date +%s) - t0 ))"
+  [ -e "$O/STOP" ] && { echo "STOPPED during $st: $(cat "$O/STOP")"; exit 6; }
 done
 # leaked throwaway databases of the live tests (ours only, by prefix)
 $PY -c '
