@@ -5,26 +5,35 @@ NOT built or tested together with the write path. COMPOSITION.md is the design o
 transaction; the core's rules move into its `events_guard` trigger transaction).
 
 Proof status (2026-11-18, after the review of 2262eaa; a fixer's report, NOT a review pass: a delta review follows):
-- Port from `fix/policy-final-review` at @@PORT@@ (THRESHOLDS amendment 8, documentation only; the code is that of bfe2a63:
+- Port from `fix/policy-final-review` at 6b77354 (THRESHOLDS amendment 8, documentation only; the code is that of bfe2a63:
   `pol/` and `ops/` as 4e1ba6b, `exp/` and `verify/` as bfe2a63). NOT from 2262eaa: the review of 2262eaa found it unsafe across
   tenants (F1) and against prepared transactions and member login roles (F2); section 5 has the history. Not merged to main. This
-  branch, `docs/step3-handoff`, merges that branch (3bd657c, no rewrite) and adds the step-3 fixtures and the protocol fixtures
+  branch, `docs/step3-handoff`, merges that branch (3bd657c, and eba8b76 for amendment 8; no rewrite) and adds the step-3 fixtures and the protocol fixtures
   (`tests/test_fixtures_step3_protocol.py`).
 - Green on t2-dev (Postgres 16.15), exact trees built by `git archive`: `tests.test_rev2262_pg` Ran 12, OK; the eight Postgres
   modules (`test_s44_pg`, `test_s1_pg`, `test_final_pg`, `test_delta1_pg`, `test_pg`, `test_pg_boundary`, `test_review3_pg`,
-  `test_step2_pg`) Ran 145, OK; in-memory and evidence suites Ran 186, OK. On this branch's merged tree: @@STEP3@@.
+  `test_step2_pg`) Ran 145, OK; in-memory and evidence suites Ran 186, OK. On this branch's merged tree: NOT RUN (see
+  "NOT proven"). The protocol fixtures' six lock-layer mutants were run on tree w4 (the code of bfe2a63 plus the protocol file as
+  in 2129a5e): Ran 2, OK, every mutant caught by an assertion (pins 2, fence 3, evict 4, in_progress 1, collapsed_key 1,
+  refused_xlock 3 failures).
 - Failing-first, strict count (`results/red/README.md`, `kit/strict_classify.py`; only safety, liveness, availability, integrity and
   verifier failures count): the review of 2262eaa at 2262eaa, availability 7, liveness 7, integrity 1 (plus mechanism 2, not
   evidence) and in memory safety 4; S1 P1/P4 at a2d65fd, safety 13 and liveness 12 (the "28 behavioural" of the earlier hand-off
   mixed classes); 4.4 eviction at 8547b27, liveness 9 (was "16"); 4.4 fences at 8547b27, mechanism 4 only; 4.4 migration at
   7464493, liveness 1. Broken variants caught: the queued-revoker filter removed; the refused revoker's eviction made unconditional;
-  the seven protocol mutants of `tests/test_fixtures_step3_protocol.py` (six lock-layer, one authentication; section 3). F3 (fence
+  six lock-layer protocol mutants of `tests/test_fixtures_step3_protocol.py` (the seventh, authentication, not yet run; section 3). F3 (fence
   before eviction) and F8 (install grants) are red only as `mechanism` and F6, F7 have no red test: by the strict rule they have
   no failing-first evidence of a defect.
 - DEV seeds at the final code (tree 20da971, development observations, not proof): b3_pg PASS (54 s; the idem_unprotected control
-  caught 50 of 50 with the overlap witnessed in 49); s2_sessions PASS (1860 rows, 0 accepted attacks); @@DEV@@.
+  caught 50 of 50 with the overlap witnessed in 49); s2_sessions PASS (1860 rows, 0 accepted attacks); the complete
+  pg_diff VOID (t2-dev free space fell under 15 GiB, not by my files; b2 had finished clean, 300 logs, 45,206 events, 0
+  mismatches; B1 was cut). The last complete DEV pg_diff is still the fixer's at e816310, before the 4.4 code.
 - NOT proven:
   - no stamped run of this round (not started, by instruction);
+  - NOT RUN, because t2-dev free space stayed under the 17 GiB start bar (16.0 GB at 19:40Z, 13.2 GB at 20:00Z): a complete DEV
+    pg_diff at the final code, `verify results --dev`, DEV mig_rehearsal at the final code, and this branch's merged-tree run
+    (`tests.test_fixtures_step3`, `test_fixtures_step3_set`, `test_fixtures_step3_protocol`, `test_rev2262_pg`; the
+    CommittedSetPg fail-instead-of-skip change; the `expiry_noop` authentication mutant of f9b4e63, which has NEVER run);
   - nothing here is built or tested with the write path;
   - the eviction, the lock identities and the 2PC refusal are ASSUMPTIONS (the policy owner's and the fixer's), not the user's
     decisions;
@@ -217,8 +226,8 @@ The acceptance list of COMPOSITION.md ("Recommendation"), plus this round's addi
   `MUTANTS` patches `pol/_pgcore.sql` to break exactly one layer each (pins without FOR SHARE, the fence never refusing, `dc._evict`
   a no-op, the in-progress exemption removed, every principal on one A key, T always exclusive for a grant) and requires an
   assertion failure (not an error) from that layer's cases. The B1/B2 replay of `fixtures/step3` replays the rules core only and
-  sees none of these layers. One authentication mutant too: `dc._session` no longer judging expiry (`expiry_noop`, caught by
-  `test_bad_tokens_are_refused_on_every_call`). NOT detected, disclosed: a no-op of the final judgment `dc._gate`'s session check
+  sees none of these layers. One authentication mutant too: `dc._session` no longer judging expiry (`expiry_noop`, expected to fail
+  `test_bad_tokens_are_refused_on_every_call`; NOT YET RUN). NOT detected, disclosed: a no-op of the final judgment `dc._gate`'s session check
   (the pins make it redundant on every path these cases drive); keep it as defence in depth. Without the Postgres environment these tests and
   `CommittedSetPg` FAIL; `POL_STEP3_SKIP_PG=1` turns that into explicit, counted skips (it was a silent skip before).
 
