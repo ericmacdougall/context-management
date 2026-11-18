@@ -8,6 +8,8 @@
 #   P2  exp.d4_store_mark 1 (HEAD)
 #   RR  registry.unregistered() with wp/registry.py of the pre-seal tree vs HEAD, same live system
 #   D6  exp.h_d6_broker 5, UNSTAMPED (amendment H6c), licence type read first;  LS runkit/leak_scan.py over outputs
+#   XB  tests.test_d3_pg from XB_TREE (bca7764: review H tests on 6ddeca3 code, the F14/F16 "before")
+#   SS  seal_socket_e2e.py (same uid)      SU seal_uids_e2e.py (sealer under its own uid, H2 container pattern)
 #   RS  tests.test_d3_pg with SCHEMA_UNDER_TEST = pre-seal schema (179412e)   RH  ... = pre-review-H schema (6ddeca3)
 # usage: sh live_chain.sh <HEAD tree> <pre-seal tree> <pre-H tree> <out dir> [steps]
 set -u
@@ -55,6 +57,10 @@ l = j.get("license", {}) if isinstance(j, dict) else {}
 print("licence", s, l.get("type"), l.get("status"))'
           timeout 3600 $PY -m exp.h_d6_broker 5; echo "exit=$?"; } > "$O/D6.out" 2>&1
         echo "D6 $(grep -E '^(licence|h_d6_broker|exit=)' "$O/D6.out" | S | tr '\n' ' ')";;
+    XB) XT=${XB_TREE:?XB_TREE names the bca7764 tree}
+        (cd "$XT" && WP_PG_LIVE=1 timeout 2400 $PY -m unittest -v tests.test_d3_pg > "$O/XB.out" 2>&1); echo "XB exit=$? tree $(cat "$XT/GIT_HEAD") $(sum "$O/XB.out")";;
+    SS) timeout 600 $PY results/failing-first/harness/seal_socket_e2e.py > "$O/SS.out" 2>&1; echo "SS exit=$? $(tail -1 "$O/SS.out" | S | cut -c1-600)";;
+    SU) timeout 1200 $PY results/failing-first/harness/seal_uids_e2e.py > "$O/SU.out" 2>&1; echo "SU exit=$? $(tail -1 "$O/SU.out" | S | cut -c1-900)";;
     LS) echo "LS $($PY runkit/leak_scan.py "$WP_HOME" "$O" "$WP_HOME/results" "$WP_HOME/logs" "$WP_HOME/state" 2>&1 | S | tr '\n' ' ')";;
   esac
   echo "  $st seconds=$(( $(date +%s) - t0 ))"

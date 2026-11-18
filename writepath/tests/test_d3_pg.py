@@ -423,8 +423,8 @@ class D3Store(unittest.TestCase):
     def place(self, conn, s, hid):
         return conn.execute("select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (T, s, hid)).fetchone()[0]
 
-    def content_gone(self, eid):
-        return self.one("select content_enc is null from events where tenant_id=%s and event_id=%s", (T, eid))[0]
+    def content_gone(self, eid, t=T):
+        return self.one("select content_enc is null from events where tenant_id=%s and event_id=%s", (t, eid))[0]
 
     def test_e1_rescan_link_waits_for_an_inflight_removal(self):
         """Review E F4, the reviewer's schedule: A's batch removes e (written by B); C's rescan links e to C; a hold on
@@ -724,8 +724,8 @@ class D3Store(unittest.TestCase):
                          [("b4e", "unscannable")])
         self.assertIsNotNone(self.one("select rescanned_xmax from erasure_jobs where job_id=%s", (j,))[0], "the rescan did not complete")
         self.cascade(j)
-        self.assertTrue(self.content_gone("b4e"))
-        self.assertFalse(self.content_gone("b4h"), "an honest event of another speaker was removed")
+        self.assertTrue(self.content_gone("b4e", t="d3b4"))
+        self.assertFalse(self.content_gone("b4h", t="d3b4"), "an honest event of another speaker was removed")
         self.assertEqual(self.one("select count(*) from tombstones where job_id=%s and event_id='b4e'", (j,)), (1,))
         self.assertEqual(self.state(self.app, "select wp_erasure_rescan_done(%s, %s, %s)",
                                     (j, self.one("select ident_xmax from erasure_jobs where job_id=%s", (j,))[0], M.matcher_id())), "ok")
@@ -798,7 +798,7 @@ class D3Store(unittest.TestCase):
             lg.close()
         erasure.rescan(self.app, FixedKS(), j)
         self.cascade(j)
-        self.assertFalse(self.content_gone("b8e"), "a held speaker's unscannable event was removed")
+        self.assertFalse(self.content_gone("b8e", t=t), "a held speaker's unscannable event was removed")
         self.assertEqual(self.one("select count(*) from erasure_withheld where job_id=%s and event_id='b8e'", (j,)), (1,))
 
     # ------------------------------------------------------------------ review H F16 and H6: bounded reports
@@ -1009,7 +1009,9 @@ class D3Store(unittest.TestCase):
                     content_enc=b"planted", mentions=[], event_id="s6p")
         self.assertEqual(self.insert(self.app, "quarantine", bare), "WPS40", "a quarantine row without an attestation was stored")
         self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r, presented_epoch=epoch + 1)), "WPS41", "another epoch was accepted")
-        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r, mentions=[])), "WPS41", "quarantine mentions dropped")
+        # the honest row has no mentions ("words"), so forge by CHANGING them (an empty list would be the honest row)
+        self.assertEqual(r["mentions"], [])
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r, mentions=["S6Z"])), "WPS41", "quarantine mentions changed")
         self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "ok")
         self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "23505", "the same attestation was quarantined twice")
 
