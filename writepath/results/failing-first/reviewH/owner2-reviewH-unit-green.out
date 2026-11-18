@@ -1,0 +1,26 @@
+test_cluster_cache_is_bounded_in_bytes (tests.test_ident.H13Resource) ... ok
+test_count_equals_enumeration_with_over_long_tokens (tests.test_ident.H13Resource) ... ok
+test_every_reading_has_its_key_length (tests.test_ident.H13Resource) ... ok
+test_f13_shape_builds_no_readings (tests.test_ident.H13Resource) ... ok
+test_identical_events_peak (tests.test_ident.H13Resource) ... ok
+test_long_cluster_is_not_normalised (tests.test_ident.H13Resource) ... ok
+test_over_long_token_has_no_keys (tests.test_ident.H13Resource) ... ok
+test_token_cap_named_in_the_matcher_id (tests.test_ident.H13Resource) ... ok
+test_capacity_saturates (tests.test_ident.H15Identifiers) ... ok
+test_identifier_bytes (tests.test_ident.H15Identifiers) ... ok
+test_identifier_count (tests.test_ident.H15Identifiers) ... ok
+test_over_long_token_refused (tests.test_ident.H15Identifiers) ... ok
+test_admitted_text_is_never_unscannable (tests.test_ident.H14Unscannable) ... ok
+test_over_budget_and_oversize_are_classified_without_keys (tests.test_ident.H14Unscannable) ... ok
+test_without_a_list_it_still_raises (tests.test_ident.H14Unscannable) ... ok
+test_events_are_append_only_for_the_app (tests.test_ident.H14Schema) ... ok
+test_hold_placement_does_no_footprint_work (tests.test_ident.H14Schema) ... ok
+test_minors (tests.test_ident.H14Schema) ... ok
+test_python_only_sizes_are_sql_constraints (tests.test_ident.H14Schema) ... ok
+test_receipt_id_lists_are_bounded (tests.test_ident.H14Schema) ... ok
+test_unscannable_is_a_mention_source (tests.test_ident.H14Schema) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 19.530s
+
+OK

@@ -1,0 +1,7 @@
+[6ddeca3] matcher m5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5:b512.131072.50000
+[6ddeca3] F13 bytes=65536 admission=admitted scan=scanned hmacs=4096 peak_traced_mib=518.6 seconds=7.63
+[6ddeca3] F13b cluster_cache_entries=1968 retained_bytes=1250994 limit_attr=None
+[6ddeca3] F15 n=13 capacity bits=21 0.000s; check_identifiers 0.003s -> IdentifierRefused: 'iiiiiiiiiiiii': up to 1594323 look-alike readings of one window (i, l
+[6ddeca3] F15 n=2000 capacity bits=3170 0.005s; check_identifiers 0.028s -> IdentifierRefused: 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+[6ddeca3] F15 n=20000 capacity bits=31700 0.067s; check_identifiers 0.755s -> IdentifierRefused: 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+[6ddeca3] F15 n=200000 capacity bits=316993 3.520s; check_identifiers 10.974s -> IdentifierRefused: 'iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii

@@ -1,0 +1,7 @@
+[6917625] matcher m5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5:b512.131072.50000
+[6917625] F13 bytes=65536 admission=admitted scan=scanned hmacs=0 peak_traced_mib=3.7 seconds=0.73
+[6917625] F13b cluster_cache_entries=1968 retained_bytes=1250994 limit_attr=8388608
+[6917625] F15 n=13 capacity bits=13 0.000s; check_identifiers 0.003s -> IdentifierRefused: 'iiiiiiiiiiiii': up to 6561 look-alike readings of one window (i, l, o
+[6917625] F15 n=2000 capacity bits=13 0.004s; check_identifiers 0.000s -> IdentifierRefused: identifier 0: longer than 256 UTF-8 bytes
+[6917625] F15 n=20000 capacity bits=13 0.038s; check_identifiers 0.000s -> IdentifierRefused: identifier 0: longer than 256 UTF-8 bytes
+[6917625] F15 n=200000 capacity bits=13 0.391s; check_identifiers 0.000s -> IdentifierRefused: identifier 0: longer than 256 UTF-8 bytes

@@ -1,0 +1,18 @@
+# tree: writepath/ at 6917625 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/mentions.py 6ddeca3 tests.test_ident.H13Resource
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/mentions.py <- wp/mentions.py at 6ddeca3; tests: current; python3 -m unittest tests.test_ident.H13Resource
+FAIL: test_cluster_cache_is_bounded_in_bytes (tests.test_ident.H13Resource)
+AssertionError: 1250994 not less than or equal to 69632 : cluster cache 1250994 bytes over a limit of 65536
+FAIL: test_f13_shape_builds_no_readings (tests.test_ident.H13Resource)
+AssertionError: 4096 != 0 : readings of an over-long token were HMACed
+FAIL: test_identical_events_peak (tests.test_ident.H13Resource)
+AssertionError: 128894965 not less than 67108864 : peak 122.9 MiB
+FAIL: test_long_cluster_is_not_normalised (tests.test_ident.H13Resource)
+AssertionError: 32767 not less than or equal to 256 : a cluster longer than the token cap was normalised
+FAIL: test_over_long_token_has_no_keys (tests.test_ident.H13Resource)
+AssertionError: 1 is not None
+FAIL: test_token_cap_named_in_the_matcher_id (tests.test_ident.H13Resource)
+AssertionError: False is not true : m5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5:b512.131072.5000000.65536.1000.1048576.5000000
+Ran 8 tests in 19.683s
+FAILED (failures=6)

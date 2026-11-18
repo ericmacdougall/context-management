@@ -1,0 +1,12 @@
+# tree: writepath/ at 6917625 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/mentions.py 6ddeca3 tests.test_ident.H14Unscannable
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/mentions.py <- wp/mentions.py at 6ddeca3; tests: current; python3 -m unittest tests.test_ident.H14Unscannable
+FAIL: test_admitted_text_is_never_unscannable (tests.test_ident.H14Unscannable)
+TypeError: stream_matches() got an unexpected keyword argument 'unscannable'
+AssertionError: stream_matches cannot classify unscannable events: stream_matches() got an unexpected keyword argument 'unscannable'
+FAIL: test_over_budget_and_oversize_are_classified_without_keys (tests.test_ident.H14Unscannable)
+TypeError: stream_matches() got an unexpected keyword argument 'unscannable'
+AssertionError: stream_matches cannot classify unscannable events: stream_matches() got an unexpected keyword argument 'unscannable'
+Ran 3 tests in 1.787s
+FAILED (failures=2)

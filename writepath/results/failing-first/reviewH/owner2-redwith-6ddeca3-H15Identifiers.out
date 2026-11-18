@@ -1,0 +1,14 @@
+# tree: writepath/ at 6917625 (clean)
+# command: python3 results/failing-first/harness/red_with.py . wp/mentions.py 6ddeca3 tests.test_ident.H15Identifiers
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/mentions.py <- wp/mentions.py at 6ddeca3; tests: current; python3 -m unittest tests.test_ident.H15Identifiers
+FAIL: test_capacity_saturates (tests.test_ident.H15Identifiers)
+AssertionError: 42391158275216203514294433201 not less than or equal to 36864 : capacity computed the whole product
+FAIL: test_identifier_bytes (tests.test_ident.H15Identifiers)
+AssertionError: accepted
+FAIL: test_identifier_count (tests.test_ident.H15Identifiers)
+AssertionError: accepted
+FAIL: test_over_long_token_refused (tests.test_ident.H15Identifiers)
+AssertionError: unexpectedly None
+Ran 4 tests in 1.920s
+FAILED (failures=4)
