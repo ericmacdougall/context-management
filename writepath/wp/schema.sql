@@ -857,10 +857,14 @@ begin
     'speaker', 'the subject''s own events, facts and analyst jobs derived from them, inbox and quarantine items, the subject key',
     'mentions', jsonb_build_object(
       'rule', 'every event that mentions the subject is removed whole, whoever wrote it: original content nulled in Postgres, '
-              'placeholder in ES, derived facts and jobs deleted (D3; decision R1: no span redaction, ASSUMPTION)',
+              'placeholder in ES, derived facts and jobs deleted (D3; decision R1: no span redaction, decided by the coordinator '
+              'on the user''s delegation, 2026-11-17)',
       'matcher', (select matcher from identifier_epochs where tenant_id = j.tenant_id),
-      'matcher_rule', 'm3: whole-token-sequence match of the UTS 39 keys of the reviewed, declared identifiers (case folded, '
-                      'default ignorables removed, Unicode tables pinned by version: wp/mentions.py)',
+      'matcher_rule', 'm5: whole-token-sequence match of the one identity key of each reviewed, declared identifier against every '
+                      'reading of each text window (UTS 39 prototypes, case folded, default ignorables removed; in text a capital I '
+                      'is read as i and l, a digit 1 inside a word as 1, l and i, a digit 0 inside a word as 0 and o; at most 4096 '
+                      'readings per window, identifiers that could need more are refused; Unicode tables pinned by version: '
+                      'wp/mentions.py)',
       'other_speakers_removed', (select coalesce(jsonb_agg(tb.event_id order by tb.event_id), '[]') from tombstones tb
                                  join events e on e.tenant_id = tb.tenant_id and e.event_id = tb.event_id
                                  where tb.job_id = jid and e.subject_id <> j.subject_id),
@@ -870,10 +874,15 @@ begin
       'found_by_rescan', (select count(*) from erasure_mentions where tenant_id = j.tenant_id and subject_id = j.subject_id and source = 'rescan'),
       'rescan_coverage', 'store-checked: every candidate event was examined (erasure_rescanned, WPS24)', 'rescan_match_attested_by', 'erasure runner (the store cannot decrypt the examined events)',
       'over_match', jsonb_build_array('confusable variants of a declared identifier (Kim and Kirn share a key): such events of other speakers are removed too',
-                                      'letters merged by look-alike and case together (i, l, 1 and capital I; o and 0): Allson, Aiison, Ailson or A1ison for Alison, AIEX KIM for Alex Kim; also a different person whose name differs only by such letters (Delia and Della, Hailey and Halley, Neil and Nell)'),
+                                      'a capital I (or a look-alike of it) in text is read as i and as l, so text in capitals also matches a name that differs by i and l (DELIA also matches Della, NEIL also matches Nell, HAILEY also matches Halley; AIEX KIM matches Alex Kim)',
+                                      'a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John)',
+                                      'one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno)'),
       'not_covered', jsonb_build_array('identifiers that were never declared (nicknames, misspellings, initials, inflected forms)', 'pronouns and indirect references',
                                        'look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones)',
-                                       'a capital of another script used as the look-alike of a Latin capital when its small form looks like another letter (Greek capital Beta, Nu; matcher not_closed list)',
+                                       'a small l written for i or a small i for l (Allson or Aiison for Alison): distinct letters are never read as each other',
+                                       'a letter written for a digit (XQ-l00l for XQ-1001); digits written for letters in a word with no more letters than digits (A11s0n for Alison)',
+                                       'a digit of another script that looks like 0 or 1 (read as the letter its prototype names)',
+                                       'a capital of another script used as the look-alike of a Latin capital when its small form looks like another letter (Greek capital Beta, Nu; Latin capital I with stroke; matcher not_closed list)',
                                        'look-alikes that are punctuation or symbols (| for l): they end the token',
                                        'words of the subject quoted by others that contain no declared identifier',
                                        'names in scripts written without spaces (refused at declaration)',

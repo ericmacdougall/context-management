@@ -572,6 +572,10 @@ versioned m5.
    which is wrong: AIIson has six letters and Allison seven).
 9. CHANGED FROM m4 beyond i/l and o/0: five code points now read as their digit or letter instead of their UTS 39
    prototype (superscript one and zero, circled one and zero, modifier capital I), by item 1's NFKD rule.
+   CORRECTION (found by the closure test while writing the code): six word code points, adding circled number ten
+   (read as 10). Parenthesised and full-stop numbers (U+2474..U+249B, U+1F100..U+1F102) also expand, but they contain
+   punctuation, so they never lie inside a token (as under m4). The closure test committed in 8dab50f did not encode
+   item 1 for these; it now checks the NFKD reading for them and skips code points that cannot be inside a token.
 10. VERSION: matcher id m5:ucd<version>:di<sha12>:cf<sha12>; rule version r3:<matcher id>. The store keeps the tenant's
    matcher and refuses work under another (WPS32 at approval, WPS38 at append and rescan): an m4 tenant must re-declare
    its identifiers; there is no migration and no fallback.

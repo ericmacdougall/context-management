@@ -1,11 +1,11 @@
-# m5 tests (this commit's tests/test_ident.py) run against wp/mentions.py at 15b3255 (matcher m4); Mac, python3 13.0.0, WP_UCD_DIR=<work dir>/ucd
+# m5 tests (tests/test_ident.py as committed with the m5 code, closure test corrected) run against wp/mentions.py at 15b3255 (matcher m4); Mac, python3, Unicode 13.0.0, WP_UCD_DIR=<work dir>/ucd
 # command: WP_UCD_DIR=<dir> python3 -m unittest tests.test_ident -v
 test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings) ... FAIL
 test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings)
 Pinned per Unicode version; each reading checked through the text path, and no other reading. ... FAIL
 test_m5_cap_refuses_identifiers_over_it (tests.test_ident.F11M5Readings) ... FAIL
 test_m5_closure_over_the_tables (tests.test_ident.F11M5Readings)
-Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a ... ok
+Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a ... FAIL
 test_m5_digit_inside_a_word_is_read_as_a_letter (tests.test_ident.F11M5Readings) ... ok
 test_m5_documented_misses (tests.test_ident.F11M5Readings)
 NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no ... FAIL
@@ -80,6 +80,27 @@ Traceback (most recent call last):
   File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 440, in test_m5_cap_refuses_identifiers_over_it
     self.assertIsNotNone(p, over)
 AssertionError: unexpectedly None : Boooo Boooo Booooo
+
+======================================================================
+FAIL: test_m5_closure_over_the_tables (tests.test_ident.F11M5Readings)
+Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 528, in test_m5_closure_over_the_tables
+    self.assertEqual(broken[:10], [], f"{len(broken)} code points break the closure")
+AssertionError: Lists differ: [('conf', '0xb9'), ('conf', '0x1d35'), ('c[71 chars]ea')] != []
+
+First list contains 6 additional elements.
+First extra element 0:
+('conf', '0xb9')
+
++ []
+- [('conf', '0xb9'),
+-  ('conf', '0x1d35'),
+-  ('conf', '0x2070'),
+-  ('conf', '0x2460'),
+-  ('conf', '0x2469'),
+-  ('conf', '0x24ea')] : 6 code points break the closure
 
 ======================================================================
 FAIL: test_m5_documented_misses (tests.test_ident.F11M5Readings)
@@ -174,7 +195,7 @@ FAIL: test_m5_not_closed_list (tests.test_ident.F11M5Readings)
 Traceback (most recent call last):
   File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 500, in test_m5_not_closed_list
     self.assertIn(c, self.nc, hex(ord(c)))
-AssertionError: 'Ɨ' not found in {'Ⲙ', 'Ɗ', 'Σ', 'Ҳ', 'Ⲇ', '𐓍', 'Г', 'Ⲷ', 'Ƥ', 'Υ', 'Ϻ', 'Ⲅ', 'Ɠ', 'ﬅ', 'ſ', 'Ƭ', '𑢵', 'ᲄ', 'Ꚍ', 'Ƴ', 'Ʉ', 'Ϭ', 'М', 'Ғ', 'Ӆ', 'ꮇ', 'Ͱ', '𑢼', 'Ɓ', 'Ґ', 'Η', 'Ԋ', 'Ỻ', '𐓄', 'Μ', 'ꮁ', 'Б', 'Ɍ', 'Յ', 'Ƙ', 'Β', 'Ʈ', 'Ю', 'Ӎ', '𑢦', 'Л', 'Ƽ', 'Ƈ', 'Ⱦ', 'Ν', 'Ꞵ', 'Ⱪ', 'Ƒ', 'Ɖ', 'Ꝁ', '𐒼', 'Ⴀ', 'Ⳁ', '𐐟', 'Ⱨ', 'Փ', 'Ð', 'Ꜫ'} : 0x197
+AssertionError: 'Ɨ' not found in {'М', 'Ƙ', 'Ⱨ', 'Ҳ', 'Ⴀ', 'Ⲇ', 'Ϭ', 'Ƽ', 'ﬅ', 'Ⱦ', 'Ⲙ', 'Ɍ', '𐓄', '𑢼', 'Ỻ', 'Υ', 'ꮇ', 'Ν', 'Ⱪ', 'Ꝁ', 'Ͱ', 'Ꚍ', 'Μ', 'Փ', 'Ð', 'Ɖ', 'Ƥ', 'Ƴ', '𐓍', 'Ƭ', 'Ϻ', '𐐟', 'Ʈ', 'Ґ', 'Г', 'Ꜫ', 'Ƈ', '𑢦', 'Ʉ', 'Б', 'Ɠ', 'Ⲅ', 'Ԋ', 'Ꞵ', 'Ӆ', 'Β', 'ſ', 'Σ', 'Ӎ', 'Յ', 'ᲄ', 'Ю', '𐒼', 'Ғ', 'Ⲷ', 'Л', 'Ⳁ', 'Ɓ', 'ꮁ', 'Ƒ', '𑢵', 'Ɗ', 'Η'} : 0x197
 
 ======================================================================
 FAIL: test_m5_real_name_pairs_stay_apart (tests.test_ident.F11M5Readings)
@@ -231,6 +252,6 @@ Traceback (most recent call last):
 AssertionError: Regex didn't match: '^m5:ucd13\\.0\\.0:di[0-9a-f]{12}:cf[0-9a-f]{12}$' not found in 'm4:ucd13.0.0:di5f861f7bc729:cf93b569e499e5'
 
 ----------------------------------------------------------------------
-Ran 41 tests in 9.294s
+Ran 41 tests in 5.555s
 
-FAILED (failures=15)
+FAILED (failures=16)

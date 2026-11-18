@@ -504,16 +504,23 @@ class F11M5Readings(unittest.TestCase):
 
     def test_m5_closure_over_the_tables(self):
         """Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a
-        both-readings glyph, the other form is one of its readings inside a word; except the not-closed capitals."""
+        both-readings glyph, the other form is one of its readings inside a word; except the not-closed capitals. A code
+        point whose NFKD is ASCII containing I, 0 or 1 is read through that NFKD (design item 1), not through its own
+        prototype; a code point whose NFKC is not all word characters can never be inside a token (punctuation ends
+        it) and is skipped."""
         broken = []
         for o in range(0x110000):
             c = chr(o)
             if unicodedata.category(c)[0] not in "LN" or c in self.nc:
                 continue
+            if not all(unicodedata.category(x)[0] in "LNM" for x in unicodedata.normalize("NFKC", c)):
+                continue
             k = M.canonical(c)
             if M.canonical(k) != k:
                 broken.append(("idempotent", hex(o)))
-            for other, kind in ((c.casefold(), "case"), (self.conf.get(c), "conf")):
+            d = unicodedata.normalize("NFKD", c)
+            by_nfkd = d != c and d.isascii() and any(x in d for x in "I01")
+            for other, kind in ((c.casefold(), "case"), (d if by_nfkd else self.conf.get(c), "conf")):
                 if other is None or other == c or M.canonical(other) == k:
                     continue
                 if M.key(f"ka{other}ka") not in M.windows(f"ka{c}ka"):
