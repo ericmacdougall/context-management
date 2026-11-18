@@ -1,0 +1,33 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:48:00Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-disk_stop_ignored.py sha256 4745ebab7f1451f6b81cb8de05e5adae0472c16c354bf2f7d24efd8fede8d087, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1722c1722
+# diff: <             if f < STOP_GB:
+# diff: ---
+# diff: >             if False:
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-disk_stop_ignored.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb)
+test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.2IWXDqo6w1/writepath/tests/test_disk_gate.py", line 2005, in test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb
+    A.p.wait(timeout=30)                           # without the release: the gate itself must stop the run
+subprocess.TimeoutExpired: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '-B', '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.2IWXDqo6w1/writepath/tests/test_disk_gate.py', '--gate', 'run', 'x', 'stubexp']' timed out after 30 seconds
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.2IWXDqo6w1/writepath/tests/test_disk_gate.py", line 2007, in test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb
+    self.fail("host free fell to 7.5 GiB and the gate did not stop the experiment within 30 s")
+AssertionError: host free fell to 7.5 GiB and the gate did not stop the experiment within 30 s
+
+----------------------------------------------------------------------
+Ran 1 test in 33.325s
+
+FAILED (failures=1)
+# exit status: 1

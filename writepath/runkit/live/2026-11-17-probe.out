@@ -1,0 +1,26 @@
+EVENT ('container', 'exec_create: sh -c echo gatefix-probe-out > /proc/1/fd/1')
+EVENT ('container', 'exec_start: sh -c echo gatefix-probe-out > /proc/1/fd/1')
+EVENT ('container', 'exec_die')
+EVENT ('container', 'exec_create: sh -c echo gatefix-probe-err > /proc/1/fd/2')
+EVENT ('container', 'exec_start: sh -c echo gatefix-probe-err > /proc/1/fd/2')
+EVENT ('container', 'exec_die')
+STDOUT 2026-11-17T20:56:28.553306015Z gatefix-probe-out
+STDERR 2026-11-17T20:56:28.623237572Z gatefix-probe-err
+{"acknowledged":true,"persistent":{},"transient":{"cluster":{"routing":{"allocation":{"disk":{"watermark":{"low":"5000gb
+
+WMLINES high 12 lines in 20 s
+WMTEXT high       6 {"log.level": "INFO","message":"updating [cluster.routing.allocation.disk.watermark.high] from [2gb] to [4000gb]", "ecs.version": "1.2.0","service.name":"ES_ECS","event.dataset":"elasticsearch.server","process.thread.name":"elasticsearch[9be7a79fd3af][clusterApplierService#updateTask][T#1]","log.logger":"org.elasticsearch.common.settings.ClusterSettings","elasticsearch.cluster.uuid":"2DBg6
+WMTEXT high       5 {"log.level": "INFO","message":"updating [cluster.routing.allocation.disk.watermark.low] from [3gb] to [5000gb]", "ecs.version": "1.2.0","service.name":"ES_ECS","event.dataset":"elasticsearch.server","process.thread.name":"elasticsearch[9be7a79fd3af][clusterApplierService#updateTask][T#1]","log.logger":"org.elasticsearch.common.settings.ClusterSettings","elasticsearch.cluster.uuid":"2DBg6e
+WMTEXT high       1 {"log.level": "WARN","message":"high disk watermark [4000gb] exceeded on [0y11JwgtTsmuTb8H11LdHg][9be7a79fd3af][/usr/share/elasticsearch/data] free: 51.1gb[7.9%], shards will be relocated away from this node; currently relocating away shards totalling [0] bytes; the node is expected to continue to exceed the high disk watermark when these relocations are complete", "ecs.version": "1.2.0","
+WMAPI high {"nodes":{"0y11JwgtTsmuTb8H11LdHg":{"fs":{"data":[{"free_in_bytes":55046004736,"available_in_bytes":55029227520}]}}}}
+{"acknowledged":true,"persistent":{},"transient":{"cluster":{"routing":{"allocation":{"disk":{"watermark":{"low":"5000gb
+
+WMLINES flood 9 lines in 20 s
+WMTEXT flood       6 {"log.level": "INFO","message":"updating [cluster.routing.allocation.disk.watermark.flood_stage] from [1gb] to [3000gb]", "ecs.version": "1.2.0","service.name":"ES_ECS","event.dataset":"elasticsearch.server","process.thread.name":"elasticsearch[9be7a79fd3af][clusterApplierService#updateTask][T#1]","log.logger":"org.elasticsearch.common.settings.ClusterSettings","elasticsearch.cluster.uuid"
+WMTEXT flood       1 {"log.level": "INFO","message":"updating [indices.merge.disk.watermark.high] from [1gb] to [3000gb]", "ecs.version": "1.2.0","service.name":"ES_ECS","event.dataset":"elasticsearch.server","process.thread.name":"elasticsearch[9be7a79fd3af][clusterApplierService#updateTask][T#1]","log.logger":"org.elasticsearch.common.settings.ClusterSettings","elasticsearch.cluster.uuid":"2DBg6eIRTGOkHQ-RZi
+WMTEXT flood       1 {"log.level": "WARN","message":"flood stage disk watermark [3000gb] exceeded on [0y11JwgtTsmuTb8H11LdHg][9be7a79fd3af][/usr/share/elasticsearch/data] free: 51.2gb[7.9%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"ES_ECS","event.dataset":"elasticsearch.server","process.thread.name":"elasticsearch[9be7a79fd3af][management][T#4]","log.logger":"o
+WMTEXT flood       1 {"log.level": "WARN","message":"flood stage disk watermark [3000gb] exceeded on [0y11JwgtTsmuTb8H11LdHg][9be7a79fd3af][/usr/share/elasticsearch/data] free: 51.2gb[7.9%], all indices on this node will be marked read-only", "ecs.version": "1.2.0","service.name":"ES_ECS","event.dataset":"elasticsearch.server","process.thread.name":"elasticsearch[9be7a79fd3af][management][T#5]","log.logger":"o
+WMAPI flood {"nodes":{"0y11JwgtTsmuTb8H11LdHg":{"fs":{"data":[{"free_in_bytes":55111897088,"available_in_bytes":55095119872}]}}}}
+{"acknowledged":true,"persistent":{},"transient":{}}
+
+WMRESET {}

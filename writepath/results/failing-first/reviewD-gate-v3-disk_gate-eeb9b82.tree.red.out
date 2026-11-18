@@ -1,0 +1,50 @@
+# failing-first receipt
+# date: 2026-11-17T21:51:03Z
+# file under test: eeb9b82:writepath/exp/disk_gate.py blob 9e84aedef74bd04065da4b29a560b4ec3118dcb1 sha256 a885031d2ffe98480da834523bf47cf752d71c3863b4b9e53880df707d5031b1
+# tree: writepath at eeb9b82 (git archive; the companion and wp/ come from it too)
+# test file: tests/test_disk_gate.py at HEAD aada118 blob 3d055fca3adb21d876f40bd899d04394516b516a
+# command: DISK_GATE_UNDER_TEST=<that file> python3 -m unittest tests.test_disk_gate -v
+test_a_mount_inside_the_data_directory_blocks (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 37453 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_api_key_is_sent_and_never_written (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 37821 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_cgroup_not_naming_the_container_blocks (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 38533 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_cgroup_unreadable_blocks (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 38963 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_check_void_closes_the_run (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 39486 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_deleted_ledger_blocks (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 40144 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_docker_oomkilled_flag_blocks (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 40602 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_end_requires_this_runs_admit_record (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 41079 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_es_api_unreadable_at_end_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 41554 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_es_api_unreadable_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_data_on_a_shared_volume_blocks (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 42238 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_es_node_id_changed_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 42925 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback

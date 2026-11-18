@@ -1,6 +1,7 @@
 """Create (or reset, lab only) roles, databases and schemas. usage: python -m wp.setup [--reset]
 
-Runs as the cluster admin. DDL runs under SET ROLE wp_owner (events) or SET ROLE wp_kms (keys), so the application
+Refuses (exit 2, nothing changed) while a gated run holds WP_HOME/state/run.lock (wp/runlock.py); the gate runs it
+itself, under that lock, at each admission. Runs as the cluster admin. DDL runs under SET ROLE wp_owner (events) or SET ROLE wp_kms (keys), so the application
 role owns nothing. Role passwords are generated here, hashed client-side (SCRAM, libpq) so no cleartext reaches a
 statement or the server log, and stored only in the 0600 pgpass file. Nothing secret is printed."""
 import os
@@ -10,7 +11,7 @@ import sys
 
 from psycopg import sql
 
-from . import config, db, registry
+from . import config, db, registry, runlock
 
 HERE = pathlib.Path(__file__).parent
 LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL, db.WATCHDOG, db.BROKER, db.SEALER) + db.REVIEWERS
@@ -73,6 +74,7 @@ def _ensure_roles(admin):
 
 def main(reset):
     assert config.PG_CONTAINER.startswith(config.OWN_PREFIX)   # config refuses any other stream's conf
+    runlock.hold("wp.setup")       # F-1: never while a run holds the run lock (the gate resets under its own lock)
     admin = db.admin(db="postgres")
     _ensure_roles(admin)
     have = {r[0] for r in admin.execute("select datname from pg_database").fetchall()}

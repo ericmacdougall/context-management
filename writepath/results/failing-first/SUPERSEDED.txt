@@ -1,0 +1,36 @@
+Receipts in this folder that are NOT evidence (kept because harness logs are never deleted):
+
+- websearch-flood-hyphen-disk_gate-843f4fa.red.out: its header lacks the test-file blob (failing_first.sh then built
+  the test path from a dotted test name). Superseded by red3.
+- websearch-flood-hyphen-disk_gate-843f4fa.red2.out: the gate under test was the 843f4fa blob, but its capture
+  companion ran from the working tree (failing_first.sh extracted only the file, so `-m exp.disk_gate` resolved to the
+  working tree's copy). Superseded by red3, which extracts the whole writepath tree at the commit.
+- esapi-stage1-disk_gate-da1e748.red.out: stopped partway, and made with the same mixed-version defect. Superseded by
+  esapi-stage1-disk_gate-da1e748.tree.red.out.
+
+Receipts made before 2026-11-17 20:20Z with a gate that spawns a companion share the defect only where the working tree
+differed from the commit under test. reviewA-a1a2a3-disk_gate-2337ba4.green.out is unaffected: the working tree's gate
+was the 2337ba4 blob when it ran. reviewA-a1a2a3-disk_gate-7b4839b.red.out is unaffected: that gate has no companion.
+
+Review D (F10: tests ran with the current tree first on sys.path, so an older gate imported current modules):
+- reviewD-gate-v3-disk_gate-eeb9b82.tree.red.out: stopped partway; made with failing_first.sh before the F10 fix.
+- reviewD-gate-v3-disk_gate-eeb9b82.tree2.red.out: header only. failing_first.sh wrote the runner's output to a path
+  relative to the extracted tree, which was deleted with it (fixed: the receipt path is made absolute).
+- reviewD-gate-v3-disk_gate-eeb9b82.tree3.red.out: its exit status 1 came from a crash of the provenance listing
+  (__main__'s file is "<stdin>"), not from the tests, and one test failed on a fixture (no state/ under v2). Superseded
+  by tree4, made after both fixes; tree4 lists every loaded writepath module with its path and SHA-256.
+Receipts made before review D's F10 fix (2026-11-17 22:00Z) record no module provenance: where the working tree
+differed from the commit under test, the tests may have imported current modules. They are history, not evidence for
+v3; v3's evidence is the reviewD-* receipts listed in GATE-DESIGN.md section 5.11.
+- reviewF-sink-broken-a-no-views.red.out and reviewF-sink-broken-b-no-check.red.out (with variants/*.broken-*.py,
+  not .r2): every test ERRORs, not fails. Loaded from results/failing-first/variants/, the variant looked for
+  runkit/leak_scan.py two levels too shallow. Infrastructure, not red evidence.
+- reviewF-sink-broken-*.r2.red.out: the variants find runkit/ (parents[3]), but the refusal subtests shared one
+  directory, so a file left by one form failed the later forms (variant A reported 9 failures, 5 of them cascades).
+  Superseded by the r3 receipts, made after the test writes each refusal in its own directory.
+- reviewF-sink-*.r3.red.out and reviewF-sink-absent-e21b99b.red.out: run in the working tree, so their tracebacks
+  held local paths, and test_secret_sink.py then held a credential-URL-shaped template the pre-push scan stops.
+  Superseded by reviewF-sink-broken-*.r4.red.out and reviewF-sink-absent-e21b99b.tree.red.out, made with
+  runkit/failing_first_variant.sh in a temporary tree from e21b99b with the current tests (same failures: 9 errors;
+  4 and 12 failures). The superseded sink receipts above were redacted before publication, as each one's second
+  line states; none was pushed unredacted.

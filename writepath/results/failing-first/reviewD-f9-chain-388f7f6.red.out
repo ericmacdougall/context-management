@@ -1,0 +1,65 @@
+# failing-first receipt
+# date: 2026-11-17T22:48:00Z
+# file under test: 388f7f6:writepath/runkit/chain_singles.sh blob b35f7bb3dad9b5b15ee0b98c874bc694bede6f7b sha256 f34209acb6e74a5b84fb322685381cb7829b2ebf99601ed5d9856d62591d365d
+# tree: writepath at 388f7f6 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_chain_singles.py from HEAD 388f7f6 blob 34f5372b3b88df53da41be7ab164dabdfaa7cdc2
+# command: (cd <tree>/writepath && CHAIN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_chain_singles
+test_experiment_failure_and_gate_verdict_are_separate_fields (tests.test_chain_singles.Chain) ... FAIL
+test_failed_cleanup_stops_the_chain (tests.test_chain_singles.Chain) ... FAIL
+test_gate_blocked_at_start_runs_nothing (tests.test_chain_singles.Chain) ... FAIL
+test_gate_void_at_end_is_its_own_field (tests.test_chain_singles.Chain) ... FAIL
+test_successful_cleanup_continues (tests.test_chain_singles.Chain) ... FAIL
+
+======================================================================
+FAIL: test_experiment_failure_and_gate_verdict_are_separate_fields (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nQJy3e897E/writepath/tests/test_chain_singles.py", line 74, in test_experiment_failure_and_gate_verdict_are_separate_fields
+    self.assertIn("experiment_exit=1", o, "the experiment's exit status must be its own field")
+AssertionError: 'experiment_exit=1' not found in 'start 2026-11-17T22:48:04Z head abc123 free 30.0G: exp.first\ndisk_gate start stub\ndisk_gate check stub\nmodule exp.first stub\nexit=1\ndisk_gate end stub\nend 2026-11-17T22:48:05Z\n' : the experiment's exit status must be its own field
+
+======================================================================
+FAIL: test_failed_cleanup_stops_the_chain (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nQJy3e897E/writepath/tests/test_chain_singles.py", line 62, in test_failed_cleanup_stops_the_chain
+    self.assertEqual(rc, 3, f"a failed cleanup must stop the chain (exit 3); output tail: {out[-300:]}")
+AssertionError: 0 != 3 : a failed cleanup must stop the chain (exit 3); output tail: art 2026-11-17T22:48:11Z free 30.0G
+end 2026-11-17T22:48:13Z
+cleanup exp.some_cleanup stub output
+/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpvlv6wcir/home/results/one.abc123.second.out head abc123 start 2026-11-17T22:48:17Z free 30.0G
+end 2026-11-17T22:48:18Z
+chain end 2026-11-17T22:48:22Z
+
+
+======================================================================
+FAIL: test_gate_blocked_at_start_runs_nothing (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nQJy3e897E/writepath/tests/test_chain_singles.py", line 87, in test_gate_blocked_at_start_runs_nothing
+    self.assertIn("gate=BLOCKED", o)
+AssertionError: 'gate=BLOCKED' not found in 'start 2026-11-17T22:48:23Z head abc123 free 30.0G: exp.first\ndisk_gate start stub\nend BLOCKED\n'
+
+======================================================================
+FAIL: test_gate_void_at_end_is_its_own_field (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nQJy3e897E/writepath/tests/test_chain_singles.py", line 80, in test_gate_void_at_end_is_its_own_field
+    self.assertIn("experiment_exit=0", o)
+AssertionError: 'experiment_exit=0' not found in 'start 2026-11-17T22:48:30Z head abc123 free 30.0G: exp.first\ndisk_gate start stub\ndisk_gate check stub\nmodule exp.first stub\nexit=0\ndisk_gate end stub\nend VOID 2026-11-17T22:48:31Z\n'
+
+======================================================================
+FAIL: test_successful_cleanup_continues (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nQJy3e897E/writepath/tests/test_chain_singles.py", line 69, in test_successful_cleanup_continues
+    self.assertIn("gate=VALID", self.out("second"))
+AssertionError: 'gate=VALID' not found in 'start 2026-11-17T22:48:44Z head abc123 free 30.0G: exp.second\ndisk_gate start stub\ndisk_gate check stub\nmodule exp.second stub\nexit=0\ndisk_gate end stub\nend 2026-11-17T22:48:45Z\n'
+
+----------------------------------------------------------------------
+Ran 5 tests in 47.303s
+
+FAILED (failures=5)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_chain_singles tests/test_chain_singles.py c97e9798a54f1030
+# exit status: 1

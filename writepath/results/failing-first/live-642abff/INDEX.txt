@@ -1,0 +1,28 @@
+Live items of gate v6 on t2-dev, 2026-11-18 21:55Z to 22:09Z (GoodQA #16096). Under ~/emlab2-16096/RUNLOCK
+(taken 22:01Z, released 22:09:02Z; for L5 also 21:55-21:56Z). Free disk at each start >= 10.6e9 bytes (10.0 GiB rule
+of answer 3335a07a; never under 10.3e9 during the session). Own home ~/emlab2-16096/gatefix/wp: conf copied from the
+write-path home (stream name, ports, container names; no secret), WP_SECRETS_DIR = the write-path home's secrets
+directory (a path; no secret copied), venv a link to the write-path venv, own ledger (`disk_gate init`), own pinned
+trees. Stores: emlab2-wphard-pg and emlab2-wphard-es, used under main's coordinator decision for this session only;
+not recreated, credentials and ES security untouched. Scripts beside the receipts were sent over stdin.
+
+l1-ok.out              8dbc368: first call with a usage error (launch_one needs the pinned dir first), then
+                       `sh runkit/launch_one.sh $P l1-ok exp.live_probe ok` -> BLOCKED before the store reset: the
+                       legacy roles, databases, membership and ALTER SYSTEM values that host/bootstrap.py builds,
+                       plus the hardening branch's roles. The bootstrap part was a defect: fixed in 642abff
+                       (failing-first: ../live-8dbc368-bootstrap-cluster.red.out).
+l1-ok-642abff.out      same command at 642abff -> BLOCKED (exit 2) only by objects of feat/writepath-hardening
+                       (wp_rev1, wp_rev2, wp_reviewer, wp_sealer, their membership, settings and CONNECT), which
+                       this branch's committed setup does not create: a correct refusal for this tree.
+l2-l4-fn-642abff.out   live_fn.py: gate functions on the real stores. _clean: rows, keys-db rows, 3 unregistered
+                       stores, ES indices (4 reasons); statement_timeout 10s on both gate connections; _slow (GNU
+                       probe in both containers, parsed without a probe error): both data directories are Docker
+                       volumes on ext4, not tmpfs, and ES indices carry a flood-stage block: v4 rules refuse them.
+l1-l9-lock-642abff.out live_lock.sh: run lock held by a flock(1) stand-in: run BLOCKED, abort refused, wp.setup --reset
+                       and exp.cleanup refused (F-1, nothing changed), verdict of an unknown run exits 2.
+end-guard-check-642abff.out  exp.guard_check (read-only) at the end: FAIL on the hardening branch's tables
+                       (write_refusals, identifier_proposals, seal_keys); state found, not made, by this session.
+L5 (l5_tree.py), L8 (l8_daemon.sh), L9 cgroup (l9_cgroup_probe.py): results in GATE-DESIGN 9.3 and the WAL.
+Leak scan: runkit/leak_scan.py v4 on t2-dev over these receipts and the own home's results: 6 files, 0 entries with a
+secret value, exit 0, with --no-keystore (the key store's psql read was refused at this tree): key-store values not
+covered; the receipts were also pattern-checked.

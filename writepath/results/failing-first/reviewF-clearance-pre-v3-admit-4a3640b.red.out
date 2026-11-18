@@ -1,0 +1,49 @@
+# failing-first receipt
+# date: 2026-11-18T01:49:00Z
+# file under test: 4a3640b:writepath/runkit/clearance.py blob 082098d9f02c3792ca6d051690ac8b1f29152f25 sha256 0ae419918b070ddaefd5b458ef61d4e425bd24dc8eae9638a04f4139ddc23c13
+# tree: writepath at 4a3640b (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_clearance.py from HEAD 4a3640b blob 3d33f9f7dc71e7e9235344e7c4aa2d70fdfcc1b1
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_clearance
+test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing (tests.test_clearance.Clearance) ... FAIL
+test_conf_named_store_not_on_tmpfs_blocks_staging (tests.test_clearance.Clearance)
+A store the gate never admitted was never shown to be a private tmpfs; on a volume, docker rm leaves its roles. ... ok
+test_credential_file_after_teardown_fails (tests.test_clearance.Clearance) ... ok
+test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance) ... ok
+test_docker_error_is_never_gone (tests.test_clearance.Clearance) ... ok
+test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) ... ok
+test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance) ... ok
+test_no_receipt_no_staging (tests.test_clearance.Clearance) ... ok
+test_open_run_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_receipt_with_no_store_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_receipted_container_back_fails (tests.test_clearance.Clearance) ... ok
+test_remove_spares_a_conf_named_container_this_ledger_never_admitted (tests.test_clearance.Clearance)
+A shared host: another home with the same conf names runs stores under the same names. They are sealed (they ... ok
+test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance) ... ok
+test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) ... ok
+test_seal_teardown_stage_check (tests.test_clearance.Clearance) ... ok
+test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance) ... ok
+test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance) ... ok
+test_two_sets_sealed_before_the_teardown_both_clear (tests.test_clearance.Clearance)
+The runbook: every set of a chain is sealed while the stores are up; the first teardown destroys them. ... ok
+test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance) ... ok
+test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance) ... ok
+
+======================================================================
+FAIL: test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.Tdr3DL7aeb/writepath/tests/test_clearance.py", line 401, in test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing
+    self.assertEqual(rc, 1, "a seal naming stores a pre-v3 gate admitted, now gone, did not exit 1")
+AssertionError: 0 != 1 : a seal naming stores a pre-v3 gate admitted, now gone, did not exit 1
+
+----------------------------------------------------------------------
+Ran 24 tests in 24.641s
+
+FAILED (failures=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_clearance tests/test_clearance.py bf340d609ccc2a28
+# exit status: 1

@@ -1,0 +1,57 @@
+# failing-first receipt
+# date: 2026-11-17T22:49:47Z
+# file under test: 388f7f6:writepath/runkit/leak_scan.py blob 2a3e64e4f6e6d20921fe95d81b6c48276c41a298 sha256 e8d866ad193e824eaaaf448a5d2a0cd941966b87d81913217887e1aea962c444
+# tree: writepath at 388f7f6 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_leak_scan.py from HEAD 388f7f6 blob c452a42c508b74862ed0de4553ee2de2edd41eee
+# command: (cd <tree>/writepath && LEAK_SCAN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_leak_scan
+test_a_hit_exits_1 (tests.test_leak_scan.Scan) ... ok
+test_clean_tree_exits_0 (tests.test_leak_scan.Scan) ... ok
+test_clearance_states_the_split_rule_and_limits (tests.test_leak_scan.Scan) ... ok
+test_content_over_the_limit_is_never_sliced (tests.test_leak_scan.Scan) ... ok
+test_damaged_gzip_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_each_representation_is_found (tests.test_leak_scan.Scan) ... test_every_creation_site_is_in_the_inventory_table (tests.test_leak_scan.Scan) ... FAIL
+test_in_process_find_for_issuing_processes (tests.test_leak_scan.Scan) ... skipped "library function of this tree's scanner (not counted as red)"
+test_missing_root_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_no_value_or_fragment_is_printed (tests.test_leak_scan.Scan) ... ok
+test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan) ... ok
+test_path_name_holding_a_candidate_is_a_hit_and_printed_redacted (tests.test_leak_scan.Scan) ... ok
+test_self_test_runs_with_every_scan (tests.test_leak_scan.Scan) ... skipped "the self-test is a feature of this tree's scanner (not counted as red)"
+test_sibling_of_a_secret_source_is_scanned (tests.test_leak_scan.Scan) ... ok
+test_special_file_is_listed_not_read (tests.test_leak_scan.Scan) ... ok
+test_symlinked_directory_is_never_skipped_silently (tests.test_leak_scan.Scan) ... ok
+test_truncated_gzip_is_searched_as_far_as_it_decompresses (tests.test_leak_scan.Scan) ... ok
+test_unreadable_directory_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_unreadable_key_store_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_unreadable_secret_source_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_waiver_reason_is_printed_redacted (tests.test_leak_scan.Scan) ... ok
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='legacy_kms_key_in_log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.hM7Kqq7T7N/writepath/tests/test_leak_scan.py", line 167, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'legacy_kms_key_in_log' not found in {'keystore_key_base64url', 'apikey_key_alone', 'split_across_lines', 'keystore_key_raw_bytes', 'percent_encoded_json_unicode_escapes', 'keystore_key_hex_upper', 'apikey_decoded_id_key', 'utf16be_odd_offset', 'basic_header_broker', 'hex_upper', 'utf16le_log', 'chain_key_base64', 'gzip_of_a_log', 'fragment_of_22_chars', 'hex', 'apikey_header_encoded', 'apikey_key_json_unicode_escaped', 'chain_key_hex_in_rpc_log', 'admin_password_in_url', 'single_quoted_shell', 'elastic_password_percent_encoded_url', 'pgpass_password_in_json', 'base64', 'keystore_key_base64', 'legacy_oldhome_password', 'inside_wrapped_base64_document', 'basic_header_elastic', 'split_in_json_string', 'keystore_key_hex'} : the scanner missed the planted representation legacy_kms_key_in_log
+
+======================================================================
+FAIL: test_every_creation_site_is_in_the_inventory_table (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.hM7Kqq7T7N/writepath/tests/test_leak_scan.py", line 317, in test_every_creation_site_is_in_the_inventory_table
+    self.assertEqual(unlisted, [], "secret creation or derivation sites missing from leak_scan.SITES")
+AssertionError: Lists differ: ['host/bootstrap.py:118', 'wp/es_security.py:51'] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+'host/bootstrap.py:118'
+
+- ['host/bootstrap.py:118', 'wp/es_security.py:51']
++ [] : secret creation or derivation sites missing from leak_scan.SITES
+
+----------------------------------------------------------------------
+Ran 21 tests in 15.335s
+
+FAILED (failures=2, skipped=2)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_leak_scan tests/test_leak_scan.py cf972945af3e62c6
+# exit status: 1

@@ -19,17 +19,7 @@ from exp.common import write_result
 from wp import config, db, registry
 from wp.es import ES
 
-S, I, U, D = "SELECT", "INSERT", "UPDATE", "DELETE"
-POLICY = {
-    "events": {S, I}, "quarantine": {S, I},
-    "inbox": {S, I, U}, "analyst_jobs": {S, I, U}, "facts": {S, I, U}, "cursors": {S, I, U},
-    "erasure_jobs": {S, I},              # plus column-level UPDATE of runner fields (checked separately)
-    "tombstones": {S}, "store_registry": {S}, "decision_heads": {S}, "chains": {S}, "subjects": {S},
-    "leases": set(), "quarantine_quota": set(),
-    "identifier_epochs": {S}, "subject_identifiers": {S}, "erasure_mentions": {S}, "legal_holds": {S}, "erasure_withheld": {S}, "erasure_rescanned": {S},
-}
-PRIVS = ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"]
-ROW, BEFORE, INS, DEL, UPD, TRUNC = 1, 2, 4, 8, 16, 32
+from exp.guard_policy import BEFORE, DEL, INS, POLICY, PRIVS, ROW, TRUNC, UPD, D, I, S, U  # noqa: F401 (one source)
 
 
 def check(adm, kadm):

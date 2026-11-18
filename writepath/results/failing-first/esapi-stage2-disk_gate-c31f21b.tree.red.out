@@ -1,0 +1,55 @@
+# failing-first receipt
+# date: 2026-11-17T20:31:05Z
+# file under test: c31f21b:writepath/exp/disk_gate.py blob 4ba4952fcbae079debfad33f6e15b14cbe8ed6fc sha256 cf74a55ea3378145720df82e3bcbddd6c1de8284ed0fed29e4ac8ff0940a7570
+# tree: writepath at c31f21b (git archive; the companion and wp/ come from it too)
+# test file: tests/test_disk_gate.py at HEAD c31f21b blob 83a8de5ed4cc4e3466c4ee07f96a599836912fc0
+# command: DISK_GATE_UNDER_TEST=<that file> python3 -m unittest tests.test_disk_gate.Gate.test_api_transient_breach_between_readings_voids tests.test_disk_gate.Gate.test_api_settings_flip_between_samples_voids tests.test_disk_gate.Gate.test_api_samples_are_in_the_capture -v
+test_api_transient_breach_between_readings_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 57688 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_api_settings_flip_between_samples_voids (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 60630 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+test_api_samples_are_in_the_capture (tests.test_disk_gate.Gate) ... /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py:1052: ResourceWarning: subprocess 63282 is still running
+  _warn("subprocess %s is still running" % self.pid,
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+FAIL
+
+======================================================================
+FAIL: test_api_transient_breach_between_readings_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 612, in test_api_transient_breach_between_readings_voids
+    self.assertVoid(*self.call("end"), "ES's own report during the run")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 484, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate api at end: min free 30.00 GiB, high watermark 2.00 GiB
+disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 27 capture_sha256 f4a4e84f1b98f003c76c10f1fce213b9915e7a4ebcf8a4714ba82f630379dfcc
+
+======================================================================
+FAIL: test_api_settings_flip_between_samples_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 619, in test_api_settings_flip_between_samples_voids
+    self.assertVoid(*self.call("end"), "changed between samples")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 484, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate api at end: min free 30.00 GiB, high watermark 2.00 GiB
+disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 21 capture_sha256 0fa487d24f5010036513512868b01fbb16fd5cde6e8fd6d1d47407b93af7f408
+
+======================================================================
+FAIL: test_api_samples_are_in_the_capture (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 626, in test_api_samples_are_in_the_capture
+    self.assertGreaterEqual(len(recs), 2, "the companion took fewer than two ES API samples in 1.5 s at 0.5 s")
+AssertionError: 0 not greater than or equal to 2 : the companion took fewer than two ES API samples in 1.5 s at 0.5 s
+
+----------------------------------------------------------------------
+Ran 3 tests in 77.928s
+
+FAILED (failures=3)
+sys:1: ResourceWarning: unclosed <socket.socket fd=4, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 60158)>
+# exit status: 1

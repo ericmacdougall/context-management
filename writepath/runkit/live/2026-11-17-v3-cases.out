@@ -1,0 +1,45 @@
+/dev/sda1       643G  612G   31G  96% /
+ROW case=a valid start_rc=0 check_rc=0 end_rc=0
+START a disk_gate start run 20261117T230043Z-0a0f4f91 free 30.2 GiB es 99df06a5c084 tmpfs 2.25 GiB limit 1.46 peak 1.10 free 2.25; pg c4b890929365 tmpfs 1.00 GiB limit 0.50 peak 0.07 free 0.96 admitted at seq 2
+EVIDENCE emlab2-gatefix-es max=1572864000 swap=0 current=1180770304 peak=1181904896 shmem 200704 oom_kill=0
+EVIDENCE emlab2-gatefix-pg max=536870912 swap=0 current=61464576 peak=78389248 shmem 52301824 oom_kill=0
+EVIDENCE es-cgroup 0::/system.slice/docker-99df06a5c084974632196ed756d838347478a46e786d760233a076fba11f2f2c.scope
+EVIDENCE es-fs {"nodes":{"zs7dlmwITfiJa-Hbl6_6RA":{"fs":{"data":[{"type":"tmpfs","total_in_bytes":2415919104,"free_in_bytes":2415718400,"low_watermark_free_space_in_bytes":419430400}]}}}}
+EVIDENCE pg-fs type=tmpfs blocks=262144 free=252363 bsize=4096
+EVIDENCE pg-env PGDATA=/var/lib/postgresql/data
+1351c52cacbb
+ROW case=b pg-on-volume start_rc=2
+REASON b disk_gate BLOCKED start: the PG data directory /var/lib/postgresql/data is not a Docker tmpfs mount (volume): its free space is shared with other tenants; PG's data directory is on ext2/ext3, not tmpfs: its free space is shared with other tenants; the PG tmpfs holds 611.95 GiB, more than the container's lifetime memory
+ROW case=c restart start_rc=0 end_rc=3
+REASON c disk_gate VOID: the PG container restarted: StartedAt 2026-11-17T23:00:31.375529Z -> 2026-11-17T23:00:50.650383239Z
+disk_gate stop s-9fbb3484 recorded at seq 7
+ROW case=d stop start_rc=0 end_rc=3
+REASON d disk_gate VOID: STOP: stop s-9fbb3484 at seq 7 (operator): written reason: v3 live case d: operator stop mid-window, during the run
+ROW case=d-blocked start_rc=2
+REASON d-blocked disk_gate BLOCKED start: unacknowledged stop(s): stop s-9fbb3484 at seq 7 (operator): written reason: v3 live case d: operator stop mid-window; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'
+ack s-9fbb3484: disk_gate clear-stop: stop s-9fbb3484 acknowledged (no run's verdict changes)
+ROW case=g-redirect write_rc=2
+ROW case=g-touch start_rc=2
+REASON g-touch disk_gate BLOCKED start: unacknowledged stop(s): stop s-55dca6df at seq 10 (state/STOP directory): state/STOP directory touched or replaced; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'
+ack s-55dca6df: disk_gate clear-stop: stop s-55dca6df acknowledged (no run's verdict changes)
+ROW case=g-cp start_rc=2
+REASON g-cp disk_gate BLOCKED start: unacknowledged stop(s): stop s-3080ebae at seq 12 (state/STOP directory): state/STOP directory 1 entries written into it: written reason: legacy cp stop; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'
+ack s-3080ebae: disk_gate clear-stop: stop s-3080ebae acknowledged (no run's verdict changes)
+disk_gate stop s-aa8e7446 recorded at seq 14
+ROW case=h-truncated start_rc=2
+REASON h disk_gate BLOCKED start: the stop ledger is not intact (the stop ledger holds 13 records, but its head anchor holds 14 with a different last record: truncated or replaced)
+ROW case=h-reset rc=0
+RESET h disk_gate ledger-reset: new ledger started; the old one kept as stop_ledger.broken-20261117T230054Z.jsonl; a run open before the reset ends VOID; stop s-63623392 is open until acknowledged
+ROW case=h-after-reset start_rc=2
+REASON h-after disk_gate BLOCKED start: unacknowledged stop(s): stop s-63623392 at seq 2 (ledger-reset): the stops in the damaged ledger stop_ledger.broken-20261117T230054Z.jsonl cannot be read: check it, then acknowledge this stop; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'
+ack s-63623392: disk_gate clear-stop: stop s-63623392 acknowledged (no run's verdict changes)
+ROW case=h-reset-intact rc=2
+REASON h-intact disk_gate ledger-reset: refused: the ledger is intact (acknowledge stops one by one with clear-stop)
+ROW case=e oom start_rc=0 hog_rc=2 end_rc=3 oom_kill=1 OOMKilled=true running=true
+REASON e disk_gate VOID: Docker reports an OOM kill in the PG container
+REASON e disk_gate VOID: an OOM kill in the PG container during the run (oom_kill 0 -> 1)
+503201a451ee
+734003200 bytes (734 MB, 700 MiB) copied, 0.439263 s, 1.7 GB/s
+ROW case=f raise-fill-restore start_rc=0 end_rc=3 peak=1911988224 max=1572864000
+REASON f disk_gate VOID: the ES container's lifetime memory peak 1.78 GiB exceeds the bound 1.61 GiB: its tmpfs free space may have reached the threshold
+ledger: 7 records; disk_gate stops: none open

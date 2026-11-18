@@ -1,0 +1,54 @@
+# failing-first receipt
+# date: 2026-11-18T01:55:33Z
+# file under test: 1d22146:writepath/runkit/clearance.py blob 609609fd1818dd479b205b7ec3181d7d12c87948 sha256 0ddd01c29fe35f1acbd370da229b8ea8d266af3b5afb73556b721a9e0cd7c004
+# tree: writepath at 1d22146 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_clearance.py from HEAD 1d22146 blob 4f31fce8efc01412171b2625bc394be0cd84a5f8
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_clearance
+test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing (tests.test_clearance.Clearance) ... ok
+test_conf_named_store_not_on_tmpfs_blocks_staging (tests.test_clearance.Clearance)
+A store the gate never admitted was never shown to be a private tmpfs; on a volume, docker rm leaves its roles. ... ok
+test_credential_file_after_teardown_fails (tests.test_clearance.Clearance) ... ok
+test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance) ... ok
+test_docker_error_is_never_gone (tests.test_clearance.Clearance) ... ok
+test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) ... ok
+test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance) ... ok
+test_no_receipt_no_staging (tests.test_clearance.Clearance) ... ok
+test_open_run_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_receipt_with_no_store_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_receipted_container_back_fails (tests.test_clearance.Clearance) ... ok
+test_remove_spares_a_conf_named_container_this_ledger_never_admitted (tests.test_clearance.Clearance)
+A shared host: another home with the same conf names runs stores under the same names. They are sealed (they ... ok
+test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance) ... ok
+test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) ... ok
+test_seal_teardown_stage_check (tests.test_clearance.Clearance) ... ok
+test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance) ... ok
+test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_set_is_wp_home_results_itself (tests.test_clearance.Clearance)
+The runbook's shape: launch_one.sh writes flat into WP_HOME/results, and that directory is the set. ... ok
+test_store_started_under_a_conf_name_after_the_seal_fails (tests.test_clearance.Clearance)
+bootstrap reuses an existing password file until H-1: a store recreated after the seal holds sealed values. ... FAIL
+test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance) ... ok
+test_two_sets_sealed_before_the_teardown_both_clear (tests.test_clearance.Clearance)
+The runbook: every set of a chain is sealed while the stores are up; the first teardown destroys them. ... ok
+test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance) ... ok
+test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance) ... ok
+
+======================================================================
+FAIL: test_store_started_under_a_conf_name_after_the_seal_fails (tests.test_clearance.Clearance)
+bootstrap reuses an existing password file until H-1: a store recreated after the seal holds sealed values.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.d3dEcBjnCO/writepath/tests/test_clearance.py", line 402, in test_store_started_under_a_conf_name_after_the_seal_fails
+    self.assertEqual(rc, 1, "teardown wrote a receipt while an unsealed store runs under a conf name")
+AssertionError: 0 != 1 : teardown wrote a receipt while an unsealed store runs under a conf name
+
+----------------------------------------------------------------------
+Ran 26 tests in 19.785s
+
+FAILED (failures=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_clearance tests/test_clearance.py e3056b1125e84036
+# exit status: 1

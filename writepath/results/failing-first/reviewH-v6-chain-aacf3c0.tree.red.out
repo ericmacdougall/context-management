@@ -1,0 +1,77 @@
+# failing-first receipt
+# date: 2026-11-18T21:34:04Z
+# file under test: aacf3c0:writepath/runkit/chain_singles.sh blob bd2b7af362520082b28503ce2fea2668cd8be534 sha256 2c3265c121f0e32dfd8f4106ee80e347388ede61b6343a6fc7cc9d3f2ff430ef
+# tree: writepath at aacf3c0 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_chain_singles.py from HEAD fb1d182 blob 1f21fe481ef0ba8b913822e840bbfefd0275c2bb
+# command: (cd <tree>/writepath && CHAIN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_chain_singles
+test_f1_chain_runs_no_store_tool_outside_the_gate (tests.test_chain_singles.Chain) ... FAIL
+test_g3_a_rerun_keeps_the_earlier_attempts_record (tests.test_chain_singles.Chain) ... ok
+test_g3_forged_end_line_from_the_experiment_cannot_continue_the_chain (tests.test_chain_singles.Chain) ... ok
+test_g3_the_chain_never_reads_text_to_decide (tests.test_chain_singles.Chain) ... ok
+test_gate_blocked_runs_nothing (tests.test_chain_singles.Chain) ... ok
+test_gate_void_stops_the_chain (tests.test_chain_singles.Chain) ... ok
+test_m5_label_with_shell_text_is_refused (tests.test_chain_singles.Chain) ... ok
+test_md_last_line_without_a_newline_runs (tests.test_chain_singles.Chain) ... FAIL
+test_md_missing_spec_exits_nonzero (tests.test_chain_singles.Chain) ... FAIL
+test_md_spec_without_a_stamped_line_exits_nonzero (tests.test_chain_singles.Chain) ... FAIL
+test_mg_every_step_runs_isolated (tests.test_chain_singles.Chain) ... FAIL
+test_valid_runs_continue (tests.test_chain_singles.Chain) ... ok
+
+======================================================================
+FAIL: test_f1_chain_runs_no_store_tool_outside_the_gate (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.X7HTNSOKkB/writepath/tests/test_chain_singles.py", line 112, in test_f1_chain_runs_no_store_tool_outside_the_gate
+    self.assertNotIn("exp.cleanup", mods, "the chain deleted indices outside a run's lock")
+AssertionError: 'exp.cleanup' unexpectedly found in ['exp.disk_gate', 'exp.cleanup', 'wp.setup', 'exp.disk_gate', 'exp.cleanup', 'exp.disk_gate', 'exp.cleanup', 'wp.setup', 'exp.disk_gate'] : the chain deleted indices outside a run's lock
+
+======================================================================
+FAIL: test_md_last_line_without_a_newline_runs (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.X7HTNSOKkB/writepath/tests/test_chain_singles.py", line 160, in test_md_last_line_without_a_newline_runs
+    self.assertTrue(self.ran("exp.second"), "the spec's last line, without a newline, was dropped")
+AssertionError: False is not true : the spec's last line, without a newline, was dropped
+
+======================================================================
+FAIL: test_md_missing_spec_exits_nonzero (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.X7HTNSOKkB/writepath/tests/test_chain_singles.py", line 154, in test_md_missing_spec_exits_nonzero
+    self.assertNotEqual(p.returncode, 0, f"a missing spec ran nothing and exited 0: {p.stdout[-300:]}")
+AssertionError: 0 == 0 : a missing spec ran nothing and exited 0: chain start 2026-11-18T21:34:06Z head abc123 spec none records /var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpz7z4si64/home/results/chains/20261118T213406Z-91324
+chain end 2026-11-18T21:34:06Z
+
+
+======================================================================
+FAIL: test_md_spec_without_a_stamped_line_exits_nonzero (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.X7HTNSOKkB/writepath/tests/test_chain_singles.py", line 164, in test_md_spec_without_a_stamped_line_exits_nonzero
+    self.assertNotEqual(rc, 0, f"a spec with no stamped line ran nothing and exited 0: {out[-300:]}")
+AssertionError: 0 == 0 : a spec with no stamped line ran nothing and exited 0: chain start 2026-11-18T21:34:06Z head abc123 spec spec.txt records /var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpn3bk2tml/home/results/chains/20261118T213406Z-91332
+chain end 2026-11-18T21:34:06Z
+
+
+======================================================================
+FAIL: test_mg_every_step_runs_isolated (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.X7HTNSOKkB/writepath/tests/test_chain_singles.py", line 173, in test_mg_every_step_runs_isolated
+    self.assertEqual(sorted(set(forms)), [want], f"a step ran without -I through the tree's isolated.py: {forms}")
+AssertionError: Lists differ: ['m'] != ['iso:/var/folders/g7/bszfxt551211997q9yzkv[58 chars].py']
+
+First differing element 0:
+'m'
+'iso:/var/folders/g7/bszfxt551211997q9yzkv[57 chars]d.py'
+
+- ['m']
++ ['iso:/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpekinv3cg/home/runs/abc123-t/runkit/isolated.py'] : a step ran without -I through the tree's isolated.py: ['m', 'm', 'm', 'm', 'm']
+
+----------------------------------------------------------------------
+Ran 12 tests in 2.024s
+
+FAILED (failures=5)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_chain_singles tests/test_chain_singles.py fd27966e01db8e79
+# exit status: 1

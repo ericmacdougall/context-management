@@ -1,0 +1,29 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:48:38Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-home_prefix_without_sep.py sha256 a4810940444d181fa1b72a3f8b65d7f2c256ba742886021868b0e3f2608b4f45, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1384c1384
+# diff: <             if m.get("Type") == "bind" and (src == home or src.startswith(home.rstrip("/") + "/")):
+# diff: ---
+# diff: >             if m.get("Type") == "bind" and (src == home or src.startswith(home.rstrip("/"))):
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-home_prefix_without_sep.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_f4_container_mounting_a_sibling_directory_is_not_counted)
+test_v6_f4_container_mounting_a_sibling_directory_is_not_counted (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_f4_container_mounting_a_sibling_directory_is_not_counted (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yWcE47unJD/writepath/tests/test_disk_gate.py", line 2221, in test_v6_f4_container_mounting_a_sibling_directory_is_not_counted
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yWcE47unJD/writepath/tests/test_disk_gate.py", line 963, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: disk_gate BLOCKED: a container other than the run's stores uses this home (a bind mount under WP_HOME): emlab2-other-tool
+disk_gate BLOCKED disk_gate v6 sha256 a4810940444d181f
+
+----------------------------------------------------------------------
+Ran 1 test in 1.770s
+
+FAILED (failures=1)
+# exit status: 1

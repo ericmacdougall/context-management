@@ -1,0 +1,51 @@
+# failing-first receipt
+# date: 2026-11-18T22:04:33Z
+# file under test: 8dbc368:writepath/exp/disk_gate.py blob 4aaf63e6e64dbed9d3a85b17e71e865aa917f24e sha256 376f1038da886fe994d99ab4da3fc4b3ff4062a30ec5d39419fc287e81556d80
+# tree: writepath at 8dbc368 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD 8dbc368 blob 5235f505a8c527dd9e9377ff4fa04ac178b9caac
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate.Gate.test_v6_f3_cluster_as_bootstrap_leaves_it_is_admitted tests.test_disk_gate.Gate.test_v6_f3_legacy_role_weakened_blocks tests.test_disk_gate.Gate.test_v6_f3_alter_system_value_other_than_bootstraps_blocks
+test_v6_f3_cluster_as_bootstrap_leaves_it_is_admitted (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_legacy_role_weakened_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_alter_system_value_other_than_bootstraps_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_f3_cluster_as_bootstrap_leaves_it_is_admitted (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HpxIZzMzz3/writepath/tests/test_disk_gate.py", line 2135, in test_v6_f3_cluster_as_bootstrap_leaves_it_is_admitted
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HpxIZzMzz3/writepath/tests/test_disk_gate.py", line 963, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: ax_wal_size = 256MB
+disk_gate BLOCKED: before the store reset: an ALTER SYSTEM setting that is not committed: min_wal_size = 64MB
+disk_gate BLOCKED: before the store reset: an ALTER SYSTEM setting that is not committed: wal_keep_size = 0
+disk_gate BLOCKED: before the store reset: an ALTER SYSTEM setting that is not committed: wal_recycle = off
+disk_gate BLOCKED disk_gate v6 sha256 376f1038da886fe9
+
+======================================================================
+FAIL: test_v6_f3_legacy_role_weakened_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HpxIZzMzz3/writepath/tests/test_disk_gate.py", line 2141, in test_v6_f3_legacy_role_weakened_blocks
+    self.assertOnly(*self.call("start"), 2, "before the store reset: role kms has rolsuper=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HpxIZzMzz3/writepath/tests/test_disk_gate.py", line 1985, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: emlab
+
+======================================================================
+FAIL: test_v6_f3_alter_system_value_other_than_bootstraps_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HpxIZzMzz3/writepath/tests/test_disk_gate.py", line 2146, in test_v6_f3_alter_system_value_other_than_bootstraps_blocks
+    self.assertOnly(*self.call("start"), 2, "an ALTER SYSTEM setting that is not committed: max_wal_size = 64GB")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.HpxIZzMzz3/writepath/tests/test_disk_gate.py", line 1985, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: emlab
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.702s
+
+FAILED (failures=3)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_disk_gate tests/test_disk_gate.py 33bdc3c3655c02ac
+# exit status: 1

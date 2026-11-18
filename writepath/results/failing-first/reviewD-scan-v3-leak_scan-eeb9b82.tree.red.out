@@ -1,0 +1,195 @@
+# failing-first receipt
+# date: 2026-11-17T22:16:03Z
+# file under test: eeb9b82:writepath/runkit/leak_scan.py blob e7fadd582a270d2e347651aa98f63e9abb63f084 sha256 111558cbfc477f04757f50122fd5542d5fb5a0558db486d556e54486b299e181
+# tree: writepath at eeb9b82 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_leak_scan.py from HEAD aada118 blob d05c8c9b6a66e61a762481b602315a0611bf57ed
+# command: (cd <tree>/writepath && LEAK_SCAN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_leak_scan
+test_a_hit_exits_1 (tests.test_leak_scan.Scan) ... ok
+test_clean_tree_exits_0 (tests.test_leak_scan.Scan) ... ok
+test_clearance_states_the_split_rule_and_limits (tests.test_leak_scan.Scan) ... FAIL
+test_content_over_the_limit_is_never_sliced (tests.test_leak_scan.Scan) ... FAIL
+test_damaged_gzip_fails_closed (tests.test_leak_scan.Scan) ... FAIL
+test_each_representation_is_found (tests.test_leak_scan.Scan) ... test_every_creation_site_is_in_the_inventory_table (tests.test_leak_scan.Scan) ... FAIL
+test_in_process_find_for_issuing_processes (tests.test_leak_scan.Scan) ... skipped "library function of this tree's scanner (not counted as red)"
+test_missing_root_fails_closed (tests.test_leak_scan.Scan) ... FAIL
+test_no_value_or_fragment_is_printed (tests.test_leak_scan.Scan) ... ok
+test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan) ... ok
+test_path_name_holding_a_candidate_is_a_hit_and_printed_redacted (tests.test_leak_scan.Scan) ... FAIL
+test_self_test_runs_with_every_scan (tests.test_leak_scan.Scan) ... skipped "the self-test is a feature of this tree's scanner (not counted as red)"
+test_sibling_of_a_secret_source_is_scanned (tests.test_leak_scan.Scan) ... FAIL
+test_special_file_is_listed_not_read (tests.test_leak_scan.Scan) ... FAIL
+test_symlinked_directory_is_never_skipped_silently (tests.test_leak_scan.Scan) ... FAIL
+test_truncated_gzip_is_searched_as_far_as_it_decompresses (tests.test_leak_scan.Scan) ... FAIL
+test_unreadable_directory_fails_closed (tests.test_leak_scan.Scan) ... FAIL
+test_unreadable_key_store_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_unreadable_secret_source_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_waiver_reason_is_printed_redacted (tests.test_leak_scan.Scan) ... FAIL
+
+======================================================================
+FAIL: test_clearance_states_the_split_rule_and_limits (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 313, in test_clearance_states_the_split_rule_and_limits
+    self.assertIn("16 consecutive characters", out, "a clearance must state exactly what it can and cannot find")
+AssertionError: '16 consecutive characters' not found in 'leak_scan version 2 sha256 111558cbfc477f04757f50122fd5542d5fb5a0558db486d556e54486b299e181\nself-test: 24/24 planted representations found, 0 control hit(s)\nsource secrets/es_api_key.verifier.json: 2 value(s)\nsource secrets/es_broker_password: 1 value(s)\nsource secrets/es_elastic_password: 1 value(s)\nsource secrets/pg_password: 1 value(s)\nsource secrets/pgpass: 1 value(s)\nsource secrets/pgpass.wp_app: 1 value(s)\nsource oldhome/pgpass: 1 value(s)\nkey store: 3 live key(s); keys destroyed before this scan cannot be checked\nNOT COVERED: broker-minted and probe API keys (memory only; the issuing process must check with representations()); SCRAM verifiers (salted); values rotated or destroyed before this scan\ncandidate values: 8 from files, 3 from the key store\nfiles scanned: 1 unreadable: 0 files with a secret value: 0\n' : a clearance must state exactly what it can and cannot find
+
+======================================================================
+FAIL: test_content_over_the_limit_is_never_sliced (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 242, in test_content_over_the_limit_is_never_sliced
+    self.assertEqual(rc, 2, "content over the size limit must be listed as not scanned (exit 2), not sliced")
+AssertionError: 0 != 2 : content over the size limit must be listed as not scanned (exit 2), not sliced
+
+======================================================================
+FAIL: test_damaged_gzip_fails_closed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 229, in test_damaged_gzip_fails_closed
+    self.assertEqual(rc, 2, "a gzip file that cannot be decompressed was skipped silently (must exit 2)")
+AssertionError: 1 != 2 : a gzip file that cannot be decompressed was skipped silently (must exit 2)
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='chain_key_hex_in_rpc_log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 160, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'chain_key_hex_in_rpc_log' not found in {'legacy_oldhome_password', 'keystore_key_base64', 'elastic_password_percent_encoded_url', 'keystore_key_base64url', 'hex', 'fragment_of_22_chars', 'hex_upper', 'basic_header_elastic', 'split_in_json_string', 'pgpass_password_in_json', 'apikey_key_json_unicode_escaped', 'basic_header_broker', 'base64', 'keystore_key_hex_upper', 'split_across_lines', 'gzip_of_a_log', 'apikey_header_encoded', 'inside_wrapped_base64_document', 'keystore_key_raw_bytes', 'single_quoted_shell', 'apikey_key_alone', 'keystore_key_hex', 'apikey_decoded_id_key', 'admin_password_in_url'} : the scanner missed the planted representation chain_key_hex_in_rpc_log
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='chain_key_base64')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 160, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'chain_key_base64' not found in {'legacy_oldhome_password', 'keystore_key_base64', 'elastic_password_percent_encoded_url', 'keystore_key_base64url', 'hex', 'fragment_of_22_chars', 'hex_upper', 'basic_header_elastic', 'split_in_json_string', 'pgpass_password_in_json', 'apikey_key_json_unicode_escaped', 'basic_header_broker', 'base64', 'keystore_key_hex_upper', 'split_across_lines', 'gzip_of_a_log', 'apikey_header_encoded', 'inside_wrapped_base64_document', 'keystore_key_raw_bytes', 'single_quoted_shell', 'apikey_key_alone', 'keystore_key_hex', 'apikey_decoded_id_key', 'admin_password_in_url'} : the scanner missed the planted representation chain_key_base64
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='utf16le_log')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 160, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'utf16le_log' not found in {'legacy_oldhome_password', 'keystore_key_base64', 'elastic_password_percent_encoded_url', 'keystore_key_base64url', 'hex', 'fragment_of_22_chars', 'hex_upper', 'basic_header_elastic', 'split_in_json_string', 'pgpass_password_in_json', 'apikey_key_json_unicode_escaped', 'basic_header_broker', 'base64', 'keystore_key_hex_upper', 'split_across_lines', 'gzip_of_a_log', 'apikey_header_encoded', 'inside_wrapped_base64_document', 'keystore_key_raw_bytes', 'single_quoted_shell', 'apikey_key_alone', 'keystore_key_hex', 'apikey_decoded_id_key', 'admin_password_in_url'} : the scanner missed the planted representation utf16le_log
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='utf16be_odd_offset')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 160, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'utf16be_odd_offset' not found in {'legacy_oldhome_password', 'keystore_key_base64', 'elastic_password_percent_encoded_url', 'keystore_key_base64url', 'hex', 'fragment_of_22_chars', 'hex_upper', 'basic_header_elastic', 'split_in_json_string', 'pgpass_password_in_json', 'apikey_key_json_unicode_escaped', 'basic_header_broker', 'base64', 'keystore_key_hex_upper', 'split_across_lines', 'gzip_of_a_log', 'apikey_header_encoded', 'inside_wrapped_base64_document', 'keystore_key_raw_bytes', 'single_quoted_shell', 'apikey_key_alone', 'keystore_key_hex', 'apikey_decoded_id_key', 'admin_password_in_url'} : the scanner missed the planted representation utf16be_odd_offset
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='percent_encoded_json_unicode_escapes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 160, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'percent_encoded_json_unicode_escapes' not found in {'legacy_oldhome_password', 'keystore_key_base64', 'elastic_password_percent_encoded_url', 'keystore_key_base64url', 'hex', 'fragment_of_22_chars', 'hex_upper', 'basic_header_elastic', 'split_in_json_string', 'pgpass_password_in_json', 'apikey_key_json_unicode_escaped', 'basic_header_broker', 'base64', 'keystore_key_hex_upper', 'split_across_lines', 'gzip_of_a_log', 'apikey_header_encoded', 'inside_wrapped_base64_document', 'keystore_key_raw_bytes', 'single_quoted_shell', 'apikey_key_alone', 'keystore_key_hex', 'apikey_decoded_id_key', 'admin_password_in_url'} : the scanner missed the planted representation percent_encoded_json_unicode_escapes
+
+======================================================================
+FAIL: test_every_creation_site_is_in_the_inventory_table (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 287, in test_every_creation_site_is_in_the_inventory_table
+    self.assertIsNotNone(table, "the scanner has no creation-site table (SITES)")
+AssertionError: unexpectedly None : the scanner has no creation-site table (SITES)
+
+======================================================================
+FAIL: test_missing_root_fails_closed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 200, in test_missing_root_fails_closed
+    self.assertEqual(rc, 2, "a requested directory that does not exist must make the scan fail closed (exit 2)")
+AssertionError: 0 != 2 : a requested directory that does not exist must make the scan fail closed (exit 2)
+
+======================================================================
+FAIL: test_path_name_holding_a_candidate_is_a_hit_and_printed_redacted (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 274, in test_path_name_holding_a_candidate_is_a_hit_and_printed_redacted
+    self.assertEqual(self.leaked(out), [], "the scanner printed a path holding a secret fragment (indexes only)")
+AssertionError: Lists differ: [3] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+3
+
+- [3]
+?  -
+
++ [] : the scanner printed a path holding a secret fragment (indexes only)
+
+======================================================================
+FAIL: test_sibling_of_a_secret_source_is_scanned (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 223, in test_sibling_of_a_secret_source_is_scanned
+    self.assertEqual(rc, 1, "a results directory beside a secret source was excluded by a string prefix")
+AssertionError: 2 != 1 : a results directory beside a secret source was excluded by a string prefix
+
+======================================================================
+FAIL: test_special_file_is_listed_not_read (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 248, in test_special_file_is_listed_not_read
+    rc, _ = self.run_scan(self.home, d, timeout=60)
+subprocess.TimeoutExpired: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/runkit/leak_scan.py', '/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpii570weo/home', '/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpii570weo/fifo']' timed out after 60 seconds
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 250, in test_special_file_is_listed_not_read
+    self.fail("the scanner blocked reading a FIFO")
+AssertionError: the scanner blocked reading a FIFO
+
+======================================================================
+FAIL: test_symlinked_directory_is_never_skipped_silently (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 260, in test_symlinked_directory_is_never_skipped_silently
+    self.assertEqual(rc, 2, "a symlinked directory outside the scanned roots was skipped silently")
+AssertionError: 0 != 2 : a symlinked directory outside the scanned roots was skipped silently
+
+======================================================================
+FAIL: test_truncated_gzip_is_searched_as_far_as_it_decompresses (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 236, in test_truncated_gzip_is_searched_as_far_as_it_decompresses
+    self.assertEqual(rc, 1, "the readable part of a truncated gzip file was not searched")
+AssertionError: 0 != 1 : the readable part of a truncated gzip file was not searched
+
+======================================================================
+FAIL: test_unreadable_directory_fails_closed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 213, in test_unreadable_directory_fails_closed
+    self.assertEqual(rc, 2, "a directory the walk could not enter was skipped silently (must exit 2)")
+AssertionError: 0 != 2 : a directory the walk could not enter was skipped silently (must exit 2)
+
+======================================================================
+FAIL: test_waiver_reason_is_printed_redacted (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.o2Gn26Nawz/writepath/tests/test_leak_scan.py", line 279, in test_waiver_reason_is_printed_redacted
+    self.assertEqual(self.leaked(out), [], "the scanner printed a waiver reason holding a secret value")
+AssertionError: Lists differ: [5] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+5
+
+- [5]
+?  -
+
++ [] : the scanner printed a waiver reason holding a secret value
+
+----------------------------------------------------------------------
+Ran 21 tests in 67.936s
+
+FAILED (failures=17, skipped=2)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_leak_scan tests/test_leak_scan.py 368d565a76351a61
+# exit status: 1

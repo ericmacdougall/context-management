@@ -1,35 +1,20 @@
 #!/bin/sh
-# One stamped experiment on the lab host, from a PINNED tree (pin_run.sh), with the run_all validity gates of amendment
-# 17c: the start line (20 GB from amendment 24; 17 GB before), exp.disk_gate start / check / end, and a watcher that writes WP_HOME/state/STOP when this
-# stream's Elasticsearch logs a flood-stage watermark (disk_gate end then marks the run VOID).
+# One stamped experiment on the lab host, from a PINNED tree (pin_run.sh), made by the gate itself (gate v5,
+# runkit/GATE-DESIGN.md section 8): `exp.disk_gate run` admits the run (pinned tree equal to its commit, registered
+# fixtures, clean stores, every storage rule, 10 GB free measured inside the locked admission, amendment GF1), runs the experiment
+# in the foreground with the run lock, ends the run and exits with the verdict: 0 VALID, 3 VOID, 2 BLOCKED.
+# The verdict is the gate's end record in the ledger (`exp.disk_gate verdict <run>`); the experiment's output goes to
+# WP_HOME/results/runs/<run>/experiment.out and never into the gate's own lines (review a108fc3 G-3). No shell string
+# is built from the label or arguments (m-5); the gate validates the label. To detach, run this under nohup yourself.
+# Gate v6 (GATE-DESIGN 9): the gate resets the stores itself under its run lock (no reset before this script), and
+# runs isolated: `python -I -B <tree>/runkit/isolated.py exp.disk_gate run ...` (review aacf3c0 m-G; the gate refuses
+# a non-isolated interpreter).
 # usage: sh runkit/launch_one.sh <pinned dir> <label> <module> [args...]
-#        output WP_HOME/results/one.<head>.<label>.out; prints that path, the head, the start time and free space.
-# Needs WP_HOME (this stream's home on the host) and ES_CONTAINER (default emlab2-wphard-es).
+# Needs WP_HOME (this stream's home on the host).
 set -eu
 : "${WP_HOME:?WP_HOME must name the home of this stream}"
 export WP_HOME
-ES_CONTAINER=${ES_CONTAINER:-emlab2-wphard-es}
-# exact KiB (amendment H4): df -BG rounds up and let 19.3 GiB through; disk_gate measures free / GiB >= 20.0
-FREEK=$(df -k --output=avail "$WP_HOME" | tail -1 | tr -dc 0-9)
-FREE=$(awk -v k="$FREEK" 'BEGIN{printf "%.1f", k/1048576}')
-[ "$FREEK" -ge 20971520 ] || { echo "BLOCKED free ${FREE}G < 20"; exit 3; }   # amendment 24; exact KiB since H4
-D=$1; L=$2; shift 2
+D=$1; shift
 case "$D" in */runs/*) ;; *) echo "refusing: not a pinned tree"; exit 2 ;; esac
 cd "$D"
-H=$(cat GIT_HEAD)
-S=$(date -u +%FT%TZ)
-OUT=$WP_HOME/results/one.$H.$L.out
-PY=$WP_HOME/venv/bin/python
-setsid sh -c "echo start $S head $H free ${FREE}G: $*
-  $PY -m exp.disk_gate start || { echo 'end BLOCKED'; exit 2; }
-  $PY -m exp.disk_gate check '$L' || { echo 'end VOID (disk gate)'; exit 3; }
-  $PY -m $*
-  echo exit=\$?
-  $PY -m exp.disk_gate end || { echo \"end VOID \$(date -u +%FT%TZ)\"; exit 3; }
-  echo \"end \$(date -u +%FT%TZ)\"" > "$OUT" 2>&1 < /dev/null &
-RP=$!
-setsid sh -c "while kill -0 $RP 2>/dev/null; do
-  if docker logs --since $S $ES_CONTAINER 2>&1 | grep -qiE 'flood stage disk watermark|high disk watermark .* exceeded'; then
-    echo \"flood watcher: flood stage or high watermark in the ES log at \$(date -u +%T)\" > $WP_HOME/state/STOP; echo \"flood stage or high watermark seen \$(date -u +%T): STOP written\"; exit 0; fi
-  sleep 10; done; echo 'run ended, watcher exits'" > "$WP_HOME/state/flood_watch-$H.$L.log" 2>&1 < /dev/null &
-echo "$OUT head $H start $S free ${FREE}G"
+exec "$WP_HOME/venv/bin/python" -I -B "$D/runkit/isolated.py" exp.disk_gate run "$@"

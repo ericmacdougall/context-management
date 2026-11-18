@@ -1,0 +1,146 @@
+# failing-first receipt (broken variant, r2: the variant finds runkit/ from its own directory)
+# REDACTED before publication (2026-11-17, never pushed unredacted): the local working-tree path is written <tree> and any other home path <home>; a test source line shaped like a credential URL (a template holding no value) is masked. Otherwise as recorded. Superseded: see SUPERSEDED.txt.
+# date: 2026-11-18T00:52:59Z
+# file under test: results/failing-first/variants/secret_sink.broken-b-no-check.r2.py sha256 a1b69034663bfb34c010baafecc80d75d2dc4f0330e04ed99a0d2c464e2a77e1, wp/secret_sink.py with the changes below
+# test file: tests/test_secret_sink.py blob ece902caa0826670bc308db10864b5e8cad34ed2
+# command (from writepath/): SECRET_SINK_UNDER_TEST=results/failing-first/variants/secret_sink.broken-b-no-check.r2.py python3 -m unittest tests.test_secret_sink -v
+# diff: 40c40
+# diff: <         p = pathlib.Path(__file__).resolve().parents[1] / "runkit" / "leak_scan.py"
+# diff: ---
+# diff: >         p = pathlib.Path(__file__).resolve().parents[3] / "runkit" / "leak_scan.py"
+# diff: 104c104
+# diff: <     hit = find(raw)
+# diff: ---
+# diff: >     hit = []   # BROKEN VARIANT B: no check before writing
+test_bytes_are_checked_like_text (tests.test_secret_sink.Sink) ... FAIL
+test_clean_write_lands_with_its_mode (tests.test_secret_sink.Sink) ... ok
+test_encoded_forms_are_refused (tests.test_secret_sink.Sink) ... test_find_returns_labels_only (tests.test_secret_sink.Sink) ... ok
+test_label_holding_a_value_is_refused (tests.test_secret_sink.Sink) ... ok
+test_log_record_holding_a_value_is_redacted_whole (tests.test_secret_sink.Sink) ... ok
+test_public_key_id_alone_is_not_refused (tests.test_secret_sink.Sink) ... ok
+test_raw_value_is_refused (tests.test_secret_sink.Sink) ... FAIL
+test_unsearchable_content_is_refused (tests.test_secret_sink.Sink) ... FAIL
+
+======================================================================
+FAIL: test_bytes_are_checked_like_text (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 77, in test_bytes_are_checked_like_text
+    self.refused(f"x {self.pw}".encode("utf-16-le"))
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='base64')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='hex')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='percent')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='percent_url')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='unicode_escaped')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='split')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='fragment')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='apikey_header')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_encoded_forms_are_refused (tests.test_secret_sink.Sink) (form='key_alone')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 74, in test_encoded_forms_are_refused
+    self.refused(v, name=f"{n}.txt")
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_raw_value_is_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 62, in test_raw_value_is_refused
+    e = self.refused(json.dumps({"dsn": f"postgresql://<masked url>@127.0.0.1/x"}))
+  File "<tree>/tests/test_secret_sink.py", line 54, in refused
+    self.s.write(p, data)
+AssertionError: SecretInOutput not raised
+
+======================================================================
+FAIL: test_unsearchable_content_is_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 94, in test_unsearchable_content_is_refused
+    self.s.write(self.tmp / "x.gz", b"\x1f\x8b\x08\x00" + secrets.token_bytes(64))
+AssertionError: SinkError not raised
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.142s
+
+FAILED (failures=12)
+# exit status: 1

@@ -57,11 +57,17 @@ def fingerprint():
 
 
 def write_result(name, data):
-    RESULTS.mkdir(parents=True, exist_ok=True)
+    """A result row. Under the gate (exp.disk_gate run) it goes into the run's own directory WP_RUN_DIR and carries
+    the run id WP_GATE_RUN, the only rows the gate's end record lists and stage_results.py stages (GATE-DESIGN 8.2 P8);
+    outside a gated run (no WP_RUN_DIR) it goes to WP_HOME/results as before, unstamped and never staged."""
+    out = pathlib.Path(os.environ["WP_RUN_DIR"]) if os.environ.get("WP_RUN_DIR") else RESULTS
+    out.mkdir(parents=True, exist_ok=True)
     doc = {"name": name, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "env": fingerprint(), "result": data}
+    if os.environ.get("WP_GATE_RUN"):
+        doc["gate_run"] = os.environ["WP_GATE_RUN"]
     raw = json.dumps(doc, indent=1, sort_keys=True, default=str).encode()
     h = hashlib.sha256(raw).hexdigest()
-    p = RESULTS / f"{name}.{h[:16]}.json"
+    p = out / f"{name}.{h[:16]}.json"
     p.write_bytes(raw)
     print(f"RESULT {name} sha256={h} file={p}")
     return h, p

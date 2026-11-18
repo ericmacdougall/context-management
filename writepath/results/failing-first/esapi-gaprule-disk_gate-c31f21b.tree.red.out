@@ -1,0 +1,21 @@
+# failing-first receipt
+# date: 2026-11-17T21:06:27Z
+# file under test: c31f21b:writepath/exp/disk_gate.py blob 4ba4952fcbae079debfad33f6e15b14cbe8ed6fc sha256 cf74a55ea3378145720df82e3bcbddd6c1de8284ed0fed29e4ac8ff0940a7570
+# tree: writepath at c31f21b (git archive; the companion and wp/ come from it too)
+# test file: tests/test_disk_gate.py at HEAD 4c370ed blob 3039b9863759018b4e6ab7fcff9928839e67161e
+# command: DISK_GATE_UNDER_TEST=<that file> python3 -m unittest tests.test_disk_gate.Gate.test_api_sampling_gap_voids -v
+test_api_sampling_gap_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_api_sampling_gap_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 640, in test_api_sampling_gap_voids
+    self.assertTrue(stalled([ok(100.0), ok(160.0), {"k": "final", "m": 165.0}]), "a 60 s gap between samples")
+AssertionError: [] is not true : a 60 s gap between samples
+
+----------------------------------------------------------------------
+Ran 1 test in 0.524s
+
+FAILED (failures=1)
+# exit status: 1

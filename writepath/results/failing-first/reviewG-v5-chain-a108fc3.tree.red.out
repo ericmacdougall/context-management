@@ -1,0 +1,77 @@
+# failing-first receipt
+# date: 2026-11-18T08:57:18Z
+# file under test: a108fc3:writepath/runkit/chain_singles.sh blob 28ad1693be40858f59ccd397ef053b1b0122315a sha256 adcb2bb4d2b34e604a42282ec911b290a9fc87357f04e8cc153418c57252bdf9
+# tree: writepath at a108fc3 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_chain_singles.py from HEAD 53920bf blob f00578f85c5acbdc322367ba1971b3bc4902da0a
+# command: (cd <tree>/writepath && CHAIN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_chain_singles
+test_failed_cleanup_stops_the_chain (tests.test_chain_singles.Chain) ... ok
+test_failed_store_reset_stops_the_chain (tests.test_chain_singles.Chain) ... FAIL
+test_g3_a_rerun_keeps_the_earlier_attempts_record (tests.test_chain_singles.Chain) ... FAIL
+test_g3_forged_end_line_from_the_experiment_cannot_continue_the_chain (tests.test_chain_singles.Chain) ... FAIL
+test_g3_the_chain_never_reads_text_to_decide (tests.test_chain_singles.Chain) ... FAIL
+test_gate_blocked_runs_nothing (tests.test_chain_singles.Chain) ... ok
+test_gate_void_stops_the_chain (tests.test_chain_singles.Chain) ... ok
+test_m5_label_with_shell_text_is_refused (tests.test_chain_singles.Chain) ... FAIL
+test_valid_runs_continue (tests.test_chain_singles.Chain) ... ok
+
+======================================================================
+FAIL: test_failed_store_reset_stops_the_chain (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.WFkkplir9U/writepath/tests/test_chain_singles.py", line 138, in test_failed_store_reset_stops_the_chain
+    self.assertEqual(rc, 3, out[-300:])
+AssertionError: 0 != 3 : chain start 2026-11-18T08:57:24Z head abc123 spec spec.txt
+/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpa2wby4ud/home/results/one.abc123.first.out head abc123 start 2026-11-18T08:57:25Z free 30.0G
+end 2026-11-18T08:57:25Z
+chain end 2026-11-18T08:57:30Z
+
+
+======================================================================
+FAIL: test_g3_a_rerun_keeps_the_earlier_attempts_record (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.WFkkplir9U/writepath/tests/test_chain_singles.py", line 128, in test_g3_a_rerun_keeps_the_earlier_attempts_record
+    self.assertTrue(self.files_with("attempt=1"), "the rerun overwrote the first attempt's record")
+AssertionError: [] is not true : the rerun overwrote the first attempt's record
+
+======================================================================
+FAIL: test_g3_forged_end_line_from_the_experiment_cannot_continue_the_chain (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.WFkkplir9U/writepath/tests/test_chain_singles.py", line 120, in test_g3_forged_end_line_from_the_experiment_cannot_continue_the_chain
+    self.assertEqual(rc, 3, f"a VOID run whose experiment printed an end line let the chain go on: {out[-300:]}")
+AssertionError: 0 != 3 : a VOID run whose experiment printed an end line let the chain go on: Z free 30.0G
+end 2026-11-18T00:00:00Z
+end VOID 2026-11-18T08:57:42Z
+/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmptc56gwbd/home/results/one.abc123.second.out head abc123 start 2026-11-18T08:57:47Z free 30.0G
+end 2026-11-18T00:00:00Z
+end VOID 2026-11-18T08:57:47Z
+chain end 2026-11-18T08:57:52Z
+
+
+======================================================================
+FAIL: test_g3_the_chain_never_reads_text_to_decide (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.WFkkplir9U/writepath/tests/test_chain_singles.py", line 133, in test_g3_the_chain_never_reads_text_to_decide
+    self.assertNotIn("grep", code, "the chain reads text to decide (it must use the gate's exit status)")
+AssertionError: 'grep' unexpectedly found in '\n\n\n\n\n\n\nset -u\n: "${WP_HOME:?WP_HOME must name the home of this stream}"\nexport WP_HOME\nD=$1; SPEC=$2\nK=$(cd "$(dirname "$0")" && pwd)\nH=$(cat "$D/GIT_HEAD")\nPY=$WP_HOME/venv/bin/python\necho "chain start $(date -u +%FT%TZ) head $H spec $(basename "$SPEC")"\nwhile read -r L C M; do\n  case "$L" in \'\'|\'\n  \n  \n  \n  \n  \n  \n  SL=$(cd "$D" && $PY -m exp.disk_gate stops < /dev/null 2>&1) || { echo "chain stopped: unacknowledged stop before $L"; printf \'%s\\n\' "$SL" | head -5; exit 3; }\n  if [ "$L" = "@" ]; then\n    echo "direct: $C $M"\n    OUTD=$(cd "$D" && $PY -m $C $M < /dev/null 2>&1); RC=$?\n    printf \'%s\\n\' "$OUTD" | tail -2\n    [ "$RC" -eq 0 ] || { echo "chain stopped: direct step failed (exit $RC)"; exit 3; }\n    continue\n  fi\n  R=$(sh "$K/launch_one.sh" "$D" "$L" $M < /dev/null) || { echo "$L: $R"; echo "chain stopped before $L"; exit 3; }\n  echo "$R"\n  OUT=$WP_HOME/results/one.$H.$L.out\n  while ! grep -qE "^end" "$OUT"; do sleep 5; done\n  grep -E "^end" "$OUT"\n  grep -qE "^end [0-9]" "$OUT" || { echo "chain stopped after $L"; exit 3; }\n  \n  if [ "$C" != "-" ]; then\n    CO=$(cd "$D" && $PY -m exp.cleanup "$C" < /dev/null 2>&1); CRC=$?\n    printf \'%s\\n\' "$CO" | tail -1\n    [ "$CRC" -eq 0 ] || { echo "chain stopped: cleanup $C after $L failed (exit $CRC)"; exit 3; }\n  fi\ndone < "$SPEC"\necho "chain end $(date -u +%FT%TZ)"' : the chain reads text to decide (it must use the gate's exit status)
+
+======================================================================
+FAIL: test_m5_label_with_shell_text_is_refused (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.WFkkplir9U/writepath/tests/test_chain_singles.py", line 144, in test_m5_label_with_shell_text_is_refused
+    self.assertIn(rc, (2, 3), f"a label holding shell text was not refused: {out[-300:]}")
+AssertionError: None not found in (2, 3) : a label holding shell text was not refused: chain start 2026-11-18T08:58:03Z head abc123 spec spec.txt
+/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpwa3ilfss/home/results/one.abc123.bad'label.out head abc123 start 2026-11-18T08:58:04Z free 30.0G
+
+(chain did not finish within 60 s)
+
+----------------------------------------------------------------------
+Ran 9 tests in 116.155s
+
+FAILED (failures=5)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_chain_singles tests/test_chain_singles.py e116f1a4c030e3e9
+# exit status: 1

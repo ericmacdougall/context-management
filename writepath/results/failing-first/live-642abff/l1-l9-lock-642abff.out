@@ -1,0 +1,19 @@
+2026-11-18T22:07:35Z
+## run while the lock is held
+gate_version=disk_gate v6 sha256 b43e40310ed05dbcc9e22423aca061c12de5be1bea6873b9b4dfde6ae08fb00f
+disk_gate BLOCKED: another run's launcher or experiment is alive (it holds the run lock state/run.lock)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+exit 2
+## abort while the lock is held
+disk_gate abort: refused: the run lock is held: a gate or its experiment is alive; nothing was written
+exit 2
+## wp.setup --reset while the lock is held (F-1)
+wp.setup: refused: a run holds the run lock state/run.lock (its gate or experiment is alive); the gate resets the stores itself at its next admission; nothing was changed
+exit 2
+## exp.cleanup while the lock is held (F-1)
+exp.cleanup: refused: a run holds the run lock state/run.lock (its gate or experiment is alive); the gate resets the stores itself at its next admission; nothing was changed
+exit 2
+## holder done; verdict of a run this ledger never admitted
+disk_gate verdict: no run r-00000000000000000000000000000000 in the ledger
+exit 2
+2026-11-18T22:08:15Z

@@ -1,0 +1,4 @@
+2026-11-18T22:08:25Z
+guard_check gatefix-live-end FAIL {'G1': ['write_refusals:owner=wp_owner,policy=False', 'identifier_proposals:owner=wp_owner,policy=False'], 'G3': ['write_refusals:no guard for INSERT,UPDATE,DELETE,TRUNCATE'], 'G6': ['pg:identifier_proposals', 'pg:seal_keys', 'pg:write_refusals']}
+exit 1
+guard_check_gatefix-live-end.5830cc03ade4b452.json

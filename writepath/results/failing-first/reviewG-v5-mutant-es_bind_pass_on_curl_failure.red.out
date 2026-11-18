@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T09:45:04Z
+# tree: writepath at 18da8c8 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v5-mutant-es_bind_pass_on_curl_failure.py sha256 4fcc5e6bf12d4a2d08431aa2af207a0884c6cc2d0c7dbbcada49294413fc18be, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 59be819:
+# diff: 457c457
+# diff: <         return outside, ["the ES node inside the pinned container could not be asked for its node and ephemeral id"]
+# diff: ---
+# diff: >         return outside, []
+# test file: tests/test_disk_gate.py from HEAD 59be819 blob f851d2293fbc107dd28d8205bd1ecd16fcaa221a
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v5-mutant-es_bind_pass_on_curl_failure.py python3 -m unittest -v tests.test_disk_gate.Gate.test_mutant_es_curl_failure_inside_the_container_blocks)
+test_mutant_es_curl_failure_inside_the_container_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_mutant_es_curl_failure_inside_the_container_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BiUd13yjiQ/writepath/tests/test_disk_gate.py", line 1805, in test_mutant_es_curl_failure_inside_the_container_blocks
+    self.assertBlocked(*self.call("start"), "could not be asked")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BiUd13yjiQ/writepath/tests/test_disk_gate.py", line 837, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run r-322e315303e4d8b79682dc14ca2f5b89
+
+----------------------------------------------------------------------
+Ran 1 test in 3.763s
+
+FAILED (failures=1)
+# exit status: 1

@@ -1,0 +1,443 @@
+# failing-first receipt
+# date: 2026-11-18T21:33:56Z
+# file under test: aacf3c0:writepath/exp/disk_gate.py blob 32fb0cdb4d69559428d791899bf830a5ca59642d sha256 f1b3ddf13d9226d51f024c2b7259b1d698943d1cc44a6abf5a35fdcc22530f53
+# tree: writepath at aacf3c0 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD fb1d182 blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate.Gate.test_v6_gf1_run_is_admitted_at_12_gb_free tests.test_disk_gate.Gate.test_v6_gf1_admission_under_10_gb_free_blocks tests.test_disk_gate.Gate.test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb tests.test_disk_gate.Gate.test_v6_f1_reset_and_cleanup_run_inside_the_run_lock tests.test_disk_gate.Gate.test_v6_f1_failed_reset_blocks tests.test_disk_gate.Gate.test_v6_f1_store_reset_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f1_gate_runs_the_real_tools_isolated_with_its_lock tests.test_disk_gate.Gate.test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock tests.test_disk_gate.Gate.test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids tests.test_disk_gate.Gate.test_v6_f2_oom_kill_in_the_gates_cgroup_voids tests.test_disk_gate.Gate.test_v6_f2_unreadable_own_cgroup_blocks tests.test_disk_gate.Gate.test_v6_f2_nonzero_exit_by_itself_stays_valid tests.test_disk_gate.Gate.test_v6_f3_role_attribute_weakened_before_the_reset_blocks tests.test_disk_gate.Gate.test_v6_f3_extra_membership_blocks tests.test_disk_gate.Gate.test_v6_f3_parameter_privilege_blocks tests.test_disk_gate.Gate.test_v6_f3_schema_drift_after_the_reset_blocks tests.test_disk_gate.Gate.test_v6_f3_delete_grant_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_guard_trigger_disabled_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_role_setting_changed_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_scratch_database_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_alter_system_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_constraint_dropped_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_unreadable_catalog_blocks tests.test_disk_gate.Gate.test_v6_f3_unreadable_catalog_at_end_voids tests.test_disk_gate.Gate.test_v6_f3_change_reverted_within_the_run_is_a_stated_limit tests.test_disk_gate.Gate.test_v6_guard_policy_is_bound_to_setup tests.test_disk_gate.Gate.test_v6_f4_container_using_this_home_blocks tests.test_disk_gate.Gate.test_v6_f4_container_using_this_home_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f4_container_list_failure_blocks tests.test_disk_gate.Gate.test_v6_f4_container_mounting_a_sibling_directory_is_not_counted tests.test_disk_gate.Gate.test_v6_mb_fifo_in_the_pinned_tree_blocks_without_hanging tests.test_disk_gate.Gate.test_v6_mb_fifo_in_the_run_directory_voids_without_hanging tests.test_disk_gate.Gate.test_v6_mc_row_over_the_size_cap_voids tests.test_disk_gate.Gate.test_v6_mc_large_run_file_is_hashed_in_bounded_memory tests.test_disk_gate.Gate.test_v6_mg_gate_not_isolated_blocks tests.test_disk_gate.Gate.test_v6_mg_experiment_runs_isolated_with_the_listed_environment tests.test_disk_gate.Gate.test_v6_mh_second_end_record_makes_the_verdict_void tests.test_disk_gate.Gate.test_v6_mi_gate_leading_a_group_with_another_member_stays_valid tests.test_disk_gate.Gate.test_v6_abort_closes_a_dead_v5_run tests.test_disk_gate.Gate.test_v6_mutant_group_list_failure_voids tests.test_disk_gate.Gate.test_v6_mutant_es_clean_check_error_blocks tests.test_disk_gate.Gate.test_v6_mutant_row_without_a_run_id_voids tests.test_disk_gate.Gate.test_v6_mutant_module_from_a_sibling_directory_blocks tests.test_disk_gate.Gate.test_v6_verdict_paths_cite_existing_tests  tests.test_disk_gate.Gate.test_free_space_dropping_during_setup_blocks
+test_v6_gf1_run_is_admitted_at_12_gb_free (tests.test_disk_gate.Gate) ... FAIL
+test_v6_gf1_admission_under_10_gb_free_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f1_reset_and_cleanup_run_inside_the_run_lock (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f1_failed_reset_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f1_store_reset_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f1_gate_runs_the_real_tools_isolated_with_its_lock (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f2_oom_kill_in_the_gates_cgroup_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f2_unreadable_own_cgroup_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f2_nonzero_exit_by_itself_stays_valid (tests.test_disk_gate.Gate) ... ok
+test_v6_f3_role_attribute_weakened_before_the_reset_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_extra_membership_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_parameter_privilege_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_schema_drift_after_the_reset_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_delete_grant_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_guard_trigger_disabled_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_role_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_scratch_database_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_alter_system_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_constraint_dropped_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_unreadable_catalog_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_unreadable_catalog_at_end_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_change_reverted_within_the_run_is_a_stated_limit (tests.test_disk_gate.Gate) ... FAIL
+test_v6_guard_policy_is_bound_to_setup (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f4_container_using_this_home_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f4_container_using_this_home_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f4_container_list_failure_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f4_container_mounting_a_sibling_directory_is_not_counted (tests.test_disk_gate.Gate) ... ok
+test_v6_mb_fifo_in_the_pinned_tree_blocks_without_hanging (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mb_fifo_in_the_run_directory_voids_without_hanging (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mc_row_over_the_size_cap_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mc_large_run_file_is_hashed_in_bounded_memory (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mg_gate_not_isolated_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mg_experiment_runs_isolated_with_the_listed_environment (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mh_second_end_record_makes_the_verdict_void (tests.test_disk_gate.Gate) ... FAIL
+test_v6_mi_gate_leading_a_group_with_another_member_stays_valid (tests.test_disk_gate.Gate) ... FAIL
+test_v6_abort_closes_a_dead_v5_run (tests.test_disk_gate.Gate) ... ok
+test_v6_mutant_group_list_failure_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_mutant_es_clean_check_error_blocks (tests.test_disk_gate.Gate) ... ok
+test_v6_mutant_row_without_a_run_id_voids (tests.test_disk_gate.Gate) ... ok
+test_v6_mutant_module_from_a_sibling_directory_blocks (tests.test_disk_gate.Gate) ... ok
+test_v6_verdict_paths_cite_existing_tests (tests.test_disk_gate.Gate) ... FAIL
+test_free_space_dropping_during_setup_blocks (tests.test_disk_gate.Gate) ... ok
+
+======================================================================
+FAIL: test_v6_gf1_run_is_admitted_at_12_gb_free (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1993, in test_v6_gf1_run_is_admitted_at_12_gb_free
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 963, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: disk_gate BLOCKED: host free 12.0 GiB < 20.0 (measured at admission)
+disk_gate BLOCKED disk_gate v5 sha256 f1b3ddf13d9226d5
+
+======================================================================
+FAIL: test_v6_gf1_admission_under_10_gb_free_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1998, in test_v6_gf1_admission_under_10_gb_free_blocks
+    self.assertOnly(*self.call("start"), 2, "host free 9.5 GiB < 10")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1985, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: host free 9.5 GiB < 20.0 (measured at admission)
+
+======================================================================
+FAIL: test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2005, in test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb
+    A.p.wait(timeout=30)                           # without the release: the gate itself must stop the run
+subprocess.TimeoutExpired: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '-B', '/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py', '--gate', 'run', 'x', 'stubexp']' timed out after 30 seconds
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2007, in test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb
+    self.fail("host free fell to 7.5 GiB and the gate did not stop the experiment within 30 s")
+AssertionError: host free fell to 7.5 GiB and the gate did not stop the experiment within 30 s
+
+======================================================================
+FAIL: test_v6_f1_reset_and_cleanup_run_inside_the_run_lock (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2013, in test_v6_f1_reset_and_cleanup_run_inside_the_run_lock
+    self.assertEqual(self.tools(), [["admission", ["cleanup", "reset"], True]],
+AssertionError: Lists differ: [] != [['admission', ['cleanup', 'reset'], True]]
+
+Second list contains 1 additional elements.
+First extra element 0:
+['admission', ['cleanup', 'reset'], True]
+
+- []
++ [['admission', ['cleanup', 'reset'], True]] : admission did not run exp.cleanup and wp.setup --reset itself, under the run lock
+
+======================================================================
+FAIL: test_v6_f1_failed_reset_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2021, in test_v6_f1_failed_reset_blocks
+    self.assertOnly(*self.call("start"), 2, "failed under the run lock")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-dc752bf1a5b5d9163fbe4e2ad2e29ede
+
+======================================================================
+FAIL: test_v6_f1_store_reset_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2026, in test_v6_f1_store_reset_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "was reset or replaced during the run", "catalog wp_events.")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f1_gate_runs_the_real_tools_isolated_with_its_lock (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2044, in test_v6_f1_gate_runs_the_real_tools_isolated_with_its_lock
+    self.assertEqual([(c["tool"], c["argv"]) for c in calls],
+AssertionError: Lists differ: [] != [('exp.cleanup', ['gate-admission']), ('wp[54 chars]d'])]
+
+Second list contains 3 additional elements.
+First extra element 0:
+('exp.cleanup', ['gate-admission'])
+
+- []
++ [('exp.cleanup', ['gate-admission']),
++  ('wp.setup', ['--reset']),
++  ('exp.cleanup', ['gate-after-end'])] : the gate did not run the store tools as designed
+
+======================================================================
+FAIL: test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2069, in test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock
+    self.assertEqual(rc, 2, f"{mod} ran while a run holds the run lock: {out.strip()[-300:]}")
+AssertionError: 1 != 2 : wp.setup ran while a run holds the run lock: nect(host=config.PG_HOST, port=config.PG_PORT, dbname=db or config.EVENTS_DB, user=role,
+  File "/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmpk1m4g_vs/tmpqsbkuz_f/psycopg/__init__.py", line 5, in connect
+    raise RuntimeError('test stand-in: no server')
+RuntimeError: test stand-in: no server
+
+======================================================================
+FAIL: test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2080, in test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids
+    self.assertOnly(rc, out, 3, "killed by signal 9")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f2_oom_kill_in_the_gates_cgroup_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2084, in test_v6_f2_oom_kill_in_the_gates_cgroup_voids
+    self.assertOnly(rc, out, 3, "OOM kill in the gate's cgroup")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f2_unreadable_own_cgroup_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2088, in test_v6_f2_unreadable_own_cgroup_blocks
+    self.assertOnly(*self.call("start"), 2, "memory cannot be observed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-923ff51e194fc3a95186d4983ca12d2b
+
+======================================================================
+FAIL: test_v6_f3_role_attribute_weakened_before_the_reset_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2099, in test_v6_f3_role_attribute_weakened_before_the_reset_blocks
+    self.assertOnly(*self.call("start"), 2, "before the store reset: role wp_app has rolsuper=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-6e6f903eadaf74e2bcfd0c292e730313
+
+======================================================================
+FAIL: test_v6_f3_extra_membership_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2104, in test_v6_f3_extra_membership_blocks
+    self.assertOnly(*self.call("start"), 2, "member of pg_read_server_files")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-9112ad6c82c8c8f56a69cf927ac51e15
+
+======================================================================
+FAIL: test_v6_f3_parameter_privilege_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2108, in test_v6_f3_parameter_privilege_blocks
+    self.assertOnly(*self.call("start"), 2, "parameter privilege")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-8a4e5dace9a9f5431809abb023fe2d4c
+
+======================================================================
+FAIL: test_v6_f3_schema_drift_after_the_reset_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2113, in test_v6_f3_schema_drift_after_the_reset_blocks
+    self.assertOnly(*self.call("start"), 2, "G3 table events has no guard trigger for TRUNCATE")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-dda6e0cc83503c32f98773839aeb2427
+
+======================================================================
+FAIL: test_v6_f3_delete_grant_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2118, in test_v6_f3_delete_grant_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "G2 wp_app on events", "catalog wp_events.app_privs changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_guard_trigger_disabled_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2125, in test_v6_f3_guard_trigger_disabled_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "G3 trigger events.events_guard is enabled 'D'",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_role_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2131, in test_v6_f3_role_setting_changed_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "role wp_app has settings", "catalog cluster.settings changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_scratch_database_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2136, in test_v6_f3_scratch_database_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "a database outside the committed set: scratch",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_alter_system_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2142, in test_v6_f3_alter_system_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "ALTER SYSTEM", "catalog cluster.auto_conf changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_constraint_dropped_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2147, in test_v6_f3_constraint_dropped_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "catalog wp_events.constraints changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_unreadable_catalog_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2151, in test_v6_f3_unreadable_catalog_blocks
+    self.assertOnly(*self.call("start"), 2, "live catalogs could not be read")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-80b9dd28f38bac24446e5b5961f01654
+
+======================================================================
+FAIL: test_v6_f3_unreadable_catalog_at_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2156, in test_v6_f3_unreadable_catalog_at_end_voids
+    self.assertOnly(*self.call("end"), 3, "live catalogs could not be read")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_change_reverted_within_the_run_is_a_stated_limit (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2164, in test_v6_f3_change_reverted_within_the_run_is_a_stated_limit
+    self.assertIn("a catalog change made and reverted within the run", self.g.LIMITS)
+AssertionError: 'a catalog change made and reverted within the run' not found in "LIMITS v5 (GATE-DESIGN 8.4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it."
+
+======================================================================
+FAIL: test_v6_guard_policy_is_bound_to_setup (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2169, in test_v6_guard_policy_is_bound_to_setup
+    self.fail("the pinned tree has no committed catalog expectation (exp/guard_policy.py)")
+AssertionError: the pinned tree has no committed catalog expectation (exp/guard_policy.py)
+
+======================================================================
+FAIL: test_v6_f4_container_using_this_home_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2207, in test_v6_f4_container_using_this_home_blocks
+    self.assertOnly(*self.call("start"), 2, "uses this home")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-9515e5ac1315cd6bc0adfee0aa79f4e4
+
+======================================================================
+FAIL: test_v6_f4_container_using_this_home_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2212, in test_v6_f4_container_using_this_home_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "uses this home")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f4_container_list_failure_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2216, in test_v6_f4_container_list_failure_blocks
+    self.assertOnly(*self.call("start"), 2, "container list (docker ps) could not be read")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-054f83c7abc9755648e1217b44b5266e
+
+======================================================================
+FAIL: test_v6_mb_fifo_in_the_pinned_tree_blocks_without_hanging (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2228, in test_v6_mb_fifo_in_the_pinned_tree_blocks_without_hanging
+    self.assertOnly(*self.launch("x", tree=t, timeout=60).run(), 2, "special or unreadable entry in the pinned tree")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 'HUNG' != 2 : expected BLOCKED (exit 2), got 'HUNG': (the gate did not exit within 60 s: killed by the test)
+
+======================================================================
+FAIL: test_v6_mb_fifo_in_the_run_directory_voids_without_hanging (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2232, in test_v6_mb_fifo_in_the_run_directory_voids_without_hanging
+    self.assertOnly(rc, out, 3, "special or unreadable file in the run directory")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_mc_row_over_the_size_cap_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2236, in test_v6_mc_row_over_the_size_cap_voids
+    self.assertOnly(rc, out, 3, "larger than 16 MiB")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: 4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_mc_large_run_file_is_hashed_in_bounded_memory (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2243, in test_v6_mc_large_run_file_is_hashed_in_bounded_memory
+    self.assertLess(peak, 400 * MIB, f"a child of this test (the gate) peaked at {peak // MIB} MiB hashing a 1 GiB file")
+AssertionError: 1085669376 not less than 419430400 : a child of this test (the gate) peaked at 1035 MiB hashing a 1 GiB file
+
+======================================================================
+FAIL: test_v6_mg_gate_not_isolated_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2250, in test_v6_mg_gate_not_isolated_blocks
+    self.assertOnly(*self.call("start"), 2, "not isolated")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 2 : expected BLOCKED (exit 2), got 0: disk_gate start run r-7ef41aa351952df6abae2dbdadc6a90e
+
+======================================================================
+FAIL: test_v6_mg_experiment_runs_isolated_with_the_listed_environment (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2257, in test_v6_mg_experiment_runs_isolated_with_the_listed_environment
+    self.assertEqual(d["isolated"], 1, "the experiment's interpreter is not isolated (-I)")
+AssertionError: 0 != 1 : the experiment's interpreter is not isolated (-I)
+
+======================================================================
+FAIL: test_v6_mh_second_end_record_makes_the_verdict_void (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2272, in test_v6_mh_second_end_record_makes_the_verdict_void
+    self.assertEqual([v for r, v in self.ends() if r == self._run["run"]], ["VALID", "VOID"])
+AssertionError: Lists differ: ['VALID'] != ['VALID', 'VOID']
+
+Second list contains 1 additional elements.
+First extra element 1:
+'VOID'
+
+- ['VALID']
++ ['VALID', 'VOID']
+
+======================================================================
+FAIL: test_v6_mi_gate_leading_a_group_with_another_member_stays_valid (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2281, in test_v6_mi_gate_leading_a_group_with_another_member_stays_valid
+    self.assertValid(rc, out)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 1005, in assertValid
+    self.assertEqual(rc, 0, f"expected a valid run (exit 0), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 3 != 0 : expected a valid run (exit 0), got 3: oup on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_verdict_paths_cite_existing_tests (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.p7JbDBIb55/writepath/tests/test_disk_gate.py", line 2317, in test_v6_verdict_paths_cite_existing_tests
+    self.assertTrue(cited, "runkit/VERDICT-PATHS.md cites no test")
+AssertionError: set() is not true : runkit/VERDICT-PATHS.md cites no test
+
+----------------------------------------------------------------------
+Ran 45 tests in 309.194s
+
+FAILED (failures=37)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_disk_gate tests/test_disk_gate.py 1d5785d497c09877
+# exit status: 1

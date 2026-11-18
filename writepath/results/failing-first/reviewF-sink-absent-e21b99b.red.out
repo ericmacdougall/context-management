@@ -1,0 +1,138 @@
+# failing-first receipt
+# REDACTED before publication (2026-11-17, never pushed unredacted): the local working-tree path is written <tree> and any other home path <home>; a test source line shaped like a credential URL (a template holding no value) is masked. Otherwise as recorded. Superseded: see SUPERSEDED.txt.
+# date: 2026-11-18T00:51:40Z
+# file under test: wp/secret_sink.py, absent at HEAD e21b99b (the tests come first)
+# test file: tests/test_secret_sink.py blob ece902caa0826670bc308db10864b5e8cad34ed2
+# command (from writepath/): python3 -m unittest tests.test_secret_sink -v
+test_bytes_are_checked_like_text (tests.test_secret_sink.Sink) ... ERROR
+test_clean_write_lands_with_its_mode (tests.test_secret_sink.Sink) ... ERROR
+test_encoded_forms_are_refused (tests.test_secret_sink.Sink) ... ERROR
+test_find_returns_labels_only (tests.test_secret_sink.Sink) ... ERROR
+test_label_holding_a_value_is_refused (tests.test_secret_sink.Sink) ... ERROR
+test_log_record_holding_a_value_is_redacted_whole (tests.test_secret_sink.Sink) ... ERROR
+test_public_key_id_alone_is_not_refused (tests.test_secret_sink.Sink) ... ERROR
+test_raw_value_is_refused (tests.test_secret_sink.Sink) ... ERROR
+test_unsearchable_content_is_refused (tests.test_secret_sink.Sink) ... ERROR
+
+======================================================================
+ERROR: test_bytes_are_checked_like_text (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_clean_write_lands_with_its_mode (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_encoded_forms_are_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_find_returns_labels_only (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_label_holding_a_value_is_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_log_record_holding_a_value_is_redacted_whole (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_public_key_id_alone_is_not_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_raw_value_is_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+======================================================================
+ERROR: test_unsearchable_content_is_refused (tests.test_secret_sink.Sink)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<tree>/tests/test_secret_sink.py", line 36, in setUp
+    self.s = _load()                       # a fresh module: a fresh registry
+  File "<tree>/tests/test_secret_sink.py", line 30, in _load
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 846, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 982, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1039, in get_data
+FileNotFoundError: [Errno 2] No such file or directory: '<tree>/wp/secret_sink.py'
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.004s
+
+FAILED (errors=9)
+# exit status: 1

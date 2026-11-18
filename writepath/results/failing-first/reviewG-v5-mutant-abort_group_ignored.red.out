@@ -1,0 +1,40 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T10:09:26Z
+# tree: writepath at bee0274 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v5-mutant-abort_group_ignored.py sha256 2f0bb3e1e7d60727510bd16bd25ae6eece08bd70468626a13f300cdb6fa0804b, copied into the tree
+# its difference from exp/disk_gate.py at HEAD bee0274:
+# diff: 1327c1327
+# diff: <             if alive:
+# diff: ---
+# diff: >             if False:
+# test file: tests/test_disk_gate.py from HEAD bee0274 blob 44b41df664712a8517e8040228592e3a149476d4
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v5-mutant-abort_group_ignored.py python3 -m unittest -v tests.test_disk_gate.Gate.test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused tests.test_disk_gate.Gate.test_g1_abort_checks_the_run_id_and_then_the_group)
+test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused (tests.test_disk_gate.Gate) ... FAIL
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/case.py:621: ResourceWarning: unclosed file <_io.BufferedReader name=7>
+  outcome.errors.clear()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+test_g1_abort_checks_the_run_id_and_then_the_group (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.bMI3lNLVT4/writepath/tests/test_disk_gate.py", line 1690, in test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused
+    self.assertEqual(rc, 2, f"abort closed run A while a member of its process group lives: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : abort closed run A while a member of its process group lives: n ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_g1_abort_checks_the_run_id_and_then_the_group (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.bMI3lNLVT4/writepath/tests/test_disk_gate.py", line 1704, in test_g1_abort_checks_the_run_id_and_then_the_group
+    self.assertEqual(rc, 2, out[-300:])
+AssertionError: 0 != 2 :  ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 3.686s
+
+FAILED (failures=2)
+sys:1: ResourceWarning: unclosed <socket.socket fd=4, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 53808)>
+# exit status: 1

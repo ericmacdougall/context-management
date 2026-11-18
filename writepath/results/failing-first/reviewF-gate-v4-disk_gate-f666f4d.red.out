@@ -1,0 +1,400 @@
+# failing-first receipt
+# date: 2026-11-18T00:18:57Z
+# file under test: f666f4d:writepath/exp/disk_gate.py blob ff350cdedef81d114c342400335f82c6102d691b sha256 809e09bc78e8cb6d92875146d69060f7baf6b7767310b06bcece68ab6e718279
+# tree: writepath at f666f4d (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD 201612d blob fe3956d14f2ddf4c55038c9adc8f88790550b4ad
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate
+test_a_mount_inside_the_data_directory_blocks (tests.test_disk_gate.Gate) ... ok
+test_admin_role_that_cannot_read_server_files_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_another_pg_server_at_the_experiments_endpoint_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_api_key_is_sent_and_never_written (tests.test_disk_gate.Gate) ... ok
+test_cgroup_not_naming_the_container_blocks (tests.test_disk_gate.Gate) ... ok
+test_cgroup_unreadable_blocks (tests.test_disk_gate.Gate) ... ok
+test_check_void_closes_the_run (tests.test_disk_gate.Gate) ... ok
+test_dangling_link_under_the_data_mount_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_data_directory_overriding_pgdata_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_deleted_ledger_blocks (tests.test_disk_gate.Gate) ... ok
+test_disk_threshold_check_disabled_at_admission_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_disk_threshold_check_disabled_persistently_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_docker_oomkilled_flag_blocks (tests.test_disk_gate.Gate) ... ok
+test_end_requires_this_runs_admit_record (tests.test_disk_gate.Gate) ... ok
+test_endpoint_switched_to_another_pg_server_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_es_api_unreadable_at_end_voids (tests.test_disk_gate.Gate) ... ok
+test_es_api_unreadable_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_data_link_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_es_data_on_a_shared_volume_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_node_id_changed_voids (tests.test_disk_gate.Gate) ... ok
+test_es_reporting_another_data_path_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_reporting_another_filesystem_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_threshold_changed_voids (tests.test_disk_gate.Gate) ... ok
+test_es_tmpfs_not_above_limit_plus_threshold_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_url_answered_by_another_node_process_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_es_url_switched_to_another_node_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_every_verdict_states_the_gate_and_its_limits (tests.test_disk_gate.Gate) ... FAIL
+test_flood_stage_block_on_an_index_voids (tests.test_disk_gate.Gate) ... FAIL
+test_free_space_dropping_during_setup_blocks (tests.test_disk_gate.Gate) ... ok
+test_head_anchor_required (tests.test_disk_gate.Gate) ... ok
+test_index_created_during_the_run_with_es_defaults_stays_valid (tests.test_disk_gate.Gate) ... ok
+test_ledger_cut_back_past_its_adoption_is_not_readopted_silently (tests.test_disk_gate.Gate) ... ok
+test_ledger_reset_keeps_the_broken_ledger (tests.test_disk_gate.Gate) ... ok
+test_ledger_reset_refuses_an_intact_ledger (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_copied_during_finalization_is_never_lost (tests.test_disk_gate.Gate) ... FAIL
+test_legacy_stop_entry_overwritten_in_the_window_voids (tests.test_disk_gate.Gate) ... FAIL
+test_legacy_stop_file_blocks_and_stays_where_it_was_written (tests.test_disk_gate.Gate) ... FAIL
+test_legacy_stop_overwritten_during_finalization_is_never_lost (tests.test_disk_gate.Gate) ... FAIL
+test_legacy_stop_touched_during_finalization_is_never_lost (tests.test_disk_gate.Gate) ... FAIL
+test_legacy_stop_written_in_the_window_voids_and_persists (tests.test_disk_gate.Gate) ... ok
+test_limit_raised_and_restored_with_a_peak_over_the_bound_voids (tests.test_disk_gate.Gate) ... ok
+test_memory_limit_changed_voids (tests.test_disk_gate.Gate) ... ok
+test_mount_below_the_data_mount_in_the_containers_mount_table_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_no_memory_limit_blocks (tests.test_disk_gate.Gate) ... ok
+test_no_stream_code_writes_disk_or_block_settings (tests.test_disk_gate.Gate) ... ok
+test_nonce_file_is_removed_after_each_step (tests.test_disk_gate.Gate) ... ok
+test_oom_event_without_a_kill_voids (tests.test_disk_gate.Gate) ... FAIL
+test_oom_kill_during_the_check_home_measurement_voids (tests.test_disk_gate.Gate) ... FAIL
+test_oom_kill_of_a_process_in_the_container_voids (tests.test_disk_gate.Gate) ... ok
+test_open_stop_blocks_start (tests.test_disk_gate.Gate) ... ok
+test_own_files_growing_over_the_cap_voids (tests.test_disk_gate.Gate) ... ok
+test_paused_at_end_voids (tests.test_disk_gate.Gate) ... ok
+test_peak_already_over_the_bound_blocks (tests.test_disk_gate.Gate) ... ok
+test_pg_cluster_replaced_under_the_container_voids (tests.test_disk_gate.Gate) ... FAIL
+test_pg_data_on_a_shared_volume_blocks (tests.test_disk_gate.Gate) ... ok
+test_pg_endpoint_unreachable_at_end_voids (tests.test_disk_gate.Gate) ... FAIL
+test_pg_statfs_unreadable_voids (tests.test_disk_gate.Gate) ... ok
+test_pg_tmpfs_not_above_limit_blocks (tests.test_disk_gate.Gate) ... ok
+test_pg_wal_linked_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_pgdata_dotdot_escape_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_pgdata_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... ok
+test_recreate_voids (tests.test_disk_gate.Gate) ... ok
+test_restart_during_the_end_home_measurement_voids (tests.test_disk_gate.Gate) ... FAIL
+test_restart_voids (tests.test_disk_gate.Gate) ... ok
+test_retire_legacy_stop_moves_it_unread_and_leaves_a_stop_to_acknowledge (tests.test_disk_gate.Gate) ... skipped 'needs a command the v3 gate lacks (not counted as red)'
+test_run_admitted_by_an_older_gate_is_refused (tests.test_disk_gate.Gate) ... ok
+test_stop_and_abort_still_work_while_a_legacy_path_exists (tests.test_disk_gate.Gate) ... ok
+test_stop_in_the_window_voids_even_after_ack (tests.test_disk_gate.Gate) ... ok
+test_store_on_a_volume_is_not_called_a_tmpfs (tests.test_disk_gate.Gate) ... FAIL
+test_swap_allowed_blocks (tests.test_disk_gate.Gate) ... ok
+test_swap_in_use_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_tablespace_created_during_the_run_outside_the_tmpfs_voids (tests.test_disk_gate.Gate) ... FAIL
+test_tablespace_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_tmpfs_with_an_inode_limit_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_tmpfs_written_from_outside_the_container_voids (tests.test_disk_gate.Gate) ... ok
+test_transient_watermark_change_still_present_voids (tests.test_disk_gate.Gate) ... FAIL
+test_truncated_ledger_blocks (tests.test_disk_gate.Gate) ... ok
+test_v2_ledger_is_adopted_once_and_only_by_init (tests.test_disk_gate.Gate) ... ok
+test_valid_run_passes (tests.test_disk_gate.Gate) ... ok
+
+======================================================================
+FAIL: test_admin_role_that_cannot_read_server_files_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 875, in test_admin_role_that_cannot_read_server_files_blocks
+    self.assertBlocked(*self.call("start"), "server file")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001859Z-719c44a8 free 30.0 GiB es b9e53647d17f tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg efe69f5b3cc4 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_another_pg_server_at_the_experiments_endpoint_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 861, in test_another_pg_server_at_the_experiments_endpoint_blocks
+    self.assertBlocked(*self.call("start"), "nonce")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001859Z-6767a365 free 30.0 GiB es 21e80d469b4c tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 90b440696378 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_dangling_link_under_the_data_mount_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 921, in test_dangling_link_under_the_data_mount_blocks
+    self.assertBlocked(*self.call("start"), "resolve")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001904Z-c03f1794 free 30.0 GiB es b9aeb0861acc tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 165d708641d1 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_data_directory_overriding_pgdata_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 895, in test_data_directory_overriding_pgdata_blocks
+    self.assertBlocked(*self.call("start"), "/srv/pgdata")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001905Z-efdd2e23 free 30.0 GiB es dc80be7c6c6f tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 24d9b589c418 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_disk_threshold_check_disabled_at_admission_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 939, in test_disk_threshold_check_disabled_at_admission_blocks
+    self.assertBlocked(*self.call("start"), "threshold_enabled")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001906Z-7b266806 free 30.0 GiB es e272ef3c3a7f tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 6b2ecbc5e257 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_disk_threshold_check_disabled_persistently_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 945, in test_disk_threshold_check_disabled_persistently_during_the_run_voids
+    self.assertVoid(*self.call("check", "x"), "threshold_enabled")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate x free 30.0 GiB es faadbe8a2014 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg f22b52b79a59 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_endpoint_switched_to_another_pg_server_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 866, in test_endpoint_switched_to_another_pg_server_during_the_run_voids
+    self.assertVoid(*self.call("end"), "nonce")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es a639e82ef896 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 424f86303854 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_es_data_link_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 917, in test_es_data_link_outside_the_tmpfs_blocks
+    self.assertBlocked(*self.call("start"), "/var/tmp/indices")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001912Z-77e77d0a free 30.0 GiB es 3def205b8ae7 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 57553cbfe9b3 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_es_url_answered_by_another_node_process_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 836, in test_es_url_answered_by_another_node_process_blocks
+    self.assertBlocked(*self.call("start"), "ephemeral")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001916Z-009b0600 free 30.0 GiB es 58e84e60f77c tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 23f2c096fd53 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_es_url_switched_to_another_node_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 841, in test_es_url_switched_to_another_node_during_the_run_voids
+    self.assertVoid(*self.call("end"), "ephemeral")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es 5de71a7c6c46 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg ff6a1529cbd9 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_every_verdict_states_the_gate_and_its_limits (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 979, in test_every_verdict_states_the_gate_and_its_limits
+    self.assertIn("LIMITS v4", out, "the VALID verdict line does not state the operator trust boundary")
+AssertionError: 'LIMITS v4' not found in 'disk_gate end free 30.0 GiB floor_breaches 0 es 2e1ec06fc4b7 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg dc4436cfb2cc tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75\n' : the VALID verdict line does not state the operator trust boundary
+
+======================================================================
+FAIL: test_flood_stage_block_on_an_index_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 955, in test_flood_stage_block_on_an_index_voids
+    self.assertVoid(*self.call("end"), "read_only_allow_delete")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es 1457ef52570f tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 2ca46baaa113 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_legacy_stop_copied_during_finalization_is_never_lost (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1177, in test_legacy_stop_copied_during_finalization_is_never_lost
+    self._finalization_write("cp")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1168, in _finalization_write
+    self.assertTrue(rc == 3 or rc2 == 2,
+AssertionError: False is not true : a legacy STOP cp during finalization was lost: end rc 0, next start rc 0
+
+======================================================================
+FAIL: test_legacy_stop_entry_overwritten_in_the_window_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1186, in test_legacy_stop_entry_overwritten_in_the_window_voids
+    self.assertVoid(*self.call("end"), "STOP")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es d332aafae817 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg f918cca91eb0 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_legacy_stop_file_blocks_and_stays_where_it_was_written (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1154, in test_legacy_stop_file_blocks_and_stays_where_it_was_written
+    self.assertTrue(p.is_file() and p.read_text() == "operator: stop now\n",
+AssertionError: False is not true : the gate moved or changed a legacy STOP file instead of leaving it for a person
+
+======================================================================
+FAIL: test_legacy_stop_overwritten_during_finalization_is_never_lost (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1180, in test_legacy_stop_overwritten_during_finalization_is_never_lost
+    self._finalization_write("overwrite")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1168, in _finalization_write
+    self.assertTrue(rc == 3 or rc2 == 2,
+AssertionError: False is not true : a legacy STOP overwrite during finalization was lost: end rc 0, next start rc 0
+
+======================================================================
+FAIL: test_legacy_stop_touched_during_finalization_is_never_lost (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1174, in test_legacy_stop_touched_during_finalization_is_never_lost
+    self._finalization_write("touch")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 1168, in _finalization_write
+    self.assertTrue(rc == 3 or rc2 == 2,
+AssertionError: False is not true : a legacy STOP touch during finalization was lost: end rc 0, next start rc 0
+
+======================================================================
+FAIL: test_mount_below_the_data_mount_in_the_containers_mount_table_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 913, in test_mount_below_the_data_mount_in_the_containers_mount_table_blocks
+    self.assertBlocked(*self.call("start"), "below")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001927Z-05210f5a free 30.0 GiB es ffd1e70f7db3 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 1ca599f60005 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_oom_event_without_a_kill_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 934, in test_oom_event_without_a_kill_voids
+    self.assertVoid(*self.call("end"), "oom")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es 6ea64f816df9 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 3f07057eeba4 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_oom_kill_during_the_check_home_measurement_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 972, in test_oom_kill_during_the_check_home_measurement_voids
+    self.assertVoid(*self.call("check", "x"), "OOM")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate x free 30.0 GiB es ac976047822c tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 534a4f8edb8c tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_pg_cluster_replaced_under_the_container_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 881, in test_pg_cluster_replaced_under_the_container_voids
+    self.assertVoid(*self.call("end"), "system identifier")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es bc666193ce5a tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 4ebc8e2ca638 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_pg_endpoint_unreachable_at_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 871, in test_pg_endpoint_unreachable_at_end_voids
+    self.assertVoid(*self.call("end"), "endpoint")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es b5766c8b0391 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 103ac6d6b0ee tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_pg_wal_linked_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 899, in test_pg_wal_linked_outside_the_tmpfs_blocks
+    self.assertBlocked(*self.call("start"), "/var/lib/pgwal")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001936Z-1a05a84f free 30.0 GiB es d228f41d2e2f tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 359bb4de8976 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_pgdata_dotdot_escape_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 890, in test_pgdata_dotdot_escape_blocks
+    self.assertBlocked(*self.call("start"), "on-disk")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001937Z-dd06137e free 30.0 GiB es 3ae29b8abb30 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 8f8d222f4f11 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_restart_during_the_end_home_measurement_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 967, in test_restart_during_the_end_home_measurement_voids
+    self.assertVoid(*self.call("end"), "restarted")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es 3373220e0805 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg a4504d8b3d53 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_store_on_a_volume_is_not_called_a_tmpfs (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 992, in test_store_on_a_volume_is_not_called_a_tmpfs
+    self.assertNotIn("tmpfs holds", out, "a volume's figures were reported as a tmpfs's")
+AssertionError: 'tmpfs holds' unexpectedly found in "disk_gate BLOCKED start: the PG data directory /var/lib/postgresql/data is not a Docker tmpfs mount (volume): its free space is shared with other tenants; PG's data directory is on ext2/ext3, not tmpfs: its free space is shared with other tenants; the PG tmpfs holds 586.00 GiB, more than the container's lifetime memory peak 0.50 GiB: pages in it are charged to another cgroup (written from outside the container), so the memory limit does not bound it\n" : a volume's figures were reported as a tmpfs's
+
+======================================================================
+FAIL: test_swap_in_use_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 996, in test_swap_in_use_blocks
+    self.assertBlocked(*self.call("start"), "swap")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001942Z-17602e91 free 30.0 GiB es efa381369f21 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 9a8f51f43fce tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_tablespace_created_during_the_run_outside_the_tmpfs_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 909, in test_tablespace_created_during_the_run_outside_the_tmpfs_voids
+    self.assertVoid(*self.call("end"), "/mnt/ts")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es a2694e1c41dc tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 4d872e5379e0 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_tablespace_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 904, in test_tablespace_outside_the_tmpfs_blocks
+    self.assertBlocked(*self.call("start"), "/mnt/ts")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001943Z-49ec1f8e free 30.0 GiB es e0a99e6413c1 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg c6700f897e4c tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_tmpfs_with_an_inode_limit_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 929, in test_tmpfs_with_an_inode_limit_blocks
+    self.assertBlocked(*self.call("start"), "inode")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 683, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T001944Z-c167c027 free 30.0 GiB es 3341c4e626cf tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 2c31e1b0e7ff tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_transient_watermark_change_still_present_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 950, in test_transient_watermark_change_still_present_voids
+    self.assertVoid(*self.call("end"), "flood_stage")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.rzI5inCu9x/writepath/tests/test_disk_gate.py", line 688, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB floor_breaches 0 es 738f7b4467db tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 6a9e0e8b49de tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+----------------------------------------------------------------------
+Ran 79 tests in 51.641s
+
+FAILED (failures=31, skipped=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   leak_scan runkit/leak_scan.py deec6472af55284a
+#   tests.test_disk_gate tests/test_disk_gate.py dfb9f258dc9e7030
+#   wp wp/__init__.py e3b0c44298fc1c14
+#   wp.config wp/config.py 16fe0005a66087c2
+# exit status: 1

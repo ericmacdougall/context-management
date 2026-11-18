@@ -1,0 +1,6 @@
+/dev/sda1       643G  592G   51G  93% /
+69f6c4227563
+9be7a79fd3af
+ES started
+/emlab2-gatefix-es json-file map[mode:blocking] tty=false mem=1572864000 ports=map[9200/tcp:[{127.0.0.1 29299}]]
+/emlab2-gatefix-pg json-file map[] tty=false mem=536870912 ports=map[]

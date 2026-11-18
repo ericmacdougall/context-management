@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:47:51Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-pre_reset_check_skipped.py sha256 4c9e03eb4442877e7b476e217bc6f749f6c26e4d96c20010ccd26246961dcd70, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1462c1462
+# diff: <             w = [f"before the store reset: {x}" for x in _catalog_rules(snap0, "before")]
+# diff: ---
+# diff: >             w = []
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-pre_reset_check_skipped.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_f3_role_attribute_weakened_before_the_reset_blocks)
+test_v6_f3_role_attribute_weakened_before_the_reset_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_f3_role_attribute_weakened_before_the_reset_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jcA12m04kC/writepath/tests/test_disk_gate.py", line 2099, in test_v6_f3_role_attribute_weakened_before_the_reset_blocks
+    self.assertOnly(*self.call("start"), 2, "before the store reset: role wp_app has rolsuper=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jcA12m04kC/writepath/tests/test_disk_gate.py", line 1985, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: role wp_app has rolsuper=True (not its committed attributes)
+
+----------------------------------------------------------------------
+Ran 1 test in 1.753s
+
+FAILED (failures=1)
+# exit status: 1

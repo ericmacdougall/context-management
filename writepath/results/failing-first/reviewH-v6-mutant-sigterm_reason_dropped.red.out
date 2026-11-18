@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T21:48:41Z
+# tree: writepath at 5a3373e (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-sigterm_reason_dropped.py sha256 5900290f4577119a341f08c0082b656f3eb9c70e03c7ad4d8d4ecd0cd887ceeb, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 5a3373e:
+# diff: 1786c1786
+# diff: <         if sig:
+# diff: ---
+# diff: >         if False:
+# test file: tests/test_disk_gate.py from HEAD 5a3373e blob 1cdb3c60c4353d3227d025fad85fa9eeffd2409c
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-sigterm_reason_dropped.py python3 -m unittest -v tests.test_disk_gate.Gate.test_p3_sigterm_during_the_run_voids)
+test_p3_sigterm_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_p3_sigterm_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.LJbgZhocov/writepath/tests/test_disk_gate.py", line 1918, in test_p3_sigterm_during_the_run_voids
+    self.assertVoid(*A.finish(), "signalled")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.LJbgZhocov/writepath/tests/test_disk_gate.py", line 999, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: elines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 1 test in 3.496s
+
+FAILED (failures=1)
+# exit status: 1

@@ -2,6 +2,9 @@
 # Read-only, on the lab host: for each stamped single's .out, read the ES container log over the run window
 # (start .. end as the .out records them) and count high-watermark-exceeded and flood-stage lines. Prints names,
 # return codes and counts only. usage: ssh <lab host> sh -s <heads...> < runkit/window_check.sh
+# HISTORICAL (review A1): this reads wall-clock windows with `docker logs --since/--until`, which can conceal an
+# in-window line (clock steps, timestamps of a replaced container, truncation). Its output is an observation about
+# old-gate runs only, never evidence for a gate verdict; since review A, exp/disk_gate.py judges its own capture.
 R=$HOME/emlab2-16096/wphard/wp/results
 for h in "$@"; do
   for f in "$R"/one."$h".*.out; do

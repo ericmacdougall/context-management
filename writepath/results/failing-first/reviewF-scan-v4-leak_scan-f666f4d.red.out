@@ -1,0 +1,145 @@
+# failing-first receipt
+# date: 2026-11-18T00:43:38Z
+# file under test: f666f4d:writepath/runkit/leak_scan.py blob 194a4adf5fce57a96a6669a6ce5019ebb0a4acfb sha256 deec6472af55284a952633ba2f5a018531111b560f3e58c10dbc84ac3fdc29c9
+# tree: writepath at f666f4d (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_leak_scan.py from HEAD cf8f322 blob 75c79e52436295645ae9e877cfed3e8724f7d273
+# command: (cd <tree>/writepath && LEAK_SCAN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_leak_scan
+test_a_hit_exits_1 (tests.test_leak_scan.Scan) ... ok
+test_clean_tree_exits_0 (tests.test_leak_scan.Scan) ... ok
+test_clearance_states_the_split_rule_and_limits (tests.test_leak_scan.Scan) ... ok
+test_content_over_the_limit_is_never_sliced (tests.test_leak_scan.Scan) ... ok
+test_damaged_gzip_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_each_representation_is_found (tests.test_leak_scan.Scan) ... ok
+test_every_python_creation_site_is_in_the_table_with_its_count (tests.test_leak_scan.Scan) ... FAIL
+test_hit_lines_are_ids_and_offsets (tests.test_leak_scan.Scan) ... FAIL
+test_in_process_find_for_issuing_processes (tests.test_leak_scan.Scan) ... skipped "library function of this tree's scanner (not counted as red)"
+test_legacy_write_path_sites (tests.test_leak_scan.Scan) ... skipped 'NOT CHECKED: no history for a13b524:systems/memsys/kms.sql here (an extracted tree); run in the repo'
+test_limits_are_one_versioned_statement (tests.test_leak_scan.Scan) ... FAIL
+test_map_is_private_and_never_inside_a_scanned_root (tests.test_leak_scan.Scan) ... FAIL
+test_missing_root_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_mutated_creation_sites_are_named (tests.test_leak_scan.Scan) ... FAIL
+test_near_complete_key_and_short_fragment_in_names_are_never_printed (tests.test_leak_scan.Scan) ... FAIL
+test_no_issuer_side_check_is_claimed (tests.test_leak_scan.Scan) ... FAIL
+test_no_value_or_fragment_is_printed (tests.test_leak_scan.Scan) ... ok
+test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan) ... ok
+test_path_name_holding_a_candidate_is_a_hit_and_printed_redacted (tests.test_leak_scan.Scan) ... ok
+test_requested_root_names_are_searched (tests.test_leak_scan.Scan) ... test_self_test_runs_with_every_scan (tests.test_leak_scan.Scan) ... skipped "the self-test is a feature of this tree's scanner (not counted as red)"
+test_shell_and_sql_creation_lines_lint (tests.test_leak_scan.Scan) ... ok
+test_sibling_of_a_secret_source_is_scanned (tests.test_leak_scan.Scan) ... ok
+test_special_file_is_listed_not_read (tests.test_leak_scan.Scan) ... ok
+test_symlinked_directory_is_never_skipped_silently (tests.test_leak_scan.Scan) ... ok
+test_truncated_gzip_is_searched_as_far_as_it_decompresses (tests.test_leak_scan.Scan) ... ok
+test_unicode_escaped_password_with_a_percent_is_found_and_never_printed (tests.test_leak_scan.Scan) ... FAIL
+test_unreadable_directory_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_unreadable_key_store_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_unreadable_secret_source_fails_closed (tests.test_leak_scan.Scan) ... ok
+test_waiver_reason_is_printed_redacted (tests.test_leak_scan.Scan) ... ok
+
+======================================================================
+FAIL: test_every_python_creation_site_is_in_the_table_with_its_count (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 329, in test_every_python_creation_site_is_in_the_table_with_its_count
+    self.assertIsNotNone(check, "the scanner has no structural creation-site check (check_sites)")
+AssertionError: unexpectedly None : the scanner has no structural creation-site check (check_sites)
+
+======================================================================
+FAIL: test_hit_lines_are_ids_and_offsets (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 429, in test_hit_lines_are_ids_and_offsets
+    self.assertTrue(re.search(r"(?m)^HIT file #\d+ (name )?view \d+ offset \d+ inventory v\d+ class \S+$", self.out),
+AssertionError: None is not true : hits are not reported as file number, view, offset, inventory id and class
+
+======================================================================
+FAIL: test_limits_are_one_versioned_statement (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 462, in test_limits_are_one_versioned_statement
+    self.assertTrue(lim.startswith("LIMITS v4"), "the scanner's limits are not versioned")
+AssertionError: False is not true : the scanner's limits are not versioned
+
+======================================================================
+FAIL: test_map_is_private_and_never_inside_a_scanned_root (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 440, in test_map_is_private_and_never_inside_a_scanned_root
+    self.assertTrue(p.exists(), "no map written with --map")
+AssertionError: False is not true : no map written with --map
+
+======================================================================
+FAIL: test_mutated_creation_sites_are_named (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 337, in test_mutated_creation_sites_are_named
+    self.assertIsNotNone(check, "the scanner has no structural creation-site check (check_sites)")
+AssertionError: unexpectedly None : the scanner has no structural creation-site check (check_sites)
+
+======================================================================
+FAIL: test_near_complete_key_and_short_fragment_in_names_are_never_printed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 424, in test_near_complete_key_and_short_fragment_in_names_are_never_printed
+    self.assertEqual(self.leaked(out), [], "the output holds a fragment of an inventoried value (indexes only)")
+AssertionError: Lists differ: [3, 7] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+3
+
+- [3, 7]
++ [] : the output holds a fragment of an inventoried value (indexes only)
+
+======================================================================
+FAIL: test_no_issuer_side_check_is_claimed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 390, in test_no_issuer_side_check_is_claimed
+    self.assertEqual(claims, [], "SITES still claims an issuer-side check that does not exist")
+AssertionError: Lists differ: [('wp/broker.py', '"POST", "/_security/api[258 chars]()')] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+('wp/broker.py', '"POST", "/_security/api_key", {"name": name', 'broker-minted writer API keys', 'memory only: the broker checks its own output with find()')
+
++ []
+- [('wp/broker.py',
+-   '"POST", "/_security/api_key", {"name": name',
+-   'broker-minted writer API keys',
+-   'memory only: the broker checks its own output with find()'),
+-  ('exp/h_probe_es.py',
+-   'by.req("POST", "/_security/api_key", body',
+-   'probe API keys',
+-   'memory only: the probe checks its own output with find()')] : SITES still claims an issuer-side check that does not exist
+
+======================================================================
+FAIL: test_requested_root_names_are_searched (tests.test_leak_scan.Scan) (root='empty')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 456, in test_requested_root_names_are_searched
+    self.assertEqual(rc, 1, "a requested root whose name holds a secret value was not a hit")
+AssertionError: 0 != 1 : a requested root whose name holds a secret value was not a hit
+
+======================================================================
+FAIL: test_requested_root_names_are_searched (tests.test_leak_scan.Scan) (root='alias')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 456, in test_requested_root_names_are_searched
+    self.assertEqual(rc, 1, "a requested root whose name holds a secret value was not a hit")
+AssertionError: 0 != 1 : a requested root whose name holds a secret value was not a hit
+
+======================================================================
+FAIL: test_unicode_escaped_password_with_a_percent_is_found_and_never_printed (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.nmSu5lDZPc/writepath/tests/test_leak_scan.py", line 403, in test_unicode_escaped_password_with_a_percent_is_found_and_never_printed
+    self.assertEqual(rc, 1, "a password written as JSON unicode escapes, holding '%41', was not found")
+AssertionError: 0 != 1 : a password written as JSON unicode escapes, holding '%41', was not found
+
+----------------------------------------------------------------------
+Ran 31 tests in 2.881s
+
+FAILED (failures=10, skipped=3)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_leak_scan tests/test_leak_scan.py fae08bebc55be568
+# exit status: 1

@@ -1,0 +1,44 @@
+/dev/sda1       643G  591G   52G  92% /
+disk_gate start run 20261117T205756Z-6f7ed787 free 51.4 GiB own 0.04 GiB (pg 0.04 es 0.00 home 0.00) cap +2.0 GiB es 9be7a79fd3af pg 69f6c4227563 admitted at seq 1
+disk_gate api before a: min free 51.43 GiB, high watermark 2.00 GiB
+disk_gate api at end: min free 51.44 GiB, high watermark 2.00 GiB
+disk_gate end free 51.4 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 27 capture_sha256 a10859161f1f7a341794c1c1ecfc536026fac8e2bda937d2c71836d2e1a605a9
+ROW case=a action=none start_rc=0 check_rc=0 end_rc=0 end: disk_gate end free 51.4 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 27 capture_sha256 a10859161f1f7a341794c1c1ecfc536026fac8e2bda937d2c71836d2e1a605a9
+disk_gate start run 20261117T205805Z-c12faf46 free 51.4 GiB own 0.04 GiB (pg 0.04 es 0.00 home 0.00) cap +2.0 GiB es 9be7a79fd3af pg 69f6c4227563 admitted at seq 3
+disk_gate api before b: min free 51.44 GiB, high watermark 2.00 GiB
+disk_gate api at end: min free 51.45 GiB, high watermark 2.00 GiB
+disk_gate end free 51.5 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 25 capture_sha256 d1ca9e718e72f318320325a811e04124fa490685e7d2d70aa30dc810855b0670
+disk_gate VOID: the gate-marker lines on the ES container's stdout are not the gate's own tokens in order (3 seen): a forged, replayed or missing marker
+ROW case=b action=forge start_rc=0 check_rc=0 end_rc=3 end: disk_gate VOID: the gate-marker lines on the ES container's stdout are not the gate's own tokens in order (3 seen): a forged, replayed or missing marker
+disk_gate start run 20261117T205809Z-02c1e1b0 free 51.5 GiB own 0.04 GiB (pg 0.04 es 0.00 home 0.00) cap +2.0 GiB es 9be7a79fd3af pg 69f6c4227563 admitted at seq 5
+disk_gate api before d: min free 51.45 GiB, high watermark 2.00 GiB
+disk_gate stop s-91f8aa67 recorded at seq 6
+disk_gate api at end: min free 51.46 GiB, high watermark 2.00 GiB
+disk_gate end free 51.5 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0 capture_lines 5 events 22 capture_sha256 b25cc08e95aa97ad67a3c69c1997866e46ada968f69e0b48d083869ffa039f0a
+disk_gate VOID: STOP: stop s-91f8aa67 at seq 6 (operator): written reason: gatefix live case d: operator stop mid-window, during the run
+ROW case=d action=stop start_rc=0 check_rc=0 end_rc=3 end: disk_gate VOID: STOP: stop s-91f8aa67 at seq 6 (operator): written reason: gatefix live case d: operator stop mid-window, during the run
+start while the case-d stop is open (expect BLOCKED, exit 2):
+ROW case=d-blocked start_rc=2: disk_gate BLOCKED start: unacknowledged stop(s): stop s-91f8aa67 at seq 6 (operator): written reason: gatefix live case d: operator stop mid-window; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'
+ack s-91f8aa67: disk_gate clear-stop: stop s-91f8aa67 acknowledged (no run's verdict changes)
+disk_gate start run 20261117T205814Z-6764e3a2 free 51.5 GiB own 0.04 GiB (pg 0.04 es 0.00 home 0.00) cap +2.0 GiB es 9be7a79fd3af pg 69f6c4227563 admitted at seq 9
+disk_gate api before e: min free 51.47 GiB, high watermark 2.00 GiB
+disk_gate end free 51.5 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 1 capture_lines 6 events 30 capture_sha256 fa417cc1abb73a8cab9660bb4a4d1a169a00258217eef0df77ffff212e5b612f
+disk_gate VOID: the ES node passed its high disk watermark during the run (1 captured lines; new shards were not allocated)
+disk_gate VOID: STOP: stop s-89ca7bdc at seq 10 (gate capture): gate capture: a high-watermark line in the ES log at 2026-11-17T20:58:16.744955561Z, during the run
+ROW case=e action=watermark start_rc=0 check_rc=0 end_rc=3 end: disk_gate VOID: STOP: stop s-89ca7bdc at seq 10 (gate capture): gate capture: a high-watermark line in the ES log at 2026-11-17T20:58:16.744955561Z, during the run
+ack s-89ca7bdc: disk_gate clear-stop: stop s-89ca7bdc acknowledged (no run's verdict changes)
+disk_gate start run 20261117T205820Z-2489f439 free 51.5 GiB own 0.04 GiB (pg 0.04 es 0.00 home 0.00) cap +2.0 GiB es 9be7a79fd3af pg 69f6c4227563 admitted at seq 13
+disk_gate api before f: min free 51.49 GiB, high watermark 2.00 GiB
+disk_gate VOID: ES disk or logger settings changed between samples during the run
+disk_gate VOID: STOP: stop s-fd1863d7 at seq 14 (gate capture): gate capture: ES API: ES reports 51.52 GiB free on a data path, below its high watermark (4000.00 GiB), during the run
+disk_gate VOID: STOP: stop s-f109a6da at seq 15 (gate capture): gate capture: a flood-stage line in the ES log at 2026-11-17T20:58:31.528585719Z, during the run
+ROW case=f action=realwm start_rc=0 check_rc=0 end_rc=3 end: disk_gate VOID: STOP: stop s-f109a6da at seq 15 (gate capture): gate capture: a flood-stage line in the ES log at 2026-11-17T20:58:31.528585719Z, during the run
+ack s-fd1863d7: disk_gate clear-stop: stop s-fd1863d7 acknowledged (no run's verdict changes)
+ack s-f109a6da: disk_gate clear-stop: stop s-f109a6da acknowledged (no run's verdict changes)
+disk_gate start run 20261117T205904Z-52f7f12d free 51.6 GiB own 0.04 GiB (pg 0.04 es 0.00 home 0.00) cap +2.0 GiB es 9be7a79fd3af pg 69f6c4227563 admitted at seq 19
+disk_gate api before c: min free 51.57 GiB, high watermark 2.00 GiB
+disk_gate VOID: lifecycle events on the ES or PG container during the run: container:kill
+disk_gate VOID: the capture ended early: log stderr closed (container stopped, restarted or removed, or the docker daemon restarted)
+disk_gate VOID: the ES container's started changed during the run (2026-11-17T20:52:34.717871201Z -> 2026-11-17T20:59:07.656001272Z)
+ROW case=c action=restart start_rc=0 check_rc=0 end_rc=3 end: disk_gate VOID: the ES container's started changed during the run (2026-11-17T20:52:34.717871201Z -> 2026-11-17T20:59:07.656001272Z)
+ledger: 20 records; open stops: disk_gate stops: none open

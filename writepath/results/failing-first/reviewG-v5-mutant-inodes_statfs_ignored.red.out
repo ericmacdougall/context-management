@@ -1,0 +1,28 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T09:45:14Z
+# tree: writepath at 18da8c8 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v5-mutant-inodes_statfs_ignored.py sha256 d4e8f68847d16eff6993600ce7221544bb2dc2a349592bd5c95805d25597341d, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 59be819:
+# diff: 577c577
+# diff: <         if "nr_inodes=0" not in opts or pr["statfs"]["files"] != 0:
+# diff: ---
+# diff: >         if "nr_inodes=0" not in opts:
+# test file: tests/test_disk_gate.py from HEAD 59be819 blob f851d2293fbc107dd28d8205bd1ecd16fcaa221a
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v5-mutant-inodes_statfs_ignored.py python3 -m unittest -v tests.test_disk_gate.Gate.test_mutant_inode_count_without_the_limit_option_blocks)
+test_mutant_inode_count_without_the_limit_option_blocks (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_mutant_inode_count_without_the_limit_option_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.xDaiIykLeB/writepath/tests/test_disk_gate.py", line 1813, in test_mutant_inode_count_without_the_limit_option_blocks
+    self.assertBlocked(*self.call("start"), "inode")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.xDaiIykLeB/writepath/tests/test_disk_gate.py", line 837, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run r-2a17090169ea9a4db94acd12b19bbcde
+
+----------------------------------------------------------------------
+Ran 1 test in 3.576s
+
+FAILED (failures=1)
+# exit status: 1

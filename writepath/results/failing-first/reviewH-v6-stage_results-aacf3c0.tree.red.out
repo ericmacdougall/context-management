@@ -1,0 +1,143 @@
+# failing-first receipt
+# date: 2026-11-18T21:34:06Z
+# file under test: aacf3c0:writepath/runkit/stage_results.py blob 567e509e233460b4b70d02e5e9e83b58970eb106 sha256 5b0581db8986cb229ce1b0fad3c26cba269fa17ee6e1c9421e72684d99aa3373
+# tree: writepath at aacf3c0 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_stage_results.py from HEAD fb1d182 blob dc04685a3f625ba56e1983b0b038d37ef8fc6061
+# command: (cd <tree>/writepath && STAGE_RESULTS_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_stage_results
+test_edited_ledger_is_refused (tests.test_stage_results.Stage) ... ok
+test_f2_experiment_killed_by_a_signal_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_f2_missing_exit_status_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_file_changed_after_the_run_is_refused (tests.test_stage_results.Stage) ... ok
+test_file_listed_by_a_valid_end_record_is_staged (tests.test_stage_results.Stage) ... ERROR
+test_file_of_a_void_run_is_refused (tests.test_stage_results.Stage) ... ok
+test_file_the_gate_did_not_list_is_refused (tests.test_stage_results.Stage) ... ok
+test_h9_set_changed_after_clearance_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_h9_set_without_a_passing_check_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_me_code_commit_is_the_gates_not_the_rows (tests.test_stage_results.Stage) ... FAIL
+test_me_group_that_is_a_path_is_refused (tests.test_stage_results.Stage) ... FAIL
+test_me_header_only_groups_file_stages_nothing_and_writes_no_manifest (tests.test_stage_results.Stage) ... FAIL
+test_me_staged_file_is_never_overwritten (tests.test_stage_results.Stage) ... FAIL
+test_v5_run_is_refused (tests.test_stage_results.Stage) ... FAIL
+
+======================================================================
+ERROR: test_file_listed_by_a_valid_end_record_is_staged (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 114, in test_file_listed_by_a_valid_end_record_is_staged
+    man = (self.dst / "MANIFEST.v6.tsv").read_text()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1256, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1242, in open
+    return io.open(self, mode, buffering, encoding, errors, newline,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1110, in _opener
+    return self._accessor.open(self, flags, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp22ztwiwf/dst/MANIFEST.v6.tsv'
+
+======================================================================
+FAIL: test_f2_experiment_killed_by_a_signal_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 188, in test_f2_experiment_killed_by_a_signal_is_refused
+    self.assertRefused(*self.stage(self.ledger(exp_rc=-9)), "the experiment died by signal 9", "did not exit by")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although the experiment died by signal 9: files 1
+
+
+======================================================================
+FAIL: test_f2_missing_exit_status_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 191, in test_f2_missing_exit_status_is_refused
+    self.assertRefused(*self.stage(self.ledger(exp_rc=None)), "no exit status", "did not exit by")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although no exit status: files 1
+
+
+======================================================================
+FAIL: test_h9_set_changed_after_clearance_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 184, in test_h9_set_changed_after_clearance_is_refused
+    self.assertRefused(*self.stage(led, clear=False), "a file changed after clearance", "verify-copy")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although a file changed after clearance: files 1
+
+
+======================================================================
+FAIL: test_h9_set_without_a_passing_check_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 178, in test_h9_set_without_a_passing_check_is_refused
+    self.assertRefused(*self.stage(led, clear=False), "the set has no PASS stage-check", "verify-copy")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although the set has no PASS stage-check: files 1
+
+
+======================================================================
+FAIL: test_me_code_commit_is_the_gates_not_the_rows (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 154, in test_me_code_commit_is_the_gates_not_the_rows
+    self.assertEqual([r[3] for r in rows], [COMMIT], "code_commit was not taken from the gate's records")
+AssertionError: Lists differ: [] != ['c0ffee1000000000000000000000000000000000']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'c0ffee1000000000000000000000000000000000'
+
+- []
++ ['c0ffee1000000000000000000000000000000000'] : code_commit was not taken from the gate's records
+
+======================================================================
+FAIL: test_me_group_that_is_a_path_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 159, in test_me_group_that_is_a_path_is_refused
+    self.assertRefused(*self.stage(self.ledger()), f"group {g!r}", "is not a plain name")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although group '../outside': files 1
+
+
+======================================================================
+FAIL: test_me_header_only_groups_file_stages_nothing_and_writes_no_manifest (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 146, in test_me_header_only_groups_file_stages_nothing_and_writes_no_manifest
+    self.assertRefused(*self.stage(self.ledger()), "the groups file lists no file", "lists no file")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although the groups file lists no file: files 0
+
+
+======================================================================
+FAIL: test_me_staged_file_is_never_overwritten (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 168, in test_me_staged_file_is_never_overwritten
+    self.assertNotEqual(rc, 0, f"a second staging of the same file succeeded: {out[-300:]}")
+AssertionError: 0 == 0 : a second staging of the same file succeeded: files 1
+
+
+======================================================================
+FAIL: test_v5_run_is_refused (tests.test_stage_results.Stage)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 194, in test_v5_run_is_refused
+    self.assertRefused(*self.stage(self.ledger(v=5, gate="disk_gate v5")), "a v5 run", "older than v6")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.g8HNnstxyw/writepath/tests/test_stage_results.py", line 121, in assertRefused
+    self.assertNotEqual(rc, 0, f"staged although {why}: {out[-300:]}")
+AssertionError: 0 == 0 : staged although a v5 run: files 1
+
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.707s
+
+FAILED (failures=9, errors=1)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_stage_results tests/test_stage_results.py 4ac153d4fb7d361c
+# exit status: 1

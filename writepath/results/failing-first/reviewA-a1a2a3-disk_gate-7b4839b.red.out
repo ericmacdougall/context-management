@@ -1,0 +1,177 @@
+# failing-first receipt
+# date: 2026-11-17T19:09:58Z
+# file under test: 7b4839b:writepath/exp/disk_gate.py blob dd95149d90b912e4f79bf8ac79efa1a01f5064ec sha256 63a3025e77cab417853f04fd26b41fe6abd4f20dd4983f906314a1771f95e991
+# test file: tests/test_disk_gate.py at HEAD 4608dac blob d65cea9b91d9ae3b055e4a773cc1cb134ee08188
+# command: DISK_GATE_UNDER_TEST=<that file> python3 -m unittest tests.test_disk_gate -v
+test_a1_forged_end_marker_conceals_a_later_flood_line (tests.test_disk_gate.Gate) ... FAIL
+test_a1_forged_marker_alone_voids (tests.test_disk_gate.Gate) ... FAIL
+test_a1_non_blocking_log_driver_is_never_certified (tests.test_disk_gate.Gate) ... FAIL
+test_a1_reversed_endpoints_hide_a_flood_line (tests.test_disk_gate.Gate) ... FAIL
+test_a1_small_backward_clock_step_hides_a_flood_line (tests.test_disk_gate.Gate) ... FAIL
+test_a1_truncation_then_start_marker_replay_hides_a_flood_line (tests.test_disk_gate.Gate) ... FAIL
+test_a2_pause_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_a2_replacement_during_end_measurement_voids (tests.test_disk_gate.Gate) ... FAIL
+test_a2_restart_between_end_inspection_and_log_retrieval_voids (tests.test_disk_gate.Gate) ... FAIL
+test_a3_newer_stop_during_an_ack_still_blocks_start (tests.test_disk_gate.Gate) ... FAIL
+test_a3_readmission_after_an_ack_does_not_rebaseline_the_window (tests.test_disk_gate.Gate) ... FAIL
+test_a3_stop_then_ack_during_the_run_still_voids (tests.test_disk_gate.Gate) ... FAIL
+test_ack_needs_a_reason (tests.test_disk_gate.Gate) ... ok
+test_ack_with_a_reason_unblocks_start_and_is_recorded (tests.test_disk_gate.Gate) ... ok
+test_cap_breach_voids (tests.test_disk_gate.Gate) ... ok
+test_capture_edited_voids (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_clean_run_passes (tests.test_disk_gate.Gate) ... ok
+test_close_marker_never_lands_voids (tests.test_disk_gate.Gate) ... ok
+test_companion_killed_voids (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_edited_ledger_blocks_start (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_empty_stop_file_is_not_attributed (tests.test_disk_gate.Gate) ... ok
+test_flood_line_before_the_run_does_not_void (tests.test_disk_gate.Gate) ... ok
+test_flood_line_voids (tests.test_disk_gate.Gate) ... ok
+test_follower_eof_voids (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_follower_loss_voids (tests.test_disk_gate.Gate)
+A line the capture never received (follower loss) while the retained log has it: VOID. ... ok
+test_high_watermark_line_voids (tests.test_disk_gate.Gate) ... ok
+test_high_watermark_on_stderr_voids (tests.test_disk_gate.Gate) ... ok
+test_log_read_failure_voids (tests.test_disk_gate.Gate) ... ok
+test_log_read_timeout_voids (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_low_watermark_line_does_not_void (tests.test_disk_gate.Gate) ... ok
+test_open_run_blocks_start_until_aborted (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_replaced_container_voids (tests.test_disk_gate.Gate) ... ok
+test_rotated_log_voids (tests.test_disk_gate.Gate) ... ok
+test_same_second_restart_voids (tests.test_disk_gate.Gate) ... ok
+test_start_at_20gb_allowed (tests.test_disk_gate.Gate) ... ok
+test_start_under_20gb_blocked (tests.test_disk_gate.Gate) ... ok
+test_start_with_stop_present_is_blocked_and_the_stop_kept (tests.test_disk_gate.Gate) ... ok
+test_stop_arriving_while_end_measures_voids (tests.test_disk_gate.Gate) ... ok
+test_stop_command_and_stops_listing (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_stop_reason_names_the_watcher_not_an_operator (tests.test_disk_gate.Gate) ... ok
+test_stop_written_during_run_voids (tests.test_disk_gate.Gate) ... ok
+test_truncated_log_with_a_flood_line_voids (tests.test_disk_gate.Gate) ... ok
+test_tty_container_blocks_start (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_unsupported_log_driver_blocks_start (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_update_event_voids (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_usage_not_measured_at_check_voids (tests.test_disk_gate.Gate) ... ok
+test_usage_not_measured_at_end_voids (tests.test_disk_gate.Gate) ... ok
+test_void_check_closes_the_run (tests.test_disk_gate.Gate) ... skipped 'needs a command or knob the 7b4839b gate lacks (not counted as red)'
+test_wall_clock_step_voids (tests.test_disk_gate.Gate) ... ok
+
+======================================================================
+FAIL: test_a1_forged_end_marker_conceals_a_later_flood_line (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 613, in test_a1_forged_end_marker_conceals_a_later_flood_line
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a1_forged_marker_alone_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 618, in test_a1_forged_marker_alone_voids
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a1_non_blocking_log_driver_is_never_certified (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 645, in test_a1_non_blocking_log_driver_is_never_certified
+    self.assertTrue(rs == 2 or re_ == 3, f"a non-blocking driver (drops are invisible) was certified: start {rs}, end {re_}")
+AssertionError: False is not true : a non-blocking driver (drops are invisible) was certified: start 0, end 0
+
+======================================================================
+FAIL: test_a1_reversed_endpoints_hide_a_flood_line (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 631, in test_a1_reversed_endpoints_hide_a_flood_line
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a1_small_backward_clock_step_hides_a_flood_line (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 625, in test_a1_small_backward_clock_step_hides_a_flood_line
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a1_truncation_then_start_marker_replay_hides_a_flood_line (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 639, in test_a1_truncation_then_start_marker_replay_hides_a_flood_line
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a2_pause_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 661, in test_a2_pause_during_the_run_voids
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a2_replacement_during_end_measurement_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 656, in test_a2_replacement_during_end_measurement_voids
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a2_restart_between_end_inspection_and_log_retrieval_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 651, in test_a2_restart_between_end_inspection_and_log_retrieval_voids
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a3_newer_stop_during_an_ack_still_blocks_start (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 677, in test_a3_newer_stop_during_an_ack_still_blocks_start
+    self.assertEqual(rc, 2, f"start went through with an unacknowledged newer STOP: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : start went through with an unacknowledged newer STOP: disk_gate start free 30.0 GiB own 3.00 GiB (pg 1.00 es 1.00 home 1.00) cap +2.0 GiB
+
+======================================================================
+FAIL: test_a3_readmission_after_an_ack_does_not_rebaseline_the_window (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 684, in test_a3_readmission_after_an_ack_does_not_rebaseline_the_window
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+======================================================================
+FAIL: test_a3_stop_then_ack_during_the_run_still_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 668, in test_a3_stop_then_ack_during_the_run_still_voids
+    self.assertVoid(*self.call("end"))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-gatefix/writepath/tests/test_disk_gate.py", line 431, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-300:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: disk_gate end free 30.0 GiB own +0.00 GiB floor_breaches 0 es_flood_lines 0 es_high_watermark_lines 0
+
+----------------------------------------------------------------------
+Ran 49 tests in 49.270s
+
+FAILED (failures=12, skipped=11)
+# exit status: 1

@@ -1,0 +1,35 @@
+# failing-first receipt
+# date: 2026-11-18T21:34:08Z
+# file under test: aacf3c0:writepath/runkit/clearance.py blob 1ac7030b61cd6a9081975e96a40218bd5d3bc423 sha256 68410497e0856388f016534fc5416d804e5475cafdb01c29e41e208bde823c91
+# tree: writepath at aacf3c0 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_clearance.py from HEAD fb1d182 blob 0dfe89530bc22cbdf5998c8358639c695794f188
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_clearance.Clearance.test_c3_v3_receipt_with_a_waived_key_store_fails_verify_copy tests.test_clearance.Clearance.test_c3_receipt_without_a_daemon_fails_verify_copy tests.test_clearance.Clearance.test_c3_current_receipt_with_a_rebound_check_still_passes
+test_c3_v3_receipt_with_a_waived_key_store_fails_verify_copy (tests.test_clearance.Clearance) ... FAIL
+test_c3_receipt_without_a_daemon_fails_verify_copy (tests.test_clearance.Clearance) ... FAIL
+test_c3_current_receipt_with_a_rebound_check_still_passes (tests.test_clearance.Clearance) ... ok
+
+======================================================================
+FAIL: test_c3_v3_receipt_with_a_waived_key_store_fails_verify_copy (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.T71L96OZ2G/writepath/tests/test_clearance.py", line 528, in test_c3_v3_receipt_with_a_waived_key_store_fails_verify_copy
+    self.assertEqual(rc, 1, f"verify-copy passed a v3 receipt sealed with --no-keystore: {out[-300:]}")
+AssertionError: 0 != 1 : verify-copy passed a v3 receipt sealed with --no-keystore: f's; operator credentials; other streams' secrets; tampering by the same OS user with the receipt, the ledger or this tool. The receipt holds the SHA-256 of each inventoried value: safe to publish for generated values (token_urlsafe(32), os.urandom), not for a low-entropy one (H-1 rules those out).
+
+
+======================================================================
+FAIL: test_c3_receipt_without_a_daemon_fails_verify_copy (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.T71L96OZ2G/writepath/tests/test_clearance.py", line 535, in test_c3_receipt_without_a_daemon_fails_verify_copy
+    self.assertEqual(rc, 1, f"verify-copy passed a receipt that records no daemon: {out[-300:]}")
+AssertionError: 0 != 1 : verify-copy passed a receipt that records no daemon: f's; operator credentials; other streams' secrets; tampering by the same OS user with the receipt, the ledger or this tool. The receipt holds the SHA-256 of each inventoried value: safe to publish for generated values (token_urlsafe(32), os.urandom), not for a low-entropy one (H-1 rules those out).
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.946s
+
+FAILED (failures=2)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_clearance tests/test_clearance.py cd7dde1e54d866f8
+# exit status: 1

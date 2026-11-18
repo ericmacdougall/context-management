@@ -1,0 +1,18 @@
+2026-11-18T22:06:31Z
+10635239424
+gate_version=disk_gate v6 sha256 b43e40310ed05dbcc9e22423aca061c12de5be1bea6873b9b4dfde6ae08fb00f
+gate_limits=LIMITS v6 (GATE-DESIGN 9.4, 8.4, 6.4): not detected, the operator trust boundary: tampering by the same OS user with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's process group or cgroup on purpose; rows written outside the run directory (never staged); a docker pause and unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; clock stability. Not inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+disk_gate BLOCKED: before the store reset: a role outside the committed set: wp_rev1
+disk_gate BLOCKED: before the store reset: a role outside the committed set: wp_rev2
+disk_gate BLOCKED: before the store reset: a role outside the committed set: wp_reviewer
+disk_gate BLOCKED: before the store reset: a role outside the committed set: wp_sealer
+disk_gate BLOCKED: before the store reset: role wp_rev1 is a member of wp_reviewer (not a committed membership)
+disk_gate BLOCKED: before the store reset: role wp_rev2 is a member of wp_reviewer (not a committed membership)
+disk_gate BLOCKED: before the store reset: a setting of role wp_rev1 in database (all) that is not committed: idle_in_transaction_session_timeout=5s,lock_timeout=10s,statement_timeout=30s
+disk_gate BLOCKED: before the store reset: a setting of role wp_rev2 in database (all) that is not committed: idle_in_transaction_session_timeout=5s,lock_timeout=10s,statement_timeout=30s
+disk_gate BLOCKED: before the store reset: a setting of role wp_sealer in database (all) that is not committed: idle_in_transaction_session_timeout=5s,lock_timeout=10s,statement_timeout=30s
+disk_gate BLOCKED: before the store reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+exit 2

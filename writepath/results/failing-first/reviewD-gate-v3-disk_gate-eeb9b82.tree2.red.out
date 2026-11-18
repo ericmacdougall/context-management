@@ -1,0 +1,7 @@
+# failing-first receipt
+# date: 2026-11-17T21:55:30Z
+# file under test: eeb9b82:writepath/exp/disk_gate.py blob 9e84aedef74bd04065da4b29a560b4ec3118dcb1 sha256 a885031d2ffe98480da834523bf47cf752d71c3863b4b9e53880df707d5031b1
+# tree: writepath at eeb9b82 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD aada118 blob 3d055fca3adb21d876f40bd899d04394516b516a
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate
+# exit status: 1
