@@ -1,0 +1,172 @@
+/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py:1184: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/results/summary_current.json' mode='r' encoding='UTF-8'>
+  cur = json.load(open(os.path.join(RES, "summary_current.json")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+E/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py:874: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/results/up_1.json' mode='r' encoding='UTF-8'>
+  return json.load(open(os.path.join(RES, life + ".json")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+EE/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py:874: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/results/down_7.json' mode='r' encoding='UTF-8'>
+  return json.load(open(os.path.join(RES, life + ".json")))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+EEFEFEEFFFEF
+======================================================================
+ERROR: test_disclosed_limits_are_stated_where_results_are_presented (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1185, in test_disclosed_limits_are_stated_where_results_are_presented
+    text = json.dumps(cur["limits"])
+KeyError: 'limits'
+
+======================================================================
+ERROR: test_f21_a_figure_without_raw_source_says_so (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1030, in test_f21_a_figure_without_raw_source_says_so
+    R = self.rebuilt("up_1")   # no oracle legs were saved for up_1: T1 is from stored figures
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 888, in rebuilt
+    summarize.rebuild(R, raw)
+AttributeError: module 'summarize' has no attribute 'rebuild'
+
+======================================================================
+ERROR: test_f21_every_leaf_a_verdict_reads_has_a_declared_source (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 894, in test_f21_every_leaf_a_verdict_reads_has_a_declared_source
+    for gate, p in self.leaves(scope):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 881, in leaves
+    out += [(name, p) for p in self.E.leaf_paths(g.evidence)]
+AttributeError: module 'evidence' has no attribute 'leaf_paths'
+
+======================================================================
+ERROR: test_f21_every_raw_sourced_leaf_follows_its_raw_rows (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1005, in test_f21_every_raw_sourced_leaf_follows_its_raw_rows
+    base = self.rebuilt(life)
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 888, in rebuilt
+    summarize.rebuild(R, raw)
+AttributeError: module 'summarize' has no attribute 'rebuild'
+
+======================================================================
+ERROR: test_f21_post_transition_control_failures_fail_the_up_gate (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1025, in test_f21_post_transition_control_failures_fail_the_up_gate
+    R = self.rebuilt("up_1", all_post_fail)
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 888, in rebuilt
+    summarize.rebuild(R, raw)
+AttributeError: module 'summarize' has no attribute 'rebuild'
+
+======================================================================
+ERROR: test_f21_stored_values_of_raw_sourced_leaves_are_never_read (tests.test_evidence.RebuildTests)
+Poison every raw-sourced leaf in the stored life: the rebuilt record and every verdict are unchanged.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 902, in test_f21_stored_values_of_raw_sourced_leaves_are_never_read
+    clean = self.rebuilt(life)
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 888, in rebuilt
+    summarize.rebuild(R, raw)
+AttributeError: module 'summarize' has no attribute 'rebuild'
+
+======================================================================
+ERROR: test_f22_a_bad_label_on_a_late_auto_answer_is_unverified_end_to_end (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1129, in test_f22_a_bad_label_on_a_late_auto_answer_is_unverified_end_to_end
+    R = self.rebuilt("down_7", relabel(v))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 888, in rebuilt
+    summarize.rebuild(R, raw)
+AttributeError: module 'summarize' has no attribute 'rebuild'
+
+======================================================================
+ERROR: test_f22_every_row_field_has_a_domain_and_every_out_of_domain_value_is_unparsed (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1092, in test_f22_every_row_field_has_a_domain_and_every_out_of_domain_value_is_unparsed
+    for f in observe.ROW_FIELDS:
+AttributeError: module 'observe' has no attribute 'ROW_FIELDS'
+
+======================================================================
+ERROR: test_f23_the_campaign_is_the_registered_one (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1167, in test_f23_the_campaign_is_the_registered_one
+    self.assertEqual(summarize.CAMPAIGN, {"down": (1, 2, 3, 4, 5, 6, 7), "up": (1, 2, 3, 4, 5)})
+AttributeError: module 'summarize' has no attribute 'CAMPAIGN'
+
+======================================================================
+FAIL: test_f21_post_transition_control_failures_fail_the_up_gate_through_load (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1076, in test_f21_post_transition_control_failures_fail_the_up_gate_through_load
+    self.assertEqual(self.V.judge("EXP2-T5-up", self.via_load("up_1", all_post_fail)).status, "FAIL")
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_f22_a_bad_label_is_unverified_through_load (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1083, in test_f22_a_bad_label_is_unverified_through_load
+    self.assertEqual(self.V.judge("EXP2-T3-down", self.via_load("down_7", relabel)).status, "UNVERIFIED")
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_f22_label_success_and_failure_relations (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1119, in test_f22_label_success_and_failure_relations
+    observe.parse_work(M, window)
+AssertionError: Unparsed not raised : auto success labelled none
+
+======================================================================
+FAIL: test_f23_a_missing_direction_or_life_is_unverified (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1163, in test_f23_a_missing_direction_or_life_is_unverified
+    self.assertEqual(cur["aggregate"][g]["status"], "UNVERIFIED", (drop, g))
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+ : ('up', 'EXP2-T2')
+
+======================================================================
+FAIL: test_f23_empty_input_is_unverified_for_every_gate (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1139, in test_f23_empty_input_is_unverified_for_every_gate
+    self.assertEqual(set(cur["aggregate"]), set(self.V.GATES))
+AssertionError: Items in the second set but not the first:
+'EXP2-T1'
+'EXP2-T2'
+'EXP3-semonly-control'
+'EXP2-T5-up'
+'EXP2-T4'
+'EXP2-T5-down'
+'EXP1-T3'
+'EXP2-T3-down'
+'EXP1-T2'
+'EXP2-T3-up'
+'EXP3-migration'
+'EXP1-T4'
+'EXP1-T4-battery'
+
+======================================================================
+FAIL: test_f24_a_full_400_byte_licence_body_passes (tests.test_evidence.RebuildTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1179, in test_f24_a_full_400_byte_licence_body_passes
+    self.assertEqual(self.V.judge("EXP1-T3", R).status, "PASS")
+AssertionError: 'UNVERIFIED' != 'PASS'
+- UNVERIFIED
++ PASS
+
+
+----------------------------------------------------------------------
+Ran 15 tests in 46.770s
+
+FAILED (failures=6, errors=9)

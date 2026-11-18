@@ -1,0 +1,939 @@
+{
+ "aggregate": {
+  "EXP1-T2": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json PASS",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T3": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4-battery": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T1": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json FAIL; down_7.json PASS; up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "FAIL"
+  },
+  "EXP2-T2": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS; up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3-down": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3-up": {
+   "reason": "up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T4": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED; up_1.json UNVERIFIED; up_2.json UNVERIFIED; up_3.json UNVERIFIED; up_4.json UNVERIFIED; up_5.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T5-down": {
+   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json PASS; down_7.json PASS",
+   "status": "PASS"
+  },
+  "EXP2-T5-up": {
+   "reason": "up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "status": "PASS"
+  },
+  "EXP3-migration": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-semonly-control": {
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json PASS",
+   "status": "UNVERIFIED"
+  }
+ },
+ "artefact": "summary_current.json",
+ "clauses": {
+  "A.T1-control": {
+   "reason": "EXP2-T1 FAIL",
+   "status": "FAIL"
+  },
+  "A.T1-control-witness": {
+   "reason": "EXP2-T1 FAIL",
+   "status": "FAIL"
+  },
+  "A.T4-control": {
+   "reason": "EXP2-T4 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "A.T4-control-witness": {
+   "reason": "EXP2-T4 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "A.counts": {
+   "reason": "procedure or recording rule: not decided by a gate",
+   "status": "UNVERIFIED"
+  },
+  "A.ground-truth": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "A.http-patch": {
+   "reason": "reported only: no gate decides this clause",
+   "status": "UNVERIFIED"
+  },
+  "A.threads": {
+   "reason": "procedure or recording rule: not decided by a gate",
+   "status": "UNVERIFIED"
+  },
+  "B.down6": {
+   "reason": "procedure or recording rule: not decided by a gate",
+   "status": "UNVERIFIED"
+  },
+  "B.expiry": {
+   "reason": "procedure or recording rule: not decided by a gate; not tested",
+   "status": "UNVERIFIED"
+  },
+  "B.http-patch": {
+   "reason": "procedure or recording rule: not decided by a gate",
+   "status": "UNVERIFIED"
+  },
+  "B.probe-start": {
+   "reason": "EXP1-T2 UNVERIFIED; the poll END time is used: it is later than the probe start, so a refusal timed by it within 5 s is within 5 s by the start too",
+   "status": "UNVERIFIED"
+  },
+  "B.recompute": {
+   "reason": "reported only: no gate decides this clause; checked by tests (recompute_all.json); not a gate",
+   "status": "UNVERIFIED"
+  },
+  "B.summarize": {
+   "reason": "procedure or recording rule: not decided by a gate; since review 10 the raw-sourced figures are rebuilt from typed rows (summarize.RAW_SOURCES)",
+   "status": "UNVERIFIED"
+  },
+  "B.timing": {
+   "reason": "procedure or recording rule: not decided by a gate",
+   "status": "UNVERIFIED"
+  },
+  "C.T1-oracle": {
+   "reason": "EXP2-T1 FAIL",
+   "status": "FAIL"
+  },
+  "C.T1-oracle-witness": {
+   "reason": "EXP2-T1 FAIL",
+   "status": "FAIL"
+  },
+  "C.T4-loud": {
+   "reason": "EXP2-T4 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "C.T5-down": {
+   "reason": "EXP2-T5-down PASS",
+   "status": "PASS"
+  },
+  "C.T5-down-absent": {
+   "reason": "EXP2-T5-down PASS; absent does not parse: UNVERIFIED (off PASS)",
+   "status": "PASS"
+  },
+  "C.T5-up": {
+   "reason": "EXP2-T5-up PASS",
+   "status": "PASS"
+  },
+  "C.T5-up-witness": {
+   "reason": "EXP2-T5-up PASS",
+   "status": "PASS"
+  },
+  "C.migration": {
+   "reason": "procedure or recording rule: not decided by a gate; recorder rule (exp3.scroll_all); tested in test_gates",
+   "status": "UNVERIFIED"
+  },
+  "D.T4": {
+   "reason": "EXP2-T4 UNVERIFIED; unclassified semantic failures: UNVERIFIED, never PASS",
+   "status": "UNVERIFIED"
+  },
+  "D.count": {
+   "reason": "procedure or recording rule: not decided by a gate; recorder rule (exp3.source_count); tested in test_gates",
+   "status": "UNVERIFIED"
+  },
+  "EVIDENCE-RULES": {
+   "reason": "procedure or recording rule: not decided by a gate; recording rule; not gated",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T1": {
+   "reason": "reported only: no gate decides this clause; no gate. Disclosed limit: a 400 with \"non-compliant\" is not counted as a licence refusal, only a 403 (summarize.LIMITS)",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T2.bound": {
+   "reason": "EXP1-T2 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T2.no-success": {
+   "reason": "EXP1-T2 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T2.refused": {
+   "reason": "EXP1-T2 UNVERIFIED; every mandatory probe must have its first refusal of its required Outcome case; a never-refused or skipped probe does not parse",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T3.detector": {
+   "reason": "EXP1-T3 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T3.every-cell": {
+   "reason": "registered wording no recorded field witnesses: only three fixed latch cells are witnessed, not every LICENCE_ERROR cell of a search path (forces EXP1-T3 off PASS)",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T3.message": {
+   "reason": "EXP1-T3 UNVERIFIED; the committed lives recorded only an error summary, not the message: UNVERIFIED for all of them",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.control": {
+   "reason": "EXP1-T4 UNVERIFIED; EXP1-T4-battery UNVERIFIED; witness: allowed count 1..7 of 8, all of kw a",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.control-battery": {
+   "reason": "EXP1-T4-battery UNVERIFIED; on trial the allowed document is readable and the hidden one is not",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.document-fails": {
+   "reason": "EXP1-T4 UNVERIFIED; EXP1-T4-battery UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.error": {
+   "reason": "EXP1-T4 UNVERIFIED; an authorisation or licence refusal; any other error says nothing (UNVERIFIED), a success is a FAIL",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.error-battery": {
+   "reason": "EXP1-T4-battery UNVERIFIED; every read path of the battery: get, search, count, mget, msearch, scroll, kNN, termvectors, wildcard index, ES|QL",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.no-document": {
+   "reason": "EXP1-T4 UNVERIFIED; review 12 F28: the witness is the document count read from the body's shape whatever the HTTP status. The committed lives were recorded without it (their after cells keep class, status and an error summary): UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T4.no-document-battery": {
+   "reason": "EXP1-T4-battery UNVERIFIED; review 12 F28: returned_any_source was recorded only for 2xx answers and returned_hidden_doc covers only the hidden document, so the committed battery has no witness that a refused read path carried no document: UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T1.compared": {
+   "reason": "EXP2-T1 FAIL; rebuilt from rows.gz + oracle.gz for down_7; stored (labelled 'from stored figure') for lives without saved oracle legs",
+   "status": "FAIL"
+  },
+  "EXP2-T1.examined": {
+   "reason": "EXP2-T1 FAIL",
+   "status": "FAIL"
+  },
+  "EXP2-T1.mismatch": {
+   "reason": "EXP2-T1 FAIL",
+   "status": "FAIL"
+  },
+  "EXP2-T2.run": {
+   "reason": "EXP2-T2 PASS; review 12 closes the review-10 limit: the registered run (auto and auto+linear readers) is derived from rows.gz and gated; the joined window of all read arms is kept as an additional check",
+   "status": "PASS"
+  },
+  "EXP2-T2.share": {
+   "reason": "EXP2-T2 PASS",
+   "status": "PASS"
+  },
+  "EXP2-T2.witness": {
+   "reason": "EXP2-T2 PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3.down": {
+   "reason": "EXP2-T3-down PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3.up": {
+   "reason": "EXP2-T3-up PASS",
+   "status": "PASS"
+  },
+  "EXP2-T3.witness": {
+   "reason": "EXP2-T3-down PASS; EXP2-T3-up PASS",
+   "status": "PASS"
+  },
+  "EXP2-T4.lost": {
+   "reason": "EXP2-T4 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T4.loud": {
+   "reason": "EXP2-T4 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T4.reported": {
+   "reason": "reported only: no gate decides this clause",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T4.witness": {
+   "reason": "EXP2-T4 UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP2-T5.down": {
+   "reason": "EXP2-T5-down PASS",
+   "status": "PASS"
+  },
+  "EXP2-T5.witness": {
+   "reason": "EXP2-T5-down PASS",
+   "status": "PASS"
+  },
+  "EXP2-T6": {
+   "reason": "reported only: no gate decides this clause",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T1": {
+   "reason": "reported only: no gate decides this clause; no gate (summarize.exp3_checks lists silent differences)",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.count-fails": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.counts": {
+   "reason": "EXP3-migration UNVERIFIED; equality with the independent source count (299/299 and 199/199 after an earlier delete), the registered intent",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.knn": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.ops": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.relative": {
+   "reason": "registered wording no recorded field witnesses: not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept) (forces EXP3-migration off PASS)",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.vectors": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T2.witness": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T3.control": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T3.witness": {
+   "reason": "EXP3-migration UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T4": {
+   "reason": "reported only: no gate decides this clause; no gate for the pass clause",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T4.control": {
+   "reason": "EXP3-semonly-control UNVERIFIED",
+   "status": "UNVERIFIED"
+  },
+  "EXP3-T5": {
+   "reason": "reported only: no gate decides this clause; no gate; n=1",
+   "status": "UNVERIFIED"
+  },
+  "EXP4-T1": {
+   "reason": "reported only: no gate decides this clause; no gate",
+   "status": "UNVERIFIED"
+  },
+  "EXP4-T2": {
+   "reason": "reported only: no gate decides this clause; no gate",
+   "status": "UNVERIFIED"
+  },
+  "LIVES-A": {
+   "reason": "procedure or recording rule: not decided by a gate; procedure of a down life; recorded by life.py:down, not gated",
+   "status": "UNVERIFIED"
+  },
+  "LIVES-B": {
+   "reason": "procedure or recording rule: not decided by a gate; procedure of an up life; recorded by life.py:up",
+   "status": "UNVERIFIED"
+  },
+  "LIVES-N": {
+   "reason": "procedure or recording rule: not decided by a gate; inventory: summarize.CAMPAIGN (5 + 5 plus supplemental down_6, down_7); a missing life is UNVERIFIED for every gate. One B life (up_5) has ttl 300 s",
+   "status": "UNVERIFIED"
+  },
+  "LIVES-WORST": {
+   "reason": "reported only: no gate decides this clause; aggregate is FAIL if any life fails (summarize.current_summary); the Wilson bound is reported (summarize.aggregate), not gated",
+   "status": "UNVERIFIED"
+  }
+ },
+ "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
+ "inventory": {
+  "down": [
+   "down_1.json",
+   "down_2.json",
+   "down_3.json",
+   "down_4.json",
+   "down_5.json",
+   "down_6.json",
+   "down_7.json"
+  ],
+  "up": [
+   "up_1.json",
+   "up_2.json",
+   "up_3.json",
+   "up_4.json",
+   "up_5.json"
+  ]
+ },
+ "limits": [
+  {
+   "gate": "EXP3-migration (THRESHOLDS EXP3-T2)",
+   "limit": "LIMIT, forces UNVERIFIED (review 12, clause EXP3-T2.relative): semantic vectors were checked within absolute error 0.005 and cosine 0.9999 of the stub, NOT the registered per-value 1% relative criterion (the vectors needed for it were not kept). Counts equal the independent source counts (299/299 and 199/199 after an earlier delete; registered text 300/300 and 200/200): a substitute, clause EXP3-T2.counts."
+  },
+  {
+   "gate": "EXP1-T3",
+   "limit": "LIMIT, forces UNVERIFIED (review 12, clause EXP1-T3.every-cell): three fixed latch cells (rrf retriever, linear retriever, reranker gate) are checked, not every LICENCE_ERROR cell of a search path."
+  },
+  {
+   "gate": "EXP2-T2",
+   "limit": "closed in review 12 (clause EXP2-T2.run): the registered run of consecutive failed auto requests is derived from rows.gz and gated; the earlier joined window of all read arms (gap under 1 s) is kept as an additional check."
+  },
+  {
+   "gate": "EXP1-T2",
+   "limit": "SUBSTITUTE (clause B.probe-start): refusal timing uses the poll's end time, not the probe start time addendum B names; the end is later, so within 5 s by the end implies within 5 s by the start."
+  },
+  {
+   "gate": "EXP1-T1",
+   "limit": "no gate: a 400 carrying \"non-compliant\" is not counted as a licence refusal; only a 403 with the licence text is (THRESHOLDS EXP1-T1 says 403 or 400)."
+  },
+  {
+   "gate": "EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2",
+   "limit": "no gate: these registered thresholds are reported only (UNVERIFIED in `clauses`), so this artefact is not a complete registered-threshold verdict."
+  }
+ ],
+ "lives": {
+  "down_1.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "254 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_2.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "254 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_3.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "253 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_4.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "253 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_5.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "253 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_6.json": {
+   "EXP1-T2": {
+    "reason": "exp1_moment.rrf: absent",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); msearch: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); scroll_open: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); knn_search: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); termvectors_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); wildcard_index: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); esql: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "examined 18820 < 20,000; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "FAIL"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "109 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   }
+  },
+  "down_7.json": {
+   "EXP1-T2": {
+    "reason": "PASS: every mandatory probe's first refusal of its required Outcome case (licence probes LICENCE_REFUSAL, dls_search AUTHORISATION_REFUSAL), carried with its timing, within 5 s of start_basic; no success after it",
+    "status": "PASS"
+   },
+   "EXP1-T3": {
+    "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4": {
+    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP1-T4-battery": {
+    "reason": "get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); msearch: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); scroll_open: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); knn_search: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); termvectors_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); wildcard_index: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); esql: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-down": {
+    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "257 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-down": {
+    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "status": "PASS"
+   },
+   "EXP3-migration": {
+    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP3-semonly-control": {
+    "reason": "PASS: semantic-only fixture answers semantic, match and match_all with hits; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
+    "status": "PASS"
+   }
+  },
+  "up_1.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_2.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_3.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_4.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "94 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  },
+  "up_5.json": {
+   "EXP2-T1": {
+    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "PASS"
+   },
+   "EXP2-T2": {
+    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "status": "PASS"
+   },
+   "EXP2-T3-up": {
+    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "status": "PASS"
+   },
+   "EXP2-T4": {
+    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "status": "UNVERIFIED"
+   },
+   "EXP2-T5-up": {
+    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "status": "PASS"
+   }
+  }
+ },
+ "raw_checks": {
+  "down_1.json": {
+   "mode": "down",
+   "raw_check": {
+    "poll": "no poll file: these figures are not accepted without it"
+   },
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "down_2.json": {
+   "mode": "down",
+   "raw_check": {
+    "poll": "no poll file: these figures are not accepted without it"
+   },
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "down_3.json": {
+   "mode": "down",
+   "raw_check": {
+    "poll": "no poll file: these figures are not accepted without it"
+   },
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "down_4.json": {
+   "mode": "down",
+   "raw_check": {
+    "poll": "no poll file: these figures are not accepted without it"
+   },
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "down_5.json": {
+   "mode": "down",
+   "raw_check": {
+    "poll": "no poll file: these figures are not accepted without it"
+   },
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "down_6.json": {
+   "mode": "down",
+   "raw_check": {
+    "poll": "no poll file: these figures are not accepted without it"
+   },
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "down_7.json": {
+   "mode": "down",
+   "raw_check": {},
+   "rebuilt_from_raw": [
+    "poll",
+    "rows",
+    "rows+oracle"
+   ]
+  },
+  "up_1.json": {
+   "mode": "up",
+   "raw_check": {},
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "up_2.json": {
+   "mode": "up",
+   "raw_check": {},
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "up_3.json": {
+   "mode": "up",
+   "raw_check": {},
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "up_4.json": {
+   "mode": "up",
+   "raw_check": {},
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  },
+  "up_5.json": {
+   "mode": "up",
+   "raw_check": {},
+   "rebuilt_from_raw": [
+    "rows"
+   ]
+  }
+ },
+ "unexpected_files": []
+}

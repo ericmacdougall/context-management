@@ -1,0 +1,55 @@
+# tests.test_evidence (typed-evidence redesign, tests written first) run on fix/licence-matrix with licence code identical to 4761862 (git diff 4761862 empty for summarize, lib, matrix, exp2, exp3). Command: cd licence && python3 -m unittest tests.test_evidence
+EF.FF.F.
+======================================================================
+ERROR: setUpClass (tests.test_evidence.GeneratedInvalidEvidenceTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/licence/tests/test_evidence.py", line 154, in setUpClass
+    import evidence  # noqa: F401  (absent before the redesign: these tests error, the scenario tests above fail by behaviour)
+ModuleNotFoundError: No module named 'evidence'
+
+======================================================================
+FAIL: test_a_outcome_1xx_3xx_401_are_never_available (tests.test_evidence.ScenarioRegressionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/licence/tests/test_evidence.py", line 75, in test_a_outcome_1xx_3xx_401_are_never_available
+    self.assertNotEqual(lib.classify(code, {}), "AVAILABLE", code)
+AssertionError: 'AVAILABLE' == 'AVAILABLE' : 101
+
+======================================================================
+FAIL: test_f11_control_counts_are_required_and_the_rate_is_computed (tests.test_evidence.ScenarioRegressionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/licence/tests/test_evidence.py", line 118, in test_f11_control_counts_are_required_and_the_rate_is_computed
+    self.assertNotPass("down_7", "exp2", "T1_status", c + (key,), val, exact="UNVERIFIED")
+  File "<repo>/licence/tests/test_evidence.py", line 69, in assertNotPass
+    self.assertNotEqual(st, "PASS", (path, val))
+AssertionError: 'PASS' == 'PASS' : (('exp2', 'T1_control_broken_fallback', 'client_labelled'), 'absent')
+
+======================================================================
+FAIL: test_f12_values_outside_their_domain (tests.test_evidence.ScenarioRegressionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/licence/tests/test_evidence.py", line 146, in test_f12_values_outside_their_domain
+    self.assertNotPass(life, report, key, path, val, mode=life.split("_")[0], exact="UNVERIFIED")
+  File "<repo>/licence/tests/test_evidence.py", line 69, in assertNotPass
+    self.assertNotEqual(st, "PASS", (path, val))
+AssertionError: 'PASS' == 'PASS' : (('exp2', 'T2_failed_requests'), -1)
+
+======================================================================
+FAIL: test_f8_migrated_operations_missing_or_failed (tests.test_evidence.ScenarioRegressionTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<repo>/licence/tests/test_evidence.py", line 93, in test_f8_migrated_operations_missing_or_failed
+    self.assertNotPass("down_7", "exp3", "migration_status", ops + ("lic3-bbq_disk-mig", "update"), bad, exact="UNVERIFIED")
+  File "<repo>/licence/tests/test_evidence.py", line 71, in assertNotPass
+    self.assertEqual(st, exact, (path, val))
+AssertionError: 'FAIL' != 'UNVERIFIED'
+- FAIL
++ UNVERIFIED
+ : (('exp3', 'migration', 'migrated_basic_ops', 'lic3-bbq_disk-mig', 'update'), -1)
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.693s
+
+FAILED (failures=4, errors=1)

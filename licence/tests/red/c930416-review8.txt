@@ -1,0 +1,89 @@
+Red of review-8 regressions (F13-F15) on c930416 code: PYTHONDONTWRITEBYTECODE=1 python3 -W ignore -m unittest tests.test_evidence.RecordingBoundaryTests
+
+FFFF.FFFEF
+======================================================================
+ERROR: test_f14_huge_and_odd_values_never_raise (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 253, in test_f14_huge_and_odd_values_never_raise
+    r = summarize.exp2_checks(R, "down")
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 150, in exp2_checks
+    "T2_fail_fraction": failed / n if _num(failed) and _is_int(n) and n > 0 else None, "T2_longest_window_s": g("exp2.T2_longest_failure_window_s"),
+OverflowError: integer division result too large for a float
+
+======================================================================
+FAIL: test_f13_a_timing_without_its_refusal_outcome_is_unverified (tests.test_evidence.RecordingBoundaryTests)
+Committed down_1..6 store only a timing and a bare status per probe (no class, no body marker, no raw poll rows): no PASS.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 226, in test_f13_a_timing_without_its_refusal_outcome_is_unverified
+    self.assertEqual(summarize.exp1_checks(_life("down_%d" % n))["T2_status"], "UNVERIFIED", n)
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+ : 1
+
+======================================================================
+FAIL: test_f13_cell_class_labels_licence_text_only_on_403 (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 243, in test_f13_cell_class_labels_licence_text_only_on_403
+    self.assertNotEqual(lib.classify(code, body), "LICENCE_ERROR", code)
+AssertionError: 'LICENCE_ERROR' == 'LICENCE_ERROR' : 500
+
+======================================================================
+FAIL: test_f13_dls_401_503_transport_are_not_a_refusal (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 204, in test_f13_dls_401_503_transport_are_not_a_refusal
+    self.assertNotEqual(self.t2({"dls_search": obs}), "PASS", obs)
+AssertionError: 'PASS' == 'PASS' : ('OTHER_ERROR', 401)
+
+======================================================================
+FAIL: test_f13_dls_licence_refusal_is_not_the_dls_refusal (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 207, in test_f13_dls_licence_refusal_is_not_the_dls_refusal
+    self.assertNotEqual(self.t2({"dls_search": ("LICENCE_ERROR", 403)}), "PASS")
+AssertionError: 'PASS' == 'PASS'
+
+======================================================================
+FAIL: test_f13_licence_text_on_503_is_not_a_licence_refusal (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 210, in test_f13_licence_text_on_503_is_not_a_licence_refusal
+    self.assertNotEqual(self.t2({p: ("LICENCE_ERROR", 503) for p in PROBES[:4]}), "PASS")
+AssertionError: 'PASS' == 'PASS'
+
+======================================================================
+FAIL: test_f13_raw_rows_are_required_for_rederived_figures (tests.test_evidence.RecordingBoundaryTests)
+A life file copied without its raw rows: the moment (poll.gz) and the T5 licence-refusal count (rows.gz) cannot be re-derived.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 235, in test_f13_raw_rows_are_required_for_rederived_figures
+    self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_f13_recorded_refusal_status_outside_403_is_not_a_pass (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 221, in test_f13_recorded_refusal_status_outside_403_is_not_a_pass
+    self.assertNotEqual(summarize.exp1_checks(R)["T2_status"], "PASS", s)
+AssertionError: 'PASS' == 'PASS' : 101
+
+======================================================================
+FAIL: test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 263, in test_f15_nested_evidence_is_checked_by_exact_type_and_containers_are_immutable
+    E.Dls(control=sub, after=after)
+AssertionError: Unparsed not raised
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.465s
+
+FAILED (failures=8, errors=1)

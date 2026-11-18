@@ -1,0 +1,83 @@
+Red of review-8 follow-up regressions on f931710 code: PYTHONDONTWRITEBYTECODE=1 python3 -W ignore -m unittest tests.test_evidence.RecordingBoundaryTests
+
+........F.FE.EF.F
+======================================================================
+ERROR: test_f14_aggregate_never_raises_on_odd_values (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 361, in test_f14_aggregate_never_raises_on_odd_values
+    summarize.aggregate(RES, {})   # must not raise
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 291, in aggregate
+    for cell, row in matrix_table(R).items():
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 165, in matrix_table
+    row[k] = v["class"] + ("/%s" % v.get("status") if v.get("status") else "")
+TypeError: unsupported operand type(s) for +: 'int' and 'str'
+
+======================================================================
+ERROR: test_f14_load_never_raises_on_bad_transition_times_or_raw_rows (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 302, in test_f14_load_never_raises_on_bad_transition_times_or_raw_rows
+    L = summarize.load(d, life.split("_")[0])   # must not raise
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 89, in load
+    _backfill_observed(R, f)
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 58, in _backfill_observed
+    new = observe.moments(json.load(gzip.open(base + ".poll.gz", "rt")), R["start_basic"]["t_resp"])
+KeyError: 't_resp'
+
+======================================================================
+FAIL: test_f13_refusal_licence_flag_is_a_declared_domain (tests.test_evidence.RecordingBoundaryTests)
+A first_refusal without its licence flag, or with a non-bool flag, is not a refusal of either kind.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 273, in test_f13_refusal_licence_flag_is_a_declared_domain
+    self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED", bad)
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+ : absent
+
+======================================================================
+FAIL: test_f13_successes_and_refusals_are_counted_by_outcome_not_label (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 278, in test_f13_successes_and_refusals_are_counted_by_outcome_not_label
+    self.assertIsNone(observe.outcome_from_cell(["AVAILABLE", 403]))      # label contradicts status: not an observation
+AssertionError: Outcome(status=403, case='AUTHORISATION_REFUSAL', licence_text=False) is not None
+
+======================================================================
+FAIL: test_f14_reports_never_raise_on_odd_values (tests.test_evidence.RecordingBoundaryTests)
+Every leaf a gate reads, set to each odd value, through every report function (not only judge).
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 344, in test_f14_reports_never_raise_on_odd_values
+    self.assertEqual(problems, [], "\n".join(problems[:40]))
+AssertionError: Lists differ: ["EXP3-semonly-control semonly_trial.match[276 chars]ror"] != []
+
+First list contains 4 additional elements.
+First extra element 0:
+"EXP3-semonly-control semonly_trial.match_all.status='5': TypeError"
+
++ []
+- ["EXP3-semonly-control semonly_trial.match_all.status='5': TypeError",
+-  'EXP3-semonly-control semonly_trial.match_all.status="{\'a\': {\'b\': []}}": '
+-  'TypeError',
+-  "EXP3-semonly-control semonly_trial.match_all.status='xxxxxxxxxxxxxxxxxxxx': "
+-  'TypeError',
+-  "EXP3-semonly-control semonly_trial.match_all.status='[[[]]]': TypeError"] : EXP3-semonly-control semonly_trial.match_all.status='5': TypeError
+EXP3-semonly-control semonly_trial.match_all.status="{'a': {'b': []}}": TypeError
+EXP3-semonly-control semonly_trial.match_all.status='xxxxxxxxxxxxxxxxxxxx': TypeError
+EXP3-semonly-control semonly_trial.match_all.status='[[[]]]': TypeError
+
+======================================================================
+FAIL: test_f15_status_values_are_exact_outcomes (tests.test_evidence.RecordingBoundaryTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 369, in test_f15_status_values_are_exact_outcomes
+    E.LatchCell(outcome=Sub(403, "LICENCE_REFUSAL", True), error="x")
+AssertionError: Unparsed not raised
+
+----------------------------------------------------------------------
+Ran 17 tests in 53.556s
+
+FAILED (failures=4, errors=2)

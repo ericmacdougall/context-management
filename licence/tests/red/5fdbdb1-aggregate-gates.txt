@@ -1,0 +1,102 @@
+# tests.test_gates.AggregateGateCoverageTests (gate review 5 F6) run against licence/ code at 5fdbdb1 before the fix. Command: PYTHONDONTWRITEBYTECODE=1 python3 -W ignore -m unittest tests.test_gates.AggregateGateCoverageTests
+FFFFEFFFFFFF
+======================================================================
+ERROR: test_recompute_agreement_needs_both_figures (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 1005, in test_recompute_agreement_needs_both_figures
+    self.assertFalse(recompute.agree(None, 0))
+AttributeError: module 'recompute' has no attribute 'agree'
+
+======================================================================
+FAIL: test_aggregate_with_one_direction_absent_is_not_all_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 999, in test_aggregate_with_one_direction_absent_is_not_all_pass
+    self.assertFalse(any(v is True for v in agg["all_pass"].values()), agg["all_pass"])
+AssertionError: True is not false : {'T1_pass': True, 'T2_pass': True, 'T3_pass': True, 'T4_pass': False, 'T5_pass': True}
+
+======================================================================
+FAIL: test_exp2_t2_with_no_requests_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 970, in test_exp2_t2_with_no_requests_is_not_a_pass
+    self.assertFalse(r["T2_pass"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_exp2_t4_with_no_acknowledged_writes_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 978, in test_exp2_t4_with_no_acknowledged_writes_is_not_a_pass
+    self.assertFalse(r["T4_pass"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_migration_with_zero_documents_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 989, in test_migration_with_zero_documents_is_not_a_pass
+    self.assertFalse(chk["bbq_disk_to_hnsw"] or chk["bbq_disk_to_bbq_hnsw"] or chk["semantic_to_text_vector"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_t2_all_probes_missing_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 938, in test_t2_all_probes_missing_is_not_a_pass
+    self.assertFalse(r["T2_pass"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_t2_all_probes_verified_passes (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 924, in test_t2_all_probes_verified_passes
+    self.assertEqual(r.get("T2_status"), "PASS")
+AssertionError: None != 'PASS'
+
+======================================================================
+FAIL: test_t2_one_probe_missing_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 933, in test_t2_one_probe_missing_is_not_a_pass
+    self.assertFalse(r["T2_pass"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_t2_one_probe_unverified_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 928, in test_t2_one_probe_unverified_is_not_a_pass
+    self.assertFalse(r["T2_pass"])
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_t2_refusal_after_bound_fails_not_unverified (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 946, in test_t2_refusal_after_bound_fails_not_unverified
+    self.assertEqual(summarize.exp1_checks(R).get("T2_status"), "FAIL")
+AssertionError: None != 'FAIL'
+
+======================================================================
+FAIL: test_t4_battery_empty_or_absent_is_not_a_pass (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 959, in test_t4_battery_empty_or_absent_is_not_a_pass
+    self.assertFalse(r.get("T4_battery_pass"))
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_t4_dls_absent_is_unverified (tests.test_gates.AggregateGateCoverageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<licence>/tests/test_gates.py", line 953, in test_t4_dls_absent_is_unverified
+    self.assertEqual(r.get("T4_status"), "UNVERIFIED")
+AssertionError: None != 'UNVERIFIED'
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.006s
+
+FAILED (failures=11, errors=1)
