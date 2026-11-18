@@ -8,6 +8,9 @@
 #   P2  exp.d4_store_mark 1 (HEAD)
 #   RR  registry.unregistered() with wp/registry.py of the pre-seal tree vs HEAD, same live system
 #   D6  exp.h_d6_broker 5, UNSTAMPED (amendment H6c), licence type read first;  LS runkit/leak_scan.py over outputs
+#   PC  DEVIATION for P1: registry_marker's PG-grep positive control expects the OLD code's plaintext marker in
+#       database emlab; that database is empty on this cluster (observed 2026-11-18), so a plaintext row carrying the
+#       same marker is seeded there (a grep-sensitivity control, not the old code's write path)
 #   XB  tests.test_d3_pg from XB_TREE (bca7764: review H tests on 6ddeca3 code, the F14/F16 "before")
 #   SS  seal_socket_e2e.py (same uid)      SU seal_uids_e2e.py (sealer under its own uid, H2 container pattern)
 #   RS  tests.test_d3_pg with SCHEMA_UNDER_TEST = pre-seal schema (179412e)   RH  ... = pre-review-H schema (6ddeca3)
@@ -18,7 +21,7 @@ L=$HOME/emlab2-16096/RUNLOCK
 export WP_HOME=$HOME/emlab2-16096/wphard/wp
 export WP_UCD_DIR=$HOME/emlab2-16096/wphard/ucd
 PY=$WP_HOME/venv/bin/python
-NEW=$1; SEAL0=$2; H0=$3; O=$4; STEPS=${5:-"G1 P0 G2 G3 P1 P2 RR RS RH D6 LS"}
+NEW=$1; SEAL0=$2; H0=$3; O=$4; STEPS=${5:-"G1 P0 G2 G3 PC P1 P2 RR RS RH XB SS SU D6 LS"}
 mkdir -p "$O"
 K=$(df -k --output=avail "$HOME" | tail -1 | tr -dc 0-9)
 [ "$K" -ge 20971520 ] || { echo "below start line: $K KiB"; exit 4; }
@@ -57,6 +60,14 @@ l = j.get("license", {}) if isinstance(j, dict) else {}
 print("licence", s, l.get("type"), l.get("status"))'
           timeout 3600 $PY -m exp.h_d6_broker 5; echo "exit=$?"; } > "$O/D6.out" 2>&1
         echo "D6 $(grep -E '^(licence|h_d6_broker|exit=)' "$O/D6.out" | S | tr '\n' ' ')";;
+    PC) timeout 120 $PY -c '
+from wp import db
+a = db.admin(db="emlab")
+a.execute("create table if not exists pc_marker(x text)")
+if not a.execute("select 1 from pc_marker limit 1").fetchone():
+    a.execute("insert into pc_marker values (%s)", ("zqn6secret plaintext positive control",))
+a.execute("checkpoint")
+print("PC seeded", a.execute("select count(*) from pc_marker").fetchone()[0])' > "$O/PC.out" 2>&1; echo "PC exit=$? $(tail -1 "$O/PC.out")";;
     XB) XT=${XB_TREE:?XB_TREE names the bca7764 tree}
         (cd "$XT" && WP_PG_LIVE=1 timeout 2400 $PY -m unittest -v tests.test_d3_pg > "$O/XB.out" 2>&1); echo "XB exit=$? tree $(cat "$XT/GIT_HEAD") $(sum "$O/XB.out")";;
     SS) timeout 600 $PY results/failing-first/harness/seal_socket_e2e.py > "$O/SS.out" 2>&1; echo "SS exit=$? $(tail -1 "$O/SS.out" | S | cut -c1-600)";;

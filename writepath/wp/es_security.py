@@ -84,14 +84,21 @@ def _recreate(security):
 def enable():
     _recreate(True)
     p = config.SECRETS / "es_elastic_password"
-    fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    try:
-        r = subprocess.run(["docker", "exec", NAME, "bin/elasticsearch-reset-password", "-u", "elastic", "-a", "-b", "-s"],
-                           stdout=fd, stderr=subprocess.DEVNULL)
-    finally:
-        os.close(fd)
-    if r.returncode != 0:
-        raise SystemExit("password reset failed (nothing printed)")
+    # The node answers 401 before its security index is usable; a reset in that window fails (observed 2026-11-18 on
+    # t2-dev: one attempt, exit non-zero, the old password file truncated). Retry for up to two minutes; the value goes
+    # straight from the tool's stdout to the 0600 file on every attempt and is never printed.
+    for _ in range(20):
+        fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            r = subprocess.run(["docker", "exec", NAME, "bin/elasticsearch-reset-password", "-u", "elastic", "-a", "-b", "-s"],
+                               stdout=fd, stderr=subprocess.DEVNULL)
+        finally:
+            os.close(fd)
+        if r.returncode == 0 and p.stat().st_size > 0:
+            break
+        time.sleep(6)
+    else:
+        raise SystemExit("password reset failed after 20 attempts (nothing printed)")
     from . import es_keys
     print("security on; key ids", es_keys.create())
 
