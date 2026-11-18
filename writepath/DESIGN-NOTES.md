@@ -681,7 +681,17 @@ B5. REFUSAL: an event over the size bound raises ContentTooLarge, code WPM01; an
    writer still gets the WPM error (the exception says recorded = False); a recording failure never masks or replaces
    the refusal. A refused event is NOT stored unscanned (option (b) of item 6 is not built).
 B6. RETRIES: append rescans after WPS17 (identifiers declared meanwhile), up to 7 more times, so one admitted event can
-   cost up to 8 budgets. Stated, not changed. The number of events in one append is not bounded here (each event is);
+   cost up to 8 budgets. Stated, not changed.
+   WORST ADMITTED COST, MEASURED after the code (agent-af5c8cce658ab5a89/budget_worst.py, Mac, real HMAC-SHA256, fake
+   lookup): 14,600 tokens "IIa", "IIb", ... (58,399 bytes) have 4,963,088 window keys, just under the event maximum;
+   scan() took 14.5 s (2.9 us per window key; 3.9 million distinct keys HMACed in 476 chunks of at most 8,192; peak RSS
+   grew by 6 MB). Adding 4,000 bytes puts it over the maximum: refused (WPM02) in 0.19 s. So one crafted event that is
+   ADMITTED can still cost about 15 s of matcher CPU in Python plus 476 store lookups (NOT MEASURED), and up to 8 times
+   that with WPS17 retries; realistic text costs well under a second. This is the trade-off main asked to see, not
+   tuned away: holding the 10 times margin at the size bound fixes the event maximum near 4.5 million keys; a smaller
+   size bound (16 KiB: maximum about 1.2 million keys, about 4 s) or a per-tenant rate limit would lower it.
+   THE RESCAN PAGE: the rescan reads up to 2,000 events per page; with the size bound a page's ciphertext is at most
+   about 131 MB (2,000 times 65,564 bytes), decrypted one event at a time. Stated, not changed. The number of events in one append is not bounded here (each event is);
    ASSUMPTION: the API layer bounds the batch.
 B7. THE ERASURE RESCAN runs under the same budget by construction: it counts each event's keys with the same function
    before enumerating and streams the keys, checking each HMAC against the subject's identifier HMACs (no lookup

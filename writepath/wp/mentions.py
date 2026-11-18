@@ -8,8 +8,8 @@ time every event's content is tokenised, every READING of every 1..MAX_N token w
 records the subject in the event's `mentions`, and the erasure removes such events WHOLE (decision R1: no span
 redaction).
 
-Matcher id (class 3): m5:ucd<unicodedata version>:di<sha12>:cf<sha12>, naming the Unicode version and the two data
-tables. The store keeps the tenant's matcher id and refuses work under another (WPS32 at approval, WPS38 at append and
+Matcher id (class 3): m5:ucd<unicodedata version>:di<sha12>:cf<sha12>:b<budget>, naming the Unicode version, the two
+data tables and the key budget BUDGET. The store keeps the tenant's matcher id and refuses work under another (WPS32 at approval, WPS38 at append and
 rescan), so a version change is refused, never silently unmatched.
 
 Tables (class 4): Default_Ignorable_Code_Point of THIS Unicode version and UTS 39 confusables.txt 18.0.0, built by
@@ -43,7 +43,13 @@ erasure receipts state both.
 
 The store binds the scan to the identifier-set version (events.mention_scan_upto vs identifier_epochs.max_seq,
 WPS17) and to the matcher (events.mention_matcher, WPS38); events written before a subject's identifiers were declared
-are found by the erasure-time rescan (wp/erasure.py)."""
+are found by the erasure-time rescan (wp/erasure.py).
+
+Budget (m5 b1, DESIGN-NOTES "Matcher budget"): event content is at most MAX_CONTENT_BYTES UTF-8 bytes (ContentTooLarge,
+WPM01) and its window keys at most budget(tokens) (MatcherBudgetExceeded, WPM02), both checked before any key is
+enumerated or HMAC'd; keys are then enumerated lazily and matched CHUNK at a time, so work is bounded by the budget and
+memory by one chunk."""
+import collections
 import hashlib
 import itertools
 import os
@@ -60,6 +66,12 @@ PINS = {
 }
 MAX_N = 4
 MAX_READINGS = 4096          # readings per window (DESIGN-NOTES "Decisions after review E" item 5)
+# The key budget, ONE versioned record named in the matcher id (DESIGN-NOTES "Matcher budget (m5 b1)" B1-B3): changing
+# any number changes matcher_id(). ASSUMPTION (main's decision, numbers measured by this stream).
+Budget = collections.namedtuple("Budget", "per_token floor event_max content_bytes")
+BUDGET = Budget(per_token=512, floor=131072, event_max=5_000_000, content_bytes=65536)
+MAX_CONTENT_BYTES = BUDGET.content_bytes
+CHUNK = 8192                 # distinct window keys HMAC'd and looked up at a time (memory, not the budget)
 NOT_COVERED = (
     "identifiers that were never declared (nicknames, misspellings, initials, inflected forms)",
     "pronouns and indirect references",
@@ -102,6 +114,26 @@ class UCDUnavailable(Exception):
 
 class MatcherMismatch(Exception):
     """The tenant's stored matcher is not this process's matcher: matching would silently miss identifiers."""
+
+
+class WriteRefused(Exception):
+    """A write refused before anything is stored (m5 b1). `code` is stable (WPMnn, distinct from the store's WPSnn);
+    `index` is the position of the refused text in the batch; `recorded` is set by the caller that counts it
+    (wp/log.py): True, False when counting failed (the refusal stands), None when not counted. Messages carry numbers
+    only, never content."""
+    code = None
+
+    def __init__(self, msg, index=None):
+        super().__init__(f"{self.code} {msg}")
+        self.index, self.recorded = index, None
+
+
+class ContentTooLarge(WriteRefused):
+    code = "WPM01"
+
+
+class MatcherBudgetExceeded(WriteRefused):
+    code = "WPM02"
 
 
 def _table_dir():
@@ -149,7 +181,11 @@ def tables():
 def matcher_id():
     tables()                                   # fail closed before naming a matcher
     return (f"m5:ucd{UCD}:di{PINS[('default_ignorable', UCD)][:12]}"
-            f":cf{PINS[('confusables', CONFUSABLES_VERSION)][:12]}")
+            f":cf{PINS[('confusables', CONFUSABLES_VERSION)][:12]}:{budget_tag()}")
+
+
+def budget_tag():
+    return "b%d.%d.%d.%d" % BUDGET
 
 
 def label():
@@ -541,30 +577,138 @@ def key(identifier):
     return " ".join(x[1] for x in _tokens(identifier, ident=True))
 
 
-def _windows_at(text):
-    """[(key window, start, end)] for every reading of every 1..MAX_N token window. A window with more than
-    MAX_READINGS readings is not enumerated: rule r3 refuses every identifier whose capacity exceeds the cap, so no
-    approved identifier can match it."""
+def check_size(text, index=None, what="event content"):
+    """ContentTooLarge (WPM01) when text is over MAX_CONTENT_BYTES UTF-8 bytes. A text with more code points than the
+    bound is refused without encoding it (each code point is at least one byte)."""
+    if len(text) > MAX_CONTENT_BYTES:
+        raise ContentTooLarge(f"{what} {index}: more than {MAX_CONTENT_BYTES} UTF-8 bytes ({len(text)} code points), over the "
+                              f"bound of {MAX_CONTENT_BYTES} ({budget_tag()})", index)
+    n = len(text.encode("utf-8", "surrogatepass"))
+    if n > MAX_CONTENT_BYTES:
+        raise ContentTooLarge(f"{what} {index}: {n} UTF-8 bytes, over the bound of {MAX_CONTENT_BYTES} ({budget_tag()})", index)
+
+
+def budget(n_tokens):
+    """The most window keys an event of n_tokens tokens may have (DESIGN-NOTES "Matcher budget" B2)."""
+    return min(BUDGET.event_max, max(BUDGET.floor, BUDGET.per_token * n_tokens))
+
+
+def _reading_count(tok):
+    """The number of text keys of one token, or None when it has more than MAX_READINGS (counted, not enumerated)."""
+    word = _letters_over_digits(tok[1])
+    m = 1
+    for full, lit in tok[4]:
+        m *= len(full if word else lit)
+        if m > MAX_READINGS:
+            return None
+    return m
+
+
+def _plan(text):
+    """(tokens, reading count per token, window key count): the count is every key of every 1..MAX_N token window,
+    repeats included, windows over MAX_READINGS excluded, computed from the counts alone (nothing enumerated)."""
     t = _tokens(text)
-    ks = [_token_keys(x) for x in t]
-    out = []
-    for n in range(1, MAX_N + 1):
-        for i in range(len(t) - n + 1):
-            parts = ks[i:i + n]
-            if any(p is None for p in parts):
-                continue
-            m = 1
-            for p in parts:
-                m *= len(p)
-            if m > MAX_READINGS:
-                continue
-            a, b = t[i][2], t[i + n - 1][3]
-            out.extend((" ".join(c), a, b) for c in itertools.product(*parts))
-    return out
+    c = [_reading_count(x) for x in t]
+    total = 0
+    for i in range(len(t)):
+        p = 1
+        for j in range(i, min(i + MAX_N, len(t))):
+            if c[j] is None:
+                break
+            p *= c[j]
+            if p > MAX_READINGS:          # counts are at least 1: every longer window from i is over the cap too
+                break
+            total += p
+    return t, c, total
+
+
+def key_count(text):
+    """(tokens, window keys) of text, counted without enumerating (size not checked)."""
+    t, _, total = _plan(text)
+    return len(t), total
+
+
+def _admitted(text, index=None):
+    """The plan (tokens, counts) of a text within the size bound and its budget; WPM01 or WPM02 otherwise."""
+    check_size(text, index)
+    t, c, total = _plan(text)
+    b = budget(len(t))
+    if total > b:
+        raise MatcherBudgetExceeded(f"event {index}: {total} matcher keys for {len(t)} tokens, over the budget of {b} "
+                                    f"({budget_tag()}: {BUDGET.per_token} per token, at least {BUDGET.floor}, at most "
+                                    f"{BUDGET.event_max})", index)
+    return t, c
+
+
+def admit(texts):
+    """Refuse the batch (WriteRefused, naming the first refused text by index) unless every text is within the size
+    bound and its key budget. Nothing is enumerated or HMAC'd."""
+    for i, x in enumerate(texts):
+        _admitted(x, i)
+
+
+def _iter_windows(t, c):
+    """Yield (key, start, end) for every reading of every 1..MAX_N token window of an admitted plan, lazily: only the
+    key lists of the current MAX_N tokens are held (each at most MAX_READINGS keys)."""
+    cache = {}
+    for i in range(len(t)):
+        for old in [k for k in cache if k < i]:
+            del cache[old]
+        p = 1
+        for j in range(i, min(i + MAX_N, len(t))):
+            if c[j] is None:
+                break
+            p *= c[j]
+            if p > MAX_READINGS:
+                break
+            for x in range(i, j + 1):
+                if x not in cache:
+                    cache[x] = _token_keys(t[x])
+            a, b = t[i][2], t[j][3]
+            for combo in itertools.product(*(cache[x] for x in range(i, j + 1))):
+                yield " ".join(combo), a, b
+
+
+def _windows_at(text):
+    """[(key window, start, end)] for every reading of every 1..MAX_N token window, within the budget (tests and
+    diagnostics; matching never builds this list). A window with more than MAX_READINGS readings is not enumerated:
+    rule r3 refuses every identifier whose capacity exceeds the cap, so no approved identifier can match it."""
+    return list(_iter_windows(*_admitted(text)))
 
 
 def windows(text):
-    return {w for w, _, _ in _windows_at(text)}
+    """The set of window keys of text, within the budget (tests and diagnostics)."""
+    return {w for w, _, _ in _iter_windows(*_admitted(text))}
+
+
+def _stream(ks, tenant, plans, lookup):
+    """Match the window keys of each (tag, plan) in `plans` (an iterable, consumed lazily), CHUNK distinct keys at a
+    time: HMAC them, call lookup(list of HMACs) -> {hmac: value}, and collect {tag: {(key, value)}} for every hit.
+    Holds at most CHUNK pending keys (each with the tags that produced it)."""
+    hits, pending = {}, {}
+
+    def flush():
+        keys = list(pending)
+        hs = _hmacs(ks, tenant, keys)
+        found = lookup(hs)
+        for k, h in zip(keys, hs):
+            if h in found:
+                for tag in pending[k]:
+                    hits.setdefault(tag, set()).add((k, found[h]))
+        pending.clear()
+
+    for tag, plan in plans:
+        for w, _, _ in _iter_windows(*plan):
+            s = pending.get(w)
+            if s is None:
+                if len(pending) >= CHUNK:
+                    flush()
+                pending[w] = {tag}
+            else:
+                s.add(tag)
+    if pending:
+        flush()
+    return hits
 
 
 def _hmacs(ks, tenant, keys):
@@ -654,44 +798,53 @@ def declare(conn, ks, tenant, subject_id, identifiers, reviewer=None):
 
 
 def scan(conn, ks, tenant, texts):
-    """(identifier-set version, [sorted subject ids mentioned, per text]). The version and the tenant's matcher are read
-    BEFORE the identifiers, so a declaration that lands in between makes the store refuse the write (WPS17) and the
-    caller rescans. A tenant whose stored matcher is not this one raises MatcherMismatch (the store refuses it too:
-    WPS38); a tenant with no matcher has no identifiers."""
+    """(identifier-set version, [sorted subject ids mentioned, per text]). Every text is admitted first (size bound and
+    key budget, m5 b1: WriteRefused naming the text's index), whether or not the tenant has identifiers. The version and
+    the tenant's matcher are read BEFORE the identifiers, so a declaration that lands in between makes the store refuse
+    the write (WPS17) and the caller rescans. A tenant whose stored matcher is not this one raises MatcherMismatch (the
+    store refuses it too: WPS38); a tenant with no matcher has no identifiers. Keys are looked up CHUNK at a time."""
+    plans = [_admitted(x, i) for i, x in enumerate(texts)]
     r = conn.execute("select max_seq, matcher from identifier_epochs where tenant_id=%s", (tenant,)).fetchone()
     version, tm = (r[0], r[1]) if r else (0, None)
     if tm is not None and tm != matcher_id():
         raise MatcherMismatch(f"tenant matcher {tm} is not {matcher_id()}")
     if not version:
         return 0, [[] for _ in texts]
-    per = [sorted(windows(x)) for x in texts]
-    flat = sorted({w for p in per for w in p})
-    if not flat:
-        return version, [[] for _ in texts]
-    hm = dict(zip(flat, _hmacs(ks, tenant, flat)))
-    hit = dict(conn.execute("select ident_hmac, subject_id from subject_identifiers where tenant_id=%s and ident_hmac = any(%s)",
-                            (tenant, list(hm.values()))).fetchall())
-    return version, [sorted({hit[hm[w]] for w in p if hm[w] in hit}) for p in per]
+
+    def lookup(hs):
+        return dict(conn.execute("select ident_hmac, subject_id from subject_identifiers where tenant_id=%s and ident_hmac = any(%s)",
+                                 (tenant, hs)).fetchall())
+    hits = _stream(ks, tenant, enumerate(plans), lookup)
+    return version, [sorted({v for _, v in hits.get(i, ())}) for i in range(len(texts))]
 
 
 def subject_hmacs(ks, tenant, identifiers):
     return set(_hmacs(ks, tenant, [key(i) for i in identifiers]))
 
 
+def stream_matches(ks, tenant, items, hmacs):
+    """The tags of (tag, text) items whose text contains one of the identifier HMACs, texts admitted one at a time as
+    they are consumed (the erasure rescan). A text over the size bound or its budget raises WriteRefused (fail closed)."""
+    hm = set(hmacs)
+    plans = ((tag, _admitted(text, tag)) for tag, text in items)
+    return set(_stream(ks, tenant, plans, lambda hs: {h: True for h in hs if h in hm}))
+
+
 def matches(ks, tenant, text, hmacs):
-    """True when text contains one of the identifier HMACs (used by the erasure rescan)."""
-    return bool(find_spans(ks, tenant, text, hmacs))
+    """True when text contains one of the identifier HMACs."""
+    return bool(stream_matches(ks, tenant, [(0, text)], hmacs))
 
 
 def find_spans(ks, tenant, text, hmacs):
     """Ordered, non-overlapping [(start, end)] in `text` covering every window whose HMAC is in hmacs (overlaps merged).
-    Diagnostic only (decision R1: an event that matches is removed whole)."""
-    ws = _windows_at(text)
-    if not ws or not hmacs:
+    Diagnostic only (decision R1: an event that matches is removed whole). Within the budget; two lazy passes (the
+    matching keys first, CHUNK at a time; then their spans), so nothing proportional to the key count is held."""
+    plan = _admitted(text)
+    if not hmacs:
         return []
-    keys = sorted({w for w, _, _ in ws})
-    hm = dict(zip(keys, _hmacs(ks, tenant, keys)))
-    hits = sorted((a, b) for w, a, b in ws if hm[w] in hmacs)
+    hm = set(hmacs)
+    keys = {k for k, _ in _stream(ks, tenant, [(0, plan)], lambda hs: {h: True for h in hs if h in hm}).get(0, ())}
+    hits = sorted((a, b) for w, a, b in _iter_windows(*plan) if w in keys)
     out = []
     for a, b in hits:
         if out and a < out[-1][1]:

@@ -34,6 +34,7 @@ STORES = [
         "own and mentioning events tombstoned and content nulled in the cascade (chain keeps the digest); own key destroyed", True),
     _pg("quarantine", "ciphertext of unadopted stale writes", "rows of the subject deleted in the cascade; key destroyed", True),
     _pg("quarantine_quota", "per-session counters", "no content", False),
+    _pg("write_refusals", "m5 b1: counts of refused writes per tenant, day and code (WPM01, WPM02)", "no content, no subject", False),
     _pg("subject_identifiers", "HMAC (tenant key) of declared identifiers", "the subject's rows deleted in the cascade after the rescan used them", True),
     _pg("identifier_proposals", "D3: proposed identifiers, HMAC plus the normalised identifier under the subject key", "the subject's rows deleted in the cascade (subject key destroyed too)", True),
     _pg("identifier_epochs", "identifier-set version and matcher id per tenant", "no content", False),

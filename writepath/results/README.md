@@ -415,6 +415,17 @@ to 15b3255:
   (whose key is a text reading of "In the") and two coverage statements were missing: 3 failures on abceae9; the
   stop-word test passes on m4.
 
+Matcher budget m5 b1 (`failing-first/budget/`; design f545ad8, tests 80c6be4, code in the commit after it; DESIGN-NOTES
+"Matcher budget (m5 b1)"; home paths shown as ~):
+- `test_ident-budget-on-819258c.red.out` (Mac, Unicode 13.0.0, offline): the budget tests on 819258c: 8 failures, all
+  by assertion (crafted text not refused, no count before enumeration, no size bound, one HMAC batch of 80,883 keys,
+  no budget in the matcher id, no schema size constraint).
+- `test_ident-stopclass-on-abceae9.red.out`: the stop-word class test on abceae9 (before the r3 stop-list fix):
+  accepted "admln the" and others; it passes on 819258c.
+- `test_ident-budget.green.out` (Mac, Unicode 13.0.0): test_ident 51/51 at the code commit.
+- NOT RUN: tests/test_d3_pg.py B1-B4 (live): t2-dev was below the 20 GB run floor and its run lock was held by another
+  owner. No live evidence for the store constraint, write_refusals or the rescan's fail-closed path yet.
+
 review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
 are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own
 failing-first evidence replaces them when it is integrated.

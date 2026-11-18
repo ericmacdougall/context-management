@@ -131,6 +131,8 @@ def rescan(conn, ks, jid, page=2000):
     subject's (declared after they were written) are decrypted and matched against the subject's identifier HMACs.
     Hits are recorded in erasure_mentions (the cascade then removes them); the covered version is recorded on the job.
     Returns (scanned, found). Undecryptable content (speaker already erased) has nothing left to leak and is skipped.
+    Matching runs under the matcher budget (m5 b1): an event over the content bound or its key budget, possible only for
+    an event admitted under another matcher, raises WriteRefused (fail closed: no page recorded, completion refused).
     Every page and the completion carry this process's matcher id: the store refuses another matcher than the
     tenant's (WPS38, review C class 3), and M.matcher_id() itself fails closed without the pinned Unicode tables."""
     t, s, xmax, done_x = conn.execute("select tenant_id, subject_id, ident_xmax, rescanned_xmax from erasure_jobs where job_id=%s", (jid,)).fetchone()
@@ -148,14 +150,15 @@ def rescan(conn, ks, jid, page=2000):
             break
         last = rows[-1][0]
         keys = ks.keys(t, [r[1] for r in rows])
-        texts = {}
-        for eid, sp, enc in rows:
-            plain = K.open_(keys[sp], t, sp, eid, bytes(enc)) if keys.get(sp) else None
-            if plain is not None:
-                texts[eid] = sorted(M.windows(plain))
-        flat = sorted({w for v in texts.values() for w in v})
-        h = dict(zip(flat, M.window_hmacs(ks, t, flat))) if flat else {}
-        hits = [eid for eid, ws in texts.items() if any(h[w] in hm for w in ws)]
+
+        def plains():
+            for eid, sp, enc in rows:                # decrypted one at a time as the matcher consumes them
+                plain = K.open_(keys[sp], t, sp, eid, bytes(enc)) if keys.get(sp) else None
+                if plain is not None:
+                    yield eid, plain
+        # m5 b1 B7: each event is counted against the budget before its keys are enumerated; an event over it (admitted
+        # under another matcher's budget) raises WriteRefused and the page is not recorded, so WPS24 refuses completion
+        hits = sorted(M.stream_matches(ks, t, plains(), hm))
         if hits:
             conn.execute("select wp_erasure_add_mentions(%s, %s)", (jid, hits))
         conn.execute("select wp_erasure_rescan_page(%s, %s, %s)", (jid, [r[0] for r in rows], mid))   # D4: coverage, store-checked

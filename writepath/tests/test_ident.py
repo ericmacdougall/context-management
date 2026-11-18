@@ -611,7 +611,7 @@ class F12Budget(unittest.TestCase):
         self.fail(f"not refused: expected {code}")
 
     def scan(self, ks, texts, names=(NAME,)):
-        conn = FakeConn({h: "SUBJ" for h in M.subject_hmacs(ks, T, names)})
+        conn = FakeConn({h: "SUBJ" for h in M.subject_hmacs(KS, T, names)})     # the declaration is not the scan's work: not counted
         return conn, M.scan(conn, ks, T, texts)
 
     def test_crafted_text_refused_in_bounded_work_and_memory(self):

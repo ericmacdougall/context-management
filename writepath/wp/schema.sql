@@ -252,6 +252,9 @@ create table events (
   actor text not null, trust_origin text not null,
   ts_event timestamptz not null, ts_ingested timestamptz not null default clock_timestamp(),
   content_enc bytea,                                        -- NULL only after erasure (wp_erasure_cascade; a tombstone and its job remain)
+  -- m5 b1 (DESIGN-NOTES "Matcher budget" B3): 65,536 bytes of content (wp/mentions.py MAX_CONTENT_BYTES) plus 28 bytes
+  -- of nonce and tag; the app refuses larger content first (WPM01), so this only stops a path that skips the check
+  constraint events_content_size check (content_enc is null or octet_length(content_enc) <= 65564),
   content_digest text not null,                             -- sha256 of the ciphertext; the chain hashes THIS, so redaction keeps the chain verifiable
   mentions text[] not null default '{}',                    -- subjects whose declared identifiers the write-time matcher found
   mention_scan_upto bigint not null default 0,              -- identifier-set version the matcher ran against
@@ -369,8 +372,30 @@ create trigger events_no_change before update or delete on events for each row e
 create table quarantine (
   id bigserial primary key, tenant_id tenant_t not null, session_id text not null, subject_id text not null,
   presented_epoch bigint not null, reason text not null, kind text not null, content_enc bytea not null, mentions text[] not null default '{}',
-  at timestamptz not null default clock_timestamp()
+  at timestamptz not null default clock_timestamp(),
+  constraint quarantine_content_size check (octet_length(content_enc) <= 65564)     -- as events_content_size
 );
+
+-- m5 b1 (DESIGN-NOTES "Matcher budget" B5): writes refused before anything is stored, counted per tenant, day and code
+-- (WPM01 content over the size bound, WPM02 over the matcher key budget). A count and a code only: no content, no
+-- subject, no event id. Written only by wp_write_refused; an operator reads it.
+create table write_refusals (
+  tenant_id tenant_t not null, day date not null, code text not null check (code in ('WPM01', 'WPM02')),
+  n bigint not null, last_at timestamptz not null default clock_timestamp(),
+  primary key (tenant_id, day, code)
+);
+
+create function wp_write_refused(t tenant_t, c text) returns bigint language plpgsql security definer set search_path = public, pg_temp as $$
+declare k bigint;
+begin
+  if c is null or c not in ('WPM01', 'WPM02') then
+    raise exception 'unknown write refusal code' using errcode = '22023';
+  end if;
+  insert into write_refusals(tenant_id, day, code, n) values (t, current_date, c, 1)
+    on conflict (tenant_id, day, code) do update set n = write_refusals.n + 1, last_at = clock_timestamp()
+    returning n into k;
+  return k;
+end $$;
 create table quarantine_quota (
   tenant_id tenant_t not null, session_id text not null, kept bigint not null default 0, dropped bigint not null default 0,
   primary key (tenant_id, session_id)
@@ -947,7 +972,8 @@ grant execute on function wp_lease_acquire(tenant_t, text, double precision, boo
   wp_erasure_pg_residue(text, text), wp_fence(text, text, bigint),
   wp_hold_check(text, text), wp_erasure_add_mentions(text, text[]),
   wp_identifier_propose(tenant_t, text, text, text, bytea, text),
-  wp_erasure_rescan_done(text, bigint, text), wp_erasure_rescan_page(text, text[], text), wp_subject_xmax(text, text) to wp_app;
+  wp_erasure_rescan_done(text, bigint, text), wp_erasure_rescan_page(text, text[], text), wp_subject_xmax(text, text),
+  wp_write_refused(tenant_t, text) to wp_app;
 -- D1: holds are placed and released only by the legal-operations role; the application cannot lift a hold.
 grant execute on function wp_hold_place(tenant_t, text, text, text), wp_hold_release(text) to wp_legal;
 grant select on legal_holds, erasure_jobs, erasure_withheld to wp_legal;

@@ -9,6 +9,7 @@ import psycopg
 
 from . import keys as K, mentions as M, secrets as SEC
 from .secrets import SecretDetected  # noqa: F401  (re-exported for callers)
+from .mentions import WriteRefused, ContentTooLarge, MatcherBudgetExceeded  # noqa: F401  (re-exported: m5 b1 refusals)
 from .lease import is_stale_error, session_scope
 
 ANALYST_KINDS = ("message",)        # kinds whose append also enqueues an analyst job (same transaction)
@@ -64,9 +65,13 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
     """events: dicts with subject_id, kind, actor, trust_origin, ts_event (aware datetime), content (str), optional
     idem_key and, for kind='decision', decision={item, action, based_on_event_id, source_event_id}.
     Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch.
-    Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision."""
+    Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision, and
+    WriteRefused (ContentTooLarge WPM01, MatcherBudgetExceeded WPM02; m5 b1) before anything else when an event is over
+    the content size bound or its matcher key budget: the whole batch is refused, nothing is stored (no event, no
+    quarantine row, no subject key) and the refusal is counted in write_refusals."""
     t, sid = lease.tenant, lease.scope.split(":", 1)[1]
     prepared = []
+    _admit(conn, t, lambda: M.admit([e["content"] for e in events]))
     scan_v = SEC.check([e["content"] for e in events], "event")     # row 19: before anything is sealed or stored
     keys = ks.keys(t, [e["subject_id"] for e in events], create=True)
     for e in events:
@@ -88,6 +93,8 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
             if st == "WPS17" and attempt < 7:
                 _scan(conn, ks, t, prepared, events)   # identifiers declared meanwhile: match against the new set
                 continue
+            if st == "23514" and (getattr(getattr(ex, "diag", None), "constraint_name", None) or "").endswith("_content_size"):
+                raise _record(conn, t, ContentTooLarge("the store refused the ciphertext size (a path that skipped the check)")) from None
             if st == "WPS18":
                 raise MentionsErased(str(ex).split("\n")[0]) from None
             if st in ("WPS15", "23505", "WPS14") and attempt < 7:
@@ -111,6 +118,25 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
             if st in ("WPS05", "WPS04", "WPS13"):        # stale head, no valid user source, source already used
                 raise StaleDecision(f"{st} " + str(ex).split("\n")[0]) from None
             raise
+
+
+def _record(conn, t, ex):
+    """Count a refusal in write_refusals (code only) in its own transaction; never masks it: ex.recorded says whether
+    the count landed. Returns ex for raising."""
+    try:
+        with conn.transaction():
+            conn.execute("select wp_write_refused(%s::tenant_t, %s)", (t, ex.code))
+        ex.recorded = True
+    except Exception:                                # noqa: BLE001  (the refusal stands whatever counting does)
+        ex.recorded = False
+    return ex
+
+
+def _admit(conn, t, check):
+    try:
+        check()
+    except WriteRefused as ex:
+        raise _record(conn, t, ex) from None
 
 
 def _scan(conn, ks, t, prepared, events):
@@ -210,6 +236,7 @@ def _verify_nulls(conn, tenant, rows):
 
 # ---------------------------------------------------------------- inbox
 def inbox_enqueue(conn, ks, lease, item_id, target_session, subject_id, payload):
+    _admit(conn, lease.tenant, lambda: M.check_size(json.dumps(payload), 0, "inbox payload"))      # m5 b1 B3: WPM01
     SEC.check([json.dumps(payload)], "inbox")
     k = ks.keys(lease.tenant, [subject_id], create=True)[subject_id]
     enc = K.seal(k, lease.tenant, subject_id, "inbox:" + item_id, json.dumps(payload))
@@ -259,7 +286,8 @@ def job_claim(conn, tenant, ttl_s=30.0):
 
 def job_complete(conn, ks, tenant, job_id, claim_epoch, result_text, verify):
     """Completion is a conditional write: current claimant only (claim_epoch), verify result mandatory and ok, and the
-    store refuses it if any input was erased meanwhile."""
+    store refuses it if any input was erased meanwhile. A result over the size bound raises ContentTooLarge (WPM01)."""
+    _admit(conn, tenant, lambda: M.check_size(result_text, 0, "job result"))
     SEC.check([result_text], "job_result")
     subj = conn.execute("select e.subject_id from analyst_jobs j join events e on e.tenant_id=j.tenant_id and e.event_id=j.input_event_ids[1] "
                         "where j.tenant_id=%s and j.job_id=%s", (tenant, job_id)).fetchone()
