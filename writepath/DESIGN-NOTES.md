@@ -550,6 +550,10 @@ versioned m5.
    2-token names 0.3% of 3000, 3-token 4.3% of 1000, 4-token 11.4% of 1000, numbers and codes 0% of 1504. (P = 16384:
    0.0%, 1.4%, 5.6%; P = 65536: 0.0%, 0.3%, 1.5%. If 1 were read as l only: P = 4096 refuses 0.0%, 0.0%, 0.4%.)
    P = 4096 is chosen for cost (item 6); it is one constant, and main may change it.
+   PRECISION (advisor check on abceae9): the capacity is an UPPER BOUND, not the largest count reachable: under item
+   3's rule digits cannot fill every i, l or o position of a word, so a tight bound would refuse fewer names than the
+   rates above. The rates are for Latin-script names only (NOT VERIFIED for other scripts: Greek iota and omicron,
+   Cyrillic o, Arabic alef and heh and Hebrew vav carry the same weights).
 6. COST (measured, same probe, HMAC about 8 us per key in Python on the Mac): keys per token, all windows of one event
    counted with repeats: m4 about 4; m5 prose with the pronoun I 7.8; all-caps legal text 34.4; text dense with codes
    and versions 7.4; hex dump 8.2. ADVERSARIAL text (tokens built to put just under P readings in every window) reaches
@@ -558,16 +562,29 @@ versioned m5.
    OPEN (availability, for main): (a) a per-event key budget that refuses the write when exceeded, so crafted text is
    refused (it may also refuse a legitimate pathological text); (b) let an over-budget event be written unscanned and
    found by the erasure-time rescan (a store change to WPS17); (c) accept and monitor. Not built: m5 implements none.
+   Also (advisor check on abceae9): _windows_at builds the whole key list in memory, so a long crafted event is a
+   memory problem as well as CPU (measured at 7fd3164: 300 crafted tokens gave 1.39 million window keys, 0.35 s to
+   enumerate); and the erasure-time rescan reads the same events, so one crafted event taxes every later erasure's
+   rescan, which weighs against (b). Recommendation to main: (a) with the budget set at least 10 times above the
+   worst measured realistic text (34.4 keys per token), the enumeration made lazy so that the budget bounds memory,
+   and the refusal reported to the writer with the reason.
 7. NOT COVERED (receipt and NOT_COVERED): a letter standing for a digit (XQ-l00l or XQ-IOOI for XQ-1001); small l
    written for i or small i for l (Allson, Aiison for Alison: m4 matched them); digits standing for letters in a token
    with no more letters than digits (4l1s0n for Alison); non-ASCII digits that look like 0 or 1 read as the letter
    their prototype names, not as the digit; the computed not-closed capitals, 66 on Unicode 13: m4's 63 unchanged plus
    three that m4 covered only through its joined i/l class (Latin capital I with stroke, Cyrillic capital Yeru and Yeru
    with back yer); every m4 NOT_COVERED item.
+   ADDED (advisor check on abceae9; m4 matched these): a look-alike of small l or small i from ANOTHER script written
+   for the other letter is read as the letter its prototype names only: 89 look-alikes of l (Cyrillic palochka, Latin
+   dental click, Hebrew vav, Arabic alef, ...) and 39 of i (dotless i, Cyrillic small i, Greek iota, ...) besides the
+   ASCII letters, on Unicode 13 and 15 (AlӀson with palochka does not match Alison). Stated, not added to the
+   both-readings table: vav and alef are ordinary letters in their own scripts, and reading them as i would make
+   every such word a reading of an i-word.
 8. STILL OVER-MATCHED (receipt and OVER_MATCH): confusable variants (Kim and Kirn) as before; a capital I or one of its
    look-alikes in TEXT is read as l too, so text in capitals over-matches (DELIA also matches Della, NEIL matches
    Nell, HAILEY matches Halley); a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and
-   Nell); one text window can hit several subjects (EIIa Moreno hits Elia Moreno and Ella Moreno; NEIL YOUNG hits
+   Nell; a handle maria1 matches a declared Marial); one text window can hit several subjects (EIIa Moreno hits Elia
+   Moreno and Ella Moreno; NEIL YOUNG hits
    Neil Young and Nell Young). CORRECTION (while writing the tests, 3c0da12 said "AIIson hits Alison and Allison",
    which is wrong: AIIson has six letters and Allison seven).
 9. CHANGED FROM m4 beyond i/l and o/0: five code points now read as their digit or letter instead of their UTS 39
@@ -579,6 +596,13 @@ versioned m5.
 10. VERSION: matcher id m5:ucd<version>:di<sha12>:cf<sha12>; rule version r3:<matcher id>. The store keeps the tenant's
    matcher and refuses work under another (WPS32 at approval, WPS38 at append and rescan): an m4 tenant must re-declare
    its identifiers; there is no migration and no fallback.
+11. RULE r3 STOP LIST (CORRECTION, advisor check on abceae9): the stop list was built from identity keys while text now
+   has readings, so "ln the" was accepted and would then match every "In the" (m4 refused it, because i and l were
+   one class). The stop keys are now every TEXT key of each common word written in lower case, capitalised and in
+   capitals (53 words, 65 keys). Red on abceae9, green after (results/failing-first/m5).
+12. NOT VERIFIED: refusal rates outside Latin script (item 5); whether exp.d4_store_mark's corpus contains any
+   both-readings glyph (it passed under m5, which shows the call sites work, not that readings were exercised there;
+   tests/test_ident.py exercises them); the adversarial cost on t2-dev (measured on the Mac only).
 Tests first (tests/test_ident.py F11M5*, red on 15b3255 by assertion through key(), windows(), find_spans() and
 identifier_problem(), which exist there): the four real-name pairs do not match each other in either direction; AIIson
 and A1ison still match Alison; the seeded generator of case, look-alike (only glyphs from the computed table and the

@@ -1,4 +1,4 @@
-# m5 tests on m5 (this commit); Mac, python3, Unicode 13.0.0, WP_UCD_DIR=<work dir>/ucd
+# m5 tests on m5 with the stop-list fix (this commit); Mac, python3, Unicode 13.0.0, WP_UCD_DIR=<work dir>/ucd
 # command: WP_UCD_DIR=<dir> python3 -m unittest tests.test_ident -v
 test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings) ... ok
 test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings)
@@ -48,6 +48,6 @@ test_every_default_ignorable_inside_a_name (tests.test_ident.WholeDefaultIgnorab
 test_f6_khmer_inherent_vowels (tests.test_ident.WholeDefaultIgnorable) ... ok
 
 ----------------------------------------------------------------------
-Ran 41 tests in 4.884s
+Ran 41 tests in 7.539s
 
 OK

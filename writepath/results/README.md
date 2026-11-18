@@ -401,6 +401,20 @@ review E"; home paths shown as ~):
   release without FOR UPDATE: E4; the hold check without FOR SHARE: E8); d4_store_mark R=1 pass after reset. E7 has no
   failing variant: mark holds the subject three ways (DESIGN-NOTES "Redesign after review E").
 
+Matcher m5 (`failing-first/m5/`; design 3c0da12, tests 8dab50f and 9230853, code 5f727c5 and the stop-list fix after
+9230853; DESIGN-NOTES "Decisions after review E"; home paths shown as ~). m4's wp/mentions.py is unchanged from 0bff333
+to 15b3255:
+- `test_ident-m5-on-15b3255.red.out` (Mac, Unicode 13.0.0, offline): the m5 tests on m4: 16 of 41 fail, all by
+  assertion (the real-name pairs share keys, ASCII classes il1 and o0, digit identifiers share keys, no cap, near misses
+  matched, 147 of 3,300 generated variants missed, among them circled digits).
+- `test_ident-m5.green.out` (Mac, Unicode 13.0.0): 41/41 on 5f727c5.
+- `live-7fd3164.red-green.out` (`harness/m5_check.sh`, t2-dev, Unicode 15.0.0, unstamped, under the run lock 00:07:56Z
+  to 00:08:12Z, 2026-11-18): both-readings 23 (i, l), 11 (1, l, i), 11 (0, o); 66 not-closed capitals; test_ident 41/41;
+  the same tests on m4 16 failures; test_d3_pg live 16/16; wp.setup --reset then exp.d4_store_mark R=1 pass.
+- `test_ident-stopwords-on-abceae9.red.out` (Mac, Unicode 13.0.0): the advisor's check: rule r3 accepted "ln the"
+  (whose key is a text reading of "In the") and two coverage statements were missing: 3 failures on abceae9; the
+  stop-word test passes on m4.
+
 review1-p1 and review1-p2 have NO header: only their file names give the disk_gate commit (ca93e3d, edf9f93). They
 are not rerun here. disk_gate.py and its test now belong to the gate fixer's branch fix/writepath-gate, whose own
 failing-first evidence replaces them when it is integrated.

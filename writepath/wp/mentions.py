@@ -66,6 +66,9 @@ NOT_COVERED = (
     "look-alikes outside UTS 39 confusables.txt " + CONFUSABLES_VERSION + " (transliterations, homophones)",
     "a small l written for i or a small i for l (Allson or Aiison for Alison; lan for Ian): distinct letters are "
     "never read as each other; only a capital I and its look-alikes are read both ways",
+    "a look-alike of small l or small i from another script written for the OTHER letter (Cyrillic palochka, Latin "
+    "dental click, Hebrew vav or Arabic alef for i; Cyrillic small i or dotless i for l): it is read as the letter its "
+    "prototype names only (89 look-alikes of l and 39 of i besides the ASCII letters, Unicode 13 and 15)",
     "a letter written for a digit (XQ-l00l or XQ-IOOI for XQ-1001)",
     "digits written for letters in a word with no more letters than digits (A11s0n for Alison)",
     "a digit of another script that looks like 0 or 1: it is read as the letter its prototype names, not as the digit",
@@ -82,7 +85,8 @@ OVER_MATCH = (
     "a capital I (or one of its look-alikes) in text is read as i and as l, so text in capitals also matches a "
     "name that differs by i and l (DELIA also matches Della, NEIL also matches Nell, HAILEY also matches Halley; "
     "AIEX KIM matches Alex Kim)",
-    "a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John)",
+    "a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John; "
+    "a handle such as maria1 matches a declared Marial)",
     "one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno): erasing either "
     "removes that event",
 )
@@ -480,9 +484,17 @@ _STOP_KEYS = None
 
 
 def _stop_keys():
+    """Every key a common word can have in TEXT, written in lower case, capitalised or in capitals: an identifier made
+    only of such keys would match ordinary text ("ln the" has a text key of "In the", "ls lt" of "IS IT")."""
     global _STOP_KEYS
     if _STOP_KEYS is None:
-        _STOP_KEYS = frozenset(key(w) for w in STOP)
+        s = set()
+        for w in STOP:
+            s.add(key(w))
+            for form in (w, w.capitalize(), w.upper()):
+                for tok in _tokens(form):
+                    s.update(_token_keys(tok) or ())
+        _STOP_KEYS = frozenset(s)
     return _STOP_KEYS
 
 
