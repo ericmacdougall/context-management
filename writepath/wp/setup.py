@@ -34,10 +34,12 @@ def _ensure_roles(admin):
         if r not in have:
             admin.execute(sql.SQL("create role {} login " + ROLE_ATTRS).format(sql.Identifier(r)))
         admin.execute(sql.SQL("alter role {} " + ROLE_ATTRS).format(sql.Identifier(r)))
-        # a role created now has no password, whatever an existing pgpass file holds: the stores are on tmpfs
-        # (host/bootstrap.py), so a recreated cluster keeps the files of the one before it (observed live 2026-11-18
-        # after the tmpfs rebuild: wp_app's login failed). A new role gets a new password and its file is rewritten.
-        if r not in known or r not in have:
+        # a role without a password on the cluster gets one, whatever an existing pgpass file holds: the stores are on
+        # tmpfs (host/bootstrap.py), so a recreated cluster keeps the files of the one before it (observed live
+        # 2026-11-18 after the tmpfs rebuild: wp_app's login failed, and a setup that keyed on "created now" left the
+        # roles of that first run without passwords). The admin reads pg_authid (superuser); no value is read back.
+        no_pw = admin.execute("select rolpassword is null from pg_authid where rolname = %s", (r,)).fetchall()
+        if r not in known or not no_pw or no_pw[0][0]:
             pw = secrets.token_urlsafe(32)
             h = admin.pgconn.encrypt_password(pw.encode(), r.encode(), b"scram-sha-256").decode()
             admin.execute(sql.SQL("alter role {} password {}").format(sql.Identifier(r), sql.Literal(h)))

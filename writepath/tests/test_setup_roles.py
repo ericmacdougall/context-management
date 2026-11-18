@@ -4,7 +4,9 @@
            rewritten, even when a pgpass file from an earlier cluster exists (the stores are on tmpfs: a recreate keeps
            the files and empties the cluster). Live origin: 2026-11-18 23:45Z on t2-dev, after the tmpfs rebuild,
            `wp.setup --reset` then tests.test_d3_pg: password authentication failed for user "wp_app".
-  S-ROLE2  a role the cluster has and whose file exists keeps its password (setup stays idempotent: no rotation)."""
+  S-ROLE2  a role the cluster has WITH a password and whose file exists keeps it (setup stays idempotent: no rotation).
+  S-ROLE3  a role the cluster has WITHOUT a password (left by a first setup run that keyed on "created now", live
+           2026-11-18 23:49Z: all nine login roles had rolpassword null) gets one and its file is rewritten."""
 import os
 import pathlib
 import sys
@@ -39,12 +41,24 @@ class _Cur:
 
 
 class FakeAdmin:
-    def __init__(self, roles):
-        self.roles, self.sql, self.pgconn = roles, [], _PG()
+    """roles: those the cluster has; with_pw: those of them that have a password (pg_authid.rolpassword not null)."""
+    def __init__(self, roles, with_pw=()):
+        self.roles, self.with_pw, self.sql, self.pgconn = set(roles), set(with_pw), [], _PG()
 
     def execute(self, q, *a):
-        self.sql.append(repr(q))
-        return _Cur([(r,) for r in self.roles] if "pg_roles" in repr(q) else [])
+        s = repr(q)
+        self.sql.append(s)
+        if "pg_roles" in s:
+            return _Cur([(r,) for r in sorted(self.roles)])
+        if "pg_authid" in s:
+            r = a[0][0]
+            return _Cur([(r not in self.with_pw,)] if r in self.roles else [])
+        role = next((r for r in setup.LOGIN_ROLES if f"Identifier('{r}')" in s), None)
+        if role and "create role" in s:
+            self.roles.add(role)
+        if role and "password" in s:
+            self.with_pw.add(role)
+        return _Cur([])
 
     def password_set(self, role):
         return any(f"Identifier('{role}')" in s and "password" in s for s in self.sql)
@@ -68,8 +82,16 @@ class SetupRoles(unittest.TestCase):
             self.assertNotIn("from-the-cluster-before", p.read_text(), f"{r}'s file still holds the old cluster's line")
             self.assertEqual(p.stat().st_mode & 0o777, 0o600)
 
-    def test_s_role2_existing_roles_keep_their_passwords(self):
+    def test_s_role3_existing_roles_without_password_get_one(self):
+        # the cluster a first setup run left on 2026-11-18 (roles created, no passwords, old files kept)
         a = FakeAdmin(roles=["wp", "wp_owner", "wp_reviewer", *setup.LOGIN_ROLES])
+        setup._ensure_roles(a)
+        for r in setup.LOGIN_ROLES:
+            self.assertTrue(a.password_set(r), f"{r} still has no password")
+            self.assertNotIn("from-the-cluster-before", pathlib.Path(config.pgpass(r)).read_text())
+
+    def test_s_role2_existing_roles_keep_their_passwords(self):
+        a = FakeAdmin(roles=["wp", "wp_owner", "wp_reviewer", *setup.LOGIN_ROLES], with_pw=setup.LOGIN_ROLES)
         setup._ensure_roles(a)
         for r in setup.LOGIN_ROLES:
             self.assertFalse(a.password_set(r), f"{r}'s password was rotated")
