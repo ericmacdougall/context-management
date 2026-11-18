@@ -21,9 +21,15 @@ re-enabled ALWAYS afterwards; C4's appends go through the guard as the app role.
         removal: a link to an event being removed waits; a hold on any subject the removal judged (speaker, rescan
         link, the subject itself) waits and then reports the event as removed; a hold placed first withholds it
   E6  (review E F12) a repeated mark during a batch does not deadlock (mark takes the subject before the job)
-  B1-B4 (matcher budget m5 b1, DESIGN-NOTES "Matcher budget") a write refused for its matcher budget (WPM02), size
+  B1-B3 (matcher budget m5 b1, DESIGN-NOTES "Matcher budget") a write refused for its matcher budget (WPM02), size
         (WPM01) or the per-call limit (WPM03) leaves no events, quarantine or key row and is counted in write_refusals; the store bounds ciphertext
-        size; the erasure rescan finds a mention under the budget and fails closed (WPS24) on an over-budget legacy event
+        size; the erasure rescan finds a mention under the budget
+  B4-B8 (review H H3, Class B) an event the rescan cannot scan (over budget, oversize, unauthenticated ciphertext), also one
+        planted through wp_app with triggers on, is linked as 'unscannable', removed whole and the erasure completes; an
+        honest event survives; wp_app cannot update events; a legal hold still withholds an unscannable event
+  H16a, H16b, H6 (review H F16, H6) hold placement does no footprint work; the separate report is bounded (20 ids, a
+        count capped at 10,001), may fail without removing the hold and can be rerun; receipt id lists are bounded
+  H size constraints: proposal ciphertext at most 284 bytes; at most 64 open proposals per subject (WPS39)
 Runs only with WP_PG_LIVE=1 on the lab host. SCHEMA_UNDER_TEST names another schema.sql (failing-first).
 usage (on t2-dev, from WP_HOME/src): WP_PG_LIVE=1 ../venv/bin/python -m unittest tests.test_d3_pg -v"""
 import hashlib
@@ -357,7 +363,7 @@ class D3Store(unittest.TestCase):
         self.assertTrue(link_waited, "a rescan link committed while the removal of its event was in flight")
         self.assertEqual((out.get("batch"), out.get("link")), ("ok", "ok"))
         self.assertTrue(self.content_gone("e1e"))
-        self.assertNotIn("e1e", (out.get("hold") or {}).get("linked_removed_ids") or [], "the hold on C did not cover e")
+        self.assertNotIn("e1e", self.report_ids(out, "h-e1"), "the hold on C did not cover e")
         self.assertEqual(self.one("select count(*) from erasure_mentions where tenant_id=%s and subject_id='E1C' and event_id='e1e'", (T,)), (1,))
 
     def test_e2_hold_on_the_speaker_waits_and_reports_the_removal(self):
@@ -377,7 +383,7 @@ class D3Store(unittest.TestCase):
                 x.close()
         self.assertTrue(hold_waited, "a hold on the speaker landed while the removal it judged was in flight")
         self.assertTrue(self.content_gone("e2e"))
-        self.assertIn("e2e", (out.get("hold") or {}).get("linked_removed_ids") or [], "the hold did not record the removal")
+        self.assertIn("e2e", self.report_ids(out, "h-e2"), "the hold did not record the removal")
 
     def test_e3_hold_on_a_rescan_linked_subject_waits_and_reports(self):
         self.event("e3e", "E3B", ["E3A"])
@@ -397,7 +403,7 @@ class D3Store(unittest.TestCase):
             for x in (hold, c, lg):
                 x.close()
         self.assertTrue(hold_waited, "a hold on a rescan-linked subject landed while the removal it judged was in flight")
-        self.assertIn("e3e", (out.get("hold") or {}).get("linked_removed_ids") or [])
+        self.assertIn("e3e", self.report_ids(out, "h-e3"))
 
     def test_e4_hold_first_withholds_and_release_waits(self):
         self.event("e4a", "E4B", ["E4A"])
@@ -448,7 +454,7 @@ class D3Store(unittest.TestCase):
             for x in (hold, c, lg):
                 x.close()
         self.assertTrue(hold_waited)
-        self.assertIn("e5b", (out.get("hold") or {}).get("linked_removed_ids") or [])
+        self.assertIn("e5b", self.report_ids(out, "h-e5s"))
 
     def test_e6_repeated_mark_during_a_batch_does_not_deadlock(self):
         """Review E F12: a batch holds the subject FOR SHARE and later updates the job cursor; a repeated mark took the
@@ -606,15 +612,219 @@ class D3Store(unittest.TestCase):
         scanned, found = erasure.rescan(self.app, FixedKS(), j)
         self.assertEqual((scanned, found), (1, 1))
 
-    def test_b4_rescan_of_an_over_budget_legacy_event_fails_closed(self):
+    def test_b4_over_budget_legacy_event_is_removed_as_unscannable(self):
+        """Review H H3 (main's decision, Class B): an event the rescan cannot scan within budget is treated as a
+        mention: linked as 'unscannable', removed whole, and the erasure completes; an honest event survives."""
         from wp import erasure, mentions as M
         j = self.rescan_tenant("d3b4", "B4X", "Rosalind Okafor")
-        self.legacy_event("d3b4", "b4e", "B4Y", " ".join("1I1I1I" for _ in range(300)) + " Rosalind Okafor")
-        self.refused(lambda: erasure.rescan(self.app, FixedKS(), j), "WPM02")
-        self.assertEqual(self.one("select rescanned_xmax from erasure_jobs where job_id=%s", (j,)), (None,))
-        upto = self.one("select ident_xmax from erasure_jobs where job_id=%s", (j,))[0]
-        self.assertEqual(self.state(self.app, "select wp_erasure_rescan_done(%s, %s, %s)", (j, upto, M.matcher_id())), "WPS24",
-                         "the erasure completed without scanning the over-budget event")
+        self.legacy_event("d3b4", "b4e", "B4Y", " ".join("1I1I1I" for _ in range(300)))
+        self.legacy_event("d3b4", "b4h", "B4Z", "nothing about anyone here")
+        erasure.rescan(self.app, FixedKS(), j)
+        self.assertEqual(self.app.execute("select event_id, source from erasure_mentions where job_id=%s order by event_id", (j,)).fetchall(),
+                         [("b4e", "unscannable")])
+        self.assertIsNotNone(self.one("select rescanned_xmax from erasure_jobs where job_id=%s", (j,))[0], "the rescan did not complete")
+        self.cascade(j)
+        self.assertTrue(self.content_gone("b4e"))
+        self.assertFalse(self.content_gone("b4h"), "an honest event of another speaker was removed")
+        self.assertEqual(self.one("select count(*) from tombstones where job_id=%s and event_id='b4e'", (j,)), (1,))
+        self.assertEqual(self.state(self.app, "select wp_erasure_rescan_done(%s, %s, %s)",
+                                    (j, self.one("select ident_xmax from erasure_jobs where job_id=%s", (j,))[0], M.matcher_id())), "ok")
+
+    def plant(self, t, sid, eid, speaker, content):
+        """An event inserted DIRECTLY through wp_app's INSERT grant, events_guard on (review H F14): lease, digest, scan
+        version and matcher all valid, admission skipped."""
+        from wp import mentions as M
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array[%s])", (t, speaker))
+        epoch = self.app.execute("select epoch from wp_lease_acquire(%s::tenant_t, %s, 60, true, 'h14', 2000)", (t, "session:" + sid)).fetchone()[0]
+        mx = (self.one("select max_seq from identifier_epochs where tenant_id=%s", (t,)) or (0,))[0]
+        scan_v = self.one("select wp_secret_scan_version()")[0]
+        return self.state(self.app, "insert into events(tenant_id, session_id, seq, event_id, idem_key, req_hash, kind, subject_id, actor, "
+                          "trust_origin, ts_event, content_enc, content_digest, mentions, mention_scan_upto, mention_matcher, secret_scan, "
+                          "prev_hash, hash, lease_scope, lease_epoch) values (%s, %s, 1, %s, %s, 'rh', 'message', %s, 'user', 'user_typed', "
+                          "now(), %s, %s, '{}', %s, %s, %s, %s, 'hz', %s, %s)",
+                          (t, sid, eid, eid, speaker, content, sha(content), mx, M.matcher_id(), scan_v, "0" * 64, "session:" + sid, epoch))
+
+    def declared_job(self, t, subject, name):
+        from wp import mentions as M
+        h = M.subject_hmacs(FixedKS(), t, [name]).pop()
+        pid = self.propose(self.app, subject, h, rv=M.rule_version(), t=t)
+        self.assertEqual(self.state(self.r1, "select wp_identifier_approve(%s, %s, %s)", (pid, h, M.rule_version())), "ok")
+        return self.job(subject, t=t)
+
+    def test_b5_planted_over_budget_event_through_the_app(self):
+        """reviewH F14: no older matcher needed. A wp_app writer plants a validly sealed, over-budget event at scan
+        version 0 under the CURRENT matcher; the identifier is declared later. The rescan must not stall."""
+        from wp import erasure, keys as K, mentions as M
+        t = "d3b5"
+        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
+        over = " ".join("1I1I1I" for _ in range(300))
+        self.assertEqual(self.plant(t, "b5s", "b5e", "B5Y", K.seal(FixedKS.SUBJ_KEY, t, "B5Y", "b5e", over)), "ok")
+        self.assertEqual(self.plant(t, "b5h", "b5h", "B5Z", K.seal(FixedKS.SUBJ_KEY, t, "B5Z", "b5h", "plain words")), "ok")
+        j = self.declared_job(t, "B5X", "Rosalind Okafor")
+        erasure.rescan(self.app, FixedKS(), j)
+        self.assertEqual(self.app.execute("select event_id, source from erasure_mentions where job_id=%s", (j,)).fetchall(), [("b5e", "unscannable")])
+        self.cascade(j)
+        self.assertTrue(self.content_gone("b5e"))
+        self.assertFalse(self.content_gone("b5h"))
+
+    def test_b6_garbage_ciphertext_through_the_app(self):
+        """Ciphertext that does not authenticate (or is too short to) with the speaker's key present: unscannable,
+        removed; it must neither stall the rescan nor be skipped as if its speaker were erased."""
+        from wp import erasure, mentions as M
+        t = "d3b6"
+        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
+        self.assertEqual(self.plant(t, "b6s", "b6g", "B6Y", bytes(range(60))), "ok")
+        self.assertEqual(self.plant(t, "b6t", "b6t", "B6Y", b"short"), "ok")
+        j = self.declared_job(t, "B6X", "Rosalind Okafor")
+        erasure.rescan(self.app, FixedKS(), j)
+        self.assertEqual(sorted(self.app.execute("select event_id, source from erasure_mentions where job_id=%s", (j,)).fetchall()),
+                         [("b6g", "unscannable"), ("b6t", "unscannable")])
+
+    def test_b7_app_cannot_update_events(self):
+        self.event("b7e", "B7Y", [], t="d3b7")
+        self.assertEqual(self.state(self.app, "update events set content_enc = %s where tenant_id='d3b7' and event_id='b7e'", (b"x",)), "42501")
+        self.assertEqual(self.state(self.app, "update events set mention_scan_upto = 0 where tenant_id='d3b7'"), "42501")
+
+    def test_b8_hold_still_withholds_an_unscannable_event(self):
+        from wp import erasure, mentions as M
+        t = "d3b8"
+        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
+        self.assertEqual(self.plant(t, "b8s", "b8e", "B8Y", bytes(range(60))), "ok")
+        j = self.declared_job(t, "B8X", "Rosalind Okafor")
+        lg = self.legal("wp-b8-legal")
+        try:
+            erasure.place_hold(lg, t, "B8Y", "h-b8", "test")
+        finally:
+            lg.close()
+        erasure.rescan(self.app, FixedKS(), j)
+        self.cascade(j)
+        self.assertFalse(self.content_gone("b8e"), "a held speaker's unscannable event was removed")
+        self.assertEqual(self.one("select count(*) from erasure_withheld where job_id=%s and event_id='b8e'", (j,)), (1,))
+
+    # ------------------------------------------------------------------ review H F16 and H6: bounded reports
+    def bulk_removed(self, t, speaker, n, mention=None, job="bulk-job"):
+        """n events of `speaker` (mentioning `mention`) already removed by an earlier erasure: content null, tombstoned."""
+        ev = self.ev
+        ev.execute("set role wp_owner")
+        try:
+            ev.execute("insert into subjects(tenant_id, subject_id) values (%s, %s) on conflict do nothing", (t, speaker))
+            ev.execute("alter table events disable trigger events_guard")
+            ev.execute("insert into events(tenant_id, session_id, seq, event_id, idem_key, req_hash, kind, subject_id, actor, trust_origin, "
+                       "ts_event, content_enc, content_digest, mentions, prev_hash, hash, lease_scope, lease_epoch) "
+                       "select %s, 'bulk-' || %s, g, %s || '-' || lpad(g::text, 6, '0'), 'i' || g, 'rh', 'message', %s, 'user', 'user_typed', "
+                       "now(), null, 'd', %s, 'p', 'h' || g, 'session:bulk-' || %s, 1 from generate_series(1, %s) g",
+                       (t, speaker, speaker.lower(), speaker, [mention] if mention else [], speaker, n))
+            ev.execute("insert into tombstones(tenant_id, event_id, subject_id, job_id) select %s, %s || '-' || lpad(g::text, 6, '0'), %s, %s "
+                       "from generate_series(1, %s) g", (t, speaker.lower(), speaker, job, n))
+        finally:
+            ev.execute("alter table events enable always trigger events_guard")
+            ev.execute("reset role")
+
+    def report(self, hid):
+        lg = self.legal("wp-report")
+        try:
+            return lg.execute("select wp_hold_report(%s)", (hid,)).fetchone()[0]
+        finally:
+            lg.close()
+
+    def report_ids(self, out, hid):
+        """The ids of a hold's report (review H F16: placement no longer reports; the report is its own call)."""
+        if not isinstance(out.get("hold"), dict):
+            return []
+        return self.report(hid).get("linked_removed_ids") or []
+
+    def test_h16a_large_footprint(self):
+        t = "d3h16a"
+        self.bulk_removed(t, "H16S", 20000)
+        lg = self.legal("wp-h16a-legal")
+        try:
+            t0 = time.time()
+            placed = lg.execute("select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (t, "H16S", "h-h16a")).fetchone()[0]
+            place_s = time.time() - t0
+        finally:
+            lg.close()
+        self.assertEqual(placed.get("report_state"), "pending")
+        self.assertLess(place_s, 1.0, "placement did footprint work")
+        r = self.report("h-h16a")
+        self.assertEqual(len(r["linked_removed_ids"]), 20)
+        self.assertEqual(r["linked_removed"], 10001)
+        self.assertTrue(r.get("linked_removed_more"))
+        self.assertEqual(self.one("select report_state from legal_holds where hold_id='h-h16a'"), ("done",))
+
+    def test_h16b_report_failure_keeps_the_hold(self):
+        import psycopg
+        from wp import erasure
+        t = "d3h16b"
+        self.bulk_removed(t, "H16T", 20000)
+        lg = self.legal("wp-h16b-legal")
+        try:
+            lg.execute("select wp_hold_place(%s::tenant_t, %s, %s, 'test')", (t, "H16T", "h-h16b"))
+            lg.execute("set statement_timeout = '1ms'")
+            self.assertEqual(self.state(lg, "select wp_hold_report(%s)", ("h-h16b",)), "57014")
+            lg.execute("reset statement_timeout")
+        finally:
+            lg.close()
+        self.assertEqual(self.one("select released_at is null, report_state from legal_holds where hold_id='h-h16b'"), (True, "pending"))
+
+        class FailingReport:                             # the Python path: a report that fails leaves the hold, says pending
+            def __init__(self, c):
+                self.c = c
+
+            def execute(self, sql, args=()):
+                if "wp_hold_report" in sql:
+                    raise psycopg.errors.QueryCanceled("canceling statement due to statement timeout")
+                return self.c.execute(sql, args)
+
+            def __getattr__(self, name):
+                return getattr(self.c, name)
+        lg = self.legal("wp-h16b-legal2")
+        try:
+            r = erasure.place_hold(FailingReport(lg), t, "H16T", "h-h16b2", "test")
+        finally:
+            lg.close()
+        self.assertEqual((r.get("report_state"), r.get("report_error")), ("pending", "57014"))
+        self.assertEqual(self.one("select released_at is null from legal_holds where hold_id='h-h16b2'"), (True,))
+        self.assertEqual(len(self.report("h-h16b2")["linked_removed_ids"]), 20, "a rerun of the report works")
+
+    def test_h6_receipt_lists_are_bounded(self):
+        t = "d3h6"
+        ev = self.ev
+        ev.execute("set role wp_owner")
+        try:
+            ev.execute("insert into subjects(tenant_id, subject_id) values (%s, 'H6X'), (%s, 'H6Y') on conflict do nothing", (t, t))
+            ev.execute("alter table events disable trigger events_guard")
+            ev.execute("insert into events(tenant_id, session_id, seq, event_id, idem_key, req_hash, kind, subject_id, actor, trust_origin, "
+                       "ts_event, content_enc, content_digest, mentions, prev_hash, hash, lease_scope, lease_epoch) "
+                       "select %s, 'h6', g, 'h6-' || lpad(g::text, 5, '0'), 'i' || g, 'rh', 'message', 'H6Y', 'user', 'user_typed', "
+                       "now(), 'c'::bytea, 'd', array['H6X'], 'p', 'h' || g, 'session:h6', 1 from generate_series(1, 1200) g", (t,))
+        finally:
+            ev.execute("alter table events enable always trigger events_guard")
+            ev.execute("reset role")
+        j = self.job("H6X", t=t)
+        for _ in range(30):
+            if self.app.execute("select wp_erasure_cascade(%s, 100)", (j,)).fetchone()[0] == 0:
+                break
+        self.assertEqual(self.owner_state("update erasure_jobs set state = 'keys_destroyed' where job_id = %s", (j,)), "ok")
+        self.ev.execute("set role wp_owner")
+        try:
+            r = self.ev.execute("select wp_erasure_complete(%s, '{}'::jsonb, 'test')", (j,)).fetchone()[0]
+        finally:
+            self.ev.execute("reset role")
+        self.assertTrue(r.get("done"), r)
+        m = r["scope"]["mentions"]
+        self.assertEqual(len(m["other_speakers_removed"]), 1000)
+        self.assertEqual(m["other_speakers_removed_count"], 1200)
+        self.assertEqual(m["unscannable_removed"]["count"], 0)
+
+    def test_h_size_constraints(self):
+        self.assertEqual(self.owner_state("insert into identifier_proposals(tenant_id, proposal_id, subject_id, ident_hmac, ident_enc, rule_version, proposed_by) "
+                                          "values ('d3hs', 'p-big', 'S', 'h', %s, 'r', current_user)", (b"x" * 285,)), "23514")
+        self.assertEqual(self.owner_state("insert into identifier_proposals(tenant_id, proposal_id, subject_id, ident_hmac, ident_enc, rule_version, proposed_by) "
+                                          "values ('d3hs', 'p-ok', 'S', 'h', %s, 'r', current_user)", (b"x" * 284,)), "ok")
+        for i in range(64):
+            self.propose(self.app, "HSP", "hs%d" % i, t="d3hs2", pid="hsp-%d" % i)
+        self.assertEqual(self.state(self.app, "select wp_identifier_propose('d3hs2'::tenant_t, 'HSP', 'hsp-64', 'hs64', %s, %s)",
+                                    (b"sealed", self.RV)), "WPS39")
 
 
 class FixedKS:

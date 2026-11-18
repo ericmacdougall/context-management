@@ -141,7 +141,7 @@ class Tables(unittest.TestCase):
 
     def test_matcher_id_names_unicode_version_and_tables(self):
         mid = M.matcher_id()
-        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+(\.\d+){{6}}$")   # b: the budget (m5 b1)
+        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+(\.\d+){{7}}$")   # b: the budget (m5 b1; review H adds the token cap)
         di = hashlib.sha256((pathlib.Path(UCD_DIR) / f"default_ignorable-{UCD}.tsv").read_bytes()).hexdigest()[:12]
         self.assertIn(f":di{di}:", mid)
         self.assertEqual(M.label(), f"ident:{mid}:")
@@ -800,13 +800,280 @@ class F13CallBudget(unittest.TestCase):
         self.admitted([FLOOR_SHAPE] * 40)                # 4,893,760 keys
 
     def test_call_limits_named_in_the_matcher_id(self):
-        self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES, CALL_EVENTS, CALL_BYTES, CALL_KEYS)),
+        self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d.%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES, CALL_EVENTS, CALL_BYTES, CALL_KEYS, 64)),
                         M.matcher_id())
 
     def test_store_counts_the_call_code(self):
         sql = (HERE / "wp" / "schema.sql").read_text()
         self.assertIsNotNone(re.search(r"code text not null check \(code in \('WPM01', 'WPM02', 'WPM03'\)\)", sql), "write_refusals does not accept WPM03")
         self.assertIsNotNone(re.search(r"c not in \('WPM01', 'WPM02', 'WPM03'\)", sql), "wp_write_refused does not accept WPM03")
+
+
+TOKEN_CP = 64                       # review H H1: a token is at most 64 code points, written and as key (BUDGET.token_cp)
+CEILING = 64 * 2**20                # review H H1: one call holds at most about 46 MiB besides the fixed tables
+MAX_IDENTS, MAX_IDENT_BYTES = 64, 256
+
+
+def traced(fn):
+    """(result, peak traced bytes, seconds) of fn() (tables are loaded before, so only the call's own memory counts)."""
+    import time
+    import tracemalloc
+    tracemalloc.start()
+    t0 = time.perf_counter()
+    try:
+        out = fn()
+    finally:
+        peak = tracemalloc.get_traced_memory()[1]
+        tracemalloc.stop()
+    return out, peak, time.perf_counter() - t0
+
+
+class CanonicalSpy:
+    """Context manager: records the length of every string M.canonical() is asked to normalise."""
+
+    def __enter__(self):
+        self.orig, self.lengths = M.canonical, []
+
+        def spy(s):
+            self.lengths.append(len(s))
+            return self.orig(s)
+        M.canonical = spy
+        return self
+
+    def __exit__(self, *exc):
+        M.canonical = self.orig
+        return False
+
+
+class H13Resource(unittest.TestCase):
+    """DESIGN-NOTES "Review H" H1, H2 (F13): derived bytes are bounded by admitted bytes and one structural constant
+    (a token is at most TOKEN_CP code points); the worst admitted shapes hold less than CEILING."""
+
+    @classmethod
+    def setUpClass(cls):
+        M.key("warm up the tables")
+
+    def test_f13_shape_builds_no_readings(self):
+        # one 65,536-byte token with 4,096 readings: 6ddeca3 built 4,096 keys of 65,536 code points (518 MiB traced)
+        ks = CountingKS()
+        _, peak, _ = traced(lambda: M.scan(FakeConn({}), ks, T, ["I" * 12 + "a" * 65524]))
+        self.assertEqual(ks.total, 0, "readings of an over-long token were HMACed")
+        self.assertLess(peak, CEILING, "peak %.1f MiB" % (peak / 2**20))
+
+    def test_long_cluster_is_not_normalised(self):
+        # one cluster of 32,768 code points (a base and alternating combining classes): cut at TOKEN_CP, not normalised
+        M._CLUSTERS.clear()
+        with CanonicalSpy() as spy:
+            M.key_count("I" + "̖́" * 16383)
+        self.assertLessEqual(max(spy.lengths or [0]), 4 * TOKEN_CP, "a cluster longer than the token cap was normalised")
+
+    def test_over_long_token_has_no_keys(self):
+        self.assertIsNone(M._reading_count(M._tokens("a" * (TOKEN_CP + 1))[0]))
+        self.assertEqual(M._reading_count(M._tokens("a" * TOKEN_CP)[0]), 1)
+        self.assertEqual(M.key_count("a" * TOKEN_CP + " " + "b" * (TOKEN_CP + 1)), (2, 1))
+        self.assertEqual(M.windows("a" * TOKEN_CP + " " + "b" * (TOKEN_CP + 1)), {"a" * TOKEN_CP})
+
+    def test_count_equals_enumeration_with_over_long_tokens(self):
+        glyphs = ["I", "l", "1", "0", "a", "n", "m", "́", "​", "Ⅲ"]
+        r = random.Random(1609613)
+        for _ in range(200):
+            s = " ".join("".join(r.choice(glyphs) for _ in range(r.choice((1, 3, 30, 63, 64, 65, 70))))
+                         for _ in range(r.randint(1, 5)))
+            self.assertEqual(len(M._windows_at(s)), M.key_count(s)[1], repr(s[:40]))
+
+    def test_every_reading_has_its_key_length(self):
+        # the window-key bound (4 x TOKEN_CP + 3 code points) rests on this: a reading replaces one character by one
+        for g in M.both_readings():
+            for cl in (g, g + "́", g + "̖́"):
+                k, full, lit = M._cluster(cl)
+                self.assertTrue(all(len(x) == len(k) for x in full + lit), repr(cl))
+
+    def test_identical_events_peak(self):
+        # 1,000 identical events: every pending key carried 1,000 tags (123 MiB traced at 6ddeca3)
+        unit = " ".join("II" + c for c in "abcdefghjkmnpq")
+        n, k = M.key_count(unit)
+        ks = CountingKS()
+        _, peak, _ = traced(lambda: M.scan(FakeConn({}), ks, T, [unit] * min(CALL_EVENTS, CALL_KEYS // k)))
+        self.assertLessEqual(ks.max_batch, CHUNK)
+        self.assertLess(peak, CEILING, "peak %.1f MiB" % (peak / 2**20))
+
+    def test_cluster_cache_is_bounded_in_bytes(self):
+        limit = 64 * 1024
+        had = hasattr(M, "CLUSTER_CACHE_BYTES")
+        old = getattr(M, "CLUSTER_CACHE_BYTES", None)
+        M.CLUSTER_CACHE_BYTES = limit
+        M._CLUSTERS.clear()
+        try:
+            for i in range(2000):                        # about 2,000 distinct clusters (128 bases x 16 mark runs)
+                M.key_count(chr(0x100 + i % 128) + "".join(chr(0x300 + (j * 7 + i // 128) % 0x70) for j in range(29)))
+            size = sum(sys.getsizeof(c) + sum(sys.getsizeof(x) for x in (v[0],) + tuple(v[1]) + tuple(v[2]))
+                       for c, v in M._CLUSTERS.items())
+            self.assertLessEqual(size, limit + 4096, "cluster cache %d bytes over a limit of %d" % (size, limit))
+        finally:
+            if had:
+                M.CLUSTER_CACHE_BYTES = old
+            else:
+                del M.CLUSTER_CACHE_BYTES
+            M._CLUSTERS.clear()
+
+    def test_token_cap_named_in_the_matcher_id(self):
+        self.assertTrue(M.matcher_id().endswith(".%d.%d.%d.%d" % (CALL_EVENTS, CALL_BYTES, CALL_KEYS, TOKEN_CP)), M.matcher_id())
+
+
+class H15Identifiers(unittest.TestCase):
+    """DESIGN-NOTES "Review H" H4 (F15): identifier count and bytes are refused before any normalisation; an over-long
+    token is refused; capacity saturates."""
+
+    @classmethod
+    def setUpClass(cls):
+        M.key("warm up the tables")
+
+    @staticmethod
+    def names(n):
+        return ["Rosalind Okafor" + chr(97 + i // 26) + chr(97 + i % 26) for i in range(n)]
+
+    def refused_unnormalised(self, idents):
+        with CanonicalSpy() as spy:
+            try:
+                M.check_identifiers(idents)
+            except M.IdentifierRefused as e:
+                self.assertEqual(spy.lengths, [], "normalised before the size refusal")
+                return str(e)
+        self.fail("accepted")
+
+    def test_identifier_count(self):
+        why = self.refused_unnormalised(self.names(MAX_IDENTS + 1))
+        self.assertIn(str(MAX_IDENTS), why)
+        self.assertEqual(len(M.check_identifiers(self.names(MAX_IDENTS))), MAX_IDENTS)
+
+    def test_identifier_bytes(self):
+        long = "b" * 128 + " " + "c" * 128                                           # 257 bytes
+        why = self.refused_unnormalised([long])
+        self.assertIn(str(MAX_IDENT_BYTES), why)
+        self.assertIsNotNone(M.identifier_problem(long))                             # the reviewer path too
+        self.assertIsNone(M.identifier_problem("b" * 60 + " " + "c" * 60))
+
+    def test_over_long_token_refused(self):
+        self.assertIsNotNone(M.identifier_problem("b" * (TOKEN_CP + 1)))
+        self.assertIsNone(M.identifier_problem("b" * TOKEN_CP))
+
+    def test_capacity_saturates(self):
+        self.assertLessEqual(M.capacity("I" * 60), 9 * CAP, "capacity computed the whole product")
+        self.assertGreater(M.capacity("I" * 13), CAP)
+        self.assertIsNotNone(M.identifier_problem("I" * 13))
+
+
+OVER = CRAFTED                                       # 300 tokens, about 1.39 million keys: over its budget of 153,600
+
+
+class H14Unscannable(unittest.TestCase):
+    """DESIGN-NOTES "Review H" H3 (F14, Class B): the erasure rescan classifies an event it cannot scan within budget as
+    unscannable, by the count alone (no key enumerated), instead of raising; admitted text is never unscannable."""
+
+    @classmethod
+    def setUpClass(cls):
+        M.key("warm up the tables")
+
+    def classify(self, items, hmacs, ks=None):
+        uns = []
+        try:
+            got = M.stream_matches(ks or CountingKS(), T, items, hmacs, unscannable=uns)
+        except TypeError as e:
+            self.fail(f"stream_matches cannot classify unscannable events: {e}")
+        except M.WriteRefused as e:
+            self.fail(f"an unscannable event raised {e.code} instead of being classified")
+        return got, uns
+
+    def test_over_budget_and_oversize_are_classified_without_keys(self):
+        ks = CountingKS()
+        near = "x " + NAME
+        got, uns = self.classify([(0, OVER), (1, near), (2, "a" * (MAX_BYTES + 1))], hm(NAME), ks)
+        self.assertEqual(got, {1})
+        self.assertEqual(uns, [0, 2])
+        self.assertLessEqual(ks.total, M.key_count(near)[1], "keys of an unscannable event were HMACed")
+
+    def test_admitted_text_is_never_unscannable(self):
+        r = random.Random(16096014)
+        glyphs = ["I", "l", "i", "1", "0", "o", "a", "Ⅲ", "́", " ", " "]
+        texts = [PROSE, LEGAL, CODE, TABLE, CAPS_I[:400], FLOOR_SHAPE, "a" * 70 + " " + NAME]
+        texts += ["".join(r.choice(glyphs) for _ in range(r.randint(1, 120))) for _ in range(200)]
+        texts = [x for x in texts if self.admits(x)]
+        self.assertGreater(len(texts), 150)
+        _, uns = self.classify(list(enumerate(texts)), hm(NAME))
+        self.assertEqual(uns, [])
+
+    @staticmethod
+    def admits(x):
+        try:
+            M.admit([x])
+            return True
+        except M.WriteRefused:
+            return False
+
+    def test_without_a_list_it_still_raises(self):
+        with self.assertRaises(M.WriteRefused):
+            M.stream_matches(CountingKS(), T, [(0, OVER)], hm(NAME))
+
+
+def _fn_body(sql, name):
+    m = re.search(rf"create function {name}\(.*?\nend \$\$;", sql, re.S)
+    return m.group(0) if m else ""
+
+
+class H14Schema(unittest.TestCase):
+    """DESIGN-NOTES "Review H" H1, H3, H5, H6, H7: the store-side bounds and rules, read from the schema."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.sql = (HERE / "wp" / "schema.sql").read_text()
+
+    def has(self, pat, why):
+        self.assertIsNotNone(re.search(pat, self.sql, re.S), why)
+
+    def test_python_only_sizes_are_sql_constraints(self):
+        self.has(r"constraint inbox_payload_size check \(octet_length\(payload_enc\) <= 65564\)", "inbox payload unbounded")
+        self.has(r"constraint analyst_jobs_result_size check \(result_enc is null or octet_length\(result_enc\) <= 65564\)", "job result unbounded")
+        self.has(r"constraint identifier_proposals_size check \(octet_length\(ident_enc\) <= 284\)", "proposal ciphertext unbounded")
+        self.assertIn("WPS39", _fn_body(self.sql, "wp_identifier_propose"), "open proposals per subject unbounded")
+
+    def test_events_are_append_only_for_the_app(self):
+        # verified, not assumed (H3): only an insert can put content in events, and only the cascade changes it
+        for g in re.findall(r"grant ([^;]*?) to ([^;]*);", self.sql, re.S):
+            privs, rest = g[0].split(" on ", 1) if " on " in g[0] else (g[0], "")
+            if "wp_app" in g[1] and "update" in privs and not rest.startswith("function"):
+                self.assertNotRegex(rest, r"\bevents\b", "wp_app may update events")
+        self.assertEqual(set(re.findall(r"update events set ([a-z_]+ = [a-z]+)", self.sql)), {"content_enc = null"})
+
+    def test_unscannable_is_a_mention_source(self):
+        self.has(r"source in \('write', 'rescan', 'unscannable'\)", "erasure_mentions has no unscannable source")
+        self.has(r"grant execute on function [^;]*wp_erasure_add_unscannable\(text, text\[\]\)[^;]* to wp_app", "no unscannable link for the runner")
+        self.assertNotIn("CANNOT COMPLETE", self.sql, "the receipt still says such an erasure cannot complete")
+        self.assertIn("'unscannable_removed'", self.sql)
+
+    def test_hold_placement_does_no_footprint_work(self):
+        body = _fn_body(self.sql, "wp_hold_place")
+        self.assertNotIn("array_agg", body)
+        self.assertNotIn("count(", body)
+        self.assertIn("pg_current_snapshot()", body)
+        self.has(r"removed_xid xid8 not null default pg_current_xact_id\(\)", "tombstones carry no removal xid")
+        self.has(r"grant execute on function [^;]*wp_hold_report\(text\)[^;]* to wp_legal", "no separate hold report")
+        report = _fn_body(self.sql, "wp_hold_report")
+        self.assertIn("limit 20", report)
+        self.assertIn("limit 10001", report)
+        self.assertIn("pg_visible_in_snapshot", report)
+
+    def test_receipt_id_lists_are_bounded(self):
+        body = _fn_body(self.sql, "wp_erasure_complete")
+        for key in ("other_speakers_removed", "unscannable_removed"):
+            m = re.search(rf"'{key}', (.{{0,700}})", body, re.S)
+            self.assertIsNotNone(m, key)
+            self.assertIn("limit 1000", m.group(1), f"{key} aggregates every id")
+
+    def test_minors(self):
+        self.assertNotIn("one lock order everywhere", self.sql)
+        self.assertEqual(M.key("AB-1001"), M.key("AB/1001"))
+        self.assertTrue(any("AB-1001" in x for x in M.OVER_MATCH), "separator collisions are not catalogued")
+        self.assertIn("AB-1001", self.sql, "the receipt does not state separator collisions")
 
 
 if __name__ == "__main__":
