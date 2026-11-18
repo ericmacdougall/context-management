@@ -1,5 +1,5 @@
 # t2-dev, PG 16.15 (image 933463a6c8eb), container emlab2-policyfix-pg; home paths shown as ~
-# RED (4.4 migration), tree o-red-mig2 , o_reset first: sh kit/run.sh o-red-mig2 t -v tests.test_review3_pg.Review3Rollback
+# RED (4.4 migration), tree o-red-mig2 {"commit": "7464493502962afb48f5c62c7beaf9bc4eea6733", "dirty": true, "thresholds_commit": "d05d7315d0784b0d2dc54dba9752f2f23d7ea0a1", "tree_sha256": "307bab958304d8e4a294b8e82a2a57798974c22305e5effb0c2fc297baf45111", "tests_from": "ae644df6116c56778898b851db71bf2bb7523541"}, o_reset first: sh kit/run.sh o-red-mig2 t -v tests.test_review3_pg.Review3Rollback
 test_44_forward_creates_the_evictor_role (tests.test_review3_pg.Review3Rollback.test_44_forward_creates_the_evictor_role)
 FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where ... FAIL
 test_44_rollback_gives_the_old_engine_its_advisory_lock (tests.test_review3_pg.Review3Rollback.test_44_rollback_gives_the_old_engine_its_advisory_lock)

@@ -1,5 +1,4 @@
 # sha256 of the staged logs (as committed) and of DEV result documents kept on t2-dev (~/emlab2-16096/policyfix/runs/...)
-a9e069020c162d57348cb05f62a21b7bdbaf7f535477c5fc472f5b14993b0af2  MANIFEST-policy-owner-reruns.txt
 49bbf497d9a845b318660d45ec8555427fb7fed390e03895673ee12caf35fd66  batch_o4.guard
 7c01a6743d09d86ca5b593cdda75ef22e3be5d17c4a93109b8dca8f0b877b353  batch_o5.guard
 905f8b0f207739b3fc07976aa75a4e67e4a006858eaeb5f0f69865f8b3f52f46  batch_o6.guard
@@ -15,7 +14,8 @@ e59c57e8203b0b8ef76994a6d0db5b40d4c4ab80763fef9a6aef22e533e54d59  dev_s2_088ab4c
 af6f973609362f233a55c47921aa971560946e674d8a04a4f5bac99c546ae663  dev_verify_088ab4c_VOID.out
 6c8dc16a44a3e31f3aeca708cbdfa104c277ba536e6cad49017e6fd9ab621740  dev_verify_ae644df.out
 e6eab3766077281c0ff48132b5c3e23865c3d257e1958f0823d9bc30c2bed26a  mem_green_7464493.out
-136c8f844c0e794ff947c1223c7003d953bfd1bcc039cfff670564742db4c5ad  r3_rollback_green_ae644df.out
+b9132f1817e3d31edcf6f1c395b2af46787585e073111af5e3a711577fb92a88  mem_green_ae644df.out
+3527a6c5e7c08d918221999dd4085cac63b5c8eb63b4e539ec72320eaf612277  r3_rollback_green_ae644df.out
 f1dd9c12840dff68dd21d13146edd2b66ca997eb92c9447272132ffdbdcfac27  rerun_delta1_pg_red_a2d65fd.classified.txt
 d0f4173cd2a8cbfffa815040f8c7ea089ca706296ccf5d9f4077516e7d0a64c5  rerun_delta1_pg_red_a2d65fd.out
 6454beb3dda5dec780d86a096f6e22d18f9e1e0561b557ba3b10568327434c74  rerun_delta1_pg_red_ea4677a.classified.txt
@@ -61,7 +61,7 @@ a282f0f27bf64344a82721bb44c43b4378a146f54c9b0a202766210de55dbea3  s44_ctl_sharel
 2cb266dd61b260c48166fbdcf9e4dd6ee83a3a0e08715b08b78f71e38ad4f412  s44_fence_red_8547b27.out
 5fa258172fa97799dd8596716305e3626da9c9283e024f0b5b990b0c0d2e17b3  s44_mig_exp_red_7464493.out
 c1fd78f19b489ffe66693c566babeb602a948987ec7d783116300321c50b9f80  s44_mig_tests_red_7464493.classified.txt
-f52dc1b9dba27dd391ce1582b737c8719a4463a320e3a2c91851c02c99e41c26  s44_mig_tests_red_7464493.out
+0b50302fb0148d7fa1635e12abb588256a638beb9e8e01551fb8680a7b939f09  s44_mig_tests_red_7464493.out
 2a014d993b14aaff80408789e7d768e7107c96c145fc146b1ffaa1bed6e55cdb  s44_mig_tests_red_7464493_SPOILED.out
 8807d3fa2540eb33091403e86272da048eb5c38286d8ee36ccce9ce5622d7ae7  s44_pg8_green_088ab4c.out
 3b270cc2affa3299e425b50185e1dc926bd4161da939275731568ba78e1e97df  s44_pg8_green_7464493.out
@@ -78,20 +78,14 @@ b2fe016d0078943a9a26c40998a8856fcf66bf50635b7f2ec5ced58be04f1c2f  ~/emlab2-16096
 6c3f55be09a1ebdf01e1e722d35f18ada51db08f2b6f33a98565722b7e23f931  ~/emlab2-16096/policyfix/runs/s1-exp/src/results/DEV.e6_policy_format.items.6c3f55be09a1ebdf.jsonl.gz
 47a2839d220305932ddbb0c1af3f75b9962015051473430357366b2ce0f65708  ~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.pg_diff.47a2839d22030593.json
 a9364cc7e0f3de6a88503d5c1297a32457a12b03a4a60731bb1304916c2e0a5e  ~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.pg_diff.items.a9364cc7e0f3de6a.jsonl.gz
-47a2839d220305932ddbb0c1af3f75b9962015051473430357366b2ce0f65708  ~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.pg_diff.47a2839d22030593.json
-a9364cc7e0f3de6a88503d5c1297a32457a12b03a4a60731bb1304916c2e0a5e  ~/emlab2-16096/policyfix/runs/s1-green/src/results/DEV.pg_diff.items.a9364cc7e0f3de6a.jsonl.gz
 0110936f20f5291a70a1116edc9d23ae4be6d87bcc8708b30fd3f3d4f8488209  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.b3_pg.0110936f20f5291a.json
 61f359e782c96de7b4205ffdd0556647949c2dd8ea4274812f71ebc2e21df6fc  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.b3_pg.items.61f359e782c96de7.jsonl.gz
-42f65754d5689388ad2187365b7dbd4325d7bb4372e2f1d294a7f41fefed1df8  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.mig_rehearsal.42f65754d5689388.json
-7830754ea5c36199e6599821ce01d4aef667a697dddbaf82c7427b4c03cb446a  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.mig_rehearsal.items.7830754ea5c36199.jsonl.gz
 42f65754d5689388ad2187365b7dbd4325d7bb4372e2f1d294a7f41fefed1df8  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.mig_rehearsal.42f65754d5689388.json
 7830754ea5c36199e6599821ce01d4aef667a697dddbaf82c7427b4c03cb446a  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.mig_rehearsal.items.7830754ea5c36199.jsonl.gz
 dd8fc825681d7f309530e0172413bcbd7f71ab4e7e22038651e40c2839246323  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.s2_sessions.dd8fc825681d7f30.json
 59cfd3dbd2ad3492936ac2c68f7b04f1e49fe93d65a98f467d71c6081000afa5  ~/emlab2-16096/policyfix/runs/o-088a/src/results/DEV.s2_sessions.items.59cfd3dbd2ad3492.jsonl.gz
 e6280fd623404f23fa7f55670b72c1e88ca466592812d45d2b3ca82db11b2f2d  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.b3_pg.e6280fd623404f23.json
 72674ea304b2f91d5e0e6c6e214054ee7ebb49c79e35408bc417e4954e291099  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.b3_pg.items.72674ea304b2f91d.jsonl.gz
-e20c6dfb5474dd4a847f7110a75331e59abb57939cfa4bf5bb67b2ad94846b4b  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.mig_rehearsal.e20c6dfb5474dd4a.json
-b413a571c94bd5eedbdf1c743b1555112ad461716b98c7c501d2f1914ae8a6af  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.mig_rehearsal.items.b413a571c94bd5ee.jsonl.gz
 e20c6dfb5474dd4a847f7110a75331e59abb57939cfa4bf5bb67b2ad94846b4b  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.mig_rehearsal.e20c6dfb5474dd4a.json
 b413a571c94bd5eedbdf1c743b1555112ad461716b98c7c501d2f1914ae8a6af  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.mig_rehearsal.items.b413a571c94bd5ee.jsonl.gz
 0b02ed2a1977ec9875d6bbee108fc028e389ed96be55e8b8207cc760682c939c  ~/emlab2-16096/policyfix/runs/o-ae64/src/results/DEV.s2_sessions.0b02ed2a1977ec98.json

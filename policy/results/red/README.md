@@ -6,9 +6,9 @@ credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password UR
 
 ## S1 (the final review's P1-P4 merged) and FINAL-JUDGMENT.md 4.4, t2-dev, 2026-11-18
 
-The fixer's S1 runs (`s1_*`) were never committed before; the policy owner's reruns (`rerun_*`, `s44_*`, `r3_*`, `dev_*`) ran in
-exact-commit trees built by `git archive` (sha256 of each tar checked on both ends; the stamp JSON of the tree is in each log's
-header). A lab session token that one assertion printed (`s44_fence_red_8547b27.*`) is replaced by `<lab session token
+The fixer's S1 runs (`s1_*`) were never committed before; the policy owner's reruns (`rerun_*`, `s44_*`, `r3_*`, `mem_*`, `dev_*`) ran in
+exact-commit trees built by `git archive` (sha256 of each tar checked on both ends; the stamp JSON of the tree,
+`tests_from` included, is in the header of at least one log per tree). A lab session token that one assertion printed (`s44_fence_red_8547b27.*`) is replaced by `<lab session token
 redacted>`. Each log's first two lines say what ran, on which tree and commit, and with which command. A red log has a
 `.classified.txt` beside it (kit/o-classify.py): every failure and error with its assertion text, split into behavioural assertions,
 import or undefined-function errors, and liveness or vacuity failures; only behavioural assertions count as failing-first evidence.
@@ -32,11 +32,14 @@ liveness failures, and "no lock trace recorded" are listed in the `.classified.t
 | 4.4 fences | `s44_fence_red_8547b27.out` | 8547b27 + 0046ef6 tests | FAILED (failures=4): open_session, submit, explain and the tenant's submits were not refused (None != '55P03') while a revocation evicted. |
 | 4.4 migration | `s44_mig_tests_red_7464493.out`; `s44_mig_exp_red_7464493.out` | 7464493 + ae644df tests; 7464493 exp.mig_rehearsal | FAILED (failures=2): forward on a cluster without dc_evictor (42704), rollback leaves the old engine without its advisory lock; the rehearsal stops at "permission denied for function pg_advisory_xact_lock". `s44_mig_tests_red_7464493_SPOILED.out` (0046ef6 tests) is NOT evidence: its forward test dropped dc_evictor and 6 later setUps errored; ae644df restores the role. |
 | 4.4 broken variants | `s44_ctl_sharelock_7464493.out`, `s44_ctl_refused_088ab4c.out` | 7464493 without the evictor's ShareLock filter; 088ab4c with dc._xlock_caller's eviction unconditional | FAILED (1, "the queued revoker was evicted"; 2, "a refused revoker evicted the holder"): the tests catch both variants. |
-| Green, 4.4 | `s44_pg8_green_7464493.out` (Ran 140 OK), `mem_green_7464493.out` (Ran 183 OK), `s44_pg8_green_088ab4c.out` (Ran 145 OK), `s44_pg8_green_ae644df.out` (Ran 145 OK), `r3_rollback_green_ae644df.out` (Ran 7 OK) | 7464493, 088ab4c, ae644df | OK |
+| Green, 4.4 | `s44_pg8_green_7464493.out` (Ran 140 OK), `mem_green_7464493.out` (Ran 183 OK), `s44_pg8_green_088ab4c.out` (Ran 145 OK), `s44_pg8_green_ae644df.out` (Ran 145 OK), `r3_rollback_green_ae644df.out` (Ran 7 OK), `mem_green_ae644df.out` (in-memory and evidence suites, no database, Ran 183 OK) | 7464493, 088ab4c, ae644df | OK |
 
 DEV seeds (development observations, not proof):
 - e816310 (fixer run s1-green): `s1_dev_s2_e816310.out` PASS, `s1_dev_b3_e816310.out` PASS (1031.7 s), and a COMPLETE pg_diff,
   `s1_dev_pgdiff_e816310.out`: PASS, 2597.7 s, 1,454,803 rows, lowest free 17042204 KiB. At 8547b27: e2, e3, e5, e6 PASS.
+- Every o6 log (`r3_rollback_green_ae644df.out`, `s44_pg8_green_ae644df.out`, `dev_*_ae644df.out` except the o5 VOID b3) ran after
+  I capped my DEV container's WAL (ALTER SYSTEM max_wal_size 64MB, min_wal_size 32MB; pg_wal 352 MB -> 64 MB). ASSUMPTION: WAL
+  sizing changes checkpoint frequency, not results. The log headers do not say so; this line does.
 - 088ab4c and ae644df (code identical in pol/, exp/, ops/, verify/): mig_rehearsal PASS, s2_sessions PASS (1860 rows, 0 accepted
   attacks) at both. b3_pg is VOID three times (`dev_b3_088ab4c_VOID.out`, `dev_b3_ae644df_VOID_o5.out`, `dev_b3_ae644df_VOID_o6.out`):
   each time my watcher stopped the container during the idem_unprotected control; the nine scenarios and the other two controls had
