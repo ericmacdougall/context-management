@@ -570,4 +570,6 @@ if __name__ == "__main__":
     elif sys.argv[1:2] == ["peer"]:
         peer(sys.argv[2])
     else:
+        from exp import stopsig
+        stopsig.install()                       # review D2: a stop runs the finally cleanup
         sys.exit(main(int(sys.argv[1]) if len(sys.argv) > 1 else 5))

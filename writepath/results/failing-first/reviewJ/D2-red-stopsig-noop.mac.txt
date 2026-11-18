@@ -1,0 +1,12 @@
+# tree: writepath/ at 5811368 (dirty: 9 paths)
+# command: python3 results/failing-first/harness/red_with.py . exp/stopsig.py @~/.agent-harness/work/73716864-6b3b-4deb-94ef-8ed2c8432e4a/agent-a5bed86994269066b/stopsig_noop.py tests.test_stopsig
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file exp/stopsig.py <- broken variant stopsig_noop.py (sha256 2aaeac42875bd97e); tests: current; python3 -m unittest tests.test_stopsig
+ERROR: test_sg3_orchestrators_install_it (tests.test_stopsig.StopSignal)
+FileNotFoundError: [Errno 2] No such file or directory: '/private<copy>/results/failing-first/harness/seal_uids_e2e.py'
+FAIL: test_sg1_term_runs_finally (tests.test_stopsig.StopSignal)
+AssertionError: None != 'cleanup ran'
+FAIL: test_sg2_second_term_does_not_interrupt_cleanup (tests.test_stopsig.StopSignal)
+AssertionError: None != 'cleanup ran'
+Ran 3 tests in 0.981s
+FAILED (failures=2, errors=1)

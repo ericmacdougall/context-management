@@ -1,0 +1,15 @@
+test_sg1_term_runs_finally (tests.test_stopsig.StopSignal) ... ok
+test_sg2_second_term_does_not_interrupt_cleanup (tests.test_stopsig.StopSignal) ... ok
+test_sg3_orchestrators_install_it (tests.test_stopsig.StopSignal) ... ok
+test_dr1_starts_at_12_gb (tests.test_live_chain_disk.ChainDisk) ... skipped 'needs timeout and pgrep'
+test_dr2_refuses_at_9_gb (tests.test_live_chain_disk.ChainDisk) ... skipped 'needs timeout and pgrep'
+test_dr2b_exact_boundary (tests.test_live_chain_disk.ChainDisk) ... skipped 'needs timeout and pgrep'
+test_dr3_stops_at_8_gb_during_a_step (tests.test_live_chain_disk.ChainDisk) ... skipped 'needs timeout and pgrep'
+test_dr5_grouped_step_runs_nothing_after_the_stop (tests.test_live_chain_disk.ChainDisk) ... skipped 'needs timeout and pgrep'
+test_dr6_watermark_line_voids_the_step (tests.test_live_chain_disk.ChainDisk) ... skipped 'needs timeout and pgrep'
+test_dr4_recreated_node_watermarks (tests.test_live_chain_disk.NodeWatermarks) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 2.513s
+
+OK (skipped=6)
