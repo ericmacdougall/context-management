@@ -107,7 +107,17 @@ def _timed(v):
 
 
 def _times(R):
+    """(mode, window, t_req, t_resp) when the life's run window and transition times are finite epoch times in order, else None."""
+    try:
+        return _times_or_raise(R)
+    except Exception:   # any shape of metadata: no times, so no raw figure is accepted (review 11 F25)
+        return None
+
+
+def _times_or_raise(R):
     mode = R.get("mode")
+    if mode not in ("down", "up"):
+        return None
     ev = (R.get("exp2") or {}).get("events") if isinstance(R.get("exp2"), dict) else None
     ev = ev if isinstance(ev, dict) else {}
     tr = R.get("start_basic" if mode == "down" else "start_trial")
@@ -118,17 +128,37 @@ def _times(R):
     return mode, window, t_req, t_resp
 
 
+class Unreadable(object):
+    """A raw file that exists but could not be read or decoded (review 11 F25): present, never usable."""
+
+    def __init__(self, reason):
+        self.reason = reason
+
+
+# The file whose existence decides whether a source's stored figures may stand (review 11 F25): its key file. Once it exists
+# (readable or not), the source's paths are deleted and only a completed derivation puts figures back.
+KEY_FILE = {"poll": "poll", "rows": "rows", "rows+oracle": "oracle"}
+
+
 def derive(raw, mode, window, t_req, t_resp):
     """Every figure each raw source rebuilds, from typed rows only -> {source: {"figures": {path: value}} or {"error": reason}}.
-    raw: {"rows": list or None, "poll": list or None, "oracle": dict or None}. JSON-serialisable (load caches it per file)."""
+    raw: {"rows": list, "poll": list, "oracle": dict, None when the file does not exist, or Unreadable}. A source whose key file
+    exists always gets an entry; any failure is an "error" entry, never an exception. JSON-serialisable (load caches it per file)."""
     out, W = {}, None
-    if raw.get("rows") is not None:
+    if isinstance(raw.get("rows"), Unreadable):
+        W = observe.Unparsed(("rows",), raw["rows"].reason)
+    elif raw.get("rows") is not None:
         try:
             W = observe.parse_work(raw["rows"], window)
-        except observe.Unparsed as e:
-            W = e
+        except Exception as e:   # any failure to type the rows is that source's error (review 11)
+            W = e if isinstance(e, observe.Unparsed) else observe.Unparsed(("rows",), "%s: %s" % (type(e).__name__, e))
     for name, src in RAW_SOURCES.items():
-        if mode not in src["modes"] or any(raw.get(k) is None for k in src["needs"]):
+        if mode not in src["modes"] or raw.get(KEY_FILE[name]) is None:
+            continue
+        unusable = [k for k in src["needs"] if raw.get(k) is None or isinstance(raw.get(k), Unreadable)]
+        if unusable:
+            out[name] = {"error": "%s: %s" % (name, "; ".join(
+                ("%s file absent" % k) if raw.get(k) is None else ("%s file unreadable: %s" % (k, raw[k].reason)) for k in unusable))}
             continue
         try:
             if name == "poll":
@@ -150,44 +180,56 @@ def derive(raw, mode, window, t_req, t_resp):
                     f = observe.correctness(W, *observe.oracle_from_file(raw["oracle"]))
                 figs = {("exp2", k): v for k, v in f.items()}
             out[name] = {"figures": [[list(p), v] for p, v in figs.items()]}
-        except (observe.Unparsed, ArithmeticError, TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
-            out[name] = {"error": "%s does not parse: %s" % (name, e)}
+        except Exception as e:   # any failure is this source's error; the figures stay absent (review 11 F25)
+            out[name] = {"error": "%s does not parse: %s" % (name, e) if isinstance(e, observe.Unparsed)
+                         else "%s could not be derived: %s: %s" % (name, type(e).__name__, e)}
     return out
 
 
-def apply_derived(R, derived):
-    """Delete every declared path of every source whose raw files exist, then place the rebuilt figures (review 10 F21)."""
+def apply_derived(R, derived, present, mode):
+    """Reviews 10 F21 and 11 F25. For each source of the life's direction: when its key file does not exist and the source is
+    declared "keep", the stored figures stand (labelled by provenance); in EVERY other case its declared paths are deleted, and
+    only a completed derivation puts figures back. `present` is the explicit existence of each raw file, never inferred from
+    `derived`: a derivation that did not run or did not complete leaves the figures absent and the reason in _raw_check."""
     notes, built, stored_only = R["_raw_check"], R["_rebuilt"], R["_stored_only"]
-    mode = R.get("mode")
     for name, src in RAW_SOURCES.items():
-        if mode not in src["modes"]:
+        if mode in ("down", "up") and mode not in src["modes"]:
             continue
-        if name not in derived and src["missing"] == "keep":
+        exists = bool(present.get(KEY_FILE[name]))
+        if not exists and src["missing"] == "keep":
             stored_only.append(name)
             continue
         for p in src["paths"]:
             _drop(R, p)
         got = derived.get(name)
-        if got is None:
-            notes[name] = "no %s file: these figures are not accepted without it" % "+".join(src["needs"])
-        elif "error" in got:
-            notes[name] = got["error"]
-        else:
+        if isinstance(got, dict) and "figures" in got and "error" not in got:
             for p, v in got["figures"]:
                 _place(R, tuple(p), v)
             built.append(name)
+        elif isinstance(got, dict) and "error" in got:
+            notes[name] = got["error"]
+        elif not exists:
+            notes[name] = "no %s file: these figures are not accepted without it" % KEY_FILE[name]
+        else:
+            notes[name] = "%s file present but its figures were not derived (%s): not accepted" % (
+                KEY_FILE[name], notes.get("life") or notes.get("files") or "derivation did not run")
 
 
-def rebuild(R, raw):
-    """Rebuild every raw-sourced figure of life R from in-memory raw files (see RAW_SOURCES). Mutates R."""
+_BAD_TIMES = "run window or transition times are not finite epoch times: no raw figure is accepted"
+
+
+def rebuild(R, raw, present=None):
+    """Rebuild every raw-sourced figure of life R from in-memory raw files (see RAW_SOURCES). Mutates R. `present` (raw file ->
+    exists) defaults to "every non-None entry of raw exists"."""
     R["_raw_check"], R["_rebuilt"], R["_stored_only"] = {}, [], []
+    present = {k: raw.get(k) is not None for k in ("rows", "poll", "oracle")} if present is None else present
     t = _times(R)
     if t is None:
-        R["_raw_check"]["life"] = "run window or transition times are not finite epoch times: no raw figure is accepted"
-        apply_derived(R, {})
+        R["_raw_check"]["life"] = _BAD_TIMES
+        apply_derived(R, {}, present, R.get("mode"))
         return R
     mode, window, t_req, t_resp = t
-    apply_derived(R, derive(raw, mode, window, t_req, t_resp))
+    apply_derived(R, derive(raw, mode, window, t_req, t_resp), present, mode)
     return R
 
 
@@ -214,54 +256,109 @@ def provenance(name, R):
     return "from stored figure, raw not available: " + "; ".join("%s (%s)" % (", ".join(sorted(v)), k) for k, v in sorted(parts.items()))
 
 
+RAW_FILES = ("rows", "poll", "oracle")
+
+
+def _present(base):
+    """Review 11 F25: which raw files EXIST beside a life (lexists: a dangling link, a directory or an unreadable file is present).
+    This explicit check, never an empty or failed read, is what tells "no raw file" from "raw file present but unusable"."""
+    return {k: os.path.lexists("%s.%s.gz" % (base, k)) for k in RAW_FILES}
+
+
+def _read_one(p, k):
+    with gzip.open(p, "rt", encoding="utf-8") as fh:
+        return [json.loads(l) for l in fh] if k == "rows" else json.load(fh)
+
+
 def _read_raw(base):
+    """Each raw file: its content, None when it does not exist, or Unreadable(reason) when it exists and cannot be read."""
     raw = {}
-    for k in ("rows", "poll", "oracle"):
-        p = "%s.%s.gz" % (base, k)
-        if not os.path.exists(p):
+    for k, exists in _present(base).items():
+        if not exists:
             raw[k] = None
             continue
-        with gzip.open(p, "rt") as fh:
-            raw[k] = [json.loads(l) for l in fh] if k == "rows" else json.load(fh)
+        try:
+            raw[k] = _read_one("%s.%s.gz" % (base, k), k)
+        except Exception as e:   # truncated gzip, not gzip, a directory, bad UTF-8, bad JSON, recursion: present, unusable
+            raw[k] = Unreadable("%s: %s" % (type(e).__name__, e))
     return raw
 
 
 def _stamp(base):
+    """Cache key for the raw files of a life: existence, size and mtime per file (a file that cannot be stat'ed is its own key)."""
     out = []
-    for k in ("rows", "poll", "oracle"):
+    for k in RAW_FILES:
         p = "%s.%s.gz" % (base, k)
-        st = os.stat(p) if os.path.exists(p) else None
-        out.append((k, st.st_size, st.st_mtime_ns) if st else (k, None, None))
+        try:
+            st = os.lstat(p)
+            out.append((k, st.st_mode, st.st_size, st.st_mtime_ns))
+        except FileNotFoundError:
+            out.append((k, None, None, None))
+        except OSError as e:
+            out.append((k, "unstattable", type(e).__name__, None))
     return tuple(out)
 
 
 @functools.lru_cache(maxsize=64)
 def _derived_files(base, stamp, mode, window, t_req, t_resp):
     try:
-        raw = _read_raw(base)
-    except (OSError, EOFError, ValueError) as e:
-        return json.dumps({"_read_error": str(e)})
-    return json.dumps(derive(raw, mode, window, t_req, t_resp))
+        return json.dumps(derive(_read_raw(base), mode, window, t_req, t_resp))
+    except Exception as e:   # never reached by design (derive and _read_raw catch per file and source); the figures stay absent
+        return json.dumps({"_read_error": "%s: %s" % (type(e).__name__, e)})
+
+
+def _unparsed_life(name, direction, reason):
+    """Review 11 F26: a life file that does not parse into a life of its direction. Every gate of it is UNVERIFIED with `reason`."""
+    return {"_file": name, "mode": direction, "_unparsed": reason, "_raw_check": {"life": reason}, "_rebuilt": [], "_stored_only": []}
+
+
+def parse_life(f, direction):
+    """Parse one life file at the boundary -> the life (a dict of its direction, the loader's "_" keys removed) or an Unparsed
+    life. Never raises on any file content."""
+    name = os.path.basename(f)
+    try:
+        with open(f, "rb") as fh:
+            R = json.loads(fh.read().decode("utf-8"))
+    except Exception as e:   # unreadable, not UTF-8, not JSON, nested too deep
+        return _unparsed_life(name, direction, "life file does not parse: %s: %s" % (type(e).__name__, str(e)[:200]))
+    if not isinstance(R, dict):
+        return _unparsed_life(name, direction, "life file is a JSON %s, not an object" % type(R).__name__)
+    if R.get("mode") != direction:
+        return _unparsed_life(name, direction, "life mode %r does not match its file name (%s)" % (R.get("mode"), direction))
+    for k in [k for k in R if isinstance(k, str) and k.startswith("_")]:   # the loader's own namespace; a file cannot set it
+        del R[k]
+    R["_file"] = name
+    return R
+
+
+def _load_one(f, direction):
+    R = parse_life(f, direction)
+    if "_unparsed" in R:
+        return R
+    R["_raw_check"], R["_rebuilt"], R["_stored_only"] = {}, [], []
+    base = f[:-5]
+    present = _present(base)
+    t = _times(R)
+    if t is None:
+        R["_raw_check"]["life"] = _BAD_TIMES
+        apply_derived(R, {}, present, direction)
+        return R
+    got = json.loads(_derived_files(base, _stamp(base), *t))
+    if "_read_error" in got:
+        R["_raw_check"]["files"] = got.pop("_read_error")
+    apply_derived(R, got, present, direction)
+    return R
 
 
 def load(d, mode):
-    """Every life file of a direction, with its raw-sourced figures rebuilt from the raw files beside it (RAW_SOURCES)."""
+    """Every life file of a direction, with its raw-sourced figures rebuilt from the raw files beside it (RAW_SOURCES). Never raises
+    on file content: a file that cannot be loaded is an Unparsed life (review 11 F26)."""
     out = []
     for f in sorted(glob.glob(os.path.join(d, "%s_[0-9]*.json" % mode))):
-        with open(f) as fh:
-            R = json.load(fh)
-        R["_file"] = os.path.basename(f)
-        R["_raw_check"], R["_rebuilt"], R["_stored_only"] = {}, [], []
-        t = _times(R) if isinstance(R, dict) else None
-        if t is None:
-            R["_raw_check"]["life"] = "run window or transition times are not finite epoch times: no raw figure is accepted"
-            apply_derived(R, {})
-        else:
-            got = json.loads(_derived_files(f[:-5], _stamp(f[:-5]), *t))
-            if "_read_error" in got:
-                R["_raw_check"]["files"] = got.pop("_read_error")
-            apply_derived(R, got)
-        out.append(R)
+        try:
+            out.append(_load_one(f, mode))
+        except Exception as e:   # belt and braces: a failure anywhere in loading is that life's UNVERIFIED, never a crash
+            out.append(_unparsed_life(os.path.basename(f), mode, "life could not be loaded: %s: %s" % (type(e).__name__, str(e)[:200])))
     return out
 
 
@@ -518,6 +615,21 @@ LIMITS = (
 )
 
 
+def _judge_life(name, R):
+    """One gate of one inventory life -> (Verdict, provenance). Absent, unparsed or incomplete lives are UNVERIFIED with the reason;
+    a verdict that raises is UNVERIFIED with the exception named (review 11 F26: current_summary never raises on file content)."""
+    if R is None:
+        return verdicts.Verdict(verdicts.UNVERIFIED, "life file absent (campaign inventory)"), ""
+    if "_unparsed" in R:
+        return verdicts.Verdict(verdicts.UNVERIFIED, R["_unparsed"]), ""
+    if R.get("status") != "complete":
+        return verdicts.Verdict(verdicts.UNVERIFIED, "life status %r, not complete" % (R.get("status"),)), ""
+    try:
+        return verdicts.judge(name, R), provenance(name, R)
+    except Exception as e:
+        return verdicts.Verdict(verdicts.UNVERIFIED, "verdict could not be computed: %s: %s" % (type(e).__name__, str(e)[:200])), ""
+
+
 def current_summary(d):
     """Reviews 9 F19 and 10 F23: the current summary artefact. The inventory is CAMPAIGN x verdicts.GATES, not the files found: a
     missing life is listed with every gate UNVERIFIED ("life file absent"), and a gate's aggregate is FAIL if any expected life fails,
@@ -537,23 +649,20 @@ def current_summary(d):
             for name, g in sorted(verdicts.GATES.items()):
                 if g.scope not in ("both", mode):
                     continue
-                if R is None:
-                    v, prov = verdicts.Verdict(verdicts.UNVERIFIED, "life file absent (campaign inventory)"), ""
-                elif R.get("status") != "complete":
-                    v, prov = verdicts.Verdict(verdicts.UNVERIFIED, "life status %r, not complete" % R.get("status")), ""
-                else:
-                    v, prov = verdicts.judge(name, R), provenance(name, R)
+                v, prov = _judge_life(name, R)
                 reason = ("PASS: " + g.doc) if v.status == verdicts.PASS else (v.reason or "no reason given")
                 row[name] = {"status": v.status, "reason": reason + ("; " + prov if prov else "")}
-                agg.setdefault(name, []).append((f, v.status, R is None))
+                agg.setdefault(name, []).append((f, v.status, "absent" if R is None else "unparsed" if "_unparsed" in R else ""))
     out = {}
     for name, g in sorted(verdicts.GATES.items()):
         xs = agg.get(name, [])
         st = [s for _, s, _ in xs]
-        absent = [f for f, _, a in xs if a]
-        status = verdicts.FAIL if verdicts.FAIL in st else verdicts.UNVERIFIED if (absent or not st or any(s != verdicts.PASS for s in st)) \
+        absent = [f for f, _, a in xs if a == "absent"]
+        unparsed = [f for f, _, a in xs if a == "unparsed"]
+        status = verdicts.FAIL if verdicts.FAIL in st else verdicts.UNVERIFIED if (absent or unparsed or not st or any(s != verdicts.PASS for s in st)) \
             else verdicts.PASS
-        reason = ("absent: %s; " % ", ".join(absent) if absent else "") + "; ".join("%s %s" % (f, s) for f, s, _ in xs)
+        reason = ("absent: %s; " % ", ".join(absent) if absent else "") + ("does not parse: %s; " % ", ".join(unparsed) if unparsed else "") \
+            + "; ".join("%s %s" % (f, s) for f, s, _ in xs)
         out[name] = {"status": status, "reason": reason or "no life in scope"}
     return {"artefact": "summary_current.json", "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
             "inventory": {m: ["%s_%d.json" % (m, n) for n in ns] for m, ns in sorted(CAMPAIGN.items())},

@@ -1362,8 +1362,32 @@ class FailurePathTests(unittest.TestCase):
                 except Exception as e:
                     self.fail("raised %s on %s %r" % (type(e).__name__, source, v[:20]))
 
+    # ---- adversarial pass (review 11): cases found by reading every except / early return / .get default ----------------------
+    def test_adv_an_oracle_with_its_references_emptied_does_not_pass_t1(self):
+        import gzip
+        O = json.loads(gzip.decompress(self.raw["oracle"]).decode())
+        O["rrf"], O["linear"] = {}, {}   # every backend answer becomes "without oracle": not examined, so T1 must not PASS
+        self.assert_not_pass(self.life_dir(files={"oracle": self.gz(json.dumps(O))}), ("EXP2-T1",), "emptied references")
+
+    def test_adv_a_dangling_link_in_place_of_a_raw_file_is_present(self):
+        for source, gates in self.GATES_BY_SOURCE.items():
+            d = self.life_dir(files={self.KEY_FILE[source]: None})
+            os.symlink(os.path.join(d, "nowhere"), os.path.join(d, "down_7.%s.gz" % self.KEY_FILE[source]))
+            self.assert_not_pass(d, gates, (source, "dangling link"))
+
+    def test_adv_a_life_file_cannot_set_the_loaders_own_keys(self):
+        R = copy.deepcopy(self.passing)
+        R.update({"_stored_only": ["rows+oracle", "rows", "poll"], "_rebuilt": ["rows", "poll", "rows+oracle"], "_raw_check": {}})
+        d = self.life_dir(life=R, files={"oracle": b"broken", "rows": b"broken", "poll": b"broken"})
+        self.assert_not_pass(d, sum(self.GATES_BY_SOURCE.values(), ()), "injected loader keys")
+        R = copy.deepcopy(self.passing)
+        R["_unparsed"] = "x"   # stripped at the boundary: the life is judged normally
+        row, _ = self.statuses(self.life_dir(life=R))
+        self.assertEqual(row["EXP2-T2"]["status"], "PASS")
+
     def test_f27_readme_states_the_current_rule(self):
-        body = open(os.path.join(RES, "README.md")).read()
+        with open(os.path.join(RES, "README.md")) as fh:
+            body = fh.read()
         self.assertNotIn("only if the raw files reproduce it", body)
         self.assertIn("deleted and rebuilt", body)
 
