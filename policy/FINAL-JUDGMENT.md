@@ -249,14 +249,25 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
     The terminated backend's transaction rolls back whole, so it never commits a later effect.
   - **Fence.** While a revocation evicts, it holds the fence lock of that key (F_A 1145241605, F_T 1145241606), scoped to its
     transaction. A call about to take that A or T shared first reads `pg_locks`. If the fence is held, the call refuses with 55P03
-    and does nothing. It never waits for the fence, so the lock order of 4.2 is unchanged. As a result, each round meets only
-    holders that started before it.
+    and does nothing (`S44_Fence`: under F_A the target's explain, submit and open_session refuse within 0.5 s and bob's calls
+    answer; under F_T submits refuse and reads answer; control `S44_FenceControl` with `dc._fenced` a no-op). It never waits for
+    the fence, so the lock order of 4.2 is unchanged for every call that does not evict. As a result, a later round can meet only
+    holders that passed the fence check before the fence was taken. Only an evicting call takes a fence, and only after its
+    request at that level timed out, holding nothing above that level. A second evictor of the same key waits for the first one's
+    fence, FIFO, under the same budget (`dc._budget`, XWAIT). The fence is not recorded in `dc.trace`, and the deadlock detector
+    covers it like any advisory lock.
   - **Raw advisory calls.** The advisory-lock functions are PUBLIC by default, so a login role could take A, T, a fence or an
     idempotency lock with a raw call. `pol.pgcore.install` revokes EXECUTE on every `pg_catalog` advisory-lock function from PUBLIC
-    in the policy database, and grants it to dc_owner (`test_login_roles_cannot_take_advisory_locks`).
+    in the policy database, and grants it to dc_owner (`test_login_roles_cannot_take_advisory_locks`). The revoke is database-wide:
+    any other code in that database that takes advisory locks as a login role loses them. `ops/migrate_r3_7` creates dc_evictor
+    on forward, and its rollback gives PUBLIC the EXECUTE back, because the pre-R3-7 engine takes its idempotency lock as dc_app
+    with a raw call (`test_44_rollback_gives_the_old_engine_its_advisory_lock`, `test_44_forward_creates_the_evictor_role`).
   - **Bound.** Against holders it may evict, a revocation applies within one round: XWAIT, plus up to 1 s per evicted backend,
-    plus its own apply. It runs at most three rounds and never acts after its caller's expiry E (`dc._budget`). Otherwise it fails
-    with 55P03 and applies nothing. Measured with one holder: 2.11-2.12 s.
+    plus its own apply. It runs at most three rounds, starts no round at or after its caller's expiry E, and applies nothing
+    after E (`dc._budget`, the final judgment). Otherwise it fails with 55P03 and applies nothing. The evictions of a round
+    already started can finish after E, at most 1 s per backend: ending a stalled holder is not an effect of the revocation.
+    `end_session` and `dc.revoke_factor` have no caller expiry; they are bounded by the three rounds. Measured with one holder:
+    2.11-2.12 s.
   - **Residuals (disclosed).**
     1. A backend ended by eviction loses its whole connection and its open transaction, including any unrelated work on it. For T
        this can be a legitimate submit of another principal that held T longer than XWAIT. That caller sees a terminated

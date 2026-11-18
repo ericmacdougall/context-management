@@ -90,6 +90,9 @@ def build_old_history(OLD, seed, logs=3):
     o = owner("mig_reset")                  # lab reset: a kept pre-migration schema from an earlier rehearsal (forward refuses while it exists)
     o.execute("drop schema if exists %s cascade" % MIG.PRE)
     o.execute("drop schema if exists dc_crypto cascade")
+    # a pre-R3-7 deployment's database has PostgreSQL's default ACLs; this lab database had the definer core installed before, which
+    # makes the advisory-lock functions non-PUBLIC (FINAL-JUDGMENT.md 4.4), and the old engine calls them as dc_app
+    MIG.advisory_to_public(o)
     o.close()
     OLD.install(port, sp, apw, tenants)
     app = OLD.connect_app(port, ap, "mig_old")

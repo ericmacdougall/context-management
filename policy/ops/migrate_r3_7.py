@@ -5,7 +5,9 @@ forward(conn, tenants, idp_password_file)   ONE transaction; on any check failur
   1. Preconditions: the old schema is present (dc.apply_authority exists), no dc_pre_r3_7 schema exists, every tenant's chain verifies.
   2. The old schema is renamed dc_pre_r3_7 and dc_app loses USAGE on it (the R3-7 hole stays closed during the rollback window).
   3. The definer core is installed and each tenant's genesis is written from `tenants` (the same configs the deployment was installed
-     with: the genesis is not recoverable from the old tables, which hold only current state).
+     with: the genesis is not recoverable from the old tables, which hold only current state). The roles the core needs and the old
+     schema lacks are created first: dc_idp, and dc_evictor (NOLOGIN, member of pg_signal_backend only: it owns dc._evict,
+     FINAL-JUDGMENT.md 4.4). The core makes the pg_catalog advisory-lock functions non-PUBLIC in this database (4.4).
   4. REPLAY, not copy: every old event, in chain order, goes through the owner-only raw core (dc._lock_event, dc._reduce_apply). Its
      new outcome code must equal the stored one. An event the new core judges differently (for example a grant row dc_app inserted
      directly in a non-admin's name) makes the migration refuse: state derived from such a log is never carried over. LIMIT: a forged
@@ -24,8 +26,9 @@ rollback(conn)   ONE transaction: locks every table of the migrated schema (EXCL
   written after the migration (an applied or refused request, an erasure, an audit row): dropping the schema would discard those
   writes, or undo an erasure (review-3 N4). There is no override: carry such writes back by hand or keep the migrated schema (finish).
   Otherwise it drops the new dc schema (and dc_crypto, which the old schema did not have), renames dc_pre_r3_7 back to dc and restores
-  dc_app's USAGE. Role dc_idp is left in place (roles are cluster-wide; the old schema references none of its grants). Refused when
-  dc_pre_r3_7 or the mark is absent.
+  dc_app's USAGE, and gives PUBLIC its EXECUTE on the pg_catalog advisory-lock functions back (PostgreSQL's default: the old engine
+  takes its idempotency lock as dc_app with a raw pg_advisory_xact_lock). Roles dc_idp and dc_evictor are left in place (roles are
+  cluster-wide; the old schema references none of their grants). Refused when dc_pre_r3_7 or the mark is absent.
 finish(conn)   drops dc_pre_r3_7 after the deployment has been accepted; there is no rollback after finish.
 
 usage (lab host): python -m ops.migrate_r3_7 forward|rollback|finish --tenants <json file>  (env: POL_PG_PORT, POL_PG_SUPER_PASSFILE,
@@ -50,6 +53,18 @@ MARK_EXCLUDED = ("sessions", "factors", "used_proofs", "migration_mark")
 
 class MigrationRefused(Exception):
     pass
+
+
+# the pg_catalog advisory-lock functions (FINAL-JUDGMENT.md 4.4); the same selection as the DO block at the end of pol/_pgcore.sql
+ADVISORY = ("select p.oid::regprocedure::text from pg_catalog.pg_proc p where p.pronamespace = 'pg_catalog'::regnamespace"
+            " and p.proname like 'pg\\_%advisory%'")
+
+
+def advisory_to_public(c):
+    """PostgreSQL's default: PUBLIC may EXECUTE the advisory-lock functions. The definer core revokes that in its database; the
+    pre-R3-7 engine needs it (its dc_app connection calls pg_advisory_xact_lock itself)."""
+    for (f,) in c.execute(ADVISORY).fetchall():
+        c.execute(sql.SQL("grant execute on function {} to public").format(sql.SQL(f)))
 
 
 def _exists_schema(c, name):
@@ -127,6 +142,9 @@ def forward(c, tenants, idp_password_file):
         c.execute(sql.SQL("revoke usage on schema {} from dc_app").format(sql.Identifier(PRE)))
         if c.execute("select 1 from pg_roles where rolname='dc_idp'").fetchone() is None:
             c.execute("create role dc_idp login")
+        if c.execute("select 1 from pg_roles where rolname='dc_evictor'").fetchone() is None:     # 4.4, as pgcore.install
+            c.execute("create role dc_evictor nologin")
+        c.execute("grant pg_signal_backend to dc_evictor")
         c.execute(sql.SQL("alter role dc_idp with login password {}").format(sql.Literal(pgcore._scram_verifier(pgcore._read_secret(idp_password_file)))))
         with open(pgcore._SQL_PATH, encoding="utf-8") as f:
             c.execute(f.read())
@@ -181,6 +199,7 @@ def rollback(c):
         c.execute("drop schema if exists dc_crypto cascade")
         c.execute(sql.SQL("alter schema {} rename to dc").format(sql.Identifier(PRE)))
         c.execute("grant usage on schema dc to dc_app")
+        advisory_to_public(c)
     return {"rolled_back": True}
 
 
