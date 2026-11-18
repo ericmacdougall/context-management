@@ -1,8 +1,9 @@
 """The committed step-3 fixture set (fixtures/step3, exported by exp/fixtures_step3.py at the commit its MANIFEST.json names):
 - it matches its manifest and replays clean through the oracle pol._core;
 - every B1 control's mutated oracle is caught by it, so a clean replay is not vacuous;
-- on Postgres (the environment of tests/test_pg.py; skipped without it) it replays clean through the dc core, the reference the port
-  replaces, and pg_diff's mutated core (stale check removed) is caught.
+- on Postgres (the environment of tests/test_pg.py) it replays clean through the dc core, the reference the port replaces, and
+  pg_diff's mutated core (stale check removed) is caught. Without that environment CommittedSetPg FAILS (review of 2262eaa: it was a
+  silent skip), unless POL_STEP3_SKIP_PG=1 is set explicitly; then each test is SKIPPED with that reason and counted as a skip.
 The port into the write path must pass the same replay against its own schema (HANDOFF-STEP3.md)."""
 import os
 import sys
@@ -40,11 +41,16 @@ class CommittedSet(unittest.TestCase):
                 self.assertGreater(F.check_oracle(SET, control).mismatches, 0)
 
 
-@unittest.skipUnless(psycopg is not None and all(os.environ.get(k) for k in ENV), "Postgres lab environment not configured")
 class CommittedSetPg(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         sys.setrecursionlimit(10000)
+
+    def setUp(self):
+        if psycopg is None or not all(os.environ.get(k) for k in ENV):
+            if os.environ.get("POL_STEP3_SKIP_PG") == "1":
+                self.skipTest("POL_STEP3_SKIP_PG=1: the Postgres replay of the step-3 set was NOT run")
+            self.fail("Postgres lab environment not configured (tests/test_pg.py ENV); set POL_STEP3_SKIP_PG=1 to skip explicitly")
 
     def test_dc_core_replays_clean(self):
         rep = F.check_pg(SET)
