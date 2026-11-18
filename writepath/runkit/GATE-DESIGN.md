@@ -794,3 +794,6 @@ or loaded; that is a stated limit.
 - H-6 the gated chain's runbook: seal, scan, teardown, receipt and stage-check after the last experiment of a chain
   (runkit/README.md step 6), before any result is committed.
 - H-7 THRESHOLDS.md: append H6c (6.6).
+- H-8 host/bootstrap.py (5.6, gate v4 B4): mount each store's data tmpfs with `nr_inodes=0`, in the Docker form 6.7
+  records from the live step (A-1). Until then gate v4 BLOCKS every start on the stream's own containers with the
+  inode reason: fail closed, by design.

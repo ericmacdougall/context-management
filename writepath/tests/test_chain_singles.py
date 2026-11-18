@@ -11,13 +11,15 @@ import unittest
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 
-# The stub interpreter: `-m exp.disk_gate <cmd>` exits with $GATE_<CMD> (default 0), `-m exp.cleanup <x>` with
-# $CLEANUP_RC, any other module with $EXP_RC.
+# The stub interpreter: `-m exp.disk_gate <cmd>` exits with $GATE_<CMD> (default 0; `version` also prints the two
+# fields the real gate prints), `-m exp.cleanup <x>` with $CLEANUP_RC, any other module with $EXP_RC.
 PY = """#!/bin/sh
 [ "$1" = "-m" ] || exit 9
 m=$2; shift 2
 case "$m" in
-  exp.disk_gate) eval "rc=\\${GATE_$(echo "$1" | tr a-z- A-Z_):-0}"; echo "disk_gate $1 stub"; exit "$rc" ;;
+  exp.disk_gate) eval "rc=\\${GATE_$(echo "$1" | tr a-z- A-Z_):-0}"; echo "disk_gate $1 stub"
+    [ "$1" = version ] && [ "$rc" = 0 ] && { echo "gate_version=disk_gate stub sha256 0"; echo "gate_limits=LIMITS stub"; }
+    exit "$rc" ;;
   exp.cleanup) echo "cleanup $1 stub output"; exit "${CLEANUP_RC:-0}" ;;
   *) echo "module $m stub"; exit "${EXP_RC:-0}" ;;
 esac
@@ -87,6 +89,24 @@ class Chain(unittest.TestCase):
         self.assertIn("gate=BLOCKED", o)
         self.assertIn("experiment_exit=not run", o)
         self.assertNotIn("module exp.first stub", o)
+
+    def test_every_outcome_states_the_gate_version_and_limits(self):
+        # review F F19 (GATE-DESIGN 6.2 B8): the run's output names the gate that judged it and the limits of its
+        # guarantee, before the verdict, whatever the verdict is
+        for i, env in enumerate(({}, {"GATE_START": "2"}, {"GATE_CHECK": "3"}, {"GATE_END": "3"})):
+            label = f"run{i}"
+            self.chain(f"{label} - exp.first\n", **env)
+            o = self.out(label)
+            for field in ("gate_version=disk_gate stub sha256 0", "gate_limits=LIMITS stub"):
+                self.assertIn(field, o, f"{field.split('=')[0]} missing from the run's output under {env or 'VALID'}")
+                self.assertLess(o.index(field), o.index("gate="), f"{field.split('=')[0]} must precede the verdict")
+
+    def test_gate_that_cannot_name_itself_runs_nothing(self):
+        self.chain("first - exp.first\n", GATE_VERSION="1")
+        o = self.out("first")
+        self.assertIn("gate=BLOCKED", o)
+        self.assertNotIn("module exp.first stub", o)
+        self.assertNotIn("disk_gate start stub", o)
 
 
 if __name__ == "__main__":

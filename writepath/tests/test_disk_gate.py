@@ -12,6 +12,7 @@ passed). Tests that need a v3-only command skip there, never counted as red.
 usage (from writepath/): python3 -m unittest tests.test_disk_gate -v"""
 import calendar
 import fcntl
+import hashlib
 import http.server
 import importlib.util
 import io
@@ -982,6 +983,15 @@ class Gate(unittest.TestCase):
         self.assertEqual(rec.get("gate"), "disk_gate v4")
         self.assertRegex(rec.get("gate_sha256") or "", r"^[0-9a-f]{64}$")
         self.assertLessEqual(rec.get("window_end") or "~", rec["at"])
+
+    def test_version_names_the_gate_its_hash_and_its_limits(self):
+        # what runkit/launch_one.sh writes into every run's output before the verdict (B8)
+        rc, out = self.call("version")
+        self.assertEqual(rc, 0, f"no version command: {out.strip()[-200:]}")
+        f = dict(x.split("=", 1) for x in out.splitlines() if x.startswith("gate_"))
+        sha = hashlib.sha256(pathlib.Path(self.g.__file__).read_bytes()).hexdigest()
+        self.assertEqual(f.get("gate_version"), f"disk_gate v4 sha256 {sha}")
+        self.assertTrue(f.get("gate_limits", "").startswith("LIMITS v4"), "the limits are not stated")
 
     # ---- B9 (review F F20, F21)
     def test_store_on_a_volume_is_not_called_a_tmpfs(self):

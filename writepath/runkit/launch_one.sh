@@ -1,8 +1,8 @@
 #!/bin/sh
 # One stamped experiment on the lab host, from a PINNED tree (pin_run.sh), with the run_all validity gates of amendment
 # 17c: the start line (20 GB from amendment 24; 17 GB before; the gate measures it again inside its locked admission)
-# and exp.disk_gate start / check / end (gate v3, runkit/GATE-DESIGN.md section 5: private tmpfs stores, nothing to
-# watch). A VOID check closes the run in the ledger itself.
+# and exp.disk_gate start / check / end (gate v4, runkit/GATE-DESIGN.md sections 5 and 6: private tmpfs stores bound to
+# the endpoints the experiment uses, nothing to watch). A VOID check closes the run in the ledger itself.
 # usage: sh runkit/launch_one.sh <pinned dir> <label> <module> [args...]
 #        output WP_HOME/results/one.<head>.<label>.out; prints that path, the head, the start time and free space.
 # Needs WP_HOME (this stream's home on the host).
@@ -22,7 +22,10 @@ OUT=$WP_HOME/results/one.$H.$L.out
 PY=$WP_HOME/venv/bin/python
 # Two separate fields (review D F9): experiment_exit=<status|not run> is the experiment's own outcome (a FAIL is a result);
 # gate=VALID|VOID|BLOCKED is the gate's verdict on the run. The `end` line keeps its earlier form for window_check.sh.
+# gate_version= and gate_limits= (review F F19, GATE-DESIGN 6.2 B8) name the gate, its SHA-256 and the limits of its
+# guarantee before any verdict; a gate that cannot name itself runs nothing.
 setsid sh -c "echo start $S head $H free ${FREE}G: $*
+  if ! $PY -m exp.disk_gate version; then echo 'experiment_exit=not run'; echo 'gate=BLOCKED'; echo 'end BLOCKED'; exit 2; fi
   if ! $PY -m exp.disk_gate start; then echo 'experiment_exit=not run'; echo 'gate=BLOCKED'; echo 'end BLOCKED'; exit 2; fi
   if ! $PY -m exp.disk_gate check '$L'; then echo 'experiment_exit=not run'; echo 'gate=VOID'; echo 'end VOID (disk gate)'; exit 3; fi
   $PY -m $*

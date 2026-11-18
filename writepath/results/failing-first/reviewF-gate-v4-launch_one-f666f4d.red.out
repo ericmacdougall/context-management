@@ -1,0 +1,51 @@
+# failing-first receipt
+# date: 2026-11-18T00:34:32Z
+# file under test: f666f4d:writepath/runkit/launch_one.sh blob 152bbd14fc4963d412f6ae848841b7f10b56f22a sha256 7ea2e88cd8a4ec87fc4eba1feb1005577f9d3293371aa1a2209da8ff97318bd3
+# tree: writepath at f666f4d (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_chain_singles.py from HEAD 13dc47d blob a5ff5cadb80948c79efb12531038d7c08b30cc2e
+# command: (cd <tree>/writepath && LAUNCH_ONE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_chain_singles tests.test_disk_gate.Gate.test_version_names_the_gate_its_hash_and_its_limits
+test_every_outcome_states_the_gate_version_and_limits (tests.test_chain_singles.Chain) ... FAIL
+test_experiment_failure_and_gate_verdict_are_separate_fields (tests.test_chain_singles.Chain) ... ok
+test_failed_cleanup_stops_the_chain (tests.test_chain_singles.Chain) ... ok
+test_gate_blocked_at_start_runs_nothing (tests.test_chain_singles.Chain) ... ok
+test_gate_that_cannot_name_itself_runs_nothing (tests.test_chain_singles.Chain) ... FAIL
+test_gate_void_at_end_is_its_own_field (tests.test_chain_singles.Chain) ... ok
+test_successful_cleanup_continues (tests.test_chain_singles.Chain) ... ok
+test_version_names_the_gate_its_hash_and_its_limits (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_every_outcome_states_the_gate_version_and_limits (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JjlVoRcgvJ/writepath/tests/test_chain_singles.py", line 101, in test_every_outcome_states_the_gate_version_and_limits
+    self.assertIn(field, o, f"{field.split('=')[0]} missing from the run's output under {env or 'VALID'}")
+AssertionError: 'gate_version=disk_gate stub sha256 0' not found in 'start 2026-11-18T00:34:33Z head abc123 free 30.0G: exp.first\ndisk_gate start stub\ndisk_gate check stub\nmodule exp.first stub\nexperiment_exit=0\ndisk_gate end stub\ngate=VALID\nend 2026-11-18T00:34:33Z\n' : gate_version missing from the run's output under VALID
+
+======================================================================
+FAIL: test_gate_that_cannot_name_itself_runs_nothing (tests.test_chain_singles.Chain)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JjlVoRcgvJ/writepath/tests/test_chain_singles.py", line 107, in test_gate_that_cannot_name_itself_runs_nothing
+    self.assertIn("gate=BLOCKED", o)
+AssertionError: 'gate=BLOCKED' not found in 'start 2026-11-18T00:34:54Z head abc123 free 30.0G: exp.first\ndisk_gate start stub\ndisk_gate check stub\nmodule exp.first stub\nexperiment_exit=0\ndisk_gate end stub\ngate=VALID\nend 2026-11-18T00:34:54Z\n'
+
+======================================================================
+FAIL: test_version_names_the_gate_its_hash_and_its_limits (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.JjlVoRcgvJ/writepath/tests/test_disk_gate.py", line 990, in test_version_names_the_gate_its_hash_and_its_limits
+    self.assertEqual(rc, 0, f"no version command: {out.strip()[-200:]}")
+AssertionError: 1 != 0 : no version command: ate/STOP.ingested-<seq>; and any change to the
+directory (a touch, a file copied or moved into it) is a stop too, detected against a signature in the head anchor.
+Prints numbers, ids and reasons only.
+
+----------------------------------------------------------------------
+Ran 8 tests in 43.289s
+
+FAILED (failures=3)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_chain_singles tests/test_chain_singles.py 3d52d9da7f74c66b
+#   tests.test_disk_gate tests/test_disk_gate.py 39f83ac87c025b31
+#   wp wp/__init__.py e3b0c44298fc1c14
+#   wp.config wp/config.py 16fe0005a66087c2
+# exit status: 1
