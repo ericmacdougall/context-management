@@ -190,6 +190,15 @@ the examples and default deny are what ships.
     attempt. `PgDecisionService` and `PgSessionBridge` use autocommit. `pol.pgcore.install` sets
     `idle_in_transaction_session_timeout` = 60 s as the role default of `dc_app` and `dc_idp`; a caller's own `lock_timeout` is
     honoured and never lengthened.
+  - Stalled holders (FINAL-JUDGMENT.md 4.4; ASSUMPTION, the policy owner's choice, not the user's). The idle timeout bounds only a
+    caller that leaves it alone. When a revoke, `end_session`, `dc.revoke_factor`, grant or erasure has waited XWAIT for A or T
+    exclusively, and its own caller is pinned and judged, it ends (`pg_terminate_backend`) the dc_app and dc_idp backends of this
+    database that hold that lock or wait for it shared, then tries again, at most three rounds, never after its caller's expiry.
+    Only `dc._evict` signals, as the NOLOGIN role dc_evictor (member of `pg_signal_backend` only; EXECUTE for dc_owner only).
+    While it evicts it holds a fence, and new shared callers of that key refuse with 55P03. Owner and superuser holders are never
+    evicted; the revocation then gives up with 55P03. A caller that keeps a transaction open after a call should expect its
+    connection to be ended if that transaction blocks a revocation for more than XWAIT (2 s). The advisory-lock functions are not
+    PUBLIC in the policy database: only dc_owner may call them.
   - New SQLSTATE 55P03 from a call: a wait before the expiry ended by the caller's own `lock_timeout` or by XWAIT on an exclusive
     lock, or a wait after the acquisition. Nothing was applied; the call is retryable.
 - Revoke, grant and erasure serialise the tenant (T exclusive), which is a scaling limit; so do all submits of a tenant from the
@@ -205,12 +214,13 @@ the examples and default deny are what ships.
 - Audit growth is unbounded in this module.
 - Residues of the final judgment (by design): a refused `dc.submit` leaves sequence gaps (its staged inserts are rolled back); a
   subject-token mapping minted by a call that the CORE refused (not the final judgment) stays until that subject is erased (it links
-  to no value); any login role can take the advisory locks (`pg_advisory_xact_lock` is PUBLIC: the idempotency lock and A, T, S and
-  N of S1) or hold rows in an open transaction, and so delay other callers, at most until each caller's expiry (J2), and a held A
-  or T makes revokes and erasures fail retryably after XWAIT. That is a denial of service, never a wrong decision. A `dc_app`
-  connection can also keep a transaction open after a call, past the idle timeout, by resetting that timeout or by never being idle
-  (a long-running statement or a stream of statements in it); revocations of that principal then fail retryably for as long as it
-  holds. Bounding that needs eviction (`pg_terminate_backend` with `pg_signal_backend` granted), a privilege decision for the
-  coordinator, open and not taken here (FINAL-JUDGMENT.md 4.4).
+  to no value); a login role can hold the locks and rows of its calls in an open transaction (the advisory-lock functions
+  themselves are no longer PUBLIC in the policy database), and so delay other callers, at most until each caller's expiry (J2).
+  A held A or T no longer blocks revocations past XWAIT: the holder is evicted (FINAL-JUDGMENT.md 4.4, ASSUMPTION). Disclosed
+  residuals of eviction: an evicted backend loses its whole connection, including unrelated work, and for T that can be a
+  legitimate submit of another principal that held T longer than XWAIT (retryable, nothing of it committed); the fence refuses
+  the target's or tenant's new calls (55P03) while a revocation evicts; a stalled submitter also holds the chain head (L7), so the
+  tenant's other submits are refused at their expiry until a revoke, grant or erasure of the tenant (or a revoke of the staller)
+  evicts it. That is a denial of service ended by an operator's action, never a wrong decision; not measured.
 - The pin is checked after the call. Local endpoints are not attested.
 - The composed system (COMPOSITION.md) is not built.

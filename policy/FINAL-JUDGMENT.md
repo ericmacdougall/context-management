@@ -87,6 +87,8 @@ for S1 in the same change as the code.
 | PostgreSQL 16, 13.3, https://www.postgresql.org/docs/16/explicit-locking.html | FOR SHARE conflicts with FOR NO KEY UPDATE (a plain UPDATE) and FOR UPDATE; FOR KEY SHARE does not; avoid deadlocks by acquiring locks in a consistent order; advisory locks are released at transaction end | high | pins are FOR SHARE (a KEY SHARE pin would not stop an UPDATE); one global order (section 4.2) |
 | PostgreSQL 16 lock manager README, https://raw.githubusercontent.com/postgres/postgres/REL_16_STABLE/src/backend/storage/lmgr/README | a new request goes to the end of the wait queue and is granted only if it conflicts neither with granted locks nor with earlier waiters. A process that already holds a conflicting lock is inserted ahead. The deadlock detector may reorder a queue to break a soft deadlock | high | an advisory lock is served FIFO, so a queued exclusive request is not starved by a stream of shared requests. A row lock gives no such queue to FOR SHARE requests, which join a share-lock set while an UPDATE waits. Hence the authority lock and the tenant lock are advisory, and the tenant row is no longer locked |
 | PostgreSQL 16, 19.11.1, https://www.postgresql.org/docs/16/runtime-config-client.html | `lock_timeout` limits each lock acquisition attempt; `idle_in_transaction_session_timeout` terminates the session; all are user-settable; no `transaction_timeout` in 16 | high | the budget is set before every acquisition statement, and each such statement waits for at most one lock (section 4.4). The idle timeout bounds only cooperating callers |
+| PostgreSQL 16, 9.28.2, https://www.postgresql.org/docs/16/functions-admin.html (retrieved 2026-11-18) | `pg_terminate_backend(pid, timeout)` waits up to `timeout` ms for the process to end; a member of `pg_signal_backend` may terminate other backends, but only superusers can terminate superuser backends | high | eviction (4.4) runs as dc_evictor, member of `pg_signal_backend` only, and cannot end a superuser holder; such a holder makes the revocation give up |
+| PostgreSQL 17, 19.11.1, https://www.postgresql.org/docs/17/runtime-config-client.html (retrieved 2026-11-18) | `transaction_timeout` (new in 17) ends a session whose transaction runs longer than the setting; default 0 | high (text); medium that it is user-settable (the page names no restriction, as for the other client timeouts) | not available on 16.15, and a holder could disable it like the idle timeout (4.4 options) |
 | PostgreSQL 16, CREATE FUNCTION, https://www.postgresql.org/docs/16/sql-createfunction.html | a SET clause saves the setting on entry and restores it on exit; SET LOCAL inside such a function is confined to it | high | the caller's `lock_timeout` is restored on every exit path, refusals and errors included |
 | PostgreSQL 16, 38.7, https://www.postgresql.org/docs/16/xfunc-volatility.html | STABLE functions read with the caller's snapshot; `SELECT FOR SHARE` is not allowed in them | high | pins live in VOLATILE functions; the STABLE `dc._explain_raw` only reads after them |
 | PostgreSQL 16, 9.9.5, https://www.postgresql.org/docs/16/functions-datetime.html | `now()` is the transaction start; `clock_timestamp()` advances within a statement | high | the clock reads (M1) |
@@ -196,21 +198,75 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
   So a revoke applies, refuses at E_X, or fails after XWAIT at one of its two exclusive locks. It waits at most 2 x XWAIT for
   in-flight calls, plus raw-SQL row waits up to E_X.
 - **Holders.** An in-flight call ends by its own expiry ceiling plus apply CPU time. A caller-held transaction ends when the caller
-  commits, or after `idle_in_transaction_session_timeout` = 60 s. `pol.pgcore.install` sets that as the role default for dc_app and
-  dc_idp, which terminates an idle holder.
+  commits, after `idle_in_transaction_session_timeout` = 60 s if the caller leaves that setting alone (`pol.pgcore.install` sets it
+  as the role default for dc_app and dc_idp), or when a revocation evicts it (below).
 - **Tenant stall.** While a revoke, grant or erasure is queued for T, new submits of the tenant queue behind it. That lasts at most
   XWAIT per attempt.
 - **`end_session`** waits FIFO, at most XWAIT, for the in-flight calls of the session's principal.
-- **Residual (open, material; the coordinator's decision):** the target principal's own connection can block its revocation. After
-  a call, a dc_app connection keeps the call's locks (A shared and the pinned rows) until its transaction ends, and two ways keep that
-  transaction open past the 60 s idle timeout: resetting the timeout (the setting is user-settable), or never being idle (a
-  long-running statement such as `pg_sleep`, or a stream of statements, in the same transaction; `statement_timeout` is user-settable
-  too). Either way, revocations of that principal fail retryably after XWAIT for as long as it holds. The revoke never waits longer
-  and never applies partially, and the blocked principal's own calls keep working: this is new with S1 (before S1 a revoke skipped or
-  raced such a holder). PostgreSQL 16 has no server-enforced `transaction_timeout` (added in 17), and no setting can be made
-  non-user-settable for a role. A bound needs eviction: after XWAIT, the revoke terminates the backends holding A(target)
-  (`pg_terminate_backend`, with dc_owner granted `pg_signal_backend`). That is a privilege decision for the coordinator; it is not
-  taken here.
+- **Stalled holders.** This was the open residual of this section. It is now closed by eviction, which is an ASSUMPTION: the policy
+  owner's choice, not the user's.
+  - **The problem.** After a call, a dc_app connection keeps the call's locks until its transaction ends: A shared, the pinned rows,
+    and for a submit also T shared and the later locks. Three ways keep that transaction open past the 60 s idle timeout:
+    - resetting the timeout (it is user-settable);
+    - a long statement (`pg_sleep`; `statement_timeout` is user-settable too);
+    - a stream of statements, so the transaction is never idle.
+  - **At 8547b27.** While such a holder held, every revocation of its principal (revoke, `end_session`, `dc.revoke_factor`) failed
+    with 55P03 after XWAIT. While a submitter held T, every revoke, grant and erasure of its tenant failed the same way.
+  - **Options.** The table below gives each option with its measured bound. Measurements are from t2-dev, PG 16.15.
+    `tests/test_s44_pg.py` prints each number as a `MEASURE` line; the logs are in results/red/.
+
+  | Option | What it bounds | Measured | Decision |
+  |---|---|---|---|
+  | Nothing (8547b27) | Only holders that end: FIFO queues the revoke ahead of later shared requests | Stalled holder, all 4 ways: 55P03 after 2.00-2.01 s on every attempt, holder still connected. Reconnecting adversary with 1 s holds: revoked in 0.53 s | Superseded |
+  | Timeouts (role defaults) | Only a holder that leaves its settings alone | Role default set to 3 s: a cooperating holder was ended after 2.83 s. A holder that ran `set local idle_in_transaction_session_timeout = 0` was still connected after 8.00 s | Kept at 60 s as defence in depth; not a bound |
+  | `transaction_timeout` (PostgreSQL 17) | The same as timeouts: it is not restricted to superusers | Not measurable: the server is 16.15 and has no such setting | Not available here, and not a bound on 17 either |
+  | Autocommit-only API (refuse calls inside an explicit transaction) | Nothing against one statement: `select dc.explain(t, 'r1'), pg_sleep(3600)` holds the call's locks until the statement ends | Not built; reasoned from the statement-scoped lock lifetime | Not a bound |
+  | Revocation epoch judged at use time, so a revoke need not wait for holders | It would let a revoke commit while a holder's call is still open. That reverses S1's "the call commits first" order (section 4.1) and needs its own proof | Not built, not measured | Not taken |
+  | **Eviction (built)** | Every dc_app or dc_idp holder of the needed lock | One stalled holder (idle_reset, sleep, stream, submit): revoked in 2.11-2.12 s, holder ended. `end_session` 2.11 s. `dc.revoke_factor` 2.11 s. Tenant-lock holder: 2.12 s under a revoke, 2.11 s under an erasure. With bystanders: 2.12 s, and bob's holder, an idle dc_idp and another database's holder were all kept. Control with `dc._evict` made a no-op: 55P03 after 2.01 s, holder still connected | **Taken (ASSUMPTION)** |
+
+  Eviction as built (`dc._xlock`, `dc._xlock_caller`, `dc._evict`; see DESIGN.md "Stalled holders"):
+  - **When.** Eviction runs only when an exclusive request for A or T times out at XWAIT. It also runs only after the requesting
+    call's own authority is settled:
+    - A revoke takes A(target) before its pins. So the caller is judged first, in a sub-block that is then rolled back: A(caller)
+      shared, its pins, its pinned admin flag, and the clock read last.
+    - `end_session`, `dc.revoke_factor`, and the tenant lock of a revoke, grant or erasure come after their pins and judgment
+      already.
+    - A refused revoker evicts nobody (`S44_Scope`).
+  - **Whom.** Eviction ends backends that meet all of these:
+    - they belong to THIS database;
+    - their session user is dc_app or dc_idp;
+    - they are not the caller;
+    - they hold the lock in either mode, or wait for it SHARED.
+
+    A backend waiting EXCLUSIVELY is a second revocation in the queue and is left alone (`test_a_queued_revoker_is_not_evicted`,
+    which fails with that filter removed). Owner, superuser and other-database backends are never evicted. A round that finds
+    nothing to evict gives up with 55P03 (measured: 2.01 s against an owner holder).
+  - **How.** `dc._evict` calls `pg_terminate_backend(pid, 1000)`.
+    - `dc._evict` is SECURITY DEFINER and owned by the NOLOGIN role dc_evictor.
+    - dc_evictor is a member of `pg_signal_backend` and of nothing else.
+    - Only dc_owner may EXECUTE `dc._evict`.
+
+    The terminated backend's transaction rolls back whole, so it never commits a later effect.
+  - **Fence.** While a revocation evicts, it holds the fence lock of that key (F_A 1145241605, F_T 1145241606), scoped to its
+    transaction. A call about to take that A or T shared first reads `pg_locks`. If the fence is held, the call refuses with 55P03
+    and does nothing. It never waits for the fence, so the lock order of 4.2 is unchanged. As a result, each round meets only
+    holders that started before it.
+  - **Raw advisory calls.** The advisory-lock functions are PUBLIC by default, so a login role could take A, T, a fence or an
+    idempotency lock with a raw call. `pol.pgcore.install` revokes EXECUTE on every `pg_catalog` advisory-lock function from PUBLIC
+    in the policy database, and grants it to dc_owner (`test_login_roles_cannot_take_advisory_locks`).
+  - **Bound.** Against holders it may evict, a revocation applies within one round: XWAIT, plus up to 1 s per evicted backend,
+    plus its own apply. It runs at most three rounds and never acts after its caller's expiry E (`dc._budget`). Otherwise it fails
+    with 55P03 and applies nothing. Measured with one holder: 2.11-2.12 s.
+  - **Residuals (disclosed).**
+    1. A backend ended by eviction loses its whole connection and its open transaction, including any unrelated work on it. For T
+       this can be a legitimate submit of another principal that held T longer than XWAIT. That caller sees a terminated
+       connection (57P01). Nothing of its transaction committed, and it can retry.
+    2. While a revocation evicts, new calls are refused with 55P03 (retryable): the target's calls under fence F_A, or the tenant's
+       calls under fence F_T.
+    3. A stalled submitter also holds the chain-head row (L7). Other submits of its tenant wait until their own expiry and are
+       refused. This lasts until a revoke, grant or erasure of that tenant evicts the staller through T, or a revoke of the staller
+       evicts it through A. It is a denial of service ended by an operator's action, never a wrong decision. It is not measured.
+    4. dc_owner may call `dc._evict` for any A or T key. dc_owner is the trusted owner role.
 
 ### 4.5 Deadlocks
 
@@ -253,7 +309,7 @@ excluded by an acquisition lock, or fails the call in the apply phase, as tested
 | open_session | factor row held by a writer (was the ledger foreign key) | the pin statement itself, which judges the newest version | `S1_OpenSession.test_factor_row_writer` |
 | end_session | in-flight calls of its principal | waits FIFO (L1 exclusive), XWAIT | `S1_MutualWaits.test_end_session_waits_for_the_call` |
 | PgDecisionService | any wait of the database call | recheck-only, section 6 | `P1_PgServiceJudgment` |
-| caller-held transaction | everything after the call, before COMMIT | revocations wait for it (pins and authority lock), FIFO, XWAIT per attempt, idle timeout 60 s | `S1_MutualWaits.test_revoke_waits_for_a_held_call` |
+| caller-held transaction | everything after the call, before COMMIT | revocations wait for it (pins and authority lock), FIFO, XWAIT per attempt, idle timeout 60 s; past XWAIT a dc_app or dc_idp holder is evicted (4.4) | `S1_MutualWaits.test_revoke_waits_for_a_held_call`, `S44_Eviction`, `S44_Scope`, `S44_Control` |
 
 ## 6. What stays a recheck, and why
 

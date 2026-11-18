@@ -185,7 +185,9 @@ class S44_Eviction(_S44):
     def test_a_reconnecting_adversary(self):
         """Three connections of alice keep re-taking her authority lock: each opens a transaction, makes a call, holds it 1 s with
         the idle timeout reset, and reconnects at once when it is evicted. The gate refuses alice's new calls while the revocation
-        runs, so each round can only meet holders that started before it. Red at 8547b27: 55P03 after XWAIT."""
+        runs, so each round can only meet holders that started before it. Regression guard, NOT failing-first: it passes at 8547b27
+        too (o2 red run, 0.53 s), because each hold ends after 1 s and the revoke's exclusive request queues ahead of later shared
+        ones (FIFO). Commit 174d837's message called it red; that was wrong. It stays as the measured bound for this adversary."""
         self.unrevoke("alice")
         tok = self.tok("alice")
         ap = os.environ["POL_PG_APP_PASSFILE"]

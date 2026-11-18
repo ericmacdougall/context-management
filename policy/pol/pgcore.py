@@ -21,7 +21,9 @@ Locks (S1, FINAL-JUDGMENT.md section 4): every call takes all its locks before i
 authority lock, the authority rows FOR SHARE, the tenant lock, the idempotency lock, data rows, subject locks, the chain head, the
 nonce lock), each wait capped by the credential's remaining life; then the writes, the final judgment and a revoke's authority writes
 run under lock_timeout 1 ms. READ COMMITTED, set explicitly. install() sets idle_in_transaction_session_timeout = 60 s as the role
-default of dc_app and dc_idp, which bounds how long a caller-held transaction can delay a revocation.
+default of dc_app and dc_idp, which bounds only a caller-held transaction that leaves that setting alone. A holder that blocks a
+revocation past XWAIT is evicted (FINAL-JUDGMENT.md 4.4; ASSUMPTION): install() creates the NOLOGIN role dc_evictor (member of
+pg_signal_backend only, owner of dc._evict only) and makes the advisory-lock functions non-PUBLIC in the policy database.
 
 ASSUMPTION (round 3, not confirmed by the user): non-humans only propose and remark; the per-req cap binds non-humans; idempotency is
 per (tenant, principal, idem) with a fingerprint over the event, never the session token."""
@@ -101,9 +103,13 @@ def install(port: int, super_passfile: str, app_password_file: str, tenants, idp
     c = _connect("postgres", super_passfile, port, "pol-install")
     try:
         with c.transaction():
-            for r, login in (("dc_owner", False), ("dc_app", True), ("dc_idp", True)):
+            for r, login in (("dc_owner", False), ("dc_app", True), ("dc_idp", True), ("dc_evictor", False)):
                 if c.execute("select 1 from pg_roles where rolname=%s", (r,)).fetchone() is None:
                     c.execute(sql.SQL("create role {} " + ("login" if login else "nologin")).format(sql.Identifier(r)))
+            # FINAL-JUDGMENT.md 4.4: dc_evictor owns dc._evict only; pg_signal_backend lets it end non-superuser backends. ASSUMPTION
+            # (the policy owner's choice, not the user's): this privilege, scoped by dc._evict to dc_app and dc_idp backends of this
+            # database that hold or wait for the lock a revocation needs.
+            c.execute("grant pg_signal_backend to dc_evictor")
             for r, pw in pws.items():
                 c.execute(sql.SQL("alter role {} with login password {}").format(sql.Identifier(r), sql.Literal(_scram_verifier(pw))))
             for r in ("dc_app", "dc_idp"):           # S1: a holder of pinned authority cannot sit idle in a transaction for long

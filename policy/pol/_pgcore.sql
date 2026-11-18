@@ -545,6 +545,135 @@ begin
   perform set_config('lock_timeout', coalesce(ms, 0)::text, true);
 end $$;
 
+-- ------------------------------------------------------------------------------------------------ 4.4: stalled holders are evicted
+-- FINAL-JUDGMENT.md 4.4. ASSUMPTION (the policy owner's choice, not the user's): a dc_app or dc_idp backend that holds (or waits for)
+-- a principal's authority lock A or a tenant lock T past XWAIT, while a revocation, end_session, factor revocation, grant or erasure
+-- needs that lock exclusively, is ended (pg_terminate_backend), so a revocation applies in bounded time even against a holder that
+-- resets its idle timeout, runs a long statement or never goes idle. Eviction comes only after the revoking call's own authority is
+-- pinned and judged (clock read last), and only through dc._evict, owned by the NOLOGIN role dc_evictor (the only role granted
+-- pg_signal_backend; EXECUTE for dc_owner only). While a revocation is evicting, it holds the FENCE of the lock (F_A 1145241605,
+-- F_T 1145241606, the same two-int4 key); a call about to take that lock SHARED refuses (55P03, retryable, nothing done), so each
+-- round can only meet holders that started before it. The fence is read from pg_locks, never waited for, so it adds no step to the
+-- lock order of 4.2. Owner, superuser and other-database backends are never evicted; a round that finds nothing to evict gives up.
+
+create function dc._fenced(p_fcls int, p_key int) returns void language plpgsql as $$
+begin
+  if exists (select 1 from pg_catalog.pg_locks l
+              where l.locktype = 'advisory' and l.objsubid = 2 and l.granted and l.pid <> pg_backend_pid()
+                and l.database = (select d.oid from pg_catalog.pg_database d where d.datname = current_database())
+                and l.classid = p_fcls::bigint::oid and l.objid = (p_key::bigint & 4294967295)::oid) then
+    raise exception 'a revocation of this authority is in progress' using errcode = 'lock_not_available';
+  end if;
+end $$;
+
+-- SECURITY DEFINER as dc_evictor (install sets the owner): end every dc_app or dc_idp backend of THIS database, other than the caller,
+-- that holds the advisory lock (p_cls, p_key) in either mode, or waits for it SHARED; p_cls must be A or T. A backend waiting for it
+-- EXCLUSIVELY is another revocation in the queue, not a stall, and is left alone. Waits up to 1 s for each to exit. Returns how many
+-- were signalled.
+create function dc._evict(p_cls int, p_key int) returns int language plpgsql security definer set search_path = pg_catalog, pg_temp as $$
+#variable_conflict use_variable
+declare n int := 0; r record;
+begin
+  if p_cls is null or p_key is null or p_cls not in (1145241601, 1145241602) then
+    raise exception 'evict: lock class % is not evictable', p_cls;
+  end if;
+  for r in select distinct l.pid from pg_catalog.pg_locks l join pg_catalog.pg_stat_activity a on a.pid = l.pid
+            where l.locktype = 'advisory' and l.objsubid = 2 and l.pid <> pg_backend_pid()
+              and l.database = (select d.oid from pg_catalog.pg_database d where d.datname = current_database())
+              and a.datname = current_database() and a.usename in ('dc_app', 'dc_idp')
+              and l.classid = p_cls::bigint::oid and l.objid = (p_key::bigint & 4294967295)::oid
+              and (l.granted or l.mode = 'ShareLock')
+            order by l.pid loop
+    perform pg_terminate_backend(r.pid, 1000);
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+
+-- After an exclusive request timed out: give up (55P03) at or after the deadline, when the caller's own lock_timeout (not XWAIT) ran
+-- out, or after the third round; else take the fence, read the clock again, and evict. A round that signals nobody gives up.
+create function dc._evict_round(p_cls int, p_key int, p_fcls int, p_deadline timestamptz, p_lt bigint, p_round int) returns void
+language plpgsql as $$
+begin
+  if (p_deadline is not null and clock_timestamp() >= p_deadline) or (p_lt > 0 and p_lt <= dc._xwait_ms()) or p_round >= 3 then
+    raise exception 'exclusive lock still held' using errcode = 'lock_not_available';
+  end if;
+  perform dc._budget(p_deadline, p_lt, dc._xwait_ms());
+  perform pg_advisory_xact_lock(p_fcls, p_key);
+  if p_deadline is not null and clock_timestamp() >= p_deadline then
+    raise exception 'exclusive lock still held' using errcode = 'lock_not_available';
+  end if;
+  if dc._evict(p_cls, p_key) = 0 then
+    raise exception 'exclusive lock held by a backend that is never evicted' using errcode = 'lock_not_available';
+  end if;
+end $$;
+
+-- An EXCLUSIVE A or T for a call whose own authority is already settled: dc_idp's end_session, the owner's revoke_factor, and the
+-- tenant lock of an admin's revoke, grant or erasure (taken after the caller's pins and judgment). At most three rounds of: wait up
+-- to XWAIT, then dc._evict_round.
+create function dc._xlock(p_cls int, p_key int, p_fcls int, p_deadline timestamptz, p_lt bigint) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare i int;
+begin
+  for i in 1 .. 3 loop
+    perform dc._budget(p_deadline, p_lt, dc._xwait_ms());
+    begin
+      perform pg_advisory_xact_lock(p_cls, p_key);
+      return;
+    exception when lock_not_available then
+      null;
+    end;
+    perform dc._evict_round(p_cls, p_key, p_fcls, p_deadline, p_lt, i);
+  end loop;
+end $$;
+
+-- The A EXCLUSIVE of dc.submit's acquisition (a revoke's target, or a self-revoke), which comes BEFORE the caller's pins (L1). After
+-- a timeout the caller is judged first, in a sub-block: its own authority lock shared (fence checked, XWAIT cap), its pins (L2.0-2.2),
+-- its pinned admin flag, the clock last; only then the eviction. The sub-block is rolled back (DCEVI) so the call's lock sequence
+-- stays the declared one; the judgment's verdict and the eviction count leave it in the error detail. Returns the refusal, or NULL
+-- when the lock is held.
+create function dc._xlock_caller(s dc.sessions, p_key int, p_lt bigint, p_adm boolean) returns text language plpgsql as $$
+#variable_conflict use_variable
+declare i int; why text; n int; d text; ck int := dc._k('auth', s.tenant, s.principal);
+begin
+  for i in 1 .. 3 loop
+    perform dc._budget(s.expires_at, p_lt, dc._xwait_ms());
+    begin
+      perform pg_advisory_xact_lock(1145241601, p_key);
+      return null;
+    exception when lock_not_available then
+      null;
+    end;
+    if clock_timestamp() >= s.expires_at or (p_lt > 0 and p_lt <= dc._xwait_ms()) or i >= 3 then
+      raise exception 'authority lock still held' using errcode = 'lock_not_available';
+    end if;
+    begin
+      why := null;
+      n := 0;
+      perform dc._fenced(1145241605, ck);
+      perform dc._budget(s.expires_at, p_lt, dc._xwait_ms());
+      perform pg_advisory_xact_lock_shared(1145241601, ck);
+      why := dc._pin(s, p_lt, false);
+      if why is null and (select p.admin from dc.principal p where p.tenant = s.tenant and p.pid = s.principal) is distinct from p_adm then
+        why := 'unauthorized';
+      end if;
+      if why is null and clock_timestamp() >= s.expires_at then why := 'unauthenticated:invalid_session'; end if;
+      if why is null then n := dc._evict(1145241601, p_key); end if;
+      raise exception 'judged' using errcode = 'DCEVI', detail = coalesce(why, '') || '|' || n;
+    exception when sqlstate 'DCEVI' then
+      get stacked diagnostics d = pg_exception_detail;
+    end;
+    why := nullif(split_part(d, '|', 1), '');
+    if why is not null then return why; end if;
+    if split_part(d, '|', 2)::int = 0 then
+      raise exception 'authority lock held by a backend that is never evicted' using errcode = 'lock_not_available';
+    end if;
+    perform dc._budget(s.expires_at, p_lt, dc._xwait_ms());
+    perform pg_advisory_xact_lock(1145241605, p_key);
+  end loop;
+  raise exception 'authority lock still held' using errcode = 'lock_not_available';
+end $$;
+
 -- L0: one relation lock per statement, in the global table order (key: the position in it), in the mode the entry point needs
 create function dc._rel(p_deadline timestamptz, p_lt bigint, p_tables text[], p_modes text[]) returns void language plpgsql as $$
 #variable_conflict use_variable
@@ -588,8 +717,13 @@ declare typ text := case when jsonb_typeof(ev) = 'object' then ev->>'type' end; 
 begin
   perform dc._budget(p_deadline, p_lt, case when p_xt then dc._xwait_ms() end);
   perform dc._at(3, 0);
-  if p_xt then perform pg_advisory_xact_lock(1145241602, dc._k('tenant', p_tenant, null));
-  else perform pg_advisory_xact_lock_shared(1145241602, dc._k('tenant', p_tenant, null)); end if;
+  if p_xt and p_lt is not null then          -- an admin's revoke or grant, after its pins and judgment: evicts a stalled holder (4.4)
+    perform dc._xlock(1145241602, dc._k('tenant', p_tenant, null), 1145241606, p_deadline, p_lt);
+  elsif p_xt then perform pg_advisory_xact_lock(1145241602, dc._k('tenant', p_tenant, null));
+  else
+    if p_lt is not null then perform dc._fenced(1145241606, dc._k('tenant', p_tenant, null)); end if;
+    perform pg_advisory_xact_lock_shared(1145241602, dc._k('tenant', p_tenant, null));
+  end if;
   if jsonb_typeof(ev) = 'object' and jsonb_typeof(ev->'principal') = 'string' then
     perform dc._budget(p_deadline, p_lt);
     perform dc._at(4, 0);
@@ -810,6 +944,7 @@ begin
     if ft is not null then
       perform dc._budget(dl, p_lt);
       perform dc._at(1, dc._k('auth', ft, fp));
+      perform dc._fenced(1145241605, dc._k('auth', ft, fp));
       perform pg_advisory_xact_lock_shared(1145241601, dc._k('auth', ft, fp));
     end if;
     fr := dc._judge_proof(body, mac, b, p_lt);
@@ -860,7 +995,7 @@ begin
   if s.token_hash is null or s.revoked then return false; end if;
   perform dc._budget(null, p_lt, dc._xwait_ms());
   perform dc._at(1, dc._k('auth', s.tenant, s.principal));
-  perform pg_advisory_xact_lock(1145241601, dc._k('auth', s.tenant, s.principal));
+  perform dc._xlock(1145241601, dc._k('auth', s.tenant, s.principal), 1145241605, null, p_lt);
   perform dc._budget(null, p_lt, dc._xwait_ms());
   perform dc._at(2, 4);
   update dc.sessions x set revoked = true where x.token_hash = s.token_hash and not x.revoked;
@@ -886,7 +1021,7 @@ begin
   if ft is null then return false; end if;
   perform dc._budget(null, p_lt, dc._xwait_ms());
   perform dc._at(1, dc._k('auth', ft, fp));
-  perform pg_advisory_xact_lock(1145241601, dc._k('auth', ft, fp));
+  perform dc._xlock(1145241601, dc._k('auth', ft, fp), 1145241605, null, p_lt);
   perform dc._budget(null, p_lt, dc._xwait_ms());
   perform dc._at(2, 1);
   update dc.factors f set revoked = true where f.factor = p_factor and not f.revoked;
@@ -1061,8 +1196,13 @@ begin
             where x.k is not null group by x.k order by x.k loop
     perform dc._budget(s.expires_at, p_lt, case when r.ex then dc._xwait_ms() end);
     perform dc._at(1, r.k);
-    if r.ex then perform pg_advisory_xact_lock(1145241601, r.k);
-    else perform pg_advisory_xact_lock_shared(1145241601, r.k); end if;
+    if r.ex then
+      why := dc._xlock_caller(s, r.k, p_lt, adm);
+      if why is not null then return why; end if;
+    else
+      perform dc._fenced(1145241605, r.k);
+      perform pg_advisory_xact_lock_shared(1145241601, r.k);
+    end if;
   end loop;
   why := dc._pin(s, p_lt, false);
   if why is not null then return why; end if;
@@ -1156,6 +1296,7 @@ begin
   perform dc._rel(s.expires_at, p_lt, p_tables, p_modes);
   perform dc._budget(s.expires_at, p_lt);
   perform dc._at(1, k);
+  perform dc._fenced(1145241605, k);
   perform pg_advisory_xact_lock_shared(1145241601, k);
   return dc._pin(s, p_lt, p_admin);
 end $$;
@@ -1258,7 +1399,7 @@ begin
     if p_subject is null or p_subject <> dc._canon_subject(p_subject) then return jsonb_build_object('refused', 'bad_subject'); end if;
     perform dc._budget(s.expires_at, p_lt, dc._xwait_ms());
     perform dc._at(3, 0);
-    perform pg_advisory_xact_lock(1145241602, dc._k('tenant', s.tenant, null));
+    perform dc._xlock(1145241602, dc._k('tenant', s.tenant, null), 1145241606, s.expires_at, p_lt);
     for r in select v.ref from dc.vals v where v.tenant = s.tenant and v.ref = any(refs) and p_subject = any(v.subjects)
               order by v.ref collate "C" loop
       perform dc._budget(s.expires_at, p_lt);
@@ -1301,3 +1442,19 @@ grant usage on schema dc to dc_app, dc_idp;
 grant execute on function dc.submit(text, jsonb), dc.explain(text, text), dc.read_table(text), dc.erase_candidates(text, text),
                           dc.erase_values(text, text, text[]) to dc_app;
 grant execute on function dc.open_session(text, integer), dc.end_session(text) to dc_idp;
+-- 4.4: the only function that signals backends runs as dc_evictor (NOLOGIN, member of pg_signal_backend, nothing else) and only
+-- owner code can call it; no login role can.
+alter function dc._evict(int, int) owner to dc_evictor;
+grant execute on function dc._evict(int, int) to dc_owner;
+-- 4.4: the advisory-lock functions are PUBLIC by default, so a login role could take A, T, a fence or an idempotency lock with a raw
+-- call and hold it outside any API call. In this database only the owner's code may call them (pg_proc is per database; other
+-- databases keep the default).
+do $$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_catalog.pg_proc p
+            where p.pronamespace = 'pg_catalog'::regnamespace and p.proname like 'pg\_%advisory%' loop
+    execute format('revoke execute on function %s from public', f);
+    execute format('grant execute on function %s to dc_owner', f);
+  end loop;
+end $$;
