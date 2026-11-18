@@ -1,0 +1,3 @@
+== s1_delta1_pg_red_ea4677a.out
+safety       FAIL  test_erase_values_judges_the_session_again_after_waiting_for_a_lock.test_erase_values_judges_the_session_again_after_waiting_for_a_lock  | AssertionError: {'erased': 1, 'refused': None, 'remaining': 0} != {'refused': 'unauthorized'}
+STRICT {'safety': 1} [('Ran 11 tests in 16.902s', 'FAILED (failures=1)')]

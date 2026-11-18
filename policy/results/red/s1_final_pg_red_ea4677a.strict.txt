@@ -1,0 +1,2 @@
+== s1_final_pg_red_ea4677a.out
+STRICT {} [('Ran 12 tests in 5.744s', 'OK')]

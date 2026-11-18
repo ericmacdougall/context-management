@@ -1,0 +1,18 @@
+== rerun_final_mem_red_a2d65fd.out
+safety       FAIL  test_explain_and_table_judge_again_before_returning.test_explain_and_table_judge_again_before_returning [explain] | AssertionError: {'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []} not found in (None, []) : returned decision state to a
+safety       FAIL  test_judged_again_after_waiting_for_the_engine_lock.test_judged_again_after_waiting_for_the_engine_lock (wait='engine', mutation='ended') | AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+safety       FAIL  test_judged_again_after_waiting_for_the_engine_lock.test_judged_again_after_waiting_for_the_engine_lock (wait='engine', mutation='policy_revoked') | AssertionError: 'proposed' != 'principal_revoked'
+safety       FAIL  test_judged_again_after_waiting_for_the_engine_lock.test_judged_again_after_waiting_for_the_engine_lock (wait='engine', mutation='removed') | AssertionError: 'proposed' != 'unauthenticated:unknown_principal'
+safety       FAIL  test_judged_again_after_waiting_for_the_key_lock.test_judged_again_after_waiting_for_the_key_lock (wait='key', mutation='ended') | AssertionError: 'proposed' != 'unauthenticated:invalid_session'
+safety       FAIL  test_judged_again_after_waiting_for_the_key_lock.test_judged_again_after_waiting_for_the_key_lock (wait='key', mutation='policy_revoked') | AssertionError: 'proposed' != 'principal_revoked'
+safety       FAIL  test_judged_again_after_waiting_for_the_key_lock.test_judged_again_after_waiting_for_the_key_lock (wait='key', mutation='removed') | AssertionError: 'proposed' != 'unauthenticated:unknown_principal'
+integrity    FAIL  test_no_wait_between_the_erase_judgment_and_the_deletion.test_no_wait_between_the_erase_judgment_and_the_deletion  | AssertionError: Tuples differ: (True, 1) != (False, 0)
+integrity    FAIL  test_fault_in_the_engine_before_it_applies.test_fault_in_the_engine_before_it_applies  | AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+integrity    FAIL  test_fault_inside_the_reduction.test_fault_inside_the_reduction  | AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+integrity    FAIL  test_fault_while_applying_the_delta.test_fault_while_applying_the_delta  | AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+integrity    FAIL  test_fault_while_tokenising_the_label.test_fault_while_tokenising_the_label  | AssertionError: Tuples differ: (1, 1, 0) != (0, 0, 0)
+integrity    FAIL  test_malformed_type_then_valid_then_exact_retry.test_malformed_type_then_valid_then_exact_retry  | AssertionError: Tuples differ: ('raised:TypeError', (1, 1), 'proposed', 'idem_conflict', False, 2) != ('bad_event', (0, 0), 'proposed', 'duplicate', True, 1)
+integrity    FAIL  test_other_malformed_keys_never_leave_a_value.test_other_malformed_keys_never_leave_a_value (over='{"type": {}}') | AssertionError: 'raised:TypeError' != 'bad_event'
+integrity    FAIL  test_reduce_never_raises.test_reduce_never_raises  | AssertionError: Lists differ: [("{'type': {'k': []}, 'id': 'alice/x0', '[1144 chars]or')] != []
+integrity    FAIL  test_random_mix_keeps_the_vault_exact.test_random_mix_keeps_the_vault_exact  | AssertionError: Lists differ: [(39, 1, 0), (40, 1, 0), (41, 1, 0), (42, 1, 0), (43, 1, 0)] != []
+STRICT {'safety': 7, 'integrity': 9} [('Ran 16 tests in 3.726s', 'FAILED (failures=16)')]

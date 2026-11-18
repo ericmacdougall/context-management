@@ -4,6 +4,29 @@ Each log is the unittest output of a red run: the new tests against the code the
 broken variant), on local, never-pushed `red/*` branches. Home paths are redacted to `~`. Before commit the logs were scanned for
 credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password URLs); none occur. The 64-hex strings are sha256 digests.
 
+## Review of 2262eaa (F1-F8, H1, H2), t2-dev, 2026-11-18
+
+Trees are `git archive` exports (code paths only, `results/` excluded) of the fix worktree; the header of each log names the tree
+object. 2262eaa is the code under review; the fix commits are 6361bd9 (H2) and 4e1ba6b (F1-F3, F5, F8, H1); trees b9cc544 and
+20da971 have pol/, exp/, ops/ and verify/ identical to them (20da971 adds the corrected tests/test_rev2262_pg.py). Strict classes
+as defined below (`kit/strict_classify.py`; rev2262 tests are classed by test name in its `BY_TEST`).
+
+| Finding | Red log (2262eaa) | Strict class of the red failures | Green log |
+|---|---|---|---|
+| H2 in-memory reads of revoked principals | `rev2262_mem_red_2262eaa.out` (FAILED, failures=4) | safety 4: explain and read_table answered for a principal revoked by the core, by policy, or during the wait | `rev2262_mem_green_b9cc544.out` (in-memory and evidence suites, Ran 186, OK) |
+| F1 cross-tenant key collisions | `rev2262_pg_red_2262eaa.out` (Ran 12, FAILED, failures=17, all assertions) | availability 3: a tenant-a revoke of a colliding existing or nonexistent target ended a tenant-b backend; a colliding subject stalled another tenant's submit (55P03) | `rev2262_pg_green_20da971.out` (Ran 12, OK) |
+| F5 refused grant or revoke | same log | availability 4 (a refused change evicted bob's in-flight submit), liveness 4 (a refused change gave up with 55P03 on the tenant lock instead of answering bad_event) | same |
+| F2a prepared transactions | same log | liveness 1: a prepared transaction held a call's advisory locks, so its principal could not be revoked | same (install refused, every call 55000 when max_prepared_transactions > 0) |
+| F2b member login role | same log | liveness 1: a login role in dc_app was never evicted, the revoke gave up | same |
+| H1 end_session vs a revoke in progress | same log | liveness 1: end_session evicted the revocation in progress (the mirror guard, a stalled applied revoke still evicted, passes red and green) | same |
+| F3 fence before eviction | same log | mechanism 1: a reconnecting adversary was answered after the revoke began (not evidence of an unsafe outcome) | same |
+| F8 advisory ACL | same log | mechanism 1 (install left explicit advisory grants), integrity 1 (rollback did not restore the recorded ACL) | same |
+
+Other green logs: `rev2262_pg8_green_b9cc544.out` (the eight Postgres suites, Ran 145, OK). SUPERSEDED, kept for the record and NOT
+evidence: `rev2262_pg_red_2262eaa_SUPERSEDED.out` (first red run; two test bugs, F2b's unrevoke waited on the holder's own pin and
+F2a counted prepared locks with a wrong join) and `rev2262_pg_green_b9cc544_SUPERSEDED.out` (the same F2b bug, and an F5 test that
+expected bad_event while a stalled submitter held the chain head, FINAL-JUDGMENT.md 4.4 residual 3; the test was split).
+
 ## S1 (the final review's P1-P4 merged) and FINAL-JUDGMENT.md 4.4, t2-dev, 2026-11-18
 
 The fixer's S1 runs (`s1_*`) were never committed before; the policy owner's reruns (`rerun_*`, `s44_*`, `r3_*`, `mem_*`, `dev_*`) ran in
@@ -16,21 +39,32 @@ import or undefined-function errors, and liveness or vacuity failures; only beha
 `batch_o*.guard` and `batch_o6.samples` are the disk watcher's records (OWNER-COMMON: no run may leave under 15 GB free, read as
 15 GiB; my watcher stopped my own container the moment free space fell under it, and every later step of that batch is VOID).
 
-Counting rule for the S1 red logs: a failure counts as behavioural only if its assertion shows the call applied, answered or opened
-when it should have refused. UndefinedFunction errors (the S1 helpers do not exist at the old commit), "vacuous" or "did not wait"
-liveness failures, and "no lock trace recorded" are listed in the `.classified.txt` but are NOT evidence.
+Counting rule (strict, review of 2262eaa F4; it replaces the earlier "behavioural" counts of this section, which mixed classes): each
+FAIL or ERROR block of a red log is put in ONE class by `kit/strict_classify.py` (its rules, in order, are the whole method; the
+`.strict.txt` beside each log is its output, one line per block):
+- failing-first evidence of a defect: `safety` (an unsafe outcome: answered, applied, opened, accepted or erased when it should have
+  refused), `liveness` (a revocation gave up, waited past expiry or was starved), `availability` (another backend ended, stalled or
+  fenced by a call that should not touch it), `integrity` (partial state, a raise instead of a refusal, inexact rows), `verifier` (a
+  verifier said PASS on manipulated evidence);
+- NOT evidence of a defect: `mechanism` (a step of the fix's protocol is absent, e.g. a fence did not refuse, a privilege was not
+  refused, the mutation did not wait for the call, but the assertion shows no unsafe outcome), `vacuous` (the test's own
+  precondition failed: no wait, no lock trace) and `missing-api` (the function, role or attribute the test calls does not exist).
+`kit/o-classify.py` (the older three-way split behind the `.classified.txt` files) is committed beside it, verbatim from t2-dev
+(sha256 79655326a98702db9e7b04a46521a2d5e747dde6a64b258f6486c91ad7da4a27). Not covered by the strict classifier, disclosed:
+the evidence-identity logs (`evidence_*_red_ea4677a.out`; every block is UNCLASSIFIED there, their failures are verdict assertions
+that the section below reads per manipulation by hand), and the SUPERSEDED and SPOILED logs (not evidence).
 
 | What | Log | Code under test | Result |
 |---|---|---|---|
-| S1 P1/P4 (blocking points) | `rerun_s1_pg_red_a2d65fd.out` | a2d65fd + the S1 tests of 8547b27 | FAILED (failures=81, errors=5): 28 behavioural failures; 5 UndefinedFunction errors, 44 vacuous or liveness failures and 9 "no lock trace recorded" are not evidence. |
-| S1 at ea4677a (the fixer's red) | `s1_pg_red_ea4677a.out` (fixer run s1-red), `rerun_s1_pg_red_ea4677a.out` (my rerun, same counts) | ea4677a + the S1 tests of 8547b27 | FAILED (failures=70, errors=5): 14 behavioural; 5 UndefinedFunction, 47 vacuous or liveness, 9 no-trace. |
-| P1, P4, P5 on Postgres, rerun | `rerun_final_pg_red_a2d65fd.out` | a2d65fd + test_final_pg of 8547b27 | FAILED (failures=19), 2 of them vacuous. At ea4677a the same module passes (`s1_final_pg_red_ea4677a.out`, `rerun_final_pg_ea4677a.out`: ea4677a already had the recheck fixes). |
-| erase_values judged again after a wait | `rerun_delta1_pg_red_a2d65fd.out`, `rerun_delta1_pg_red_ea4677a.out`, `s1_delta1_pg_red_ea4677a.out` | a2d65fd / ea4677a | FAILED (failures=1) each: erased 1 after the wait. |
-| P1, P3 in memory; P2 S2 verifier, reruns | `rerun_final_mem_red_a2d65fd.out`, `rerun_verify_s2_red_a2d65fd.out` | a2d65fd | FAILED (failures=16) each, all assertions (as in the a2d65fd logs above). |
+| S1 P1/P4 (blocking points) | `rerun_s1_pg_red_a2d65fd.out` | a2d65fd + the S1 tests of 8547b27 | FAILED (failures=81, errors=5). Strict: 25 evidence (safety 13, liveness 12); not evidence: mechanism 28, vacuous 28, missing-api 5. (Was "28 behavioural".) |
+| S1 at ea4677a (the fixer's red) | `s1_pg_red_ea4677a.out` (fixer run s1-red), `rerun_s1_pg_red_ea4677a.out` (my rerun, same counts) | ea4677a + the S1 tests of 8547b27 | FAILED (failures=70, errors=5). Strict: 11 evidence (liveness 11; no block classed safety); not evidence: mechanism 29, vacuous 30, missing-api 5. (Was "14 behavioural".) |
+| P1, P4, P5 on Postgres, rerun | `rerun_final_pg_red_a2d65fd.out` | a2d65fd + test_final_pg of 8547b27 | FAILED (failures=19). Strict: safety 17; vacuous 2. At ea4677a the same module passes (`s1_final_pg_red_ea4677a.out`, `rerun_final_pg_ea4677a.out`: ea4677a already had the recheck fixes). |
+| erase_values judged again after a wait | `rerun_delta1_pg_red_a2d65fd.out`, `rerun_delta1_pg_red_ea4677a.out`, `s1_delta1_pg_red_ea4677a.out` | a2d65fd / ea4677a | FAILED (failures=1) each: erased 1 after the wait (strict: safety 1 each). |
+| P1, P3 in memory; P2 S2 verifier, reruns | `rerun_final_mem_red_a2d65fd.out`, `rerun_verify_s2_red_a2d65fd.out` | a2d65fd | FAILED (failures=16) each. Strict: memory safety 7, integrity 9; S2 verifier 16. |
 | Green, S1 | `s1_pg_green_e816310.out` (Ran 126 OK), `s1_pg_green_8547b27.out` (test_s1_pg, Ran 51 OK), `rerun_pg7_green_8547b27.out` (Ran 126 OK), `rerun_mem_green_8547b27.out` (in-memory and evidence suites, Ran 183 OK) | e816310, 8547b27 | OK |
-| 4.4 eviction | `s44_red_8547b27.out` | 8547b27 + the 4.4 tests of 6bed430 | FAILED (failures=16), all assertions: a revoke, end_session, revoke_factor, tenant revoke or erasure behind a stalled holder gave up with 55P03 instead of applying. |
-| 4.4 fences | `s44_fence_red_8547b27.out` | 8547b27 + 0046ef6 tests | FAILED (failures=4): open_session, submit, explain and the tenant's submits were not refused (None != '55P03') while a revocation evicted. |
-| 4.4 migration | `s44_mig_tests_red_7464493.out`; `s44_mig_exp_red_7464493.out` | 7464493 + ae644df tests; 7464493 exp.mig_rehearsal | FAILED (failures=2): forward on a cluster without dc_evictor (42704), rollback leaves the old engine without its advisory lock; the rehearsal stops at "permission denied for function pg_advisory_xact_lock". `s44_mig_tests_red_7464493_SPOILED.out` (0046ef6 tests) is NOT evidence: its forward test dropped dc_evictor and 6 later setUps errored; ae644df restores the role. |
+| 4.4 eviction | `s44_red_8547b27.out` | 8547b27 + the 4.4 tests of 6bed430 | FAILED (failures=16). Strict: liveness 9 (a revoke, end_session, revoke_factor, tenant revoke or erasure behind a stalled holder gave up with 55P03 instead of applying); mechanism 7, not evidence (6 InsufficientPrivilege not raised for dc_app/dc_idp advisory calls, 1 evictor role not scoped). (Was "16, all assertions".) |
+| 4.4 fences | `s44_fence_red_8547b27.out` | 8547b27 + 0046ef6 tests | FAILED (failures=4): open_session, submit, explain and the tenant's submits were not refused (None != '55P03') while a revocation evicted. Strict: mechanism 4, not evidence of an unsafe outcome by themselves (the assertion is the missing refusal). |
+| 4.4 migration | `s44_mig_tests_red_7464493.out`; `s44_mig_exp_red_7464493.out` | 7464493 + ae644df tests; 7464493 exp.mig_rehearsal | FAILED (failures=2): forward on a cluster without dc_evictor (42704), rollback leaves the old engine without its advisory lock; the rehearsal stops at "permission denied for function pg_advisory_xact_lock" (strict: liveness 1, missing-api 1). `s44_mig_tests_red_7464493_SPOILED.out` (0046ef6 tests) is NOT evidence: its forward test dropped dc_evictor and 6 later setUps errored; ae644df restores the role. |
 | 4.4 broken variants | `s44_ctl_sharelock_7464493.out`, `s44_ctl_refused_088ab4c.out` | 7464493 without the evictor's ShareLock filter; 088ab4c with dc._xlock_caller's eviction unconditional | FAILED (1, "the queued revoker was evicted"; 2, "a refused revoker evicted the holder"): the tests catch both variants. |
 | Green, 4.4 | `s44_pg8_green_7464493.out` (Ran 140 OK), `mem_green_7464493.out` (Ran 183 OK), `s44_pg8_green_088ab4c.out` (Ran 145 OK), `s44_pg8_green_ae644df.out` (Ran 145 OK), `r3_rollback_green_ae644df.out` (Ran 7 OK), `mem_green_ae644df.out` (in-memory and evidence suites, no database, Ran 183 OK) | 7464493, 088ab4c, ae644df | OK |
 

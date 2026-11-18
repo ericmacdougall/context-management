@@ -1,0 +1,77 @@
+== rerun_s1_pg_red_ea4677a.out
+missing-api  ERROR test_a_wait_after_the_judgment_fails_the_call.test_a_wait_after_the_judgment_fails_the_call  | psycopg.errors.UndefinedFunction: function "dc._lock_target(text, text, timestamptz, bigint)" does not exist
+missing-api  ERROR test_the_stage_never_waits.test_the_stage_never_waits  | psycopg.errors.UndefinedFunction: function "dc._acquire_submit(dc.sessions, jsonb, bigint)" does not exist
+missing-api  ERROR test_without_the_pins_a_mutation_lands_during_the_wait.test_without_the_pins_a_mutation_lands_during_the_wait  | psycopg.errors.UndefinedFunction: function "dc._pin(dc.sessions, bigint, boolean)" does not exist
+missing-api  ERROR test_an_out_of_order_lock_is_refused.test_an_out_of_order_lock_is_refused (first=(3, 0), second=(2, 0)) | psycopg.errors.UndefinedFunction: function dc._at(smallint, smallint) does not exist
+missing-api  ERROR test_an_out_of_order_lock_is_refused.test_an_out_of_order_lock_is_refused (first=(1, 50), second=(1, 7)) | psycopg.errors.UndefinedFunction: function dc._at(smallint, smallint) does not exist
+mechanism    FAIL  test_subject_token_unique_index.test_subject_token_unique_index  | AssertionError: None != '55P03' : {'id': 'alice/c5731b64c', 'code': 'proposed', 'original': None, 'value_ref': 'val-851a7bc1e60ec322347ec049e7e37330095a1f98'}
+vacuous      FAIL  test_authority_lock.test_authority_lock (mutation='principal') | AssertionError: False is not true : vacuous: the call did not wait
+vacuous      FAIL  test_authority_lock.test_authority_lock (mutation='factor') | AssertionError: False is not true : vacuous: the call did not wait
+vacuous      FAIL  test_authority_lock.test_authority_lock  | AssertionError: 2 != 0
+vacuous      FAIL  test_pin_waits_for_a_row_writer.test_pin_waits_for_a_row_writer (table='sessions') | AssertionError: False is not true : vacuous: the pin did not wait for the row's writer
+vacuous      FAIL  test_pin_waits_for_a_row_writer.test_pin_waits_for_a_row_writer (table='factors') | AssertionError: False is not true : vacuous: the pin did not wait for the row's writer
+vacuous      FAIL  test_pin_waits_for_a_row_writer.test_pin_waits_for_a_row_writer (table='principal') | AssertionError: False is not true : vacuous: the pin did not wait for the row's writer
+vacuous      FAIL  test_authority_lock.test_authority_lock  | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+liveness     FAIL  test_chain_head_row.test_chain_head_row  | AssertionError: False is not true : the call was still waiting 1 s after its token expired
+liveness     FAIL  test_erase_value_row.test_erase_value_row  | AssertionError: False is not true : erase_values still waiting after expiry (late 1.00 s)
+liveness     FAIL  test_events_table_lock.test_events_table_lock  | AssertionError: False is not true : the call was still waiting 1 s after its token expired
+liveness     FAIL  test_explain_table_lock.test_explain_table_lock  | AssertionError: False is not true : explain still waiting after expiry (late 1.00 s)
+liveness     FAIL  test_head_row.test_head_row  | AssertionError: False is not true : the call was still waiting 1 s after its token expired
+liveness     FAIL  test_idempotency_lock.test_idempotency_lock  | AssertionError: False is not true : the call was still waiting 1 s after its token expired
+liveness     FAIL  test_open_session_twin.test_open_session_twin  | AssertionError: False is not true : open_session still waiting after the proof expired (late 1.00 s)
+liveness     FAIL  test_revoke_target_row.test_revoke_target_row  | AssertionError: False is not true : the revoke still waiting after expiry (late 1.00 s)
+vacuous      FAIL  test_tenant_lock.test_tenant_lock  | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [submit] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [submit_revoke] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [submit_grant] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [explain] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [read_table] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [erase_candidates] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [erase_values] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [open_session] | AssertionError: None is not true : no lock trace recorded
+vacuous      FAIL  test_every_entry_point_follows_the_declared_order.test_every_entry_point_follows_the_declared_order [end_session] | AssertionError: None is not true : no lock trace recorded
+mechanism    FAIL  test_end_session_waits_for_the_call.test_end_session_waits_for_the_call  | AssertionError: False is not true : end_session did not wait for the in-flight call
+liveness     FAIL  test_erasure_is_not_starved_by_a_stream_of_submits.test_erasure_is_not_starved_by_a_stream_of_submits  | AssertionError: False is not true : erase_values was starved by the stream
+mechanism    FAIL  test_open_session_vs_revoke.test_open_session_vs_revoke  | AssertionError: False is not true : the revoke did not wait for the open_session
+liveness     FAIL  test_revoke_is_not_starved_by_a_stream_of_submits.test_revoke_is_not_starved_by_a_stream_of_submits  | AssertionError: False is not true : the revoke was starved by the stream
+liveness     FAIL  test_prune_never_waits.test_prune_never_waits  | AssertionError: True is not false : B waited for A's prune
+vacuous      FAIL  test_twin_rolls_back.test_twin_rolls_back (mutation='factor') | AssertionError: False is not true : vacuous: the factor revocation did not wait while B waited
+vacuous      FAIL  test_twin_rolls_back.test_twin_rolls_back (mutation='principal') | AssertionError: False is not true : vacuous: the principal revocation did not wait while B waited
+mechanism    FAIL  test_chain_head_row.test_chain_head_row (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for the call
+mechanism    FAIL  test_chain_head_row.test_chain_head_row (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for the call
+mechanism    FAIL  test_chain_head_row.test_chain_head_row (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for the call
+vacuous      FAIL  test_erase_tenant_lock.test_erase_tenant_lock (mutation='principal') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_erase_tenant_lock.test_erase_tenant_lock (mutation='factor') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_erase_tenant_lock.test_erase_tenant_lock (mutation='end') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_erase_tenant_lock.test_erase_tenant_lock (mutation='revoke') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+mechanism    FAIL  test_erase_token_row.test_erase_token_row (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for erase_values
+vacuous      FAIL  test_erase_token_row.test_erase_token_row (mutation='factor') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_erase_token_row.test_erase_token_row (mutation='end') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_erase_token_row.test_erase_token_row (mutation='revoke') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+mechanism    FAIL  test_erase_value_row.test_erase_value_row (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for erase_values
+mechanism    FAIL  test_erase_value_row.test_erase_value_row (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for erase_values
+mechanism    FAIL  test_erase_value_row.test_erase_value_row (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for erase_values
+mechanism    FAIL  test_head_row.test_head_row (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for the call
+mechanism    FAIL  test_head_row.test_head_row (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for the call
+mechanism    FAIL  test_head_row.test_head_row (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for the call
+mechanism    FAIL  test_idempotency_lock.test_idempotency_lock (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for the call
+mechanism    FAIL  test_idempotency_lock.test_idempotency_lock (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for the call
+mechanism    FAIL  test_idempotency_lock.test_idempotency_lock (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for the call
+mechanism    FAIL  test_subject_lock.test_subject_lock (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for the call
+mechanism    FAIL  test_subject_lock.test_subject_lock (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for the call
+mechanism    FAIL  test_subject_lock.test_subject_lock (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for the call
+mechanism    FAIL  test_subject_lock.test_subject_lock (mutation='revoke') | AssertionError: False is not true : the mutation (revoke) did not wait for the call
+vacuous      FAIL  test_tenant_lock.test_tenant_lock (mutation='principal') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_tenant_lock.test_tenant_lock (mutation='factor') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_tenant_lock.test_tenant_lock (mutation='end') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+vacuous      FAIL  test_tenant_lock.test_tenant_lock (mutation='revoke') | AssertionError: False is not true : vacuous: the call did not wait on the held lock
+mechanism    FAIL  test_revoke_gives_up_after_xwait.test_revoke_gives_up_after_xwait  | AssertionError: None != '55P03' : the revoke after XWAIT: {'id': 'admin/rv6c1a43', 'code': 'revoked', 'original': None, 'value_ref': None}
+mechanism    FAIL  test_revoke_waits_for_an_open_end_session.test_revoke_waits_for_an_open_end_session (end_session='commit') | AssertionError: False is not true : the revoke did not wait for the open end_session
+mechanism    FAIL  test_revoke_waits_for_an_open_end_session.test_revoke_waits_for_an_open_end_session (end_session='rollback') | AssertionError: False is not true : the revoke did not wait for the open end_session
+mechanism    FAIL  test_target_principal_row.test_target_principal_row (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for the revoke
+mechanism    FAIL  test_target_principal_row.test_target_principal_row (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for the revoke
+mechanism    FAIL  test_target_principal_row.test_target_principal_row (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for the revoke
+mechanism    FAIL  test_target_props_rows.test_target_props_rows (mutation='principal') | AssertionError: False is not true : the mutation (principal) did not wait for the revoke
+mechanism    FAIL  test_target_props_rows.test_target_props_rows (mutation='factor') | AssertionError: False is not true : the mutation (factor) did not wait for the revoke
+mechanism    FAIL  test_target_props_rows.test_target_props_rows (mutation='end') | AssertionError: False is not true : the mutation (end) did not wait for the revoke
+STRICT {'missing-api': 5, 'mechanism': 29, 'vacuous': 30, 'liveness': 11} [('Ran 51 tests in 183.248s', 'FAILED (failures=70, errors=5)')]

@@ -1,0 +1,18 @@
+== rerun_verify_s2_red_a2d65fd.out
+verifier     FAIL  test_a_trial_index_must_be_an_integer.test_a_trial_index_must_be_an_integer (bad="'0'") | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_a_trial_index_must_be_an_integer.test_a_trial_index_must_be_an_integer (bad='0.0') | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_a_trial_index_must_be_an_integer.test_a_trial_index_must_be_an_integer (bad='True') | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_a_trial_index_must_be_an_integer.test_a_trial_index_must_be_an_integer (bad='None') | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_a_trial_index_must_be_an_integer.test_a_trial_index_must_be_an_integer (bad='-1') | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_copies] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_copies_renumbered] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_one_trial_twice] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_trial_gap] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_seed_copied] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_replay_first_unlinked] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_replay_first_other_factor] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_revoked_principal_copies] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_concurrent_round_copied] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_no_identity] | AssertionError: 'PASS' != 'FAIL'
+verifier     FAIL  test_each_duplication_fails.test_each_duplication_fails [_p2_nonce_shared_across_classes] | AssertionError: 'PASS' != 'FAIL'
+STRICT {'verifier': 16} [('Ran 8 tests in 0.644s', 'FAILED (failures=16)')]
