@@ -4,24 +4,31 @@ Status: hand-off package of the policy owner. The core is built and tested ALONE
 NOT built or tested together with the write path. COMPOSITION.md is the design of the port (the write path owns the decision
 transaction; the core's rules move into its `events_guard` trigger transaction).
 
-Proof status (2026-11-18, after the review of 2262eaa; a fixer's report, NOT a review pass: a delta review follows):
-- Port from `fix/policy-final-review` at 6b77354 (THRESHOLDS amendment 8, documentation only; the code is that of bfe2a63:
-  `pol/` and `ops/` as 4e1ba6b, `exp/` and `verify/` as bfe2a63). NOT from 2262eaa: the review of 2262eaa found it unsafe across
-  tenants (F1) and against prepared transactions and member login roles (F2); section 5 has the history. Not merged to main. This
-  branch, `docs/step3-handoff`, merges that branch (3bd657c, and eba8b76 for amendment 8; no rewrite) and adds the step-3 fixtures and the protocol fixtures
-  (`tests/test_fixtures_step3_protocol.py`).
-- Green on t2-dev (Postgres 16.15), exact trees built by `git archive`: `tests.test_rev2262_pg` Ran 12, OK; the eight Postgres
-  modules (`test_s44_pg`, `test_s1_pg`, `test_final_pg`, `test_delta1_pg`, `test_pg`, `test_pg_boundary`, `test_review3_pg`,
-  `test_step2_pg`) Ran 145, OK; in-memory and evidence suites Ran 186, OK. On this branch's merged tree: NOT RUN (see
-  "NOT proven"). The protocol fixtures' six lock-layer mutants were run on tree w4 (the code of bfe2a63 plus the protocol file as
-  in 2129a5e): Ran 2, OK, every mutant caught by an assertion (pins 2, fence 3, evict 4, in_progress 1, collapsed_key 1,
-  refused_xlock 3 failures).
+Proof status (2026-11-18, after the delta review of 6b77354; a fixer's report, NOT a review pass: a delta review follows):
+- The delta review of 6b77354 (BLOCK for client use) found 6b77354 unsafe: its in-progress exemption (H1) never worked, so a
+  revocation in progress was ended by a later `end_session`, `dc.revoke_factor` or second revoke and lost (N1); six refused shapes
+  of a grant or revoke still took T exclusively and evicted bystanders (N2); waiters and committed innocents were ended (N3); an
+  admin parked on another tenant froze its own (N4); the rollback built SQL from the mark's text (N7). DO NOT port from 6b77354.
+- Port from `fix/policy-final-review` at 81279dd (the fix of N1-N7) or a later commit of that branch; THRESHOLDS amendment 9 is its
+  last commit (documentation only). Not merged to main. This branch, `docs/step3-handoff`, merges that branch (no rewrite) and adds
+  the step-3 fixtures and the protocol fixtures (`tests/test_fixtures_step3_protocol.py`).
+- Green at 81279dd, DEVIATION: PG 17.11 local on the Mac, not 16.15: `tests.test_rev6b77_pg` (red at 6b77354, results/red README
+  section "Review of 6b77354") and the focused Postgres modules (`test_rev2262_pg`, `test_s44_pg`, `test_s1_pg`, `test_final_pg`,
+  `test_delta1_pg`, `test_review3_pg`, `test_step2_pg`, `test_pg`, `test_pg_boundary`), Ran 156, OK. On t2-dev (16.15): see "NOT
+  proven". Earlier, at 6b77354 on t2-dev: `tests.test_rev2262_pg` Ran 12, OK; the eight Postgres modules Ran 145, OK; in-memory
+  and evidence suites Ran 186, OK; those runs did not detect N1-N4 (H1 passed on timing only).
+- Protocol fixtures on this branch's merged tree (87e0843): NOT RUN anywhere. Every MUTANTS anchor was checked to occur exactly
+  once in the 81279dd core; that each new mutant is caught by an assertion is NOT yet shown. Reasons: the Mac fell under 2 GB free
+  (0.18 GB, not this work's files), so the local server was removed before the run; on t2-dev the 10 GB start bar was not reached
+  from 22:30 to 23:02Z (8.8 to 9.7 GB free). Run first: `python -m unittest -v tests.test_fixtures_step3_protocol` on the lab
+  environment of tests/test_pg.py.
 - Failing-first, strict count (`results/red/README.md`, `kit/strict_classify.py`; only safety, liveness, availability, integrity and
   verifier failures count): the review of 2262eaa at 2262eaa, availability 7, liveness 7, integrity 1 (plus mechanism 2, not
   evidence) and in memory safety 4; S1 P1/P4 at a2d65fd, safety 13 and liveness 12 (the "28 behavioural" of the earlier hand-off
   mixed classes); 4.4 eviction at 8547b27, liveness 9 (was "16"); 4.4 fences at 8547b27, mechanism 4 only; 4.4 migration at
   7464493, liveness 1. Broken variants caught: the queued-revoker filter removed; the refused revoker's eviction made unconditional;
-  six lock-layer protocol mutants of `tests/test_fixtures_step3_protocol.py` (the seventh, authentication, not yet run; section 3). F3 (fence
+  the six lock-layer protocol mutants of 2129a5e on tree w4 (6b77354's code; its `in_progress` mutant changed dead code, see
+  section 3), while the first `expiry_noop` ran and was NOT caught; the mutants of 87e0843 have NOT run (above). F3 (fence
   before eviction) and F8 (install grants) are red only as `mechanism` and F6, F7 have no red test: by the strict rule they have
   no failing-first evidence of a defect.
 - DEV seeds at the final code (tree 20da971, development observations, not proof): b3_pg PASS (54 s; the idem_unprotected control
@@ -30,15 +37,20 @@ Proof status (2026-11-18, after the review of 2262eaa; a fixer's report, NOT a r
   mismatches; B1 was cut). The last complete DEV pg_diff is still the fixer's at e816310, before the 4.4 code.
 - NOT proven:
   - no stamped run of this round (not started, by instruction);
-  - NOT RUN, because t2-dev free space stayed under the 17 GiB start bar (16.0 GB at 19:40Z, 13.2 GB at 20:00Z): a complete DEV
-    pg_diff at the final code, `verify results --dev`, DEV mig_rehearsal at the final code, and this branch's merged-tree run
-    (`tests.test_fixtures_step3`, `test_fixtures_step3_set`, `test_fixtures_step3_protocol`, `test_rev2262_pg`; the
-    CommittedSetPg fail-instead-of-skip change; the `expiry_noop` authentication mutant of f9b4e63, which has NEVER run);
+  - NOT RUN on t2-dev (PostgreSQL 16.15) at 81279dd, because free space stayed under the lab rule's 10 GB start bar (8.8 to 9.7
+    GB, 22:30 to 23:02Z; batch b6 waited 30 min without the lock and gave up): `tests.test_rev6b77_pg`, the focused Postgres
+    modules, the protocol fixtures, DEV mig_rehearsal, the complete DEV pg_diff and `verify results --dev`. Every 81279dd result
+    is local only (DEVIATION: PG 17.11). The last complete DEV pg_diff is still the fixer's at e816310, before the 4.4 code;
+  - Correction: an earlier version of this list said the `expiry_noop` mutant of f9b4e63 "has NEVER run". It had run: the policy
+    owner's t2-dev log `s3_green_f9b4e63.out` (Ran 25, FAILED, failures=1) and twice in the review of 6b77354, and it was NOT
+    caught (`MUTANT expiry_noop ran=1 failures=0`): that version removed only `dc._session`'s expiry clause, which only the final
+    judgment `dc._gate` reads, and the entry guards still refused the expired token. The reviewer's `gate_noop` was not caught
+    either. Both are now caught by `N6_JudgmentAtTheGate` (a token that expires inside the call), see section 3;
   - nothing here is built or tested with the write path;
-  - the eviction, the lock identities and the 2PC refusal are ASSUMPTIONS (the policy owner's and the fixer's), not the user's
-    decisions;
-  - the residuals of section 4 (H1 between-waits window, retry of a valid change may evict, S collisions within a tenant) are
-    disclosed, not measured.
+  - the eviction, the marker, the lock identities and the 2PC refusal are ASSUMPTIONS (the policy owner's and the fixers'), not the
+    user's decisions;
+  - the residuals of section 4 (a leaked marker, the unlocked pre-read, the re-check-to-signal window, S collisions within a tenant)
+    are disclosed, not measured.
 
 ASSUMPTIONS in force, not confirmed by the user (label them wherever the port relies on them): decision 8 (agents only propose and
 remark), decision 9 (idempotency per tenant, principal and key), decision 10 (identifier declaration rule plus span redaction),
@@ -72,9 +84,12 @@ Roles (`pol/_pgcore.sql`, privileges at the end):
 - `dc_idp` (the identity adapter) may EXECUTE only `dc.open_session` and `dc.end_session`.
 - `dc_evictor` (NOLOGIN) is a member of `pg_signal_backend` and of nothing else, and owns only `dc._evict`, which only dc_owner may
   execute (FINAL-JUDGMENT.md 4.4; ASSUMPTION). The port needs the same privilege split, or another way to end a stalled holder.
-  Eviction scope changed in the review of 2262eaa (F2b): it no longer matches the user NAMES dc_app and dc_idp; it ends any backend
-  of this database whose session user is not a superuser and not a member of dc_owner, that holds or waits for the key, and is not
-  itself a revocation in progress (H1). A login role that is a member of dc_app is therefore evicted like dc_app.
+  Eviction scope (review of 2262eaa F2b, review of 6b77354 N1, N3, N4; FINAL-JUDGMENT.md 4.4 "Whom" is normative): it ends a
+  backend of this database whose session user is not a superuser and not a member of dc_owner, only if that backend HELD the key
+  (or its fence) granted, in the same transaction, both when the evicting request began and just before the signal, and is not a
+  call in progress marked for that key (the marker M(k), advisory class 1145241607, session-level SHARED, held together with k or
+  its fence exclusively). Waiters are never ended. A login role that is a member of dc_app is evicted like dc_app. dc_evictor needs
+  no statistics rights: everything it reads is in `pg_locks`.
 - Two-phase commit (review of 2262eaa F2a; ASSUMPTION, fail closed): `install()` refuses a server with
   `max_prepared_transactions > 0`, and every API call raises SQLSTATE 55000 while it is > 0. The API cannot run on a cluster that
   uses two-phase commit; the port must either keep this refusal or end prepared holders some other way.
@@ -128,8 +143,12 @@ fence, or a wait after the acquisition. Nothing was applied; the call is retryab
 Stalled holders (FINAL-JUDGMENT.md 4.4; ASSUMPTION). A caller that keeps a transaction open after a call holds that call's locks.
 If that blocks a revoke, `end_session`, `dc.revoke_factor`, grant or erasure for more than XWAIT, the blocked call (once its own
 caller is pinned and judged) ends the holder's backend (`pg_terminate_backend`) and retries, at most three rounds. Callers must
-expect a terminated connection (57P01) in that case; nothing of the ended transaction is committed. Owner and superuser holders are
-never ended. Measured bound with one holder: 2.11-2.12 s (t2-dev, PG 16.15).
+expect a terminated connection (57P01) in that case; nothing of the ended transaction is committed, except in the window between
+eviction's last re-check and its signal (microseconds), where the holder's commit stands and its connection is ended before its
+next statement (FINAL-JUDGMENT.md 4.4 residual 1). A call that only queued behind the evicting request, or whose connection began a
+new transaction, is never ended (N3). Owner and superuser holders, and calls in progress marked for the key, are never ended. A
+round that can signal nobody because every holder is spared gives up with 55P03 (retryable). Measured bound with one holder:
+2.11-2.12 s (t2-dev, PG 16.15, at 6b77354; not re-measured at 81279dd).
 
 `dc.open_session(proof text, ttl_s integer) -> jsonb` (dc_idp):
 - proof = `<body>.<mac>`: body is a JSON object with exactly the keys `channel`, `expires` (epoch seconds, a number), `factor`, `nonce`
@@ -181,8 +200,11 @@ Lock order (READ COMMITTED; FINAL-JUDGMENT.md 4.2 is normative, `dc._at` enforce
 - L2 the authority rows: the caller's session, factor and principal FOR SHARE (the pins); a revoke's target principal and session
   rows FOR NO KEY UPDATE;
 - L3 the tenant lock T(tenant), advisory class 1145241602, key = the tenant row's `lockid` (`dc._tk`): shared by ordinary
-  submits, exclusive for erasure and for a revoke or grant the rules would apply (F5: a refused one takes T shared, answers
-  `bad_event` and evicts nobody; one that applies without `xa` fails 55P03);
+  submits, exclusive for erasure and for a revoke or grant that an UNLOCKED pre-read predicts will apply: the rules' facts (F5),
+  the stage's body checks, `dc._shape`, the idempotency lookup and the caller's revocation (review of 6b77354 N2). A change the
+  pre-read predicts will be refused takes T shared and evicts nobody (`N2_RefusedShapes`, every refusal reason of the code); one
+  that applies without `xa` fails 55P03. Residual: a change refused only because owner SQL changed the state after the pre-read
+  may have taken T exclusively and evicted (FINAL-JUDGMENT.md 4.4 residual 8);
 - L4 the per-principal idempotency lock;
 - L5 data rows (head, props, values, token row);
 - L6 subject locks S(tenant, subject): class = -(the tenant's `lockid`), key = `hashtext` of the subject (32 bits within one
@@ -192,8 +214,18 @@ Lock order (READ COMMITTED; FINAL-JUDGMENT.md 4.2 is normative, `dc._at` enforce
 
 The tenant row is no longer locked; `dc._lock_event` remains only on the owner-only raw path (`dc._apply_event`). An evicting call
 also takes the fence F_A (1145241605) or F_T (1145241606) of the key it evicts for, BEFORE its judgment and its first eviction
-(review of 2262eaa F3; FINAL-JUDGMENT.md 4.4). The write path's trigger
-has its own locks; COMPOSITION.md item 5 gives the merged order, which must be re-derived against this order.
+(review of 2262eaa F3; FINAL-JUDGMENT.md 4.4). Before it requests A or T exclusively, a call takes the marker M(k) (class
+1145241607, session-level, SHARED only, outside the lock order: no one takes it exclusively, so nothing waits for it) and
+releases it on every exit of `dc.submit` (revoke or grant), `dc.end_session`, `dc.revoke_factor` and `dc.erase_values`, from
+their exception handlers too. The write path's trigger has its own locks; COMPOSITION.md item 5 gives the merged order, which must
+be re-derived against this order.
+
+**Reserved advisory key space (the port must not use it).** In the policy database, the two-key advisory classes 1145241601 to
+1145241607 (A, T, 1145241603 unused and reserved, N, F_A, F_T, M) and every NEGATIVE class in [-1,000,000,000, -1] (S, one class
+per tenant `lockid`) belong to the core; so does the one-key (bigint) space of L4, `hashtextextended` of (tenant, principal),
+where a collision is a wait of probability 2^-64 per pair, never an eviction. A write-path
+lock in these spaces would collide with the core: in A, T or a fence it would make its holder evictable, and in M it would spare a
+holder that must be ended. The port that moves these locks into its own schema keeps the same reservation, or re-derives it.
 
 ## 3. What the port must keep
 
@@ -217,19 +249,37 @@ The acceptance list of COMPOSITION.md ("Recommendation"), plus this round's addi
   port must acquire them before its final judgment too, in one global order, or fail them in the apply phase;
 - 4.4: a revocation is not blocked past XWAIT by a holder that keeps its transaction open (`tests/test_s44_pg.py`, with its
   broken-variant controls: eviction made a no-op, and the queued-revoker filter removed);
-- the review of 2262eaa: no cross-tenant eviction, fencing or stalling through A or T (exact `lockid` keys); a refused grant or
-  revoke waits for and evicts nobody; prepared transactions refused; member login roles evicted; a revocation in progress is not
-  evicted by a later exclusive request (H1); the fence before the first eviction (F3); explicit advisory grants removed (F8)
+- the review of 2262eaa: no cross-tenant eviction, fencing or stalling through A or T (exact `lockid` keys); prepared
+  transactions refused; member login roles evicted; the fence before the first eviction (F3); explicit advisory grants removed (F8)
   (`tests/test_rev2262_pg.py`);
+- the review of 6b77354 (`tests/test_rev6b77_pg.py`), replacing two claims this section made before that were false at 6b77354:
+  - a revocation in progress is never ended by a later exclusive request on its key, whatever it is doing (holding the key and
+    parked on a row lock, or holding only the fence while it evicts), whether the trigger is `end_session`, `dc.revoke_factor` or a
+    second admin's revoke (`N1_ParkedRevocation`, six cases); the claim before ("not evicted by a later exclusive request (H1)")
+    was false, the exemption never worked;
+  - a refused grant or revoke waits for no exclusive holder and evicts nobody for EVERY refusal reason the code can return
+    (`N2_RefusedShapes`, `F5_RefusedAuthorityChange`); the claim before covered only four shapes. Except: residual 8 of
+    FINAL-JUDGMENT.md 4.4 (state changed by owner SQL after the unlocked pre-read);
+  - a backend that queued behind an evicting request, or a pooled connection's later transaction, is never ended (`N3_InnocentWaiter`);
+  - an admin holding T exclusively while parked on another tenant's lock is evicted, so it cannot freeze its tenant (`N4_ParkedExclusive`);
+  - a token that expires inside a call is refused by the final judgment (`N6_JudgmentAtTheGate`);
+  - the rollback refuses a mark that names anything but a live advisory-lock function (`N7_RollbackMark`);
 - the protocol fixtures (`tests/test_fixtures_step3_protocol.py`): `PROTOCOL` names, for the pins, the fence, the eviction, the
-  in-progress exemption, the lock identity, the refused-change rule and session expiry, the cases the port must run green against its own schema;
-  `MUTANTS` patches `pol/_pgcore.sql` to break exactly one layer each (pins without FOR SHARE, the fence never refusing, `dc._evict`
-  a no-op, the in-progress exemption removed, every principal on one A key, T always exclusive for a grant) and requires an
-  assertion failure (not an error) from that layer's cases. The B1/B2 replay of `fixtures/step3` replays the rules core only and
-  sees none of these layers. One authentication mutant too: `dc._session` no longer judging expiry (`expiry_noop`, expected to fail
-  `test_bad_tokens_are_refused_on_every_call`; NOT YET RUN). NOT detected, disclosed: a no-op of the final judgment `dc._gate`'s session check
-  (the pins make it redundant on every path these cases drive); keep it as defence in depth. Without the Postgres environment these tests and
-  `CommittedSetPg` FAIL; `POL_STEP3_SKIP_PG=1` turns that into explicit, counted skips (it was a silent skip before).
+  in-progress marker, the eviction snapshot, the lock identity, the refused-change rule and authentication (session expiry and the
+  final judgment), the cases the port must run green against its own schema. `MUTANTS` patches `pol/_pgcore.sql` to break exactly
+  one layer each and requires an assertion failure (not an error) from that layer's cases: pins without FOR SHARE; the fence never
+  refusing; `dc._evict` a no-op; the marker never taken, never released, sparing any key, or sparing a shared holder; eviction
+  ignoring the snapshot, or matching it by backend instead of transaction; every principal on one A key; T always exclusive for a
+  grant; the pre-read skipping the body checks; the final judgment's session check removed (`gate_noop`); expiry judged nowhere
+  (`expiry_noop`). The B1/B2 replay of `fixtures/step3` replays the rules core only and sees none of these layers. History, so the
+  port does not repeat it: the first `expiry_noop` (f9b4e63, `dc._session` only) RAN and was NOT caught, and `gate_noop` was not
+  caught either; the H1 mutant of 2c56338 (`in_progress`) was reported caught although the clause it changed was dead code (dc_evictor cannot read
+`wait_event`), so "caught" did not show that the exemption worked; it is replaced by the marker mutants. Layers these fixtures
+  do NOT cover (disclosed, listed in the module docstring): S and N keys, L4, the lock order itself (`S1_LockOrder` covers it), deadlocks, the 2PC
+  refusal, the member-role scope and the evictor's privileges, the advisory ACL and its rollback, the re-check-to-signal window,
+  other N1 timings (`N1_Sweep`, supporting only) and a leaked marker (`N1_LeakBound`). Without the Postgres environment these tests
+  and `CommittedSetPg` FAIL; `POL_STEP3_SKIP_PG=1` turns that into explicit, counted skips (it was a silent skip before).
+- the reserved advisory key space (section 2, "Reserved advisory key space").
 
 ## 4. Limits (carried, not solved)
 
@@ -244,16 +294,23 @@ The acceptance list of COMPOSITION.md ("Recommendation"), plus this round's addi
 - Label filtering of reads and the hold decision of erasure are in-process (trusted), not enforced by the database.
 - Enrolment is the identity adapter's and out of scope.
 - Eviction residuals (FINAL-JUDGMENT.md 4.4): an evicted backend loses its whole connection, including unrelated work; for T that
-  can be a legitimate submit of another principal that held T longer than XWAIT. The fences refuse the target's or the tenant's new
+  can be a legitimate submit of another principal, but only one that held T for at least XWAIT within one transaction (corrected:
+  at 6b77354 a submit that merely queued behind the revoke was ended after it committed, N3). The fences refuse the target's or the tenant's new
   calls (55P03) while a revocation evicts. A stalled submitter holds the chain head (L7): the tenant's other submits are refused at
   their own expiry until a revoke, grant or erasure of that tenant (or a revoke of the staller) evicts it. Not measured.
 - Revoke, grant and erasure serialise the tenant (T exclusive), and every submit of a tenant serialises from the chain-head lock
   (L7) to COMMIT: a scaling limit.
-- Residuals of the review of 2262eaa (FINAL-JUDGMENT.md 4.4, residuals 5-7):
-  - H1 window: "inside the protocol" is read from `pg_locks` and `pg_stat_activity` at eviction time; a revocation in progress
-    between two waits (plpgsql, microseconds) or applying looks like a stalled exclusive holder and a concurrent exclusive request
-    that itself waited XWAIT may evict it then. Not observed, not measured.
-  - A duplicate or idempotent retry of a VALID revoke or grant still takes the exclusive locks and may evict, as the original did.
+- Residuals of the reviews of 2262eaa and 6b77354 (FINAL-JUDGMENT.md 4.4, residuals 1 and 5-9):
+  - Corrected: the "H1 window" stated here before (a revocation exposed only between two waits, microseconds) was false; at
+    6b77354 a revocation was exposed whenever it evicted or was parked (N1). Now: a marker leaks only if an error escapes an API
+    function's exception handler and the client keeps its transaction past a savepoint rollback; the leaked marker then spares
+    only an admin's earlier applied exclusive lock on that key, and revoking that admin ends it (`N1_LeakBound`). Not observed.
+  - Corrected: "a duplicate or idempotent retry of a VALID revoke or grant still takes the exclusive locks" is no longer true (the
+    pre-read looks up idempotency, N2). What remains: a change refused only because owner SQL changed the state after the
+    unlocked pre-read may have taken the exclusive locks and evicted (residual 8).
+  - Between eviction's last re-check and its signal (microseconds), a holder may commit; its work stands and its connection is ended.
+  - No migration path from an already deployed R3-7 schema of the 2262eaa era (no `lockid` columns): `install()` replaces schema
+    dc and `ops/migrate_r3_7` refuses (residual 9). None is known to exist.
   - Within one tenant, two subjects collide on S with probability 2^-32 per pair (a wait under the caller's budget, never an
     eviction); N (32-bit hash of a random nonce) and L4 (`hashtextextended`, 64 bits) are unchanged; none is evictable. A and T
     have no collision (unique `lockid` from one sequence, 1 to 10^9, no cycle: once it is exhausted, inserting a principal or tenant fails).
@@ -261,7 +318,21 @@ The acceptance list of COMPOSITION.md ("Recommendation"), plus this round's addi
   - The database-wide advisory revoke breaks other tools in the same database that take advisory locks as a login role (Flyway,
     Liquibase, Rails); disclosed, not fixed.
 
-## 5. Changes since 2262eaa (the review of 2262eaa, GoodQA #16096)
+## 5. Changes since 6b77354 (the delta review of 6b77354, GoodQA #16096)
+
+All in 81279dd except where named; red logs at 6b77354 and green logs in `results/red/` (README section "Review of 6b77354"),
+DEVIATION: PG 17.11 local, not 16.15.
+
+| Item | Finding | Fix | Red at 6b77354 (local) | Green |
+|---|---|---|---|---|
+| N1 | The H1 exemption read `wait_event`, which dc_evictor cannot see: a revocation parked on a row lock or evicting was ended by a later `end_session`, `dc.revoke_factor` or second revoke | marker M(k) (class 1145241607) taken before the exclusive request, released on every exit; `dc._evict` spares a marked holder of k or F held exclusively | `N1_ParkedRevocation` 6 of 6 (revoker ended, revocation lost) | `N1_ParkedRevocation`, `N1_ModeRule`, `N1_LeakBound` |
+| N2 | Six refused shapes (bad client_id, unknown key, label without value, grant role owner, exact retry, reused idem key) still took T and A exclusively and evicted | pre-read runs `dc._body_refusal`, `dc._shape`, the idempotency lookup and the caller's revocation before any lock | `N2_RefusedShapes` both tests, every shape | same |
+| N3 | Eviction ended every holder row, waiters included: a submit that queued behind a revoke was ended after it committed | snapshot of `pid:virtualtransaction` before each request; only snapshotted holders still in that transaction are ended | `N3_InnocentWaiter` 2 of 2 | same |
+| N4 | Any backend waiting for an A, T or fence lock was spared: an admin parked on T(b) froze tenant a | the exemption is the marker of the same key, nothing else | `N4_ParkedExclusive` parked case | both N4 cases |
+| N6 | `expiry_noop` (f9b4e63) ran and was not caught; `gate_noop` not caught | `N6_JudgmentAtTheGate` (expiry inside the call); mutants `gate_noop`, `expiry_noop` (all checks) | green at 6b77354 as expected (a mutant-killer, not a defect test) | protocol fixtures: NOT RUN (section "Proof status") |
+| N7 | Rollback built SQL from the mark's text: a tampered mark granted `pg_read_file` to PUBLIC | the mark is validated against the live advisory functions before any SQL | `N7_RollbackMark` | same |
+
+## 5b. Changes since 2262eaa (the review of 2262eaa)
 
 | Item | Finding | Fix | Commit | Red at 2262eaa, strict class | Green |
 |---|---|---|---|---|---|
