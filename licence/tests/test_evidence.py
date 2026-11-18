@@ -26,6 +26,14 @@ sys.path.insert(0, os.path.dirname(LIC))
 import lib  # noqa: E402
 import summarize  # noqa: E402
 
+def _t2(r):
+    """Review 13: every EXP1-T2 verdict carries the LIMIT EXP1-T2.cadence (never established), so the gate is never PASS. Map exactly
+    that downgrade back (the reason starts with the LIMIT only when every other conjunct is established) so a test still asserts what
+    the recorded evidence decided."""
+    st, why = r.get("T2_status"), r.get("T2_reason") or ""
+    return "PASS" if st == "UNVERIFIED" and why.startswith("registered clause not witnessed: EXP1-T2.cadence ") else st
+
+
 INF = float("inf")
 # Intended HTTP statuses per outcome case, declared HERE independently of evidence.Outcome (the generator must not ask the classifier
 # under test which statuses are acceptable): only a 403 is ever a refusal.
@@ -51,12 +59,43 @@ def _inner(status, reason, cid):
     return status
 
 
+LIC_ERR = {"type": "security_exception", "reason": "current license is non-compliant for [inference]"}
+MISSING_EP = {"type": "resource_not_found_exception", "reason": "Inference endpoint not found [lic-stub]"}
+
+
+def _writes_record(R, mode):
+    """A synthetic raw write record (observe.parse_writes; the committed lives were recorded without one) that passes every EXP2-T4
+    conjunct: plain writes acknowledged before and after the transition, all present; semantic writes on Basic all loud, none
+    acknowledged or present."""
+    tr = R["start_basic" if mode == "down" else "start_trial"]
+    q, r = tr["t_req"], tr["t_resp"]
+    acked = {"w0-000000": q - 5, "w0-000001": r + 5}
+    if mode == "down":
+        sem = [[q - 5, "s000000", 201, None, q - 4.9], [r + 1, "s000001", 403, LIC_ERR, r + 1.1], [r + 2, "s000002", 404, MISSING_EP, r + 2.1]]
+        present = ["s000000"]
+    else:
+        sem = [[q - 6, "s000000", 404, MISSING_EP, q - 5.9], [q - 5, "s000001", 403, LIC_ERR, q - 4.9], [r + 5, "s000002", 201, None, r + 5.1]]
+        present = ["s000002"]
+    return {"acked": acked, "failed_batches": [], "sem_rows": sem, "live_present": sorted(acked), "sem_present": present}
+
+
+def _with_writes(R, mode):
+    """The EXP2-T4 figures a life recorded with writes.gz carries (review 13: the committed write counts are derived with no raw record,
+    so no gate reads them)."""
+    import observe
+    tr = R["start_basic" if mode == "down" else "start_trial"]
+    R["exp2"]["writes"] = observe.writes(_writes_record(R, mode), tr["t_req"], tr["t_resp"], mode)
+    R["_stored_only"] = [s for s in R.get("_stored_only", []) if s != "writes"]
+    R.setdefault("_rebuilt", []).append("writes")
+    return R
+
+
 def _healthy(scope):
-    """Known-good fixture: committed down_7 / up_1 as the summarizer loads them, with addendum C's sem_failed_other (never recorded) set
-    so that EXP2-T4 can pass. Every other value is as committed."""
-    R = _life("down_7" if scope in ("down", "both") else "up_1")
-    R["exp2"]["writes"]["sem_failed_other"] = 0
-    if scope in ("down", "both"):
+    """Known-good fixture: committed down_7 / up_1 as the summarizer loads them, with a synthetic raw write record (review 13; before,
+    only addendum C's sem_failed_other was set) so that EXP2-T4 can pass. Every other value is as committed."""
+    mode = "down" if scope in ("down", "both") else "up"
+    R = _with_writes(_life("down_7" if mode == "down" else "up_1"), mode)
+    if mode == "down":
         _with_adapter_view(R)
     return R
 
@@ -88,7 +127,8 @@ def _set(R, path, val):
 
 def _status(R, report, key, mode="down"):
     if report == "exp1":
-        return summarize.exp1_checks(R).get(key)
+        r = summarize.exp1_checks(R)
+        return _t2(r) if key == "T2_status" else r.get(key)
     if report == "exp2":
         return summarize.exp2_checks(R, mode).get(key)
     return summarize.exp3_checks(R)["migration_checks"].get(key) if key == "migration_status" else summarize.exp3_checks(R).get(key)
@@ -169,7 +209,8 @@ class ScenarioRegressionTests(unittest.TestCase):
         R = _life("down_7")
         R["exp2"]["T1_control_broken_fallback"]["flagged_wrong"] = int(R["exp2"]["T1_control_broken_fallback"]["client_labelled"] * 0.8)
         R["exp2"]["T1_control_broken_fallback"]["flag_rate"] =R["exp2"]["T1_control_broken_fallback"]["flagged_wrong"] / R["exp2"]["T1_control_broken_fallback"]["client_labelled"]
-        self.assertEqual(_status(R, "exp2", "T1_status"), "FAIL")
+        # review 13: below the 90% floor the T1 PASS is "CLAIMED, not proven" (THRESHOLDS.md:54): UNVERIFIED, not FAIL
+        self.assertEqual(_status(R, "exp2", "T1_status"), "UNVERIFIED")
         R = _life("down_7")   # counts say 80%, the stored derived rate still says 1.0: the record is inconsistent
         R["exp2"]["T1_control_broken_fallback"]["flagged_wrong"] = int(R["exp2"]["T1_control_broken_fallback"]["client_labelled"] * 0.8)
         self.assertEqual(_status(R, "exp2", "T1_status"), "UNVERIFIED")
@@ -221,8 +262,8 @@ class RecordingBoundaryTests(unittest.TestCase):
     def t2(self, after):
         import exp2
         R = _life("down_7")
-        R["exp1_moment"] = exp2.moment_analysis(_poll(after), T_RESP)
-        return summarize.exp1_checks(R)["T2_status"]
+        R["exp1_moment"] = exp2.moment_analysis(_poll(after), T_RESP, t_req=T_RESP - 0.5)
+        return _t2(summarize.exp1_checks(R))
 
     def test_f13_healthy_recorded_refusals_pass(self):
         self.assertEqual(self.t2({}), "PASS")
@@ -246,12 +287,12 @@ class RecordingBoundaryTests(unittest.TestCase):
                 m["first_refusal_status"] = s
                 if isinstance(m.get("first_refusal"), dict):
                     m["first_refusal"]["status"] = s
-            self.assertNotEqual(summarize.exp1_checks(R)["T2_status"], "PASS", s)
+            self.assertNotEqual(_t2(summarize.exp1_checks(R)), "PASS", s)
 
     def test_f13_a_timing_without_its_refusal_outcome_is_unverified(self):
         """Committed down_1..6 store only a timing and a bare status per probe (no class, no body marker, no raw poll rows): no PASS."""
         for n in range(1, 7):
-            self.assertEqual(summarize.exp1_checks(_life("down_%d" % n))["T2_status"], "UNVERIFIED", n)
+            self.assertEqual(_t2(summarize.exp1_checks(_life("down_%d" % n))), "UNVERIFIED", n)
 
     def test_f13_raw_rows_are_required_for_rederived_figures(self):
         """A life file copied without its raw rows: the moment (poll.gz) and the T5 licence-refusal count (rows.gz) cannot be re-derived."""
@@ -260,7 +301,7 @@ class RecordingBoundaryTests(unittest.TestCase):
         try:
             shutil.copy(os.path.join(RES, "down_7.json"), d)
             R = summarize.load(d, "down")[0]
-            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+            self.assertEqual(_t2(summarize.exp1_checks(R)), "UNVERIFIED")
             self.assertEqual(summarize.exp2_checks(R, "down")["T5_status"], "UNVERIFIED")
         finally:
             shutil.rmtree(d)
@@ -297,7 +338,7 @@ class RecordingBoundaryTests(unittest.TestCase):
             R = _life("down_7")
             fr = R["exp1_moment"]["dls_search"]["first_refusal"]
             _set(R, ("exp1_moment", "dls_search", "first_refusal", "licence_text"), bad)
-            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED", bad)
+            self.assertEqual(_t2(summarize.exp1_checks(R)), "UNVERIFIED", bad)
             self.assertTrue(fr is not None)
 
     def test_f13_successes_and_refusals_are_counted_by_outcome_not_label(self):
@@ -342,7 +383,7 @@ class RecordingBoundaryTests(unittest.TestCase):
             with gzip.open(os.path.join(d, "down_7.poll.gz"), "wt") as fh:
                 fh.write('[{"rrf": [1]}, 5]')
             R = summarize.load(d, "down")[0]
-            self.assertEqual(summarize.exp1_checks(R)["T2_status"], "UNVERIFIED")
+            self.assertEqual(_t2(summarize.exp1_checks(R)), "UNVERIFIED")
         finally:
             shutil.rmtree(d)
 
@@ -518,17 +559,18 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
             E.FallbackControl(client_labelled=0, flagged_wrong=0, backend_checked=1, backend_wrong=0)
         with self.assertRaises(E.Unparsed):
             E.Writes(acked=3, acked_absent=5, sem_acked=1, sem_acked_absent=0, sem_failed=0, sem_failed_present=0, sem_failed_loud=0,
-                     sem_failed_other=None, loss_control=True)   # relation: absent acknowledged writes cannot exceed acknowledged
+                     sem_failed_other=None, loss_control=True, by_phase=None, basic=None)   # relation: absent acknowledged writes cannot exceed acknowledged
         with self.assertRaises(E.Unparsed):
-            E.Availability(failed=-1, requests=10, longest_window_s=0.0, windows=[], consecutive_auto_s=0.0)
+            E.Availability(failed=-1, requests=10, longest_window_s=0.0, windows=[], consecutive_auto_s=0.0, phases=None)
         E.DlsControl(outcome=ok, only_kw_a=True, returned=4)   # and a valid one constructs
 
     def test_healthy_fixture_passes_every_gate(self):
         import clauses
         for name, g in self.V.GATES.items():   # review 12: the base carries the new DLS witnesses; a LIMIT gate shows only its LIMIT
-            v = self.V.judge(name, clauses.augment_base(_healthy(g.scope)))
-            lim = clauses.limits_for(name)
-            self.assertEqual(_inner(v.status, v.reason, lim[0].cid) if lim else v.status, "PASS", (name, v.reason))
+            v, parts = self.V.judge_parts(name, clauses.augment_base(_healthy(g.scope)))
+            lim = {c.cid for c in clauses.limits_for(name)}   # review 13: every other conjunct is established
+            self.assertEqual({p.cid: p.reason for p in parts if p.cid not in lim and p.state != "ESTABLISHED"}, {}, name)
+            self.assertEqual(v.status, "UNVERIFIED" if lim else "PASS", (name, v.reason))
 
     def test_generated_invalid_evidence_is_never_pass_and_never_raises(self):
         problems, n = [], 0
@@ -681,7 +723,7 @@ class RawEdgeTests(unittest.TestCase):
         return next(i for i, p in enumerate(self.POLL) if p["rrf"][0] == "LICENCE_ERROR") + 20
 
     def test_f17_healthy_raw_poll_passes(self):
-        self.assertEqual(summarize.exp1_checks(self.load_with())["T2_status"], "PASS")
+        self.assertEqual(_t2(summarize.exp1_checks(self.load_with())), "PASS")
 
     def test_f17_late_success_with_a_bad_timestamp_is_not_a_pass(self):
         i = self.late()
@@ -692,7 +734,7 @@ class RawEdgeTests(unittest.TestCase):
                 del P[i]["_t1"]
             else:
                 P[i]["_t1"] = bad
-            self.assertNotEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "PASS", bad)
+            self.assertNotEqual(_t2(summarize.exp1_checks(self.load_with(poll=P))), "PASS", bad)
 
     def test_f17_raw_poll_mutations_are_unverified(self):
         i = self.late()
@@ -712,7 +754,7 @@ class RawEdgeTests(unittest.TestCase):
         for lab, m in muts.items():
             P = copy.deepcopy(self.POLL)
             m(P)
-            self.assertEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "UNVERIFIED", lab)
+            self.assertEqual(_t2(summarize.exp1_checks(self.load_with(poll=P))), "UNVERIFIED", lab)
 
     def test_f17_raw_workload_row_mutations_are_unverified(self):
         """The generator's raw-row mutations on rows.gz: every one makes EXP2-T2, T3 and T5 UNVERIFIED (never PASS, never raises)."""
@@ -746,7 +788,7 @@ class RawEdgeTests(unittest.TestCase):
         P = copy.deepcopy(self.POLL)
         i = next(k for k, p in enumerate(P) if p["rrf"][0] == "LICENCE_ERROR")
         P[i]["rrf"], P[i + 1]["rrf"] = ["OTHER_ERROR", 403], ["AVAILABLE", 200]
-        self.assertNotEqual(summarize.exp1_checks(self.load_with(poll=P))["T2_status"], "PASS")
+        self.assertNotEqual(_t2(summarize.exp1_checks(self.load_with(poll=P))), "PASS")
 
     def test_f17_a_stored_summary_is_never_accepted_without_its_raw_file(self):
         R = self.load_with()
@@ -754,7 +796,7 @@ class RawEdgeTests(unittest.TestCase):
         life["exp1_moment"] = copy.deepcopy(R["exp1_moment"])            # carries first_refusal objects
         life["exp2"]["T5_control_after_1s"]["licence_refusals"] = R["exp2"]["T5_control_after_1s"]["licence_refusals"]
         L = self.load_with(life=life, drop=("poll", "rows"))
-        self.assertEqual(summarize.exp1_checks(L)["T2_status"], "UNVERIFIED")
+        self.assertEqual(_t2(summarize.exp1_checks(L)), "UNVERIFIED")
         self.assertEqual(summarize.exp2_checks(L, "down")["T5_status"], "UNVERIFIED")
 
     def test_f17_stored_availability_and_flip_must_agree_with_the_raw_rows(self):
@@ -970,7 +1012,23 @@ class RebuildTests(unittest.TestCase):
             "ctl before: a licence refusal becomes a success": rows(setrow(
                 lambda W, q, *a: first(W, lambda r: r[2] == "ctl" and r[1] < q and not r[4]), lambda r, *a: ok_row(r))),
         }
+        def arm_ends(W, *a):   # review 13 T2 phases: the first and last request of each read arm gone
+            for arm in ("auto", "lex", "vec"):
+                W.pop(last(W, lambda r: r[2] == arm))
+                W.pop(first(W, lambda r: r[2] == arm))
+        out["each read arm loses its first and last request (T2 phases)"] = rows(arm_ends)
+        other = "client" if scope == "down" else "backend"
+
+        def early_auto(W, q, *a):   # review 13 T3 before: one early auto answer gone, the next one carries the post-transition label
+            W.pop(first(W, lambda r: r[2] == "auto" and r[4] and r[1] < q))
+            j = first(W, lambda r: r[2] == "auto" and r[4] and r[1] < q)
+            W[j] = W[j][:5] + [other] + W[j][6:]
+        out["an early auto answer gone, the next relabelled (T3 before)"] = rows(early_auto)
         if scope == "down":
+            def ctl_query_unreferenced(raw, R):   # review 13 T1 control readers: a control answer's rrf reference removed
+                qi = next(r[3] for r in raw["rows"] if r[2] == "ctl" and r[4])
+                del raw["oracle"]["rrf"][str(qi)]
+            out["a control reader's rrf reference is gone (T1 control readers)"] = ctl_query_unreferenced
             def early_clients_backend(W, q, s, *a):   # every client answer within 2 s of the response: the flip moves later
                 for j, r in enumerate(W):
                     if r[2] == "auto" and r[4] and r[5] == "client" and r[1] < s + 2:
@@ -1017,6 +1075,10 @@ class RebuildTests(unittest.TestCase):
                     row = list(p["dls_search"]) + [None] * max(0, 3 - len(p["dls_search"]))
                     p["dls_search"] = row[:3] + [1]
             out["poll: every DLS search returned one document (F28)"] = poll(dls_docs_recorded)
+
+            def first_poll_refused(P, t, f):   # review 13: answered-before and refusals-before-window move
+                P[0][f] = (["OTHER_ERROR", 403] if f == "dls_search" else ["LICENCE_ERROR", 403]) + ([None] if f == "dls_search" else [])
+            out["poll: every probe refused in the first poll (before the request)"] = poll(each_probe(first_poll_refused))
         else:
             def early_backends_client(W, q, s, *a):   # the flip's first backend answer (by start) and those near it: the flip moves later
                 t = min(r[0] for r in W if r[2] == "auto" and r[4] and r[5] == "backend" and r[1] >= s)
@@ -1032,7 +1094,10 @@ class RebuildTests(unittest.TestCase):
         for life, scope in (("down_7", "down"), ("up_1", "up")):
             base = self.rebuilt(life)
             stored = self.stored(life)
-            want = {p for _, p in self.leaves(scope) if summarize.source_of(p) in summarize.rebuilt_sources(base)}
+            # the post-transition window start is a recorder constant written with the counts (EXP2-T5 down 1.0 s, up 0.0 s), not a
+            # figure of the rows; its conjunct is tested at figure level (tests.test_clauses VIOLATIONS "EXP2-T5.*-window")
+            want = {p for _, p in self.leaves(scope) if summarize.source_of(p) in summarize.rebuilt_sources(base)
+                    and p[-1] != "start_rel_resp_s"}
             changed = set()
             for lab, m in self.raw_mutations(scope).items():
                 try:
@@ -1245,9 +1310,12 @@ class FailurePathTests(unittest.TestCase):
         for k in [k for k in R if k.startswith("_")]:
             del R[k]
         cls.passing = R
+        import clauses
+        cls.limits = {g: {c.cid for c in clauses.limits_for(g)} for gs in cls.GATES_BY_SOURCE.values() for g in gs}
         for name, gates in cls.GATES_BY_SOURCE.items():
-            for g in gates:
-                assert verdicts.judge(g, R).status == "PASS", (name, g)
+            for g in gates:   # review 13: every conjunct but a LIMIT (EXP1-T2.cadence, never established) is established
+                v, parts = verdicts.judge_parts(g, R)
+                assert all(p.state == "ESTABLISHED" for p in parts if p.cid not in cls.limits[g]), (name, g, v.reason)
 
     def life_dir(self, life=None, files=None):
         """A temporary results dir with down_7.json (`life`: a dict, or bytes written as they are) and raw files (`files`: ext ->
@@ -1291,6 +1359,9 @@ class FailurePathTests(unittest.TestCase):
         for g in gates:
             self.assertNotEqual(row[g]["status"], "PASS", (why, g, row[g]["reason"]))
             self.assertTrue(row[g]["reason"], (why, g))
+            # not only the LIMIT: a conjunct the base establishes is no longer established
+            self.assertTrue([c for c, st in row[g]["conjuncts"].items() if st != "ESTABLISHED" and c not in self.limits[g]],
+                            (why, g, row[g]["reason"]))
 
     # ---- F25: every raw source x every way its derivation can fail --------------------------------------------------------------
     def failure_modes(self, source):

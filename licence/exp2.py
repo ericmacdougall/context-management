@@ -58,20 +58,15 @@ def make_broken(ttl):
     return a
 
 
-def classify_sem_failure(code, e):
-    """Addendum C: a failed semantic write is 'licence' (error text names a non-compliant licence), 'missing_endpoint' (404 resource_not_found for the
-    inference endpoint) or 'other' (any other 403/404, a missing index, a transport failure). Only the first two are loud licensing failures."""
-    # review 8 F13: through the same Outcome cases as the verdicts; licence text on a 503 is an infrastructure failure, not a licence one
-    text = json.dumps(e).lower() if e else ""
-    try:
-        o = evidence.Outcome.of(code, e)
-    except evidence.Unparsed:
-        return "other"
-    if o.case == "LICENCE_REFUSAL":
-        return "licence"
-    if o.case == "NOT_FOUND" and isinstance(e, dict) and e.get("type") == "resource_not_found_exception" and "inference" in text:
-        return "missing_endpoint"
-    return "other"
+classify_sem_failure = observe.classify_sem_failure   # one classification for the recorder and the loader (review 13 F32)
+
+
+class _NoLock:   # a test fixture may build a Workload without __init__
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
 
 
 def mk_text(rng):
@@ -185,7 +180,7 @@ class Workload:
             t0 = time.time()
             c, j, _ = req("PUT", "/lic-sem2/_doc/%s" % i, {"body": "alpha bravo %d" % seq}, timeout=20)
             with self.lock:
-                self.sem_rows.append([t0, i, c, lib.err(j) if c >= 300 else None])
+                self.sem_rows.append([t0, i, c, lib.err(j) if c >= 300 else None, time.time()])   # t1: review 13 F32 (up: on Basic)
             time.sleep(0.25)
 
     def _sampler(self):
@@ -213,7 +208,9 @@ class Workload:
         self.events["t_stop"] = time.time()
 
     # ---- verification
-    def verify_writes(self):
+    def verify_writes(self, t_req=None, t_resp=None, direction=None):
+        """Read back what is present, keep the raw write record (self.writes_raw, dumped by dump_writes) and reduce it with
+        observe.writes, the same function the loader runs on results/<life>.writes.gz. Transition times select the Basic interval."""
         cr, jr, _ = req("POST", "/mc-%s-live/_refresh" % TENANT)
         if cr != 200:   # MUST SUCCEED: an unrefreshed index would make acknowledged writes look absent
             raise AssertionError("refresh of the live index: HTTP %s" % cr)
@@ -230,25 +227,21 @@ class Workload:
             c, j, _ = req("POST", "/_search/scroll", {"scroll": "2m", "scroll_id": sid}, timeout=120)
         if sid:
             req("DELETE", "/_search/scroll", {"scroll_id": sid})
-        acked = set(self.acked)
-        control_detects = len((acked | {"__injected_lost_write__"}) - present) == len(acked - present) + 1
-        failed_ids = {i for _, ids, _ in self.attempted_failed for i in ids}
         cr, jr, _ = req("POST", "/lic-sem2/_refresh")
         c, j, _ = req("POST", "/lic-sem2/_search", {"size": 10000, "track_total_hits": True, "_source": False, "query": {"match_all": {}}})
         got = j.get("hits", {}).get("hits", []) if c == 200 and isinstance(j, dict) else None
         if cr != 200 or got is None or (j.get("_shards") or {}).get("failed") or j["hits"].get("total", {}).get("value") != len(got):
             # MUST SUCCEED: an unread or truncated semantic index would make sem_failed_present and sem_present_unacked vacuously 0
             raise AssertionError("semantic index read-back: refresh HTTP %s, search HTTP %s" % (cr, c))
-        sem_present = {h["_id"] for h in got}
-        sem_ack = {r[1] for r in self.sem_rows if r[2] in (200, 201)}
-        sem_fail = [r for r in self.sem_rows if r[2] not in (200, 201)]   # every write is acked or failed (a 1xx/202 is not silently neither)
-        loud = sum(1 for r in sem_fail if classify_sem_failure(r[2], r[3]) != "other")
-        return {"control_injected_loss_detected": control_detects, "live_present": len(present), "acked": len(acked), "acked_absent": len(acked - present), "present_unacked": len(present - acked),
-                "failed_batches": len(self.attempted_failed), "failed_ids_present": len(failed_ids & present),
-                "sem_acked": len(sem_ack), "sem_acked_absent": len(sem_ack - sem_present), "sem_present_unacked": len(sem_present - sem_ack),
-                "sem_failed": len(sem_fail), "sem_failed_loud_licence_or_missing": loud, "sem_failed_other": len(sem_fail) - loud,
-                "sem_failed_present": len({r[1] for r in sem_fail} & sem_present),
-                "sem_first_ok_t": min([r[0] for r in self.sem_rows if r[2] in (200, 201)] or [None]) if sem_ack else None}
+        with self.lock if hasattr(self, "lock") else _NoLock():
+            self.writes_raw = {"acked": dict(self.acked), "failed_batches": [[b[0], list(b[1]), b[2]] for b in self.attempted_failed],
+                               "sem_rows": [list(r) for r in self.sem_rows], "live_present": sorted(present),
+                               "sem_present": sorted(h["_id"] for h in got)}
+        return observe.writes(self.writes_raw, t_req, t_resp, direction)
+
+    def dump_writes(self, path):
+        with gzip.open(path, "wt") as fh:
+            json.dump(self.writes_raw, fh)
 
     def _typed_figures(self, out, rows, t_req, t_resp, direction):
         # T2, T3, T5 are computed only from the TYPED workload stream (review 9 F17): finite times inside the run window, completion
@@ -261,13 +254,14 @@ class Workload:
         except observe.Unparsed as e:
             out["raw_check"] = "workload stream does not parse: %s" % e
             return
-        out.update(observe.availability(TW))
+        out.update(observe.availability(TW, t_req, t_resp))
         out.update(observe.flip(TW, t_req, t_resp, direction))
         if direction == "down":
             out["T3_backend_labelled_after_resp_start"] = sum(1 for w in TW if w.arm == "auto" and w.ok and w.label == "backend" and w.t0 > t_resp)
         else:
             out["T3_ttl_s"] = self.ttl
         out.update(observe.control(TW, t_req, t_resp, direction))
+        out["T1_answers_bound"] = observe.answers_bound(TW)
         # T1 on the same typed rows (review 10 F21: one implementation, also used by summarize.rebuild on the saved oracle)
         out.update(observe.correctness(TW, getattr(self, "oracle_legs", {}), getattr(self, "oracle_rrf", {}), getattr(self, "oracle_lin", {})))
 
@@ -340,8 +334,9 @@ class Poller(threading.Thread):
             time.sleep(0.05)
 
 
-def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "inference_use", "dls_search"), direction="down", window=None):
+def moment_analysis(rows, t_resp, features=("rrf", "linear", "semantic_query", "inference_use", "dls_search"), direction="down", window=None,
+                    t_req=None):
     """First refusal (down) or first success (up) per feature, relative to the transition response, from the TYPED poll stream
     (observe.parse_poll: a row or ordering violation gives every probe a stream_error and no first_refusal). window: the run's
     (t_start, t_stop)."""
-    return observe.moments(rows, t_resp, tuple(features), window, direction)
+    return observe.moments(rows, t_resp, tuple(features), window, direction, t_req)

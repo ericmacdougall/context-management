@@ -159,5 +159,128 @@
     "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
    }
   ]
+ },
+ "status_changes_review_13": {
+  "compared_with": "summary_current.json at 099865c",
+  "count": 11,
+  "note": "Gate review 13 (conjunct audit, licence/CLAUSE-AUDIT.md) restated these statuses from the evidence the committed lives hold; no result file was edited and nothing was rerun. The aggregate gate statuses did not change.",
+  "changes": [
+   {
+    "life": "down_1.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "down_2.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "down_3.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "down_4.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "down_5.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "down_7.json",
+    "gate": "EXP1-T2",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "registered 50 ms poll cadence not witnessed (THRESHOLDS.md:24, clause EXP1-T2.cadence, LIMIT): the recorder slept 50 ms between polls of seven probes and the recorded poll starts are a median 0.19 s apart"
+   },
+   {
+    "life": "up_1.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "up_2.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "up_3.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "up_4.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   },
+   {
+    "life": "up_5.json",
+    "gate": "EXP2-T1",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the EXP2-T1 figures of this life are derived figures with no raw record (its oracle legs were not saved), and since review 13 such a figure is withheld from every gate (summarize.gate_view): it was a PASS on stored figures, which is not evidence"
+   }
+  ],
+  "clause_count": 6,
+  "clause_changes": [
+   {
+    "clause": "A.T1-control",
+    "from": "FAIL",
+    "to": "UNVERIFIED",
+    "why": "review-13 clause rule: a clause FAILs only on a violation of one of its own conjuncts. down_6's EXP2-T1 FAIL is its examined count (18,820 answers in rows, under 20,000), which belongs to EXP2-T1.examined and EXP2-T1.compared; this clause's own conjuncts are not established on the lives without saved oracle legs, so it is UNVERIFIED"
+   },
+   {
+    "clause": "A.T1-control-witness",
+    "from": "FAIL",
+    "to": "UNVERIFIED",
+    "why": "review-13 clause rule: a clause FAILs only on a violation of one of its own conjuncts. down_6's EXP2-T1 FAIL is its examined count (18,820 answers in rows, under 20,000), which belongs to EXP2-T1.examined and EXP2-T1.compared; this clause's own conjuncts are not established on the lives without saved oracle legs, so it is UNVERIFIED"
+   },
+   {
+    "clause": "C.T1-oracle",
+    "from": "FAIL",
+    "to": "UNVERIFIED",
+    "why": "review-13 clause rule: a clause FAILs only on a violation of one of its own conjuncts. down_6's EXP2-T1 FAIL is its examined count (18,820 answers in rows, under 20,000), which belongs to EXP2-T1.examined and EXP2-T1.compared; this clause's own conjuncts are not established on the lives without saved oracle legs, so it is UNVERIFIED"
+   },
+   {
+    "clause": "C.T1-oracle-witness",
+    "from": "FAIL",
+    "to": "UNVERIFIED",
+    "why": "review-13 clause rule: a clause FAILs only on a violation of one of its own conjuncts. down_6's EXP2-T1 FAIL is its examined count (18,820 answers in rows, under 20,000), which belongs to EXP2-T1.examined and EXP2-T1.compared; this clause's own conjuncts are not established on the lives without saved oracle legs, so it is UNVERIFIED"
+   },
+   {
+    "clause": "EXP1-T2.cadence",
+    "from": null,
+    "to": "UNVERIFIED",
+    "why": "new LIMIT clause of the review-13 audit (THRESHOLDS.md:24)"
+   },
+   {
+    "clause": "EXP2-T1.mismatch",
+    "from": "FAIL",
+    "to": "UNVERIFIED",
+    "why": "review-13 clause rule: a clause FAILs only on a violation of one of its own conjuncts. down_6's EXP2-T1 FAIL is its examined count (18,820 answers in rows, under 20,000), which belongs to EXP2-T1.examined and EXP2-T1.compared; this clause's own conjuncts are not established on the lives without saved oracle legs, so it is UNVERIFIED"
+   }
+  ]
  }
 }

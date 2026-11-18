@@ -394,6 +394,10 @@ def _moment_probe(name, at):
     return evidence(name, {"first_refusal": F("first_refusal", at),
                            "success_after_refusal": F("success_after_first_refusal", "count", expect={0}),
                            "n": F("n", "pos"),
+                           # review 13 audit witnesses (observe.moments); absent: the conjunct is not established (UNVERIFIED)
+                           "success_before": F("success_before_request", "count", optional=True, bad=(0,)),
+                           "refusals_before": F("refusals_before_window", "count", optional=True, expect={0}, bad=(1,)),
+                           "unobserved_after": F("unobserved_after_first_refusal", "count", optional=True, expect={0}, bad=(1,)),
                            "first_refusal_s": F("first_refusal_rel_resp_s", "offset", lo=-0.5, verify=True)},   # legacy summary: must agree
                     [("le", "success_after_refusal", "n"), ("eq", "first_refusal_s", "first_refusal.at_s")],
                     "One mandatory probe polled across start_basic. A skipped or never-refused probe has no first_refusal and does not parse.")
@@ -469,41 +473,70 @@ FallbackControl = evidence("FallbackControl", {
      ("ratio_matches", "flag_rate", "flagged_wrong", "client_labelled")],
     "Sensitivity control (broken fallback): it exists only with a sample of client-labelled and backend-labelled answers.",
     {"flagged": property(lambda s: Proportion(s.flagged_wrong, s.client_labelled))})
+ByLabel = evidence("ByLabel", {"client": F("client", "count"), "backend": F("backend", "count")})
+ControlReaders = evidence("ControlReaders", {"checked": F("checked", "count"), "wrong": F("wrong", "count", expect={0}),
+                                             "without_oracle": F("without_oracle", "count", expect={0})}, [("le", "wrong", "checked")],
+                          "Review 13 audit: the strategy=backend control readers' backend-labelled answers against the rrf reference.")
+# Review 13 audit: every oracle-derived figure is optional. The loader removes them for a life whose oracle legs were not saved (a
+# stored derived figure is not evidence); each conjunct that needs one is then NOT ESTABLISHED. `answers_bound` comes from the rows
+# alone: below 20,000 the floor is violated whatever the oracle would say.
 Correctness = evidence("Correctness", {
-    "examined": F("exp2.T1_examined", "pos", bad=(19999,)),
-    "mismatches": F("exp2.T1_mismatches", "count", expect={0}),
-    "backend_without_oracle": F("exp2.T1_backend_without_oracle", "count", expect={0}),
-    "control": F("exp2.T1_control_broken_fallback", FallbackControl)}, [("le", "mismatches", "examined")], "EXP2-T1.")
+    "examined": F("exp2.T1_examined", "pos", optional=True, bad=(19999,)),
+    "mismatches": F("exp2.T1_mismatches", "count", optional=True, expect={0}),
+    "backend_without_oracle": F("exp2.T1_backend_without_oracle", "count", optional=True, expect={0}),
+    "control": F("exp2.T1_control_broken_fallback", FallbackControl, optional=True),
+    "by_label": F("exp2.T1_examined_by_label", ByLabel, optional=True),
+    "ctl": F("exp2.T1_control_readers", ControlReaders, optional=True),
+    "answers_bound": F("exp2.T1_answers_bound", "count", optional=True)},
+    [("le", "mismatches", "examined"), ("le", "examined", "answers_bound")],
+    "EXP2-T1.")
 
+Phase = evidence("Phase", {"before": F("before", "count"), "after": F("after", "count")},
+                 doc="Requests completed before the transition request and started at or after its response (review 13 audit).")
+Phases = evidence("Phases", {g: F(g, Phase) for g in ("auto", "lex", "vec")})
 Availability = evidence("Availability", {
     "failed": F("exp2.T2_failed_requests", "count"),
     "requests": F("exp2.T2_non_control_requests", "pos"),
     "longest_window_s": F("exp2.T2_longest_failure_window_s", "duration", bad=(2.5,)),
     "windows": F("exp2.T2_failure_windows", "windows"),
     # review 12: THRESHOLDS EXP2-T2 as registered, the longest run of consecutive failed auto requests (observe.consecutive_auto_failure)
-    "consecutive_auto_s": F("exp2.T2_longest_consecutive_auto_failure_s", "duration", bad=(2.5,))},
+    "consecutive_auto_s": F("exp2.T2_longest_consecutive_auto_failure_s", "duration", bad=(2.5,)),
+    "phases": F("exp2.T2_requests_by_phase", Phases, optional=True)},
     [("le", "failed", "requests"), ("windows_match", "windows", "longest_window_s", "failed")], "EXP2-T2.",
     {"failed_share": property(lambda s: Proportion(s.failed, s.requests))})
 
+Before = evidence("Before", {"n": F("n", "count"), "other": F("other_label", "count")}, [("le", "other", "n")],
+                  "Auto answers completed before the transition request, and how many carry the post-transition label (review 13 audit).")
 FlipDown = evidence("FlipDown", {
     "flip_s": F("exp2.T3_flip_latency_s", "offset", bad=(5.5,)),
     "backend_after_client": F("exp2.T3_backend_after_first_client", "count", expect={0}),
-    "t_req": F("start_basic.t_req", "timestamp"), "t_resp": F("start_basic.t_resp", "timestamp")},
+    "t_req": F("start_basic.t_req", "timestamp"), "t_resp": F("start_basic.t_resp", "timestamp"),
+    "before": F("exp2.T3_before_transition", Before, optional=True)},
     [("le", "t_req", "t_resp"), ("ge_diff", "flip_s", "t_req", "t_resp")],
     "EXP2-T3 down. The flip offset is signed: an answer received after the start_basic request but before its response is negative.")
 FlipUp = evidence("FlipUp", {
     "flip_s": F("exp2.T3_flip_latency_s", "duration"),
     "ttl_s": F("ttl", "duration"),
     "ttl_recorded": F("exp2.T3_ttl_s", "duration", verify=True),
-    "client_after_backend": F("exp2.T3_client_after_first_backend", "count", expect={0})}, [("eq", "ttl_recorded", "ttl_s")], doc="EXP2-T3 up (first backend answer at or after t_resp).")
+    "client_after_backend": F("exp2.T3_client_after_first_backend", "count", expect={0}),
+    "before": F("exp2.T3_before_transition", Before, optional=True)}, [("eq", "ttl_recorded", "ttl_s")],
+    doc="EXP2-T3 up (first backend answer at or after t_resp).")
 
+SemBasic = evidence("SemBasic", {
+    "attempted": F("attempted", "count"), "acked": F("acked", "count", expect={0}, bad=(1,)), "present": F("present", "count", expect={0}, bad=(1,)),
+    "failed": F("failed", "count"), "failed_loud": F("failed_loud", "count"), "failed_other": F("failed_other", "count", expect={0}, bad=(1,)),
+    "transition": F("transition", "count")},
+    [("sum_eq", ("acked", "failed"), "attempted"), ("le", "present", "attempted"), ("sum_eq", ("failed_loud", "failed_other"), "failed")],
+    "Review 13 F32: the semantic writes issued on Basic (observe.writes).")
 Writes = evidence("Writes", {
     "acked": F("acked", "pos"), "acked_absent": F("acked_absent", "count", expect={0}),
     "sem_acked": F("sem_acked", "pos"), "sem_acked_absent": F("sem_acked_absent", "count", expect={0}),
     "sem_failed": F("sem_failed", "count"), "sem_failed_present": F("sem_failed_present", "count", expect={0}),
     "sem_failed_loud": F("sem_failed_loud_licence_or_missing", "count"),
     "sem_failed_other": F("sem_failed_other", "count", optional=True, expect={0}),
-    "loss_control": F("control_injected_loss_detected", "flag", expect=True)},
+    "loss_control": F("control_injected_loss_detected", "flag", expect=True),
+    "by_phase": F("acked_by_phase", Phase, optional=True),
+    "basic": F("sem_basic", SemBasic, optional=True)},
     [("le", "acked_absent", "acked"), ("le", "sem_acked_absent", "sem_acked"), ("le", "sem_failed_present", "sem_failed"),
      ("le", "sem_failed_loud", "sem_failed"), ("le", "sem_failed_other", "sem_failed")],
     "EXP2-T4 writes. sem_failed_other is optional (addendum D): absent with sem_failed > 0 means unclassified.")
@@ -512,7 +545,8 @@ WritesGate = evidence("WritesGate", {"writes": F("exp2.writes", Writes)}, doc="E
 ControlDown = evidence("ControlDown", {
     "n": F("n", "pos"), "licence_failures": F("licence_failures", "count"), "other_failures": F("other_failures", "count"),
     "success": F("success", "count"), "fail_fraction": F("fail_fraction", "rate", verify=True),
-    "licence_refusals": F("licence_refusals", "count")},   # counted by Outcome case (observe.control_counts), review 8 F13
+    "licence_refusals": F("licence_refusals", "count"),
+    "start": F("start_rel_resp_s", "offset", optional=True)},   # review 13: where the counted window starts (registered: 1 s)   # counted by Outcome case (observe.control_counts), review 8 F13
     [("sum_eq", ("licence_failures", "other_failures", "success"), "n"),
      ("ratio_matches", "fail_fraction", ("licence_failures", "other_failures"), "n"),
      ("le", "licence_refusals", ("licence_failures", "other_failures"))],
@@ -522,7 +556,9 @@ ControlPre = evidence("ControlPre", {"n": F("n", "pos"), "failures": F("failures
                                      "licence_failures": F("licence_failures", "count", verify=True)},   # legacy substring count: checked, not used
                       [("le", "licence_refusals", "failures"), ("le", "failures", "n"), ("le", "licence_failures", "failures")],
                       props={"licence_share": property(lambda s: Proportion(s.licence_refusals, s.n))})
-ControlPost = evidence("ControlPost", {"n": F("n", "pos"), "success": F("success", "count")}, [("le", "success", "n")],
+ControlPost = evidence("ControlPost", {"n": F("n", "pos"), "success": F("success", "count"),
+                                       "start": F("start_rel_resp_s", "offset", optional=True)},   # review 13 F31: registered 0 s
+                       [("le", "success", "n")],
                        props={"success_share": property(lambda s: Proportion(s.success, s.n))})
 LicenceUp = evidence("LicenceUp", {"before": F("exp2.T5_control_before_start_trial", ControlPre),
                                    "after": F("exp2.T5_control_after_trial", ControlPost)}, doc="EXP2-T5 up.")

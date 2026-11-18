@@ -407,6 +407,81 @@ d8aa93d; each is listed with its reason in `results/SUPERSEDED.json` (`status_ch
 against a node; no committed life can show EXP1-T4 PASS until a life is recorded with them. The read-path payload shapes are the documented
 Elasticsearch shapes plus the reviewer's synthetic 403; a shape the function does not know is recorded as unknown (UNVERIFIED), not as 0.
 
+## 3g. Review 13: a clause passes only when every conjunct of it is established (F31, F32 and the audit)
+
+Thirteen reviews blocked the PR on one class: verdict code said PASS when the registered requirement was not established. Review 12 traced
+each clause to a gate; review 13 found two clauses whose gate passed while part of the clause's words was never checked. Per-clause
+tracing was too coarse: a clause such as THRESHOLDS.md:75 "after the trial `n > 0` and every control request succeeds" is several
+conditions, and the trace showed only that some field of the clause was read.
+
+**Scenarios (what passed that should not have):**
+
+| id | found by | scenario | class |
+|---|---|---|---|
+| F31 | review 13 | the up-transition control counted only requests starting 1 s after the `start_trial` response; a 503 at +0.1 s vanished and EXP2-T5-up passed (THRESHOLDS.md:75 says "after the trial", with no 1 s grace; the grace is registered for the down direction only, line 34) | F part of a clause not checked |
+| F32 | review 13 | EXP2-T4 passed with a semantic write acknowledged and present on Basic: the recorder summed acknowledgements over the whole life, and the verdict checked only lost acknowledgements and present FAILED writes (THRESHOLDS.md:33 "none acknowledged, none present") | F |
+| A1 | audit | stored DERIVED figures with no raw record behind them (EXP2-T1 for the ten lives without saved oracle legs, `exp2.writes`, the EXP3 migration figures) could make a gate PASS | D derived figure trusted |
+| A2 | audit | the registered 50 ms poll cadence (line 24) was read by no verdict; the recorded median period is 0.19 s | F (now a LIMIT) |
+| A3 | audit | the HTTP status in an error text was matched anywhere in the text (`HTTP (\d{3})`), so a status quoted inside a response body could be taken as the answer's status | A outcome not classified |
+| A4 | audit | EXP2-T2 had no witness that each read arm issued requests before and after the transition; EXP2-T3 had no witness of the label BEFORE the transition; EXP1-T2 had no witness that the probe answered before the request or was observed in every poll after its first refusal | B/C witness not required |
+| A5 | audit | EXP2-T1's control readers (backend answers vs the rrf reference) and "both labels examined" were not checked; the examined count was not bounded by the answers in rows | B/D |
+| A6 | audit | a control that was not met (EXP2-T1 floor under 90%, the T4 injected loss not reported, the EXP3-T3 corrupted copy not caught) made the gate FAIL. For T1, line 54 says the PASS is then "CLAIMED, not proven": UNVERIFIED. For the T4 control (line 55) and the EXP3-T3 corrupted copy (line 42) the words say only "must"; treating an unmet sensitivity control as UNVERIFIED (the check is not shown sensitive, the system is not shown faulty) is an ASSUMPTION. The EXP2-T5 control (line 34, "invalidates the run") is unchanged: below 95% it is still FAIL | E verdict stronger than the words |
+
+**Research (2026-11-18).** R. M. Hierons, "Verdict functions in testing with a fault domain or test hypotheses",
+https://bura.brunel.ac.uk/bitstream/2438/1868/1/verdicts_final.pdf : a verdict function returns pass, fail or inconclusive, and
+inconclusive is the verdict when the test objective was not reached. Confidence medium (a primary paper on conformance testing,
+applied by analogy). Also consulted: arXiv 2508.20902 on three-valued test oracles (low: abstract only). Used: a conjunct is
+ESTABLISHED, VIOLATED or NOT_ESTABLISHED, and a verdict is PASS only when every conjunct is established (an unreached objective is
+inconclusive, here UNVERIFIED). Rejected: a numeric "coverage score" per clause, because a partial score would invite a partial pass.
+
+**Design.**
+1. **One judging function per gate, returning parts.** `verdicts.py` gate functions return a list of `Part(cid, state, reason)`, one
+   per conjunct named in `verdicts.GATES[g].conjuncts`. `judge_parts` combines them: any VIOLATED is FAIL, else any NOT_ESTABLISHED
+   is UNVERIFIED, else PASS. A LIMIT clause of the gate is a conjunct that is never established (`conjuncts_of`). A gate cannot PASS
+   with a conjunct it did not return: `judge_parts` checks the returned ids against the declared list.
+2. **Conjuncts are registered words.** `clauses.CONJUNCTS` holds each conjunct's THRESHOLDS.md line and quote (checked as a substring
+   of the line), the recorder function that computes its figure from raw rows, and a note. `clauses.CLAUSES[i].conj` lists the
+   conjuncts of each clause.
+3. **Clause status (hybrid rule, `clauses.clause_statuses`).** FAIL when one of the clause's OWN conjuncts is VIOLATED on any life;
+   PASS only when every conjunct of every gate deciding it is ESTABLISHED on every in-scope inventory life; otherwise UNVERIFIED.
+   Per-clause scoring alone (only the clause's own conjuncts) was tried and rejected: it raised EXP1-T4.control and EXP1-T4.error to
+   PASS on a gate that is UNVERIFIED.
+4. **Only raw-backed figures establish a conjunct (`summarize.gate_view`, `summarize.judged`).** `withheld_paths` lists the
+   derived figures no raw file of the life rebuilds (a "keep" source not in `_rebuilt`; every raw source when the life was never
+   loaded, so a missing marker fails closed); they are removed before judging and the reason says so. A conjunct the full record
+   shows VIOLATED stays VIOLATED (positive evidence of a failure decides first): down_6 EXP2-T1 is FAIL from rows (18,820 answers,
+   under the registered 20,000). The guarantee holds for every status summarize reports (`judged` is its only status path);
+   `verdicts.judge` called directly judges whatever life it is given.
+5. **New raw-row witnesses** (all in `observe.py`, parsed and typed in `evidence.py`): EXP1-T2 `success_before_request`,
+   `refusals_before_window`, `unobserved_after_first_refusal`; EXP2-T1 `T1_examined_by_label`, `T1_control_readers`,
+   `T1_answers_bound`; EXP2-T2 `T2_requests_by_phase`; EXP2-T3 `T3_before_transition`; EXP2-T5 window start `start_rel_resp_s`
+   (down 1.0, up 0.0: F31); EXP2-T4 from a raw write record `results/<life>.writes.gz` (`observe.parse_writes`, `observe.writes`:
+   `acked_by_phase` and `sem_basic` with attempted, acknowledged, present, failed and loud counts for the writes issued on Basic: F32).
+   The status regex is anchored to the adapter prefix `^<Name>: HTTP (\d{3}): ` (A3).
+6. **The audit is generated, and every conjunct has a raw-row test.** `audit.py` writes `CLAUSE-AUDIT.md` from the tables, the
+   tests and `summary_current.json`; a test fails when the committed file differs. `tests.test_clauses.ConjunctViolationTests`
+   changes the RAW record (rows, poll, oracle, writes) of a passing base so that only one conjunct stops being established, runs it
+   through parse, `summarize.rebuild` and the gate view, and asserts the conjunct is not established, the gate is not PASS, no other
+   conjunct moved (except a declared `also`) and no clause citing it is PASS. A conjunct whose words are an AND has one more input
+   per further condition (`HALVES`, 21 entries). Three kinds have no raw record: the EXP3 migration figures (never saved) and the
+   post-transition window start are tested at the figure level; the matrix-cell conjuncts (EXP1-T3, EXP1-T4, the DLS battery, the
+   semantic-only control) change the primary cell itself.
+
+**Status changes against 099865c** (`results/SUPERSEDED.json`, `status_changes_review_13`): 11 life-gates PASS to UNVERIFIED (EXP2-T1
+on down_1..5 and up_1..5: derived figures withheld; EXP1-T2 on down_7: the cadence LIMIT). Clauses: 12 PASS, 2 FAIL, 62 UNVERIFIED of
+76 (was 12, 7, 56 of 75); five clauses FAIL to UNVERIFIED (A.T1-control, A.T1-control-witness, C.T1-oracle, C.T1-oracle-witness,
+EXP2-T1.mismatch: under the hybrid rule down_6's FAIL belongs only to the clauses about the examined count), and EXP1-T2.cadence is new.
+The aggregate gate statuses are unchanged.
+
+**Not established (stated, not closed):** the 50 ms cadence (LIMIT); EXP1-T3 every cell (LIMIT); EXP3-T2 1% relative error (LIMIT); the
+EXP2-T4 control is a set difference against the injected id, as registered (line 55), so it shows the verifier reports a missing id,
+not that the scroll reads every document; the committed lives have no write record, no DLS no-document witness and no migration
+inputs, so EXP2-T4, EXP1-T4 and EXP3-migration cannot PASS on them; the EXP2-T2 per-thread run is covered by the stricter all-arms
+window by reasoning (readers sleep 2 ms between requests), not by a separate figure; EXP2-T5-up control requests in flight across the
+`start_trial` call (completed at or after its request, started before its response) fall in neither window, as before review 13;
+the new recorder fields (`writes.gz`, `t1` on
+semantic rows) have run only against stubs, never against a node.
+
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
 - `exp2.T1_examined`, `T1_mismatches` and `T1_backend_without_oracle`: computed by the harness from rows and oracle. down_7 rows are recomputed by recompute.py. The domain is still enforced: counts, with mismatches ≤ examined.

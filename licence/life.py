@@ -130,13 +130,14 @@ def down(n, ttl, post):
     poll.join(10)
     W.stop()
     R["exp2"] = W.analyse(sb["t_req"], sb["t_resp"], "down")
-    R["exp2"]["writes"] = W.verify_writes()
+    R["exp2"]["writes"] = W.verify_writes(sb["t_req"], sb["t_resp"], "down")
     R["exp2"]["events"] = W.events
     R["exp2"]["latch_sample_n"] = len(W.latch)
     R["exp2"]["latch_timeline"] = _latch_changes(W.latch, sb["t_resp"])
-    R["exp1_moment"] = exp2.moment_analysis(poll.rows, sb["t_resp"], window=(W.events["t_start"], W.events["t_stop"]))
+    R["exp1_moment"] = exp2.moment_analysis(poll.rows, sb["t_resp"], window=(W.events["t_start"], W.events["t_stop"]), t_req=sb["t_req"])
     R["exp1_moment_n_polls"] = len(poll.rows)
     W.dump(os.path.join(RES, "down_%d.rows.gz" % n))
+    W.dump_writes(os.path.join(RES, "down_%d.writes.gz" % n))   # review 13 F32: the raw write record (summarize RAW_SOURCES "writes")
     W.dump_oracles(os.path.join(RES, "down_%d.oracle.gz" % n))
     import gzip
     with gzip.open(os.path.join(RES, "down_%d.poll.gz" % n), "wt") as fh:
@@ -243,7 +244,7 @@ def up(n, ttl, post):
     bad = W.compute_backend_oracles()
     R["exp2_backend_oracle_failures"] = bad
     R["exp2"] = W.analyse(st["t_req"], st["t_resp"], "up")
-    R["exp2"]["writes"] = W.verify_writes()
+    R["exp2"]["writes"] = W.verify_writes(st["t_req"], st["t_resp"], "up")
     R["exp2"]["events"] = W.events
     R["exp2"]["latch_timeline"] = _latch_changes(W.latch, st["t_resp"])
     sw = R["exp2"]["writes"].get("sem_first_ok_t")
@@ -251,6 +252,7 @@ def up(n, ttl, post):
     R["exp1_moment"] = exp2.moment_analysis(poll.rows, st["t_resp"], features=("rrf", "linear", "semantic_query", "inference_use"), direction="up",
                                            window=(W.events["t_start"], W.events["t_stop"]))
     W.dump(os.path.join(RES, "up_%d.rows.gz" % n))
+    W.dump_writes(os.path.join(RES, "up_%d.writes.gz" % n))
     W.dump_oracles(os.path.join(RES, "up_%d.oracle.gz" % n))
     import gzip
     with gzip.open(os.path.join(RES, "up_%d.poll.gz" % n), "wt") as fh:

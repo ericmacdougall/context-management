@@ -1,7 +1,7 @@
 {
  "aggregate": {
   "EXP1-T2": {
-   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json PASS",
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json UNVERIFIED; down_7.json UNVERIFIED",
    "status": "UNVERIFIED"
   },
   "EXP1-T3": {
@@ -17,7 +17,7 @@
    "status": "UNVERIFIED"
   },
   "EXP2-T1": {
-   "reason": "down_1.json PASS; down_2.json PASS; down_3.json PASS; down_4.json PASS; down_5.json PASS; down_6.json FAIL; down_7.json PASS; up_1.json PASS; up_2.json PASS; up_3.json PASS; up_4.json PASS; up_5.json PASS",
+   "reason": "down_1.json UNVERIFIED; down_2.json UNVERIFIED; down_3.json UNVERIFIED; down_4.json UNVERIFIED; down_5.json UNVERIFIED; down_6.json FAIL; down_7.json PASS; up_1.json UNVERIFIED; up_2.json UNVERIFIED; up_3.json UNVERIFIED; up_4.json UNVERIFIED; up_5.json UNVERIFIED",
    "status": "FAIL"
   },
   "EXP2-T2": {
@@ -56,19 +56,19 @@
  "artefact": "summary_current.json",
  "clauses": {
   "A.T1-control": {
-   "reason": "EXP2-T1 FAIL",
-   "status": "FAIL"
+   "reason": "conjuncts EXP2-T1.control-floor: 1 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_2.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_3.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_4.json derived figures with no raw",
+   "status": "UNVERIFIED"
   },
   "A.T1-control-witness": {
-   "reason": "EXP2-T1 FAIL",
-   "status": "FAIL"
+   "reason": "conjuncts EXP2-T1.control-floor: 1 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_2.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_3.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_4.json derived figures with no raw",
+   "status": "UNVERIFIED"
   },
   "A.T4-control": {
-   "reason": "EXP2-T4 UNVERIFIED",
+   "reason": "conjuncts EXP2-T4.control: 0 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent",
    "status": "UNVERIFIED"
   },
   "A.T4-control-witness": {
-   "reason": "EXP2-T4 UNVERIFIED",
+   "reason": "conjuncts EXP2-T4.control: 0 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent",
    "status": "UNVERIFIED"
   },
   "A.counts": {
@@ -76,7 +76,7 @@
    "status": "UNVERIFIED"
   },
   "A.ground-truth": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3.ground-truth: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "A.http-patch": {
@@ -100,7 +100,7 @@
    "status": "UNVERIFIED"
   },
   "B.probe-start": {
-   "reason": "EXP1-T2 UNVERIFIED; the poll END time is used: it is later than the probe start, so a refusal timed by it within 5 s is within 5 s by the start too",
+   "reason": "conjuncts EXP1-T2.refused-each, EXP1-T2.within-5s: 2 of 14 life-conjunct checks established; not established: down_1.json exp1_moment.rrf: absent | down_2.json exp1_moment.rrf: absent | down_3.json exp1_moment.rrf: absent | down_4.json exp1_moment.rrf: absent | down_5.json exp1_moment.rrf: absent | down_6.json exp1_moment.rrf: absent; the poll END time is used: it is later than the probe start, so a refusal timed by it within 5 s is within 5 s by the start too",
    "status": "UNVERIFIED"
   },
   "B.recompute": {
@@ -116,31 +116,31 @@
    "status": "UNVERIFIED"
   },
   "C.T1-oracle": {
-   "reason": "EXP2-T1 FAIL",
-   "status": "FAIL"
+   "reason": "conjuncts EXP2-T1.oracle: 1 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.oracle: not derived from raw rows | down_2.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.oracle: not derived from raw rows | down_3.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.oracle: not derived from raw rows | down_4.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_",
+   "status": "UNVERIFIED"
   },
   "C.T1-oracle-witness": {
-   "reason": "EXP2-T1 FAIL",
-   "status": "FAIL"
+   "reason": "conjuncts EXP2-T1.oracle: 1 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.oracle: not derived from raw rows | down_2.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.oracle: not derived from raw rows | down_3.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.oracle: not derived from raw rows | down_4.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_",
+   "status": "UNVERIFIED"
   },
   "C.T4-loud": {
-   "reason": "EXP2-T4 UNVERIFIED",
+   "reason": "conjuncts EXP2-T4.classified: 0 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent",
    "status": "UNVERIFIED"
   },
   "C.T5-down": {
-   "reason": "EXP2-T5-down PASS",
+   "reason": "conjuncts EXP2-T5.down, EXP2-T5.down-window: 14 of 14 life-conjunct checks established",
    "status": "PASS"
   },
   "C.T5-down-absent": {
-   "reason": "EXP2-T5-down PASS; absent does not parse: UNVERIFIED (off PASS)",
+   "reason": "conjuncts EXP2-T5.down: 7 of 7 life-conjunct checks established; absent does not parse: UNVERIFIED (off PASS)",
    "status": "PASS"
   },
   "C.T5-up": {
-   "reason": "EXP2-T5-up PASS",
+   "reason": "conjuncts EXP2-T5.up-before, EXP2-T5.up-after, EXP2-T5.up-window: 15 of 15 life-conjunct checks established",
    "status": "PASS"
   },
   "C.T5-up-witness": {
-   "reason": "EXP2-T5-up PASS",
+   "reason": "conjuncts EXP2-T5.up-before, EXP2-T5.up-after, EXP2-T5.up-window: 15 of 15 life-conjunct checks established",
    "status": "PASS"
   },
   "C.migration": {
@@ -148,7 +148,7 @@
    "status": "UNVERIFIED"
   },
   "D.T4": {
-   "reason": "EXP2-T4 UNVERIFIED; unclassified semantic failures: UNVERIFIED, never PASS",
+   "reason": "conjuncts EXP2-T4.classified: 0 of 12 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; unclassified semantic failures: UNVERIFIED, never PASS",
    "status": "UNVERIFIED"
   },
   "D.count": {
@@ -164,99 +164,103 @@
    "status": "UNVERIFIED"
   },
   "EXP1-T2.bound": {
-   "reason": "EXP1-T2 UNVERIFIED",
+   "reason": "conjuncts EXP1-T2.refused-each, EXP1-T2.within-5s, EXP1-T2.answered-before: 3 of 21 life-conjunct checks established; not established: down_1.json exp1_moment.rrf: absent | down_2.json exp1_moment.rrf: absent | down_3.json exp1_moment.rrf: absent | down_4.json exp1_moment.rrf: absent | down_5.json exp1_moment.rrf: absent | down_6.json exp1_moment.rrf: absent",
+   "status": "UNVERIFIED"
+  },
+  "EXP1-T2.cadence": {
+   "reason": "conjuncts EXP1-T2.cadence: 0 of 7 life-conjunct checks established; not established: down_1.json exp1_moment.rrf: absent | down_2.json exp1_moment.rrf: absent | down_3.json exp1_moment.rrf: absent | down_4.json exp1_moment.rrf: absent | down_5.json exp1_moment.rrf: absent | down_6.json exp1_moment.rrf: absent; review 13 audit: the recorder sleeps 50 ms BETWEEN polls, and one poll of seven probes takes longer; the recorded median period is about 0.19 s (poll_period_median_s), so the registered cadence is not what was run",
    "status": "UNVERIFIED"
   },
   "EXP1-T2.no-success": {
-   "reason": "EXP1-T2 UNVERIFIED",
+   "reason": "conjuncts EXP1-T2.refused-each, EXP1-T2.no-success-after, EXP1-T2.observed-after: 3 of 21 life-conjunct checks established; not established: down_1.json exp1_moment.rrf: absent | down_2.json exp1_moment.rrf: absent | down_3.json exp1_moment.rrf: absent | down_4.json exp1_moment.rrf: absent | down_5.json exp1_moment.rrf: absent | down_6.json exp1_moment.rrf: absent",
    "status": "UNVERIFIED"
   },
   "EXP1-T2.refused": {
-   "reason": "EXP1-T2 UNVERIFIED; every mandatory probe must have its first refusal of its required Outcome case; a never-refused or skipped probe does not parse",
+   "reason": "conjuncts EXP1-T2.refused-each, EXP1-T2.answered-before, EXP1-T2.cadence: 2 of 21 life-conjunct checks established; not established: down_1.json exp1_moment.rrf: absent | down_2.json exp1_moment.rrf: absent | down_3.json exp1_moment.rrf: absent | down_4.json exp1_moment.rrf: absent | down_5.json exp1_moment.rrf: absent | down_6.json exp1_moment.rrf: absent; every mandatory probe must have its first refusal of its required Outcome case; a never-refused or skipped probe does not parse",
    "status": "UNVERIFIED"
   },
   "EXP1-T3.detector": {
-   "reason": "EXP1-T3 UNVERIFIED",
+   "reason": "conjuncts EXP1-T3.message, EXP1-T3.detector: 0 of 14 life-conjunct checks established; not established: down_1.json exp1_after.retriever_rrf.adapter_message: absent | down_2.json exp1_after.retriever_rrf.adapter_message: absent | down_3.json exp1_after.retriever_rrf.adapter_message: absent | down_4.json exp1_after.retriever_rrf.adapter_message: absent | down_5.json exp1_after.retriever_rrf.adapter_message: absent | down_6.json exp1_after.retriever_rrf.adapter_message: absent",
    "status": "UNVERIFIED"
   },
   "EXP1-T3.every-cell": {
-   "reason": "registered wording no recorded field witnesses: only three fixed latch cells are witnessed, not every LICENCE_ERROR cell of a search path (forces EXP1-T3 off PASS)",
+   "reason": "conjuncts EXP1-T3.every-cell: 0 of 7 life-conjunct checks established; not established: down_1.json exp1_after.retriever_rrf.adapter_message: absent | down_2.json exp1_after.retriever_rrf.adapter_message: absent | down_3.json exp1_after.retriever_rrf.adapter_message: absent | down_4.json exp1_after.retriever_rrf.adapter_message: absent | down_5.json exp1_after.retriever_rrf.adapter_message: absent | down_6.json exp1_after.retriever_rrf.adapter_message: absent; only three fixed latch cells are witnessed, not every LICENCE_ERROR cell of a search path",
    "status": "UNVERIFIED"
   },
   "EXP1-T3.message": {
-   "reason": "EXP1-T3 UNVERIFIED; the committed lives recorded only an error summary, not the message: UNVERIFIED for all of them",
+   "reason": "conjuncts EXP1-T3.message, EXP1-T3.detector, EXP1-T3.every-cell: 0 of 21 life-conjunct checks established; not established: down_1.json exp1_after.retriever_rrf.adapter_message: absent | down_2.json exp1_after.retriever_rrf.adapter_message: absent | down_3.json exp1_after.retriever_rrf.adapter_message: absent | down_4.json exp1_after.retriever_rrf.adapter_message: absent | down_5.json exp1_after.retriever_rrf.adapter_message: absent | down_6.json exp1_after.retriever_rrf.adapter_message: absent; the committed lives recorded only an error summary, not the message: UNVERIFIED for all of them",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.control": {
-   "reason": "EXP1-T4 UNVERIFIED; EXP1-T4-battery UNVERIFIED; witness: allowed count 1..7 of 8, all of kw a",
+   "reason": "conjuncts EXP1-T4.control: 7 of 8 life-conjunct checks established; not established: the gate's other conjuncts are not all established: down_1.json EXP1-T4-battery.control, down_1.json EXP1-T4-battery.no-document, down_1.json EXP1-T4-battery.refused, down_1.json EXP1-T4.no-document, down_2.json EXP1-T4-battery.control, down_2.json EXP1-T4-battery.no-document, down_2.json EXP1-T4-battery.refused, down_2.json EXP1-T4.no-document; witness: allowed count 1..7 of 8, all of kw a",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.control-battery": {
-   "reason": "EXP1-T4-battery UNVERIFIED; on trial the allowed document is readable and the hidden one is not",
+   "reason": "conjuncts EXP1-T4-battery.control: 2 of 7 life-conjunct checks established; not established: down_1.json dls_battery_trial: absent | down_2.json dls_battery_trial: absent | down_3.json dls_battery_trial: absent | down_4.json dls_battery_trial: absent | down_5.json dls_battery_trial: absent; on trial the allowed document is readable and the hidden one is not",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.document-fails": {
-   "reason": "EXP1-T4 UNVERIFIED; EXP1-T4-battery UNVERIFIED",
+   "reason": "conjuncts EXP1-T4.control, EXP1-T4-battery.control, EXP1-T4.no-document, EXP1-T4-battery.no-document: 9 of 28 life-conjunct checks established; not established: down_1.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_1.json dls_battery_trial: absent | down_2.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_2.json dls_battery_trial: absent | down_3.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_3.json dls_battery_trial: absent",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.error": {
-   "reason": "EXP1-T4 UNVERIFIED; an authorisation or licence refusal; any other error says nothing (UNVERIFIED), a success is a FAIL",
+   "reason": "conjuncts EXP1-T4.control, EXP1-T4.refused: 14 of 15 life-conjunct checks established; not established: the gate's other conjuncts are not all established: down_1.json EXP1-T4.no-document, down_2.json EXP1-T4.no-document, down_3.json EXP1-T4.no-document, down_4.json EXP1-T4.no-document, down_5.json EXP1-T4.no-document, down_6.json EXP1-T4.no-document, down_7.json EXP1-T4.no-document; an authorisation or licence refusal; any other error says nothing (UNVERIFIED), a success is a FAIL",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.error-battery": {
-   "reason": "EXP1-T4-battery UNVERIFIED; every read path of the battery: get, search, count, mget, msearch, scroll, kNN, termvectors, wildcard index, ES|QL",
+   "reason": "conjuncts EXP1-T4-battery.control, EXP1-T4-battery.refused: 4 of 14 life-conjunct checks established; not established: down_1.json dls_battery_trial: absent | down_2.json dls_battery_trial: absent | down_3.json dls_battery_trial: absent | down_4.json dls_battery_trial: absent | down_5.json dls_battery_trial: absent; every read path of the battery: get, search, count, mget, msearch, scroll, kNN, termvectors, wildcard index, ES|QL",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.no-document": {
-   "reason": "EXP1-T4 UNVERIFIED; review 12 F28: the witness is the document count read from the body's shape whatever the HTTP status. The committed lives were recorded without it (their after cells keep class, status and an error summary): UNVERIFIED",
+   "reason": "conjuncts EXP1-T4.control, EXP1-T4.no-document: 7 of 14 life-conjunct checks established; not established: down_1.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_2.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_3.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_4.json EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic | down_5.json EXP1-T4.no-document: dls_search_as_user:; review 12 F28: the witness is the document count read from the body's shape whatever the HTTP status. The committed lives were recorded without it (their after cells keep class, status and an error summary): UNVERIFIED",
    "status": "UNVERIFIED"
   },
   "EXP1-T4.no-document-battery": {
-   "reason": "EXP1-T4-battery UNVERIFIED; review 12 F28: returned_any_source was recorded only for 2xx answers and returned_hidden_doc covers only the hidden document, so the committed battery has no witness that a refused read path carried no document: UNVERIFIED",
+   "reason": "conjuncts EXP1-T4-battery.control, EXP1-T4-battery.no-document: 2 of 14 life-conjunct checks established; not established: down_1.json dls_battery_trial: absent | down_2.json dls_battery_trial: absent | down_3.json dls_battery_trial: absent | down_4.json dls_battery_trial: absent | down_5.json dls_battery_trial: absent | down_6.json get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); msearch: no status-i; review 12 F28: returned_any_source was recorded only for 2xx answers and returned_hidden_doc covers only the hidden document, so the committed battery has no witness that a refused read path carried no document: UNVERIFIED",
    "status": "UNVERIFIED"
   },
   "EXP2-T1.compared": {
-   "reason": "EXP2-T1 FAIL; rebuilt from rows.gz + oracle.gz for down_7; stored (labelled 'from stored figure') for lives without saved oracle legs",
+   "reason": "conjuncts EXP2-T1.no-mismatch, EXP2-T1.oracle, EXP2-T1.control-readers, EXP2-T1.control-floor, EXP2-T1.examined, EXP2-T1.both-labels: 6 of 72 life-conjunct checks established; violated: down_6.json EXP2-T1.examined: at most 18820 answers to examine (successful auto and auto+linear rows) < 20,000; rebuilt from rows.gz + oracle.gz for down_7; stored (labelled 'from stored figure') for lives without saved oracle legs",
    "status": "FAIL"
   },
   "EXP2-T1.examined": {
-   "reason": "EXP2-T1 FAIL",
+   "reason": "conjuncts EXP2-T1.examined: 1 of 12 life-conjunct checks established; violated: down_6.json EXP2-T1.examined: at most 18820 answers to examine (successful auto and auto+linear rows) < 20,000",
    "status": "FAIL"
   },
   "EXP2-T1.mismatch": {
-   "reason": "EXP2-T1 FAIL",
-   "status": "FAIL"
+   "reason": "conjuncts EXP2-T1.no-mismatch, EXP2-T1.oracle, EXP2-T1.control-readers, EXP2-T1.control-floor: 4 of 48 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-floor: no broken-fallback control from raw rows | down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.control-readers: control readers' answers not compared | down_1.json derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.no-mismatch: answers not compared from raw rows and oracle | down_1.json derived figures with no r",
+   "status": "UNVERIFIED"
   },
   "EXP2-T2.run": {
-   "reason": "EXP2-T2 PASS; review 12 closes the review-10 limit: the registered run (auto and auto+linear readers) is derived from rows.gz and gated; the joined window of all read arms is kept as an additional check",
+   "reason": "conjuncts EXP2-T2.run, EXP2-T2.window, EXP2-T2.phases: 36 of 36 life-conjunct checks established; review 12 closes the review-10 limit: the registered run (auto and auto+linear readers) is derived from rows.gz and gated; the joined window of all read arms is kept as an additional check",
    "status": "PASS"
   },
   "EXP2-T2.share": {
-   "reason": "EXP2-T2 PASS",
+   "reason": "conjuncts EXP2-T2.share, EXP2-T2.phases: 24 of 24 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T2.witness": {
-   "reason": "EXP2-T2 PASS",
+   "reason": "conjuncts EXP2-T2.share, EXP2-T2.run, EXP2-T2.window, EXP2-T2.phases: 48 of 48 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T3.down": {
-   "reason": "EXP2-T3-down PASS",
+   "reason": "conjuncts EXP2-T3.down, EXP2-T3.down-stays, EXP2-T3.down-before: 21 of 21 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T3.up": {
-   "reason": "EXP2-T3-up PASS",
+   "reason": "conjuncts EXP2-T3.up, EXP2-T3.up-stays, EXP2-T3.up-before: 15 of 15 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T3.witness": {
-   "reason": "EXP2-T3-down PASS; EXP2-T3-up PASS",
+   "reason": "conjuncts EXP2-T3.down, EXP2-T3.down-stays, EXP2-T3.down-before, EXP2-T3.up, EXP2-T3.up-stays, EXP2-T3.up-before: 36 of 36 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T4.lost": {
-   "reason": "EXP2-T4 UNVERIFIED",
+   "reason": "conjuncts EXP2-T4.lost, EXP2-T4.phases, EXP2-T4.control: 0 of 36 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent",
    "status": "UNVERIFIED"
   },
   "EXP2-T4.loud": {
-   "reason": "EXP2-T4 UNVERIFIED",
+   "reason": "conjuncts EXP2-T4.basic-attempted, EXP2-T4.basic-loud, EXP2-T4.basic-none-acked, EXP2-T4.basic-none-present: 0 of 48 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent",
    "status": "UNVERIFIED"
   },
   "EXP2-T4.reported": {
@@ -264,15 +268,15 @@
    "status": "UNVERIFIED"
   },
   "EXP2-T4.witness": {
-   "reason": "EXP2-T4 UNVERIFIED",
+   "reason": "conjuncts EXP2-T4.lost, EXP2-T4.phases, EXP2-T4.control, EXP2-T4.basic-attempted: 0 of 48 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_2.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_3.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_4.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_5.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent | down_6.json derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent",
    "status": "UNVERIFIED"
   },
   "EXP2-T5.down": {
-   "reason": "EXP2-T5-down PASS",
+   "reason": "conjuncts EXP2-T5.down, EXP2-T5.down-window: 14 of 14 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T5.witness": {
-   "reason": "EXP2-T5-down PASS",
+   "reason": "conjuncts EXP2-T5.down, EXP2-T5.down-window: 14 of 14 life-conjunct checks established",
    "status": "PASS"
   },
   "EXP2-T6": {
@@ -284,39 +288,39 @@
    "status": "UNVERIFIED"
   },
   "EXP3-T2.count-fails": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T2.counts: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T2.counts": {
-   "reason": "EXP3-migration UNVERIFIED; equality with the independent source count (299/299 and 199/199 after an earlier delete), the registered intent",
+   "reason": "conjuncts EXP3-T2.counts: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; equality with the independent source count (299/299 and 199/199 after an earlier delete), the registered intent",
    "status": "UNVERIFIED"
   },
   "EXP3-T2.knn": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T2.knn: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T2.ops": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T2.ops: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T2.relative": {
-   "reason": "registered wording no recorded field witnesses: not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept) (forces EXP3-migration off PASS)",
+   "reason": "conjuncts EXP3-T2.relative: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)",
    "status": "UNVERIFIED"
   },
   "EXP3-T2.vectors": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T2.vectors: 0 of 7 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T2.witness": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T2.counts, EXP3-T2.vectors, EXP3-T2.knn, EXP3-T2.ops, EXP3-T2.relative: 0 of 35 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T3.control": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T3.plain, EXP3-T3.corrupted: 0 of 14 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T3.witness": {
-   "reason": "EXP3-migration UNVERIFIED",
+   "reason": "conjuncts EXP3-T3.plain, EXP3-T3.corrupted: 0 of 14 life-conjunct checks established; not established: down_1.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_2.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_3.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_4.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_5.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent | down_6.json derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T4": {
@@ -324,7 +328,7 @@
    "status": "UNVERIFIED"
   },
   "EXP3-T4.control": {
-   "reason": "EXP3-semonly-control UNVERIFIED",
+   "reason": "conjuncts EXP3-T4.control: 1 of 7 life-conjunct checks established; not established: down_1.json semonly_trial.semantic: absent | down_2.json semonly_trial.semantic: absent | down_3.json semonly_trial.semantic: absent | down_4.json semonly_trial.semantic: absent | down_5.json semonly_trial.semantic: absent | down_6.json semonly_trial.semantic: absent",
    "status": "UNVERIFIED"
   },
   "EXP3-T5": {
@@ -393,6 +397,14 @@
    "limit": "SUBSTITUTE (clause B.probe-start): refusal timing uses the poll's end time, not the probe start time addendum B names; the end is later, so within 5 s by the end implies within 5 s by the start."
   },
   {
+   "gate": "EXP1-T2",
+   "limit": "LIMIT, forces UNVERIFIED (review 13, clause EXP1-T2.cadence): the registered 50 ms poll cadence was not what ran. The recorder sleeps 50 ms between polls of seven probes; down_7's recorded poll starts are a median 0.19 s apart (min 0.14 s, max 0.43 s, 494 polls)."
+  },
+  {
+   "gate": "EXP2-T1, EXP2-T4, EXP3-migration",
+   "limit": "withheld (review 13, summarize.gate_view): a derived figure with no raw record is not evidence. EXP2-T1 for lives without a saved oracle (down_1..5, up_1..5), the committed exp2.writes counts (no life carries writes.gz) and the EXP3 migration figures are removed before judging, so they can never make a PASS. A violation they record still makes the gate FAIL (positive evidence of a failure decides first). This holds for every status summarize reports (summarize.judged); verdicts.judge on its own judges whatever life it is given."
+  },
+  {
    "gate": "EXP1-T1",
    "limit": "no gate: a 400 carrying \"non-compliant\" is not counted as a licence refusal; only a 403 with the licence text is (THRESHOLDS EXP1-T1 says 403 or 400)."
   },
@@ -404,433 +416,1086 @@
  "lives": {
   "down_1.json": {
    "EXP1-T2": {
+    "conjuncts": {
+     "EXP1-T2.answered-before": "NOT_ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "NOT_ESTABLISHED",
+     "EXP1-T2.observed-after": "NOT_ESTABLISHED",
+     "EXP1-T2.refused-each": "NOT_ESTABLISHED",
+     "EXP1-T2.within-5s": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_moment.rrf: absent",
     "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
+    "conjuncts": {
+     "EXP1-T4-battery.control": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "NOT_ESTABLISHED"
+    },
     "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "254 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "NOT_ESTABLISHED"
+    },
     "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    }
   },
   "down_2.json": {
    "EXP1-T2": {
+    "conjuncts": {
+     "EXP1-T2.answered-before": "NOT_ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "NOT_ESTABLISHED",
+     "EXP1-T2.observed-after": "NOT_ESTABLISHED",
+     "EXP1-T2.refused-each": "NOT_ESTABLISHED",
+     "EXP1-T2.within-5s": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_moment.rrf: absent",
     "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
+    "conjuncts": {
+     "EXP1-T4-battery.control": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "NOT_ESTABLISHED"
+    },
     "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "254 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "NOT_ESTABLISHED"
+    },
     "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    }
   },
   "down_3.json": {
    "EXP1-T2": {
+    "conjuncts": {
+     "EXP1-T2.answered-before": "NOT_ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "NOT_ESTABLISHED",
+     "EXP1-T2.observed-after": "NOT_ESTABLISHED",
+     "EXP1-T2.refused-each": "NOT_ESTABLISHED",
+     "EXP1-T2.within-5s": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_moment.rrf: absent",
     "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
+    "conjuncts": {
+     "EXP1-T4-battery.control": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "NOT_ESTABLISHED"
+    },
     "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "253 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "NOT_ESTABLISHED"
+    },
     "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    }
   },
   "down_4.json": {
    "EXP1-T2": {
+    "conjuncts": {
+     "EXP1-T2.answered-before": "NOT_ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "NOT_ESTABLISHED",
+     "EXP1-T2.observed-after": "NOT_ESTABLISHED",
+     "EXP1-T2.refused-each": "NOT_ESTABLISHED",
+     "EXP1-T2.within-5s": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_moment.rrf: absent",
     "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
+    "conjuncts": {
+     "EXP1-T4-battery.control": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "NOT_ESTABLISHED"
+    },
     "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "253 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "NOT_ESTABLISHED"
+    },
     "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    }
   },
   "down_5.json": {
    "EXP1-T2": {
+    "conjuncts": {
+     "EXP1-T2.answered-before": "NOT_ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "NOT_ESTABLISHED",
+     "EXP1-T2.observed-after": "NOT_ESTABLISHED",
+     "EXP1-T2.refused-each": "NOT_ESTABLISHED",
+     "EXP1-T2.within-5s": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_moment.rrf: absent",
     "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
+    "conjuncts": {
+     "EXP1-T4-battery.control": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "NOT_ESTABLISHED"
+    },
     "reason": "dls_battery_trial: absent; from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "253 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "NOT_ESTABLISHED"
+    },
     "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    }
   },
   "down_6.json": {
    "EXP1-T2": {
+    "conjuncts": {
+     "EXP1-T2.answered-before": "NOT_ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "NOT_ESTABLISHED",
+     "EXP1-T2.observed-after": "NOT_ESTABLISHED",
+     "EXP1-T2.refused-each": "NOT_ESTABLISHED",
+     "EXP1-T2.within-5s": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_moment.rrf: absent",
     "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
-    "reason": "get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); msearch: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); scroll_open: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); knn_search: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); termvectors_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); wildcard_index: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); esql: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4-battery.control": "ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "ESTABLISHED"
+    },
+    "reason": "get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); msearch: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); scroll_open: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); knn_search: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); termvectors_hidden: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); wildcard_index: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); esql: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "examined 18820 < 20,000; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "VIOLATED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: at most 18820 answers to examine (successful auto and auto+linear rows) < 20,000; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
     "status": "FAIL"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "109 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "NOT_ESTABLISHED"
+    },
     "reason": "semonly_trial.semantic: absent; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    }
   },
   "down_7.json": {
    "EXP1-T2": {
-    "reason": "PASS: every mandatory probe's first refusal of its required Outcome case (licence probes LICENCE_REFUSAL, dls_search AUTHORISATION_REFUSAL), carried with its timing, within 5 s of start_basic; no success after it",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP1-T2.answered-before": "ESTABLISHED",
+     "EXP1-T2.cadence": "NOT_ESTABLISHED",
+     "EXP1-T2.no-success-after": "ESTABLISHED",
+     "EXP1-T2.observed-after": "ESTABLISHED",
+     "EXP1-T2.refused-each": "ESTABLISHED",
+     "EXP1-T2.within-5s": "ESTABLISHED"
+    },
+    "reason": "registered clause not witnessed: EXP1-T2.cadence (review 13 audit: the recorder sleeps 50 ms BETWEEN polls, and one poll of seven probes takes longer; the recorded median period is about 0.19 s (poll_period_median_s), so the registered cadence is not what was run)",
+    "status": "UNVERIFIED"
    },
    "EXP1-T3": {
+    "conjuncts": {
+     "EXP1-T3.detector": "NOT_ESTABLISHED",
+     "EXP1-T3.every-cell": "NOT_ESTABLISHED",
+     "EXP1-T3.message": "NOT_ESTABLISHED"
+    },
     "reason": "exp1_after.retriever_rrf.adapter_message: absent; from stored figure, raw not available: exp1_after.retriever_linear, exp1_after.retriever_rrf, exp1_after.text_similarity_reranker_gate (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4": {
-    "reason": "dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4.control": "ESTABLISHED",
+     "EXP1-T4.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4.refused": "ESTABLISHED"
+    },
+    "reason": "EXP1-T4.no-document: dls_search_as_user: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26): in the answer, in polled searches started after start_basic; from stored figure, raw not available: exp1_after.dls_search_as_user, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP1-T4-battery": {
-    "reason": "get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); msearch: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); scroll_open: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); knn_search: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); termvectors_hidden: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); wildcard_index: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); esql: no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; THRESHOLDS.md:26); from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
+    "conjuncts": {
+     "EXP1-T4-battery.control": "ESTABLISHED",
+     "EXP1-T4-battery.no-document": "NOT_ESTABLISHED",
+     "EXP1-T4-battery.refused": "ESTABLISHED"
+    },
+    "reason": "get_allowed_doc0: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); get_hidden_doc1: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); search_match_all: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); search_term_hidden: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); count: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); mget: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); msearch: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); scroll_open: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); knn_search: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); termvectors_hidden: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); wildcard_index: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); esql: no status-independent witness that no document was returned (docs_in_payload; THRESHOLDS.md:26); from stored figure, raw not available: dls_battery_after.count, dls_battery_after.esql, dls_battery_after.get_allowed_doc0, dls_battery_after.get_hidden_doc1, dls_battery_after.knn_search, dls_battery_after.mget, dls_battery_after.msearch, dls_battery_after.scroll_open, dls_battery_after.search_match_all, dls_battery_after.search_term_hidden, dls_battery_after.termvectors_hidden, dls_battery_after.wildcard_index, dls_battery_trial.count, dls_battery_trial.esql, dls_battery_trial.get_allowed_doc0, dls_battery_trial.get_hidden_doc1, dls_battery_trial.knn_search, dls_battery_trial.mget, dls_battery_trial.msearch, dls_battery_trial.scroll_open, dls_battery_trial.search_match_all, dls_battery_trial.search_term_hidden, dls_battery_trial.termvectors_hidden, dls_battery_trial.wildcard_index, exp1_trial.dls_search_as_user (matrix cell, a primary observation recorded once (no raw file))",
     "status": "UNVERIFIED"
    },
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts)",
+    "conjuncts": {
+     "EXP2-T1.both-labels": "ESTABLISHED",
+     "EXP2-T1.control-floor": "ESTABLISHED",
+     "EXP2-T1.control-readers": "ESTABLISHED",
+     "EXP2-T1.examined": "ESTABLISHED",
+     "EXP2-T1.no-mismatch": "ESTABLISHED",
+     "EXP2-T1.oracle": "ESTABLISHED"
+    },
+    "reason": "PASS: 0 wrong answers (auto, auto+linear and control readers) over >= 20,000 examined, client and backend both examined; control flags >= 90%",
     "status": "PASS"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-down": {
-    "reason": "PASS: first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
+    "conjuncts": {
+     "EXP2-T3.down": "ESTABLISHED",
+     "EXP2-T3.down-before": "ESTABLISHED",
+     "EXP2-T3.down-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: backend-labelled before; first client-labelled answer within 5 s of start_basic; no backend label after it; from stored figure, raw not available: start_basic.t_req, start_basic.t_resp (transition request and response times, a primary observation (no raw file))",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "257 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-down": {
-    "reason": "PASS: >= 95% of control requests after 1 s are a LICENCE_REFUSAL (counted by Outcome case)",
+    "conjuncts": {
+     "EXP2-T5.down": "ESTABLISHED",
+     "EXP2-T5.down-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% of control requests started 1 s or more after start_basic are a LICENCE_REFUSAL (counted by Outcome case)",
     "status": "PASS"
    },
    "EXP3-migration": {
-    "reason": "registered clause not witnessed: EXP3-T2.relative (not witnessed: absolute error 0.005 and cosine 0.9999 were recorded, the per-value 1% relative error was not (vectors not kept)); from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
+    "conjuncts": {
+     "EXP3-T2.counts": "NOT_ESTABLISHED",
+     "EXP3-T2.knn": "NOT_ESTABLISHED",
+     "EXP3-T2.ops": "NOT_ESTABLISHED",
+     "EXP3-T2.relative": "NOT_ESTABLISHED",
+     "EXP3-T2.vectors": "NOT_ESTABLISHED",
+     "EXP3-T3.corrupted": "NOT_ESTABLISHED",
+     "EXP3-T3.plain": "NOT_ESTABLISHED",
+     "EXP3.ground-truth": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp3); exp3.migration.bbq_disk_to_hnsw: absent; from stored figure, raw not available: exp3.after_restart, exp3.migration (derived; the migration inputs were never saved)",
     "status": "UNVERIFIED"
    },
    "EXP3-semonly-control": {
+    "conjuncts": {
+     "EXP3-T4.control": "ESTABLISHED"
+    },
     "reason": "PASS: semantic-only fixture answers semantic, match and match_all with hits; from stored figure, raw not available: semonly_trial.match, semonly_trial.match_all, semonly_trial.semantic (matrix cell, a primary observation recorded once (no raw file))",
     "status": "PASS"
    }
   },
   "up_1.json": {
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-up": {
-    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "conjuncts": {
+     "EXP2-T3.up": "ESTABLISHED",
+     "EXP2-T3.up-before": "ESTABLISHED",
+     "EXP2-T3.up-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: client-labelled before; first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-up": {
-    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "conjuncts": {
+     "EXP2-T5.up-after": "ESTABLISHED",
+     "EXP2-T5.up-before": "ESTABLISHED",
+     "EXP2-T5.up-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% LICENCE_REFUSAL before start_trial; every control request started at or after its response succeeds",
     "status": "PASS"
    }
   },
   "up_2.json": {
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-up": {
-    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "conjuncts": {
+     "EXP2-T3.up": "ESTABLISHED",
+     "EXP2-T3.up-before": "ESTABLISHED",
+     "EXP2-T3.up-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: client-labelled before; first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-up": {
-    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "conjuncts": {
+     "EXP2-T5.up-after": "ESTABLISHED",
+     "EXP2-T5.up-before": "ESTABLISHED",
+     "EXP2-T5.up-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% LICENCE_REFUSAL before start_trial; every control request started at or after its response succeeds",
     "status": "PASS"
    }
   },
   "up_3.json": {
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-up": {
-    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "conjuncts": {
+     "EXP2-T3.up": "ESTABLISHED",
+     "EXP2-T3.up-before": "ESTABLISHED",
+     "EXP2-T3.up-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: client-labelled before; first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-up": {
-    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "conjuncts": {
+     "EXP2-T5.up-after": "ESTABLISHED",
+     "EXP2-T5.up-before": "ESTABLISHED",
+     "EXP2-T5.up-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% LICENCE_REFUSAL before start_trial; every control request started at or after its response succeeds",
     "status": "PASS"
    }
   },
   "up_4.json": {
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-up": {
-    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "conjuncts": {
+     "EXP2-T3.up": "ESTABLISHED",
+     "EXP2-T3.up-before": "ESTABLISHED",
+     "EXP2-T3.up-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: client-labelled before; first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "94 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-up": {
-    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "conjuncts": {
+     "EXP2-T5.up-after": "ESTABLISHED",
+     "EXP2-T5.up-before": "ESTABLISHED",
+     "EXP2-T5.up-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% LICENCE_REFUSAL before start_trial; every control request started at or after its response succeeds",
     "status": "PASS"
    }
   },
   "up_5.json": {
    "EXP2-T1": {
-    "reason": "PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
-    "status": "PASS"
+    "conjuncts": {
+     "EXP2-T1.both-labels": "NOT_ESTABLISHED",
+     "EXP2-T1.control-floor": "NOT_ESTABLISHED",
+     "EXP2-T1.control-readers": "NOT_ESTABLISHED",
+     "EXP2-T1.examined": "NOT_ESTABLISHED",
+     "EXP2-T1.no-mismatch": "NOT_ESTABLISHED",
+     "EXP2-T1.oracle": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches); EXP2-T1.examined: no oracle-derived count from raw rows; EXP2-T1.no-mismatch: answers not compared from raw rows and oracle; EXP2-T1.both-labels: client- and backend-labelled answers examined: not recorded; EXP2-T1.oracle: not derived from raw rows; EXP2-T1.control-readers: control readers' answers not compared; EXP2-T1.control-floor: no broken-fallback control from raw rows; from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_control_readers, exp2.T1_examined, exp2.T1_examined_by_label, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)",
+    "status": "UNVERIFIED"
    },
    "EXP2-T2": {
-    "reason": "PASS: failed reads <= 0.1% (computed from counts); longest failure window <= 2 s",
+    "conjuncts": {
+     "EXP2-T2.phases": "ESTABLISHED",
+     "EXP2-T2.run": "ESTABLISHED",
+     "EXP2-T2.share": "ESTABLISHED",
+     "EXP2-T2.window": "ESTABLISHED"
+    },
+    "reason": "PASS: failed reads <= 0.1%; consecutive failed auto run and failure window <= 2 s; reads on both sides of the transition",
     "status": "PASS"
    },
    "EXP2-T3-up": {
-    "reason": "PASS: first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
+    "conjuncts": {
+     "EXP2-T3.up": "ESTABLISHED",
+     "EXP2-T3.up-before": "ESTABLISHED",
+     "EXP2-T3.up-stays": "ESTABLISHED"
+    },
+    "reason": "PASS: client-labelled before; first backend-labelled answer within TTL + 5 s of start_trial; no client label after it",
     "status": "PASS"
    },
    "EXP2-T4": {
-    "reason": "93 semantic write failures never classified (addendum D); from stored figure, raw not available: exp2.writes (derived; the write ids were never saved)",
+    "conjuncts": {
+     "EXP2-T4.basic-attempted": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-loud": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-acked": "NOT_ESTABLISHED",
+     "EXP2-T4.basic-none-present": "NOT_ESTABLISHED",
+     "EXP2-T4.classified": "NOT_ESTABLISHED",
+     "EXP2-T4.control": "NOT_ESTABLISHED",
+     "EXP2-T4.lost": "NOT_ESTABLISHED",
+     "EXP2-T4.phases": "NOT_ESTABLISHED"
+    },
+    "reason": "derived figures with no raw record are not evidence (exp2.writes); exp2.writes: absent; from stored figure, raw not available: exp2.writes (derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life)",
     "status": "UNVERIFIED"
    },
    "EXP2-T5-up": {
-    "reason": "PASS: >= 95% LICENCE_REFUSAL (counted by Outcome case) before start_trial; every control request succeeds after it",
+    "conjuncts": {
+     "EXP2-T5.up-after": "ESTABLISHED",
+     "EXP2-T5.up-before": "ESTABLISHED",
+     "EXP2-T5.up-window": "ESTABLISHED"
+    },
+    "reason": "PASS: >= 95% LICENCE_REFUSAL before start_trial; every control request started at or after its response succeeds",
     "status": "PASS"
    }
   }

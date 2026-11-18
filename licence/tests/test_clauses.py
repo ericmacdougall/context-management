@@ -11,6 +11,7 @@ Also F28 (the DLS recorder must see a document whatever the HTTP status), the hi
 raw target changing) and F30 (only the current-report writer may write summary_current.json).
 Run: cd licence && python3 -m unittest tests.test_clauses
 """
+import collections
 import copy
 import json
 import os
@@ -290,15 +291,20 @@ class HistoryTests(unittest.TestCase):
 
     def test_every_restated_status_is_listed_with_its_count(self):
         idx = json.load(open(os.path.join(RES, "SUPERSEDED.json")))
-        ch = idx.get("status_changes_review_12")
-        self.assertIsInstance(ch, dict, "SUPERSEDED.json does not list the review-12 status changes")
-        self.assertEqual(ch["count"], len(ch["changes"]))
         cur = json.load(open(os.path.join(RES, "summary_current.json")))
-        for e in ch["changes"]:
-            where = cur["aggregate"] if e["life"] == "aggregate" else cur["lives"][e["life"]]
-            self.assertEqual(where[e["gate"]]["status"], e["to"], e)
         readme = open(os.path.join(RES, "README.md")).read()
-        self.assertIn("%d statuses changed" % ch["count"], readme)
+        for review in (12, 13):
+            ch = idx.get("status_changes_review_%d" % review)
+            self.assertIsInstance(ch, dict, "SUPERSEDED.json does not list the review-%d status changes" % review)
+            self.assertEqual(ch["count"], len(ch["changes"]))
+            for e in ch["changes"]:
+                where = cur["aggregate"] if e["life"] == "aggregate" else cur["lives"][e["life"]]
+                self.assertEqual(where[e["gate"]]["status"], e["to"], e)
+            self.assertIn("%d statuses changed" % ch["count"], readme)
+        ch = idx["status_changes_review_13"]
+        self.assertEqual(ch["clause_count"], len(ch["clause_changes"]))
+        for e in ch["clause_changes"]:
+            self.assertEqual(cur["clauses"][e["clause"]]["status"], e["to"], e)
 
 
 # ---- F29: no derivation survives its raw target changing ---------------------------------------------------------------------
@@ -454,6 +460,572 @@ class RecorderLevelReview13Tests(unittest.TestCase):
         v = self._t4([[100.0, "s000000", 201, None], [102.1, "s000001", 201, None]], ["s000000", "s000001"])
         self.assertNotEqual(v.status, "PASS", "a semantic write acknowledged at 102.1 s, after the Basic response at 102.0 s, and present "
                                               "must not pass: %s" % v.reason)
+
+
+# ---- review 13 audit: one raw-row violation per conjunct, through the real path ---------------------------------------------------
+# Every conjunct of every gate (verdicts.GATES[...].conjuncts) has an entry: a builder that changes the RAW record of a passing base so
+# that ONLY that conjunct stops being established, run through parse, reduction (summarize.rebuild) and the verdict on the gate view
+# (summarize.judged). `also` names conjuncts the same raw change unavoidably moves too (stated in CLAUSE-AUDIT.md); `whole` marks a
+# conjunct the evidence type enforces, whose violation leaves the evidence unparsed (every conjunct NOT_ESTABLISHED). Level "figure"
+# marks the cases with no raw record: the EXP3 migration figures (never saved) and a stale post-transition window (the recorder
+# writes the window start; the conjunct guards a figure computed elsewhere).
+LIC_ERR = {"type": "security_exception", "reason": "current license is non-compliant for [inference]"}
+MISSING_EP = {"type": "resource_not_found_exception", "reason": "Inference endpoint not found [lic-stub]"}
+NOT_LIC = 'BackendError: HTTP 503: {"error":{"type":"unavailable_shards_exception","reason":"no shard"},"status":503}'
+_BASES = {}
+
+
+def _gz(name, kind):
+    import gzip
+    with gzip.open(os.path.join(RES, "%s.%s.gz" % (name, kind)), "rt") as fh:
+        return [json.loads(l) for l in fh] if kind == "rows" else json.load(fh)
+
+
+def _writes_base(R, mode):
+    """A synthetic raw write record (the committed lives were recorded without one) that passes every EXP2-T4 conjunct."""
+    from tests.test_evidence import _writes_record
+    return _writes_record(R, mode)
+
+
+def raw_base(mode):
+    """(life as the loader parses it, raw files): committed down_7 (rows, poll, oracle) or up_1 (rows), each with a synthetic write
+    record and the matrix-cell fields the review-12 recorder writes (clauses.augment_base, the adapter view of the latch cells)."""
+    if mode not in _BASES:
+        name = "down_7" if mode == "down" else "up_1"
+        R = summarize.parse_life(os.path.join(RES, name + ".json"), mode)
+        clauses.augment_base(R)
+        if mode == "down":
+            from tests.test_evidence import _with_adapter_view
+            _with_adapter_view(R)
+        raw = {"rows": _gz(name, "rows"), "poll": _gz(name, "poll") if mode == "down" else None,
+               "oracle": _gz(name, "oracle") if mode == "down" else None, "writes": _writes_base(R, mode)}
+        for p in raw["poll"] or ():   # the polled counterpart of augment_base: the review-12 fourth element, docs_in_payload
+            d = p.get("dls_search")
+            if d and len(d) == 3:
+                d.append(d[2] if d[1] == 200 else 0)
+        _BASES[mode] = (R, raw)
+    R, raw = _BASES[mode]
+    return copy.deepcopy(R), copy.deepcopy(raw)
+
+
+def run_gate(gate, R, raw, level="raw"):
+    """-> ({conjunct: state}, Verdict) through the real path (raw: rebuild then the gate view; figure: the verdict on the life)."""
+    if level == "raw":
+        R = copy.deepcopy(R)
+        summarize.rebuild(R, raw)
+        v, parts = summarize.judged(gate, R)
+    else:
+        v, parts = verdicts.judge_parts(gate, R)
+    return {p.cid: p.state for p in parts}, v
+
+
+def _t(R):
+    tr = R["start_basic"] if R["mode"] == "down" else R["start_trial"]
+    return tr["t_req"], tr["t_resp"]
+
+
+def _rows_edit(raw, keep=None, edit=None):
+    rows = raw["rows"]
+    if keep is not None:
+        rows = [r for r in rows if keep(r)]
+    if edit is not None:
+        rows = [edit(list(r)) for r in rows]
+    raw["rows"] = rows
+
+
+def _first_refusal_seq(raw, R, probe="rrf"):
+    q, r = _t(R)
+    return next(i for i, p in enumerate(raw["poll"]) if p["_t1"] >= r - 0.5 and p.get(probe, [None])[0] == "LICENCE_ERROR")
+
+
+def _set_poll(raw, cond, probe, value):
+    for p in raw["poll"]:
+        if cond(p):
+            p[probe] = list(value)
+
+
+def v_refused_each(R, raw):
+    q, r = _t(R)
+    _set_poll(raw, lambda p: p["_t1"] >= r - 0.5, "rrf", ["OTHER_ERROR", 503])
+
+
+def v_within_5s(R, raw):
+    q, r = _t(R)
+    _set_poll(raw, lambda p: r - 0.5 <= p["_t1"] < r + 5.5, "rrf", ["OTHER_ERROR", 503])
+
+
+def v_no_success_after(R, raw):
+    raw["poll"][_first_refusal_seq(raw, R) + 3]["rrf"] = ["AVAILABLE", 200]
+
+
+def v_observed_after(R, raw):
+    del raw["poll"][_first_refusal_seq(raw, R) + 3]["rrf"]
+
+
+def v_answered_before(R, raw):   # no rrf answer before the request (a refusal there would also be a success after it)
+    q, r = _t(R)
+    _set_poll(raw, lambda p: p["_t1"] < q, "rrf", ["OTHER_ERROR", 503])
+
+
+def v_examined(R, raw):   # keep fewer than 20,000 successful auto/auto+linear answers, both labels still present
+    n = [0]
+
+    def keep(x):
+        if x[2] in ("auto", "lin") and x[4]:
+            n[0] += 1
+            return n[0] % 3 != 0
+        return True
+    _rows_edit(raw, keep)
+
+
+def _edit_first(raw, cond, change):
+    done = [False]
+
+    def edit(x):
+        if not done[0] and cond(x):
+            change(x)
+            done[0] = True
+        return x
+    _rows_edit(raw, edit=edit)
+
+
+def v_no_mismatch(R, raw):
+    q, r = _t(R)
+    _edit_first(raw, lambda x: x[2] == "auto" and x[4] and x[5] == "client" and x[0] > r + 5, lambda x: x.__setitem__(6, ["d99999"]))
+
+
+def v_both_labels(R, raw):
+    _rows_edit(raw, lambda x: not (x[2] in ("auto", "lin") and x[4] and x[5] == "backend"))
+
+
+def v_oracle(R, raw):
+    qi = next(x[3] for x in raw["rows"] if x[2] == "lin" and x[4] and x[5] == "backend")
+    del raw["oracle"]["linear"][str(qi)]
+
+
+def v_control_readers(R, raw):
+    _edit_first(raw, lambda x: x[2] == "ctl" and x[4] and len(set(x[6])) > 1, lambda x: x.__setitem__(6, list(reversed(x[6]))))
+
+
+def v_control_floor(R, raw):   # the broken arm's client answers made legal: the check is not shown sensitive
+    import exp2
+    legs = {int(k): v for k, v in raw["oracle"]["legs"].items()}
+
+    def edit(x):
+        if x[2] == "brk" and x[4] and x[5] == "client":
+            x[6] = exp2._client_ids(legs[x[3]])
+        return x
+    _rows_edit(raw, edit=edit)
+
+
+def _insert(raw, rows):
+    out = raw["rows"]
+    for row in rows:
+        out = insert_row(out, row)
+    raw["rows"] = out
+
+
+def v_t2_share(R, raw):   # isolated lexical failures 1.05 s apart: more than 0.1% of reads, no window, no auto run
+    ev = R["exp2"]["events"]
+    n = int(0.0011 * sum(1 for x in raw["rows"] if x[2] in ("auto", "lin", "lex", "vec"))) + 1
+    start = ev["t_start"] + 0.5
+    assert start + 1.05 * n < ev["t_stop"], "too short a life for isolated failures"
+    _insert(raw, [[start + 1.05 * i, start + 1.05 * i + 0.01, "lex", 0, 0, None, None, NOT_LIC] for i in range(n)])
+
+
+def v_t2_run(R, raw):   # a 2.5 s interval in which every auto request fails
+    q, r = _t(R)
+    a = r + 20.0
+    _rows_edit(raw, lambda x: not (x[2] in ("auto", "lin") and x[4] and a - 0.5 <= x[0] <= a + 3.0))
+    _insert(raw, [[a + 0.1 * i, a + 0.1 * i + 0.05, "auto", 0, 0, None, None, NOT_LIC] for i in range(26)])
+
+
+def v_t2_window(R, raw):   # lexical failures 0.5 s apart over 3 s: a failure window, no auto run
+    q, r = _t(R)
+    a = r + 30.0
+    _insert(raw, [[a + 0.5 * i, a + 0.5 * i + 0.01, "lex", 0, 0, None, None, NOT_LIC] for i in range(7)])
+
+
+def v_t2_phases(R, raw):
+    q, r = _t(R)
+    _rows_edit(raw, lambda x: not (x[2] == "vec" and x[0] >= r))
+
+
+def v_t3_flip(R, raw):
+    q, r = _t(R)
+    lim = r + (5.5 if R["mode"] == "down" else R["ttl"] + 5.5)
+    lab = "client" if R["mode"] == "down" else "backend"
+    _rows_edit(raw, lambda x: not (x[2] == "auto" and x[4] and x[5] == lab and x[1] < lim))
+
+
+def v_t3_stays(R, raw):
+    q, r = _t(R)
+    lab = "backend" if R["mode"] == "down" else "client"
+    _insert(raw, [[r + 40.0, r + 40.01, "auto", 0, 1, lab, ["d00001"], None]])
+
+
+def v_t3_before(R, raw):
+    q, r = _t(R)
+    other = "client" if R["mode"] == "down" else "backend"
+    _edit_first(raw, lambda x: x[2] == "auto" and x[4] and x[1] < q - 5, lambda x: x.__setitem__(5, other))
+
+
+def _ctl_fail_share(raw, sel):
+    """Turn every 8th selected control failure into a non-licence 503 (12.5% > 5%)."""
+    n = [0]
+
+    def edit(x):
+        if x[2] == "ctl" and not x[4] and sel(x):
+            n[0] += 1
+            if n[0] % 8 == 0:
+                x[7] = NOT_LIC
+        return x
+    _rows_edit(raw, edit=edit)
+
+
+def v_t5_down(R, raw):
+    q, r = _t(R)
+    _ctl_fail_share(raw, lambda x: x[0] >= r + 1.0)
+
+
+def v_t5_up_before(R, raw):
+    q, r = _t(R)
+    _ctl_fail_share(raw, lambda x: x[1] < q)
+
+
+def v_t5_up_after(R, raw):   # review 13 F31: a failure 0.1 s after the start_trial response
+    q, r = _t(R)
+    _insert(raw, [[r + 0.1, r + 0.15, "ctl", 0, 0, None, None, NOT_LIC]])
+
+
+def f_window(start):
+    def v(R, raw):
+        summarize.rebuild(R, raw)
+        key = "T5_control_after_1s" if R["mode"] == "down" else "T5_control_after_trial"
+        R["exp2"][key]["start_rel_resp_s"] = start
+    return v
+
+
+def _w(raw):
+    return raw["writes"]
+
+
+def v_t4_lost(R, raw):
+    _w(raw)["live_present"].remove("w0-000001")
+
+
+def v_t4_phases(R, raw):
+    q, r = _t(R)
+    _w(raw)["acked"]["w0-000001"] = q - 1
+
+
+def v_t4_control(R, raw):
+    _w(raw)["live_present"].append("__injected_lost_write__")
+
+
+def _basic_rows(R, raw):
+    q, r = _t(R)
+    return [x for x in _w(raw)["sem_rows"] if (x[0] >= r if R["mode"] == "down" else x[4] < q)]
+
+
+def v_t4_attempted(R, raw):
+    b = {x[1] for x in _basic_rows(R, raw)}
+    _w(raw)["sem_rows"] = [x for x in _w(raw)["sem_rows"] if x[1] not in b]
+
+
+def v_t4_loud(R, raw):
+    x = _basic_rows(R, raw)[-1]
+    x[2], x[3] = 404, {"type": "index_not_found_exception", "reason": "no such index [lic-sem2]"}
+
+
+def v_t4_acked(R, raw):   # the reviewer's F32 case: acknowledged on Basic and present
+    x = _basic_rows(R, raw)[0]
+    x[2], x[3] = 201, None
+    _w(raw)["sem_present"].append(x[1])
+
+
+def v_t4_present(R, raw):
+    _w(raw)["sem_present"].append(_basic_rows(R, raw)[0][1])
+
+
+def v_t4_classified(R, raw):   # a non-loud semantic failure outside the Basic interval
+    q, r = _t(R)
+    t = q - 3 if R["mode"] == "down" else r + 8
+    _w(raw)["sem_rows"].append([t, "s000009", 503, {"type": "unavailable_shards_exception"}, t + 0.1])
+
+
+def cell(path, value):
+    def v(R, raw):
+        _put(R, path, value)
+    return v
+
+
+def cells(*edits):
+    def v(R, raw):
+        for p, x in edits:
+            _put(R, p, x)
+    return v
+
+
+_MIG = "exp3.migration."
+Violation = collections.namedtuple("Violation", "gate mode fn also whole level doc")
+
+
+def _v(gate, mode, fn, doc, also=(), whole=False, level="raw"):
+    return Violation(gate, mode, fn, tuple(also), whole, level, doc)
+
+
+VIOLATIONS = {
+    "EXP1-T2.refused-each": _v("EXP1-T2", "down", v_refused_each, "poll: rrf never refused after the transition (every later rrf cell an HTTP 503)", whole=True),
+    "EXP1-T2.within-5s": _v("EXP1-T2", "down", v_within_5s, "poll: rrf cells from t_resp-0.5 to t_resp+5.5 s made HTTP 503, so its first refusal is after 5.5 s"),
+    "EXP1-T2.no-success-after": _v("EXP1-T2", "down", v_no_success_after, "poll: one rrf answer 200 three polls after its first refusal"),
+    "EXP1-T2.observed-after": _v("EXP1-T2", "down", v_observed_after, "poll: the rrf key missing from one poll after its first refusal"),
+    "EXP1-T2.answered-before": _v("EXP1-T2", "down", v_answered_before, "poll: rrf answered no poll before the start_basic request (every earlier rrf cell an HTTP 503)"),
+    "EXP1-T3.message": _v("EXP1-T3", "down", cell("exp1_after.retriever_rrf.adapter_message", "HTTP 403: forbidden"),
+                          "cell: a latch message on which the real detector says False while the record says True", whole=True),
+    "EXP1-T3.detector": _v("EXP1-T3", "down", cells(("exp1_after.retriever_rrf.adapter_message", clauses.NOT_LICENCE_403),
+                                                    ("exp1_after.retriever_rrf.adapter_detects", False)),
+                           "cell: an authorisation 403 message the adapter does not detect as a licence error"),
+    "EXP1-T4.control": _v("EXP1-T4", "down", cell("exp1_trial.dls_search_as_user.only_kw_a", False),
+                          "cell: the trial control returned a forbidden document", whole=True),
+    "EXP1-T4.refused": _v("EXP1-T4", "down", cells(("exp1_after.dls_search_as_user.status", 200), ("exp1_after.dls_search_as_user.class", "AVAILABLE")),
+                          "cell: the DLS user's search answered 200 after start_basic"),
+    "EXP1-T4.no-document": _v("EXP1-T4", "down", cell("exp1_after.dls_search_as_user.docs_in_payload", 1), "cell: a 403 whose body carries one document"),
+    "EXP1-T4-battery.control": _v("EXP1-T4-battery", "down", cell("dls_battery_trial.get_hidden_doc1.returned_hidden_doc", True),
+                                  "cell: the hidden document readable on trial", whole=True),
+    "EXP1-T4-battery.refused": _v("EXP1-T4-battery", "down", cell("dls_battery_after.knn_search.status", 200), "cell: kNN read path 200 after start_basic"),
+    "EXP1-T4-battery.no-document": _v("EXP1-T4-battery", "down", cell("dls_battery_after.esql.docs_in_payload", 1), "cell: an ES|QL refusal carrying one row"),
+    "EXP2-T1.examined": _v("EXP2-T1", "down", v_examined, "rows: every third successful auto/auto+linear answer removed (fewer than 20,000 left)"),
+    "EXP2-T1.no-mismatch": _v("EXP2-T1", "down", v_no_mismatch, "rows: one client-labelled auto answer replaced by an id no leg returns"),
+    "EXP2-T1.both-labels": _v("EXP2-T1", "down", v_both_labels, "rows: every backend-labelled auto/auto+linear answer removed",
+                              also=("EXP2-T1.examined",)),
+    "EXP2-T1.oracle": _v("EXP2-T1", "down", v_oracle, "oracle: the linear reference of a query an auto+linear backend answer used removed"),
+    "EXP2-T1.control-readers": _v("EXP2-T1", "down", v_control_readers, "rows: one control reader's answer reordered"),
+    "EXP2-T1.control-floor": _v("EXP2-T1", "down", v_control_floor, "rows: the broken arm's client answers replaced by the legal client RRF"),
+    "EXP2-T2.share": _v("EXP2-T2", "down", v_t2_share, "rows: isolated lexical failures 1.05 s apart, just over 0.1% of reads"),
+    "EXP2-T2.run": _v("EXP2-T2", "down", v_t2_run, "rows: 2.5 s in which every auto request fails (auto successes there removed)", also=("EXP2-T2.window",)),
+    "EXP2-T2.window": _v("EXP2-T2", "down", v_t2_window, "rows: seven lexical failures 0.5 s apart (3 s window), auto untouched"),
+    "EXP2-T2.phases": _v("EXP2-T2", "down", v_t2_phases, "rows: no vector request after the start_basic response"),
+    "EXP2-T3.down": _v("EXP2-T3-down", "down", v_t3_flip, "rows: client-labelled auto answers completed before t_resp+5.5 s removed"),
+    "EXP2-T3.down-stays": _v("EXP2-T3-down", "down", v_t3_stays, "rows: one backend-labelled auto answer 40 s after the response"),
+    "EXP2-T3.down-before": _v("EXP2-T3-down", "down", v_t3_before, "rows: one auto answer before the request labelled client"),
+    "EXP2-T3.up": _v("EXP2-T3-up", "up", v_t3_flip, "rows: backend-labelled auto answers completed before t_resp+ttl+5.5 s removed"),
+    "EXP2-T3.up-stays": _v("EXP2-T3-up", "up", v_t3_stays, "rows: one client-labelled auto answer 40 s after the response"),
+    "EXP2-T3.up-before": _v("EXP2-T3-up", "up", v_t3_before, "rows: one auto answer before the request labelled backend"),
+    "EXP2-T4.lost": _v("EXP2-T4", "down", v_t4_lost, "writes: an acknowledged plain write absent"),
+    "EXP2-T4.phases": _v("EXP2-T4", "down", v_t4_phases, "writes: no plain write acknowledged after the response"),
+    "EXP2-T4.control": _v("EXP2-T4", "down", v_t4_control, "writes: the injected id present, so the control cannot report it"),
+    "EXP2-T4.basic-attempted": _v("EXP2-T4", "down", v_t4_attempted, "writes: no semantic write issued on Basic"),
+    "EXP2-T4.basic-loud": _v("EXP2-T4", "down", v_t4_loud, "writes: a Basic semantic failure that is a 404 for a missing index", also=("EXP2-T4.classified",)),
+    "EXP2-T4.basic-none-acked": _v("EXP2-T4", "down", v_t4_acked, "writes: a semantic write acknowledged on Basic and present (review 13 F32)",
+                                   also=("EXP2-T4.basic-none-present",)),
+    "EXP2-T4.basic-none-present": _v("EXP2-T4", "down", v_t4_present, "writes: a loud Basic failure whose document is present",
+                                     also=("EXP2-T4.classified",)),
+    "EXP2-T4.classified": _v("EXP2-T4", "down", v_t4_classified, "writes: a 503 semantic failure on trial (outside the Basic interval)"),
+    "EXP2-T5.down": _v("EXP2-T5-down", "down", v_t5_down, "rows: 12.5% of control failures after 1 s turned into 503 without licence text"),
+    "EXP2-T5.down-window": _v("EXP2-T5-down", "down", f_window(0.5), "figure: a post-transition count whose window starts 0.5 s after the response",
+                              level="figure"),
+    "EXP2-T5.up-before": _v("EXP2-T5-up", "up", v_t5_up_before, "rows: 12.5% of control failures before the request turned into 503"),
+    "EXP2-T5.up-after": _v("EXP2-T5-up", "up", v_t5_up_after, "rows: a control 503 0.1 s after the start_trial response (review 13 F31)"),
+    "EXP2-T5.up-window": _v("EXP2-T5-up", "up", f_window(1.0), "figure: a post-trial count whose window starts 1 s after the response", level="figure"),
+    "EXP3-T2.counts": _v("EXP3-migration", "down", cell(_MIG + "bbq_disk_to_hnsw.dst_count", 1), "figure: destination count 1", level="figure"),
+    "EXP3-T2.vectors": _v("EXP3-migration", "down", cell(_MIG + "bbq_disk_to_bbq_hnsw.vector_mismatches", 1), "figure: one vector mismatch", level="figure"),
+    "EXP3-T2.knn": _v("EXP3-migration", "down", cell(_MIG + "bbq_disk_to_hnsw.knn_self_top1", 0), "figure: kNN self-hit 0", level="figure"),
+    "EXP3-T2.ops": _v("EXP3-migration", "down", cell(_MIG + "migrated_basic_ops.lic3-sem-mig.update", 500), "figure: update on a migrated index 500",
+                      level="figure"),
+    "EXP3.ground-truth": _v("EXP3-migration", "down", cell(_MIG + "bbq_disk_to_hnsw.src_vs_ground_truth_max_abs", 0.5),
+                            "figure: source vectors 0.5 from the ground truth", level="figure"),
+    "EXP3-T3.plain": _v("EXP3-migration", "down", cell(_MIG + "control_plain_to_hnsw.vector_mismatches", 1), "figure: the plain copy changed", level="figure"),
+    "EXP3-T3.corrupted": _v("EXP3-migration", "down", cell(_MIG + "control_corrupted_vs_true_source.vector_mismatches", 0),
+                            "figure: the corrupted copy not caught", level="figure"),
+    "EXP3-T4.control": _v("EXP3-semonly-control", "down", cell("semonly_trial.match.status", 500), "cell: match on the semantic-only index 500"),
+}
+
+
+# ---- each half of a compound conjunct (review 13, a conjunct whose predicate is an AND): one more raw or figure violation per half
+def v_refused_before(R, raw):   # a refusal recorded in the first poll, well before the window
+    raw["poll"][0]["rrf"] = ["LICENCE_ERROR", 403]
+
+
+def v_both_labels_client(R, raw):
+    _rows_edit(raw, lambda x: not (x[2] in ("auto", "lin") and x[4] and x[5] == "client"))
+
+
+def v_ctl_without_oracle(R, raw):   # a control reader's query loses its rrf reference
+    qi = next(x[3] for x in raw["rows"] if x[2] == "ctl" and x[4])
+    del raw["oracle"]["rrf"][str(qi)]
+
+
+def v_t3_before_none(R, raw):   # no auto answer completed before the request
+    q, r = _t(R)
+    _rows_edit(raw, lambda x: not (x[2] == "auto" and x[4] and x[1] < q))
+
+
+def v_t4_sem_lost(R, raw):   # the semantic write acknowledged on trial is absent
+    w = _w(raw)
+    acked = [x[1] for x in w["sem_rows"] if 200 <= x[2] < 300]
+    w["sem_present"] = [i for i in w["sem_present"] if i != acked[0]]
+
+
+def v_t4_failed_present(R, raw):   # a loud semantic failure on trial whose document is present
+    q, r = _t(R)
+    t = q - 3 if R["mode"] == "down" else r + 8
+    _w(raw)["sem_rows"].append([t, "s000009", 403, LIC_ERR, t + 0.1])
+    _w(raw)["sem_present"].append("s000009")
+
+
+def fig(*edits):   # figure-level: each (dotted path, function of the old value)
+    def v(R, raw):
+        for path, f in edits:
+            d = R
+            ks = path.split(".")
+            for k in ks[:-1]:
+                d = d[k]
+            d[ks[-1]] = f(d[ks[-1]])
+    return v
+
+
+_M = _MIG
+dec = lambda x: x - 1   # noqa: E731
+HALVES = {
+    "EXP1-T2.answered-before#refused-before": _v("EXP1-T2", "down", v_refused_before, "poll: rrf refused (403 licence) in the first poll, before the window"),
+    "EXP2-T1.both-labels#client": _v("EXP2-T1", "down", v_both_labels_client, "rows: every client-labelled auto/auto+linear answer removed",
+                                     also=("EXP2-T1.examined",)),
+    "EXP2-T1.control-readers#without-oracle": _v("EXP2-T1", "down", v_ctl_without_oracle,
+                                                 "oracle: the rrf reference of a query a control reader answered removed", also=("EXP2-T1.oracle",)),
+    "EXP2-T3.down-before#none": _v("EXP2-T3-down", "down", v_t3_before_none, "rows: every auto answer completed before the request removed"),
+    "EXP2-T3.up-before#none": _v("EXP2-T3-up", "up", v_t3_before_none, "rows: every auto answer completed before the request removed"),
+    "EXP2-T4.lost#semantic": _v("EXP2-T4", "down", v_t4_sem_lost, "writes: the semantic write acknowledged on trial absent"),
+    "EXP2-T4.classified#present": _v("EXP2-T4", "down", v_t4_failed_present, "writes: a loud semantic failure on trial whose document is present"),
+    "EXP3-T2.counts#bbq-hnsw": _v("EXP3-migration", "down", fig((_M + "bbq_disk_to_bbq_hnsw.dst_count", dec)), "figure: bbq_hnsw copy one short", level="figure"),
+    "EXP3-T2.counts#semantic": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.dst_count", dec)), "figure: semantic copy one short",
+                                  level="figure"),
+    "EXP3-T2.counts#source-hnsw": _v("EXP3-migration", "down", fig((_M + "bbq_disk_to_hnsw.src_count", dec), (_M + "bbq_disk_to_hnsw.dst_count", dec)),
+                                     "figure: hnsw source and copy agree, one under the independent count", level="figure"),
+    "EXP3-T2.counts#source-bbq-hnsw": _v("EXP3-migration", "down", fig((_M + "bbq_disk_to_bbq_hnsw.src_count", dec),
+                                                                       (_M + "bbq_disk_to_bbq_hnsw.dst_count", dec)),
+                                         "figure: bbq_hnsw source and copy agree, one under the independent count", level="figure"),
+    "EXP3-T2.counts#source-semantic": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.docs", dec), (_M + "semantic_to_text_vector.dst_count", dec)),
+                                         "figure: semantic docs and copy agree, one under the independent count", level="figure"),
+    "EXP3-T2.counts#source-plain": _v("EXP3-migration", "down", fig((_M + "control_plain_to_hnsw.src_count", dec), (_M + "control_plain_to_hnsw.dst_count", dec)),
+                                      "figure: plain source and copy agree, one under the independent count", level="figure"),
+    "EXP3-T2.vectors#hnsw": _v("EXP3-migration", "down", fig((_M + "bbq_disk_to_hnsw.vector_mismatches", lambda x: 1)), "figure: one hnsw vector mismatch",
+                               level="figure"),
+    "EXP3-T2.vectors#semantic": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.vector_mismatches_vs_stored", lambda x: 1)),
+                                   "figure: one semantic vector differs from the stored one", level="figure"),
+    "EXP3-T2.vectors#abs-err": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.worst_abs_err_vs_stub", lambda x: 0.01)),
+                                  "figure: worst absolute error 0.01", level="figure"),
+    "EXP3-T2.vectors#cosine": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.worst_cosine_vs_stub", lambda x: 0.999)),
+                                 "figure: worst cosine 0.999", level="figure"),
+    "EXP3-T2.vectors#skipped": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.skipped_not_single_chunk", lambda x: 1),
+                                                                (_M + "semantic_to_text_vector.docs", dec), (_M + "semantic_to_text_vector.dst_count", dec)),
+                                  "figure: one multi-chunk document skipped (docs and copy one fewer)", level="figure"),
+    "EXP3-T2.knn#bbq-hnsw": _v("EXP3-migration", "down", fig((_M + "bbq_disk_to_bbq_hnsw.knn_self_top1", lambda x: 0)), "figure: bbq_hnsw kNN self-hit 0",
+                               level="figure"),
+    "EXP3-T2.knn#semantic": _v("EXP3-migration", "down", fig((_M + "semantic_to_text_vector.knn_self_top1", lambda x: 0)), "figure: semantic kNN self-hit 0",
+                               level="figure"),
+    "EXP3-T3.plain#count": _v("EXP3-migration", "down", fig((_M + "control_plain_to_hnsw.dst_count", dec)), "figure: plain control copy one short",
+                              level="figure"),
+}
+ALL_VIOLATIONS = sorted(list(VIOLATIONS.items()) + list(HALVES.items()))
+
+
+def _base_mode(gate):
+    s = verdicts.GATES[gate].scope
+    return "down" if s == "both" else s
+
+
+class ConjunctViolationTests(unittest.TestCase):
+    def test_every_conjunct_quotes_its_registered_line_and_names_a_recorder(self):
+        import audit
+        with open(os.path.join(LIC, "THRESHOLDS.md")) as fh:
+            lines = fh.read().split("\n")
+        for cid, d in clauses.CONJUNCTS.items():
+            self.assertIn(d.quote, lines[d.line - 1], cid)
+            audit.def_line(d.recorder)   # raises KeyError when the recorder function does not exist
+        gated = {cid for g in verdicts.GATES.values() for cid in g.conjuncts} | {c.cid for c in clauses.CLAUSES if c.kind == "LIMIT"}
+        self.assertEqual(sorted(gated ^ set(clauses.CONJUNCTS)), [])
+        for c in clauses.CLAUSES:
+            self.assertTrue(set(c.conj) <= set(clauses.CONJUNCTS), c.cid)
+            if c.gates:
+                self.assertTrue(c.conj, (c.cid, "a gated clause without conjuncts"))
+                own = {x for g in c.gates for x in verdicts.conjuncts_of(g)}
+                self.assertTrue(set(c.conj) <= own, (c.cid, sorted(set(c.conj) - own), "not decided by its gates"))
+
+    def test_a_conjunct_the_gate_function_does_not_judge_is_not_established(self):
+        R, raw = raw_base("up")
+        g = verdicts.GATES["EXP2-T5-up"]
+        old = g.verdict
+        try:
+            verdicts.GATES["EXP2-T5-up"] = g._replace(verdict=lambda ev: [p for p in old(ev) if p.cid != "EXP2-T5.up-after"])
+            states, v = run_gate("EXP2-T5-up", R, raw)
+        finally:
+            verdicts.GATES["EXP2-T5-up"] = g
+        self.assertEqual(states["EXP2-T5.up-after"], "NOT_ESTABLISHED")
+        self.assertEqual(v.status, "UNVERIFIED")
+
+    def test_withheld_figures_fail_closed_without_the_loader_markers(self):
+        from tests.test_evidence import _life
+        R = _life("down_7")   # complete EXP2-T1 figures; then treated as stored (oracle source not rebuilt)
+        self.assertEqual(summarize.judged("EXP2-T1", R)[0].status, "PASS")
+        R["_rebuilt"] = [s for s in R["_rebuilt"] if s != "rows+oracle"]
+        self.assertEqual(verdicts.judge("EXP2-T1", R).status, "PASS")   # the figures alone would pass
+        self.assertEqual(summarize.judged("EXP2-T1", R)[0].status, "UNVERIFIED")
+        for mark in ("absent", [], None):
+            X = copy.deepcopy(R)
+            if mark == "absent":
+                del X["_stored_only"]
+            else:
+                X["_stored_only"] = mark
+            self.assertNotEqual(summarize.judged("EXP2-T1", X)[0].status, "PASS", mark)
+        X = copy.deepcopy(R)
+        del X["_rebuilt"]   # never loaded: no figure is known to come from raw rows
+        for g in ("EXP2-T1", "EXP2-T2", "EXP2-T3-down", "EXP2-T5-down"):
+            self.assertNotEqual(summarize.judged(g, X)[0].status, "PASS", g)
+
+    def test_committed_clause_audit_is_what_audit_py_writes(self):
+        import audit
+        with open(os.path.join(LIC, "CLAUSE-AUDIT.md")) as fh:
+            self.assertEqual(fh.read(), audit.render(), "regenerate: cd licence && python3 audit.py CLAUSE-AUDIT.md")
+
+    def test_every_conjunct_has_one_raw_violation_and_every_limit_is_never_established(self):
+        for g in verdicts.GATES:
+            for cid in verdicts.GATES[g].conjuncts:
+                self.assertIn(cid, VIOLATIONS, (g, cid, "a conjunct no raw-row test violates"))
+                self.assertEqual(VIOLATIONS[cid].gate, g, cid)
+            for c in clauses.limits_for(g):
+                R, raw = raw_base(_base_mode(g))
+                states, _ = run_gate(g, R, raw, "figure" if g == "EXP3-migration" else "raw")
+                self.assertEqual(states[c.cid], "NOT_ESTABLISHED", (g, c.cid))
+        self.assertEqual(sorted(set(VIOLATIONS) ^ (set(clauses.CONJUNCTS) - {c.cid for c in clauses.CLAUSES if c.kind == "LIMIT"})), [])
+
+    def test_bases_establish_every_conjunct(self):
+        for g, gate in verdicts.GATES.items():
+            for mode in (("down", "up") if gate.scope == "both" else (gate.scope,)):
+                if g == "EXP2-T1" and mode == "up":
+                    continue   # the up lives carry no saved oracle
+                R, raw = raw_base(mode)
+                states, v = run_gate(g, R, raw, "figure" if g == "EXP3-migration" else "raw")
+                lim = {c.cid for c in clauses.limits_for(g)}
+                self.assertEqual({c: s for c, s in states.items() if c not in lim and s != "ESTABLISHED"}, {}, (g, mode, v.reason))
+
+    def test_violating_one_conjunct_in_the_raw_record_leaves_the_gate_and_its_clauses_off_pass(self):
+        for key, x in ALL_VIOLATIONS:
+            cid = key.split("#")[0]
+            with self.subTest(conjunct=key):
+                R, raw = raw_base(x.mode)
+                x.fn(R, raw)
+                states, v = run_gate(x.gate, R, raw, x.level)
+                self.assertNotEqual(states[cid], "ESTABLISHED", (cid, v.reason))
+                self.assertNotEqual(v.status, "PASS", cid)
+                lim = {c.cid for c in clauses.limits_for(x.gate)}
+                if not x.whole:
+                    moved = sorted(c for c, s in states.items() if s != "ESTABLISHED" and c != cid and c not in lim and c not in x.also)
+                    self.assertEqual(moved, [], (cid, "the raw change moved other conjuncts", v.reason))
+                st = clauses.clause_statuses({x.gate: [("life", {c: (s, "") for c, s in states.items()})]})
+                for c in clauses.CLAUSES:
+                    if cid in c.conj:
+                        self.assertNotEqual(st[c.cid]["status"], "PASS", (cid, c.cid))
 
 
 def _healthy_for_t4():

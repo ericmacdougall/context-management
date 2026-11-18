@@ -48,12 +48,15 @@ RAW_SOURCES = {
     "rows": {"needs": ("rows",), "modes": ("down", "up"), "missing": "delete",
              "paths": _paths("exp2", "T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
                              "T2_longest_consecutive_auto_failure_s",
+                             "T2_requests_by_phase",
                              "T3_flip_latency_s", "T3_backend_after_first_client", "T3_client_after_first_backend",
-                             "T3_backend_labelled_after_resp_start", "T5_control_after_1s", "T5_control_before_start_trial",
-                             "T5_control_after_trial")},
+                             "T3_backend_labelled_after_resp_start", "T3_before_transition", "T5_control_after_1s",
+                             "T5_control_before_start_trial", "T5_control_after_trial", "T1_answers_bound")},
     "rows+oracle": {"needs": ("rows", "oracle"), "modes": ("down", "up"), "missing": "keep",
                     "paths": _paths("exp2", "T1_examined", "T1_mismatches", "T1_examples", "T1_backend_without_oracle",
-                                    "T1_control_broken_fallback")},
+                                    "T1_control_broken_fallback", "T1_examined_by_label", "T1_control_readers")},
+    # review 13 F32: the raw write record (acknowledgement times, semantic writer rows, ids present), saved by lives recorded after it
+    "writes": {"needs": ("writes",), "modes": ("down", "up"), "missing": "keep", "paths": (("exp2", "writes"),)},
 }
 _CELL = "matrix cell, a primary observation recorded once (no raw file)"
 STORED = {   # every other leaf a verdict reads, with why it has no raw source
@@ -62,10 +65,10 @@ STORED = {   # every other leaf a verdict reads, with why it has no raw source
     ("start_basic",): "transition request and response times, a primary observation (no raw file)",
     ("start_trial",): "transition request and response times, a primary observation (no raw file)",
     ("ttl",): "configuration", ("exp2", "T3_ttl_s"): "configuration (copy of ttl)",
-    ("exp2", "writes"): "derived; the write ids were never saved",
     ("exp3",): "derived; the migration inputs were never saved",
 }
-_NO_ORACLE = "derived; the oracle legs were not saved for this life"
+_NO_RAW = {"rows+oracle": "derived; the oracle legs were not saved for this life",
+           "writes": "derived; the write record (ids, acknowledgement times, semantic writer rows) was not saved for this life"}
 
 
 def source_of(path):
@@ -137,7 +140,7 @@ class Unreadable(object):
 
 # The file whose existence decides whether a source's stored figures may stand (review 11 F25): its key file. Once it exists
 # (readable or not), the source's paths are deleted and only a completed derivation puts figures back.
-KEY_FILE = {"poll": "poll", "rows": "rows", "rows+oracle": "oracle"}
+KEY_FILE = {"poll": "poll", "rows": "rows", "rows+oracle": "oracle", "writes": "writes"}
 
 
 def derive(raw, mode, window, t_req, t_resp):
@@ -161,8 +164,10 @@ def derive(raw, mode, window, t_req, t_resp):
                 ("%s file absent" % k) if raw.get(k) is None else ("%s file unreadable: %s" % (k, raw[k].reason)) for k in unusable))}
             continue
         try:
-            if name == "poll":
-                m = observe.moments(raw["poll"], t_resp, observe.LICENCE_PROBES + ("dls_search",), window)
+            if name == "writes":
+                figs = {("exp2", "writes"): observe.writes(raw["writes"], t_req, t_resp, mode)}
+            elif name == "poll":
+                m = observe.moments(raw["poll"], t_resp, observe.LICENCE_PROBES + ("dls_search",), window, t_req=t_req)
                 bad = [f for f, v in m.items() if v.get("stream_error")]
                 if bad:
                     raise observe.Unparsed(("poll",), m[bad[0]]["stream_error"])
@@ -171,7 +176,8 @@ def derive(raw, mode, window, t_req, t_resp):
                 if isinstance(W, Exception):
                     raise W
                 if name == "rows":
-                    f = dict(observe.availability(W), **observe.flip(W, t_req, t_resp, mode))
+                    f = dict(observe.availability(W, t_req, t_resp), **observe.flip(W, t_req, t_resp, mode))
+                    f["T1_answers_bound"] = observe.answers_bound(W)
                     if mode == "down":
                         f["T3_backend_labelled_after_resp_start"] = sum(1 for w in W if w.arm == "auto" and w.ok and w.label == "backend"
                                                                         and w.t0 > t_resp)
@@ -222,7 +228,7 @@ def rebuild(R, raw, present=None):
     """Rebuild every raw-sourced figure of life R from in-memory raw files (see RAW_SOURCES). Mutates R. `present` (raw file ->
     exists) defaults to "every non-None entry of raw exists"."""
     R["_raw_check"], R["_rebuilt"], R["_stored_only"] = {}, [], []
-    present = {k: raw.get(k) is not None for k in ("rows", "poll", "oracle")} if present is None else present
+    present = {k: raw.get(k) is not None for k in RAW_FILES} if present is None else present
     t = _times(R)
     if t is None:
         R["_raw_check"]["life"] = _BAD_TIMES
@@ -246,7 +252,7 @@ def provenance(name, R):
         if src == "stored":
             cat = stored_category(p) or "undeclared"
         elif src in (R.get("_stored_only") or ()):
-            cat = _NO_ORACLE
+            cat = _NO_RAW[src]
         else:
             continue
         if not cat.startswith("configuration"):
@@ -256,7 +262,7 @@ def provenance(name, R):
     return "from stored figure, raw not available: " + "; ".join("%s (%s)" % (", ".join(sorted(v)), k) for k, v in sorted(parts.items()))
 
 
-RAW_FILES = ("rows", "poll", "oracle")
+RAW_FILES = ("rows", "poll", "oracle", "writes")
 
 
 def _present(base):
@@ -376,13 +382,55 @@ def combine(statuses):
     return "FAIL" if "FAIL" in s else ("UNVERIFIED" if not s or any(x != "PASS" for x in s) else "PASS")
 
 
+def withheld_paths(R):
+    """Review 13 audit: life paths holding DERIVED figures that no raw record behind this life rebuilds: the "keep" sources not in
+    R["_rebuilt"] (every raw source when the life was never loaded) and the STORED categories marked derived. They stay in the life
+    for the reports, but no conjunct is established from them: a figure establishes one only when it is rebuilt from raw rows, or is
+    itself a primary observation (a matrix cell, a transition time, configuration). A failure they record still decides (judged)."""
+    built = R.get("_rebuilt")
+    if not isinstance(built, list):   # never loaded: nothing is known to be rebuilt from raw rows (fail closed)
+        out = [p for src in RAW_SOURCES.values() for p in src["paths"]]
+    else:   # a "keep" source that was not rebuilt holds only stored derived figures (not read from R["_stored_only"]: fail closed)
+        out = [p for name, src in RAW_SOURCES.items() if src["missing"] == "keep" and name not in built for p in src["paths"]]
+    return out + [p for p, cat in STORED.items() if cat.startswith("derived")]
+
+
+def gate_view(R):
+    """A copy of the life without its withheld derived figures (what every gate of the current summary judges)."""
+    import copy
+    V = copy.deepcopy(R)
+    for p in withheld_paths(R):
+        _drop(V, p)
+    return V
+
+
+def judged(name, R):
+    """(Verdict, [verdicts.Part]) of one gate on a loaded life. A conjunct is ESTABLISHED only on the gate view (withheld derived
+    figures removed); a conjunct the full life shows VIOLATED stays VIOLATED (positive evidence of a failure decides first, review 12),
+    so a withheld figure can turn a PASS into UNVERIFIED but never hide a recorded failure. An UNVERIFIED caused by a withheld figure
+    says so."""
+    v, parts = verdicts.judge_parts(name, gate_view(R))
+    reads = {tuple(p) for p in evidence.leaf_paths(verdicts.GATES[name].evidence)}
+    gone = sorted({".".join(w) for w in withheld_paths(R) for p in reads if p[:len(w)] == w})
+    if not gone:
+        return v, parts
+    note = "derived figures with no raw record are not evidence (%s)" % ", ".join(gone)
+    full = {p.cid: p for p in verdicts.judge_parts(name, R)[1] if p.state == verdicts.VIOLATED}
+    parts = [verdicts.Part(p.cid, verdicts.VIOLATED, "recorded in a derived figure: " + full[p.cid].reason)
+             if p.state != verdicts.VIOLATED and p.cid in full else p for p in parts]
+    v = verdicts.combine(parts)
+    if v.status != verdicts.PASS:
+        v = verdicts.Verdict(v.status, note + "; " + v.reason)
+    return v, [verdicts.Part(p.cid, p.state, note + "; " + p.reason) if p.state == verdicts.NOT_ESTABLISHED else p for p in parts]
+
+
 def gate(name, R):
-    return verdicts.judge(name, R).status
+    return judged(name, R)[0].status
 
 
 def put(r, name, R):
     """Write gate `name` into report dict r as <out>_status and <out>_pass (true only for PASS), with the reason when not PASS."""
-    v = verdicts.judge(name, R)
+    v = judged(name, R)[0]
     out = verdicts.GATES[name].out
     r[out + "_status"], r[out + "_pass"] = v.status, v.status == "PASS"
     if v.status != "PASS":
@@ -598,6 +646,15 @@ LIMITS = (
                                  "additional check."},
     {"gate": "EXP1-T2", "limit": "SUBSTITUTE (clause B.probe-start): refusal timing uses the poll's end time, not the probe start time "
                                  "addendum B names; the end is later, so within 5 s by the end implies within 5 s by the start."},
+    {"gate": "EXP1-T2", "limit": "LIMIT, forces UNVERIFIED (review 13, clause EXP1-T2.cadence): the registered 50 ms poll cadence was not "
+                                 "what ran. The recorder sleeps 50 ms between polls of seven probes; down_7's recorded poll starts are a "
+                                 "median 0.19 s apart (min 0.14 s, max 0.43 s, 494 polls)."},
+    {"gate": "EXP2-T1, EXP2-T4, EXP3-migration",
+     "limit": "withheld (review 13, summarize.gate_view): a derived figure with no raw record is not evidence. EXP2-T1 for lives without "
+              "a saved oracle (down_1..5, up_1..5), the committed exp2.writes counts (no life carries writes.gz) and the EXP3 migration "
+              "figures are removed before judging, so they can never make a PASS. A violation they record still makes the gate FAIL "
+              "(positive evidence of a failure decides first). This holds for every status summarize reports (summarize.judged); "
+              "verdicts.judge on its own judges whatever life it is given."},
     {"gate": "EXP1-T1", "limit": "no gate: a 400 carrying \"non-compliant\" is not counted as a licence refusal; only a 403 with the "
                                  "licence text is (THRESHOLDS EXP1-T1 says 403 or 400)."},
     {"gate": "EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2",
@@ -607,18 +664,22 @@ LIMITS = (
 
 
 def _judge_life(name, R):
-    """One gate of one inventory life -> (Verdict, provenance). Absent, unparsed or incomplete lives are UNVERIFIED with the reason;
+    """One gate of one inventory life -> (Verdict, provenance, {conjunct: (state, reason)}). Absent, unparsed or incomplete lives are
+    UNVERIFIED with the reason (every conjunct NOT_ESTABLISHED);
     a verdict that raises is UNVERIFIED with the exception named (review 11 F26: current_summary never raises on file content)."""
+    def none(why):
+        return verdicts.Verdict(verdicts.UNVERIFIED, why), "", {c: (verdicts.NOT_ESTABLISHED, why) for c in verdicts.conjuncts_of(name)}
     if R is None:
-        return verdicts.Verdict(verdicts.UNVERIFIED, "life file absent (campaign inventory)"), ""
+        return none("life file absent (campaign inventory)")
     if "_unparsed" in R:
-        return verdicts.Verdict(verdicts.UNVERIFIED, R["_unparsed"]), ""
+        return none(R["_unparsed"])
     if R.get("status") != "complete":
-        return verdicts.Verdict(verdicts.UNVERIFIED, "life status %r, not complete" % (R.get("status"),)), ""
+        return none("life status %r, not complete" % (R.get("status"),))
     try:
-        return verdicts.judge(name, R), provenance(name, R)
+        v, parts = judged(name, R)
+        return v, provenance(name, R), {p.cid: (p.state, p.reason) for p in parts}
     except Exception as e:
-        return verdicts.Verdict(verdicts.UNVERIFIED, "verdict could not be computed: %s: %s" % (type(e).__name__, str(e)[:200])), ""
+        return none("verdict could not be computed: %s: %s" % (type(e).__name__, str(e)[:200]))
 
 
 def current_summary(d):
@@ -630,7 +691,7 @@ def current_summary(d):
     for mode in ("down", "up"):
         for R in load(d, mode):
             found[R["_file"]] = R
-    lives, notes, agg = {}, {}, {}
+    lives, notes, agg, parts_by_gate = {}, {}, {}, {}
     for mode, ns in sorted(CAMPAIGN.items()):
         for n in ns:
             f = "%s_%d.json" % (mode, n)
@@ -640,9 +701,11 @@ def current_summary(d):
             for name, g in sorted(verdicts.GATES.items()):
                 if g.scope not in ("both", mode):
                     continue
-                v, prov = _judge_life(name, R)
+                v, prov, parts = _judge_life(name, R)
                 reason = ("PASS: " + g.doc) if v.status == verdicts.PASS else (v.reason or "no reason given")
-                row[name] = {"status": v.status, "reason": reason + ("; " + prov if prov else "")}
+                row[name] = {"status": v.status, "reason": reason + ("; " + prov if prov else ""),
+                             "conjuncts": {c: s for c, (s, _) in sorted(parts.items())}}
+                parts_by_gate.setdefault(name, []).append((f, parts))
                 agg.setdefault(name, []).append((f, v.status, "absent" if R is None else "unparsed" if "_unparsed" in R else ""))
     out = {}
     for name, g in sorted(verdicts.GATES.items()):
@@ -658,7 +721,7 @@ def current_summary(d):
     return {"artefact": "summary_current.json", "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
             "inventory": {m: ["%s_%d.json" % (m, n) for n in ns] for m, ns in sorted(CAMPAIGN.items())},
             "unexpected_files": sorted(found), "limits": list(LIMITS), "lives": lives, "raw_checks": notes, "aggregate": out,
-            "clauses": clauses.clause_statuses(out)}   # review 12: every THRESHOLDS.md clause (clauses.CLAUSES) with a status
+            "clauses": clauses.clause_statuses(parts_by_gate)}   # review 13: every clause from its own conjuncts
 
 
 CURRENT = "summary_current.json"

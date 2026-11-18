@@ -38,6 +38,15 @@ import matrix  # noqa: E402
 import exp3  # noqa: E402
 import recompute  # noqa: E402
 import summarize  # noqa: E402
+import verdicts  # noqa: E402
+
+def _t2(r):
+    """Review 13: every EXP1-T2 verdict carries the LIMIT EXP1-T2.cadence (never established), so the gate is never PASS. Map exactly
+    that downgrade back (the reason starts with the LIMIT only when every other conjunct is established) so a test still asserts what
+    the recorded evidence decided."""
+    st, why = r.get("T2_status"), r.get("T2_reason") or ""
+    return "PASS" if st == "UNVERIFIED" and why.startswith("registered clause not witnessed: EXP1-T2.cadence ") else st
+
 
 RES = os.path.join(LIC, "results")
 # Shims so that old code fails by behaviour, not by a missing name. ScrollError: old migrations raise nothing, so assertRaises(Exception) fails there.
@@ -375,9 +384,14 @@ class T4Tests(unittest.TestCase):
                 self.assertTrue(r["T4_legacy_rule_result"], f)   # the old-rule result is kept as a report, separately named
 
     def test_classified_clean_record_passes(self):
+        # review 13: the committed write counts are derived with no raw record (withheld), so a classified committed record is not
+        # a PASS; a life recorded with writes.gz (synthetic record: every Basic semantic write loud, none acknowledged or present) is
+        from tests.test_evidence import _with_writes
         R = load("down_1.json")
         R["exp2"]["writes"]["sem_failed_other"] = 0
-        self.assertTrue(summarize.exp2_checks(R, "down")["T4_pass"])
+        self.assertEqual(summarize.exp2_checks(R, "down")["T4_status"], "UNVERIFIED")
+        R = _with_writes(load("down_1.json"), "down")
+        self.assertTrue(summarize.exp2_checks(R, "down")["T4_pass"], summarize.exp2_checks(R, "down").get("T4_reason"))
 
     def test_classified_record_with_other_failures_fails(self):
         R = load("down_1.json")
@@ -385,11 +399,13 @@ class T4Tests(unittest.TestCase):
         w["sem_failed_other"], w["sem_failed_loud_licence_or_missing"] = 3, w["sem_failed"] - 3
         self.assertEqual(summarize.exp2_checks(R, "down")["T4_status"], "FAIL")
 
-    def test_no_semantic_failures_needs_no_classification(self):
+    def test_no_semantic_failures_is_not_a_pass(self):
+        # review 13 F32: the semantic writer must be seen failing loudly ON BASIC (a positive witness), so a record with no semantic
+        # failure at all is UNVERIFIED (before review 13 it needed no classification and passed)
         R = load("down_1.json")
         w = R["exp2"]["writes"]
         w["sem_failed"] = w["sem_failed_loud_licence_or_missing"] = 0
-        self.assertTrue(summarize.exp2_checks(R, "down")["T4_pass"])
+        self.assertEqual(summarize.exp2_checks(R, "down")["T4_status"], "UNVERIFIED")
 
 
 class MatrixFake:
@@ -829,7 +845,7 @@ class Exp2VerifyWritesTests(unittest.TestCase):
 
     def _w(self):
         w = object.__new__(exp2.Workload)
-        w.acked, w.attempted_failed, w.sem_rows = {}, [], [[0.0, "s1", 201, None]]
+        w.acked, w.attempted_failed, w.sem_rows = {}, [], [[100.0, "s1", 201, None]]   # a time (review 13: the write record is parsed)
         return w
 
     def _run(self, sem_status):
@@ -884,6 +900,7 @@ class Exp2VerifyWritesTests(unittest.TestCase):
 
 
 MIG_LIMIT = "registered clause not witnessed: EXP3-T2.relative "   # review 12: verdicts.judge's downgrade of a migration PASS by the LIMIT row
+MIG_WITHHELD = "derived figures with no raw record are not evidence (exp3)"   # review 13: summarize.judged on the gate view
 
 
 class MigrationVerdictTests(unittest.TestCase):
@@ -891,9 +908,12 @@ class MigrationVerdictTests(unittest.TestCase):
         for n in (1, 2, 3, 4, 5, 6, 7):
             R = load("down_%d.json" % n)
             chk = summarize.exp3_checks(R)["migration_checks"]
-            # review 12: every check passes; only the LIMIT EXP3-T2.relative (the 1% relative error is not witnessed) withholds PASS
+            # review 13: the migration figures are derived with no raw record, so no gate reads them (UNVERIFIED, reason says so)
             self.assertEqual(chk["migration_status"], "UNVERIFIED", n)
-            self.assertTrue(chk["migration_reason"].startswith(MIG_LIMIT), (n, chk["migration_reason"]))
+            self.assertTrue(chk["migration_reason"].startswith(MIG_WITHHELD), (n, chk["migration_reason"]))
+            # review 12: on the recorded figures every check passes; only the LIMIT EXP3-T2.relative withholds PASS
+            v = verdicts.judge("EXP3-migration", R)
+            self.assertTrue(v.status == "UNVERIFIED" and v.reason.startswith(MIG_LIMIT), (n, v.reason))
 
     def test_source_count_not_matching_independent_count_fails(self):
         R = load("down_1.json")
@@ -929,44 +949,44 @@ class AggregateGateCoverageTests(unittest.TestCase):
 
     def t2(self, **kw):
         R = load("down_1.json")
-        R["exp1_moment"] = exp2.moment_analysis(_poll_rows(100.0, **kw), 100.0)
+        R["exp1_moment"] = exp2.moment_analysis(_poll_rows(100.0, **kw), 100.0, t_req=99.5)   # review 13: answered before the request
         return summarize.exp1_checks(R)
 
     def test_t2_all_probes_verified_passes(self):   # control: the synthetic rows are a real pass
         r = self.t2()
-        self.assertTrue(r["T2_pass"])
-        self.assertEqual(r.get("T2_status"), "PASS")
+        self.assertFalse(r["T2_pass"])   # review 13: the cadence LIMIT; every other conjunct is established
+        self.assertEqual(_t2(r), "PASS")
 
     def test_t2_one_probe_unverified_is_not_a_pass(self):
         r = self.t2(unverified=("dls_search",))
         self.assertFalse(r["T2_pass"])
-        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+        self.assertEqual(_t2(r), "UNVERIFIED")
 
     def test_t2_one_probe_missing_is_not_a_pass(self):
         r = self.t2(drop=("inference_use",))
         self.assertFalse(r["T2_pass"])
-        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+        self.assertEqual(_t2(r), "UNVERIFIED")
 
     def test_t2_all_probes_missing_is_not_a_pass(self):
         r = self.t2(drop=MANDATORY_T2)
         self.assertFalse(r["T2_pass"])
-        self.assertEqual(r.get("T2_status"), "UNVERIFIED")
+        self.assertEqual(_t2(r), "UNVERIFIED")
 
     def test_t2_late_refusal_with_an_unverified_probe_is_unverified(self):
         R = load("down_1.json")
-        m = exp2.moment_analysis(_poll_rows(100.0, unverified=("dls_search",)), 100.0)
+        m = exp2.moment_analysis(_poll_rows(100.0, unverified=("dls_search",)), 100.0, t_req=99.5)
         m["rrf"]["first_refusal_rel_resp_s"] = 9.0
         R["exp1_moment"] = m
-        self.assertEqual(summarize.exp1_checks(R).get("T2_status"), "UNVERIFIED")   # validate-first: an unverified probe makes the gate UNVERIFIED
+        self.assertEqual(_t2(summarize.exp1_checks(R)), "UNVERIFIED")   # validate-first: an unverified probe makes the gate UNVERIFIED
 
     def test_t2_refusal_after_bound_with_all_probes_verified_fails(self):
         R = load("down_1.json")
-        m = exp2.moment_analysis(_poll_rows(100.0), 100.0)
-        self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "PASS")
+        m = exp2.moment_analysis(_poll_rows(100.0), 100.0, t_req=99.5)
+        self.assertEqual(_t2(summarize.exp1_checks(dict(R, exp1_moment=m))), "PASS")
         m["rrf"]["first_refusal_rel_resp_s"] = 9.0   # a summary that contradicts its refusal Outcome's timing does not parse
-        self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "UNVERIFIED")
+        self.assertEqual(_t2(summarize.exp1_checks(dict(R, exp1_moment=m))), "UNVERIFIED")
         m["rrf"]["first_refusal"]["rel_resp_s"] = 9.0
-        self.assertEqual(summarize.exp1_checks(dict(R, exp1_moment=m)).get("T2_status"), "FAIL")
+        self.assertEqual(_t2(summarize.exp1_checks(dict(R, exp1_moment=m))), "FAIL")
 
     def test_t4_dls_absent_is_unverified(self):
         R = load("down_1.json")
@@ -1058,9 +1078,11 @@ class ReviewSixGateTests(unittest.TestCase):
         return summarize.exp3_checks(R)["migration_checks"]["migration_status"]
 
     def test_f8_migration_healthy_passes(self):
-        chk = summarize.exp3_checks(_life("down_1"))["migration_checks"]   # review 12: only the LIMIT withholds the PASS
+        chk = summarize.exp3_checks(_life("down_1"))["migration_checks"]   # review 13: the derived figures are withheld
         self.assertEqual(chk["migration_status"], "UNVERIFIED")
-        self.assertTrue(chk["migration_reason"].startswith(MIG_LIMIT), chk["migration_reason"])
+        self.assertTrue(chk["migration_reason"].startswith(MIG_WITHHELD), chk["migration_reason"])
+        v = verdicts.judge("EXP3-migration", _life("down_1"))   # review 12: on the recorded figures only the LIMIT withholds the PASS
+        self.assertTrue(v.reason.startswith(MIG_LIMIT), v.reason)
 
     def test_f8_no_operations_is_unverified(self):
         self.assertEqual(self.mig({}), "UNVERIFIED")
