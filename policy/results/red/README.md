@@ -4,6 +4,26 @@ Each log is the unittest output of a red run: the new tests against the code the
 broken variant), on local, never-pushed `red/*` branches. Home paths are redacted to `~`. Before commit the logs were scanned for
 credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password URLs); none occur. The 64-hex strings are sha256 digests.
 
+## Review of 6b77354 (N1-N4, N6, N7), LOCAL, 2026-11-18
+
+DEVIATION: every log in this section ran on a throwaway PostgreSQL 17.11 (Homebrew) on the Mac at 127.0.0.1, not on t2-dev's
+16.15; the t2-dev confirmation is a separate entry when it runs. Red tree: `git archive 6b77354` of `policy/` plus the new
+`tests/test_rev6b77_pg.py`. Green tree: the working tree that became the fix commit (`pol/`, `ops/` and `tests/` byte-equal to it).
+
+| Finding | Red log (6b77354) | Strict class of the red failures | Green log |
+|---|---|---|---|
+| N1 parked revocation ended | `rev6b77_red_6b77354_local.out` (Ran 17, FAILED, failures=42) | liveness 6 (`N1_ParkedRevocation`: in both parked states and for all three triggers the revoker was ended and the revocation lost); `N1_Sweep` lost 6 of 8 trials (supporting, timing-dependent, not counted) | `rev6b77_green_fix_local.out` (Ran 17, OK) |
+| N2 refused shapes | same log | availability 15 (a refused change evicted bob's stalled submit), liveness 15 (it waited XWAIT for T and gave up 55P03 instead of answering its refusal): 15 of the 16 shapes; `grant_role_not_string` passes red and green | same |
+| N3 innocent waiter | same log | availability 2 (a submit that queued behind a revoke and committed, and a pooled connection's later transaction, were ended) | same |
+| N4 parked exclusive | same log | liveness 1 (an admin holding T(a) while parked on T(b) was spared, the revoke gave up 55P03) | same |
+| N7 rollback mark | same log | integrity 1 (a tampered mark made the rollback grant `pg_read_file` to PUBLIC) | same |
+
+Not red at 6b77354, by design: `N1_ModeRule` and `N4_ParkedExclusive.test_a_marker_for_another_key_spares_nothing` are mutant
+killers (they fail on `mark_any_mode` and `mark_any_key` of the protocol fixtures); `N6_JudgmentAtTheGate` kills `gate_noop` and
+`expiry_noop`; `N1_LeakBound` needs the marker (its positive control fails at 6b77354, counted above, not evidence of a defect).
+Focused suites on the fix (`rev2262`, `s44`, `s1`, `final`, `delta1`, `review3`, `step2`, `pg`, `pg_boundary`):
+`rev6b77_focused_green_fix_local.out`, Ran 156, OK.
+
 ## Review of 2262eaa (F1-F8, H1, H2), t2-dev, 2026-11-18
 
 Trees are `git archive` exports (code paths only, `results/` excluded) of the fix worktree; the header of each log names the tree

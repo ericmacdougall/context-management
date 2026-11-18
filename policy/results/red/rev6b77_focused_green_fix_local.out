@@ -1,0 +1,47 @@
+# DEVIATION: PG 17.11 local (Homebrew, 127.0.0.1), not 16.15. tree: fix/policy-final-review working tree that became the fix commit
+MEASURE f1_colliding_subject 0.140
+.MEASURE f1_nonexistent_colliding_target 0.021
+.MEASURE f1_colliding_existing_target 2.144
+.MEASURE f5_stalled_submitter_grant_unknown_req 4.004
+MEASURE f5_stalled_submitter_grant_unknown_target 4.010
+MEASURE f5_stalled_submitter_grant_revoked_target 4.002
+MEASURE f5_stalled_submitter_revoke_unknown_target 4.009
+.MEASURE f5_owner_t_grant_unknown_req 0.023
+MEASURE f5_owner_t_grant_unknown_target 0.004
+MEASURE f5_owner_t_grant_revoked_target 0.006
+MEASURE f5_owner_t_revoke_unknown_target 0.005
+.MEASURE f2b_member_role_holder 2.145
+.MEASURE h1_mirror_stalled_admin 2.177
+.H1 revoke {'id': 'admin/rv5dd9b8', 'code': 'revoked', 'original': None, 'value_ref': None} end_session {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+.MEASURE f3_reconnecting_adversary 2.727
+F3 adversary evicted=6 gated=172 answered_after_first_eviction=[] refused_after=109 dt=2.727
+...MEASURE revoke_reconnecting_adversary 0.550
+ADVERSARY {'evicted': 0, 'calls': 9, 'gated': 0}
+.MEASURE end_session_holder 2.119
+.MEASURE revoke_target_holder_idle_reset 2.242
+MEASURE revoke_target_holder_sleep 2.116
+MEASURE revoke_target_holder_stream 2.111
+MEASURE revoke_target_holder_submit 2.145
+.MEASURE revoke_factor_holder 2.137
+.MEASURE revoke_tenant_holder 2.151
+MEASURE erase_tenant_holder 2.146
+...MEASURE control_no_eviction 2.088
+..MEASURE idle_timeout_cooperating_holder_ended_after 2.801
+MEASURE idle_timeout_noncooperating_holder_still_connected_after 8.007
+...MEASURE revoke_owner_holder_gives_up 2.013
+...MEASURE revoke_with_bystanders 2.130
+..........................~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_s1_pg.py:638: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/pol/_pgcore.sql' mode='r' encoding='utf-8'>
+  src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pol", "_pgcore.sql"), encoding="utf-8").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.................................~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-policy-fix/policy/tests/test_final_pg.py:354: ResourceWarning: unclosed <socket.socket fd=11, family=2, type=1, proto=0, laddr=('127.0.0.1', 57080)>
+  socket.socket(fileno=os.dup(c.fileno())).shutdown(socket.SHUT_RDWR)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.........................................................WARNING: password file "/dev/null" is not a plain file
+WARNING: password file "/dev/null" is not a plain file
+..............
+----------------------------------------------------------------------
+Ran 156 tests in 326.271s
+
+OK
+
+PG N2 blocks (s per 2000 proposals): 10.80 21.39 15.38 8.53 11.84 13.06 12.59 13.58 13.09 9.58

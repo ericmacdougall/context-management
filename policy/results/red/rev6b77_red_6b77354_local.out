@@ -1,0 +1,562 @@
+# DEVIATION: PG 17.11 local (Homebrew, 127.0.0.1), not 16.15. tree: git archive 6b77354 + tests/test_rev6b77_pg.py from the fix
+2026-11-18T22:21:40Z
+test_a_leaked_marker_is_bounded_by_revoking_its_holder (tests.test_rev6b77_pg.N1_LeakBound.test_a_leaked_marker_is_bounded_by_revoking_its_holder) ... FAIL
+test_a_marked_shared_holder_is_evicted (tests.test_rev6b77_pg.N1_ModeRule.test_a_marked_shared_holder_is_evicted) ... MEASURE n1_mode_rule 4.117
+N1M end_session={'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'} in 4.12s looper_alive=False loops=1 first=[('55P03', 'authority lock still held'), (None, None)]
+ok
+test_fence_only_end_session (tests.test_rev6b77_pg.N1_ParkedRevocation.test_fence_only_end_session) ... MEASURE n1_fence_only_end_session_trigger 6.234
+N1 fence_only/end_session revoke=None trigger=True revoker_alive=False
+FAIL
+test_fence_only_revoke_factor (tests.test_rev6b77_pg.N1_ParkedRevocation.test_fence_only_revoke_factor) ... MEASURE n1_fence_only_revoke_factor_trigger 6.238
+N1 fence_only/revoke_factor revoke=None trigger=True revoker_alive=False
+FAIL
+test_fence_only_second_admin_revoke (tests.test_rev6b77_pg.N1_ParkedRevocation.test_fence_only_second_admin_revoke) ... MEASURE n1_fence_only_second_revoke_trigger 6.261
+N1 fence_only/second_revoke revoke=None trigger='revoked' revoker_alive=False
+FAIL
+test_holds_key_end_session (tests.test_rev6b77_pg.N1_ParkedRevocation.test_holds_key_end_session) ... MEASURE n1_holds_key_end_session_trigger 2.123
+N1 holds_key/end_session revoke=None trigger=True revoker_alive=False
+FAIL
+test_holds_key_revoke_factor (tests.test_rev6b77_pg.N1_ParkedRevocation.test_holds_key_revoke_factor) ... MEASURE n1_holds_key_revoke_factor_trigger 2.120
+N1 holds_key/revoke_factor revoke=None trigger=True revoker_alive=False
+FAIL
+test_holds_key_second_admin_revoke (tests.test_rev6b77_pg.N1_ParkedRevocation.test_holds_key_second_admin_revoke) ... MEASURE n1_holds_key_second_revoke_trigger 18.011
+N1 holds_key/second_revoke revoke=None trigger='revoked' revoker_alive=False
+FAIL
+test_sweep (tests.test_rev6b77_pg.N1_Sweep.test_sweep) ... N1S k=1 d=0.00 alice_holders=0 revoke=None end_session=True revoker_alive=False alice_revoked=False
+N1S k=1 d=0.03 alice_holders=0 revoke=None end_session=True revoker_alive=False alice_revoked=False
+N1S k=1 d=0.06 alice_holders=0 revoke=None end_session=True revoker_alive=False alice_revoked=False
+N1S k=1 d=0.10 alice_holders=0 revoke=None end_session=True revoker_alive=False alice_revoked=False
+N1S k=6 d=0.05 alice_holders=0 revoke=None end_session=True revoker_alive=False alice_revoked=False
+N1S k=6 d=0.20 alice_holders=0 revoke=None end_session=True revoker_alive=False alice_revoked=False
+N1S k=6 d=0.40 alice_holders=4 revoke='revoked' end_session=True revoker_alive=True alice_revoked=True
+N1S k=6 d=0.70 alice_holders=4 revoke='revoked' end_session=True revoker_alive=True alice_revoked=True
+N1S SUMMARY trials=8 lost=6
+FAIL
+test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody)
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... MEASURE n2_stalled_submitter_identity_in_body 2.124
+
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [identity_in_body]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_unknown_key 2.113
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [unknown_key]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_missing_client_id 2.117
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [missing_client_id]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_bad_client_id 2.110
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [bad_client_id]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_value_not_string 2.119
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [value_not_string]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_value_without_label 2.119
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [value_without_label]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_label_refused 2.110
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [label_refused]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_non_canonical_subject 2.127
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [non_canonical_subject]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_label_without_value 2.115
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [label_without_value]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_missing_idem 2.117
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [missing_idem]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_empty_idem 2.110
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [empty_idem]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_bad_based_on 2.112
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [bad_based_on]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_grant_bad_role 2.110
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [grant_bad_role]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_grant_role_not_string 4.003
+MEASURE n2_stalled_submitter_grant_duplicate 2.112
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [grant_duplicate]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+MEASURE n2_stalled_submitter_grant_idem_conflict 2.112
+  test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [grant_idem_conflict]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the ... FAIL
+test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) ... MEASURE n2_owner_t_identity_in_body 2.027
+
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [identity_in_body] ... FAIL
+MEASURE n2_owner_t_unknown_key 2.008
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [unknown_key] ... FAIL
+MEASURE n2_owner_t_missing_client_id 2.016
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [missing_client_id] ... FAIL
+MEASURE n2_owner_t_bad_client_id 2.010
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [bad_client_id] ... FAIL
+MEASURE n2_owner_t_value_not_string 2.011
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [value_not_string] ... FAIL
+MEASURE n2_owner_t_value_without_label 2.008
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [value_without_label] ... FAIL
+MEASURE n2_owner_t_label_refused 2.005
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [label_refused] ... FAIL
+MEASURE n2_owner_t_non_canonical_subject 2.007
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [non_canonical_subject] ... FAIL
+MEASURE n2_owner_t_label_without_value 2.005
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [label_without_value] ... FAIL
+MEASURE n2_owner_t_missing_idem 2.031
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [missing_idem] ... FAIL
+MEASURE n2_owner_t_empty_idem 2.021
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [empty_idem] ... FAIL
+MEASURE n2_owner_t_bad_based_on 2.006
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [bad_based_on] ... FAIL
+MEASURE n2_owner_t_grant_bad_role 2.006
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [grant_bad_role] ... FAIL
+MEASURE n2_owner_t_grant_role_not_string 0.006
+MEASURE n2_owner_t_grant_duplicate 2.007
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [grant_duplicate] ... FAIL
+MEASURE n2_owner_t_grant_idem_conflict 2.006
+  test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [grant_idem_conflict] ... FAIL
+test_a_pooled_connection_is_judged_by_its_transaction (tests.test_rev6b77_pg.N3_InnocentWaiter.test_a_pooled_connection_is_judged_by_its_transaction)
+N3, the snapshot is per transaction, not per backend. The owner holds T shared (never evicted); a pooled connection P holds ... N3B revoke='55P03' second=None pooled_alive=False
+FAIL
+test_a_submit_queued_behind_a_revoke_survives (tests.test_rev6b77_pg.N3_InnocentWaiter.test_a_submit_queued_behind_a_revoke_survives)
+N3. bob's submit is stalled (T shared, chain head). The admin revokes x; once that revoke waits for T, alice submits on r2 ... N3 revoke='revoked' innocent='proposed' innocent_alive=False bob_alive=False
+FAIL
+test_a_holder_parked_on_another_tenant_is_evicted (tests.test_rev6b77_pg.N4_ParkedExclusive.test_a_holder_parked_on_another_tenant_is_evicted)
+N4 (the review's probe Z, with polls). B0: tenant-b's admin grant applied, transaction open (T(b) exclusive). B1, one ... MEASURE n4_parked_on_other_tenant 2.031
+N4 revoke={'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'} in 2.03s b1_alive=True
+FAIL
+test_a_marker_for_another_key_spares_nothing (tests.test_rev6b77_pg.N4_ParkedExclusive.test_a_marker_for_another_key_spares_nothing)
+Mutant killer (green at 6b77354, which did not see a row-lock wait as 'inside'): B1 holds T(a) exclusively from an applied ... N4B revoke={'id': 'admin/rva125e6', 'code': 'revoked', 'original': None, 'value_ref': None} in 2.14s b1_alive=False
+ok
+test_expiry_inside_the_call_is_refused_at_the_gate (tests.test_rev6b77_pg.N6_JudgmentAtTheGate.test_expiry_inside_the_call_is_refused_at_the_gate) ... N6 submit={'id': None, 'code': 'unauthenticated:invalid_session', 'original': None, 'value_ref': None} in 3.04s events=0
+ok
+test_a_tampered_mark_is_refused (tests.test_rev6b77_pg.N7_RollbackMark.test_a_tampered_mark_is_refused) ... N7 rollback refused=None public_can_read_files=True
+FAIL
+
+======================================================================
+FAIL: test_a_leaked_marker_is_bounded_by_revoking_its_holder (tests.test_rev6b77_pg.N1_LeakBound.test_a_leaked_marker_is_bounded_by_revoking_its_holder)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 275, in test_a_leaked_marker_is_bounded_by_revoking_its_holder
+    self.assertTrue(self.holds(lp, MARK_CLS, self.key("tenant", T)), "positive control: the patched core leaked the marker")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : positive control: the patched core leaked the marker
+
+======================================================================
+FAIL: test_fence_only_end_session (tests.test_rev6b77_pg.N1_ParkedRevocation.test_fence_only_end_session)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 145, in test_fence_only_end_session
+    self._case("fence_only", "end_session")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 128, in _case
+    self.assertTrue(was, "the %s ended the revocation in progress (%s)" % (trigger, state))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the end_session ended the revocation in progress (fence_only)
+
+======================================================================
+FAIL: test_fence_only_revoke_factor (tests.test_rev6b77_pg.N1_ParkedRevocation.test_fence_only_revoke_factor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 148, in test_fence_only_revoke_factor
+    self._case("fence_only", "revoke_factor")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 128, in _case
+    self.assertTrue(was, "the %s ended the revocation in progress (%s)" % (trigger, state))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the revoke_factor ended the revocation in progress (fence_only)
+
+======================================================================
+FAIL: test_fence_only_second_admin_revoke (tests.test_rev6b77_pg.N1_ParkedRevocation.test_fence_only_second_admin_revoke)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 151, in test_fence_only_second_admin_revoke
+    self._case("fence_only", "second_revoke")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 128, in _case
+    self.assertTrue(was, "the %s ended the revocation in progress (%s)" % (trigger, state))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the second_revoke ended the revocation in progress (fence_only)
+
+======================================================================
+FAIL: test_holds_key_end_session (tests.test_rev6b77_pg.N1_ParkedRevocation.test_holds_key_end_session)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 136, in test_holds_key_end_session
+    self._case("holds_key", "end_session")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 128, in _case
+    self.assertTrue(was, "the %s ended the revocation in progress (%s)" % (trigger, state))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the end_session ended the revocation in progress (holds_key)
+
+======================================================================
+FAIL: test_holds_key_revoke_factor (tests.test_rev6b77_pg.N1_ParkedRevocation.test_holds_key_revoke_factor)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 139, in test_holds_key_revoke_factor
+    self._case("holds_key", "revoke_factor")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 128, in _case
+    self.assertTrue(was, "the %s ended the revocation in progress (%s)" % (trigger, state))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the revoke_factor ended the revocation in progress (holds_key)
+
+======================================================================
+FAIL: test_holds_key_second_admin_revoke (tests.test_rev6b77_pg.N1_ParkedRevocation.test_holds_key_second_admin_revoke)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 142, in test_holds_key_second_admin_revoke
+    self._case("holds_key", "second_revoke")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 128, in _case
+    self.assertTrue(was, "the %s ended the revocation in progress (%s)" % (trigger, state))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the second_revoke ended the revocation in progress (holds_key)
+
+======================================================================
+FAIL: test_sweep (tests.test_rev6b77_pg.N1_Sweep.test_sweep)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 197, in test_sweep
+    self.assertEqual(lost, [], "a revocation in progress was evicted")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [(1, 0.0, 0, None, True, False, False), (1[190 chars]lse)] != []
+
+First list contains 6 additional elements.
+First extra element 0:
+(1, 0.0, 0, None, True, False, False)
+
++ []
+- [(1, 0.0, 0, None, True, False, False),
+-  (1, 0.03, 0, None, True, False, False),
+-  (1, 0.06, 0, None, True, False, False),
+-  (1, 0.1, 0, None, True, False, False),
+-  (6, 0.05, 0, None, True, False, False),
+-  (6, 0.2, 0, None, True, False, False)] : a revocation in progress was evicted
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [identity_in_body]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused identity_in_body evicted bob's in-flight submit: {'id': None, 'code': 'identity_in_body', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [unknown_key]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused unknown_key evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [missing_client_id]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused missing_client_id evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [bad_client_id]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused bad_client_id evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [value_not_string]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused value_not_string evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [value_without_label]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused value_without_label evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [label_refused]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused label_refused evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [non_canonical_subject]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused non_canonical_subject evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [label_without_value]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused label_without_value evicted bob's in-flight submit: {'id': None, 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [missing_idem]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused missing_idem evicted bob's in-flight submit: {'id': 'admin/cab5d9a', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [empty_idem]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused empty_idem evicted bob's in-flight submit: {'id': 'admin/c014e10', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [bad_based_on]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused bad_based_on evicted bob's in-flight submit: {'id': 'admin/c349dcf', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [grant_bad_role]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused grant_bad_role evicted bob's in-flight submit: {'id': 'admin/c940e6a', 'code': 'bad_event', 'original': None, 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [grant_duplicate]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused grant_duplicate evicted bob's in-flight submit: {'id': 'admin/gc88d1a', 'code': 'duplicate', 'original': 'granted', 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_evict_nobody (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_evict_nobody) [grant_idem_conflict]
+bob's submit holds T shared and the chain head; each refused change (a 4 s admin token) answers its refusal or waits at the
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 370, in test_refused_shapes_evict_nobody
+    self.assertTrue(was, "a refused %s evicted bob's in-flight submit: %r" % (name, r))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : a refused grant_idem_conflict evicted bob's in-flight submit: {'id': 'admin/gc88d1a', 'code': 'idem_conflict', 'original': 'granted', 'value_ref': None}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [identity_in_body]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'identity_in_body' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [unknown_key]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [missing_client_id]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [bad_client_id]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [value_not_string]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [value_without_label]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [label_refused]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [non_canonical_subject]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [label_without_value]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [missing_idem]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [empty_idem]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [bad_based_on]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [grant_bad_role]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'bad_event' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [grant_duplicate]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'duplicate' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_refused_shapes_never_wait_for_the_tenant_lock (tests.test_rev6b77_pg.N2_RefusedShapes.test_refused_shapes_never_wait_for_the_tenant_lock) [grant_idem_conflict]
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 352, in test_refused_shapes_never_wait_for_the_tenant_lock
+    self.assertEqual(r.get("code"), want, "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'idem_conflict' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_a_pooled_connection_is_judged_by_its_transaction (tests.test_rev6b77_pg.N3_InnocentWaiter.test_a_pooled_connection_is_judged_by_its_transaction)
+N3, the snapshot is per transaction, not per backend. The owner holds T shared (never evicted); a pooled connection P holds
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 421, in test_a_pooled_connection_is_judged_by_its_transaction
+    self.assertEqual(self.code(po), "proposed", "%r" % (po,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'proposed' : {'r': {'error': None, 'message': None}, 't': 1795040658.512147}
+
+======================================================================
+FAIL: test_a_submit_queued_behind_a_revoke_survives (tests.test_rev6b77_pg.N3_InnocentWaiter.test_a_submit_queued_behind_a_revoke_survives)
+N3. bob's submit is stalled (T shared, chain head). The admin revokes x; once that revoke waits for T, alice submits on r2
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 393, in test_a_submit_queued_behind_a_revoke_survives
+    self.assertTrue(was, "the innocent submit's backend was terminated")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : the innocent submit's backend was terminated
+
+======================================================================
+FAIL: test_a_holder_parked_on_another_tenant_is_evicted (tests.test_rev6b77_pg.N4_ParkedExclusive.test_a_holder_parked_on_another_tenant_is_evicted)
+N4 (the review's probe Z, with polls). B0: tenant-b's admin grant applied, transaction open (T(b) exclusive). B1, one
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 456, in test_a_holder_parked_on_another_tenant_is_evicted
+    self.assertEqual(r.get("code"), "revoked", "%r" % (r,))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None != 'revoked' : {'error': '55P03', 'message': 'exclusive lock held by a backend that is never evicted'}
+
+======================================================================
+FAIL: test_a_tampered_mark_is_refused (tests.test_rev6b77_pg.N7_RollbackMark.test_a_tampered_mark_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/scratch/claude-501/-Users-eric-harness/73716864-6b3b-4deb-94ef-8ed2c8432e4a/scratchpad/pf2/src/r6b7/policy/tests/test_rev6b77_pg.py", line 541, in test_a_tampered_mark_is_refused
+    self.assertFalse(leaked, "the rollback granted a superuser-only function to PUBLIC from the mark's text")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : the rollback granted a superuser-only function to PUBLIC from the mark's text
+
+----------------------------------------------------------------------
+Ran 17 tests in 172.045s
+
+FAILED (failures=42)

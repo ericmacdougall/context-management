@@ -608,14 +608,57 @@ end $$;
 -- that passed the fence check before it was taken (review of 2262eaa F3: the fence now comes BEFORE the judgment and the eviction on
 -- every path). The fence is read from pg_locks by calls, never waited for, so it adds no step to the lock order of 4.2.
 --
--- Whom (review of 2262eaa F2b, H1): every backend of THIS database, other than the caller, whose session user is neither a superuser
--- nor a member of dc_owner (a login role that is a MEMBER of dc_app or dc_idp is evicted like dc_app itself; roles are not listed by
--- name), and that holds the lock or a fence in a way that can stall: a SHARED holder or shared waiter, or an EXCLUSIVE holder that is
--- not itself inside the lock protocol. "Inside" means it waits right now for an A, T or fence lock, or for a backend it is evicting
--- to exit: that is a revocation in progress (bounded by its own XWAIT rounds and expiry), and ending it would cancel it (H1). An
--- exclusive holder that is NOT waiting (a revocation that applied and whose transaction stays open, holding A, T or a fence) is a
--- stalled holder and is evicted. An exclusive WAITER is a queued revocation and is left alone. Owner and superuser backends are never
--- evicted; a round that finds nothing to evict gives up (55P03).
+-- Whom (review of 2262eaa F2b, H1; review of 6b77354 N1, N3, N4: the earlier rule read wait_event, which dc_evictor cannot see, and
+-- spared any backend waiting for any A, T or fence lock). An exclusive request E on key k (A or T; F is k's fence) may end a backend B
+-- of THIS database, other than E, whose session user is neither a superuser nor a member of dc_owner (a login role that is a MEMBER of
+-- dc_app or dc_idp is evicted like dc_app itself; roles are not listed by name), only if all of these hold, each read from pg_locks:
+--   (a) B held the lock E evicts for (k, or F when E could not take the fence), GRANTED, in transaction X when E's request began
+--       (dc._snap, 'pid:virtualtransaction', taken just before each request); a backend that queued behind E is not in it (N3);
+--   (b) B still holds it, granted, in the same X, re-checked immediately before the signal, so B held it for at least XWAIT in one
+--       transaction;
+--   (c) B is not a call in progress on k: it does not hold the MARKER M(k) (class 1145241607, key k, session-level SHARED, taken by an
+--       API call before it requests k exclusively, released on every exit of that call, dc._mark / dc._unmark) together with k or F
+--       EXCLUSIVELY, granted. So a revocation in progress (waiting, judging, evicting, or parked holding k or F) is never ended by
+--       another exclusive request on k (that one gives up, 55P03, retryable) (N1); a call that returned with its transaction open
+--       is unmarked and is a stalled holder (H1 mirror); a marker of another key spares nothing (N4); a marked backend that holds k
+--       only SHARED is evicted, so a leaked marker (only possible when an error escapes the API function's own handler) spares at
+--       most an exclusive lock taken earlier in that transaction, and revoking its principal still ends it (its calls hold
+--       A(principal) shared).
+-- Waiters are never ended (they hold nothing yet). Owner and superuser backends are never evicted. A round that signals nobody gives
+-- up (55P03) when every current holder is spared, and otherwise waits another round (a holder that came after the snapshot is in the
+-- next one). Residual: B can commit between (b) and the signal (microseconds); its next transaction then fails with the connection.
+-- The marker is never waited for (shared, and no one takes it exclusively), so it adds no step to the lock order of 4.2. Classes
+-- 1145241601-1145241607 and the negative classes -1e9..-1 (S) are reserved for this protocol.
+
+-- 4.4 marker: this backend is inside an API call that needs k exclusively. Taken once per key (a session lock is counted per take, so a
+-- second take would need a second release); every exit of dc.submit (revoke or grant), dc.end_session, dc.revoke_factor and
+-- dc.erase_values calls dc._unmark, from its exception handler too.
+create function dc._mark(p_key int) returns void language plpgsql as $$
+begin
+  if not exists (select 1 from pg_catalog.pg_locks l
+                  where l.pid = pg_backend_pid() and l.locktype = 'advisory' and l.objsubid = 2 and l.granted
+                    and l.classid = 1145241607::oid and l.objid = (p_key::bigint & 4294967295)::oid) then
+    perform pg_advisory_lock_shared(1145241607, p_key);
+  end if;
+end $$;
+
+create function dc._unmark() returns void language plpgsql as $$
+declare r record;
+begin
+  for r in select l.objid from pg_catalog.pg_locks l
+            where l.pid = pg_backend_pid() and l.locktype = 'advisory' and l.objsubid = 2 and l.granted and l.mode = 'ShareLock'
+              and l.classid = 1145241607::oid loop
+    perform pg_advisory_unlock_shared(1145241607, r.objid::text::bigint::int);
+  end loop;
+end $$;
+
+-- (a): the granted holders of (p_cls, p_key) other than this backend, as 'pid:virtualtransaction'
+create function dc._snap(p_cls int, p_key int) returns text[] language sql volatile as $$
+  select coalesce(array_agg(l.pid::text || ':' || l.virtualtransaction), array[]::text[]) from pg_catalog.pg_locks l
+   where l.locktype = 'advisory' and l.objsubid = 2 and l.granted and l.pid <> pg_backend_pid()
+     and l.database = (select d.oid from pg_catalog.pg_database d where d.datname = current_database())
+     and l.classid = p_cls::bigint::oid and l.objid = (p_key::bigint & 4294967295)::oid
+$$;
 
 create function dc._fenced(p_fcls int, p_key int) returns void language plpgsql as $$
 begin
@@ -627,33 +670,63 @@ begin
   end if;
 end $$;
 
--- SECURITY DEFINER as dc_evictor (install sets the owner): end the backends described above for the advisory lock (p_cls, p_key);
--- p_cls must be A, T, F_A or F_T. Waits up to 1 s for each to exit. Returns how many were signalled.
-create function dc._evict(p_cls int, p_key int) returns int language plpgsql security definer set search_path = pg_catalog, pg_temp as $$
+-- SECURITY DEFINER as dc_evictor (install sets the owner): end the backends described above ("Whom") for the advisory lock (p_cls,
+-- p_key), p_snap being dc._snap of that lock taken before the request; p_cls must be A, T, F_A or F_T. Waits up to 1 s for each to
+-- exit. Returns how many were signalled; when none was: 0 if every current holder is spared (the caller gives up), -1 otherwise (no
+-- holder is left, or one came after the snapshot: the caller's next round).
+create function dc._evict(p_cls int, p_key int, p_snap text[]) returns int language plpgsql security definer
+set search_path = pg_catalog, pg_temp as $$
 #variable_conflict use_variable
 declare n int := 0; r record; db oid := (select d.oid from pg_catalog.pg_database d where d.datname = current_database());
+        ko oid := (p_key::bigint & 4294967295)::oid;
 begin
   if p_cls is null or p_key is null or p_cls not in (1145241601, 1145241602, 1145241605, 1145241606) then
     raise exception 'evict: lock class % is not evictable', p_cls;
   end if;
-  for r in select distinct l.pid from pg_catalog.pg_locks l
-              join pg_catalog.pg_stat_activity a on a.pid = l.pid
-              join pg_catalog.pg_roles ro on ro.oid = a.usesysid
-            where l.locktype = 'advisory' and l.objsubid = 2 and l.pid <> pg_backend_pid() and l.database = db
-              and a.datname = current_database()
-              and not ro.rolsuper and not pg_catalog.pg_has_role(a.usesysid, 'dc_owner', 'MEMBER')
-              and l.classid = p_cls::bigint::oid and l.objid = (p_key::bigint & 4294967295)::oid
-              and (l.mode = 'ShareLock'
-                   or (l.granted and a.wait_event is distinct from 'BackendTermination'
-                       and not exists (select 1 from pg_catalog.pg_locks w
-                                        where w.pid = l.pid and not w.granted and w.locktype = 'advisory' and w.objsubid = 2
-                                          and w.database = db
-                                          and w.classid in (1145241601::oid, 1145241602::oid, 1145241605::oid, 1145241606::oid))))
+  for r in select l.pid, l.virtualtransaction vx from pg_catalog.pg_locks l
+            where l.locktype = 'advisory' and l.objsubid = 2 and l.granted and l.pid <> pg_backend_pid() and l.database = db
+              and l.classid = p_cls::bigint::oid and l.objid = ko
+              and (l.pid::text || ':' || l.virtualtransaction) = any(coalesce(p_snap, array[]::text[]))
             order by l.pid loop
-    perform pg_terminate_backend(r.pid, 1000);
-    n := n + 1;
+    -- (b) and (c), and the role rule, re-read for this backend just before its signal
+    if exists (select 1 from pg_catalog.pg_locks l
+                 join pg_catalog.pg_stat_activity a on a.pid = l.pid
+                 join pg_catalog.pg_roles ro on ro.oid = a.usesysid
+                where l.pid = r.pid and l.virtualtransaction = r.vx and l.locktype = 'advisory' and l.objsubid = 2 and l.granted
+                  and l.database = db and l.classid = p_cls::bigint::oid and l.objid = ko
+                  and a.datname = current_database()
+                  and not ro.rolsuper and not pg_catalog.pg_has_role(a.usesysid, 'dc_owner', 'MEMBER'))
+       and not (exists (select 1 from pg_catalog.pg_locks m
+                         where m.pid = r.pid and m.locktype = 'advisory' and m.objsubid = 2 and m.granted and m.database = db
+                           and m.classid = 1145241607::oid and m.objid = ko)
+                and exists (select 1 from pg_catalog.pg_locks x
+                             where x.pid = r.pid and x.locktype = 'advisory' and x.objsubid = 2 and x.granted and x.database = db
+                               and x.mode = 'ExclusiveLock' and x.objid = ko
+                               and x.classid in (1145241601::oid, 1145241602::oid, 1145241605::oid, 1145241606::oid))) then
+      perform pg_terminate_backend(r.pid, 1000);
+      n := n + 1;
+    end if;
   end loop;
-  return n;
+  if n > 0 then return n; end if;
+  if exists (select 1 from pg_catalog.pg_locks l
+               join pg_catalog.pg_stat_activity a on a.pid = l.pid
+               join pg_catalog.pg_roles ro on ro.oid = a.usesysid
+              where l.locktype = 'advisory' and l.objsubid = 2 and l.granted and l.pid <> pg_backend_pid() and l.database = db
+                and l.classid = p_cls::bigint::oid and l.objid = ko and a.datname = current_database()
+                and not ro.rolsuper and not pg_catalog.pg_has_role(a.usesysid, 'dc_owner', 'MEMBER')
+                and not (exists (select 1 from pg_catalog.pg_locks m
+                                  where m.pid = l.pid and m.locktype = 'advisory' and m.objsubid = 2 and m.granted and m.database = db
+                                    and m.classid = 1145241607::oid and m.objid = ko)
+                         and exists (select 1 from pg_catalog.pg_locks x
+                                      where x.pid = l.pid and x.locktype = 'advisory' and x.objsubid = 2 and x.granted
+                                        and x.database = db and x.mode = 'ExclusiveLock' and x.objid = ko
+                                        and x.classid in (1145241601::oid, 1145241602::oid, 1145241605::oid, 1145241606::oid))))
+     or not exists (select 1 from pg_catalog.pg_locks l
+                     where l.locktype = 'advisory' and l.objsubid = 2 and l.granted and l.pid <> pg_backend_pid() and l.database = db
+                       and l.classid = p_cls::bigint::oid and l.objid = ko) then
+    return -1;
+  end if;
+  return 0;
 end $$;
 
 -- The fence of (p_fcls, p_key), waited for up to XWAIT (another evictor of the same lock holds it while it works). TRUE when held; FALSE
@@ -671,33 +744,37 @@ end $$;
 
 -- After an exclusive request timed out (the caller is already pinned and judged): give up (55P03) at or after the deadline, when the
 -- caller's own lock_timeout (not XWAIT) ran out, or after the third round. Else take the fence, read the clock again, and evict the
--- lock's stalled holders. When another backend holds the fence, evict that one instead if it is a stalled holder (a revocation that
--- applied and stayed open), and try again next round. A round that signals nobody gives up.
-create function dc._evict_round(p_cls int, p_key int, p_fcls int, p_deadline timestamptz, p_lt bigint, p_round int) returns void
-language plpgsql as $$
+-- lock's stalled holders (p_snap, taken before the request). When another backend holds the fence, evict that one instead if it is a
+-- stalled holder (a revocation that applied and stayed open; never a revocation in progress, which holds the marker), and try again
+-- next round. A round that signals nobody while every holder is spared gives up.
+create function dc._evict_round(p_cls int, p_key int, p_fcls int, p_deadline timestamptz, p_lt bigint, p_round int, p_snap text[])
+returns void language plpgsql as $$
 #variable_conflict use_variable
-declare fenced boolean;
+declare fenced boolean; fsnap text[];
 begin
   if (p_deadline is not null and clock_timestamp() >= p_deadline) or (p_lt > 0 and p_lt <= dc._xwait_ms()) or p_round >= 3 then
     raise exception 'exclusive lock still held' using errcode = 'lock_not_available';
   end if;
+  fsnap := dc._snap(p_fcls, p_key);
   fenced := dc._try_fence(p_fcls, p_key, p_deadline, p_lt);
   if p_deadline is not null and clock_timestamp() >= p_deadline then
     raise exception 'exclusive lock still held' using errcode = 'lock_not_available';
   end if;
-  if dc._evict(case when fenced then p_cls else p_fcls end, p_key) = 0 then
+  if (case when fenced then dc._evict(p_cls, p_key, p_snap) else dc._evict(p_fcls, p_key, fsnap) end) = 0 then
     raise exception 'exclusive lock held by a backend that is never evicted' using errcode = 'lock_not_available';
   end if;
 end $$;
 
 -- An EXCLUSIVE A or T for a call whose own authority is already settled: dc_idp's end_session, the owner's revoke_factor, and the
--- tenant lock of an admin's revoke, grant or erasure (taken after the caller's pins and judgment). At most three rounds of: wait up
--- to XWAIT, then dc._evict_round.
+-- tenant lock of an admin's revoke, grant or erasure (taken after the caller's pins and judgment). The call is marked for the key
+-- first (4.4 (c)). At most three rounds of: snapshot the holders, wait up to XWAIT, then dc._evict_round.
 create function dc._xlock(p_cls int, p_key int, p_fcls int, p_deadline timestamptz, p_lt bigint) returns void language plpgsql as $$
 #variable_conflict use_variable
-declare i int;
+declare i int; snap text[];
 begin
+  perform dc._mark(p_key);
   for i in 1 .. 3 loop
+    snap := dc._snap(p_cls, p_key);
     perform dc._budget(p_deadline, p_lt, dc._xwait_ms());
     begin
       perform pg_advisory_xact_lock(p_cls, p_key);
@@ -705,7 +782,7 @@ begin
     exception when lock_not_available then
       null;
     end;
-    perform dc._evict_round(p_cls, p_key, p_fcls, p_deadline, p_lt, i);
+    perform dc._evict_round(p_cls, p_key, p_fcls, p_deadline, p_lt, i, snap);
   end loop;
 end $$;
 
@@ -714,12 +791,14 @@ end $$;
 -- XWAIT cap), its pins (L2.0-2.2), its pinned admin flag, the clock last; only then the eviction. The sub-block is rolled back (DCEVI)
 -- so the call's lock sequence stays the declared one; the judgment's verdict and the eviction count leave it in the error detail. A
 -- refusal returns into dc._submit's exception block, which releases the fence with everything else the call took. Returns the refusal,
--- or NULL when the lock is held.
+-- or NULL when the lock is held. Marked for the key first, snapshots as in dc._xlock (4.4 (a), (c)).
 create function dc._xlock_caller(s dc.sessions, p_key int, p_lt bigint, p_adm boolean) returns text language plpgsql as $$
 #variable_conflict use_variable
-declare i int; why text; n int; d text; ck int := dc._ak(s.tenant, s.principal); fenced boolean;
+declare i int; why text; n int; d text; ck int := dc._ak(s.tenant, s.principal); fenced boolean; snap text[]; fsnap text[];
 begin
+  perform dc._mark(p_key);
   for i in 1 .. 3 loop
+    snap := dc._snap(1145241601, p_key);
     perform dc._budget(s.expires_at, p_lt, dc._xwait_ms());
     begin
       perform pg_advisory_xact_lock(1145241601, p_key);
@@ -730,6 +809,7 @@ begin
     if clock_timestamp() >= s.expires_at or (p_lt > 0 and p_lt <= dc._xwait_ms()) or i >= 3 then
       raise exception 'authority lock still held' using errcode = 'lock_not_available';
     end if;
+    fsnap := dc._snap(1145241605, p_key);
     fenced := dc._try_fence(1145241605, p_key, s.expires_at, p_lt);
     begin
       why := null;
@@ -746,7 +826,9 @@ begin
         end if;
       end if;
       if why is null and clock_timestamp() >= s.expires_at then why := 'unauthenticated:invalid_session'; end if;
-      if why is null then n := dc._evict(case when fenced then 1145241601 else 1145241605 end, p_key); end if;
+      if why is null then
+        n := case when fenced then dc._evict(1145241601, p_key, snap) else dc._evict(1145241605, p_key, fsnap) end;
+      end if;
       raise exception 'judged' using errcode = 'DCEVI', detail = coalesce(why, '') || '|' || n;
     exception when sqlstate 'DCEVI' then
       get stacked diagnostics d = pg_exception_detail;
@@ -1063,12 +1145,21 @@ end $$;
 -- (final review P5): under REPEATABLE READ or SERIALIZABLE the update reads the transaction's snapshot, so a session opened after it
 -- would be "not found" (false) and stay live; READ UNCOMMITTED is refused by the same exact comparison.
 create function dc.end_session(p_token text) returns boolean language plpgsql security definer set search_path = dc, pg_temp as $$
+declare r boolean;
 begin
   perform dc._no2pc();                      -- review of 2262eaa F2a
   if current_setting('transaction_isolation') <> 'read committed' then
     raise exception 'end_session refused: isolation' using errcode = 'P0001';
   end if;
-  return dc._end_session(p_token, dc._lt());
+  perform dc._unmark();                     -- 4.4 (c): marked while it needs A exclusively, released on every exit
+  begin
+    r := dc._end_session(p_token, dc._lt());
+  exception when query_canceled or others then
+    perform dc._unmark();
+    raise;
+  end;
+  perform dc._unmark();
+  return r;
 end $$;
 
 -- S1: L0 dc.sessions; L1 A(the session's principal) EXCLUSIVE, so it waits FIFO for that principal's in-flight calls (which pin the
@@ -1104,8 +1195,17 @@ end $$;
 -- calls of the factor's principal (XWAIT per attempt) instead of only for the calls that pinned this factor's row. Direct owner SQL
 -- on dc.factors also waits for those pins, but is not queued.
 create function dc.revoke_factor(p_factor text) returns boolean language plpgsql security definer set search_path = dc, pg_temp as $$
+declare r boolean;
 begin
-  return dc._revoke_factor(p_factor, dc._lt());
+  perform dc._unmark();                     -- 4.4 (c), as dc.end_session
+  begin
+    r := dc._revoke_factor(p_factor, dc._lt());
+  exception when query_canceled or others then
+    perform dc._unmark();
+    raise;
+  end;
+  perform dc._unmark();
+  return r;
 end $$;
 
 create function dc._revoke_factor(p_factor text, p_lt bigint) returns boolean language plpgsql set lock_timeout = '0' as $$
@@ -1205,41 +1305,61 @@ create function dc._out(code text, orig text, evid text, ref text) returns jsonb
   select jsonb_build_object('code', code, 'original', orig, 'id', evid, 'value_ref', ref)
 $$;
 
+-- The body checks of dc.submit that come before the rules: NULL, or the audit code of the refusal ('identity_in_body', 'bad_subject'
+-- (answered bad_event) or 'bad_event'). Pure (no writes, no locks), so the stage and the pre-read of dc._acquire_submit run the SAME
+-- checks (review of 6b77354 N2).
+create function dc._body_refusal(p_body jsonb) returns text language plpgsql stable as $$
+#variable_conflict use_variable
+declare cid text;
+        body_keys text[] := array['type','client_id','idem','req','value','label','based_on','proposal','proposal_hash','pending','verb',
+                                  'choose','target','role'];
+begin
+  if p_body is null or jsonb_typeof(p_body) <> 'object' then return 'bad_event'; end if;
+  if p_body ?| array['tenant', 'principal', 'channel', 'id', 'actor', 'trust_origin'] then return 'identity_in_body'; end if;
+  cid := case when jsonb_typeof(p_body->'client_id') = 'string' then p_body->>'client_id' end;
+  if exists (select 1 from jsonb_object_keys(p_body) k where k <> all(body_keys)) or cid is null or cid !~ '^[A-Za-z0-9._-]{1,64}$' then
+    return 'bad_event';
+  end if;
+  if p_body ? 'value' then
+    if jsonb_typeof(p_body->'value') <> 'string' or not p_body ? 'label' then return 'bad_event'; end if;
+    begin
+      perform dc._label_norm(p_body->'label');
+    exception when others then
+      return 'bad_event';
+    end;
+    -- subjects must arrive canonical (the caller applies pol.labels.canon_subject): a non-canonical spelling is refused, never stored
+    if exists (select 1 from jsonb_array_elements(p_body->'label'->'subjects') e where e #>> '{}' <> dc._canon_subject(e #>> '{}')) then
+      return 'bad_subject';
+    end if;
+  elsif p_body ? 'label' then
+    return 'bad_event';
+  end if;
+  return null;
+end $$;
+
+-- The event the stage builds from a body that passed dc._body_refusal, before its value and label are minted
+create function dc._body_ev(s dc.sessions, p_body jsonb) returns jsonb language sql stable as $$
+  select (p_body - 'client_id' - 'value' - 'label')
+         || jsonb_build_object('id', s.principal || '/' || (p_body->>'client_id'), 'tenant', s.tenant, 'principal', s.principal,
+                               'channel', s.channel)
+         || dc._origin((select p.kind from dc.principal p where p.tenant = s.tenant and p.pid = s.principal), s.channel)
+$$;
+
 -- Everything dc.submit writes, for the session s it began with. Runs after dc._acquire_submit, under lock_timeout 1 ms: every lock it
 -- needs is already held, so a wait here fails the call (55P03). Returns dc._out, plus 'target' when a revoke was applied.
 create function dc._submit_stage(s dc.sessions, p_body jsonb) returns jsonb language plpgsql as $$
 #variable_conflict use_variable
-declare ev jsonb; cid text; typ text; lab jsonb; tlab jsonb; vref text; created bool := false; r jsonb; code text;
-        body_keys text[] := array['type','client_id','idem','req','value','label','based_on','proposal','proposal_hash','pending','verb',
-                                  'choose','target','role'];
+declare ev jsonb; typ text; lab jsonb; tlab jsonb; vref text; created bool := false; r jsonb; code text;
         subj text; toks text[] := array[]::text[]; tok text; x jsonb;
 begin
-  if p_body is null or jsonb_typeof(p_body) <> 'object' then
-    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
+  code := dc._body_refusal(p_body);          -- review of 6b77354 N2: the same checks the pre-read of dc._acquire_submit runs
+  if code is not null then
+    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, code);
+    return dc._out(case when code = 'bad_subject' then 'bad_event' else code end, null, null, null);
   end if;
-  if p_body ?| array['tenant', 'principal', 'channel', 'id', 'actor', 'trust_origin'] then
-    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'identity_in_body'); return dc._out('identity_in_body', null, null, null);
-  end if;
-  cid := case when jsonb_typeof(p_body->'client_id') = 'string' then p_body->>'client_id' end;
-  if exists (select 1 from jsonb_object_keys(p_body) k where k <> all(body_keys)) or cid is null or cid !~ '^[A-Za-z0-9._-]{1,64}$' then
-    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
-  end if;
-  ev := (p_body - 'client_id' - 'value' - 'label')
-        || jsonb_build_object('id', s.principal || '/' || cid, 'tenant', s.tenant, 'principal', s.principal, 'channel', s.channel)
-        || dc._origin((select p.kind from dc.principal p where p.tenant = s.tenant and p.pid = s.principal), s.channel);
+  ev := dc._body_ev(s, p_body);
   if p_body ? 'value' then
-    if jsonb_typeof(p_body->'value') <> 'string' or not p_body ? 'label' then
-      insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
-    end if;
-    begin
-      lab := dc._label_norm(p_body->'label');
-    exception when others then
-      insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
-    end;
-    -- subjects must arrive canonical (the caller applies pol.labels.canon_subject): a non-canonical spelling is refused, never stored
-    if exists (select 1 from jsonb_array_elements(p_body->'label'->'subjects') e where e #>> '{}' <> dc._canon_subject(e #>> '{}')) then
-      insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_subject'); return dc._out('bad_event', null, null, null);
-    end if;
+    lab := dc._label_norm(p_body->'label');
     for subj in select jsonb_array_elements_text(lab->'subjects') loop
       insert into dc.subject_tokens values (s.tenant, subj, 'subj-' || replace(gen_random_uuid()::text, '-', '')) on conflict do nothing;
       select t.token into tok from dc.subject_tokens t where t.tenant = s.tenant and t.subject = subj;
@@ -1258,8 +1378,6 @@ begin
       on conflict do nothing;
     created := found;
     ev := ev || jsonb_build_object('value_ref', vref, 'label', tlab);
-  elsif p_body ? 'label' then
-    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
   end if;
   r := dc._reduce_stage(s.tenant, ev);
   code := r->>'code';
@@ -1287,7 +1405,7 @@ end $$;
 create function dc._acquire_submit(s dc.sessions, p_body jsonb, p_lt bigint, out why text, out xa boolean) language plpgsql as $$
 #variable_conflict use_variable
 declare typ text := case when jsonb_typeof(p_body) = 'object' and jsonb_typeof(p_body->'type') = 'string' then p_body->>'type' end;
-        adm bool; tgt text; tk int; r record; sc int;
+        adm bool; pre bool; tgt text; tk int; r record; sc int;
         wr text := case when typ = 'revoke' then 'row exclusive' else 'row share' end;
 begin
   perform dc._rel(s.expires_at, p_lt,
@@ -1297,10 +1415,26 @@ begin
   xa := false;
   select coalesce(p.admin, false) into adm from dc.principal p where p.tenant = s.tenant and p.pid = s.principal;
   adm := coalesce(adm, false);
-  if adm and typ = 'revoke' and jsonb_typeof(p_body->'target') = 'string' then
+  -- review of 6b77354 N2: and only when nothing before the rules would refuse it either: the stage's body checks (the same function),
+  -- dc._shape of the event the stage builds (a value's label stands in for the minted one), no earlier event with this idempotency key
+  -- (duplicate or idem_conflict), the caller unrevoked
+  pre := adm and typ in ('revoke', 'grant');
+  if pre and dc._body_refusal(p_body) is not null then pre := false; end if;       -- (in steps: SQL does not promise an order)
+  if pre and not dc._shape(dc._body_ev(s, p_body)
+                           || case when p_body ? 'value' then jsonb_build_object('value_ref', 'val-pre', 'label', dc._label_norm(p_body->'label'))
+                                   else '{}'::jsonb end) then
+    pre := false;
+  end if;
+  if pre and exists (select 1 from dc.events e where e.tenant = s.tenant and e.principal = s.principal and e.idem = p_body->>'idem') then
+    pre := false;
+  end if;
+  if pre and exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.revoked) then
+    pre := false;                                            -- predicted refusal: the shared locks of any other submit (no xa)
+  end if;
+  if pre and typ = 'revoke' and jsonb_typeof(p_body->'target') = 'string' then
     tk := dc._ak(s.tenant, p_body->>'target');               -- NULL: no such principal in this tenant (the rules: bad_event)
     if tk is not null then tgt := p_body->>'target'; xa := true; end if;
-  elsif adm and typ = 'grant' and jsonb_typeof(p_body->'req') = 'string' and jsonb_typeof(p_body->'target') = 'string'
+  elsif pre and typ = 'grant' and jsonb_typeof(p_body->'req') = 'string' and jsonb_typeof(p_body->'target') = 'string'
         and jsonb_typeof(p_body->'role') = 'string' then
     xa := exists (select 1 from dc.head x where x.tenant = s.tenant and x.req = p_body->>'req')
           and exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = p_body->>'target' and not p.revoked);
@@ -1339,10 +1473,26 @@ begin
   why := null;
 end $$;
 
+-- Review of 6b77354 N1: only a revoke or a grant can request an exclusive lock (dc._acquire_submit), so only those are marked (4.4 (c));
+-- the marker is released on every exit, the exception handler included (a 55P03 or a refusal inside dc._submit also leaves its inner
+-- blocks, which do not release a session lock). Other bodies skip the handler and the pg_locks reads.
 create function dc.submit(p_token text, p_body jsonb) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
+declare r jsonb;
 begin
   perform dc._no2pc();                      -- review of 2262eaa F2a
-  return dc._submit(p_token, p_body, dc._lt());
+  if jsonb_typeof(p_body) is distinct from 'object' or jsonb_typeof(p_body->'type') is distinct from 'string'
+     or p_body->>'type' not in ('revoke', 'grant') then
+    return dc._submit(p_token, p_body, dc._lt());
+  end if;
+  perform dc._unmark();
+  begin
+    r := dc._submit(p_token, p_body, dc._lt());
+  exception when query_canceled or others then
+    perform dc._unmark();
+    raise;
+  end;
+  perform dc._unmark();
+  return r;
 end $$;
 
 -- Acquire (every wait capped at the session's expiry; a timeout after it is the refusal), then under lock_timeout 1 ms the stage and
@@ -1502,9 +1652,18 @@ end $$;
 -- meanwhile; it waits FIFO for the submits in flight and new ones queue behind it, XWAIT per attempt), L5.2 the value rows by reference,
 -- L5.3 the token row; then under 1 ms the deletes and the final judgment.
 create function dc.erase_values(p_token text, p_subject text, p_refs text[]) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
+declare r jsonb;
 begin
   perform dc._no2pc();                      -- review of 2262eaa F2a
-  return dc._erase_values(p_token, p_subject, p_refs, dc._lt());
+  perform dc._unmark();                     -- 4.4 (c), as dc.end_session
+  begin
+    r := dc._erase_values(p_token, p_subject, p_refs, dc._lt());
+  exception when query_canceled or others then
+    perform dc._unmark();
+    raise;
+  end;
+  perform dc._unmark();
+  return r;
 end $$;
 
 create function dc._erase_values(p_token text, p_subject text, p_refs text[], p_lt bigint) returns jsonb language plpgsql
@@ -1569,8 +1728,8 @@ grant execute on function dc.submit(text, jsonb), dc.explain(text, text), dc.rea
 grant execute on function dc.open_session(text, integer), dc.end_session(text) to dc_idp;
 -- 4.4: the only function that signals backends runs as dc_evictor (NOLOGIN, member of pg_signal_backend, nothing else) and only
 -- owner code can call it; no login role can.
-alter function dc._evict(int, int) owner to dc_evictor;
-grant execute on function dc._evict(int, int) to dc_owner;
+alter function dc._evict(int, int, text[]) owner to dc_evictor;
+grant execute on function dc._evict(int, int, text[]) to dc_owner;
 -- 4.4: the advisory-lock functions are PUBLIC by default, so a login role could take A, T, a fence or an idempotency lock with a raw
 -- call and hold it outside any API call. In this database only the owner's code may call them (pg_proc is per database; other
 -- databases keep the default).

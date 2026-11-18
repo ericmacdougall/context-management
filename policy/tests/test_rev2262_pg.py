@@ -269,7 +269,9 @@ class H1_RevocationInProgress(_Rev):
         """H1. The admin's revoke of alice holds A(alice) exclusively and waits for the tenant lock: bob's stalled submit (evicted in its
         first round) and an owner connection that holds T shared until 3.5 s (never evicted, so the revoke waits a second round).
         Meanwhile dc_idp ends alice's session: it waits XWAIT for A(alice), then evicts. Red at 2262eaa: it evicted the revoker
-        (granted holder), and the revocation was lost."""
+        (granted holder), and the revocation was lost. Review of 6b77354 N1: this case passed on 6b77354 only by timing (the revoker
+        happened to be back in an advisory wait when end_session looked); the deterministic cases are
+        tests.test_rev6b77_pg.N1_ParkedRevocation."""
         atok = self.tok("alice")
         bc, bbp, _ = self.holder("bob", "submit")
         self.hold.execute("begin")

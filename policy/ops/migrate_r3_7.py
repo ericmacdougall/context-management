@@ -86,9 +86,22 @@ def advisory_acl(c):
 
 def restore_advisory_acl(c, acl):
     """Make the EXECUTE grants of each advisory-lock function exactly `acl` (as advisory_acl returns it): revoke every grantee that is
-    not in it, grant every one that is (a role dropped since forward is skipped)."""
+    not in it, grant every one that is (a role dropped since forward is skipped).
+    Review of 6b77354 N7: `acl` comes from dc.migration_mark, which dc_owner can rewrite, and this runs as superuser, so it is
+    validated first: every function it names must be one of the live advisory-lock signatures (read from pg_proc here; only those
+    strings are ever placed in SQL text), and every entry must be [role name, bool]. Anything else refuses the rollback."""
     now = advisory_acl(c)
-    for f in sorted(set(now) | set(acl)):
+    if not isinstance(acl, dict):
+        raise MigrationRefused("dc.migration_mark.advisory_acl is not an object: refusing to restore from it")
+    bad = sorted(f for f in acl if f not in now)
+    if bad:
+        raise MigrationRefused("dc.migration_mark.advisory_acl names functions that are not advisory-lock functions: %d entries"
+                               % len(bad))
+    for f, v in acl.items():
+        if not isinstance(v, list) or not all(isinstance(e, list) and len(e) == 2 and isinstance(e[0], str) and isinstance(e[1], bool)
+                                              for e in v):
+            raise MigrationRefused("dc.migration_mark.advisory_acl has a malformed entry: refusing to restore from it")
+    for f in sorted(now):
         want = {g: opt for g, opt in acl.get(f, [])}
         for g, _opt in now.get(f, []):
             if g not in want:
