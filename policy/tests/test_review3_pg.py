@@ -322,11 +322,17 @@ class Review3Rollback(unittest.TestCase):
         except psycopg.Error as e:
             self.fail("the old engine's raw advisory lock is refused after the rollback: %s %s" % (e.sqlstate, e.diag.message_primary))
 
+    def _evictor_back(self):
+        if self.o.execute("select 1 from pg_roles where rolname = 'dc_evictor'").fetchone() is None:
+            self.o.execute("create role dc_evictor nologin")
+        self.o.execute("grant pg_signal_backend to dc_evictor")
+
     def test_44_forward_creates_the_evictor_role(self):
         """FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where
         pgcore.install never ran must create it too. Red at 7464493 (forward fails: role dc_evictor does not exist)."""
         self.MIG.rollback(self.o)
         self.o.execute("drop role dc_evictor")
+        self.addCleanup(self._evictor_back)     # the cluster as pgcore.install leaves it, whatever forward did (on the red tree: nothing)
         try:
             self.MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
         except psycopg.Error as e:
