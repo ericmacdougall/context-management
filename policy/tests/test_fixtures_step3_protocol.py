@@ -12,7 +12,10 @@ protocol cases FAIL (an assertion, not an error), so a green protocol run is not
   in_progress    dc._evict's "inside the protocol" exemption removed: end_session evicts a revocation in progress (H1).
   collapsed_key  every principal shares one authority key (dc._ak = 1): a revoke in one tenant evicts and fences another (F1).
   refused_xlock  a grant takes the tenant lock exclusively whatever the rules will say (F5).
-  expiry_noop    the authentication layer: dc._session no longer judges the session's expiry, so an expired token is accepted.
+  expiry_noop    the authentication layer: session expiry is judged nowhere (dc._session and the entry guards of dc._submit,
+                 dc._explain, dc._erase_candidates and dc._erase_values), so an expired token is accepted. A first version patched
+                 dc._session alone and was NOT caught (the entry guards still refused the expired token): each expiry check alone is
+                 redundant, like dc._gate below.
 Not covered, disclosed: removing the final judgment dc._gate's session check is caught by no case here (the pins make it redundant
 on every path these cases drive); the port keeps it as defence in depth."""
 import os
@@ -58,7 +61,17 @@ MUTANTS = {
         ("    xa := exists (select 1 from dc.head x where x.tenant = s.tenant and x.req = p_body->>'req')\n"
          "          and exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = p_body->>'target' and not p.revoked);\n",
          "    xa := true;\n")]),
-    "expiry_noop": ("auth", [("     and not x.revoked and x.expires_at > clock_timestamp();\n", "     and not x.revoked;\n")]),
+    "expiry_noop": ("auth", [
+        ("     and not x.revoked and x.expires_at > clock_timestamp();\n", "     and not x.revoked;\n"),
+        ("  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then\n",
+         "  if s.token_hash is null or s.revoked then\n"),
+        ("  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then return null; end if;\n",
+         "  if s.token_hash is null or s.revoked then return null; end if;\n"),
+        ("  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then return deny; end if;\n",
+         "  if s.token_hash is null or s.revoked then return deny; end if;\n"),
+        ("  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then return jsonb_build_object('refused', "
+         "'unauthorized'); end if;\n",
+         "  if s.token_hash is null or s.revoked then return jsonb_build_object('refused', 'unauthorized'); end if;\n")]),
 }
 
 
