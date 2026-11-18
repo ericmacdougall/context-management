@@ -10,7 +10,7 @@ IMG_ES=docker.elastic.co/elasticsearch/elasticsearch:9.5.6
 cg() { echo "/sys/fs/cgroup/system.slice/docker-$(docker inspect -f '{{.Id}}' "$1").scope"; }
 case "${1:-}" in
   fill)
-    df -h /home/eric | tail -1
+    df -h "$HOME" | tail -1
     echo "== tmpfs 128 MiB > memory limit 64 MiB (no swap): write 120 MiB"
     docker run --name emlab2-gatefix-fill --memory 64m --memory-swap 64m \
       --mount type=tmpfs,dst=/d,tmpfs-size=134217728 --entrypoint sh postgres:16 \
@@ -62,7 +62,7 @@ case "${1:-}" in
   teardown)
     docker rm -f "$ES" "$PG" emlab2-gatefix-fill emlab2-gatefix-fill2 > /dev/null 2>&1
     docker ps -a --filter name=emlab2-gatefix --format '{{.Names}}' | wc -l | sed 's/^/remaining containers: /'
-    df -h /home/eric | tail -1
+    df -h "$HOME" | tail -1
     ;;
   *) echo "usage: fill | es | pg | restart | teardown"; exit 2 ;;
 esac

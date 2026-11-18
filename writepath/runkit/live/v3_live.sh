@@ -42,7 +42,7 @@ evidence() {
 }
 case "${1:-}" in
   setup)
-    df -h /home/eric | tail -1
+    df -h "$HOME" | tail -1
     mkdir -p "$WP_HOME/conf"
     printf 'emlab2-wphard\n' > "$WP_HOME/conf/stream"
     printf '25999\n' > "$WP_HOME/conf/pg_port"
@@ -60,7 +60,7 @@ case "${1:-}" in
     echo "init: $(gate init 'gate v3 live confirmation home' | tail -1)"
     ;;
   cases)
-    df -h /home/eric | tail -1
+    df -h "$HOME" | tail -1
     # (a) a valid run
     S=$(gate start); RS=$?; C=$(gate check a); RC=$?; sleep 3; E=$(gate end); RE=$?
     row "case=a valid start_rc=$RS check_rc=$RC end_rc=$RE"
@@ -125,7 +125,7 @@ case "${1:-}" in
     docker rm -fv "$ES" "$PG" "$PGV" > /dev/null 2>&1
     docker ps -a --filter name=emlab2-gatefix --format '{{.Names}}' | wc -l | sed 's/^/remaining containers: /'
     rm -rf "$G/home" "$G/tree" "$G/why" "$G/ledger.cut"
-    du -sh "$G" 2> /dev/null; df -h /home/eric | tail -1
+    du -sh "$G" 2> /dev/null; df -h "$HOME" | tail -1
     ;;
   *) echo "usage: setup | cases | teardown"; exit 2 ;;
 esac

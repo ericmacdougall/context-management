@@ -50,7 +50,7 @@ run_case() {  # $1 label, $2 action
 }
 case "${1:-}" in
   setup)
-    df -h /home/eric | tail -1
+    df -h "$HOME" | tail -1
     mkdir -p "$WP_HOME/conf"
     printf 'emlab2-wphard\n' > "$WP_HOME/conf/stream"
     printf '25999\n' > "$WP_HOME/conf/pg_port"
@@ -94,7 +94,7 @@ case "${1:-}" in
     api "/_cluster/settings?include_defaults=true&flat_settings=true&filter_path=*.cluster.routing.allocation.disk.watermark.*" | sed 's/^/WMRESET /'; echo
     ;;
   cases)
-    df -h /home/eric | tail -1
+    df -h "$HOME" | tail -1
     run_case a none
     run_case b forge
     run_case d stop
@@ -117,7 +117,7 @@ case "${1:-}" in
     docker rm -f "$ES" "$PG" > /dev/null && echo "removed $ES $PG"
     ps -eo pid,command | grep -E 'disk_gate _capture' | grep -v grep || echo "no capture companion running"
     rm -rf "$G/home" "$G/tree" "$G"/probe_*
-    du -sh "$G" 2>/dev/null; df -h /home/eric | tail -1
+    du -sh "$G" 2>/dev/null; df -h "$HOME" | tail -1
     ;;
   *) echo "usage: setup | probe | cases | teardown"; exit 2 ;;
 esac
