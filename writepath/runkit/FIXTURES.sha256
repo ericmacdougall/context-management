@@ -1,7 +1,7 @@
 # Registered fixtures (GATE-DESIGN 8.2 P6): every non-.py file under exp/, wp/, old_repro/ and host/, and requirements.lock,
 # with its SHA-256 (sha256sum format). The gate refuses a run when a file there is not listed or differs. Update it in
 # the same commit as the fixture: shasum -a 256 <file> (or sha256sum <file>).
-6a8195f3f072ed21a7eaff0f9e5e013f67aab66acc1714163e3501425644b353  exp/THRESHOLDS.md
+aa1eb0d88be959a579d80e2fd2ef2e925e15e5cebb4509f3cd98e7c001f6f1b4  exp/THRESHOLDS.md
 36a86fc3b0b367b6adaf9070f5b243efcee4d6d273e8c0d2598188cda5b0ccc1  exp/controls_4960f50.sql
 66161c238241034f8ce1a1096902a87bc9d4bfd55ae30d8f9cd31681810cf4b1  wp/keys_schema.sql
 80442bc20ab05975dd0ed263f1afd88585458b204e9cadf451c2107e23ac47d9  wp/schema.sql
