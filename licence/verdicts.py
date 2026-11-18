@@ -61,12 +61,15 @@ def dls(e: Dls):
     shown = {k: v for k, v in counts.items() if v}
     if shown:   # THRESHOLDS.md:26: returning any document is a FAIL, whatever the status; positive evidence decides first
         return Verdict(FAIL, "dls_search_as_user: documents returned after start_basic (%s)" % ", ".join("%d %s" % (v, k) for k, v in shown.items()))
+    if e.after.cell_class in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP"):   # matrix.NOT_OBSERVED
+        return Verdict(UNVERIFIED, "after cell not established: %s" % e.after.cell_class)
+    r = refusal("dls_search_as_user", e.after.outcome)
+    if r.status == FAIL:   # a missing witness only withholds a PASS; it never softens a definite FAIL (a 2xx answer)
+        return r
     missing = [k for k in ("in the answer", "in polled searches started after start_basic") if counts[k] is None]
     if missing:
         return Verdict(UNVERIFIED, "dls_search_as_user: %s: %s" % (_NO_DOC_WITNESS, ", ".join(missing)))
-    if e.after.cell_class in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP"):   # matrix.NOT_OBSERVED
-        return Verdict(UNVERIFIED, "after cell not established: %s" % e.after.cell_class)
-    return refusal("dls_search_as_user", e.after.outcome)
+    return r
 
 
 def battery(e: Battery):
@@ -74,10 +77,10 @@ def battery(e: Battery):
     for p in E.BATTERY:
         r = getattr(e.after, p)
         leaked = r.hidden or r.any_source or bool(r.docs)
-        if not leaked and r.docs is None:
-            out.append(Verdict(UNVERIFIED, "%s: %s" % (p, _NO_DOC_WITNESS)))
-        else:
-            out.append(refusal(p, r.outcome, leaked))
+        v = refusal(p, r.outcome, leaked)
+        if v.status != FAIL and r.docs is None:   # a missing witness withholds a PASS, never a definite FAIL
+            v = Verdict(UNVERIFIED, "%s: %s" % (p, _NO_DOC_WITNESS))
+        out.append(v)
     return combine(out)
 
 

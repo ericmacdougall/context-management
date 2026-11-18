@@ -428,9 +428,9 @@ DlsControl = evidence("DlsControl", {
     "returned": F("returned", "count", lo=1, hi=7)},
     doc="Positive restricted control on trial: the DLS user read some (1..7 of 8) documents, all permitted.")
 # Review 12 F28 (THRESHOLDS.md:26 "returning any document is a FAIL"): the witness is the status-independent document count the
-# recorder reads from the response body's shape (matrix.docs_in_payload). It is mandatory: a record made without it (every committed
-# life, recorded before review 12) leaves it absent, and the verdict is then UNVERIFIED unless another field already shows a returned
-# document (a positive count is positive evidence and is a FAIL with or without the new witness). The legacy 200-only `returned` count is
+# recorder reads from the response body's shape (matrix.docs_in_payload). It is optional so a record made without it (every committed
+# life, recorded before review 12) still parses; verdicts.dls then withholds the PASS (UNVERIFIED) unless a field already shows a
+# definite FAIL (a positive document count, or a 2xx answer), which a missing witness never softens. The legacy 200-only `returned` count is
 # read when present.
 DlsAfter = evidence("DlsAfter", {
     "outcome": F("status", "status", expect=REFUSALS, text="error"),

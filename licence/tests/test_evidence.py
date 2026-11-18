@@ -43,6 +43,14 @@ def _life(name):
     return copy.deepcopy(_LIVES[mode][name])
 
 
+def _inner(status, reason, cid):
+    """Review 12: verdicts.judge turns a gate's PASS into UNVERIFIED "registered clause not witnessed: <LIMIT cid> (...)" and changes
+    nothing else; map exactly that downgrade back to the inner PASS so a test can still assert what the evidence decided."""
+    if status == "UNVERIFIED" and reason.startswith("registered clause not witnessed: %s " % cid):
+        return "PASS"
+    return status
+
+
 def _healthy(scope):
     """Known-good fixture: committed down_7 / up_1 as the summarizer loads them, with addendum C's sem_failed_other (never recorded) set
     so that EXP2-T4 can pass. Every other value is as committed."""
@@ -141,6 +149,8 @@ class ScenarioRegressionTests(unittest.TestCase):
         self.assertNotPass("down_7", "exp1", "T4_battery_status", ("dls_battery_trial",), {}, exact="UNVERIFIED")
         self.assertNotPass("down_7", "exp1", "T4_battery_status", ("dls_battery_trial", "esql"), "absent", exact="UNVERIFIED")
         self.assertNotPass("down_7", "exp1", "T4_battery_status", ("dls_battery_after", "esql", "status"), 401, exact="UNVERIFIED")
+        # review 12: a committed record has no docs_in_payload witness; that withholds a PASS but never softens a 2xx answer's FAIL
+        self.assertNotPass("down_7", "exp1", "T4_battery_status", ("dls_battery_after", "esql", "status"), 200, exact="FAIL")
         self.assertNotPass("down_7", "exp1", "T4_battery_status", ("dls_battery_trial", "get_hidden_doc1", "returned_hidden_doc"), True,
                            exact="UNVERIFIED")
 
@@ -394,9 +404,9 @@ class RecordingBoundaryTests(unittest.TestCase):
         Sub = type("Sub", (E.DlsControl,), {})
         ok = E.Outcome.of(200)
         sub = Sub(outcome=ok, only_kw_a=True, returned=4)
-        after = E.DlsAfter(outcome=E.Outcome.of(403), cell_class="OTHER_ERROR")
+        after = E.DlsAfter(outcome=E.Outcome.of(403), cell_class="OTHER_ERROR", docs=0, returned=None)
         with self.assertRaises(E.Unparsed):
-            E.Dls(control=sub, after=after)
+            E.Dls(control=sub, after=after, polled_docs=0)
         a = E.Availability.parse({"exp2": {"T2_failed_requests": 0, "T2_non_control_requests": 5, "T2_longest_failure_window_s": 0.0,
                                            "T2_failure_windows": []}})
         self.assertIsInstance(a.windows, tuple)
@@ -510,13 +520,15 @@ class GeneratedInvalidEvidenceTests(unittest.TestCase):
             E.Writes(acked=3, acked_absent=5, sem_acked=1, sem_acked_absent=0, sem_failed=0, sem_failed_present=0, sem_failed_loud=0,
                      sem_failed_other=None, loss_control=True)   # relation: absent acknowledged writes cannot exceed acknowledged
         with self.assertRaises(E.Unparsed):
-            E.Availability(failed=-1, requests=10, longest_window_s=0.0, windows=[])
+            E.Availability(failed=-1, requests=10, longest_window_s=0.0, windows=[], consecutive_auto_s=0.0)
         E.DlsControl(outcome=ok, only_kw_a=True, returned=4)   # and a valid one constructs
 
     def test_healthy_fixture_passes_every_gate(self):
-        for name, g in self.V.GATES.items():
-            v = self.V.judge(name, _healthy(g.scope))
-            self.assertEqual(v.status, "PASS", (name, v.reason))
+        import clauses
+        for name, g in self.V.GATES.items():   # review 12: the base carries the new DLS witnesses; a LIMIT gate shows only its LIMIT
+            v = self.V.judge(name, clauses.augment_base(_healthy(g.scope)))
+            lim = clauses.limits_for(name)
+            self.assertEqual(_inner(v.status, v.reason, lim[0].cid) if lim else v.status, "PASS", (name, v.reason))
 
     def test_generated_invalid_evidence_is_never_pass_and_never_raises(self):
         problems, n = [], 0
@@ -772,7 +784,10 @@ class RawEdgeTests(unittest.TestCase):
         return R
 
     def t3(self, R):
-        return summarize.exp1_checks(R)["T3_latch_status"]
+        """The latch detector's own verdict. Review 12: EXP1-T3 carries the LIMIT EXP1-T3.every-cell, so a detector PASS is reported as
+        UNVERIFIED with exactly that clause as the reason; this reads it back as the inner PASS (any other UNVERIFIED stays UNVERIFIED)."""
+        r = summarize.exp1_checks(R)
+        return _inner(r["T3_latch_status"], r["T3_latch_reason"], "EXP1-T3.every-cell")
 
     def test_f18_adapter_message_format_is_the_adapters(self):
         import observe
@@ -996,6 +1011,12 @@ class RebuildTests(unittest.TestCase):
             out["poll: every probe answers in the last poll"] = poll(each_probe(late_success))
             out["poll: every first refusal is one poll later"] = poll(each_probe(first_refusal_later))
             out["poll: no probe is ever refused"] = poll(each_probe(no_refusal))
+
+            def dls_docs_recorded(P, t):   # review 12 F28: every polled DLS search carries a status-independent count of 1
+                for p in P:
+                    row = list(p["dls_search"]) + [None] * max(0, 3 - len(p["dls_search"]))
+                    p["dls_search"] = row[:3] + [1]
+            out["poll: every DLS search returned one document (F28)"] = poll(dls_docs_recorded)
         else:
             def early_backends_client(W, q, s, *a):   # the flip's first backend answer (by start) and those near it: the flip moves later
                 t = min(r[0] for r in W if r[2] == "auto" and r[4] and r[5] == "backend" and r[1] >= s)
@@ -1183,7 +1204,8 @@ class RebuildTests(unittest.TestCase):
         R = _healthy("down")
         for c in LATCH_CELLS:
             R["exp1_after"][c].update(adapter_message=msg, adapter_detects=True)
-        self.assertEqual(self.V.judge("EXP1-T3", R).status, "PASS")
+        v = self.V.judge("EXP1-T3", R)
+        self.assertEqual(_inner(v.status, v.reason, "EXP1-T3.every-cell"), "PASS", v.reason)
 
     LIMITS = ("EXP3-T2", "EXP1-T3", "EXP2-T2", "EXP1-T2", "EXP1-T1", "EXP4-T2")
 
