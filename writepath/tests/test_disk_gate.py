@@ -73,6 +73,22 @@ for op in json.loads(env.get("STUB_OPS") or "[]"):
         pathlib.Path(op[1]).write_text(op[2])
     elif op[0] == "linger":                          # a child that outlives the experiment, in its process group
         subprocess.Popen(["sleep", "30"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    elif op[0] == "dump":                            # v6 m-G: what the experiment was started with
+        pathlib.Path(op[1]).write_text(json.dumps({"env": sorted(env), "isolated": sys.flags.isolated,
+                                                   "bytecode_off": sys.dont_write_bytecode}))
+    elif op[0] == "mkfifo":                          # v6 m-B: a FIFO in the run directory
+        os.mkfifo(os.path.join(env["WP_RUN_DIR"], op[1]))
+    elif op[0] == "sparse":                          # v6 m-C: a large sparse file in the run directory
+        with open(os.path.join(env["WP_RUN_DIR"], op[1]), "wb") as f:
+            f.truncate(int(op[2]))
+    elif op[0] == "bigrow":                          # v6 m-C: a JSON row over the gate's size cap
+        with open(os.path.join(env["WP_RUN_DIR"], op[1]), "w") as f:
+            f.write('{"gate_run": "%s", "at": "%s", "pad": "' % (env["WP_GATE_RUN"],
+                                                                  time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())))
+            f.write("x" * int(op[2]))
+            f.write('"}')
+    elif op[0] == "selfkill":                        # v6 F-2: the experiment dies by a signal the gate did not send
+        os.kill(os.getpid(), int(op[1]))
 rel = env.get("STUB_RELEASE")
 t0 = time.monotonic()
 while rel and not os.path.exists(rel) and time.monotonic() - t0 < 120:
@@ -126,6 +142,67 @@ def make_tree(src_root, dest):
     return dest
 
 
+# ------------------------------------------------------- the live catalogs as a clean lab cluster shows them (v6, F-3)
+# Written out here, not imported from exp/guard_policy.py: a weakened expectation in the gate's tree must not move the
+# scenario with it. Values are text, as the gate compares them. test_v6_guard_policy_is_bound_to_setup binds the
+# expectation file to wp/setup.py.
+T_POLICY = {"events": "SI", "quarantine": "SI", "inbox": "SIU", "analyst_jobs": "SIU", "facts": "SIU", "cursors": "SIU",
+            "erasure_jobs": "SI", "tombstones": "S", "store_registry": "S", "decision_heads": "S", "chains": "S",
+            "subjects": "S", "leases": "", "quarantine_quota": "", "identifier_epochs": "S", "subject_identifiers": "S",
+            "erasure_mentions": "S", "legal_holds": "S", "erasure_withheld": "S", "erasure_rescanned": "S"}
+T_PRIV = {"S": "SELECT", "I": "INSERT", "U": "UPDATE"}
+T_LOGIN = ["wp_app", "wp_broker", "wp_kms", "wp_legal", "wp_verifier", "wp_watchdog"]
+T_CONF = "idle_in_transaction_session_timeout=5s,lock_timeout=10s,statement_timeout=30s"
+T_ROW, T_BEFORE, T_INS, T_DEL, T_UPD, T_TRUNC = 1, 2, 4, 8, 16, 32
+
+
+def _db_acl(conn):
+    return ",".join(sorted(["PUBLIC:TEMPORARY", "wp:CONNECT", "wp:CREATE", "wp:TEMPORARY"] + [f"{g}:CONNECT" for g in conn]))
+
+
+def good_catalog():
+    """{section: {tag: rows}}: what the gate's tagged catalog queries read on a cluster wp.setup --reset just built."""
+    roles = [["wp", "True", "True", "True", "True", "True", "True", "True"]]
+    roles += [[r, "False", "True", "False", "False", str(r != "wp_owner"), "False", "False"]
+              for r in sorted(T_LOGIN + ["wp_owner"])]
+    cluster = {
+        "roles": roles,
+        "members": sorted([["pg_checkpoint", "wp_kms"], ["pg_read_all_stats", "wp_kms"],
+                           ["pg_signal_backend", "wp_watchdog"], ["pg_read_all_stats", "wp_watchdog"]]),
+        "settings": [[r, "", T_CONF] for r in T_LOGIN],
+        "databases": [["postgres", "5", "True", "wp", "PUBLIC:CONNECT,PUBLIC:TEMPORARY,wp:CONNECT,wp:CREATE,wp:TEMPORARY"],
+                      ["template0", "4", "False", "wp", ""], ["template1", "1", "True", "wp", ""],
+                      ["wp_events", "16384", "True", "wp", _db_acl(["wp_app", "wp_broker", "wp_legal", "wp_verifier"])],
+                      ["wp_keys", "16385", "True", "wp", _db_acl(["wp_kms", "wp_verifier"])]],
+        "parameter_acl": [], "auto_conf": []}
+    tables = sorted(T_POLICY)
+    ev = {"schema": [["public", "2200", "wp_owner", ""]],
+          "relations": [[t, str(17000 + i), "r", "wp_owner", "", "False", "False"] for i, t in enumerate(tables)],
+          "column_acl": [["erasure_jobs", "status", "{wp_app=w/wp_owner}"]],
+          "triggers": sorted([[t, f"{t}_guard", str(T_BEFORE | T_ROW | T_INS | T_UPD | T_DEL), "A", "wp_guard"]
+                              for t in tables] + [[t, f"{t}_no_truncate", str(T_BEFORE | T_TRUNC), "A", "wp_guard"]
+                                                  for t in tables]),
+          "functions": [["wp_guard", "", "wp_owner", "False", "", "0" * 32, ""],
+                        ["wp_hold_place", "subject text", "wp_owner", "True", "{wp_legal=X/wp_owner}", "1" * 32, ""],
+                        ["wp_hold_release", "subject text", "wp_owner", "True", "{wp_legal=X/wp_owner}", "2" * 32, ""]],
+          "constraints": [["events", "events_pkey", "PRIMARY KEY (id)"], ["facts", "facts_pkey", "PRIMARY KEY (id)"]],
+          "indexes": [["decision_source_once", "True", "True", "CREATE UNIQUE INDEX decision_source_once ..."],
+                      ["erasure_one_open", "True", "True", "CREATE UNIQUE INDEX erasure_one_open ..."]],
+          "policies": [], "default_acl": [],
+          "app_privs": [[t, T_PRIV[p]] for t in tables for p in sorted(T_POLICY[t])],
+          "app_column_update": [[t] for t in tables if "U" in T_POLICY[t] or t == "erasure_jobs"],
+          "app_execute": [["wp_guard"]]}
+    ks = {"schema": [["public", "2201", "wp_kms", ""]],
+          "relations": [["subject_keys", "18000", "r", "wp_kms", "", "False", "False"],
+                        ["tenant_keys", "18001", "r", "wp_kms", "", "False", "False"]],
+          "column_acl": [], "triggers": [], "functions": [], "constraints": [], "indexes": [], "policies": [],
+          "default_acl": [], "verifier_key_read": [["False"]]}
+    return {"cluster": cluster, "wp_events": ev, "wp_keys": ks}
+
+
+GATE_CG = "user.slice/gate-test.scope"         # the gate's own cgroup in the scenario (v6 F-2)
+
+
 class FakeES(http.server.BaseHTTPRequestHandler):
     """ES's node stats for the fake ES container S["cid"]: one data path with the container's statfs, ES's three
     free-space thresholds (S["thr"], default 3, 2 and 1 GiB like the settings below), the container's node id and a
@@ -153,8 +230,10 @@ class FakeES(http.server.BaseHTTPRequestHandler):
         elif code == 200 and path.startswith("/_all/_settings"):
             body = S.get("idx", {})
         elif code == 200 and path.startswith("/_cat/indices/"):
-            # v5 P7: indices under the stream prefix left by an earlier run (none on clean stores)
-            body = [{"index": n} for n in S.get("es_indices", [])]
+            # v5 P7: indices under the stream prefix left by an earlier run (none on clean stores); "cat_status" makes
+            # this one request fail (review aacf3c0 mutant es_clean_error_passes)
+            code = S.get("cat_status", 200)
+            body = [{"index": n} for n in S.get("es_indices", [])] if code == 200 else {"error": code}
         elif code == 200 and path == "/_nodes/_local/stats/fs,jvm":
             started, now = _ms(c["started"]), int(time.time() * 1000)
             typ, total, free = c["statfs"][ESDATA]
@@ -198,11 +277,55 @@ class Fake:
     def create(cls, root):
         f = cls(root)
         (f.root / "state.json").write_text(json.dumps({"c": {}, "clock": 0.0, "flags": {}, "triggers": [], "calls": {},
-                                                       "home_du": GIB}))
+                                                       "home_du": GIB, "catalog": good_catalog()}))
         (f.root / "events").touch()
         (f.root / "proc").mkdir()
         (f.root / "cg").mkdir()
+        # v6 F-2: the gate's own cgroup (/proc/self/cgroup) and its memory.events
+        (f.root / "proc" / "self").mkdir()
+        (f.root / "proc" / "self" / "cgroup").write_text(f"0::/{GATE_CG}\n")
+        (f.root / "cg" / GATE_CG).mkdir(parents=True)
+        (f.root / "cg" / GATE_CG / "memory.events").write_text("low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\n")
         return f
+
+    # --- v6: the gate's own cgroup, the live catalogs, other containers using the home
+    def gate_oom(self):
+        """An OOM kill in the gate's own cgroup (the experiment or a process it started)."""
+        p = self.root / "cg" / GATE_CG / "memory.events"
+        ev = dict((k, int(v)) for k, v in (x.split() for x in p.read_text().splitlines()))
+        ev["oom"] += 1
+        ev["oom_kill"] += 1
+        p.write_text("".join(f"{k} {v}\n" for k, v in ev.items()))
+
+    def cat(self, section, tag, how, *row):
+        """Change what a catalog query returns: how "add" appends row, "drop" removes the rows starting with row,
+        "set" replaces the rows starting with row[0] by row."""
+        def f(st):
+            rows = st["catalog"][section][tag]
+            n = len(row) if how == "drop" else 1
+            keep = [r for r in rows if r[:n] != list(row[:n])] if how in ("drop", "set") else rows
+            st["catalog"][section][tag] = keep + ([list(row)] if how in ("add", "set") else [])
+        self.locked(f)
+
+    def cat_restore(self, section, tag):
+        self.locked(lambda st: st["catalog"][section].update({tag: good_catalog()[section][tag]}))
+
+    def reset_db(self, db):
+        """wp.setup --reset of database db (drop schema public cascade; create; schema files): new object ids."""
+        def f(st):
+            s = st["catalog"][db]
+            s["schema"] = [[r[0], str(int(r[1]) + 100000)] + r[2:] for r in s["schema"]]
+            s["relations"] = [[r[0], str(int(r[1]) + 100000)] + r[2:] for r in s["relations"]]
+        self.locked(f)
+
+    def add_user(self, name, source):
+        """A container that is not one of the run's stores, bind-mounting `source` (v6 F-4)."""
+        cid = self.add(name, "/srv/other", GIB // 4, GIB, GIB, GIB // 4)
+        self.set(cid, mounts=[{"Type": "bind", "Source": source, "Destination": "/w", "RW": True}])
+        return cid
+
+    def setflag(self, name, value):
+        self.flag(**{name: value})
 
     def st(self):
         return json.loads((self.root / "state.json").read_text())
@@ -452,7 +575,13 @@ class FakePG:
         dd = s["dd"] or dict(e.split("=", 1) for e in c.get("env", []) if "=" in e).get("PGDATA")
         tables = (self.F.st().get("tables") or self.TABLES).get(self.db, {})
         m = re.search(r'exists\s*\(\s*select 1 from public\."((?:[^"]|"")+)"', str(sql), re.I)
-        if re.match(r"\s*set\s+statement_timeout", str(sql), re.I):
+        tag = re.match(r"/\* gate:(\w+) \*/", str(sql))
+        if tag:                                     # v6: a catalog query, answered from the scenario's catalog
+            st = self.F.st()
+            if st["flags"].get("catalog_fail"):
+                raise RuntimeError("FakePG: the catalog cannot be read")
+            rows = [tuple(r) for r in st["catalog"]["cluster" if self.db == "postgres" else self.db][tag.group(1)]]
+        elif re.match(r"\s*set\s+statement_timeout", str(sql), re.I):
             rows = []
         elif m:
             rows = [(bool(tables.get(m.group(1).replace('""', '"'))),)]
@@ -484,7 +613,7 @@ class FakePG:
 
 
 def fake_main(argv):
-    F = Fake(os.environ["FAKE_DOCKER_STATE"])
+    F = Fake(os.environ.get("FAKE_DOCKER_STATE") or "/nonexistent-fake-state")
     prog, args = argv[0], argv[1:]
     if prog == "du":
         F.fire("du")
@@ -493,31 +622,51 @@ def fake_main(argv):
             return 1
         print(f"{st['home_du']}\t{args[-1]}")
         return 0
+    if prog == "ps":                                # the host's ps; "host_ps_rc" makes it fail (mutant group_list)
+        if F.root.is_dir() and F.st()["flags"].get("host_ps_rc"):
+            print("ps: cannot list processes", file=sys.stderr)
+            return 1
+        os.execv("/bin/ps", ["ps", *args])
     cmd, args = args[0], args[1:]
+    if cmd == "ps":                                 # v6 F-4: docker ps -aq --no-trunc
+        st = F.st()
+        if st["flags"].get("docker_ps_rc"):
+            print("Cannot connect to the Docker daemon", file=sys.stderr)
+            return 1
+        for cid, c in st["c"].items():
+            if not c["gone"]:
+                print(cid)
+        return 0
     if cmd == "inspect":
         fmt = None
         if args[0] == "-f":
             fmt, args = args[1], args[2:]
+        if args[:1] == ["--type"]:
+            args = args[2:]
         F.fire("inspect")
         st = F.st()
-        cid = F.resolve(st, args[0])
-        if cid is None:
-            print("Error: No such object: " + args[0], file=sys.stderr)
-            return 1
-        c = st["c"][cid]
-        if fmt == "{{.State.StartedAt}}":
-            print(c["started"])
-        elif fmt:                                   # the 7b4839b gate's format
-            print(f"{cid}|{c['started']}|{json.dumps(c['logcfg'])}")
-        else:
-            print(json.dumps([{"Id": cid, "Name": "/" + c["name"], "RestartCount": c["restarts"],
-                               "State": dict({"Running": c["running"], "Paused": c["paused"],
-                                              "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
-                                             **({} if st["flags"].get("no_started") else {"StartedAt": c["started"]})),
-                               "Mounts": c["mounts"],
-                               "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]},
-                               "Config": {"Tty": c["tty"], "Env": c.get("env", [])},
-                               "NetworkSettings": {"Ports": c.get("ports") or {}}}]))
+        objs = []
+        for ref in args:
+            cid = F.resolve(st, ref)
+            if cid is None:
+                print("Error: No such object: " + ref, file=sys.stderr)
+                return 1
+            c = st["c"][cid]
+            if fmt == "{{.State.StartedAt}}":
+                print(c["started"])
+                return 0
+            if fmt:                                 # the 7b4839b gate's format
+                print(f"{cid}|{c['started']}|{json.dumps(c['logcfg'])}")
+                return 0
+            objs.append({"Id": cid, "Name": "/" + c["name"], "RestartCount": c["restarts"],
+                         "State": dict({"Running": c["running"], "Paused": c["paused"],
+                                        "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
+                                       **({} if st["flags"].get("no_started") else {"StartedAt": c["started"]})),
+                         "Mounts": c["mounts"],
+                         "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]},
+                         "Config": {"Tty": c["tty"], "Env": c.get("env", [])},
+                         "NetworkSettings": {"Ports": c.get("ports") or {}}})
+        print(json.dumps(objs))
         return 0
     if cmd == "exec":
         opts = []
@@ -676,7 +825,7 @@ class Gate(unittest.TestCase):
             (home / "conf" / k).write_text(v + "\n")
         bindir = pathlib.Path(cls.tmp) / "bin"
         bindir.mkdir()
-        for prog in ("docker", "du"):
+        for prog in ("docker", "du", "ps"):
             p = bindir / prog
             p.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{pathlib.Path(__file__).resolve()}" --fake {prog} "$@"\n')
             p.chmod(0o755)
@@ -743,7 +892,11 @@ class Gate(unittest.TestCase):
                         mock.patch.object(self.g, "_pg_connect", lambda *a, **k: FakePG(self.F, *a, **k), create=True),
                         # v5 P7: the store inventory's unregistered list (wp.registry), from the scenario
                         mock.patch.object(self.g, "_unregistered", lambda *a: self.F.st().get("unregistered", []),
-                                          create=True)]
+                                          create=True),
+                        # v6: the store reset and cleanup the gate runs under its lock (recorded, not run), and the
+                        # interpreter's -I flag (this test process is not isolated; test_v6_m_g_* tests the check)
+                        mock.patch.object(self.g, "_run_tools", fake_tools(self.F, self.g), create=True),
+                        mock.patch.object(self.g, "_isolated", lambda: True, create=True)]
         self._run = None
         for p in patches:
             p.start()
@@ -1180,8 +1333,9 @@ class Gate(unittest.TestCase):
         self.assertEqual(found, [], "stream code that writes cluster or index settings (disk thresholds, blocks)")
 
     def test_free_space_dropping_during_setup_blocks(self):
-        # 30 GiB free before the gate observed anything, 18 GiB once it had read ES: admission must use the latter
-        self.free = lambda: 18 if FakeES.S.get("reads") else 30
+        # 30 GiB free before the gate observed anything, 9 GiB once it had read ES: admission must use the latter
+        # (amendment GF1: the start line is 10 GB; it was 20 GB and 18 GiB here before GF1)
+        self.free = lambda: 9 if FakeES.S.get("reads") else 30
         self.assertBlocked(*self.call("start"), "host free")
 
     # ---- R8 own files
@@ -1819,6 +1973,353 @@ class Gate(unittest.TestCase):
         self.F.set(self.es, inodes=[1048576, 1048000])     # inodes_statfs_ignored: nr_inodes=0 in the options only
         self.assertBlocked(*self.call("start"), "inode")
 
+    # ============================================================== review aacf3c0 (gate v6): VERDICT-PATHS.md conjuncts
+    def assertOnly(self, rc, out, code, *why):
+        """Exit `code` (2 BLOCKED, 3 VOID) and every stated reason matches one of `why`: the scenario violates the
+        conjunct under test and nothing else, so the test cannot pass on an incidental reason."""
+        kind = {2: "BLOCKED", 3: "VOID"}[code]
+        self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+        lines = [x.split(f"disk_gate {kind}: ", 1)[1] for x in out.splitlines() if x.startswith(f"disk_gate {kind}: ")]
+        self.assertTrue(lines, f"{kind} without a stated reason: {out.strip()[-400:]}")
+        for x in lines:
+            self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+
+    def tools(self):
+        return self.F.st().get("tools", [])
+
+    # ---- C11, amendment GF1 (answer 3335a07a): start at >= 10 GB free, stop at 8 GB
+    def test_v6_gf1_run_is_admitted_at_12_gb_free(self):
+        self.free = lambda: 12
+        self.start()
+        self.assertValid(*self.call("end"))
+
+    def test_v6_gf1_admission_under_10_gb_free_blocks(self):
+        self.free = lambda: 9.5
+        self.assertOnly(*self.call("start"), 2, "host free 9.5 GiB < 10")
+
+    def test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb(self):
+        A = self.launch("x").begin()
+        self.assertTrue(A.run_id, f"run was not admitted: {A.output()[-400:]}")
+        A.free_file.write_text("7.5")
+        try:
+            A.p.wait(timeout=30)                           # without the release: the gate itself must stop the run
+        except subprocess.TimeoutExpired:
+            self.fail("host free fell to 7.5 GiB and the gate did not stop the experiment within 30 s")
+        self.assertOnly(*A.finish(release=False), 3, "host free fell to 7.5", "host free 7.5 GiB < 8")
+
+    # ---- C1, C5 (F-1): the reset and cleanup run inside this run's lock; a reset during the run voids
+    def test_v6_f1_reset_and_cleanup_run_inside_the_run_lock(self):
+        self.start()
+        self.assertEqual(self.tools(), [["admission", ["cleanup", "reset"], True]],
+                         "admission did not run exp.cleanup and wp.setup --reset itself, under the run lock")
+        self.assertValid(*self.call("end"))
+        self.assertEqual(self.tools()[1:], [["after", ["cleanup-after"], True]],
+                         "the end did not delete the stream's indices before releasing the run lock")
+
+    def test_v6_f1_failed_reset_blocks(self):
+        self.F.flag(tools_fail_admission=True)
+        self.assertOnly(*self.call("start"), 2, "failed under the run lock")
+
+    def test_v6_f1_store_reset_during_the_run_voids(self):
+        self.start()
+        self.F.reset_db("wp_events")                       # wp.setup --reset by a command that ignores the lock
+        self.assertOnly(*self.call("end"), 3, "was reset or replaced during the run", "catalog wp_events.")
+
+    def _tool_stub(self, name):
+        return ('"""Test stand-in for %s: takes the run lock as the real tool does, then records how it was run."""\n'
+                "import json, os, sys\nfrom wp import runlock\nrunlock.hold(%r)\n"
+                "with open(os.environ['STUB_TOOLS_LOG'], 'a') as f:\n"
+                "    f.write(json.dumps({'tool': %r, 'argv': sys.argv[1:], 'isolated': sys.flags.isolated,\n"
+                "                        'fd': bool(os.environ.get('WP_RUN_LOCK_FD'))}) + '\\n')\n") % (name, name, name)
+
+    def test_v6_f1_gate_runs_the_real_tools_isolated_with_its_lock(self):
+        t = self.fresh_tree()
+        (t / "exp" / "cleanup.py").write_text(self._tool_stub("exp.cleanup"))
+        (t / "wp" / "setup.py").write_text(self._tool_stub("wp.setup"))
+        write_manifest(t)
+        log = pathlib.Path(tempfile.mkdtemp(dir=self.tmp)) / "tools.jsonl"
+        rc, out = self.launch("x", tree=t, env={"FAKE_TOOLS": "real", "STUB_TOOLS_LOG": str(log)}).run()
+        self.assertValid(rc, out)
+        calls = [json.loads(x) for x in log.read_text().splitlines()] if log.exists() else []
+        self.assertEqual([(c["tool"], c["argv"]) for c in calls],
+                         [("exp.cleanup", ["gate-admission"]), ("wp.setup", ["--reset"]),
+                          ("exp.cleanup", ["gate-after-end"])], "the gate did not run the store tools as designed")
+        self.assertTrue(all(c["isolated"] and c["fd"] for c in calls), f"a tool ran without -I or the lock: {calls}")
+
+    def test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock(self):
+        stubs = pathlib.Path(tempfile.mkdtemp(dir=self.tmp))
+        (stubs / "psycopg").mkdir()
+        marker = stubs / "connected"
+        (stubs / "psycopg" / "__init__.py").write_text(
+            "import pathlib\nfrom . import sql\n"
+            f"def connect(*a, **k):\n    pathlib.Path({str(marker)!r}).write_text('x')\n"
+            "    raise RuntimeError('test stand-in: no server')\n")
+        (stubs / "psycopg" / "sql.py").write_text("SQL = Identifier = Literal = str\n")
+
+        def tool(mod, *args):
+            code = ("import runpy, sys; sys.path[:0] = [%r, %r]; sys.argv = [%r, *%r]; "
+                    "runpy.run_module(%r, run_name='__main__')") % (str(stubs), str(self.tree), mod, list(args), mod)
+            r = subprocess.run([sys.executable, "-B", "-c", code], cwd=self.tree, capture_output=True, text=True,
+                               timeout=120, env=dict(os.environ, PYTHONPATH=""))
+            return r.returncode, r.stdout + r.stderr
+        lk = self.g._take_run_lock()                       # what a live run holds
+        try:
+            for mod, args in (("wp.setup", ("--reset",)), ("exp.cleanup", ("manual",))):
+                rc, out = tool(mod, *args)
+                self.assertEqual(rc, 2, f"{mod} ran while a run holds the run lock: {out.strip()[-300:]}")
+                self.assertIn("refused", out)
+            self.assertFalse(marker.exists(), "wp.setup connected to the cluster while a run holds the run lock")
+        finally:
+            lk.close()
+        rc, out = tool("wp.setup", "--reset")              # the lock free: setup goes on (to the stand-in server)
+        self.assertTrue(marker.exists(), f"wp.setup refused with the run lock free: {out.strip()[-300:]}")
+
+    # ---- C9 (F-2): the experiment ended by itself, with no OOM kill in the gate's cgroup
+    def test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids(self):
+        rc, out = self.launch("x", ops=[["selfkill", int(signal.SIGKILL)]]).run()
+        self.assertOnly(rc, out, 3, "killed by signal 9")
+
+    def test_v6_f2_oom_kill_in_the_gates_cgroup_voids(self):
+        rc, out = self.launch("x", ops=[["fake", "gate_oom"]]).run()
+        self.assertOnly(rc, out, 3, "OOM kill in the gate's cgroup")
+
+    def test_v6_f2_unreadable_own_cgroup_blocks(self):
+        (self.F.root / "proc" / "self" / "cgroup").unlink()
+        self.assertOnly(*self.call("start"), 2, "memory cannot be observed")
+
+    def test_v6_f2_nonzero_exit_by_itself_stays_valid(self):
+        A = self.launch("x", rc="3")
+        self.assertValid(*A.run())
+        end = [r for r in self.records() if r["kind"] == "end"][-1]
+        self.assertEqual(end.get("exp_rc"), 3)
+
+    # ---- C6 (F-3): the live catalogs equal the committed expectation, and do not change during the run
+    def test_v6_f3_role_attribute_weakened_before_the_reset_blocks(self):
+        self.F.cat("cluster", "roles", "set", "wp_app", "True", "True", "False", "False", "True", "False", "False")
+        self.assertOnly(*self.call("start"), 2, "before the store reset: role wp_app has rolsuper=True")
+        self.assertEqual(self.tools(), [], "the reset ran (and would have repaired the role silently)")
+
+    def test_v6_f3_extra_membership_blocks(self):
+        self.F.cat("cluster", "members", "add", "pg_read_server_files", "wp_app")
+        self.assertOnly(*self.call("start"), 2, "member of pg_read_server_files")
+
+    def test_v6_f3_parameter_privilege_blocks(self):
+        self.F.cat("cluster", "parameter_acl", "add", "session_replication_role", "{wp_app=s/wp}")
+        self.assertOnly(*self.call("start"), 2, "parameter privilege")
+
+    def test_v6_f3_schema_drift_after_the_reset_blocks(self):
+        # a schema the reset did not produce (a guard missing from the schema files): the expectation, not the reset
+        self.F.cat("wp_events", "triggers", "drop", "events", "events_no_truncate")
+        self.assertOnly(*self.call("start"), 2, "G3 table events has no guard trigger for TRUNCATE")
+
+    def test_v6_f3_delete_grant_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "app_privs", "add", "events", "DELETE")
+        self.assertOnly(*self.call("end"), 3, "G2 wp_app on events", "catalog wp_events.app_privs changed")
+
+    def test_v6_f3_guard_trigger_disabled_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "triggers", "drop", "events", "events_guard")
+        self.F.cat("wp_events", "triggers", "add", "events", "events_guard",
+                   str(T_BEFORE | T_ROW | T_INS | T_UPD | T_DEL), "D", "wp_guard")
+        self.assertOnly(*self.call("end"), 3, "G3 trigger events.events_guard is enabled 'D'",
+                        "catalog wp_events.triggers changed")
+
+    def test_v6_f3_role_setting_changed_during_the_run_voids(self):
+        self.start()
+        self.F.cat("cluster", "settings", "set", "wp_app", "", "statement_timeout=0")
+        self.assertOnly(*self.call("end"), 3, "role wp_app has settings", "catalog cluster.settings changed")
+
+    def test_v6_f3_scratch_database_during_the_run_voids(self):
+        self.start()
+        self.F.cat("cluster", "databases", "add", "scratch", "20000", "True", "wp_app", "")
+        self.assertOnly(*self.call("end"), 3, "a database outside the committed set: scratch",
+                        "catalog cluster.databases changed")
+
+    def test_v6_f3_alter_system_during_the_run_voids(self):
+        self.start()
+        self.F.cat("cluster", "auto_conf", "add", "fsync", "off", "True")
+        self.assertOnly(*self.call("end"), 3, "ALTER SYSTEM", "catalog cluster.auto_conf changed")
+
+    def test_v6_f3_constraint_dropped_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "constraints", "drop", "events", "events_pkey")
+        self.assertOnly(*self.call("end"), 3, "catalog wp_events.constraints changed")
+
+    def test_v6_f3_unreadable_catalog_blocks(self):
+        self.F.flag(catalog_fail=True)
+        self.assertOnly(*self.call("start"), 2, "live catalogs could not be read")
+
+    def test_v6_f3_unreadable_catalog_at_end_voids(self):
+        self.start()
+        self.F.flag(catalog_fail=True)
+        self.assertOnly(*self.call("end"), 3, "live catalogs could not be read")
+
+    def test_v6_f3_change_reverted_within_the_run_is_a_stated_limit(self):
+        # LIMITS v6: a catalog change made and reverted between two reads is not seen; the run stays VALID
+        self.start()
+        self.F.cat("wp_events", "app_privs", "add", "events", "DELETE")
+        self.F.cat_restore("wp_events", "app_privs")
+        self.assertValid(*self.call("end"))
+        self.assertIn("a catalog change made and reverted within the run", self.g.LIMITS)
+
+    def test_v6_guard_policy_is_bound_to_setup(self):
+        p = self.tree / "exp" / "guard_policy.py"
+        if not p.exists():
+            self.fail("the pinned tree has no committed catalog expectation (exp/guard_policy.py)")
+        spec = importlib.util.spec_from_file_location("guard_policy_under_test", p)
+        GP = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(GP)
+        setup = (self.tree / "wp" / "setup.py").read_text()
+        dbpy = (self.tree / "wp" / "db.py").read_text()
+        m = re.search(r"^APP, VERIFIER, KMS, LEGAL, WATCHDOG, BROKER = (.+)$", dbpy, re.M)
+        names = dict(zip(("APP", "VERIFIER", "KMS", "LEGAL", "WATCHDOG", "BROKER"), re.findall(r'"(\w+)"', m.group(1))))
+        login = re.search(r"^LOGIN_ROLES = \((.+)\)$", setup, re.M).group(1)
+        self.assertEqual(set(GP.LOGIN_ROLES), {names[x.strip()[3:]] for x in login.split(",")})
+        attrs = re.search(r'^ROLE_ATTRS = "(.+)"$', setup, re.M).group(1).split()
+        word = {"superuser": "rolsuper", "inherit": "rolinherit", "createrole": "rolcreaterole",
+                "createdb": "rolcreatedb", "replication": "rolreplication", "bypassrls": "rolbypassrls"}
+        flags = {}
+        for a in attrs:
+            neg = a.startswith("no") and a[2:] in word
+            flags[word[a[2:] if neg else a]] = not neg
+        self.assertEqual(GP.ROLE_FLAGS, flags, "role attributes in setup.py and exp/guard_policy.py differ")
+        tmo = dict(re.findall(r'"(\w+_timeout)": "(\w+)"', re.search(r"^ROLE_TIMEOUTS = \{.+\}$", setup, re.M).group(0)))
+        tmo.update(re.findall(r"set (lock_timeout) = '(\w+)'", setup))
+        self.assertEqual(GP.ROLE_SETTINGS, tmo, "role settings in setup.py and exp/guard_policy.py differ")
+        mem = set()
+        for granted, member in re.findall(r'"grant ((?:pg_\w+, )*pg_\w+) to (\w+) with inherit true"', setup):
+            mem |= {(g, member) for g in granted.split(", ")}
+        self.assertEqual(GP.MEMBERSHIPS, mem, "role memberships in setup.py and exp/guard_policy.py differ")
+        conn = {k.lower(): tuple(sorted(x.strip() for x in v.split(","))) for k, v in
+                re.findall(r"grant connect on database \"\{config\.(EVENTS|KEYS)_DB\}\" to ([\w, ]+)'", setup)}
+        self.assertEqual({k: tuple(sorted(v)) for k, v in GP.CONNECT.items()}, conn,
+                         "database CONNECT grants in setup.py and exp/guard_policy.py differ")
+        self.assertIn('create role wp_owner nologin', setup)
+        self.assertEqual(GP.OWNER_ROLE, "wp_owner")
+        # this test file's scenario catalog is the committed expectation, so a clean scenario is a clean cluster
+        self.assertEqual({t: {T_PRIV[c] for c in v} for t, v in T_POLICY.items()}, GP.POLICY)
+        self.assertEqual(sorted(T_LOGIN), sorted(GP.LOGIN_ROLES))
+
+    # ---- C12 (F-4): no container but the run's stores uses this home
+    def test_v6_f4_container_using_this_home_blocks(self):
+        self.F.add_user("emlab2-other-tool", os.path.realpath(self.home) + "/secrets")
+        self.assertOnly(*self.call("start"), 2, "uses this home")
+
+    def test_v6_f4_container_using_this_home_during_the_run_voids(self):
+        self.start()
+        self.F.add_user("emlab2-other-tool", os.path.realpath(self.home))
+        self.assertOnly(*self.call("end"), 3, "uses this home")
+
+    def test_v6_f4_container_list_failure_blocks(self):
+        self.F.flag(docker_ps_rc=True)
+        self.assertOnly(*self.call("start"), 2, "container list (docker ps) could not be read")
+
+    def test_v6_f4_container_mounting_a_sibling_directory_is_not_counted(self):
+        self.F.add_user("emlab2-other-tool", os.path.realpath(self.home) + "-sibling")
+        self.F.add_user("emlab2-other-tool2", "/srv/elsewhere")
+        self.start()
+        self.assertValid(*self.call("end"))
+
+    # ---- C2, C8 (m-B, m-C): special files never hang the gate; files are hashed in bounded memory
+    def test_v6_mb_fifo_in_the_pinned_tree_blocks_without_hanging(self):
+        t = self.fresh_tree()
+        os.mkfifo(t / "exp" / "pipe")
+        self.assertOnly(*self.launch("x", tree=t, timeout=60).run(), 2, "special or unreadable entry in the pinned tree")
+
+    def test_v6_mb_fifo_in_the_run_directory_voids_without_hanging(self):
+        rc, out = self.launch("x", timeout=60, ops=[["mkfifo", "pipe.json"]]).run()
+        self.assertOnly(rc, out, 3, "special or unreadable file in the run directory")
+
+    def test_v6_mc_row_over_the_size_cap_voids(self):
+        rc, out = self.launch("x", ops=[["bigrow", "big.json", 17 * MIB]]).run()
+        self.assertOnly(rc, out, 3, "larger than 16 MiB")
+
+    def test_v6_mc_large_run_file_is_hashed_in_bounded_memory(self):
+        import resource
+        A = self.launch("x", ops=[["sparse", "blob.bin", GIB]])
+        self.assertValid(*A.run())
+        peak = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss * (1 if sys.platform == "darwin" else 1024)
+        self.assertLess(peak, 400 * MIB, f"a child of this test (the gate) peaked at {peak // MIB} MiB hashing a 1 GiB file")
+        rec = [r for r in self.records() if r["kind"] == "end"][-1]
+        self.assertIn("blob.bin", [f["name"] for f in rec["files"]])
+
+    # ---- C2 (m-G): the gate and the experiment run isolated, with a listed environment
+    def test_v6_mg_gate_not_isolated_blocks(self):
+        with mock.patch.object(self.g, "_isolated", lambda: False, create=True):
+            self.assertOnly(*self.call("start"), 2, "not isolated")
+
+    def test_v6_mg_experiment_runs_isolated_with_the_listed_environment(self):
+        dump = pathlib.Path(tempfile.mkdtemp(dir=self.tmp)) / "dump.json"
+        A = self.launch("x", env={"LEAKY_SETTING": "1", "PYTHONINSPECT": ""}, ops=[["dump", str(dump)]])
+        self.assertValid(*A.run())
+        d = json.loads(dump.read_text())
+        self.assertEqual(d["isolated"], 1, "the experiment's interpreter is not isolated (-I)")
+        self.assertTrue(d["bytecode_off"])
+        for k in ("PYTHONPATH", "LEAKY_SETTING", "PYTHONINSPECT"):
+            self.assertNotIn(k, d["env"], f"{k} reached the experiment")
+        self.assertIn("WP_GATE_RUN", d["env"])
+        adm = [r for r in self.records() if r["kind"] == "admit"][-1]
+        self.assertIn("WP_HOME", adm.get("env") or {}, "the admit record does not list the experiment's environment")
+        self.assertNotIn("LEAKY_SETTING", adm.get("env") or {})
+
+    # ---- C10 (m-H): exactly one end record
+    def test_v6_mh_second_end_record_makes_the_verdict_void(self):
+        self.start()
+        with self.g.Ledger() as L:                         # a forged VALID end, through the gate's own code
+            L.append("end", run=self._run["run"], verdict="VALID", reasons=[], window_end=self.g._utc())
+        self.assertOnly(*self.call("end"), 3, "was closed before its end")
+        self.assertEqual([v for r, v in self.ends() if r == self._run["run"]], ["VALID", "VOID"])
+        rc, out = self.raw_call("verdict", self._run["run"])
+        self.assertEqual(rc, 3, f"verdict took the first of two end records: {out.strip()[-300:]}")
+        self.assertIn("2 end records", out)
+
+    # ---- C9 (m-I): a gate that leads a group holding another process makes its own session
+    def test_v6_mi_gate_leading_a_group_with_another_member_stays_valid(self):
+        A = self.launch("x", leader=True, rows=[{"name": "r", "gate_run": "self"}])
+        rc, out = A.run()
+        self.assertValid(rc, out)
+        rc, out = self.raw_call("verdict", A.run_id)
+        self.assertEqual(rc, 0, out[-300:])
+
+    def test_v6_abort_closes_a_dead_v5_run(self):
+        p = subprocess.Popen(["true"], start_new_session=True)
+        p.wait()                                           # its process group is gone
+        old = "r-" + "b" * 32
+        with self.g.Ledger() as L:
+            L.append("admit", v=5, gate="disk_gate v5", run=old, label="old", pid=p.pid, pgid=p.pid)
+        rc, out = self.abort(old, "v5 launcher and experiment shown dead")
+        self.assertEqual(rc, 0, out[-300:])
+        self.assertEqual(self.ends(), [(old, "VOID")])
+
+    # ---- the four surviving mutants of review aacf3c0
+    def test_v6_mutant_group_list_failure_voids(self):
+        self.F.flag(host_ps_rc=True)                       # group_list_failure_passes
+        self.assertOnly(*self.launch("x").run(), 3, "process group could not be listed")
+
+    def test_v6_mutant_es_clean_check_error_blocks(self):
+        FakeES.S.update(cat_status=500)                    # es_clean_error_passes
+        self.assertOnly(*self.call("start"), 2, "could not be checked clean before the run (ES indices 500)")
+
+    def test_v6_mutant_row_without_a_run_id_voids(self):
+        rc, out = self.launch("x", rows=[{"name": "r", "gate_run": None}]).run()   # row_without_run_id_passes
+        self.assertOnly(rc, out, 3, "carries run 'None'")
+
+    def test_v6_mutant_module_from_a_sibling_directory_blocks(self):
+        mod = SimpleNamespace(__file__=str(self.tree) + "-sibling/wp/zz.py")      # module_prefix_without_sep
+        with mock.patch.dict(sys.modules, {"wp.zz_sibling": mod}):
+            self.assertOnly(*self.call("start"), 2, "loaded from outside the pinned tree")
+
+    # ---- every test VERDICT-PATHS.md cites exists
+    def test_v6_verdict_paths_cite_existing_tests(self):
+        doc = HERE / "runkit" / "VERDICT-PATHS.md"
+        cited = set(re.findall(r"`(test_\w+)`", doc.read_text())) if doc.exists() else set()
+        self.assertTrue(cited, "runkit/VERDICT-PATHS.md cites no test")
+        have = set()
+        for f in (HERE / "tests").glob("test_*.py"):
+            have |= set(re.findall(r"def (test_\w+)\(", f.read_text()))
+        self.assertEqual(sorted(cited - have), [], "VERDICT-PATHS.md cites tests that do not exist")
+
 
 def _killpg_quiet(pg):
     try:
@@ -1832,13 +2333,15 @@ class Launch:
     below, from the pinned tree). An older gate has no `run`; there the launcher's steps are made as its launcher made
     them (start; the experiment; end), so the same scenario shows that gate's verdict."""
 
-    def __init__(self, t, label, tree=None, **stub):
+    def __init__(self, t, label, tree=None, leader=False, timeout=300, env=None, **stub):
         self.t, self.label, self.tree = t, label, tree or t.tree
         d = pathlib.Path(tempfile.mkdtemp(dir=t.tmp))
-        self.started, self.release = d / "started", d / "release"
+        self.started, self.release, self.free_file = d / "started", d / "release", d / "free"
         self.env = dict(os.environ, GATE_TREE=str(self.tree), STUB_TESTS=str(THIS.parent), FAKE_FREE_GB=str(t.free()),
-                        STUB_STARTED=str(self.started), STUB_RELEASE=str(self.release),
+                        FAKE_FREE_FILE=str(self.free_file), STUB_STARTED=str(self.started),
+                        STUB_RELEASE=str(self.release), **(env or {}),
                         **{"STUB_" + k.upper(): v if isinstance(v, str) else json.dumps(v) for k, v in stub.items()})
+        self.leader, self.timeout = leader, timeout
         self.p, self.rc, self.out, self.run_id = None, None, "", None
         t.addCleanup(self._cleanup)
 
@@ -1854,9 +2357,13 @@ class Launch:
 
     def begin(self):
         if self.t.v5:
-            self.p = subprocess.Popen([sys.executable, "-B", str(THIS), "--gate", "run", self.label, "stubexp"],
-                                      cwd=self.tree, env=self.env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                      stderr=subprocess.STDOUT)
+            cmd = [sys.executable, "-B", str(THIS), "--gate", "run", self.label, "stubexp"]
+            if self.leader:                    # m-I: the gate leads its process group, which holds another process
+                cmd = ["sh", "-c", 'sleep 60 < /dev/null > /dev/null 2>&1 & exec "$@"', "sh"] + cmd
+            self.p = subprocess.Popen(cmd, cwd=self.tree, env=self.env, stdin=subprocess.DEVNULL,
+                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=self.leader)
+            if self.leader:
+                self.t.addCleanup(_killpg_quiet, self.p.pid)
             t0 = time.monotonic()
             while not self.started.exists() and self.p.poll() is None and time.monotonic() - t0 < 120:
                 time.sleep(0.05)
@@ -1872,10 +2379,18 @@ class Launch:
     def output(self):
         return self.out
 
-    def finish(self):
-        self.release.touch()
+    def finish(self, release=True):
+        if release:
+            self.release.touch()
         if self.t.v5:
-            out, _ = self.p.communicate(timeout=300)
+            try:
+                out, _ = self.p.communicate(timeout=self.timeout)
+            except subprocess.TimeoutExpired:      # a hung gate is a test failure, never a hung test (m-B)
+                self.kill_launcher()
+                self.kill_experiment()
+                out, _ = self.p.communicate(timeout=60)
+                self.out += out.decode("utf-8", "replace")
+                return "HUNG", self.out + f"\n(the gate did not exit within {self.timeout} s: killed by the test)"
             self.out += out.decode("utf-8", "replace")
             return self.p.returncode, self.out
         if self.rc != 0:
@@ -1910,9 +2425,32 @@ class Launch:
         return self.t.abort(self.run_id, "late call") if self.t.v5 else self.t.call("end")
 
 
+def fake_tools(F, g):
+    """The gate's _run_tools (v6 F-1) as the offline tests see it: each call is recorded in the scenario (its tag,
+    its step names, and whether the run lock was held at that moment: a fresh open of state/run.lock cannot take it);
+    flag "tools_fail_<tag>" makes it fail. FAKE_TOOLS=real in a launcher's environment runs the real one instead."""
+    def tools(steps, lock, tag):
+        held = False
+        try:
+            with open(g.RUN_LOCK, "a") as f:
+                try:
+                    fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except OSError:
+                    held = True
+        except OSError:
+            pass
+        F.locked(lambda st: st.setdefault("tools", []).append([tag, [s[0] for s in steps], held]))
+        if F.st()["flags"].get("tools_fail_" + tag):
+            return [f"{steps[0][0]} ({steps[0][1]}) failed under the run lock (1)"]
+        return []
+    return tools
+
+
 def gate_main(argv):
     """--gate: exp/disk_gate.py of GATE_TREE run as a process, with the same fakes as the in-process tests (fake docker
-    on PATH, the scenario's /proc and cgroup trees, FakePG, the scenario's unregistered list, FAKE_FREE_GB)."""
+    on PATH, the scenario's /proc and cgroup trees, FakePG, the scenario's unregistered list, FAKE_FREE_GB, or the
+    number in FAKE_FREE_FILE when it exists; v6: the recorded store tools unless FAKE_TOOLS=real, the -I check, a short
+    in-run poll and grace, and STUB_*/FAKE_* passed to the experiment)."""
     root = pathlib.Path(os.environ["FAKE_DOCKER_STATE"])
     F = Fake(root)
     tree = pathlib.Path(os.environ["GATE_TREE"])
@@ -1920,11 +2458,23 @@ def gate_main(argv):
     spec = importlib.util.spec_from_file_location("disk_gate_seam", tree / "exp" / "disk_gate.py")
     g = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(g)
-    free = float(os.environ.get("FAKE_FREE_GB", "30"))
-    shutil.disk_usage = lambda p: SimpleNamespace(total=100 * GIB, used=(100 - free) * GIB, free=free * GIB)
+    free0, ff = float(os.environ.get("FAKE_FREE_GB", "30")), os.environ.get("FAKE_FREE_FILE")
+
+    def usage(p):
+        try:
+            free = float(pathlib.Path(ff).read_text()) if ff else free0
+        except (OSError, ValueError):
+            free = free0
+        return SimpleNamespace(total=100 * GIB, used=(100 - free) * GIB, free=free * GIB)
+    shutil.disk_usage = usage
     g.PROC_ROOT, g.CGROUP_ROOT = root / "proc", root / "cg"
     g._pg_connect = lambda *a, **k: FakePG(F, *a, **k)
     g._unregistered = lambda *a: F.st().get("unregistered", [])
+    if os.environ.get("FAKE_TOOLS") != "real":
+        g._run_tools = fake_tools(F, g)
+    g._isolated = lambda: os.environ.get("FAKE_NOT_ISOLATED") != "1"
+    g.POLL_S, g.TERM_GRACE_S = 0.2, 3
+    g.EXP_ENV_PREFIXES = tuple(getattr(g, "EXP_ENV_PREFIXES", ())) + ("STUB_", "FAKE_", "GATE_TREE")
     try:
         g.main(*argv)
         return 0

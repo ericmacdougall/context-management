@@ -506,6 +506,40 @@ class Clearance(unittest.TestCase):
         self.assertEqual(self.receipt().get("keystore", {}).get("waiver"), "key store container not reachable",
                          "the receipt does not record the waiver's reason")
 
+    # ---- review aacf3c0 C-3 remainder (m-F): verify-copy judges the receipt itself, not only the check file
+    def rebind(self, edit):
+        """Edit the receipt as an older clearance (or a hand) wrote it, then write a PASS check bound to it, as an
+        older stage-check that had no key store or daemon rule would have."""
+        rec = self.receipt()
+        edit(rec)
+        raw = json.dumps(rec, indent=1, sort_keys=True).encode()
+        (self.set / "CLEARANCE.json").write_bytes(raw)
+        chk = {"kind": "stage-check", "tool": {"clearance": "3"}, "at": "2026-11-18T00:00:00Z", "result": "PASS",
+               "reasons": [], "receipt_sha256": hashlib.sha256(raw).hexdigest()}
+        (self.set / "CLEARANCE.check.json").write_text(json.dumps(chk))
+        copy = self.tmp / f"copy-{len(list(self.tmp.iterdir()))}"
+        shutil.copytree(self.set, copy)
+        return self.tool("verify-copy", str(copy))
+
+    def test_c3_v3_receipt_with_a_waived_key_store_fails_verify_copy(self):
+        self.seal(waive="key store container not reachable")
+        self.assertEqual(self.teardown()[0], 0)
+        rc, out = self.rebind(lambda r: r["tool"].update(clearance="3"))
+        self.assertEqual(rc, 1, f"verify-copy passed a v3 receipt sealed with --no-keystore: {out[-300:]}")
+        self.assertIn("older than v4", out)
+        self.assertIn("key store was not covered", out)
+
+    def test_c3_receipt_without_a_daemon_fails_verify_copy(self):
+        self.cleared()
+        rc, out = self.rebind(lambda r: r.pop("daemon"))
+        self.assertEqual(rc, 1, f"verify-copy passed a receipt that records no daemon: {out[-300:]}")
+        self.assertIn("no Docker daemon identity", out)
+
+    def test_c3_current_receipt_with_a_rebound_check_still_passes(self):
+        self.cleared()
+        rc, out = self.rebind(lambda r: None)
+        self.assertEqual(rc, 0, out[-400:])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
