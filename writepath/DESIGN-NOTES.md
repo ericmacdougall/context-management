@@ -568,6 +568,8 @@ versioned m5.
    rescan, which weighs against (b). Recommendation to main: (a) with the budget set at least 10 times above the
    worst measured realistic text (34.4 keys per token), the enumeration made lazy so that the budget bounds memory,
    and the refusal reported to the writer with the reason.
+   DECIDED (main, 2026-11-17, recorded as ASSUMPTION under the user's "you decide" delegation): (a). Design in
+   "Matcher budget (m5 b1)" below; it supersedes the OPEN text above.
 7. NOT COVERED (receipt and NOT_COVERED): a letter standing for a digit (XQ-l00l or XQ-IOOI for XQ-1001); small l
    written for i or small i for l (Allson, Aiison for Alison: m4 matched them); digits standing for letters in a token
    with no more letters than digits (4l1s0n for Alison); non-ASCII digits that look like 0 or 1 read as the letter
@@ -600,6 +602,13 @@ versioned m5.
    has readings, so "ln the" was accepted and would then match every "In the" (m4 refused it, because i and l were
    one class). The stop keys are now every TEXT key of each common word written in lower case, capitalised and in
    capitals (53 words, 65 keys). Red on abceae9, green after (results/failing-first/m5).
+   THE RULE, stated (main's relay after the m5 return): an identifier is refused as TOO GENERIC when every one of its
+   tokens' identity keys is a key that some common word (STOP) can have in TEXT written in lower case, capitalised or
+   in capitals; separately, a single token shorter than MIN_SINGLE = 6 characters with no digit is refused. A
+   consequence the tests use as an independent oracle: an identifier that would match a phrase made only of common
+   words, in one of those three case forms, is refused. Tested with both readings applied: for every STOP word and
+   every substitution of its i, l and o by I, l, i, 1, 0 and O, the identifier "<variant> the" (and "the <variant>")
+   is refused whenever its key is among the window keys of "<word> the" ("the <word>") in one of the case forms.
 12. NOT VERIFIED: refusal rates outside Latin script (item 5); whether exp.d4_store_mark's corpus contains any
    both-readings glyph (it passed under m5, which shows the call sites work, not that readings were exercised there;
    tests/test_ident.py exercises them); the adversarial cost on t2-dev (measured on the Mac only).
@@ -611,3 +620,94 @@ documented exceptions excluded from it and tested as misses; near misses (now in
 match; XQ-1001 and XQ-l00l stay distinct and text XQ-1001 does not match XQ-l00l; the cap (an identifier over P
 refused, one at P accepted, a window over P not enumerated; the last is a guard, m4 passes it); the invariants of item
 4; the both-readings table pinned by its counts and members on this Unicode version.
+
+## Matcher budget (m5 b1; written before tests and code)
+
+Source: main's relay after the m5 return (2026-11-17): main's decision, recorded as ASSUMPTION (the user delegated
+the erasure design choices with "you decide"); main chose option (a) of "Decisions after review E" item 6 with the
+requirements below. The numbers are this owner's, measured as stated; every one is an ASSUMPTION main may change.
+
+B1. MEASUREMENT (keys counted as the budget counts them: every window of 1..4 tokens, repeats included, windows over
+   P = 4096 readings skipped; probes agent-af5c8cce658ab5a89/budget_probe.py, budget_real.py, budget_short.py, Mac,
+   Unicode 13). Keys per token, synthetic samples: prose with the pronoun I 7.8; all-caps legal text 34.4; a code
+   block dense with i, l, I, 0 and 1 (identifiers such as IIlI1, l10, 0x10) 38.0; a table of codes 25.2; leetspeak
+   chat 13.6; prose repeated to 39 KB 7.8. Real files (Python 3.9 LICENSE.txt, difflib.py, argparse.py, this.py), as
+   written: 4.0 to 6.2; upper-cased: 4.8 to 11.8, worst 4 KiB slice 15.3. Short all-caps strings (headings, places,
+   names): at most 5,344 keys for a whole string ("MINNEAPOLIS ILLINOIS INDIANA MISSISSIPPI MISSOURI", 5 tokens).
+   Keys per byte: worst realistic 6.82 (the code block). ADVERSARIAL: "1I1I1I" tokens 4,635 keys per token; "I1x"
+   1,550; "IIII" plus five letters 4,364; two-letter "II" tokens 340 keys per token, which at 64 KiB is 7.4 million
+   keys. PLAIN ENGLISH THAT IS PATHOLOGICAL: all-caps sentences in which nearly every word has several I's
+   ("IMMEDIATE INITIALIZATION IS IMPOSSIBLE IN ILLINOIS ...") reach 1,546 keys per token.
+   Cost: lazy enumeration plus one HMAC per key 1.6 us per key; plain hmac.new 3.4 us, a copied HMAC 2.7 us (one run
+   each on a loaded Mac, not a controlled benchmark; item 6's earlier 8 us went through windows(), sorting and the
+   test key service, and is superseded). The store lookup of each 8,192-key chunk is NOT MEASURED (t2-dev is below
+   the 20 GB run floor).
+B2. THE BUDGET, one versioned record (BUDGET in wp/mentions.py), named in the matcher id so that changing any number
+   changes the matcher id (and WPS38 then treats it as another matcher):
+   - KEYS_PER_TOKEN = 512: 13.5 times the worst realistic per-token figure (38.0), 14.9 times all-caps legal text, 33
+     times the worst real upper-cased slice;
+   - KEYS_FLOOR = 131,072 (2^17): an event with few tokens may use this many whatever its token count, so a short
+     all-caps heading full of I's is admitted (24.5 times the worst short string measured; about 0.2 s of matcher
+     time);
+   - EVENT_KEYS_MAX = 5,000,000: the most any event may use: 11.2 times the worst realistic text at the size bound
+     (6.82 keys per byte times 65,536 bytes is 447,000); prose at the size bound is about 106,000 keys (47 times
+     under);
+   - budget(event) = min(EVENT_KEYS_MAX, max(KEYS_FLOOR, KEYS_PER_TOKEN times the event's token count)).
+   A window with more than P readings is not counted and not enumerated (unchanged from m5 item 5).
+B3. THE SIZE BOUND: MAX_CONTENT_BYTES = 65,536 UTF-8 bytes of event content. Why this number: it bounds the matcher's
+   worst admitted work per event (EVENT_KEYS_MAX is derived from it), the tokenizer's work and the ciphertext the
+   store keeps; it admits a long document (about 10,000 English words; the 39 KB sample) in one event. ASSUMPTION: the
+   repository has no evidence of real event sizes (no loader, fixture or mapping states one), so this turns some
+   writes that were accepted into refusals; a writer with a longer document splits it into several events. The same
+   bound applies to an inbox payload and an analyst job result (also sealed and stored; not matcher-scanned). Checked
+   on the code-point count first (a string longer than the bound in code points is longer in bytes, refused without
+   encoding it), then on the UTF-8 length, before the secret scan, before any key is created or anything is sealed.
+   Defence in depth: check constraints in the store on events and quarantine ciphertext (bound plus the 28 bytes of
+   nonce and tag), so a path that skips the check cannot store an oversized event.
+B4. HOW IT RUNS (append): admit(texts) first: size, then the key COUNT, computed arithmetically from each token's
+   reading count (a product of small integers, stopped above P) and summed over windows; nothing is enumerated before
+   the count is known to be within the budget. Then enumeration is lazy (a generator over windows keeping at most the
+   key lists of the last 4 tokens) and matching is chunked: at most CHUNK = 8,192 distinct pending keys are HMACed and
+   looked up at a time. So the work is at most the budget and the memory at most one chunk plus four token key lists
+   (each at most P), whatever the text; nothing proportional to the unbudgeted key count is built. The same functions
+   serve scan() (append), the erasure rescan, find_spans() and windows() (tests and diagnostics).
+B5. REFUSAL: an event over the size bound raises ContentTooLarge, code WPM01; an event over its budget raises
+   MatcherBudgetExceeded, code WPM02. Both are WriteRefused (attribute `code`), distinct from the store's WPSnn
+   SQLSTATEs and from SecretDetected. The message gives the reason with numbers only (bytes and the bound; keys, tokens
+   and the budget; the index of the event in the batch), never content. The whole append is refused (nothing of the
+   batch is stored): no events row, no quarantine row, no subject key created. The refusal is RECORDED: a store
+   function wp_write_refused(tenant, code) adds one to write_refusals(tenant_id, day, code, n, last_at) in its own
+   transaction (count and reason code, no content, no subject); an operator reads the table. If recording fails, the
+   writer still gets the WPM error (the exception says recorded = False); a recording failure never masks or replaces
+   the refusal. A refused event is NOT stored unscanned (option (b) of item 6 is not built).
+B6. RETRIES: append rescans after WPS17 (identifiers declared meanwhile), up to 7 more times, so one admitted event can
+   cost up to 8 budgets. Stated, not changed. The number of events in one append is not bounded here (each event is);
+   ASSUMPTION: the API layer bounds the batch.
+B7. THE ERASURE RESCAN runs under the same budget by construction: it counts each event's keys with the same function
+   before enumerating and streams the keys, checking each HMAC against the subject's identifier HMACs (no lookup
+   array). Every event admitted under this matcher is within the budget. An event over the current budget can exist
+   only if it was admitted under another matcher id (an older, larger budget, or no budget at all: every event
+   written before b1), which is possible because a tenant may change matcher while it has no identifiers. Such an
+   event makes the rescan raise MatcherBudgetExceeded: the page is not recorded, so WPS24 refuses completion and the
+   job records error_type MatcherBudgetExceeded (fail closed). CONSEQUENCE: one such event blocks that subject's
+   erasure until an operator acts, indefinitely. Raising the budget strands nothing; lowering it can. Because the
+   budget is in the matcher id, WPS38 already stops a tenant WITH identifiers from moving to a new budget (there is no
+   migration; m5 item 10). OPTIONS for main: (i) stay fail closed (built; visible in error_type); (ii) treat an
+   over-budget event as a mention, removed whole with the subject (it cannot be checked; over-erasure of another
+   speaker's event, irreversible); (iii) re-admit at migration: a matcher migration refuses to finish while
+   over-budget events exist and quarantines them for review. Recommendation: (i) now, (iii) with the migration.
+B8. STATED LIMITATIONS: an all-caps text in which most words carry several I's, longer than about 85 such tokens, is
+   refused (the measured 200-token sample is 309,286 keys, over max(131,072, 512 times 200)); lower-casing it or
+   splitting it into short events admits it. A code-dense text above 512 keys per token beyond the floor is refused.
+   The refusal rate of real traffic is NOT MEASURED (no real corpus here).
+B9. TESTS FIRST (red on 819258c by assertion, never by a missing name: the tests reach the new behaviour through
+   functions that exist there, scan(), find_spans(), windows() and a counting fake key service, and read the error
+   code with getattr): the crafted text (about 4,600 keys per token) is refused with code WPM02 having HMACed no key,
+   within an operation ceiling (keys HMACed 0) and a generous time ceiling, with a bounded peak of traced memory;
+   realistic prose, all-caps legal text, a long document near the size bound, code blocks and tables are admitted and
+   still find a declared name; content one byte over the bound is refused with WPM01 and content at the bound is
+   admitted; an admitted adversarial-but-under-budget text never HMACs more than CHUNK keys in one batch nor more than
+   its budget in all; the matcher id names the budget; the schema's size constraint equals the bound plus 28; the
+   stop-word class test of item 11. Live (tests/test_d3_pg.py, needs the stores): a refused write leaves no events,
+   quarantine or subject key row and adds one write_refusals row with its code; the rescan of an over-budget legacy
+   event fails closed. The live tests wait for t2-dev space (the run floor and lock rule stand).
