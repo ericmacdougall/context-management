@@ -26,5 +26,138 @@
    "superseded_by": "summary_current.json",
    "why": "written by an earlier summarizer; its statuses are not what the current code gives"
   }
- ]
+ ],
+ "status_changes_review_12": {
+  "compared_with": "summary_current.json at d8aa93d",
+  "count": 18,
+  "note": "Gate review 12 restated these statuses from the evidence the committed lives actually hold; no result file was edited and nothing was rerun. Each status is now what summary_current.json gives.",
+  "changes": [
+   {
+    "life": "down_1.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_1.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "down_2.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_2.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "down_3.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_3.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "down_4.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_4.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "down_5.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_5.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "down_6.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_6.json",
+    "gate": "EXP1-T4-battery",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "returned_any_source was recorded only for 2xx answers and returned_hidden_doc covers only the hidden document, so no committed field shows that a refused read path carried no document (THRESHOLDS.md:26; clause EXP1-T4.no-document-battery)"
+   },
+   {
+    "life": "down_6.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "down_7.json",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "down_7.json",
+    "gate": "EXP1-T4-battery",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "returned_any_source was recorded only for 2xx answers and returned_hidden_doc covers only the hidden document, so no committed field shows that a refused read path carried no document (THRESHOLDS.md:26; clause EXP1-T4.no-document-battery)"
+   },
+   {
+    "life": "down_7.json",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   },
+   {
+    "life": "aggregate",
+    "gate": "EXP1-T4",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "no committed field shows that the refused post-transition DLS search carried no document: the old recorder kept only status, class and an error summary, and counted returned documents only for HTTP 200 (THRESHOLDS.md:26; clause EXP1-T4.no-document)"
+   },
+   {
+    "life": "aggregate",
+    "gate": "EXP3-migration",
+    "from": "PASS",
+    "to": "UNVERIFIED",
+    "why": "the registered per-value 1% relative criterion for the semantic recipe is not witnessed (absolute error and cosine were recorded; the vectors were not kept): THRESHOLDS.md:41, clause EXP3-T2.relative (LIMIT)"
+   }
+  ]
+ }
 }

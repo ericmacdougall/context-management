@@ -289,7 +289,7 @@ declared table, and the tests are generated from that table.
 
 ## 3e. Review 11: every failure path of loading and deriving ends in UNVERIFIED (F25 to F27)
 
-Review 11 found that the review-10 loader inferred "no raw file" from "no derived entry". A derivation that did not run (bad timing metadata) or could not read its file therefore kept the stored T1 figures. It also found that a life file holding `[]` raised out of `current_summary()`. The class is closed as follows.
+Review 11 found that the review-10 loader inferred "no raw file" from "no derived entry". A derivation that did not run (bad timing metadata) or could not read its file therefore kept the stored T1 figures. It also found that a life file holding `[]` raised out of `current_summary()`. The changes below remove those two paths; review 12 found further instances of the same class (F28, F29), so this section claims only what its tests show.
 
 1. **F25: existence is checked, never inferred.**
    - `summarize._present` checks every raw file with `os.path.lexists`, so a directory, an unreadable file or a dangling link counts as present.
@@ -317,9 +317,95 @@ Review 11 found that the review-10 loader inferred "no raw file" from "no derive
   - `availability` with no reads is rejected by the positive `requests` field.
   - `_drop` returns early when the parent is not an object, so nothing stored can survive under it.
   - The poll source is skipped for up lives, and no up-scoped gate reads `exp1_moment`.
-- **Not a gate path (disclosed):**
-  - The legacy report (`summarize.main` without `--current`, `exp*_checks`, `aggregate`) still indexes life records directly and can raise on a malformed complete life. It writes no status of record.
-  - `recompute.py` is a hand-run corroboration script that raises on a malformed life rather than retaining anything.
+- **Not a gate path (disclosed; restated in review 12, F30):**
+  - The legacy report (`summarize.main` without `--current`, `exp*_checks`, `aggregate`) still indexes life records directly and can raise on a malformed complete life, before its output file is opened. Since review 12 it refuses `summary_current.json` as its destination (exit 2), so it cannot overwrite the current report; any other path it writes is not a status of record.
+  - `recompute.py` is a hand-run corroboration script that raises on a malformed life rather than retaining anything, and refuses the same destination.
+
+## 3f. Review 12: start from the registered rules (F28 to F30)
+
+Twelve rounds each found one more instance of one class: a PASS that did not rest on positive typed evidence. Every earlier completeness
+check started from the code (the leaves a verdict reads), so a registered clause no verdict reads was invisible. F28 was such a clause:
+THRESHOLDS.md:26 "returning any document is a FAIL", and no field recorded a document carried by a refused answer. Review 12 changes the
+starting point to THRESHOLDS.md.
+
+**Research (2026-11-17; secondary sources, so medium to low confidence):**
+- Requirements traceability: a requirement row with no linked test is the gap a matrix exists to show, and requirement identifiers must be
+  stable. https://www.practitest.com/resource-center/article/requirement-traceability-matrix-rtm/ ,
+  https://www.qase.io/blog/requirements-traceability-test-coverage-chain/ (medium). Used: stable clause ids, and a missing link fails a
+  test instead of appearing in a report.
+- Mutation analysis of oracles: a mutant counts only when the fault reaches an oracle strong enough to give a failing verdict; the oracle's
+  quality is how many mutants it kills. https://arxiv.org/pdf/2212.06118 , https://mutationtesting.uni.lu/theory.php (medium). Used:
+  mutations are applied to the evidence a clause names, and the verdict (the oracle) must reach the declared status. Rejected: a general
+  mutation framework over the source code (cost, and source-level mutants of this code say nothing about clause coverage).
+- Fail closed: deny by default when a check cannot be completed or its inputs are missing (CWE-636 "Not Failing Securely"; OWASP Top 10
+  2025 A10 "Mishandling of Exceptional Conditions"). https://authgear.com/post/owasp-2025-mishandling-of-exceptional-conditions (low:
+  secondary summary). Used: a missing witness is UNVERIFIED, an unknown body shape is unknown (never zero), and positive evidence of a
+  failure decides before missing evidence.
+
+**The clause table: `licence/clauses.py`** (72 rows; every row also appears in `summary_current.json` under `clauses` with a status).
+Each row is one atomic clause: THRESHOLDS.md line and quote, kind (PASS, FAIL, CONTROL, SUBSTITUTE, LIMIT, REPORTED, RULE), the gates
+that decide it, the witness fields, the mutations, the recorder function and the verdict function. `tests/test_clauses.py` generates the
+tests from it:
+1. Every bullet line of THRESHOLDS.md (and the Evidence rules paragraph, line 50) is cited, and each quote is on its cited line.
+2. Every gate in `verdicts.GATES` is cited by a clause; an ungated clause can only be REPORTED, RULE or LIMIT and is UNVERIFIED in the
+   report, never PASS.
+3. Every FAIL clause has a mutation for each of its gates; on a passing base life each mutation moves the gate to its declared status
+   (FAIL, or UNVERIFIED where the rule says an absent key fails). The base is the committed down_7/up_1 plus what the review-12 recorder
+   records on a refusal (`clauses.augment_base`), and the test asserts it parses and does not FAIL first.
+4. Every witness of a PASS, CONTROL or SUBSTITUTE clause is a field its gate reads, and removing it or setting it to null, a string or -1
+   makes the gate UNVERIFIED.
+5. A LIMIT clause forces its gate's PASS to UNVERIFIED and the reason names the clause (`verdicts.judge`).
+
+**Decisions the table forces (ASSUMPTION: the plain reading of the rule "a clause with no witness field is a gap you close or a declared
+limit that forces UNVERIFIED"):**
+- EXP1-T4 "returning any document is a FAIL": a witness was added (below); the committed lives lack it, so EXP1-T4 and EXP1-T4-battery are
+  UNVERIFIED for all of them. A positive count (for example `returned = 8`) is a FAIL with or without the new witness.
+- EXP3-T2 "within 1% relative of the stub's float vectors": not witnessed (absolute error and cosine were recorded) -> LIMIT; EXP3-migration
+  is UNVERIFIED in every life.
+- EXP1-T3 "for every LICENCE_ERROR cell of a search path": three cells are witnessed -> LIMIT (it was UNVERIFIED in every life already).
+- EXP2-T2 "the longest run of consecutive failed auto requests": closed. `observe.consecutive_auto_failure` derives it from rows.gz (auto
+  and auto+linear readers; inferred: both run strategy auto) and the gate reads it; every committed life has 0 failed reads, so no status
+  changed.
+- EXP1-T2 "probe START time": SUBSTITUTE. The poll end is later than the probe start, so a refusal within 5 s by the end is within 5 s by
+  the start.
+
+**Recorder audit (F28's other half): every reduction of a response to a boolean or count.**
+
+| Where | Reduction | Status-dependent? | Decision |
+|---|---|---|---|
+| `matrix.dls_search` | `returned` = hit count only when HTTP 200 | yes | Kept as recorded; `docs_in_payload` added (by body shape, any status). |
+| `matrix.dls_battery` | `returned_any_source` = `_source` in body and status < 300 | yes | Kept; `docs_in_payload` added per read path. `returned_hidden_doc` was already status-independent but covers only the hidden document. |
+| `matrix.quick_probes` | DLS poll row `[class, status, returned]` | yes | Fourth element `docs_in_payload`; `observe.moments` sums it over probes started after start_basic (`docs_after_transition`, None for three-element rows). |
+| `matrix.S`, ES\|QL `Q`, `inference_list` | witness (ids, values) only when 200 | yes | Correct as is: the witness only upgrades a 2xx to AVAILABLE; no registered clause concerns data returned with an error for these cells. |
+| `matrix.make_fixture`, `check_fixture`, `check_written`, `check_vec_fixture`, `check_dls_principal` | prerequisite holds only on 200/2xx | yes | Correct: a failed prerequisite is UNVERIFIED_PREREQUISITE or aborts. |
+| `exp3.reads`, `semonly_queries`, `unrefreshed_partial` | hit totals only when 200 | yes | Correct: EXP3-T4 registers "a 200 with a different total" as the silent case; a non-200 is recorded with its class. Ungated except the semantic-only control, which requires 200 with hits. |
+| `exp3.check_vectors`, `check_semantic` | a kNN self-hit only on 200 | yes | Conservative: a non-200 counts as a miss. |
+| `exp2.verify_writes`, `exp3.count`, `source_count` | presence and counts only on 200 | yes | Conservative or abort: a non-200 fails the check. |
+| `lib.bulk` | successful items counted only when the bulk answer is 200 | yes | Conservative: a non-200 bulk counts every item failed. |
+| `exp4` | licence type only on 200 | yes | Ungated (EXP4 is REPORTED). |
+
+**F29 and its class.** The derivation cache (`functools.lru_cache` keyed on an `lstat` stamp) is removed: every report reads and derives
+the raw files afresh (one full current report takes about 18 s on the Mac). A test replaces a raw symlink's target, then removes it,
+between two reports in one process; another fails if a memo appears in summarize, observe, evidence or verdicts. The search for the same
+class (memo, module-level state or stat shortcut between input and verdict) found:
+- `lib._LAST` (the thread's last raw response). `matrix.verdict` attached it to a cell on a status match alone, so a cell judged on one
+  of two requests (client-side fusion) could carry another request's bytes. It now attaches it only if the bytes decode to the cell's body
+  (`matrix._same_response`; test `test_f29_class_a_stale_last_response_is_not_recorded_as_this_cells_message`).
+- While writing that test: `matrix.py` defined a function `observe` that shadowed the imported `observe` module, so recording an adapter
+  message raised AttributeError on the first 4xx/5xx cell whose last response matched. The committed lives predate adapter-message
+  recording, so no committed result is affected; the recorder would have crashed on its first live refusal. The module is now imported
+  as `observe_mod`, and the test above covers the path.
+- No other memo, cache, stat-based key or mutable module state lies between a raw file and a verdict.
+
+**F30.** `summarize.refuse_current_destination` makes the legacy report and `recompute.py` exit 2 before computing anything when the
+destination is `summary_current.json` (by name, resolved name or the same file). Only `summarize.py <results> --current <out>` writes it.
+
+**History.** The committed lives were recorded by the old recorder and are not edited. The current report changes 18 statuses against
+d8aa93d; each is listed with its reason in `results/SUPERSEDED.json` (`status_changes_review_12`) and counted in `results/README.md`.
+
+**Not verified.** The new recorder fields (`docs_in_payload`, the fourth poll element) have run only against stubbed responses, never
+against a node; no committed life can show EXP1-T4 PASS until a life is recorded with them. The read-path payload shapes are the documented
+Elasticsearch shapes plus the reviewer's synthetic 403; a shape the function does not know is recorded as unknown (UNVERIFIED), not as 0.
 
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
