@@ -1,0 +1,61 @@
+# failing-first receipt (new module)
+# date: 2026-11-18T22:01:00Z
+# tree: writepath at 6be02e3 (git archive); the current tests/ copied into it; run from it
+# module under test: results/failing-first/variants/disk_gate.v6-mutant-catalog_end_diff_skipped.py sha256 a54bf1c9aa699123b7eb3fdbeef0ed0b25f4531df28765e97a3f338946b2f0c3, copied into the tree
+# its difference from exp/disk_gate.py at HEAD 6be02e3:
+# diff: 1603c1603
+# diff: <         why += w if snap is None else _catalog_rules(snap, "end") + _catalog_diff(run["catalog"], snap)
+# diff: ---
+# diff: >         why += w if snap is None else _catalog_rules(snap, "end")
+# test file: tests/test_disk_gate.py from HEAD 6be02e3 blob bde6b833e78ac2be5387a73a5854821d636c8823
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<tree>/writepath/results/failing-first/variants/disk_gate.v6-mutant-catalog_end_diff_skipped.py python3 -m unittest -v tests.test_disk_gate.Gate.test_v6_f3_default_acl_added_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_policy_added_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f3_constraint_dropped_during_the_run_voids tests.test_disk_gate.Gate.test_v6_f1_store_reset_during_the_run_voids)
+test_v6_f3_default_acl_added_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_policy_added_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f3_constraint_dropped_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_v6_f1_store_reset_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_v6_f3_default_acl_added_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 2113, in test_v6_f3_default_acl_added_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "catalog wp_events.default_acl changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_policy_added_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 2118, in test_v6_f3_policy_added_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "catalog wp_events.policies changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f3_constraint_dropped_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 2165, in test_v6_f3_constraint_dropped_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "catalog wp_events.constraints changed")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+======================================================================
+FAIL: test_v6_f1_store_reset_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 2026, in test_v6_f1_store_reset_during_the_run_voids
+    self.assertOnly(*self.call("end"), 3, "was reset or replaced during the run", "catalog wp_events.")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jgXmCRPjUU/writepath/tests/test_disk_gate.py", line 1981, in assertOnly
+    self.assertEqual(rc, code, f"expected {kind} (exit {code}), got {rc!r}: {out.strip()[-600:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0: ot inspected: Elasticsearch indices deleted during the run by a process that does not take the run lock (an older tree's exp.cleanup, a direct DELETE); Elasticsearch users, roles, API keys, ingest pipelines and snapshot repositories; a catalog change made and reverted within the run; the venv's packages, .pth files and sitecustomize (versions recorded, not verified); store content written by a process outside the run. The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.
+
+----------------------------------------------------------------------
+Ran 4 tests in 14.460s
+
+FAILED (failures=4)
+# exit status: 1

@@ -2099,6 +2099,24 @@ class Gate(unittest.TestCase):
         self.assertOnly(*self.call("start"), 2, "before the store reset: role wp_app has rolsuper=True")
         self.assertEqual(self.tools(), [], "the reset ran (and would have repaired the role silently)")
 
+    def test_v6_f3_weakened_role_the_reset_would_repair_still_blocks(self):
+        # the reset re-applies the role's attributes, so only the check before it can see that the role was weakened
+        # (mutant pre_reset_check_skipped admits this run)
+        self.F.flag(reset_repairs_roles=True)
+        self.F.cat("cluster", "roles", "set", "wp_app", "True", "True", "False", "False", "True", "False", "False")
+        self.assertOnly(*self.call("start"), 2, "before the store reset: role wp_app has rolsuper=True")
+
+    def test_v6_f3_default_acl_added_during_the_run_voids(self):
+        # no committed rule names default ACLs: only the comparison with admission's catalog sees it
+        self.start()
+        self.F.cat("wp_events", "default_acl", "add", "wp_owner", "public", "r", "{wp_app=arwd/wp_owner}")
+        self.assertOnly(*self.call("end"), 3, "catalog wp_events.default_acl changed")
+
+    def test_v6_f3_policy_added_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "policies", "add", "events", "p_all", "ALL", "{public}", "true", "true")
+        self.assertOnly(*self.call("end"), 3, "catalog wp_events.policies changed")
+
     def test_v6_f3_extra_membership_blocks(self):
         self.F.cat("cluster", "members", "add", "pg_read_server_files", "wp_app")
         self.assertOnly(*self.call("start"), 2, "member of pg_read_server_files")
@@ -2442,6 +2460,8 @@ def fake_tools(F, g):
         F.locked(lambda st: st.setdefault("tools", []).append([tag, [s[0] for s in steps], held]))
         if F.st()["flags"].get("tools_fail_" + tag):
             return [f"{steps[0][0]} ({steps[0][1]}) failed under the run lock (1)"]
+        if tag == "admission" and F.st()["flags"].get("reset_repairs_roles"):
+            F.cat_restore("cluster", "roles")      # wp.setup --reset re-applies the committed role attributes
         return []
     return tools
 
