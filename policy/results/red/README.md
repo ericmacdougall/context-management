@@ -7,8 +7,10 @@ credential shapes (private-key blocks, AWS key ids, `sk-` keys, user:password UR
 ## Review of 2262eaa (F1-F8, H1, H2), t2-dev, 2026-11-18
 
 Trees are `git archive` exports (code paths only, `results/` excluded) of the fix worktree; the header of each log names the tree
-object. 2262eaa is the code under review; the fix commits are 6361bd9 (H2) and 4e1ba6b (F1-F3, F5, F8, H1); trees b9cc544 and
-20da971 have pol/, exp/, ops/ and verify/ identical to them (20da971 adds the corrected tests/test_rev2262_pg.py). Strict classes
+object. 2262eaa is the code under review; the fix commits are 6361bd9 (H2), 4e1ba6b (F1-F3, F5, F8, H1) and the F6/F7 commit
+that adds this paragraph. Trees b9cc544 and 20da971 have pol/ and ops/ identical to 4e1ba6b, and exp/ and verify/ identical to the
+F6/F7 commit (the log headers that say "identical to the fix commits" mean these two; 20da971 adds the corrected
+tests/test_rev2262_pg.py). Strict classes
 as defined below (`kit/strict_classify.py`; rev2262 tests are classed by test name in its `BY_TEST`).
 
 | Finding | Red log (2262eaa) | Strict class of the red failures | Green log |
@@ -26,6 +28,15 @@ Other green logs: `rev2262_pg8_green_b9cc544.out` (the eight Postgres suites, Ra
 evidence: `rev2262_pg_red_2262eaa_SUPERSEDED.out` (first red run; two test bugs, F2b's unrevoke waited on the holder's own pin and
 F2a counted prepared locks with a wrong join) and `rev2262_pg_green_b9cc544_SUPERSEDED.out` (the same F2b bug, and an F5 test that
 expected bad_event while a stalled submitter held the chain head, FINAL-JUDGMENT.md 4.4 residual 3; the test was split).
+
+F6 and F7 (experiment controls; no failing-first unit test, disclosed: the evidence is the DEV run): `dev_b3_20da971.out` (DEV
+seeds, not proof): b3_pg PASS in 54 s, nine scenarios 50 of 50 with overlap 50 of 50 where pinned; controls no_head_lock 50/50
+(overlap 50), no_advisory_lock 50/50 (overlap 50), idem_unprotected caught 50 of 50 with the overlap witnessed in 49 (B seen
+blocked on A's transaction id, wait_event transactionid); in the 50th round the monitor never saw B blocked (overlap False,
+recorded as such; at 2262eaa the control reported overlap True unconditionally). The three earlier DEV b3 runs were VOID during
+this control (see the S1 section). `dev_s2_20da971.out`: s2_sessions PASS, 1860 rows, 0 accepted attacks, 91 s; ctl_txn_clock now
+patches only the proof-expiry clock (F7: the session-side patches changed nothing the arm measures, which runs proof trials only, and were removed; token expiry inside a
+transaction is covered by tests/test_delta1_pg.py M1_WallClock, not by this control).
 
 ## S1 (the final review's P1-P4 merged) and FINAL-JUDGMENT.md 4.4, t2-dev, 2026-11-18
 

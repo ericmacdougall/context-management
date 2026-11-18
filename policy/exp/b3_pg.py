@@ -361,40 +361,18 @@ def ctl_no_advisory(c, i):
 
 
 def ctl_idem_unprotected(c, i):
-    """Nothing makes B wait here (no shared row, no advisory lock, no unique index), so the overlap is forced with events instead of a
-    lock: A holds its transaction open at before_commit until B has computed its outcome and reached its own before_commit."""
+    """Without the idempotency lock and the unique index, B's idempotency lookup is unprotected. B (another request of the same
+    principal with the same idem key) does its lookup, then waits on the tenant's chain head row, which A holds (S1 lock order: the
+    lookup comes before the chain head). The monitor race of the other controls: A stops at before_commit until the monitor sees B
+    waiting on a lock, then commits. B's lookup therefore ran while A was open, so B misses A's event and both apply (2 rows: the
+    check-then-act race the lock and the index close). overlap = the monitor saw B blocked between A's lock and A's commit (review of
+    2262eaa F6: the earlier version forced the order with events, always waited TIMEOUT for an event B could never reach while
+    blocked, and reported overlap True unconditionally)."""
     ra, rb, ea, eb = s4b_events(i, "c3")
-    res, errs, w = {}, [], {}
-    a_locked, b_ready = threading.Event(), threading.Event()
-
-    def hook_a(name):
-        if name == "locked":
-            a_locked.set()
-        if name == "before_commit":
-            w["b_ready_while_a_open"] = b_ready.wait(TIMEOUT)
-
-    def hook_b(name):
-        if name == "before_commit":
-            b_ready.set()
-
-    def run(key, eng, ev, hook):
-        try:
-            res[key] = eng._submit(ev, hook)
-        except Exception as e:      # noqa: BLE001
-            errs.append((key, repr(e)))
-            a_locked.set()
-            b_ready.set()
-    ta = threading.Thread(target=run, args=("a", c.ea, ea, hook_a))
-    ta.start()
-    a_locked.wait(TIMEOUT)
-    tb = threading.Thread(target=run, args=("b", c.eb, eb, hook_b))
-    tb.start()
-    ta.join(TIMEOUT * 3)
-    tb.join(TIMEOUT * 3)
-    ov = bool(w.get("b_ready_while_a_open"))
+    res, ov, w, errs = race(c, ea, eb, wait_at="before_commit")
     n = c.adm.execute("select count(*) from dc.events where tenant=%s and principal='u1' and idem=%s", (T, ea["idem"])).fetchone()[0]
     both = res.get("a") == ("superseded", None) and res.get("b") == ("superseded", None) and n == 2
-    return both, True, {"codes": res, "event_rows": n, "w": w, "errs": errs}
+    return both, ov, {"codes": res, "event_rows": n, "wait_event": w.get("b_wait_event"), "w": w, "errs": errs}
 
 
 HEAD_LOCK = "    perform 1 from dc.head where tenant = p_tenant and req = ev->>'req' for update;\n"

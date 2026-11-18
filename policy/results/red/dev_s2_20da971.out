@@ -1,0 +1,9 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), containers emlab2-policyfix2-pg (127.0.0.1:25811) and emlab2-policyfix2-prep (max_prepared_transactions 5, F2a only); home paths shown as ~
+# DEV (development seeds, not proof), batch b3 at the final code (tree w4 = tree object 20da971: pol/ ops/ as 4e1ba6b, exp/ verify/ with the F6/F7 edits committed next): m exp.s2_sessions
+# free 19106910208 bytes at 2026-11-18T18:55:50Z
+# tree w4 fix worktree tree-commit fea99cb (tree 20da971), uncommitted tgz-sha256 67227c30997777ae25bf3c92431ef6f3c2cfa52d14c5d5738ef06d5d633acec6
++ tests/test_fixtures_step3_protocol.py (step-3 protocol fixtures, uncommitted draft) overlaid
+# cmd m exp.s2_sessions
+RESULT s2_sessions verdict=PASS sha256=ada8a93553e4d609808bbc61beffccdf734760fde20c8d8011fe59609f0c2d06 file=~/emlab2-16096/policyfix2/runs/w4/policy/results/DEV.s2_sessions.ada8a93553e4d609.json
+PASS rows 1860 accepted attacks 0
+# rc 0 seconds 91 free-after 19539857408 pg-volume 115990269
