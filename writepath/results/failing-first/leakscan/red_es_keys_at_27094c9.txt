@@ -1,0 +1,12 @@
+# tree: writepath/ at 27094c9 (dirty: 4 paths)
+# command: python3 results/failing-first/harness/red_with.py . wp/es_keys.py 27094c9 tests.test_es_keys_output
+# harness sha256: 536aba1f1cfca052
+# replaced: wp file wp/es_keys.py <- wp/es_keys.py at 27094c9; tests: current; python3 -m unittest tests.test_es_keys_output
+FAIL: test_k_out1_printed_line_is_scan_clean (tests.test_es_keys_output.CreateOutput)
+AssertionError: 'files with a secret value: 0' not found in 'candidate secret values loaded: 8\nfiles scanned: 1 files with a secret value: 1\nHIT /var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp07_mlx7n/out/D6.out 4\n'
+FAIL: test_k_out2_fingerprints (tests.test_es_keys_output.CreateOutput)
+AssertionError: Regex didn't match: '^sha256:[0-9a-f]{16}$' not found in 'KEYID0001abcdefghijklmnop'
+FAIL: test_k_rot_previous_key_invalidated_first (tests.test_es_keys_output.CreateOutput)
+AssertionError: Lists differ: ['POST'] != ['DELETE', 'POST']
+Ran 3 tests in 0.135s
+FAILED (failures=3)

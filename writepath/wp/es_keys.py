@@ -55,6 +55,14 @@ def _superuser_header():
     return h
 
 
+def fingerprint(key_id):
+    """What create() reports for a key: a hash of its id, never the id. An id alone does not authenticate (an API key
+    request needs id and key together), but the id sits in the 0600 key file next to the key, so the stream's leak scan
+    (runkit/leak_scan.py) counts it as a secret value; printing it made the 2026-11-18 D6 receipt a scan hit."""
+    import hashlib
+    return "sha256:" + hashlib.sha256(key_id.encode()).hexdigest()[:16]
+
+
 def _write(name, obj):
     p = config.SECRETS / name
     fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
@@ -69,15 +77,19 @@ def create():
     es = ES()
     es.auth = _superuser_header()
     out = {}
+    # Rotation: the previous key of each role is invalidated before its successor is minted, so a rerun leaves one
+    # valid key per role.
     for role, rd in ROLE_DESCRIPTORS.items():
+        es.req("DELETE", "/_security/api_key", {"name": f"wp16096-{role}"}, ok=(200, 404))
         j = es.req("POST", "/_security/api_key", {"name": f"wp16096-{role}", "role_descriptors": {f"wp16096_{role}": rd},
                                                  "metadata": {"stream": "goodqa-16096", "role": role}})[1]
         _write(f"es_api_key.{role}.json", {"id": j["id"], "encoded": j["encoded"]})
-        out[role] = j["id"]
+        out[role] = fingerprint(j["id"])
+    es.req("DELETE", "/_security/api_key", {"name": "wp16096-admin"}, ok=(200, 404))
     j = es.req("POST", "/_security/api_key", {"name": "wp16096-admin", "metadata": {"stream": "goodqa-16096", "role": "admin"}})[1]
     _write("es_api_key.json", {"id": j["id"], "encoded": j["encoded"]})
-    out["admin"] = j["id"]
-    return out                      # key ids only (not secret)
+    out["admin"] = fingerprint(j["id"])
+    return out                      # fingerprints of key ids only: no id, no key
 
 
 def create_broker():

@@ -1,0 +1,8 @@
+== python3 -m unittest tests.test_es_keys_output (Mac, tree 27094c9 + es_keys fingerprint change)
+Ran 3 tests in 0.153s
+
+OK
+== python3 -m unittest tests.test_broker (Mac, tree 27094c9 + es_keys fingerprint change)
+Ran 18 tests in 1.116s
+
+OK

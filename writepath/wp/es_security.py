@@ -100,7 +100,7 @@ def enable():
     else:
         raise SystemExit("password reset failed after 20 attempts (nothing printed)")
     from . import es_keys
-    print("security on; key ids", es_keys.create())
+    print("security on; key id fingerprints", es_keys.create())
 
 
 def disable():
