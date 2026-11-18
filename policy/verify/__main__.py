@@ -3,7 +3,8 @@
 usage: python -m verify [results_dir] [--dev] [--seeds-file F] [--thresholds-file F]
 For each experiment it takes the stamped result files (or, with --dev, only DEV. files), checks the items file hash recorded in the
 result, loads verify/<x>.py BY PATH (each module is stdlib-only; an AST check here refuses any module that imports pol, exp or
-tests), recomputes the verdict from the rows, and compares it with the verdict the experiment wrote. A disagreement, a missing
+tests, and checks the shared evidence layer verify/evidence.py, which every verifier loads by path, the same way), recomputes the
+verdict from the rows, and compares it with the verdict the experiment wrote. A disagreement, a missing
 artifact or a missing result is FAIL.
 For a STAMPED set (no --dev) the provenance gate verify/provenance.py must also pass (review-3 N6: one result per experiment, clean
 stamps at the thresholds commit, one commit, one thresholds digest equal to the THRESHOLDS file, the STAMPED seeds of exp/seeds.py);
@@ -68,6 +69,10 @@ def main(argv):
     root = os.path.dirname(HERE)
     res = args[0] if args else os.path.join(root, "results")
     table, ok_all, stamped_docs = [], True, {}
+    try:                                                              # GoodQA #16096 class B: the layer every verifier loads
+        evidence_ok = _imports_ok(os.path.join(HERE, "evidence.py"))
+    except (OSError, SyntaxError):                                    # missing or unparsable: every experiment FAILs, no crash
+        evidence_ok = False
     for key, name in EXPS.items():
         vpath = os.path.join(HERE, key + ".py")
         files = [f for f in glob.glob(os.path.join(res, ("DEV." if dev else "") + name + ".*.json"))
@@ -76,8 +81,8 @@ def main(argv):
             table.append({"exp": name, "verdict": "FAIL", "why": "no result file"})
             ok_all = False
             continue
-        if not _imports_ok(vpath):
-            table.append({"exp": name, "verdict": "FAIL", "why": "verifier imports pol/exp/tests"})
+        if not _imports_ok(vpath) or not evidence_ok:
+            table.append({"exp": name, "verdict": "FAIL", "why": "verifier or verify/evidence.py imports pol/exp/tests"})
             ok_all = False
             continue
         mod = _load(vpath)

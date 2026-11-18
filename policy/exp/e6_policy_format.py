@@ -151,7 +151,7 @@ def main():
         for i in range(N_EMPTY):
             pr = probe(rng)
             rows.append({"arm": "empty", "seed": s, "returned": {"Policy(1)": ev(Policy(1), pr), "DENY_ALL": ev(DENY_ALL, pr),
-                                                                 "safe({})": ev(safe_policy({}), pr), "safe(None)": ev(safe_policy(None), pr)}})
+                                                                 "safe({})": ev(safe_policy({}), pr), "safe(None)": ev(safe_policy(None), pr)}, "i": i})
         for i in range(N_MALFORMED):
             kind, bad = mutate(rng, GOOD)
             try:
@@ -164,10 +164,10 @@ def main():
             sp, lp = safe_policy(bad), lenient_load(bad)
             prs = [probe(rng) for _ in range(N_PROBES)]
             rows.append({"arm": "malformed", "seed": s, "kind": kind, "doc": json.dumps(bad, default=repr)[:600], "parse": parsed,
-                         "safe": [ev(sp, pr) for pr in prs], "lenient_ctl": [ev(lp, pr) for pr in prs]})
+                         "safe": [ev(sp, pr) for pr in prs], "lenient_ctl": [ev(lp, pr) for pr in prs], "i": i})
         good = parse_policy(GOOD)
         for i in range(N_VALID):
-            rows.append({"arm": "valid", "seed": s, "returned": ev(good, probe(rng))})
+            rows.append({"arm": "valid", "seed": s, "returned": ev(good, probe(rng)), "i": i})
         ex = parse_policy(EXAMPLE_POLICY)
         rows.append({"arm": "example", "seed": s, "example_flag": EXAMPLE_POLICY.get("example"), "example_tenants": sorted(ex.grants)})
         rows += holds_rows(s)

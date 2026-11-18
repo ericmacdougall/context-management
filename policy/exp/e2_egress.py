@@ -134,6 +134,7 @@ class Scenario:
 
 def run_scenario(E, seed, i, arm, rows):
     rng = random.Random("%s/%d" % (seed, i))
+    n0 = len(rows)                      # identity (GoodQA #16096 class B): this scenario's child rows are rows[n0:]
     sc = Scenario(E)
     st, s = sc.store, sc.s
     pool = []
@@ -248,8 +249,11 @@ def run_scenario(E, seed, i, arm, rows):
         mks = sorted({m.group(0) for m in MARKER_RE.finditer(p.text)})
         rows.append({"t": "payload", "arm": arm, "seed": seed, "i": i, "channel": p.channel, "dest": p.dest, "attrs": p.attrs, "tenant": p.tenant,
                      "markers": [[m, sc.cls_of[m]] for m in mks if m in sc.cls_of]})
+    for k, r in enumerate(rows[n0:]):   # each child's index in its scenario; the scenario row declares the count
+        r["k"] = k
     rows.append({"t": "scenario", "arm": arm, "seed": seed, "i": i, "payloads": len(sc.net.payloads),
-                 "evaluated_actions": sorted({r["action"] for r in sc.audit._snapshot()}), "registered": sorted(sc.net.registered.values())})
+                 "evaluated_actions": sorted({r["action"] for r in sc.audit._snapshot()}), "registered": sorted(sc.net.registered.values()),
+                 "items": len(rows) - n0})
 
 
 FORGES = ["extra_tenant", "extra_principal", "extra_now", "extra_recipient_object", "credential_unknown_key", "foreign_recipient", "unknown_recipient",

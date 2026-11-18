@@ -1,0 +1,263 @@
+# green run: tests.test_evidence_mig tests.test_evidence_layer tests.test_verify_pgdiff_mig tests.test_verify_s2 tests.test_verify_provenance against verify/mig.py
+# worktree HEAD: ea4677a58a1dcf0d2eb99f317445c2f5a62c06e4
+# git diff --stat ea4677a -- verify/mig.py (empty: the code under test is ea4677a's):
+ policy/verify/mig.py | 28 ++++++++++++++++++++++++++--
+ 1 file changed, 26 insertions(+), 2 deletions(-)
+# sha256 verify/mig.py in the worktree: 291c8d4d065746f7f4d772dc3e587d498588be9301aa04f37765aa97ae579b4d
+# sha256 verify/mig.py at ea4677a:     9131b70fe055861c26c5c412eeff971351030e2f464f475a6ca2a9f2072833a0
+# command (from policy/): python3 -m unittest -v tests.test_evidence_mig tests.test_evidence_layer tests.test_verify_pgdiff_mig tests.test_verify_s2 tests.test_verify_provenance
+test_audit_probe_failing_row_first_passing_later (tests.test_evidence_mig.MigEvidence)
+The audit's probe 2a: seed 71's clean row failing, a passing one after it (PASSED at ea4677a). ... ok
+test_design_comes_from_the_pins (tests.test_evidence_mig.MigEvidence) ... ok
+test_drop (tests.test_evidence_mig.MigEvidence) ... ok
+test_duplicate (tests.test_evidence_mig.MigEvidence) ... ok
+test_extra (tests.test_evidence_mig.MigEvidence) ... ok
+test_honest_set_passes (tests.test_evidence_mig.MigEvidence) ... ok
+test_overwrite (tests.test_evidence_mig.MigEvidence) ... ok
+test_permutation_keeps_the_verdict (tests.test_evidence_mig.MigEvidence) ... ok
+test_relabel (tests.test_evidence_mig.MigEvidence) ... ok
+test_renumber_out_of_sequence (tests.test_evidence_mig.MigEvidence) ... ok
+test_each_reason_is_named (tests.test_evidence_layer.Layer) ... ok
+test_identities_are_typed (tests.test_evidence_layer.Layer) ... ok
+test_main_import_gate_covers_the_layer (tests.test_evidence_layer.Layer) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/exp/e1_lattice.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_pins_compare_exactly (tests.test_evidence_layer.Layer) ... ok
+test_unclassified_rows_and_bad_seeds (tests.test_evidence_layer.Layer) ... ok
+test_wrong_experiment_name (tests.test_evidence_layer.Layer) ... ok
+test_each_break_fails (tests.test_verify_pgdiff_mig.MigVerifier) ... ok
+test_good_passes (tests.test_verify_pgdiff_mig.MigVerifier) ... ok
+test_n4_rollback_after_a_write_must_be_refused_and_the_write_kept (tests.test_verify_pgdiff_mig.MigVerifier) ... ok
+test_n8_probe_must_fail_with_insufficient_privilege (tests.test_verify_pgdiff_mig.MigVerifier)
+0a20b64 accepted any non-empty exception name as a denied privilege probe (an OperationalError, or a missing function). ... ok
+test_each_break_fails (tests.test_verify_pgdiff_mig.PgDiffVerifier) ... ok
+test_good_passes (tests.test_verify_pgdiff_mig.PgDiffVerifier) ... ok
+test_n8_control_caught_only_by_errors_fails (tests.test_verify_pgdiff_mig.PgDiffVerifier)
+0a20b64 counted error:* outcomes as control differences: a control arm whose broken run only errored looked 'caught'. ... ok
+test_n8_each_control_arm_must_catch_semantically (tests.test_verify_pgdiff_mig.PgDiffVerifier) ... ok
+test_duplicated_and_unexpected_coverage_fails (tests.test_verify_s2.CoverageIsPinned) ... ok
+test_each_manipulation_fails (tests.test_verify_s2.CoverageIsPinned) ... ok
+test_a_trial_index_must_be_an_integer (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_each_duplication_fails (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_good_set_passes (tests.test_verify_s2.TrialsAreIndependent) ... ok
+test_each_break_fails (tests.test_verify_s2.VerifyS2) ... ok
+test_good_set_passes (tests.test_verify_s2.VerifyS2) ... ok
+test_missing_rows_fail (tests.test_verify_s2.VerifyS2) ... ok
+test_dev_set_is_not_held_to_provenance (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ake3gkfa/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ake3gkfa/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ake3gkfa/tmpkdvi2ukf/DEV.x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ake3gkfa/tmpkdvi2ukf/DEV.x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_dirty_stamp_fails (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rbrv6eej/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rbrv6eej/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rbrv6eej/tmph5n4xhal/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rbrv6eej/tmph5n4xhal/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rbrv6eej/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_good_stamped_set_passes (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ihy2txlz/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ihy2txlz/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ihy2txlz/tmpwm0i5_tl/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ihy2txlz/tmpwm0i5_tl/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ihy2txlz/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_run_not_at_the_thresholds_commit_fails (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-dudqjhs2/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-dudqjhs2/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-dudqjhs2/tmp_q65dfrf/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-dudqjhs2/tmp_q65dfrf/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-dudqjhs2/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_seedless_experiment_must_record_no_seeds (tests.test_verify_provenance.Provenance)
+b1 never draws seeds: its stamped result records none (the reserved STAMPED entry is unused); recording some is a mismatch. ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/verify/b1.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/tmpxerh25lw/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/tmpxerh25lw/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/verify/b1.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/tmpy6_xy8cq/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/tmpy6_xy8cq/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_thresholds_digest_must_match_the_file (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/tmppczt1ntm/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/tmppczt1ntm/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_two_result_files_fail (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/tmp1irqc9k4/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/tmp1irqc9k4/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/tmp1irqc9k4/x_exp.0000000000000001.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_verify_record_keeps_rows_and_provenance_apart (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-nvixir14/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-nvixir14/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-nvixir14/tmp50culqzv/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-nvixir14/tmp50culqzv/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-nvixir14/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_wrong_seeds_fail (tests.test_verify_provenance.Provenance) ... ~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/tmp4woo1191/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/tmp4woo1191/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/verify/evidence.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/verify/x.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:90: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/tmpljwzzva6/x_exp.0000000000000000.json' mode='r' encoding='UTF-8'>
+  d = json.load(open(f))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:95: ResourceWarning: unclosed file <_io.BufferedReader name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/tmpljwzzva6/x_exp.items.afe487e6aff40141.jsonl.gz'>
+  raw = open(os.path.join(res, it["file"]), "rb").read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-policy-evidence/policy/verify/__main__.py:31: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/verify/provenance.py' mode='r' encoding='utf-8'>
+  tree = ast.parse(open(path, encoding="utf-8").read(), path)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 1.108s
+
+OK
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True DEV.x_exp.0000000000000000.json
+VERIFY overall=PASS sha256=d76cd4e413b019c8828b75374559512faec70c8abc9b5572962be5f37c080224 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ake3gkfa/tmpkdvi2ukf/DEV.VERIFY.d76cd4e413b019c8.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL x_exp: stamp dirty=True
+VERIFY overall=FAIL sha256=3f6f576c70ef176701bd05fe15fb932df9f4ebbe0a518f43e0fab00af834b724 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-rbrv6eej/tmph5n4xhal/VERIFY.3f6f576c70ef1767.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE PASS 
+VERIFY overall=PASS sha256=724c457f18fe602e54418bc83b2cdee6b816c7f18be5cf43bd4d4d7092c4920c file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-ihy2txlz/tmpwm0i5_tl/VERIFY.724c457f18fe602e.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL x_exp: run commit c1 is not the thresholds commit c0
+VERIFY overall=FAIL sha256=15561b593bc3d396240089d08aab2e2510db711e08c9fe6848546f65cd9ef9f9 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-dudqjhs2/tmp_q65dfrf/VERIFY.15561b593bc3d396.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE PASS 
+VERIFY overall=PASS sha256=724c457f18fe602e54418bc83b2cdee6b816c7f18be5cf43bd4d4d7092c4920c file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/tmpxerh25lw/VERIFY.724c457f18fe602e.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL x_exp: records seeds [41] but never draws any
+VERIFY overall=FAIL sha256=41d13744ce8b2362b610a212b02ea86c58c56990691d97c411b70a37511b18ac file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-xjtqx9a3/tmpy6_xy8cq/VERIFY.41d13744ce8b2362.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL thresholds digest of the results differs from /var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/THRESHOLDS.md
+VERIFY overall=FAIL sha256=9b9f85c5c14e9f79bdb340118b2e3c737b4b401c4b101627df19f8c931d197b7 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-0vv_rvx2/tmppczt1ntm/VERIFY.9b9f85c5c14e9f79.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000001.json
+PROVENANCE FAIL x_exp: 2 stamped result files (want 1); results from 0 commits: []; results under 0 thresholds digests
+VERIFY overall=FAIL sha256=513700775fdd2f3af10826a7291a3cbfcc141df9ec696a2400f9a5d07e2fcc14 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-akao939x/tmp1irqc9k4/VERIFY.513700775fdd2f3a.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL x_exp: stamp dirty=True
+VERIFY overall=FAIL sha256=3f6f576c70ef176701bd05fe15fb932df9f4ebbe0a518f43e0fab00af834b724 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-nvixir14/tmp50culqzv/VERIFY.3f6f576c70ef1767.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL x_exp: seeds [1, 3] != stamped [1, 2]
+VERIFY overall=FAIL sha256=216f05bd2d907f1d2176d68f16d19514d38a2a509db4a473a46e34eafe598ce6 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/tmp4woo1191/VERIFY.216f05bd2d907f1d.json
+x_exp              PASS  exp=PASS  recomputed=PASS  agree=True x_exp.0000000000000000.json
+PROVENANCE FAIL x_exp: seeds [7] != stamped [1, 2]
+VERIFY overall=FAIL sha256=8dc10a0370b79367ffbf598f7b3fae482da0e6439cc921cb1796bf4d9181e869 file=/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/prov-g2tjb1nw/tmpljwzzva6/VERIFY.8dc10a0370b79367.json
+# unittest exit status 0

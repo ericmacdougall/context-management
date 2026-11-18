@@ -31,9 +31,10 @@ class Provenance(unittest.TestCase):
         os.mkdir(self.vdir)
         with open(os.path.join(self.vdir, "x.py"), "w") as f:
             f.write("def verify(doc, rows):\n    return {'verdict': 'PASS' if rows else 'FAIL', 'checks': {}}\n")
-        real = os.path.join(POLICY, "verify", "provenance.py")
-        if os.path.exists(real):
-            shutil.copy(real, self.vdir)
+        for name in ("provenance.py", "evidence.py"):        # evidence.py: the shared layer the import gate checks (GoodQA #16096 class B)
+            real = os.path.join(POLICY, "verify", name)
+            if os.path.exists(real):
+                shutil.copy(real, self.vdir)
         self.seeds = os.path.join(self.tmp, "seeds.py")
         with open(self.seeds, "w") as f:
             f.write("STAMPED = {'x': [1, 2]}\nDEV = {'x': [7]}\n")

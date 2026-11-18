@@ -1,9 +1,31 @@
 """Independent recomputation of E1 from its raw rows (stdlib only; imports nothing from pol or exp).
 
 Rows: arm in {enforced, ctl_<dim>, laws, roundtrip}. Labels are lists in the order
-tenants, acl, regions, sensitivity, models, banned, local_only, restricted, holds, subjects."""
+tenants, acl, regions, sensitivity, models, banned, local_only, restricted, holds, subjects.
 
+Evidence identity (GoodQA #16096 class B, verify/evidence.py): the design parameters in params must equal PINS (THRESHOLDS E1), the seeds
+are params.seeds (at least MIN_SEEDS, distinct). The rows must be EXACTLY: one derivation per (arm, seed, n) for the arms enforced and
+ctl_<dim> and n = 0..n_per_seed-1; one law triple per ("laws", seed, n), n = 0..law_triples/5-1 (exp/e1_lattice.py writes LAW_TRIPLES // 5
+per seed); one round trip per ("roundtrip", seed, n), n = 0..roundtrip_per_seed-1. A duplicate, missing, extra, unidentified or
+unclassified row FAILs before any counter is read."""
+import importlib.util
+import os
+
+
+def _evidence():
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "evidence.py")
+    spec = importlib.util.spec_from_file_location("verify_evidence", p)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+EV = _evidence()
 DIMS = ["tenants", "acl", "regions", "sensitivity", "models", "banned", "local_only", "restricted", "holds", "subjects"]
+# the design (THRESHOLDS E1; exp/e1_lattice.py): pinned here, never read from the judged document
+PINS = {"n_per_seed": 4000, "probes_per_derivation": 40, "law_triples": 5000, "roundtrip_per_seed": 1000}
+MIN_SEEDS = 5
+ARMS = ["enforced"] + ["ctl_" + d for d in DIMS]
 
 
 def _s(x):
@@ -71,13 +93,32 @@ def _canon(lab):
     return tuple(out)
 
 
+def _family(r):
+    a = r["arm"]
+    if a in ("laws", "roundtrip"):
+        return a
+    return "derivation" if a == "enforced" or (isinstance(a, str) and a.startswith("ctl_")) else None
+
+
+def _ident(r):
+    return r["arm"], r["seed"], r["n"]
+
+
 def verify(result_doc, rows):
-    params = result_doc.get("params", {})
-    probes_per = params.get("probes_per_derivation", 40)
+    g = EV.Gate("e1_lattice", result_doc)
+    g.pinned(PINS)
+    sd = g.seeds(MIN_SEEDS)
+    fam = g.split(rows, _family)
+    g.family("derivation", fam.get("derivation", []), _ident, {EV.key(a, s, n) for a in ARMS for s in sd for n in range(PINS["n_per_seed"])})
+    g.family("laws", fam.get("laws", []), _ident, {EV.key("laws", s, n) for s in sd for n in range(PINS["law_triples"] // 5)})
+    g.family("roundtrip", fam.get("roundtrip", []), _ident, {EV.key("roundtrip", s, n) for s in sd for n in range(PINS["roundtrip_per_seed"])})
+    if not g.ok:
+        return g.fail()
+    probes_per = PINS["probes_per_derivation"]
     arms = {}
     for r in rows:
         arms.setdefault(r["arm"], []).append(r)
-    checks = {}
+    checks = {"evidence": g.report()}
     per = {}
     for arm, rs in arms.items():
         if arm in ("laws", "roundtrip"):
@@ -118,7 +159,7 @@ def verify(result_doc, rows):
         lf += _canon([own_join([enc2d(r["a"]), enc2d(r["b"])])[k] for k in DIMS]) != _canon(r["ab"])
     checks["law_failures"] = lf
     checks["law_triples"] = len(arms.get("laws", []))
-    ok = ok and lf == 0 and checks["law_triples"] * 5 >= params.get("law_triples", 5000)
+    ok = ok and lf == 0 and checks["law_triples"] * 5 >= PINS["law_triples"]
     # round trip
     mism, stored = 0, 0
     for r in arms.get("roundtrip", []):

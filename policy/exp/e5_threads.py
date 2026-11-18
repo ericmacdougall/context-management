@@ -51,7 +51,7 @@ def run_thread_arm(E, arm, sd, rows):
             w = TW.gen_world(rng)
             rows.append({"t": "world", "fam": "A", "arm": arm, "seed": seed, "i": i,
                          "edges": [[w.items[a].thread, w.items[b].thread, t] for a, b, t in w.edges], "findings": len(w.findings),
-                         "sources": TW.sources(w)})
+                         "sources": TW.sources(w), "viewers": [v[0] for v in TW.viewers(w)]})    # identity: the views this world declares
             for v in TW.viewers(w):
                 blob = TW.serialise(TW.build_view(E, w, v))
                 mblob = TW.serialise(TW.build_view(E, TW.mutate(w, v), v))

@@ -1,0 +1,22 @@
+# reworked legacy fixture against the ea4677a verifier: tests.test_verify_pgdiff_mig (its PgDiffVerifier class now on the pinned design of tests/test_evidence_pgdiff.py)
+# worktree HEAD: 490a7675937732e5c5ce1eb302d43a1f65ffe6e5
+# git diff --stat ea4677a -- verify/pgdiff.py (empty: the code under test is ea4677a's):
+# sha256 verify/pgdiff.py in the worktree during this run: 78c725075b75bc6e67a4962f075266779a782e584075a004124f96118b358084
+# expected: OK (the honest set PASSES and every legacy break still FAILS at ea4677a, so the rework kept each break)
+# command (from policy/): python3 -m unittest -v tests.test_verify_pgdiff_mig
+test_each_break_fails (tests.test_verify_pgdiff_mig.MigVerifier) ... ok
+test_good_passes (tests.test_verify_pgdiff_mig.MigVerifier) ... ok
+test_n4_rollback_after_a_write_must_be_refused_and_the_write_kept (tests.test_verify_pgdiff_mig.MigVerifier) ... ok
+test_n8_probe_must_fail_with_insufficient_privilege (tests.test_verify_pgdiff_mig.MigVerifier)
+0a20b64 accepted any non-empty exception name as a denied privilege probe (an OperationalError, or a missing function). ... ok
+test_each_break_fails (tests.test_verify_pgdiff_mig.PgDiffVerifier) ... ok
+test_good_passes (tests.test_verify_pgdiff_mig.PgDiffVerifier) ... ok
+test_n8_control_caught_only_by_errors_fails (tests.test_verify_pgdiff_mig.PgDiffVerifier)
+0a20b64 counted error:* outcomes as control differences: a control arm whose broken run only errored looked 'caught'. ... ok
+test_n8_each_control_arm_must_catch_semantically (tests.test_verify_pgdiff_mig.PgDiffVerifier) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.053s
+
+OK
+# unittest exit status 0

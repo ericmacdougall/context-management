@@ -189,7 +189,7 @@ def pdp_arms(rng, rows):
         pol = mk_policy(revoked=[p.id] if key == "id" else ())
         for arm, fn in (("enforced", _pdp.evaluate), ("ctl_naive_pdp", NAIVE.evaluate)):
             rows.append({"arm": arm, "cat": "planted", "key": key, "form": form, "channel": chan, "sent": rr(req),
-                         "returned": call(fn, p, "send_model", [lab], dict(req), pol, NOW, None)})
+                         "returned": call(fn, p, "send_model", [lab], dict(req), pol, NOW, None), "case": i})
     for i in range(N_FAULT):
         p, lab = P("p%d" % rng.randrange(10 ** 6)), Label(["t1"], acl=[["g1"]], regions=["eu"], sensitivity=1)
         kind = rng.choice(["rule", "rule", "rule", "label", "principal", "action", "request", "policy"])
@@ -215,7 +215,7 @@ def pdp_arms(rng, rows):
             j = rng.randrange(3)
             args[4], detail = [None, {"version": 1}, "policy"][j], "policy_%d" % j
         for arm, fn in (("enforced", _pdp.evaluate), ("ctl_naive_pdp", NAIVE.evaluate)):
-            rows.append({"arm": arm, "cat": "fault", "kind": kind, "detail": detail, "returned": call(fn, *args)})
+            rows.append({"arm": arm, "cat": "fault", "kind": kind, "detail": detail, "returned": call(fn, *args), "case": i})
     for i in range(N_LEGIT):
         p, lab = P("p%d" % rng.randrange(10 ** 6), groups=("g1", "g2")), Label(["t1"], acl=[["g1"]], regions=["eu"], sensitivity=1)
         cred = rng.choice([None, {}, {"cap_clearance": 3}, {"cap_actions": ["send_model", "read"]}, {"cap_restricted": True},
@@ -223,7 +223,8 @@ def pdp_arms(rng, rows):
         req = {"destination": "dm"}
         if cred is not None:
             req["credential"] = cred
-        rows.append({"arm": "enforced", "cat": "legit", "sent": rr(req), "returned": call(_pdp.evaluate, p, "send_model", [lab], req, mk_policy(), NOW, None)})
+        rows.append({"arm": "enforced", "cat": "legit", "sent": rr(req), "returned": call(_pdp.evaluate, p, "send_model", [lab], req, mk_policy(), NOW, None),
+                     "case": i})
     variants = ["CAP_ACTIONS", "cap-actions", "Cap_Actions", "cap_actions\u200b", " cap_actions", "cap.actions", "capactions", "cap_scope", "cаp_actions"]
     for i in range(N_CONTEXT):
         us = P("pq", groups=("g1",), clearance=3, restricted_ok=True, region="us")
@@ -243,7 +244,7 @@ def pdp_arms(rng, rows):
             a = ("read", [Label(["t1"], acl=[["g9"]])], {"principal": {"groups": ["g9"]}}, None)
         for arm, fn in (("enforced", _pdp.evaluate), ("ctl_naive_pdp", NAIVE.evaluate)):
             rows.append({"arm": arm, "cat": "context", "kind": kind, "sent": rr(a[2]),
-                         "returned": call(fn, us, a[0], a[1], dict(a[2]), pol, NOW, a[3])})
+                         "returned": call(fn, us, a[0], a[1], dict(a[2]), pol, NOW, a[3]), "case": i})
 
 
 # ------------------------------------------------------------------------------------------------ forge arm (surface-derived)
@@ -478,9 +479,12 @@ def main():
     for s in sd:
         rng = random.Random("%s|e3" % s)
         random.seed("%s|e3-forge" % s)
+        n0 = len(rows)
         pdp_arms(rng, rows)
         entries, others = surface_entries()
         forge_arm(rows, entries)
+        for r in rows[n0:]:             # identity field (GoodQA #16096 class B): the seed of every row
+            r["seed"] = s
     # the experiment's own summary (verify/e3.py recomputes independently)
     def acc(r):
         x = r["returned"]
