@@ -101,7 +101,7 @@ SITES = [
      "memory only: never written (the server key goes into PG's catalog)", True),
     ("host/bootstrap.py", "main", "secrets.token_urlsafe", 2, "PG admin password; legacy role passwords",
      "file: secrets/pg_password, secrets/pgpass; secrets/pw_emlab, secrets/pw_kms, oldhome/pgpass", True),
-    ("host/bootstrap.py", "main", "str POSTGRES_PASSWORD", 1, "PG superuser password, passed by file",
+    ("host/bootstrap.py", "pg_run_args", "str POSTGRES_PASSWORD", 1, "PG superuser password, passed by file",
      "not a creation: secrets/pg_password", False),
     ("wp/broker.py", "Broker._mint", "http POST _security/api_key", 1, "broker-minted writer API keys",
      MEM + "; sink H-2", True),
