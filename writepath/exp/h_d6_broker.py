@@ -601,8 +601,8 @@ def main(r=5):
                       "holds manage and create_index on every tenant's names and can re-point any tenant's alias; only "
                       "broker-minted keys are tenant- and epoch-scoped; a broker-mode deployment must not mint or place "
                       "the role keys where the application runs",
-                      "H6e C14d: a writer key can add fields to its own tenant's mapping (the index privilege includes "
-                      "mapping updates); tenant-local, reported, not judged"],
+                      "H6e C14d: whether a writer key can update its own tenant's mapping is observed, not assumed "
+                      "(see C14.d.own_mapping); tenant-local, reported, not judged"],
            "cleanup": "broker-minted keys are not invalidated by this experiment; they expire after 1 h"}
     res["broker_user"] = es_keys.create_broker()
     if not (config.SECRETS / "es_api_key.projector.json").exists():
