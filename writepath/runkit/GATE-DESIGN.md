@@ -772,7 +772,8 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   admit in the ledger and in every `stop_ledger.broken-*.jsonl`, where an unparsable line contributes every 64-hex
   token it holds (extra Ids cost nothing: they must be absent). Admit Ids must be full 64-hex Docker Ids. The
   containers the conf names are added when they exist.
-- "Gone" is a positive observation: `docker ps -a --no-trunc` succeeded and the Id is not in it. A Docker error is
+- "Gone" is a positive observation: `docker ps -a --no-trunc` succeeded and the Id is not in it (observed on t2-dev,
+  Docker 29.1.3, 2026-11-18, read-only: exit 0, 28 of 28 lines of the form `<64 hex> <name>`). A Docker error is
   never "gone". `--remove` runs `docker rm -fv` only on sealed Ids that this home's ledger admitted and whose
   current name starts with the stream's `OWN_PREFIX` (wp/config.py). A container named only by the conf is sealed but
   never removed: on a shared host another home with the same conf runs stores under the same names (t2-dev, 2026-11-18:
@@ -793,19 +794,45 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   COPY` checks a copy fetched from the host before `runkit/stage_results.py` rewrites it: receipt present and torn
   down, recorded scan exit 0, a PASS check bound to that receipt, and the copy's files equal to the manifest. It does
   not see Docker or WP_HOME; stage-check on the host does.
-- Exit codes: seal 0 (sealed, scan clean), 1 (sealed, scan not clean: teardown still proceeds, staging is blocked), 2
-  (not sealed); teardown 0 (receipt written), 1 (refused), 2 (no seal or usage); stage-check and verify-copy 0 or 1.
-- LIMITS clearance v1 is a constant in the tool, printed with every result and copied into the receipt.
+- Stores (added after the advisor's review of 73549e4). A store is a container that an admit record names (the gate
+  showed its data root on a private tmpfs at admission, B3; a container's mounts cannot change after creation) or
+  that the conf names. Clearance itself checks a conf-named store the ledger never admitted: from `docker inspect`
+  at the seal, its data directory must be on a single tmpfs mount, with nothing mounted below it. A named volume, a
+  bind mount or the container layer is "not shown". A 64-hex token from an unreadable replaced-ledger line is only an
+  Id that must be absent, not a store. Stage-check FAILs when the receipt names no store (nothing shows the
+  credentials dead) or names a store whose destruction is not shown. Until H-8 lands, the gate admits no run on the
+  stream's own stores, so every real store reaches clearance through this conf-named path.
+- The set and the runbook. `launch_one.sh` writes flat into `WP_HOME/results`, so a chain's SET is `WP_HOME/results`
+  itself. Every set a home holds is sealed before the first teardown: teardown destroys the stores and the
+  credentials, and a seal made after that has nothing to inventory. Two sets sealed first, then both torn down and
+  checked, is a test. Once its copy is committed, the cleared directory is moved aside before the next chain; a
+  cleared set is never sealed again.
+- Exit codes: seal 0 (sealed, stageable so far), 1 (sealed but not stageable: the scan found a value, so tear down
+  anyway; the scan could not complete, so fix it and seal again BEFORE teardown, or the set can never be scanned; no
+  store; a store not shown on tmpfs), 2 (not sealed); teardown 0 (receipt written), 1 (refused), 2 (no seal or usage);
+  stage-check and verify-copy 0 or 1.
+- LIMITS clearance v2 is a constant in the tool, printed with every result and copied into the receipt. v1 (73549e4)
+  claimed destruction for conf-named containers that nothing had shown to be on a tmpfs. v2 states, and enforces,
+  the store rule above.
 Hand-off H-9 (runkit/stage_results.py, the repo author's file): refuse a source set unless `verify-copy` passes on
 it, and carry CLEARANCE.json, CLEARANCE.check.json and CLEARANCE.seal.json into the committed set unchanged.
-Evidence (offline): `tests/test_clearance.py`, 20 tests. Every ledger record in them is written by the gate's own
-`Ledger`, and a fake docker accepts only the exact calls clearance makes. Red in a temporary tree from 8668f5e
-(`runkit/failing_first_variant.sh`): with the tool absent, 23 of 23 cases fail
-(`reviewF-clearance-absent-8668f5e.tree.red.out`); against variant a, where a Docker error reads as an empty list,
-exactly `test_docker_error_is_never_gone` fails (`reviewF-clearance-broken-a-error-is-gone.red.out`); against variant
-b, which finds `secrets*` directories by following links, exactly `test_deletion_stays_inside_wp_home` fails
-(`reviewF-clearance-broken-b-follows-links.red.out`). A later test, that `--remove` spares a container the conf names but this home's ledger never admitted, failed against the committed 73549e4 (`reviewF-clearance-conf-only-73549e4.red.out`, made by `runkit/failing_first.sh`: exactly that test) and passes with the fix. While the tool was being built, a test found that wp.config's
-`NotThisStream` is a `SystemExit`, which would have printed the home path; the tool catches it. Live: 6.7.
+Evidence (offline). `tests/test_clearance.py` has 23 tests at blob a40751c, all passing. Every ledger record in them
+is written by the gate's own `Ledger`, and a fake docker accepts only the exact calls clearance makes (`ps`, `rm -fv`,
+`inspect --type container`). Each red receipt names the test blob it ran:
+- `reviewF-clearance-absent-8668f5e.tree.red.out` (blob 0eae9c4, 19 tests): with the tool absent, 23 of 23 cases
+  fail. Made by `runkit/failing_first_variant.sh` in a temporary tree from 8668f5e.
+- `reviewF-clearance-broken-a-error-is-gone.red.out` (blob 0eae9c4): variant a, where a Docker error reads as an
+  empty list, fails exactly `test_docker_error_is_never_gone`.
+- `reviewF-clearance-broken-b-follows-links.red.out` (blob 0eae9c4): variant b, which finds `secrets*` directories
+  by following links, fails exactly `test_deletion_stays_inside_wp_home`.
+- `reviewF-clearance-conf-only-73549e4.red.out` (blob 7228961, 20 tests): the committed 73549e4 fails exactly the
+  `--remove` conf-only test. Made by `runkit/failing_first.sh`.
+- `reviewF-clearance-stores-bdf7972.red.out` (blob a40751c, 23 tests): the committed bdf7972 fails exactly the two
+  store tests (not on tmpfs; no store). The two-set test passes there as well: it shows the runbook works, and it is
+  not a red test.
+
+While the tool was being built, a test found that wp.config's `NotThisStream` is a `SystemExit`, which would have
+printed the home path; the tool catches it. Live: 6.7.
 
 ### 7.5 Scanner v4 (runkit/leak_scan.py), narrowed
 Its statement is "these inventoried values were not found in these representations and views"; it never says a set

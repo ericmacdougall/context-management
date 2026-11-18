@@ -22,9 +22,10 @@ TOOL = os.environ.get("CLEARANCE_UNDER_TEST") or str(HERE / "runkit" / "clearanc
 GOOD = {"stream": "emlab2-wphard", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
         "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"}
 FMT = "{{.ID}} {{.Names}}"
+DATA = {"es": "/usr/share/elasticsearch/data", "pg": "/var/lib/postgresql/data"}
 
 DOCKER = """#!/bin/sh
-# fake docker: one file <full id>.name per container, holding its name
+# fake docker: one file <full id>.name per container, holding its name, and <full id>.inspect, its inspect JSON
 d=$FAKE_DOCKER_DIR
 [ -n "${FAKE_DOCKER_DOWN:-}" ] && { echo "Cannot connect to the Docker daemon (fake)" >&2; exit 1; }
 case "$1" in
@@ -37,8 +38,12 @@ case "$1" in
     shift 2
     for c in "$@"; do
       [ -e "$d/$c.name" ] || { echo "Error response from daemon: No such container: $c" >&2; exit 1; }
-      rm -f "$d/$c.name"; echo "$c"
+      rm -f "$d/$c.name" "$d/$c.inspect"; echo "$c"
     done ;;
+  inspect)
+    [ "$#" = 4 ] && [ "$2" = "--type" ] && [ "$3" = "container" ] || { echo "fake docker: unexpected inspect call" >&2; exit 9; }
+    [ -e "$d/$4.inspect" ] || { echo "Error: No such container: $4" >&2; exit 1; }
+    cat "$d/$4.inspect" ;;
   *) echo "fake docker: unsupported call" >&2; exit 9 ;;
 esac
 """ % FMT
@@ -96,9 +101,13 @@ class Clearance(unittest.TestCase):
         (s / "r.json").write_text(json.dumps({"verdict": "PASS"}))
         return s
 
-    def container(self, name):
+    def container(self, name, data_type="tmpfs"):
+        """A fake container; its store's data directory (by the name's -es or -pg suffix) on a mount of data_type."""
         cid = secrets.token_hex(32)
         (self.dock / f"{cid}.name").write_text(name + "\n")
+        d = DATA.get(name.rsplit("-", 1)[-1], "/data")
+        (self.dock / f"{cid}.inspect").write_text(json.dumps([{"Id": cid, "Name": "/" + name, "HostConfig": {},
+                                                               "Mounts": [{"Type": data_type, "Destination": d}]}]))
         return cid
 
     def exists(self, cid):
@@ -344,6 +353,43 @@ class Clearance(unittest.TestCase):
         self.assertEqual(rc, 1, "teardown wrote a receipt while a conf-named container exists")
         self.assertTrue(self.exists(stranger), "--remove destroyed a container this home's ledger never admitted")
         self.assertFalse(self.exists(self.pg), "--remove spared an admitted container of the stream")
+
+    def test_conf_named_store_not_on_tmpfs_blocks_staging(self):
+        """A store the gate never admitted was never shown to be a private tmpfs; on a volume, docker rm leaves its roles."""
+        (self.dock / f"{self.es}.name").unlink()
+        stranger = self.container("emlab2-wphard-es", data_type="volume")
+        rc, out = self.seal()
+        self.assertEqual(rc, 1, "seal of a set whose conf-named store keeps its data on a volume did not exit 1")
+        (self.dock / f"{stranger}.name").unlink()               # its owner removes it
+        self.assertEqual(self.teardown()[0], 0, "teardown is refused (destroying must stay possible)")
+        rc, _ = self.check()
+        self.assertEqual(rc, 1, "a store whose destruction is not proven passed stage-check")
+        self.setUp()                                             # the same store on a private tmpfs: proven, passes
+        (self.dock / f"{self.es}.name").unlink()
+        on_tmpfs = self.container("emlab2-wphard-es", data_type="tmpfs")
+        self.assertEqual(self.seal()[0], 0, "seal of a set whose conf-named store is on a private tmpfs did not exit 0")
+        (self.dock / f"{on_tmpfs}.name").unlink()                # its owner removes it (--remove never does)
+        self.assertEqual(self.teardown()[0], 0)
+        self.assertEqual(self.check()[0], 0, "a conf-named store on a private tmpfs failed stage-check")
+
+    def test_receipt_with_no_store_blocks_staging(self):
+        self.cleared()
+        self.new_secrets()
+        s2 = self.mkset("chain-2")                               # no admit since the receipt, no store up
+        rc, _ = self.seal(s2)
+        self.assertEqual(rc, 1, "a seal that names no store did not exit 1")
+        self.assertEqual(self.teardown(s2)[0], 0)
+        rc, _ = self.check(s2)
+        self.assertEqual(rc, 1, "a receipt that shows no store destroyed passed stage-check")
+
+    def test_two_sets_sealed_before_the_teardown_both_clear(self):
+        """The runbook: every set of a chain is sealed while the stores are up; the first teardown destroys them."""
+        s2 = self.mkset("chain-1b")
+        self.assertEqual(self.seal()[0], 0)
+        self.assertEqual(self.seal(s2)[0], 0)
+        self.assertEqual(self.teardown()[0], 0)
+        self.assertEqual(self.teardown(s2)[0], 0, "the second set's teardown is refused after the first")
+        self.assertEqual((self.check()[0], self.check(s2)[0]), (0, 0))
 
     def test_remove_spares_a_container_outside_the_stream_prefix(self):
         other = self.container("other-stream-es")

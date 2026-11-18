@@ -1,0 +1,57 @@
+# failing-first receipt
+# date: 2026-11-18T01:44:00Z
+# file under test: bdf7972:writepath/runkit/clearance.py blob c31723bdb09f1b18f44495742ef08d9f2282402c sha256 a77b42c9ce1ae5aa270712c9846ab63b32d4c16821af26e00aefc662b0362bae
+# tree: writepath at bdf7972 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_clearance.py from HEAD bdf7972 blob a40751cb58a360409c762e7c3eaac5a03e81bf30
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_clearance
+test_conf_named_store_not_on_tmpfs_blocks_staging (tests.test_clearance.Clearance)
+A store the gate never admitted was never shown to be a private tmpfs; on a volume, docker rm leaves its roles. ... FAIL
+test_credential_file_after_teardown_fails (tests.test_clearance.Clearance) ... ok
+test_deletion_stays_inside_wp_home (tests.test_clearance.Clearance) ... ok
+test_docker_error_is_never_gone (tests.test_clearance.Clearance) ... ok
+test_edited_ledger_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_home_of_another_stream_is_refused_without_its_path (tests.test_clearance.Clearance) ... ok
+test_ledger_reset_seals_every_admit_ever (tests.test_clearance.Clearance) ... ok
+test_no_receipt_no_staging (tests.test_clearance.Clearance) ... ok
+test_open_run_refuses_the_seal (tests.test_clearance.Clearance) ... ok
+test_receipt_with_no_store_blocks_staging (tests.test_clearance.Clearance) ... FAIL
+test_receipted_container_back_fails (tests.test_clearance.Clearance) ... ok
+test_remove_spares_a_conf_named_container_this_ledger_never_admitted (tests.test_clearance.Clearance)
+A shared host: another home with the same conf names runs stores under the same names. They are sealed (they ... ok
+test_remove_spares_a_container_outside_the_stream_prefix (tests.test_clearance.Clearance) ... ok
+test_run_admitted_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_scan_hit_at_seal_blocks_staging (tests.test_clearance.Clearance) ... ok
+test_seal_refuses_a_special_file_or_link (tests.test_clearance.Clearance) ... ok
+test_seal_teardown_stage_check (tests.test_clearance.Clearance) ... ok
+test_second_chain_seals_only_its_containers (tests.test_clearance.Clearance) ... ok
+test_set_changed_after_the_seal_fails (tests.test_clearance.Clearance) ... ok
+test_teardown_refuses_while_a_sealed_container_exists (tests.test_clearance.Clearance) ... ok
+test_two_sets_sealed_before_the_teardown_both_clear (tests.test_clearance.Clearance)
+The runbook: every set of a chain is sealed while the stores are up; the first teardown destroys them. ... ok
+test_unlistable_credential_dir_refuses_the_receipt (tests.test_clearance.Clearance) ... ok
+test_verify_copy_on_a_copied_set (tests.test_clearance.Clearance) ... ok
+
+======================================================================
+FAIL: test_conf_named_store_not_on_tmpfs_blocks_staging (tests.test_clearance.Clearance)
+A store the gate never admitted was never shown to be a private tmpfs; on a volume, docker rm leaves its roles.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.PQOVSKtAwT/writepath/tests/test_clearance.py", line 362, in test_conf_named_store_not_on_tmpfs_blocks_staging
+    self.assertEqual(rc, 1, "seal of a set whose conf-named store keeps its data on a volume did not exit 1")
+AssertionError: 0 != 1 : seal of a set whose conf-named store keeps its data on a volume did not exit 1
+
+======================================================================
+FAIL: test_receipt_with_no_store_blocks_staging (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.PQOVSKtAwT/writepath/tests/test_clearance.py", line 380, in test_receipt_with_no_store_blocks_staging
+    self.assertEqual(rc, 1, "a seal that names no store did not exit 1")
+AssertionError: 0 != 1 : a seal that names no store did not exit 1
+
+----------------------------------------------------------------------
+Ran 23 tests in 14.808s
+
+FAILED (failures=2)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_clearance tests/test_clearance.py 85249c86a88f29f9
+# exit status: 1

@@ -37,18 +37,20 @@ import subprocess
 import sys
 import time
 
-VERSION = "1"
-LIMITS = ("LIMITS clearance v1 (GATE-DESIGN 7.4): cleared = every container named by a gate admit record since the "
-          "previous receipt (every admit when there is none) and each container the conf names was absent from "
-          "Docker's container list at teardown and at the stage check, so every role, API key and key held only in "
-          "those stores is destroyed (the gate admits only stores whose data root is a private tmpfs, B3); every entry "
-          "in WP_HOME/secrets*, WP_SECRETS_DIR and WP_HOME/svc and the file oldhome/pgpass was removed; the set is "
-          "byte-for-byte the sealed set; and the scanner (its own LIMITS) found nothing at the seal. Not covered: data "
-          "encrypted or keyed under a key-store key and published with it; copies of a store or credential made "
-          "elsewhere (docker commit, backups, other paths or hosts); a container that served a run without a gate admit "
-          "record; operator credentials; other streams' secrets; tampering by the same OS user with the receipt, the "
-          "ledger or this tool. The receipt holds the SHA-256 of each inventoried value: safe to publish for generated "
-          "values (token_urlsafe(32), os.urandom), not for a low-entropy one (H-1 rules those out).")
+VERSION = "2"
+LIMITS = ("LIMITS clearance v2 (GATE-DESIGN 7.4): cleared = every store (a container named by a gate admit record "
+          "since the previous receipt, by every admit when there is none, or by the conf) was shown to keep its data "
+          "on a private tmpfs, by the gate at admission (B3) or by clearance from docker inspect at the seal, and was "
+          "absent from Docker's container list at teardown and at the stage check, so every role, API key and key held "
+          "only in it is destroyed; a receipt that names no store, or a store not so shown, fails the stage check; "
+          "every entry in WP_HOME/secrets*, WP_SECRETS_DIR and WP_HOME/svc and the file oldhome/pgpass was removed; "
+          "the set is byte-for-byte the sealed set; and the scanner (its own LIMITS) found nothing at the seal. Not "
+          "covered: data encrypted or keyed under a key-store key and published with it; copies of a store or "
+          "credential made elsewhere (docker commit, backups, other paths or hosts); a container that served a run "
+          "without a gate admit record and is not the conf's; operator credentials; other streams' secrets; tampering "
+          "by the same OS user with the receipt, the ledger or this tool. The receipt holds the SHA-256 of each "
+          "inventoried value: safe to publish for generated values (token_urlsafe(32), os.urandom), not for a "
+          "low-entropy one (H-1 rules those out).")
 RECEIPT, SEAL, CHECK = "CLEARANCE.json", "CLEARANCE.seal.json", "CLEARANCE.check.json"
 OWN = (RECEIPT, SEAL, CHECK)
 HEX64 = re.compile(r"[0-9a-f]{64}")
@@ -224,7 +226,9 @@ def _admit_ids(r):
 
 
 def sealed_containers(g, recs, hashes, home):
-    """(range, first seq, {id: where it came from}) per GATE-DESIGN 7.4."""
+    """(range, first seq, {id: {from, kind, admitted, store}}) per GATE-DESIGN 7.4. An admitted container is a store
+    whose data root the gate showed to be a private tmpfs at admission (B3); a 64-hex token of an unreadable replaced
+    ledger line is no known store, only an Id that must be absent."""
     last, _ = _read_json(g.STATE_DIR / "clearance.last.json")
     ok = (isinstance(last, dict) and isinstance(last.get("seq"), int) and 1 <= last["seq"] <= len(recs) and
           hashes[last["seq"] - 1] == last.get("tip"))
@@ -232,8 +236,8 @@ def sealed_containers(g, recs, hashes, home):
     ids = {}
     for r in recs[first - 1:]:
         if r.get("kind") == "admit":
-            for x in _admit_ids(r):
-                ids.setdefault(x, f"admit {r['seq']}")
+            for k, x in zip(("es", "pg"), _admit_ids(r)):
+                ids.setdefault(x, {"from": f"admit {r['seq']}", "kind": k, "admitted": True, "store": True})
     if rng == "all":
         for n, f in enumerate(sorted(g.STATE_DIR.glob("stop_ledger.broken-*.jsonl")), 1):
             try:
@@ -251,10 +255,12 @@ def sealed_containers(g, recs, hashes, home):
                     continue
                 if isinstance(r, dict) and all(isinstance(r.get(k), str) and HEX64.fullmatch(r[k]) for k in ("es", "pg")):
                     for k in ("es", "pg"):
-                        ids.setdefault(r[k], f"replaced ledger #{n}, admit {r.get('seq')}")
+                        ids.setdefault(r[k], {"from": f"replaced ledger #{n}, admit {r.get('seq')}", "kind": k,
+                                              "admitted": True, "store": True})
                 else:                     # unreadable: every 64-hex token must be absent too (it costs nothing)
                     for t in re.findall(rb"[0-9a-f]{64}", ln):
-                        ids.setdefault(t.decode(), f"replaced ledger #{n}, unreadable line")
+                        ids.setdefault(t.decode(), {"from": f"replaced ledger #{n}, unreadable line", "kind": None,
+                                                    "admitted": False, "store": False})
     return rng, first, ids
 
 
@@ -296,6 +302,38 @@ def containers():
             raise Refused("Docker's container list has a line of an unexpected form: nothing counts as gone")
         out[p[0]] = p[1].split(",")[0].strip()
     return out
+
+
+def _storage(cid, data):
+    """None when Docker shows the container's data directory on a private tmpfs with nothing mounted below it (the
+    gate's B3 rule, from inspect only); else the reason its removal does not prove its store destroyed."""
+    try:
+        r = subprocess.run(["docker", "inspect", "--type", "container", cid], capture_output=True, text=True,
+                           timeout=120, stdin=subprocess.DEVNULL)
+        j = json.loads(r.stdout)[0] if r.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired, ValueError, IndexError, KeyError):
+        j = None
+    if not isinstance(j, dict):
+        return "its storage could not be inspected"
+    mounts = j.get("Mounts") or []
+    at = [m for m in mounts if m.get("Destination") == data]
+    if any(str(m.get("Destination", "")).startswith(data + "/") for m in mounts):
+        return "a mount lies below its data directory"
+    if (len(at) == 1 and at[0].get("Type") == "tmpfs") or (not at and data in ((j.get("HostConfig") or {}).get("Tmpfs")
+                                                                                or {})):
+        return None
+    return (f"its data directory is on a {at[0].get('Type')} mount" if at else
+            "its data directory is in the container's own layer") + ": removing the container is not shown to destroy it"
+
+
+def _store_reasons(ids):
+    """Why a receipt does not show its credentials dead: no store at all, or a store whose destruction is not proven."""
+    stores = {c: v for c, v in ids.items() if isinstance(v, dict) and v.get("store")}
+    why = [] if stores else ["the seal names no store (no admit since the previous receipt, no conf-named container "
+                             "running): nothing shows this set's credentials destroyed"]
+    why += [f"store {c[:12]} ({v.get('from')}): {v.get('storage')}" for c, v in sorted(stores.items())
+            if not v.get("proven")]
+    return why
 
 
 # ------------------------------------------------------------------------------------------------------- credentials
@@ -430,10 +468,18 @@ def seal(home, s, ks, nks):
         raise Refused("a run is open in the stop ledger (admitted, not ended): seal after it ends")
     rng, first, ids = sealed_containers(g, recs, hashes, home)
     listing = containers()
-    for key, name in (("es_container", g.config.ES_CONTAINER), ("pg_container", g.config.PG_CONTAINER)):
+    for k, name in (("es", g.config.ES_CONTAINER), ("pg", g.config.PG_CONTAINER)):
         for cid, n in listing.items():
             if n == name:
-                ids.setdefault(cid, f"conf {key}")
+                ids.setdefault(cid, {"from": f"conf {k}_container", "kind": k, "admitted": False, "store": True})
+    for cid, v in ids.items():
+        if v["admitted"]:
+            v["storage"] = "private tmpfs (shown by the gate at admission, B3)"
+        elif v["store"]:
+            why = _storage(cid, g.DATA[v["kind"]])
+            v["storage"] = "private tmpfs (shown by clearance at the seal)" if why is None else why
+            v["proven"] = why is None
+        v.setdefault("proven", v["admitted"])
     locs, bad = locations(home)
     for label, p in locs:
         _, b = entries(p)
@@ -456,9 +502,15 @@ def seal(home, s, ks, nks):
     _write(s / SEAL, obj)
     print(f"clearance seal: SEALED: {len(m1)} file(s); {len(ids)} container(s) (ledger {rng}, records {first} to "
           f"{len(recs)}); {len(creds)} credential value(s); key store {obj['keystore']}; scan exit {scan['exit']}")
-    if scan["exit"] != 0:
-        print("clearance seal: the scan is not clean: staging is blocked; teardown still proceeds")
-    return 0 if scan["exit"] == 0 else 1
+    blocked = _store_reasons(ids)
+    if scan["exit"] == 1:
+        blocked.append("the scan found a value: tear down anyway (the values die with the stores)")
+    elif scan["exit"] != 0:
+        blocked.append(f"the scan could not complete (exit {scan['exit']}): fix the cause and seal again BEFORE "
+                       "teardown; after teardown the credentials are gone and this set can never be scanned")
+    for b in blocked:
+        print(f"clearance seal: staging is blocked: {b}")
+    return 1 if blocked else 0
 
 
 def teardown(home, s, remove):
@@ -482,7 +534,7 @@ def teardown(home, s, remove):
     present = sorted(c for c in sealed if c in listing)
     # --remove destroys only what this home's ledger admitted, under the stream's prefix: a container named only by
     # the conf may be another home's store on a shared host (the same conf names), so its owner removes it.
-    admitted = {c for c, src in sl["container_sources"].items() if not src.startswith("conf ")}
+    admitted = {c for c, v in sl["container_sources"].items() if v.get("admitted")}
     foreign = [c for c in present if c in admitted and not listing[c].startswith(g.config.OWN_PREFIX)]
     conf_only = [c for c in present if c not in admitted]
     removed = []
@@ -568,6 +620,7 @@ def stage_check(home, s):
             why.append(str(e))
         if (rec.get("scan") or {}).get("exit") != 0:
             why.append(f"the scan at the seal did not exit 0 (exit {(rec.get('scan') or {}).get('exit')})")
+        why += _store_reasons(rec.get("container_sources") or {})
     _write(s / CHECK, {"kind": "stage-check", "tool": _tool(), "at": _utc(), "result": "FAIL" if why else "PASS",
                        "reasons": why, "receipt_sha256": rec_sha, "limits": LIMITS})
     for w in why:
