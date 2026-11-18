@@ -24,6 +24,7 @@ try:
 except ImportError:              # pragma: no cover
     psycopg = None
 
+from tests.kit import enroll, proof
 from tests.test_final_pg import UNAUTH
 from tests.test_pg import T
 from tests.test_s1_pg import A_CLS, XWAIT, _S1
@@ -368,7 +369,73 @@ class S44_Scope(_S44):
         self.unrevoke("alice")
 
 
-class S44_Control(_S44):
+FENCE_A = "select pg_advisory_xact_lock(1145241605, hashtext(jsonb_build_array('auth', %s::text, %s::text)::text))"
+FENCE_T = "select pg_advisory_xact_lock(1145241606, hashtext(jsonb_build_array('tenant', %s::text, null::text)::text))"
+
+
+class _Fence(_S44):
+    def calls(self, pid, which=("explain", "submit", "open_session")):
+        """Each named call by `pid`, prepared (token, factor) BEFORE the fence is taken; returns ({call: result}, {call: seconds})."""
+        tok = self.tok(pid)
+        f = enroll(self.o, T, pid, "owner_ui")
+        fns = {"explain": lambda: self.app.execute("select dc.explain(%s, 'r1')", (tok,)).fetchone()[0],
+               "submit": lambda: self.submit(self.app, tok, self.body(None, "fenced")),
+               "open_session": lambda: self.idp.execute("select dc.open_session(%s, 60)", (proof(f),)).fetchone()[0]}
+        return lambda: {n: self.call(fns[n]) for n in which}
+
+    def under(self, fence_sql, args, *preps):
+        """Run each prepared call set while the superuser `hold` connection holds the fence lock (as an evicting revocation would)."""
+        self.hold.execute("begin")
+        try:
+            self.hold.execute(fence_sql, args)
+            return [p() for p in preps]
+        finally:
+            self.hold.execute("rollback")
+
+    @staticmethod
+    def err(r):
+        return r.get("error") if isinstance(r, dict) else None
+
+
+class S44_Fence(_Fence):
+    """While a revocation evicts it holds the fence of the lock it evicts for; a new call that would take that lock shared refuses at
+    once (55P03), nothing done, instead of re-taking it behind the revocation's back. Held here directly by a superuser connection, so
+    the test does not depend on eviction timing (the reconnecting adversary never reaches the fence: its holds end within XWAIT).
+    Red at 8547b27 (no fence: every call answers)."""
+
+    def test_the_authority_fence_refuses_the_target_only(self):
+        self.unrevoke("alice")
+        a, b = self.under(FENCE_A, (T, "alice"), self.calls("alice"), self.calls("bob"))
+        for name, (r, dt) in a.items():
+            with self.subTest(principal="alice", call=name):
+                self.assertEqual(self.err(r), "55P03", "%r" % (r,))
+                self.assertLess(dt, 0.5, "the fenced call waited instead of refusing")
+        for name, (r, dt) in b.items():
+            with self.subTest(principal="bob", call=name):
+                self.assertIsNone(self.err(r), "%r" % (r,))
+        after = self.submit(self.app, self.tok("alice"), self.body(None, "after", req="r2"))
+        self.assertNotEqual(after.get("code"), UNAUTH, "%r" % (after,))         # the fence ends with the revocation's transaction
+
+    def test_the_tenant_fence_refuses_submits_only(self):
+        self.unrevoke("alice")
+        (a,) = self.under(FENCE_T, (T,), self.calls("alice"))
+        self.assertEqual(self.err(a["submit"][0]), "55P03", "%r" % (a["submit"],))
+        self.assertLess(a["submit"][1], 0.5, "the fenced submit waited instead of refusing")
+        for name in ("explain", "open_session"):
+            with self.subTest(call=name):
+                self.assertIsNone(self.err(a[name][0]), "%r" % (a[name],))
+
+
+class S44_FenceControl(_Fence):
+    def test_without_the_fence_check_the_target_is_not_refused(self):
+        """Control for S44_Fence: dc._fenced made a no-op; the target's calls answer under a held fence."""
+        self.o.execute("create or replace function dc._fenced(p_fcls int, p_key int) returns void language plpgsql as $$ begin end $$")
+        self.unrevoke("alice")
+        (a,) = self.under(FENCE_A, (T, "alice"), self.calls("alice"))
+        for name, (r, dt) in a.items():
+            with self.subTest(call=name):
+                self.assertIsNone(self.err(r), "%r" % (r,))
+
     """The control: the same build with dc._evict made a no-op must show the defect (the holder blocks the revoke). It passes at
     8547b27 too, where nothing evicts."""
 

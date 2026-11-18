@@ -309,6 +309,33 @@ class Review3Rollback(unittest.TestCase):
             self.MIG.rollback(self.o)
         self.assertFalse(self._is_old_schema(), "the migrated schema was replaced although it held post-migration writes")
 
+    def test_44_rollback_gives_the_old_engine_its_advisory_lock(self):
+        """FINAL-JUDGMENT.md 4.4: the definer core makes the advisory-lock functions non-PUBLIC in its database. The pre-R3-7 engine
+        takes its idempotency lock as dc_app with a raw pg_advisory_xact_lock, so a rollback must give PUBLIC its EXECUTE back.
+        Red at 7464493 (permission denied after the rollback)."""
+        self.assertFalse(self.o.execute("select has_function_privilege('dc_app', 'pg_advisory_xact_lock(bigint)', 'EXECUTE')").fetchone()[0])
+        self.MIG.rollback(self.o)
+        self.assertTrue(self._is_old_schema())
+        self.assertTrue(self.o.execute("select has_function_privilege('dc_app', 'pg_advisory_xact_lock(bigint)', 'EXECUTE')").fetchone()[0])
+        try:
+            self._app("select 1 from (select pg_advisory_xact_lock(hashtextextended('x', 0))) s")
+        except psycopg.Error as e:
+            self.fail("the old engine's raw advisory lock is refused after the rollback: %s %s" % (e.sqlstate, e.diag.message_primary))
+
+    def test_44_forward_creates_the_evictor_role(self):
+        """FINAL-JUDGMENT.md 4.4: dc._evict is owned by dc_evictor, which pgcore.install creates; a migration on a cluster where
+        pgcore.install never ran must create it too. Red at 7464493 (forward fails: role dc_evictor does not exist)."""
+        self.MIG.rollback(self.o)
+        self.o.execute("drop role dc_evictor")
+        try:
+            self.MIG.forward(self.o, {T: CFG}, os.environ["POL_PG_IDP_PASSWORD_FILE"])
+        except psycopg.Error as e:
+            self.fail("forward failed on a cluster without dc_evictor: %s %s" % (e.sqlstate, e.diag.message_primary))
+        self.assertEqual(self.o.execute("select proowner::regrole::text from pg_proc where oid = 'dc._evict(integer,integer)'::regprocedure")
+                         .fetchone()[0], "dc_evictor")
+        self.assertTrue(self.o.execute("select pg_has_role('dc_evictor', 'pg_signal_backend', 'MEMBER')").fetchone()[0])
+        self.assertEqual(self.o.execute("select rolcanlogin from pg_roles where rolname = 'dc_evictor'").fetchone()[0], False)
+
     def test_n4_rollback_without_writes_proceeds(self):
         """Logins are not data: a session opened after the migration does not block the rollback; the old schema comes back."""
         self._token()
