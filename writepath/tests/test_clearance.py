@@ -25,10 +25,29 @@ FMT = "{{.ID}} {{.Names}}"
 DATA = {"es": "/usr/share/elasticsearch/data", "pg": "/var/lib/postgresql/data"}
 
 DOCKER = """#!/bin/sh
-# fake docker: one file <full id>.name per container, holding its name, and <full id>.inspect, its inspect JSON
-d=$FAKE_DOCKER_DIR
+# fake docker: one file <full id>.name per container, holding its name, <full id>.inspect, its inspect JSON, and
+# <full id>.keys, the key-store rows `psql` returns (subject and tenant keys, hex). DOCKER_HOST or DOCKER_CONTEXT set
+# selects ANOTHER daemon (review a108fc3 C-2): its own, empty, container list and its own ID.
+d=$FAKE_DOCKER_DIR; id=c20f7230-59a2-4824-a2f4-fda71c982ee6; name=lab-host
+if [ -n "${DOCKER_HOST:-}${DOCKER_CONTEXT:-}" ]; then d=$FAKE_DOCKER_DIR.other; id=4cee4408-10d2-4e17-891c-a41736ac4536; name=other; mkdir -p "$d"; fi
 [ -n "${FAKE_DOCKER_DOWN:-}" ] && { echo "Cannot connect to the Docker daemon (fake)" >&2; exit 1; }
 case "$1" in
+  info)
+    [ "$#" = 3 ] && [ "$2" = "--format" ] || { echo "fake docker: unexpected info call" >&2; exit 9; }
+    echo "$id $name" ;;
+  context)
+    [ "$2" = "show" ] || { echo "fake docker: unexpected context call" >&2; exit 9; }
+    echo "${DOCKER_CONTEXT:-default}" ;;
+  exec)
+    c=""; for f in "$d"/*.name; do [ -e "$f" ] && [ "$(cat "$f")" = "$2" ] && { i=${f##*/}; c=${i%%.name}; }; done
+    [ -n "$c" ] && [ "$3" = psql ] || { echo "Error: No such container: $2" >&2; exit 1; }
+    for q; do :; done
+    case "$q" in
+      *subject_keys*) sed -n 1p "$d/$c.keys" ;;
+      *tenant_keys*) sed -n 2p "$d/$c.keys" ;;
+      *pg_database*) ;;
+      *) echo "fake docker: unexpected query" >&2; exit 9 ;;
+    esac ;;
   ps)
     [ "$#" = 5 ] && [ "$2" = "-a" ] && [ "$3" = "--no-trunc" ] && [ "$4" = "--format" ] && [ "$5" = "%s" ] ||
       { echo "fake docker: unexpected ps call" >&2; exit 9; }
@@ -81,6 +100,8 @@ class Clearance(unittest.TestCase):
         (bindir / "docker").chmod(0o755)
         self.env = dict(os.environ, PATH=f"{bindir}:{os.environ['PATH']}", FAKE_DOCKER_DIR=str(self.dock))
         self.env.pop("WP_SECRETS_DIR", None)
+        for k in ("DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_CONFIG"):
+            self.env.pop(k, None)
         self.env.pop("FAKE_DOCKER_DOWN", None)
         self.es, self.pg = self.container("emlab2-wphard-es"), self.container("emlab2-wphard-pg")
         self.run_ledger(self.es, self.pg)
@@ -108,6 +129,7 @@ class Clearance(unittest.TestCase):
         d = DATA.get(name.rsplit("-", 1)[-1], "/data")
         (self.dock / f"{cid}.inspect").write_text(json.dumps([{"Id": cid, "Name": "/" + name, "HostConfig": {},
                                                                "Mounts": [{"Type": data_type, "Destination": d}]}]))
+        (self.dock / f"{cid}.keys").write_text(secrets.token_hex(32) + "\n" + secrets.token_hex(32) + "\n")
         return cid
 
     def exists(self, cid):
@@ -131,8 +153,9 @@ class Clearance(unittest.TestCase):
         r = subprocess.run([sys.executable, TOOL, *args], capture_output=True, text=True, env=e, timeout=300)
         return r.returncode, r.stdout + r.stderr
 
-    def seal(self, s=None, **env):
-        return self.tool("seal", str(self.home), str(s or self.set), "--no-keystore", "fake stores in a test", **env)
+    def seal(self, s=None, waive=None, **env):
+        """Seal with the key store inventoried from the conf's PG container (fake psql), or waived with a reason."""
+        return self.tool("seal", str(self.home), str(s or self.set), *(["--no-keystore", waive] if waive else []), **env)
 
     def teardown(self, s=None, remove=True, **env):
         return self.tool("teardown", str(self.home), str(s or self.set), *(["--remove"] if remove else []), **env)
@@ -377,7 +400,7 @@ class Clearance(unittest.TestCase):
         self.cleared()
         self.new_secrets()
         s2 = self.mkset("chain-2")                               # no admit since the receipt, no store up
-        rc, _ = self.seal(s2)
+        rc, _ = self.seal(s2, waive="no store is up to read the key store from")
         self.assertEqual(rc, 1, "a seal that names no store did not exit 1")
         self.assertEqual(self.teardown(s2)[0], 0)
         rc, _ = self.check(s2)
@@ -433,6 +456,55 @@ class Clearance(unittest.TestCase):
         self.assertEqual(rc, 1, "teardown wrote a receipt while a foreign sealed container exists")
         self.assertTrue(self.exists(other), "--remove removed a container outside the stream's prefix")
         self.assertFalse((self.set / "CLEARANCE.json").exists())
+
+    # ---- review a108fc3 C-1: the seal records the names it relied on; a store under them after the seal is refused
+    def test_c1_store_recreated_under_a_sealed_conf_name_after_a_conf_edit_is_refused(self):
+        self.assertEqual(self.seal()[0], 0)
+        for c in (self.es, self.pg):
+            (self.dock / f"{c}.name").unlink()
+        late = self.container("emlab2-wphard-pg")              # a store under the seal-time conf name
+        (self.home / "conf" / "pg_container").write_text("emlab2-wphard-pg2\n")     # the conf edited after the seal
+        rc, out = self.teardown(remove=False)
+        self.assertEqual(rc, 1, f"teardown wrote a receipt while a store runs under a sealed conf name: {out[-300:]}")
+        self.assertTrue(self.exists(late))
+        (self.dock / f"{late}.name").unlink()
+        self.assertEqual(self.teardown(remove=False)[0], 0)
+        self.container("emlab2-wphard-pg")
+        rc, out = self.check()
+        self.assertEqual(rc, 1, f"stage-check passed while a store runs under a sealed conf name: {out[-300:]}")
+
+    def test_c1_unsealed_container_under_the_stream_prefix_is_refused(self):
+        self.assertEqual(self.seal()[0], 0)
+        self.container("emlab2-wphard-pgcopy")                 # neither a conf name nor sealed, but the stream's
+        rc, out = self.teardown()
+        self.assertEqual(rc, 1, f"teardown wrote a receipt while an unsealed store of the stream runs: {out[-300:]}")
+
+    # ---- C-2: teardown and stage-check judge the daemon the seal judged
+    def test_c2_teardown_against_another_daemon_is_refused(self):
+        self.assertEqual(self.seal()[0], 0)
+        rc, out = self.teardown(DOCKER_HOST="tcp://127.0.0.1:2376")
+        self.assertEqual(rc, 1, f"teardown on another daemon counted the sealed stores as gone: {out[-300:]}")
+        self.assertTrue(self.exists(self.es) and self.exists(self.pg))
+        self.assertFalse((self.set / "CLEARANCE.json").exists(), "a receipt was written from another daemon")
+
+    def test_c2_stage_check_against_another_daemon_fails(self):
+        self.cleared()
+        self.assertEqual(self.check()[0], 0)
+        self.container("emlab2-wphard-es")                     # nothing of it is visible from the other daemon
+        rc, out = self.check(DOCKER_CONTEXT="rootless")
+        self.assertEqual(rc, 1, f"stage-check passed against another daemon: {out[-300:]}")
+
+    # ---- C-3: a waiver never counts as clearance
+    def test_c3_waived_key_store_never_passes(self):
+        rc, out = self.seal(waive="key store container not reachable")
+        self.assertNotEqual(rc, 0, f"a seal without the key store exited 0: {out[-300:]}")
+        self.assertEqual(self.teardown()[0], 0)
+        rc, out = self.check()
+        self.assertEqual(rc, 1, f"stage-check passed a set whose key store was not covered: {out[-300:]}")
+        self.assertIn("key store", out)
+        self.assertEqual(self.receipt("CLEARANCE.check.json")["result"], "FAIL")
+        self.assertEqual(self.receipt().get("keystore", {}).get("waiver"), "key store container not reachable",
+                         "the receipt does not record the waiver's reason")
 
 
 if __name__ == "__main__":

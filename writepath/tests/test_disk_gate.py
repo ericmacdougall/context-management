@@ -22,6 +22,7 @@ import pathlib
 import re
 import shutil
 import signal
+import subprocess
 import sys
 import tempfile
 import threading
@@ -42,6 +43,86 @@ ESDATA, PGDATA = "/usr/share/elasticsearch/data", "/var/lib/postgresql/data"
 def _ms(rfc):
     base, _, frac = rfc.rstrip("Z").partition(".")
     return calendar.timegm(time.strptime(base, "%Y-%m-%dT%H:%M:%S")) * 1000 + int((frac + "000")[:3])
+
+
+# ------------------------------------------------------------------------------------------- pinned tree (v5, G-2)
+COMMIT = "c0ffee1" + "0" * 33               # the fake commit the test tree's manifest names
+THIS = pathlib.Path(__file__).resolve()
+
+# The experiment the gate runs in the Launcher tests: a module at the pinned tree's root. Driven by STUB_* variables:
+# STUB_STARTED (file: its pid, written first), STUB_OPS (JSON list of steps, below), STUB_RELEASE (file to wait for),
+# STUB_ROWS (JSON list of result rows to write), STUB_PRINT (text to print), STUB_RC (exit status).
+STUB = r'''"""Test experiment for tests/test_disk_gate.py (not a lab experiment)."""
+import json, os, pathlib, subprocess, sys, time
+env = os.environ
+if env.get("STUB_STARTED"):
+    pathlib.Path(env["STUB_STARTED"]).write_text(str(os.getpid()))
+sys.path.insert(0, env["STUB_TESTS"])
+from test_disk_gate import Fake                      # noqa: E402
+F = Fake(env["FAKE_DOCKER_STATE"])
+for op in json.loads(env.get("STUB_OPS") or "[]"):
+    if op[0] == "fake":                              # a fake docker operation in the window
+        getattr(F, op[1])(*op[2:])
+    elif op[0] == "gate":                            # a gate command in the window (e.g. stop)
+        subprocess.run([sys.executable, "-B", env["STUB_TESTS"] + "/test_disk_gate.py", "--gate"] + op[1:],
+                       stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120)
+    elif op[0] == "append":                          # append to a file of the pinned tree
+        with open(op[1], "a") as f:
+            f.write(op[2])
+    elif op[0] == "write":                           # write a file anywhere (e.g. a forged state file)
+        pathlib.Path(op[1]).write_text(op[2])
+    elif op[0] == "linger":                          # a child that outlives the experiment, in its process group
+        subprocess.Popen(["sleep", "30"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+rel = env.get("STUB_RELEASE")
+t0 = time.monotonic()
+while rel and not os.path.exists(rel) and time.monotonic() - t0 < 120:
+    time.sleep(0.05)
+out = pathlib.Path(env.get("WP_RUN_DIR") or pathlib.Path(env["WP_HOME"]) / "results")
+out.mkdir(parents=True, exist_ok=True)
+for i, r in enumerate(json.loads(env.get("STUB_ROWS") or "[]")):
+    run = env.get("WP_GATE_RUN") if r.get("gate_run") == "self" else r.get("gate_run")
+    doc = {"name": r["name"], "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "result": {"i": i}}
+    if run:
+        doc["gate_run"] = run
+    (out / f"{r['name']}.{i:016x}.json").write_text(json.dumps(doc))
+print(env.get("STUB_PRINT", ""))
+sys.exit(int(env.get("STUB_RC", "0")))
+'''
+
+
+def _sha256(b):
+    return hashlib.sha256(b).hexdigest()
+
+
+def write_manifest(tree, commit=COMMIT):
+    """TREE.manifest of a tree, in the format runkit/tree_manifest.py writes from git objects: a header, the commit,
+    then '<sha256> <mode> <path>' per file, sorted; GIT_HEAD and the manifest itself are not listed."""
+    rows = []
+    for d, dirs, files in os.walk(tree):
+        dirs.sort()
+        for n in files + [x for x in dirs if os.path.islink(os.path.join(d, x))]:
+            p = os.path.join(d, n)
+            rel = os.path.relpath(p, tree)
+            if rel in ("TREE.manifest", "GIT_HEAD"):
+                continue
+            if os.path.islink(p):
+                rows.append((rel, "120000", _sha256(os.readlink(p).encode())))
+            else:
+                rows.append((rel, "100755" if os.stat(p).st_mode & 0o100 else "100644",
+                             _sha256(pathlib.Path(p).read_bytes())))
+    text = "tree-manifest v1\ncommit %s\n" % commit + "".join(f"{h} {m} {r}\n" for r, m, h in sorted(rows))
+    (pathlib.Path(tree) / "TREE.manifest").write_text(text)
+    (pathlib.Path(tree) / "GIT_HEAD").write_text(commit[:7] + "\n")
+
+
+def make_tree(src_root, dest):
+    """A pinned tree: the writepath tree of the gate under test (no results, tests or bytecode), the test experiment
+    and a manifest naming COMMIT."""
+    shutil.copytree(src_root, dest, ignore=shutil.ignore_patterns("results", "tests", "__pycache__", "*.pyc",
+                                                                  "TREE.manifest", "GIT_HEAD"))
+    (dest / "stubexp.py").write_text(STUB)
+    write_manifest(dest)
+    return dest
 
 
 class FakeES(http.server.BaseHTTPRequestHandler):
@@ -70,6 +151,9 @@ class FakeES(http.server.BaseHTTPRequestHandler):
             body = {"nodes": {c["node"]: {"name": "node", "ephemeral_id": S.get("eph") or c["eph"]}}}
         elif code == 200 and path.startswith("/_all/_settings"):
             body = S.get("idx", {})
+        elif code == 200 and path.startswith("/_cat/indices/"):
+            # v5 P7: indices under the stream prefix left by an earlier run (none on clean stores)
+            body = [{"index": n} for n in S.get("es_indices", [])]
         elif code == 200 and path == "/_nodes/_local/stats/fs,jvm":
             started, now = _ms(c["started"]), int(time.time() * 1000)
             typ, total, free = c["statfs"][ESDATA]
@@ -189,13 +273,14 @@ class Fake:
         ev["oom_kill"] += int(kill)
         p.write_text("".join(f"{k} {v}\n" for k, v in ev.items()))
 
-    def probe(self, c, root, paths):
-        """The v4 in-container probe's output for container c (see exp/disk_gate.py PROBE): its mount table, the data
-        mount's statfs, each requested path and each link under root resolved, with device numbers."""
-        out = [f"M\t{20 + i} 1 {mm} / {mp} rw,relatime - {fs} {fs} {so}" for i, (mp, fs, mm, so) in enumerate(c["mi"])]
+    def probe(self, c, root, paths, v5=False):
+        """The in-container probe's output for container c (see exp/disk_gate.py PROBE): its mount table, the data
+        mount's statfs, each requested path and each link under root resolved, with device numbers. v4 prints one
+        tab-separated line per record; v5 (review a108fc3 m-1) prints NUL-terminated fields, a fixed count per tag."""
+        recs = [("M", f"{20 + i} 1 {mm} / {mp} rw,relatime - {fs} {fs} {so}") for i, (mp, fs, mm, so) in enumerate(c["mi"])]
         typ, total, free = c["statfs"][root]
         files, ffree = c["inodes"]
-        out.append(f"F\t{typ}\t{total // 4096}\t4096\t{free // 4096}\t{files}\t{ffree}")
+        recs.append(("F", f"{typ}\t{total // 4096}\t4096\t{free // 4096}\t{files}\t{ffree}"))
         mm_root = next((mm for mp, fs, mm, so in c["mi"] if mp == root), "0:40")
 
         def dev(mm):
@@ -215,12 +300,13 @@ class Fake:
                     d = dev(mm)
             return [str(d), real]
         for p in [root] + list(paths):
-            out.append("P\t%s\t%s\t%s" % (*res(p), p))
+            recs.append(("P", *res(p), p))
         for link, target in c["links"]:
             if link.startswith(root + "/"):
-                out.append("L\t%s\t%s\t%s" % (*res(target), link))
-        out.append("END")
-        return out
+                recs.append(("L", *res(target), link))
+        if v5:
+            return b"".join(f.encode("utf-8", "surrogateescape") + b"\0" for r in recs for f in r) + b"END\0"
+        return ("\n".join("\t".join(r) for r in recs) + "\nEND\n").encode("utf-8", "surrogateescape")
 
     def cgread(self, cid):
         d = self.cgdir(cid)
@@ -341,8 +427,13 @@ class FakePG:
     server (a copy with the same layout but not the inspected container's files), "unreachable" refuses connections.
     pg_read_file reads the files written into the serving container (the nonce)."""
 
-    def __init__(self, F):
-        self.F = F
+    # v5 P7: the base tables of the public schema per database, and whether each holds a row (clean = only
+    # store_registry, which setup fills); a scenario replaces it with state "tables"
+    TABLES = {"wp_events": {"store_registry": True, "events": False, "facts": False},
+              "wp_keys": {"subject_keys": False, "tenant_keys": False}}
+
+    def __init__(self, F, db=None, **kw):
+        self.F, self.db = F, db or "postgres"
         if F.st().get("pg_endpoint") == "unreachable":
             raise ConnectionRefusedError("connection refused")
 
@@ -354,10 +445,19 @@ class FakePG:
         return c, c["files"]
 
     def execute(self, sql, params=()):
+        self.F.locked(lambda st: st.setdefault("pg_sql", []).append([self.db, str(sql)]))   # m-6: what the gate sent
         c, files = self._server()
         s = c["pgsrv"]
         dd = s["dd"] or dict(e.split("=", 1) for e in c.get("env", []) if "=" in e).get("PGDATA")
-        if "data_directory" in sql:
+        tables = (self.F.st().get("tables") or self.TABLES).get(self.db, {})
+        m = re.search(r'exists\s*\(\s*select 1 from public\."((?:[^"]|"")+)"', str(sql), re.I)
+        if re.match(r"\s*set\s+statement_timeout", str(sql), re.I):
+            rows = []
+        elif m:
+            rows = [(bool(tables.get(m.group(1).replace('""', '"'))),)]
+        elif "pg_class" in str(sql) and "public" in str(sql):
+            rows = [(t,) for t in tables]
+        elif "data_directory" in sql:
             rows = [(dd,)]
         elif "pg_control_system" in sql:
             rows = [(int(s["sysid"]),)]
@@ -410,8 +510,9 @@ def fake_main(argv):
             print(f"{cid}|{c['started']}|{json.dumps(c['logcfg'])}")
         else:
             print(json.dumps([{"Id": cid, "Name": "/" + c["name"], "RestartCount": c["restarts"],
-                               "State": {"Running": c["running"], "Paused": c["paused"], "StartedAt": c["started"],
-                                         "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
+                               "State": dict({"Running": c["running"], "Paused": c["paused"],
+                                              "Pid": c["pid"] if c["running"] else 0, "OOMKilled": c["oom"]},
+                                             **({} if st["flags"].get("no_started") else {"StartedAt": c["started"]})),
                                "Mounts": c["mounts"],
                                "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]},
                                "Config": {"Tty": c["tty"], "Env": c.get("env", [])},
@@ -444,11 +545,18 @@ def fake_main(argv):
                 print("stat: cannot read file system information", file=sys.stderr)
                 rc = 1
             else:
-                print("\n".join(F.probe(c, ex[4], ex[5:])))
+                sys.stdout.flush()
+                sys.stdout.buffer.write(F.probe(c, ex[4], ex[5:], v5="probe v5" in ex[2]))
+        elif kind == "nonce" and st["flags"].get("nonce_rc"):
+            print("sh: cannot create the file", file=sys.stderr)
+            rc = 1
         elif kind == "nonce":
             F.locked(lambda s: s["c"][cid]["files"].update({ex[-1]: stdin}))
         elif kind == "rm":
             F.locked(lambda s: s["c"][cid]["files"].pop(ex[-1], None))
+        elif kind == "curl" and st["flags"].get("curl_rc"):
+            print("curl: (7) Failed to connect", file=sys.stderr)
+            rc = 7
         elif kind == "curl":
             # only whether the credential arrived on stdin is kept, never the header itself
             F.locked(lambda s: s["c"][cid].update(curl_auth=stdin.startswith("Authorization: ")))
@@ -575,18 +683,32 @@ class Gate(unittest.TestCase):
                                                "PYTHONPATH": str(HERE), "FAKE_DOCKER_STATE": "",
                                                "DISK_GATE_SAMPLE_S": "0.5"})   # the v2 gate's sampler, in tests
         cls.env.start()
-        sys.path.insert(0, str(HERE))
-        src = os.environ.get("DISK_GATE_UNDER_TEST") or str(HERE / "exp" / "disk_gate.py")
-        spec = importlib.util.spec_from_file_location("disk_gate_under_test", src)
+        cls.home = home
+        # v5 (review a108fc3 G-2): the gate runs from a PINNED tree under WP_HOME/runs whose TREE.manifest names a
+        # commit. The tree here is a copy of the tree of the gate under test, with its own manifest (a fake commit).
+        src = pathlib.Path(os.environ.get("DISK_GATE_UNDER_TEST") or HERE / "exp" / "disk_gate.py").resolve()
+        cls.bytecode = sys.dont_write_bytecode
+        sys.dont_write_bytecode = True                # a pinned tree holds no bytecode cache (v5 P4)
+        cls.tree = make_tree(src.parents[1], home / "runs" / f"{COMMIT[:7]}-20261118T000000Z")
+        os.environ["PYTHONPATH"] = str(cls.tree)
+        for m in [m for m in sys.modules if m in ("wp", "exp") or m.startswith(("wp.", "exp."))]:
+            del sys.modules[m]
+        sys.path.insert(0, str(cls.tree))
+        spec = importlib.util.spec_from_file_location("disk_gate_under_test", cls.tree / "exp" / "disk_gate.py")
         cls.g = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.g)
-        cls.home = home
         cls.v3 = hasattr(cls.g, "MARGIN")           # the v3 gate; the v2 gate (eeb9b82) runs these as red evidence
+        cls.v5 = hasattr(cls.g, "RUN_LOCK")         # the v5 gate: `run` is the only way to start and end a run
 
     @classmethod
     def tearDownClass(cls):
         cls.es_api.shutdown()
         cls.env.stop()
+        sys.dont_write_bytecode = cls.bytecode
+        if str(cls.tree) in sys.path:
+            sys.path.remove(str(cls.tree))
+        for m in [m for m in sys.modules if m in ("wp", "exp") or m.startswith(("wp.", "exp."))]:
+            del sys.modules[m]
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
     def setUp(self):
@@ -611,7 +733,11 @@ class Gate(unittest.TestCase):
                         mock.patch.object(self.g, "CGROUP_ROOT", root / "cg"),
                         # v4's connection to the experiment's PG endpoint (B1); create=True so that an older gate
                         # under test runs these tests to a FAIL, not an error
-                        mock.patch.object(self.g, "_pg_connect", lambda: FakePG(self.F), create=True)]
+                        mock.patch.object(self.g, "_pg_connect", lambda *a, **k: FakePG(self.F, *a, **k), create=True),
+                        # v5 P7: the store inventory's unregistered list (wp.registry), from the scenario
+                        mock.patch.object(self.g, "_unregistered", lambda *a: self.F.st().get("unregistered", []),
+                                          create=True)]
+        self._run = None
         for p in patches:
             p.start()
             self.addCleanup(p.stop)
@@ -643,14 +769,34 @@ class Gate(unittest.TestCase):
 
     # ---- helpers
     def call(self, *args):
+        """A gate command in this process. On the v5 gate, `start` and `end` have no command (only `run` starts and
+        ends a run); the storage tests drive the same two steps `run` takes, admission and end, through the gate's
+        own functions, so every rule of those steps is tested here and `run` itself in the Launcher tests."""
         buf = io.StringIO()
         try:
             with redirect_stdout(buf):
+                if self.v5 and args and args[0] in ("start", "end"):
+                    return self._step(args[0]), buf.getvalue()
                 self.g.main(*args)
             return 0, buf.getvalue()
         except SystemExit as e:
             code = e.code if isinstance(e.code, int) or e.code is None else 1
             return code or 0, buf.getvalue() + ("" if isinstance(e.code, int) or e.code is None else str(e.code))
+
+    def _step(self, which):
+        g = self.g
+        if which == "start":
+            try:
+                self._run = g._admit("t", os.getpgrp())
+            except g.Blocked as b:
+                g._print_blocked(b.reasons)
+                return 2
+            print(f"disk_gate start run {self._run['run']}")
+            return 0
+        if self._run is None:
+            print("disk_gate VOID: no run admitted in this test")
+            return 3
+        return g._report(self._run, *g._finish(self._run))
 
     def start(self):
         rc, out = self.call("start")
@@ -705,7 +851,6 @@ class Gate(unittest.TestCase):
     # ---- positive control
     def test_valid_run_passes(self):
         self.start()
-        self.assertValid(*self.call("check", "x"))
         self.assertValid(*self.call("end"))
 
     # ---- R1 isolation: the data paths must be private tmpfs mounts
@@ -943,7 +1088,7 @@ class Gate(unittest.TestCase):
         # unchanged threshold figures (node stats) do not show that the disk decider was turned off
         self.start()
         FakeES.S.update(persistent={"cluster.routing.allocation.disk.threshold_enabled": "false"})
-        self.assertVoid(*self.call("check", "x"), "threshold_enabled")
+        self.assertVoid(*self.call("end"), "threshold_enabled")
 
     def test_transient_watermark_change_still_present_voids(self):
         self.start()
@@ -967,20 +1112,20 @@ class Gate(unittest.TestCase):
         self.F.trigger("du", 1, "restart", self.pg)         # fires inside end's WP_HOME measurement
         self.assertVoid(*self.call("end"), "restarted")
 
-    def test_oom_kill_during_the_check_home_measurement_voids(self):
+    def test_oom_kill_during_the_end_home_measurement_voids(self):
         self.start()
         self.F.trigger("du", 1, "oom", self.es, 1)
-        self.assertVoid(*self.call("check", "x"), "OOM")
+        self.assertVoid(*self.call("end"), "OOM")
 
     # ---- B8 (review F F19): every verdict carries the gate version, its hash, the window's end and the limits
     def test_every_verdict_states_the_gate_and_its_limits(self):
         self.start()
         rc, out = self.call("end")
         self.assertValid(rc, out)
-        self.assertIn("LIMITS v4", out, "the VALID verdict line does not state the operator trust boundary")
+        self.assertIn(self.g.LIMITS, out, "the VALID verdict line does not state the operator trust boundary")
         rec = self.last_record()
-        self.assertEqual(rec.get("limits"), "v4")
-        self.assertEqual(rec.get("gate"), "disk_gate v4")
+        self.assertEqual(rec.get("limits"), self.g.LIMITS_ID)
+        self.assertEqual(rec.get("gate"), self.g.VERSION)
         self.assertRegex(rec.get("gate_sha256") or "", r"^[0-9a-f]{64}$")
         self.assertLessEqual(rec.get("window_end") or "~", rec["at"])
 
@@ -990,8 +1135,8 @@ class Gate(unittest.TestCase):
         self.assertEqual(rc, 0, f"no version command: {out.strip()[-200:]}")
         f = dict(x.split("=", 1) for x in out.splitlines() if x.startswith("gate_"))
         sha = hashlib.sha256(pathlib.Path(self.g.__file__).read_bytes()).hexdigest()
-        self.assertEqual(f.get("gate_version"), f"disk_gate v4 sha256 {sha}")
-        self.assertTrue(f.get("gate_limits", "").startswith("LIMITS v4"), "the limits are not stated")
+        self.assertEqual(f.get("gate_version"), f"{self.g.VERSION} sha256 {sha}")
+        self.assertEqual(f.get("gate_limits"), self.g.LIMITS, "the limits are not stated")
 
     # ---- B9 (review F F20, F21)
     def test_store_on_a_volume_is_not_called_a_tmpfs(self):
@@ -1044,13 +1189,6 @@ class Gate(unittest.TestCase):
     def test_open_stop_blocks_start(self):
         self.call("stop", "left by an earlier run")
         self.assertBlocked(*self.call("start"), "unacknowledged stop")
-
-    def test_check_void_closes_the_run(self):
-        self.start()
-        self.F.cg(self.pg, oom_kill=2)
-        self.assertVoid(*self.call("check", "x"))
-        rc, out = self.call("end")
-        self.assertEqual(rc, 3, out)
 
     # ---- ledger continuity (review D F7)
     def _ledger(self):
@@ -1149,6 +1287,8 @@ class Gate(unittest.TestCase):
 
     def test_run_admitted_by_an_older_gate_is_refused(self):
         self.need_v3()
+        if self.v5:
+            self.skipTest("v5 keeps no run state file: a run lives in its launcher's memory (GATE-DESIGN 8.2)")
         (self.home / "state" / "disk_gate.json").write_text(json.dumps({"run": "old", "admit_seq": 1,
                                                                         "run_dir": "/nonexistent"}))
         self.assertVoid(*self.call("end"), "older gate")
@@ -1206,8 +1346,9 @@ class Gate(unittest.TestCase):
         self.legacy_write("touch")
         rc, out = self.call("stop", "recorded while a legacy STOP path exists")
         self.assertEqual(rc, 0, out)
-        rc, out = self.call("abort", "launcher gone")
-        self.assertEqual(rc, 0, out)
+        if not self.v5:                    # v5 abort needs a dead launcher: the G-1 tests cover it
+            rc, out = self.call("abort", "launcher gone")
+            self.assertEqual(rc, 0, out)
 
     def test_retire_legacy_stop_moves_it_unread_and_leaves_a_stop_to_acknowledge(self):
         self.need_v4()
@@ -1265,6 +1406,388 @@ class Gate(unittest.TestCase):
         self.assertEqual(leak_scan.find((out1 + out2).encode(), [key, enc]), [], "the gate printed the API key")
 
 
+    # ================================================================ review a108fc3 (gate v5): the gate is the launcher
+    def records(self):
+        p = self.home / "state" / "stop_ledger.jsonl"
+        return [json.loads(x) for x in p.read_text().splitlines()] if p.exists() else []
+
+    def ends(self):
+        return [(r.get("run"), r.get("verdict")) for r in self.records() if r["kind"] == "end"]
+
+    def launch(self, label="x", tree=None, **stub):
+        return Launch(self, label, tree, **stub)
+
+    def fresh_tree(self):
+        """A pinned tree of its own for a test that changes it (same commit, same files)."""
+        d = self.home / "runs" / f"{COMMIT[:7]}-{os.urandom(4).hex()}"
+        shutil.copytree(self.tree, d, symlinks=True)
+        self.addCleanup(shutil.rmtree, d, True)
+        return d
+
+    def abort(self, run, reason="launcher looked dead"):
+        return self.call("abort", run or "-", reason)
+
+    def raw_call(self, *args):
+        """A gate command exactly as the command line gives it (no start/end shim)."""
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                self.g.main(*args)
+            return 0, buf.getvalue()
+        except SystemExit as e:
+            return (e.code if isinstance(e.code, int) else 1 if e.code else 0), buf.getvalue() + (
+                "" if isinstance(e.code, int) or e.code is None else str(e.code))
+
+    def test_g1_no_command_but_run_admits_or_closes_a_run(self):
+        # review a108fc3 G-1: start, check and end were separate commands that acted on whatever run was current
+        self.start()
+        for cmd in (("check", "x"), ("end",)):
+            rc, out = self.raw_call(*cmd)
+            self.assertEqual(rc, 2, f"{cmd[0]} is still a command that acts on the current run: {out.strip()[-200:]}")
+        self.assertEqual(self.ends(), [], "a command other than run closed the run")
+
+    # ---- G-1: one launcher owns a run; abort only of a dead one; a late call never touches another run
+    def test_g1_abort_while_the_launcher_lives_is_refused_and_a_second_run_blocks(self):
+        A = self.launch("a").begin()
+        self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
+        rc, out = self.abort(A.run_id)
+        self.assertEqual(rc, 2, f"abort closed run A while its launcher is alive: {out.strip()[-300:]}")
+        B = self.launch("b").begin()
+        rcb, outb = B.finish()
+        self.assertEqual(rcb, 2, f"run B was admitted while run A's launcher is alive: {outb.strip()[-300:]}")
+        rca, outa = A.finish()
+        self.assertEqual(rca, 0, outa[-400:])
+        self.assertEqual(self.ends(), [(A.run_id, "VALID")], "the ledger's end records are not A's own VALID only")
+
+    def test_g1_abort_while_the_experiment_outlives_its_launcher_is_refused(self):
+        A = self.launch("a").begin()
+        self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
+        A.kill_launcher()                                  # the launcher dies; its experiment keeps the stores busy
+        rc, out = self.abort(A.run_id)
+        self.assertEqual(rc, 2, f"abort closed run A while its experiment still runs: {out.strip()[-300:]}")
+        A.kill_experiment()
+        rc, out = self.abort_when_dead(A.run_id)
+        self.assertEqual(rc, 0, f"abort refused although run A's launcher and experiment are dead: {out[-300:]}")
+
+    def test_g1_late_call_of_a_dead_launcher_cannot_touch_another_run(self):
+        A = self.launch("a").begin()
+        self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
+        A.kill_launcher()
+        A.kill_experiment()
+        rc, out = self.abort_when_dead(A.run_id)
+        self.assertEqual(rc, 0, f"abort refused although run A is dead: {out[-300:]}")
+        B = self.launch("b").begin()
+        self.assertTrue(B.run_id and B.run_id != A.run_id, f"run B was not admitted: {B.output()[-400:]}")
+        rc, out = A.late_call()                            # whatever A's launcher could still call
+        self.assertNotEqual(rc, 0, f"a late call of run A's launcher succeeded: {out.strip()[-300:]}")
+        self.assertNotIn(B.run_id, [r for r, _ in self.ends()], "a late call of run A's launcher closed run B")
+        rcb, outb = B.finish()
+        self.assertEqual(rcb, 0, outb[-400:])
+        self.assertEqual(self.ends(), [(A.run_id, "VOID"), (B.run_id, "VALID")])
+
+    def test_g1_abort_naming_another_run_is_refused(self):
+        A = self.launch("a").begin()
+        self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
+        rc, out = self.abort("r-" + "0" * 32, "wrong run id")
+        self.assertEqual(rc, 2, f"abort naming a run that is not open closed run {A.run_id}: {out.strip()[-300:]}")
+        A.finish()
+
+    def abort_when_dead(self, run, within=15):
+        """abort, retried while the killed processes are being reaped (the kernel frees the lock and the group)."""
+        t0 = time.monotonic()
+        while True:
+            rc, out = self.abort(run)
+            if rc == 0 or time.monotonic() - t0 > within:
+                return rc, out
+            time.sleep(0.2)
+
+    # ---- G-2: the tree is the pinned commit, the gate is its gate, fixtures registered, stores clean, rows bound
+    def test_g2_tree_differing_from_its_commit_is_refused(self):
+        t = self.fresh_tree()
+        with open(t / "wp" / "config.py", "a") as f:
+            f.write("\n# an uncommitted edit\n")
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "differs from commit")
+
+    def test_g2_untracked_file_in_the_tree_is_refused(self):
+        t = self.fresh_tree()
+        (t / "exp" / "scratch_helper.py").write_text("X = 1\n")
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "untracked")
+
+    def test_g2_bytecode_cache_in_the_tree_is_refused(self):
+        t = self.fresh_tree()
+        (t / "wp" / "__pycache__").mkdir()
+        (t / "wp" / "__pycache__" / "config.cpython-312.pyc").write_bytes(b"\x00stale")
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "__pycache__")
+
+    def test_g2_dirty_head_is_refused(self):
+        t = self.fresh_tree()
+        (t / "GIT_HEAD").write_text(COMMIT[:7] + "-dirty\n")
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "dirty")
+
+    def test_g2_gate_that_is_not_the_commits_gate_is_refused(self):
+        t = self.fresh_tree()
+        m = (t / "TREE.manifest").read_text()
+        own = _sha256((t / "exp" / "disk_gate.py").read_bytes())
+        (t / "TREE.manifest").write_text(m.replace(own, "0" * 64))
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "gate")
+
+    def test_g2_tree_changed_during_the_run_voids(self):
+        t = self.fresh_tree()
+        rc, out = self.launch("x", tree=t, ops=[["append", str(t / "wp" / "config.py"), "\n# edited mid-run\n"]]).run()
+        self.assertVoid(rc, out, "changed during the run")
+
+    def test_g2_unregistered_fixture_is_refused(self):
+        t = self.fresh_tree()
+        (t / "exp" / "extra_fixture.sql").write_text("select 1;\n")
+        write_manifest(t)                                   # committed with the code, but never registered
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "fixture")
+
+    def test_g2_changed_fixture_is_refused(self):
+        t = self.fresh_tree()
+        with open(t / "wp" / "schema.sql", "a") as f:
+            f.write("\n-- a changed fixture\n")
+        write_manifest(t)                                   # committed, but the registered hash was not updated
+        rc, out = self.launch("x", tree=t).run()
+        self.assertBlocked(rc, out, "fixture")
+
+    def test_g2_rows_left_in_a_table_block(self):
+        self.F.locked(lambda st: st.update(tables={"wp_events": {"store_registry": True, "events": True},
+                                                   "wp_keys": {"subject_keys": False}}))
+        self.assertBlocked(*self.call("start"), "not clean")
+
+    def test_g2_index_left_in_elasticsearch_blocks(self):
+        FakeES.S.update(es_indices=["wp16096-t1-events-base"])
+        self.assertBlocked(*self.call("start"), "not clean")
+
+    def test_g2_unregistered_store_blocks(self):
+        self.F.locked(lambda st: st.update(unregistered=["pg:scratch_table"]))
+        self.assertBlocked(*self.call("start"), "not clean")
+
+    def test_g2_row_of_another_run_voids(self):
+        rc, out = self.launch("x", rows=[{"name": "r", "gate_run": "r-" + "1" * 32}]).run()
+        self.assertVoid(rc, out, "another run")
+
+    def test_g2_end_record_lists_every_run_file_with_its_hash(self):
+        A = self.launch("x", rows=[{"name": "r", "gate_run": "self"}], print="hello from the experiment")
+        rc, out = A.run()
+        self.assertValid(rc, out)
+        rec = [r for r in self.records() if r["kind"] == "end"][-1]
+        files = {f["name"]: f["sha256"] for f in rec.get("files") or []}
+        self.assertTrue(files, "the end record lists no file of the run")
+        d = self.home / "results" / "runs" / A.run_id
+        on_disk = {str(p.relative_to(d)): _sha256(p.read_bytes()) for p in d.rglob("*") if p.is_file()}
+        self.assertEqual(files, on_disk, "the end record does not list exactly the run directory's files")
+        self.assertIn("hello from the experiment", (d / "experiment.out").read_text())
+
+    def test_g2_write_result_stamps_the_run_and_writes_into_its_directory(self):
+        import exp.common as common
+        d = self.home / "results" / "runs" / "r-test"
+        d.mkdir(parents=True, exist_ok=True)
+        with mock.patch.dict(os.environ, {"WP_RUN_DIR": str(d), "WP_GATE_RUN": "r-test"}), \
+                mock.patch.object(common, "fingerprint", lambda: {}), redirect_stdout(io.StringIO()):
+            _, p = common.write_result("stamp_probe", {"ok": True})
+        self.assertEqual(pathlib.Path(p).parent, d, "write_result did not write into the run's directory")
+        self.assertEqual(json.loads(pathlib.Path(p).read_text()).get("gate_run"), "r-test",
+                         "write_result did not stamp the gate's run id")
+
+    def test_p11_process_outliving_the_experiment_voids(self):
+        rc, out = self.launch("x", ops=[["linger"]]).run()
+        self.assertVoid(rc, out, "outlived")
+
+    def test_p10_two_runs_with_one_label_keep_both_records(self):
+        A = self.launch("same", rows=[{"name": "r", "gate_run": "self"}])
+        self.assertValid(*A.run())
+        d = self.home / "results" / "runs" / str(A.run_id)
+        before = {str(p): p.read_bytes() for p in d.rglob("*") if p.is_file()}
+        self.assertTrue(before, "run A left no record directory")
+        B = self.launch("same", rows=[{"name": "r", "gate_run": "self"}])
+        self.assertValid(*B.run())
+        self.assertNotEqual(A.run_id, B.run_id)
+        self.assertEqual({str(p): p.read_bytes() for p in d.rglob("*") if p.is_file()}, before,
+                         "the second run with the same label changed the first run's record")
+
+    def test_g3_experiment_text_never_becomes_the_verdict(self):
+        # the experiment prints what the old launcher's verdict lines looked like, and a stop lands in its window
+        A = self.launch("x", print="gate=VALID\nend 2026-11-18T00:00:00Z",
+                        ops=[["gate", "stop", "operator stop in the window"]])
+        rc, out = A.run()
+        self.assertVoid(rc, out, "STOP")
+        self.assertNotIn("end 2026-11-18T00:00:00Z", out, "the experiment's text reached the gate's own output")
+
+    # ---- m-1: the probe's output cannot be forged through a crafted name
+    def test_m1_forged_probe_lines_through_a_crafted_link_name_block(self):
+        dev = str(os.makedev(0, 50))
+        name = f"{PGDATA}/x\nP\t{dev}\t/srv/pgdata\t/srv/pgdata\nP\t{dev}\t/srv/pgdata/pg_wal\t/srv/pgdata/pg_wal"
+        self.F.locked(lambda st: st["c"][self.pg].update(links=[[name, PGDATA]]) or
+                      st["c"][self.pg]["pgsrv"].update(dd="/srv/pgdata"))
+        self.assertBlocked(*self.call("start"), "not on the private tmpfs")
+
+    # ---- m-2: the drift baseline is not a file the run can rewrite
+    def test_m2_baseline_rewritten_by_the_run_does_not_hide_a_replaced_store(self):
+        self.start()
+        new = self.F.replace("emlab2-wphard-pg")
+        old = self.pg                                      # a copy of the old cluster: the same system identifier
+        self.F.locked(lambda st: st["c"][new]["pgsrv"].update(sysid=st["c"][old]["pgsrv"]["sysid"]))
+        p = self.home / "state" / "disk_gate.json"
+        if p.exists():                                     # what the run's own OS user can do to a v4 state file
+            st = json.loads(p.read_text())
+            st["obs"]["pg"]["id"] = new
+            st["obs"]["pg"]["started"] = self.F.st()["c"][new]["started"]
+            p.write_text(json.dumps(st))
+        self.assertVoid(*self.call("end"))
+
+    # ---- m-4
+    def test_m4_missing_startedat_at_end_voids(self):
+        self.start()
+        self.F.flag(no_started=True)
+        self.assertVoid(*self.call("end"), "StartedAt")
+
+    # ---- m-6
+    def test_m6_every_gate_pg_connection_sets_a_statement_timeout(self):
+        self.start()
+        sql = self.F.st().get("pg_sql", [])
+        self.assertTrue(sql, "the gate sent no PG statement")
+        first = {}
+        for db, s in sql:
+            first.setdefault(db, s)
+        for db, s in first.items():
+            self.assertRegex(s, r"(?i)^\s*set\s+statement_timeout",
+                             f"the gate's first statement on {db} does not set a statement timeout")
+
+    # ---- the four surviving mutants of review a108fc3
+    def test_mutant_oom_kill_during_the_slow_end_probes_voids(self):
+        # fast_before_slow: identity and counters must be read after the slow probes (B6, F18)
+        self.start()
+        self.F.trigger("rm", 1, "oom", self.pg, 1)         # the next nonce removal: end's PG slow phase
+        self.assertVoid(*self.call("end"), "OOM")
+
+    def test_mutant_es_curl_failure_inside_the_container_blocks(self):
+        self.F.flag(curl_rc=1)                             # es_bind_pass_on_curl_failure
+        self.assertBlocked(*self.call("start"), "could not be asked")
+
+    def test_mutant_nonce_write_failure_blocks(self):
+        self.F.flag(nonce_rc=1)                            # nonce_write_failure_passes
+        self.assertBlocked(*self.call("start"), "nonce could not be written")
+
+    def test_mutant_inode_count_without_the_limit_option_blocks(self):
+        self.F.set(self.es, inodes=[1048576, 1048000])     # inodes_statfs_ignored: nr_inodes=0 in the options only
+        self.assertBlocked(*self.call("start"), "inode")
+
+
+class Launch:
+    """One run as its launcher makes it. v5: `exp.disk_gate run LABEL stubexp` as a process (through the --gate seam
+    below, from the pinned tree). An older gate has no `run`; there the launcher's steps are made as its launcher made
+    them (start; the experiment; end), so the same scenario shows that gate's verdict."""
+
+    def __init__(self, t, label, tree=None, **stub):
+        self.t, self.label, self.tree = t, label, tree or t.tree
+        d = pathlib.Path(tempfile.mkdtemp(dir=t.tmp))
+        self.started, self.release = d / "started", d / "release"
+        self.env = dict(os.environ, GATE_TREE=str(self.tree), STUB_TESTS=str(THIS.parent), FAKE_FREE_GB=str(t.free()),
+                        STUB_STARTED=str(self.started), STUB_RELEASE=str(self.release),
+                        **{"STUB_" + k.upper(): v if isinstance(v, str) else json.dumps(v) for k, v in stub.items()})
+        self.p, self.rc, self.out, self.run_id = None, None, "", None
+        t.addCleanup(self._cleanup)
+
+    def _cleanup(self):
+        """A test that failed half-way leaves no launcher or experiment of its own running."""
+        self.release.touch()
+        if self.p and self.p.poll() is None:
+            try:
+                self.p.communicate(timeout=60)
+            except subprocess.TimeoutExpired:
+                self.kill_launcher()
+        self.kill_experiment()
+
+    def begin(self):
+        if self.t.v5:
+            self.p = subprocess.Popen([sys.executable, "-B", str(THIS), "--gate", "run", self.label, "stubexp"],
+                                      cwd=self.tree, env=self.env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                      stderr=subprocess.STDOUT)
+            t0 = time.monotonic()
+            while not self.started.exists() and self.p.poll() is None and time.monotonic() - t0 < 120:
+                time.sleep(0.05)
+            adm = [r for r in self.t.records() if r["kind"] == "admit" and r.get("label") == self.label]
+            if self.started.exists() and adm:
+                self.run_id = adm[-1]["run"]
+        else:
+            self.rc, self.out = self.t.call("start")
+            m = re.search(r"start run (\S+)", self.out)
+            self.run_id = m.group(1) if self.rc == 0 and m else None
+        return self
+
+    def output(self):
+        return self.out
+
+    def finish(self):
+        self.release.touch()
+        if self.t.v5:
+            out, _ = self.p.communicate(timeout=300)
+            self.out += out.decode("utf-8", "replace")
+            return self.p.returncode, self.out
+        if self.rc != 0:
+            return self.rc, self.out
+        r = subprocess.run([sys.executable, "-B", "-m", "stubexp"], cwd=self.tree, env=self.env,
+                           stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=300)
+        rc, out = self.t.call("end")
+        self.out += r.stdout + out
+        return rc, self.out
+
+    def run(self):
+        return self.begin().finish()
+
+    def kill_launcher(self):
+        if self.p:
+            os.kill(self.p.pid, signal.SIGKILL)
+            self.p.wait(timeout=30)
+
+    def kill_experiment(self):
+        if self.p and self.started.exists():
+            try:
+                pid = int(self.started.read_text())
+                cmd = subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True, text=True).stdout
+                if "stubexp" in cmd:                       # only this test's experiment, never a reused pid
+                    os.kill(pid, signal.SIGKILL)
+            except (OSError, ValueError):
+                pass
+
+    def late_call(self):
+        """What run A's launcher could still call after an abort: v5 has no end command, so the only call naming A
+        is abort (and verdict, which only reads); the older gate's launcher called end."""
+        return self.t.abort(self.run_id, "late call") if self.t.v5 else self.t.call("end")
+
+
+def gate_main(argv):
+    """--gate: exp/disk_gate.py of GATE_TREE run as a process, with the same fakes as the in-process tests (fake docker
+    on PATH, the scenario's /proc and cgroup trees, FakePG, the scenario's unregistered list, FAKE_FREE_GB)."""
+    root = pathlib.Path(os.environ["FAKE_DOCKER_STATE"])
+    F = Fake(root)
+    tree = pathlib.Path(os.environ["GATE_TREE"])
+    sys.path.insert(0, str(tree))
+    spec = importlib.util.spec_from_file_location("disk_gate_seam", tree / "exp" / "disk_gate.py")
+    g = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(g)
+    free = float(os.environ.get("FAKE_FREE_GB", "30"))
+    shutil.disk_usage = lambda p: SimpleNamespace(total=100 * GIB, used=(100 - free) * GIB, free=free * GIB)
+    g.PROC_ROOT, g.CGROUP_ROOT = root / "proc", root / "cg"
+    g._pg_connect = lambda *a, **k: FakePG(F, *a, **k)
+    g._unregistered = lambda *a: F.st().get("unregistered", [])
+    try:
+        g.main(*argv)
+        return 0
+    except SystemExit as e:
+        if isinstance(e.code, int) or e.code is None:
+            return e.code or 0
+        print(e.code)
+        return 1
+
+
 def _alive(pid):
     try:
         os.kill(pid, 0)
@@ -1276,4 +1799,6 @@ def _alive(pid):
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--fake":
         sys.exit(fake_main(sys.argv[2:]))
+    if len(sys.argv) > 1 and sys.argv[1] == "--gate":
+        sys.exit(gate_main(sys.argv[2:]))
     unittest.main(verbosity=2)
