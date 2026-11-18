@@ -1,6 +1,6 @@
 """B3: the decision core under real overlapping Postgres transactions (the plpgsql core of pol/_pgcore.sql on the experiment's own
 container, database pol). Since 27ad63a the core runs in owner code: S1-S6, the differential arm and the controls drive the owner-only raw
-entries dc._lock_event / dc._reduce_apply (the same functions dc.submit calls) over owner connections, which is where the test seams
+entries dc._lock_event / dc._reduce_apply (sharing dc._lock_tail and dc._reduce_stage with dc.submit) over owner connections, where the test seams
 (hooks between lock and apply, and before commit) can sit; S7 and S8 drive the deployment path itself: dc_app calling dc.submit with
 session tokens that dc_idp opened. Env (paths only): POL_PG_PORT, POL_PG_SUPER_PASSFILE, POL_PG_APP_PASSWORD_FILE, POL_PG_APP_PASSFILE,
 POL_PG_IDP_PASSWORD_FILE, POL_PG_IDP_PASSFILE.

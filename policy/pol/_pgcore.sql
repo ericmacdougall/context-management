@@ -9,14 +9,13 @@
 -- id (step 2, R3-1). Actor and trust origin are derived from the session (dc._origin). Authority changes (revoke, grant) are applied inside the
 -- same function, from the event that function built and judged: there is no separately callable apply step.
 --
--- Final judgment (final review P1/P4; DESIGN.md "Final judgment after the last wait"). Every session-keyed call and dc.open_session
--- judges its caller's authority ONCE MORE after the last statement of the call that can wait (row, table, advisory and unique-index
--- waits) and before anything it did can commit: writes are staged in a subtransaction that a refusal rolls back, reads are discarded.
--- The judgment itself never waits (dc._gate and dc._judge_proof are VOLATILE and lock their tables in a statement of their own first: a
--- read inside a STABLE function or a simple expression uses a snapshot taken before its own lock wait, as dc.explain's principal check
--- did at a2d65fd, and a read that never waits cannot be stale that way, whatever the server's order of snapshot and plan locks). The only
--- writes after it are a revoke's own authority writes, on rows and tables locked before it, skipping session rows another transaction
--- holds; and a refusal's audit row.
+-- Acquire, judge, apply (S1; FINAL-JUDGMENT.md section 4, DESIGN.md "Final judgment after the last wait"). Every session-keyed call
+-- and dc.open_session takes EVERY lock it needs before it judges, in one global order (L0 relation locks, L1 the authority lock, L2
+-- the authority rows FOR SHARE, L3 the tenant lock, L4 the idempotency lock, L5 data rows, L6 subject locks, L7 the chain head, L8 the
+-- nonce lock), each wait capped by the credential's remaining life (dc._budget). The authority rows are pinned, so no transaction can
+-- change the caller's session, factor or principal until the call ends: a revoke, end_session or factor revoke waits for the call.
+-- Then lock_timeout drops to 1 ms: the staged writes, the final judgment (dc._gate, the wall clock read last) and a revoke's authority
+-- writes never wait; a wait there fails the call (55P03) and writes nothing. A refusal rolls the stage back; its audit row stays.
 --
 -- The rules are CORE-RULES.md, ported rule by rule from pol/_core.py (the Python core stays as the differential oracle). Labels are
 -- normalised and joined here exactly as pol.labels does (sorted with COLLATE "C", which orders UTF-8 by code point like Python).
@@ -62,6 +61,8 @@ create index vals_subjects on dc.vals using gin(subjects);
 create table dc.subject_tokens(tenant text not null, subject text not null, token text not null unique, primary key (tenant, subject));
 create table dc.sessions(token_hash text primary key, tenant text not null, principal text not null, channel text not null, factor text not null,
                          expires_at timestamptz not null, revoked bool not null default false);
+-- a revoke locks and ends every session of its target (S1, L2.4)
+create index sessions_by_principal on dc.sessions(tenant, principal);
 -- step 2: enrolled factors and the proofs already used (replay ledger, pruned after expiry). Owner-only: no login role holds any privilege.
 create table dc.factors(factor text primary key, tenant text not null, principal text not null, channel text not null, key bytea not null,
                         revoked bool not null default false, enrolled_at timestamptz not null default now(),
@@ -492,25 +493,150 @@ begin
   end loop;
 end $$;
 
--- the lock order (tenant row, then the (tenant, principal) advisory lock, then the requirement's head row); called before _reduce_apply
-create function dc._lock_event(p_tenant text, ev jsonb) returns void language plpgsql as $$
-#variable_conflict use_variable
-declare typ text := case when jsonb_typeof(ev) = 'object' then ev->>'type' end;
+-- ------------------------------------------------------------------------------------------------ S1: the lock order and its budget
+-- FINAL-JUDGMENT.md 4.2. Advisory classes (two-int4 key space): A(tenant, principal) 1145241601, T(tenant) 1145241602,
+-- S(tenant, subject) 1145241603, N(factor, nonce) 1145241604; the per-principal idempotency lock keeps its int8 key (L4).
+create function dc._k(kind text, a text, b text) returns int language sql immutable as $$
+  select hashtext(jsonb_build_array(kind, a, b)::text)
+$$;
+
+-- the cap on an exclusive wait (A or T): past it the call fails retryably (55P03) and the queue behind it moves on
+create function dc._xwait_ms() returns bigint language sql immutable as $$ select 2000::bigint $$;
+
+-- the caller's lock_timeout in ms (0: none), read by each API function before its inner function's SET clause replaces it
+create function dc._lt() returns bigint language sql stable as $$
+  select (extract(epoch from current_setting('lock_timeout')::interval) * 1000)::bigint
+$$;
+
+-- the run-time order check: each lock request records (level, key) in the transaction-local setting dc.trace, and a request below
+-- the last one raises DCORD. Reset at the start of every call (a transaction that makes several calls is outside the proof, 4.5).
+create function dc._at_reset() returns void language plpgsql as $$
 begin
-  if typ in ('revoke', 'grant') then perform 1 from dc.tenant where tenant = p_tenant for update;
-  else perform 1 from dc.tenant where tenant = p_tenant for share; end if;
-  if not found then raise exception 'tenant not installed'; end if;
+  perform set_config('dc.at', '', true);
+  perform set_config('dc.trace', '', true);
+end $$;
+
+create function dc._at(p_level bigint, p_key bigint) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare held text := coalesce(current_setting('dc.at', true), '');
+begin
+  if p_level is null or p_key is null then raise exception 'lock order: null level or key' using errcode = 'DCORD'; end if;
+  if held <> '' and (p_level < split_part(held, ':', 1)::bigint
+                     or (p_level = split_part(held, ':', 1)::bigint and p_key < split_part(held, ':', 2)::bigint)) then
+    raise exception 'lock order: %:% requested after %', p_level, p_key, held using errcode = 'DCORD';
+  end if;
+  perform set_config('dc.at', p_level || ':' || p_key, true);
+  perform set_config('dc.trace', coalesce(current_setting('dc.trace', true), '') || p_level || ':' || p_key || ',', true);
+end $$;
+
+-- before every acquisition statement: lock_timeout = the smallest of the caller's own (when set), the time left until p_deadline (at
+-- least 1 ms) and p_cap. It never refuses: a timeout after the deadline is the call's refusal, one before it is re-raised. NULL p_lt:
+-- the owner-only raw path, which keeps the owner's own lock_timeout.
+create function dc._budget(p_deadline timestamptz, p_lt bigint, p_cap bigint default null) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare ms bigint;
+begin
+  if p_lt is null then return; end if;
+  if p_deadline is not null then
+    ms := least(greatest(1, ceil(extract(epoch from p_deadline - clock_timestamp()) * 1000)), 2147483647);
+  end if;
+  if p_lt > 0 then ms := least(coalesce(ms, p_lt), p_lt); end if;
+  if p_cap is not null then ms := least(coalesce(ms, p_cap), p_cap); end if;
+  perform set_config('lock_timeout', coalesce(ms, 0)::text, true);
+end $$;
+
+-- L0: one relation lock per statement, in the global table order (key: the position in it), in the mode the entry point needs
+create function dc._rel(p_deadline timestamptz, p_lt bigint, p_tables text[], p_modes text[]) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare i int; k int;
+        rels text[] := array['audit','chain','chainhead','events','factors','head','principal','props','role','sessions','subject_tokens',
+                             'tenant','used_proofs','vals'];
+begin
+  for i in 1 .. coalesce(array_length(p_tables, 1), 0) loop
+    k := array_position(rels, p_tables[i]) - 1;
+    if k is null or p_modes[i] not in ('access share', 'row share', 'row exclusive') then
+      raise exception 'lock order: relation % in mode %', p_tables[i], p_modes[i] using errcode = 'DCORD';
+    end if;
+    perform dc._budget(p_deadline, p_lt);
+    perform dc._at(0, k);
+    execute format('lock table dc.%I in %s mode', p_tables[i], p_modes[i]);
+  end loop;
+end $$;
+
+-- L2.3-2.4: a revoke's target principal row and its session rows, one per statement, so its authority writes after the final judgment
+-- never wait. Every API writer of these rows holds A(target), which the revoke holds exclusively.
+create function dc._lock_target(p_tenant text, tgt text, p_deadline timestamptz, p_lt bigint) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare r record;
+begin
+  perform dc._budget(p_deadline, p_lt);
+  perform dc._at(2, 3);
+  perform 1 from dc.principal p where p.tenant = p_tenant and p.pid = tgt for no key update;
+  for r in select x.token_hash from dc.sessions x where x.tenant = p_tenant and x.principal = tgt order by x.token_hash collate "C" loop
+    perform dc._budget(p_deadline, p_lt);
+    perform dc._at(2, 4);
+    perform 1 from dc.sessions x where x.token_hash = r.token_hash for no key update;
+  end loop;
+end $$;
+
+-- L3-L5, shared by dc.submit's acquisition and the owner-only raw path (dc._lock_event): the tenant lock T (exclusive for an authority
+-- change, p_xt), the per-principal idempotency lock, the event's head row; for a revoke, its target's head rows and open props rows.
+-- The B3 controls patch the idempotency-lock and head-row lines.
+create function dc._lock_tail(p_tenant text, ev jsonb, p_xt boolean, p_deadline timestamptz, p_lt bigint) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare typ text := case when jsonb_typeof(ev) = 'object' then ev->>'type' end; r record;
+begin
+  perform dc._budget(p_deadline, p_lt, case when p_xt then dc._xwait_ms() end);
+  perform dc._at(3, 0);
+  if p_xt then perform pg_advisory_xact_lock(1145241602, dc._k('tenant', p_tenant, null));
+  else perform pg_advisory_xact_lock_shared(1145241602, dc._k('tenant', p_tenant, null)); end if;
   if jsonb_typeof(ev) = 'object' and jsonb_typeof(ev->'principal') = 'string' then
+    perform dc._budget(p_deadline, p_lt);
+    perform dc._at(4, 0);
     perform pg_advisory_xact_lock(hashtextextended(jsonb_build_array(p_tenant, ev->>'principal')::text, 0));
   end if;
   if jsonb_typeof(ev) = 'object' and typ is distinct from 'revoke' and jsonb_typeof(ev->'req') = 'string' then
+    perform dc._budget(p_deadline, p_lt);
+    perform dc._at(5, 0);
     perform 1 from dc.head where tenant = p_tenant and req = ev->>'req' for update;
+  end if;
+  if typ = 'revoke' and jsonb_typeof(ev->'target') = 'string' then
+    for r in select distinct x.req from dc.props x where x.tenant = p_tenant and x.author = ev->>'target' and x.status = 'open'
+              order by x.req loop
+      perform dc._budget(p_deadline, p_lt);
+      perform dc._at(5, 0);
+      perform 1 from dc.head h where h.tenant = p_tenant and h.req = r.req for update;
+    end loop;
+    for r in select x.req, x.id from dc.props x where x.tenant = p_tenant and x.author = ev->>'target' and x.status = 'open'
+              order by x.req, x.id loop
+      perform dc._budget(p_deadline, p_lt);
+      perform dc._at(5, 1);
+      perform 1 from dc.props x where x.tenant = p_tenant and x.req = r.req and x.id = r.id for update;
+    end loop;
   end if;
 end $$;
 
+-- OWNER-ONLY raw path (PgEngine, B3, the differential), called before dc._reduce_apply: the S1 order from L1 on, without a budget (the
+-- owner's own lock_timeout), without L0 and without the chain-head row, which the event insert takes as before (so the B3 controls
+-- still show what a missing lock does).
+create function dc._lock_event(p_tenant text, ev jsonb) returns void language plpgsql as $$
+#variable_conflict use_variable
+declare typ text := case when jsonb_typeof(ev) = 'object' then ev->>'type' end;
+        tgt text := case when jsonb_typeof(ev) = 'object' and jsonb_typeof(ev->'target') = 'string' then ev->>'target' end;
+begin
+  perform dc._at_reset();
+  if not exists (select 1 from dc.tenant t where t.tenant = p_tenant) then raise exception 'tenant not installed'; end if;
+  if typ = 'revoke' and tgt is not null then
+    perform dc._at(1, dc._k('auth', p_tenant, tgt));
+    perform pg_advisory_xact_lock(1145241601, dc._k('auth', p_tenant, tgt));
+    perform dc._lock_target(p_tenant, tgt, null, null);
+  end if;
+  perform dc._lock_tail(p_tenant, ev, coalesce(typ in ('revoke', 'grant'), false), null, null);
+end $$;
+
 -- reduce(view, ev) + apply everything but a revoke's authority writes: {code, original, target}; target is the revoked principal when a
--- revoke was applied (the caller then runs dc._lock_authority, its final judgment, dc._apply_authority). Locks must already be held
--- (_lock_event).
+-- revoke was applied (the caller then runs its final judgment and dc._apply_authority). Locks must already be held (dc._acquire_submit
+-- or dc._lock_event).
 create function dc._reduce_stage(p_tenant text, ev jsonb) returns jsonb language plpgsql as $$
 #variable_conflict use_variable
 declare r record; fp text; ofp text; ocode text; code text; orig text;
@@ -544,37 +670,23 @@ begin
                             'target', (select op->>1 from jsonb_array_elements(r.delta) op where op->>0 = 'revoke' limit 1));
 end $$;
 
--- before the final judgment: every lock a revoke's authority writes need, so nothing after the judgment waits (the two tables, ROW
--- EXCLUSIVE, and the target's principal row). Session rows are not locked here: dc._apply_authority skips those another transaction
--- holds (an open dc.end_session or a revoke of the same principal, which revoke that row themselves; a skipped row stays refused through
--- the principal's revoke).
-create function dc._lock_authority(p_tenant text, tgt text) returns void language plpgsql as $$
-#variable_conflict use_variable
-begin
-  lock table dc.principal, dc.sessions in row exclusive mode;
-  perform 1 from dc.principal p where p.tenant = p_tenant and p.pid = tgt for no key update;
-end $$;
-
--- after the final judgment: the revoke's authority writes, which never wait (dc._lock_authority ran before the judgment)
+-- after the final judgment: a revoke's authority writes, on the rows dc._lock_target locked, so they never wait. Every session of the
+-- target is ended: no new one can be opened meanwhile (dc.open_session takes A(target) shared, the revoke holds it exclusively).
 create function dc._apply_authority(p_tenant text, tgt text) returns void language plpgsql as $$
 #variable_conflict use_variable
 begin
   update dc.principal set revoked = true where tenant = p_tenant and pid = tgt;
-  update dc.sessions s set revoked = true
-   where s.token_hash in (select x.token_hash from dc.sessions x where x.tenant = p_tenant and x.principal = tgt for no key update skip locked);
+  update dc.sessions x set revoked = true where x.tenant = p_tenant and x.principal = tgt and not x.revoked;
 end $$;
 
 -- reduce + apply, authority writes included: {code, original}. For the owner-only raw callers (PgEngine, B3, the differential), which
--- judge no session. Locks must already be held (_lock_event).
+-- judge no session. Locks must already be held (dc._lock_event).
 create function dc._reduce_apply(p_tenant text, ev jsonb) returns jsonb language plpgsql as $$
 #variable_conflict use_variable
 declare r jsonb;
 begin
   r := dc._reduce_stage(p_tenant, ev);
-  if r->>'target' is not null then
-    perform dc._lock_authority(p_tenant, r->>'target');
-    perform dc._apply_authority(p_tenant, r->>'target');
-  end if;
+  if r->>'target' is not null then perform dc._apply_authority(p_tenant, r->>'target'); end if;
   return r - 'target';
 end $$;
 
@@ -614,14 +726,16 @@ begin
 end $$;
 
 -- the judgment of a well-formed proof (body, mac, parsed body b): the factor row, or a P0001 'proof refused: <reason>'. dc.open_session runs
--- it before the replay ledger and again after its last wait (final review P4). VOLATILE (each statement reads a fresh snapshot) and it
--- never waits once its first statement holds the table locks, so its reads see every commit made during the call's waits.
-create function dc._judge_proof(body text, mac text, b jsonb) returns dc.factors language plpgsql volatile as $$
+-- it with p_lt (its acquisition: the factor row L2.1 and the principal row L2.2 are locked FOR SHARE, each wait capped at the proof's
+-- expiry, and judged as locked), then again after the ledger insert without p_lt, on the rows it already holds (final review P4).
+-- VOLATILE: each statement reads a fresh snapshot.
+create function dc._judge_proof(body text, mac text, b jsonb, p_lt bigint default null) returns dc.factors language plpgsql volatile as $$
 #variable_conflict use_variable
-declare fr dc.factors; k text; x numeric;
+declare fr dc.factors; k text; rv bool; x numeric;
+        dl timestamptz := to_timestamp(least(greatest((b->>'expires')::numeric, 0), extract(epoch from clock_timestamp()) + 301));
 begin
-  lock table dc.factors, dc.principal in access share mode;
-  select f.* into fr from dc.factors f where f.factor = b->>'factor';
+  if p_lt is not null then perform dc._budget(dl, p_lt); perform dc._at(2, 1); end if;
+  select f.* into fr from dc.factors f where f.factor = b->>'factor' for share;
   -- compare digests of the two MACs, so the comparison time says nothing about how much of a guessed MAC was right
   if fr.factor is null or dc_crypto.digest(mac, 'sha256')
        <> dc_crypto.digest(encode(dc_crypto.hmac(convert_to(body, 'UTF8'), fr.key, 'sha256'), 'hex'), 'sha256') then
@@ -636,8 +750,9 @@ begin
   if x <= extract(epoch from clock_timestamp()) or x > extract(epoch from clock_timestamp()) + 300 then
     raise exception 'proof refused: time' using errcode = 'P0001';
   end if;
-  select p.kind into k from dc.principal p where p.tenant = fr.tenant and p.pid = fr.principal and not p.revoked;
-  if k is null then raise exception 'proof refused: principal' using errcode = 'P0001'; end if;
+  if p_lt is not null then perform dc._budget(dl, p_lt); perform dc._at(2, 2); end if;
+  select p.kind, p.revoked into k, rv from dc.principal p where p.tenant = fr.tenant and p.pid = fr.principal for share;
+  if k is null or rv then raise exception 'proof refused: principal' using errcode = 'P0001'; end if;
   if (k = 'human' and fr.channel not in ('owner_ui', 'owner_cli')) or (k <> 'human' and fr.channel <> 'agent_api') then
     raise exception 'proof refused: channel' using errcode = 'P0001';
   end if;
@@ -646,12 +761,19 @@ end $$;
 
 -- the identity adapter (dc_idp): a session ONLY from a proof. Tenant, principal and channel come from the factor row; the proof must name
 -- the same ones, be unexpired and at most 300 s ahead, carry a nonce not used before with this factor, and the principal must be
--- unrevoked with a channel its kind allows (dc._judge_proof, run again after the last wait). Refusals raise P0001 'proof refused: <reason>'
--- and write nothing.
+-- unrevoked with a channel its kind allows (dc._judge_proof). Refusals raise P0001 'proof refused: <reason>' and write nothing.
 create function dc.open_session(p_proof text, p_ttl_s integer) returns jsonb
 language plpgsql security definer set search_path = dc, pg_temp as $$
+begin
+  return dc._open_session(p_proof, p_ttl_s, dc._lt());
+end $$;
+
+-- S1 (FINAL-JUDGMENT.md 4.2): L0, L1 A(factor's principal) shared, L2.1-2.2 inside dc._judge_proof, L8 N(factor, nonce); every wait
+-- capped at the proof's expiry (a timeout after it is 'proof refused: time'). Then, under 1 ms: the prune (rows another presentation
+-- holds are skipped), the ledger, the session and the second judgment, on the rows already locked.
+create function dc._open_session(p_proof text, p_ttl_s integer, p_lt bigint) returns jsonb language plpgsql set lock_timeout = '0' as $$
 #variable_conflict use_variable
-declare body text; mac text; b jsonb; fr dc.factors; x numeric; tok text; n int;
+declare body text; mac text; b jsonb; fr dc.factors; x numeric; tok text; n int; dl timestamptz; ft text; fp text; nk int;
 begin
   if p_proof is null or length(p_proof) > 2048 or p_ttl_s is null or p_ttl_s < 1 or p_ttl_s > 86400 then
     raise exception 'proof refused: shape' using errcode = 'P0001';
@@ -676,18 +798,41 @@ begin
      or (b->>'nonce') !~ '^[0-9a-f]{32}$' then
     raise exception 'proof refused: shape' using errcode = 'P0001';
   end if;
-  fr := dc._judge_proof(body, mac, b);
   x := (b->>'expires')::numeric;
-  delete from dc.used_proofs u where u.factor = fr.factor and u.expires < clock_timestamp() - interval '1 minute';   -- refused anyway
-  insert into dc.used_proofs values (fr.factor, b->>'nonce', to_timestamp(x)) on conflict do nothing;      -- a concurrent twin waits, then sees it
+  -- the deadline of every wait below: the proof's expiry (one more than 300 s ahead is refused by the time check anyway)
+  dl := to_timestamp(least(greatest(x, 0), extract(epoch from clock_timestamp()) + 301));
+  perform dc._at_reset();
+  begin
+    perform dc._budget(dl, p_lt);
+    select f.tenant, f.principal into ft, fp from dc.factors f where f.factor = b->>'factor';   -- unlocked: whose authority to lock
+    perform dc._rel(dl, p_lt, array['factors', 'principal', 'sessions', 'used_proofs'],
+                    array['row share', 'row share', 'row exclusive', 'row exclusive']);
+    if ft is not null then
+      perform dc._budget(dl, p_lt);
+      perform dc._at(1, dc._k('auth', ft, fp));
+      perform pg_advisory_xact_lock_shared(1145241601, dc._k('auth', ft, fp));
+    end if;
+    fr := dc._judge_proof(body, mac, b, p_lt);
+    nk := dc._k('nonce', fr.factor, b->>'nonce');
+    perform dc._budget(dl, p_lt);
+    perform dc._at(8, nk);
+    perform pg_advisory_xact_lock(1145241604, nk);                 -- a concurrent twin of this proof: wait for its outcome
+  exception when lock_not_available then
+    if clock_timestamp() < dl then raise; end if;
+    raise exception 'proof refused: time' using errcode = 'P0001';
+  end;
+  perform set_config('lock_timeout', '1ms', true);
+  delete from dc.used_proofs u where (u.factor, u.nonce) in (
+    select v.factor, v.nonce from dc.used_proofs v where v.factor = fr.factor and v.expires < clock_timestamp() - interval '1 minute'
+       for update skip locked);                                        -- refused anyway; rows another presentation holds are skipped
+  insert into dc.used_proofs values (fr.factor, b->>'nonce', to_timestamp(x)) on conflict do nothing;      -- a twin committed it first
   get diagnostics n = row_count;
   if n = 0 then raise exception 'proof refused: replayed' using errcode = 'P0001'; end if;
   tok := encode(dc_crypto.gen_random_bytes(32), 'hex');
   insert into dc.sessions values (encode(sha256(convert_to(tok, 'UTF8')), 'hex'), fr.tenant, fr.principal, fr.channel, fr.factor,
                                   clock_timestamp() + make_interval(secs => p_ttl_s), false);
-  -- final review P4: the prune, the ledger insert (a concurrent twin's uncommitted row; the factor row through the foreign key) and the
-  -- session insert can wait; the WHOLE proof is judged again after them (signature, factor revoked, binding, time, principal, channel).
-  -- A refusal raises, so the statement writes nothing.
+  -- final review P4: the whole proof is judged again after the writes (signature, factor revoked, binding, time, principal, channel),
+  -- on the rows locked above, under 1 ms. A refusal raises, so the statement writes nothing.
   fr := dc._judge_proof(body, mac, b);
   return jsonb_build_object('token', tok, 'tenant', fr.tenant, 'principal', fr.principal, 'channel', fr.channel, 'factor', fr.factor);
 end $$;
@@ -696,14 +841,55 @@ end $$;
 -- (final review P5): under REPEATABLE READ or SERIALIZABLE the update reads the transaction's snapshot, so a session opened after it
 -- would be "not found" (false) and stay live; READ UNCOMMITTED is refused by the same exact comparison.
 create function dc.end_session(p_token text) returns boolean language plpgsql security definer set search_path = dc, pg_temp as $$
-#variable_conflict use_variable
-declare n int;
 begin
   if current_setting('transaction_isolation') <> 'read committed' then
     raise exception 'end_session refused: isolation' using errcode = 'P0001';
   end if;
-  update dc.sessions s set revoked = true
-   where p_token is not null and s.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex') and not s.revoked;
+  return dc._end_session(p_token, dc._lt());
+end $$;
+
+-- S1: L0 dc.sessions; L1 A(the session's principal) EXCLUSIVE, so it waits FIFO for that principal's in-flight calls (which pin the
+-- session row) and new ones queue behind it; capped at XWAIT (55P03, retryable). Then the update, which no API call holds.
+create function dc._end_session(p_token text, p_lt bigint) returns boolean language plpgsql set lock_timeout = '0' as $$
+#variable_conflict use_variable
+declare s dc.sessions; n int;
+begin
+  perform dc._at_reset();
+  perform dc._rel(null, p_lt, array['sessions'], array['row exclusive']);
+  s := dc._peek(p_token);
+  if s.token_hash is null or s.revoked then return false; end if;
+  perform dc._budget(null, p_lt, dc._xwait_ms());
+  perform dc._at(1, dc._k('auth', s.tenant, s.principal));
+  perform pg_advisory_xact_lock(1145241601, dc._k('auth', s.tenant, s.principal));
+  perform dc._budget(null, p_lt, dc._xwait_ms());
+  perform dc._at(2, 4);
+  update dc.sessions x set revoked = true where x.token_hash = s.token_hash and not x.revoked;
+  get diagnostics n = row_count;
+  return n = 1;
+end $$;
+
+-- OWNER-ONLY (granted to no login role): revoke a factor through the authority lock, so the revocation waits FIFO for the in-flight
+-- calls of the factor's principal (XWAIT per attempt) instead of only for the calls that pinned this factor's row. Direct owner SQL
+-- on dc.factors also waits for those pins, but is not queued.
+create function dc.revoke_factor(p_factor text) returns boolean language plpgsql security definer set search_path = dc, pg_temp as $$
+begin
+  return dc._revoke_factor(p_factor, dc._lt());
+end $$;
+
+create function dc._revoke_factor(p_factor text, p_lt bigint) returns boolean language plpgsql set lock_timeout = '0' as $$
+#variable_conflict use_variable
+declare ft text; fp text; n int;
+begin
+  perform dc._at_reset();
+  perform dc._rel(null, p_lt, array['factors'], array['row exclusive']);
+  select f.tenant, f.principal into ft, fp from dc.factors f where f.factor = p_factor;
+  if ft is null then return false; end if;
+  perform dc._budget(null, p_lt, dc._xwait_ms());
+  perform dc._at(1, dc._k('auth', ft, fp));
+  perform pg_advisory_xact_lock(1145241601, dc._k('auth', ft, fp));
+  perform dc._budget(null, p_lt, dc._xwait_ms());
+  perform dc._at(2, 1);
+  update dc.factors f set revoked = true where f.factor = p_factor and not f.revoked;
   get diagnostics n = row_count;
   return n = 1;
 end $$;
@@ -725,17 +911,51 @@ begin
   return s;
 end $$;
 
+-- S1, before any lock: the session row for a token, unlocked and unjudged, only to learn whose authority to lock and the deadline of
+-- the call's waits (expires_at, never updated). NULL outside READ COMMITTED: the guard comes before the first row lock (a FOR SHARE in
+-- a REPEATABLE READ transaction on a row changed after its snapshot raises 40001). Its own wait (a relation lock on dc.sessions, which
+-- only owner DDL takes) is bounded by the caller's lock_timeout alone: the deadline is not known yet (FINAL-JUDGMENT.md 4.4).
+create function dc._peek(p_token text) returns dc.sessions language plpgsql volatile as $$
+declare s dc.sessions;
+begin
+  if current_setting('transaction_isolation') <> 'read committed' then return null; end if;
+  select x.* into s from dc.sessions x
+   where p_token is not null and p_token <> '' and x.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex');
+  return s;
+end $$;
+
+-- S1, L2.0-2.2: the pins. The caller's session row, its factor row and its principal row, each locked FOR SHARE in a statement of its
+-- own (each wait capped at the session's expiry) and judged as locked (PostgreSQL 13.2.1: a locking read that waited locks and returns
+-- the newest version). NULL, or 'unauthenticated:invalid_session', 'principal_revoked', 'unauthorized' (p_admin and not an admin).
+-- No transaction can change these rows until the call ends. Expiry is not judged here: dc._gate reads the clock last.
+create function dc._pin(s dc.sessions, p_lt bigint, p_admin boolean) returns text language plpgsql volatile as $$
+#variable_conflict use_variable
+declare sv bool; fv bool; pr dc.principal;
+begin
+  perform dc._budget(s.expires_at, p_lt);
+  perform dc._at(2, 0);
+  select x.revoked into sv from dc.sessions x where x.token_hash = s.token_hash for share;
+  perform dc._budget(s.expires_at, p_lt);
+  perform dc._at(2, 1);
+  select f.revoked into fv from dc.factors f where f.factor = s.factor for share;
+  perform dc._budget(s.expires_at, p_lt);
+  perform dc._at(2, 2);
+  select p.* into pr from dc.principal p where p.tenant = s.tenant and p.pid = s.principal for share;
+  if sv is distinct from false or fv is distinct from false then return 'unauthenticated:invalid_session'; end if;
+  if pr.pid is null or pr.revoked then return 'principal_revoked'; end if;
+  if p_admin and not pr.admin then return 'unauthorized'; end if;
+  return null;
+end $$;
+
 -- The FINAL judgment of a session-keyed call (final review P1; DESIGN.md "Final judgment after the last wait"): NULL when the token's
 -- session (the one the call began with, s) is still live and its principal unrevoked (and, with p_admin, an admin); else the refusal:
--- 'unauthenticated:invalid_session', 'principal_revoked' or 'unauthorized'. The caller runs it after its last statement that can wait.
--- VOLATILE, and it never waits itself once its first statement holds the table locks, so each of its reads takes its snapshot after
--- every wait of the call (a read in a STABLE function waits with its caller's older snapshot); the wall clock is read last, inside
--- dc._session.
+-- 'unauthenticated:invalid_session', 'principal_revoked' or 'unauthorized'. The caller runs it after its stage, under lock_timeout 1 ms:
+-- the rows it reads are pinned (dc._pin) and their tables locked (L0), so it never waits and reads exactly the pinned versions; the wall
+-- clock is read last, inside dc._session. With the pins removed (the S1_Control broken variant) it is the recheck of the old design.
 create function dc._gate(p_token text, s dc.sessions, p_admin bool default false) returns text language plpgsql volatile as $$
 #variable_conflict use_variable
 declare pr dc.principal; cur dc.sessions;
 begin
-  lock table dc.sessions, dc.factors, dc.principal in access share mode;
   select p.* into pr from dc.principal p where p.tenant = s.tenant and p.pid = s.principal;
   cur := dc._session(p_token);
   if s.token_hash is null or cur.token_hash is distinct from s.token_hash then return 'unauthenticated:invalid_session'; end if;
@@ -749,7 +969,8 @@ create function dc._out(code text, orig text, evid text, ref text) returns jsonb
   select jsonb_build_object('code', code, 'original', orig, 'id', evid, 'value_ref', ref)
 $$;
 
--- Everything dc.submit writes, for the session s it began with; may wait anywhere. Returns dc._out, plus 'target' when a revoke was applied.
+-- Everything dc.submit writes, for the session s it began with. Runs after dc._acquire_submit, under lock_timeout 1 ms: every lock it
+-- needs is already held, so a wait here fails the call (55P03). Returns dc._out, plus 'target' when a revoke was applied.
 create function dc._submit_stage(s dc.sessions, p_body jsonb) returns jsonb language plpgsql as $$
 #variable_conflict use_variable
 declare ev jsonb; cid text; typ text; lab jsonb; tlab jsonb; vref text; created bool := false; r jsonb; code text;
@@ -759,9 +980,6 @@ declare ev jsonb; cid text; typ text; lab jsonb; tlab jsonb; vref text; created 
 begin
   if p_body is null or jsonb_typeof(p_body) <> 'object' then
     insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
-  end if;
-  if exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.revoked) then
-    insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'principal_revoked'); return dc._out('principal_revoked', null, null, null);
   end if;
   if p_body ?| array['tenant', 'principal', 'channel', 'id', 'actor', 'trust_origin'] then
     insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'identity_in_body'); return dc._out('identity_in_body', null, null, null);
@@ -773,7 +991,6 @@ begin
   ev := (p_body - 'client_id' - 'value' - 'label')
         || jsonb_build_object('id', s.principal || '/' || cid, 'tenant', s.tenant, 'principal', s.principal, 'channel', s.channel)
         || dc._origin((select p.kind from dc.principal p where p.tenant = s.tenant and p.pid = s.principal), s.channel);
-  perform dc._lock_event(s.tenant, ev);                 -- tenant FOR SHARE: erase_values (FOR UPDATE) cannot interleave with minting below
   if p_body ? 'value' then
     if jsonb_typeof(p_body->'value') <> 'string' or not p_body ? 'label' then
       insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, 'bad_event'); return dc._out('bad_event', null, null, null);
@@ -796,7 +1013,8 @@ begin
     -- review-3 N5: the reference is RANDOM, never computed from the value, its label or a subject, so a reference left in the log after
     -- erasure cannot be confirmed by guessing a text or a name (there is no key to guess with). A retry by the same principal with the
     -- same idempotency key, value and label, while that value is stored, reuses the logged reference, so the event fingerprint is the
-    -- same and the core answers duplicate. The per-principal advisory lock taken by _lock_event above serialises such retries.
+    -- same and the core answers duplicate. The per-principal idempotency lock (L4, dc._lock_tail) serialises such retries; the tenant
+    -- lock (L3, shared here, exclusive in dc.erase_values) keeps erasure from interleaving with the minting above.
     select v.ref into vref from dc.events e join dc.vals v on v.tenant = e.tenant and v.ref = e.ev->>'value_ref'
      where e.tenant = s.tenant and e.principal = s.principal and e.idem = p_body->>'idem' and v.text = p_body->>'value' and v.label = lab;
     if vref is null then vref := 'val-' || encode(dc_crypto.gen_random_bytes(20), 'hex'); end if;
@@ -819,30 +1037,88 @@ begin
   return dc._out(code, null, ev->>'id', vref) || case when r->>'target' is null then '{}'::jsonb else jsonb_build_object('target', r->>'target') end;
 end $$;
 
-create function dc.submit(p_token text, p_body jsonb) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
+-- S1 acquisition of dc.submit (L0-L7, FINAL-JUDGMENT.md 4.2): NULL, or the pins' refusal. A revoke by an admin takes A(target)
+-- exclusive beside A(caller) shared, sorted by key (a self-revoke takes A exclusive only), then its target's rows; a revoke or grant by
+-- an admin takes T exclusive. Another principal's revoke or grant is refused by the rules and takes neither, so it cannot stall
+-- anyone. The admin flag read before L1 is unlocked; the API never changes it, and if owner SQL did during the call the pinned flag
+-- differs and the call is refused.
+create function dc._acquire_submit(s dc.sessions, p_body jsonb, p_lt bigint) returns text language plpgsql as $$
 #variable_conflict use_variable
-declare s dc.sessions; out jsonb; why text; lt text;
+declare typ text := case when jsonb_typeof(p_body) = 'object' and jsonb_typeof(p_body->'type') = 'string' then p_body->>'type' end;
+        adm bool; tgt text; why text; r record;
+        wr text := case when typ = 'revoke' then 'row exclusive' else 'row share' end;
 begin
-  s := dc._session(p_token);
-  if s.principal is null then return dc._out('unauthenticated:invalid_session', null, null, null); end if;
-  -- final review P1: the stage writes everything and can wait anywhere (the tenant row, the principal's advisory lock, the head row, a
-  -- concurrent first use of a subject, the chain head, the rows a revoke closes, any table lock); then the locks a revoke's authority
-  -- writes need; then ONE judgment, which never waits. A refusal rolls the whole stage back (its audit rows too).
+  perform dc._rel(s.expires_at, p_lt,
+    array['audit', 'chain', 'chainhead', 'events', 'factors', 'head', 'principal', 'props', 'role', 'sessions', 'subject_tokens', 'vals'],
+    array['row exclusive', 'row exclusive', 'row exclusive', 'row exclusive', 'row share', 'row exclusive', wr, 'row exclusive',
+          'row exclusive', wr, 'row exclusive', 'row exclusive']);
+  select coalesce(p.admin, false) into adm from dc.principal p where p.tenant = s.tenant and p.pid = s.principal;
+  adm := coalesce(adm, false);
+  if adm and typ = 'revoke' and jsonb_typeof(p_body->'target') = 'string' then tgt := p_body->>'target'; end if;
+  for r in select x.k, coalesce(bool_or(x.ex), false) ex
+             from (values (dc._k('auth', s.tenant, s.principal), s.principal = tgt),
+                          (case when tgt is not null then dc._k('auth', s.tenant, tgt) end, true)) x(k, ex)
+            where x.k is not null group by x.k order by x.k loop
+    perform dc._budget(s.expires_at, p_lt, case when r.ex then dc._xwait_ms() end);
+    perform dc._at(1, r.k);
+    if r.ex then perform pg_advisory_xact_lock(1145241601, r.k);
+    else perform pg_advisory_xact_lock_shared(1145241601, r.k); end if;
+  end loop;
+  why := dc._pin(s, p_lt, false);
+  if why is not null then return why; end if;
+  if (select p.admin from dc.principal p where p.tenant = s.tenant and p.pid = s.principal) is distinct from adm then return 'unauthorized'; end if;
+  if tgt is not null then perform dc._lock_target(s.tenant, tgt, s.expires_at, p_lt); end if;
+  perform dc._lock_tail(s.tenant, jsonb_build_object('type', typ, 'principal', s.principal, 'req', p_body->'req', 'target', tgt),
+                        adm and coalesce(typ in ('revoke', 'grant'), false), s.expires_at, p_lt);
+  if typ is not null and p_body ? 'value' and jsonb_typeof(p_body->'label'->'subjects') = 'array' then
+    for r in select distinct dc._k('subject', s.tenant, x #>> '{}') k from jsonb_array_elements(p_body->'label'->'subjects') x
+              where jsonb_typeof(x) = 'string' order by 1 loop
+      perform dc._budget(s.expires_at, p_lt);
+      perform dc._at(6, r.k);
+      perform pg_advisory_xact_lock(1145241603, r.k);
+    end loop;
+  end if;
+  perform dc._budget(s.expires_at, p_lt);
+  perform dc._at(7, 0);
+  perform 1 from dc.chainhead where tenant = s.tenant for update;
+  return null;
+end $$;
+
+create function dc.submit(p_token text, p_body jsonb) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
+begin
+  return dc._submit(p_token, p_body, dc._lt());
+end $$;
+
+-- Acquire (every wait capped at the session's expiry; a timeout after it is the refusal), then under lock_timeout 1 ms the stage and
+-- ONE final judgment, then a revoke's authority writes. A refusal rolls the stage back (its audit rows too). A wait after the
+-- acquisition fails the call (55P03), everything rolled back. The SET clause restores the caller's lock_timeout on every exit.
+create function dc._submit(p_token text, p_body jsonb, p_lt bigint) returns jsonb language plpgsql set lock_timeout = '0' as $$
+#variable_conflict use_variable
+declare s dc.sessions; out jsonb; why text;
+begin
+  perform dc._at_reset();
+  perform dc._budget(null, p_lt);
+  s := dc._peek(p_token);
+  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then
+    return dc._out('unauthenticated:invalid_session', null, null, null);
+  end if;
   begin
+    why := dc._acquire_submit(s, p_body, p_lt);
+    if why is not null then raise exception 'refused by the pins' using errcode = 'DCGAT'; end if;
+    perform set_config('lock_timeout', '1ms', true);
     out := dc._submit_stage(s, p_body);
-    if out->>'target' is not null then perform dc._lock_authority(s.tenant, out->>'target'); end if;
     why := dc._gate(p_token, s);
     if why is not null then raise exception 'final judgment refused' using errcode = 'DCGAT'; end if;
-  exception when sqlstate 'DCGAT' then
-    if why = 'principal_revoked' then insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, why); end if;
-    return dc._out(why, null, null, null);
+  exception
+    when sqlstate 'DCGAT' then
+      perform set_config('lock_timeout', '1ms', true);
+      if why = 'principal_revoked' then insert into dc.audit(tenant, principal, code) values (s.tenant, s.principal, why); end if;
+      return dc._out(why, null, null, null);
+    when lock_not_available then
+      if clock_timestamp() < s.expires_at then raise; end if;
+      return dc._out('unauthenticated:invalid_session', null, null, null);
   end;
-  -- FINAL-JUDGMENT.md S2: nothing after the judgment may wait. Enforced, not argued: any lock wait from here fails the call
-  -- (lock_not_available, everything rolled back) instead of waiting while the caller's authority lapses. The caller's value is restored.
-  lt := current_setting('lock_timeout');
-  perform set_config('lock_timeout', '1ms', true);
-  if out->>'target' is not null then perform dc._apply_authority(s.tenant, out->>'target'); end if;   -- locked before the judgment
-  perform set_config('lock_timeout', lt, true);
+  if out->>'target' is not null then perform dc._apply_authority(s.tenant, out->>'target'); end if;
   return out - 'target';
 end $$;
 
@@ -870,65 +1146,141 @@ begin
   return jsonb_build_object('principal', s.principal, 'tenant', s.tenant, 'req', p_req, 'head', h, 'open', items, 'values', vals);
 end $$;
 
-create function dc.explain(p_token text, p_req text) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
+-- S1 acquisition shared by the reads and erasure: L0 (the entry point's tables), L1 A(caller) shared, L2.0-2.2 the pins. NULL, or the
+-- pins' refusal.
+create function dc._acquire_session(s dc.sessions, p_lt bigint, p_admin boolean, p_tables text[], p_modes text[]) returns text
+language plpgsql as $$
 #variable_conflict use_variable
-declare s dc.sessions := dc._session(p_token); out jsonb;
+declare k int := dc._k('auth', s.tenant, s.principal);
 begin
-  if s.principal is null then return null; end if;
-  out := dc._explain_raw(s, p_req);
-  if dc._gate(p_token, s) is not null then return null; end if;      -- final review P1: the reads above can wait; judge after them
-  return out;
+  perform dc._rel(s.expires_at, p_lt, p_tables, p_modes);
+  perform dc._budget(s.expires_at, p_lt);
+  perform dc._at(1, k);
+  perform pg_advisory_xact_lock_shared(1145241601, k);
+  return dc._pin(s, p_lt, p_admin);
+end $$;
+
+create function dc.explain(p_token text, p_req text) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
+begin
+  return dc._read(p_token, p_req, false, dc._lt());
 end $$;
 
 create function dc.read_table(p_token text) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
-#variable_conflict use_variable
-declare s dc.sessions := dc._session(p_token); out jsonb;
 begin
-  if s.principal is null then return '[]'::jsonb; end if;
-  out := coalesce((select jsonb_agg(x order by x->>'req' collate "C") from (
-            select dc._explain_raw(s, h.req) x from dc.head h where h.tenant = s.tenant) q where x is not null), '[]'::jsonb);
-  if dc._gate(p_token, s) is not null then return '[]'::jsonb; end if;   -- final review P1: judge after the reads
+  return coalesce(dc._read(p_token, null, true, dc._lt()), '[]'::jsonb);
+end $$;
+
+-- dc.explain (one requirement) and dc.read_table (p_all): acquire, then under 1 ms the read and the final judgment; NULL when refused.
+-- The read cannot wait (its tables are locked at L0), so the STABLE dc._explain_raw reads after every wait of the call.
+create function dc._read(p_token text, p_req text, p_all boolean, p_lt bigint) returns jsonb language plpgsql set lock_timeout = '0' as $$
+#variable_conflict use_variable
+declare s dc.sessions; out jsonb;
+begin
+  perform dc._at_reset();
+  perform dc._budget(null, p_lt);
+  s := dc._peek(p_token);
+  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then return null; end if;
+  begin
+    if dc._acquire_session(s, p_lt, false, array['factors', 'head', 'principal', 'props', 'role', 'sessions', 'vals'],
+                           array['row share', 'access share', 'row share', 'access share', 'access share', 'row share', 'access share'])
+       is not null then
+      return null;
+    end if;
+    perform set_config('lock_timeout', '1ms', true);
+    if p_all then
+      out := coalesce((select jsonb_agg(x order by x->>'req' collate "C") from (
+                select dc._explain_raw(s, h.req) x from dc.head h where h.tenant = s.tenant) q where x is not null), '[]'::jsonb);
+    else
+      out := dc._explain_raw(s, p_req);
+    end if;
+    if dc._gate(p_token, s) is not null then return null; end if;
+  exception when lock_not_available then
+    if clock_timestamp() < s.expires_at then raise; end if;
+    return null;
+  end;
   return out;
 end $$;
 
 -- erasure, step 1 (admin session): the values about a canonical subject and their labels, for the in-process hold/erase decision
 create function dc.erase_candidates(p_token text, p_subject text) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
-#variable_conflict use_variable
-declare s dc.sessions := dc._session(p_token); out jsonb;
 begin
-  if s.principal is null or not exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.admin and not p.revoked) then
-    return jsonb_build_object('refused', 'unauthorized', 'values', '[]'::jsonb);
-  end if;
-  if p_subject is null or p_subject <> dc._canon_subject(p_subject) then return jsonb_build_object('refused', 'bad_subject', 'values', '[]'::jsonb); end if;
-  out := jsonb_build_object('refused', null, 'values', coalesce((select jsonb_agg(jsonb_build_object('ref', v.ref, 'label', v.label) order by v.ref collate "C")
-                                                                 from dc.vals v where v.tenant = s.tenant and p_subject = any(v.subjects)), '[]'::jsonb));
-  if dc._gate(p_token, s, true) is not null then                  -- final review P1: judge after the read
-    return jsonb_build_object('refused', 'unauthorized', 'values', '[]'::jsonb);
-  end if;
+  return dc._erase_candidates(p_token, p_subject, dc._lt());
+end $$;
+
+create function dc._erase_candidates(p_token text, p_subject text, p_lt bigint) returns jsonb language plpgsql set lock_timeout = '0' as $$
+#variable_conflict use_variable
+declare s dc.sessions; out jsonb; deny jsonb := jsonb_build_object('refused', 'unauthorized', 'values', '[]'::jsonb);
+begin
+  perform dc._at_reset();
+  perform dc._budget(null, p_lt);
+  s := dc._peek(p_token);
+  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then return deny; end if;
+  begin
+    if dc._acquire_session(s, p_lt, true, array['factors', 'principal', 'sessions', 'vals'],
+                           array['row share', 'row share', 'row share', 'access share']) is not null then
+      return deny;
+    end if;
+    perform set_config('lock_timeout', '1ms', true);
+    if p_subject is null or p_subject <> dc._canon_subject(p_subject) then return jsonb_build_object('refused', 'bad_subject', 'values', '[]'::jsonb); end if;
+    out := jsonb_build_object('refused', null, 'values', coalesce((select jsonb_agg(jsonb_build_object('ref', v.ref, 'label', v.label) order by v.ref collate "C")
+                                                                   from dc.vals v where v.tenant = s.tenant and p_subject = any(v.subjects)), '[]'::jsonb));
+    if dc._gate(p_token, s, true) is not null then return deny; end if;
+  exception when lock_not_available then
+    if clock_timestamp() < s.expires_at then raise; end if;
+    return deny;
+  end;
   return out;
 end $$;
 
 -- erasure, step 2 (admin session): delete the given values (only those still about the subject) and, when no value about the subject
--- remains, the subject's token mapping; all under the tenant row FOR UPDATE, so no submit can mint or use the token meanwhile
+-- remains, the subject's token mapping. S1: L0, L1, the pins (admin), L3 the tenant lock EXCLUSIVE (no submit can mint or use the token
+-- meanwhile; it waits FIFO for the submits in flight and new ones queue behind it, XWAIT per attempt), L5.2 the value rows by reference,
+-- L5.3 the token row; then under 1 ms the deletes and the final judgment.
 create function dc.erase_values(p_token text, p_subject text, p_refs text[]) returns jsonb language plpgsql security definer set search_path = dc, pg_temp as $$
-#variable_conflict use_variable
-declare s dc.sessions := dc._session(p_token); n int; rest int;
 begin
-  if s.principal is null or not exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = s.principal and p.admin and not p.revoked) then
-    return jsonb_build_object('refused', 'unauthorized');
-  end if;
-  if p_subject is null or p_subject <> dc._canon_subject(p_subject) then return jsonb_build_object('refused', 'bad_subject'); end if;
-  -- final review P1: the tenant row, the value rows and the token mapping can each wait; the deletes are staged and judged after them
+  return dc._erase_values(p_token, p_subject, p_refs, dc._lt());
+end $$;
+
+create function dc._erase_values(p_token text, p_subject text, p_refs text[], p_lt bigint) returns jsonb language plpgsql
+set lock_timeout = '0' as $$
+#variable_conflict use_variable
+declare s dc.sessions; n int; rest int; r record; refs text[] := coalesce(p_refs, array[]::text[]);
+begin
+  perform dc._at_reset();
+  perform dc._budget(null, p_lt);
+  s := dc._peek(p_token);
+  if s.token_hash is null or s.revoked or s.expires_at <= clock_timestamp() then return jsonb_build_object('refused', 'unauthorized'); end if;
   begin
-    perform 1 from dc.tenant where tenant = s.tenant for update;
-    delete from dc.vals v where v.tenant = s.tenant and v.ref = any(coalesce(p_refs, array[]::text[])) and p_subject = any(v.subjects);
+    if dc._acquire_session(s, p_lt, true, array['audit', 'factors', 'principal', 'sessions', 'subject_tokens', 'vals'],
+                           array['row exclusive', 'row share', 'row share', 'row share', 'row exclusive', 'row exclusive']) is not null then
+      raise exception 'refused by the pins' using errcode = 'DCGAT';
+    end if;
+    if p_subject is null or p_subject <> dc._canon_subject(p_subject) then return jsonb_build_object('refused', 'bad_subject'); end if;
+    perform dc._budget(s.expires_at, p_lt, dc._xwait_ms());
+    perform dc._at(3, 0);
+    perform pg_advisory_xact_lock(1145241602, dc._k('tenant', s.tenant, null));
+    for r in select v.ref from dc.vals v where v.tenant = s.tenant and v.ref = any(refs) and p_subject = any(v.subjects)
+              order by v.ref collate "C" loop
+      perform dc._budget(s.expires_at, p_lt);
+      perform dc._at(5, 2);
+      perform 1 from dc.vals v where v.tenant = s.tenant and v.ref = r.ref for update;
+    end loop;
+    perform dc._budget(s.expires_at, p_lt);
+    perform dc._at(5, 3);
+    perform 1 from dc.subject_tokens t where t.tenant = s.tenant and t.subject = p_subject for update;
+    perform set_config('lock_timeout', '1ms', true);
+    delete from dc.vals v where v.tenant = s.tenant and v.ref = any(refs) and p_subject = any(v.subjects);
     get diagnostics n = row_count;
     select count(*) into rest from dc.vals v where v.tenant = s.tenant and p_subject = any(v.subjects);
     if rest = 0 then delete from dc.subject_tokens t where t.tenant = s.tenant and t.subject = p_subject; end if;
     insert into dc.audit(tenant, principal, code, ev) values (s.tenant, s.principal, 'erase_subject', jsonb_build_object('erased', n, 'remaining', rest));
     if dc._gate(p_token, s, true) is not null then raise exception 'final judgment refused' using errcode = 'DCGAT'; end if;
-  exception when sqlstate 'DCGAT' then
-    return jsonb_build_object('refused', 'unauthorized');
+  exception
+    when sqlstate 'DCGAT' then
+      return jsonb_build_object('refused', 'unauthorized');
+    when lock_not_available then
+      if clock_timestamp() < s.expires_at then raise; end if;
+      return jsonb_build_object('refused', 'unauthorized');
   end;
   return jsonb_build_object('refused', null, 'erased', n, 'remaining', rest);
 end $$;

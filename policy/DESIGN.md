@@ -77,7 +77,7 @@ the examples and default deny are what ships.
   `erase_subject` deletes every value ABOUT the subject, whoever wrote it. A value under a recorded legal hold is queued instead.
 - The append-only event log and the core state never hold subject names. The service puts a label into the event only after each
   subject is replaced by a per-tenant token. The token is RANDOM in both engines (`subj-<random>`; memory `MemoryEngine._event_label`,
-  Postgres minted under the tenant row lock), never computed from the name or from any key, and the name-to-token mapping is kept only
+  Postgres minted under the tenant lock and the subject's lock), never computed from the name or from any key, and the name-to-token mapping is kept only
   by the engine (Postgres: the owner-only `dc.subject_tokens`). Erasure deletes the mapping once no value about the subject remains;
   after that no row links the token to the name, no party (a key holder included) can confirm a guessed name against a token left in
   the log, and a re-appearing subject gets a fresh token (`tests/test_round3.py::test_tokens_are_unconfirmable_after_erasure`,
@@ -105,48 +105,53 @@ the examples and default deny are what ships.
 - The decision rules run in plpgsql (`dc._rules`, a port of `pol/_core.py`). `pol/_core.py` stays as the oracle: `exp/pg_diff.py`
   replays the B2 logs and every B1 transition through both and compares codes and views, with a mutated-SQL control.
 - `dc._apply_event`, `dc._lock_event` and `dc._reduce_apply` are the raw core: OWNER-ONLY, for the differential and B3; no login role
-  can execute them (`tests/test_pg_boundary.py`). The same holds for the internals of the final judgment (`dc._gate`,
-  `dc._judge_proof`, `dc._submit_stage`, `dc._reduce_stage`, `dc._lock_authority`, `dc._apply_authority`).
+  can execute them (`tests/test_pg_boundary.py`). The same holds for the internals of S1 (`dc._peek`, `dc._pin`, `dc._gate`,
+  `dc._judge_proof`, `dc._acquire_submit`, `dc._submit_stage`, `dc._reduce_stage`, `dc._apply_authority`, the inner functions behind
+  each API function) and for `dc.revoke_factor`, which is owner-only.
 - `dc.events` is append-only by grants plus triggers: UPDATE, DELETE and TRUNCATE are refused for the owner too. `DISABLE TRIGGER`
   needs ownership.
 - The hash chain is computed in a trigger under a per-tenant chain-head lock and verified in the database (`dc.verify_chain`). A rewrite
   by a superuser with triggers bypassed is detected only against an EXTERNAL anchor (`anchor_export` / `anchor_check`, `FileAnchor`):
   an owner who recomputes the whole chain passes `dc.verify_chain` (R3-8).
 - Erasure is two calls: `dc.erase_candidates` lists the values about a subject; the in-process policy point applies the hold decision;
-  `dc.erase_values` deletes the chosen ones under the tenant row FOR UPDATE and deletes the subject mapping only if no value about the
-  subject remains. Propose holds the tenant row FOR SHARE from token minting to commit, so erasure and propose cannot interleave.
-- Isolation is READ COMMITTED, set explicitly. Lock order:
-  1. tenant row (FOR SHARE, or FOR UPDATE for revoke, grant and erasure);
-  2. advisory (tenant, principal);
-  3. head FOR UPDATE;
-  4. event insert, which takes the chain head;
-  5. for a revoke, before its final judgment: `dc.principal` and `dc.sessions` (ROW EXCLUSIVE), then the target's principal row.
-- Final judgment after the last wait (final review P1 and P4). The invariant, for every entry point (`dc.submit`, `dc.explain`,
-  `dc.read_table`, `dc.erase_candidates`, `dc.erase_values`, `dc.open_session`):
-  - J1. Authorization is judged once more AFTER the last statement of the call that can wait (row locks, table locks, advisory
-    locks, unique-index and foreign-key waits) and BEFORE anything the call did can commit. Writes before the judgment are staged in a
-    subtransaction that a refusal rolls back (SQLSTATE `DCGAT`, caught inside the call); reads before it are discarded on refusal.
-    `dc.open_session` raises instead, so its statement writes nothing.
-  - J2. The judgment never waits itself: `dc._gate` and `dc._judge_proof` are VOLATILE and lock the tables they read (ACCESS SHARE)
-    in a statement of their own first, so each of their reads takes its snapshot after every wait of the call. A read inside a STABLE
-    function, or inside a plpgsql simple expression, uses a snapshot taken before its own lock wait: at a2d65fd `dc.explain` checked
-    the principal that way and answered for a principal revoked while it waited (`tests/test_final_pg.py::P1_JudgmentNeverWaits`).
-    A plain statement of a VOLATILE function reads after its own wait on PG 16; the explicit lock does not rely on that.
-  - J3. The judgment reads the wall clock (`clock_timestamp()`) last, inside `dc._session`.
+  `dc.erase_values` deletes the chosen ones under the tenant lock T held exclusively and deletes the subject mapping only if no value
+  about the subject remains. A submit holds T shared from its acquisition to commit, so erasure and minting cannot interleave.
+- Isolation is READ COMMITTED, set explicitly. Lock order (S1, FINAL-JUDGMENT.md 4.2; levels in increasing order, keys sorted inside
+  a level, checked at run time by `dc._at`, SQLSTATE `DCORD`):
+  - L0 relation locks, one table per statement, in a fixed table order;
+  - L1 the authority lock A(tenant, principal) (advisory): shared by every call of the principal, exclusive for a revoke of it, an
+    `dc.end_session` of one of its sessions and `dc.revoke_factor`;
+  - L2 the authority rows: the caller's session, factor and principal FOR SHARE (the pins); a revoke's target principal row and
+    session rows FOR NO KEY UPDATE;
+  - L3 the tenant lock T (advisory): shared by submits, exclusive for an admin's revoke or grant and for erasure;
+  - L4 the per-principal idempotency lock; L5 data rows (head, a revoke's props, erasure's value and token rows); L6 subject locks;
+    L7 the chain head; L8 the nonce lock of `dc.open_session`.
+  The owner-only raw path (`dc._lock_event`) takes L1-L5 without a budget and leaves the chain head to the event insert.
+- Acquire, judge, apply (S1; final review P1 and P4, and the coordinator's structural brief). The invariant, for every entry point
+  (`dc.submit`, `dc.explain`, `dc.read_table`, `dc.erase_candidates`, `dc.erase_values`, `dc.open_session`):
+  - J1. Every lock of the call is taken BEFORE the judgment, the authority rows among them (`dc._pin`; `dc._judge_proof` for a
+    proof). A locking read that waited locks and returns the newest version (PostgreSQL 13.2.1), and no transaction can change a
+    pinned row until the call ends: a revoke, an `end_session`, a factor revoke or direct owner SQL waits for the call. A change
+    committed during a wait BEFORE the pins is judged by the pins (the call is refused); one attempted after them waits.
+  - J2. Each acquisition statement waits for one lock, with `lock_timeout` set by `dc._budget` to the smaller of the caller's own and
+    the credential's remaining life (session `expires_at`, proof `expires`), and XWAIT = 2 s for an exclusive A or T. A timeout after
+    the expiry is a refusal; one before it is re-raised (55P03, retryable). So no call waits past its expiry by more than the timer
+    latency, except the token lookup itself (`dc._peek`, which can wait only for owner DDL on `dc.sessions`, under the caller's own
+    `lock_timeout`; a call that waited there is refused if the token expired meanwhile).
+  - J3. After the acquisition `lock_timeout` is 1 ms: the staged writes, the final judgment (`dc._gate`, the wall clock read last
+    inside `dc._session`) and a revoke's authority writes never wait. A wait there fails the call (55P03) and writes nothing
+    (`tests/test_s1_pg.py::S1_ApplyNeverWaits`). Each inner function carries a SET clause, so the caller's `lock_timeout` is restored
+    on every exit.
   - J4. What is judged: the session row is not ended or revoked, unexpired on the wall clock, its factor exists and is unrevoked
     (use-time factor revocation), its principal is unrevoked, and for erasure the principal is an admin. `dc.open_session` judges the
-    whole proof again (signature, factor revoked, binding, time, principal, channel) after the prune, the replay-ledger insert and the
-    session insert.
-  - J5. After the judgment a call writes only (a) a revoke's own authority writes (the target's principal row and sessions), on rows
-    and tables locked before the judgment, skipping session rows another transaction holds, so they never wait; and (b) a refusal's
-    audit row. Neither can change the call's answer, and a revoke's authority writes never refuse their own caller (a self-revoke is
-    applied). "Never wait" is enforced, not only argued: `dc.submit` sets `lock_timeout` to 1 ms right after its judgment and
-    restores the caller's value before it returns, so a lock wait there fails the whole call (`lock_not_available`) instead of
-    waiting (`tests/test_final_pg.py::S2_NothingWaitsAfterTheJudgment`; FINAL-JUDGMENT.md S2). The other entry points return
-    directly after their judgment.
-  - J6. Only READ COMMITTED, by exact comparison (below).
-  The blocking points and their tests are in `tests/test_final_pg.py` (each test witnesses the wait with `pg_blocking_pids`, so none
-  passes because nothing waited). The memory `DecisionService` follows the same invariant: `MemoryEngine._submit` runs the service's
+    whole proof on the pinned rows, and again after the prune, the replay-ledger insert and the session insert.
+  - J5. Writes before the judgment are staged in a subtransaction that a refusal rolls back (SQLSTATE `DCGAT`); after it a call
+    writes only a revoke's own authority writes, on rows locked at L2.3-2.4 (every session of the target, none skipped), and a
+    refusal's audit row. A revoke's authority writes never refuse their own caller (a self-revoke is applied).
+  - J6. Only READ COMMITTED, by exact comparison (below), checked before the first lock.
+  The blocking points and their tests are in `tests/test_s1_pg.py` (points after the pins: the mutation waits for the call, which
+  applies first; the expiry ceiling; the lock order; mutual waits) and `tests/test_final_pg.py` (points before the pins; each test
+  witnesses the wait with `pg_blocking_pids`, so none passes because nothing waited). The memory `DecisionService` follows the same invariant: `MemoryEngine._submit` runs the service's
   final judgment inside the engine lock, after the key-lock and engine-lock waits and before the reduction; `explain` and `table`
   judge after their reads; erasure judges inside the vault lock before each deletion (`tests/test_final.py`). `PgDecisionService`
   judges the in-process authority the database cannot see (the in-process session, the directory, the policy document's
@@ -166,24 +171,29 @@ the examples and default deny are what ships.
     - `dc.explain` returns null, and `dc.read_table` returns `[]`;
     - `dc.erase_candidates` returns `{refused: unauthorized, values: []}`, and `dc.erase_values` returns `{refused: unauthorized}`.
     The reason: such a snapshot would outlive `end_session`, a principal revoke or a factor revoke.
-  - Every session-keyed call judges its session once more after its last wait (J1). A session that ended, expired, lost its factor
-    or lost its principal while the call waited gets the answers above (`dc.submit`: `unauthenticated:invalid_session`, or
-    `principal_revoked` with an audit row for a revoked principal), and nothing the call staged is kept. This replaces the earlier
-    sentence "`dc.submit` and `dc.erase_values` judge the session again after their lock waits", which was false for `dc.submit`
-    (its subject-token, value, event and revoke writes waited after that judgment) and did not cover the read calls.
+  - Every session-keyed call pins its authority before it judges (J1). A session that ended, lost its factor or lost its principal
+    during a wait before the pins, or expired before the final judgment, gets the answers above (`dc.submit`:
+    `unauthenticated:invalid_session`, or `principal_revoked` with an audit row for a revoked principal), and nothing the call staged
+    is kept. An end, revoke or factor revoke attempted after the pins waits for the call. This replaces the earlier sentence
+    "`dc.submit` and `dc.erase_values` judge the session again after their lock waits", which was false for `dc.submit` (its
+    subject-token, value, event and revoke writes waited after that judgment) and did not cover the read calls.
   - `dc.end_session` isolation guard (decision, final review P5): it raises unless READ COMMITTED. Under REPEATABLE READ or
     SERIALIZABLE its update reads the transaction's snapshot, so a session opened after that snapshot was "not found": it answered
     false and the session stayed live. A logout that fails loudly is better than one that reports "no such session" for a live one,
     and the identity adapter (`PgSessionBridge`) already runs at READ COMMITTED in autocommit, so no correct caller changes.
-  - A revoked factor ends the sessions it opened at their next call (J4). Revoking a principal refuses its sessions at once
-    (`principal_revoked`), including a session row the revoke skipped because an open `dc.end_session` held it.
+  - A revoked factor ends the sessions it opened at their next call (J4). Revoking a principal ends every session of it: the revoke
+    waits (FIFO, XWAIT per attempt) for an open `dc.end_session` or `dc.open_session` of that principal instead of skipping its row.
   - Proof and session expiry are judged on `clock_timestamp()` (the wall clock), not on the transaction start, so a token or proof
     that expires inside a long caller transaction is refused at its next call.
   - The judgment is a point inside the call. A caller that keeps its own transaction open after a call commits that call's effects
-    later; they stay ordered before any end, revoke or expiry that came after the judgment (the call read the session row, the end
-    wrote it). `PgDecisionService` and `PgSessionBridge` use autocommit. A deployment should also set `lock_timeout` and
-    `idle_in_transaction_session_timeout` for `dc_app` and `dc_idp` (not done here).
-- Revoke and erasure serialise the tenant, which is a scaling limit.
+    later; an end, revoke or factor revoke waits for that COMMIT (the pins and the authority lock are held until then), XWAIT per
+    attempt. `PgDecisionService` and `PgSessionBridge` use autocommit. `pol.pgcore.install` sets
+    `idle_in_transaction_session_timeout` = 60 s as the role default of `dc_app` and `dc_idp`; a caller's own `lock_timeout` is
+    honoured and never lengthened.
+  - New SQLSTATE 55P03 from a call: a wait before the expiry ended by the caller's own `lock_timeout` or by XWAIT on an exclusive
+    lock, or a wait after the acquisition. Nothing was applied; the call is retryable.
+- Revoke, grant and erasure serialise the tenant (T exclusive), which is a scaling limit; so do all submits of a tenant from the
+  chain-head lock (L7) to COMMIT.
 
 ## Not proven / limits (see also each result's `not_proven`)
 - Python cannot stop in-process code from reaching private names. The surface test enforces what the package exports and imports; the
@@ -195,7 +205,11 @@ the examples and default deny are what ships.
 - Audit growth is unbounded in this module.
 - Residues of the final judgment (by design): a refused `dc.submit` leaves sequence gaps (its staged inserts are rolled back); a
   subject-token mapping minted by a call that the CORE refused (not the final judgment) stays until that subject is erased (it links
-  to no value); any login role can take the (tenant, principal) advisory lock (`pg_advisory_xact_lock` is PUBLIC) or hold rows in
-  an open transaction, and so delay other callers. That is a denial of service, never a wrong decision: J1 judges after the wait.
+  to no value); any login role can take the advisory locks (`pg_advisory_xact_lock` is PUBLIC: the idempotency lock and A, T, S and
+  N of S1) or hold rows in an open transaction, and so delay other callers, at most until each caller's expiry (J2), and a held A
+  or T makes revokes and erasures fail retryably after XWAIT. That is a denial of service, never a wrong decision. A `dc_app`
+  connection can also reset its own idle timeout and hold a transaction after a call; revocations of that principal then fail
+  retryably for as long as it holds. Bounding that needs eviction (`pg_terminate_backend` with `pg_signal_backend` granted), a
+  privilege decision not taken here (FINAL-JUDGMENT.md 4.4).
 - The pin is checked after the call. Local endpoints are not attested.
 - The composed system (COMPOSITION.md) is not built.

@@ -134,14 +134,15 @@ records the sequence in the transaction-local setting `dc.trace`, which the enum
 
 | Entry point | Sequence |
 |---|---|
-| `dc.submit` (propose, decide, supersede, resolve, retract, remark) | L0 (row exclusive on the 13 tables it can touch); L1 A(caller) sh; L2.0-2.2; L3 T sh; L4; L5.0 head(req); L6 S(subjects); L7 |
-| `dc.submit` revoke | L0; L1 A(caller) sh and A(target) ex, sorted (a self-revoke takes ex only); L2.0-2.4; L3 T ex; L4; L5.0 and 5.1; L7 |
-| `dc.submit` grant | L0; L1 A(caller) sh; L2.0-2.2; L3 T ex; L4; L5.0 head(req); L7 |
+| `dc.submit` (propose, decide, supersede, resolve, retract, remark) | L0 (the 12 tables it can touch, `tenant` and `used_proofs` excepted: row exclusive; factors, principal, sessions row share); L1 A(caller) sh; L2.0-2.2; L3 T sh; L4; L5.0 head(req); L6 S(subjects); L7 |
+| `dc.submit` revoke by an admin | L0 (principal and sessions row exclusive); L1 A(caller) sh and A(target) ex, sorted (a self-revoke takes ex only); L2.0-2.4; L3 T ex; L4; L5.0 and 5.1; L7 |
+| `dc.submit` grant by an admin | L0; L1 A(caller) sh; L2.0-2.2; L3 T ex; L4; L5.0 head(req); L7 |
+| `dc.submit` revoke or grant by a non-admin | as an ordinary submit (A(caller) sh, T sh): the rules refuse it, so it takes no exclusive lock to stall others with. The admin flag that decides this is read unlocked after L0; the API never changes it, and if owner SQL did during the call, the pinned flag differs and the call is refused |
 | `dc.explain`, `dc.read_table` | L0 (row share: factors, principal, sessions; access share: head, props, role, vals); L1 sh; L2.0-2.2 |
 | `dc.erase_candidates` | L0 (factors, principal, sessions row share; vals access share); L1 sh; L2.0-2.2 (admin judged on the pinned row) |
 | `dc.erase_values` | L0 (audit, subject_tokens, vals row exclusive; factors, principal, sessions row share); L1 sh; L2.0-2.2; L3 T ex; L5.2 by reference; L5.3 |
 | `dc.open_session` | L0 (factors, principal row share; sessions, used_proofs row exclusive); L1 A(factor's principal) sh; L2.1-2.2 inside `dc._judge_proof`; L8 |
-| `dc.end_session` | L0 (sessions row exclusive); L1 A(session's principal) ex; then the UPDATE of its session row |
+| `dc.end_session` | L0 (sessions row exclusive); L1 A(session's principal) ex; then the UPDATE of its session row (recorded as L2.4) |
 | `dc.revoke_factor` (owner-only, new) | L0 (factors row exclusive); L1 A(factor's principal) ex; then the UPDATE of the factor row |
 | `dc._apply_event` (owner-only raw path: B3, pg_diff) | L1 A(target) ex (revoke); L2.3-2.4 (revoke); L3; L4; L5; no budget (the owner's own `lock_timeout`) |
 
@@ -177,6 +178,11 @@ records the sequence in the transaction-local setting `dc.trace`, which the enum
 - **Excluded:** the caller's COMMIT. A caller-held transaction makes the effects visible when it commits; they were judged before
   E, and revocations wait for that COMMIT. Also excluded: WAL flush and replication waits at COMMIT, and `statement_timeout`, which
   is unchanged.
+- **The token lookup.** `dc._peek` runs before E is known, so its one possible wait is bounded only by the caller's own
+  `lock_timeout`. It can wait only for a relation lock on `dc.sessions` that conflicts with ACCESS SHARE, which no API call takes:
+  owner DDL or `LOCK TABLE ... ACCESS EXCLUSIVE`. A call that waited there and finds the token expired is refused at once, with
+  nothing applied (`P1_JudgmentNeverWaits` covers the wait). So "returns by E + d" holds for every wait except this one, and "no
+  effect after E" holds for all of them.
 
 **Exclusive waits, revoke wait and tenant stall.** A request for A or T exclusive also uses XWAIT = 2 s (`dc._xwait_ms()`) as a
 further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it is retryable, and the queue behind it is released.
@@ -236,7 +242,7 @@ excluded by an acquisition lock, or fails the call in the apply phase, as tested
 | revoke | its authority writes after the final judgment | rows locked at L2.3-2.4; 1 ms | `S1_ApplyNeverWaits.test_a_wait_after_the_judgment_fails_the_call` (broken variant without the L2.3 lock) |
 | explain, read_table, erase_candidates | relation lock during the read | before the pins (L0); the read after the pins cannot wait | `S1_BeforeThePins` (reads) |
 | erase_values | tenant lock, value row, token row | after the pins (L3, L5) | `S1_PinnedAuthority.test_erase_*` |
-| open_session | ledger twin (same nonce) | after the pins (L8): the factor or principal revocation waits for the call | `S1_OpenSession.test_twin` |
+| open_session | ledger twin (same nonce) | after the pins (L8): the factor or principal revocation waits for the call (B held in its own transaction, so the wait for B is observed after A ends) | `S1_OpenSession.test_twin_rolls_back`, `test_twin_commits` |
 | open_session | prune of the same expired rows | apply, `SKIP LOCKED`: no wait | `S1_OpenSession.test_prune_never_waits` |
 | open_session | factor row held by a writer (was the ledger foreign key) | the pin statement itself, which judges the newest version | `S1_OpenSession.test_factor_row_writer` |
 | end_session | in-flight calls of its principal | waits FIFO (L1 exclusive), XWAIT | `S1_MutualWaits.test_end_session_waits_for_the_call` |

@@ -17,8 +17,11 @@ Trust split (disclosed). The database enforces who may change decision state and
 participant). Label-level filtering of reads and the legal-hold check of erasure stay in the in-process policy point (pol.enforce):
 that part is trusted code, not enforced by the database. Python-private names are not enforcement either (tests/test_surface.py).
 
-Lock order, always: tenant row (FOR SHARE; FOR UPDATE for revoke, grant and erasure), the (tenant, principal) advisory lock, the
-requirement's head row FOR UPDATE, then the event insert (whose trigger locks the chain head). READ COMMITTED, set explicitly.
+Locks (S1, FINAL-JUDGMENT.md section 4): every call takes all its locks before it judges, in one global order (relation locks, the
+authority lock, the authority rows FOR SHARE, the tenant lock, the idempotency lock, data rows, subject locks, the chain head, the
+nonce lock), each wait capped by the credential's remaining life; then the writes, the final judgment and a revoke's authority writes
+run under lock_timeout 1 ms. READ COMMITTED, set explicitly. install() sets idle_in_transaction_session_timeout = 60 s as the role
+default of dc_app and dc_idp, which bounds how long a caller-held transaction can delay a revocation.
 
 ASSUMPTION (round 3, not confirmed by the user): non-humans only propose and remark; the per-req cap binds non-humans; idempotency is
 per (tenant, principal, idem) with a fingerprint over the event, never the session token."""
@@ -103,6 +106,8 @@ def install(port: int, super_passfile: str, app_password_file: str, tenants, idp
                     c.execute(sql.SQL("create role {} " + ("login" if login else "nologin")).format(sql.Identifier(r)))
             for r, pw in pws.items():
                 c.execute(sql.SQL("alter role {} with login password {}").format(sql.Identifier(r), sql.Literal(_scram_verifier(pw))))
+            for r in ("dc_app", "dc_idp"):           # S1: a holder of pinned authority cannot sit idle in a transaction for long
+                c.execute(sql.SQL("alter role {} set idle_in_transaction_session_timeout = '60s'").format(sql.Identifier(r)))
             c.execute("grant dc_owner to postgres")
             c.execute(ddl)
             for t, cfg in tenants.items():
@@ -430,8 +435,8 @@ class PgDecisionService:
     def erase_subject(self, session, subject) -> dict:
         """As DecisionService.erase_subject. The database lists the values about the canonical subject (admin session only); the in-process
         policy point decides each (a legal hold queues it) for the SAME verified session; the database deletes the allowed ones and, when
-        none about the subject remains, the token mapping, under the tenant row lock (no concurrent submit can mint or use the token
-        meanwhile). Final review P1: the in-process decisions are made again after dc.erase_values (which can wait on a value row) and
+        none about the subject remains, the token mapping, under the tenant lock held exclusively (no concurrent submit can mint or use
+        the token meanwhile). Final review P1: the in-process decisions are made again after dc.erase_values (which can wait) and
         before COMMIT; when a value's decision changed during the wait the call is rolled back, that value is counted as queued or denied
         (as the memory engine judges each value at its deletion), and the remaining values are erased in a fresh call, judged again.
         Each such round removes at least one value, so the loop ends. A value denied before the call and allowed after it stays (the
