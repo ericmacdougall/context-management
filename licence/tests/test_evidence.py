@@ -1202,5 +1202,195 @@ class RebuildTests(unittest.TestCase):
 
 
 
+class FailurePathTests(unittest.TestCase):
+    """Gate review 11. F25: once a raw file exists for a life (readable or not), every stored path it declares is deleted; a derivation
+    that cannot complete leaves those figures absent with a reason (UNVERIFIED), never a stored PASS. F26: a life file is parsed at the
+    boundary; any content makes that life UNVERIFIED and current_summary() never raises."""
+
+    GATES_BY_SOURCE = {"poll": ("EXP1-T2",), "rows": ("EXP2-T2", "EXP2-T3-down", "EXP2-T5-down"), "rows+oracle": ("EXP2-T1",)}
+    KEY_FILE = {"poll": "poll", "rows": "rows", "rows+oracle": "oracle"}
+
+    @classmethod
+    def setUpClass(cls):
+        import verdicts
+        cls.V = verdicts
+        cls.raw = {}
+        for k in ("rows", "poll", "oracle"):
+            with open(os.path.join(RES, "down_7.%s.gz" % k), "rb") as fh:
+                cls.raw[k] = fh.read()
+        # A stored record that PASSes every raw-sourced gate on its stored figures alone: the clean rebuild of down_7, written back.
+        R = summarize.load(RES, "down")[-1]
+        for k in [k for k in R if k.startswith("_")]:
+            del R[k]
+        cls.passing = R
+        for name, gates in cls.GATES_BY_SOURCE.items():
+            for g in gates:
+                assert verdicts.judge(g, R).status == "PASS", (name, g)
+
+    def life_dir(self, life=None, files=None):
+        """A temporary results dir with down_7.json (`life`: a dict, or bytes written as they are) and raw files (`files`: ext ->
+        bytes, "dir" for a directory in its place, or None for no file); defaults are the committed raw files."""
+        import gzip  # noqa: F401
+        d = tempfile.mkdtemp()
+        body = self.passing if life is None else life
+        with open(os.path.join(d, "down_7.json"), "wb") as fh:
+            fh.write(body if isinstance(body, bytes) else json.dumps(body).encode())
+        spec = dict(self.raw)
+        spec.update(files or {})
+        for k, v in spec.items():
+            p = os.path.join(d, "down_7.%s.gz" % k)
+            if v == "dir":
+                os.mkdir(p)
+            elif v is not None:
+                with open(p, "wb") as fh:
+                    fh.write(v)
+        return d
+
+    def statuses(self, d):
+        import shutil
+        try:
+            cur = summarize.current_summary(d)
+            loaded = summarize.load(d, "down")
+        finally:
+            shutil.rmtree(d)
+        return cur["lives"]["down_7.json"], loaded
+
+    @staticmethod
+    def gz(text):
+        import gzip
+        import io
+        b = io.BytesIO()
+        with gzip.GzipFile(fileobj=b, mode="wb") as fh:
+            fh.write(text.encode() if isinstance(text, str) else text)
+        return b.getvalue()
+
+    def assert_not_pass(self, d, gates, why):
+        row, loaded = self.statuses(d)
+        for g in gates:
+            self.assertNotEqual(row[g]["status"], "PASS", (why, g, row[g]["reason"]))
+            self.assertTrue(row[g]["reason"], (why, g))
+
+    # ---- F25: every raw source x every way its derivation can fail --------------------------------------------------------------
+    def failure_modes(self, source):
+        key = self.KEY_FILE[source]
+        rows_wrong_shape = self.gz("".join(json.dumps(x) + "\n" for x in ([1, 2, 3], {"a": 1}, "x")))
+        modes = {
+            "truncated gzip": {key: self.raw[key][: len(self.raw[key]) // 2]},
+            "not gzip at all": {key: b"\xff\x00garbage"},
+            "empty file": {key: b""},
+            "read error (a directory in its place)": {key: "dir"},
+            "wrong shape": {key: rows_wrong_shape if key == "rows" else self.gz(json.dumps([1, 2]) if key == "oracle" else json.dumps({"a": 1}))},
+            "valid JSON of the wrong type": {key: self.gz("[]" if key == "rows" else '"x"')},
+        }
+        if source == "rows+oracle":
+            modes["missing companion (rows absent)"] = {"rows": None}
+            modes["companion unusable (rows truncated)"] = {"rows": self.raw["rows"][:100]}
+        return modes
+
+    def test_f25_every_failed_derivation_of_a_present_raw_file_is_unverified(self):
+        for source, gates in self.GATES_BY_SOURCE.items():
+            for why, files in self.failure_modes(source).items():
+                self.assert_not_pass(self.life_dir(files=files), gates, (source, why))
+
+    def test_f25_bad_timing_metadata_never_keeps_a_stored_figure(self):
+        cases = {
+            "transition time not a number": lambda R: R["start_basic"].__setitem__("t_resp", "x"),
+            "transition time absent": lambda R: R["start_basic"].pop("t_req"),
+            "window start NaN": lambda R: R["exp2"]["events"].__setitem__("t_start", float("nan")),
+            "window absent": lambda R: R["exp2"].pop("events"),
+            "window reversed": lambda R: R["exp2"]["events"].update(t_start=R["exp2"]["events"]["t_stop"] + 1),
+            "mode absent": lambda R: R.pop("mode"),
+            "mode of the other direction": lambda R: R.__setitem__("mode", "up"),
+        }
+        for why, m in cases.items():
+            R = copy.deepcopy(self.passing)
+            m(R)
+            self.assert_not_pass(self.life_dir(life=R), sum(self.GATES_BY_SOURCE.values(), ()), why)
+
+    def test_f25_no_oracle_file_is_the_only_way_t1_stays_stored(self):
+        row, loaded = self.statuses(self.life_dir(files={"oracle": None}))
+        self.assertEqual(row["EXP2-T1"]["status"], "PASS")
+        self.assertIn("from stored figure, raw not available", row["EXP2-T1"]["reason"])
+        row, loaded = self.statuses(self.life_dir(files={"oracle": "dir"}))
+        self.assertEqual(row["EXP2-T1"]["status"], "UNVERIFIED")
+
+    # ---- F26: any life-file content, any raw-file content -------------------------------------------------------------------------
+    LIFE_GARBAGE = (b"[]", b"{}", b'"x"', b"1", b"null", b"true", b"{", b"\xff\x00\x01", b"", b'{"mode": "down"}',
+                    b'{"mode": "down", "status": "complete", "exp2": [], "start_basic": 5}', b'{"mode": "down", "exp1_moment": "x"}',
+                    b"[" * 10000 + b"]" * 10000, b'{"mode": "down", "status": "complete", "ttl": 1e999}')
+
+    def test_f26_any_life_file_content_is_that_lifes_unverified(self):
+        for body in self.LIFE_GARBAGE:
+            d = self.life_dir(life=body)
+            try:
+                row, loaded = self.statuses(d)
+            except Exception as e:   # current_summary() and load() never raise on file content
+                self.fail("raised %s on %r" % (type(e).__name__, body[:40]))
+            for g, v in row.items():
+                self.assertEqual(v["status"], "UNVERIFIED", (body[:40], g))
+                self.assertTrue(v["reason"], (body[:40], g))
+
+    def test_f26_a_bad_life_is_reflected_in_the_aggregate_and_others_still_judged(self):
+        import shutil
+        d = tempfile.mkdtemp()
+        try:
+            for f in os.listdir(RES):
+                if f.startswith(("down_6.", "down_7.")):
+                    shutil.copy(os.path.join(RES, f), d)
+            with open(os.path.join(d, "down_6.json"), "wb") as fh:
+                fh.write(b"[]")
+            cur = summarize.current_summary(d)
+        finally:
+            shutil.rmtree(d)
+        self.assertEqual(cur["lives"]["down_6.json"]["EXP2-T2"]["status"], "UNVERIFIED")
+        self.assertIn("down_6.json", cur["aggregate"]["EXP2-T2"]["reason"])
+        self.assertEqual(cur["lives"]["down_7.json"]["EXP2-T2"]["status"], "PASS")
+
+    RAW_GARBAGE = (b"", b"\x00", b"[]", b"{}")
+
+    def test_f26_arbitrary_raw_and_companion_content_never_raises_and_never_passes_its_gates(self):
+        values = [self.gz(json.dumps(v)) for v in ([], {}, "x", 1, None, [[]], [{}], {"legs": [], "rrf": {}, "linear": {}},
+                                                   {"legs": {"1": "x"}, "rrf": {"1": 5}, "linear": {}})] + list(self.RAW_GARBAGE)
+        for source, gates in self.GATES_BY_SOURCE.items():
+            key = self.KEY_FILE[source]
+            for v in values:
+                d = self.life_dir(files={key: v})
+                try:
+                    self.assert_not_pass(d, gates, (source, v[:20]))
+                except AssertionError:
+                    raise
+                except Exception as e:
+                    self.fail("raised %s on %s %r" % (type(e).__name__, source, v[:20]))
+
+    # ---- adversarial pass (review 11): cases found by reading every except / early return / .get default ----------------------
+    def test_adv_an_oracle_with_its_references_emptied_does_not_pass_t1(self):
+        import gzip
+        O = json.loads(gzip.decompress(self.raw["oracle"]).decode())
+        O["rrf"], O["linear"] = {}, {}   # every backend answer becomes "without oracle": not examined, so T1 must not PASS
+        self.assert_not_pass(self.life_dir(files={"oracle": self.gz(json.dumps(O))}), ("EXP2-T1",), "emptied references")
+
+    def test_adv_a_dangling_link_in_place_of_a_raw_file_is_present(self):
+        for source, gates in self.GATES_BY_SOURCE.items():
+            d = self.life_dir(files={self.KEY_FILE[source]: None})
+            os.symlink(os.path.join(d, "nowhere"), os.path.join(d, "down_7.%s.gz" % self.KEY_FILE[source]))
+            self.assert_not_pass(d, gates, (source, "dangling link"))
+
+    def test_adv_a_life_file_cannot_set_the_loaders_own_keys(self):
+        R = copy.deepcopy(self.passing)
+        R.update({"_stored_only": ["rows+oracle", "rows", "poll"], "_rebuilt": ["rows", "poll", "rows+oracle"], "_raw_check": {}})
+        d = self.life_dir(life=R, files={"oracle": b"broken", "rows": b"broken", "poll": b"broken"})
+        self.assert_not_pass(d, sum(self.GATES_BY_SOURCE.values(), ()), "injected loader keys")
+        R = copy.deepcopy(self.passing)
+        R["_unparsed"] = "x"   # stripped at the boundary: the life is judged normally
+        row, _ = self.statuses(self.life_dir(life=R))
+        self.assertEqual(row["EXP2-T2"]["status"], "PASS")
+
+    def test_f27_readme_states_the_current_rule(self):
+        with open(os.path.join(RES, "README.md")) as fh:
+            body = fh.read()
+        self.assertNotIn("only if the raw files reproduce it", body)
+        self.assertIn("deleted and rebuilt", body)
+
+
 if __name__ == "__main__":
     unittest.main()

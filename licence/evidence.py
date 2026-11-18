@@ -313,7 +313,9 @@ class Evidence:
     def parse(cls, raw, at=()):
         try:
             return cls._parse(raw, at)
-        except (ArithmeticError, TypeError, ValueError, RecursionError) as e:   # input-shaped errors become UNVERIFIED (review 8 F14)
+        except Unparsed:
+            raise
+        except Exception as e:   # any input-shaped error becomes UNVERIFIED (review 8 F14; review 11: every exception class)
             raise Unparsed(at, "malformed input: %s" % type(e).__name__)
 
     @classmethod
@@ -550,5 +552,5 @@ def parse(cls, life):
         return cls.parse(life), None
     except Unparsed as e:
         return None, str(e)
-    except (ArithmeticError, TypeError, ValueError, RecursionError) as e:
+    except Exception as e:   # review 11: no exception class escapes as a crash; the gate is UNVERIFIED
         return None, "malformed input: %s" % type(e).__name__

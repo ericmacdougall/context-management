@@ -287,6 +287,40 @@ declared table, and the tests are generated from that table.
 4. **F24:** the message domain allows the full 410 characters.
 5. **Disclosed limits.** The six wording differences are `summarize.LIMITS`. They are emitted into `summary_current.json` and stated in DEGRADE.md and results/README.md, and the verdicts.py docstring no longer claims the thresholds are THRESHOLDS.md's unqualified.
 
+## 3e. Review 11: every failure path of loading and deriving ends in UNVERIFIED (F25 to F27)
+
+Review 11 found that the review-10 loader inferred "no raw file" from "no derived entry". A derivation that did not run (bad timing metadata) or could not read its file therefore kept the stored T1 figures. It also found that a life file holding `[]` raised out of `current_summary()`. The class is closed as follows.
+
+1. **F25: existence is checked, never inferred.**
+   - `summarize._present` checks every raw file with `os.path.lexists`, so a directory, an unreadable file or a dangling link counts as present.
+   - `KEY_FILE` names the file that decides each source: `poll.gz`, `rows.gz`, or `oracle.gz` for T1.
+   - `apply_derived(R, derived, present, mode)` keeps stored figures only when the key file does not exist and the source is declared "keep". Every other case deletes the paths. Only a completed derivation puts figures back, and anything else records a reason.
+   - `_read_raw` turns any read exception into `Unreadable(reason)`, and `derive` turns any exception per source into an `error` entry. A missing or unusable companion file is an error.
+2. **F26: the life file is parsed at the boundary.**
+   - `summarize.parse_life` returns the life, or an Unparsed life when the content cannot be read, is not UTF-8 or JSON, is not an object, or its `mode` disagrees with the file name.
+   - The loader's `_` keys are stripped from file content, so a file cannot claim `_rebuilt` or `_stored_only`.
+   - Every gate of an Unparsed life is UNVERIFIED with the reason. The aggregate names it ("does not parse"), and the other lives are still judged.
+   - `_judge_life` turns any exception from a verdict into UNVERIFIED. `evidence.parse` and `Evidence.parse` now map every exception class (not only Arithmetic, Type, Value and Recursion errors) to UNVERIFIED.
+3. **F27:** results/README.md states the delete-and-rebuild rule and its stored-only exceptions.
+
+**Adversarial pass over the class.** Every `except`, early `return`/`continue`, `.get(...)` default and `if not` in summarize.py, observe.py, evidence.py and recompute.py was read for a path that turns a failure into retained data or a skipped check. The tests are `FailurePathTests` (the `test_adv_*` cases come from this pass). Findings:
+- **Fixed:**
+  - `apply_derived` treated a missing entry as permission to keep (F25).
+  - `rebuild`/`load` skipped every source when the mode was unknown; they now delete all of them.
+  - `load` indexed the file before checking its shape (F26).
+  - `derive` and `_derived_files` caught only listed exception classes, and `_read_raw` read the three files under one handler, so one bad file hid the state of the others.
+  - The evidence parse handlers caught four exception classes.
+- **Safe as is:**
+  - `observe.moments` gives `stream_error` or `skipped` probes. `derive` raises on `stream_error`, and the evidence spec rejects a skipped probe.
+  - `observe.correctness` skips a backend answer with no reference, but the gate requires `backend_without_oracle == 0` (tested with the references emptied).
+  - `max(1, n)` in `control` gives a fraction for n = 0, but every control spec requires `n` positive.
+  - `availability` with no reads is rejected by the positive `requests` field.
+  - `_drop` returns early when the parent is not an object, so nothing stored can survive under it.
+  - The poll source is skipped for up lives, and no up-scoped gate reads `exp1_moment`.
+- **Not a gate path (disclosed):**
+  - The legacy report (`summarize.main` without `--current`, `exp*_checks`, `aggregate`) still indexes life records directly and can raise on a malformed complete life. It writes no status of record.
+  - `recompute.py` is a hand-run corroboration script that raises on a malformed life rather than retaining anything.
+
 ## 5. Figures trusted because the file holds no counts (recompute.py covers some from raw rows)
 
 - `exp2.T1_examined`, `T1_mismatches` and `T1_backend_without_oracle`: computed by the harness from rows and oracle. down_7 rows are recomputed by recompute.py. The domain is still enforced: counts, with mismatches ≤ examined.

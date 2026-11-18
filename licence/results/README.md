@@ -14,7 +14,7 @@
   - Times must be finite epoch times inside the run window and in recording order, with no duplicates or overlaps.
   - Labels and HTTP statuses must agree, and arms and fields must stay in their closed domains.
   - The EXP1-T2 moments and the EXP2-T2, T3 and T5 figures are re-derived from the typed raw files at load.
-  - A stored figure is used only if the raw files reproduce it. If there is no raw file, the file does not parse, or it disagrees, the gate is UNVERIFIED.
+  - Every stored figure a raw file can rebuild is deleted and rebuilt from that file (rule below, reviews 10 and 11). A stored value under those paths is never read, compared or kept.
 - **EXP1-T3** passes only when the adapter's own `ElasticsearchSearch._is_licence_error` recognises the message the adapter would build: `HTTP <code>: ` followed by the first 400 bytes of the body.
   - The committed lives recorded only an error summary, not that message, so EXP1-T3 is UNVERIFIED for them.
 
@@ -29,6 +29,17 @@
 - **Figures with no raw source.** These include matrix cells, transition times, write counts, EXP3, and T1 for lives without saved oracle legs. They are declared in `summarize.STORED`, and every verdict that reads one says "from stored figure, raw not available" in its reason. A test generated from the evidence types fails if any figure a verdict reads is undeclared.
 - **Row schema.** Every workload-row field has a declared domain (`observe.ROW_FIELDS`), together with its relation to the arm and to the success state.
 - **Inventory.** It comes from the campaign (`summarize.CAMPAIGN`: down_1..7 and up_1..5), not from the files found. A missing life or direction is UNVERIFIED.
+
+## Review 11: the rule for stored figures
+
+Stored figures under a raw source's paths are **deleted and rebuilt**, with one declared stored-only exception:
+
+- A source's paths are deleted as soon as its key file **exists** beside the life, whether or not that file is readable. Existence is an explicit check (`summarize._present`), never an empty or failed read. The key files are `poll.gz` (EXP1-T2), `rows.gz` (EXP2-T2, T3, T5) and `oracle.gz` (EXP2-T1, which also needs `rows.gz`).
+- Figures are put back only by a derivation that completes from typed rows. Any failure leaves them absent, records the reason in `raw_checks`, and makes the gate UNVERIFIED. Failures include an unreadable, truncated or non-gzip file, wrong row shape, a missing or broken companion file, a bad run window or transition time, and any exception.
+- **Stored-only exceptions** (declared in `summarize.STORED`, labelled "from stored figure, raw not available" in every reason that uses them):
+  - EXP2-T1 for a life with no `oracle.gz` at all (down_1..6, up_1..5: the oracle legs were not saved)
+  - matrix cells, transition times, configuration, write counts and EXP3
+- A life file is parsed at the boundary. If its content is not a JSON object whose `mode` matches its file name, or it cannot be read, it is an unparsed life. Every gate of it is UNVERIFIED with the reason, the aggregate names it ("does not parse"), and the other lives are still judged.
 
 ## Disclosed limits
 

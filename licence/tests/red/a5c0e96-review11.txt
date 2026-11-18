@@ -1,0 +1,84 @@
+FFFEFF/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py:1366: ResourceWarning: unclosed file <_io.TextIOWrapper name='/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/results/README.md' mode='r' encoding='UTF-8'>
+  body = open(os.path.join(RES, "README.md")).read()
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+F
+======================================================================
+ERROR: test_f26_a_bad_life_is_reflected_in_the_aggregate_and_others_still_judged (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1342, in test_f26_a_bad_life_is_reflected_in_the_aggregate_and_others_still_judged
+    cur = summarize.current_summary(d)
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 528, in current_summary
+    for R in load(d, mode):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/summarize.py", line 253, in load
+    R["_file"] = os.path.basename(f)
+TypeError: list indices must be integers or slices, not str
+
+======================================================================
+FAIL: test_f25_bad_timing_metadata_never_keeps_a_stored_figure (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1308, in test_f25_bad_timing_metadata_never_keeps_a_stored_figure
+    self.assert_not_pass(self.life_dir(life=R), sum(self.GATES_BY_SOURCE.values(), ()), why)
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1270, in assert_not_pass
+    self.assertNotEqual(row[g]["status"], "PASS", (why, g, row[g]["reason"]))
+AssertionError: 'PASS' == 'PASS' : ('transition time not a number', 'EXP2-T1', 'PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)')
+
+======================================================================
+FAIL: test_f25_every_failed_derivation_of_a_present_raw_file_is_unverified (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1293, in test_f25_every_failed_derivation_of_a_present_raw_file_is_unverified
+    self.assert_not_pass(self.life_dir(files=files), gates, (source, why))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1270, in assert_not_pass
+    self.assertNotEqual(row[g]["status"], "PASS", (why, g, row[g]["reason"]))
+AssertionError: 'PASS' == 'PASS' : (('rows+oracle', 'truncated gzip'), 'EXP2-T1', 'PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)')
+
+======================================================================
+FAIL: test_f25_no_oracle_file_is_the_only_way_t1_stays_stored (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1315, in test_f25_no_oracle_file_is_the_only_way_t1_stays_stored
+    self.assertEqual(row["EXP2-T1"]["status"], "UNVERIFIED")
+AssertionError: 'PASS' != 'UNVERIFIED'
+- PASS
++ UNVERIFIED
+
+
+======================================================================
+FAIL: test_f26_any_life_file_content_is_that_lifes_unverified (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1326, in test_f26_any_life_file_content_is_that_lifes_unverified
+    row, loaded = self.statuses(d)
+TypeError: list indices must be integers or slices, not str
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1328, in test_f26_any_life_file_content_is_that_lifes_unverified
+    self.fail("raised %s on %r" % (type(e).__name__, body[:40]))
+AssertionError: raised TypeError on b'[]'
+
+======================================================================
+FAIL: test_f26_arbitrary_raw_and_companion_content_never_raises_and_never_passes_its_gates (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1359, in test_f26_arbitrary_raw_and_companion_content_never_raises_and_never_passes_its_gates
+    self.assert_not_pass(d, gates, (source, v[:20]))
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1270, in assert_not_pass
+    self.assertNotEqual(row[g]["status"], "PASS", (why, g, row[g]["reason"]))
+AssertionError: 'PASS' == 'PASS' : (('rows+oracle', b'\x1f\x8b\x08\x00Z\xef\xfcj\x02\xff\xcb+\xcd\xc9\x01\x00O\xfc\xcb%'), 'EXP2-T1', 'PASS: 0 wrong answers over >= 20,000 examined; control flags >= 90% (computed from its counts); from stored figure, raw not available: exp2.T1_backend_without_oracle, exp2.T1_control_broken_fallback, exp2.T1_examined, exp2.T1_mismatches (derived; the oracle legs were not saved for this life)')
+
+======================================================================
+FAIL: test_f27_readme_states_the_current_rule (tests.test_evidence.FailurePathTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/eric/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/wt-licfix/licence/tests/test_evidence.py", line 1367, in test_f27_readme_states_the_current_rule
+    self.assertNotIn("only if the raw files reproduce it", body)
+AssertionError: 'only if the raw files reproduce it' unexpectedly found in '# Licence rehearsal results\n\n**Current gate statuses: `summary_current.json`.** Read this file and no other summary for a status.\n\n- It is generated by the current code: `python3 summarize.py results --current results/summary_current.json` (run from `licence/`).\n- `tests/test_evidence.py` (`test_f19_current_summary_artefact_is_what_the_code_produces`) fails if the file differs from what the code produces.\n- For every life and every gate in its scope, it gives an explicit `status` (`PASS`, `FAIL` or `UNVERIFIED`) and a `reason`.\n- `raw_checks` records, per life, why a figure taken from a raw file was not accepted.\n- `aggregate` gives one status per gate: PASS only when every life passes, FAIL when any life fails, otherwise UNVERIFIED.\n\n## How statuses are derived (review 9)\n\n- **Raw rows are typed first** (`observe.parse_poll`, `observe.parse_work`).\n  - Times must be finite epoch times inside the run window and in recording order, with no duplicates or overlaps.\n  - Labels and HTTP statuses must agree, and arms and fields must stay in their closed domains.\n  - The EXP1-T2 moments and the EXP2-T2, T3 and T5 figures are re-derived from the typed raw files at load.\n  - A stored figure is used only if the raw files reproduce it. If there is no raw file, the file does not parse, or it disagrees, the gate is UNVERIFIED.\n- **EXP1-T3** passes only when the adapter\'s own `ElasticsearchSearch._is_licence_error` recognises the message the adapter would build: `HTTP <code>: ` followed by the first 400 bytes of the body.\n  - The committed lives recorded only an error summary, not that message, so EXP1-T3 is UNVERIFIED for them.\n\n## Review 10: rebuild, row schema, inventory\n\n- **Rebuild by construction.** When a life has a raw file, the loader deletes every stored figure that the raw file can rebuild and then rebuilds all of them from typed rows. The sources are declared in `summarize.RAW_SOURCES`:\n  - EXP1-T2 moments: `poll.gz`\n  - EXP2-T2, T3 and T5, both directions (including the post-transition control): `rows.gz`\n  - EXP2-T1: `rows.gz` plus `oracle.gz`\n\n  Nothing stored under those paths is read.\n- **Figures with no raw source.** These include matrix cells, transition times, write counts, EXP3, and T1 for lives without saved oracle legs. They are declared in `summarize.STORED`, and every verdict that reads one says "from stored figure, raw not available" in its reason. A test generated from the evidence types fails if any figure a verdict reads is undeclared.\n- **Row schema.** Every workload-row field has a declared domain (`observe.ROW_FIELDS`), together with its relation to the arm and to the success state.\n- **Inventory.** It comes from the campaign (`summarize.CAMPAIGN`: down_1..7 and up_1..5), not from the files found. A missing life or direction is UNVERIFIED.\n\n## Disclosed limits\n\nGate review 10 classed these six differences from the registered wording as disclosed lab limits. A PASS establishes the implemented rule only. The same list is in `summary_current.json` (`limits`) and in DEGRADE.md.\n\n| Threshold | Limit |\n|---|---|\n| EXP3-T2 (migration) | 1. PASS establishes counts equal to the independent source counts: 299/299 and 199/199 after an earlier delete, where the registered text says 300/300 and 200/200.<br>2. PASS establishes semantic vectors within absolute error 0.005 and cosine 0.9999 of the stub. It does **not** establish the registered per-value 1% relative criterion, because the vectors needed for it were not kept. |\n| EXP1-T3 | Three fixed latch cells are checked, not every LICENCE_ERROR cell of a search path. |\n| EXP2-T2 | The failure window joins failed reads from four arms with a gap under 1 s, not consecutive failed auto requests. Every committed life has 0 failed reads. |\n| EXP1-T2 | Timing uses the poll end time, not the probe start time. This is conservative for the 5 s bound. |\n| EXP1-T1 | A 400 with "non-compliant" is not counted as a licence refusal; only a 403 is. |\n| EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2 | No gate exists. The artefact is not a complete registered-threshold verdict. |\n\n## Historical files\n\n`SUPERSEDED.json` lists every superseded summary with its sha256:\n\n- `summary_corrected.json`\n- `summary_campaign.json`\n- `summary_supp.json`\n- `summary_down_7.json`\n\nThese files are kept **byte-identical** for provenance. Their sha256 values are in `SUPERSEDED.json` and `MANIFEST.sha256`, and a test checks both. None of them is a current status.\n\nThe recorded lives (`down_*.json`, `up_*.json`, `*.rows.gz`, `*.poll.gz`, `*.oracle.gz`) are also unchanged. Nothing was rerun.\n'
+
+----------------------------------------------------------------------
+Ran 7 tests in 43.483s
+
+FAILED (failures=6, errors=1)
