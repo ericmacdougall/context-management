@@ -146,10 +146,10 @@ class ClauseTableTests(unittest.TestCase):
                         if _get(R, w) is E.MISSING:
                             continue
                         _put(R, w, bad)
-                        ev, why = E.parse(verdicts.GATES[g].evidence, R)
                         if bad in (-1,) and isinstance(_get(base(g), w), bool):
                             continue
-                        self.assertIsNone(ev, (c.cid, g, w, bad, "the gate still parses without its witness"))
+                        # UNVERIFIED either because the evidence no longer parses or because the verdict finds no witness (an
+                        # optional witness whose absence the verdict must treat as "not shown", e.g. docs_in_payload)
                         self.assertEqual(verdicts.judge(g, R).status, "UNVERIFIED", (c.cid, g, w, bad))
 
     def test_a_limit_clause_forces_its_gate_off_pass(self):
@@ -333,6 +333,24 @@ class CacheTests(unittest.TestCase):
             src = open(os.path.join(LIC, mod + ".py")).read()
             for marker in ("lru_cache", "functools.cache", "@cache"):
                 self.assertNotIn(marker, src, (mod, marker))
+
+
+    def test_f29_class_a_stale_last_response_is_not_recorded_as_this_cells_message(self):
+        """Same class as F29 (state between input and verdict keyed on something weaker than the content): matrix.verdict reads the
+        thread's last response; a status match alone must not attach another response's bytes to this cell."""
+        import lib
+        import matrix
+        body = {"error": {"type": "security_exception", "reason": "current license is non-compliant for [rrf]"}, "status": 403}
+        other = b'{"error":{"type":"security_exception","reason":"action is unauthorized"},"status":403}'
+        lib._LAST.v = (403, other)   # the previous request had the same status and a different body
+        spec = matrix.CELLS[("after", "retriever_rrf")] if ("after", "retriever_rrf") in matrix.CELLS else None
+        phase = "after" if spec else [p for p, n in matrix.CELLS if n == "retriever_rrf"][0]
+        est = {p: True for p in matrix.CELLS[(phase, "retriever_rrf")].prereqs}
+        out = matrix.verdict(phase, "retriever_rrf", est, 403, body, None)
+        self.assertNotIn("adapter_message", out, "another response's bytes were recorded as this cell's adapter message")
+        lib._LAST.v = (403, json.dumps(body).encode())
+        out = matrix.verdict(phase, "retriever_rrf", est, 403, body, None)
+        self.assertIn("adapter_message", out)
 
 
 # ---- F30: only the current-report writer may write summary_current.json --------------------------------------------------------

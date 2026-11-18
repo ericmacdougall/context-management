@@ -12,7 +12,6 @@ only when sem_failed is 0. The per-life reports here (figures copied for reading
 not gates; they may raise on a malformed life file."""
 import collections
 import glob
-import functools
 import gzip
 import json
 import math
@@ -48,6 +47,7 @@ RAW_SOURCES = {
     "poll": {"needs": ("poll",), "modes": ("down",), "missing": "delete", "paths": (("exp1_moment",),)},
     "rows": {"needs": ("rows",), "modes": ("down", "up"), "missing": "delete",
              "paths": _paths("exp2", "T2_failed_requests", "T2_non_control_requests", "T2_longest_failure_window_s", "T2_failure_windows",
+                             "T2_longest_consecutive_auto_failure_s",
                              "T3_flip_latency_s", "T3_backend_after_first_client", "T3_client_after_first_backend",
                              "T3_backend_labelled_after_resp_start", "T5_control_after_1s", "T5_control_before_start_trial",
                              "T5_control_after_trial")},
@@ -143,7 +143,7 @@ KEY_FILE = {"poll": "poll", "rows": "rows", "rows+oracle": "oracle"}
 def derive(raw, mode, window, t_req, t_resp):
     """Every figure each raw source rebuilds, from typed rows only -> {source: {"figures": {path: value}} or {"error": reason}}.
     raw: {"rows": list, "poll": list, "oracle": dict, None when the file does not exist, or Unreadable}. A source whose key file
-    exists always gets an entry; any failure is an "error" entry, never an exception. JSON-serialisable (load caches it per file)."""
+    exists always gets an entry; any failure is an "error" entry, never an exception. JSON-serialisable."""
     out, W = {}, None
     if isinstance(raw.get("rows"), Unreadable):
         W = observe.Unparsed(("rows",), raw["rows"].reason)
@@ -284,27 +284,13 @@ def _read_raw(base):
     return raw
 
 
-def _stamp(base):
-    """Cache key for the raw files of a life: existence, size and mtime per file (a file that cannot be stat'ed is its own key)."""
-    out = []
-    for k in RAW_FILES:
-        p = "%s.%s.gz" % (base, k)
-        try:
-            st = os.lstat(p)
-            out.append((k, st.st_mode, st.st_size, st.st_mtime_ns))
-        except FileNotFoundError:
-            out.append((k, None, None, None))
-        except OSError as e:
-            out.append((k, "unstattable", type(e).__name__, None))
-    return tuple(out)
-
-
-@functools.lru_cache(maxsize=64)
-def _derived_files(base, stamp, mode, window, t_req, t_resp):
+def _derive_files(base, mode, window, t_req, t_resp):
+    """Read the raw files beside a life and derive every source from them, afresh on every call. Review 12 F29: there is no cache
+    between input and verdict (a stat- or link-keyed memo outlived a changed or vanished raw target within one process)."""
     try:
-        return json.dumps(derive(_read_raw(base), mode, window, t_req, t_resp))
+        return derive(_read_raw(base), mode, window, t_req, t_resp)
     except Exception as e:   # never reached by design (derive and _read_raw catch per file and source); the figures stay absent
-        return json.dumps({"_read_error": "%s: %s" % (type(e).__name__, e)})
+        return {"_read_error": "%s: %s" % (type(e).__name__, e)}
 
 
 def _unparsed_life(name, direction, reason):
@@ -343,7 +329,7 @@ def _load_one(f, direction):
         R["_raw_check"]["life"] = _BAD_TIMES
         apply_derived(R, {}, present, direction)
         return R
-    got = json.loads(_derived_files(base, _stamp(base), *t))
+    got = _derive_files(base, *t)
     if "_read_error" in got:
         R["_raw_check"]["files"] = got.pop("_read_error")
     apply_derived(R, got, present, direction)
@@ -364,6 +350,7 @@ def load(d, mode):
 
 # ---- verdicts: every gate status comes from verdicts.judge(), which parses the life into typed evidence (evidence.py) first. Nothing in
 # this module decides a gate; it writes reports and copies each verdict into them as <out>_status, <out>_pass and, when not PASS, <out>_reason.
+import clauses  # noqa: E402
 import verdicts  # noqa: E402
 from evidence import MAX_INT, MISSING  # noqa: E402
 
@@ -595,23 +582,27 @@ def aggregate(d, res):
 # down_7: addendum B, 10441ea), counted in every result table (DEGRADE.md evidence ids). A missing life is UNVERIFIED, never skipped.
 CAMPAIGN = {"down": (1, 2, 3, 4, 5, 6, 7), "up": (1, 2, 3, 4, 5)}
 
-# The six registered-wording differences gate review 10 classed as disclosed lab limits. They are stated with the results: here (and
-# so in summary_current.json), in DEGRADE.md and in results/README.md. A PASS below establishes the implemented rule, not more.
+# The registered-wording differences (gate reviews 10 and 12). They are stated with the results: here (and so in summary_current.json),
+# in DEGRADE.md and in results/README.md. Since review 12 the clause table (clauses.CLAUSES) decides what each one does to a status:
+# a LIMIT forces its gate's PASS to UNVERIFIED; a SUBSTITUTE is witnessed by a measure that implies the registered one.
 LIMITS = (
     {"gate": "EXP3-migration (THRESHOLDS EXP3-T2)",
-     "limit": "PASS establishes the implemented rule: counts equal the independent source counts (299/299 and 199/199 after an earlier "
-              "delete; registered text 300/300 and 200/200) and semantic vectors within absolute error 0.005 and cosine 0.9999 of the "
-              "stub. It does NOT establish the registered per-value 1% relative criterion; the vectors needed for it were not kept."},
-    {"gate": "EXP1-T3", "limit": "checks three fixed latch cells (rrf retriever, linear retriever, reranker gate), not every "
-                                 "LICENCE_ERROR cell of a search path; a three-cell PASS cannot establish the every-cell criterion."},
-    {"gate": "EXP2-T2", "limit": "the longest failure window joins failed auto, linear, lexical and vector reads whose gap is under 1 s; "
-                                 "the registered window is consecutive failed auto requests (every committed life has 0 failed reads)."},
-    {"gate": "EXP1-T2", "limit": "refusal timing uses the poll's end time, not the probe start time addendum B names; conservative for "
-                                 "the 5 s bound, but the reported timing is not the registered probe-start measurement."},
-    {"gate": "EXP1-T1", "limit": "a 400 carrying \"non-compliant\" is not counted as a licence refusal; only a 403 with the licence "
-                                 "text is (THRESHOLDS EXP1-T1 says 403 or 400)."},
+     "limit": "LIMIT, forces UNVERIFIED (review 12, clause EXP3-T2.relative): semantic vectors were checked within absolute error 0.005 "
+              "and cosine 0.9999 of the stub, NOT the registered per-value 1% relative criterion (the vectors needed for it were not "
+              "kept). Counts equal the independent source counts (299/299 and 199/199 after an earlier delete; registered text 300/300 "
+              "and 200/200): a substitute, clause EXP3-T2.counts."},
+    {"gate": "EXP1-T3", "limit": "LIMIT, forces UNVERIFIED (review 12, clause EXP1-T3.every-cell): three fixed latch cells (rrf retriever, "
+                                 "linear retriever, reranker gate) are checked, not every LICENCE_ERROR cell of a search path."},
+    {"gate": "EXP2-T2", "limit": "closed in review 12 (clause EXP2-T2.run): the registered run of consecutive failed auto requests is "
+                                 "derived from rows.gz and gated; the earlier joined window of all read arms (gap under 1 s) is kept as an "
+                                 "additional check."},
+    {"gate": "EXP1-T2", "limit": "SUBSTITUTE (clause B.probe-start): refusal timing uses the poll's end time, not the probe start time "
+                                 "addendum B names; the end is later, so within 5 s by the end implies within 5 s by the start."},
+    {"gate": "EXP1-T1", "limit": "no gate: a 400 carrying \"non-compliant\" is not counted as a licence refusal; only a 403 with the "
+                                 "licence text is (THRESHOLDS EXP1-T1 says 403 or 400)."},
     {"gate": "EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2",
-     "limit": "no gate: these registered thresholds are reported only, so this artefact is not a complete registered-threshold verdict."},
+     "limit": "no gate: these registered thresholds are reported only (UNVERIFIED in `clauses`), so this artefact is not a complete "
+              "registered-threshold verdict."},
 )
 
 
@@ -666,7 +657,21 @@ def current_summary(d):
         out[name] = {"status": status, "reason": reason or "no life in scope"}
     return {"artefact": "summary_current.json", "generated_by": "summarize.current_summary (python3 summarize.py <results> --current <out>)",
             "inventory": {m: ["%s_%d.json" % (m, n) for n in ns] for m, ns in sorted(CAMPAIGN.items())},
-            "unexpected_files": sorted(found), "limits": list(LIMITS), "lives": lives, "raw_checks": notes, "aggregate": out}
+            "unexpected_files": sorted(found), "limits": list(LIMITS), "lives": lives, "raw_checks": notes, "aggregate": out,
+            "clauses": clauses.clause_statuses(out)}   # review 12: every THRESHOLDS.md clause (clauses.CLAUSES) with a status
+
+
+CURRENT = "summary_current.json"
+
+
+def refuse_current_destination(path, tool):
+    """Review 12 F30: only the current-report writer (`summarize.py <results> --current <out>`) may write summary_current.json. A legacy
+    tool given that destination (by name, or the same file by another path) exits non-zero before computing anything."""
+    here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results", CURRENT)
+    same = os.path.exists(path) and os.path.exists(here) and os.path.samefile(path, here)
+    if os.path.basename(os.path.realpath(path)) == CURRENT or os.path.basename(path) == CURRENT or same:
+        sys.stderr.write("%s: refusing to write %s: only `summarize.py <results> --current <out>` writes the current report\n" % (tool, path))
+        sys.exit(2)
 
 
 def main():
@@ -674,6 +679,8 @@ def main():
         json.dump(current_summary(sys.argv[1]), open(sys.argv[3], "w"), indent=1, sort_keys=True)
         open(sys.argv[3], "a").write("\n")
         return
+    if len(sys.argv) > 2:
+        refuse_current_destination(sys.argv[2], "summarize.py (legacy report)")
     d = sys.argv[1]
     res = {"down": [], "up": []}
     for R in load(d, "down"):

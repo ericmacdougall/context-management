@@ -9,7 +9,7 @@ import os
 import secrets
 import time
 
-import observe
+import observe as observe_mod   # the module; `observe` below is this file's sub-observation helper (review 12: it shadowed the module)
 from lib import BulkError, bulk, bulk_strict, classify, embed, err, last_response, req
 
 STUB_URL = os.environ.get("LIC_STUB_URL", "http://172.17.0.1:19271/embed")
@@ -138,10 +138,21 @@ def verdict(phase, name, est, status, body=None, witness=None, extra=None, refus
         if witness is not None:
             out["witness"] = witness
     code, raw = last_response()
-    if status is not None and status >= 400 and code == status:   # EXP1-T3: what the adapter would see, and its own detector's answer
-        out["adapter_message"] = observe.adapter_message(status, raw)
-        out["adapter_detects"] = observe.adapter_detects(out["adapter_message"])
+    if status is not None and status >= 400 and code == status and _same_response(raw, body):   # EXP1-T3: what the adapter would see
+        out["adapter_message"] = observe_mod.adapter_message(status, raw)
+        out["adapter_detects"] = observe_mod.adapter_detects(out["adapter_message"])
     return out
+
+
+def _same_response(raw, body):
+    """Review 12 (F29's class): the thread's last raw response belongs to this cell only if it decodes to this cell's body; a matching
+    status alone could attach another request's bytes (client_side_fusion is judged on one of two requests)."""
+    try:
+        if isinstance(body, dict) and set(body) == {"_raw"}:   # lib.req keeps the first 300 bytes of a non-JSON body
+            return (raw or b"")[:300].decode("utf-8", "replace") == body["_raw"]
+        return json.loads((raw or b"").decode("utf-8", "replace")) == body
+    except Exception:
+        return False
 
 
 class Cells:
@@ -285,11 +296,60 @@ def ensure_dls():
     return {"role": observe(cr, jr), "user": observe(cu, ju)}
 
 
+def docs_in_payload(j):
+    """Review 12 F28: how many documents (or document-derived values) a response body carries, read from the body's SHAPE and never
+    from its HTTP status -> int >= 0, or None when the body has no shape this function knows (an unknown body is never "nothing").
+    Shapes, one per read path of the DLS battery and the DLS search: search `hits.hits` (and `hits.total`), get `found`/`_source`,
+    mget `docs[]`, msearch `responses[]` (each counted the same way), ES|QL `values[]`, termvectors `term_vectors`, `_count` `count`.
+    An error body (`error`) with none of them is a known shape carrying 0 documents."""
+    if not isinstance(j, dict) or "_raw" in j:
+        return None
+    n, known = 0, "error" in j
+    h = j.get("hits")
+    if h is not None:
+        if not isinstance(h, dict) or not isinstance(h.get("hits", []), list):
+            return None
+        tot = h.get("total")
+        tot = tot.get("value") if isinstance(tot, dict) else tot
+        n += max(len(h.get("hits", [])), tot if type(tot) is int and tot > 0 else 0)
+        known = True
+    if "found" in j or "_source" in j:
+        known = True
+        n += 1 if (j.get("found") is True or "_source" in j or "term_vectors" in j) else 0
+    elif "term_vectors" in j:
+        known, n = True, n + 1
+    if "docs" in j:
+        if not isinstance(j["docs"], list):
+            return None
+        known = True
+        n += sum(1 for d in j["docs"] if isinstance(d, dict) and (d.get("found") is True or "_source" in d))
+    if "responses" in j:
+        if not isinstance(j["responses"], list):
+            return None
+        known = True
+        for r in j["responses"]:
+            k = docs_in_payload(r)
+            if k is None:
+                return None
+            n += k
+    if "values" in j:
+        if not isinstance(j["values"], list):
+            return None
+        known, n = True, n + len(j["values"])
+    if "count" in j:
+        if type(j["count"]) is not int or j["count"] < 0:
+            return None
+        known, n = True, n + j["count"]
+    return n if known else None
+
+
 def dls_search():
-    """-> (status, body, sorted ids or None, extra fields). The caller emits the cell."""
+    """-> (status, body, sorted ids or None, extra fields). The caller emits the cell. `returned` (the 200-only id count) is kept as
+    recorded; `docs_in_payload` is the status-independent witness of THRESHOLDS EXP1-T4 "returning any document is a FAIL" (review 12)."""
     c, j, _ = req("POST", "/%s/_search" % BASE_IDX, {"query": {"match_all": {}}, "size": 20}, user=DLS_USER, pwfile=DLS_PW)
     ids = sorted(hits(j)) if c == 200 else None
     extra = {"only_kw_a": ids == ["0", "2", "4", "6"], "returned": len(ids)} if c == 200 else {"returned": None}
+    extra["docs_in_payload"] = docs_in_payload(j)
     return c, j, ids, extra
 
 
@@ -302,7 +362,9 @@ def dls_battery():
 
     def rec(name, c, j):
         body = json.dumps(j)
-        out[name] = {"status": c, "returned_hidden_doc": ('"kw":"b"' in body.replace(" ", "")) or ("berlin move notes" in body), "returned_any_source": '"_source"' in body and c < 300}
+        out[name] = {"status": c, "returned_hidden_doc": ('"kw":"b"' in body.replace(" ", "")) or ("berlin move notes" in body),
+                     "returned_any_source": '"_source"' in body and c < 300,   # legacy (2xx only); kept as recorded
+                     "docs_in_payload": docs_in_payload(j)}                    # review 12 F28: by shape, whatever the status
     rec("get_allowed_doc0", *req("GET", "/%s/_doc/0" % BASE_IDX, **U)[:2])
     rec("get_hidden_doc1", *req("GET", "/%s/_doc/1" % BASE_IDX, **U)[:2])
     rec("search_match_all", *req("POST", "/%s/_search" % BASE_IDX, {"query": {"match_all": {}}, "size": 20}, **U)[:2])
@@ -324,7 +386,8 @@ def establish_quick():
 
 
 def quick_probes(sem_idx="lic-sem", est=None):
-    """Fast subset. Rows keep the recorded shape: name -> [class, status] ([class, status, returned] for dls_search), plus _times and _t."""
+    """Fast subset. Rows keep the recorded shape: name -> [class, status] ([class, status, returned, docs_in_payload] for dls_search;
+    rows recorded before review 12 have no fourth element), plus _times and _t."""
     est = establish_quick() if est is None else est
     K = Cells("quick", est)
     times = {}
@@ -350,10 +413,10 @@ def quick_probes(sem_idx="lic-sem", est=None):
         c, j, ids, extra = dls_search()
         K.put("dls_search", c, j, ids, extra)
     else:   # no password file or no user: the probe cannot be sent
-        K.put("dls_search", None, extra={"returned": None})
+        K.put("dls_search", None, extra={"returned": None, "docs_in_payload": None})
     times["dls_search"] = [t0, time.time()]
     cells = K.done()
-    rows = {n: [v["class"], v["status"]] + ([v.get("returned")] if n == "dls_search" else []) for n, v in cells.items()}
+    rows = {n: [v["class"], v["status"]] + ([v.get("returned"), v.get("docs_in_payload")] if n == "dls_search" else []) for n, v in cells.items()}
     return dict(rows, _times=times, _t=t)
 
 
@@ -448,7 +511,7 @@ def run(label):
         c, j, ids, extra = dls_search()
         K.put("dls_search_as_user", c, j, ids, extra)
     else:
-        K.put("dls_search_as_user", None, extra={"returned": None})
+        K.put("dls_search_as_user", None, extra={"returned": None, "docs_in_payload": None})
     # percolator (lexical)
     perc = P + "perc"
     drop(perc)
