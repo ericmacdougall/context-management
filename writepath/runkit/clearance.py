@@ -724,6 +724,18 @@ def verify_copy(c):
     else:
         if (rec.get("scan") or {}).get("exit") != 0:
             why.append("the scan at the seal did not exit 0")
+        # review aacf3c0 C-3 (m-F): the receipt itself must show what stage-check judged, whatever the check file says:
+        # a receipt of clearance v4 or later, a covered key store, a recorded daemon and proven stores
+        v = str((rec.get("tool") or {}).get("clearance") or "")
+        if not (v.isdigit() and int(v) >= 4):
+            why.append(f"the receipt was written by clearance {v or 'of no version'}, older than v4 (no key store "
+                       "rule, no daemon identity): seal and tear down again with the current clearance")
+        why += _keystore_reasons(rec.get("keystore"))
+        dmn = rec.get("daemon")
+        if not (isinstance(dmn, dict) and dmn.get("id")):
+            why.append("the receipt records no Docker daemon identity: nothing shows which daemon's container list "
+                       "proved the stores gone")
+        why += _store_reasons(rec.get("container_sources") or {})
         if not isinstance(chk, dict) or chk.get("result") != "PASS" or chk.get("receipt_sha256") != rec_sha:
             why.append("no PASS stage-check bound to this receipt (CLEARANCE.check.json): run stage-check on the host "
                        "first, then copy")
