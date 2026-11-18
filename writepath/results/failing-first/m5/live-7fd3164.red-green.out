@@ -1,0 +1,39 @@
+# m5 live window on t2-dev: sh results/failing-first/harness/m5_check.sh <src-7fd3164> <src-0bff333 (m4 mentions.py, unchanged to 15b3255)>
+lock taken 2026-11-18T00:07:56Z new 7fd3164 old 0bff333 free_kib 22090460
+unicode 15.0.0
+== M both readings, not closed
+both [('0o', 11), ('1il', 11), ('il', 23)] not_closed 66 first_use_s 1.64 id m5
+== G1 test_ident (m5)
+Ran 41 tests in 5.452s
+
+OK
+== R1 test_ident (new tests, wp/mentions.py of the m4 tree)
+FAIL: test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings.test_m5_ascii_letters_and_digits_are_their_own_keys)
+FAIL: test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings.test_m5_both_readings_glyphs)
+FAIL: test_m5_cap_refuses_identifiers_over_it (tests.test_ident.F11M5Readings.test_m5_cap_refuses_identifiers_over_it)
+FAIL: test_m5_closure_over_the_tables (tests.test_ident.F11M5Readings.test_m5_closure_over_the_tables)
+FAIL: test_m5_documented_misses (tests.test_ident.F11M5Readings.test_m5_documented_misses)
+FAIL: test_m5_generated_variants_match (tests.test_ident.F11M5Readings.test_m5_generated_variants_match)
+FAIL: test_m5_identifiers_with_digits_stay_distinct (tests.test_ident.F11M5Readings.test_m5_identifiers_with_digits_stay_distinct)
+FAIL: test_m5_identity_key_is_one_of_the_text_keys (tests.test_ident.F11M5Readings.test_m5_identity_key_is_one_of_the_text_keys)
+FAIL: test_m5_near_misses_do_not_match (tests.test_ident.F11M5Readings.test_m5_near_misses_do_not_match)
+FAIL: test_m5_not_closed_list (tests.test_ident.F11M5Readings.test_m5_not_closed_list)
+FAIL: test_m5_real_name_pairs_stay_apart (tests.test_ident.F11M5Readings.test_m5_real_name_pairs_stay_apart)
+FAIL: test_m5_stated_over_match (tests.test_ident.F11M5Readings.test_m5_stated_over_match)
+FAIL: test_m5_window_over_the_cap_is_not_enumerated (tests.test_ident.F11M5Readings.test_m5_window_over_the_cap_is_not_enumerated)
+FAIL: test_s6_capital_i_lookalike_in_text (tests.test_ident.Matcher.test_s6_capital_i_lookalike_in_text)
+FAIL: test_s6_one_case_insensitive_key_per_identifier (tests.test_ident.Matcher.test_s6_one_case_insensitive_key_per_identifier)
+FAIL: test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables.test_matcher_id_names_unicode_version_and_tables)
+Ran 41 tests in 5.102s
+FAILED (failures=16)
+== G2 test_d3_pg live (new)
+Ran 16 tests in 1.824s
+
+OK
+== P1 setup --reset, exp.d4_store_mark R=1 (new)
+setup ok reset
+d4_store_mark {'pass': True, 'why': []}
+RESULT d4_store_mark sha256=1f098ad88b1f3222cec8198143c174270b8538dbe56f6e7090cd88cb4fa723a2 file=~/emlab2-16096/wphard/wp/results/d4_store_mark.1f098ad88b1f3222.json
+lock released 2026-11-18T00:08:12Z
+exit 0
+ls: cannot access '~/emlab2-16096/RUNLOCK': No such file or directory
