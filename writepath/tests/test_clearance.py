@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import secrets
 import shutil
 import subprocess
@@ -22,6 +23,7 @@ TOOL = os.environ.get("CLEARANCE_UNDER_TEST") or str(HERE / "runkit" / "clearanc
 GOOD = {"stream": "emlab2-wphard", "pg_port": "25660", "es_url": "http://127.0.0.1:19460",
         "pg_container": "emlab2-wphard-pg", "es_container": "emlab2-wphard-es"}
 FMT = "{{.ID}} {{.Names}}"
+STREAM_LABEL = "emlab2.stream=wphard"            # host/bootstrap.py LABEL; bound by test_integ_stream_label_is_bootstraps
 DATA = {"es": "/usr/share/elasticsearch/data", "pg": "/var/lib/postgresql/data"}
 
 DOCKER = """#!/bin/sh
@@ -49,6 +51,14 @@ case "$1" in
       *) echo "fake docker: unexpected query" >&2; exit 9 ;;
     esac ;;
   ps)
+    if [ "$#" = 7 ] && [ "$4" = "--filter" ]; then     # the containers carrying a label (<full id>.labels: one per line)
+      [ "$2" = "-a" ] && [ "$3" = "--no-trunc" ] && [ "$6" = "--format" ] && [ "$7" = "{{.ID}}" ] &&
+        [ "${5#label=}" != "$5" ] || { echo "fake docker: unexpected ps call" >&2; exit 9; }
+      [ -n "${FAKE_DOCKER_FILTER_DOWN:-}" ] && { echo "Error response from daemon: (fake filter failure)" >&2; exit 1; }
+      for f in "$d"/*.labels; do   # a container exists while its .name does (tests remove one by its .name)
+        i=${f##*/}; i=${i%%.labels}; [ -e "$d/$i.name" ] && grep -qxF -- "${5#label=}" "$f" && echo "$i"; done
+      exit 0
+    fi
     [ "$#" = 5 ] && [ "$2" = "-a" ] && [ "$3" = "--no-trunc" ] && [ "$4" = "--format" ] && [ "$5" = "%s" ] ||
       { echo "fake docker: unexpected ps call" >&2; exit 9; }
     for f in "$d"/*.name; do [ -e "$f" ] || continue; i=${f##*/}; printf '%%s %%s\\n' "${i%%.name}" "$(cat "$f")"; done ;;
@@ -57,7 +67,7 @@ case "$1" in
     shift 2
     for c in "$@"; do
       [ -e "$d/$c.name" ] || { echo "Error response from daemon: No such container: $c" >&2; exit 1; }
-      rm -f "$d/$c.name" "$d/$c.inspect"; echo "$c"
+      rm -f "$d/$c.name" "$d/$c.inspect" "$d/$c.labels"; echo "$c"
     done ;;
   inspect)
     [ "$#" = 4 ] && [ "$2" = "--type" ] && [ "$3" = "container" ] || { echo "fake docker: unexpected inspect call" >&2; exit 9; }
@@ -122,10 +132,15 @@ class Clearance(unittest.TestCase):
         (s / "r.json").write_text(json.dumps({"verdict": "PASS"}))
         return s
 
-    def container(self, name, data_type="tmpfs"):
-        """A fake container; its store's data directory (by the name's -es or -pg suffix) on a mount of data_type."""
+    def container(self, name, data_type="tmpfs", labels=None):
+        """A fake container; its store's data directory (by the name's -es or -pg suffix) on a mount of data_type.
+        Labels: by default the stream's (host/bootstrap.py LABEL) on a name under the stream prefix, else none."""
         cid = secrets.token_hex(32)
         (self.dock / f"{cid}.name").write_text(name + "\n")
+        if labels is None:
+            labels = [STREAM_LABEL] if name.startswith(GOOD["stream"] + "-") else []
+        if labels:
+            (self.dock / f"{cid}.labels").write_text("".join(x + "\n" for x in labels))
         d = DATA.get(name.rsplit("-", 1)[-1], "/data")
         (self.dock / f"{cid}.inspect").write_text(json.dumps([{"Id": cid, "Name": "/" + name, "HostConfig": {},
                                                                "Mounts": [{"Type": data_type, "Destination": d}]}]))
@@ -478,6 +493,45 @@ class Clearance(unittest.TestCase):
         self.container("emlab2-wphard-pgcopy")                 # neither a conf name nor sealed, but the stream's
         rc, out = self.teardown()
         self.assertEqual(rc, 1, f"teardown wrote a receipt while an unsealed store of the stream runs: {out[-300:]}")
+
+    # ---- integ (hardening 8b12324): the service containers (key service, sealer) count as the stream's
+    def test_integ_key_service_container_under_the_prefix_is_refused(self):
+        self.assertEqual(self.seal()[0], 0)
+        self.container("emlab2-wphard-keysvc")                 # the hardening key service, not sealed
+        rc, out = self.teardown()
+        self.assertEqual(rc, 1, f"teardown wrote a receipt while the key service runs: {out[-300:]}")
+
+    def test_integ_unsealed_container_with_the_stream_label_is_refused(self):
+        self.assertEqual(self.seal()[0], 0)
+        self.container("sealer-scratch", labels=[STREAM_LABEL])  # outside the prefix, but the stream's label
+        rc, out = self.teardown()
+        self.assertEqual(rc, 1, f"teardown wrote a receipt while a container of the stream's label runs: {out[-300:]}")
+        self.assertIn("label", out)
+
+    def test_integ_stage_check_fails_on_a_container_with_the_stream_label(self):
+        self.cleared()
+        self.assertEqual(self.check()[0], 0)
+        self.container("sealer-scratch", labels=[STREAM_LABEL])
+        rc, out = self.check()
+        self.assertEqual(rc, 1, f"stage-check passed while a container of the stream's label runs: {out[-300:]}")
+
+    def test_integ_another_streams_label_is_not_counted(self):
+        self.container("other-tool", labels=["emlab2.stream=other", "wphard=1"])
+        self.cleared()
+        self.assertEqual(self.check()[0], 0)
+
+    def test_integ_label_list_failure_is_refused(self):
+        self.assertEqual(self.seal()[0], 0)
+        rc, out = self.teardown(FAKE_DOCKER_FILTER_DOWN="1")
+        self.assertEqual(rc, 1, f"teardown wrote a receipt without the stream-label container list: {out[-300:]}")
+        self.assertFalse((self.set / "CLEARANCE.json").exists())
+
+    def test_integ_stream_label_is_bootstraps(self):
+        for f in ("host/bootstrap.py", "exp/h_d2_uids.py"):
+            self.assertRegex((HERE / f).read_text(), rf'(?m)^LABEL = "{re.escape(STREAM_LABEL)}"', f)
+        gp = (HERE / "exp" / "guard_policy.py").read_text()
+        k, v = STREAM_LABEL.split("=")
+        self.assertRegex(gp, rf'(?m)^STREAM_LABEL = \("{re.escape(k)}", "{re.escape(v)}"\)')
 
     # ---- C-2: teardown and stage-check judge the daemon the seal judged
     def test_c2_teardown_against_another_daemon_is_refused(self):

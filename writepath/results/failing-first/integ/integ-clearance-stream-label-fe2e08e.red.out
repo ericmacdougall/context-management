@@ -1,0 +1,44 @@
+# failing-first receipt
+# date: 2026-11-18T23:15:13Z
+# file under test: fe2e08e:writepath/runkit/clearance.py blob fcaac93d9d7c84449dffbcc842ca0bf981fe3d6a sha256 f4ef42172d917d466c60f0caf1069d84fc2b1f26f2b5747d3e450c2d58105cda
+# tree: writepath at fe2e08e (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_clearance.py from HEAD fe2e08e blob bd255d35fa1727fb24f1fce51317afc73a91066e
+# command: (cd <tree>/writepath && CLEARANCE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_clearance.Clearance.test_integ_unsealed_container_with_the_stream_label_is_refused tests.test_clearance.Clearance.test_integ_stage_check_fails_on_a_container_with_the_stream_label tests.test_clearance.Clearance.test_integ_label_list_failure_is_refused
+test_integ_unsealed_container_with_the_stream_label_is_refused (tests.test_clearance.Clearance) ... FAIL
+test_integ_stage_check_fails_on_a_container_with_the_stream_label (tests.test_clearance.Clearance) ... FAIL
+test_integ_label_list_failure_is_refused (tests.test_clearance.Clearance) ... FAIL
+
+======================================================================
+FAIL: test_integ_unsealed_container_with_the_stream_label_is_refused (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.wZs3tF0wvF/writepath/tests/test_clearance.py", line 508, in test_integ_unsealed_container_with_the_stream_label_is_refused
+    self.assertEqual(rc, 1, f"teardown wrote a receipt while a container of the stream's label runs: {out[-300:]}")
+AssertionError: 0 != 1 : teardown wrote a receipt while a container of the stream's label runs: f's; operator credentials; other streams' secrets; tampering by the same OS user with the receipt, the ledger or this tool. The receipt holds the SHA-256 of each inventoried value: safe to publish for generated values (token_urlsafe(32), os.urandom), not for a low-entropy one (H-1 rules those out).
+
+
+======================================================================
+FAIL: test_integ_stage_check_fails_on_a_container_with_the_stream_label (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.wZs3tF0wvF/writepath/tests/test_clearance.py", line 516, in test_integ_stage_check_fails_on_a_container_with_the_stream_label
+    self.assertEqual(rc, 1, f"stage-check passed while a container of the stream's label runs: {out[-300:]}")
+AssertionError: 0 != 1 : stage-check passed while a container of the stream's label runs: f's; operator credentials; other streams' secrets; tampering by the same OS user with the receipt, the ledger or this tool. The receipt holds the SHA-256 of each inventoried value: safe to publish for generated values (token_urlsafe(32), os.urandom), not for a low-entropy one (H-1 rules those out).
+
+
+======================================================================
+FAIL: test_integ_label_list_failure_is_refused (tests.test_clearance.Clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.wZs3tF0wvF/writepath/tests/test_clearance.py", line 526, in test_integ_label_list_failure_is_refused
+    self.assertEqual(rc, 1, f"teardown wrote a receipt without the stream-label container list: {out[-300:]}")
+AssertionError: 0 != 1 : teardown wrote a receipt without the stream-label container list: f's; operator credentials; other streams' secrets; tampering by the same OS user with the receipt, the ledger or this tool. The receipt holds the SHA-256 of each inventoried value: safe to publish for generated values (token_urlsafe(32), os.urandom), not for a low-entropy one (H-1 rules those out).
+
+
+----------------------------------------------------------------------
+Ran 3 tests in 3.417s
+
+FAILED (failures=3)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_clearance tests/test_clearance.py 13f83a70ba442e15
+# exit status: 1

@@ -10,7 +10,8 @@ byte-for-byte the one sealed, and that the defence-in-depth scan of it (runkit/l
       credential by inventory id, class, source number and SHA-256; the scanner's result; the Docker daemon (ID, name,
       context, DOCKER_HOST, DOCKER_CONTEXT) and the names a store can carry (conf names, stream prefix): teardown and
       stage-check refuse another daemon or endpoint, and any unsealed container under a sealed or current conf name or
-      the prefix (P12). --no-keystore records its reason and is never clearance: the seal exits 1 and stage-check FAILs
+      the prefix (P12), or carrying the stream's label (exp/guard_policy.py STREAM_LABEL, the label host/bootstrap.py
+      and the service containers carry, whatever the name). --no-keystore records its reason and is never clearance: the seal exits 1 and stage-check FAILs
       (P13). Writes SET/CLEARANCE.seal.json.
       Exit 0 sealed and clean, 1 sealed but staging blocked (teardown still proceeds), 2 not sealed.
   teardown WP_HOME SET [--remove]
@@ -48,7 +49,7 @@ LIMITS = ("LIMITS clearance v4 (GATE-DESIGN 7.4, 8.2 P12 and P13): cleared = eve
           "docker inspect at the seal, and was absent from the container list of the daemon the seal recorded (its "
           "ID, name and context, and DOCKER_HOST and DOCKER_CONTEXT, equal; the daemon ID's uniqueness is not "
           "documented by Docker: ASSUMPTION) at teardown and at the stage check, when no other container carried a "
-          "conf name sealed or current, or the stream prefix, either, so every role, API key and key held only in it "
+          "conf name sealed or current, the stream prefix or the stream label, either, so every role, API key and key held only in it "
           "is destroyed; a receipt that names no store, or a store not so shown, or a key store not covered "
           "(--no-keystore), fails the stage check; "
           "every entry in WP_HOME/secrets*, WP_SECRETS_DIR and WP_HOME/svc and the file oldhome/pgpass was removed; "
@@ -314,6 +315,22 @@ def containers():
     return out
 
 
+def labelled(key, value):
+    """Full ids of the containers carrying the stream label key=value, any name, from a successful filtered
+    `docker ps -a --no-trunc`. Anything else is a Refused: an unreadable list never means 'none'."""
+    cmd = ["docker", "ps", "-a", "--no-trunc", "--filter", f"label={key}={value}", "--format", "{{.ID}}"]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=120, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise Refused(f"Docker's list of containers with the stream label cannot be read ({type(e).__name__})") from None
+    if r.returncode != 0:
+        raise Refused(f"Docker's list of containers with the stream label cannot be read (docker exit {r.returncode})")
+    ids = r.stdout.split()
+    if not all(HEX64.fullmatch(i) for i in ids):
+        raise Refused("Docker's list of containers with the stream label has a line of an unexpected form")
+    return set(ids)
+
+
 def _storage(cid, data):
     """None when Docker shows the container's data directory on a private tmpfs with nothing mounted below it (the
     gate's B3 rule, from inspect only); else the reason its removal does not prove its store destroyed."""
@@ -373,14 +390,17 @@ def _names(g):
 
 
 def _late_conf(g, listing, sealed, sealed_names):
-    """Ids of containers not in the seal that carry a conf name sealed then or current now, or the stream prefix: a
-    store started after the seal (review a108fc3 C-1: the names are the sealed ones too, not only the current conf).
-    Until H-1, bootstrap reuses an existing password file, so such a store holds the sealed values."""
+    """Ids of containers not in the seal that carry a conf name sealed then or current now, the stream prefix, or the
+    stream label: a store or service container (key service, sealer) started after the seal (review a108fc3 C-1: the
+    names are the sealed ones too, not only the current conf). Until H-1, bootstrap reuses an existing password file,
+    so such a store holds the sealed values."""
     now = _names(g)
     sn = sealed_names if isinstance(sealed_names, dict) else {}
     names = {x for x in (now["es"], now["pg"], sn.get("es"), sn.get("pg")) if x}
     prefixes = tuple(x for x in (now["prefix"], sn.get("prefix")) if x)
-    return sorted(c for c, n in listing.items() if c not in sealed and (n in names or n.startswith(prefixes)))
+    lab = labelled(*g.GP.STREAM_LABEL)
+    return sorted({c for c, n in listing.items() if c not in sealed and (n in names or n.startswith(prefixes))} |
+                  (lab - set(sealed)))
 
 
 def _keystore_reasons(ks):
@@ -636,7 +656,7 @@ def teardown(home, s, remove):
     late = _late_conf(g, listing, sealed, sl.get("names"))
     if late:
         short = ", ".join(c[:12] for c in late)
-        raise Refused(f"{len(late)} container(s) carry a sealed or current conf name or the stream prefix but are not "
+        raise Refused(f"{len(late)} container(s) carry a sealed or current conf name, the stream prefix or the stream label but are not "
                       f"in the seal ({short}): a store started after the seal may hold the sealed credentials; stop "
                       "it, then seal again")
     locs, bad = locations(home)
@@ -698,7 +718,7 @@ def stage_check(home, s):
                 why.append(f"{len(back)} receipted container(s) exist ({', '.join(c[:12] for c in back)})")
             late = _late_conf(g, listing, set(rec["containers"]), rec.get("names"))
             if late:
-                why.append(f"{len(late)} container(s) carry a sealed or current conf name or the stream prefix but are "
+                why.append(f"{len(late)} container(s) carry a sealed or current conf name, the stream prefix or the stream label but are "
                            f"not in the receipt ({', '.join(c[:12] for c in late)}): a store started after the seal")
             why += credentials_left(home)
         except Refused as e:
