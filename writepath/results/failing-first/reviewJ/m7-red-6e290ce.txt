@@ -1,0 +1,62 @@
+# offline modules from a working-tree copy (m7-red-6e290ce), run 2026-11-18T21:57:25Z: python -m unittest tests.test_h6e_judge
+.FFFFFFF
+======================================================================
+FAIL: test_j2_mixed_bulk_B_item (tests.test_h6e_judge.H6eJudge.test_j2_mixed_bulk_B_item)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 58, in test_j2_mixed_bulk_B_item
+    self.assertTrue(any(w.startswith("C14a") for w in self.judge(x)[0]), "B's bulk item accepted, no reason given")
+AssertionError: False is not true : B's bulk item accepted, no reason given
+
+======================================================================
+FAIL: test_j3_mixed_bulk_own_refused_is_invalid (tests.test_h6e_judge.H6eJudge.test_j3_mixed_bulk_own_refused_is_invalid)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 63, in test_j3_mixed_bulk_own_refused_is_invalid
+    self.assertIn("C14a own", self.judge(x)[1])
+AssertionError: 'C14a own' not found in {}
+
+======================================================================
+FAIL: test_j4_reindex_created (tests.test_h6e_judge.H6eJudge.test_j4_reindex_created)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 68, in test_j4_reindex_created
+    self.assertTrue(any(w.startswith("C14b") for w in self.judge(x)[0]))
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_j5_stale_without_require_alias (tests.test_h6e_judge.H6eJudge.test_j5_stale_without_require_alias)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 73, in test_j5_stale_without_require_alias
+    self.assertTrue(any(w.startswith("C14c") for w in self.judge(x)[0]))
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_j6_mapping (tests.test_h6e_judge.H6eJudge.test_j6_mapping)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 78, in test_j6_mapping
+    self.assertTrue(any(w.startswith("C14d") for w in self.judge(x)[0]))
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_j7_missing (tests.test_h6e_judge.H6eJudge.test_j7_missing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 86, in test_j7_missing
+    self.assertIn("C14 missing", self.judge(x)[0])
+AssertionError: 'C14 missing' not found in []
+
+======================================================================
+FAIL: test_j8_c9_files (tests.test_h6e_judge.H6eJudge.test_j8_c9_files)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/scratch/m7-red-6e290ce.zSfa/writepath/tests/test_h6e_judge.py", line 90, in test_j8_c9_files
+    self.assertIn(n, H.PROBE_FILES, f"C9 does not probe {n}")
+AssertionError: 'projector_role_key' not found in {'broker_es_pw_file': '/svc/broker/es_broker_password', 'broker_pgpass': '/svc/broker/pgpass.wp_broker', 'elastic_pw_file': '/operator/secrets/es_elastic_password', 'admin_es_key': '/operator/secrets/es_api_key.json', 'admin_pgpass': '/operator/secrets/pgpass', 'operator_broker_pw_file': '/operator/secrets/es_broker_password'} : C9 does not probe projector_role_key
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.001s
+
+FAILED (failures=7)

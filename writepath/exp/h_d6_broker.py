@@ -8,7 +8,8 @@
                                     one-shot per run: python -m exp.h_d6_broker child <arm> <json args>
 The operator (this process: setup, projection of tenants A and B, witnesses, descriptor reads, broker stop and start)
 uses the lab's admin credentials, which the app container gets read-only at /operator/secrets for C9 only.
-Cases C1 to C13 and the verdict rule are in exp/THRESHOLDS.md amendment H6. Every encoded key stays in the child's
+Cases C1 to C13 and the verdict rule are in exp/THRESHOLDS.md amendment H6; C9's role-key and seal-key files and
+C14a to C14d (mixed bulk, reindex from B, stale name without require_alias, mapping updates) in amendment H6e. Every encoded key stays in the child's
 memory; the child prints only key id fingerprints and, on a separate line the orchestrator keeps in memory and never writes, the
 sha256 of each key value, so C13 can look for the values in the broker log, the child output and the result.
 usage: python -m exp.h_d6_broker [R]"""
@@ -31,7 +32,12 @@ N_PAIRS = 20
 PROBE_FILES = {"broker_es_pw_file": "/svc/broker/es_broker_password", "broker_pgpass": "/svc/broker/pgpass.wp_broker",
                "elastic_pw_file": "/operator/secrets/es_elastic_password",
                "admin_es_key": "/operator/secrets/es_api_key.json", "admin_pgpass": "/operator/secrets/pgpass",
-               "operator_broker_pw_file": "/operator/secrets/es_broker_password"}
+               "operator_broker_pw_file": "/operator/secrets/es_broker_password",
+               # H6e (review J M7): the role keys (the projector's re-points any tenant's alias) and the seal key
+               "projector_role_key": "/operator/secrets/es_api_key.projector.json",
+               "eraser_role_key": "/operator/secrets/es_api_key.eraser.json",
+               "verifier_role_key": "/operator/secrets/es_api_key.verifier.json",
+               "seal_key": "/operator/secrets/seal_key"}
 TOKEN = re.compile(rb"[A-Za-z0-9+/=_-]{20,}")
 
 
@@ -57,6 +63,40 @@ def _alias_req(es, actions):
     from wp.es import _etype
     s, j = es.req("POST", "/_aliases", {"actions": actions}, ok=None)
     return [s, None if s == 200 and not j.get("errors") else _etype(j) or "errors"]
+
+
+def _bulk(es, items):
+    """H6e C14a: one _bulk (require_alias) of creates; [request status, [item status, error type] per item]."""
+    from wp.es import _etype
+    nd = "".join(json.dumps({"create": {"_index": t, "_id": i}}) + "\n" + json.dumps({"event_id": i, "kind": "h6probe"}) + "\n"
+                 for t, i in items)
+    s, j = es.req("POST", "/_bulk", ndjson=nd, ok=None, require_alias="true")
+    its = [next(iter(x.values())) for x in (j.get("items") or [])] if isinstance(j, dict) else []
+    return [s, [[x.get("status"), _etype(x) or None] for x in its]]
+
+
+def _reindex(es, src, dst):
+    """H6e C14b: [status, error type, documents created]."""
+    from wp.es import _etype
+    s, j = es.req("POST", "/_reindex", {"source": {"index": src}, "dest": {"index": dst, "op_type": "create"}}, ok=None)
+    return [s, None if s == 200 else _etype(j), (j or {}).get("created") if isinstance(j, dict) else None]
+
+
+def _mapping(es, target, field):
+    """H6e C14d: PUT _mapping through an alias name; [status, error type]."""
+    from wp.es import _etype
+    s, j = es.req("PUT", f"/{target}/_mapping", {"properties": {field: {"type": "keyword"}}}, ok=None)
+    return [s, None if s == 200 else _etype(j)]
+
+
+def _c14(es, A, Bt, E, eb):
+    """H6e C14a, C14b, C14d with one key (A's writer key in the fenced arm, the projector role key in the control)."""
+    from wp import families as F
+    own, other = F.write_alias(A, "events", E), F.write_alias(Bt, "events", eb)
+    st, items = _bulk(es, [(own, "h6-c14a-own"), (other, "h6-c14a-B")])
+    return {"a": {"request": st, "own": items[0] if items else None, "B": items[1] if len(items) > 1 else None},
+            "b": _reindex(es, F.read_alias(Bt, "events"), own),
+            "d": {"own_mapping": _mapping(es, own, f"h6c14d_{E}"), "B_mapping": _mapping(es, other, f"h6c14d_{eb}")}}
 
 
 def _files():
@@ -110,6 +150,7 @@ def child_fenced(a):
         res["C4"] = {"add_next": _alias_req(es1, [{"add": {"index": idx, "alias": F.write_alias(A, "events", E + 1)}}]),
                      "remove_own": _alias_req(es1, [{"remove": {"index": idx, "alias": F.write_alias(A, "events", E)}}]),
                      "add_on_B": _alias_req(es1, [{"add": {"index": F.base_index(Bt, "events"), "alias": F.write_alias(Bt, "events", eb + 1)}}])}
+        res["C14"] = _c14(es1, A, Bt, E, eb)                 # H6e
         # C5: h2 takes the lease by force; the broker's CAS moves -w; h1's key then writes through -w<E>
         l2 = L.acquire(conn, A, L.PROJECTOR, 120.0, force=True)
         k2 = key(A, l2, "mint_A_h2") if l2 else None
@@ -117,6 +158,9 @@ def child_fenced(a):
             res["C5"] = {"E2": l2.epoch, "h2_write": _w(B.es_with_key(k2, "projector"), F.write_alias(A, "events", l2.epoch), "h6-c5own"),
                          "stale": [_w(es1, F.write_alias(A, "events", E), f"h6-c5-{i}") for i in range(N_STALE)]}
             res["C5"]["stale_accepted"] = sum(1 for s, _ in res["C5"]["stale"] if s in (200, 201))
+            # H6e C14c: the stale name WITHOUT require_alias (an accepted write would auto-create an index of that name)
+            c = [_w(es1, F.write_alias(A, "events", E), f"h6-c14c-{i}", alias=False) for i in range(5)]
+            res["C14"]["c"] = {"writes": c, "accepted": sum(1 for s, _ in c if s in (200, 201))}
             res["C6"] = {}
             for name, (ep, who) in {"old_epoch_h1": (E, la.holder), "new_epoch_h1": (l2.epoch, la.holder),
                                     "new_epoch_empty": (l2.epoch, "")}.items():
@@ -204,6 +248,7 @@ def child_control(a):
     res["C3"] = {"A_x": _w(es, F.erase_alias(A, "events"), "h6-c3")}
     res["C4"] = {"add_on_B": _alias_req(es, [{"add": {"index": F.base_index(Bt, "events"), "alias": F.write_alias(Bt, "events", eb + 1)}}]),
                  "add_next": _alias_req(es, [{"add": {"index": idx, "alias": F.write_alias(A, "events", E + 1)}}])}
+    res["C14_reported"] = _c14(es, A, Bt, E, eb)        # H6e: findings of the role-key build, not judged
     l2 = L.acquire(conn, A, L.PROJECTOR, 120.0, force=True)
     try:
         F.fence_es(es, A, l2.epoch)
@@ -491,6 +536,21 @@ def judge(arm, x, wit):
                 why.append(f"{c} {k} accepted")
         if c not in x and not inv:
             why.append(f"{c} missing")
+    c14 = x.get("C14") or {}                                 # H6e
+    if not c14 and not inv:
+        why.append("C14 missing")
+    a14 = c14.get("a") or {}
+    if c14 and not (isinstance(a14.get("own"), list) and a14["own"][0] in (200, 201)):
+        inv["C14a own"] = f"own bulk item {a14.get('own')} (request {a14.get('request')}): the B refusal would be vacuous"
+    if c14 and (not isinstance(a14.get("B"), list) or a14["B"][0] in (200, 201)):
+        why.append(f"C14a B item {a14.get('B')}")
+    b14 = c14.get("b")
+    if c14 and (not isinstance(b14, list) or (b14[0] == 200 and (b14[2] or 0) > 0)):
+        why.append(f"C14b reindex {b14}")
+    if c14 and x.get("C5") and (c14.get("c") or {}).get("accepted", 1) != 0:
+        why.append(f"C14c accepted {(c14.get('c') or {}).get('accepted')}")
+    if c14 and ok((c14.get("d") or {}).get("B_mapping")):
+        why.append(f"C14d B mapping {(c14.get('d') or {}).get('B_mapping')}")
     c5 = x.get("C5") or {}
     if c5 and not ok(c5.get("h2_write")):
         inv["C5_h2_write"] = f"h2 write {c5.get('h2_write')}"
@@ -536,7 +596,13 @@ def main(r=5):
                       "identities on one host, not host isolation", "the broker trusts every allowed peer uid for every "
                       "tenant (tenant authority: design path item 2)", "holder strings are trusted within one service "
                       "identity", "a key already issued writes until the next CAS or its 1 h expiry (C12 a)",
-                      "the operator directory is mounted into the app container for this test only"],
+                      "the operator directory is mounted into the app container for this test only",
+                      "H6e: the default role-key mode (WP_BROKER unset) has no tenant isolation: the projector role key "
+                      "holds manage and create_index on every tenant's names and can re-point any tenant's alias; only "
+                      "broker-minted keys are tenant- and epoch-scoped; a broker-mode deployment must not mint or place "
+                      "the role keys where the application runs",
+                      "H6e C14d: a writer key can add fields to its own tenant's mapping (the index privilege includes "
+                      "mapping updates); tenant-local, reported, not judged"],
            "cleanup": "broker-minted keys are not invalidated by this experiment; they expire after 1 h"}
     res["broker_user"] = es_keys.create_broker()
     if not (config.SECRETS / "es_api_key.projector.json").exists():
