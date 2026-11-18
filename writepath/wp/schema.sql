@@ -368,7 +368,7 @@ begin
     raise exception 'seal_missing: no attestation from the seal authority' using errcode = 'WPS40';
   end if;
   if not wp_seal.verify(NEW.seal_key_id, NEW.seal_mac,
-       array['wp-seal-v1', NEW.seal_key_id, NEW.tenant_id::text, NEW.event_id, NEW.subject_id, NEW.content_digest,
+       array['wp-seal-v2', 'events', NEW.seal_key_id, NEW.tenant_id::text, NEW.event_id, NEW.subject_id, NEW.content_digest,
              NEW.mention_scan_upto::text, NEW.mention_matcher, NEW.secret_scan, cardinality(NEW.mentions)::text] || NEW.mentions ||
        array[NEW.lease_scope, NEW.lease_epoch::text, NEW.seal_batch, NEW.seal_index::text, NEW.seal_count::text]) then
     raise exception 'seal_invalid' using errcode = 'WPS41';
@@ -497,7 +497,7 @@ begin
     raise exception 'seal_missing: no attestation from the seal authority' using errcode = 'WPS40';
   end if;
   if not wp_seal.verify(NEW.seal_key_id, NEW.seal_mac,
-       array['wp-seal-v1', NEW.seal_key_id, NEW.tenant_id::text, NEW.event_id, NEW.subject_id, encode(sha256(NEW.content_enc), 'hex'),
+       array['wp-seal-v2', 'quarantine', NEW.seal_key_id, NEW.tenant_id::text, NEW.event_id, NEW.subject_id, encode(sha256(NEW.content_enc), 'hex'),
              NEW.mention_scan_upto::text, NEW.mention_matcher, NEW.secret_scan, cardinality(NEW.mentions)::text] || NEW.mentions ||
        array['session:' || NEW.session_id, NEW.presented_epoch::text, NEW.seal_batch, NEW.seal_index::text, NEW.seal_count::text]) then
     raise exception 'seal_invalid' using errcode = 'WPS41';

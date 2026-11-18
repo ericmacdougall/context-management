@@ -68,7 +68,8 @@ SEAL_COLS = ("seal_key_id", "seal_mac", "seal_batch", "seal_index", "seal_count"
 def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
     """events: dicts with subject_id, kind, actor, trust_origin, ts_event (aware datetime), content (str), optional
     idem_key and, for kind='decision', decision={item, action, based_on_event_id, source_event_id}.
-    Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch.
+    Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch
+    except SealUnavailable from the quarantine reseal (review J M2).
     Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision, and
     WriteRefused (ContentTooLarge WPM01, MatcherBudgetExceeded WPM02, CallBudgetExceeded WPM03; m5 b1) before anything
     else when an event is over the content size bound or its matcher key budget, or the call over its limits: the whole batch is refused, nothing is stored (no event, no
@@ -81,10 +82,10 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
     eids = [uuid.uuid4().hex for _ in events]
     batch = uuid.uuid4().hex
 
-    def seal():
+    def seal(purpose="events"):
         try:
             got = auth.seal(t, lease.scope, lease.epoch, batch, [{"event_id": eid, "subject_id": e["subject_id"], "content": e["content"]}
-                                                                for eid, e in zip(eids, events)])
+                                                                for eid, e in zip(eids, events)], purpose=purpose)
         except WriteRefused as ex:
             raise _record(conn, t, ex) from None
         if [r["event_id"] for r in got] != eids:
@@ -121,6 +122,14 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
             if st == "WPS09":
                 raise IdempotencyConflict(str(ex).split("\n")[0]) from None
             if is_stale_error(ex):
+                # review J M2: an attestation is valid in one table only, so the authority seals the batch again for
+                # quarantine (a fresh scan against the current identifier set; review J N1). A speaker erased meanwhile:
+                # the whole batch is that speaker's or another's, so every event is dropped as erased.
+                try:
+                    _apply_seal(prepared, seal("quarantine"))
+                except K.SubjectErased:
+                    return {"accepted": [], "duplicates": [], "quarantined": 0, "dropped_over_cap": 0, "dropped_stale": 0,
+                            "dropped_erased": len(prepared)}
                 q = dropped = stale = 0
                 for p in prepared:
                     try:
@@ -135,9 +144,9 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
                     except psycopg.Error as qe:
                         qs = getattr(qe, "sqlstate", None)
                         if qs in ("WPS17", "WPS18", "WPS42"):
-                            # review J N1: a zombie write scanned below the current identifier set, mentioning an erased
+                            # review J N1: a write rescanned below an identifier declared meanwhile, mentioning an erased
                             # subject, or removed by an erasure is refused by the store; it is dropped and counted here
-                            # (the writer's lease was taken over, so nothing is resealed for it)
+                            # (the writer's lease was taken over: it is not retried)
                             stale += 1
                         elif qs != "WPS03":     # an erased subject's stale write is dropped, not kept
                             raise

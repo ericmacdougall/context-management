@@ -317,8 +317,13 @@ class D3Store(unittest.TestCase):
         pid = self.propose(self.app, subject, h, rv=M.rule_version(), t=t)
         self.assertEqual(self.state(self.r1, "select wp_identifier_approve(%s, %s, %s)", (pid, h, M.rule_version())), "ok")
 
-    def sealed(self, t, sid, eid, speaker, content, epoch, auth=None, batch="b"):
-        r = (auth or self.authority()).seal(t, "session:" + sid, epoch, batch, [{"event_id": eid, "subject_id": speaker, "content": content}])[0]
+    def sealed(self, t, sid, eid, speaker, content, epoch, auth=None, batch="b", purpose="events"):
+        """A row sealed by the authority for `purpose` (review J M2). An authority without purposes (before M2) is called
+        without one, so an older tree runs red by assertion, never by a TypeError."""
+        import inspect
+        a = auth or self.authority()
+        kw = {"purpose": purpose} if "purpose" in inspect.signature(a.seal).parameters else {}
+        r = a.seal(t, "session:" + sid, epoch, batch, [{"event_id": eid, "subject_id": speaker, "content": content}], **kw)[0]
         return dict(tenant_id=t, session_id=sid, event_id=eid, idem_key=eid, req_hash="rh", kind="message", subject_id=speaker, actor="user",
                     trust_origin="user_typed", content_enc=r["content_enc"], content_digest=r["content_digest"], mentions=r["mentions"],
                     mention_scan_upto=r["scan"], mention_matcher=r["matcher"], secret_scan=r["secret_scan"], lease_scope="session:" + sid,
@@ -1004,7 +1009,7 @@ class D3Store(unittest.TestCase):
         self.tenant(t)
         epoch = self.lease(t, "s6a")
         self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['S6Y'])", (t,))
-        r = self.sealed(t, "s6a", "s6e", "S6Y", "words", epoch)
+        r = self.sealed(t, "s6a", "s6e", "S6Y", "words", epoch, purpose="quarantine")
         bare = dict(tenant_id=t, session_id="s6a", subject_id="S6Y", presented_epoch=epoch, reason="stale_epoch", kind="message",
                     content_enc=b"planted", mentions=[], event_id="s6p")
         self.assertEqual(self.insert(self.app, "quarantine", bare), "WPS40", "a quarantine row without an attestation was stored")
@@ -1062,6 +1067,21 @@ class D3Store(unittest.TestCase):
         self.assertEqual(self.put(r2), "WPS41", "an attestation under an inactive key was accepted")
         self.assertEqual(self.put(r), "ok")
 
+    def test_s10_an_attestation_is_valid_in_one_table(self):
+        """Review J M2: the target table is attested. A row sealed for events is refused in quarantine and a row sealed
+        for quarantine is refused in events; each is accepted in its own table (the controls). Before: one attestation
+        was valid in either table."""
+        t = "d3s10"
+        self.tenant(t)
+        epoch = self.lease(t, "s10a")
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['S10Y'])", (t,))
+        ev = self.sealed(t, "s10a", "s10e", "S10Y", "words", epoch, purpose="events")
+        qu = self.sealed(t, "s10a", "s10q", "S10Y", "other words", epoch, purpose="quarantine")
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(ev)), "WPS41", "an events attestation was accepted in quarantine")
+        self.assertEqual(self.put(qu), "WPS41", "a quarantine attestation was accepted in events")
+        self.assertEqual(self.put(ev), "ok", "control: the events row in events")
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(qu)), "ok", "control: the quarantine row in quarantine")
+
     # ------------------------------------------------------------------ N: quarantine after an erasure (review J N1)
     def erase_to_done(self, t, subject, name):
         """Declare `subject` with `name`, then its full erasure: mark, rescan, cascade, keys destroyed, completion done."""
@@ -1085,7 +1105,7 @@ class D3Store(unittest.TestCase):
         t = "d3n1a"
         self.tenant(t)
         epoch = self.lease(t, "n1a")
-        r = self.sealed(t, "n1a", "n1a-e", "N1Y", "I met " + NAME + " today", epoch)
+        r = self.sealed(t, "n1a", "n1a-e", "N1Y", "I met " + NAME + " today", epoch, purpose="quarantine")
         self.assertEqual(r["mentions"], [], "the identifier did not exist yet")
         j, done = self.erase_to_done(t, "N1X", NAME)
         self.assertTrue(done.get("done"), done)
@@ -1099,7 +1119,7 @@ class D3Store(unittest.TestCase):
         self.tenant(t)
         self.declare(t, "N2X", NAME)
         epoch = self.lease(t, "n1b")
-        r = self.sealed(t, "n1b", "n1b-e", "N2Y", "I met " + NAME + " today", epoch)
+        r = self.sealed(t, "n1b", "n1b-e", "N2Y", "I met " + NAME + " today", epoch, purpose="quarantine")
         self.assertEqual(r["mentions"], ["N2X"])
         j = self.job("N2X", t=t)
         from wp import erasure
@@ -1116,7 +1136,7 @@ class D3Store(unittest.TestCase):
         self.tenant(t)
         self.declare(t, "N3X", NAME)
         epoch = self.lease(t, "n1c")
-        r = self.sealed(t, "n1c", "n1c-e", "N3Y", "I met " + NAME + " today", epoch)
+        r = self.sealed(t, "n1c", "n1c-e", "N3Y", "I met " + NAME + " today", epoch, purpose="quarantine")
         self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['N3Y'])", (t,))
         self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "ok")
         j = self.job("N3X", t=t)

@@ -17,7 +17,8 @@ store (events_guard, quarantine_guard) refuses any row whose attestation is miss
 
 The attestation is HMAC-SHA256 under an independent random 32-byte key (NOT derived from the tenant key: the key
 service is an HMAC oracle for that key and hands out chain_key) over a length-prefixed encoding ("<UTF-8 octets>:<value>"
-per field, so no separator can be forged) of: "wp-seal-v1", key id, tenant, event id, subject id, sha256 hex of the
+per field, so no separator can be forged) of: "wp-seal-v2", the purpose (the one table the row is for: events or
+quarantine), key id, tenant, event id, subject id, sha256 hex of the
 ciphertext, identifier-set version, matcher id, secret-scan version, the mentions (count, then each), lease scope,
 lease epoch, batch id, index in batch, batch size. The store holds the key's HMAC pads in the private schema wp_seal and
 computes sha256(opad || sha256(ipad || M)) itself (RFC 2104). The log names counts, a refusal code and seconds, plus
@@ -35,7 +36,8 @@ import time
 
 from . import keys as K, mentions as M, secrets as SEC
 
-VERSION = "wp-seal-v1"
+VERSION = "wp-seal-v2"                       # v2 (review J M2): the target table is attested
+PURPOSES = ("events", "quarantine")
 OPS = ("seal",)
 BLOCK = 64                                   # SHA-256 block size (RFC 2104 B)
 KEY_FILE = "seal_key"
@@ -70,10 +72,13 @@ def _int(v):
 
 
 def message(key_id, tenant, event_id, subject_id, content_digest, scan, matcher, secret_scan, mentions, lease_scope,
-            lease_epoch, batch_id, index, count):
+            lease_epoch, batch_id, index, count, purpose="events"):
+    """purpose: the one table the attestation is valid in ("events" or "quarantine"; review J M2)."""
     if not isinstance(mentions, (list, tuple)):
         raise TypeError("mentions is not a list")
-    return encode([VERSION, key_id, tenant, event_id, subject_id, content_digest, _int(scan), matcher, secret_scan,
+    if purpose not in PURPOSES:
+        raise ValueError("unknown seal purpose")
+    return encode([VERSION, purpose, key_id, tenant, event_id, subject_id, content_digest, _int(scan), matcher, secret_scan,
                    _int(len(mentions)), *mentions, lease_scope, _int(lease_epoch), batch_id, _int(index), _int(count)])
 
 
@@ -136,8 +141,9 @@ class Authority:
                 _tag(tenant), _tag(batch_id), len(events), sum(len(str(e.get("content", "")).encode()) for e in events), result,
                 time.monotonic() - t0))
 
-    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events):
-        """events: [{event_id, subject_id, content}]. Returns per event, in order: {event_id, content_enc,
+    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events"):
+        """events: [{event_id, subject_id, content}]; purpose: the table the rows are for (events, or quarantine for a
+        write whose lease was taken over; review J M2). Returns per event, in order: {event_id, content_enc,
         content_digest, mentions, scan, matcher, secret_scan, seal_key_id, seal_mac, seal_batch, seal_index,
         seal_count}. Raises WriteRefused (WPM01 to WPM03) or SecretDetected before any key is used."""
         t0 = time.monotonic()
@@ -145,6 +151,8 @@ class Authority:
             if not isinstance(v, str) or not v:
                 raise ValueError("tenant, lease scope and batch id are non-empty text")
         _int(lease_epoch)
+        if purpose not in PURPOSES:
+            raise ValueError("unknown seal purpose")
         if not isinstance(events, list) or not events:
             raise ValueError("a batch is a non-empty list")
         for e in events:
@@ -172,10 +180,10 @@ class Authority:
             dg = hashlib.sha256(enc).hexdigest()
             men = sorted({x for x in f if x != e["subject_id"]})
             m = message(self.key_id, tenant, e["event_id"], e["subject_id"], dg, version, mid, sv, men, lease_scope,
-                        lease_epoch, batch_id, i, n)                                                           # 5.
+                        lease_epoch, batch_id, i, n, purpose)                                                  # 5.
             out.append({"event_id": e["event_id"], "content_enc": enc, "content_digest": dg, "mentions": men, "scan": version,
                         "matcher": mid, "secret_scan": sv, "seal_key_id": self.key_id, "seal_mac": mac(self._key, m),
-                        "seal_batch": batch_id, "seal_index": i, "seal_count": n})
+                        "seal_batch": batch_id, "seal_index": i, "seal_count": n, "purpose": purpose})
         self._note(tenant, batch_id, events, "ok", t0)
         return out
 
@@ -185,7 +193,8 @@ def dispatch(auth, op, a):
     if op != "seal":
         return {"error": "unknown_op"}
     try:
-        rows = auth.seal(a.get("tenant"), a.get("lease_scope"), a.get("lease_epoch"), a.get("batch_id"), a.get("events"))
+        rows = auth.seal(a.get("tenant"), a.get("lease_scope"), a.get("lease_epoch"), a.get("batch_id"), a.get("events"),
+                         a.get("purpose", "events"))
     except M.WriteRefused as ex:
         return {"error": "WriteRefused", "code": ex.code, "index": getattr(ex, "index", None)}
     except SEC.SecretDetected as ex:
@@ -212,8 +221,9 @@ class Client:
             raise SealUnavailable(f"seal authority unreachable ({type(e).__name__})") from None
         self.f = self.sock.makefile("rwb")
 
-    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events):
+    def seal(self, tenant, lease_scope, lease_epoch, batch_id, events, purpose="events"):
         req = {"op": "seal", "args": {"tenant": tenant, "lease_scope": lease_scope, "lease_epoch": lease_epoch, "batch_id": batch_id,
+                                      "purpose": purpose,
                                       "events": [{"event_id": e["event_id"], "subject_id": e["subject_id"], "content": e["content"]}
                                                  for e in events]}}
         try:
