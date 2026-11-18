@@ -389,16 +389,18 @@ class S1_RevokePath(_S1):
     def test_revoke_gives_up_after_xwait(self):
         """S1 only: an exclusive wait is capped at XWAIT (2 s). Past it the revoke fails with 55P03, applies nothing, and the
         queue behind it is released. ea4677a did not wait at all: it skipped the target's session row held by the open
-        end_session and applied the revoke."""
+        end_session and applied the revoke. 4.4 (tests/test_s44_pg.py): a dc_app or dc_idp holder past XWAIT is now evicted, so
+        the holder here is a superuser connection taking bob's authority lock exclusively, which is never evicted (the revoke finds
+        nothing to evict and gives up after its first round)."""
         self.unrevoke("bob")
         adm = self.tok("admin")
-        self.idp_t.execute("begin")
-        self.idp_t.execute("select dc.end_session(%s)", (self.tok("bob"),))
+        self.hold.execute("begin")
+        adv(self.hold, A_CLS, "auth", T, "bob")
         t0 = time.time()
         t, out = self.start(lambda: self.submit(self.app, adm, self.revoke_body("bob")))
         t.join(XWAIT + 2.5)
         alive = t.is_alive()
-        self.idp_t.execute("rollback")
+        self.hold.execute("rollback")
         t.join(20)
         self.assertFalse(alive, "the revoke was still waiting after XWAIT")
         self.assertEqual(out["r"].get("error"), "55P03", "the revoke after XWAIT: %r" % (out["r"],))
