@@ -38,6 +38,12 @@ this control (see the S1 section). `dev_s2_20da971.out`: s2_sessions PASS, 1860 
 patches only the proof-expiry clock (F7: the session-side patches changed nothing the arm measures, which runs proof trials only, and were removed; token expiry inside a
 transaction is covered by tests/test_delta1_pg.py M1_WallClock, not by this control).
 
+Complete DEV pg_diff at the final code, first attempt: VOID (`dev_pgdiff_20da971_VOID.out`, watcher record
+`batch_b3_20da971.watch`). t2-dev free space fell from 19,133,423,616 bytes at the batch start to 16,099,225,600 at 19:13:55Z
+(under 15 GiB), while my container's data volume grew from 113,788,149 to 398,262,013 bytes; the rest of the drop was not mine
+(likely other jobs on the host; not attributed). My watcher stopped my container at that moment (1013 s into the run): b2 had
+finished clean (300 logs, 45,206 events, 0 mismatches), B1 was cut. NOT a result.
+
 ## S1 (the final review's P1-P4 merged) and FINAL-JUDGMENT.md 4.4, t2-dev, 2026-11-18
 
 The fixer's S1 runs (`s1_*`) were never committed before; the policy owner's reruns (`rerun_*`, `s44_*`, `r3_*`, `mem_*`, `dev_*`) ran in

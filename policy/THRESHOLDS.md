@@ -1016,3 +1016,85 @@ Run lock (OWNER-COMMON): the stamped run starts only holding ~/emlab2-16096/RUNL
 Stamped run of this round: once, after this commit, on a rebuilt container and a clean synced copy (`SYNC_RUN=stamped-<commit> sh
 sync.sh`), with kit/launch_stamped.sh (POL_SEEDS=stamped, hostrun.sh all, no override variable) after kit/preflight.sh passes;
 GIT_STAMP dirty=false, commit == thresholds commit == this commit. Its verdict is reported as it falls.
+
+## Amendment 8 (2026-11-18: the review of 2262eaa, F1-F8, H1, H2; written after DEV runs; committed ALONE, the last commit of this round, before the stamped run)
+
+Why: the review of 2262eaa (GoodQA #16096) found, against the amendment 7 commit:
+- F1, F5: the lock keys A, T and S were `hashtext(kind, tenant, name)` in one 32-bit space for every tenant. With 4.4 eviction a
+  collision is no longer a wait: a tenant admin could evict and fence another tenant's backends, a subject could stall another
+  tenant, and a grant or revoke the rules refuse still took T exclusively and evicted the tenant's in-flight submitters.
+- F2: two holders eviction could not end, making a principal unrevocable: a prepared transaction (F2a) and a login role that is a
+  MEMBER of dc_app (F2b; eviction matched user names).
+- H1: end_session evicted a revocation in progress on the same key. H2: in memory, explain and read_table answered for a revoked
+  principal. F3: the first eviction round ran before the fence. F8: install left explicit advisory grants and rollback did not
+  restore the prior ACL.
+- F4: the red counts mixed classes. F6, F7: two experiment controls (below) did not measure what their labels said.
+
+Amendment 7's stamped run never started, so its seeds stay unused and are carried over unchanged. Everything below is fixed
+before this round's stamped run. Earlier amendments stay in force where not changed here. Commits are on fix/policy-final-review:
+6361bd9 (H2), 4e1ba6b (F1-F3, F5, F8, H1), 622def2 (F4), bfe2a63 (F6, F7). Red and green logs: results/red/README.md, section
+"Review of 2262eaa"; the strict counting rule is in the same file.
+
+Product code (failing-first at 2262eaa, tests/test_rev2262_pg.py and tests/test_rev2262.py; red Ran 12 FAILED failures=17 and
+FAILED failures=4; green Ran 12 OK and Ran 186 OK; the eight Postgres suites Ran 145 OK):
+- Lock identities (ASSUMPTION, the fixer's choice): A and its fence key = the principal row's `lockid`, T and its fence key = the
+  tenant row's `lockid`, from one sequence `dc.lockid_seq` (1 to 10^9, no cycle), unique, frozen by triggers. S is classed by
+  tenant (class = -lockid of the tenant), key `hashtext` of the subject within it (2^-32 per pair of one tenant, a wait, never an
+  eviction). N and L4 unchanged (32-bit hash of a random nonce; 64-bit `hashtextextended`); neither is evictable. FINAL-JUDGMENT.md
+  4.2 and 4.4 updated.
+- Refused authority changes: a revoke takes A(target) exclusively only for a principal of the caller's tenant; a revoke or grant
+  takes T exclusively only when the rules would apply it, else T shared and `bad_event`, evicting nobody; one that applies without
+  its exclusive lock fails 55P03, nothing applied.
+- Two-phase commit (ASSUMPTION, fail closed): install refuses and every API call raises 55000 while `max_prepared_transactions > 0`.
+  Environment consequence: the stamped container must run with `max_prepared_transactions = 0` (the PostgreSQL default;
+  ASSUMPTION: kit/rebuild_pg.sh, not in this repository, does not raise it; NOT checked here); install refuses otherwise.
+- Eviction scope: backends of this database whose session user is not a superuser and not a member of dc_owner (was: the user
+  names dc_app and dc_idp), that hold or wait for the key, are not the caller, and are not a revocation in progress (H1: waiting on
+  BackendTermination or on an ungranted A, T or fence request). The fence is taken before the judgment and the first eviction (F3).
+- Advisory ACL: install revokes EXECUTE on every `pg_catalog` advisory-lock function from PUBLIC and from every other explicit
+  grantee but the owner; `ops/migrate_r3_7` records the ACL it found and its rollback restores exactly that (an older mark falls back
+  to PUBLIC). This supersedes amendment 7's "rollback restores PUBLIC EXECUTE".
+- In memory (H2): explain and read_table refuse a principal revoked by the core, by policy or during the wait.
+
+Experiment control definitions changed (bfe2a63):
+- B3 ctl_idem_unprotected (F6): the variant is unchanged (no advisory lock, no idempotency index). The round now races A and B
+  through the monitor at before_commit and reports overlap True ONLY when the monitor saw B blocked between A's lock and A's commit
+  (was: True unconditionally). It CATCHES when both writes answer `superseded` and two event rows exist (verify/b3.py unchanged).
+  The B3 pass rule is unchanged: every control passes in at least 90% of R rounds, and no_head_lock witnesses overlap in at least
+  90%; the idem control's overlap count is reported, not gated. This supersedes amendment 7's "unreviewed observation" about it.
+- S2 ctl_txn_clock (F7): two patch pairs, (TIME_CHECK, the transaction clock now()) and (OPEN_ISOLATION, ""), replacing amendment
+  7's four. The removed pairs (SESSION_ISOLATION, SESSION_CLOCK) touched only token checks, and the arm writes only expired_in_txn
+  PROOF rows, so they changed nothing it measured. The control is PROOF expiry only; token expiry inside a transaction has no S2
+  control and is covered by tests/test_delta1_pg.py M1_WallClock (red at d05d731). verify/s2.py's rule text is unchanged in effect
+  (its token clause matches nothing the arm writes, disclosed in its docstring). Every other S2 pin of amendment 7 is unchanged.
+
+DEV results (dev seeds, development observations, not proof; t2-dev, tree w4 = tree object 20da971, whose pol/, exp/, ops/,
+verify/ and tests/ equal those of bfe2a63; logs in results/red/):
+- b3_pg PASS in 54 s: nine scenarios 50 of 50 (overlap witnessed where pinned), no_head_lock 50/50 (overlap 50), no_advisory_lock
+  50/50, idem_unprotected caught 50/50 with overlap witnessed in 49 (`dev_b3_20da971.out`). The three earlier VOID b3 runs of
+  amendment 7 are superseded by this one.
+- s2_sessions PASS, 1860 rows, 0 accepted attacks, 91 s (`dev_s2_20da971.out`).
+- Complete pg_diff: VOID (`dev_pgdiff_20da971_VOID.out`, `batch_b3_20da971.watch`). Free space on t2-dev fell from 19.13 GB to
+  16.10 GB (under 15 GiB) while my container grew 0.28 GB; my watcher stopped the container after 1013 s. b2 had finished clean
+  (300 logs, 45,206 events, 0 mismatches); B1 was cut. NOT RUN afterwards: free space stayed under the 17 GiB start bar (16.0 GB at
+  19:40Z, 13.2 GB at 20:00Z; not my files, which total about 50 MB). The last complete DEV pg_diff is still the fixer's at e816310.
+- NOT RUN for the same reason: verify --dev on these result documents, DEV mig_rehearsal at the final code (ops/migrate_r3_7.py
+  changed in 4e1ba6b; its rollback and forward are covered only by tests/test_review3_pg.py and test_s44_pg.py, green in the
+  eight-suite run), and the step-3 branch's merged-tree run.
+- Disk: my DEV container's data volume was 113.8 MB at the batch start and 398.3 MB when stopped.
+
+Not proven, disclosed (FINAL-JUDGMENT.md 4.4 residuals 5-7): a revocation in progress between two waits or applying looks like a
+stalled exclusive holder and may be evicted by a concurrent exclusive request that waited XWAIT (not observed, not measured); a
+duplicate or idempotent retry of a VALID revoke or grant still takes its exclusive locks and may evict; the API is unusable on a
+cluster with 2PC enabled; the database-wide advisory revoke breaks other tools in that database that lock as a login role. F6 and
+F7 have no failing-first unit test (controls; the DEV run is their evidence). The step-3 protocol fixtures do not catch a no-op of
+`dc._gate`'s session check.
+
+Unchanged: every other threshold, the provenance gate, the seeds of amendment 7 (fresh, unused), the environment of amendments 6 and
+7 (with the `max_prepared_transactions = 0` requirement above), the disk bar (20 GB free by `df` before the stamped run), the run
+lock, and the ASSUMPTIONS (decisions 8 to 11, the origin vocabulary, the 4.4 eviction; new: the lock identities and the 2PC
+refusal), none confirmed by the user. LIMITS of amendment 7 stand, plus the residuals above.
+
+Stamped run of this round: NOT STARTED (by instruction). When it is run: once, after THIS commit, which supersedes amendment 7's
+"after this commit"; GIT_STAMP dirty=false, commit == thresholds commit == this commit; otherwise as amendment 7 says. Its verdict is
+reported as it falls.
