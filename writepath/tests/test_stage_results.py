@@ -111,9 +111,12 @@ class Stage(unittest.TestCase):
         got = [p for p in self.staged() if p.name == "e_verify.0123456789abcdef.json"]
         self.assertEqual(len(got), 1, out[-300:])
         self.assertNotIn(self.home.encode(), got[0].read_bytes(), "the host home path was committed")
+        self.assertTrue((self.dst / "MANIFEST.v6.tsv").exists(), "no MANIFEST.v6.tsv was written")
         man = (self.dst / "MANIFEST.v6.tsv").read_text()
         self.assertIn(RUN, man, "the manifest does not name the run that produced the file")
-        self.assertEqual(sorted(p.name for p in (self.dst / "clearance" / self.set.name).iterdir()),
+        cdir = self.dst / "clearance" / self.set.name
+        self.assertTrue(cdir.is_dir(), "the staged set does not carry its clearance files (H-9)")
+        self.assertEqual(sorted(p.name for p in cdir.iterdir()),
                          ["CLEARANCE.check.json", "CLEARANCE.json", "CLEARANCE.seal.json"],
                          "the staged set does not carry its clearance files (H-9)")
 

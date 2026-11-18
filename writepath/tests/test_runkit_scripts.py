@@ -79,7 +79,15 @@ class Sync(unittest.TestCase):
         bindir.mkdir()
         self.log = self.tmp / "rsync.args"
         (bindir / "rsync").write_text(f'#!/bin/sh\nprintf "%s\\n" "$@" > "{self.log}"\n')
-        (bindir / "rsync").chmod(0o755)
+        # git and tree_manifest.py stand-ins: the script's own logic runs, in any tree (also an extracted one)
+        (bindir / "git").write_text("#!/bin/sh\ncase \"$1\" in rev-parse) echo " + "1" * 40 +
+                                    " ;; diff) exit 0 ;; *) exit 9 ;; esac\n")
+        (bindir / "python3").write_text(
+            '#!/bin/sh\nif [ "$1" = runkit/tree_manifest.py ] && [ "$2" = ship ]; then\n'
+            '  d=$(mktemp -d) && echo 1111111 > "$d/GIT_HEAD" && tar -c -f "$4" -C "$d" GIT_HEAD; s=$?; rm -rf "$d"; '
+            'exit $s\nfi\nexec "%s" "$@"\n' % sys.executable)
+        for n in ("rsync", "git", "python3"):
+            (bindir / n).chmod(0o755)
         self.env = dict(os.environ, PATH=f"{bindir}:{os.environ['PATH']}")
 
     def sync(self, **env):
