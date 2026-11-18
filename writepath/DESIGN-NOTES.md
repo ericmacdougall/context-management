@@ -975,3 +975,137 @@ re-deriving every b1 number (not done; stated for main).
   stream instead of materialising): USED for the shape of the model (bound derived bytes by a ratio of admitted bytes
   and stream products). Medium confidence (secondary sources). REJECTED: vendor-specific numeric thresholds, which
   do not transfer to a matcher.
+
+## Seal authority: "sealed" implies "scanned" (main's option (b); written before tests and code)
+
+Source: main's decision on this owner's writer-scan-claim finding (option (b), in this stream, after F13, F15 and F16;
+main's decision under the user's "you decide"; ASSUMPTION, source: main). Today wp_app holds every capability a write
+needs: subject keys (it seals), the tenant HMAC (it matches) and INSERT on events (it states what it matched). So
+events.mentions, mention_scan_upto, mention_matcher and secret_scan are the writer's word: review H F14 showed a writer
+planting content the matcher never admitted. After this change the store refuses any event that was not sealed by ONE
+service outside wp_app, which seals only content it has admitted, scanned and secret-checked itself.
+
+### A1. Trust boundary (stated once)
+
+The guarantee is store-side and holds against a wp_app holder who uses every privilege wp_app has (its database role,
+its key-service and broker sockets, its files) and deviates from the code in any way. It does NOT hold against: a
+compromised seal authority (it holds the seal key, subject keys and plaintext and can seal anything); an application
+that copies plaintext before handing it to the authority (exfiltration is not a store property); anyone who can read the
+store's private seal schema (wp_owner, a superuser, the operator); a host where the kernel's uid separation fails
+(docker access on the lab host is root-equivalent, as H2 states). wp_app still receives subject keys and can read and
+re-encrypt any subject's content (app-side decryption is unchanged); what it can no longer do is make the store accept
+content the authority did not scan.
+
+### A2. The authority
+
+A sibling service, NOT the D6 broker: the broker holds Elasticsearch manage rights and the broker password; merging
+the seal key into it would put two unrelated capabilities behind one identity, and a broker compromise would become a
+seal compromise. The authority (wp/sealer.py) reuses the key service's transport exactly (wp/keysvc.py Server: unix
+socket, kernel peer uid by SO_PEERCRED, fail-closed allow list WP_SEALER_ALLOW_UIDS = the app's uid), runs as its own
+uid (lab: 20005, its own 0700 directory /svc/sealer holding only seal_key, mode 0600, and pgpass.wp_sealer), and is a
+client of the key service (its uid added to WP_KEYSVC_ALLOW_UIDS) and of Postgres as wp_sealer (SELECT on
+identifier_epochs and subject_identifiers only; nothing it can write).
+ONE operation, seal(tenant, lease_scope, lease_epoch, batch_id, events=[{event_id, subject_id, content}]):
+  1. admission: the m5 b1 + review H budget (WPM01 to WPM03) over the batch, exactly as M.admit; refused batches get
+     the code back and nothing is sealed (the app records the refusal as today);
+  2. the secret scanner (wp/secrets.py SEC.check; its version becomes secret_scan): row 19's claim moves here too;
+  3. the matcher: identifier-set version v and the tenant's matcher read FIRST, then the identifiers, as M.scan does
+     (a declaration in between makes v stale and the store refuses with WPS17); mentions per event, the speaker
+     removed, sorted by code point;
+  4. encryption under the subject key (K.seal, AAD tenant/subject/event_id, unchanged format);
+  5. the attestation per event: seal_mac = HMAC-SHA256(seal key, M) where M is the length-prefixed encoding
+     ("<octets>:<value>" per field, so no separator can be forged) of: "wp-seal-v1", seal key id, tenant, event_id,
+     subject_id, sha256 hex of the ciphertext, v, the matcher id, the secret-scan version, the mentions (count, then
+     each), lease_scope, lease_epoch, batch_id, index in batch, batch size.
+  Returns {event_id: (ciphertext, mentions, v, matcher, secret_scan, key_id, mac)}. The app inserts exactly that.
+WPS17 retry: the app calls seal again (new nonce, new attestation); the cost is stated.
+
+### A3. The store
+
+A private schema wp_seal (owner wp_owner; USAGE granted to nobody) with seal_keys(key_id, ipad, opad, active):
+ipad = K XOR (0x36 x 64) and opad = K XOR (0x5c x 64), K being the 32-byte key zero-padded to SHA-256's 64-byte
+block (RFC 2104), computed by setup in Python, so the store computes
+HMAC-SHA256 as sha256(opad || sha256(ipad || M)) with PostgreSQL's built-in sha256() (no pgcrypto needed). These two
+values ARE the key (XOR with a constant): the schema's privileges are what protect it. Not in public, because wp_verifier
+holds SELECT on all tables in schema public.
+events gains seal_key_id text and seal_mac text; events_guard (SECURITY DEFINER, wp_owner) recomputes M from the NEW
+row's own columns and refuses: no attestation (WPS40 seal_missing), an attestation that does not verify under an active
+key (WPS41 seal_invalid; the message says only that, never the expected value). The comparison is made between
+sha256 of the two MACs, so a timing difference reveals nothing about the expected MAC's prefix. quarantine_guard does
+the same for quarantine rows (they carry content and mentions the cascade relies on; a quarantined row is the event's
+attestation with the presented, stale epoch). The existing checks stay (digest WPS19, matcher WPS38, scan version
+WPS17, secret scan WPS21): the attestation binds the values those checks compare, so they now check authority-written
+values. Legacy rows (inserted before the change) are not re-verified; the rescan and the unscannable rule (review H
+H3) still cover them, and stay as defence in depth for everything.
+
+### A4. Attacks, one by one
+
+- FORGED CLAIM (mentions dropped, scan version or matcher lied about, secret scan claimed): any changed field changes
+  M; without the seal key the app cannot produce the MAC. WPS41.
+- MISSING ATTESTATION (the F14 plant, an app that skips the authority): WPS40.
+- REPLAY onto another row: event_id is in M (and in the ciphertext's AAD), and unique per tenant: a copy under another
+  event_id is WPS41; the same event_id is the existing duplicate path (WPS14/23505). Another tenant: tenant in M, WPS41.
+  Another subject: subject in M and the AAD. Another session or epoch: lease_scope and lease_epoch in M, WPS41 (and the
+  fence refuses a stale epoch anyway).
+- REPLAY of an attestation made against an OLDER IDENTIFIER SET (the version race): v is in M, so it cannot be raised;
+  the store refuses v below the current max_seq (WPS17, existing, under the identifier_epochs share lock it already
+  takes). Lowering is refused the same way. So the only accepted attestation is one scanned against the current set.
+- REPLAY under another matcher or budget: the matcher id (which names the budget and the token cap) is in M; WPS38
+  compares it with the tenant's.
+- BATCH: batch_id, index and size are in M, so the attestation names the admission call it came from (audit: a batch
+  is visible as admitted together). It bounds nothing across calls: an app may make many calls (no rate limit; the
+  authority is the natural place for one, not built here).
+- SEAL-CAPABLE KEY FOR wp_app? Every key and key-like capability wp_app can obtain today, enumerated:
+  1. subject keys (key service `keys`, also with create): encrypt and decrypt; no MAC.
+  2. the tenant key as an HMAC ORACLE (`tenant_hmac`, `tenant_hmac_many` on ANY text) and `chain_key` (an HMAC of the
+     tenant key): therefore the seal key must NOT be derived from the tenant key or any key the key service holds; it
+     is an independent random 32-byte key, held only by the authority and the store.
+  3. key-service `destroy`, `purge`, `is_destroyed`, `key_exists`, `physical_pending`, `describe`: no key material.
+  4. the broker's `writer_key` and `eraser_key`: Elasticsearch API keys scoped to aliases; unrelated to the store.
+  5. its own pgpass.wp_app and, in a deployment, its ES role key files.
+  6. database: SELECT on the tables granted to it; EXECUTE on the functions granted to it. None of them reads wp_seal
+     or returns anything computed from it (static test: wp_seal is referenced only by events_guard, quarantine_guard
+     and the setup function that installs keys; no function builds dynamic SQL from its arguments).
+  The authority's own socket returns attestations for content it admitted and scanned, never the key.
+- AUTHORITY DOWN: seal() fails (connection refused or closed); the append raises SealUnavailable and nothing is
+  stored. There is no fallback in the app, and none is possible: the store requires the attestation. Writes stop while
+  the authority is down: a new availability dependency, stated.
+- AUTHORITY LOGS: operation, peer uid, tenant id, batch id, event count, byte total, key count, refusal code, seconds.
+  Never content, ciphertext, keys, HMACs, identifiers, mentioned subject ids or event ids.
+- KEY HANDLING: setup generates the key (os.urandom(32)), writes it to /svc/sealer/seal_key (0600, the authority's
+  uid) and installs ipad/opad in wp_seal.seal_keys as wp_owner; the value is never printed, logged or committed;
+  key_id is a random label (not derived from the key) recorded in results. Rotation: a new key_id, both active during
+  the switch, the old one deactivated; stated, not built.
+
+### A5. Cost per write
+
+One more unix-socket round trip per append batch (plaintext in, ciphertext out: up to the call limit of 1 MiB each
+way) and the authority's own key-service and lookup calls, which today the app makes; the matcher and secret-scan CPU
+moves from the app process to the authority (the same work: review H H10). In the store: two sha256 over about 300
+bytes and the encoding per event inside events_guard. Measured when the live run is possible (t2-dev below the run
+floor at 2026-11-18T01:46Z); NOT MEASURED until then.
+
+### A6. Tests first (step 3), through wp_app with triggers on
+
+Live (tests/test_d3_pg.py, red on 7c90b41 by assertion, run when the floor allows): a valid attestation from an
+in-process authority with a test key is accepted; FORGED: the same row with mentions dropped, a raised scan version or
+another matcher is WPS41; MISSING: no attestation is WPS40 (the review H F14 plant); REPLAYED: an accepted attestation
+reused for another event_id, tenant or session is WPS41; STALE: an attestation made at version v after a declaration
+moved the set to v+1 is WPS17, and the same with v rewritten is WPS41; a quarantine row without an attestation is
+WPS40. Offline (tests/test_sealer.py, red on 7c90b41): the authority refuses over-budget batches with WPM02 and seals
+nothing; changing any attested field changes the MAC; the encoding is length-prefixed (no two field lists encode
+alike); its log lines contain no content, key, HMAC or subject id; the app's append raises SealUnavailable when the
+socket is absent and never inserts; the seal key is not derivable from any key-service operation (the authority's key
+file is the only source); schema static checks (wp_seal private, guards verify, no grant on wp_seal).
+
+### A7. Sources (read 2026-11-18)
+
+- RFC 2104, HMAC (https://www.rfc-editor.org/rfc/rfc2104, read 2026-11-18): ipad 0x36 and opad 0x5C repeated B times, a
+  key shorter than B zero-padded, HMAC = H(K xor opad, H(K xor ipad, text)); used as is in the store. High.
+- The confused deputy (Hardy 1988) and capability separation, as the pattern behind "the writer must not hold the
+  capability that certifies its own writes". Medium (classic paper; applied by analogy).
+- Envelope encryption and tokenisation services (cloud KMS documentation: a separate service performs the
+  cryptographic operation and never releases its key): USED for the shape (key stays in the service; callers get
+  results). Medium. REJECTED: asymmetric signatures, because PostgreSQL cannot verify Ed25519 or ECDSA without an
+  extension the lab does not have; and per-tenant seal keys derived from the tenant key (the key service is an HMAC
+  oracle for that key, A4 item 2).
