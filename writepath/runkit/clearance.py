@@ -40,7 +40,8 @@ import time
 VERSION = "2"
 LIMITS = ("LIMITS clearance v2 (GATE-DESIGN 7.4): cleared = every store (a container named by a gate admit record "
           "since the previous receipt, by every admit when there is none, or by the conf) was shown to keep its data "
-          "on a private tmpfs, by the gate at admission (B3) or by clearance from docker inspect at the seal, and was "
+          "on a private tmpfs, by a gate of ledger format 3 or later at admission or by clearance from docker inspect at "
+          "the seal, and was "
           "absent from Docker's container list at teardown and at the stage check, so every role, API key and key held "
           "only in it is destroyed; a receipt that names no store, or a store not so shown, fails the stage check; "
           "every entry in WP_HOME/secrets*, WP_SECRETS_DIR and WP_HOME/svc and the file oldhome/pgpass was removed; "
@@ -226,9 +227,10 @@ def _admit_ids(r):
 
 
 def sealed_containers(g, recs, hashes, home):
-    """(range, first seq, {id: {from, kind, admitted, store}}) per GATE-DESIGN 7.4. An admitted container is a store
-    whose data root the gate showed to be a private tmpfs at admission (B3); a 64-hex token of an unreadable replaced
-    ledger line is no known store, only an Id that must be absent."""
+    """(range, first seq, {id: {from, kind, admitted, store, gate_v}}) per GATE-DESIGN 7.4. An admitted container is
+    a store of this home; the gate showed its data root to be a private tmpfs at admission only from ledger format 3 on
+    (v3 R1, v4 B3: the v2 gate's admits carry no format and had no tmpfs rule). A 64-hex token of an unreadable
+    replaced-ledger line is no known store, only an Id that must be absent."""
     last, _ = _read_json(g.STATE_DIR / "clearance.last.json")
     ok = (isinstance(last, dict) and isinstance(last.get("seq"), int) and 1 <= last["seq"] <= len(recs) and
           hashes[last["seq"] - 1] == last.get("tip"))
@@ -237,7 +239,8 @@ def sealed_containers(g, recs, hashes, home):
     for r in recs[first - 1:]:
         if r.get("kind") == "admit":
             for k, x in zip(("es", "pg"), _admit_ids(r)):
-                ids.setdefault(x, {"from": f"admit {r['seq']}", "kind": k, "admitted": True, "store": True})
+                ids.setdefault(x, {"from": f"admit {r['seq']}", "kind": k, "admitted": True, "store": True,
+                                   "gate_v": r.get("v")})
     if rng == "all":
         for n, f in enumerate(sorted(g.STATE_DIR.glob("stop_ledger.broken-*.jsonl")), 1):
             try:
@@ -256,7 +259,7 @@ def sealed_containers(g, recs, hashes, home):
                 if isinstance(r, dict) and all(isinstance(r.get(k), str) and HEX64.fullmatch(r[k]) for k in ("es", "pg")):
                     for k in ("es", "pg"):
                         ids.setdefault(r[k], {"from": f"replaced ledger #{n}, admit {r.get('seq')}", "kind": k,
-                                              "admitted": True, "store": True})
+                                              "admitted": True, "store": True, "gate_v": r.get("v")})
                 else:                     # unreadable: every 64-hex token must be absent too (it costs nothing)
                     for t in re.findall(rb"[0-9a-f]{64}", ln):
                         ids.setdefault(t.decode(), {"from": f"replaced ledger #{n}, unreadable line", "kind": None,
@@ -473,13 +476,15 @@ def seal(home, s, ks, nks):
             if n == name:
                 ids.setdefault(cid, {"from": f"conf {k}_container", "kind": k, "admitted": False, "store": True})
     for cid, v in ids.items():
-        if v["admitted"]:
-            v["storage"] = "private tmpfs (shown by the gate at admission, B3)"
+        if v["admitted"] and isinstance(v.get("gate_v"), int) and v["gate_v"] >= 3:
+            v["storage"], v["proven"] = "private tmpfs (shown by the gate at admission: ledger format 3 or later)", True
         elif v["store"]:
-            why = _storage(cid, g.DATA[v["kind"]])
+            why = (_storage(cid, g.DATA[v["kind"]]) if cid in listing else "removed before the seal, and admitted by a "
+                   "gate before v3, which had no tmpfs rule: its storage cannot be shown")
             v["storage"] = "private tmpfs (shown by clearance at the seal)" if why is None else why
             v["proven"] = why is None
-        v.setdefault("proven", v["admitted"])
+        else:
+            v["proven"] = False                     # not a store: it only has to be absent
     locs, bad = locations(home)
     for label, p in locs:
         _, b = entries(p)

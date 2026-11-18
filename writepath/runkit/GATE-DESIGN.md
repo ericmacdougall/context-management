@@ -794,10 +794,13 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   COPY` checks a copy fetched from the host before `runkit/stage_results.py` rewrites it: receipt present and torn
   down, recorded scan exit 0, a PASS check bound to that receipt, and the copy's files equal to the manifest. It does
   not see Docker or WP_HOME; stage-check on the host does.
-- Stores (added after the advisor's review of 73549e4). A store is a container that an admit record names (the gate
-  showed its data root on a private tmpfs at admission, B3; a container's mounts cannot change after creation) or
-  that the conf names. Clearance itself checks a conf-named store the ledger never admitted: from `docker inspect`
-  at the seal, its data directory must be on a single tmpfs mount, with nothing mounted below it. A named volume, a
+- Stores (added after the advisor's review of 73549e4). A store is a container that an admit record or the conf
+  names. An admit of ledger format 3 or later shows its data root on a private tmpfs (v3 R1, v4 B3; a container's
+  mounts cannot change after creation). The v2 gate's admits carry no format and it had no tmpfs rule (61b05b8), so
+  they show nothing. Clearance itself checks every other store that still exists (a conf-named container, or one a v2
+  gate admitted): from `docker inspect` at the seal, its data directory must be on a single tmpfs mount, with nothing
+  mounted below it. A pre-v3 store already removed cannot be shown: a home whose ledger holds one cannot be cleared
+  (its way out is a fresh home, which H-1's per-generation rule gives anyway). A named volume, a
   bind mount or the container layer is "not shown". A 64-hex token from an unreadable replaced-ledger line is only an
   Id that must be absent, not a store. Stage-check FAILs when the receipt names no store (nothing shows the
   credentials dead) or names a store whose destruction is not shown. Until H-8 lands, the gate admits no run on the
@@ -816,7 +819,7 @@ SET [--remove]`, `stage-check WP_HOME SET`, `verify-copy COPY`.
   the store rule above.
 Hand-off H-9 (runkit/stage_results.py, the repo author's file): refuse a source set unless `verify-copy` passes on
 it, and carry CLEARANCE.json, CLEARANCE.check.json and CLEARANCE.seal.json into the committed set unchanged.
-Evidence (offline). `tests/test_clearance.py` has 23 tests at blob a40751c, all passing. Every ledger record in them
+Evidence (offline). `tests/test_clearance.py` has 24 tests, all passing (blob 3d33f9f). Every ledger record in them
 is written by the gate's own `Ledger`, and a fake docker accepts only the exact calls clearance makes (`ps`, `rm -fv`,
 `inspect --type container`). Each red receipt names the test blob it ran:
 - `reviewF-clearance-absent-8668f5e.tree.red.out` (blob 0eae9c4, 19 tests): with the tool absent, 23 of 23 cases
@@ -830,6 +833,8 @@ is written by the gate's own `Ledger`, and a fake docker accepts only the exact 
 - `reviewF-clearance-stores-bdf7972.red.out` (blob a40751c, 23 tests): the committed bdf7972 fails exactly the two
   store tests (not on tmpfs; no store). The two-set test passes there as well: it shows the runbook works, and it is
   not a red test.
+- `reviewF-clearance-pre-v3-admit-4a3640b.red.out` (blob 3d33f9f, 24 tests): the committed 4a3640b, which took any
+  admit as proof, fails exactly `test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing`.
 
 While the tool was being built, a test found that wp.config's `NotThisStream` is a `SystemExit`, which would have
 printed the home path; the tool catches it. Live: 6.7.

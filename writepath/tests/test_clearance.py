@@ -118,9 +118,10 @@ class Clearance(unittest.TestCase):
                            text=True, env=dict(self.env, WP_HOME=str(self.home)), timeout=60)
         self.assertEqual(r.returncode, 0, "the gate's Ledger could not write the test ledger: " + r.stderr[-300:])
 
-    def run_ledger(self, es, pg, end=True):
+    def run_ledger(self, es, pg, end=True, v=4):
+        """An admitted run; v=None writes the admit as the v2 gate did (no format field, no tmpfs rule)."""
         run = "run-" + secrets.token_hex(3)
-        recs = [("admit", {"v": 4, "gate": "disk_gate v4", "run": run, "es": es, "pg": pg})]
+        recs = [("admit", {"run": run, "es": es, "pg": pg, **({"v": v, "gate": f"disk_gate v{v}"} if v else {})})]
         if end:
             recs.append(("end", {"run": run, "verdict": "VALID"}))
         self.ledger(*recs)
@@ -390,6 +391,17 @@ class Clearance(unittest.TestCase):
         self.assertEqual(self.teardown()[0], 0)
         self.assertEqual(self.teardown(s2)[0], 0, "the second set's teardown is refused after the first")
         self.assertEqual((self.check()[0], self.check(s2)[0]), (0, 0))
+
+    def test_admit_by_a_gate_without_a_tmpfs_rule_proves_nothing(self):
+        old_es, old_pg = self.container("emlab2-wphard-es"), self.container("emlab2-wphard-pg")
+        self.run_ledger(old_es, old_pg, v=None)                  # admitted by the v2 gate, removed long ago
+        for c in (old_es, old_pg):
+            (self.dock / f"{c}.name").unlink()
+        rc, _ = self.seal()
+        self.assertEqual(rc, 1, "a seal naming stores a pre-v3 gate admitted, now gone, did not exit 1")
+        self.assertEqual(self.teardown()[0], 0)
+        rc, _ = self.check()
+        self.assertEqual(rc, 1, "an admit by a gate without a tmpfs rule passed as proof that its store was destroyed")
 
     def test_remove_spares_a_container_outside_the_stream_prefix(self):
         other = self.container("other-stream-es")
