@@ -1,13 +1,16 @@
 """Delete this stream's own Elasticsearch indices (prefix wp16096- only) on this stream's own cluster, after printing
 how many indices and shards they held and the node's shard headroom (item 5 of the 4960f50 round: run_all calls this
 between experiments, so no single experiment's tenants count against the next one's shard budget).
+Refuses (exit 2, nothing deleted) while a gated run holds WP_HOME/state/run.lock (wp/runlock.py); the gate runs it
+itself, under that lock, at admission and after the end record.
 usage: python -m exp.cleanup [label]"""
 import sys
 
-from wp import config
+from wp import config, runlock
 from wp.es import ES
 
 assert config.INDEX_PREFIX == "wp16096-" and config.ES_CONTAINER.startswith(config.OWN_PREFIX)   # own node only (conf)
+runlock.hold("exp.cleanup")        # F-1: never while a run holds the run lock
 es = ES()
 names = es.indices(config.INDEX_PREFIX + "*")
 # _cat/shards rejects expand_wildcards on 9.5.6 (400 unrecognized parameter); its wildcard covers this stream's indices
