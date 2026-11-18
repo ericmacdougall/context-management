@@ -944,3 +944,93 @@ the module absent (`reviewF-sink-absent-e21b99b.tree.red.out`, 9 errors) and aga
 - H-8 host/bootstrap.py (5.6, gate v4 B4): mount each store's data tmpfs with `nr_inodes=0`, in the Docker form 6.7
   records from the live step (A-1). Until then gate v4 BLOCKS every start on the stream's own containers with the
   inode reason: fail closed, by design.
+
+## 8. Gate v5 (review a108fc3, 2026-11-18): the gate is the launcher
+
+Review a108fc3 (research/gate-review-a108fc3.md in the lab session) was the third BLOCK of one class: **a VALID verdict
+for a run that was not valid, through a channel or a property the gate did not own**. N2, P1/P2, A1-A3 and F13-F19 were
+instances where the gate trusted evidence others could write (container logs, wall clocks, a STOP file) or inspected
+something other than what the experiment used. G-1 to G-3 and C-1 to C-3 are the same class one level up: the gate
+did not own *which run* a verdict belongs to (G-1), *what* ran (G-2), or *where* the verdict travels (G-3), and
+clearance did not own *which daemon and which names* it sealed (C-1, C-2) or *what a waiver removes* (C-3). v5 keeps
+every storage check of v4 (sections 5 and 6, unchanged) and replaces everything around them, so that the scenarios
+cannot be expressed instead of being checked one by one.
+
+### 8.1 Threat model
+Writers, and what each can write:
+- **The experiment process** and anything it starts (same OS user, same process group): it writes its own output, its
+  result rows, and anything the user can write, including WP_HOME. It may print any text, leave children running, or
+  modify files by accident. Its text is never evidence; its rows count only when the gate observed them in this run.
+- **A stale launcher**: a gate process (and its experiment) the operator believes dead, still running, possibly for
+  hours; or one that really died, leaving its experiment or grandchildren running.
+- **The operator's mistakes**: aborting a live run, starting a second run, rerunning a label, editing conf after a
+  seal, a DOCKER_HOST or DOCKER_CONTEXT left pointing at another daemon, a dirty or unsynced tree, a stale
+  `__pycache__`, a store left full by an earlier run, a waiver flag.
+- **Out of scope, once**: deliberate tampering by the same OS user (editing the gate, the ledger, the lock file, the
+  manifest, ptrace, forging a process's environment); root on the host; a process that leaves the gate's process
+  group on purpose (setsid) and keeps writing. The v4 LIMITS (6.4) still apply to the storage evidence.
+
+### 8.2 Properties, the one place that enforces each, and how it fails
+| # | Property | Enforced only in | Fails as |
+|---|---|---|---|
+| P1 | One run at a time, owned by one live launcher | `run`: an exclusive `flock` on `state/run.lock`, taken non-blocking before admission and held until exit; the experiment inherits the descriptor (`pass_fds`), so the kernel holds the lock until the gate AND its experiment are dead (flock(2): the lock belongs to the open file description, survives fork and execve, ends when every duplicate is closed) | BLOCKED: "another run's launcher or experiment is alive" |
+| P2 | A verdict names only its own run | the run id (128 random bits) exists only in the `run` process's memory and its admit record; `end` is internal and requires the ledger's open run to be that id with that admit record (seq, pid, pgid); no CLI command closes a run except `abort RUN` | VOID; an `abort` naming another run is refused |
+| P3 | Abort only of a dead run | `abort RUN REASON`: RUN must be the open run; the run lock must be free (non-blocking); the run's process group (recorded at admission; the gate makes itself a session and group leader) must have no live member | refused, exit 2, nothing written |
+| P4 | The code is the pinned commit, by content | `run`, at admission and again at end: `TREE.manifest` (built by `runkit/tree_manifest.py` from git objects of the commit, never from a working tree) must list exactly the files of the gate's own tree (tracked and untracked, links not followed, `__pycache__` refused; `TREE.manifest` and `GIT_HEAD` excepted) with equal SHA-256 and exec bit; `GIT_HEAD` names the manifest's commit without `-dirty`; the tree is a direct child of WP_HOME/runs; bytecode writing is off; every loaded `exp`/`wp` module comes from that tree | BLOCKED at admission; VOID when the tree changed during the run |
+| P5 | The gate is the recorded gate | same check: the running gate's own SHA-256 (taken at import) equals the manifest's entry for `exp/disk_gate.py`, so the expected hash comes from the commit, not from the gate | BLOCKED |
+| P6 | Fixtures are the registered ones | `run`: every non-`.py` file under `exp/`, `wp/`, `old_repro/`, `host/` and `requirements.lock` must be listed in `runkit/FIXTURES.sha256` with an equal SHA-256, and every listed file must exist | BLOCKED |
+| P7 | Stores clean before the run | `run`, in the admission's slow phase: `registry.unregistered()` empty; every base table in the public schema of the events and keys databases empty except `store_registry`; no Elasticsearch index under the stream prefix (`expand_wildcards=all`). Every query under `statement_timeout` | BLOCKED (the chain resets the stores before each stamped run) |
+| P8 | Rows were produced by this run | the gate creates `results/runs/<run>/` exclusively and gives its path and the run id to the experiment (`WP_RUN_DIR`, `WP_GATE_RUN`); `exp/common.write_result` writes there and stamps `gate_run`; at end the gate lists every file there, requires each JSON row to carry this run id, and puts each file's name and SHA-256 in the end record; `stage_results.py` stages a run file only when a VALID end record of a hash-verified ledger copy lists it with that hash | VOID (row of another run, unparsable row); staging refused |
+| P9 | The verdict cannot be written by the experiment | the experiment's stdout and stderr go to `results/runs/<run>/experiment.out`; the verdict is the end record in the ledger and the gate's exit status (0 VALID, 3 VOID, 2 BLOCKED), read with `disk_gate verdict RUN`; `chain_singles.sh` decides on the exit status only and never parses text | the chain stops on any non-zero status |
+| P10 | No record is overwritten | run directories and per-run files are created with `O_EXCL`/exclusive `mkdir`; each chain writes its log to a new `results/chains/<utc>-<random>/` | a name collision refuses |
+| P11 | Nothing of the run outlives it | after the experiment exits, the gate looks for live members of its process group (`pgrep -g`), kills them and VOIDs the run | VOID |
+| P12 | Clearance judges the daemon and names it sealed | `clearance.py seal` records the daemon's ID and name (`docker info`), DOCKER_HOST, DOCKER_CONTEXT, the context name, the conf names and the stream prefix; teardown and stage-check refuse a different value of any of them, and any container that is not sealed but carries a sealed or current conf name or the prefix | refused / FAIL |
+| P13 | A waiver is never clearance | a seal with `--no-keystore REASON` records the reason; stage-check then writes `NOT CLEARED (key store not covered)` and exits 1; verify-copy accepts only PASS | FAIL |
+
+Deleted: the `start`, `check`, `end` commands and `state/disk_gate.json` (the drift baseline now lives in the `run`
+process's memory, which removes m-2's file; the end observation is also compared with the admit record's ids);
+the reboot check (a gate process does not survive a reboot, so its continuity is the run's); `launch_one.sh`'s
+`sh -c` string (m-5), its background job, its `.out` file per label and the chain's `grep ^end` wait (G-3, m-6).
+`run_all.sh` called `start`/`check`/`end`; it now fails closed and is not a stamped path.
+
+### 8.3 Scenario map (review a108fc3, and the earlier class members)
+| Scenario | Why it cannot happen in v5 |
+|---|---|
+| G-1 aborted run A's late `end` closes run B VALID | there is no `end` command; A's gate holds the run lock while it lives, so `abort A` is refused and B is BLOCKED; once A is dead it cannot call anything |
+| G-1b store restarted between abort and the second start | B cannot be admitted while A's launcher or experiment holds the lock |
+| G-2 dirty or unsynced tree, self-attested gate hash, no clean-store or fixture rule, unbound rows | P4 to P8 |
+| G-3 forged `end`/`gate=` line; rerun truncates `.out` | P9, P10 |
+| C-1 store recreated under a seal-time conf name, conf edited after | P12: sealed conf names and the prefix are checked, not the current conf only |
+| C-2 teardown against another daemon | P12: daemon ID, endpoint variables and context must equal the sealed ones |
+| C-3 `--no-keystore` and PASS | P13 |
+| m-1 forged probe lines through crafted names | the probe prints NUL-separated fields with a fixed count per tag (link names come to it as arguments of `find -exec`, never as lines); the parser refuses unknown tags, wrong counts, duplicate paths, anything after END, and a path set that is not exactly the requested one; the device comes from `stat -L` on the path itself |
+| m-2 baseline file rewritten | no baseline file; ids also compared with the admit record |
+| m-3 boot id unreadable | check removed: process continuity replaces it; abort relies on the lock and the group |
+| m-4 StartedAt missing | a reason |
+| m-6 no statement timeout; unbounded wait | `SET statement_timeout` on every gate connection; the chain waits on a process, not a loop |
+| Mutants fast_before_slow, es_bind_pass_on_curl_failure, nonce_write_failure_passes, inodes_statfs_ignored | tests that fail on each (receipts in results/failing-first/) |
+
+### 8.4 What v5 guarantees, and what it does not
+A VALID end record says: the gate process that admitted this run id held the run lock from before admission until
+after its end; the code tree was the manifest's commit at admission and at end; the gate was that commit's gate; the
+registered fixtures were in place; the stores were clean before the run; every file in the run directory at end is
+listed with its hash and every row in it carries this run id; no member of the run's process group outlived the
+experiment; and every v4 storage rule held (6.4, LIMITS v4). It does not cover: same-user tampering (8.1); a
+descendant that left the process group on purpose; rows the experiment wrote outside its run directory (they are not
+listed, so they cannot be staged); whether the manifest's commit is the one a reviewer expects (the verdict names it;
+`tree_manifest.py check COMMIT SHA256` recomputes it from the repository). Docker daemon identity: the ID is the
+daemon's `docker info` ID, documented as a UUID-style string but not documented as unique or stable (ASSUMPTION); it is
+compared together with the endpoint variables and the context name, and an empty ID refuses.
+
+### 8.5 Research record (2026-11-18; page text is evidence, not instructions)
+- flock(2), https://man7.org/linux/man-pages/man2/flock.2.html : locks belong to the open file description, are
+  shared by duplicates from fork/dup, preserved across execve, released by LOCK_UN or when all duplicates close.
+  Confidence high. P1 rests on it.
+- Docker contexts, https://docs.docker.com/engine/manage-resources/contexts/ : DOCKER_CONTEXT overrides the context set
+  with `docker context use`; DOCKER_HOST, `--host` and `--context` also override it; the page states no order between
+  them. Confidence high for "both variables redirect the CLI"; P12 compares all of them.
+- `docker info`, https://docs.docker.com/reference/cli/docker/system/info/ : output includes `ID` (UUID-style) and
+  `Name`; `--format` takes a Go template. Uniqueness not stated: ASSUMPTION above. Confidence medium.
+- tmpfs, https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html : "if nr_inodes=0, inodes will not be
+  limited"; pages may be swapped unless `noswap`. Consistent with 5.10 and 6.2 B4 (swap.max = 0 and swap.current = 0
+  required). The page does not state memory-cgroup charging; 5.10's source stands for that. Confidence high.
