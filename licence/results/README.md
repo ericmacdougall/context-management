@@ -41,16 +41,49 @@ Stored figures under a raw source's paths are **deleted and rebuilt**, with one 
   - matrix cells, transition times, configuration, write counts and EXP3
 - A life file is parsed at the boundary. If its content is not a JSON object whose `mode` matches its file name, or it cannot be read, it is an unparsed life. Every gate of it is UNVERIFIED with the reason, the aggregate names it ("does not parse"), and the other lives are still judged.
 
+## Review 12: clauses from the registered rules, and 18 statuses changed
+
+- **Clause table.** `licence/clauses.py` lists every THRESHOLDS.md clause with the evidence fields that witness it, the recorder that produces them and the verdict that reads them. `summary_current.json` reports every clause under `clauses`; an ungated clause is UNVERIFIED, never PASS. `tests/test_clauses.py` generates the checks from the table (DESIGN-VERDICTS.md section 3f).
+- **18 statuses changed** against `summary_current.json` at d8aa93d. They are listed with reasons in `SUPERSEDED.json` (`status_changes_review_12`). No result file was edited and nothing was rerun.
+  - down_1.json EXP1-T4: PASS to UNVERIFIED
+  - down_1.json EXP3-migration: PASS to UNVERIFIED
+  - down_2.json EXP1-T4: PASS to UNVERIFIED
+  - down_2.json EXP3-migration: PASS to UNVERIFIED
+  - down_3.json EXP1-T4: PASS to UNVERIFIED
+  - down_3.json EXP3-migration: PASS to UNVERIFIED
+  - down_4.json EXP1-T4: PASS to UNVERIFIED
+  - down_4.json EXP3-migration: PASS to UNVERIFIED
+  - down_5.json EXP1-T4: PASS to UNVERIFIED
+  - down_5.json EXP3-migration: PASS to UNVERIFIED
+  - down_6.json EXP1-T4: PASS to UNVERIFIED
+  - down_6.json EXP1-T4-battery: PASS to UNVERIFIED
+  - down_6.json EXP3-migration: PASS to UNVERIFIED
+  - down_7.json EXP1-T4: PASS to UNVERIFIED
+  - down_7.json EXP1-T4-battery: PASS to UNVERIFIED
+  - down_7.json EXP3-migration: PASS to UNVERIFIED
+  - aggregate EXP1-T4: PASS to UNVERIFIED
+  - aggregate EXP3-migration: PASS to UNVERIFIED
+- **Why.**
+  - EXP1-T4 and EXP1-T4-battery: THRESHOLDS.md:26 says returning any document is a FAIL. The committed lives were recorded by a recorder that saw a returned document only in a 2xx answer, so nothing committed shows that a refused (403) answer carried no document. They are UNVERIFIED, not PASS.
+  - EXP3-migration: the registered per-value 1% relative criterion (THRESHOLDS.md:41) is not witnessed.
+- **New recorder field.** `matrix.docs_in_payload` counts documents by the body's shape whatever the status. It has run only against stubbed responses, never against a node.
+
+## Legacy tools
+
+`summarize.py <results> <out>` (the legacy report) and `recompute.py <results> <out>` are not the status of record.
+- They **refuse** `summary_current.json` as a destination: exit 2 before computing anything, with a message naming it. Only `summarize.py <results> --current <out>` writes the current report.
+- On a malformed complete life (a missing or wrongly typed key) they raise an exception before opening their output file. They do not write a partial report, and they do not turn the failure into a status.
+
 ## Disclosed limits
 
-Gate review 10 classed these six differences from the registered wording as disclosed lab limits. A PASS establishes the implemented rule only. The same list is in `summary_current.json` (`limits`) and in DEGRADE.md.
+Gate reviews 10 and 12 classed these differences from the registered wording. Since review 12 the clause table decides what each does to a status: a LIMIT forces UNVERIFIED, a substitute witnesses the registered rule through a measure that implies it. The same list is in `summary_current.json` (`limits`, `clauses`) and in DEGRADE.md.
 
 | Threshold | Limit |
 |---|---|
-| EXP3-T2 (migration) | 1. PASS establishes counts equal to the independent source counts: 299/299 and 199/199 after an earlier delete, where the registered text says 300/300 and 200/200.<br>2. PASS establishes semantic vectors within absolute error 0.005 and cosine 0.9999 of the stub. It does **not** establish the registered per-value 1% relative criterion, because the vectors needed for it were not kept. |
-| EXP1-T3 | Three fixed latch cells are checked, not every LICENCE_ERROR cell of a search path. |
-| EXP2-T2 | The failure window joins failed reads from four arms with a gap under 1 s, not consecutive failed auto requests. Every committed life has 0 failed reads. |
-| EXP1-T2 | Timing uses the poll end time, not the probe start time. This is conservative for the 5 s bound. |
+| EXP3-T2 (migration) | **LIMIT: EXP3-migration is UNVERIFIED.** 1. Semantic vectors were checked within absolute error 0.005 and cosine 0.9999 of the stub, **not** the registered per-value 1% relative criterion; the vectors needed for it were not kept.<br>2. Substitute: counts equal the independent source counts (299/299 and 199/199 after an earlier delete; the registered text says 300/300 and 200/200). |
+| EXP1-T3 | **LIMIT: never PASS here.** Three fixed latch cells are checked, not every LICENCE_ERROR cell of a search path. |
+| EXP2-T2 | **Closed in review 12.** The registered run of consecutive failed auto requests is derived from the rows and gated; the joined window of four read arms is an extra check. Every committed life has 0 failed reads. |
+| EXP1-T2 | Substitute: timing uses the poll end time, not the probe start time. The end is later, so within 5 s by the end implies within 5 s by the start. |
 | EXP1-T1 | A 400 with "non-compliant" is not counted as a licence refusal; only a 403 is. |
 | EXP3-T1, EXP3-T4, EXP3-T5, EXP4-T1, EXP4-T2 | No gate exists. The artefact is not a complete registered-threshold verdict. |
 

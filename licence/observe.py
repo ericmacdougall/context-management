@@ -245,7 +245,22 @@ def moments(rows, t_resp, features=LICENCE_PROBES + ("dls_search",), window=None
             "dls_returned_counts_before": sorted({c.extra[0] for r, c in seq if r.t1 < t_resp and c.label == "AVAILABLE" and c.extra})
             if f == "dls_search" else None,
             "n": len(seq)}
+        if f == "dls_search":
+            out[f]["docs_after_transition"] = _docs_after(seq, t_resp)
     return out
+
+
+def _docs_after(seq, t_resp):
+    """Review 12 F28 (THRESHOLDS EXP1-T4 "returning any document is a FAIL"): documents carried by DLS probe answers that STARTED after
+    the start_basic response, read from the recorded status-independent count (matrix.docs_in_payload, the fourth row element). None
+    (no witness) when any such row was recorded without it: rows recorded before review 12 have three elements."""
+    after = [c for r, c in seq if r.t0 >= t_resp]
+    if not after:
+        return None
+    got = [c.extra[1] if len(c.extra) > 1 else None for c in after]
+    if any(type(k) is not int or k < 0 for k in got):
+        return None
+    return sum(got)
 
 
 def control_counts(W, keep):
@@ -266,7 +281,30 @@ def availability(W):
             cur = [w.t0, w.t1, 1]
             wins.append(cur)
     return {"T2_failed_requests": len(fails), "T2_non_control_requests": sum(1 for w in W if w.arm in READ_ARMS),
-            "T2_longest_failure_window_s": max([x[1] - x[0] for x in wins] or [0.0]), "T2_failure_windows": wins[:10]}
+            "T2_longest_failure_window_s": max([x[1] - x[0] for x in wins] or [0.0]), "T2_failure_windows": wins[:10],
+            "T2_longest_consecutive_auto_failure_s": consecutive_auto_failure(W)}
+
+
+AUTO_ARMS = ("auto", "lin")   # strategy=auto readers: the 8 auto and the 2 auto+linear readers (THRESHOLDS EXP2-T2, "any thread")
+
+
+def consecutive_auto_failure(W):
+    """THRESHOLDS EXP2-T2 as registered (review 12 closes the review-10 limit): the longest run of consecutive failed auto requests by
+    time, any thread. Auto requests in start order; a run is a maximal sequence of failed ones with no successful auto request between
+    them; its length is from the first start to the latest end. 0.0 when no auto request failed."""
+    longest, run = 0.0, None
+    for w in sorted((w for w in W if w.arm in AUTO_ARMS), key=lambda w: (w.t0, w.t1, w.seq)):
+        if w.ok:
+            if run:
+                longest = max(longest, run[1] - run[0])
+            run = None
+        elif run is None:
+            run = [w.t0, w.t1]
+        else:
+            run[1] = max(run[1], w.t1)
+    if run:
+        longest = max(longest, run[1] - run[0])
+    return longest
 
 
 def flip(W, t_req, t_resp, direction):

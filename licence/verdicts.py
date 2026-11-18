@@ -51,14 +51,37 @@ def latch(e: Latch):
                    for c in E.LATCH_CELLS)
 
 
+_NO_DOC_WITNESS = ("no status-independent witness that no document was returned (docs_in_payload; recorded from review 12 on; "
+                   "THRESHOLDS.md:26)")
+
+
 def dls(e: Dls):
+    a = e.after
+    counts = {"in the answer": a.docs, "counted from 200 hits": a.returned, "in polled searches started after start_basic": e.polled_docs}
+    shown = {k: v for k, v in counts.items() if v}
+    if shown:   # THRESHOLDS.md:26: returning any document is a FAIL, whatever the status; positive evidence decides first
+        return Verdict(FAIL, "dls_search_as_user: documents returned after start_basic (%s)" % ", ".join("%d %s" % (v, k) for k, v in shown.items()))
     if e.after.cell_class in ("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP"):   # matrix.NOT_OBSERVED
         return Verdict(UNVERIFIED, "after cell not established: %s" % e.after.cell_class)
-    return refusal("dls_search_as_user", e.after.outcome)
+    r = refusal("dls_search_as_user", e.after.outcome)
+    if r.status == FAIL:   # a missing witness only withholds a PASS; it never softens a definite FAIL (a 2xx answer)
+        return r
+    missing = [k for k in ("in the answer", "in polled searches started after start_basic") if counts[k] is None]
+    if missing:
+        return Verdict(UNVERIFIED, "dls_search_as_user: %s: %s" % (_NO_DOC_WITNESS, ", ".join(missing)))
+    return r
 
 
 def battery(e: Battery):
-    return combine(refusal(p, getattr(e.after, p).outcome, getattr(e.after, p).hidden or getattr(e.after, p).any_source) for p in E.BATTERY)
+    out = []
+    for p in E.BATTERY:
+        r = getattr(e.after, p)
+        leaked = r.hidden or r.any_source or bool(r.docs)
+        v = refusal(p, r.outcome, leaked)
+        if v.status != FAIL and r.docs is None:   # a missing witness withholds a PASS, never a definite FAIL
+            v = Verdict(UNVERIFIED, "%s: %s" % (p, _NO_DOC_WITNESS))
+        out.append(v)
+    return combine(out)
 
 
 def correctness(e: Correctness):
@@ -72,7 +95,8 @@ def correctness(e: Correctness):
 
 def availability(e: Availability):
     return combine([ok(e.failed_share.rate <= 0.001, "%d of %d reads failed" % (e.failed, e.requests)),
-                    ok(e.longest_window_s <= 2.0, "longest failure window %.3f s" % e.longest_window_s)])
+                    ok(e.longest_window_s <= 2.0, "longest failure window %.3f s" % e.longest_window_s),
+                    ok(e.consecutive_auto_s <= 2.0, "longest run of consecutive failed auto requests %.3f s" % e.consecutive_auto_s)])
 
 
 def flip_down(e: FlipDown):
@@ -153,9 +177,16 @@ GATES = {
 
 
 def judge(name, life):
-    """Parse the life into the gate's evidence type, then judge it. Never raises for malformed input."""
+    """Parse the life into the gate's evidence type, then judge it. Never raises for malformed input. Review 12: a registered clause of
+    the gate that no field witnesses (a LIMIT row of clauses.CLAUSES) forces a PASS to UNVERIFIED, naming the clause; a FAIL stays."""
     g = GATES[name]
     ev, why = E.parse(g.evidence, life)
     if ev is None:
         return Verdict(UNVERIFIED, why)
-    return g.verdict(ev)
+    v = g.verdict(ev)
+    if v.status == PASS:
+        import clauses
+        lim = clauses.limits_for(name)
+        if lim:
+            return Verdict(UNVERIFIED, "registered clause not witnessed: " + "; ".join("%s (%s)" % (c.cid, c.note) for c in lim))
+    return v

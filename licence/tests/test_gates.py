@@ -683,7 +683,8 @@ class MatrixInvariantTests(MatrixHarness):
         f.docs["lic3-sem"] = {"0": {"body": "paris"}}
         P = self.quick()
         self.assertEqual({n: P[n][0] for (ph, n) in REGISTRY if ph == "quick" and P[n][0] != "AVAILABLE"}, {})
-        self.assertEqual(len(P["dls_search"]), 3)
+        self.assertEqual(len(P["dls_search"]), 4)   # review 12 F28: class, status, returned, status-independent document count
+        self.assertIs(type(P["dls_search"][3]), int)   # recorded (before the transition the DLS user may read documents)
 
 
 class MatrixVerdictTests(MatrixHarness):
@@ -882,12 +883,17 @@ class Exp2VerifyWritesTests(unittest.TestCase):
         self.assertEqual(self._run(200)["sem_acked_absent"], 0)
 
 
+MIG_LIMIT = "registered clause not witnessed: EXP3-T2.relative "   # review 12: verdicts.judge's downgrade of a migration PASS by the LIMIT row
+
+
 class MigrationVerdictTests(unittest.TestCase):
     def test_recorded_lives_have_independent_source_counts_and_pass(self):
         for n in (1, 2, 3, 4, 5, 6, 7):
             R = load("down_%d.json" % n)
             chk = summarize.exp3_checks(R)["migration_checks"]
-            self.assertEqual(chk["migration_status"], "PASS", n)
+            # review 12: every check passes; only the LIMIT EXP3-T2.relative (the 1% relative error is not witnessed) withholds PASS
+            self.assertEqual(chk["migration_status"], "UNVERIFIED", n)
+            self.assertTrue(chk["migration_reason"].startswith(MIG_LIMIT), (n, chk["migration_reason"]))
 
     def test_source_count_not_matching_independent_count_fails(self):
         R = load("down_1.json")
@@ -1052,7 +1058,9 @@ class ReviewSixGateTests(unittest.TestCase):
         return summarize.exp3_checks(R)["migration_checks"]["migration_status"]
 
     def test_f8_migration_healthy_passes(self):
-        self.assertEqual(summarize.exp3_checks(_life("down_1"))["migration_checks"]["migration_status"], "PASS")
+        chk = summarize.exp3_checks(_life("down_1"))["migration_checks"]   # review 12: only the LIMIT withholds the PASS
+        self.assertEqual(chk["migration_status"], "UNVERIFIED")
+        self.assertTrue(chk["migration_reason"].startswith(MIG_LIMIT), chk["migration_reason"])
 
     def test_f8_no_operations_is_unverified(self):
         self.assertEqual(self.mig({}), "UNVERIFIED")
@@ -1076,7 +1084,9 @@ class ReviewSixGateTests(unittest.TestCase):
         return r.get("T4_battery_status"), r.get("T4_battery_pass")
 
     def test_f9_healthy_battery_passes(self):
-        self.assertEqual(self.battery(lambda R: None), ("PASS", True))
+        import clauses
+        self.assertEqual(self.battery(clauses.augment_base), ("PASS", True))   # with the review-12 docs_in_payload witness
+        self.assertEqual(self.battery(lambda R: None), ("UNVERIFIED", False))   # the committed record has no such witness
 
     def test_f9_trial_control_absent_empty_or_401_is_not_a_pass(self):
         def absent(R):

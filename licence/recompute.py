@@ -161,6 +161,8 @@ def one(path):
 
 def main():
     d, o = sys.argv[1], sys.argv[2]
+    import summarize
+    summarize.refuse_current_destination(o, "recompute.py")   # review 12 F30: never the current-report destination
     res = [one(f) for f in sorted(glob.glob(os.path.join(d, "down_[0-9]*.json")) + glob.glob(os.path.join(d, "up_[0-9]*.json")))]
     json.dump(res, open(o, "w"), indent=1, sort_keys=True)
     for r in res:

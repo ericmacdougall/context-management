@@ -427,11 +427,19 @@ DlsControl = evidence("DlsControl", {
     "only_kw_a": F("only_kw_a", "flag", expect=True, enforce=True),
     "returned": F("returned", "count", lo=1, hi=7)},
     doc="Positive restricted control on trial: the DLS user read some (1..7 of 8) documents, all permitted.")
+# Review 12 F28 (THRESHOLDS.md:26 "returning any document is a FAIL"): the witness is the status-independent document count the
+# recorder reads from the response body's shape (matrix.docs_in_payload). It is optional so a record made without it (every committed
+# life, recorded before review 12) still parses; verdicts.dls then withholds the PASS (UNVERIFIED) unless a field already shows a
+# definite FAIL (a positive document count, or a 2xx answer), which a missing witness never softens. The legacy 200-only `returned` count is
+# read when present.
 DlsAfter = evidence("DlsAfter", {
     "outcome": F("status", "status", expect=REFUSALS, text="error"),
-    "cell_class": F("class", "cell_class", bad=("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP"))})
-Dls = evidence("Dls", {"control": F("exp1_trial.dls_search_as_user", DlsControl), "after": F("exp1_after.dls_search_as_user", DlsAfter)},
-               doc="EXP1-T4.")
+    "cell_class": F("class", "cell_class", bad=("UNVERIFIED_PREREQUISITE", "EMPTY_WITNESS", "SKIP")),
+    "docs": F("docs_in_payload", "count", optional=True, expect={0}, bad=(1,)),
+    "returned": F("returned", "count", optional=True, expect={0}, bad=(8,))})
+Dls = evidence("Dls", {"control": F("exp1_trial.dls_search_as_user", DlsControl), "after": F("exp1_after.dls_search_as_user", DlsAfter),
+                       "polled_docs": F("exp1_moment.dls_search.docs_after_transition", "count", optional=True, expect={0}, bad=(1,))},
+               doc="EXP1-T4: the trial control, the post-transition search, and every polled DLS search started after start_basic.")
 
 TrialRead = evidence("TrialRead", {"outcome": F("status", "status", expect=OK, enforce=True),
                                    "hidden": F("returned_hidden_doc", "flag", expect=False, enforce=True),
@@ -445,7 +453,8 @@ BatteryTrial = evidence("BatteryTrial", dict({p: F(p, TrialHiddenRead if p == "g
     doc="Trial control: every read path answers as DLS should, the allowed document is readable, the hidden one never returned.")
 AfterRead = evidence("AfterRead", {"outcome": F("status", "status", expect=REFUSALS),
                                    "hidden": F("returned_hidden_doc", "flag", expect=False),
-                                   "any_source": F("returned_any_source", "flag", expect=False)})
+                                   "any_source": F("returned_any_source", "flag", expect=False),
+                                   "docs": F("docs_in_payload", "count", optional=True, expect={0}, bad=(1,))})   # review 12 F28: by shape
 BatteryAfter = evidence("BatteryAfter", {p: F(p, AfterRead) for p in BATTERY})
 Battery = evidence("Battery", {"control": F("exp1_trial.dls_search_as_user", DlsControl), "trial": F("dls_battery_trial", BatteryTrial),
                                "after": F("dls_battery_after", BatteryAfter)}, doc="EXP1-T4 battery.")
@@ -470,7 +479,9 @@ Availability = evidence("Availability", {
     "failed": F("exp2.T2_failed_requests", "count"),
     "requests": F("exp2.T2_non_control_requests", "pos"),
     "longest_window_s": F("exp2.T2_longest_failure_window_s", "duration", bad=(2.5,)),
-    "windows": F("exp2.T2_failure_windows", "windows")},
+    "windows": F("exp2.T2_failure_windows", "windows"),
+    # review 12: THRESHOLDS EXP2-T2 as registered, the longest run of consecutive failed auto requests (observe.consecutive_auto_failure)
+    "consecutive_auto_s": F("exp2.T2_longest_consecutive_auto_failure_s", "duration", bad=(2.5,))},
     [("le", "failed", "requests"), ("windows_match", "windows", "longest_window_s", "failed")], "EXP2-T2.",
     {"failed_share": property(lambda s: Proportion(s.failed, s.requests))})
 
