@@ -1,0 +1,80 @@
+# advisor-check tests (stop-word readings, palochka miss, maria1) against wp/mentions.py at abceae9 (m5 before the fix); Mac, python3, Unicode 13.0.0; the RuleR3 stop-word test passes with 15b3255's (m4) mentions.py: OK
+# command: WP_UCD_DIR=<dir> python3 -m unittest tests.test_ident -v
+test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings) ... ok
+test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings)
+Pinned per Unicode version; each reading checked through the text path, and no other reading. ... ok
+test_m5_cap_refuses_identifiers_over_it (tests.test_ident.F11M5Readings) ... ok
+test_m5_closure_over_the_tables (tests.test_ident.F11M5Readings)
+Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a ... ok
+test_m5_digit_inside_a_word_is_read_as_a_letter (tests.test_ident.F11M5Readings) ... ok
+test_m5_documented_misses (tests.test_ident.F11M5Readings)
+NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no ... FAIL
+test_m5_generated_variants_match (tests.test_ident.F11M5Readings) ... ok
+test_m5_identifiers_with_digits_stay_distinct (tests.test_ident.F11M5Readings) ... ok
+test_m5_identity_key_is_one_of_the_text_keys (tests.test_ident.F11M5Readings) ... ok
+test_m5_near_misses_do_not_match (tests.test_ident.F11M5Readings) ... ok
+test_m5_not_closed_list (tests.test_ident.F11M5Readings) ... ok
+test_m5_real_name_pairs_stay_apart (tests.test_ident.F11M5Readings) ... ok
+test_m5_reordered_combining_marks (tests.test_ident.F11M5Readings) ... ok
+test_m5_reviewer_counterexample_still_matches (tests.test_ident.F11M5Readings) ... ok
+test_m5_stated_over_match (tests.test_ident.F11M5Readings) ... FAIL
+test_m5_window_over_the_cap_is_not_enumerated (tests.test_ident.F11M5Readings) ... ok
+test_s15_no_module_builds_identifier_hmacs_itself (tests.test_ident.LabelInOnePlace)
+A second copy of the label (erasure's rescan had "ident:" + w) silently stops matching when the label ... ok
+test_r1_no_span_redaction_api (tests.test_ident.Matcher)
+Decision R1 (review C F1): whole-event removal is the only path; the matcher offers no redaction. ... ok
+test_s2_whole_tokens_only (tests.test_ident.Matcher) ... ok
+test_s3_offsets_are_in_the_original_text (tests.test_ident.Matcher) ... ok
+test_s4_invisible_characters_inside_a_name_in_text (tests.test_ident.Matcher) ... ok
+test_s6_capital_i_lookalike_in_text (tests.test_ident.Matcher) ... ok
+test_s6_lookalikes_in_other_speakers_text_match (tests.test_ident.Matcher) ... ok
+test_s6_one_case_insensitive_key_per_identifier (tests.test_ident.Matcher) ... ok
+test_s7_identifier_inside_quoted_text_of_another_speaker (tests.test_ident.Matcher) ... ok
+test_two_occurrences_and_overlap_merged (tests.test_ident.Matcher) ... ok
+test_s16_unsegmented_script_refused (tests.test_ident.RuleR3) ... ok
+test_s1_lookalike_of_a_common_word_refused (tests.test_ident.RuleR3) ... FAIL
+test_s1_short_or_common_refused (tests.test_ident.RuleR3) ... ok
+test_s3_normal_form_keeps_letters (tests.test_ident.RuleR3) ... ok
+test_s4_ignorables_removed_from_declared_identifier (tests.test_ident.RuleR3) ... ok
+test_s5_mixed_script_declared_identifier_refused (tests.test_ident.RuleR3) ... ok
+test_unassigned_code_point_refused (tests.test_ident.RuleR3) ... ok
+test_hmac_label_binds_the_matcher (tests.test_ident.Tables) ... ok
+test_loads_the_pinned_tables (tests.test_ident.Tables) ... ok
+test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables) ... ok
+test_missing_table_fails_closed (tests.test_ident.Tables) ... ok
+test_other_unicode_version_fails_closed (tests.test_ident.Tables) ... ok
+test_tampered_table_fails_closed (tests.test_ident.Tables) ... ok
+test_every_default_ignorable_inside_a_name (tests.test_ident.WholeDefaultIgnorable) ... ok
+test_f6_khmer_inherent_vowels (tests.test_ident.WholeDefaultIgnorable) ... ok
+
+======================================================================
+FAIL: test_m5_documented_misses (tests.test_ident.F11M5Readings)
+NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 430, in test_m5_documented_misses
+    self.assertIn(word, nc)
+AssertionError: 'palochka' not found in 'identifiers that were never declared (nicknames, misspellings, initials, inflected forms) pronouns and indirect references look-alikes outside UTS 39 confusables.txt 18.0.0 (transliterations, homophones) a small l written for i or a small i for l (Allson or Aiison for Alison; lan for Ian): distinct letters are never read as each other; only a capital I and its look-alikes are read both ways a letter written for a digit (XQ-l00l or XQ-IOOI for XQ-1001) digits written for letters in a word with no more letters than digits (A11s0n for Alison) a digit of another script that looks like 0 or 1: it is read as the letter its prototype names, not as the digit a capital of another script that looks like one Latin capital while its small form looks like another letter (Greek capital Nu, Eta; Latin capital I with stroke; the list is not_closed()): it is matched by its small form, not as the look-alike look-alikes that are punctuation or symbols (| for l): they end the token words of the subject quoted by others that contain no declared identifier names in scripts written without spaces (refused at declaration)'
+
+======================================================================
+FAIL: test_m5_stated_over_match (tests.test_ident.F11M5Readings)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 440, in test_m5_stated_over_match
+    self.assertIn(word, om)
+AssertionError: 'maria1' not found in 'confusable variants of a declared identifier (for example Kim and Kirn share a key): such events of other speakers are removed too a capital I (or one of its look-alikes) in text is read as i and as l, so text in capitals also matches a name that differs by i and l (DELIA also matches Della, NEIL also matches Nell, HAILEY also matches Halley; AIEX KIM matches Alex Kim) a digit 1 or 0 inside a word in text is read as the letters too (Ne1l matches Neil and Nell; J0hn matches John) one text window can hit several subjects (EIIa Moreno hits both Elia Moreno and Ella Moreno): erasing either removes that event'
+
+======================================================================
+FAIL: test_s1_lookalike_of_a_common_word_refused (tests.test_ident.RuleR3)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 77, in test_s1_lookalike_of_a_common_word_refused
+    self.bad("ln the", "common")
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_ident.py", line 61, in bad
+    self.assertIsNotNone(p, ident)
+AssertionError: unexpectedly None : ln the
+
+----------------------------------------------------------------------
+Ran 41 tests in 4.156s
+
+FAILED (failures=3)

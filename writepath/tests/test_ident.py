@@ -72,6 +72,11 @@ class RuleR3(unittest.TestCase):
         # its skeleton is the skeleton of "customer": it would match every "customer" in other speakers' text
         self.bad("custorner", "common")
         self.bad("adrnin", "common")
+        # m5: a capital I in TEXT is read as l too, so "In the" and "IS IT" have the text keys of "ln the" and "ls lt";
+        # an identifier with those keys would match ordinary text (advisor check on abceae9)
+        self.bad("ln the", "common")
+        self.bad("ls lt", "common")
+        self.bad("lT lS", "common")
 
     def test_s5_mixed_script_declared_identifier_refused(self):
         self.bad("Аlexander Kim", "script")          # Cyrillic capital A inside a Latin name
@@ -416,19 +421,22 @@ class F11M5Readings(unittest.TestCase):
         """NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no
         more letters than digits."""
         for text, ident in (("Allson", "Alison"), ("Aiison", "Alison"), ("lan Smith", "Ian Smith"),
-                            ("XQ-l00l", "XQ-1001"), ("XQ-IOOI", "XQ-1001"), ("A11s0n", "Alison")):
+                            ("XQ-l00l", "XQ-1001"), ("XQ-IOOI", "XQ-1001"), ("A11s0n", "Alison"),
+                            ("AlӀson", "Alison"),        # Cyrillic palochka (looks like l) for i
+                            ("Aіex Kim", "Alex Kim")):    # Cyrillic small i (looks like i) for l
             self.assertFalse(self.matches(text, ident), (text, ident))
         nc = " ".join(M.NOT_COVERED)
-        for word in ("Allson", "XQ-l00l", "A11s0n"):
+        for word in ("Allson", "XQ-l00l", "A11s0n", "palochka"):
             self.assertIn(word, nc)
 
     def test_m5_stated_over_match(self):
         for text, ident in (("AIEX KIM", "Alex Kim"), ("DELIA SMITH", "Della Smith"), ("NEIL YOUNG", "Nell Young"),
                             ("HAILEY BROWN", "Halley Brown"), ("Ne1l Young", "Neil Young"), ("Ne1l Young", "Nell Young"),
-                            ("EIIa Moreno", "Elia Moreno"), ("EIIa Moreno", "Ella Moreno")):
+                            ("EIIa Moreno", "Elia Moreno"), ("EIIa Moreno", "Ella Moreno"),
+                            ("maria1 Smith", "Marial Smith")):  # a word ending in a digit: the digit read as l
             self.assertTrue(self.matches(text, ident), (text, ident))
         om = " ".join(M.OVER_MATCH)
-        for word in ("DELIA", "Ne1l", "several subjects"):
+        for word in ("DELIA", "Ne1l", "several subjects", "maria1"):
             self.assertIn(word, om)
         self.assertNotIn("Delia and Della", om)     # plain text naming one of them no longer matches the other
 
