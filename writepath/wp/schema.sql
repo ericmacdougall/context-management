@@ -7,6 +7,8 @@
 --                session_replication_role, has no DELETE or TRUNCATE privilege anywhere, and no write privilege on
 --                leases, subjects, chains, tombstones, decision_heads, store_registry, quarantine_quota.
 --   wp_verifier  completes erasure jobs (wp_erasure_complete); otherwise read-only.
+--   wp_sealer    the seal authority (wp/sealer.py): SELECT on identifier_epochs and subject_identifiers only. The seal
+--                key's pads live in schema wp_seal, which no role but wp_owner can use.
 --   wp_reviewer  NOLOGIN group (D3): its member logins (one per reviewer principal) approve or reject identifier
 --                proposals. Only wp_identifier_approve writes subject_identifiers; wp_app can only propose.
 --
@@ -269,6 +271,10 @@ create table events (
   mention_scan_upto bigint not null default 0,              -- identifier-set version the matcher ran against
   mention_matcher text not null default '',                 -- matcher id that ran (class 3: must be the tenant's, WPS38)
   secret_scan text not null default '',                    -- secret-scanner version the app ran (row 19); must be current
+  -- the seal authority's attestation (DESIGN-NOTES "Seal authority" A3, A8): HMAC under a key wp_app cannot read over
+  -- this row's own fields; events_guard refuses a row without one (WPS40) or with one that does not verify (WPS41).
+  -- NULL only on rows written before the authority (owner fixtures, legacy); the rescan and unscannable rule cover those
+  seal_key_id text, seal_mac text, seal_batch text, seal_index int, seal_count int,
   prev_hash text not null, hash text not null,
   decision_item text, decision_action text, based_on_event_id text, source_event_id text,
   lease_scope text not null, lease_epoch bigint not null,
@@ -299,11 +305,73 @@ create table decision_heads (
 -- row 19: the secret-scanner version every new event must carry (wp/secrets.py VERSION); bumping it is a migration
 create function wp_secret_scan_version() returns text language sql immutable as $$ select 's1'::text $$;
 
+-- ------------------------------------------------------------------ the seal authority's key (private schema wp_seal)
+-- DESIGN-NOTES "Seal authority" A3, A8. The admin creates schema wp_seal (authorization wp_owner) next to public; USAGE
+-- is granted to nobody (revoked from public below), so only wp_owner and the SECURITY DEFINER guards reach it. ipad and
+-- opad are the 32-byte seal key zero-padded to 64 bytes XOR 0x36 / 0x5c (RFC 2104): they ARE the key; the schema's
+-- privileges protect them. Not in public: wp_verifier holds SELECT on every table there.
+create table wp_seal.seal_keys (
+  key_id text primary key,
+  ipad bytea not null check (octet_length(ipad) = 64),
+  opad bytea not null check (octet_length(opad) = 64),
+  active boolean not null default true,
+  installed_at timestamptz not null default clock_timestamp()
+);
+-- setup installs the pads of the key it generated (wp/setup.py); rotation is a second key_id, then deactivation
+create function wp_seal.install(kid text, ip bytea, op bytea) returns void language plpgsql set search_path = pg_catalog, pg_temp as $$
+begin
+  if kid is null or kid = '' or octet_length(ip) is distinct from 64 or octet_length(op) is distinct from 64 then
+    raise exception 'seal key malformed' using errcode = '22023';
+  end if;
+  insert into wp_seal.seal_keys(key_id, ipad, opad) values (kid, ip, op);
+end $$;
+-- the attested message: "<UTF-8 octets>:<value>" per field (wp/sealer.py encode); a NULL field is refused, never
+-- skipped (string concatenation and string_agg would drop it and two rows could encode alike)
+create function wp_seal.message(f text[]) returns bytea language plpgsql immutable set search_path = pg_catalog, pg_temp as $$
+declare acc text := ''; x text;
+begin
+  if f is null or array_position(f, null) is not null then
+    raise exception 'seal_invalid' using errcode = 'WPS41';
+  end if;
+  foreach x in array f loop
+    acc := acc || octet_length(convert_to(x, 'UTF8'))::text || ':' || x;
+  end loop;
+  return convert_to(acc, 'UTF8');
+end $$;
+-- true iff mac is HMAC-SHA256(key kid, message(f)) under an ACTIVE key; compares sha256 of both values, so the time
+-- taken says nothing about a prefix of the expected MAC; never returns or raises the expected value
+create function wp_seal.verify(kid text, mac text, f text[]) returns boolean language plpgsql stable set search_path = pg_catalog, pg_temp as $$
+declare k record; m bytea;
+begin
+  if kid is null or mac is null or mac !~ '^[0-9a-f]{64}$' then
+    return false;
+  end if;
+  select ipad, opad into k from wp_seal.seal_keys where key_id = kid and active;
+  if not found then
+    return false;
+  end if;
+  m := wp_seal.message(f);
+  if sha256(decode(mac, 'hex')) is distinct from sha256(sha256(k.opad || sha256(k.ipad || m))) then
+    return false;
+  end if;
+  return true;
+end $$;
+
 create function events_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare er boolean; ch record; src record; hd record; prior record; mx bigint; mm text;
 begin
   if NEW.lease_scope is distinct from 'session:' || NEW.session_id then
     raise exception 'scope_not_bound table=events presented=% required=session:%', NEW.lease_scope, NEW.session_id using errcode = 'WPS12';
+  end if;
+  -- the seal authority's attestation (A3, A8), before everything else: a forged row is refused as forged
+  if NEW.seal_key_id is null and NEW.seal_mac is null then
+    raise exception 'seal_missing: no attestation from the seal authority' using errcode = 'WPS40';
+  end if;
+  if not wp_seal.verify(NEW.seal_key_id, NEW.seal_mac,
+       array['wp-seal-v1', NEW.seal_key_id, NEW.tenant_id::text, NEW.event_id, NEW.subject_id, NEW.content_digest,
+             NEW.mention_scan_upto::text, NEW.mention_matcher, NEW.secret_scan, cardinality(NEW.mentions)::text] || NEW.mentions ||
+       array[NEW.lease_scope, NEW.lease_epoch::text, NEW.seal_batch, NEW.seal_index::text, NEW.seal_count::text]) then
+    raise exception 'seal_invalid' using errcode = 'WPS41';
   end if;
   perform public.wp_fence(NEW.tenant_id, NEW.lease_scope, NEW.lease_epoch);
   if NEW.secret_scan is distinct from wp_secret_scan_version() then
@@ -381,7 +449,12 @@ create trigger events_no_change before update or delete on events for each row e
 create table quarantine (
   id bigserial primary key, tenant_id tenant_t not null, session_id text not null, subject_id text not null,
   presented_epoch bigint not null, reason text not null, kind text not null, content_enc bytea not null, mentions text[] not null default '{}',
+  -- A8: the attested fields of the event the authority sealed (scope 'session:' || session_id, epoch presented_epoch)
+  event_id text not null, mention_scan_upto bigint not null default 0, mention_matcher text not null default '',
+  secret_scan text not null default '',
+  seal_key_id text, seal_mac text, seal_batch text, seal_index int, seal_count int,
   at timestamptz not null default clock_timestamp(),
+  unique (tenant_id, event_id),
   constraint quarantine_content_size check (octet_length(content_enc) <= 65564)     -- as events_content_size
 );
 
@@ -412,6 +485,16 @@ create table quarantine_quota (
 create function quarantine_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare er boolean; q record; cap constant bigint := 1000;
 begin
+  -- A3, A8: a quarantine row carries content and mentions the cascade relies on, so it needs the attestation too
+  if NEW.seal_key_id is null and NEW.seal_mac is null then
+    raise exception 'seal_missing: no attestation from the seal authority' using errcode = 'WPS40';
+  end if;
+  if not wp_seal.verify(NEW.seal_key_id, NEW.seal_mac,
+       array['wp-seal-v1', NEW.seal_key_id, NEW.tenant_id::text, NEW.event_id, NEW.subject_id, encode(sha256(NEW.content_enc), 'hex'),
+             NEW.mention_scan_upto::text, NEW.mention_matcher, NEW.secret_scan, cardinality(NEW.mentions)::text] || NEW.mentions ||
+       array['session:' || NEW.session_id, NEW.presented_epoch::text, NEW.seal_batch, NEW.seal_index::text, NEW.seal_count::text]) then
+    raise exception 'seal_invalid' using errcode = 'WPS41';
+  end if;
   select erased into er from subjects where tenant_id = NEW.tenant_id and subject_id = NEW.subject_id for share;
   if er then raise exception 'subject_erased' using errcode = 'WPS03'; end if;
   insert into quarantine_quota(tenant_id, session_id) values (NEW.tenant_id, NEW.session_id) on conflict do nothing;
@@ -848,7 +931,11 @@ begin
   end if;
   delete from facts where tenant_id = j.tenant_id and subject_id = j.subject_id;
   delete from inbox where tenant_id = j.tenant_id and subject_id = j.subject_id;
-  delete from quarantine where tenant_id = j.tenant_id and (subject_id = j.subject_id or mentions @> array[j.subject_id]);
+  -- A8: the rescan never reads quarantine, so a row scanned below this subject's identifier-set version is treated as
+  -- mentioning it (by arithmetic, no decryption), unless its speaker is under an active hold (kept, not retried)
+  delete from quarantine q where q.tenant_id = j.tenant_id and (q.subject_id = j.subject_id or q.mentions @> array[j.subject_id]
+    or (q.mention_scan_upto < (select coalesce(x.ident_xmax, 0) from erasure_jobs x where x.job_id = jid)
+        and not exists (select 1 from legal_holds h where h.tenant_id = q.tenant_id and h.subject_id = q.subject_id and h.released_at is null)));
   -- D3 sealed identifiers: never used for matching, and none can be added after the mark (propose and approve judge
   -- `erased` under the subject lock), so they go at the first final pass, whether or not a rescan ran (a subject with
   -- only a proposal has identifier-set version 0 and no rescan; at 4fe3ac1 its proposal was never deleted)
@@ -1045,7 +1132,20 @@ end $$;
 revoke all on all tables in schema public from public;
 revoke all on all functions in schema public from public;
 revoke all on all sequences in schema public from public;
+revoke all on schema wp_seal from public;
+revoke all on all tables in schema wp_seal from public;
+revoke all on all functions in schema wp_seal from public;
 grant usage on schema public to wp_app, wp_verifier, wp_legal, wp_broker;   -- wp_broker: wp_lease_holder_current only
+-- the seal authority's login (A2): it reads the identifier set version, the tenant's matcher and the identifiers, nothing
+-- else, and writes nothing. Granted only where setup created the role (a cluster set up before it has none).
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'wp_sealer') then
+    grant usage on schema public to wp_sealer;
+    grant usage on type tenant_t to wp_sealer;
+    grant select on identifier_epochs, subject_identifiers to wp_sealer;
+  end if;
+end $$;
 grant usage on type tenant_t to wp_app, wp_verifier, wp_legal;
 grant select on all tables in schema public to wp_verifier;
 grant select, insert on events, quarantine to wp_app;

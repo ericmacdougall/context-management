@@ -52,6 +52,7 @@ STORES = [
     _pg("cursors", "projection cursors", "no content", False),
     _pg("decision_heads", "keyed item hash, version, event id, action", "no plaintext; the item hash uses the tenant key (survives erasure, N15)", False),
     _pg("store_registry", "this list", "no content", False),
+    _pg("wp_seal.seal_keys", "the seal authority's HMAC pads (DESIGN-NOTES A3; private schema, no role but wp_owner)", "no content, no subject", False),
     _pg("erasure_jobs", "subject id, verify counts, error TYPE only", "kept as the audit record", False),
     Store("keys:subject_keys", "keys", "subject_keys", "per-subject data keys", "deleted + VACUUM + WAL switch/checkpoint", True),
     Store("keys:destroyed", "keys", "destroyed", "subject ids", "kept: refuses re-creating an erased subject's key", False),
@@ -95,7 +96,8 @@ def sync_db(conn):
 # --------------------------------------------------------------- introspection
 def _pg_relations(conn):
     return {r[0] for r in conn.execute(
-        "select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','p','v','m','f') "
+        "select case when n.nspname = 'public' then c.relname else n.nspname || '.' || c.relname end "
+        "from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','p','v','m','f') "
         "and n.nspname not in ('pg_catalog','information_schema') and n.nspname not like 'pg_toast%%'").fetchall()}
 
 

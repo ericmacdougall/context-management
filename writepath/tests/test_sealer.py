@@ -396,7 +396,7 @@ class SealerOffline(unittest.TestCase):
         keys_table = _table(SCHEMA, "wp_seal.seal_keys")
         for col in ("key_id text primary key", "ipad bytea not null", "opad bytea not null", "active boolean not null"):
             self.assertTrue(col in keys_table, col)
-        self.assertFalse(re.search(r"grant [^;]*wp_seal", SCHEMA), "a privilege on wp_seal is granted")
+        self.assertFalse(re.search(r"grant [^;]*wp_seal(?!er)", SCHEMA), "a privilege on wp_seal is granted")
         self.assertTrue("revoke all on schema wp_seal from public" in SCHEMA, "revoke all on schema wp_seal from public")
         self.assertTrue("revoke all on all functions in schema wp_seal from public" in SCHEMA, "revoke all on all functions in schema wp_seal from public")
         fns = _functions(SCHEMA)

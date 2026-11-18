@@ -1,0 +1,15 @@
+test_u10_schema_statics (tests.test_sealer.SealerOffline) ... ok
+test_u1_encoding_is_length_prefixed_in_octets (tests.test_sealer.SealerOffline) ... ok
+test_u2_every_field_is_bound (tests.test_sealer.SealerOffline) ... ok
+test_u3_store_formula_is_hmac (tests.test_sealer.SealerOffline) ... ok
+test_u4_mac_key_is_the_authoritys_own (tests.test_sealer.SealerOffline) ... ok
+test_u5_seal_output (tests.test_sealer.SealerOffline) ... ok
+test_u6_refused_batches_seal_nothing (tests.test_sealer.SealerOffline) ... ok
+test_u7_socket_peer_codes_and_log (tests.test_sealer.SealerOffline) ... ok
+test_u8_append_without_an_authority (tests.test_sealer.SealerOffline) ... ok
+test_u9_key_file_and_key_service (tests.test_sealer.SealerOffline) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.776s
+
+OK

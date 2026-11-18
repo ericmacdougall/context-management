@@ -1,7 +1,8 @@
 """Postgres connections. Passwords via a 0600 pgpass file (never argv or environment values), one entry per role.
 
 Roles: wp_app (the application; default), wp_verifier (erasure completion), wp_kms (the key-service stand-in),
-wp_legal (legal holds), wp_broker (the D6 key broker: lease check only), and the cluster admin (setup, migrations and experiment controls only).
+wp_legal (legal holds), wp_broker (the D6 key broker: lease check only), wp_sealer (the seal authority: SELECT on
+identifier_epochs and subject_identifiers), and the cluster admin (setup, migrations and experiment controls only).
 D2: every role has its own credential file. In this lab all files belong to one OS user, so the separation is per file,
 not per OS identity; a deployment runs each role as its own service identity that can read only its own secret."""
 import os
@@ -11,6 +12,7 @@ import psycopg
 from . import config
 
 APP, VERIFIER, KMS, LEGAL, WATCHDOG, BROKER = "wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog", "wp_broker"
+SEALER = "wp_sealer"                                # the seal authority (wp/sealer.py): reads identifiers only
 REVIEWER_GROUP = "wp_reviewer"                     # D3: NOLOGIN group; approves identifier proposals
 REVIEWERS = ("wp_rev1", "wp_rev2")                 # one login per reviewer principal (members of REVIEWER_GROUP)
 

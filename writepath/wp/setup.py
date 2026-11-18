@@ -13,7 +13,7 @@ from psycopg import sql
 from . import config, db, registry
 
 HERE = pathlib.Path(__file__).parent
-LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL, db.WATCHDOG, db.BROKER) + db.REVIEWERS
+LOGIN_ROLES = (db.APP, db.VERIFIER, db.KMS, db.LEGAL, db.WATCHDOG, db.BROKER, db.SEALER) + db.REVIEWERS
 ROLE_TIMEOUTS = {"statement_timeout": "30s", "idle_in_transaction_session_timeout": "5s"}
 ROLE_ATTRS = "nosuperuser nocreatedb nocreaterole noreplication nobypassrls inherit"
 
@@ -82,7 +82,7 @@ def main(reset):
     if "wp_ctl" in have:                     # this stream's old all-triggers-dropped control database: retired
         admin.execute('drop database "wp_ctl"')
     admin.execute(f'revoke connect on database "{config.EVENTS_DB}" from public')
-    admin.execute(f'grant connect on database "{config.EVENTS_DB}" to wp_app, wp_verifier, wp_legal, wp_broker, ' + ', '.join(db.REVIEWERS))
+    admin.execute(f'grant connect on database "{config.EVENTS_DB}" to wp_app, wp_verifier, wp_legal, wp_broker, wp_sealer, ' + ', '.join(db.REVIEWERS))
     admin.execute(f'revoke connect on database "{config.KEYS_DB}" from public')
     admin.execute(f'grant connect on database "{config.KEYS_DB}" to wp_kms, wp_verifier')
     admin.execute("grant pg_checkpoint to wp_kms with inherit true")
@@ -94,12 +94,35 @@ def main(reset):
     ks.execute("grant execute on function pg_switch_wal() to wp_kms")
     if reset:
         ev.execute("drop schema public cascade"); ev.execute("create schema public authorization wp_owner")
+        # DESIGN-NOTES A8: the seal key's private schema is created by the admin next to public and dropped with it
+        ev.execute("drop schema if exists wp_seal cascade"); ev.execute("create schema wp_seal authorization wp_owner")
         ev.execute("set role wp_owner"); ev.execute((HERE / "schema.sql").read_text()); ev.execute("reset role")
         ks.execute("drop schema public cascade"); ks.execute("create schema public authorization wp_kms")
         ks.execute("set role wp_kms"); ks.execute((HERE / "keys_schema.sql").read_text()); ks.execute("reset role")
     ev.execute("set role wp_owner"); registry.sync_db(ev); ev.execute("reset role")
+    _seal_key(ev)
     config.LOG_DIR.mkdir(parents=True, exist_ok=True)
     print("setup ok", "reset" if reset else "")
+
+
+def _seal_key(ev):
+    """The seal authority's key (DESIGN-NOTES A2, A4 KEY HANDLING): generated once into WP_SECRETS_DIR/seal_key (0600,
+    never overwritten, never printed), its pads installed in wp_seal.seal_keys as wp_owner when that key id is absent.
+    Prints only the key id (a random label). The authority's deployment copies the file to its own 0700 directory."""
+    from . import sealer
+    p = sealer.key_path()
+    if not p.exists():
+        sealer.new_key_file(p)
+    kid, key = sealer.load_key(p)
+    ev.execute("set role wp_owner")
+    try:
+        if ev.execute("select 1 from wp_seal.seal_keys where key_id = %s", (kid,)).fetchone() is None:
+            ip, op = sealer.pads(key)
+            ev.execute("select wp_seal.install(%s, %s, %s)", (kid, ip, op))
+    finally:
+        ev.execute("reset role")
+    del key
+    print("seal key", kid)
 
 
 if __name__ == "__main__":

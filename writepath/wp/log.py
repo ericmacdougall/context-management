@@ -7,8 +7,9 @@ import uuid
 
 import psycopg
 
-from . import keys as K, mentions as M, secrets as SEC
+from . import keys as K, mentions as M, secrets as SEC, sealer as SL
 from .secrets import SecretDetected  # noqa: F401  (re-exported for callers)
+from .sealer import SealUnavailable, SealError  # noqa: F401  (re-exported: the seal authority, DESIGN-NOTES A1 to A8)
 from .mentions import WriteRefused, ContentTooLarge, MatcherBudgetExceeded, CallBudgetExceeded  # noqa: F401  (re-exported: m5 b1)
 from .lease import is_stale_error, session_scope
 
@@ -61,28 +62,46 @@ def _canonical(e):
                        "ts": e["ts_event"].isoformat(), "content": e["content"], "decision": d}, sort_keys=True)
 
 
-def append(conn, ks: K.KeyService, lease, events, hook=_noop):
+SEAL_COLS = ("seal_key_id", "seal_mac", "seal_batch", "seal_index", "seal_count")
+
+
+def append(conn, ks: K.KeyService, lease, events, hook=_noop, sealer=None):
     """events: dicts with subject_id, kind, actor, trust_origin, ts_event (aware datetime), content (str), optional
     idem_key and, for kind='decision', decision={item, action, based_on_event_id, source_event_id}.
     Returns {'accepted': [event_id], 'duplicates': [event_id], 'quarantined': n, ...}. Never raises on a stale epoch.
     Raises IdempotencyConflict when a key is reused with a different request, StaleDecision on a stale decision, and
     WriteRefused (ContentTooLarge WPM01, MatcherBudgetExceeded WPM02, CallBudgetExceeded WPM03; m5 b1) before anything
     else when an event is over the content size bound or its matcher key budget, or the call over its limits: the whole batch is refused, nothing is stored (no event, no
-    quarantine row, no subject key) and the refusal is counted in write_refusals."""
+    quarantine row, no subject key) and the refusal is counted in write_refusals.
+    The seal authority (`sealer`, else wp/sealer.py sealer_for; DESIGN-NOTES A8) admits, secret-scans, matches,
+    encrypts and attests the batch; this function only orders, chains and inserts what it returned (the store refuses
+    anything else: WPS40, WPS41). No authority reachable: SealUnavailable, nothing stored."""
     t, sid = lease.tenant, lease.scope.split(":", 1)[1]
+    auth = sealer if sealer is not None else SL.sealer_for(conn, ks)
+    eids = [uuid.uuid4().hex for _ in events]
+    batch = uuid.uuid4().hex
+
+    def seal():
+        try:
+            got = auth.seal(t, lease.scope, lease.epoch, batch, [{"event_id": eid, "subject_id": e["subject_id"], "content": e["content"]}
+                                                                for eid, e in zip(eids, events)])
+        except WriteRefused as ex:
+            raise _record(conn, t, ex) from None
+        if [r["event_id"] for r in got] != eids:
+            raise SealError("the seal authority returned another batch")
+        return got
+
+    sealed = seal()
+    keys = ks.keys(t, sorted({e["subject_id"] for e in events}))       # created by the authority; needed for req_hash only
     prepared = []
-    _admit(conn, t, lambda: M.admit([e["content"] for e in events]))
-    scan_v = SEC.check([e["content"] for e in events], "event")     # row 19: before anything is sealed or stored
-    keys = ks.keys(t, [e["subject_id"] for e in events], create=True)
-    for e in events:
-        eid = uuid.uuid4().hex
+    for e, eid, r in zip(events, eids, sealed):
+        if keys.get(e["subject_id"]) is None:
+            raise K.SubjectErased(e["subject_id"])
         d = e.get("decision") or {}
-        enc = K.seal(keys[e["subject_id"]], t, e["subject_id"], eid, e["content"])
-        prepared.append(dict(e, event_id=eid, idem_key=e.get("idem_key") or eid,
-                             req_hash=K.req_hmac(keys[e["subject_id"]], _canonical(e)), content_enc=enc, content_digest=digest(enc), secret_scan=scan_v,
+        prepared.append(dict(e, event_id=eid, idem_key=e.get("idem_key") or eid, req_hash=K.req_hmac(keys[e["subject_id"]], _canonical(e)),
                              item=ks.tenant_hmac(t, "item:" + d["item"]) if d else None, action=d.get("action"),
                              based_on=d.get("based_on_event_id"), source=d.get("source_event_id")))
-    _scan(conn, ks, t, prepared, events)
+    _apply_seal(prepared, sealed)
     ckey = ks.chain_key(t)
     hook("before_txn")
     for attempt in range(8):
@@ -91,7 +110,7 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
         except psycopg.Error as ex:
             st = getattr(ex, "sqlstate", None)
             if st == "WPS17" and attempt < 7:
-                _scan(conn, ks, t, prepared, events)   # identifiers declared meanwhile: match against the new set
+                _apply_seal(prepared, seal())     # identifiers declared meanwhile: the authority rescans and re-attests
                 continue
             if st == "23514" and (getattr(getattr(ex, "diag", None), "constraint_name", None) or "").endswith("_content_size"):
                 raise _record(conn, t, ContentTooLarge("the store refused the ciphertext size (a path that skipped the check)")) from None
@@ -106,9 +125,11 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
                 for p in prepared:
                     try:
                         with conn.transaction():
-                            n = conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc, mentions) "
-                                             "values (%s,%s,%s,%s,%s,%s,%s,%s)",
-                                             (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"], p["mentions"])).rowcount
+                            n = conn.execute("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc, mentions, "
+                                             "event_id, mention_scan_upto, mention_matcher, secret_scan, seal_key_id, seal_mac, seal_batch, seal_index, seal_count) "
+                                             "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                                             (t, sid, p["subject_id"], lease.epoch, "stale_epoch", p["kind"], p["content_enc"], p["mentions"],
+                                              p["event_id"], p["scan"], p["matcher"], p["secret_scan"]) + tuple(p[c] for c in SEAL_COLS)).rowcount
                         q += n
                         dropped += 1 - n
                     except psycopg.Error as qe:
@@ -118,6 +139,12 @@ def append(conn, ks: K.KeyService, lease, events, hook=_noop):
             if st in ("WPS05", "WPS04", "WPS13"):        # stale head, no valid user source, source already used
                 raise StaleDecision(f"{st} " + str(ex).split("\n")[0]) from None
             raise
+
+
+def _apply_seal(prepared, sealed):
+    for p, r in zip(prepared, sealed):
+        p.update(content_enc=r["content_enc"], content_digest=r["content_digest"], mentions=list(r["mentions"]), scan=r["scan"],
+                 matcher=r["matcher"], secret_scan=r["secret_scan"], **{c: r[c] for c in SEAL_COLS})
 
 
 def _record(conn, t, ex):
@@ -137,15 +164,6 @@ def _admit(conn, t, check):
         check()
     except WriteRefused as ex:
         raise _record(conn, t, ex) from None
-
-
-def _scan(conn, ks, t, prepared, events):
-    mid = M.matcher_id()                    # fails closed (UCDUnavailable) without the pinned Unicode tables
-    version, found = M.scan(conn, ks, t, [e["content"] for e in events])
-    for p, f in zip(prepared, found):
-        p["mentions"] = [x for x in f if x != p["subject_id"]]
-        p["scan"] = version
-        p["matcher"] = mid
 
 
 def _existing(conn, t, sid, prepared):
@@ -177,10 +195,11 @@ def _append_txn(conn, t, sid, lease, prepared, hook, ckey=None):
             conn.execute(
                 "insert into events(tenant_id,session_id,seq,event_id,idem_key,req_hash,kind,subject_id,actor,trust_origin,ts_event,content_enc,content_digest,"
                 "mentions,mention_scan_upto,mention_matcher,prev_hash,hash,decision_item,decision_action,based_on_event_id,source_event_id,lease_scope,lease_epoch,"
-                "secret_scan) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                "secret_scan,seal_key_id,seal_mac,seal_batch,seal_index,seal_count) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"
+                "%s,%s,%s,%s,%s)",
                 (t, sid, seq, p["event_id"], p["idem_key"], p["req_hash"], p["kind"], p["subject_id"], p["actor"], p["trust_origin"], p["ts_event"], p["content_enc"],
                  p["content_digest"], p["mentions"], p["scan"], p["matcher"], prev, h, p["item"], p["action"], p["based_on"], p["source"], lease.scope, lease.epoch,
-                 p["secret_scan"]))
+                 p["secret_scan"]) + tuple(p[c] for c in SEAL_COLS))
             if p["kind"] in ANALYST_KINDS:
                 conn.execute("insert into analyst_jobs(tenant_id, job_id, idem_key, session_id, input_event_ids, lease_scope, lease_epoch) values (%s,%s,%s,%s,%s,%s,%s)",
                              (t, uuid.uuid4().hex, "analyst:" + p["event_id"], sid, [p["event_id"]], lease.scope, lease.epoch))
@@ -305,7 +324,7 @@ def job_complete(conn, ks, tenant, job_id, claim_epoch, result_text, verify):
 
 
 # ---------------------------------------------------------------- decisions
-def decide(conn, ks, lease, subject_id, item, action, based_on_event_id, payload, source_event_id, idem_key, ts):
+def decide(conn, ks, lease, subject_id, item, action, based_on_event_id, payload, source_event_id, idem_key, ts, sealer=None):
     """A decision is a typed event bound by the store to the item head it was made against (based_on_event_id must be
     the head's last event; 'execute' additionally requires that event to be the current approval), to exactly one
     typed user message in the same session (a decision is never a source), and to its idempotency key.
@@ -313,7 +332,7 @@ def decide(conn, ks, lease, subject_id, item, action, based_on_event_id, payload
     body = json.dumps({"item": item, "action": action, "payload": payload, "based_on_event_id": based_on_event_id}, sort_keys=True)
     r = append(conn, ks, lease, [dict(subject_id=subject_id, kind="decision", actor="user", trust_origin="user_typed", ts_event=ts, content=body,
                                       idem_key=idem_key, decision={"item": item, "action": action, "based_on_event_id": based_on_event_id,
-                                                                   "source_event_id": source_event_id})])
+                                                                   "source_event_id": source_event_id})], sealer=sealer)
     if r["accepted"]:
         return "accepted", r["accepted"][0]
     if r["duplicates"]:

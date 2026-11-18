@@ -21,7 +21,7 @@ def checks(src: dict):
     reg = src.get("registry.py", "")
     fams = re.findall(r'^    "([a-z0-9_]+)": \{"mappings"', src.get("families.py", ""), re.M)
     out["S4"] = [f for f in fams if f'"es", "{f}"' not in reg]
-    tables = re.findall(r"^create table ([a-z_]+)", src.get("schema.sql", ""), re.M)
+    tables = re.findall(r"^create table ([a-z_]+(?:\.[a-z_]+)?)", src.get("schema.sql", ""), re.M)
     out["S5"] = [t for t in tables if f'_pg("{t}"' not in reg]
     out["S6"] = sorted(n for n, s in src.items() if n.endswith(".py") and re.search(r"_reindex|_delete_by_query|_update_by_query", s))
     return out, fams, tables
