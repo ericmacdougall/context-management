@@ -21,6 +21,9 @@ re-enabled ALWAYS afterwards; C4's appends go through the guard as the app role.
         removal: a link to an event being removed waits; a hold on any subject the removal judged (speaker, rescan
         link, the subject itself) waits and then reports the event as removed; a hold placed first withholds it
   E6  (review E F12) a repeated mark during a batch does not deadlock (mark takes the subject before the job)
+  B1-B4 (matcher budget m5 b1, DESIGN-NOTES "Matcher budget") a write refused for its matcher budget (WPM02) or size
+        (WPM01) leaves no events, quarantine or key row and is counted in write_refusals; the store bounds ciphertext
+        size; the erasure rescan finds a mention under the budget and fails closed (WPS24) on an over-budget legacy event
 Runs only with WP_PG_LIVE=1 on the lab host. SCHEMA_UNDER_TEST names another schema.sql (failing-first).
 usage (on t2-dev, from WP_HOME/src): WP_PG_LIVE=1 ../venv/bin/python -m unittest tests.test_d3_pg -v"""
 import hashlib
@@ -526,6 +529,104 @@ class D3Store(unittest.TestCase):
         self.assertTrue(hold_waited, "a hold landed inside the final pass")
         self.assertEqual(out.get("batch"), "ok")
         self.assertEqual(self.one("select count(*) from identifier_proposals where proposal_id=%s", (pid,)), (0,))
+
+
+    # ------------------------------------------------------------------ B (matcher budget m5 b1, DESIGN-NOTES B3-B7)
+    def refused(self, call, code):
+        try:
+            call()
+        except Exception as e:                           # noqa: BLE001  (the type does not exist before b1; the code is the contract)
+            self.assertEqual(getattr(e, "code", None), code, f"refused with {type(e).__name__}: {e}")
+            return e
+        self.fail(f"not refused: expected {code}")
+
+    def test_b1_refused_write_leaves_no_row_and_is_recorded(self):
+        import datetime
+        import types
+        TR = "d3b1"
+
+        class NoKS:                                      # a refused write must not reach the key service (no subject key)
+            def __getattr__(self, name):
+                raise RuntimeError(f"key service used before the refusal: {name}")
+
+        lease = types.SimpleNamespace(tenant=TR, scope="session:b1", epoch=1)
+
+        def ev(content):
+            return dict(subject_id="B1S", kind="message", actor="user", trust_origin="user_typed",
+                        ts_event=datetime.datetime.now(datetime.timezone.utc), content=content)
+        crafted = " ".join("1I1I1I" for _ in range(300))
+        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("fine"), ev(crafted)]), "WPM02")
+        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("a" * 65537)]), "WPM01")
+        self.assertEqual(self.one("select count(*) from events where tenant_id=%s", (TR,)), (0,))
+        self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s", (TR,)), (0,))
+        self.assertEqual(self.ev.execute("select code, n from write_refusals where tenant_id=%s order by code", (TR,)).fetchall(),
+                         [("WPM01", 1), ("WPM02", 1)])
+        self.assertEqual(self.state(self.app, "insert into write_refusals(tenant_id, day, code, n) values (%s, current_date, 'WPM02', 1)", (TR,)),
+                         "42501", "the app writes the refusal table directly")
+        self.assertNotEqual(self.state(self.app, "select wp_write_refused(%s::tenant_t, 'not-a-code')", (TR,)), "ok")
+
+    def test_b2_store_bounds_ciphertext_size(self):
+        # 65,536 bytes of content plus 28 (nonce and tag) is the largest ciphertext the store keeps
+        for size, want in ((65564, "ok"), (65565, "23514")):
+            got = self.owner_state("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc) "
+                                   "values ('d3b2', 's', 'B2S', 1, 'stale_epoch', 'message', %s)", (b"x" * size,))
+            self.assertEqual(got, want, f"quarantine ciphertext of {size} bytes")
+        try:
+            self.event("b2-ok", "B2S", [], content=b"x" * 65564, t="d3b2")
+            fine = "ok"
+        except Exception as e:                           # noqa: BLE001
+            fine = getattr(e, "sqlstate", repr(e))
+        self.assertEqual(fine, "ok")
+        try:
+            self.event("b2-big", "B2S", [], content=b"x" * 65565, t="d3b2")
+            big = "ok"
+        except Exception as e:                           # noqa: BLE001
+            big = getattr(e, "sqlstate", repr(e))
+        self.assertEqual(big, "23514", "an oversized event ciphertext was stored")
+
+    def rescan_tenant(self, t, subject, name):
+        """A tenant on THIS process's matcher with one approved identifier for `subject`, and its marked erasure job."""
+        from wp import mentions as M
+        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
+        h = M.subject_hmacs(FixedKS(), t, [name]).pop()
+        pid = self.propose(self.app, subject, h, rv=M.rule_version(), t=t)
+        self.assertEqual(self.state(self.r1, "select wp_identifier_approve(%s, %s, %s)", (pid, h, M.rule_version())), "ok")
+        return self.job(subject, t=t)
+
+    def legacy_event(self, t, eid, speaker, text):
+        """An event as an older matcher admitted it: sealed under the fixed test key, scanned against version 0."""
+        from wp import keys as K
+        self.event(eid, speaker, [], content=K.seal(FixedKS.SUBJ_KEY, t, speaker, eid, text), t=t)
+
+    def test_b3_rescan_finds_a_mention_under_the_budget(self):
+        from wp import erasure
+        j = self.rescan_tenant("d3b3", "B3X", "Rosalind Okafor")
+        self.legacy_event("d3b3", "b3e", "B3Y", "I met Rosalind Okafor today.")
+        scanned, found = erasure.rescan(self.app, FixedKS(), j)
+        self.assertEqual((scanned, found), (1, 1))
+
+    def test_b4_rescan_of_an_over_budget_legacy_event_fails_closed(self):
+        from wp import erasure, mentions as M
+        j = self.rescan_tenant("d3b4", "B4X", "Rosalind Okafor")
+        self.legacy_event("d3b4", "b4e", "B4Y", " ".join("1I1I1I" for _ in range(300)) + " Rosalind Okafor")
+        self.refused(lambda: erasure.rescan(self.app, FixedKS(), j), "WPM02")
+        self.assertEqual(self.one("select rescanned_xmax from erasure_jobs where job_id=%s", (j,)), (None,))
+        upto = self.one("select ident_xmax from erasure_jobs where job_id=%s", (j,))[0]
+        self.assertEqual(self.state(self.app, "select wp_erasure_rescan_done(%s, %s, %s)", (j, upto, M.matcher_id())), "WPS24",
+                         "the erasure completed without scanning the over-budget event")
+
+
+class FixedKS:
+    """Fixed test keys: one subject key for every speaker, one tenant HMAC key (opaque test bytes, not a secret)."""
+    SUBJ_KEY = bytes(range(32))
+    HKEY = b"test-only-fixed-key"
+
+    def keys(self, tenant, subjects, create=False):
+        return {s: self.SUBJ_KEY for s in subjects}
+
+    def tenant_hmac_many(self, tenant, texts):
+        import hmac as _h
+        return [_h.new(self.HKEY, x.encode(), hashlib.sha256).hexdigest() for x in texts]
 
 
 if __name__ == "__main__":

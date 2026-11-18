@@ -141,7 +141,7 @@ class Tables(unittest.TestCase):
 
     def test_matcher_id_names_unicode_version_and_tables(self):
         mid = M.matcher_id()
-        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}$")
+        self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+\.\d+\.\d+\.\d+$")   # b: the budget (m5 b1)
         di = hashlib.sha256((pathlib.Path(UCD_DIR) / f"default_ignorable-{UCD}.tsv").read_bytes()).hexdigest()[:12]
         self.assertIn(f":di{di}:", mid)
         self.assertEqual(M.label(), f"ident:{mid}:")
@@ -534,6 +534,208 @@ class F11M5Readings(unittest.TestCase):
                 if M.key(f"ka{other}ka") not in M.windows(f"ka{c}ka"):
                     broken.append((kind, hex(o)))
         self.assertEqual(broken[:10], [], f"{len(broken)} code points break the closure")
+
+
+class CountingKS(FakeKS):
+    """FakeKS that counts every key it HMACs and the largest single batch (the operation count of the matcher)."""
+
+    def __init__(self):
+        self.total, self.max_batch, self.calls = 0, 0, 0
+
+    def tenant_hmac_many(self, tenant, texts):
+        texts = list(texts)
+        self.total += len(texts)
+        self.max_batch = max(self.max_batch, len(texts))
+        self.calls += 1
+        return super().tenant_hmac_many(tenant, texts)
+
+
+class FakeConn:
+    """The two queries scan() makes: the tenant's identifier-set version and matcher, and the lookup of window HMACs.
+    Records the size of every lookup array."""
+
+    def __init__(self, idents):
+        self.idents, self.lookups = dict(idents), []
+
+    def execute(self, sql, args=()):
+        conn = self
+
+        class R:
+            def fetchone(self):
+                return (1, None)
+
+            def fetchall(self):
+                conn.lookups.append(len(args[1]))
+                return [(h, conn.idents[h]) for h in args[1] if h in conn.idents]
+        return R()
+
+
+# Budget m5 b1 (DESIGN-NOTES "Matcher budget (m5 b1)"); the literals, not M's names, so a red on 819258c is an assertion
+PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES, CHUNK = 512, 131072, 5_000_000, 65536, 8192
+CRAFTED = " ".join("1I1I1I" for _ in range(300))            # about 4,635 keys per token: 1.39 million keys
+PROSE = ("I think I will call Alison tomorrow. If Ian or Neil can join, I will book the room at 10am. "
+         "Delia said the invoice INV-1001 is overdue; I asked Della to check it. ")
+LEGAL = ("LIMITATION OF LIABILITY. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, "
+         "EXEMPLARY OR CONSEQUENTIAL DAMAGES INCLUDING BUT NOT LIMITED TO PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, "
+         "LOSS OF USE, DATA OR PROFITS, OR BUSINESS INTERRUPTION HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY. ")
+CODE = ("```python\nfor i1 in range(10):\n    if x0 == 1 and l1 > 0:\n        Id = f(i1, l0)\n"
+        "    IOError(0x10, 'I0 l1')\nclass IIlI1(Ill1):\n    def l10(self): return self.Il0 or 101\n```\n")
+TABLE = ("| ID | Item | Qty | Price |\n|----|------|-----|-------|\n| I-101 | IPA lot 10 | 11 | 10.10 |\n"
+         "| I-110 | Oil 1L | 100 | 1.01 |\n| L-011 | IIIx10 | 1 | 0.01 |\n")
+CAPS_I = ("IMMEDIATE INITIALIZATION IS IMPOSSIBLE IN ILLINOIS; INDIVIDUALS INSISTING ON IMMINENT INSTALLATION "
+          "INITIALLY IGNITED INFINITE IRRITATION. MISSISSIPPI MINIMALISM IS INFINITELY INTIMIDATING. ")
+NAME = "Rosalind Okafor"
+
+
+def _fill(unit, size, name=NAME):
+    """unit repeated to just under `size` UTF-8 bytes, with `name` in the middle."""
+    half = unit * max(1, (size // 2 - len(name) - 4) // len(unit.encode()))
+    return half + " " + name + " " + half
+
+
+class F12Budget(unittest.TestCase):
+    """DESIGN-NOTES "Matcher budget (m5 b1)" B9: refusal of crafted text in bounded work and memory; admission of
+    realistic text; the content size bound; chunked matching; the budget named in the matcher id."""
+
+    @classmethod
+    def setUpClass(cls):
+        M.key("warm up the tables")                     # first use loads the pinned tables (about 2 s): not the matcher's cost
+
+    def refused(self, call, code):
+        """Run call(); return the exception, asserting its code. A call that returns is a failure (red on 819258c)."""
+        try:
+            call()
+        except Exception as e:                           # noqa: BLE001  (the type does not exist before b1; the code is the contract)
+            self.assertEqual(getattr(e, "code", None), code, f"refused with {type(e).__name__}: {e}")
+            return e
+        self.fail(f"not refused: expected {code}")
+
+    def scan(self, ks, texts, names=(NAME,)):
+        conn = FakeConn({h: "SUBJ" for h in M.subject_hmacs(ks, T, names)})
+        return conn, M.scan(conn, ks, T, texts)
+
+    def test_crafted_text_refused_in_bounded_work_and_memory(self):
+        import time
+        import tracemalloc
+        for call in (lambda ks: M.find_spans(ks, T, CRAFTED + " " + NAME, hm(NAME)),
+                     lambda ks: M.scan(FakeConn({}), ks, T, ["ok", CRAFTED])):
+            ks = CountingKS()
+            tracemalloc.start()
+            t0 = time.perf_counter()
+            try:
+                e = self.refused(lambda: call(ks), "WPM02")
+            finally:
+                dt = time.perf_counter() - t0
+                peak = tracemalloc.get_traced_memory()[1]
+                tracemalloc.stop()
+            self.assertEqual(ks.total, 0, "keys were HMACed before the budget was checked")
+            self.assertLess(dt, 2.0, "refusal took longer than the generous ceiling")
+            self.assertLess(peak, 8 * 2 ** 20, "refusal built a structure of %d bytes" % peak)
+            self.assertNotIn("1I1I1I", str(e), "the refusal repeats the content")
+
+    def test_worst_shape_at_the_size_bound_refused_by_count(self):
+        # two-letter "II" tokens: 340 keys per token, under the per-token budget, 7.4 million keys at 64 KiB: over the
+        # event maximum. Only the count may run (enumerating would build millions of keys), so a matcher without a
+        # count before enumeration fails here without being run
+        text = " ".join(["II"] * (MAX_BYTES // 3))
+        if not callable(getattr(M, "key_count", None)):
+            self.fail("no key count before enumeration (m5 b1 B4)")
+        n, keys = M.key_count(text)
+        self.assertGreater(keys, EVENT_MAX)
+        self.assertLessEqual(keys, PER_TOKEN * n)
+        ks = CountingKS()
+        self.refused(lambda: M.find_spans(ks, T, text, hm(NAME)), "WPM02")
+        self.assertEqual(ks.total, 0)
+
+    def test_realistic_text_admitted_and_still_matched(self):
+        for label, unit, size in (("prose", PROSE, 4000), ("all-caps legal", LEGAL, 4000), ("code block", CODE, 4000),
+                                  ("table", TABLE, 6000), ("long document near the bound", PROSE, MAX_BYTES - 100),
+                                  ("long all-caps legal near the bound", LEGAL, MAX_BYTES - 100),
+                                  ("long code near the bound", CODE, MAX_BYTES - 100)):
+            text = _fill(unit, size)
+            self.assertLessEqual(len(text.encode()), MAX_BYTES, label)
+            ks = CountingKS()
+            _, (v, found) = self.scan(ks, [text])
+            self.assertEqual(found, [["SUBJ"]], label)
+
+    def test_short_all_caps_heading_admitted_by_the_floor(self):
+        for s in ("MINNEAPOLIS ILLINOIS INDIANA MISSISSIPPI MISSOURI", "INITIAL INVESTIGATION INTO MISSISSIPPI",
+                  "III III III III", CAPS_I[:60]):
+            _, (v, found) = self.scan(CountingKS(), [s + " " + NAME.upper()])
+            self.assertEqual(found, [["SUBJ"]], s)
+
+    def test_long_i_heavy_capitals_refused_stated_limitation(self):
+        self.refused(lambda: self.scan(CountingKS(), [CAPS_I * 10]), "WPM02")      # B8: 309,286 keys for 200 tokens
+
+    def test_content_size_bound(self):
+        at = "a" * MAX_BYTES
+        _, (v, found) = self.scan(CountingKS(), [at])
+        self.assertEqual(found, [[]])
+        for over in ("a" * (MAX_BYTES + 1), "\U0001F600" * (MAX_BYTES // 4 + 1), "é" * (MAX_BYTES // 2 + 1)):
+            ks = CountingKS()
+            e = self.refused(lambda: self.scan(ks, ["fine", over]), "WPM01")
+            self.assertEqual(ks.total, 0)
+            self.assertEqual(getattr(e, "index", None), 1, "the refusal names the event in the batch")
+        self.refused(lambda: M.find_spans(CountingKS(), T, "a" * (MAX_BYTES + 1), hm(NAME)), "WPM01")
+        _, (v, found) = self.scan(CountingKS(), ["\U0001F600" * (MAX_BYTES // 4)])          # exactly the bound in bytes
+        self.assertEqual(found, [[]])
+
+    def test_admitted_heavy_text_is_matched_in_chunks_within_its_budget(self):
+        # 20 distinct tokens of 8 readings each: about 93,600 distinct keys, under the floor (admitted)
+        toks = ["III" + c for c in "abcdefghjkmnpqrstuvw"]
+        text = " ".join(toks) + " " + NAME
+        ks = CountingKS()
+        conn, (v, found) = self.scan(ks, [text])
+        self.assertEqual(found, [["SUBJ"]])
+        self.assertLessEqual(ks.total, FLOOR + 2, "more keys HMACed than the budget")
+        self.assertLessEqual(ks.max_batch, CHUNK, "one HMAC batch held more than a chunk")
+        self.assertTrue(conn.lookups and max(conn.lookups) <= CHUNK, f"lookup arrays {conn.lookups[:5]}")
+        ks = CountingKS()
+        self.assertEqual(M.find_spans(ks, T, text, hm(NAME)) != [], True)
+        self.assertLessEqual(ks.max_batch, CHUNK)
+
+    def test_budget_is_named_in_the_matcher_id(self):
+        self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES)), M.matcher_id())
+
+    def test_store_bounds_ciphertext_size(self):
+        sql = (HERE / "wp" / "schema.sql").read_text()
+        for table in ("events", "quarantine"):
+            pat = rf"constraint {table}_content_size check \([^)]*octet_length\(content_enc\) <= {MAX_BYTES + 28}\)"
+            self.assertIsNotNone(re.search(pat, sql), f"{table}: no ciphertext size bound of {MAX_BYTES} + 28 (nonce and tag)")
+
+
+class F12StopClass(unittest.TestCase):
+    """DESIGN-NOTES item 11, the rule stated: an identifier that would match a phrase made only of common words, in lower
+    case, capitalised or capitals, is refused; generated with both readings applied (i, l and o replaced by I, l, i, 1,
+    0 and O). An independent oracle: windows() of the phrase, not the rule's own stop keys."""
+
+    SUBS = {"i": "iIl1", "l": "lIi1", "o": "oO0"}
+    OTHER = ("the", "it", "is", "in", "of", "to")       # the second word of each phrase
+
+    def variants(self, w):
+        opts = [self.SUBS.get(c, c) for c in w]
+        out = [""]
+        for o in opts:
+            out = [p + x for p in out for x in o][:256]
+        return out
+
+    def test_s1_stop_word_with_both_readings_refused(self):
+        checked, accepted = 0, []
+        for w in sorted(M.STOP):
+            pairs = [(f"{v} {o}", f"{w} {o}") for o in self.OTHER for v in self.variants(w)]
+            pairs += [(f"{o} {v}", f"{o} {w}") for o in self.OTHER for v in self.variants(w)]
+            seen = {}
+            for _, phrase in pairs:
+                if phrase not in seen:
+                    seen[phrase] = set().union(*(M.windows(f) for f in (phrase, phrase.capitalize(), phrase.upper(), phrase.title())))
+            for ident, phrase in pairs:
+                if M.key(ident) not in seen[phrase]:
+                    continue
+                checked += 1
+                if M.identifier_problem(ident) is None:
+                    accepted.append(ident)
+        self.assertGreater(checked, 500, "the generator checked too few identifiers to mean anything")
+        self.assertEqual(accepted[:10], [], f"{len(accepted)} identifiers matching common-word phrases were accepted")
 
 
 if __name__ == "__main__":

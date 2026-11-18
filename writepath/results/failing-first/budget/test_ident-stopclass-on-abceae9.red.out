@@ -1,0 +1,30 @@
+# tests/test_ident.py F12StopClass run against the abceae9 tree (before the r3 stop-list fix), Mac, Unicode 13
+F
+======================================================================
+FAIL: test_s1_stop_word_with_both_readings_refused (tests.test_ident.F12StopClass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-abceae9-173929/writepath/tests/test_ident.py", line 738, in test_s1_stop_word_with_both_readings_refused
+    self.assertEqual(accepted[:10], [], f"{len(accepted)} identifiers matching common-word phrases were accepted")
+AssertionError: Lists differ: ['admln the', 'admln it', 'admln is', 'adm[75 chars]mln'] != []
+
+First list contains 10 additional elements.
+First extra element 0:
+'admln the'
+
++ []
+- ['admln the',
+-  'admln it',
+-  'admln is',
+-  'admln in',
+-  'admln of',
+-  'admln to',
+-  'the admln',
+-  'it admln',
+-  'is admln',
+-  'in admln'] : 144 identifiers matching common-word phrases were accepted
+
+----------------------------------------------------------------------
+Ran 1 test in 0.669s
+
+FAILED (failures=1)

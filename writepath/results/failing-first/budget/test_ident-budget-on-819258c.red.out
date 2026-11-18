@@ -1,0 +1,76 @@
+# tests/test_ident.py (budget tests) run against the 819258c tree, Mac, Unicode 13: WP_UCD_DIR=<dir> python3 -m unittest tests.test_ident.F12Budget tests.test_ident.F12StopClass tests.test_ident.Tables
+FFFFF..FF...F...
+======================================================================
+FAIL: test_admitted_heavy_text_is_matched_in_chunks_within_its_budget (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 691, in test_admitted_heavy_text_is_matched_in_chunks_within_its_budget
+    self.assertLessEqual(ks.max_batch, CHUNK, "one HMAC batch held more than a chunk")
+AssertionError: 80883 not less than or equal to 8192 : one HMAC batch held more than a chunk
+
+======================================================================
+FAIL: test_budget_is_named_in_the_matcher_id (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 698, in test_budget_is_named_in_the_matcher_id
+    self.assertTrue(M.matcher_id().endswith(":b%d.%d.%d.%d" % (PER_TOKEN, FLOOR, EVENT_MAX, MAX_BYTES)), M.matcher_id())
+AssertionError: False is not true : m5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5
+
+======================================================================
+FAIL: test_content_size_bound (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 676, in test_content_size_bound
+    e = self.refused(lambda: self.scan(ks, ["fine", over]), "WPM01")
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 611, in refused
+    self.fail(f"not refused: expected {code}")
+AssertionError: not refused: expected WPM01
+
+======================================================================
+FAIL: test_crafted_text_refused_in_bounded_work_and_memory (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 626, in test_crafted_text_refused_in_bounded_work_and_memory
+    e = self.refused(lambda: call(ks), "WPM02")
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 611, in refused
+    self.fail(f"not refused: expected {code}")
+AssertionError: not refused: expected WPM02
+
+======================================================================
+FAIL: test_long_i_heavy_capitals_refused_stated_limitation (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 668, in test_long_i_heavy_capitals_refused_stated_limitation
+    self.refused(lambda: self.scan(CountingKS(), [CAPS_I * 10]), "WPM02")      # B8: 309,286 keys for 200 tokens
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 611, in refused
+    self.fail(f"not refused: expected {code}")
+AssertionError: not refused: expected WPM02
+
+======================================================================
+FAIL: test_store_bounds_ciphertext_size (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 704, in test_store_bounds_ciphertext_size
+    self.assertIsNotNone(re.search(pat, sql), f"{table}: no ciphertext size bound of {MAX_BYTES} + 28 (nonce and tag)")
+AssertionError: unexpectedly None : events: no ciphertext size bound of 65536 + 28 (nonce and tag)
+
+======================================================================
+FAIL: test_worst_shape_at_the_size_bound_refused_by_count (tests.test_ident.F12Budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 642, in test_worst_shape_at_the_size_bound_refused_by_count
+    self.fail("no key count before enumeration (m5 b1 B4)")
+AssertionError: no key count before enumeration (m5 b1 B4)
+
+======================================================================
+FAIL: test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/agent-af5c8cce658ab5a89/red-819258c-173832/writepath/tests/test_ident.py", line 144, in test_matcher_id_names_unicode_version_and_tables
+    self.assertRegex(mid, rf"^m5:ucd{re.escape(UCD)}:di[0-9a-f]{{12}}:cf[0-9a-f]{{12}}:b\d+\.\d+\.\d+\.\d+$")   # b: the budget (m5 b1)
+AssertionError: Regex didn't match: '^m5:ucd13\\.0\\.0:di[0-9a-f]{12}:cf[0-9a-f]{12}:b\\d+\\.\\d+\\.\\d+\\.\\d+$' not found in 'm5:ucd13.0.0:di5f861f7bc729:cf93b569e499e5'
+
+----------------------------------------------------------------------
+Ran 16 tests in 3.412s
+
+FAILED (failures=8)
