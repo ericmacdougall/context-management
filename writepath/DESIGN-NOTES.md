@@ -764,3 +764,195 @@ B10. PER-CALL LIMIT (main's decision 1, 2026-11-18; ASSUMPTION under the user's 
    limit exists. Tests first (tests/test_ident.py F13CallBudget, red on 77fb0e7 by assertion: 7 failures): 1,001
    events, 17 times 64,000 bytes and 41 floor-shaped events refused with WPM03 and no HMAC, 1,000, 16 and 40 admitted;
    the matcher id names the seven numbers; the store accepts WPM03. Live: tests/test_d3_pg.py B1 counts WPM03.
+
+## Review H: one resource model, unscannable events, F15, F16 (reviewH-1 on 6ddeca3; written before tests and code)
+
+Source: main's relay of reviewH-1 (Codex R3, BLOCK on F13 to F16) and main's decisions on Class A, Class B and F16
+(main's decisions under the user's "you decide"; ASSUMPTION, numbers this owner's). Main's order: this section, the
+failing tests and the code for F13, F15, F16 and the unscannable rule; then, in a separate note, the seal authority
+(option (b), Step 2). ADMISSION IS COST CONTROL UNTIL THE SEAL AUTHORITY LANDS: after this change no erasure depends on
+admission having been honest (H3); that admission ran at all is attested by nothing the store can check until Step 2.
+
+### H1. Class A: one resource model
+
+THE MODEL. Every quantity a call holds or does is bounded by what admission already bounds (content bytes, key count)
+and ONE structural constant, so that no entry point has a bound of its own to forget:
+  T = BUDGET.token_cp = 64: a token is at most 64 code points AS WRITTEN (ignorables removed, combining marks counted)
+  AND as identity key. A longer token is OVER-LONG: it is not normalised past the 65th code point, it has no readings,
+  and every window containing it is skipped in the count and in enumeration alike (the reading count of an over-long
+  token is None, the path a token over P readings already takes, so count equals enumeration by construction). Rule r3
+  refuses an identifier with an over-long token, so no approved identifier can match a skipped window (the matching
+  window would have to equal the identifier's key token by token). T is in BUDGET and therefore in the matcher id.
+From T:
+  - a window key is at most L = 4 x 64 + 3 = 259 code points (at most 1,036 bytes as a Python str, 4 bytes per code
+    point at worst) and every reading of a token has the length of its identity key (invariant, tested over every
+    glyph of both_readings() alone and with marks);
+  - planning (tokenising and counting) does constant work per code point of content: no cluster or token longer than
+    T is normalised (a 64 KiB single cluster of marks took 3.4 s at 6ddeca3, linear; it is now cut at T);
+  - so: DERIVED BYTES HELD AT ONCE <= k x admitted content bytes + C, and WORK <= planning(content bytes) + keys x L,
+    where keys <= the budget the call was admitted under. The tests assert the formula on generated worst shapes (peak
+    traced memory and counted operations), not a threshold per shape.
+Every container that grows with input, and its bound:
+  - the call's texts: <= BUDGET.call_bytes (1 MiB) of UTF-8, as Python strs <= 4 MiB; the caller's;
+  - one plan (_tokens of one event; plans are rebuilt one event at a time, never kept): proportional to the event's
+    code points, at most about 150 bytes per content byte (measured 9.5 MiB for 64 KiB of one-letter tokens);
+  - the window cache of _iter_windows: the key lists of the last MAX_N = 4 tokens, each <= P = 4,096 keys of <= T
+    code points, so <= 4 x 4,096 x 305 bytes = 5 MB, plus one token's key set while it is built;
+  - pending keys in _stream: flushed at CHUNK = 8,192 distinct keys OR CHUNK_TAGS = 65,536 (key, tag) pairs, whichever
+    comes first (the pairs bound is new: 1,000 identical events made every pending key carry 1,000 tags); keys <= 8,192
+    x 1,036 bytes = 8.5 MB, the labelled copies HMACed the same again, 8,192 HMACs of 64 hex characters 0.9 MB;
+  - hits: the value (subject id) or the tag only, never the key; per event at most the subjects it is found to
+    mention, which is what the write stores (output-sized, stated, not bounded further);
+  - the cluster cache _CLUSTERS: clusters of at most T code points only, its size tracked in bytes (strings counted at
+    their str size) and the cache emptied when it passes CLUSTER_CACHE_BYTES = 8 MiB (performance only; not in the
+    matcher id);
+  - the tables (_TABLES, _CLASSES, _BOTH, _WEIGHTS, _STOP_KEYS): fixed per Unicode version, loaded once.
+So one call holds at most about 4 + 10 + 5 + 19 + 8 MiB plus the fixed tables, whatever is admitted.
+
+ENTRY POINTS (input; bytes in; derived bytes held at once; work; where each bound is enforced; the test):
+
+| entry point | input | bytes in | derived held at once | work | enforced | test (worst admitted input, peak and time) |
+|---|---|---|---|---|---|---|
+| append (log.append, scan) | <= 1,000 events | <= 64 KiB each, 1 MiB per call | one plan + window cache + one flush (H1 list) | planning linear in bytes + <= 5,000,000 keys x L | Python admission (WPM01 to 03) BEFORE the seal; SQL events_content_size; T and the budget in the matcher id | test_ident H13Resource: the F13 shape, a 64 KiB mark cluster, 1,000 identical events, the worst admitted event and call: tracemalloc peak and counted HMACs/canonical code points |
+| erasure rescan | the tenant's candidate events, page by page | ids and speakers per page of 2,000; content in sub-batches of <= 16 events or 1 MiB | one sub-batch of ciphertext + one plan + one flush | per event: decrypt + plan (linear in <= 65,564 bytes); enumeration only within the event's budget | SQL events_content_size bounds every stored event (inserted by anyone); the unscannable rule (H3) bounds what admission did not | test_ident H14Unscannable (offline, counting key service: 0 HMACs for an unscannable event); test_d3_pg B4 to B7 (live) |
+| identifier proposal (propose, check_identifiers) | <= 64 identifiers per call | <= 256 UTF-8 bytes each, checked before normalisation | the identifiers' tokens (<= 16 KiB of text) | r3 per identifier; capacity saturates above P | Python (count, bytes); SQL ident_enc <= 284 bytes and <= 64 open proposals per subject (WPS39) | test_ident H15Identifiers: 257-byte and 65-identifier calls refused with 0 code points normalised; capacity of 60 I's returns <= 9 P; test_d3_pg (live) the constraints |
+| review | one proposal | <= 284 bytes ciphertext, so <= 256 bytes plaintext | one identifier | r3 once | SQL ident_enc constraint (the reviewer reads only stored proposals) | covered by the proposal rows |
+| hold place | one subject | ids | one row | lock the subject, insert one row | SQL (no footprint work in the placing transaction, H5) | test_d3_pg H16a (live): placement with 20,000 removed events in the footprint |
+| hold report | one hold | ids | <= 20 ids + a count capped at 10,001 | streams the tenant's removed events in the footprint until both limits | SQL LIMIT; its own transaction; re-runnable; failure leaves the hold installed | test_d3_pg H16a, H16b (live): the report under statement_timeout fails, the hold stays, a rerun reports |
+| hold release | one hold | ids | one row | lock, update | SQL | existing E tests |
+| cascade batch | <= batch candidates (adaptive, <= 5,000) | ids | the batch's footprint | per candidate: its footprint (speaker, mentions array, links) | SQL batch size; the mentions array of an event is NOT bounded (disclosed below) | existing cost runs (exp/erasure_cost.py) |
+| completion receipt | one job | none | <= 1,000 ids per list + counts | counts linear in the job's tombstones | SQL LIMIT on every id list in the receipt (H6) | test_d3_pg H6 (live): a receipt with more than 1,000 other-speaker removals |
+| inbox enqueue / claim | one payload | <= 64 KiB | one payload | seal | Python WPM01; SQL inbox_payload_size (new; wp_app may also UPDATE inbox, a CHECK covers updates) | test_ident static schema check; test_d3_pg (live) |
+| analyst job result | one result | <= 64 KiB | one result | seal | Python WPM01; SQL analyst_jobs_result_size (new; covers UPDATE) | as above |
+
+ROWS WITH NO ENFORCED BOUND (disclosed, not closed here): (a) app-written columns other than the sealed contents
+above: ids, idem_key, req_hash, the mentions and input_event_ids arrays, facts.body_enc; a wp_app holder can store large
+values in them (PostgreSQL's 1 GB per value). The one that reaches erasure work is events.mentions (the cascade
+share-locks every subject it names): an event naming a million subjects costs that cascade batch a million subject
+lookups; only existing subjects are locked. (b) Repetition: no per-tenant rate limit on appends, proposals (tenant-wide
+open proposals are unbounded; 64 per subject) or holds. (c) Erasure-time work is linear in the tenant's candidate
+events and the subject's footprint, by design (D5).
+
+### H2. F13, specifically
+
+The F13 input "I" x 12 + "a" x 65,524 is ONE over-long token: it is skipped with no reading built (0 keys counted and
+enumerated, nothing HMACed), where 6ddeca3 built 4,096 keys of 65,536 code points (518.5 MiB traced, 691 MB RSS, 6.9 s).
+_stream flushes by pairs as well as keys (H1). _CLUSTERS is bounded in bytes. COST OF T: a token over 64 code points
+is never matched, which only matters for an identifier with such a token, now refused by r3 ("a token longer than 64
+code points: declare a shorter form"); text cases: a 65-letter run (a hash, a base64 blob, a word glued by a joiner
+that is not ignorable) is not searched for a declared name, which is correct for whole-token matching. NOT_COVERED
+gains it.
+
+### H3. Class B (F14): an event the rescan cannot scan is treated as containing the subject
+
+Main's decision: erasure must not depend on admission having been honest. RULE: in the erasure rescan, a candidate
+event the matcher cannot scan within budget is UNSCANNABLE and is treated as a mention of the subject being erased:
+recorded through wp_erasure_add_unscannable (erasure_mentions source 'unscannable', same locks as
+wp_erasure_add_mentions), removed whole by the cascade under the same rules as any mention (a legal hold on its speaker,
+its mentioned subjects or a linked subject still withholds it), and listed separately in the receipt
+(unscannable_removed: count, the first 1,000 ids, and where the full list is). The cost, stated in the receipt: the
+other speaker's content in such an event is lost.
+WHAT IS UNSCANNABLE (deterministic per event, decided without enumerating): content over the size bound; a key count
+over the event's budget (the arithmetic count, H1); ciphertext that does not authenticate under the speaker's key
+(InvalidTag) or a nonce/blob too short; plaintext that is not UTF-8. WHAT IS NOT (raises, as before; nothing is
+recorded for the page, so WPS24 refuses completion and the job retries): a key-service failure, UCDUnavailable,
+MatcherMismatch, any database error. A transient fault must never delete other speakers' content. An event whose
+speaker key is gone (speaker erased: content crypto-shredded) is skipped, as before, and that is stated (nothing is
+left to read).
+PER-EVENT WORK of the rescan is bounded by the SQL size constraint (every stored event, inserted by anyone, is at most
+65,564 bytes): decrypt, tokenise and count, linear in that.
+WHO CAN MAKE AN UNSCANNABLE EVENT (verified in the schema, not assumed; a static test pins it): wp_app has SELECT and
+INSERT on events and no UPDATE; the only UPDATE of events in the schema is the cascade's `content_enc = null`
+(wp_erasure_apply, owner). So an event's content never changes after insert, and an honest write under the tenant's
+matcher was admitted under the same budget and sealed by the writer: it is never unscannable (property test: any text
+admit() accepts is never classified unscannable). An unscannable event is therefore one that a wp_app holder inserted
+around admission (or with a bad seal), or one written while the tenant had no matcher by an app under another budget.
+It is not limited to the planter's OWN subjects: the app writes for every speaker, so a planted event can carry any
+speaker id; whatever it carries is removed. That is the stated cost; Step 2 (the seal authority) removes the bypass.
+THE OLD B7 POSITION IS WITHDRAWN: "possible only under another matcher" was false (reviewH F14) and the fail-closed
+stall it led to is replaced by this rule; the receipt no longer says that such an erasure cannot complete.
+GUARANTEES THAT LIVED ONLY IN PYTHON, each now a SQL constraint or a disclosed non-guarantee (H1 table): event and
+quarantine content (SQL, unchanged); inbox payload and analyst job result (SQL, new); proposal ciphertext and open
+proposals per subject (SQL, new); identifiers per call and per-call bytes (Python only: cost control, disclosed); the
+matcher's key count (Python only until Step 2; erasure no longer depends on it).
+
+### H4. F15: proposals
+
+check_identifiers refuses, before any normalisation or key: more than MAX_IDENTIFIERS = 64 identifiers in one call; an
+identifier over MAX_IDENTIFIER_BYTES = 256 UTF-8 bytes (code points checked first, as check_size does). identifier_problem
+applies the byte bound too (the reviewer path) and refuses an over-long token. capacity() stops multiplying once the
+product passes P (it returns a value above P, at most 9 P, never 3^n). SQL: identifier_proposals_size check
+(octet_length(ident_enc) <= 284: 256 plus the 28 bytes of nonce and tag) and wp_identifier_propose refuses a 65th open
+('proposed') proposal for one subject (WPS39), counted under the subject lock it already takes.
+
+### H5. F16: the hold is installed alone; the report is separate, bounded and re-runnable
+
+wp_hold_place locks the subject FOR UPDATE (unchanged: the F4 conflict with in-flight removals), inserts the hold with
+report_state 'pending' and the SNAPSHOT of that insert statement (pg_current_snapshot(), taken after the lock was
+granted, so every removal the hold waited for is visible in it), and returns {hold_id, open_erasure_state,
+report_state}. Nothing proportional to the footprint runs in that transaction, so it cannot time out on a large
+footprint, and the exclusive lock is held for one insert.
+wp_hold_report(hold_id) (wp_legal), its own transaction, no exclusive lock: the footprint events (speaker, mentions,
+erasure_mentions links) whose removal is VISIBLE IN THE HOLD'S SNAPSHOT (tombstones.removed_xid, a new xid8 column
+defaulting to pg_current_xact_id(), tested with pg_visible_in_snapshot): the first 20 ids by a query with LIMIT 20 and
+the count by a subquery with LIMIT 10,001 (reported as "more than 10,000"), one scan with an OR condition over the
+three footprint sources (no UNION, so nothing is de-duplicated in memory). It stores the report on the hold row
+(report jsonb, report_state 'done') and returns it; it is idempotent and may be re-run. Why the snapshot and not a
+timestamp: a column default is evaluated when the removal's row is formed, BEFORE that insert can wait on a lock, so
+a removal could carry a time earlier than a hold it commits after (the E1 schedule pauses a batch exactly there);
+visibility in the hold's snapshot is the old in-transaction report's semantics exactly (the same pattern as
+events.commit_xid). Sources: PostgreSQL 18 documentation 9.27.8, pg_current_snapshot, pg_visible_in_snapshot and
+pg_current_xact_id (https://www.postgresql.org/docs/current/functions-info.html, read 2026-11-17, high confidence for
+the functions; whether a statement in a READ COMMITTED function sees its own statement's snapshot is general
+PostgreSQL behaviour that the live E tests must confirm, medium until they run).
+erasure.place_hold places, then reports in a second transaction; if the report fails or times out it returns the hold
+with report_state 'pending' and the error's SQLSTATE, and the hold stays. PL/pgSQL cannot catch a statement timeout
+with OTHERS (QUERY_CANCELED is excluded), so the two-transaction split is the only way to keep the hold through a
+failing report (https://www.postgresql.org/docs/current/plpgsql-control-structures.html, trapping errors, read
+2026-11-17, high confidence).
+E1 to E8 change only where they read the report: after placement they call wp_hold_report.
+
+### H6. The completion receipt is bounded the same way
+
+wp_erasure_complete aggregated every other-speaker removal id with jsonb_agg in the completing transaction (F16's
+shape on the completion path). Every id list in the receipt (other_speakers_removed, unscannable_removed) is the first
+1,000 ids by LIMIT plus an exact count, with the statement that the full list is in tombstones by job_id (and
+erasure_mentions by source). Main asked for ids: this keeps them, bounded; main is told.
+
+### H7. Minors
+
+schema.sql's D3 comment no longer says "one lock order everywhere" (withdrawn in "F12"); it names the order this path
+takes. OVER_MATCH and the receipt gain separator collisions (AB-1001, AB/1001 and AB 1001 have one key: punctuation ends
+tokens), with a test. The uncovered-capital count under m5 is 66 (not m4's 63) wherever a number is stated. The
+identity-key inclusion invariant is qualified: an identifier's identity key is among the keys of the same text only
+for windows within the caps (T code points per token, P readings), which every identifier r3 accepts satisfies.
+
+### H8. Tests first (red on 6ddeca3 by assertion, never by a missing name)
+
+Offline, tests/test_ident.py: H13Resource (the F13 shape scanned with a peak below the model's ceiling and no HMAC; a
+64 KiB mark cluster planned with at most T code points of any cluster normalised, counted through a wrapper of
+canonical; 1,000 identical events with the peak below the ceiling; the cluster cache under a patched byte limit;
+count equals enumeration over strings with over-long tokens; every reading has its key's length); H15Identifiers
+(65 identifiers, a 257-byte identifier and a 65-letter token refused, the first two before any normalisation;
+capacity saturates); H14Unscannable (stream_matches with an unscannable list: an over-budget item classified with 0
+HMACs while the item beside it is still matched; admitted texts never classified; called without the list it still
+raises); static schema checks (the new constraints, no UPDATE grant on events for wp_app and no UPDATE of events
+content but the cascade's, the unscannable source and function grant, the removal xid, no footprint aggregate in
+wp_hold_place, wp_hold_report granted to wp_legal, the bounded receipt lists, no "CANNOT COMPLETE" text, the lock-order
+comment, the separator over-match). Live, tests/test_d3_pg.py (needs the stores; red not run on 6ddeca3, stated):
+B4 now expects the over-budget legacy event removed, listed and the erasure done while an honest event survives; B5 a
+planted over-budget event and B6 a garbage-ciphertext event inserted through wp_app with triggers on, removed and
+listed; B7 wp_app cannot UPDATE events; H16a a large footprint (placement quick, report bounded); H16b a report under
+statement_timeout fails and the hold stays; H6 a bounded receipt; the new constraints refuse oversize rows.
+
+### H9. Sources (read 2026-11-17)
+
+- OWASP API Security Top 10 2023, API4 Unrestricted Resource Consumption
+  (https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/): limits on memory, CPU,
+  payload size and number of operations per request, enforced server side. USED for the per-entry-point table (every
+  resource, not only count). High confidence.
+- PostgreSQL documentation, functions-info 9.27.8 and plpgsql error trapping (URLs above). USED for H5. High.
+- Decompression-bomb guidance (zip-bomb write-ups and safe-unzip libraries: bound the expanded size and the ratio, and
+  stream instead of materialising): USED for the shape of the model (bound derived bytes by a ratio of admitted bytes
+  and stream products). Medium confidence (secondary sources). REJECTED: vendor-specific numeric thresholds, which
+  do not transfer to a matcher.
