@@ -50,7 +50,6 @@ class Stage(unittest.TestCase):
         self.runs = self.set / "runs"
         d = self.runs / RUN
         d.mkdir(parents=True)
-        (self.set / "ledger").mkdir()
         self.row = json.dumps({"name": "e_verify", "gate_run": RUN, "env": {"code_commit": "deadbee"},
                                "result": {"home": self.home + "results"}}).encode()
         (d / "e_verify.0123456789abcdef.json").write_bytes(self.row)
@@ -70,11 +69,12 @@ class Stage(unittest.TestCase):
                  "commit": COMMIT, "gate": gate, "exp_rc": exp_rc}]
         raw = chain(recs)
         lines = raw.split(b"\n")[:-1]
-        (self.set / "ledger" / "stop_ledger.head").write_text(json.dumps(   # the head anchor, copied with the ledger
+        (self.tmp / "stop_ledger.head").write_text(json.dumps(   # the head anchor, copied with the ledger
             {"count": len(lines), "tip": hashlib.sha256(lines[-1]).hexdigest(), "at": "2026-11-18T00:00:00Z"}))
+        self.sealed = {"to_seq": len(lines), "tip": hashlib.sha256(lines[-1]).hexdigest()}   # what the seal records
         if edit:
             raw = raw.replace(b'"verdict": "VOID"', b'"verdict": "VALID"')
-        p = self.set / "ledger" / "stop_ledger.jsonl"
+        p = self.tmp / "stop_ledger.jsonl"
         p.write_bytes(raw)
         return p
 
@@ -89,6 +89,7 @@ class Stage(unittest.TestCase):
         rec = {"kind": "teardown", "torn_down_at": "2026-11-18T01:00:00Z", "manifest": m, "scan": {"exit": 0},
                "tool": {"clearance": "4"}, "keystore": {"covered": True}, "daemon": {"id": "TESTDAEMON"},
                "container_sources": {"e" * 64: {"store": True, "proven": True}},
+               "ledger": dict(getattr(self, "sealed", {}), range="all", from_seq=1),
                "seal_sha256": hashlib.sha256(seal).hexdigest()}
         raw = json.dumps(rec, sort_keys=True).encode()
         (self.set / "CLEARANCE.json").write_bytes(raw)
@@ -192,6 +193,19 @@ class Stage(unittest.TestCase):
 
     def test_f2_missing_exit_status_is_refused(self):
         self.assertRefused(*self.stage(self.ledger(exp_rc=None)), "no exit status", "did not exit by")
+
+    def test_h9_ledger_copy_that_is_not_the_sealed_one_is_refused(self):
+        led = self.ledger()
+        self.sealed = {"to_seq": 3, "tip": "0" * 64}             # the receipt sealed another ledger
+        self.assertRefused(*self.stage(led), "the ledger copy is not the sealed ledger", "is not the ledger the")
+
+    def test_h9_run_ended_after_the_seal_is_refused(self):
+        led = self.ledger()
+        recs = [json.loads(x) for x in led.read_bytes().splitlines()]
+        raw = led.read_bytes().splitlines()
+        self.sealed = {"to_seq": 2, "tip": hashlib.sha256(raw[1]).hexdigest()}   # sealed before the end record
+        self.assertEqual(recs[2]["kind"], "end")
+        self.assertRefused(*self.stage(led), "the run ended after the seal", "ended after the seal")
 
     def test_v5_run_is_refused(self):
         self.assertRefused(*self.stage(self.ledger(v=5, gate="disk_gate v5")), "a v5 run", "older than v6")
