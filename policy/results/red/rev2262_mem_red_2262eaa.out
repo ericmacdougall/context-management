@@ -1,0 +1,117 @@
+# t2-dev, PG 16.15 (image 933463a6c8eb), containers emlab2-policyfix2-pg (127.0.0.1:25811) and emlab2-policyfix2-prep (max_prepared_transactions 5, F2a only); home paths shown as ~
+# RED (H2, in memory): 2262eaa + tests/test_rev2262.py (tree red-2262b): sh kit/batch.sh b1 -> t -v tests.test_rev2262
+# free 19504967680 bytes at 2026-11-18T18:42:33Z
+# tree red-2262b 2262eaa + tests/test_rev2262_pg.py tests/test_rev2262.py of tree-commit 08649ea (fix worktree) tgz-sha256 12710bcb860569db8861694dabeb09d91abcd23398b853063ba4ddf92d1ca9db
+# cmd t -v tests.test_rev2262
+test_core_revoke_ends_reads (tests.test_rev2262.H2_RevokedPrincipalReads.test_core_revoke_ends_reads)
+Red at 2262eaa: after admin's applied revoke of alice, explain returned alice's view of r1 and table listed 2 reqs. ... FAIL
+test_policy_revocation_ends_reads (tests.test_rev2262.H2_RevokedPrincipalReads.test_policy_revocation_ends_reads)
+Red at 2262eaa: alice listed as revoked in the policy document still read. ... FAIL
+test_revocation_during_the_wait (tests.test_rev2262.H2_RevokedPrincipalReads.test_revocation_during_the_wait)
+The final judgment: explain judged alice, then waited for the engine lock; the revocation lands during the wait (policy ... 
+  test_revocation_during_the_wait (tests.test_rev2262.H2_RevokedPrincipalReads.test_revocation_during_the_wait) [explain]
+The final judgment: explain judged alice, then waited for the engine lock; the revocation lands during the wait (policy ... FAIL
+  test_revocation_during_the_wait (tests.test_rev2262.H2_RevokedPrincipalReads.test_revocation_during_the_wait) [table]
+The final judgment: explain judged alice, then waited for the engine lock; the revocation lands during the wait (policy ... FAIL
+
+======================================================================
+FAIL: test_core_revoke_ends_reads (tests.test_rev2262.H2_RevokedPrincipalReads.test_core_revoke_ends_reads)
+Red at 2262eaa: after admin's applied revoke of alice, explain returned alice's view of r1 and table listed 2 reqs.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262b/policy/tests/test_rev2262.py", line 32, in test_core_revoke_ends_reads
+    self.assertEqual(self._reads(w, a), (None, []))
+AssertionError: Tuples differ: ({'req': 'r1', 'version': 0, 'status': 'un[348 chars][]}]) != (None, [])
+
+First differing element 0:
+{'req': 'r1', 'version': 0, 'status': 'un[83 chars]: []}
+None
+
++ (None, [])
+- ({'candidates': [],
+-   'open': [],
+-   'req': 'r1',
+-   'status': 'unset',
+-   'value': None,
+-   'value_by': None,
+-   'value_version': 0,
+-   'version': 0},
+-  [{'candidates': [],
+-    'open': [],
+-    'req': 'r1',
+-    'status': 'unset',
+-    'value': None,
+-    'value_by': None,
+-    'value_version': 0,
+-    'version': 0},
+-   {'candidates': [],
+-    'open': [],
+-    'req': 'r2',
+-    'status': 'unset',
+-    'value': None,
+-    'value_by': None,
+-    'value_version': 0,
+-    'version': 0}])
+
+======================================================================
+FAIL: test_policy_revocation_ends_reads (tests.test_rev2262.H2_RevokedPrincipalReads.test_policy_revocation_ends_reads)
+Red at 2262eaa: alice listed as revoked in the policy document still read.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262b/policy/tests/test_rev2262.py", line 41, in test_policy_revocation_ends_reads
+    self.assertEqual(self._reads(w, a), (None, []))
+AssertionError: Tuples differ: ({'req': 'r1', 'version': 0, 'status': 'un[348 chars][]}]) != (None, [])
+
+First differing element 0:
+{'req': 'r1', 'version': 0, 'status': 'un[83 chars]: []}
+None
+
++ (None, [])
+- ({'candidates': [],
+-   'open': [],
+-   'req': 'r1',
+-   'status': 'unset',
+-   'value': None,
+-   'value_by': None,
+-   'value_version': 0,
+-   'version': 0},
+-  [{'candidates': [],
+-    'open': [],
+-    'req': 'r1',
+-    'status': 'unset',
+-    'value': None,
+-    'value_by': None,
+-    'value_version': 0,
+-    'version': 0},
+-   {'candidates': [],
+-    'open': [],
+-    'req': 'r2',
+-    'status': 'unset',
+-    'value': None,
+-    'value_by': None,
+-    'value_version': 0,
+-    'version': 0}])
+
+======================================================================
+FAIL: test_revocation_during_the_wait (tests.test_rev2262.H2_RevokedPrincipalReads.test_revocation_during_the_wait) [explain]
+The final judgment: explain judged alice, then waited for the engine lock; the revocation lands during the wait (policy
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262b/policy/tests/test_rev2262.py", line 64, in test_revocation_during_the_wait
+    self.assertFalse(out.get("r"), "%r" % (out,))
+AssertionError: {'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []} is not false : {'r': {'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []}}
+
+======================================================================
+FAIL: test_revocation_during_the_wait (tests.test_rev2262.H2_RevokedPrincipalReads.test_revocation_during_the_wait) [table]
+The final judgment: explain judged alice, then waited for the engine lock; the revocation lands during the wait (policy
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/policyfix2/runs/red-2262b/policy/tests/test_rev2262.py", line 64, in test_revocation_during_the_wait
+    self.assertFalse(out.get("r"), "%r" % (out,))
+AssertionError: [{'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []}, {'req': 'r2', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []}] is not false : {'r': [{'req': 'r1', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []}, {'req': 'r2', 'version': 0, 'status': 'unset', 'value': None, 'value_by': None, 'value_version': 0, 'candidates': [], 'open': []}]}
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.607s
+
+FAILED (failures=4)
+# rc 1 seconds 1 free-after 19484594176 pg-volume 68910845
