@@ -684,7 +684,7 @@ class MatrixInvariantTests(MatrixHarness):
         P = self.quick()
         self.assertEqual({n: P[n][0] for (ph, n) in REGISTRY if ph == "quick" and P[n][0] != "AVAILABLE"}, {})
         self.assertEqual(len(P["dls_search"]), 4)   # review 12 F28: class, status, returned, status-independent document count
-        self.assertEqual(P["dls_search"][3], 0)
+        self.assertIs(type(P["dls_search"][3]), int)   # recorded (before the transition the DLS user may read documents)
 
 
 class MatrixVerdictTests(MatrixHarness):

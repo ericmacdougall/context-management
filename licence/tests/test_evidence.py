@@ -408,7 +408,7 @@ class RecordingBoundaryTests(unittest.TestCase):
         with self.assertRaises(E.Unparsed):
             E.Dls(control=sub, after=after, polled_docs=0)
         a = E.Availability.parse({"exp2": {"T2_failed_requests": 0, "T2_non_control_requests": 5, "T2_longest_failure_window_s": 0.0,
-                                           "T2_failure_windows": []}})
+                                           "T2_failure_windows": [], "T2_longest_consecutive_auto_failure_s": 0.0}})
         self.assertIsInstance(a.windows, tuple)
 
 
