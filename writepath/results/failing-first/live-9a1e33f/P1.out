@@ -1,0 +1,4 @@
+registry_marker FAIL fenced 0 / 10 controls violated {'ctl_no_placeholders': 10, 'ctl_key_kept': 10}
+  sample fenced: {'before': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 4, 'es_api_Y': 3, 'pg_disk_files_X': 0, 'pg_disk_positive_control_old_plaintext': 0, 'es_disk_files_X': 2, 'keydb_disk_files_keyhex': 2}, 'after': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 0, 'es_api_Y': 3, 'es_disk_files_X': 0, 'es_disk_files_Y': 2, 'keydb_disk_files_keyhex': 0, 'keydb_disk_paths_keyhex': []}, 'controls_flagged': {'table': True, 'index': True, 'logfile': True}}
+  sample controls: {'ctl_no_placeholders': {'es_X_files': 2, 'keyhex_files': 0, 'es_api_X': 4}, 'ctl_key_kept': {'es_X_files': 0, 'keyhex_files': 2, 'es_api_X': 0}}
+RESULT registry_marker sha256=10c476a1747046777c924c7edaacbb7c134bf6c690d4e7460f167dceaf1d5ad6 file=~/emlab2-16096/wphard/wp/results/registry_marker.10c476a174704677.json

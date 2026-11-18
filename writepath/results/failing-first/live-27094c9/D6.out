@@ -1,0 +1,5 @@
+security on; key ids <redacted 2026-11-18: four role key ids; a non-secret id the leak scan counts as a candidate>
+licence 200 basic active
+h_d6_broker {"fenced_holds": "5/5", "control_violated": "5/5", "invalid_request_cases": [], "void": false, "feasible": true}
+RESULT h_d6_broker sha256=caddcc4c93150c5908f2862e92c16091bde13bf69be71708e94220313d7aa375 file=~/emlab2-16096/wphard/wp/results/h_d6_broker.caddcc4c93150c59.json
+exit=0

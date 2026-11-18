@@ -1,0 +1,88 @@
+test_m5_ascii_letters_and_digits_are_their_own_keys (tests.test_ident.F11M5Readings.test_m5_ascii_letters_and_digits_are_their_own_keys) ... ok
+test_m5_both_readings_glyphs (tests.test_ident.F11M5Readings.test_m5_both_readings_glyphs)
+Pinned per Unicode version; each reading checked through the text path, and no other reading. ... ok
+test_m5_cap_refuses_identifiers_over_it (tests.test_ident.F11M5Readings.test_m5_cap_refuses_identifiers_over_it) ... ok
+test_m5_closure_over_the_tables (tests.test_ident.F11M5Readings.test_m5_closure_over_the_tables)
+Every case pair and every confusable source (letter or digit) shares the key of its other form, or, for a ... ok
+test_m5_digit_inside_a_word_is_read_as_a_letter (tests.test_ident.F11M5Readings.test_m5_digit_inside_a_word_is_read_as_a_letter) ... ok
+test_m5_documented_misses (tests.test_ident.F11M5Readings.test_m5_documented_misses)
+NOT_COVERED (m5): small l written for i and small i for l, letters for digits, digits in a token with no ... ok
+test_m5_generated_variants_match (tests.test_ident.F11M5Readings.test_m5_generated_variants_match) ... ok
+test_m5_identifiers_with_digits_stay_distinct (tests.test_ident.F11M5Readings.test_m5_identifiers_with_digits_stay_distinct) ... ok
+test_m5_identity_key_is_one_of_the_text_keys (tests.test_ident.F11M5Readings.test_m5_identity_key_is_one_of_the_text_keys) ... ok
+test_m5_near_misses_do_not_match (tests.test_ident.F11M5Readings.test_m5_near_misses_do_not_match) ... ok
+test_m5_not_closed_list (tests.test_ident.F11M5Readings.test_m5_not_closed_list) ... ok
+test_m5_real_name_pairs_stay_apart (tests.test_ident.F11M5Readings.test_m5_real_name_pairs_stay_apart) ... ok
+test_m5_reordered_combining_marks (tests.test_ident.F11M5Readings.test_m5_reordered_combining_marks) ... ok
+test_m5_reviewer_counterexample_still_matches (tests.test_ident.F11M5Readings.test_m5_reviewer_counterexample_still_matches) ... ok
+test_m5_stated_over_match (tests.test_ident.F11M5Readings.test_m5_stated_over_match) ... ok
+test_m5_window_over_the_cap_is_not_enumerated (tests.test_ident.F11M5Readings.test_m5_window_over_the_cap_is_not_enumerated) ... ok
+test_admitted_heavy_text_is_matched_in_chunks_within_its_budget (tests.test_ident.F12Budget.test_admitted_heavy_text_is_matched_in_chunks_within_its_budget) ... ok
+test_budget_is_named_in_the_matcher_id (tests.test_ident.F12Budget.test_budget_is_named_in_the_matcher_id) ... ok
+test_content_size_bound (tests.test_ident.F12Budget.test_content_size_bound) ... ok
+test_count_equals_enumeration (tests.test_ident.F12Budget.test_count_equals_enumeration) ... ok
+test_crafted_text_refused_in_bounded_work_and_memory (tests.test_ident.F12Budget.test_crafted_text_refused_in_bounded_work_and_memory) ... ok
+test_long_i_heavy_capitals_refused_stated_limitation (tests.test_ident.F12Budget.test_long_i_heavy_capitals_refused_stated_limitation) ... ok
+test_realistic_text_admitted_and_still_matched (tests.test_ident.F12Budget.test_realistic_text_admitted_and_still_matched) ... ok
+test_short_all_caps_heading_admitted_by_the_floor (tests.test_ident.F12Budget.test_short_all_caps_heading_admitted_by_the_floor) ... ok
+test_store_bounds_ciphertext_size (tests.test_ident.F12Budget.test_store_bounds_ciphertext_size) ... ok
+test_worst_shape_at_the_size_bound_refused_by_count (tests.test_ident.F12Budget.test_worst_shape_at_the_size_bound_refused_by_count) ... ok
+test_s1_stop_word_with_both_readings_refused (tests.test_ident.F12StopClass.test_s1_stop_word_with_both_readings_refused) ... ok
+test_call_bytes (tests.test_ident.F13CallBudget.test_call_bytes) ... ok
+test_call_event_count (tests.test_ident.F13CallBudget.test_call_event_count) ... ok
+test_call_keys_many_floor_shaped_events (tests.test_ident.F13CallBudget.test_call_keys_many_floor_shaped_events) ... ok
+test_call_limits_named_in_the_matcher_id (tests.test_ident.F13CallBudget.test_call_limits_named_in_the_matcher_id) ... ok
+test_store_counts_the_call_code (tests.test_ident.F13CallBudget.test_store_counts_the_call_code) ... ok
+test_cluster_cache_is_bounded_in_bytes (tests.test_ident.H13Resource.test_cluster_cache_is_bounded_in_bytes) ... ok
+test_count_equals_enumeration_with_over_long_tokens (tests.test_ident.H13Resource.test_count_equals_enumeration_with_over_long_tokens) ... ok
+test_every_reading_has_its_key_length (tests.test_ident.H13Resource.test_every_reading_has_its_key_length) ... ok
+test_f13_shape_builds_no_readings (tests.test_ident.H13Resource.test_f13_shape_builds_no_readings) ... ok
+test_identical_events_peak (tests.test_ident.H13Resource.test_identical_events_peak) ... ok
+test_long_cluster_is_not_normalised (tests.test_ident.H13Resource.test_long_cluster_is_not_normalised) ... ok
+test_over_long_token_has_no_keys (tests.test_ident.H13Resource.test_over_long_token_has_no_keys) ... ok
+test_token_cap_named_in_the_matcher_id (tests.test_ident.H13Resource.test_token_cap_named_in_the_matcher_id) ... ok
+test_events_are_append_only_for_the_app (tests.test_ident.H14Schema.test_events_are_append_only_for_the_app) ... ok
+test_hold_placement_does_no_footprint_work (tests.test_ident.H14Schema.test_hold_placement_does_no_footprint_work) ... ok
+test_minors (tests.test_ident.H14Schema.test_minors) ... ok
+test_python_only_sizes_are_sql_constraints (tests.test_ident.H14Schema.test_python_only_sizes_are_sql_constraints) ... ok
+test_receipt_id_lists_are_bounded (tests.test_ident.H14Schema.test_receipt_id_lists_are_bounded) ... ok
+test_unscannable_is_a_mention_source (tests.test_ident.H14Schema.test_unscannable_is_a_mention_source) ... ok
+test_admitted_text_is_never_unscannable (tests.test_ident.H14Unscannable.test_admitted_text_is_never_unscannable) ... ok
+test_over_budget_and_oversize_are_classified_without_keys (tests.test_ident.H14Unscannable.test_over_budget_and_oversize_are_classified_without_keys) ... ok
+test_without_a_list_it_still_raises (tests.test_ident.H14Unscannable.test_without_a_list_it_still_raises) ... ok
+test_capacity_saturates (tests.test_ident.H15Identifiers.test_capacity_saturates) ... ok
+test_identifier_bytes (tests.test_ident.H15Identifiers.test_identifier_bytes) ... ok
+test_identifier_count (tests.test_ident.H15Identifiers.test_identifier_count) ... ok
+test_over_long_token_refused (tests.test_ident.H15Identifiers.test_over_long_token_refused) ... ok
+test_s15_no_module_builds_identifier_hmacs_itself (tests.test_ident.LabelInOnePlace.test_s15_no_module_builds_identifier_hmacs_itself)
+A second copy of the label (erasure's rescan had "ident:" + w) silently stops matching when the label ... ok
+test_r1_no_span_redaction_api (tests.test_ident.Matcher.test_r1_no_span_redaction_api)
+Decision R1 (review C F1): whole-event removal is the only path; the matcher offers no redaction. ... ok
+test_s2_whole_tokens_only (tests.test_ident.Matcher.test_s2_whole_tokens_only) ... ok
+test_s3_offsets_are_in_the_original_text (tests.test_ident.Matcher.test_s3_offsets_are_in_the_original_text) ... ok
+test_s4_invisible_characters_inside_a_name_in_text (tests.test_ident.Matcher.test_s4_invisible_characters_inside_a_name_in_text) ... ok
+test_s6_capital_i_lookalike_in_text (tests.test_ident.Matcher.test_s6_capital_i_lookalike_in_text) ... ok
+test_s6_lookalikes_in_other_speakers_text_match (tests.test_ident.Matcher.test_s6_lookalikes_in_other_speakers_text_match) ... ok
+test_s6_one_case_insensitive_key_per_identifier (tests.test_ident.Matcher.test_s6_one_case_insensitive_key_per_identifier) ... ok
+test_s7_identifier_inside_quoted_text_of_another_speaker (tests.test_ident.Matcher.test_s7_identifier_inside_quoted_text_of_another_speaker) ... ok
+test_two_occurrences_and_overlap_merged (tests.test_ident.Matcher.test_two_occurrences_and_overlap_merged) ... ok
+test_s16_unsegmented_script_refused (tests.test_ident.RuleR3.test_s16_unsegmented_script_refused) ... ok
+test_s1_lookalike_of_a_common_word_refused (tests.test_ident.RuleR3.test_s1_lookalike_of_a_common_word_refused) ... ok
+test_s1_short_or_common_refused (tests.test_ident.RuleR3.test_s1_short_or_common_refused) ... ok
+test_s3_normal_form_keeps_letters (tests.test_ident.RuleR3.test_s3_normal_form_keeps_letters) ... ok
+test_s4_ignorables_removed_from_declared_identifier (tests.test_ident.RuleR3.test_s4_ignorables_removed_from_declared_identifier) ... ok
+test_s5_mixed_script_declared_identifier_refused (tests.test_ident.RuleR3.test_s5_mixed_script_declared_identifier_refused) ... ok
+test_unassigned_code_point_refused (tests.test_ident.RuleR3.test_unassigned_code_point_refused) ... ok
+test_hmac_label_binds_the_matcher (tests.test_ident.Tables.test_hmac_label_binds_the_matcher) ... ok
+test_loads_the_pinned_tables (tests.test_ident.Tables.test_loads_the_pinned_tables) ... ok
+test_matcher_id_names_unicode_version_and_tables (tests.test_ident.Tables.test_matcher_id_names_unicode_version_and_tables) ... ok
+test_missing_table_fails_closed (tests.test_ident.Tables.test_missing_table_fails_closed) ... ok
+test_other_unicode_version_fails_closed (tests.test_ident.Tables.test_other_unicode_version_fails_closed) ... ok
+test_tampered_table_fails_closed (tests.test_ident.Tables.test_tampered_table_fails_closed) ... ok
+test_every_default_ignorable_inside_a_name (tests.test_ident.WholeDefaultIgnorable.test_every_default_ignorable_inside_a_name) ... ok
+test_f6_khmer_inherent_vowels (tests.test_ident.WholeDefaultIgnorable.test_f6_khmer_inherent_vowels) ... ok
+
+----------------------------------------------------------------------
+Ran 78 tests in 39.101s
+
+OK

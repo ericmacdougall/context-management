@@ -1,0 +1,179 @@
+test_a1_app_has_no_path_to_subject_identifiers (tests.test_d3_pg.D3Store.test_a1_app_has_no_path_to_subject_identifiers) ... ok
+test_a2_no_self_approval (tests.test_d3_pg.D3Store.test_a2_no_self_approval) ... ok
+test_a3_binding_rule_version_and_state (tests.test_d3_pg.D3Store.test_a3_binding_rule_version_and_state) ... ok
+test_b1_refused_write_leaves_no_row_and_is_recorded (tests.test_d3_pg.D3Store.test_b1_refused_write_leaves_no_row_and_is_recorded) ... ok
+test_b2_store_bounds_ciphertext_size (tests.test_d3_pg.D3Store.test_b2_store_bounds_ciphertext_size) ... ok
+test_b3_rescan_finds_a_mention_under_the_budget (tests.test_d3_pg.D3Store.test_b3_rescan_finds_a_mention_under_the_budget) ... ok
+test_b4_over_budget_legacy_event_is_removed_as_unscannable (tests.test_d3_pg.D3Store.test_b4_over_budget_legacy_event_is_removed_as_unscannable)
+Review H H3 (main's decision, Class B): an event the rescan cannot scan within budget is treated as a ... ERROR
+test_b5_planted_over_budget_event_through_the_app (tests.test_d3_pg.D3Store.test_b5_planted_over_budget_event_through_the_app)
+reviewH F14 after the authority (A4 MISSING): a wp_app writer can no longer plant. The validly encrypted, ... FAIL
+test_b6_garbage_ciphertext (tests.test_d3_pg.D3Store.test_b6_garbage_ciphertext)
+Through the app: garbage ciphertext has no attestation (WPS40). As legacy rows (owner fixture): ciphertext ... FAIL
+test_b7_app_cannot_update_events (tests.test_d3_pg.D3Store.test_b7_app_cannot_update_events) ... ok
+test_b8_hold_still_withholds_an_unscannable_event (tests.test_d3_pg.D3Store.test_b8_hold_still_withholds_an_unscannable_event) ... ERROR
+test_c1_app_has_no_redaction_path (tests.test_d3_pg.D3Store.test_c1_app_has_no_redaction_path) ... ok
+test_c2_proposal_cannot_commit_after_the_erasure (tests.test_d3_pg.D3Store.test_c2_proposal_cannot_commit_after_the_erasure)
+Reviewer's schedule: propose reads erased=false and pauses; the mark and the whole cascade finish; then the ... ok
+test_c3_approval_after_mark_refused (tests.test_d3_pg.D3Store.test_c3_approval_after_mark_refused) ... ok
+test_c4_matcher_stored_and_enforced (tests.test_d3_pg.D3Store.test_c4_matcher_stored_and_enforced) ... ok
+test_c5_null_content_needs_tombstone_and_job (tests.test_d3_pg.D3Store.test_c5_null_content_needs_tombstone_and_job) ... ok
+test_e1_rescan_link_waits_for_an_inflight_removal (tests.test_d3_pg.D3Store.test_e1_rescan_link_waits_for_an_inflight_removal)
+Review E F4, the reviewer's schedule: A's batch removes e (written by B); C's rescan links e to C; a hold on ... ok
+test_e2_hold_on_the_speaker_waits_and_reports_the_removal (tests.test_d3_pg.D3Store.test_e2_hold_on_the_speaker_waits_and_reports_the_removal) ... ok
+test_e3_hold_on_a_rescan_linked_subject_waits_and_reports (tests.test_d3_pg.D3Store.test_e3_hold_on_a_rescan_linked_subject_waits_and_reports) ... ok
+test_e4_hold_first_withholds_and_release_waits (tests.test_d3_pg.D3Store.test_e4_hold_first_withholds_and_release_waits) ... ok
+test_e5_hold_on_the_subject_itself (tests.test_d3_pg.D3Store.test_e5_hold_on_the_subject_itself) ... ok
+test_e6_repeated_mark_during_a_batch_does_not_deadlock (tests.test_d3_pg.D3Store.test_e6_repeated_mark_during_a_batch_does_not_deadlock)
+Review E F12: a batch holds the subject FOR SHARE and later updates the job cursor; a repeated mark took the ... ok
+test_e7_hold_against_mark (tests.test_d3_pg.D3Store.test_e7_hold_against_mark)
+Hold x mark, both orders. A hold placed first refuses the mark (WPS16). A hold placed while a mark is paused ... ok
+test_e8_hold_waits_for_the_final_pass (tests.test_d3_pg.D3Store.test_e8_hold_waits_for_the_final_pass)
+Hold x the cascade's final pass (facts, inbox, quarantine, proposals, identifiers of the subject), which no ... ok
+test_h16a_large_footprint (tests.test_d3_pg.D3Store.test_h16a_large_footprint) ... ok
+test_h16b_report_failure_keeps_the_hold (tests.test_d3_pg.D3Store.test_h16b_report_failure_keeps_the_hold) ... ok
+test_h6_receipt_lists_are_bounded (tests.test_d3_pg.D3Store.test_h6_receipt_lists_are_bounded) ... ok
+test_h_size_constraints (tests.test_d3_pg.D3Store.test_h_size_constraints) ... ok
+test_s1_valid_attestation_accepted (tests.test_d3_pg.D3Store.test_s1_valid_attestation_accepted) ... ok
+test_s2_forged_claims_refused (tests.test_d3_pg.D3Store.test_s2_forged_claims_refused) ... FAIL
+test_s3_missing_attestation_refused (tests.test_d3_pg.D3Store.test_s3_missing_attestation_refused) ... FAIL
+test_s4_replayed_attestation_refused (tests.test_d3_pg.D3Store.test_s4_replayed_attestation_refused) ... FAIL
+test_s5_stale_identifier_set (tests.test_d3_pg.D3Store.test_s5_stale_identifier_set) ... FAIL
+test_s6_quarantine_needs_an_attestation (tests.test_d3_pg.D3Store.test_s6_quarantine_needs_an_attestation) ... FAIL
+test_s7_quarantine_scanned_below_the_identifier_set_is_removed (tests.test_d3_pg.D3Store.test_s7_quarantine_scanned_below_the_identifier_set_is_removed) ... ERROR
+test_s8_seal_keys_are_private (tests.test_d3_pg.D3Store.test_s8_seal_keys_are_private) ... ok
+test_s9_unknown_inactive_key_and_bad_mac (tests.test_d3_pg.D3Store.test_s9_unknown_inactive_key_and_bad_mac) ... FAIL
+
+======================================================================
+ERROR: test_b4_over_budget_legacy_event_is_removed_as_unscannable (tests.test_d3_pg.D3Store.test_b4_over_budget_legacy_event_is_removed_as_unscannable)
+Review H H3 (main's decision, Class B): an event the rescan cannot scan within budget is treated as a
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 727, in test_b4_over_budget_legacy_event_is_removed_as_unscannable
+    self.assertTrue(self.content_gone("b4e"))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 427, in content_gone
+    return self.one("select content_enc is null from events where tenant_id=%s and event_id=%s", (T, eid))[0]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+TypeError: 'NoneType' object is not subscriptable
+
+======================================================================
+ERROR: test_b8_hold_still_withholds_an_unscannable_event (tests.test_d3_pg.D3Store.test_b8_hold_still_withholds_an_unscannable_event)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 801, in test_b8_hold_still_withholds_an_unscannable_event
+    self.assertFalse(self.content_gone("b8e"), "a held speaker's unscannable event was removed")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 427, in content_gone
+    return self.one("select content_enc is null from events where tenant_id=%s and event_id=%s", (T, eid))[0]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+TypeError: 'NoneType' object is not subscriptable
+
+======================================================================
+ERROR: test_s7_quarantine_scanned_below_the_identifier_set_is_removed (tests.test_d3_pg.D3Store.test_s7_quarantine_scanned_below_the_identifier_set_is_removed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 1034, in test_s7_quarantine_scanned_below_the_identifier_set_is_removed
+    left = sorted(r[0] for r in self.ev.execute("select event_id from quarantine where tenant_id=%s", (t,)).fetchall())
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/venv/lib/python3.12/site-packages/psycopg/connection.py", line 251, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column "event_id" does not exist
+LINE 1: select event_id from quarantine where tenant_id=$1
+               ^
+HINT:  Perhaps you meant to reference the column "quarantine.tenant_id".
+
+======================================================================
+FAIL: test_b5_planted_over_budget_event_through_the_app (tests.test_d3_pg.D3Store.test_b5_planted_over_budget_event_through_the_app)
+reviewH F14 after the authority (A4 MISSING): a wp_app writer can no longer plant. The validly encrypted,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 762, in test_b5_planted_over_budget_event_through_the_app
+    self.assertEqual(self.plant(t, "b5s", "b5e", "B5Y", K.seal(FixedKS.SUBJ_KEY, t, "B5Y", "b5e", over)), "WPS40")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+
+
+======================================================================
+FAIL: test_b6_garbage_ciphertext (tests.test_d3_pg.D3Store.test_b6_garbage_ciphertext)
+Through the app: garbage ciphertext has no attestation (WPS40). As legacy rows (owner fixture): ciphertext
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 775, in test_b6_garbage_ciphertext
+    self.assertEqual(self.plant(t, "b6s", "b6p", "B6Y", bytes(range(60))), "WPS40")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+
+
+======================================================================
+FAIL: test_s2_forged_claims_refused (tests.test_d3_pg.D3Store.test_s2_forged_claims_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 956, in test_s2_forged_claims_refused
+    self.assertEqual(self.put(r, **over), "WPS41", f"forged claim accepted: {what}")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : forged claim accepted: mentions dropped
+
+======================================================================
+FAIL: test_s3_missing_attestation_refused (tests.test_d3_pg.D3Store.test_s3_missing_attestation_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 962, in test_s3_missing_attestation_refused
+    self.assertEqual(self.plant(t, "s3a", "s3e", "S3Y", b"opaque"), "WPS40", "an event without an attestation was stored (F14)")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+ : an event without an attestation was stored (F14)
+
+======================================================================
+FAIL: test_s4_replayed_attestation_refused (tests.test_d3_pg.D3Store.test_s4_replayed_attestation_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 974, in test_s4_replayed_attestation_refused
+    self.assertEqual(self.put(r, event_id="s4copy", idem_key="s4copy"), "WPS41", "replayed onto another event id")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : replayed onto another event id
+
+======================================================================
+FAIL: test_s5_stale_identifier_set (tests.test_d3_pg.D3Store.test_s5_stale_identifier_set)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 989, in test_s5_stale_identifier_set
+    self.assertEqual(self.put(r, mention_scan_upto=r["mention_scan_upto"] + 1), "WPS41", "a rewritten scan version was accepted")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+ : a rewritten scan version was accepted
+
+======================================================================
+FAIL: test_s6_quarantine_needs_an_attestation (tests.test_d3_pg.D3Store.test_s6_quarantine_needs_an_attestation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 1010, in test_s6_quarantine_needs_an_attestation
+    self.assertEqual(self.insert(self.app, "quarantine", bare), "WPS40", "a quarantine row without an attestation was stored")
+AssertionError: 'ok' != 'WPS40'
+- ok
++ WPS40
+ : a quarantine row without an attestation was stored
+
+======================================================================
+FAIL: test_s9_unknown_inactive_key_and_bad_mac (tests.test_d3_pg.D3Store.test_s9_unknown_inactive_key_and_bad_mac)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/tests/test_d3_pg.py", line 1052, in test_s9_unknown_inactive_key_and_bad_mac
+    self.assertEqual(self.put(r, seal_key_id="no-such-key"), "WPS41")
+AssertionError: 'ok' != 'WPS41'
+- ok
++ WPS41
+
+
+----------------------------------------------------------------------
+Ran 37 tests in 6.349s
+
+FAILED (failures=8, errors=3)

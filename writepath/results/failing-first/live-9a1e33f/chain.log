@@ -1,0 +1,27 @@
+lock taken 2026-11-18T17:53:15Z head 9a1e33f seal0 179412e h0 6ddeca3 free_kib 26972044
+G1 exit=0 Ran 78 tests in 40.309s OK 
+  G1 seconds=40
+P0 setup ok reset 
+  P0 seconds=1
+G2 exit=1 Ran 37 tests in 6.642s FAILED (failures=1, errors=2) 
+  G2 seconds=7
+G3 exit=0 Ran 3 tests in 0.332s OK 
+  G3 seconds=0
+P1 exit=0 registry_marker FAIL fenced 0 / 10 controls violated {'ctl_no_placeholders': 10, 'ctl_key_kept': 10}   sample fenced: {'before': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 4, 'es_api_Y': 3, 'pg_disk_files_X': 0, 'pg_disk_positive_control_old_plaintext': 0, 'es_disk_files_X': 2, 'keydb_disk_files_keyhex': 2}, 'after': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 0, 'es_api_Y': 3, 'es_disk_files_X': 0, 'es_disk_files_Y': 2, 'keydb_disk_files_keyhex'   sample controls: {'ctl_no_placeholders': {'es_X_files': 2, 'keyhex_files': 0, 'es_api_X': 4}, 'ctl_key_kept': {'es_X_files': 0, 'keyhex_files': 2, 'es_api_X': 0}} RESULT registry_marker sha256=10c476a1747046777c924c7edaacbb7c134bf6c690d4e7460f167dceaf1d5ad6 file=~/emlab2-16096/wphard/wp/results/registry_marker.10c476a174704677.json 
+  P1 seconds=976
+P2 exit=0 d4_store_mark {'pass': True, 'why': []} RESULT d4_store_mark sha256=054b3191ad80d7c3434801a0a35b540b8a6c936a65a63de4894a04ea4279da96 file=~/emlab2-16096/wphard/wp/results/d4_store_mark.054b3191ad80d7c3.json 
+  P2 seconds=2
+RR rr-tree-1795025421 unregistered ['pg:seal_keys']
+RR src-9a1e33f unregistered []
+  RR seconds=0
+RS exit=1 Ran 37 tests in 6.349s FAILED (failures=8, errors=3) 
+  RS seconds=7
+RH exit=1 Ran 37 tests in 6.366s FAILED (failures=12, errors=7) 
+  RH seconds=6
+D6 licence 200 basic active exit=1 
+  D6 seconds=35
+LS candidate secret values loaded: 33 files scanned: 451 files with a secret value: 0 
+  LS seconds=0
+dropped leaked test databases 0
+free_kib_end 22720412 chain done 2026-11-18T18:11:09Z
+lock released 2026-11-18T18:11:09Z

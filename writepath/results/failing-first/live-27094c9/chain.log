@@ -1,0 +1,35 @@
+lock taken 2026-11-18T18:13:26Z head 27094c9 seal0 179412e h0 6ddeca3 free_kib 22753428
+G1 exit=0 Ran 78 tests in 39.101s OK 
+  G1 seconds=39
+P0 setup ok reset 
+  P0 seconds=1
+G2 exit=0 Ran 37 tests in 6.731s OK 
+  G2 seconds=7
+G3 exit=0 Ran 3 tests in 0.309s OK 
+  G3 seconds=0
+PC exit=0 PC seeded 1
+  PC seconds=0
+P1 exit=0 registry_marker PASS fenced 10 / 10 controls violated {'ctl_no_placeholders': 10, 'ctl_key_kept': 10}   sample fenced: {'before': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 4, 'es_api_Y': 3, 'pg_disk_files_X': 0, 'pg_disk_positive_control_old_plaintext': 2, 'es_disk_files_X': 2, 'keydb_disk_files_keyhex': 2}, 'after': {'pg_sql_hits_events_db': {}, 'pg_sql_hits_keys_db': {}, 'es_api_X': 0, 'es_api_Y': 3, 'es_disk_files_X': 0, 'es_disk_files_Y': 2, 'keydb_disk_files_keyhex'   sample controls: {'ctl_no_placeholders': {'es_X_files': 2, 'keyhex_files': 0, 'es_api_X': 4}, 'ctl_key_kept': {'es_X_files': 0, 'keyhex_files': 2, 'es_api_X': 0}} RESULT registry_marker sha256=ba2a91777bdb00290afa285a69de5cdc5ac1039ab8fb1addec08e5e24d35b19a file=~/emlab2-16096/wphard/wp/results/registry_marker.ba2a91777bdb0029.json 
+  P1 seconds=1008
+P2 exit=0 d4_store_mark {'pass': True, 'why': []} RESULT d4_store_mark sha256=7fb9f436e8cb83da66bd7976c985e5d965f07f96d830e4f314c1ac7e8398ff43 file=~/emlab2-16096/wphard/wp/results/d4_store_mark.7fb9f436e8cb83da.json 
+  P2 seconds=2
+RR rr-tree-1795026663 unregistered ['pg:seal_keys']
+RR src-27094c9 unregistered []
+  RR seconds=1
+RS exit=1 Ran 37 tests in 6.512s FAILED (failures=8, errors=1) 
+  RS seconds=6
+RH exit=1 Ran 37 tests in 6.574s FAILED (failures=12, errors=7) 
+  RH seconds=7
+XB exit=1 tree bca7764 Ran 28 tests in 7.009s FAILED (failures=4, errors=8) 
+  XB seconds=7
+SS exit=0 seal_socket_e2e {"E1": {"accepted": 1, "row_attested": [true, true]}, "E2": {"raised": "SealUnavailable", "stored": 0}, "E3": {"raised": "SealUnavailable", "stored": 0}, "same_uid_limit": true} PASS
+  SS seconds=2
+SU exit=0 seal_uids_e2e {"K7": "SealUnavailable the seal authority refused this peer uid", "down": {"K6": "SealUnavailable", "phase": "down", "stored_delta": 0, "uid": 20001}, "limits": ["docker access on the host is root-equivalent: separation of service identities on one host, not host isolation", "one host, one Postgres", "the authority trusts every allowed peer uid for every tenant"], "uids": {"app": 20001, "keysvc": 20003, "peer": 20002, "sealer": 20005}, "up": {"K1_pgpass.wp_sealer": "PermissionError errno=13", "K1_seal_key": "PermissionError errno=13", "K2": "SealUnavailable", "K3": {"accepted": 1, "key_id_present": true, "mac_hex64": true}, "K4": "WPS40", "K5": "WPS41", "phase": "up", "stored_delta": 1, "uid": 20001}, "verdict": "PASS"}
+  SU seconds=7
+D6 licence 200 basic active h_d6_broker {"fenced_holds": "5/5", "control_violated": "5/5", "invalid_request_cases": [], "void": false, "feasible": true} exit=0 
+  D6 seconds=258
+LS candidate secret values loaded: 34 files scanned: 459 files with a secret value: 1 HIT ~/emlab2-16096/wphard/live-a5b-27094c9/D6.out 4 
+  LS seconds=0
+dropped leaked test databases 0
+free_kib_end 19280788 chain done 2026-11-18T18:35:51Z
+lock released 2026-11-18T18:35:51Z

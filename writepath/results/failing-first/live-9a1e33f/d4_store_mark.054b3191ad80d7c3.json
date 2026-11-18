@@ -1,0 +1,89 @@
+{
+ "at": "2026-11-18T18:10:21Z",
+ "env": {
+  "argv": "~/emlab2-16096/wphard/wp/src-9a1e33f/exp/d4_store_mark.py 1",
+  "code_commit": "9a1e33f",
+  "cpus": 48,
+  "es": {
+   "licence": "basic",
+   "licence_expiry": null,
+   "nodes": 1,
+   "url": "http://127.0.0.1:19570",
+   "version": "9.5.6"
+  },
+  "host": "t2-dev",
+  "key_store": {
+   "deletion": "row delete; purge waits for the cluster xid/xmin horizon to pass the delete, then VACUUM FULL + pg_switch_wal x2 + CHECKPOINT (lab: no archive, replica or backup; freed filesystem blocks not overwritten)",
+   "kind": "lab-postgres-keystore",
+   "note": "LAB STAND-IN for the client's KMS; every erasure result here is conditional on a KMS with real key deletion",
+   "stand_in": true
+  },
+  "licence_required": "basic (no Enterprise feature on the required path)",
+  "load_avg": [
+   8.56396484375,
+   6.04296875,
+   4.0693359375
+  ],
+  "model_calls": "none (deterministic stub only)",
+  "postgres": "16.15 (Debian 16.15-1.pgdg13+2)",
+  "postgres_settings": {
+   "archive_mode": "off",
+   "autovacuum": "on",
+   "default_statistics_target": "100",
+   "effective_cache_size": "5242888kB",
+   "fsync": "on",
+   "idle_in_transaction_session_timeout": "5000ms",
+   "jit": "on",
+   "maintenance_work_mem": "65536kB",
+   "max_connections": "200",
+   "max_wal_size": "256MB",
+   "plan_cache_mode": "auto",
+   "random_page_cost": "4",
+   "shared_buffers": "163848kB",
+   "statement_timeout": "30000ms",
+   "synchronous_commit": "on",
+   "wal_keep_size": "0MB",
+   "wal_recycle": "off",
+   "work_mem": "4096kB"
+  },
+  "python": "3.12.3"
+ },
+ "name": "d4_store_mark",
+ "result": {
+  "R": 1,
+  "honest": [
+   {
+    "accepted": true,
+    "examined": 12,
+    "mode": "honest",
+    "rescanned_xmax_set": true,
+    "scanned_found": [
+     12,
+     1
+    ]
+   }
+  ],
+  "lazy_control": [
+   {
+    "accepted": true,
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": true
+   }
+  ],
+  "lazy_fenced": [
+   {
+    "accepted": false,
+    "error": "WPS24",
+    "examined": 5,
+    "mode": "lazy",
+    "rescanned_xmax_set": false
+   }
+  ],
+  "patch": "control: wp_erasure_rescan_done without the missing-candidate check",
+  "verdict": {
+   "pass": true,
+   "why": []
+  }
+ }
+}

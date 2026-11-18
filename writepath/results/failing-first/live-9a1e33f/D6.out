@@ -1,0 +1,17 @@
+password reset failed (nothing printed)
+licence 200 basic active
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/exp/h_d6_broker.py", line 573, in <module>
+    sys.exit(main(int(sys.argv[1]) if len(sys.argv) > 1 else 5))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/exp/h_d6_broker.py", line 536, in main
+    res["broker_user"] = es_keys.create_broker()
+                         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/wp/es_keys.py", line 89, in create_broker
+    es.req("PUT", f"/_security/role/{B.BROKER_ROLE}", B.broker_role_descriptor())
+  File "~/emlab2-16096/wphard/wp/src-9a1e33f/wp/es.py", line 74, in req
+    raise ESError(r.status, _etype(j), f"{method} {path.split('?')[0]}")
+wp.es.ESError: ES 401 security_exception PUT /_security/role/wp16096_broker_role
+exit=1
