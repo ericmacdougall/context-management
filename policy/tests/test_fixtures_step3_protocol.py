@@ -12,6 +12,7 @@ protocol cases FAIL (an assertion, not an error), so a green protocol run is not
   in_progress    dc._evict's "inside the protocol" exemption removed: end_session evicts a revocation in progress (H1).
   collapsed_key  every principal shares one authority key (dc._ak = 1): a revoke in one tenant evicts and fences another (F1).
   refused_xlock  a grant takes the tenant lock exclusively whatever the rules will say (F5).
+  expiry_noop    the authentication layer: dc._session no longer judges the session's expiry, so an expired token is accepted.
 Not covered, disclosed: removing the final judgment dc._gate's session check is caught by no case here (the pins make it redundant
 on every path these cases drive); the port keeps it as defence in depth."""
 import os
@@ -34,6 +35,7 @@ PROTOCOL = {
     "identity": ["tests.test_rev2262_pg.F1_CrossTenant.test_colliding_principals_never_cross_evict_or_cross_fence",
                  "tests.test_rev2262_pg.F1_CrossTenant.test_a_nonexistent_colliding_target_evicts_nobody"],
     "refused": ["tests.test_rev2262_pg.F5_RefusedAuthorityChange.test_refused_changes_never_wait_for_the_tenant_lock"],
+    "auth": ["tests.test_step2_pg.Step2Pg.test_bad_tokens_are_refused_on_every_call"],
 }
 MUTANTS = {
     "pins_noop": ("pins", [
@@ -56,6 +58,7 @@ MUTANTS = {
         ("    xa := exists (select 1 from dc.head x where x.tenant = s.tenant and x.req = p_body->>'req')\n"
          "          and exists (select 1 from dc.principal p where p.tenant = s.tenant and p.pid = p_body->>'target' and not p.revoked);\n",
          "    xa := true;\n")]),
+    "expiry_noop": ("auth", [("     and not x.revoked and x.expires_at > clock_timestamp();\n", "     and not x.revoked;\n")]),
 }
 
 
