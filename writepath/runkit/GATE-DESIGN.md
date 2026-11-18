@@ -1075,10 +1075,14 @@ the test that violates only it, is in `runkit/VERDICT-PATHS.md` (draft 2). v6 ke
 | surviving mutants group_list_failure_passes, es_clean_error_passes, row_without_run_id_passes, module_prefix_without_sep | tests that fail on each (receipts `results/failing-first/reviewH-v6-mutant-*.red.out`) | `test_v6_mutant_*` |
 
 ### 9.3 Facts assumed (checked live where marked in the run receipts; the gate fails closed on each)
-- The gate runs in a cgroup v2 hierarchy whose `memory.events` it can read (ASSUMPTION for t2-dev until live item L3
-  shows it; unreadable BLOCKS).
-- The catalog SQL is validated offline only against a fake; its first live run is a live item (L2). Postgres 16
-  catalogs (`pg_parameter_acl` exists from 15).
+- The gate runs in a cgroup v2 hierarchy whose `memory.events` it can read. Observed on t2-dev 2026-11-18T21:57Z (a
+  read-only probe started with `setsid -w` over ssh, part of live item GF16096-L9): one `0::` line, the path is the
+  ssh login's `session-N.scope` under `user-1000.slice`, `memory.events` readable with `oom_kill` 0. The scope is the
+  whole login session, so every process of that session shares the counter (fails closed, LIMITS v6). Unreadable
+  BLOCKS.
+- The catalog SQL is validated offline only against a fake (PENDING_REAL_TEST GF16096-L9; the stores' code accepts
+  only the `emlab2-wphard` stream, whose containers this round may not touch). Postgres 16 catalogs
+  (`pg_parameter_acl` exists from 15).
 
 ### 9.4 What v6 guarantees, and what it does not (LIMITS v6)
 A VALID end record adds to 8.4: the stores were reset by this gate under its lock and were the same databases, schema
