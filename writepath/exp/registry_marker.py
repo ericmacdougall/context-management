@@ -35,6 +35,17 @@ def grep_files(container, path, pattern):
     return len(grep_paths(container, path, pattern))
 
 
+def _temp_table_state(conn):
+    """Review J M5, reported: wp_app creating a temp table after setup revoked TEMPORARY ('42501' expected)."""
+    import psycopg
+    try:
+        conn.execute("create temp table wp_m5_probe(x int)")
+        conn.execute("drop table wp_m5_probe")
+        return "created"
+    except psycopg.Error as e:
+        return e.sqlstate
+
+
 def toast_control():
     """Review J M10: which disk files of the PC step's two tables (database emlab) the grep finds, for a pattern that is
     a literal run in the stored value (one copy) and one that a compressed value holds only as a back-reference (three
@@ -53,10 +64,21 @@ def toast_control():
     finally:
         a.close()
     out = {"stored_bytes": size}
+    files = [f"/var/lib/postgresql/data/{p}" for ps in paths.values() for p in ps]
     for label, pat in (("one_copy", "zqtoastpc-"), ("three_copies", "zqtoastpc-" * 3)):
-        hits = grep_paths(PG_C, "/var/lib/postgresql/data", pat)
+        r = subprocess.run(["docker", "exec", "-i", PG_C, "grep", "-laF", "-f", "-", *files], input=pat.encode() + b"\n",
+                           capture_output=True, timeout=120)
+        hits = [x for x in r.stdout.decode().splitlines() if x.strip()]
         out[label] = {t: any(h.endswith("/" + p) for h in hits for p in ps) for t, ps in paths.items()}
     return out
+
+
+def _reported(fn):
+    """A reported-only control never fails the experiment: its error is recorded instead."""
+    try:
+        return fn()
+    except Exception as e:  # noqa: BLE001
+        return {"error": type(e).__name__}
 
 
 def sql_scan(conn, marker):
@@ -88,10 +110,12 @@ def run_one(arm):
     flagged = registry.unregistered(vc, vk, es)
     out["controls_setup"] = {"lo": lo is not None, "ds_template": ds_t, "ds": ds}
     out["controls_flagged"] = {"table": "pg:rogue_cache" in flagged, "index": f"es-index:{P}zz-rogue" in flagged,
-                               "logfile": any(f.endswith("rogue.txt") for f in flagged),
-                               "large_object": "pg:large_objects(1)" in flagged,
-                               "data_stream": f"es-datastream:{P}zzds1" in flagged,
-                               "ds_backing_index": any(f.startswith(f"es-index:.ds-{P}zzds1") for f in flagged)}
+                               "logfile": any(f.endswith("rogue.txt") for f in flagged)}
+    # review J M5: REPORTED, not part of `holds` (no amendment changes this experiment's verdict rule)
+    out["controls_reported_m5"] = {"large_object": "pg:large_objects(1)" in flagged,
+                                   "data_stream": f"es-datastream:{P}zzds1" in flagged,
+                                   "ds_backing_index": any(f.startswith(f"es-index:.ds-{P}zzds1") for f in flagged),
+                                   "wp_app_temp_table": _reported(lambda: _temp_table_state(conn))}
     adm.execute("drop table rogue_cache"); es.req("DELETE", f"/{P}zz-rogue"); (config.LOG_DIR / "rogue.txt").unlink()
     adm.execute("select lo_unlink(%s)", (lo,))
     es.req("DELETE", f"/_data_stream/{P}zzds1", ok=None); es.req("DELETE", "/_index_template/zz-rogue-ds", ok=None)
@@ -122,7 +146,7 @@ def run_one(arm):
                      "pg_disk_files_X": grep_files(PG_C, "/var/lib/postgresql/data", mx),
                      "pg_disk_positive_control_old_plaintext": grep_files(PG_C, "/var/lib/postgresql/data", "zqn6secret"),
                      "es_disk_files_X": grep_files(ES_C, "/usr/share/elasticsearch/data", mx),
-                     "toast_control": toast_control()}
+                     "toast_control": _reported(toast_control)}
     keyhex = ks.keys(t, ["X"])["X"].hex()
     out["before"]["keydb_disk_files_keyhex"] = grep_files(PG_C, "/var/lib/postgresql/data", keyhex)
     # ---- 4. erase

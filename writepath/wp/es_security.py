@@ -1,13 +1,15 @@
 """Turn security on (or off) for THIS stream's own Elasticsearch node, container conf/es_container only (D6); the name
 must start with config.OWN_PREFIX and the container's published port must be the conf es_url port.
 
-enable: recreate the container from its own docker-inspect record (same image, ports, mounts, ulimits, memory) with
-  xpack.security.enabled=true (HTTP without TLS on 127.0.0.1, single node), wait for it to answer 401, reset the
-  `elastic` password inside the container with its stdout written straight to secrets/es_elastic_password (0600; the
-  value never reaches a terminal, argv or the environment), then create the per-role keys (wp/es_keys.py).
+enable: recreate the container from its own docker-inspect record (same image, ports, mounts, private tmpfs, ulimits,
+  memory and swap limit) with xpack.security.enabled=true (HTTP without TLS on 127.0.0.1, single node), wait for it
+  to answer 401, reset the `elastic` password inside the container with its stdout written straight to
+  secrets/es_elastic_password (0600; the value never reaches a terminal, argv or the environment), then create the
+  per-role keys (wp/es_keys.py).
 disable: the same recreation with xpack.security.enabled=false (rollback).
-Refuses any other container name. Data on the node is not preserved unless the container has a volume; the lab
-recreates every index from Postgres on demand. usage: python -m wp.es_security enable|disable"""
+Refuses any other container name. The node's data is NOT preserved (its data directory is a private tmpfs,
+host/bootstrap.py): every index, user and key on it is gone after either call; the lab recreates every index from
+Postgres on demand. usage: python -m wp.es_security enable|disable"""
 import json
 import os
 import subprocess
@@ -46,12 +48,18 @@ def _run_args(j, security):
         for b in binds or []:
             args += ["-p", f"{b.get('HostIp') or '127.0.0.1'}:{b['HostPort']}:{cport.split('/')[0]}"]
     for m in j.get("Mounts") or []:
+        if m["Type"] not in ("volume", "bind"):
+            continue                                    # a tmpfs is recreated from HostConfig.Tmpfs below
         src = m["Name"] if m["Type"] == "volume" else m["Source"]
         args += ["-v", f"{src}:{m['Destination']}" + ("" if m.get("RW", True) else ":ro")]
+    for path, opts in sorted((hc.get("Tmpfs") or {}).items()):     # the private store (host/bootstrap.py): kept as is
+        args += ["--tmpfs", f"{path}:{opts}" if opts else path]
     for u in hc.get("Ulimits") or []:
         args += ["--ulimit", f"{u['Name']}={u['Soft']}:{u['Hard']}"]
     if hc.get("Memory"):
         args += ["-m", str(hc["Memory"])]
+    if hc.get("MemorySwap"):
+        args += ["--memory-swap", str(hc["MemorySwap"])]   # equal to Memory: no swap (the gate's bound)
     env = [e for e in cfg.get("Env") or [] if not e.startswith(("xpack.security.", "ELASTIC_PASSWORD", WM))]
     env += [f"{WM}{k}={v}" for k, v in WATERMARKS.items()]
     env += [f"xpack.security.enabled={'true' if security else 'false'}"]

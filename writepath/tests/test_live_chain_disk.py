@@ -10,6 +10,8 @@ container or store of the lab is touched.
   DR5  the same during the FIRST command of a grouped step (D6): no later command of the group runs (no "exit=" line,
        no h_d6_broker run), its output is renamed D6.out.STOPPED and no D6 summary line is printed (red on 5811368).
   DR6  amendment 23a: a flood-stage line in the ES log during a step makes that step VOID (exit 7, *.VOID, no summary).
+  DR7  RP without ROT_OLD rotates inside the window: hash the minted ids (0600), prove, rotate, prove (review J M8 on
+       tmpfs stores, where a recreated node keeps no earlier keys).
   DR4  es_security recreates the node with watermarks low 10gb, high 9gb, flood_stage 8gb, whatever the old container
        carried (run in a child process: no WP_HOME, sys.path or module state leaks into this test process)."""
 import json
@@ -123,6 +125,27 @@ class ChainDisk(unittest.TestCase):
         self.assertIn("VOID G1", out)
         self.assertTrue((self.home / "out" / "G1.out.VOID").exists())
         self.assertNotIn("G1 exit=", out)
+        self.assertFalse(self.lock())
+
+
+    def test_dr7_rp_rotates_inside_the_window(self):
+        # review J M8 on tmpfs stores (a recreated node holds no earlier window's keys): without ROT_OLD the RP step
+        # hashes the ids D6 minted (0600), proves, rotates (wp.es_keys create), proves again, in that order
+        py = self.home / "emlab2-16096" / "wphard" / "wp" / "venv" / "bin" / "python"
+        py.write_text(f'#!/bin/sh\necho "$*" >> {self.calls}\n[ "$1" = "-c" ] && {{ echo aaaa; exit 0; }}\necho "{{}}"\n')
+        self.env.pop("ROT_OLD", None)
+        rc, out, _ = self.run_chain(12 * G, "RP")
+        self.assertEqual(rc, 0, out)
+        lines = self.calls.read_text().splitlines() if self.calls.exists() else []
+        at = lambda pred: next((i for i, ln in enumerate(lines) if pred(ln)), None)  # noqa: E731
+        h = at(lambda ln: "es_api_key*.json" in ln)           # the hashing snippet (its lines follow "-c")
+        p1 = at(lambda ln: "rot_proof.py" in ln and "rot-old.sha256" in ln)
+        c = at(lambda ln: ln == "-m wp.es_keys create")
+        p2 = next((i for i, ln in enumerate(lines) if "rot_proof.py" in ln and i != p1), None)
+        self.assertTrue(None not in (h, p1, c, p2) and h < p1 < c < p2, f"{(h, p1, c, p2)} in {lines}")
+        f = self.home / "out" / "rot-old.sha256"
+        self.assertEqual(f.stat().st_mode & 0o777, 0o600)
+        self.assertIn("RP in-window old ids hashed 1", out)
         self.assertFalse(self.lock())
 
 

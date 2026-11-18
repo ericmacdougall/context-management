@@ -22,7 +22,8 @@
 #   XB  tests.test_d3_pg from $XB_TREE (its own tests and code)
 #   SS  seal_socket_e2e.py (same uid)      SU seal_uids_e2e.py (sealer under its own uid)
 #   D6  wp.es_security enable, licence, exp.h_d6_broker 5 (UNSTAMPED; amendments H6c, H6e)
-#   RP  rot_proof.py against $ROT_OLD (sha256 list of the key ids printed in the 27094c9 window): counts only
+#   RP  rot_proof.py against $ROT_OLD (a sha256 list of earlier key ids) when set; otherwise IN-WINDOW: hash the ids D6
+#       minted, rot_proof (before: they are the valid ones), wp.es_keys create (rotation), rot_proof (after): counts only
 #   LS  runkit/leak_scan.py over the outputs
 # usage: sh live_chain.sh <HEAD tree> <pre-seal tree> <pre-H tree> <out dir> [steps]
 set -u
@@ -108,8 +109,24 @@ l = j.get("license", {}) if isinstance(j, dict) else {}
 print("licence", s, l.get("type"), l.get("status"))'
           stopped || { timeout 3600 $PY -m exp.h_d6_broker 5; echo "exit=$?"; }; } > "$O/D6.out" 2>&1
         say "D6 $(grep -E '^(licence|h_d6_broker|exit=)' "$O/D6.out" | S | tr '\n' ' ')";;
-    RP) timeout 120 $PY -I results/failing-first/harness/rot_proof.py "${ROT_OLD:?ROT_OLD names the old key-id hash list}" > "$O/RP.out" 2>&1
-        say "RP exit=$? $(tail -1 "$O/RP.out")";;
+    RP) if [ -n "${ROT_OLD:-}" ]; then
+          timeout 120 $PY -I results/failing-first/harness/rot_proof.py "$ROT_OLD" > "$O/RP.out" 2>&1
+          say "RP exit=$? $(tail -1 "$O/RP.out")"
+        else
+          # in-window rotation (the stores are on tmpfs: a recreated node holds no earlier window's keys): hash the ids
+          # D6 minted (sha256 only, 0600), prove the proof sees them, rotate, prove again
+          { ( umask 077; timeout 60 $PY -c '
+import glob, hashlib, json, sys
+from wp import config
+for p in sorted(glob.glob(str(config.SECRETS / "es_api_key*.json"))):
+    print(hashlib.sha256(json.load(open(p))["id"].encode()).hexdigest())' > "$O/rot-old.sha256" )
+            echo "old ids hashed $(wc -l < "$O/rot-old.sha256")"
+            stopped || { printf 'before '; timeout 120 $PY -I results/failing-first/harness/rot_proof.py "$O/rot-old.sha256" | tail -1; }
+            stopped || timeout 300 $PY -m wp.es_keys create 2>&1 | tail -1
+            stopped || { printf 'after '; timeout 120 $PY -I results/failing-first/harness/rot_proof.py "$O/rot-old.sha256" | tail -1; }
+          } > "$O/RP.out" 2>&1
+          say "RP in-window $(grep -E '^(old ids|before|created|after)' "$O/RP.out" | S | tr '\n' ' ')"
+        fi;;
     PC) timeout 120 $PY -c '
 from wp import db
 a = db.admin(db="emlab")
