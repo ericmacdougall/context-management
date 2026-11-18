@@ -1,0 +1,114 @@
+# # seal authority failing-first: tests/test_sealer.py against the wp/ code and schema of 1a4a5c2 (no wp/sealer.py), Mac, 2026-11-18: 10 failures by assertion, 0 errors. Behavioural red: U8 (log.append created a subject key and wrote with no authority) and U10 (the schema has no seal table, guard checks or quarantine version rule). U1-U7 and U9 fail only because the module does not exist yet (a new module has no prior behaviour). The live S-series in tests/test_d3_pg.py is written but NOT RUN (t2-dev under the run floor); it is neither red nor green. command: WP_UCD_DIR=<ucd> python3 ~/.claude/hooks/run_capped.py --max-rss-gb 2 --timeout-s 600 -- python3 -m unittest -v tests.test_sealer
+test_u10_schema_statics (tests.test_sealer.SealerOffline) ... FAIL
+test_u1_encoding_is_length_prefixed_in_octets (tests.test_sealer.SealerOffline) ... FAIL
+test_u2_every_field_is_bound (tests.test_sealer.SealerOffline) ... FAIL
+test_u3_store_formula_is_hmac (tests.test_sealer.SealerOffline) ... FAIL
+test_u4_mac_key_is_the_authoritys_own (tests.test_sealer.SealerOffline) ... FAIL
+test_u5_seal_output (tests.test_sealer.SealerOffline) ... FAIL
+test_u6_refused_batches_seal_nothing (tests.test_sealer.SealerOffline) ... FAIL
+test_u7_socket_peer_codes_and_log (tests.test_sealer.SealerOffline) ... FAIL
+test_u8_append_without_an_authority (tests.test_sealer.SealerOffline) ... FAIL
+test_u9_key_file_and_key_service (tests.test_sealer.SealerOffline) ... FAIL
+
+======================================================================
+FAIL: test_u10_schema_statics (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 395, in test_u10_schema_statics
+    self.assertTrue(re.search(r"create table wp_seal\.seal_keys \(", SCHEMA), "no private key table")
+AssertionError: None is not true : no private key table
+
+======================================================================
+FAIL: test_u1_encoding_is_length_prefixed_in_octets (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 217, in test_u1_encoding_is_length_prefixed_in_octets
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u2_every_field_is_bound (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 229, in test_u2_every_field_is_bound
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u3_store_formula_is_hmac (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 243, in test_u3_store_formula_is_hmac
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u4_mac_key_is_the_authoritys_own (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 252, in test_u4_mac_key_is_the_authoritys_own
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u5_seal_output (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 267, in test_u5_seal_output
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u6_refused_batches_seal_nothing (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 290, in test_u6_refused_batches_seal_nothing
+    a, ks = self.authority()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 211, in authority
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u7_socket_peer_codes_and_log (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 303, in test_u7_socket_peer_codes_and_log
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+======================================================================
+FAIL: test_u8_append_without_an_authority (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 368, in test_u8_append_without_an_authority
+    self.assertNotIn(("keys", True), ks.calls, "a subject key was created without an authority")
+AssertionError: ('keys', True) unexpectedly found in [('keys', True), ('chain_key', 0)] : a subject key was created without an authority
+
+======================================================================
+FAIL: test_u9_key_file_and_key_service (tests.test_sealer.SealerOffline)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 380, in test_u9_key_file_and_key_service
+    S = self.sealer()
+  File "~/.agent-harness/work/500523cf-38c7-4f04-96eb-cae1d57638e1/publish-clone/wt-writepath2/writepath/tests/test_sealer.py", line 191, in sealer
+    self.fail("wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)")
+AssertionError: wp.sealer is missing: no authority seals, so every write is the writer's word (review H F14)
+
+----------------------------------------------------------------------
+Ran 10 tests in 2.475s
+
+FAILED (failures=10)

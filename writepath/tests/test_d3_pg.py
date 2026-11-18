@@ -30,6 +30,15 @@ re-enabled ALWAYS afterwards; C4's appends go through the guard as the app role.
   H16a, H16b, H6 (review H F16, H6) hold placement does no footprint work; the separate report is bounded (20 ids, a
         count capped at 10,001), may fail without removing the hold and can be rerun; receipt id lists are bounded
   H size constraints: proposal ciphertext at most 284 bytes; at most 64 open proposals per subject (WPS39)
+  S1-S9 (seal authority, DESIGN-NOTES A1 to A8, main's option (b)) through wp_app with triggers on: an attestation from
+        an authority with a test key is accepted (non-ASCII ids too: SQL and Python encode alike); a FORGED claim
+        (mentions dropped, scan version raised, matcher or secret scan changed, ciphertext swapped) is WPS41; a MISSING
+        attestation (the review H F14 plant) is WPS40; a REPLAYED one (another event id, tenant or session) is WPS41; a
+        STALE one (scanned before a declaration) is WPS17 and with its version rewritten WPS41; quarantine rows need an
+        attestation too; the final pass removes quarantine rows scanned below the job's identifier version unless the
+        speaker is held; no app, reviewer or legal role can read the seal key table or call its install function; an
+        unknown or inactive key or a malformed MAC is WPS41. B5, B6 and B8 now show the plant refused (WPS40) and the
+        unscannable rule on legacy (owner-inserted) rows.
 Runs only with WP_PG_LIVE=1 on the lab host. SCHEMA_UNDER_TEST names another schema.sql (failing-first).
 usage (on t2-dev, from WP_HOME/src): WP_PG_LIVE=1 ../venv/bin/python -m unittest tests.test_d3_pg -v"""
 import hashlib
@@ -44,6 +53,8 @@ HERE = pathlib.Path(__file__).resolve().parents[1]
 T, TM = "d3t", "d3m"
 MID = "m3:test"                      # an opaque matcher id: the store compares it, never interprets it
 RV13 = "r2:m2:ucd13.0.0"             # an identifier reviewed under another matcher and Unicode version (review C F3)
+KID, SKEY = "d3-test-k1", bytes(range(100, 132))     # the seal authority's test key: opaque test bytes, not a secret
+NAME = "Rosalind Okafor"
 
 
 def sha(b):
@@ -65,10 +76,19 @@ class D3Store(unittest.TestCase):
         ev = db.admin(db=cls.name)
         ev.execute("drop schema public cascade")
         ev.execute("create schema public authorization wp_owner")
+        ev.execute("create schema wp_seal authorization wp_owner")    # A8: the admin creates it, as public
         ev.execute("set role wp_owner")
         ev.execute(pathlib.Path(os.environ.get("SCHEMA_UNDER_TEST") or HERE / "wp" / "schema.sql").read_text())
         ev.execute("reset role")
         cls.ev = ev
+        try:                                         # the test key (opaque test bytes); a schema or tree without it runs red
+            from wp import sealer
+            cls.SEALER = sealer
+        except ImportError:
+            cls.SEALER = None
+        if cls.SEALER is not None:
+            ip, op = cls.SEALER.pads(SKEY)
+            cls.owner_state(cls, "select wp_seal.install(%s, %s, %s)", (KID, ip, op))
         # the tenant's matcher (class 3); a schema without wp_matcher_set (4fe3ac1) runs A1-A3 with its own r2 version
         cls.RV = "r3:" + MID if cls.owner_state(cls, "select wp_matcher_set(%s::tenant_t, %s)", (T, MID)) == "ok" else "r2:m2:ucd15.0.0"
         cls.app = db.connect(db=cls.name, application_name="wp-d3-app")
@@ -242,11 +262,79 @@ class D3Store(unittest.TestCase):
         mx = self.one("select max_seq from identifier_epochs where tenant_id=%s", (TM,))[0]
         scan_v = self.one("select wp_secret_scan_version()")[0]      # the app sends the literal (log.append: SEC.VERSION)
         eid = str(uuid.uuid4())
-        return self.state(self.app, "insert into events(tenant_id, session_id, seq, event_id, idem_key, req_hash, kind, subject_id, actor, "
-                          "trust_origin, ts_event, content_enc, content_digest, mentions, mention_scan_upto, mention_matcher, secret_scan, "
-                          "prev_hash, hash, lease_scope, lease_epoch) values (%s, %s, 1, %s, %s, 'rh', 'message', %s, 'user', 'user_typed', "
-                          "now(), %s, %s, '{}', %s, %s, %s, %s, 'hz', %s, %s)",
-                          (TM, sid, eid, eid, subject, b"c", sha(b"c"), mx, matcher, scan_v, "0" * 64, "session:" + sid, epoch))
+        row = dict(tenant_id=TM, session_id=sid, seq=1, event_id=eid, idem_key=eid, req_hash="rh", kind="message", subject_id=subject,
+                   actor="user", trust_origin="user_typed", content_enc=b"c", content_digest=sha(b"c"), mentions=[], mention_scan_upto=mx,
+                   mention_matcher=matcher, secret_scan=scan_v, prev_hash="0" * 64, hash="hz", lease_scope="session:" + sid, lease_epoch=epoch)
+        row.update(self.attest(row, batch="c4"))     # C4 tests the matcher check, so the row carries a valid attestation
+        return self.insert(self.app, "events", row)
+
+    # ------------------------------------------------------------------ seal authority helpers (A6, A8)
+    def cols(self, table):
+        return {r[0] for r in self.ev.execute("select column_name from information_schema.columns where table_schema='public' and table_name=%s",
+                                              (table,)).fetchall()}
+
+    def insert(self, conn, table, row):
+        """Insert `row` into `table`, keeping only the columns the schema under test has (so an older schema runs red
+        by assertion, never by an unknown column)."""
+        import datetime
+        have = self.cols(table)
+        row = dict(row)
+        if table == "events":
+            row.setdefault("ts_event", datetime.datetime.now(datetime.timezone.utc))
+        ks = [k for k in row if k in have]
+        return self.state(conn, "insert into %s(%s) values (%s)" % (table, ", ".join(ks), ", ".join(["%s"] * len(ks))), [row[k] for k in ks])
+
+    def attest(self, row, batch="b", index=0, count=1, key=(KID, SKEY)):
+        """The seal columns for `row` as the authority computes them (A2 step 5), under the test key."""
+        S = self.SEALER
+        if S is None:
+            return {}
+        scope = row.get("lease_scope") or "session:" + row["session_id"]
+        epoch = row["lease_epoch"] if "lease_epoch" in row else row["presented_epoch"]
+        m = S.message(key[0], row["tenant_id"], row["event_id"], row["subject_id"], row.get("content_digest") or sha(bytes(row["content_enc"])),
+                      row["mention_scan_upto"], row["mention_matcher"], row["secret_scan"], row["mentions"], scope, epoch, batch, index, count)
+        return dict(seal_key_id=key[0], seal_mac=S.mac(key[1], m), seal_batch=batch, seal_index=index, seal_count=count)
+
+    def sealer(self):
+        if self.SEALER is None:
+            self.fail("wp.sealer is missing: nothing attests a write, so the store takes the writer's word (review H F14)")
+        return self.SEALER
+
+    def authority(self, ks=None, key=(KID, SKEY)):
+        """An in-process authority with the test key, reading as the app (stated: the deployed one reads as wp_sealer)."""
+        return self.sealer().Authority(self.app, ks or FixedKS(), key[0], key[1])
+
+    def lease(self, t, sid):
+        return self.app.execute("select epoch from wp_lease_acquire(%s::tenant_t, %s, 60, true, 'seal', 2000)", (t, "session:" + sid)).fetchone()[0]
+
+    def tenant(self, t):
+        from wp import mentions as M
+        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
+
+    def declare(self, t, subject, name):
+        from wp import mentions as M
+        h = M.subject_hmacs(FixedKS(), t, [name]).pop()
+        pid = self.propose(self.app, subject, h, rv=M.rule_version(), t=t)
+        self.assertEqual(self.state(self.r1, "select wp_identifier_approve(%s, %s, %s)", (pid, h, M.rule_version())), "ok")
+
+    def sealed(self, t, sid, eid, speaker, content, epoch, auth=None, batch="b"):
+        r = (auth or self.authority()).seal(t, "session:" + sid, epoch, batch, [{"event_id": eid, "subject_id": speaker, "content": content}])[0]
+        return dict(tenant_id=t, session_id=sid, event_id=eid, idem_key=eid, req_hash="rh", kind="message", subject_id=speaker, actor="user",
+                    trust_origin="user_typed", content_enc=r["content_enc"], content_digest=r["content_digest"], mentions=r["mentions"],
+                    mention_scan_upto=r["scan"], mention_matcher=r["matcher"], secret_scan=r["secret_scan"], lease_scope="session:" + sid,
+                    lease_epoch=epoch, seal_key_id=r["seal_key_id"], seal_mac=r["seal_mac"], seal_batch=r["seal_batch"],
+                    seal_index=r["seal_index"], seal_count=r["seal_count"])
+
+    def put(self, row, **over):
+        """Append `row` (with `over` applied) at the session's chain head, through wp_app with events_guard on."""
+        row = dict(row, **over)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, %s)", (row["tenant_id"], [row["subject_id"]] + list(row["mentions"])))
+        ch = self.app.execute("select next_seq, last_hash from chains where tenant_id=%s and session_id=%s", (row["tenant_id"], row["session_id"])).fetchone()
+        seq, prev = ch if ch else (1, "0" * 64)
+        row.setdefault("seq", seq)
+        row.setdefault("prev_hash", prev)
+        row.setdefault("hash", "h-" + row["event_id"])
+        return self.insert(self.app, "events", row)
 
     def test_c4_matcher_stored_and_enforced(self):
         self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (TM, "mA")), "ok")
@@ -561,9 +649,11 @@ class D3Store(unittest.TestCase):
             return dict(subject_id="B1S", kind="message", actor="user", trust_origin="user_typed",
                         ts_event=datetime.datetime.now(datetime.timezone.utc), content=content)
         crafted = " ".join("1I1I1I" for _ in range(300))
-        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("fine"), ev(crafted)]), "WPM02")
-        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("a" * 65537)]), "WPM01")
-        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("x")] * 1001), "WPM03")       # per-call limit (B10)
+        import inspect
+        kw = {"sealer": self.authority(NoKS())} if "sealer" in inspect.signature(self.LG.append).parameters else {}   # A8: the authority admits
+        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("fine"), ev(crafted)], **kw), "WPM02")
+        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("a" * 65537)], **kw), "WPM01")
+        self.refused(lambda: self.LG.append(self.app, NoKS(), lease, [ev("x")] * 1001, **kw), "WPM03")       # per-call limit (B10)
         self.assertEqual(self.one("select count(*) from events where tenant_id=%s", (TR,)), (0,))
         self.assertEqual(self.one("select count(*) from quarantine where tenant_id=%s", (TR,)), (0,))
         self.assertEqual(self.ev.execute("select code, n from write_refusals where tenant_id=%s order by code", (TR,)).fetchall(),
@@ -575,8 +665,8 @@ class D3Store(unittest.TestCase):
     def test_b2_store_bounds_ciphertext_size(self):
         # 65,536 bytes of content plus 28 (nonce and tag) is the largest ciphertext the store keeps
         for size, want in ((65564, "ok"), (65565, "23514")):
-            got = self.owner_state("insert into quarantine(tenant_id, session_id, subject_id, presented_epoch, reason, kind, content_enc) "
-                                   "values ('d3b2', 's', 'B2S', 1, 'stale_epoch', 'message', %s)", (b"x" * size,))
+            got = self.owner_quarantine(dict(tenant_id="d3b2", session_id="s", subject_id="B2S", presented_epoch=1, reason="stale_epoch",
+                                             kind="message", content_enc=b"x" * size, event_id="b2q%d" % size))
             self.assertEqual(got, want, f"quarantine ciphertext of {size} bytes")
         try:
             self.event("b2-ok", "B2S", [], content=b"x" * 65564, t="d3b2")
@@ -590,6 +680,16 @@ class D3Store(unittest.TestCase):
         except Exception as e:                           # noqa: BLE001
             big = getattr(e, "sqlstate", repr(e))
         self.assertEqual(big, "23514", "an oversized event ciphertext was stored")
+
+    def owner_quarantine(self, row):
+        """A fixture quarantine row as wp_owner with ONLY quarantine_guard disabled, re-enabled ALWAYS afterwards."""
+        self.ev.execute("set role wp_owner")
+        try:
+            self.ev.execute("alter table quarantine disable trigger quarantine_guard")
+            return self.insert(self.ev, "quarantine", row)
+        finally:
+            self.ev.execute("alter table quarantine enable always trigger quarantine_guard")
+            self.ev.execute("reset role")
 
     def rescan_tenant(self, t, subject, name):
         """A tenant on THIS process's matcher with one approved identifier for `subject`, and its marked erasure job."""
@@ -652,30 +752,30 @@ class D3Store(unittest.TestCase):
         return self.job(subject, t=t)
 
     def test_b5_planted_over_budget_event_through_the_app(self):
-        """reviewH F14: no older matcher needed. A wp_app writer plants a validly sealed, over-budget event at scan
-        version 0 under the CURRENT matcher; the identifier is declared later. The rescan must not stall."""
-        from wp import erasure, keys as K, mentions as M
+        """reviewH F14 after the authority (A4 MISSING): a wp_app writer can no longer plant. The validly encrypted,
+        over-budget event through the app's INSERT grant is refused for having no attestation (WPS40), and the
+        authority refuses to seal it (WPM02). Rows that predate the authority are covered by the unscannable rule (B4)."""
+        from wp import keys as K
         t = "d3b5"
-        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
+        self.tenant(t)
         over = " ".join("1I1I1I" for _ in range(300))
-        self.assertEqual(self.plant(t, "b5s", "b5e", "B5Y", K.seal(FixedKS.SUBJ_KEY, t, "B5Y", "b5e", over)), "ok")
-        self.assertEqual(self.plant(t, "b5h", "b5h", "B5Z", K.seal(FixedKS.SUBJ_KEY, t, "B5Z", "b5h", "plain words")), "ok")
-        j = self.declared_job(t, "B5X", "Rosalind Okafor")
-        erasure.rescan(self.app, FixedKS(), j)
-        self.assertEqual(self.app.execute("select event_id, source from erasure_mentions where job_id=%s", (j,)).fetchall(), [("b5e", "unscannable")])
-        self.cascade(j)
-        self.assertTrue(self.content_gone("b5e"))
-        self.assertFalse(self.content_gone("b5h"))
+        self.assertEqual(self.plant(t, "b5s", "b5e", "B5Y", K.seal(FixedKS.SUBJ_KEY, t, "B5Y", "b5e", over)), "WPS40")
+        self.assertEqual(self.plant(t, "b5h", "b5h", "B5Z", K.seal(FixedKS.SUBJ_KEY, t, "B5Z", "b5h", "plain words")), "WPS40")
+        epoch = self.lease(t, "b5s")
+        self.refused(lambda: self.authority().seal(t, "session:b5s", epoch, "b5", [{"event_id": "b5e", "subject_id": "B5Y", "content": over}]), "WPM02")
+        self.assertEqual(self.one("select count(*) from events where tenant_id=%s", (t,)), (0,))
 
-    def test_b6_garbage_ciphertext_through_the_app(self):
-        """Ciphertext that does not authenticate (or is too short to) with the speaker's key present: unscannable,
-        removed; it must neither stall the rescan nor be skipped as if its speaker were erased."""
-        from wp import erasure, mentions as M
+    def test_b6_garbage_ciphertext(self):
+        """Through the app: garbage ciphertext has no attestation (WPS40). As legacy rows (owner fixture): ciphertext
+        that does not authenticate, or is too short to, with the speaker's key present is unscannable and linked; it
+        neither stalls the rescan nor is skipped as if its speaker were erased."""
+        from wp import erasure
         t = "d3b6"
-        self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
-        self.assertEqual(self.plant(t, "b6s", "b6g", "B6Y", bytes(range(60))), "ok")
-        self.assertEqual(self.plant(t, "b6t", "b6t", "B6Y", b"short"), "ok")
-        j = self.declared_job(t, "B6X", "Rosalind Okafor")
+        self.tenant(t)
+        self.assertEqual(self.plant(t, "b6s", "b6p", "B6Y", bytes(range(60))), "WPS40")
+        self.event("b6g", "B6Y", [], content=bytes(range(60)), t=t)
+        self.event("b6t", "B6Y", [], content=b"short", t=t)
+        j = self.declared_job(t, "B6X", NAME)
         erasure.rescan(self.app, FixedKS(), j)
         self.assertEqual(sorted(self.app.execute("select event_id, source from erasure_mentions where job_id=%s", (j,)).fetchall()),
                          [("b6g", "unscannable"), ("b6t", "unscannable")])
@@ -689,8 +789,8 @@ class D3Store(unittest.TestCase):
         from wp import erasure, mentions as M
         t = "d3b8"
         self.assertEqual(self.owner_state("select wp_matcher_set(%s::tenant_t, %s)", (t, M.matcher_id())), "ok")
-        self.assertEqual(self.plant(t, "b8s", "b8e", "B8Y", bytes(range(60))), "ok")
-        j = self.declared_job(t, "B8X", "Rosalind Okafor")
+        self.event("b8e", "B8Y", [], content=bytes(range(60)), t=t)           # a legacy (pre-authority) unscannable row
+        j = self.declared_job(t, "B8X", NAME)
         lg = self.legal("wp-b8-legal")
         try:
             erasure.place_hold(lg, t, "B8Y", "h-b8", "test")
@@ -825,6 +925,140 @@ class D3Store(unittest.TestCase):
             self.propose(self.app, "HSP", "hs%d" % i, t="d3hs2", pid="hsp-%d" % i)
         self.assertEqual(self.state(self.app, "select wp_identifier_propose('d3hs2'::tenant_t, 'HSP', 'hsp-64', 'hs64', %s, %s)",
                                     (b"sealed", self.RV)), "WPS39")
+
+    # ------------------------------------------------------------------ S: the seal authority (A1 to A8)
+    def test_s1_valid_attestation_accepted(self):
+        t = "d3s1"
+        self.tenant(t)
+        self.declare(t, "S1X", NAME)
+        self.declare(t, "\u00dcn\u00efS1", "Zo\u00eb Ng\u00fcyen")          # non-ASCII subject id and identifier
+        epoch = self.lease(t, "s1a")
+        r = self.sealed(t, "s1a", "s1e", "Sp\u00ebaker1", "I met " + NAME + " and Zo\u00eb Ng\u00fcyen.", epoch)
+        self.assertEqual(r["mentions"], sorted(["S1X", "\u00dcn\u00efS1"]))
+        self.assertEqual(self.put(r), "ok", "a valid attestation was refused (SQL and Python encode differently?)")
+        r2 = self.sealed(t, "s1a", "s1f", "S1Y", "nothing about anyone", epoch)
+        self.assertEqual((r2["mentions"], self.put(r2)), ([], "ok"))
+
+    def test_s2_forged_claims_refused(self):
+        t = "d3s2"
+        self.tenant(t)
+        self.declare(t, "S2X", NAME)
+        epoch = self.lease(t, "s2a")
+        r = self.sealed(t, "s2a", "s2e", "S2Y", "I met " + NAME, epoch)
+        other = self.sealed(t, "s2a", "s2o", "S2Y", "different words", epoch)
+        self.assertEqual(r["mentions"], ["S2X"])
+        for what, over in (("mentions dropped", dict(mentions=[])),
+                           ("scan version raised", dict(mention_scan_upto=r["mention_scan_upto"] + 1)),
+                           ("matcher changed", dict(mention_matcher="m5:forged")),
+                           ("secret scan changed", dict(secret_scan="s0")),
+                           ("ciphertext swapped", dict(content_enc=other["content_enc"], content_digest=other["content_digest"])),
+                           ("speaker changed", dict(subject_id="S2Z"))):
+            self.assertEqual(self.put(r, **over), "WPS41", f"forged claim accepted: {what}")
+        self.assertEqual(self.put(r), "ok", "the unaltered row (the control) was refused")
+
+    def test_s3_missing_attestation_refused(self):
+        t = "d3s3"
+        self.tenant(t)
+        self.assertEqual(self.plant(t, "s3a", "s3e", "S3Y", b"opaque"), "WPS40", "an event without an attestation was stored (F14)")
+        epoch = self.lease(t, "s3b")
+        r = self.sealed(t, "s3b", "s3f", "S3Y", "words", epoch)
+        self.assertEqual(self.put(r, seal_mac=None), "WPS41", "a half attestation (key id, no MAC) was stored")
+
+    def test_s4_replayed_attestation_refused(self):
+        t, t2 = "d3s4", "d3s4b"
+        self.tenant(t)
+        self.tenant(t2)
+        epoch = self.lease(t, "s4a")
+        r = self.sealed(t, "s4a", "s4e", "S4Y", "words", epoch)
+        self.assertEqual(self.put(r), "ok")
+        self.assertEqual(self.put(r, event_id="s4copy", idem_key="s4copy"), "WPS41", "replayed onto another event id")
+        e2 = self.lease(t2, "s4a")
+        self.assertEqual(self.put(r, tenant_id=t2, lease_epoch=e2), "WPS41", "replayed into another tenant")
+        e3 = self.lease(t, "s4b")
+        self.assertEqual(self.put(r, session_id="s4b", lease_scope="session:s4b", lease_epoch=e3), "WPS41",
+                         "replayed into another session")      # same event id: only the scope and epoch differ (the guard runs first)
+
+    def test_s5_stale_identifier_set(self):
+        t = "d3s5"
+        self.tenant(t)
+        self.declare(t, "S5A", NAME)
+        epoch = self.lease(t, "s5a")
+        r = self.sealed(t, "s5a", "s5e", "S5Y", "Zora Quill and " + NAME, epoch)
+        self.declare(t, "S5B", "Zora Quill")                    # the set moves after the scan
+        self.assertEqual(self.put(r), "WPS17", "an attestation scanned against an older identifier set was stored")
+        self.assertEqual(self.put(r, mention_scan_upto=r["mention_scan_upto"] + 1), "WPS41", "a rewritten scan version was accepted")
+        fresh = self.sealed(t, "s5a", "s5e", "S5Y", "Zora Quill and " + NAME, epoch)
+        self.assertEqual((fresh["mentions"], self.put(fresh)), (["S5A", "S5B"], "ok"))
+
+    def qrow(self, r, **over):
+        q = dict(tenant_id=r["tenant_id"], session_id=r["session_id"], subject_id=r["subject_id"], presented_epoch=r["lease_epoch"],
+                 reason="stale_epoch", kind="message", content_enc=r["content_enc"], mentions=r["mentions"], event_id=r["event_id"],
+                 mention_scan_upto=r["mention_scan_upto"], mention_matcher=r["mention_matcher"], secret_scan=r["secret_scan"],
+                 seal_key_id=r["seal_key_id"], seal_mac=r["seal_mac"], seal_batch=r["seal_batch"], seal_index=r["seal_index"],
+                 seal_count=r["seal_count"])
+        q.update(over)
+        return q
+
+    def test_s6_quarantine_needs_an_attestation(self):
+        t = "d3s6"
+        self.tenant(t)
+        epoch = self.lease(t, "s6a")
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['S6Y'])", (t,))
+        r = self.sealed(t, "s6a", "s6e", "S6Y", "words", epoch)
+        bare = dict(tenant_id=t, session_id="s6a", subject_id="S6Y", presented_epoch=epoch, reason="stale_epoch", kind="message",
+                    content_enc=b"planted", mentions=[], event_id="s6p")
+        self.assertEqual(self.insert(self.app, "quarantine", bare), "WPS40", "a quarantine row without an attestation was stored")
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r, presented_epoch=epoch + 1)), "WPS41", "another epoch was accepted")
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r, mentions=[])), "WPS41", "quarantine mentions dropped")
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "ok")
+        self.assertEqual(self.insert(self.app, "quarantine", self.qrow(r)), "23505", "the same attestation was quarantined twice")
+
+    def test_s7_quarantine_scanned_below_the_identifier_set_is_removed(self):
+        t = "d3s7"
+        self.tenant(t)
+        self.app.execute("select wp_subjects_ensure(%s::tenant_t, array['S7Y','S7H','S7Z'])", (t,))
+        base = dict(tenant_id=t, session_id="s7", presented_epoch=1, reason="stale_epoch", kind="message", content_enc=b"opaque", mentions=[])
+        self.assertEqual(self.owner_quarantine(dict(base, subject_id="S7Y", event_id="q-old", mention_scan_upto=0)), "ok")
+        self.assertEqual(self.owner_quarantine(dict(base, subject_id="S7H", event_id="q-held", mention_scan_upto=0)), "ok")
+        self.declare(t, "S7X", NAME)
+        mx = self.one("select max_seq from identifier_epochs where tenant_id=%s", (t,))[0]
+        self.assertEqual(self.owner_quarantine(dict(base, subject_id="S7Z", event_id="q-new", mention_scan_upto=mx)), "ok")
+        lg = self.legal("wp-s7-legal")
+        try:
+            from wp import erasure
+            erasure.place_hold(lg, t, "S7H", "h-s7", "test")
+        finally:
+            lg.close()
+        j = self.job("S7X", t=t)
+        self.cascade(j)
+        left = sorted(r[0] for r in self.ev.execute("select event_id from quarantine where tenant_id=%s", (t,)).fetchall())
+        self.assertEqual(left, ["q-held", "q-new"], "a quarantine row scanned before the identifier existed survived the erasure")
+
+    def test_s8_seal_keys_are_private(self):
+        lg = self.legal("wp-s8-legal")
+        try:
+            for name, conn in (("wp_app", self.app), ("reviewer 1", self.r1), ("reviewer 2", self.r2), ("wp_legal", lg)):
+                self.assertEqual(self.state(conn, "select * from wp_seal.seal_keys"), "42501", f"{name} can read the seal keys")
+            self.assertEqual(self.state(self.app, "select wp_seal.install('x', %s, %s)", (b"\x00" * 64, b"\x00" * 64)), "42501",
+                             "wp_app can install a seal key")
+        finally:
+            lg.close()
+
+    def test_s9_unknown_inactive_key_and_bad_mac(self):
+        t = "d3s9"
+        self.tenant(t)
+        epoch = self.lease(t, "s9a")
+        r = self.sealed(t, "s9a", "s9e", "S9Y", "words", epoch)
+        self.assertEqual(self.put(r, seal_key_id="no-such-key"), "WPS41")
+        self.assertEqual(self.put(r, seal_mac="zz"), "WPS41")
+        self.assertEqual(self.put(r, seal_mac=r["seal_mac"].upper()), "WPS41")
+        k2 = bytes(range(140, 172))
+        ip, op = self.sealer().pads(k2)
+        self.assertEqual(self.owner_state("select wp_seal.install(%s, %s, %s)", ("d3-test-k2", ip, op)), "ok")
+        self.assertEqual(self.owner_state("update wp_seal.seal_keys set active = false where key_id = 'd3-test-k2'"), "ok")
+        r2 = self.sealed(t, "s9a", "s9f", "S9Y", "words", epoch, auth=self.authority(key=("d3-test-k2", k2)))
+        self.assertEqual(self.put(r2), "WPS41", "an attestation under an inactive key was accepted")
+        self.assertEqual(self.put(r), "ok")
 
 
 class FixedKS:

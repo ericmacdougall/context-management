@@ -34,6 +34,7 @@ class BrokerSchemaFromScratch(unittest.TestCase):
         ev = db.admin(db=cls.name)
         ev.execute("drop schema public cascade")
         ev.execute("create schema public authorization wp_owner")
+        ev.execute("create schema wp_seal authorization wp_owner")    # DESIGN-NOTES A8: the admin creates it, as public
         ev.execute("set role wp_owner")
         ev.execute(pathlib.Path(os.environ.get("SCHEMA_UNDER_TEST") or HERE / "wp" / "schema.sql").read_text())
         ev.execute("reset role")
