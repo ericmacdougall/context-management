@@ -426,7 +426,8 @@ Also outside the guarantee:
 ### 5.6 Precondition for the stream's containers (owner of host/bootstrap.py)
 Today emlab2-wphard-es and -pg use named volumes on the shared disk with `-m 2g`. For v3 they must be created with:
 - ES: `--memory M_es --memory-swap M_es --mount type=tmpfs,destination=/usr/share/elasticsearch/data,tmpfs-size=S_es`
-  where S_es ≥ M_es + 18 GiB (bootstrap's low watermark, 18gb free) + 0.25 GiB. tmpfs-size is a ceiling, not a
+  where S_es ≥ M_es + W_low + 0.25 GiB, W_low the node's low watermark (18gb when this was written; 10gb since H6d, so
+  S_es ≥ M_es + 10.25 GiB on the integration branch; the gate reads W_low from the node). tmpfs-size is a ceiling, not a
   reservation.
 - PG: `--memory M_pg --memory-swap M_pg --mount type=tmpfs,destination=/var/lib/postgresql/data,tmpfs-size=S_pg`
   where S_pg ≥ M_pg + 0.25 GiB.
@@ -1111,3 +1112,38 @@ unrelated OOM kill in it voids the run (fails closed); same-user tampering and r
   high. m-G rests on it; t2-dev runs Python 3.12, the Mac tests 3.9 (no `-P`; `isolated.py` sets its own path).
 - flock(2) (8.5) still carries F-1's descriptor rule: the lock belongs to the open file description, so a fresh open of
   the lock file is a different description and `wp/runlock.py` refuses it.
+
+### 9.6 Integration with the hardening branch (integ/gate-on-hardening, 2026-11-18)
+Branch integ/gate-on-hardening is a real merge of fix/writepath-gate (a293050) into feat/writepath-hardening (e1e7e51),
+plain merge fb0e19a; neither feature branch is pushed from it. The hardening objects are named in exp/guard_policy.py
+and held to explicit rules, each with a test whose scenario deviates from that rule alone (`assertExactly`: the
+exit status, the named reason, and no other reason), red on fb0e19a
+(results/failing-first/integ/integ-hardening-gate-fb0e19a.red.out) and red again on a variant of the new gate that
+waves that one rule through (results/failing-first/integ/integ-mutant-*.red.out).
+- Roles. wp_sealer, wp_rev1 and wp_rev2 are login roles (ROLE_FLAGS, ROLE_SETTINGS); wp_reviewer is a NOLOGIN group
+  (ROLE_FLAGS, no settings, no CONNECT) whose only members are wp_rev1 and wp_rev2. CONNECT on the events database adds
+  wp_sealer and both reviewers; no grantee but the owner and the admin holds TEMPORARY on a stream database (review J
+  M5). Bound to wp/setup.py and wp/db.py by text.
+- Tables. write_refusals, identifier_proposals and quarantine_removed are in POLICY with no app privilege. schema.sql
+  gives write_refusals no guard triggers; UNGUARDED_OK names it with compensating rules (owner, the effective
+  privileges of every role, its writer wp_write_refused a SECURITY DEFINER function of wp_owner that only the app role
+  may execute, any trigger it carries ALWAYS). This exemption is an ASSUMPTION reported to the hardening owner; the
+  binding test fails once schema.sql gives the table guards, so the exemption cannot outlive the gap.
+- Privileges (`_hardening_rules`). Every role's EFFECTIVE table privileges in public and wp_seal (has_table_privilege,
+  inheritance included; wp_app's stay G2's), schema privileges (USAGE, CREATE on public and wp_seal) and EXECUTE on the
+  functions in EXECUTE_ONLY equal the committed sets; bound to wp/schema.sql's grant statements by text.
+- wp_seal. The events database holds exactly the namespaces public and wp_seal (owner wp_owner), the keys database
+  public (owner wp_kms). wp_seal holds exactly seal_keys and install, message, verify, all of wp_owner, none SECURITY
+  DEFINER, no role holding a privilege on any of them; any trigger there is ALWAYS. The seal schema's OID joins the
+  reset-or-replaced identity check. No query reads a column of seal_keys (the pads are the key).
+- Service containers. The key service, verifier, broker and application containers of D2 and D6 run under the
+  stream's prefix with the stream label and mount parts of WP_HOME (exp/h_d2_uids.py, exp/h_d6_broker.py). Any
+  container but the two stores with the prefix or the label BLOCKS admission and VOIDS the end; one started and removed
+  within the run is allowed. No container of the seal authority exists in this tree ("sealer" in SERVICE_CONTAINERS is
+  an ASSUMPTION; the prefix rule covers any name it gets). WP_SECRETS_DIR outside WP_HOME is not seen by the bind-mount
+  rule of C12; the prefix and label rule does not depend on it.
+- Scanner. runkit/leak_scan.py inventories secrets/seal_key (wp/sealer.py) as a key-store key with its HMAC pads, the
+  form wp_seal.seal_keys holds, and lists the hardening's creation sites (wp/es_keys.py _rotate, wp/sealer.py mac and
+  new_key_file); red on fb0e19a in results/failing-first/integ/integ-seal-key-scan-fb0e19a.red.out.
+- Disk. Amendment GF1a in exp/THRESHOLDS.md; test_integ_gf1_lines_equal_h6d binds START_GB and STOP_GB to H6d's KiB
+  lines and ES watermarks.

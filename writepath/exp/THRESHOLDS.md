@@ -1209,7 +1209,11 @@ and stops itself at 8 GB.
 ## Amendment GF1a (2026-11-18, integration of fix/writepath-gate into feat/writepath-hardening; nothing above rewritten)
 Source: the same answer as H6d and GF1 (`answer:73716864-6b3b-4deb-94ef-8ed2c8432e4a/3335a07a-728a-4abf-99c2-6e0229b92d77`,
 "Lower floor to 10 GB (Recommended)"); main's integration brief asks that H6d and GF1 agree. They do, in one unit:
-exp.disk_gate's START_GB 10.0 and STOP_GB 8.0 are compared with free_gb(), which divides statfs bytes by 1024^3, so the
-gate's lines are exactly H6d's 10485760 KiB and 8388608 KiB. The live chain (H6d) and the stamped-run gate (GF1) start
-at the same line and stop at the same line; the ES watermarks of H6d (low 10gb, high 9gb, flood_stage 8gb) are below
-the start line, and the gate's v4 settings rules compare them with admission, not with a number of their own.
+exp.disk_gate's START_GB 10.0 and STOP_GB 8.0 are compared with free_gb(), shutil.disk_usage(WP_HOME).free / 1024^3,
+and that free figure is statvfs f_bavail, the figure `df -k --output=avail` prints, so the gate's lines are exactly
+H6d's 10485760 KiB and 8388608 KiB (results/failing-first/harness/live_chain.sh START_KIB, STOP_KIB). The live chain
+(H6d) and the stamped-run gate (GF1) start at the same line and stop at the same line. H6d's ES watermarks are the same
+lines in ES's own unit (1gb = 1024^3 bytes): low 10gb at the start line, high 9gb between, flood_stage 8gb at the stop
+line. Under gate v4 the stores keep their data on a private tmpfs, so these watermarks apply to the tmpfs, not to host
+free space; the gate's storage rule sizes the tmpfs against the node's own reported thresholds, not against a number
+of its own. tests/test_disk_gate.py test_integ_gf1_lines_equal_h6d binds the four numbers.

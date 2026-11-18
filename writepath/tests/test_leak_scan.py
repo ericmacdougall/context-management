@@ -65,7 +65,11 @@ class Scan(unittest.TestCase):
         oldkms = secrets.token_bytes(32).hex()               # a legacy KMS key (database keys, keys.key), hex text
         chain = hmac.new(tkey, b"chain-key:v1", hashlib.sha256).digest()   # wp/keys.py chain_key, sent as hex by keysvc
         cls.broker, cls.key = broker, key
-        cls.values = [app, admin, legacy, broker, espw, key, enc, kms.hex(), tkey.hex(), chain.hex(), oldkms]
+        seal, seal_id = secrets.token_bytes(32), "seal-" + secrets.token_hex(8)   # integ: wp/sealer.py's key file
+        seal_ipad = bytes(b ^ 0x36 for b in seal.ljust(64, b"\0"))                # what wp_seal.seal_keys holds
+        seal_opad = bytes(b ^ 0x5C for b in seal.ljust(64, b"\0"))
+        cls.values = [app, admin, legacy, broker, espw, key, enc, kms.hex(), tkey.hex(), chain.hex(), oldkms, seal.hex(),
+                      seal_ipad.hex(), seal_opad.hex()]
         home = cls.tmp / "home"
         for d in ("secrets", "oldhome", "conf"):
             (home / d).mkdir(parents=True)
@@ -77,6 +81,7 @@ class Scan(unittest.TestCase):
         (home / "secrets" / "es_broker_password").write_text(broker + "\n")
         (home / "secrets" / "es_api_key.verifier.json").write_text(json.dumps({"id": kid, "encoded": enc}))
         (home / "oldhome" / "pgpass").write_text(f"127.0.0.1:25660:*:emlab:{legacy}\n")
+        (home / "secrets" / "seal_key").write_text(json.dumps({"key_id": seal_id, "key": seal.hex()}))
         cls.home = home
         doc = _b64(b"x" * 49 + app.encode() + b"y" * 50)
         cls.planted = {
@@ -114,6 +119,11 @@ class Scan(unittest.TestCase):
             "utf16be_odd_offset": b"\x07" + f"pw={app}".encode("utf-16-be"),
             "percent_encoded_json_unicode_escapes": urllib.parse.quote(
                 '{"api_key": "' + "".join("\\u%04x" % ord(c) for c in key) + '"}', safe=""),
+            # integ: the seal key (hardening) as raw bytes and base64, and its pads as the store holds them
+            "seal_key_raw_bytes": b"\x00" + seal + b"\x01",
+            "seal_key_base64": _b64(seal),
+            "seal_ipad_bytea_hex": "\\x" + seal_ipad.hex(),
+            "seal_opad_base64": _b64(seal_opad),
         }
         res = cls.tmp / "results"
         res.mkdir()
@@ -121,7 +131,8 @@ class Scan(unittest.TestCase):
             (res / n).write_bytes(v if isinstance(v, bytes) else v.encode())
         # non-secret controls: the key id (results record it by design), user names, hosts, base64 of the id
         (res / "controls_not_secret").write_text(json.dumps({"key_id": kid, "users": ["wp", "wp_app", "emlab", "elastic"],
-                                                             "host": "127.0.0.1:25660", "id_b64": _b64(kid)}) + "\n")
+                                                             "host": "127.0.0.1:25660", "id_b64": _b64(kid),
+                                                             "seal_key_id": seal_id}) + "\n")   # setup prints it
         clean = cls.tmp / "clean"
         clean.mkdir()
         (clean / "result.json").write_text(json.dumps({"key_id": kid, "verdict": "PASS", "n": 5}))

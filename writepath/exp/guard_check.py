@@ -4,10 +4,13 @@
      a table without a declared policy fails.
   G2 the app role's privileges on every table equal its policy (DELETE and TRUNCATE never), checked with
      has_table_privilege / has_any_column_privilege.
-  G3 every table has BEFORE triggers covering INSERT, UPDATE, DELETE (row) and TRUNCATE (statement), and EVERY
-     non-internal trigger is enabled ALWAYS ('A'), so session_replication_role=replica cannot skip it.
-  G4 roles: wp_app / wp_verifier / wp_kms are not superuser, createrole, createdb, replication or bypassrls; wp_app is
-     not a member of wp_owner; wp_app cannot connect to wp_keys; wp_verifier cannot read key material.
+  G3 every table but exp/guard_policy.py's named exemption (UNGUARDED_OK, ASSUMPTION) has BEFORE triggers covering
+     INSERT, UPDATE, DELETE (row) and TRUNCATE (statement), and EVERY non-internal trigger is enabled ALWAYS ('A'),
+     so session_replication_role=replica cannot skip it.
+  G4 roles: every committed login and group role (exp/guard_policy.py) is not superuser, createrole, createdb,
+     replication or bypassrls; wp_app is not a member of wp_owner; wp_app cannot connect to wp_keys; wp_verifier
+     cannot read key material. The full role, membership, grant and wp_seal expectation is the gate's
+     (exp/disk_gate.py _catalog_rules), read from the same exp/guard_policy.py.
   G5 keys database tables are owned by wp_kms.
   G6 registry.unregistered() is empty.
 Controls (run only with --controls, never in the gate positions): a guardless table, a trigger switched from
@@ -19,6 +22,7 @@ from exp.common import write_result
 from wp import config, db, registry
 from wp.es import ES
 
+from exp import guard_policy as GP
 from exp.guard_policy import BEFORE, DEL, INS, POLICY, PRIVS, ROW, TRUNC, UPD, D, I, S, U  # noqa: F401 (one source)
 
 
@@ -47,9 +51,9 @@ def check(adm, kadm):
                 if typ & TRUNC:
                     cov["TRUNCATE"] = True
         miss = [k for k, v in cov.items() if not v]
-        if miss:
+        if miss and rel not in GP.UNGUARDED_OK:   # named exemption, ASSUMPTION (exp/guard_policy.py)
             out["G3"].append(f"{rel}:no guard for {','.join(miss)}")
-    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog"):
+    for r in GP.LOGIN_ROLES + GP.GROUP_ROLES:
         a = adm.execute("select rolsuper, rolcreaterole, rolcreatedb, rolreplication, rolbypassrls from pg_roles where rolname=%s", (r,)).fetchone()
         if a is None or any(a):
             out["G4"].append(f"{r}:attrs={a}")
@@ -58,7 +62,7 @@ def check(adm, kadm):
     for fn in ("wp_hold_place(tenant_t, text, text, text)", "wp_hold_release(text)"):     # D1: holds are the legal role's alone
         if adm.execute("select has_function_privilege('wp_app', %s, 'EXECUTE')", (fn,)).fetchone()[0]:
             out["G4"].append(f"wp_app can execute {fn}")
-    for r in ("wp_app", "wp_verifier", "wp_kms", "wp_legal", "wp_watchdog"):              # D2: one credential file per role
+    for r in GP.LOGIN_ROLES:                                                               # D2: one credential file per role
         import os, stat
         f = config.pgpass(r)
         if not os.path.exists(f) or stat.S_IMODE(os.stat(f).st_mode) != 0o600 or any(

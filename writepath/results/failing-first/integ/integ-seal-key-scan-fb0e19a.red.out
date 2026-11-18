@@ -1,0 +1,76 @@
+# failing-first receipt
+# date: 2026-11-18T22:48:05Z
+# file under test: fb0e19a:writepath/runkit/leak_scan.py blob 63a37dc100c1450c9d33d9f73c40a5451a5629cf sha256 82ed01b58f04c690cf29a31997e25f4334a0927999938c9f24284ab987eb209d
+# tree: writepath at fb0e19a (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_leak_scan.py from HEAD fb0e19a blob 3dffd3259d0e897604b79439c7424082df83e139
+# command: (cd <tree>/writepath && LEAK_SCAN_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_leak_scan.Scan.test_each_representation_is_found tests.test_leak_scan.Scan.test_non_secret_controls_do_not_hit tests.test_leak_scan.Scan.test_every_python_creation_site_is_in_the_table_with_its_count tests.test_leak_scan.Scan.test_no_value_or_fragment_is_printed
+test_each_representation_is_found (tests.test_leak_scan.Scan) ... test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan) ... FAIL
+test_every_python_creation_site_is_in_the_table_with_its_count (tests.test_leak_scan.Scan) ... FAIL
+test_no_value_or_fragment_is_printed (tests.test_leak_scan.Scan) ... ok
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='seal_key_raw_bytes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jmBT3jXGbK/writepath/tests/test_leak_scan.py", line 209, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'seal_key_raw_bytes' not found in {'percent_encoded_json_unicode_escapes', 'keystore_key_hex_upper', 'legacy_oldhome_password', 'basic_header_broker', 'keystore_key_base64', 'apikey_decoded_id_key', 'gzip_of_a_log', 'single_quoted_shell', 'keystore_key_hex', 'basic_header_elastic', 'controls_not_secret', 'apikey_key_alone', 'base64', 'elastic_password_percent_encoded_url', 'legacy_kms_key_in_log', 'utf16be_odd_offset', 'utf16le_log', 'inside_wrapped_base64_document', 'admin_password_in_url', 'fragment_of_22_chars', 'split_across_lines', 'chain_key_hex_in_rpc_log', 'apikey_header_encoded', 'hex', 'keystore_key_raw_bytes', 'apikey_key_json_unicode_escaped', 'chain_key_base64', 'hex_upper', 'pgpass_password_in_json', 'split_in_json_string', 'keystore_key_base64url'} : the scanner missed the planted representation seal_key_raw_bytes
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='seal_key_base64')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jmBT3jXGbK/writepath/tests/test_leak_scan.py", line 209, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'seal_key_base64' not found in {'percent_encoded_json_unicode_escapes', 'keystore_key_hex_upper', 'legacy_oldhome_password', 'basic_header_broker', 'keystore_key_base64', 'apikey_decoded_id_key', 'gzip_of_a_log', 'single_quoted_shell', 'keystore_key_hex', 'basic_header_elastic', 'controls_not_secret', 'apikey_key_alone', 'base64', 'elastic_password_percent_encoded_url', 'legacy_kms_key_in_log', 'utf16be_odd_offset', 'utf16le_log', 'inside_wrapped_base64_document', 'admin_password_in_url', 'fragment_of_22_chars', 'split_across_lines', 'chain_key_hex_in_rpc_log', 'apikey_header_encoded', 'hex', 'keystore_key_raw_bytes', 'apikey_key_json_unicode_escaped', 'chain_key_base64', 'hex_upper', 'pgpass_password_in_json', 'split_in_json_string', 'keystore_key_base64url'} : the scanner missed the planted representation seal_key_base64
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='seal_ipad_bytea_hex')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jmBT3jXGbK/writepath/tests/test_leak_scan.py", line 209, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'seal_ipad_bytea_hex' not found in {'percent_encoded_json_unicode_escapes', 'keystore_key_hex_upper', 'legacy_oldhome_password', 'basic_header_broker', 'keystore_key_base64', 'apikey_decoded_id_key', 'gzip_of_a_log', 'single_quoted_shell', 'keystore_key_hex', 'basic_header_elastic', 'controls_not_secret', 'apikey_key_alone', 'base64', 'elastic_password_percent_encoded_url', 'legacy_kms_key_in_log', 'utf16be_odd_offset', 'utf16le_log', 'inside_wrapped_base64_document', 'admin_password_in_url', 'fragment_of_22_chars', 'split_across_lines', 'chain_key_hex_in_rpc_log', 'apikey_header_encoded', 'hex', 'keystore_key_raw_bytes', 'apikey_key_json_unicode_escaped', 'chain_key_base64', 'hex_upper', 'pgpass_password_in_json', 'split_in_json_string', 'keystore_key_base64url'} : the scanner missed the planted representation seal_ipad_bytea_hex
+
+======================================================================
+FAIL: test_each_representation_is_found (tests.test_leak_scan.Scan) (representation='seal_opad_base64')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jmBT3jXGbK/writepath/tests/test_leak_scan.py", line 209, in test_each_representation_is_found
+    self.assertIn(name, self.hits, f"the scanner missed the planted representation {name}")
+AssertionError: 'seal_opad_base64' not found in {'percent_encoded_json_unicode_escapes', 'keystore_key_hex_upper', 'legacy_oldhome_password', 'basic_header_broker', 'keystore_key_base64', 'apikey_decoded_id_key', 'gzip_of_a_log', 'single_quoted_shell', 'keystore_key_hex', 'basic_header_elastic', 'controls_not_secret', 'apikey_key_alone', 'base64', 'elastic_password_percent_encoded_url', 'legacy_kms_key_in_log', 'utf16be_odd_offset', 'utf16le_log', 'inside_wrapped_base64_document', 'admin_password_in_url', 'fragment_of_22_chars', 'split_across_lines', 'chain_key_hex_in_rpc_log', 'apikey_header_encoded', 'hex', 'keystore_key_raw_bytes', 'apikey_key_json_unicode_escaped', 'chain_key_base64', 'hex_upper', 'pgpass_password_in_json', 'split_in_json_string', 'keystore_key_base64url'} : the scanner missed the planted representation seal_opad_base64
+
+======================================================================
+FAIL: test_non_secret_controls_do_not_hit (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jmBT3jXGbK/writepath/tests/test_leak_scan.py", line 212, in test_non_secret_controls_do_not_hit
+    self.assertNotIn("controls_not_secret", self.hits, "a key id, user name or host was treated as a secret")
+AssertionError: 'controls_not_secret' unexpectedly found in {'percent_encoded_json_unicode_escapes', 'keystore_key_hex_upper', 'legacy_oldhome_password', 'basic_header_broker', 'keystore_key_base64', 'apikey_decoded_id_key', 'gzip_of_a_log', 'single_quoted_shell', 'keystore_key_hex', 'basic_header_elastic', 'controls_not_secret', 'apikey_key_alone', 'base64', 'elastic_password_percent_encoded_url', 'legacy_kms_key_in_log', 'utf16be_odd_offset', 'utf16le_log', 'inside_wrapped_base64_document', 'admin_password_in_url', 'fragment_of_22_chars', 'split_across_lines', 'chain_key_hex_in_rpc_log', 'apikey_header_encoded', 'hex', 'keystore_key_raw_bytes', 'apikey_key_json_unicode_escaped', 'chain_key_base64', 'hex_upper', 'pgpass_password_in_json', 'split_in_json_string', 'keystore_key_base64url'} : a key id, user name or host was treated as a secret
+
+======================================================================
+FAIL: test_every_python_creation_site_is_in_the_table_with_its_count (tests.test_leak_scan.Scan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.jmBT3jXGbK/writepath/tests/test_leak_scan.py", line 342, in test_every_python_creation_site_is_in_the_table_with_its_count
+    self.assertEqual(check(HERE), [], "Python creation sites differ from leak_scan.SITES")
+AssertionError: Lists differ: ['unlisted: wp/es_keys.py _rotate http POS[261 chars] x1'] != []
+
+First list contains 5 additional elements.
+First extra element 0:
+'unlisted: wp/es_keys.py _rotate http POST _security/api_key x1'
+
++ []
+- ['unlisted: wp/es_keys.py _rotate http POST _security/api_key x1',
+-  'count: wp/es_keys.py create http POST _security/api_key expected 2 found 0',
+-  'unlisted: wp/sealer.py mac hmac.new x1',
+-  'unlisted: wp/sealer.py new_key_file secrets.token_bytes x1',
+-  'unlisted: wp/sealer.py new_key_file secrets.token_hex x1'] : Python creation sites differ from leak_scan.SITES
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.664s
+
+FAILED (failures=6)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_leak_scan tests/test_leak_scan.py e6b686bf60b23989
+# exit status: 1

@@ -1,0 +1,517 @@
+# failing-first receipt
+# date: 2026-11-18T22:47:52Z
+# file under test: fb0e19a:writepath/exp/disk_gate.py blob 12e600d2598cdd6a8bcae4fff1b3c6d3b4900c85 sha256 b43e40310ed05dbcc9e22423aca061c12de5be1bea6873b9b4dfde6ae08fb00f
+# tree: writepath at fb0e19a (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD fb0e19a blob 56ccc984c8983c51b5418a6218682ae9e547276e
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate.Gate.test_integ_guard_policy_is_bound_to_schema tests.test_disk_gate.Gate.test_integ_cluster_as_the_hardening_setup_leaves_it_is_admitted tests.test_disk_gate.Gate.test_integ_hardening_and_bootstrap_cluster_is_admitted tests.test_disk_gate.Gate.test_integ_sealer_attribute_changed_blocks tests.test_disk_gate.Gate.test_integ_reviewer_with_bypassrls_blocks tests.test_disk_gate.Gate.test_integ_reviewer_group_that_can_log_in_blocks tests.test_disk_gate.Gate.test_integ_extra_member_of_the_reviewer_group_blocks tests.test_disk_gate.Gate.test_integ_reviewer_membership_missing_blocks tests.test_disk_gate.Gate.test_integ_setting_on_the_reviewer_group_blocks tests.test_disk_gate.Gate.test_integ_sealer_setting_changed_during_the_run_voids tests.test_disk_gate.Gate.test_integ_reviewer_group_connect_blocks tests.test_disk_gate.Gate.test_integ_sealer_connect_to_the_key_store_blocks tests.test_disk_gate.Gate.test_integ_sealer_connect_missing_blocks tests.test_disk_gate.Gate.test_integ_public_temporary_on_a_stream_database_blocks tests.test_disk_gate.Gate.test_integ_app_grant_on_a_hardening_table_blocks tests.test_disk_gate.Gate.test_integ_extra_grant_to_the_sealer_during_the_run_voids tests.test_disk_gate.Gate.test_integ_reviewer_insert_on_proposals_blocks tests.test_disk_gate.Gate.test_integ_reviewer_read_missing_blocks tests.test_disk_gate.Gate.test_integ_seal_keys_readable_blocks tests.test_disk_gate.Gate.test_integ_usage_on_the_seal_schema_blocks tests.test_disk_gate.Gate.test_integ_create_on_public_during_the_run_voids tests.test_disk_gate.Gate.test_integ_app_may_approve_identifiers_blocks tests.test_disk_gate.Gate.test_integ_seal_function_executable_during_the_run_voids tests.test_disk_gate.Gate.test_integ_seal_function_as_security_definer_blocks tests.test_disk_gate.Gate.test_integ_extra_relation_in_the_seal_schema_during_the_run_voids tests.test_disk_gate.Gate.test_integ_seal_schema_replaced_during_the_run_voids tests.test_disk_gate.Gate.test_integ_schema_outside_the_committed_set_blocks tests.test_disk_gate.Gate.test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids tests.test_disk_gate.Gate.test_integ_trigger_disabled_on_quarantine_removed_blocks tests.test_disk_gate.Gate.test_integ_identifier_proposals_without_its_guard_blocks tests.test_disk_gate.Gate.test_integ_trigger_on_write_refusals_not_always_blocks tests.test_disk_gate.Gate.test_integ_write_refusals_writer_not_security_definer_blocks tests.test_disk_gate.Gate.test_integ_trigger_disabled_on_seal_keys_blocks tests.test_disk_gate.Gate.test_integ_key_service_container_before_the_run_blocks tests.test_disk_gate.Gate.test_integ_stream_labelled_container_before_the_run_blocks tests.test_disk_gate.Gate.test_integ_service_container_left_at_the_end_voids tests.test_disk_gate.Gate.test_integ_service_container_removed_within_the_run_is_valid tests.test_disk_gate.Gate.test_v6_guard_policy_is_bound_to_setup
+test_integ_guard_policy_is_bound_to_schema (tests.test_disk_gate.Gate) ... FAIL
+test_integ_cluster_as_the_hardening_setup_leaves_it_is_admitted (tests.test_disk_gate.Gate) ... FAIL
+test_integ_hardening_and_bootstrap_cluster_is_admitted (tests.test_disk_gate.Gate) ... FAIL
+test_integ_sealer_attribute_changed_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_with_bypassrls_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_group_that_can_log_in_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_extra_member_of_the_reviewer_group_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_membership_missing_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_setting_on_the_reviewer_group_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_sealer_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_group_connect_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_sealer_connect_to_the_key_store_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_sealer_connect_missing_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_public_temporary_on_a_stream_database_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_app_grant_on_a_hardening_table_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_extra_grant_to_the_sealer_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_insert_on_proposals_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_reviewer_read_missing_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_seal_keys_readable_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_usage_on_the_seal_schema_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_create_on_public_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_app_may_approve_identifiers_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_seal_function_executable_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_seal_function_as_security_definer_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_extra_relation_in_the_seal_schema_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_seal_schema_replaced_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_schema_outside_the_committed_set_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_trigger_disabled_on_quarantine_removed_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_identifier_proposals_without_its_guard_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_trigger_on_write_refusals_not_always_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_write_refusals_writer_not_security_definer_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_trigger_disabled_on_seal_keys_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_key_service_container_before_the_run_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_stream_labelled_container_before_the_run_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_integ_service_container_left_at_the_end_voids (tests.test_disk_gate.Gate) ... FAIL
+test_integ_service_container_removed_within_the_run_is_valid (tests.test_disk_gate.Gate) ... FAIL
+test_v6_guard_policy_is_bound_to_setup (tests.test_disk_gate.Gate) ... FAIL
+
+======================================================================
+FAIL: test_integ_guard_policy_is_bound_to_schema (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2317, in test_integ_guard_policy_is_bound_to_schema
+    self.assertEqual(set(GP.POLICY), tables, "the public tables of schema.sql and POLICY differ")
+AssertionError: Items in the second set but not the first:
+'write_refusals'
+'quarantine_removed'
+'identifier_proposals' : the public tables of schema.sql and POLICY differ
+
+======================================================================
+FAIL: test_integ_cluster_as_the_hardening_setup_leaves_it_is_admitted (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2387, in test_integ_cluster_as_the_hardening_setup_leaves_it_is_admitted
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_hardening_and_bootstrap_cluster_is_admitted (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2392, in test_integ_hardening_and_bootstrap_cluster_is_admitted
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_sealer_attribute_changed_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2397, in test_integ_sealer_attribute_changed_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_sealer has rolcreatedb=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_reviewer_with_bypassrls_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2401, in test_integ_reviewer_with_bypassrls_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_rev2 has rolbypassrls=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_reviewer_group_that_can_log_in_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2405, in test_integ_reviewer_group_that_can_log_in_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_reviewer has rolcanlogin=True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_extra_member_of_the_reviewer_group_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2409, in test_integ_extra_member_of_the_reviewer_group_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_app is a member of wp_reviewer")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_reviewer_membership_missing_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2413, in test_integ_reviewer_membership_missing_blocks
+    self.assertExactly(*self.call("start"), 2, "committed membership of wp_rev2 in wp_reviewer is missing")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_setting_on_the_reviewer_group_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2417, in test_integ_setting_on_the_reviewer_group_blocks
+    self.assertExactly(*self.call("start"), 2, "before the store reset: a setting of role wp_reviewer")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_sealer_setting_changed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2420, in test_integ_sealer_setting_changed_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_reviewer_group_connect_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2427, in test_integ_reviewer_group_connect_blocks
+    self.assertExactly(*self.call("start"), 2, "wp_reviewer may connect to or create in the events database")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_sealer_connect_to_the_key_store_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2431, in test_integ_sealer_connect_to_the_key_store_blocks
+    self.assertExactly(*self.call("start"), 2, "wp_sealer may connect to or create in the keys database")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_sealer_connect_missing_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2435, in test_integ_sealer_connect_missing_blocks
+    self.assertExactly(*self.call("start"), 2, "committed CONNECT of wp_sealer on the events database")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_public_temporary_on_a_stream_database_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2439, in test_integ_public_temporary_on_a_stream_database_blocks
+    self.assertExactly(*self.call("start"), 2, "PUBLIC may create temporary tables in the events database")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_app_grant_on_a_hardening_table_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2444, in test_integ_app_grant_on_a_hardening_table_blocks
+    self.assertExactly(*self.call("start"), 2, "G2 wp_app on write_refusals: ['INSERT']",
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_extra_grant_to_the_sealer_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2448, in test_integ_extra_grant_to_the_sealer_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_reviewer_insert_on_proposals_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2455, in test_integ_reviewer_insert_on_proposals_blocks
+    self.assertExactly(*self.call("start"), 2,
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_reviewer_read_missing_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2460, in test_integ_reviewer_read_missing_blocks
+    self.assertExactly(*self.call("start"), 2, "role wp_rev2 holds [] on public.identifier_proposals")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_seal_keys_readable_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2464, in test_integ_seal_keys_readable_blocks
+    self.assertExactly(*self.call("start"), 2, "role wp_verifier holds ['SELECT'] on wp_seal.seal_keys")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_usage_on_the_seal_schema_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2468, in test_integ_usage_on_the_seal_schema_blocks
+    self.assertExactly(*self.call("start"), 2, "role wp_app holds USAGE on schema wp_seal")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_create_on_public_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2471, in test_integ_create_on_public_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_app_may_approve_identifiers_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2478, in test_integ_app_may_approve_identifiers_blocks
+    self.assertExactly(*self.call("start"), 2, "role wp_app may execute public.wp_identifier_approve")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_seal_function_executable_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2481, in test_integ_seal_function_executable_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_seal_function_as_security_definer_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2489, in test_integ_seal_function_as_security_definer_blocks
+    self.assertExactly(*self.call("start"), 2, "wp_seal function install: owner wp_owner, security definer True")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_extra_relation_in_the_seal_schema_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2492, in test_integ_extra_relation_in_the_seal_schema_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_seal_schema_replaced_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2497, in test_integ_seal_schema_replaced_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_schema_outside_the_committed_set_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2504, in test_integ_schema_outside_the_committed_set_blocks
+    self.assertExactly(*self.call("start"), 2, "a schema outside the committed set in the events database: scratch")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2507, in test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_trigger_disabled_on_quarantine_removed_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2518, in test_integ_trigger_disabled_on_quarantine_removed_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 trigger quarantine_removed.quarantine_removed_no_truncate is "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_identifier_proposals_without_its_guard_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2523, in test_integ_identifier_proposals_without_its_guard_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 table identifier_proposals has no guard trigger for "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_trigger_on_write_refusals_not_always_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2529, in test_integ_trigger_on_write_refusals_not_always_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 trigger write_refusals.write_refusals_x is enabled 'O'")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_write_refusals_writer_not_security_definer_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2534, in test_integ_write_refusals_writer_not_security_definer_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 table write_refusals has no guard triggers and its writer "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_trigger_disabled_on_seal_keys_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2540, in test_integ_trigger_disabled_on_seal_keys_blocks
+    self.assertExactly(*self.call("start"), 2, "G3 trigger wp_seal.seal_keys.seal_keys_x is enabled 'D'")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_key_service_container_before_the_run_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2545, in test_integ_key_service_container_before_the_run_blocks
+    self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_stream_labelled_container_before_the_run_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2551, in test_integ_stream_labelled_container_before_the_run_blocks
+    self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2374, in assertExactly
+    self.assertOnly(rc, out, code, *why)
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2025, in assertOnly
+    self.assertTrue(any(w in x for w in why), f"{kind} for a reason other than the one under test: {x[:300]}")
+AssertionError: False is not true : BLOCKED for a reason other than the one under test: before the store reset: a role outside the committed set: wp_rev1
+
+======================================================================
+FAIL: test_integ_service_container_left_at_the_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2555, in test_integ_service_container_left_at_the_end_voids
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_integ_service_container_removed_within_the_run_is_valid (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2561, in test_integ_service_container_removed_within_the_run_is_valid
+    self.start()
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 1003, in start
+    self.assertEqual(rc, 0, f"start should admit the run: {out.strip()[-400:]}")
+AssertionError: 2 != 0 : start should admit the run: tore reset: wp_rev1 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_rev2 may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED: before the store reset: wp_sealer may connect to or create in the events database wp_events (not committed)
+disk_gate BLOCKED disk_gate v6 sha256 b43e40310ed05dbc
+
+======================================================================
+FAIL: test_v6_guard_policy_is_bound_to_setup (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.yxIzTEiGok/writepath/tests/test_disk_gate.py", line 2273, in test_v6_guard_policy_is_bound_to_setup
+    self.assertEqual(set(GP.LOGIN_ROLES), want, "login roles in setup.py and exp/guard_policy.py differ")
+AssertionError: Items in the second set but not the first:
+'wp_sealer'
+'wp_rev2'
+'wp_rev1' : login roles in setup.py and exp/guard_policy.py differ
+
+----------------------------------------------------------------------
+Ran 38 tests in 2.774s
+
+FAILED (failures=38)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   tests.test_disk_gate tests/test_disk_gate.py 47d4cf098b7bed21
+# exit status: 1

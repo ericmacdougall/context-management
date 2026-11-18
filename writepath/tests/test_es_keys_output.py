@@ -11,6 +11,7 @@
   K-ROT3  an invalidation that fails leaves two valid keys and reports the error; never none."""
 import inspect
 import json
+import base64
 import os
 import pathlib
 import subprocess
@@ -52,7 +53,9 @@ class FakeES:
             FakeES.n += 1
             kid = f"KEYID{FakeES.n:04d}abcdefghijklmnop"
             FakeES.keys[kid] = {"name": name, "invalidated": False}
-            return 200, {"id": kid, "encoded": f"ENCODED{FakeES.n:04d}qrstuvwxyz0123456789"}
+            # integ: `encoded` as ES returns it, base64 of "id:api_key" (scanner v4 decodes it to inventory the key)
+            enc = base64.b64encode(f"{kid}:APIKEY{FakeES.n:04d}qrstuvwxyz0123456789".encode()).decode()
+            return 200, {"id": kid, "encoded": enc}
         if method == "GET":
             return 200, {"api_keys": [{"id": i, "name": k["name"], "invalidated": k["invalidated"]} for i, k in FakeES.keys.items()
                                       if k["name"] == name and not (params.get("active_only") == "true" and k["invalidated"])]}
@@ -94,9 +97,10 @@ class CreateOutput(unittest.TestCase):
         files = sorted(p.name for p in (self.home / "secrets").iterdir())
         self.assertEqual(files, ["es_api_key.eraser.json", "es_api_key.json", "es_api_key.projector.json",
                                  "es_api_key.verifier.json"])
-        r = subprocess.run([sys.executable, "-I", str(HERE / "runkit" / "leak_scan.py"), str(self.home), str(d)],
-                           capture_output=True, text=True, check=True)
-        self.assertIn("files with a secret value: 0", r.stdout)
+        # integ: scanner v4 (fix/writepath-gate) fails closed without a key store; this offline home has none
+        r = subprocess.run([sys.executable, "-I", str(HERE / "runkit" / "leak_scan.py"), str(self.home), str(d),
+                            "--no-keystore", "offline test: no key store"], capture_output=True, text=True, check=True)
+        self.assertRegex(r.stdout, r"(files|entries) with a secret value: 0\b")   # v4 says "entries"
         self.assertNotIn("HIT", r.stdout)
 
     def test_k_out2_fingerprints(self):

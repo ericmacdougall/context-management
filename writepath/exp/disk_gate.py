@@ -1175,6 +1175,42 @@ DB_Q = {
     "default_acl": "SELECT pg_get_userbyid(d.defaclrole), coalesce(n.nspname, ''), d.defaclobjtype::text, "
                    "d.defaclacl::text FROM pg_default_acl d LEFT JOIN pg_namespace n ON n.oid = d.defaclnamespace "
                    "ORDER BY 1, 2, 3",
+    # integ (hardening objects): every namespace but pg_* and information_schema, with its owner
+    "namespaces": "SELECT n.nspname, pg_get_userbyid(n.nspowner) FROM pg_namespace n WHERE n.nspname !~ '^pg_' "
+                  "AND n.nspname <> 'information_schema' ORDER BY 1",
+}
+# The private seal schema (hardening, DESIGN-NOTES A3, A8) and every role's effective privileges in the events
+# database. Superusers and the owner role hold everything and are left out; wp_app's table privileges are G2's
+# (app_privs). Never a column of wp_seal.seal_keys: its rows are the key pads.
+_SEAL = f"n.nspname = '{GP.SEAL_SCHEMA}'"
+_BOTH = f"n.nspname IN ('public', '{GP.SEAL_SCHEMA}')"
+_ROLES = f"r.rolname !~ '^pg_' AND NOT r.rolsuper AND r.rolname <> '{GP.OWNER_ROLE}'"
+SEAL_Q = {
+    "seal_schema": "SELECT n.nspname, n.oid::bigint, pg_get_userbyid(n.nspowner), coalesce(n.nspacl::text, '') "
+                   f"FROM pg_namespace n WHERE {_SEAL}",
+    "seal_relations": "SELECT c.relname, c.oid::bigint, c.relkind::text, pg_get_userbyid(c.relowner), "
+                      "coalesce(c.relacl::text, ''), c.relrowsecurity, c.relforcerowsecurity FROM pg_class c JOIN "
+                      f"pg_namespace n ON n.oid = c.relnamespace WHERE {_SEAL} AND c.relkind IN ('r', 'p', 'v', 'm', "
+                      "'S', 'f') ORDER BY 1",
+    "seal_triggers": "SELECT c.relname, t.tgname, t.tgtype::int, t.tgenabled::text, p.proname FROM pg_trigger t JOIN "
+                     "pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace JOIN pg_proc p ON "
+                     f"p.oid = t.tgfoid WHERE {_SEAL} AND NOT t.tgisinternal ORDER BY 1, 2",
+    "seal_functions": "SELECT p.proname, pg_get_function_identity_arguments(p.oid), pg_get_userbyid(p.proowner), "
+                      "p.prosecdef, coalesce(p.proacl::text, ''), md5(coalesce(p.prosrc, '')), "
+                      "coalesce(array_to_string(p.proconfig, ','), '') FROM pg_proc p JOIN pg_namespace n ON n.oid = "
+                      f"p.pronamespace WHERE {_SEAL} ORDER BY 1, 2",
+    "role_privs": "SELECT r.rolname, n.nspname || '.' || c.relname, p.priv FROM pg_class c JOIN pg_namespace n ON "
+                  "n.oid = c.relnamespace CROSS JOIN pg_roles r CROSS JOIN unnest(ARRAY['SELECT', 'INSERT', 'UPDATE', "
+                  f"'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) AS p(priv) WHERE {_BOTH} AND c.relkind IN ('r', "
+                  f"'p') AND {_ROLES} AND r.rolname <> 'wp_app' AND has_table_privilege(r.oid, c.oid, p.priv) "
+                  "ORDER BY 1, 2, 3",
+    "role_schema": "SELECT r.rolname, n.nspname, p.priv FROM pg_namespace n CROSS JOIN pg_roles r CROSS JOIN "
+                   f"unnest(ARRAY['USAGE', 'CREATE']) AS p(priv) WHERE {_BOTH} AND {_ROLES} AND "
+                   "has_schema_privilege(r.oid, n.oid, p.priv) ORDER BY 1, 2, 3",
+    "role_execute": "SELECT n.nspname || '.' || p.proname, r.rolname FROM pg_proc p JOIN pg_namespace n ON n.oid = "
+                    f"p.pronamespace CROSS JOIN pg_roles r WHERE {_BOTH} AND {_ROLES} AND n.nspname || '.' || "
+                    "p.proname IN (" + ", ".join(f"'{f}'" for f in sorted(GP.EXECUTE_ONLY)) + ") AND "
+                    "has_function_privilege(r.oid, p.oid, 'EXECUTE') ORDER BY 1, 2",
 }
 EVENTS_Q = {
     "app_privs": "SELECT c.relname, p.priv FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace CROSS JOIN "
@@ -1197,7 +1233,7 @@ def _catalog(full):
     full the events and keys databases. Read-only; every statement under the gate's statement_timeout."""
     plan = [("cluster", "postgres", CLUSTER_Q)]
     if full:
-        plan += [(config.EVENTS_DB, config.EVENTS_DB, dict(DB_Q, **EVENTS_Q)),
+        plan += [(config.EVENTS_DB, config.EVENTS_DB, dict(DB_Q, **EVENTS_Q, **SEAL_Q)),
                  (config.KEYS_DB, config.KEYS_DB, dict(DB_Q, **KEYS_Q))]
     snap, conns = {}, []
     try:
@@ -1223,7 +1259,7 @@ def _catalog_rules(snap, phase):
     attributes and settings without a trace), "after" (after the reset) or "end"."""
     why, cl, strict = [], snap["cluster"], phase != "before"
     admin, login = config.PG_USER, set(GP.LOGIN_ROLES)
-    expected = login | {GP.OWNER_ROLE}
+    expected = login | {GP.OWNER_ROLE} | set(GP.GROUP_ROLES)
     roles = {r[0]: r for r in cl["roles"]}
     legacy = set(GP.LEGACY_ROLES)                   # host/bootstrap.py's roles: allowed, not required
     for n in sorted(set(roles) - expected - legacy - {admin}):
@@ -1270,6 +1306,8 @@ def _catalog_rules(snap, phase):
             why.append(f"{g} may connect to or create in the {k} database {n} (not committed)")
         for g in sorted(set(GP.CONNECT[k]) - conn) if strict else ():
             why.append(f"committed CONNECT of {g} on the {k} database {n} is missing")
+        for g in sorted({g for g, p in acl if p == "TEMPORARY"} - set(GP.TEMPORARY[k]) - {owner, admin}):
+            why.append(f"{g} may create temporary tables in the {k} database {n} (not committed: review J M5)")
     for r in cl["parameter_acl"]:
         why.append(f"a parameter privilege that is not committed: {r[0]} {r[1][:120]}")
     for r in cl["auto_conf"]:
@@ -1298,7 +1336,13 @@ def _catalog_rules(snap, phase):
         trg.setdefault(t, []).append((name, int(typ), en))
         if en != "A":
             why.append(f"G3 trigger {t}.{name} is enabled {en!r}, not ALWAYS")
-    for t in sorted(tables):
+    fns = {r[0]: r for r in ev["functions"]}
+    for t, writer in sorted(GP.UNGUARDED_OK.items()):   # G3's named exemption and its compensating rules
+        f = fns.get(writer)
+        if t in tables and (f is None or f[2] != GP.EVENTS_OWNER or f[3] != "True"):
+            why.append(f"G3 table {t} has no guard triggers and its writer {writer} is not a SECURITY DEFINER "
+                       f"function owned by {GP.EVENTS_OWNER}")
+    for t in sorted(set(tables) - set(GP.UNGUARDED_OK)):
         cov = set()
         for _n, typ, _e in trg.get(t, []):
             if typ & GP.BEFORE and typ & GP.ROW:
@@ -1320,6 +1364,72 @@ def _catalog_rules(snap, phase):
     for ix in GP.UNIQUE_INDEXES:
         if ix not in idx or idx[ix][1] != "True" or idx[ix][2] != "True":
             why.append(f"G7 unique index {ix} is missing or not valid")
+    return why + _hardening_rules(ev, ks, tables, fns)
+
+
+def _hardening_rules(ev, ks, tables, fns):
+    """integ/gate-on-hardening: the hardening objects held to the committed expectation (exp/guard_policy.py):
+    namespaces, the private seal schema, and every role's effective table, schema and function privileges."""
+    why = []
+    for k, sec in (("events", ev), ("keys", ks)):
+        have, want = {r[0]: r[1] for r in sec["namespaces"]}, GP.NAMESPACES[k]
+        for n in sorted(set(have) - set(want)):
+            why.append(f"a schema outside the committed set in the {k} database: {n} (owner {have[n]})")
+        for n in sorted(want):
+            if n not in have:
+                why.append(f"committed schema {n} of the {k} database is missing")
+            elif have[n] != want[n]:
+                why.append(f"schema {n} of the {k} database is owned by {have[n]} (committed: {want[n]})")
+    rel = {r[0]: r for r in ev["seal_relations"]}
+    for n in sorted(rel):
+        if n not in GP.SEAL_TABLES or rel[n][2] != "r" or rel[n][3] != GP.EVENTS_OWNER:
+            why.append(f"{GP.SEAL_SCHEMA} relation {n}: kind {rel[n][2]}, owner {rel[n][3]} (committed: tables "
+                       f"{', '.join(GP.SEAL_TABLES)} owned by {GP.EVENTS_OWNER})")
+    for n in sorted(set(GP.SEAL_TABLES) - set(rel)):
+        why.append(f"committed table {GP.SEAL_SCHEMA}.{n} is missing")
+    sf = {r[0]: r for r in ev["seal_functions"]}
+    for n in sorted(sf):
+        if n not in GP.SEAL_FUNCTIONS or sf[n][2] != GP.EVENTS_OWNER or sf[n][3] != "False":
+            why.append(f"{GP.SEAL_SCHEMA} function {n}: owner {sf[n][2]}, security definer {sf[n][3]} (committed: "
+                       f"{', '.join(GP.SEAL_FUNCTIONS)}, owned by {GP.EVENTS_OWNER}, not security definer)")
+    for n in sorted(set(GP.SEAL_FUNCTIONS) - set(sf)):
+        why.append(f"committed function {GP.SEAL_SCHEMA}.{n} is missing")
+    for t, name, _typ, en, _fn in ev["seal_triggers"]:
+        if en != "A":
+            why.append(f"G3 trigger {GP.SEAL_SCHEMA}.{t}.{name} is enabled {en!r}, not ALWAYS")
+    # effective table privileges of every role but wp_app (G2) and the owner
+    have = {}
+    for r, t, p in ev["role_privs"]:
+        have.setdefault(r, {}).setdefault(t, set()).add(p)
+    want = {r: {t: set(p) for t, p in v.items()} for r, v in GP.ROLE_TABLE_PRIVS.items()}
+    want[GP.VERIFIER_READS_PUBLIC] = {f"public.{t}": {"SELECT"} for t in tables}
+    for r in sorted(set(have) | set(want)):
+        for t in sorted(set(have.get(r, {})) | set(want.get(r, {}))):
+            h, w = have.get(r, {}).get(t, set()), want.get(r, {}).get(t, set())
+            if h != w:
+                why.append(f"role {r} holds {sorted(h)} on {t} (committed {sorted(w)})")
+    got = {}
+    for r, n, p in ev["role_schema"]:
+        got.setdefault((n, p), set()).add(r)
+    for (n, p), w in sorted(GP.SCHEMA_PRIVS.items()):
+        h = got.get((n, p), set())
+        for r in sorted(h - w):
+            why.append(f"role {r} holds {p} on schema {n} (not committed)")
+        for r in sorted(w - h):
+            why.append(f"committed {p} of {r} on schema {n} is missing")
+    ex = {}
+    for f, r in ev["role_execute"]:
+        ex.setdefault(f, set()).add(r)
+    present = {f"public.{n}" for n in fns} | {f"{GP.SEAL_SCHEMA}.{n}" for n in sf}
+    for f, w in sorted(GP.EXECUTE_ONLY.items()):
+        if f not in present:
+            why.append(f"committed function {f} is missing")
+            continue
+        h = ex.get(f, set())
+        for r in sorted(h - w):
+            why.append(f"role {r} may execute {f} (not committed)")
+        for r in sorted(w - h):
+            why.append(f"committed EXECUTE of {r} on {f} is missing")
     return why
 
 
@@ -1330,10 +1440,10 @@ def _catalog_diff(adm, now):
     for db in (config.EVENTS_DB, config.KEYS_DB):
         a = {r[0]: r[1] for r in adm["cluster"]["databases"]}.get(db)
         n = {r[0]: r[1] for r in now["cluster"]["databases"]}.get(db)
-        sa, sn = [r[1] for r in adm[db]["schema"]], [r[1] for r in now[db]["schema"]]
+        sa, sn = ([r[1] for r in s[db]["schema"] + s[db].get("seal_schema", [])] for s in (adm, now))
         if a != n or sa != sn:
-            why.append(f"the {db} database or its public schema was reset or replaced during the run (identity "
-                       f"{a}/{sa[:1]} -> {n}/{sn[:1]})")
+            why.append(f"the {db} database or its public or {GP.SEAL_SCHEMA} schema was reset or replaced during the "
+                       f"run (identity {a}/{sa[:2]} -> {n}/{sn[:2]})")
     for section in sorted(set(adm) | set(now)):
         for tag in sorted(set(adm.get(section, {})) | set(now.get(section, {}))):
             ra = {json.dumps(r) for r in adm.get(section, {}).get(tag, [])}
@@ -1359,19 +1469,33 @@ def _own_oom():
         return None
 
 
+def _stream_reasons(stores, when):
+    """integ (hardening service containers, exp/guard_policy.py SERVICE_CONTAINERS): reasons for every container
+    other than the run's two stores whose name starts with the stream's prefix or that carries the stream label: at
+    admission one left by an earlier run or another tool (its credentials and connections outlive the store reset);
+    at the end one an experiment started and did not remove. A list failure is a reason too."""
+    users, stream, why = _home_users(stores)
+    for n in stream or []:
+        what = GP.SERVICE_CONTAINERS.get(n[len(config.OWN_PREFIX):]) if n.startswith(config.OWN_PREFIX) else None
+        why.append(f"a container of this stream other than the run's stores {when}: {n}"
+                   + (f" ({what})" if what else ""))
+    return users, why
+
+
 def _home_users(stores):
     """F-4 (C12): (names of the containers other than the run's two stores, `stores`, with a bind mount whose source
-    is WP_HOME or below it: they use this home's credentials or files; reasons when the list cannot be read). A
-    container removed between the list and the inspection is retried."""
+    is WP_HOME or below it: they use this home's credentials or files; names of the containers other than the two
+    stores whose name starts with the stream's prefix or that carry the stream label (integ, _stream_reasons);
+    reasons when the list cannot be read). A container removed between the list and the inspection is retried."""
     home = os.path.realpath(HOME)
     for _ in range(3):
         try:
             r = _docker("ps", "-aq", "--no-trunc", timeout=60)
             if r.returncode != 0:
-                return None, ["the container list (docker ps) could not be read"]
+                return None, None, ["the container list (docker ps) could not be read"]
             ids = r.stdout.decode("ascii", "replace").split()
             if not ids:
-                return [], []
+                return [], [], []
             r = _docker("inspect", "--type", "container", *ids, timeout=120)
             js = json.loads(r.stdout) if r.returncode == 0 else None
         except (OSError, subprocess.TimeoutExpired, ValueError):
@@ -1379,17 +1503,22 @@ def _home_users(stores):
         if isinstance(js, list) and len(js) == len(ids):
             break
     else:
-        return None, ["the containers on this daemon could not be inspected (docker inspect failed three times)"]
-    out = []
+        return None, None, ["the containers on this daemon could not be inspected (docker inspect failed three times)"]
+    out, stream = [], []
+    key, value = GP.STREAM_LABEL
     for j in js:
         if not isinstance(j, dict) or j.get("Id") in stores:
             continue
+        name = str(j.get("Name") or j.get("Id"))[:80].lstrip("/")
+        labels = (j.get("Config") or {}).get("Labels") or {}
+        if name.startswith(config.OWN_PREFIX) or (isinstance(labels, dict) and labels.get(key) == value):
+            stream.append(name)
         for m in j.get("Mounts") or []:
             src = str(m.get("Source") or "")
             if m.get("Type") == "bind" and (src == home or src.startswith(home.rstrip("/") + "/")):
-                out.append(str(j.get("Name") or j.get("Id"))[:80].lstrip("/"))
+                out.append(name)
                 break
-    return sorted(out), []
+    return sorted(out), sorted(stream), []
 
 
 def _exp_env():
@@ -1482,7 +1611,7 @@ def _admit(label, pgid):
         for key in ("es", "pg"):
             slow[key], w = _slow(key, names[key])
             why += w
-        users, w = _home_users({(slow.get(k) or {}).get("id") for k in ("es", "pg")} - {None})
+        users, w = _stream_reasons({(slow.get(k) or {}).get("id") for k in ("es", "pg")} - {None}, "before the run")
         why += w + [f"a container other than the run's stores uses this home (a bind mount under WP_HOME): {u}"
                     for u in users or []]
         if why:
@@ -1610,7 +1739,8 @@ def _finish(run, extra=()):
         for key in ("es", "pg"):
             slow[key], w = _slow(key, run["obs"][key]["id"])
             why += w
-        users, w = _home_users({run["obs"][k]["id"] for k in ("es", "pg")})
+        users, w = _stream_reasons({run["obs"][k]["id"] for k in ("es", "pg")},
+                                   "at the end of the run (an experiment removes the service containers it starts)")
         why += w + [f"a container other than the run's stores uses this home (a bind mount under WP_HOME) {when}: {u}"
                     for u in users or []]
         f, obs, window_end = free_gb(), {}, None

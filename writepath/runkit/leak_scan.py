@@ -13,6 +13,9 @@ lint only (LINT_SITES). Sources:
   WP_HOME/secrets*/, WP_SECRETS_DIR when set, and WP_HOME/oldhome/:
     pgpass*                the password field of every entry (pgpass escapes undone); user and host are not secret
     es_api_key*.json       the API key itself (decoded from `encoded`), and `encoded` whole; the key id is NOT secret
+    seal_key               the seal authority's key (wp/sealer.py, JSON {key_id, key: hex}) as a key-store key (hex,
+                           raw bytes and their encodings), and its HMAC pads (ipad, opad: what wp_seal.seal_keys
+                           holds) the same way; the key id is NOT secret (wp.setup prints it)
     *.crt / *.pem certs    public, skipped (counted)
     any other file         its stripped content; an unknown JSON file: each string value except id/name/expiration/type
   key store (the KMS stand-in): subject_keys.key_hex and tenant_keys.hkey_hex, read through `docker exec <PG container>
@@ -62,6 +65,7 @@ VERSION = "4"
 W = 16                         # fragment window: any 16 characters of a representation of a file-held secret
 MIN_LEN = 8                    # shorter values are not inventoried (reported)
 NOT_SECRET_JSON = {"id", "name", "expiration", "type"}
+SEAL_KEY_FILE = "seal_key"     # wp/sealer.py KEY_FILE
 WS = b" \t\r\n\f\v"
 MAX_BYTES = int(os.environ.get("LEAK_SCAN_MAX_BYTES") or 512 * 1024 ** 2)   # lowered by the tests only
 GZ_DEPTH = 3
@@ -101,7 +105,7 @@ SITES = [
      "not a creation: secrets/pg_password", False),
     ("wp/broker.py", "Broker._mint", "http POST _security/api_key", 1, "broker-minted writer API keys",
      MEM + "; sink H-2", True),
-    ("wp/es_keys.py", "create", "http POST _security/api_key", 2, "role and admin API keys",
+    ("wp/es_keys.py", "_rotate", "http POST _security/api_key", 1, "role and admin API keys (minted first, review J)",
      "file: secrets/es_api_key.<role>.json, secrets/es_api_key.json", True),
     ("wp/es_keys.py", "create_broker", "secrets.token_urlsafe", 1, "broker user password",
      "file: secrets/es_broker_password", True),
@@ -122,6 +126,10 @@ SITES = [
     ("wp/keys.py", "seal", "os.urandom", 1, "AES-GCM nonce", "not secret: stored beside the ciphertext", False),
     ("wp/log.py", "event_hash", "hmac.new", 1, "event MAC", "not secret: a MAC output", False),
     ("wp/seal.py", "_mac", "hmac.new", 1, "chain MAC", "not secret: a MAC output (its key is derived)", False),
+    ("wp/sealer.py", "mac", "hmac.new", 1, "seal attestation MAC", "not secret: a MAC output", False),
+    ("wp/sealer.py", "new_key_file", "secrets.token_bytes", 1, "seal key",
+     "file: secrets/seal_key (as a key-store key, with its pads); never returned to the caller", False),
+    ("wp/sealer.py", "new_key_file", "secrets.token_hex", 1, "seal key id", "not secret: wp.setup prints it", False),
     ("wp/setup.py", "_ensure_roles", "secrets.token_urlsafe", 1, "PG login role password",
      "file: secrets/pgpass.<role>", True),
     ("wp/setup.py", "_ensure_roles", "encrypt_password", 1, "PG SCRAM verifier",
@@ -410,6 +418,16 @@ def _pgpass_entries(text):
 
 def _file_values(fn, d_name, raw, inv, rel):
     vals = []
+    if fn == SEAL_KEY_FILE:                          # integ: the seal key, held like a key-store key (with its pads)
+        j = json.loads(raw)
+        key = bytes.fromhex(j["key"])
+        if len(key) != 32:
+            raise ValueError("a seal key is 32 bytes")
+        inv["controls"].append(str(j["key_id"]).encode())
+        k = key.ljust(64, b"\0")
+        inv.setdefault("seal", []).extend([("seal key", key.hex()), ("seal key ipad", bytes(b ^ 0x36 for b in k).hex()),
+                                           ("seal key opad", bytes(b ^ 0x5C for b in k).hex())])
+        return []
     if fn.startswith("pgpass") or (d_name == "oldhome" and fn == "pgpass"):
         for user, pw in _pgpass_entries(raw.decode("utf-8", "replace")):
             vals.append((pw, "frag"))
@@ -521,6 +539,10 @@ def load_inventory(home, keystore=None, no_keystore=None, secrets_dir=None):
             inv["coverage"].append((f"legacy key store (database keys, old_repro): {len(legacy)} key(s)",))
         else:
             inv["coverage"].append(("legacy key store (database keys, old_repro): absent",))
+    seal = inv.pop("seal", [])
+    inv["keystore"] += seal
+    if seal:
+        inv["coverage"].append((f"seal key: {len(seal) // 3} key(s) with their ipad and opad",))
     if not inv["file"] and not inv["keystore"]:
         raise ScanError("no secret value inventoried: nothing to compare against")
     mem = sorted({s[4] for s in SITES if s[5].startswith("memory only")})

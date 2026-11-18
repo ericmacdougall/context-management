@@ -15,6 +15,7 @@ import fcntl
 import hashlib
 import http.server
 import importlib.util
+import inspect
 import io
 import json
 import os
@@ -149,54 +150,86 @@ def make_tree(src_root, dest):
 T_POLICY = {"events": "SI", "quarantine": "SI", "inbox": "SIU", "analyst_jobs": "SIU", "facts": "SIU", "cursors": "SIU",
             "erasure_jobs": "SI", "tombstones": "S", "store_registry": "S", "decision_heads": "S", "chains": "S",
             "subjects": "S", "leases": "", "quarantine_quota": "", "identifier_epochs": "S", "subject_identifiers": "S",
-            "erasure_mentions": "S", "legal_holds": "S", "erasure_withheld": "S", "erasure_rescanned": "S"}
+            "erasure_mentions": "S", "legal_holds": "S", "erasure_withheld": "S", "erasure_rescanned": "S",
+            # integ: the hardening tables (no app privilege; written through SECURITY DEFINER functions)
+            "write_refusals": "", "identifier_proposals": "", "quarantine_removed": ""}
+T_UNGUARDED = {"write_refusals"}                # schema.sql gives it no guard triggers (exp/guard_policy.py exemption)
 T_PRIV = {"S": "SELECT", "I": "INSERT", "U": "UPDATE"}
-T_LOGIN = ["wp_app", "wp_broker", "wp_kms", "wp_legal", "wp_verifier", "wp_watchdog"]
+T_LOGIN = ["wp_app", "wp_broker", "wp_kms", "wp_legal", "wp_rev1", "wp_rev2", "wp_sealer", "wp_verifier", "wp_watchdog"]
+T_GROUP = ["wp_reviewer"]
+T_REVIEWERS = ["wp_rev1", "wp_rev2", "wp_reviewer"]
+T_EVENTS_CONNECT = ["wp_app", "wp_broker", "wp_legal", "wp_rev1", "wp_rev2", "wp_sealer", "wp_verifier"]
 T_CONF = "idle_in_transaction_session_timeout=5s,lock_timeout=10s,statement_timeout=30s"
 T_ROW, T_BEFORE, T_INS, T_DEL, T_UPD, T_TRUNC = 1, 2, 4, 8, 16, 32
+# effective privileges of the roles other than wp_app, as wp/schema.sql grants them (reviewers inherit wp_reviewer's)
+T_ROLE_TABLES = {"wp_legal": ["legal_holds", "erasure_jobs", "erasure_withheld"],
+                 "wp_sealer": ["identifier_epochs", "subject_identifiers"],
+                 **{r: ["identifier_proposals", "subjects"] for r in T_REVIEWERS}}
+T_EXECUTE = {"public.wp_identifier_approve": T_REVIEWERS, "public.wp_identifier_reject": T_REVIEWERS,
+             "public.wp_identifier_propose": ["wp_app"] + T_REVIEWERS, "public.wp_identifier_declare": [],
+             "public.wp_hold_place": ["wp_legal"], "public.wp_hold_release": ["wp_legal"],
+             "public.wp_erasure_complete": ["wp_verifier"], "public.wp_write_refused": ["wp_app"],
+             "public.wp_lease_holder_current": ["wp_broker"],
+             "wp_seal.install": [], "wp_seal.message": [], "wp_seal.verify": []}
 
 
 def _db_acl(conn):
-    return ",".join(sorted(["PUBLIC:TEMPORARY", "wp:CONNECT", "wp:CREATE", "wp:TEMPORARY"] + [f"{g}:CONNECT" for g in conn]))
+    # integ: setup revokes TEMPORARY from PUBLIC on both stream databases (review J M5)
+    return ",".join(sorted(["wp:CONNECT", "wp:CREATE", "wp:TEMPORARY"] + [f"{g}:CONNECT" for g in conn]))
 
 
 def good_catalog():
-    """{section: {tag: rows}}: what the gate's tagged catalog queries read on a cluster wp.setup --reset just built."""
+    """{section: {tag: rows}}: what the gate's tagged catalog queries read on a cluster wp.setup --reset just built
+    (integ: with the hardening objects of feat/writepath-hardening)."""
     roles = [["wp", "True", "True", "True", "True", "True", "True", "True"]]
-    roles += [[r, "False", "True", "False", "False", str(r != "wp_owner"), "False", "False"]
-              for r in sorted(T_LOGIN + ["wp_owner"])]
+    roles += [[r, "False", "True", "False", "False", str(r in T_LOGIN), "False", "False"]
+              for r in sorted(T_LOGIN + T_GROUP + ["wp_owner"])]
     cluster = {
         "roles": roles,
         "members": sorted([["pg_checkpoint", "wp_kms"], ["pg_read_all_stats", "wp_kms"],
-                           ["pg_signal_backend", "wp_watchdog"], ["pg_read_all_stats", "wp_watchdog"]]),
+                           ["pg_signal_backend", "wp_watchdog"], ["pg_read_all_stats", "wp_watchdog"],
+                           ["wp_reviewer", "wp_rev1"], ["wp_reviewer", "wp_rev2"]]),
         "settings": [[r, "", T_CONF] for r in T_LOGIN],
         "databases": [["postgres", "5", "True", "wp", "PUBLIC:CONNECT,PUBLIC:TEMPORARY,wp:CONNECT,wp:CREATE,wp:TEMPORARY"],
                       ["template0", "4", "False", "wp", ""], ["template1", "1", "True", "wp", ""],
-                      ["wp_events", "16384", "True", "wp", _db_acl(["wp_app", "wp_broker", "wp_legal", "wp_verifier"])],
+                      ["wp_events", "16384", "True", "wp", _db_acl(T_EVENTS_CONNECT)],
                       ["wp_keys", "16385", "True", "wp", _db_acl(["wp_kms", "wp_verifier"])]],
         "parameter_acl": [], "auto_conf": []}
     tables = sorted(T_POLICY)
+    guarded = [t for t in tables if t not in T_UNGUARDED]
+    definer = [f.split(".", 1)[1] for f in sorted(T_EXECUTE) if f.startswith("public.")]
     ev = {"schema": [["public", "2200", "wp_owner", ""]],
           "relations": [[t, str(17000 + i), "r", "wp_owner", "", "False", "False"] for i, t in enumerate(tables)],
           "column_acl": [["erasure_jobs", "status", "{wp_app=w/wp_owner}"]],
           "triggers": sorted([[t, f"{t}_guard", str(T_BEFORE | T_ROW | T_INS | T_UPD | T_DEL), "A", "wp_guard"]
-                              for t in tables] + [[t, f"{t}_no_truncate", str(T_BEFORE | T_TRUNC), "A", "wp_guard"]
-                                                  for t in tables]),
-          "functions": [["wp_guard", "", "wp_owner", "False", "", "0" * 32, ""],
-                        ["wp_hold_place", "subject text", "wp_owner", "True", "{wp_legal=X/wp_owner}", "1" * 32, ""],
-                        ["wp_hold_release", "subject text", "wp_owner", "True", "{wp_legal=X/wp_owner}", "2" * 32, ""]],
+                              for t in guarded] + [[t, f"{t}_no_truncate", str(T_BEFORE | T_TRUNC), "A", "wp_guard"]
+                                                   for t in guarded]),
+          "functions": [["wp_guard", "", "wp_owner", "False", "", "0" * 32, ""]]
+                       + [[f, "x text", "wp_owner", "True", "", "1" * 32, ""] for f in definer],
           "constraints": [["events", "events_pkey", "PRIMARY KEY (id)"], ["facts", "facts_pkey", "PRIMARY KEY (id)"]],
           "indexes": [["decision_source_once", "True", "True", "CREATE UNIQUE INDEX decision_source_once ..."],
                       ["erasure_one_open", "True", "True", "CREATE UNIQUE INDEX erasure_one_open ..."]],
           "policies": [], "default_acl": [],
+          "namespaces": [["public", "wp_owner"], ["wp_seal", "wp_owner"]],
           "app_privs": [[t, T_PRIV[p]] for t in tables for p in sorted(T_POLICY[t])],
           "app_column_update": [[t] for t in tables if "U" in T_POLICY[t] or t == "erasure_jobs"],
-          "app_execute": [["wp_guard"]]}
+          "app_execute": [["wp_guard"]] + [[f.split(".", 1)[1]] for f in sorted(T_EXECUTE) if "wp_app" in T_EXECUTE[f]],
+          # integ: the private seal schema and every role's effective privileges (wp_app's tables are app_privs)
+          "seal_schema": [["wp_seal", "2300", "wp_owner", "{wp_owner=UC/wp_owner}"]],
+          "seal_relations": [["seal_keys", "17100", "r", "wp_owner", "{wp_owner=arwdDxt/wp_owner}", "False", "False"]],
+          "seal_triggers": [],
+          "seal_functions": [[f, "x text", "wp_owner", "False", "{wp_owner=X/wp_owner}", "2" * 32, "search_path=pg_catalog, pg_temp"]
+                             for f in ("install", "message", "verify")],
+          "role_privs": sorted([["wp_verifier", f"public.{t}", "SELECT"] for t in tables]
+                               + [[r, f"public.{t}", "SELECT"] for r, ts in T_ROLE_TABLES.items() for t in ts]),
+          "role_schema": sorted([r, "public", "USAGE"] for r in
+                                ["wp_app", "wp_broker", "wp_legal", "wp_sealer", "wp_verifier"] + T_REVIEWERS),
+          "role_execute": sorted([f, r] for f, rs in T_EXECUTE.items() for r in rs)}
     ks = {"schema": [["public", "2201", "wp_kms", ""]],
           "relations": [["subject_keys", "18000", "r", "wp_kms", "", "False", "False"],
                         ["tenant_keys", "18001", "r", "wp_kms", "", "False", "False"]],
           "column_acl": [], "triggers": [], "functions": [], "constraints": [], "indexes": [], "policies": [],
-          "default_acl": [], "verifier_key_read": [["False"]]}
+          "default_acl": [], "namespaces": [["public", "wp_kms"]], "verifier_key_read": [["False"]]}
     return {"cluster": cluster, "wp_events": ev, "wp_keys": ks}
 
 
@@ -316,6 +349,9 @@ class Fake:
             s = st["catalog"][db]
             s["schema"] = [[r[0], str(int(r[1]) + 100000)] + r[2:] for r in s["schema"]]
             s["relations"] = [[r[0], str(int(r[1]) + 100000)] + r[2:] for r in s["relations"]]
+            for tag in ("seal_schema", "seal_relations"):
+                if tag in s:
+                    s[tag] = [[r[0], str(int(r[1]) + 100000)] + r[2:] for r in s[tag]]
         self.locked(f)
 
     def add_user(self, name, source):
@@ -323,6 +359,10 @@ class Fake:
         cid = self.add(name, "/srv/other", GIB // 4, GIB, GIB, GIB // 4)
         self.set(cid, mounts=[{"Type": "bind", "Source": source, "Destination": "/w", "RW": True}])
         return cid
+
+    def remove(self, cid):
+        """docker rm of a container that is not a store (integ: a service container an experiment removes)."""
+        self.locked(lambda st: st["c"][cid].update(gone=True, running=False))
 
     def setflag(self, name, value):
         self.flag(**{name: value})
@@ -664,7 +704,7 @@ def fake_main(argv):
                                        **({} if st["flags"].get("no_started") else {"StartedAt": c["started"]})),
                          "Mounts": c["mounts"],
                          "HostConfig": {"LogConfig": c["logcfg"], "Memory": c["mem"]},
-                         "Config": {"Tty": c["tty"], "Env": c.get("env", [])},
+                         "Config": {"Tty": c["tty"], "Env": c.get("env", []), "Labels": c.get("labels") or {}},
                          "NetworkSettings": {"Ports": c.get("ports") or {}}})
         print(json.dumps(objs))
         return 0
@@ -2209,19 +2249,30 @@ class Gate(unittest.TestCase):
         self.assertValid(*self.call("end"))
         self.assertIn("a catalog change made and reverted within the run", self.g.LIMITS)
 
-    def test_v6_guard_policy_is_bound_to_setup(self):
+    def _gp(self):
         p = self.tree / "exp" / "guard_policy.py"
         if not p.exists():
             self.fail("the pinned tree has no committed catalog expectation (exp/guard_policy.py)")
         spec = importlib.util.spec_from_file_location("guard_policy_under_test", p)
         GP = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(GP)
+        return GP
+
+    def test_v6_guard_policy_is_bound_to_setup(self):
+        GP = self._gp()
         setup = (self.tree / "wp" / "setup.py").read_text()
         dbpy = (self.tree / "wp" / "db.py").read_text()
         m = re.search(r"^APP, VERIFIER, KMS, LEGAL, WATCHDOG, BROKER = (.+)$", dbpy, re.M)
         names = dict(zip(("APP", "VERIFIER", "KMS", "LEGAL", "WATCHDOG", "BROKER"), re.findall(r'"(\w+)"', m.group(1))))
-        login = re.search(r"^LOGIN_ROLES = \((.+)\)$", setup, re.M).group(1)
-        self.assertEqual(set(GP.LOGIN_ROLES), {names[x.strip()[3:]] for x in login.split(",")})
+        # integ: the hardening's roles (db.py SEALER, REVIEWER_GROUP, REVIEWERS)
+        names["SEALER"] = re.search(r'^SEALER = "(\w+)"', dbpy, re.M).group(1)
+        group = re.search(r'^REVIEWER_GROUP = "(\w+)"', dbpy, re.M).group(1)
+        reviewers = tuple(re.findall(r'"(\w+)"', re.search(r"^REVIEWERS = \((.+)\)", dbpy, re.M).group(1)))
+        login = re.search(r"^LOGIN_ROLES = \((.+)\)( \+ db\.REVIEWERS)?$", setup, re.M)
+        want = {names[x.strip()[3:]] for x in login.group(1).split(",")} | (set(reviewers) if login.group(2) else set())
+        self.assertEqual(set(GP.LOGIN_ROLES), want, "login roles in setup.py and exp/guard_policy.py differ")
+        self.assertIn("create role {} nologin", setup)
+        self.assertEqual(tuple(GP.GROUP_ROLES), (group,), "the NOLOGIN group of setup.py is not the committed group")
         attrs = re.search(r'^ROLE_ATTRS = "(.+)"$', setup, re.M).group(1).split()
         word = {"superuser": "rolsuper", "inherit": "rolinherit", "createrole": "rolcreaterole",
                 "createdb": "rolcreatedb", "replication": "rolreplication", "bypassrls": "rolbypassrls"}
@@ -2236,16 +2287,294 @@ class Gate(unittest.TestCase):
         mem = set()
         for granted, member in re.findall(r'"grant ((?:pg_\w+, )*pg_\w+) to (\w+) with inherit true"', setup):
             mem |= {(g, member) for g in granted.split(", ")}
+        if re.search(r"for r in db\.REVIEWERS:\n\s+admin\.execute\(sql\.SQL\(\"grant \{\} to \{\}\"\)\.format\("
+                     r"sql\.Identifier\(db\.REVIEWER_GROUP\), sql\.Identifier\(r\)\)\)", setup):
+            mem |= {(group, r) for r in reviewers}
         self.assertEqual(GP.MEMBERSHIPS, mem, "role memberships in setup.py and exp/guard_policy.py differ")
-        conn = {k.lower(): tuple(sorted(x.strip() for x in v.split(","))) for k, v in
-                re.findall(r"grant connect on database \"\{config\.(EVENTS|KEYS)_DB\}\" to ([\w, ]+)'", setup)}
+        conn = {}
+        for k, v, extra in re.findall(r"grant connect on database \"\{config\.(EVENTS|KEYS)_DB\}\" to ([\w, ]+?),? ?'"
+                                      r"( \+ ', '\.join\(db\.REVIEWERS\))?", setup):
+            conn[k.lower()] = tuple(sorted([x.strip() for x in v.split(",") if x.strip()]
+                                           + (list(reviewers) if extra else [])))
         self.assertEqual({k: tuple(sorted(v)) for k, v in GP.CONNECT.items()}, conn,
                          "database CONNECT grants in setup.py and exp/guard_policy.py differ")
+        temp = "revoke temporary on database \"{d}\" from public" in setup
+        self.assertEqual(GP.TEMPORARY, {"events": (), "keys": ()} if temp else GP.TEMPORARY)
+        self.assertTrue(temp, "setup.py no longer revokes TEMPORARY from PUBLIC (exp/guard_policy.py TEMPORARY)")
         self.assertIn('create role wp_owner nologin', setup)
         self.assertEqual(GP.OWNER_ROLE, "wp_owner")
         # this test file's scenario catalog is the committed expectation, so a clean scenario is a clean cluster
         self.assertEqual({t: {T_PRIV[c] for c in v} for t, v in T_POLICY.items()}, GP.POLICY)
         self.assertEqual(sorted(T_LOGIN), sorted(GP.LOGIN_ROLES))
+        self.assertEqual(sorted(T_GROUP), sorted(GP.GROUP_ROLES))
+
+    def test_integ_guard_policy_is_bound_to_schema(self):
+        # the privilege half of exp/guard_policy.py against wp/schema.sql's own text: tables, guard trigger lists,
+        # grants of tables, schemas and functions, and the private seal schema
+        GP = self._gp()
+        sql = re.sub(r"--[^\n]*", "", (self.tree / "wp" / "schema.sql").read_text())
+        tables = set(re.findall(r"^create table (\w+) \(", sql, re.M))
+        self.assertEqual(set(GP.POLICY), tables, "the public tables of schema.sql and POLICY differ")
+        lists = re.findall(r"foreach t in array array\[([^\]]+)\] loop\s+execute format\('create trigger", sql)
+        row, trunc = [set(re.findall(r"'(\w+)'", x)) for x in (lists[0], lists[2])] if len(lists) == 3 else (set(), set())
+        self.assertEqual(len(lists), 3, "schema.sql's guard trigger lists are not the three this test reads")
+        self.assertEqual(tables - trunc, set(GP.UNGUARDED_OK),
+                         "the tables without a TRUNCATE guard in schema.sql are not exactly the named exemption")
+        for t in GP.UNGUARDED_OK:
+            self.assertNotIn(t, row, f"{t} has guard triggers now: remove its exemption from exp/guard_policy.py")
+            w = GP.UNGUARDED_OK[t]
+            self.assertRegex(sql, rf"create function {w}\([^)]*\) returns \w+ language plpgsql security definer",
+                             f"{t}'s writer {w} is not SECURITY DEFINER in schema.sql")
+        grants = [" ".join(g.split()) for g in re.findall(r"^\s*(grant [^;]+;)", sql, re.M | re.S)]   # DO blocks too
+        members = {GP.GROUP_ROLES[0]: {m for g, m in GP.MEMBERSHIPS if g == GP.GROUP_ROLES[0]}}
+
+        def grantees(text):
+            out = set()
+            for r in (x.strip() for x in text.split(",")):
+                out |= {r} | members.get(r, set())
+            return out
+        tp = {}
+        for g in grants:
+            m = re.match(r"grant ([\w, ]+?) on ((?!function|schema|type|sequence|all )[\w, ]+) to ([\w, ]+);$", g)
+            if m and "(" not in m.group(1):
+                for r in grantees(m.group(3)):
+                    for t in (x.strip() for x in m.group(2).split(",")):
+                        tp.setdefault(r, {}).setdefault(f"public.{t}", set()).update(
+                            x.strip().upper() for x in m.group(1).split(","))
+        self.assertIn(f"grant select on all tables in schema public to {GP.VERIFIER_READS_PUBLIC};", grants)
+        tp.pop("wp_app", None)                       # G2's (POLICY), bound above
+        self.assertEqual({r: {t: set(p) for t, p in v.items()} for r, v in GP.ROLE_TABLE_PRIVS.items()}, tp,
+                         "table grants of schema.sql and ROLE_TABLE_PRIVS differ")
+        usage = set()
+        for g in grants:
+            m = re.match(r"grant usage on schema public to ([\w, ]+);$", g)
+            usage |= grantees(m.group(1)) if m else set()
+        self.assertEqual(GP.SCHEMA_PRIVS[("public", "USAGE")], usage, "USAGE on schema public differs")
+        self.assertFalse([g for g in grants if re.match(r"grant (create|all)[\w, ]* on schema", g)])
+        ex = {}
+        for g in grants:
+            m = re.match(r"grant execute on function (.+) to ([\w, ]+);$", g)
+            if m:
+                for f in re.findall(r"(\w+)\(", m.group(1)):
+                    ex.setdefault(f"public.{f}", set()).update(grantees(m.group(2)))
+        for f, w in GP.EXECUTE_ONLY.items():
+            if f.startswith("public."):
+                self.assertEqual(w, ex.get(f, set()), f"EXECUTE on {f} in schema.sql and EXECUTE_ONLY differ")
+        s = GP.SEAL_SCHEMA
+        self.assertEqual(set(GP.SEAL_TABLES), set(re.findall(rf"^create table {s}\.(\w+) \(", sql, re.M)))
+        self.assertEqual(set(GP.SEAL_FUNCTIONS), set(re.findall(rf"^create function {s}\.(\w+)\(", sql, re.M)))
+        self.assertFalse(re.search(rf"create function {s}\.\w+\([^)]*\)[^$]*security definer", sql))
+        for what in ("schema", "all tables in schema", "all functions in schema"):
+            self.assertIn(f"revoke all on {what} {s} from public;", sql)
+        self.assertFalse([g for g in grants if f" {s}." in g or f"schema {s} " in g], "a grant on the seal schema")
+
+    # ---- integ/gate-on-hardening: the hardening objects named and held (exp/guard_policy.py); red on the plain merge
+    def assertExactly(self, rc, out, code, *why):
+        """assertOnly, and every stated `why` is matched by a reason: the deviation under test is named."""
+        self.assertOnly(rc, out, code, *why)
+        kind = {2: "BLOCKED", 3: "VOID"}[code]
+        lines = [x.split(f"disk_gate {kind}: ", 1)[1] for x in out.splitlines() if x.startswith(f"disk_gate {kind}: ")]
+        for w in why:
+            self.assertTrue(any(w in x for x in lines), f"no {kind} reason names {w!r}: {lines}")
+
+    def acl(self, db, add=(), drop=()):
+        """Change a stream database's ACL in the scenario (grantee:privilege items)."""
+        row = next(r for r in self.F.st()["catalog"]["cluster"]["databases"] if r[0] == db)
+        items = (set(row[4].split(",")) | set(add)) - set(drop)
+        self.F.cat("cluster", "databases", "set", *row[:4], ",".join(sorted(items)))
+
+    def test_integ_cluster_as_the_hardening_setup_leaves_it_is_admitted(self):
+        self.start()
+        self.assertValid(*self.call("end"))
+
+    def test_integ_hardening_and_bootstrap_cluster_is_admitted(self):
+        self.bootstrap_cluster()
+        self.start()
+        self.assertValid(*self.call("end"))
+
+    def test_integ_sealer_attribute_changed_blocks(self):
+        self.F.cat("cluster", "roles", "set", "wp_sealer", "False", "True", "False", "True", "True", "False", "False")
+        self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_sealer has rolcreatedb=True")
+
+    def test_integ_reviewer_with_bypassrls_blocks(self):
+        self.F.cat("cluster", "roles", "set", "wp_rev2", "False", "True", "False", "False", "True", "False", "True")
+        self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_rev2 has rolbypassrls=True")
+
+    def test_integ_reviewer_group_that_can_log_in_blocks(self):
+        self.F.cat("cluster", "roles", "set", "wp_reviewer", "False", "True", "False", "False", "True", "False", "False")
+        self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_reviewer has rolcanlogin=True")
+
+    def test_integ_extra_member_of_the_reviewer_group_blocks(self):
+        self.F.cat("cluster", "members", "add", "wp_reviewer", "wp_app")
+        self.assertExactly(*self.call("start"), 2, "before the store reset: role wp_app is a member of wp_reviewer")
+
+    def test_integ_reviewer_membership_missing_blocks(self):
+        self.F.cat("cluster", "members", "drop", "wp_reviewer", "wp_rev2")
+        self.assertExactly(*self.call("start"), 2, "committed membership of wp_rev2 in wp_reviewer is missing")
+
+    def test_integ_setting_on_the_reviewer_group_blocks(self):
+        self.F.cat("cluster", "settings", "add", "wp_reviewer", "", "statement_timeout=0")
+        self.assertExactly(*self.call("start"), 2, "before the store reset: a setting of role wp_reviewer")
+
+    def test_integ_sealer_setting_changed_during_the_run_voids(self):
+        self.start()
+        self.F.cat("cluster", "settings", "set", "wp_sealer", "", "lock_timeout=0")
+        self.assertExactly(*self.call("end"), 3, "role wp_sealer has settings lock_timeout=0",
+                           "catalog cluster.settings changed")
+
+    def test_integ_reviewer_group_connect_blocks(self):
+        self.acl("wp_events", add=["wp_reviewer:CONNECT"])
+        self.assertExactly(*self.call("start"), 2, "wp_reviewer may connect to or create in the events database")
+
+    def test_integ_sealer_connect_to_the_key_store_blocks(self):
+        self.acl("wp_keys", add=["wp_sealer:CONNECT"])
+        self.assertExactly(*self.call("start"), 2, "wp_sealer may connect to or create in the keys database")
+
+    def test_integ_sealer_connect_missing_blocks(self):
+        self.acl("wp_events", drop=["wp_sealer:CONNECT"])
+        self.assertExactly(*self.call("start"), 2, "committed CONNECT of wp_sealer on the events database")
+
+    def test_integ_public_temporary_on_a_stream_database_blocks(self):
+        self.acl("wp_events", add=["PUBLIC:TEMPORARY"])
+        self.assertExactly(*self.call("start"), 2, "PUBLIC may create temporary tables in the events database")
+
+    def test_integ_app_grant_on_a_hardening_table_blocks(self):
+        self.F.cat("wp_events", "app_privs", "add", "write_refusals", "INSERT")
+        self.F.cat("wp_events", "app_privs", "add", "identifier_proposals", "SELECT")
+        self.assertExactly(*self.call("start"), 2, "G2 wp_app on write_refusals: ['INSERT']",
+                           "G2 wp_app on identifier_proposals: ['SELECT']")
+
+    def test_integ_extra_grant_to_the_sealer_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "role_privs", "add", "wp_sealer", "public.events", "SELECT")
+        self.assertExactly(*self.call("end"), 3, "role wp_sealer holds ['SELECT'] on public.events (committed [])",
+                           "catalog wp_events.role_privs changed")
+
+    def test_integ_reviewer_insert_on_proposals_blocks(self):
+        self.F.cat("wp_events", "role_privs", "add", "wp_rev1", "public.identifier_proposals", "INSERT")
+        self.assertExactly(*self.call("start"), 2,
+                           "role wp_rev1 holds ['INSERT', 'SELECT'] on public.identifier_proposals (committed ['SELECT'])")
+
+    def test_integ_reviewer_read_missing_blocks(self):
+        self.F.cat("wp_events", "role_privs", "drop", "wp_rev2", "public.identifier_proposals", "SELECT")
+        self.assertExactly(*self.call("start"), 2, "role wp_rev2 holds [] on public.identifier_proposals")
+
+    def test_integ_seal_keys_readable_blocks(self):
+        self.F.cat("wp_events", "role_privs", "add", "wp_verifier", "wp_seal.seal_keys", "SELECT")
+        self.assertExactly(*self.call("start"), 2, "role wp_verifier holds ['SELECT'] on wp_seal.seal_keys")
+
+    def test_integ_usage_on_the_seal_schema_blocks(self):
+        self.F.cat("wp_events", "role_schema", "add", "wp_app", "wp_seal", "USAGE")
+        self.assertExactly(*self.call("start"), 2, "role wp_app holds USAGE on schema wp_seal")
+
+    def test_integ_create_on_public_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "role_schema", "add", "wp_rev1", "public", "CREATE")
+        self.assertExactly(*self.call("end"), 3, "role wp_rev1 holds CREATE on schema public",
+                           "catalog wp_events.role_schema changed")
+
+    def test_integ_app_may_approve_identifiers_blocks(self):
+        self.F.cat("wp_events", "role_execute", "add", "public.wp_identifier_approve", "wp_app")
+        self.assertExactly(*self.call("start"), 2, "role wp_app may execute public.wp_identifier_approve")
+
+    def test_integ_seal_function_executable_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "role_execute", "add", "wp_seal.verify", "wp_verifier")
+        self.assertExactly(*self.call("end"), 3, "role wp_verifier may execute wp_seal.verify",
+                           "catalog wp_events.role_execute changed")
+
+    def test_integ_seal_function_as_security_definer_blocks(self):
+        row = next(r for r in self.F.st()["catalog"]["wp_events"]["seal_functions"] if r[0] == "install")
+        self.F.cat("wp_events", "seal_functions", "set", *row[:3], "True", *row[4:])
+        self.assertExactly(*self.call("start"), 2, "wp_seal function install: owner wp_owner, security definer True")
+
+    def test_integ_extra_relation_in_the_seal_schema_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "seal_relations", "add", "copy", "17101", "r", "wp_owner", "", "False", "False")
+        self.assertExactly(*self.call("end"), 3, "wp_seal relation copy: kind r", "catalog wp_events.seal_relations")
+
+    def test_integ_seal_schema_replaced_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "seal_schema", "set", "wp_seal", "9300", "wp_owner", "{wp_owner=UC/wp_owner}")
+        self.assertExactly(*self.call("end"), 3, "or its public or wp_seal schema was reset or replaced",
+                           "catalog wp_events.seal_schema changed")
+
+    def test_integ_schema_outside_the_committed_set_blocks(self):
+        self.F.cat("wp_events", "namespaces", "add", "scratch", "wp_app")
+        self.assertExactly(*self.call("start"), 2, "a schema outside the committed set in the events database: scratch")
+
+    def test_integ_trigger_disabled_on_identifier_proposals_during_the_run_voids(self):
+        self.start()
+        self.F.cat("wp_events", "triggers", "drop", "identifier_proposals", "identifier_proposals_guard")
+        self.F.cat("wp_events", "triggers", "add", "identifier_proposals", "identifier_proposals_guard",
+                   str(T_BEFORE | T_ROW | T_INS | T_UPD | T_DEL), "D", "wp_guard")
+        self.assertExactly(*self.call("end"), 3, "G3 trigger identifier_proposals.identifier_proposals_guard is "
+                           "enabled 'D'", "catalog wp_events.triggers changed")
+
+    def test_integ_trigger_disabled_on_quarantine_removed_blocks(self):
+        self.F.cat("wp_events", "triggers", "drop", "quarantine_removed", "quarantine_removed_no_truncate")
+        self.F.cat("wp_events", "triggers", "add", "quarantine_removed", "quarantine_removed_no_truncate",
+                   str(T_BEFORE | T_TRUNC), "D", "wp_guard")
+        self.assertExactly(*self.call("start"), 2, "G3 trigger quarantine_removed.quarantine_removed_no_truncate is "
+                           "enabled 'D'")
+
+    def test_integ_identifier_proposals_without_its_guard_blocks(self):
+        self.F.cat("wp_events", "triggers", "drop", "identifier_proposals", "identifier_proposals_guard")
+        self.assertExactly(*self.call("start"), 2, "G3 table identifier_proposals has no guard trigger for "
+                           "INSERT,UPDATE,DELETE")
+
+    def test_integ_trigger_on_write_refusals_not_always_blocks(self):
+        self.F.cat("wp_events", "triggers", "add", "write_refusals", "write_refusals_x",
+                   str(T_BEFORE | T_ROW | T_INS), "O", "wp_guard")
+        self.assertExactly(*self.call("start"), 2, "G3 trigger write_refusals.write_refusals_x is enabled 'O'")
+
+    def test_integ_write_refusals_writer_not_security_definer_blocks(self):
+        row = next(r for r in self.F.st()["catalog"]["wp_events"]["functions"] if r[0] == "wp_write_refused")
+        self.F.cat("wp_events", "functions", "set", *row[:3], "False", *row[4:])
+        self.assertExactly(*self.call("start"), 2, "G3 table write_refusals has no guard triggers and its writer "
+                           "wp_write_refused is not a SECURITY DEFINER function")
+
+    def test_integ_trigger_disabled_on_seal_keys_blocks(self):
+        self.F.cat("wp_events", "seal_triggers", "add", "seal_keys", "seal_keys_x", str(T_BEFORE | T_ROW | T_UPD),
+                   "D", "wp_guard")
+        self.assertExactly(*self.call("start"), 2, "G3 trigger wp_seal.seal_keys.seal_keys_x is enabled 'D'")
+
+    # service containers (hardening D2, D6): the stream's prefix or label, other than the run's two stores
+    def test_integ_key_service_container_before_the_run_blocks(self):
+        self.F.add("emlab2-wphard-keysvc", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
+        self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+                           "the run: emlab2-wphard-keysvc (the key service)")
+
+    def test_integ_stream_labelled_container_before_the_run_blocks(self):
+        c = self.F.add("helper-x", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
+        self.F.set(c, labels={"emlab2.stream": "wphard"})
+        self.assertExactly(*self.call("start"), 2, "a container of this stream other than the run's stores before "
+                           "the run: helper-x")
+
+    def test_integ_service_container_left_at_the_end_voids(self):
+        self.start()
+        self.F.add("emlab2-wphard-sealer", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
+        self.assertExactly(*self.call("end"), 3, "a container of this stream other than the run's stores at the end "
+                           "of the run (an experiment removes the service containers it starts): emlab2-wphard-sealer")
+
+    def test_integ_service_container_removed_within_the_run_is_valid(self):
+        self.start()
+        c = self.F.add("emlab2-wphard-keysvc", "/svc", GIB // 8, GIB, GIB // 2, GIB // 8)
+        self.F.remove(c)
+        self.assertValid(*self.call("end"))
+
+    # amendment GF1a: the gate's lines are H6d's, in one unit
+    def test_integ_gf1_lines_equal_h6d(self):
+        chain = (HERE / "results" / "failing-first" / "harness" / "live_chain.sh").read_text()   # not in a pinned tree
+        kib = dict(re.findall(r"(START_KIB|STOP_KIB)=(\d+)", chain))
+        self.assertEqual(int(kib["START_KIB"]), int(self.g.START_GB * 1024 * 1024), "H6d start line != START_GB")
+        self.assertEqual(int(kib["STOP_KIB"]), int(self.g.STOP_GB * 1024 * 1024), "H6d stop line != STOP_GB")
+        self.assertIn('df -k --output=avail', chain)  # df's avail is statvfs f_bavail, as shutil.disk_usage().free
+        self.assertIn("shutil.disk_usage(HOME).free", inspect.getsource(self.g.free_gb))
+        wm = re.search(r"^WATERMARKS = (\{.+\})$", (self.tree / "wp" / "es_security.py").read_text(), re.M).group(1)
+        wm = {k: int(v[:-2]) for k, v in re.findall(r'"(\w+)": "(\d+gb)"', wm)}
+        self.assertEqual(wm["flood_stage"], int(self.g.STOP_GB), "ES flood stage is not the stop line")
+        self.assertEqual(wm["low"], int(self.g.START_GB), "ES low watermark is not the start line")
 
     # ---- C12 (F-4): no container but the run's stores uses this home
     def test_v6_f4_container_using_this_home_blocks(self):
