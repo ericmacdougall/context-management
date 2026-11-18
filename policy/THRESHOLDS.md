@@ -1098,3 +1098,81 @@ refusal), none confirmed by the user. LIMITS of amendment 7 stand, plus the resi
 Stamped run of this round: NOT STARTED (by instruction). When it is run: once, after THIS commit, which supersedes amendment 7's
 "after this commit"; GIT_STAMP dirty=false, commit == thresholds commit == this commit; otherwise as amendment 7 says. Its verdict is
 reported as it falls.
+
+## Amendment 9 (2026-11-18: the delta review of 6b77354, N1-N7; the lab disk rule; committed ALONE, the last commit of this round, before the stamped run)
+
+Why: the delta review of 6b77354 (GoodQA #16096; BLOCK for client use, lab PASS with limits) found statements of amendment 8 false
+or stale, and the code it describes unsafe:
+- N1 (MATERIAL): amendment 8's eviction scope said a revocation in progress ("waiting on BackendTermination or on an ungranted A, T
+  or fence request") is not evicted. False: `dc._evict` runs as dc_evictor, which cannot read `wait_event` of other roles'
+  backends, so the BackendTermination clause never spared anyone; a revocation that was evicting, running or parked on a row lock
+  was ended by a later `end_session`, `dc.revoke_factor` or second revoke of the same target and lost. The H1 test passed on timing.
+- N2: amendment 8's "a revoke or grant takes T exclusively only when the rules would apply it, else T shared and `bad_event`,
+  evicting nobody" was false for six other refusal shapes (bad client_id, unknown key, label without value, grant role owner,
+  exact retry, reused idempotency key): they took A and T exclusively and evicted a bystander.
+- N3: "that hold or wait for the key" ended waiters too: a submit that queued behind a revoke was ended after it committed.
+- N4: the same exemption spared ANY backend waiting for any A, T or fence lock: an admin parked on T(b) froze tenant a.
+- N6: amendment 8's "Not proven" said only that the step-3 fixtures miss a `dc._gate` no-op. Also stale: the first `expiry_noop`
+  (f9b4e63) had run (the policy owner's t2-dev log `s3_green_f9b4e63`) and was NOT caught, and the reviewer's `gate_noop` and
+  `bt_clause_only` were not caught either.
+- N7: the rollback of `ops/migrate_r3_7` built SQL from the text of `dc.migration_mark`; a tampered mark granted `pg_read_file` to
+  PUBLIC. No migration path exists from an R3-7 schema of the 2262eaa era (no `lockid` columns).
+- Residual 5 of FINAL-JUDGMENT.md 4.4 ("between two waits, a few microseconds") and residual 1 (only a holder that held T longer
+  than XWAIT is ended) were false at 6b77354; both are corrected there.
+
+Amendment 7's and 8's stamped runs never started, so their seeds stay unused and are carried over unchanged. Earlier amendments stay
+in force where not changed here. Commits on fix/policy-final-review: 81279dd (N1, N2, N3, N4, N6 test, N7, documents and red/green
+logs); on docs/step3-handoff: 87e0843 (protocol fixtures) and 59f8051 (the HANDOFF-STEP3 correction). Red and green logs:
+results/red/README.md, section "Review of 6b77354".
+
+Product code (failing-first at 6b77354, tests/test_rev6b77_pg.py; DEVIATION: PG 17.11 local on the Mac, red Ran 17 FAILED
+failures=42, green Ran 17 OK; focused Postgres modules Ran 156 OK; on t2-dev 16.15: NOT RUN, see DEV results):
+- Eviction (supersedes amendment 8's "Eviction scope"; ASSUMPTION, the fixer's choice): an exclusive request E on key k ends a
+  backend B only if B is of this database, not the caller, not a superuser and not a member of dc_owner, AND (a) B held k (or its
+  fence) granted in transaction X when E's request began (`dc._snap`, pid:virtualtransaction), (b) B still holds it in X just
+  before the signal, (c) B is not a call in progress marked for k: the marker M(k), advisory class 1145241607, session-level,
+  SHARED only, taken by `dc._xlock` and `dc._xlock_caller` before the exclusive request and released on every exit of `dc.submit`
+  (revoke or grant), `dc.end_session`, `dc.revoke_factor` and `dc.erase_values`, exception handlers included, held together with
+  k or its fence EXCLUSIVELY. Waiters are never ended. A round that signals nobody gives up with 55P03 when every holder is spared.
+  dc_evictor's rights are unchanged (no statistics role).
+- Refused authority changes (supersedes amendment 8's bullet): the unlocked pre-read also runs the stage's body checks
+  (`dc._body_refusal`), `dc._shape` of the event, the idempotency lookup and the caller's revocation; a change it predicts will be
+  refused takes no exclusive lock. Every refusal reason the code can return is a case of `N2_RefusedShapes`. Residual: a refusal
+  caused by owner SQL after the pre-read may still have evicted (FINAL-JUDGMENT.md 4.4 residual 8).
+- Rollback: `restore_advisory_acl` refuses a mark that names anything but a live advisory-lock function or has a malformed entry,
+  before any SQL. No migration from a 2262eaa-era R3-7 schema (residual 9).
+- Reserved advisory key space (for the port): two-key classes 1145241601 to 1145241607 and negative classes [-1e9, -1], plus the
+  one-key space of L4 (HANDOFF-STEP3.md section 2).
+
+Step-3 protocol fixtures (87e0843): PROTOCOL adds the N1 parked cases, the mode rule, both N4 cases, a snapshot property (N3), N2
+never-wait and N6 (a token that expires inside the call, refused at the final judgment). MUTANTS: `in_progress` (dead code at
+6b77354) is replaced by `mark_noop`, `unmark_noop`, `mark_any_key`, `mark_any_mode`; new `snap_noop`, `snap_pid_only`,
+`body_preread`, `gate_noop`; `expiry_noop` now removes every expiry check. `bt_clause_only`'s anchor no longer exists (the clause was
+removed); its successors are the marker mutants. Result: NOT RUN (every anchor occurs exactly once in the 81279dd core; that each mutant is caught is NOT shown).
+
+Lab disk rule (source: answer:73716864-6b3b-4deb-94ef-8ed2c8432e4a/3335a07a-728a-4abf-99c2-6e0229b92d77 "Lower floor to 10 GB
+(Recommended)"): a lab run, the stamped run included, starts only with at least 10 GB free by `df` and stops itself at 8 GB. This
+REPLACES amendment 7's "The stamped run starts only with at least 20 GB free by `df`" and amendment 8's "the disk bar (20 GB free by
+`df` before the stamped run)". Applied in bytes (10,000,000,000 and 8,000,000,000, `df -B1`). Not changed by this amendment, so
+disclosed: run_all.sh still requires 16 GiB before each experiment (15.5 GiB while it runs) and kit/preflight.sh its own 18 GB; at
+the new bar they refuse before the rule does, which is stricter, not looser. The fixer's kit (batch4.sh, batch6.sh, lock.sh) applies
+the rule as stated.
+
+DEV results (dev seeds, development observations, not proof; t2-dev, PG 16.15, tree f812 = git archive 81279dd): NOT RUN.
+Batch b6 (tests.test_rev6b77_pg, the focused Postgres modules, the protocol fixtures at 87e0843, DEV mig_rehearsal, the complete
+DEV pg_diff, verify results --dev) waited 30 minutes without the run lock for the 10 GB start bar and gave up: t2-dev free space
+was 8.8 to 9.7 GB from 22:30 to 23:02Z (not this work's files; its containers held about 48 MB and were removed). The Mac's local
+server was removed too, when the Mac fell under 2 GB free (0.18 GB). The last complete DEV pg_diff is still the fixer's at e816310.
+
+Not proven, disclosed (FINAL-JUDGMENT.md 4.4 residuals 1, 5, 8, 9): a marker leaks only if an error escapes an API exception handler
+and the client keeps its transaction past a savepoint rollback, bounded by revoking that admin (`N1_LeakBound`, not observed); the
+unlocked pre-read; the re-check-to-signal window (microseconds); no migration from a 2262eaa-era R3-7 schema. N1 timings other than
+the two parked states are covered only by `N1_Sweep` (supporting, 0 of 8 lost on the fix, 6 of 8 at 6b77354, locally).
+
+Unchanged: every other threshold, the provenance gate, the seeds of amendment 7 (fresh, unused), the environment of amendments 6 to 8
+(with `max_prepared_transactions = 0`), the run lock, and the ASSUMPTIONS (decisions 8 to 11, the origin vocabulary, the 4.4
+eviction, the lock identities, the 2PC refusal; new: the marker and the snapshot rule), none confirmed by the user. LIMITS of
+amendment 7 stand, plus the residuals above.
+
+Stamped run of this round: NOT STARTED (by instruction). When it is run: once, after THIS commit, which supersedes amendment 8's
+"after this commit"; GIT_STAMP dirty=false, commit == thresholds commit == this commit; otherwise as amendment 7 says.
