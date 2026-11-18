@@ -558,3 +558,239 @@ teardown left 0 containers and 4.0K under ~/emlab2-16096/gatefix. Outputs: runki
 Not shown live: a pause in progress at a step (unit test `test_paused_at_end_voids`; a pause between steps is open
 decision D1), and an ES threshold change still present at the next step (R5, unit test
 `test_es_threshold_changed_voids`; one restored before the next step is open decision D2).
+
+## 6. Gate v4 (review F, gate half, 2026-11-17): the thing inspected is the thing used
+Section 5 stays the record of v3; where this section differs, it governs.
+
+### 6.1 Findings, decisions in force, and the class
+Review F (`reviews/writepath-hard/reviewF-gate-1.md`, Codex R4, at f666f4d) found the byte-capacity argument sound under
+its conditions and closed F1, F7, F8 (by withdrawing the clock guarantee), F9 and F10; F2, F3 and F11 partly. Its new
+material findings F13 to F19 are about proving that the experiment ran against the arrangement the gate inspected.
+Decisions in force (main, 2026-11-17; main's decisions, not the user's words): D1 and D2 are accepted as the operator
+trust boundary for this lab host provided every verdict states it (F19); v3's handling replaces the brief's
+forged-log-line live cases. The class is "the thing inspected is the thing used". v4 binds each piece of evidence to
+the endpoint the experiment uses, asks the running servers for their storage, and compares filesystem identity
+(device numbers and the container's own mount table), never path strings.
+
+### 6.2 Rules added or changed (R1 to R8 of 5.3 stay unless named)
+- **B1, PG binding (F14).** At every step the gate connects to the experiment's endpoint with the experiment's own
+  connect function (`wp.db.connect`: host `config.PG_HOST`, port `config.PG_PORT`, the cluster admin's pgpass) and asks
+  the server for its system identifier, `data_directory` and every tablespace location. It writes a fresh nonce file
+  into that data directory inside the inspected container (`docker exec -i`, content on stdin), asks the server over
+  the endpoint to read it back (`pg_read_file`, relative to its own data directory), and removes it. A server that
+  cannot read it serves another data directory: BLOCKED at start, VOID after. A role without the right to read server
+  files is BLOCKED with that reason. A changed system identifier is VOID (drift). The identifier alone would not bind:
+  a copied data directory keeps it.
+- **B2, ES binding (F14).** The node id and `ephemeral_id` (new at every process start) that es_url reports must equal
+  those reported by the node listening inside the inspected container (curl run inside it, to its own container port;
+  the API key, when there is one, goes on stdin, never into argv, because Docker's event stream records exec command
+  lines). This replaces v3's JVM start-time window. The 127.0.0.1 publish check stays.
+- **B3, storage topology (F15).** An in-container probe (`docker exec sh -c` with a fixed script; arguments are paths,
+  never secrets) prints the container's own mount table, the data mount's statfs, the resolved path and device number
+  of every path the server named (PG: `data_directory`, its `pg_wal`, every tablespace location; ES: its data path),
+  and of every symbolic link under the data mount. Rules: exactly one mount at the data mount point, type tmpfs, whose
+  device equals the data mount's; no mount below it; every named path and every link target on that same device; a
+  dangling link or an unresolvable path BLOCKS. The `PGDATA=.../data/../on-disk` escape, a symlinked PGDATA, an
+  external `pg_wal`, external tablespaces and a `data_directory` overriding PGDATA all fail on device identity. The
+  docker inspect check stays: from inside, a bind-mounted host tmpfs looks the same as a private one.
+- **B4, inodes (F16).** The data tmpfs must be mounted with `nr_inodes=0`, which the kernel documents as no inode
+  limit; the mount table must show it and statfs must report 0 total inodes. Inode and dentry memory is charged to the
+  container's cgroup (ASSUMPTION A-6 until the live step shows slab memory rising with the file count), so the memory
+  limit bounds it as it bounds bytes, and the kernel's warning that unlimited inodes let a writer use all memory is
+  answered by that limit. Exhaustion becomes a memory-limit event: memory.events `oom` (an allocation about to fail at
+  the limit, killed or not) joins `oom_kill`, and any change of either from admission is VOID. The MARGIN comment is
+  corrected: it covers statfs rounding, not inodes.
+- **B5, settings (F17).** At admission and every step the gate reads ES's cluster settings with defaults (persistent,
+  transient and defaults layers, flat) restricted to `cluster.routing.allocation.*`, `cluster.info.*` and
+  `cluster.blocks.*`, and every index's `index.blocks.*` and `index.routing.allocation.*` (hidden indices included),
+  except `index.routing.allocation.include._tier_preference` (ASSUMPTION A-4: ES sets it on every new index). Start is
+  BLOCKED unless the effective `cluster.routing.allocation.disk.threshold_enabled` is true and no index holds
+  `index.blocks.read_only_allow_delete`. Any later difference is VOID; an index deleted during the run is not a
+  difference, and a new index must carry none of these settings (no stream code sets them: the fence test). A change
+  made and restored between steps remains D2.
+- **B6, the end boundary (F18).** In start, check and end the slow steps come first (WP_HOME's size, probes, endpoint
+  queries, settings). Then, inside the ledger lock and back to back, the gate reads both containers' identity (inspect
+  by Id) and lifetime counters (memory.events, memory.peak, memory.swap.current), checks the legacy path, and writes the
+  record. That instant is recorded as `window_end`; the guarantee covers the run up to it. launch_one.sh runs `end`
+  after the experiment exits, so the experiment lies inside the window. Slow probes stay outside the lock so `stop`
+  is never held up.
+- **B7, the legacy STOP path (F13).** The gate never creates, reads, moves or anchors state/STOP. Its existence in any
+  form (file, directory, link) is an open stop that clear-stop cannot acknowledge: start BLOCKED; check and end VOID,
+  with the run closed in the ledger; `stops` lists it; `stop` and `abort` still work. Migration (every v3.0 home holds
+  the directory v3 made): `retire-legacy-stop <reason>` records a stop naming what was there (kind only), moves the
+  path unread to state/STOP.retired-<seq>, and the stop is acknowledged after a person reads it. A legacy write during a
+  window persists and voids the run; only a deletion by the same OS user can lose it (tampering, outside: 6.4).
+- **B8, stated limits (F19).** Every end record (VALID or VOID) carries the gate version, the gate file's SHA-256,
+  `window_end` and the LIMITS id; the printed verdict line carries the LIMITS text; launch_one.sh writes `gate_version=`
+  and `gate_limits=` beside `gate=`. The `end ...` line keeps its form for window_check.sh.
+- **B9, minor.** F20: wording is filesystem-neutral, and a store whose isolation failed is not compared further (its
+  reason is isolation). F21: memory.swap.current must be 0 at every step, not only memory.swap.max.
+
+### 6.3 Facts to observe first (ASSUMPTIONs; the gate fails closed on each until the live kit's step 0 shows them)
+A-1 the Docker 29 form that mounts a tmpfs with `nr_inodes=0`, and how `docker inspect` reports it; A-2 the mount table
+and statfs of such a mount on kernel 6.8; A-3 sh, stat, realpath and find in the ES 9.5.6 and postgres:16 images, and
+curl in the ES image; A-4 the allocation or block settings ES puts on a new index; A-5 `ephemeral_id` in the
+cluster-state nodes; A-6 inode and dentry memory charged to the container (memory.stat slab).
+
+### 6.4 Guarantee and LIMITS v4
+A VALID run means V1 to V5 of 5.4 and also: (V6) at every step the server at the experiment's PG endpoint read a file
+written into the inspected PG container's tmpfs, and the ES node at es_url was the node running in the inspected ES
+container; (V7) every storage path those servers reported, and every link under their data mounts, lay on the private
+tmpfs; (V8) the tmpfs had no inode limit; (V9) the disk and allocation settings were the same at every step as at
+admission. LIMITS v4 (printed with every verdict, kept in `exp/disk_gate.py` as `LIMITS`):
+- Not detected; operator trust boundary, main's decision for this lab host: a `docker pause` and unpause between two
+  steps (needs Docker access, root-equivalent on the host); an ES disk or allocation setting changed and restored
+  between steps (needs the stream's ES admin credential); an endpoint switched to another server and back, or a
+  tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential).
+- Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages
+  written into a store's tmpfs from outside its container, and mounts shared with other containers (used <= peak is
+  sampled at steps, so an outside fill-and-remove between steps is not seen); anything after `window_end`; clock
+  stability (withdrawn: F8).
+
+### 6.5 Scenario map, review F gate half
+| Finding | v4 |
+|---|---|
+| F13 legacy STOP lost in finalization (touch, copy, overwrite of an entry) | B7: no anchor, nothing read or moved by normal commands; any form of the path blocks or voids and persists |
+| F14 the inspected PG container need not serve the connection | B1 nonce read over the experiment's endpoint; B2 for ES |
+| F15 PG's real storage paths unverified (`..`, symlinks, pg_wal, tablespaces, data_directory) | B3 device identity of every path the server names and every link under the data mount |
+| F16 inode exhaustion under the byte bound | B4 `nr_inodes=0`, memory-charged inodes, memory.events oom |
+| F17 persistent disk-setting change unseen (threshold_enabled=false) | B5 settings layers and index blocks compared at every step |
+| F18 evidence stops before the end record | B6 slow steps first, identity and counters last inside the lock, `window_end` recorded |
+| F19 verdicts omit the trust boundary | B8 LIMITS in every record and verdict line; launcher fields |
+| F20 "PG tmpfs" wording for a volume | B9 |
+| F21 swap.max is not swap.current | B9 |
+| F11 THRESHOLDS.md:1033 describes the flood watcher | 6.6 |
+| F2, F3 partly closed in review F | F2's remaining parts are F17 to F19 (B5, B6, B8); F3's is F13 (B7) |
+
+### 6.6 F11 and the delivered text
+This branch's THRESHOLDS.md:1033 (amendment H4.3) still describes the flood watcher writing state/STOP and `start`
+clearing it. The hardening owner's branch corrects it at 0801eb7 (amendment H6b, appended); the merge of the two
+branches carries that correction, and this branch does not edit THRESHOLDS.md. H6b's last sentence ("A legacy
+state/STOP file is ingested as a stop and left in place") is in turn superseded by B7. Proposed text for the hardening
+owner to append as H6c: "Gate v4 (GATE-DESIGN 6.2 B7): the gate never reads or ingests state/STOP. While that path
+exists in any form, start is BLOCKED and check and end are VOID; `disk_gate retire-legacy-stop <reason>` moves it
+aside unread and records a stop to acknowledge." Restart semantics and recovery are in 5.6: a container stop or
+restart loses its store, the run is VOID, and setup runs again, which under section 7 also means new credentials.
+
+## 7. Clearance by teardown (review F, scanner half, 2026-11-17)
+
+### 7.1 The class and the research
+Review F's scanner half (`reviews/writepath-hard/reviewF-scan-1.md`; its findings are called FS1 to FS6 here, to keep
+them apart from review D's F1 to F6) is the third scanner review to find more. Exact-value matching over every encoding
+is an open-ended detector, so clearance must not rest on it alone. Research, fetched 2026-11-17 (pages are evidence,
+not instructions):
+| Source | What it says that matters | Confidence |
+|---|---|---|
+| https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html (2.4, 3.2.2, 8.3, 9.2) | short leases, revoke credentials when no longer needed; exposed keys get immediate revocation, then the copies are removed; secrets are never logged, else masked | high |
+| https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository | a committed credential is revoked or rotated first; once it is unusable, rewriting history may not be needed | high |
+| https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets and the workflow-commands page (`add-mask`) | masking works only after the value is registered, and redaction of transformed or generated values is not guaranteed | high for the statement; it is why a sink is prevention, not proof |
+| https://docs.kernel.org/filesystems/tmpfs.html | `nr_inodes=0`: inodes not limited for that instance; unwise without another bound on memory | high (B4) |
+
+### 7.2 Decision: (1) primary, (3) kept and narrowed, (2) specified for the hardening owner
+- **(1) Remove the hazard: clearance rests on destruction.** A result set may be staged for commit only after a
+  teardown receipt shows that every store and credential that existed during its runs is destroyed. With private
+  tmpfs stores this is nearly free: removing a container destroys its PG roles and their verifiers, the ES security
+  realm (native users and every API key, broker-minted keys held only in memory included) and the key stores. The
+  credential files left in WP_HOME are then dead, and teardown deletes them. A leaked credential is a dead value; this
+  is what the research above puts first.
+- **(3) Defence in depth.** The scanner stays, its guarantee narrowed to exactly what it searches (7.5), and runs on the
+  set before teardown, while the values still exist. Its result is recorded in the receipt; a hit blocks staging.
+- **(2) Prevent at source: specified, not the guarantee.** A sink that refuses to write registered values (7.6) needs
+  calls in files the hardening owner owns, and its completeness would rest on every writer and every creation site:
+  the same open-ended problem moved into code review, and the research says masking does not reach transformed values.
+  This branch provides the module and its tests; the calls are a hand-off (7.8).
+
+### 7.3 Every secret by lifetime
+| Secret | Created by | Lives in | Dies at teardown? | Condition (hand-off) |
+|---|---|---|---|---|
+| Admin PG password | host/bootstrap.py | `secrets/pg_password`, `secrets/pgpass`; verifier in the PG tmpfs | yes: verifier destroyed, files deleted | bootstrap generates it per store and never reuses an existing file (H-1) |
+| Login-role PG passwords | wp/setup.py | `secrets/pgpass.<role>`; PG tmpfs | yes | same (H-1) |
+| Legacy role passwords (emlab, kms) | host/bootstrap.py | `secrets/pw_*`, `oldhome/pgpass`; PG tmpfs | yes | `oldhome/pgpass` is on teardown's deletion list |
+| ES `elastic` and broker passwords | wp/es_security.py, wp/es_keys.py | `secrets/es_*_password`; ES realm on tmpfs | yes | same (H-1) |
+| ES API keys | wp/es_keys.py | `secrets/es_api_key*.json`; realm | yes | none |
+| Broker-minted and probe API keys | wp/broker.py, exp/h_probe_es.py | process memory; realm | yes: the realm is destroyed | none for (1); the sink (H-2) for prevention |
+| Key-store keys, req_hmac key, legacy KMS keys | wp/keys.py, memsys at a13b524 | PG tmpfs | yes, as credentials | their meaning outlives them: data published with them can be decrypted or linked with a leaked key. Covered by the scanner only (7.5). ASSUMPTION: lab data is synthetic, so that exposure is bounded |
+| Tenant chain keys | derived from tenant keys | memory, PG | as above | as above |
+| SCRAM verifiers | PG | PG tmpfs | yes | none |
+| Operator credentials (SSH keys, GitHub, Dropbox, GoodQA tokens) | outside the stream | outside WP_HOME | no | outside this design; main's publish scan covers credential-shaped strings |
+A secret that outlives a run, such as a password file reused by the next setup, must not exist: H-1 makes bootstrap
+refuse to start on an existing secret file, and teardown refuses a receipt while any file remains in a secrets
+directory.
+
+### 7.4 The teardown receipt and the staging check (runkit/clearance.py)
+- `seal SET`: while the stores are up, records each inventoried credential by inventory id, class and SHA-256 of its
+  raw value (no value, no fragment, no path from the scanned tree), and the container Ids of every admit record in the
+  stop ledger since the previous receipt (keys and roles held only inside the stores die with those containers). Then
+  runs the scanner on SET and records its exit status and LIMITS.
+- `teardown SET [--remove]`: optionally removes the sealed containers by Id; then requires each sealed Id to be gone
+  (`docker inspect` finds no such object), deletes every file in the secrets directories and `oldhome/pgpass`, and
+  writes SET/CLEARANCE.json: container Ids, credential ids with classes and hashes, times, the ledger range, the gate
+  and scanner versions, the scan result.
+- `stage-check SET`: exit 0 only when CLEARANCE.json is present and valid, no file in SET is newer than it, the
+  ledger holds no admit record after the seal that is not in the receipt, every receipted container is gone, the
+  secrets directories hold nothing, and the recorded scan exited 0. Anything else exits 1, and nothing is staged.
+What (1) does not cover: confidentiality of data encrypted or keyed under a leaked key-store key and published with it
+(7.3); operator credentials; secrets of other streams; values written before this design to sets already committed
+(those sets keep their stated limits: results/README.md).
+
+### 7.5 Scanner v4 (runkit/leak_scan.py), narrowed
+Its statement is "these inventoried values were not found in these representations and views"; it never says a set
+holds no secrets. Fixes:
+- FS1: views are the closure of {backslash unescape, percent-decode, whitespace removal} to depth 3, every
+  intermediate kept, the original bytes searched first; output redaction uses the same views.
+- FS2: the claim that the broker and probe check their output with `find()` is withdrawn (it was never implemented).
+  Their keys are covered by (1); prevention is H-2; exp/h_probe_es.py's own substring check is the hardening owner's
+  (H-4).
+- FS3: creation sites are found by parsing every Python file (calls through import aliases, calls split across lines),
+  counted per file, enclosing function and callee; SITES states the expected count; a missing, extra or moved call
+  fails. Shell and SQL files keep a regex check, which is a lint, not proof.
+- FS4: output never contains a path, name or reason text from a scanned tree: files are `file #n` (walk order), hits
+  are `file #n offset <o> inventory <id> class <c>`. `--map FILE` writes the number-to-path table to a 0600 file
+  for local use, and refuses a location inside a scanned root.
+- FS5: each requested root's own path and name are searched before traversal and before inode de-duplication.
+- FS6: one versioned `LIMITS` constant, printed with every result and quoted by this note and the run-kit README;
+  fragment classes (16 consecutive characters of a password-like value) and complete-match classes (key-store and
+  derived keys, an `encoded` API key) are named apart; results/README.md states that committed sets have not been
+  rescanned with v3 or v4.
+
+### 7.6 The sink (wp/secret_sink.py, new in this branch; used once H-2 to H-6 land)
+`register(value, label)` adds a value (str or bytes; label is static text, never derived from the value) to this
+process's registry. `find(data)` returns the labels of registered values present in data in any representation
+the scanner uses, searched on the original bytes and on each intermediate view. `write(path, data, mode)` is the only
+writer of results/ and logs/: it raises `SecretInOutput` (naming labels only) instead of writing. `RedactingFilter`
+is a logging filter that replaces registered values with `<secret:label>`. A process knows only the values it created
+or loaded; that is a stated limit.
+
+### 7.7 Scanner scenario map (reviews A, D and F)
+| Finding | Resolution |
+|---|---|
+| A4 representations missed | 5.7, FS1 views |
+| A5 unqualified "no secret values" | LIMITS on every statement (FS6); clearance moves to (1) |
+| A6 receipt provenance | 5.8 |
+| D-F4 clean after skipping evidence | 5.7 fail closed; FS5 root names |
+| D-F5 inventory incomplete | 5.7 sites; FS3 structural; (1) makes an uninventoried credential dead at staging |
+| D-F6 UTF-16, split fields, percent escapes | 5.7; FS1 |
+| D-F12 paths and reasons may hold a candidate | FS4: no tree-derived text is printed |
+| FS1 normalisation erases a representation | 7.5 |
+| FS2 issuer-side check absent | claim withdrawn; (1); H-2 |
+| FS3 site test by filename and substring | 7.5 AST |
+| FS4 redaction prints near-complete keys | 7.5 opaque ids |
+| FS5 root names | 7.5 |
+| FS6 limits inconsistent; results README | 7.5 |
+| FS7 (minor, review F) generic fallback inventory may raise false positives | hits are traced to their source, never waived routinely (README) |
+
+### 7.8 Hand-off for main to route (hardening owner's files; this branch does not edit them)
+- H-1 host/bootstrap.py, wp/setup.py, wp/es_security.py: generate every credential per store generation; refuse to
+  start when a secret file already exists (`secrets/*`, `oldhome/pgpass`); `secret_sink.register(value, "<static
+  label>")` right after generating each.
+- H-2 wp/broker.py: `secret_sink.register(encoded, "broker api key")`, and the decoded `id:key` and `key`, before the
+  minting function returns.
+- H-3 wp/es_keys.py and wp/keysvc.py (or wp/keys.py): register each API key when created or loaded, each tenant key
+  when loaded, each chain key when derived.
+- H-4 exp/h_probe_es.py: drop its `_VALUES` substring check in favour of `secret_sink.find()` over its output.
+- H-5 every experiment result writer and log setup: write through `secret_sink.write` and add `RedactingFilter`; then
+  remove the expected-failure mark from `tests/test_result_sink_fence.py`, which then fails on any direct write into
+  results/ or logs/.
+- H-6 the gated chain's runbook: seal, scan, teardown, receipt and stage-check after the last experiment of a chain
+  (runkit/README.md step 6), before any result is committed.
+- H-7 THRESHOLDS.md: append H6c (6.6).
