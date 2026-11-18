@@ -322,6 +322,39 @@ class S44_Scope(_S44):
         self.assertTrue(d[0])
         self.assertIn("search_path=pg_catalog, pg_temp", d[1] or [])
 
+    def test_login_roles_cannot_take_advisory_locks(self):
+        """4.4: a raw advisory call is a way to hold A, T, a fence or an idempotency lock outside any API call, where no judgment or
+        eviction scope applies. In this database only dc_owner may call the advisory functions. Red at 8547b27 (they are PUBLIC)."""
+        for role, c in (("dc_app", self.conn("s44-raw-app")), ("dc_idp", self.conn("s44-raw-idp", idp=True))):
+            for q in ("select pg_advisory_xact_lock_shared(%s::int, 1)" % A_CLS, "select pg_try_advisory_lock(1)",
+                      "select pg_advisory_lock_shared(1145241606, 1)"):
+                with self.subTest(role=role, q=q):
+                    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+                        c.execute(q)
+        self.assertTrue(self.o.execute("select has_function_privilege('dc_owner', 'pg_advisory_xact_lock(int4,int4)', 'EXECUTE')")
+                        .fetchone()[0])
+
+    def test_a_queued_revoker_is_not_evicted(self):
+        """4.4: two admins revoke alice while her holder stalls. The one that evicts must not end the other, which waits for the same
+        lock EXCLUSIVELY (a queued revocation, not a stall). Red at 8547b27 (both give up, 55P03); red too for an evictor that ends
+        waiters of either mode."""
+        self.unrevoke("alice")
+        c, bp, _ = self.holder("alice", "idle_reset")
+        r2c = self.conn("s44-second-revoker")
+        r2p = self.pid(r2c)
+        adm = self.tok("admin")
+        t1, o1 = self.start(lambda: self.submit(self.app, adm, self.revoke_body("alice")))
+        time.sleep(0.5)
+        t2, o2 = self.start(lambda: self.submit(r2c, adm, self.revoke_body("alice")))
+        t1.join(ADV_BOUND)
+        t2.join(ADV_BOUND)
+        self.assertFalse(t1.is_alive() or t2.is_alive())
+        self.assertFalse(self.alive(bp), "the stalled holder survived")
+        self.assertTrue(self.alive(r2p), "the queued revoker was evicted: %r" % (o2,))
+        self.assertTrue(self.count("select revoked from dc.principal where tenant = %s and pid = 'alice'", T))
+        self.assertTrue(any((o.get("r") or {}).get("code") == "revoked" for o in (o1, o2)), "%r %r" % (o1, o2))
+        self.unrevoke("alice")
+
     def test_no_holder_evicts_nothing(self):
         """Regression guard: a revoke with nothing in its way ends no backend."""
         self.unrevoke("alice")
