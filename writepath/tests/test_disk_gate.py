@@ -817,6 +817,10 @@ class Gate(unittest.TestCase):
         if not hasattr(self.g, "LIMITS"):
             self.skipTest("needs a command the v3 gate lacks (not counted as red)")
 
+    def need_v5(self):
+        if not self.v5:
+            self.skipTest("drives v5's own launcher or run lock, which the v4 gate lacks (not counted as red)")
+
     def last_record(self):
         return json.loads((self.home / "state" / "stop_ledger.jsonl").read_text().splitlines()[-1])
 
@@ -1667,6 +1671,7 @@ class Gate(unittest.TestCase):
         return [x.split(None, 2) for x in r.stdout.splitlines() if len(x.split(None, 2)) == 3 and x.split()[1] == str(pgid)]
 
     def test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused(self):
+        self.need_v5()
         A = self.launch("a", ops=[["linger"]]).begin()
         self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
         pg = A.p.pid                                       # the gate leads its own process group
@@ -1689,6 +1694,7 @@ class Gate(unittest.TestCase):
         self.assertEqual(rc, 0, f"abort refused although run A's whole group is dead: {out[-300:]}")
 
     def test_g1_abort_checks_the_run_id_and_then_the_group(self):
+        self.need_v5()
         self.start()                                       # admitted in this process: the group is this test's
         self._run["lock"].close()                          # the lock alone no longer refuses
         rc, out = self.abort("r-" + "0" * 32, "wrong run id")
@@ -1751,6 +1757,7 @@ class Gate(unittest.TestCase):
         self.assertEqual(self.ends(), [])
 
     def test_p3_sigterm_during_the_run_voids(self):
+        self.need_v5()
         A = self.launch("x").begin()
         self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
         os.kill(A.p.pid, signal.SIGTERM)
