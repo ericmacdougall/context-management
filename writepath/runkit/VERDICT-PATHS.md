@@ -1,17 +1,18 @@
 # Every path to VALID or exit 0 (GoodQA #16096, final gate round; review aacf3c0)
 
-Draft 1, written BEFORE the fixes of this round, from the code at aacf3c0. It is the plan the round works to: each
-path, the requirement conjuncts it must establish, the check that establishes each (or the gap), and the test that
-violates only that conjunct. Draft 2 (later in this branch) replaces the "aacf3c0" column with the code as fixed and
-names every test.
+Draft 2, for gate v6 (`disk_gate v6`, ledger format 6) and the run kit as fixed in this branch. Draft 1 (commit
+126445b) was the plan written from the code at aacf3c0; its gap column is kept below as "was". For each path: the
+conjuncts it must establish, the check (function) that establishes each, and the test that violates that conjunct
+alone and must fail for its stated reason (`assertOnly` in tests/test_disk_gate.py: the exit status and the one named
+reason, nothing else). Mutant receipts: results/failing-first/reviewH-v6-mutant-*.red.out.
 
 ## The requirement a VALID run must meet (its conjuncts)
 | Id | Conjunct |
 |---|---|
 | C1 | One run at a time: one live launcher holds the run lock from before admission to after the end record |
-| C2 | What ran is the pinned commit: tree equal to its manifest at admission and at end, the gate is the commit's gate, the interpreter is isolated from the caller's environment |
+| C2 | What ran is the pinned commit: tree equal to its manifest at admission and at end, the gate is the commit's gate, the gate and every interpreter it starts are isolated from the caller's environment |
 | C3 | Fixtures are the registered ones (P6) |
-| C4 | Stores clean before the run (rows, indices, unregistered stores, log files) |
+| C4 | Stores clean before the run (rows, indices, unregistered stores, log files), after a reset made under the run lock |
 | C5 | Stores exclusive and intact for the whole run: no reset or cleanup by another command, not replaced |
 | C6 | Live schema, guards, grants, roles and memberships equal the committed expectation at admission, and unchanged at end |
 | C7 | Every v4 storage rule (tmpfs, limits, swap, OOM in the stores, identity and settings drift) |
@@ -21,39 +22,44 @@ names every test.
 | C11 | Host disk: >= 10 GB free at admission (amendment GF1), never under 8 GB during the run, own growth <= 2 GB |
 | C12 | No container other than the two stores uses this home (bind mount under WP_HOME) at admission or at end |
 
-## Paths at aacf3c0 and the gap in each
-| # | Path | Conjuncts it must establish | Established at aacf3c0 by | Gap (finding) |
-|---|---|---|---|---|
-| 1 | `disk_gate run` -> `_report` returns 0 -> `sys.exit(0)` | C1-C12 | C1 flock + pass_fds; C2 `_tree` (no isolation check); C3 `_fixtures`; C4 `_clean`; C7 `_slow/_fast/_rules/_drift`; C8 `_run_files`; C9 P11 `_group_members` only; C10 `_ledger_why`; C11 START_GB 20 and cap | C5 none (F-1: reset/cleanup outside the lock; no identity check at end); C6 none (F-3); C9 exp_rc not judged (F-2), child OOM unseen; C11 no in-run stop; C12 none (F-4); C2 interpreter not isolated, WP_* env unrecorded (m-G); special files crash or hang (m-B); whole-file reads (m-C); a pre-existing group member VOIDs (m-I) |
-| 2 | `disk_gate verdict RUN` exit 0 | C10 (exactly one end, VALID) | `end[0].verdict == VALID` | more than one end record not refused (m-H); a forged first end wins |
-| 3 | `_finish` with the run already closed: exit 3, nothing written | C10 | reason added, no end record | the ledger keeps only the earlier (possibly forged VALID) end (m-H) |
-| 4 | `disk_gate abort` exit 0 | writes VOID only | lock free + group empty + v5 | none (never VALID) |
-| 5 | `disk_gate preflight` exit 0 | C4 | `_clean` | not a stamped path; fine |
-| 6 | `init`, `stop`, `stops`, `clear-stop`, `ledger-reset`, `retire-legacy-stop`, `version` exit 0 | none (no verdict) | - | none |
-| 7 | `chain_singles.sh` exit 0 | each stamped line's gate exit 0; at least one line ran | gate status per line | missing spec runs nothing and exits 0 (m-D); last line without newline dropped (m-D); reset outside the lock (F-1) |
-| 8 | `launch_one.sh` exit 0 | the gate's status | `exec` | interpreter not isolated (m-G); no reset at all, so a leftover patch is admitted (F-3) |
-| 9 | `pin_run.sh` exit 0 | the pinned tree is complete | `set -e` on the extracting tar only | a failed archive is masked (m-J) |
-| 10 | `sync.sh` exit 0 | the commit's files shipped to the named home | tree_manifest ship + rsync | remote home hard-coded to the write-path owner's (live safety) |
-| 11 | `stage_results.py` exit 0 | VALID end, listed hash, cleared set, gate-attested commit, no overwrite | hash chain + head; one end VALID; listed hash | header-only input overwrites MANIFEST.tsv; code_commit from the row; group path unchecked; exp_rc ignored; clearance not checked (m-E, H-9) |
-| 12 | `clearance.py seal` exit 0 | stores proven, key store covered, scan 0 | `_store_reasons`, `_keystore_reasons`, scan | none found this round |
-| 13 | `clearance.py teardown` exit 0 | sealed containers gone, credentials removed, same daemon | as coded | none found this round |
-| 14 | `clearance.py stage-check` PASS exit 0 | receipt valid, set equal, containers gone, keystore covered | as coded | none found this round |
-| 15 | `clearance.py verify-copy` PASS exit 0 | a PASS check bound to the receipt, set equal, key store covered, daemon recorded, receipt v4+ | check + manifest | a v3 receipt sealed with `--no-keystore` passes (C-3 remainder, m-F) |
+## Path 1: `disk_gate run LABEL MODULE` exits 0 (the only path to a VALID end record)
+`_run` -> `_admit` (BLOCKED, exit 2, on any reason) -> experiment -> `_finish` -> `_report` returns 0 only when the
+reason list is empty; the end record then says VALID.
 
-## Plan (what each gap becomes)
-- F-1: the gate takes the lock, then runs `exp.cleanup` and `wp.setup --reset` itself (inherited lock fd); both tools
-  refuse while a run holds the lock; at end the PG database, schema and table identities (OIDs) must equal admission's.
-  ES: a direct index delete by a process that ignores the lock is not detectable without a marker inside the stream's
-  prefix (which the registry and the experiments would see): LIMITS.
-- F-2: VOID when exp_rc < 0 and the gate sent no signal; VOID when the gate's own cgroup memory.events oom_kill grew;
-  BLOCKED when that file cannot be read; stage_results refuses exp_rc not an int >= 0.
-- F-3: a read-only catalog snapshot (roles, attributes, memberships, role and database settings, ALTER SYSTEM entries,
-  databases and their ACLs, parameter ACLs; per database: schema, tables, ACLs, triggers and enabled state,
-  functions, constraints, indexes, default ACLs). Before the reset: cluster rules (BLOCK; the reset would repair role
-  attributes silently). After the reset: cluster and schema rules (BLOCK). At end: rules plus equality with the
-  admission snapshot (VOID).
-- F-4: C12 at admission (BLOCK) and end (VOID); ES users, roles, API keys and pipelines go to LIMITS.
-- C-3: verify-copy refuses a receipt older than clearance v4, a waived key store, and a receipt without a daemon.
-- m-B, m-C: every file is opened with O_NOFOLLOW|O_NONBLOCK and fstat-checked before reading; a non-regular entry is a
-  reason; hashes stream; JSON rows over a size cap are a reason.
-- m-D, m-E, m-G, m-H, m-I, m-J as named above; groups.tsv retired, MANIFEST.tsv never overwritten.
+| Conjunct | Established by (v6) | Test that violates only it | Was (aacf3c0) |
+|---|---|---|---|
+| C1 | `_take_run_lock` (non-blocking flock, held to the end of `_finish`); the experiment and the store tools get the descriptor (`pass_fds`); `wp/runlock.py` makes `wp.setup` and `exp.cleanup` refuse unless they hold the lock or get the gate's own descriptor | `test_g1_abort_while_the_launcher_lives_is_refused_and_a_second_run_blocks`, `test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock`, `test_held_lock_refuses`, `test_a_fresh_descriptor_of_the_lock_file_is_refused`, `test_a_descriptor_of_another_file_is_refused` | the tools took no lock (F-1) |
+| C2 | `_tree` at admission and in `_finish`: manifest equality (special entries are reasons, never opened: `_open_regular`), the gate's own SHA-256, `-B`, `-I` (`_isolated`), every `wp`/`exp` module under `ROOT + os.sep`; the experiment and tools start as `python -I -B runkit/isolated.py MODULE` with the `_exp_env` allowlist | `test_g2_tree_differing_from_its_commit_is_refused`, `test_g2_tree_changed_during_the_run_voids`, `test_g2_gate_that_is_not_the_commits_gate_is_refused`, `test_v6_mg_gate_not_isolated_blocks`, `test_v6_mg_experiment_runs_isolated_with_the_listed_environment`, `test_v6_mutant_module_from_a_sibling_directory_blocks`, `test_v6_mb_fifo_in_the_pinned_tree_blocks_without_hanging` | not isolated, env unrecorded (m-G); a FIFO hung the gate (m-B) |
+| C3 | `_fixtures` at admission and end | `test_g2_unregistered_fixture_is_refused`, `test_g2_changed_fixture_is_refused` | held |
+| C4 | `_run_tools(RESET_STEPS)` under the lock (a failure BLOCKS), then `_clean`; an ES list error is a reason | `test_v6_f1_failed_reset_blocks`, `test_g2_rows_left_in_a_table_block`, `test_g2_index_left_in_elasticsearch_blocks`, `test_g2_unregistered_store_blocks`, `test_p7_file_in_the_log_store_blocks`, `test_v6_mutant_es_clean_check_error_blocks` | reset ran outside the lock in the chain (F-1) |
+| C5 | the lock (C1) for the tools; `_catalog_diff` compares database, schema and table OIDs at end with admission's | `test_v6_f1_store_reset_during_the_run_voids`, `test_v6_f1_reset_and_cleanup_run_inside_the_run_lock`, `test_v6_f1_gate_runs_the_real_tools_isolated_with_its_lock` | none (F-1) |
+| C6 | `_catalog` + `_catalog_rules` before the reset (cluster rules), after it (all rules) and at end, + `_catalog_diff` at end; the expectation is `exp/guard_policy.py`, the one `wp/setup.py` applies | `test_v6_f3_role_attribute_weakened_before_the_reset_blocks`, `test_v6_f3_extra_membership_blocks`, `test_v6_f3_parameter_privilege_blocks`, `test_v6_f3_schema_drift_after_the_reset_blocks`, `test_v6_f3_delete_grant_during_the_run_voids`, `test_v6_f3_guard_trigger_disabled_during_the_run_voids`, `test_v6_f3_role_setting_changed_during_the_run_voids`, `test_v6_f3_scratch_database_during_the_run_voids`, `test_v6_f3_alter_system_during_the_run_voids`, `test_v6_f3_constraint_dropped_during_the_run_voids`, `test_v6_f3_unreadable_catalog_blocks`, `test_v6_f3_unreadable_catalog_at_end_voids`, `test_v6_guard_policy_is_bound_to_setup` | none (F-3) |
+| C7 | `_slow`, `_fast`, `_rules`, `_drift` (v4, unchanged) | `test_valid_run_passes` (positive) and the v4 list, e.g. `test_es_data_on_a_shared_volume_blocks`, `test_restart_voids`, `test_oom_kill_of_a_process_in_the_container_voids`, `test_swap_allowed_blocks`, `test_es_url_switched_to_another_node_during_the_run_voids` | held |
+| C8 | `_run_files`: every entry opened `O_NOFOLLOW`/`O_NONBLOCK` and fstat-checked, hashed streaming; rows over `ROW_CAP` are a reason; `gate_run` must equal the run id (None included) and `at` lie in the window | `test_g2_row_of_another_run_voids`, `test_v6_mutant_row_without_a_run_id_voids`, `test_g2_row_written_before_the_run_window_voids`, `test_g2_row_without_a_time_voids`, `test_v6_mb_fifo_in_the_run_directory_voids_without_hanging`, `test_v6_mc_row_over_the_size_cap_voids`, `test_v6_mc_large_run_file_is_hashed_in_bounded_memory`, `test_g2_end_record_lists_every_run_file_with_its_hash` | whole-file reads (m-C), FIFO hang (m-B) |
+| C9 | `_run`: exit status < 0 without a gate signal or disk stop is a reason; `_own_oom` (the gate's cgroup `memory.events` oom_kill) at admission (unreadable BLOCKS) and end; `_group_members` (a list failure is a reason); a gate signal is a reason | `test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids`, `test_v6_f2_oom_kill_in_the_gates_cgroup_voids`, `test_v6_f2_unreadable_own_cgroup_blocks`, `test_p11_process_outliving_the_experiment_voids`, `test_v6_mutant_group_list_failure_voids`, `test_p3_sigterm_during_the_run_voids`; positive: `test_v6_f2_nonzero_exit_by_itself_stays_valid`, `test_v6_mi_gate_leading_a_group_with_another_member_stays_valid` | exp_rc not judged, child OOM unseen (F-2); a leader gate counted its parent's jobs (m-I) |
+| C10 | `Ledger` (hash chain + head) in every step; `_ledger_why`; `_finish` writes a VOID second end when the run was already closed | `test_truncated_ledger_blocks`, `test_head_anchor_required`, `test_stop_in_the_window_voids_even_after_ack`, `test_end_requires_this_runs_admit_record` | a second end was not written (m-H) |
+| C11 | `free_gb` >= `START_GB` inside the locked admission; `_wait` polls every `POLL_S` and stops the experiment under `STOP_GB` (a reason); `_finish` checks `STOP_GB` and `CAP_GB` | `test_v6_gf1_admission_under_10_gb_free_blocks`, `test_v6_gf1_run_stops_itself_when_free_falls_under_8_gb`, `test_free_space_dropping_during_setup_blocks`, `test_own_files_growing_over_the_cap_voids`; positive `test_v6_gf1_run_is_admitted_at_12_gb_free` | 20 GB, no in-run stop |
+| C12 | `_home_users` at admission (BLOCK) and end (VOID): bind sources equal to or under `realpath(WP_HOME) + "/"`; a list or inspect failure is a reason | `test_v6_f4_container_using_this_home_blocks`, `test_v6_f4_container_using_this_home_during_the_run_voids`, `test_v6_f4_container_list_failure_blocks`; positive `test_v6_f4_container_mounting_a_sibling_directory_is_not_counted` | none (F-4) |
+
+## The other paths to exit 0
+| # | Path | Conjuncts | Established by | Test |
+|---|---|---|---|---|
+| 2 | `disk_gate verdict RUN` exit 0 | C10: exactly one end record, VALID | `_verdict`: no admit or no end exits 2; more than one end exits 3 | `test_v6_mh_second_end_record_makes_the_verdict_void`, `test_verdict_exit_codes` |
+| 3 | `_finish` on a run already closed | C10 | writes a VOID second end, so path 2 exits 3 | `test_v6_mh_second_end_record_makes_the_verdict_void` |
+| 4 | `disk_gate abort RUN REASON` exit 0 | writes VOID only (never VALID) | lock free, RUN is the open run, format in `ABORTABLE` (5, 6), process group empty | `test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused`, `test_g1_abort_naming_another_run_is_refused`, `test_g1_abort_of_an_older_gates_open_run_is_refused`, `test_v6_abort_closes_a_dead_v5_run` |
+| 5 | `preflight`, `init`, `stop`, `stops`, `clear-stop`, `ledger-reset`, `retire-legacy-stop`, `version` | no verdict | - | `test_g1_no_command_but_run_admits_or_closes_a_run` |
+| 6 | `runkit/chain_singles.sh` exit 0 | every stamped line's gate exited 0; at least one stamped line ran; no store tool outside the gate | `[ -f ] && [ -r ]` on the spec, `|| [ -n "$L" ]` for a last line without a newline, count S of stamped lines (0 exits 3), every step `python -I -B runkit/isolated.py`, no cleanup or reset in the chain | `test_md_missing_spec_exits_nonzero`, `test_md_last_line_without_a_newline_runs`, `test_md_spec_without_a_stamped_line_exits_nonzero`, `test_f1_chain_runs_no_store_tool_outside_the_gate`, `test_mg_every_step_runs_isolated`, `test_gate_void_stops_the_chain` |
+| 7 | `runkit/launch_one.sh` exit 0 | the gate's own status, gate isolated | `exec python -I -B runkit/isolated.py exp.disk_gate run` | `test_mg_every_step_runs_isolated` (the chain's steps), `test_v6_mg_gate_not_isolated_blocks` |
+| 8 | `pin_run.sh` exit 0 | the pinned tree is complete | each tar's status checked; on failure the partial tree and archive are removed, exit 2 | `test_mj_failed_archive_pins_nothing`, `test_pin_copies_the_tree` |
+| 9 | `sync.sh` exit 0 | the commit's files shipped to the named home only | `WP_REMOTE_HOME` (default the stream's), refused when absolute, with `..` or other characters | `test_sync_ships_to_the_named_home`, `test_sync_default_home_is_the_streams`, `test_sync_refuses_an_absolute_or_escaping_home` |
+| 10 | `runkit/stage_results.py` exit 0 | a cleared set (verify-copy 0); the ledger copy verifies and is the one the receipt sealed (to_seq record hash = tip); per file: one admit (v >= 6) and one end (gate v6+), VALID, ended at or before to_seq, exp_rc int >= 0, one commit in admit and end, listed with an equal hash, a plain group, not staged before | `cleared`, `ledger`, the per-row checks in `main` | `test_h9_set_without_a_passing_check_is_refused`, `test_h9_set_changed_after_clearance_is_refused`, `test_h9_ledger_copy_that_is_not_the_sealed_one_is_refused`, `test_h9_run_ended_after_the_seal_is_refused`, `test_edited_ledger_is_refused`, `test_file_of_a_void_run_is_refused`, `test_file_the_gate_did_not_list_is_refused`, `test_file_changed_after_the_run_is_refused`, `test_f2_experiment_killed_by_a_signal_is_refused`, `test_f2_missing_exit_status_is_refused`, `test_v5_run_is_refused`, `test_me_code_commit_is_the_gates_not_the_rows`, `test_me_group_that_is_a_path_is_refused`, `test_me_header_only_groups_file_stages_nothing_and_writes_no_manifest`, `test_me_staged_file_is_never_overwritten`; positive `test_file_listed_by_a_valid_end_record_is_staged` |
+| 11 | `clearance.py verify-copy` exit 0 | receipt v4+, key store covered, daemon recorded, every store proven gone, PASS check bound to the receipt, set equal to its manifest | `verify_copy` | `test_c3_v3_receipt_with_a_waived_key_store_fails_verify_copy`, `test_c3_receipt_without_a_daemon_fails_verify_copy`, `test_c3_waived_key_store_never_passes`; positive `test_c3_current_receipt_with_a_rebound_check_still_passes`, `test_verify_copy_on_a_copied_set` |
+| 12 | `clearance.py seal`, `teardown`, `stage-check` exit 0 | unchanged this round (section 7.4) | as coded | `test_seal_teardown_stage_check` and the rest of tests/test_clearance.py |
+
+## What no path establishes (LIMITS v6, printed with every verdict; GATE-DESIGN 9.4)
+- ES indices deleted during the run by a process that does not take the run lock (an older tree's `exp.cleanup`, a
+  direct DELETE): not inspected. ES users, roles, API keys, ingest pipelines and snapshot repositories: not inspected.
+- A catalog change made and reverted within the run: not seen (`test_v6_f3_change_reverted_within_the_run_is_a_stated_limit`
+  pins this as a limit, so a later fix must change the test).
+- The OOM counter is the gate's whole cgroup: an OOM kill of any process sharing it voids the run (fails closed).
+- Same-user tampering, root, a process that leaves the process group or cgroup on purpose (8.1).

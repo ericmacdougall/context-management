@@ -1,7 +1,17 @@
 # Write-path lab results (GoodQA #16096)
 
 Raw result documents copied from the lab host. The only change from the host copies is that the host home directory
-prefix in paths is shortened to `~/`. `MANIFEST.tsv` lists, for every file, the sha256 of the host copy (the hash the
+prefix in paths is shortened to `~/`.
+
+**Two manifests (review aacf3c0 m-E, 2026-11-18).** `MANIFEST.tsv` (203 lines, below) and `runkit/groups.pre-v5.tsv`
+(198 rows, formerly `runkit/groups.tsv`) are the pre-v5 provenance record: every file they list was produced under a
+gate before v5 (or none), is bound to no v6 admit or end record, and keeps the label (VOID, observation, step-1 batch)
+written with it. They are kept as they are; `runkit/stage_results.py` never writes `MANIFEST.tsv` and cannot stage those
+rows. Files staged from gate v6 runs are listed in `MANIFEST.v6.tsv` (group, run, file, code_commit from the gate's admit
+and end records, both sha256 values, end seq, label, cleared set), with the set's clearance receipt under
+`clearance/<set>/`.
+
+`MANIFEST.tsv` lists, for every file, the sha256 of the host copy (the hash the
 `RESULT` lines of `run_all.*.out` print, and the 16-hex suffix of the file name) and the sha256 of the committed copy.
 Result documents are meant to carry ids and hashes only. **Leak-scan limits (review A5):** an earlier version of this
 line said a leak scan of every file against the lab's live secret values found none. That statement rests only on

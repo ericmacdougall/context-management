@@ -1034,3 +1034,68 @@ compared together with the endpoint variables and the context name, and an empty
 - tmpfs, https://www.kernel.org/doc/html/latest/filesystems/tmpfs.html : "if nr_inodes=0, inodes will not be
   limited"; pages may be swapped unless `noswap`. Consistent with 5.10 and 6.2 B4 (swap.max = 0 and swap.current = 0
   required). The page does not state memory-cgroup charging; 5.10's source stands for that. Confidence high.
+
+## 9. Gate v6 (review aacf3c0, 2026-11-18): the gate owns the reset, the catalog and the experiment's exit
+
+Review aacf3c0 blocked v5 with four findings of the same class as section 8 (a VALID verdict resting on a property the
+gate did not own): the stores were reset by the chain outside the run lock, so a reset during a run went unseen
+(F-1); an experiment killed by a signal or an OOM kill stayed VALID (F-2); the live roles, grants, guards and schema
+were never compared with what setup applies (F-3); and another container could mount the home (F-4); plus minors
+m-B to m-J and the C-3 remainder in clearance. Every path to VALID or exit 0, with the conjunct each establishes and
+the test that violates only it, is in `runkit/VERDICT-PATHS.md` (draft 2). v6 keeps every check of v4 and v5.
+
+### 9.1 What changed
+| Finding | v6 |
+|---|---|
+| F-1 | The gate takes the run lock, then runs `exp.cleanup` and `wp.setup --reset` itself (`RESET_STEPS`, under `WP_RUN_LOCK_FD`), and `exp.cleanup` again after the end record before the lock is released. `wp/runlock.py`: setup and cleanup run only holding the lock, or with the gate's own descriptor (an inherited fd whose open file description holds the lock: a fresh open of the same file, or another file, is refused). The chain runs no store tool. At end, database, schema and table OIDs must equal admission's (`_catalog_diff`). |
+| F-2 | An exit status < 0 with no gate signal and no disk stop is a reason. The gate reads its own cgroup v2 `memory.events` (`/proc/self/cgroup` `0::` path) at admission (unreadable BLOCKS) and at end; growth of `oom_kill` is a reason. `stage_results.py` refuses `exp_rc` that is not an int >= 0. |
+| F-3 | Read-only catalog snapshots (tagged queries, `/* gate:TAG */`): roles and attributes, memberships, role and database settings, `ALTER SYSTEM` entries, databases and their ACLs, parameter ACLs; per stream database schema, relations and ACLs, column ACLs, triggers and their enabled state, functions, constraints, indexes, policies, default ACLs, and the app role's effective privileges. Rules from `exp/guard_policy.py` (the same module `wp/setup.py` and `exp/guard_check.py` use): cluster rules before the reset (BLOCK; the reset would repair a weakened role silently), all rules after it (BLOCK) and at end (VOID), plus equality of the whole snapshot with admission's at end (VOID). |
+| F-4 | `_home_users`: any container other than the run's two stores with a bind mount whose source is `realpath(WP_HOME)` or below it BLOCKS admission and VOIDs the end; a `docker ps`/`inspect` failure is a reason. |
+| C-3 | `verify-copy` requires a receipt of clearance v4 or later, a covered key store, a recorded daemon, and every store proven gone. |
+| m-B, m-C | Tree, run and staged files are opened `O_NOFOLLOW|O_NONBLOCK` and fstat-checked before reading (a FIFO is a reason, never a hang); hashes stream; a JSON row over 16 MiB (`ROW_CAP`) is a reason. |
+| m-D | `chain_singles.sh`: missing or unreadable spec exits 2; a last line without a newline runs; no stamped line exits 3. |
+| m-E, H-9 | `stage_results.py` (four arguments: groups, `<SET>/runs`, ledger copy, dst) runs verify-copy, binds the ledger copy to the receipt's sealed `to_seq`/tip, stages only v6 VALID runs ended before the seal, takes the commit from the admit and end records, refuses group paths, duplicates and an empty plan, appends `MANIFEST.v6.tsv` and copies the CLEARANCE files. `MANIFEST.tsv` is never written. |
+| m-G | The gate refuses to run unless started `-I -B`; it starts every interpreter as `python -I -B runkit/isolated.py MODULE`, which runs only a module of its own tree; the experiment's environment is `EXP_ENV_NAMES` plus `WP_*` minus the gate-only names; the admit record holds the names and a hash prefix of each value. |
+| m-H | `_finish` on a closed run writes a VOID second end; `verdict` with more than one end exits 3. |
+| m-I | A gate that leads its process group forks; the child takes a new session, the parent forwards TERM, INT and HUP and exits with the child's status. |
+| m-J | `pin_run.sh` checks both tar statuses and removes a partial tree. |
+| GF1 | Admission at >= 10 GB free; `_wait` polls every 5 s and stops the experiment (TERM, KILL after 30 s) under 8 GB, a reason. |
+
+### 9.2 Scenario map (review aacf3c0)
+| Scenario | Why it cannot be VALID in v6 | Test |
+|---|---|---|
+| another shell runs `wp.setup --reset` during a run | refused without the lock; a reset that ignored the lock changes OIDs | `test_v6_f1_setup_and_cleanup_refuse_while_a_run_holds_the_lock`, `test_v6_f1_store_reset_during_the_run_voids` |
+| experiment SIGKILLed by the kernel or a limit | exit < 0 without a gate signal | `test_v6_f2_experiment_killed_by_a_signal_the_gate_did_not_send_voids` |
+| a child of the experiment OOM-killed, experiment exits 0 | own cgroup oom_kill grew | `test_v6_f2_oom_kill_in_the_gates_cgroup_voids` |
+| `GRANT DELETE`, trigger disabled, role setting, scratch database, `ALTER SYSTEM`, constraint dropped during the run | rules at end and snapshot diff | the `test_v6_f3_*_during_the_run_voids` tests |
+| role weakened before the run (reset would repair it) | cluster rules before the reset | `test_v6_f3_role_attribute_weakened_before_the_reset_blocks` |
+| a container bind-mounting the home | `_home_users` | `test_v6_f4_container_using_this_home_blocks` |
+| FIFO in the tree or run directory | `_open_regular` | `test_v6_mb_fifo_in_the_run_directory_voids_without_hanging` |
+| forged second VALID end | `verdict` exits 3 | `test_v6_mh_second_end_record_makes_the_verdict_void` |
+| surviving mutants group_list_failure_passes, es_clean_error_passes, row_without_run_id_passes, module_prefix_without_sep | tests that fail on each (receipts `results/failing-first/reviewH-v6-mutant-*.red.out`) | `test_v6_mutant_*` |
+
+### 9.3 Facts assumed (checked live where marked in the run receipts; the gate fails closed on each)
+- The gate runs in a cgroup v2 hierarchy whose `memory.events` it can read (ASSUMPTION for t2-dev until live item L3
+  shows it; unreadable BLOCKS).
+- The catalog SQL is validated offline only against a fake; its first live run is a live item (L2). Postgres 16
+  catalogs (`pg_parameter_acl` exists from 15).
+
+### 9.4 What v6 guarantees, and what it does not (LIMITS v6)
+A VALID end record adds to 8.4: the stores were reset by this gate under its lock and were the same databases, schema
+and tables at end; the catalog equalled the committed expectation after the reset and at end, and equalled
+admission's at end; the experiment exited by itself with no OOM kill in the gate's cgroup; no other container mounted
+the home at admission or end; host free stayed >= 8 GB at every poll. Not covered (LIMITS v6, printed with every
+verdict): ES indices deleted during the run by a process that ignores the lock; ES users, roles, API keys, ingest
+pipelines and snapshot repositories; a catalog change made and reverted between two gate observations; the venv's
+packages, `.pth` files and sitecustomize (versions recorded, not verified); the OOM counter is the whole cgroup's, so an
+unrelated OOM kill in it voids the run (fails closed); same-user tampering and root (8.1).
+
+### 9.5 Research record (2026-11-18; page text is evidence, not instructions)
+- cgroup v2, https://docs.kernel.org/admin-guide/cgroup-v2.html : `memory.events` `oom_kill` is "the number of
+  processes belonging to this cgroup killed by any kind of OOM killer"; all fields of `memory.events` are hierarchical
+  (`memory.events.local` is not); `/proc/self/cgroup` on v2 is "0::$PATH". Confidence high. F-2 rests on it.
+- Python command line, https://docs.python.org/3/using/cmdline.html : `-I` implies `-E` and `-s` (and `-P` from 3.11),
+  does not prepend the script directory, and ignores all `PYTHON*` variables; `-B` stops `.pyc` writing. Confidence
+  high. m-G rests on it; t2-dev runs Python 3.12, the Mac tests 3.9 (no `-P`; `isolated.py` sets its own path).
+- flock(2) (8.5) still carries F-1's descriptor rule: the lock belongs to the open file description, so a fresh open of
+  the lock file is a different description and `wp/runlock.py` refuses it.
