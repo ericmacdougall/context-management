@@ -2117,6 +2117,34 @@ class Gate(unittest.TestCase):
         self.F.cat("wp_events", "policies", "add", "events", "p_all", "ALL", "{public}", "true", "true")
         self.assertOnly(*self.call("end"), 3, "catalog wp_events.policies changed")
 
+    def bootstrap_cluster(self):
+        """What host/bootstrap.py (committed in the same tree) leaves on the cluster: the legacy login roles emlab and
+        kms, kms in pg_checkpoint, their databases emlab and keys, and the node's ALTER SYSTEM settings."""
+        for r in ("emlab", "kms"):
+            self.F.cat("cluster", "roles", "add", r, "False", "True", "False", "False", "True", "False", "False")
+        self.F.cat("cluster", "members", "add", "pg_checkpoint", "kms")
+        self.F.cat("cluster", "databases", "add", "emlab", "30001", "True", "emlab", "")
+        self.F.cat("cluster", "databases", "add", "keys", "30002", "True", "kms", "")
+        for k, v in (("archive_mode", "off"), ("max_connections", "200"), ("max_wal_size", "256MB"),
+                     ("min_wal_size", "64MB"), ("wal_keep_size", "0"), ("wal_recycle", "off")):
+            self.F.cat("cluster", "auto_conf", "add", k, v, "True")
+
+    def test_v6_f3_cluster_as_bootstrap_leaves_it_is_admitted(self):
+        # live item GF16096-L1 (t2-dev, 2026-11-18): v6 at 8dbc368 BLOCKED a cluster host/bootstrap.py had built
+        self.bootstrap_cluster()
+        self.start()
+        self.assertValid(*self.call("end"))
+
+    def test_v6_f3_legacy_role_weakened_blocks(self):
+        self.bootstrap_cluster()
+        self.F.cat("cluster", "roles", "set", "kms", "True", "True", "False", "False", "True", "False", "False")
+        self.assertOnly(*self.call("start"), 2, "before the store reset: role kms has rolsuper=True")
+
+    def test_v6_f3_alter_system_value_other_than_bootstraps_blocks(self):
+        self.bootstrap_cluster()
+        self.F.cat("cluster", "auto_conf", "set", "max_wal_size", "64GB", "True")
+        self.assertOnly(*self.call("start"), 2, "an ALTER SYSTEM setting that is not committed: max_wal_size = 64GB")
+
     def test_v6_f3_extra_membership_blocks(self):
         self.F.cat("cluster", "members", "add", "pg_read_server_files", "wp_app")
         self.assertOnly(*self.call("start"), 2, "member of pg_read_server_files")

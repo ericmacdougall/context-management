@@ -1225,19 +1225,20 @@ def _catalog_rules(snap, phase):
     admin, login = config.PG_USER, set(GP.LOGIN_ROLES)
     expected = login | {GP.OWNER_ROLE}
     roles = {r[0]: r for r in cl["roles"]}
-    for n in sorted(set(roles) - expected - {admin}):
+    legacy = set(GP.LEGACY_ROLES)                   # host/bootstrap.py's roles: allowed, not required
+    for n in sorted(set(roles) - expected - legacy - {admin}):
         why.append(f"a role outside the committed set: {n}")
     for n in sorted(expected - set(roles)) if strict else ():
         why.append(f"committed role {n} is missing")
     cols = ("rolsuper", "rolinherit", "rolcreaterole", "rolcreatedb", "rolcanlogin", "rolreplication", "rolbypassrls")
-    for n in sorted(expected & set(roles)):
+    for n in sorted((expected | legacy) & set(roles)):
         got = dict(zip(cols, roles[n][1:]))
-        want = dict(GP.ROLE_FLAGS, rolcanlogin=n in login)
+        want = dict(GP.ROLE_FLAGS, rolcanlogin=n in login or n in legacy)
         bad = [f"{k}={got.get(k)}" for k in cols if str(want[k]) != got.get(k)]
         if bad:
             why.append(f"role {n} has {', '.join(bad)} (not its committed attributes)")
     members = {(r[0], r[1]) for r in cl["members"] if r[1] != admin}
-    for g, m in sorted(members - GP.MEMBERSHIPS):
+    for g, m in sorted(members - GP.MEMBERSHIPS - GP.LEGACY_MEMBERSHIPS):
         why.append(f"role {m} is a member of {g} (not a committed membership)")
     for g, m in sorted(GP.MEMBERSHIPS - members) if strict else ():
         why.append(f"committed membership of {m} in {g} is missing")
@@ -1253,8 +1254,11 @@ def _catalog_rules(snap, phase):
             why.append(f"role {r} has none of its committed settings ({want})")
     dbs = {r[0]: r for r in cl["databases"]}
     stream = {"events": config.EVENTS_DB, "keys": config.KEYS_DB}
-    for n in sorted(set(dbs) - set(GP.SYSTEM_DATABASES) - set(stream.values())):
+    for n in sorted(set(dbs) - set(GP.SYSTEM_DATABASES) - set(stream.values()) - set(GP.LEGACY_DATABASES)):
         why.append(f"a database outside the committed set: {n}")
+    for n, owner in sorted(GP.LEGACY_DATABASES.items()):
+        if n in dbs and dbs[n][3] != owner:
+            why.append(f"the legacy database {n} is owned by {dbs[n][3]} (committed: {owner})")
     for k, n in sorted(stream.items()):
         if n not in dbs:
             if strict:
@@ -1269,7 +1273,8 @@ def _catalog_rules(snap, phase):
     for r in cl["parameter_acl"]:
         why.append(f"a parameter privilege that is not committed: {r[0]} {r[1][:120]}")
     for r in cl["auto_conf"]:
-        why.append(f"an ALTER SYSTEM setting that is not committed: {r[0]} = {r[1][:80]}")
+        if GP.AUTO_CONF.get(r[0]) != r[1]:          # host/bootstrap.py's node settings, value as written
+            why.append(f"an ALTER SYSTEM setting that is not committed: {r[0]} = {r[1][:80]}")
     if phase == "before":
         return why
     ev, ks = snap[config.EVENTS_DB], snap[config.KEYS_DB]

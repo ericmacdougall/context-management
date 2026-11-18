@@ -32,3 +32,11 @@ MEMBERSHIPS = {("pg_checkpoint", "wp_kms"), ("pg_read_all_stats", "wp_kms"), ("p
                ("pg_read_all_stats", "wp_watchdog")}                 # (granted role, member)
 CONNECT = {"events": ("wp_app", "wp_verifier", "wp_legal", "wp_broker"), "keys": ("wp_kms", "wp_verifier")}
 SYSTEM_DATABASES = ("postgres", "template0", "template1")
+# host/bootstrap.py (the legacy home old_repro runs, and the node's settings): login roles with ROLE_FLAGS and no
+# settings, their databases (name: owner), one membership, and the ALTER SYSTEM values (name: value as written).
+# Allowed, never required (wp.setup does not create them); any other value or object is a reason.
+LEGACY_ROLES = ("emlab", "kms")
+LEGACY_DATABASES = {"emlab": "emlab", "keys": "kms"}
+LEGACY_MEMBERSHIPS = {("pg_checkpoint", "kms")}
+AUTO_CONF = {"max_wal_size": "256MB", "min_wal_size": "64MB", "wal_recycle": "off", "wal_keep_size": "0",
+             "archive_mode": "off", "max_connections": "200"}
