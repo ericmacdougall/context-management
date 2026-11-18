@@ -31,7 +31,7 @@ Proof status (2026-11-18, after the delta review of 6b77354; a fixer's report, N
   section 3), while the first `expiry_noop` ran and was NOT caught; the mutants of 87e0843 have NOT run (above). F3 (fence
   before eviction) and F8 (install grants) are red only as `mechanism` and F6, F7 have no red test: by the strict rule they have
   no failing-first evidence of a defect.
-- DEV seeds at the final code (tree 20da971, development observations, not proof): b3_pg PASS (54 s; the idem_unprotected control
+- DEV seeds at 6b77354's code (tree 20da971, NOT the port base; not re-run at 81279dd; development observations, not proof): b3_pg PASS (54 s; the idem_unprotected control
   caught 50 of 50 with the overlap witnessed in 49); s2_sessions PASS (1860 rows, 0 accepted attacks); the complete
   pg_diff VOID (t2-dev free space fell under 15 GiB, not by my files; b2 had finished clean, 300 logs, 45,206 events, 0
   mismatches; B1 was cut). The last complete DEV pg_diff is still the fixer's at e816310, before the 4.4 code.
@@ -66,7 +66,7 @@ exact lock identities and the 2PC refusal (the fixer's choices, not the user's).
 | Python oracle | `pol/_core.py` | `reduce(view, ev) -> (code, original_code, delta)`, `MemoryState(cfg)` with `apply_delta`, `comparable()` (CORE-RULES section 8) and `snapshot()`; `REFUSED`, `APPLIED`. The differential reference for the port. |
 | Normative rules | `CORE-RULES.md` | Genesis, event format, outcome rules (first match wins; a refused code changes nothing), resolve, effects, bookkeeping, liveness bound, canonical forms and the comparable view. |
 | Fixtures | `fixtures/step3/` (`b2.jsonl.gz`, `b1.jsonl.gz`, `MANIFEST.json`), `exp/fixtures_step3.py` | B2 logs (60, 9859 events) and the five B1 scenarios as breadth-first trees (3042 nodes, 16946 edges) with the oracle's expected `(code, original)`, applied lists and comparable-view hashes. `python -m exp.fixtures_step3 export <dir> --full` writes the set at the stamped depths (1.17 M B1 transitions; not committed). Development fixtures, not proof. |
-| Acceptance tests | `tests/test_pg_boundary.py`, `tests/test_pg.py`, `tests/test_step2_pg.py`, `tests/test_delta1_pg.py`, `tests/test_review3_pg.py`, `tests/test_s1_pg.py`, `tests/test_final_pg.py`, `tests/test_s44_pg.py`, `tests/test_rev2262_pg.py`, `tests/test_rev2262.py`, `tests/test_fixtures_step3_set.py`,
+| Acceptance tests | `tests/test_pg_boundary.py`, `tests/test_pg.py`, `tests/test_step2_pg.py`, `tests/test_delta1_pg.py`, `tests/test_review3_pg.py`, `tests/test_s1_pg.py`, `tests/test_final_pg.py`, `tests/test_s44_pg.py`, `tests/test_rev2262_pg.py`, `tests/test_rev6b77_pg.py`, `tests/test_rev2262.py`, `tests/test_fixtures_step3_set.py`,
 `tests/test_fixtures_step3_protocol.py`; `exp/pg_diff.py`, `exp/b3_pg.py`, `exp/s2_sessions.py` | What the core proves today. The port is complete when the same checks run green against the write-path schema (COMPOSITION.md, "Recommendation"). |
 
 Fixture formats are in the docstring of `exp/fixtures_step3.py`. A B2 log is submitted event by event on a fresh tenant
@@ -196,7 +196,8 @@ Lock order (READ COMMITTED; FINAL-JUDGMENT.md 4.2 is normative, `dc._at` enforce
 - L0 relation locks, one table per statement, alphabetical;
 - L1 the authority lock A(tenant, principal), advisory class 1145241601, key = the principal row's `lockid` (`dc._ak`; review of
   2262eaa F1: no longer a 32-bit hash of the name): shared by every call of the principal, exclusive for a revoke of it (only when
-  the target is a principal of the caller's tenant), an `end_session` of its session, or `dc.revoke_factor`;
+  the target is a principal of the caller's tenant and the pre-read of L3 predicts that the revoke applies, review of 6b77354 N2),
+  an `end_session` of its session, or `dc.revoke_factor`;
 - L2 the authority rows: the caller's session, factor and principal FOR SHARE (the pins); a revoke's target principal and session
   rows FOR NO KEY UPDATE;
 - L3 the tenant lock T(tenant), advisory class 1145241602, key = the tenant row's `lockid` (`dc._tk`): shared by ordinary
