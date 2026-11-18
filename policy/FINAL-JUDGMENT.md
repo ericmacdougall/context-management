@@ -201,10 +201,16 @@ further cap. Past it, the call fails with SQLSTATE 55P03: nothing is applied, it
 - **Tenant stall.** While a revoke, grant or erasure is queued for T, new submits of the tenant queue behind it. That lasts at most
   XWAIT per attempt.
 - **`end_session`** waits FIFO, at most XWAIT, for the in-flight calls of the session's principal.
-- **Residual:** a dc_app connection that resets its own idle timeout (the setting is user-settable) and holds a transaction after a
-  call makes revocations of that principal fail retryably after XWAIT, for as long as it holds. The revoke never waits longer and
-  never applies partially. A bound would need eviction (`pg_terminate_backend`, with dc_owner granted `pg_signal_backend`), which
-  is a privilege decision for the coordinator; it is not taken here.
+- **Residual (open, material; the coordinator's decision):** the target principal's own connection can block its revocation. After
+  a call, a dc_app connection keeps the call's locks (A shared and the pinned rows) until its transaction ends, and two ways keep that
+  transaction open past the 60 s idle timeout: resetting the timeout (the setting is user-settable), or never being idle (a
+  long-running statement such as `pg_sleep`, or a stream of statements, in the same transaction; `statement_timeout` is user-settable
+  too). Either way, revocations of that principal fail retryably after XWAIT for as long as it holds. The revoke never waits longer
+  and never applies partially, and the blocked principal's own calls keep working: this is new with S1 (before S1 a revoke skipped or
+  raced such a holder). PostgreSQL 16 has no server-enforced `transaction_timeout` (added in 17), and no setting can be made
+  non-user-settable for a role. A bound needs eviction: after XWAIT, the revoke terminates the backends holding A(target)
+  (`pg_terminate_backend`, with dc_owner granted `pg_signal_backend`). That is a privilege decision for the coordinator; it is not
+  taken here.
 
 ### 4.5 Deadlocks
 

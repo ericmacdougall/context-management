@@ -208,8 +208,9 @@ the examples and default deny are what ships.
   to no value); any login role can take the advisory locks (`pg_advisory_xact_lock` is PUBLIC: the idempotency lock and A, T, S and
   N of S1) or hold rows in an open transaction, and so delay other callers, at most until each caller's expiry (J2), and a held A
   or T makes revokes and erasures fail retryably after XWAIT. That is a denial of service, never a wrong decision. A `dc_app`
-  connection can also reset its own idle timeout and hold a transaction after a call; revocations of that principal then fail
-  retryably for as long as it holds. Bounding that needs eviction (`pg_terminate_backend` with `pg_signal_backend` granted), a
-  privilege decision not taken here (FINAL-JUDGMENT.md 4.4).
+  connection can also keep a transaction open after a call, past the idle timeout, by resetting that timeout or by never being idle
+  (a long-running statement or a stream of statements in it); revocations of that principal then fail retryably for as long as it
+  holds. Bounding that needs eviction (`pg_terminate_backend` with `pg_signal_backend` granted), a privilege decision for the
+  coordinator, open and not taken here (FINAL-JUDGMENT.md 4.4).
 - The pin is checked after the call. Local endpoints are not attested.
 - The composed system (COMPOSITION.md) is not built.

@@ -170,6 +170,7 @@ class S1_PinnedAuthority(_S1):
     def _submit_point(self, hold, req="r1", subject=False, hold_conn=None, hows=POST):
         for how in hows:
             with self.subTest(mutation=how):
+                self.unrevoke("alice")        # state of an earlier subtest whose assertion failed before its cleanup (red runs)
                 subj = "s" + secrets.token_hex(4) if subject else None
                 tok, cid = self.tok("alice"), "c" + secrets.token_hex(4)
                 body = self.body(cid, "text " + cid, subjects=[subj] if subj else (), req=req)
@@ -209,6 +210,7 @@ class S1_PinnedAuthority(_S1):
     def _erase_point(self, hold, hows=POST):
         for how in hows:
             with self.subTest(mutation=how):
+                self.unrevoke("admin")
                 ref = self.submit(self.app, self.tok("alice"), self.body(None, "about dana", subjects=["dana"]))["value_ref"]
                 tok = self.tok("admin")
                 call = lambda t=tok: self.app.execute("select dc.erase_values(%s, 'dana', %s)", (t, [ref])).fetchone()[0]   # noqa: E731
@@ -262,6 +264,7 @@ class S1_BeforeThePins(_S1):
     def _before(self, call, ok, hold, hows, pid="alice"):
         for how in hows:
             with self.subTest(mutation=how):
+                self.unrevoke(pid)
                 tok = self.tok(pid)
                 r, waited = self.blocked(self.app, lambda: call(tok), hold, how, tok, pid)
                 self.assertTrue(waited, "vacuous: the call did not wait")
@@ -293,6 +296,7 @@ class S1_BeforeThePins(_S1):
                                  ("factors", "update dc.factors set revoked = true where factor = (select factor from dc.sessions where token_hash = %(h)s)", UNAUTH),
                                  ("principal", "update dc.principal set revoked = true where tenant = %(t)s and pid = 'alice'", "principal_revoked")):
             with self.subTest(table=table):
+                self.unrevoke("alice")
                 tok, cid = self.tok("alice"), "c" + secrets.token_hex(4)
                 r, waited = self.blocked(self.app, lambda: self.submit(self.app, tok, self.body(cid, "w", req="r2")),
                                          lambda c, sql=sql: c.execute(sql, {"h": self.h(tok), "t": T}), "live", tok, "alice")
@@ -327,6 +331,7 @@ class S1_RevokePath(_S1):
         for how in POST:
             with self.subTest(mutation=how):
                 self.unrevoke(target)
+                self.unrevoke("admin")
                 if before:
                     before()
                 tok = self.tok("admin")
@@ -354,6 +359,7 @@ class S1_RevokePath(_S1):
         for how, want in (("principal", "principal_revoked"), ("factor", UNAUTH)):
             with self.subTest(how):
                 self.unrevoke("bob")
+                self.unrevoke("admin")
                 tok = self.tok("admin")
                 r, waited = self.blocked(self.app, lambda: self.submit(self.app, tok, self.revoke_body("bob")),
                                          lambda c: c.execute("lock table dc.sessions in share mode"), how, tok, "admin")
@@ -872,6 +878,7 @@ class S1_OpenSession(_S1):
         landed during the wait and B was refused). B's session is refused once the revocation lands."""
         for how in (None, "factor", "principal"):
             with self.subTest(mutation=how):
+                self.unrevoke("bob")
                 r, waited, f = self._twin(how, "rollback")
                 self.assertIn("token", r, "%r" % (r,))
                 if how:
