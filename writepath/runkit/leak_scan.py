@@ -85,7 +85,7 @@ LIMITS = ("LIMITS v4 (GATE-DESIGN 7.5): found = 16 consecutive characters of one
 MEM = "memory only: dies with the ES realm at teardown (GATE-DESIGN 7.4); no issuer-side check exists (FS2)"
 SITES = [
     ("exp/disk_gate.py", "_new_id", "os.urandom", 1, "stop id", "not secret", False),
-    ("exp/disk_gate.py", "_start", "os.urandom", 1, "run id", "not secret", False),
+    ("exp/disk_gate.py", "_admit", "os.urandom", 1, "run id (128 bits; gate v5)", "not secret", False),
     ("exp/h_probe_es.py", "bulk", "secrets.token_hex", 1, "probe document id", "not secret", False),
     ("exp/h_probe_es.py", "mint", "http POST _security/api_key", 1, "probe API keys", MEM + "; sink H-4", True),
     ("exp/h_probe_es.py", "setup", "secrets.token_urlsafe", 1, "probe broker password",

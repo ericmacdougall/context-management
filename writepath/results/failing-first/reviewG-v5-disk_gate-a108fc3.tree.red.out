@@ -1,0 +1,364 @@
+# failing-first receipt
+# date: 2026-11-18T08:59:16Z
+# file under test: a108fc3:writepath/exp/disk_gate.py blob 1d5e1f9c6ab2b8a8eea061cccc2d9bd90e4ba4e5 sha256 dd9fe307bfdaf02e725918dc72e3deb4037cda4ac41573f53bf2923b7d5a3b6a
+# tree: writepath at a108fc3 (git archive); the current tests/ copied into it; run from it; nothing imported from the current tree
+# test file: tests/test_disk_gate.py from HEAD 53920bf blob 28f6e42a19e7c7bf33ad5a29e1a22c9b653029c2
+# command: (cd <tree>/writepath && DISK_GATE_UNDER_TEST=<that file> python3 - <tests> < runner) with tests: tests.test_disk_gate
+test_a_mount_inside_the_data_directory_blocks (tests.test_disk_gate.Gate) ... ok
+test_admin_role_that_cannot_read_server_files_blocks (tests.test_disk_gate.Gate) ... ok
+test_another_pg_server_at_the_experiments_endpoint_blocks (tests.test_disk_gate.Gate) ... ok
+test_api_key_is_sent_and_never_written (tests.test_disk_gate.Gate) ... ok
+test_cgroup_not_naming_the_container_blocks (tests.test_disk_gate.Gate) ... ok
+test_cgroup_unreadable_blocks (tests.test_disk_gate.Gate) ... ok
+test_dangling_link_under_the_data_mount_blocks (tests.test_disk_gate.Gate) ... ok
+test_data_directory_overriding_pgdata_blocks (tests.test_disk_gate.Gate) ... ok
+test_deleted_ledger_blocks (tests.test_disk_gate.Gate) ... ok
+test_disk_threshold_check_disabled_at_admission_blocks (tests.test_disk_gate.Gate) ... ok
+test_disk_threshold_check_disabled_persistently_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_docker_oomkilled_flag_blocks (tests.test_disk_gate.Gate) ... ok
+test_end_requires_this_runs_admit_record (tests.test_disk_gate.Gate) ... ok
+test_endpoint_switched_to_another_pg_server_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_es_api_unreadable_at_end_voids (tests.test_disk_gate.Gate) ... ok
+test_es_api_unreadable_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_data_link_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_data_on_a_shared_volume_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_node_id_changed_voids (tests.test_disk_gate.Gate) ... ok
+test_es_reporting_another_data_path_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_reporting_another_filesystem_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_threshold_changed_voids (tests.test_disk_gate.Gate) ... ok
+test_es_tmpfs_not_above_limit_plus_threshold_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_url_answered_by_another_node_process_blocks (tests.test_disk_gate.Gate) ... ok
+test_es_url_switched_to_another_node_during_the_run_voids (tests.test_disk_gate.Gate) ... ok
+test_every_verdict_states_the_gate_and_its_limits (tests.test_disk_gate.Gate) ... ok
+test_flood_stage_block_on_an_index_voids (tests.test_disk_gate.Gate) ... ok
+test_free_space_dropping_during_setup_blocks (tests.test_disk_gate.Gate) ... ok
+test_g1_abort_naming_another_run_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g1_abort_while_the_experiment_outlives_its_launcher_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g1_abort_while_the_launcher_lives_is_refused_and_a_second_run_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_g1_late_call_of_a_dead_launcher_cannot_touch_another_run (tests.test_disk_gate.Gate) ... FAIL
+test_g1_no_command_but_run_admits_or_closes_a_run (tests.test_disk_gate.Gate) ... FAIL
+test_g2_bytecode_cache_in_the_tree_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_changed_fixture_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_dirty_head_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_end_record_lists_every_run_file_with_its_hash (tests.test_disk_gate.Gate) ... FAIL
+test_g2_gate_that_is_not_the_commits_gate_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_index_left_in_elasticsearch_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_g2_row_of_another_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_g2_rows_left_in_a_table_block (tests.test_disk_gate.Gate) ... FAIL
+test_g2_tree_changed_during_the_run_voids (tests.test_disk_gate.Gate) ... FAIL
+test_g2_tree_differing_from_its_commit_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_unregistered_fixture_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_unregistered_store_blocks (tests.test_disk_gate.Gate) ... FAIL
+test_g2_untracked_file_in_the_tree_is_refused (tests.test_disk_gate.Gate) ... FAIL
+test_g2_write_result_stamps_the_run_and_writes_into_its_directory (tests.test_disk_gate.Gate) ... FAIL
+test_g3_experiment_text_never_becomes_the_verdict (tests.test_disk_gate.Gate) ... FAIL
+test_head_anchor_required (tests.test_disk_gate.Gate) ... ok
+test_index_created_during_the_run_with_es_defaults_stays_valid (tests.test_disk_gate.Gate) ... ok
+test_ledger_cut_back_past_its_adoption_is_not_readopted_silently (tests.test_disk_gate.Gate) ... ok
+test_ledger_reset_keeps_the_broken_ledger (tests.test_disk_gate.Gate) ... ok
+test_ledger_reset_refuses_an_intact_ledger (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_copied_during_finalization_is_never_lost (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_entry_overwritten_in_the_window_voids (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_file_blocks_and_stays_where_it_was_written (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_overwritten_during_finalization_is_never_lost (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_touched_during_finalization_is_never_lost (tests.test_disk_gate.Gate) ... ok
+test_legacy_stop_written_in_the_window_voids_and_persists (tests.test_disk_gate.Gate) ... ok
+test_limit_raised_and_restored_with_a_peak_over_the_bound_voids (tests.test_disk_gate.Gate) ... ok
+test_m1_forged_probe_lines_through_a_crafted_link_name_block (tests.test_disk_gate.Gate) ... FAIL
+test_m2_baseline_rewritten_by_the_run_does_not_hide_a_replaced_store (tests.test_disk_gate.Gate) ... FAIL
+test_m4_missing_startedat_at_end_voids (tests.test_disk_gate.Gate) ... FAIL
+test_m6_every_gate_pg_connection_sets_a_statement_timeout (tests.test_disk_gate.Gate) ... FAIL
+test_memory_limit_changed_voids (tests.test_disk_gate.Gate) ... ok
+test_mount_below_the_data_mount_in_the_containers_mount_table_blocks (tests.test_disk_gate.Gate) ... ok
+test_mutant_es_curl_failure_inside_the_container_blocks (tests.test_disk_gate.Gate) ... ok
+test_mutant_inode_count_without_the_limit_option_blocks (tests.test_disk_gate.Gate) ... ok
+test_mutant_nonce_write_failure_blocks (tests.test_disk_gate.Gate) ... ok
+test_mutant_oom_kill_during_the_slow_end_probes_voids (tests.test_disk_gate.Gate) ... ok
+test_no_memory_limit_blocks (tests.test_disk_gate.Gate) ... ok
+test_no_stream_code_writes_disk_or_block_settings (tests.test_disk_gate.Gate) ... ok
+test_nonce_file_is_removed_after_each_step (tests.test_disk_gate.Gate) ... ok
+test_oom_event_without_a_kill_voids (tests.test_disk_gate.Gate) ... ok
+test_oom_kill_during_the_end_home_measurement_voids (tests.test_disk_gate.Gate) ... ok
+test_oom_kill_of_a_process_in_the_container_voids (tests.test_disk_gate.Gate) ... ok
+test_open_stop_blocks_start (tests.test_disk_gate.Gate) ... ok
+test_own_files_growing_over_the_cap_voids (tests.test_disk_gate.Gate) ... ok
+test_p10_two_runs_with_one_label_keep_both_records (tests.test_disk_gate.Gate) ... FAIL
+test_p11_process_outliving_the_experiment_voids (tests.test_disk_gate.Gate) ... FAIL
+test_paused_at_end_voids (tests.test_disk_gate.Gate) ... ok
+test_peak_already_over_the_bound_blocks (tests.test_disk_gate.Gate) ... ok
+test_pg_cluster_replaced_under_the_container_voids (tests.test_disk_gate.Gate) ... ok
+test_pg_data_on_a_shared_volume_blocks (tests.test_disk_gate.Gate) ... ok
+test_pg_endpoint_unreachable_at_end_voids (tests.test_disk_gate.Gate) ... ok
+test_pg_statfs_unreadable_voids (tests.test_disk_gate.Gate) ... ok
+test_pg_tmpfs_not_above_limit_blocks (tests.test_disk_gate.Gate) ... ok
+test_pg_wal_linked_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... ok
+test_pgdata_dotdot_escape_blocks (tests.test_disk_gate.Gate) ... ok
+test_pgdata_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... ok
+test_recreate_voids (tests.test_disk_gate.Gate) ... ok
+test_restart_during_the_end_home_measurement_voids (tests.test_disk_gate.Gate) ... ok
+test_restart_voids (tests.test_disk_gate.Gate) ... ok
+test_retire_legacy_stop_moves_it_unread_and_leaves_a_stop_to_acknowledge (tests.test_disk_gate.Gate) ... ok
+test_run_admitted_by_an_older_gate_is_refused (tests.test_disk_gate.Gate) ... ok
+test_stop_and_abort_still_work_while_a_legacy_path_exists (tests.test_disk_gate.Gate) ... ok
+test_stop_in_the_window_voids_even_after_ack (tests.test_disk_gate.Gate) ... ok
+test_store_on_a_volume_is_not_called_a_tmpfs (tests.test_disk_gate.Gate) ... ok
+test_swap_allowed_blocks (tests.test_disk_gate.Gate) ... ok
+test_swap_in_use_blocks (tests.test_disk_gate.Gate) ... ok
+test_tablespace_created_during_the_run_outside_the_tmpfs_voids (tests.test_disk_gate.Gate) ... ok
+test_tablespace_outside_the_tmpfs_blocks (tests.test_disk_gate.Gate) ... ok
+test_tmpfs_with_an_inode_limit_blocks (tests.test_disk_gate.Gate) ... ok
+test_tmpfs_written_from_outside_the_container_voids (tests.test_disk_gate.Gate) ... ok
+test_transient_watermark_change_still_present_voids (tests.test_disk_gate.Gate) ... ok
+test_truncated_ledger_blocks (tests.test_disk_gate.Gate) ... ok
+test_v2_ledger_is_adopted_once_and_only_by_init (tests.test_disk_gate.Gate) ... ok
+test_valid_run_passes (tests.test_disk_gate.Gate) ... ok
+test_version_names_the_gate_its_hash_and_its_limits (tests.test_disk_gate.Gate) ... ok
+
+======================================================================
+FAIL: test_g1_abort_naming_another_run_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1492, in test_g1_abort_naming_another_run_is_refused
+    self.assertEqual(rc, 2, f"abort naming a run that is not open closed run {A.run_id}: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : abort naming a run that is not open closed run 20261118T090054Z-72e90c66: ential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g1_abort_while_the_experiment_outlives_its_launcher_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1467, in test_g1_abort_while_the_experiment_outlives_its_launcher_is_refused
+    self.assertEqual(rc, 2, f"abort closed run A while its experiment still runs: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : abort closed run A while its experiment still runs: ential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g1_abort_while_the_launcher_lives_is_refused_and_a_second_run_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1454, in test_g1_abort_while_the_launcher_lives_is_refused_and_a_second_run_blocks
+    self.assertEqual(rc, 2, f"abort closed run A while its launcher is alive: {out.strip()[-300:]}")
+AssertionError: 0 != 2 : abort closed run A while its launcher is alive: ential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g1_late_call_of_a_dead_launcher_cannot_touch_another_run (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1482, in test_g1_late_call_of_a_dead_launcher_cannot_touch_another_run
+    self.assertNotEqual(rc, 0, f"a late call of run A's launcher succeeded: {out.strip()[-300:]}")
+AssertionError: 0 == 0 : a late call of run A's launcher succeeded: ential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g1_no_command_but_run_admits_or_closes_a_run (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1446, in test_g1_no_command_but_run_admits_or_closes_a_run
+    self.assertEqual(rc, 2, f"{cmd[0]} is still a command that acts on the current run: {out.strip()[-200:]}")
+AssertionError: 0 != 2 : check is still a command that acts on the current run: disk_gate x free 30.0 GiB es be9f8360b059 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 0b69840fec7e tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75
+
+======================================================================
+FAIL: test_g2_bytecode_cache_in_the_tree_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1523, in test_g2_bytecode_cache_in_the_tree_is_refused
+    self.assertBlocked(rc, out, "__pycache__")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_changed_fixture_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1557, in test_g2_changed_fixture_is_refused
+    self.assertBlocked(rc, out, "fixture")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_dirty_head_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1529, in test_g2_dirty_head_is_refused
+    self.assertBlocked(rc, out, "dirty")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_end_record_lists_every_run_file_with_its_hash (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1582, in test_g2_end_record_lists_every_run_file_with_its_hash
+    self.assertTrue(files, "the end record lists no file of the run")
+AssertionError: {} is not true : the end record lists no file of the run
+
+======================================================================
+FAIL: test_g2_gate_that_is_not_the_commits_gate_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1537, in test_g2_gate_that_is_not_the_commits_gate_is_refused
+    self.assertBlocked(rc, out, "gate")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_index_left_in_elasticsearch_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1566, in test_g2_index_left_in_elasticsearch_blocks
+    self.assertBlocked(*self.call("start"), "not clean")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T090136Z-7f6d543c free 30.0 GiB es 11366d150183 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 91ae21953003 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_g2_row_of_another_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1574, in test_g2_row_of_another_run_voids
+    self.assertVoid(rc, out, "another run")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 835, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_rows_left_in_a_table_block (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1562, in test_g2_rows_left_in_a_table_block
+    self.assertBlocked(*self.call("start"), "not clean")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T090143Z-2fdef4df free 30.0 GiB es 0727cd2fa2da tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 4c78efcb6fb3 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_g2_tree_changed_during_the_run_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1542, in test_g2_tree_changed_during_the_run_voids
+    self.assertVoid(rc, out, "changed during the run")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 835, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_tree_differing_from_its_commit_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1510, in test_g2_tree_differing_from_its_commit_is_refused
+    self.assertBlocked(rc, out, "differs from commit")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_unregistered_fixture_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1549, in test_g2_unregistered_fixture_is_refused
+    self.assertBlocked(rc, out, "fixture")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_unregistered_store_blocks (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1570, in test_g2_unregistered_store_blocks
+    self.assertBlocked(*self.call("start"), "not clean")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T090201Z-14d51cd2 free 30.0 GiB es 64d7d2eed93f tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg 3ebdf5b414b7 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_g2_untracked_file_in_the_tree_is_refused (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1516, in test_g2_untracked_file_in_the_tree_is_refused
+    self.assertBlocked(rc, out, "untracked")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_g2_write_result_stamps_the_run_and_writes_into_its_directory (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1595, in test_g2_write_result_stamps_the_run_and_writes_into_its_directory
+    self.assertEqual(pathlib.Path(p).parent, d, "write_result did not write into the run's directory")
+AssertionError: Posix[30 chars]1211997q9yzkvkrw0000gn/T/tmpvnq8tn1n/home/results') != Posix[30 chars]1211997q9yzkvkrw0000gn/T/tmpvnq8tn1n/home/results/runs/r-test') : write_result did not write into the run's directory
+
+======================================================================
+FAIL: test_g3_experiment_text_never_becomes_the_verdict (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1621, in test_g3_experiment_text_never_becomes_the_verdict
+    self.assertNotIn("end 2026-11-18T00:00:00Z", out, "the experiment's text reached the gate's own output")
+AssertionError: 'end 2026-11-18T00:00:00Z' unexpectedly found in "disk_gate start run 20261118T090208Z-ff371ec2 free 30.0 GiB es c0d9824af52c tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg b6a67fbc1b93 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2\ngate=VALID\nend 2026-11-18T00:00:00Z\ndisk_gate end free 30.0 GiB floor_breaches 0 es c0d9824af52c tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg b6a67fbc1b93 tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75\ndisk_gate VOID: STOP: stop s-6fd223b1 at seq 3 (operator): written reason: operator stop in the window, by the end of the run\ndisk_gate VOID run 20261118T090208Z-ff371ec2 window_end 2026-11-18T09:02:11Z disk_gate v4 sha256 dd9fe307bfdaf02e LIMITS v4 (GATE-DESIGN 6.4): not detected, the operator trust boundary (main's decision for this lab host): a docker pause and unpause between two steps (needs Docker access, root-equivalent on the host); an ES disk or allocation setting changed and restored between steps (needs the stream's ES admin credential); an endpoint switched to another server and back, or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.\n" : the experiment's text reached the gate's own output
+
+======================================================================
+FAIL: test_m1_forged_probe_lines_through_a_crafted_link_name_block (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1629, in test_m1_forged_probe_lines_through_a_crafted_link_name_block
+    self.assertBlocked(*self.call("start"), "not on the private tmpfs")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 830, in assertBlocked
+    self.assertEqual(rc, 2, f"start must be BLOCKED (exit 2), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 2 : start must be BLOCKED (exit 2), got 0: disk_gate start run 20261118T090246Z-f99b1e42 free 30.0 GiB es f19e33ba6a69 tmpfs 6.00 GiB limit 2.00 peak 1.00 free 5.00; pg de0563daf5fd tmpfs 2.00 GiB limit 1.00 peak 0.50 free 1.75 admitted at seq 2
+
+======================================================================
+FAIL: test_m2_baseline_rewritten_by_the_run_does_not_hide_a_replaced_store (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1643, in test_m2_baseline_rewritten_by_the_run_does_not_hide_a_replaced_store
+    self.assertVoid(*self.call("end"))
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 835, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_m4_missing_startedat_at_end_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1649, in test_m4_missing_startedat_at_end_voids
+    self.assertVoid(*self.call("end"), "StartedAt")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 835, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+======================================================================
+FAIL: test_m6_every_gate_pg_connection_sets_a_statement_timeout (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1660, in test_m6_every_gate_pg_connection_sets_a_statement_timeout
+    self.assertRegex(s, r"(?i)^\s*set\s+statement_timeout",
+AssertionError: Regex didn't match: '(?i)^\\s*set\\s+statement_timeout' not found in 'SHOW data_directory' : the gate's first statement on postgres does not set a statement timeout
+
+======================================================================
+FAIL: test_p10_two_runs_with_one_label_keep_both_records (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1608, in test_p10_two_runs_with_one_label_keep_both_records
+    self.assertTrue(before, "run A left no record directory")
+AssertionError: {} is not true : run A left no record directory
+
+======================================================================
+FAIL: test_p11_process_outliving_the_experiment_voids (tests.test_disk_gate.Gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 1601, in test_p11_process_outliving_the_experiment_voids
+    self.assertVoid(rc, out, "outlived")
+  File "/private/var/folders/g7/bszfxt551211997q9yzkvkrw0000gn/T/tmp.BofWB7Jkbb/writepath/tests/test_disk_gate.py", line 835, in assertVoid
+    self.assertEqual(rc, 3, f"expected VOID (exit 3), got {rc!r}: {out.strip()[-400:]}")
+AssertionError: 0 != 3 : expected VOID (exit 3), got 0:  or a tablespace created and dropped, between steps (needs Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its container and mounts shared with other containers (used <= peak is sampled at steps); anything after window_end; clock stability.
+
+----------------------------------------------------------------------
+Ran 109 tests in 382.962s
+
+FAILED (failures=26)
+# loaded writepath modules (path in the extracted tree, sha256 prefix):
+#   leak_scan runkit/leak_scan.py de0304f3dd225877
+#   tests.test_disk_gate tests/test_disk_gate.py 4f14c2d84e276992
+# exit status: 1

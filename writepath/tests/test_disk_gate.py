@@ -81,7 +81,8 @@ out = pathlib.Path(env.get("WP_RUN_DIR") or pathlib.Path(env["WP_HOME"]) / "resu
 out.mkdir(parents=True, exist_ok=True)
 for i, r in enumerate(json.loads(env.get("STUB_ROWS") or "[]")):
     run = env.get("WP_GATE_RUN") if r.get("gate_run") == "self" else r.get("gate_run")
-    doc = {"name": r["name"], "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "result": {"i": i}}
+    doc = {"name": r["name"], "at": r.get("at") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+           "result": {"i": i}}
     if run:
         doc["gate_run"] = run
     (out / f"{r['name']}.{i:016x}.json").write_text(json.dumps(doc))
@@ -689,7 +690,13 @@ class Gate(unittest.TestCase):
         src = pathlib.Path(os.environ.get("DISK_GATE_UNDER_TEST") or HERE / "exp" / "disk_gate.py").resolve()
         cls.bytecode = sys.dont_write_bytecode
         sys.dont_write_bytecode = True                # a pinned tree holds no bytecode cache (v5 P4)
-        cls.tree = make_tree(src.parents[1], home / "runs" / f"{COMMIT[:7]}-20261118T000000Z")
+        # a gate at <tree>/exp/disk_gate.py brings its tree; a VARIANT file elsewhere (a mutant, for a failing-first
+        # receipt) replaces the gate in this tree, and the manifest is written for it
+        whole = src.parent.name == "exp" and src.name == "disk_gate.py"
+        cls.tree = make_tree(src.parents[1] if whole else HERE, home / "runs" / f"{COMMIT[:7]}-20261118T000000Z")
+        if not whole:
+            shutil.copyfile(src, cls.tree / "exp" / "disk_gate.py")
+            write_manifest(cls.tree)
         os.environ["PYTHONPATH"] = str(cls.tree)
         for m in [m for m in sys.modules if m in ("wp", "exp") or m.startswith(("wp.", "exp."))]:
             del sys.modules[m]
@@ -1452,6 +1459,7 @@ class Gate(unittest.TestCase):
         self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
         rc, out = self.abort(A.run_id)
         self.assertEqual(rc, 2, f"abort closed run A while its launcher is alive: {out.strip()[-300:]}")
+        self.assertIn("run lock is held", out)
         B = self.launch("b").begin()
         rcb, outb = B.finish()
         self.assertEqual(rcb, 2, f"run B was admitted while run A's launcher is alive: {outb.strip()[-300:]}")
@@ -1465,6 +1473,7 @@ class Gate(unittest.TestCase):
         A.kill_launcher()                                  # the launcher dies; its experiment keeps the stores busy
         rc, out = self.abort(A.run_id)
         self.assertEqual(rc, 2, f"abort closed run A while its experiment still runs: {out.strip()[-300:]}")
+        self.assertIn("run lock is held", out)
         A.kill_experiment()
         rc, out = self.abort_when_dead(A.run_id)
         self.assertEqual(rc, 0, f"abort refused although run A's launcher and experiment are dead: {out[-300:]}")
@@ -1480,6 +1489,7 @@ class Gate(unittest.TestCase):
         self.assertTrue(B.run_id and B.run_id != A.run_id, f"run B was not admitted: {B.output()[-400:]}")
         rc, out = A.late_call()                            # whatever A's launcher could still call
         self.assertNotEqual(rc, 0, f"a late call of run A's launcher succeeded: {out.strip()[-300:]}")
+        self.assertIn("run lock is held", out)
         self.assertNotIn(B.run_id, [r for r, _ in self.ends()], "a late call of run A's launcher closed run B")
         rcb, outb = B.finish()
         self.assertEqual(rcb, 0, outb[-400:])
@@ -1490,6 +1500,7 @@ class Gate(unittest.TestCase):
         self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
         rc, out = self.abort("r-" + "0" * 32, "wrong run id")
         self.assertEqual(rc, 2, f"abort naming a run that is not open closed run {A.run_id}: {out.strip()[-300:]}")
+        self.assertIn("run lock is held", out)
         A.finish()
 
     def abort_when_dead(self, run, within=15):
@@ -1534,7 +1545,7 @@ class Gate(unittest.TestCase):
         own = _sha256((t / "exp" / "disk_gate.py").read_bytes())
         (t / "TREE.manifest").write_text(m.replace(own, "0" * 64))
         rc, out = self.launch("x", tree=t).run()
-        self.assertBlocked(rc, out, "gate")
+        self.assertBlocked(rc, out, "is not the gate of commit")
 
     def test_g2_tree_changed_during_the_run_voids(self):
         t = self.fresh_tree()
@@ -1572,6 +1583,14 @@ class Gate(unittest.TestCase):
     def test_g2_row_of_another_run_voids(self):
         rc, out = self.launch("x", rows=[{"name": "r", "gate_run": "r-" + "1" * 32}]).run()
         self.assertVoid(rc, out, "another run")
+
+    def test_g2_row_written_before_the_run_window_voids(self):
+        rc, out = self.launch("x", rows=[{"name": "r", "gate_run": "self", "at": "2020-01-01T00:00:00Z"}]).run()
+        self.assertVoid(rc, out, "outside the run window")
+
+    def test_g2_row_without_a_time_voids(self):
+        rc, out = self.launch("x", rows=[{"name": "r", "gate_run": "self", "at": "yesterday"}]).run()
+        self.assertVoid(rc, out, "outside the run window")
 
     def test_g2_end_record_lists_every_run_file_with_its_hash(self):
         A = self.launch("x", rows=[{"name": "r", "gate_run": "self"}], print="hello from the experiment")
@@ -1640,7 +1659,121 @@ class Gate(unittest.TestCase):
             st["obs"]["pg"]["id"] = new
             st["obs"]["pg"]["started"] = self.F.st()["c"][new]["started"]
             p.write_text(json.dumps(st))
-        self.assertVoid(*self.call("end"))
+        self.assertVoid(*self.call("end"), "replaced")
+
+    # ---- G-1, abort's two checks apart (the lock, then the process group), and an older gate's open run
+    def group_of(self, pgid):
+        r = subprocess.run(["ps", "-A", "-o", "pid=", "-o", "pgid=", "-o", "comm="], capture_output=True, text=True)
+        return [x.split(None, 2) for x in r.stdout.splitlines() if len(x.split(None, 2)) == 3 and x.split()[1] == str(pgid)]
+
+    def test_g1_abort_with_the_lock_free_but_a_live_group_member_is_refused(self):
+        A = self.launch("a", ops=[["linger"]]).begin()
+        self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
+        pg = A.p.pid                                       # the gate leads its own process group
+        self.addCleanup(lambda: _killpg_quiet(pg))
+        t0 = time.monotonic()
+        while not any(c[2].endswith("sleep") for c in self.group_of(pg)) and time.monotonic() - t0 < 30:
+            time.sleep(0.05)
+        A.kill_launcher()
+        A.kill_experiment()                                # the lock dies with them; the `sleep` stays in the group
+        t0 = time.monotonic()
+        while True:
+            rc, out = self.abort(A.run_id)
+            if "run lock is held" not in out or time.monotonic() - t0 > 15:
+                break
+            time.sleep(0.2)
+        self.assertEqual(rc, 2, f"abort closed run A while a member of its process group lives: {out.strip()[-300:]}")
+        self.assertIn("process group", out)
+        _killpg_quiet(pg)
+        rc, out = self.abort_when_dead(A.run_id)
+        self.assertEqual(rc, 0, f"abort refused although run A's whole group is dead: {out[-300:]}")
+
+    def test_g1_abort_checks_the_run_id_and_then_the_group(self):
+        self.start()                                       # admitted in this process: the group is this test's
+        self._run["lock"].close()                          # the lock alone no longer refuses
+        rc, out = self.abort("r-" + "0" * 32, "wrong run id")
+        self.assertEqual(rc, 2, out[-300:])
+        self.assertIn("is not the open run", out)
+        rc, out = self.abort(self._run["run"], "right run id, live group")
+        self.assertEqual(rc, 2, out[-300:])
+        self.assertIn("process group", out)
+        self.assertEqual(self.ends(), [], "abort closed a run")
+
+    def test_g1_abort_of_an_older_gates_open_run_is_refused(self):
+        old = "r-" + "a" * 32
+        with self.g.Ledger() as L:
+            L.append("admit", v=4, gate="disk_gate v4", run=old, label="old", pid=1)
+        rc, out = self.abort(old, "the old launcher is gone")
+        self.assertEqual(rc, 2, f"abort closed an older gate's run it cannot observe dead: {out.strip()[-300:]}")
+        self.assertIn("older gate", out)
+        self.assertEqual(self.ends(), [])
+        self.assertBlocked(*self.call("start"))
+
+    # ---- branches of admission and of `run` (review a108fc3 asked for a gate whose every refusal is tested)
+    def test_p7_file_in_the_log_store_blocks(self):
+        logs = self.home / "logs"
+        logs.mkdir(exist_ok=True)
+        self.addCleanup(shutil.rmtree, logs, True)
+        (logs / "left.log").write_text("x\n")
+        self.assertBlocked(*self.call("start"), "log store")
+
+    def test_p4_tree_not_directly_under_runs_is_refused(self):
+        t = pathlib.Path(self.tmp) / "elsewhere" / self.tree.name
+        shutil.copytree(self.tree, t, symlinks=True)
+        self.addCleanup(shutil.rmtree, t.parent, True)
+        self.assertBlocked(*self.launch("x", tree=t).run(), "not from a pinned tree directly under WP_HOME/runs")
+
+    def test_p4_missing_manifest_is_refused(self):
+        t = self.fresh_tree()
+        (t / "TREE.manifest").unlink()
+        self.assertBlocked(*self.launch("x", tree=t).run(), "no readable TREE.manifest")
+
+    def test_p4_malformed_manifest_is_refused(self):
+        t = self.fresh_tree()
+        (t / "TREE.manifest").write_text("tree-manifest v0\ncommit %s\n" % COMMIT)
+        self.assertBlocked(*self.launch("x", tree=t).run(), "is not a tree-manifest v1")
+
+    def test_p4_module_loaded_from_outside_the_tree_is_refused(self):
+        with mock.patch.dict(sys.modules, {"wp.zz_outside": SimpleNamespace(__file__="/elsewhere/wp/zz_outside.py")}):
+            self.assertBlocked(*self.call("start"), "loaded from outside the pinned tree")
+
+    def test_p4_bytecode_writing_on_is_refused(self):
+        with mock.patch.object(sys, "dont_write_bytecode", False):
+            self.assertBlocked(*self.call("start"), "bytecode writing on")
+
+    def test_run_refuses_a_module_outside_the_tree_and_a_bad_label(self):
+        rc, out = self.raw_call("run", "x", "json")
+        self.assertEqual(rc, 2, out[-300:])
+        self.assertIn("is not a module of the pinned tree", out)
+        rc, out = self.raw_call("run", "-bad label", "stubexp")
+        self.assertEqual(rc, 2, out[-300:])
+        self.assertIn("usage: run LABEL MODULE", out)
+        self.assertEqual(self.ends(), [])
+
+    def test_p3_sigterm_during_the_run_voids(self):
+        A = self.launch("x").begin()
+        self.assertTrue(A.run_id, f"run A was not admitted: {A.output()[-400:]}")
+        os.kill(A.p.pid, signal.SIGTERM)
+        self.assertVoid(*A.finish(), "signalled")
+
+    def test_verdict_exit_codes(self):
+        A = self.launch("a", rows=[{"name": "r", "gate_run": "self"}])
+        self.assertValid(*A.run())
+        B = self.launch("b", rows=[{"name": "r", "gate_run": "r-" + "1" * 32}])
+        self.assertVoid(*B.run())
+        rc, out = self.raw_call("verdict", A.run_id)
+        self.assertEqual(rc, 0, out[-300:])
+        self.assertNotIn("VOID", out)
+        rc, out = self.raw_call("verdict", B.run_id)
+        self.assertEqual(rc, 3, out[-300:])
+        self.assertIn("another run", out)
+        rc, out = self.raw_call("verdict", "r-" + "2" * 32)
+        self.assertEqual(rc, 2, out[-300:])
+        self.assertIn("no run", out)
+        self.start()
+        rc, out = self.raw_call("verdict", self._run["run"])
+        self.assertEqual(rc, 2, out[-300:])
+        self.assertIn("is open", out)
 
     # ---- m-4
     def test_m4_missing_startedat_at_end_voids(self):
@@ -1678,6 +1811,13 @@ class Gate(unittest.TestCase):
     def test_mutant_inode_count_without_the_limit_option_blocks(self):
         self.F.set(self.es, inodes=[1048576, 1048000])     # inodes_statfs_ignored: nr_inodes=0 in the options only
         self.assertBlocked(*self.call("start"), "inode")
+
+
+def _killpg_quiet(pg):
+    try:
+        os.killpg(pg, signal.SIGKILL)
+    except OSError:
+        pass
 
 
 class Launch:

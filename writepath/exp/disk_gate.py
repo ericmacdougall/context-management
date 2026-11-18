@@ -1,42 +1,38 @@
-"""Run-validity gate v4 for stamped runs (review F). Design, argument and limits: runkit/GATE-DESIGN.md sections 5
-(v3, the tmpfs argument) and 6 (v4: the thing inspected is the thing used).
+"""Run-validity gate v5 for stamped runs (review a108fc3). Design, argument and limits: runkit/GATE-DESIGN.md sections 5
+(v3, the tmpfs argument), 6 (v4: the thing inspected is the thing used) and 8 (v5: the gate is the launcher).
 
-The hazard is removed, not detected: each store's data directory is a private tmpfs, larger than its container's
-memory limit plus Elasticsearch's largest watermark threshold, with no swap and no inode limit. Every tmpfs page and
-inode is charged to the container's memory cgroup, so no writer in the container can bring free space down to a
-watermark (or, for PG, to zero) without exceeding the limit, and the kernel's lifetime memory.peak proves afterwards
-that it never did. v4 binds that evidence to what the experiment uses: the server at the experiment's PG endpoint
-reads back a nonce written into the inspected container's tmpfs, the node at es_url is the node running in the
-inspected ES container, and every storage path those servers report is on the tmpfs by device number.
+The storage hazard is removed, not detected (v4, unchanged): each store's data directory is a private tmpfs, larger
+than its container's memory limit plus Elasticsearch's largest watermark threshold, with no swap and no inode limit,
+bound to the endpoints the experiment uses. v5 owns the run around it: the gate itself admits the run, starts the
+experiment, waits for it and ends the run, in one process that holds an exclusive lock for the whole run and shares
+it with the experiment, so no other command can close, abort or start a run while either lives.
 
-  init REASON    start a new stop ledger (every other command is BLOCKED without one), or adopt an existing ledger that
-                 has no init record (a v2 ledger, or one whose start was cut): never done implicitly.
-  start          BLOCKED (exit 2) unless, for both containers: the data directory is a Docker tmpfs mount, the only
-                 mount at or below that point in the container's own mount table, with nr_inodes=0; every path the
-                 store reports (PG: data_directory, pg_wal, tablespaces; ES: its data path) and every link under the
-                 mount resolve onto it; memory limit set, swap limit and swap use 0, size - limit >= ES's largest
-                 free-space threshold + MARGIN (PG: MARGIN); lifetime memory.peak within that bound; free space >=
-                 threshold + MARGIN and used <= memory.peak; running, not paused, no OOM flagged; the PG endpoint's
-                 server read the nonce; the ES node at es_url is the container's node; ES's disk decider enabled and no
-                 index under a flood-stage block. Then, in one locked ledger step: no unacknowledged stop, no legacy
-                 state/STOP path, no open run, host free >= START_GB (measured there), identity and counters, admit.
-  check NAME     VOID (exit 3) if any start rule fails now, or anything differs from admission: Id, StartedAt, ES node
-                 id, PG system identifier, oom and oom_kill counts, memory limit, swap, tmpfs size, ES's thresholds,
-                 ES's disk and allocation settings, index blocks; or a stop was recorded since admission; or WP_HOME
-                 grew over CAP_GB. A VOID check closes the run.
-  end            the same checks; the slow ones first, then, in one locked ledger step, the containers' identity and
-                 lifetime counters (the window's end), the ledger, and the end record. VOID (exit 3) on any reason.
-  preflight      the erasure gate's store inventory must be empty before any experiment.
+  run LABEL MODULE [ARGS]   the only way to make a stamped run. BLOCKED (exit 2) unless: the gate's tree is a pinned
+                 tree under WP_HOME/runs whose files equal TREE.manifest (the commit's files, by SHA-256; untracked
+                 files, bytecode caches and a dirty head refused) and whose manifest names this gate's own hash; the
+                 registered fixtures (runkit/FIXTURES.sha256) are in place; no other run holds the run lock; the
+                 ledger is intact with no open stop, no open run and no legacy state/STOP path; the stores are clean
+                 (no row outside store_registry, no index under the stream prefix, nothing unregistered); every v4
+                 storage rule holds; host free >= START_GB. Then the experiment runs as `python -E -s -B -m MODULE
+                 ARGS` from the tree, with WP_GATE_RUN (the run id, 128 random bits) and WP_RUN_DIR (its own new
+                 directory results/runs/<run>/, where its output goes too). At its exit: VOID (exit 3) if a process of
+                 the run outlived it, the tree or fixtures changed, a row in the run directory names another run, a
+                 stop was recorded, or any v4 rule or drift check fails; else VALID (exit 0). The verdict is the end
+                 record in the ledger (with every run file's SHA-256) and this exit status; the experiment's text
+                 never reaches the gate's output.
+  verdict RUN    print the ledger's verdict for RUN: exit 0 VALID, 3 VOID, 2 open or unknown.
+  abort RUN REASON   close the open run RUN VOID, only when its gate and experiment are dead: the run lock is free and
+                 the run's process group has no member. Anything else is refused (exit 2) and nothing is written.
+  init REASON    start a new stop ledger, or adopt an existing ledger that has no init record.
+  preflight      the stores must be clean (the same rule as admission).
   stop REASON    record a stop.   stops: list unacknowledged stops and a legacy path (exit 2 if any).
-  clear-stop ID REASON   acknowledge ONE stop by id; it unblocks later starts and never changes a run's verdict.
-  abort REASON   close an open run whose launcher died (VOID).
-  ledger-reset REASON    keep a DAMAGED ledger under a new name and start a new one holding one open stop (open runs
-                 end VOID); an intact ledger is refused.
+  clear-stop ID REASON   acknowledge ONE stop by id; it unblocks later runs and never changes a run's verdict.
+  ledger-reset REASON    keep a DAMAGED ledger under a new name and start a new one holding one open stop.
   retire-legacy-stop REASON   move a legacy state/STOP path aside unread and record a stop to acknowledge (migration).
-  version        gate_version=<version> sha256 <this file's SHA-256> and gate_limits=<LIMITS>, for launch_one.sh.
-The gate never creates, reads, moves or anchors state/STOP in normal operation: while that path exists in any form,
-start is BLOCKED and check and end are VOID. Every verdict carries the gate version, its SHA-256, window_end and
-LIMITS. Prints numbers, ids, store paths and reasons only, never a credential."""
+  version        gate_version=<version> sha256 <this file's SHA-256> and gate_limits=<LIMITS>.
+start, check and end are gone (exit 2): they acted on whatever run was current. Prints numbers, ids, store paths and
+reasons only, never a credential."""
+import errno
 import fcntl
 import hashlib
 import json
@@ -44,6 +40,7 @@ import os
 import pathlib
 import re
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -54,54 +51,67 @@ import urllib.request
 
 from wp import config
 
-FORMAT = 4
-VERSION = "disk_gate v4"
+FORMAT = 5
+VERSION = "disk_gate v5"
 GATE_SHA256 = hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()
-LIMITS_ID = "v4"
-LIMITS = ("LIMITS v4 (GATE-DESIGN 6.4): not detected, the operator trust boundary (main's decision for this lab "
-          "host): a docker pause and unpause between two steps (needs Docker access, root-equivalent on the host); an "
-          "ES disk or allocation setting changed and restored between steps (needs the stream's ES admin credential); "
-          "an endpoint switched to another server and back, or a tablespace created and dropped, between steps (needs "
-          "Docker or host root, or the PG admin credential). Outside the guarantee: tampering by the same OS user with "
-          "the gate's code, state or ledger; root on the host; pages written into a store's tmpfs from outside its "
-          "container and mounts shared with other containers (used <= peak is sampled at steps); anything after "
-          "window_end; clock stability.")
-START_GB, FLOOR_GB, CAP_GB = 20.0, 15.0, 2.0   # start line 20 GB from amendment 24
+LIMITS_ID = "v5"
+LIMITS = ("LIMITS v5 (GATE-DESIGN 8.4, 6.4): not detected, the operator trust boundary: tampering by the same OS user "
+          "with the gate, its tree, state, ledger, lock or manifest; root on the host; a process that leaves the run's "
+          "process group on purpose; rows written outside the run directory (never staged); a docker pause and "
+          "unpause, an ES disk or allocation setting changed and restored, or an endpoint switched and back, between "
+          "two gate steps; pages written into a store's tmpfs from outside its container; anything after window_end; "
+          "clock stability. The manifest's commit is named, not judged: tree_manifest.py check recomputes it.")
+START_GB, CAP_GB = 20.0, 2.0                   # start line 20 GB from amendment 24
 GIB = 1024 ** 3
 MARGIN = 256 * 1024 ** 2                       # headroom over the bound for statfs rounding (inodes: B4, nr_inodes=0)
 HOME = pathlib.Path(os.environ["WP_HOME"])
+ROOT = pathlib.Path(__file__).resolve().parents[1]     # the pinned tree this gate runs from (P4)
 # NOT under WP_HOME/logs: that directory is a registered store the erasure gate inventories.
 STATE_DIR = HOME / "state"
-STATE = STATE_DIR / "disk_gate.json"
 STOP = STATE_DIR / "STOP"                      # legacy path: never read; its existence stops (GATE-DESIGN 6.2 B7)
 LEDGER = STATE_DIR / "stop_ledger.jsonl"       # append-only, hash-chained: init, stop, ack, admit, end
 HEAD = STATE_DIR / "stop_ledger.head"          # count and SHA-256 of the last record, replaced atomically
 LOCK = STATE_DIR / "stop_ledger.lock"
+RUN_LOCK = STATE_DIR / "run.lock"              # P1: held by the gate and its experiment for the whole run
+RUNS_DIR = HOME / "results" / "runs"           # P8: one new directory per run
+MANIFEST, GIT_HEAD = "TREE.manifest", "GIT_HEAD"
+FIXTURES = "runkit/FIXTURES.sha256"            # P6
+FIXTURE_DIRS, FIXTURE_FILES = ("exp", "wp", "old_repro", "host"), ("requirements.lock",)
 DATA = {"es": "/usr/share/elasticsearch/data", "pg": "/var/lib/postgresql/data"}
 NAMES = {"es": "ES", "pg": "PG"}
 PROC_ROOT = pathlib.Path("/proc")
 CGROUP_ROOT = pathlib.Path("/sys/fs/cgroup")
 API_TIMEOUT_S = 10
 DOCKER_TIMEOUT_S = 300
+PG_STATEMENT_TIMEOUT = "10s"                   # m-6: on every connection the gate opens
 NONCE = "disk_gate.nonce"                      # written into PG's data directory for one read, then removed (B1)
 CLUSTER_KEYS = ("cluster.routing.allocation.", "cluster.info.", "cluster.blocks.")      # B5
 INDEX_KEYS = ("index.blocks.", "index.routing.allocation.")
 INDEX_DEFAULTS = ("index.routing.allocation.include._tier_preference",)                 # ES sets it on every index
-# B3: run inside the container with `sh -c PROBE disk_gate-probe <mount> <path>...`. Prints the container's own mount
-# table (M), the mount's statfs (F: type, blocks, block size, available, inodes, free inodes), every argument and every
-# link under the mount resolved with its device number (P, L; "-" when it does not resolve), then END. Arguments are
-# store paths, never secrets.
-PROBE = r"""# disk_gate probe v4
+RUN_RX = re.compile(r"^r-[0-9a-f]{32}$")
+UTC_RX = re.compile(r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$")
+LABEL_RX = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+MODULE_RX = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+# B3, m-1: run inside the container with `sh -c PROBE disk_gate-probe <mount> <path>...`. Prints NUL-terminated
+# fields, a fixed count per tag: M <mountinfo line>; F <statfs: type, blocks, block size, available, inodes, free
+# inodes>; P <device> <resolved> <path> for the mount and every argument; L <device> <resolved> <link> for every link
+# under the mount (names come to it as arguments of find -exec, never as lines); then END. "-" when a path does not
+# resolve. Arguments are store paths, never secrets.
+PROBE = r"""# disk_gate probe v5
 r=$1; shift
-while IFS= read -r l; do printf 'M\t%s\n' "$l"; done < /proc/self/mountinfo
+R='z() { printf "%s\0" "$@"; }
+res() { q=$(realpath -e -- "$2" 2>/dev/null && echo x) && q=${q%?x} && d=$(stat -L -c %d -- "$2" 2>/dev/null) &&
+  z "$1" "$d" "$q" "$2" || z "$1" - - "$2"; }'
+eval "$R"
+while IFS= read -r l; do z M "$l"; done < /proc/self/mountinfo
 s=$(stat -f --printf '%T\t%b\t%S\t%a\t%c\t%d' -- "$r") || exit 3
-printf 'F\t%s\n' "$s"
-res() { if q=$(realpath -e -- "$2" 2>/dev/null) && d=$(stat -L -c %d -- "$q" 2>/dev/null); then
-  printf '%s\t%s\t%s\t%s\n' "$1" "$d" "$q" "$2"; else printf '%s\t-\t-\t%s\n' "$1" "$2"; fi; }
+z F "$s"
 for p in "$r" "$@"; do res P "$p"; done
-find "$r" -type l > /dev/null 2>&1 || { printf 'E\tfind\n'; exit 3; }
-find "$r" -type l 2>/dev/null | while IFS= read -r l; do res L "$l"; done
-echo END"""
+find "$r" -type l > /dev/null 2>&1 || { z E find; exit 3; }
+find "$r" -type l -exec sh -c "$R"'
+for l do res L "$l"; done' disk_gate-links {} + || { z E find; exit 3; }
+printf 'END\0'"""
+PROBE_FIELDS = {"M": 1, "F": 1, "P": 3, "L": 3}
 
 
 class GateError(Exception):
@@ -110,6 +120,14 @@ class GateError(Exception):
 
 class LedgerError(Exception):
     pass
+
+
+class Blocked(Exception):
+    """Admission refused: the run is not admitted and nothing of it was recorded."""
+
+    def __init__(self, reasons):
+        super().__init__("; ".join(reasons))
+        self.reasons = list(reasons)
 
 
 def _targets():
@@ -131,13 +149,6 @@ def _docker(*args, timeout=None, input=None):
     Docker's event stream records every exec command line."""
     kw = {"input": input} if input is not None else {"stdin": subprocess.DEVNULL}
     return subprocess.run(["docker", *args], capture_output=True, timeout=timeout or DOCKER_TIMEOUT_S, **kw)
-
-
-def _boot_id():
-    try:
-        return pathlib.Path("/proc/sys/kernel/random/boot_id").read_text().strip()
-    except OSError:
-        return None
 
 
 def _fsync_dir(d):
@@ -317,8 +328,8 @@ def _admission_blocker(L):
                 "; read them, then 'python -m exp.disk_gate clear-stop <stop id> <reason>'")
     o = L.open_run()
     if o:
-        return (f"run {o['run']} (admitted at seq {o['seq']}) has no end record; if its launcher died: "
-                f"'python -m exp.disk_gate abort <reason>'")
+        return (f"run {o['run']} (admitted at seq {o['seq']}) has no end record; if its gate and experiment are dead: "
+                f"'python -B -m exp.disk_gate abort {o['run']} <reason>'")
     return None
 
 
@@ -499,36 +510,54 @@ def _probe(K, cid, root, paths):
     """B3: run PROBE inside the container: (parsed output, reasons). Fails closed on any error."""
     try:
         r = _docker("exec", str(cid), "sh", "-c", PROBE, "disk_gate-probe", root, *paths, timeout=120)
-        lines = r.stdout.decode("utf-8", "replace").splitlines()
     except (OSError, subprocess.TimeoutExpired):
-        r, lines = None, []
-    if r is None or r.returncode != 0 or not lines or lines[-1] != "END":
+        r = None
+    if r is None or r.returncode != 0:
         return None, [f"the {K} data mount's statfs and mount table could not be read (the in-container probe failed)"]
-    pr = {"mounts": [], "paths": {}, "links": []}
     try:
-        for ln in lines[:-1]:
-            tag, _, rest = ln.partition("\t")
-            if tag == "M":
-                pre, _, post = rest.partition(" - ")
-                f, g = pre.split(), post.split()
-                pr["mounts"].append({"mp": _unoct(f[4]), "mm": f[2], "fs": g[0], "so": g[2] if len(g) > 2 else ""})
-            elif tag == "F":
-                t, b, s, a, c, d = rest.split("\t")
-                pr["statfs"] = {"type": t, "total": int(b) * int(s), "free": int(a) * int(s), "files": int(c),
-                                "ffree": int(d)}
-            elif tag in ("P", "L"):
-                dev, real, p = rest.split("\t", 2)
-                if tag == "P":
-                    pr["paths"][p] = (dev, real)
-                else:
-                    pr["links"].append((p, dev, real))
-            else:
-                raise ValueError(tag)
+        return _parse_probe(r.stdout, root, paths), []
     except (ValueError, IndexError):
         return None, [f"the {K} in-container probe's output could not be read"]
-    if "statfs" not in pr:
-        return None, [f"the {K} in-container probe reported no statfs"]
-    return pr, []
+
+
+def _parse_probe(data, root, paths):
+    """m-1: the probe's NUL-terminated fields, a fixed count per tag, ending in END and nothing after it. Refuses an
+    unknown tag, a short record, a second statfs, a device that is not a number, and a path list that is not exactly
+    the mount followed by the requested paths."""
+    parts = data.split(b"\0")
+    if len(parts) < 2 or parts[-1] != b"" or parts[-2] != b"END":
+        raise ValueError("no END, or data after it")
+    f = [x.decode("utf-8", "surrogateescape") for x in parts[:-2]]
+    pr, plist, i = {"mounts": [], "paths": {}, "links": []}, [], 0
+    while i < len(f):
+        tag, n = f[i], PROBE_FIELDS.get(f[i])
+        if n is None or i + 1 + n > len(f):
+            raise ValueError("unknown tag or short record")
+        v, i = f[i + 1:i + 1 + n], i + 1 + n
+        if tag == "M":
+            if "\n" in v[0]:
+                raise ValueError("mountinfo")
+            pre, _, post = v[0].partition(" - ")
+            a, g = pre.split(), post.split()
+            pr["mounts"].append({"mp": _unoct(a[4]), "mm": a[2], "fs": g[0], "so": g[2] if len(g) > 2 else ""})
+        elif tag == "F":
+            t, b, s, av, c, d = v[0].split("\t")
+            if "statfs" in pr:
+                raise ValueError("second statfs")
+            pr["statfs"] = {"type": t, "total": int(b) * int(s), "free": int(av) * int(s), "files": int(c),
+                            "ffree": int(d)}
+        else:
+            dev, real, p = v
+            if not (dev == "-" or dev.isdigit()) or (dev == "-") != (real == "-"):
+                raise ValueError("device")
+            if tag == "P":
+                plist.append(p)
+                pr["paths"][p] = (dev, real)
+            else:
+                pr["links"].append((p, dev, real))
+    if "statfs" not in pr or plist != [root] + list(paths):
+        raise ValueError("statfs or path list")
+    return pr
 
 
 def _topology(K, root, pr, named):
@@ -561,17 +590,18 @@ def _topology(K, root, pr, named):
             why.append(f"{label} {p} resolves to {real}, which is not on the private tmpfs")
     for link, dev, real in pr["links"]:
         if dev == "-":
-            why.append(f"a link under the {K} data mount does not resolve ({link})")
+            why.append(f"a link under the {K} data mount does not resolve ({ascii(link)[:200]})")
         elif dev != rdev:
-            why.append(f"the link {link} under the {K} data mount resolves to {real}, which is not on the private tmpfs")
+            why.append(f"the link {ascii(link)[:200]} under the {K} data mount resolves to {ascii(real)[:200]}, which is "
+                       "not on the private tmpfs")
     return why, isolated and not why
 
 
-def _pg_connect():
-    """The experiment's own connection function (wp.db.connect) to its endpoint config.PG_HOST:PG_PORT, as the
-    cluster admin (its pgpass file; nothing secret is passed or printed)."""
+def _pg_connect(dbname):
+    """The experiment's own connection function (wp.db.connect) to its endpoint config.PG_HOST:PG_PORT, database
+    dbname, as the cluster admin (its pgpass file; nothing secret is passed or printed). Only _pg calls it."""
     from wp import db
-    return db.connect(db="postgres", role=config.PG_USER, application_name="disk_gate", connect_timeout=API_TIMEOUT_S)
+    return db.connect(db=dbname, role=config.PG_USER, application_name="disk_gate", connect_timeout=API_TIMEOUT_S)
 
 
 def _pg_nonce(cid, real, q, ep):
@@ -610,7 +640,7 @@ def _pg_slow(cid):
     in the inspected container, and the nonce read. (evidence, reasons, isolated)."""
     ep = f"{config.PG_HOST}:{config.PG_PORT}"
     try:
-        conn = _pg_connect()
+        conn = _pg("postgres")
     except Exception as e:
         return None, [f"the PG endpoint {ep} the experiment uses could not be reached ({type(e).__name__})"], False
     try:
@@ -697,6 +727,8 @@ def _fast(key, cid):
         return None, [f"the {K} container {str(cid)[:12]} cannot be inspected (removed or replaced)"]
     s = j.get("State") or {}
     ev, why = {"id": j.get("Id"), "started": s.get("StartedAt")}, []
+    if not ev["started"]:                       # m-4: a restart could not be seen without it
+        why.append(f"Docker reports no StartedAt for the {K} container: a restart cannot be ruled out")
     if not s.get("Running") or s.get("Paused"):
         why.append(f"the {K} container is not running or is paused")
     if s.get("OOMKilled"):
@@ -761,7 +793,7 @@ def _drift(now, adm):
             continue
         if n.get("id") != a["id"]:
             why.append(f"the {K} container was replaced ({a['id'][:12]} -> {str(n.get('id'))[:12]})")
-        if n.get("started") and n["started"] != a["started"]:
+        if n.get("started") != a.get("started"):
             why.append(f"the {K} container restarted: StartedAt {a['started']} -> {n['started']}")
         ac, nc = a.get("cg") or {}, n.get("cg") or {}
         if nc and ac:
@@ -816,15 +848,514 @@ def _summary(obs):
     return "; ".join(out)
 
 
+# --------------------------------------------------------------------------------------- what runs (P4, P5, P6)
+def _sha256_file(p):
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for b in iter(lambda: f.read(1 << 20), b""):
+            h.update(b)
+    return h.hexdigest()
+
+
+def _tree_files(root):
+    """{relative path: (mode, SHA-256)} of every file and link under root, links not followed, as git records them;
+    plus the bytecode caches found (names only)."""
+    out, caches = {}, []
+    for d, dirs, files in os.walk(root):
+        dirs.sort()
+        for n in [x for x in dirs if x == "__pycache__"]:
+            caches.append(os.path.relpath(os.path.join(d, n), root))
+        for n in files + [x for x in dirs if os.path.islink(os.path.join(d, x))]:
+            p = os.path.join(d, n)
+            rel = os.path.relpath(p, root)
+            if n.endswith((".pyc", ".pyo")):
+                caches.append(rel)
+            elif os.path.islink(p):
+                out[rel] = ("120000", hashlib.sha256(os.readlink(p).encode("utf-8", "surrogateescape")).hexdigest())
+            else:
+                out[rel] = ("100755" if os.lstat(p).st_mode & 0o100 else "100644", _sha256_file(p))
+    return out, caches
+
+
+def _manifest():
+    """(commit, manifest SHA-256, {path: (mode, sha256)}) from the tree's TREE.manifest; GateError if malformed."""
+    try:
+        raw = (ROOT / MANIFEST).read_bytes()
+    except OSError:
+        raise GateError(f"the tree {ROOT.name} has no readable {MANIFEST} (not a tree pinned by sync.sh)") from None
+    lines = raw.decode("utf-8", "surrogateescape").split("\n")
+    m = re.fullmatch(r"commit ([0-9a-f]{40})", lines[1]) if len(lines) > 2 and lines[0] == "tree-manifest v1" else None
+    if not m or lines[-1] != "":
+        raise GateError(f"{MANIFEST} of {ROOT.name} is not a tree-manifest v1")
+    ent = {}
+    for ln in lines[2:-1]:
+        x = re.fullmatch(r"([0-9a-f]{64}) (100644|100755|120000) (.+)", ln)
+        if not x or x.group(3) in ent:
+            raise GateError(f"{MANIFEST} of {ROOT.name} has a malformed or duplicate entry")
+        ent[x.group(3)] = (x.group(2), x.group(1))
+    return m.group(1), hashlib.sha256(raw).hexdigest(), ent
+
+
+def _tree():
+    """P4, P5: ({commit, manifest}, reasons). The tree must be a direct child of WP_HOME/runs whose files equal the
+    manifest's (from the commit's git objects), whose GIT_HEAD names that commit without -dirty, and whose manifest
+    names this gate's own hash; bytecode writing is off and every loaded exp/wp module comes from this tree."""
+    why = []
+    try:
+        runs = (HOME / "runs").resolve()
+    except OSError:
+        runs = None
+    if ROOT.parent != runs:
+        why.append(f"the gate runs from {ROOT}, not from a pinned tree directly under WP_HOME/runs")
+    try:
+        commit, msha, ent = _manifest()
+    except GateError as e:
+        return {}, why + [str(e)]
+    try:
+        head = (ROOT / GIT_HEAD).read_text().strip()
+    except OSError:
+        head = ""
+    if "dirty" in head:
+        why.append(f"the tree's GIT_HEAD {head[:40]!r} is dirty: it was pinned from a working tree with changes")
+    elif len(head) < 7 or not commit.startswith(head):
+        why.append(f"the tree's GIT_HEAD {head[:40]!r} does not name the manifest's commit {commit[:12]}")
+    if (ent.get("exp/disk_gate.py") or ("", ""))[1] != GATE_SHA256:
+        why.append(f"the running gate (sha256 {GATE_SHA256[:16]}) is not the gate of commit {commit[:12]}")
+    have, caches = _tree_files(ROOT)
+    for c in sorted(caches)[:5]:
+        why.append(f"a bytecode cache in the pinned tree: {c} (__pycache__ or .pyc; the tree runs with -B only)")
+    for rel in sorted(set(have) - set(ent) - {MANIFEST, GIT_HEAD})[:10]:
+        why.append(f"an untracked file in the pinned tree: {rel} (not a file of commit {commit[:12]})")
+    for rel in sorted(set(ent) - set(have))[:10]:
+        why.append(f"{rel} of commit {commit[:12]} is missing from the tree")
+    for rel in sorted(r for r in set(ent) & set(have) if ent[r] != have[r])[:10]:
+        why.append(f"{rel} differs from commit {commit[:12]} (content or exec bit)")
+    if not sys.dont_write_bytecode:
+        why.append("the gate runs with bytecode writing on (python -B is required, so no cache enters the tree)")
+    for name, mod in sorted(sys.modules.items()):
+        if name in ("wp", "exp") or name.startswith(("wp.", "exp.")):
+            f = getattr(mod, "__file__", None)
+            where = [f] if f else list(getattr(mod, "__path__", None) or [])
+            if not where or any(not str(pathlib.Path(x).resolve()).startswith(str(ROOT) + os.sep) for x in where):
+                why.append(f"module {name} was loaded from outside the pinned tree ({where[:1]})")
+    return {"commit": commit, "manifest": msha}, why
+
+
+def _fixtures():
+    """P6: every non-.py file under FIXTURE_DIRS and each FIXTURE_FILES entry is listed in FIXTURES with its SHA-256,
+    and every listed file exists. Reasons."""
+    try:
+        reg = {}
+        for ln in (ROOT / FIXTURES).read_text().splitlines():
+            if ln.strip() and not ln.startswith("#"):
+                x = re.fullmatch(r"([0-9a-f]{64})  (\S+)", ln)
+                if not x:
+                    raise ValueError(ln[:60])
+                reg[x.group(2)] = x.group(1)
+    except (OSError, ValueError) as e:
+        return [f"the fixture registry {FIXTURES} cannot be read ({type(e).__name__})"]
+    have = {}
+    for top in FIXTURE_DIRS:
+        for p in sorted((ROOT / top).rglob("*")) if (ROOT / top).is_dir() else []:
+            if (p.is_file() or p.is_symlink()) and p.suffix not in (".py", ".pyc") and "__pycache__" not in p.parts:
+                have[str(p.relative_to(ROOT))] = p
+    for n in FIXTURE_FILES:
+        if (ROOT / n).exists():
+            have[n] = ROOT / n
+    why = [f"fixture {rel} is not registered in {FIXTURES}" for rel in sorted(set(have) - set(reg))]
+    why += [f"registered fixture {rel} is missing from the tree" for rel in sorted(set(reg) - set(have))]
+    for rel in sorted(set(have) & set(reg)):
+        if have[rel].is_symlink() or _sha256_file(have[rel]) != reg[rel]:
+            why.append(f"fixture {rel} does not match its registered SHA-256 in {FIXTURES}")
+    return why
+
+
+# ------------------------------------------------------------------------------------------------- clean stores (P7)
+def _pg(db):
+    """A gate connection to database db of the experiment's PG endpoint whose first statement bounds every later one
+    (m-6)."""
+    conn = _pg_connect(db)
+    try:
+        conn.execute(f"SET statement_timeout = '{PG_STATEMENT_TIMEOUT}'")
+    except BaseException:
+        conn.close()
+        raise
+    return conn
+
+
+def _unregistered(ev, ks):
+    """The erasure gate's store inventory (wp.registry): everything that can hold content and is not registered."""
+    from wp import registry
+    from wp.es import ES
+    return registry.unregistered(ev, ks, ES())
+
+
+TABLES_SQL = ("SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+              "WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') ORDER BY 1")
+
+
+def _clean():
+    """P7: reasons the stores are not clean before the run."""
+    why, conns = [], []
+    try:
+        for db in (config.EVENTS_DB, config.KEYS_DB):
+            conns.append(_pg(db))
+            full = []
+            for (t,) in conns[-1].execute(TABLES_SQL).fetchall():
+                t = str(t)
+                q = 'SELECT exists(SELECT 1 FROM public."' + t.replace('"', '""') + '")'
+                if t != "store_registry" and conns[-1].execute(q).fetchall()[0][0]:
+                    full.append(t)
+            if full:
+                why.append(f"stores not clean before the run: tables of {db} holding rows: {', '.join(full)[:200]}")
+        unreg = _unregistered(*conns)
+        if unreg:
+            why.append(f"stores not clean before the run: {len(unreg)} unregistered: {', '.join(map(str, unreg[:10]))[:200]}")
+    except Exception as e:                        # the driver's own error classes; only the class name is kept
+        why.append(f"the stores could not be checked clean before the run ({type(e).__name__})")
+    finally:
+        for c in conns:
+            try:
+                c.close()
+            except Exception:
+                pass
+    code, body = _es_get(f"/_cat/indices/{config.INDEX_PREFIX}*?format=json&expand_wildcards=all&h=index")
+    if code != 200 or not isinstance(body, list):
+        why.append(f"the stores could not be checked clean before the run (ES indices {code})")
+    elif body:
+        names = sorted(str((x or {}).get("index")) for x in body)
+        why.append(f"stores not clean before the run: ES indices under {config.INDEX_PREFIX}: {', '.join(names)[:200]}")
+    logs = [p for p in config.LOG_DIR.rglob("*") if p.is_file()] if config.LOG_DIR.is_dir() else []
+    if logs:
+        why.append(f"stores not clean before the run: {len(logs)} file(s) in the log store {config.LOG_DIR.name}/")
+    return why
+
+
+# --------------------------------------------------------------------------------------------- the run (P1 to P11)
+def _take_run_lock():
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    f = open(RUN_LOCK, "a")
+    try:
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        f.close()
+        return None
+    return f
+
+
+def _admit(label, pgid):
+    """Admission (P1, P4 to P7 and every v4 rule): the run dict, holding the run lock; Blocked otherwise, with the
+    lock released and nothing recorded."""
+    info, why = _tree()
+    why += _fixtures()
+    if why:
+        raise Blocked(why)
+    lock = _take_run_lock()
+    if lock is None:
+        raise Blocked(["another run's launcher or experiment is alive (it holds the run lock state/run.lock)"])
+    try:
+        try:
+            with Ledger() as L:
+                b = _admission_blocker(L)
+        except LedgerError as e:
+            b = f"the stop ledger is not intact ({e})"
+        if b:
+            raise Blocked([b])
+        names = dict(zip(("es", "pg"), _targets()))
+        try:
+            base = _home_bytes()                    # slow steps first (B6)
+        except GateError as e:
+            raise Blocked([str(e)]) from None
+        why = _clean()
+        slow = {}
+        for key in ("es", "pg"):
+            slow[key], w = _slow(key, names[key])
+            why += w
+        if why:
+            raise Blocked(why)
+        run_id = "r-" + os.urandom(16).hex()
+        fast, adm = {}, None
+        try:
+            with Ledger() as L:                     # stops, legacy path, identity, host free and admit: one step
+                b = _admission_blocker(L)
+                w = [b] if b else []
+                if not b:
+                    t = _utc()
+                    for key in ("es", "pg"):
+                        fast[key], x = _fast(key, slow[key]["id"])
+                        w += x
+                    w += _rules(slow, fast)
+                f = free_gb()
+                if not w and f < START_GB:
+                    w.append(f"host free {f:.1f} GiB < {START_GB} (measured at admission)")
+                if not w:
+                    adm = L.append("admit", v=FORMAT, gate=VERSION, gate_sha256=GATE_SHA256, run=run_id, label=label,
+                                   pid=os.getpid(), pgid=pgid, commit=info["commit"], manifest=info["manifest"],
+                                   es=slow["es"]["id"], pg=slow["pg"]["id"], free_bytes=int(f * GIB), free_at=_utc(),
+                                   window_start=t)
+        except LedgerError as e:
+            w = [f"the stop ledger is not intact ({e})"]
+        if w:
+            raise Blocked(w)
+        d = RUNS_DIR / run_id
+        d.parent.mkdir(parents=True, exist_ok=True)
+        d.mkdir()                                   # P10: never an existing directory
+        return {"run": run_id, "seq": adm["seq"], "label": label, "obs": _merge(slow, fast), "base_home": base,
+                "free": f, "lock": lock, "dir": d, "info": info, "window_start": t}
+    except BaseException:
+        lock.close()
+        raise
+
+
+def _run_files(run):
+    """P8: ([{name, sha256}] of every file in the run directory, reasons). Every JSON row must carry this run id and
+    a time `at` inside the run window (from the admit record's window_start to now, to the second)."""
+    files, why = [], []
+    d, now = run["dir"], _utc()
+    for p in sorted(d.rglob("*")):
+        rel = str(p.relative_to(d))
+        if p.is_symlink():
+            why.append(f"a link in the run directory: {rel}")
+        elif p.is_file():
+            data = p.read_bytes()
+            files.append({"name": rel, "sha256": hashlib.sha256(data).hexdigest()})
+            if p.suffix == ".json":
+                try:
+                    doc = json.loads(data)
+                    got, at = doc.get("gate_run"), doc.get("at")
+                except (ValueError, AttributeError):
+                    got = at = "(unreadable)"
+                if got != run["run"]:
+                    why.append(f"the result row {rel} carries run {str(got)[:40]!r}: a row of another run (or of none)")
+                if not (isinstance(at, str) and UTC_RX.match(at) and run["window_start"] <= at <= now):
+                    why.append(f"the result row {rel} has time {str(at)[:40]!r}, outside the run window "
+                               f"{run['window_start']} to {now}")
+    return files, why
+
+
+def _ledger_why(L, run, when):
+    why = []
+    if not L.admitted(run["run"], run["seq"]):
+        why.append(f"this run's admission record (run {run['run']}, seq {run['seq']}) is not in the ledger: "
+                   "truncated, reset or replaced")
+    why += [f"STOP: {_stop_text(s)}, {when}" for s in L.stops_after(run["seq"])]
+    return why
+
+
+def _finish(run, extra=()):
+    """The end of the run (B6): WP_HOME's size, the tree, the fixtures, the run's files and the slow evidence first;
+    then, in one locked ledger step, the ledger, the legacy path, both containers' identity and lifetime counters back
+    to back (window_end), the rules, the drift from the baseline in this process's memory and from the admit record,
+    and the end record. Releases the run lock. (obs, reasons, host free GiB, window_end)."""
+    when = "by the end of the run"
+    why = list(extra)
+    try:
+        try:
+            d = (_home_bytes() - run["base_home"]) / GIB
+            why += [f"WP_HOME grew {d:.2f} GiB > cap {CAP_GB} {when}"] if d > CAP_GB else []
+        except GateError as e:
+            why.append(f"{e} {when}")
+        info, tw = _tree()
+        why += [f"the pinned tree changed during the run: {w}" for w in tw]
+        if info and info != run["info"]:
+            why.append("the pinned tree changed during the run: its manifest is not the one admitted")
+        why += [f"the fixtures changed during the run: {w}" for w in _fixtures()]
+        files, w = _run_files(run)
+        why += w
+        slow = {}
+        for key in ("es", "pg"):
+            slow[key], w = _slow(key, run["obs"][key]["id"])
+            why += w
+        f, obs, window_end = free_gb(), {}, None
+        try:
+            with Ledger() as L:
+                closed = L.closed(run["run"])
+                if closed:
+                    why.append(f"run {run['run']} was closed before its end")
+                why += _ledger_why(L, run, when)
+                adm = next((r for r in L.recs if r["kind"] == "admit" and r.get("run") == run["run"]), None)
+                if adm and (adm.get("es"), adm.get("pg")) != (run["obs"]["es"]["id"], run["obs"]["pg"]["id"]):
+                    why.append("the admit record names other containers than the run's baseline")
+                lg = _legacy_why()
+                if lg:
+                    why.append(f"{lg}, {when}")
+                window_end, fast = _utc(), {}
+                for key in ("es", "pg"):
+                    fast[key], w = _fast(key, run["obs"][key]["id"])
+                    why += w
+                why += _rules(slow, fast)
+                obs = _merge(slow, fast)
+                why += _drift(obs, run["obs"])
+                if not lg and _legacy_why():
+                    why.append(f"{_legacy_why()}, {when}")
+                if not closed:
+                    _end_record(L, run["run"], "VOID" if why else "VALID", why, window_end=window_end, label=run["label"],
+                                free_bytes=int(f * GIB), evidence=_summary(obs), files=files,
+                                exp_rc=run.get("exp_rc"), commit=run["info"]["commit"])
+        except LedgerError as e:
+            why.append(f"the stop ledger is not intact ({e})")
+        return obs, why, f, window_end
+    finally:
+        run["lock"].close()
+
+
+def _report(run, obs, why, f, window_end):
+    print(f"disk_gate end free {f:.1f} GiB {_summary(obs)}")
+    for x in why:
+        print(f"disk_gate VOID: {x}")
+    _verdict_line(run["run"], "VOID" if why else "VALID", window_end)
+    return 3 if why else 0
+
+
+def _group_members(pgid):
+    """Live processes of process group pgid other than this one (P11), listed by ps in its own session so that it is
+    not one of them. None when they cannot be listed."""
+    try:
+        r = subprocess.run(["ps", "-A", "-o", "pid=", "-o", "pgid="], capture_output=True, timeout=60,
+                           stdin=subprocess.DEVNULL, start_new_session=True)
+        rows = [ln.split() for ln in r.stdout.decode("ascii", "replace").splitlines()]
+        if r.returncode != 0:
+            return None
+        return sorted(int(a) for a, b in (x for x in rows if len(x) == 2 and x[0].isdigit() and x[1].isdigit())
+                      if int(b) == pgid and int(a) != os.getpid())
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
+
+def _run(args):
+    if len(args) < 2 or not LABEL_RX.match(args[0]) or not MODULE_RX.match(args[1]):
+        print("disk_gate BLOCKED: usage: run LABEL MODULE [ARGS] (LABEL letters, digits, '_', '.', '-'; MODULE a dotted "
+              "module name)")
+        sys.exit(2)
+    label, module, margs = args[0], args[1], args[2:]
+    print(f"gate_version={VERSION} sha256 {GATE_SHA256}")
+    print(f"gate_limits={LIMITS}")
+    rel = pathlib.Path(*module.split("."))
+    if not ((ROOT / rel).with_suffix(".py").is_file() or (ROOT / rel / "__main__.py").is_file()):
+        _print_blocked([f"module {module} is not a module of the pinned tree"])
+        sys.exit(2)
+    if os.getpgrp() != os.getpid():
+        try:
+            os.setsid()                             # the run's process group is this process's (P3, P11)
+        except OSError as e:
+            _print_blocked([f"the gate cannot lead its own process group ({e.strerror})"])
+            sys.exit(2)
+    sig, child = [], []
+
+    def on_signal(n, _frame):
+        sig.append(n)
+        for p in child:
+            try:
+                p.send_signal(signal.SIGTERM)
+            except OSError:
+                pass
+    for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(s, on_signal)
+    try:
+        run = _admit(label, os.getpgrp())
+    except Blocked as b:
+        _print_blocked(b.reasons)
+        sys.exit(2)
+    print(f"disk_gate start run {run['run']} label {label} commit {run['info']['commit'][:12]} free {run['free']:.1f} "
+          f"GiB {_summary(run['obs'])}")
+    sys.stdout.flush()
+    extra = []
+    if sig:
+        extra.append(f"the gate was signalled ({sig[0]}) before the experiment started")
+        rc = None
+    else:
+        out = os.open(run["dir"] / "experiment.out", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        env = dict(os.environ, WP_GATE_RUN=run["run"], WP_RUN_DIR=str(run["dir"]), PYTHONDONTWRITEBYTECODE="1")
+        try:
+            p = subprocess.Popen([sys.executable, "-E", "-s", "-B", "-m", module, *margs], cwd=str(ROOT), env=env,
+                                 stdin=subprocess.DEVNULL, stdout=out, stderr=out, pass_fds=(run["lock"].fileno(),))
+            child.append(p)
+            rc = p.wait()
+        except OSError as e:
+            rc = None
+            extra.append(f"the experiment could not be started ({type(e).__name__})")
+        finally:
+            os.close(out)
+        if sig:
+            extra.append(f"the gate was signalled ({sig[0]}) during the run; the experiment was stopped")
+    left = _group_members(os.getpgrp())
+    if left is None:
+        extra.append("the run's process group could not be listed after the experiment exited")
+    elif left:
+        for pid in left:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                pass
+        extra.append(f"{len(left)} process(es) of the run outlived the experiment (pids {left[:5]}): killed")
+    run["exp_rc"] = rc
+    print(f"experiment_exit={rc if rc is not None else 'not run'}")
+    sys.exit(_report(run, *_finish(run, extra)))
+
+
+def _abort(args):
+    """P3: close the open run RUN VOID, only when its gate and experiment are dead."""
+    reason = " ".join(args[1:]).strip()
+    if not args or not reason:
+        raise SystemExit("abort needs a run id and a reason: abort RUN REASON")
+    run_id = args[0]
+
+    def refuse(msg):
+        print(f"disk_gate abort: refused: {msg}; nothing was written")
+        sys.exit(2)
+    lk = _take_run_lock()
+    if lk is None:
+        refuse("the run lock is held: a gate or its experiment is alive")
+    try:
+        with Ledger() as L:
+            o = L.open_run()
+            if not o or o.get("run") != run_id:
+                refuse(f"{run_id[:40]} is not the open run (open: {o['run'] if o else 'none'})")
+            if o.get("v") != FORMAT:                # an older gate took no lock and recorded no process group, so v5
+                refuse(f"run {run_id} was admitted by an older gate (format {o.get('v')}), which recorded no "
+                       "process group; close it with that pinned tree's own abort")   # cannot observe it dead
+            pg = o.get("pgid")
+            if not isinstance(pg, int) or pg <= 1:
+                refuse(f"run {run_id}'s admit record names no process group")
+            try:
+                os.killpg(pg, 0)
+                alive = True
+            except ProcessLookupError:
+                alive = False
+            except OSError as e:
+                alive = e.errno != errno.ESRCH
+            if alive:
+                refuse(f"process group {pg} of run {run_id} still has a live member")
+            _end_record(L, run_id, "VOID", [f"aborted: {reason[:200]}"], window_end=_utc(), label=o.get("label"))
+        print(f"disk_gate abort: run {run_id} closed VOID")
+        _verdict_line(run_id, "VOID", None)
+    finally:
+        lk.close()
+
+
+def _verdict(args):
+    run_id = args[0] if args else ""
+    with Ledger() as L:
+        adm = [r for r in L.recs if r["kind"] == "admit" and r.get("run") == run_id]
+        end = [r for r in L.recs if r["kind"] == "end" and r.get("run") == run_id]
+    if not adm:
+        print(f"disk_gate verdict: no run {run_id[:40]} in the ledger")
+        sys.exit(2)
+    if not end:
+        print(f"disk_gate verdict: run {run_id} is open (no end record)")
+        sys.exit(2)
+    e = end[0]
+    for x in e.get("reasons") or []:
+        print(f"disk_gate VOID: {x}")
+    _verdict_line(run_id, e.get("verdict"), e.get("window_end"))
+    sys.exit(0 if e.get("verdict") == "VALID" else 3)
+
+
 # --------------------------------------------------------------------------------------------------------- commands
-def _blocked(msg):
-    print(f"disk_gate BLOCKED start: {msg}")
-    sys.exit(2)
-
-
-def _void_now(msg):
-    print(f"disk_gate VOID: {msg}")
-    sys.exit(3)
+def _print_blocked(reasons):
+    for r in reasons:
+        print(f"disk_gate BLOCKED: {r}")
+    print(f"disk_gate BLOCKED {VERSION} sha256 {GATE_SHA256[:16]}")
 
 
 def _end_record(L, run, verdict, why, **kw):
@@ -835,142 +1366,6 @@ def _end_record(L, run, verdict, why, **kw):
 
 def _verdict_line(run, verdict, window_end):
     print(f"disk_gate {verdict} run {run} window_end {window_end or '-'} {VERSION} sha256 {GATE_SHA256[:16]} {LIMITS}")
-
-
-def _start():
-    try:
-        with Ledger() as L:
-            b = _admission_blocker(L)
-    except LedgerError as e:
-        b = f"the stop ledger is not intact ({e})"
-    if b:
-        _blocked(b)
-    names = dict(zip(("es", "pg"), _targets()))
-    try:
-        base = _home_bytes()                        # slow steps first (B6)
-    except GateError as e:
-        _blocked(str(e))
-    slow, why = {}, []
-    for key in ("es", "pg"):
-        slow[key], w = _slow(key, names[key])
-        why += w
-    if why:
-        _blocked("; ".join(why))
-    run_id = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + os.urandom(4).hex()
-    fast, f, t = {}, None, None
-    try:
-        with Ledger() as L:                         # stops, legacy path, identity, host free and admit: one step
-            b = _admission_blocker(L)
-            if not b:
-                t, w = _utc(), []
-                for key in ("es", "pg"):
-                    fast[key], x = _fast(key, slow[key]["id"])
-                    w += x
-                w += _rules(slow, fast)
-                b = "; ".join(w) or None
-            f = free_gb()
-            if not b and f < START_GB:
-                b = f"host free {f:.1f} GiB < {START_GB} (measured at admission)"
-            adm = None if b else L.append("admit", v=FORMAT, gate=VERSION, run=run_id, es=slow["es"]["id"],
-                                          pg=slow["pg"]["id"], free_bytes=int(f * GIB), free_at=_utc(), window_start=t)
-    except LedgerError as e:
-        b = f"the stop ledger is not intact ({e})"
-    if b:
-        _blocked(b)
-    obs = _merge(slow, fast)
-    _write_json(STATE, {"v": FORMAT, "run": run_id, "admit_seq": adm["seq"], "obs": obs, "base_home": base,
-                        "boot": _boot_id(), "floor_breaches": []})
-    print(f"disk_gate start run {run_id} free {f:.1f} GiB {_summary(obs)} admitted at seq {adm['seq']}")
-
-
-def _state():
-    try:
-        st = json.loads(STATE.read_text())
-    except (OSError, ValueError):
-        st = None
-    if not isinstance(st, dict) or st.get("v") != FORMAT or "run" not in st:
-        _void_now("no run admitted by this gate (none, or admitted by an older gate: close it with 'abort')")
-    return st
-
-
-def _ledger_why(L, st, when):
-    why = []
-    if not L.admitted(st["run"], st["admit_seq"]):
-        why.append(f"this run's admission record (run {st['run']}, seq {st['admit_seq']}) is not in the ledger: "
-                   "truncated, reset or replaced")
-    why += [f"STOP: {_stop_text(s)}, {when}" for s in L.stops_after(st["admit_seq"])]
-    return why
-
-
-def _step(st, name, end):
-    """check and end (B6): WP_HOME's size and the slow evidence first; then, in one locked ledger step, the ledger,
-    the legacy path, both containers' identity and lifetime counters back to back (window_end), the rules, and the
-    record (end: always; check: only when VOID, which closes the run). (obs, reasons, host free GiB, window_end)."""
-    when = "by the end of the run" if end else f"before {name}"
-    try:
-        d = (_home_bytes() - st["base_home"]) / GIB
-        why = [f"WP_HOME grew {d:.2f} GiB > cap {CAP_GB} {when}"] if d > CAP_GB else []
-    except GateError as e:
-        why = [f"{e} {when}"]
-    slow = {}
-    for key in ("es", "pg"):
-        slow[key], w = _slow(key, st["obs"][key]["id"])
-        why += w
-    f, obs, window_end = free_gb(), {}, None
-    try:
-        with Ledger() as L:
-            closed = L.closed(st["run"])
-            if closed and not end:
-                _void_now(f"run {st['run']} is already closed")
-            if closed:
-                why.append(f"run {st['run']} was closed before end (a VOID check or an abort)")
-            why += _ledger_why(L, st, when)
-            lg = _legacy_why()
-            if lg:
-                why.append(f"{lg}, {when}")
-            window_end, fast = _utc(), {}
-            for key in ("es", "pg"):
-                fast[key], w = _fast(key, st["obs"][key]["id"])
-                why += w
-            why += _rules(slow, fast)
-            obs = _merge(slow, fast)
-            why += _drift(obs, st["obs"])
-            if _boot_id() != st["boot"]:
-                why.append("the host rebooted during the run")
-            if not lg and _legacy_why():
-                why.append(f"{_legacy_why()}, {when}")
-            if not closed and (end or why):
-                extra = {} if end else {"at_check": name}
-                _end_record(L, st["run"], "VOID" if why else "VALID", why, window_end=window_end,
-                            free_bytes=int(f * GIB), evidence=_summary(obs), **extra)
-    except LedgerError as e:
-        why.append(f"the stop ledger is not intact ({e})")
-    return obs, why, f, window_end
-
-
-def _check(name):
-    st = _state()
-    obs, why, f, window_end = _step(st, name, end=False)
-    if why:
-        for x in why:
-            print(f"disk_gate VOID: {x}")
-        _verdict_line(st["run"], "VOID", window_end)
-        sys.exit(3)
-    if f < FLOOR_GB:
-        st["floor_breaches"].append({"before": name, "free_gb": round(f, 2)})
-        _write_json(STATE, st)
-    print(f"disk_gate {name} free {f:.1f} GiB {_summary(obs)}")
-
-
-def _end():
-    st = _state()
-    obs, why, f, window_end = _step(st, "", end=True)
-    print(f"disk_gate end free {f:.1f} GiB floor_breaches {len(st['floor_breaches'])} {_summary(obs)}")
-    for x in why:
-        print(f"disk_gate VOID: {x}")
-    _verdict_line(st["run"], "VOID" if why else "VALID", window_end)
-    if why:
-        sys.exit(3)
 
 
 def _ledger_reset(reason):
@@ -1057,16 +1452,6 @@ def _ledger_cmd(cmd, args):
                 sys.exit(2)
             L.append("ack", stop_id=args[0], reason=reason[:200])
             print(f"disk_gate clear-stop: stop {args[0]} acknowledged (no run's verdict changes)")
-        elif cmd == "abort":
-            if not reason:
-                raise SystemExit("abort needs a reason")
-            o = L.open_run()
-            if not o:
-                print("disk_gate abort: no open run")
-                return None
-            _end_record(L, o["run"], "VOID", [f"aborted: {reason[:200]}"], window_end=_utc())
-            print(f"disk_gate abort: run {o['run']} closed VOID")
-            _verdict_line(o["run"], "VOID", None)
     return None
 
 
@@ -1094,30 +1479,33 @@ def _retire_legacy(reason):
 
 
 def main(cmd="", *args):
-    if cmd == "start":
-        return _start()
-    if cmd == "check":
-        return _check(args[0] if args else "")
-    if cmd == "end":
-        return _end()
-    if cmd == "version":               # runkit/launch_one.sh writes these into every run's output, before the verdict
+    if cmd == "run":
+        return _run(list(args))
+    if cmd in ("start", "check", "end"):            # review a108fc3 G-1: they acted on whatever run was current
+        print(f"disk_gate: '{cmd}' is gone in v5: 'python -B -m exp.disk_gate run LABEL MODULE [ARGS]' admits, runs and "
+              "ends a run in one process")
+        sys.exit(2)
+    if cmd == "version":
         print(f"gate_version={VERSION} sha256 {GATE_SHA256}")
         print(f"gate_limits={LIMITS}")
         return None
-    if cmd in ("init", "stop", "stops", "clear-stop", "abort", "ledger-reset", "retire-legacy-stop"):
+    if cmd in ("init", "stop", "stops", "clear-stop", "abort", "verdict", "ledger-reset", "retire-legacy-stop"):
         try:
+            if cmd == "abort":
+                return _abort(list(args))
+            if cmd == "verdict":
+                return _verdict(list(args))
             return _ledger_cmd(cmd, list(args))
         except LedgerError as e:
             print(f"disk_gate BLOCKED: the stop ledger is not intact ({e})")
             sys.exit(2)
-    if cmd == "preflight":             # after setup: the erasure gate's inventory must be empty before any experiment
-        from wp import db, registry
-        from wp.es import ES
-        unreg = registry.unregistered(db.admin(), db.keys_connect(), ES())
-        print(f"disk_gate preflight unregistered {len(unreg)} {unreg[:10]}")
-        if unreg:
-            print("disk_gate BLOCKED: the store inventory is not empty before the run (every erasure would report residue)")
+    if cmd == "preflight":             # the stores must be clean (P7), as at admission
+        why = _clean()
+        for w in why:
+            print(f"disk_gate BLOCKED: {w}")
+        if why:
             sys.exit(2)
+        print("disk_gate preflight: stores clean")
         return None
     raise SystemExit(__doc__)
 
